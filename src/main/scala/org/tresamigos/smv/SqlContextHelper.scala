@@ -23,7 +23,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
 
   // TODO: parameterize this on delimiter.
   private def csvToRowRdd(schema: Schema, data: RDD[String], delimiter: Char): RDD[Row] = {
-    import au.com.bytecode.opencsv.CSVParser
+    //import au.com.bytecode.opencsv.CSVParser
 
     data.mapPartitions { iterator =>
       val mutableRow = new GenericMutableRow(schema.getSize)

@@ -18,7 +18,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 
 class SingleStrRDDHelper(rdd: RDD[String]) {
-  import au.com.bytecode.opencsv.CSVParser
+  //import au.com.bytecode.opencsv.CSVParser
 
   // TODO: csvToFields is a duplicate of what is done at the schema rdd helper.  Need to extract the common part!!!
   // Copy-n-paste is EVIL!!!! (DRY)
