@@ -1,0 +1,3 @@
+id              : String
+ttime           : Timestamp
+amt             : Double
