@@ -24,45 +24,46 @@ import scala.annotation.switch
 //TODO: add support for other builtin types
 
 abstract class SchemaEntry extends java.io.Serializable {
-  def name : String
-  def toValue(s : String) : Any
-  val typeName : String
-  val dataType : DataType
+  def name: String
+  def strToVal(s: String) : Any
+  def valToStr(v: Any) : String = v.toString
+  val typeName: String
+  val dataType: DataType
   override def toString = name + ": " + typeName
 }
 
 case class DoubleSchemaEntry(val name: String) extends SchemaEntry {
-  override def toValue(s:String) : Any = if (s.isEmpty) null else s.toDouble
+  override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toDouble
   override val typeName = "Double"
   override val dataType = DoubleType
 }
 
 case class FloatSchemaEntry(val name: String) extends SchemaEntry {
-  override def toValue(s:String) : Any = if (s.isEmpty) null else s.toFloat
+  override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toFloat
   override val typeName = "Float"
   override val dataType = FloatType
 }
 
 case class IntegerSchemaEntry(val name: String) extends SchemaEntry {
-  override def toValue(s:String) : Any = if (s.isEmpty) null else s.toInt
+  override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toInt
   override val typeName = "Integer"
   override val dataType = IntegerType
 }
 
 case class LongSchemaEntry(val name: String) extends SchemaEntry {
-  override def toValue(s:String) : Any = if (s.isEmpty) null else s.toLong
+  override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toLong
   override val typeName = "Long"
   override val dataType = LongType
 }
 
 case class BooleanSchemaEntry(val name: String) extends SchemaEntry {
-  override def toValue(s:String) : Any = if (s.isEmpty) null else s.toBoolean
+  override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toBoolean
   override val typeName = "Boolean"
   override val dataType = BooleanType
 }
 
 case class StringSchemaEntry(val name: String) extends SchemaEntry {
-  override def toValue(s:String) : Any = if (s.isEmpty) null else s
+  override def strToVal(s:String) : Any = if (s.isEmpty) null else s
   override val typeName = "String"
   override val dataType = StringType
 }
@@ -70,7 +71,7 @@ case class StringSchemaEntry(val name: String) extends SchemaEntry {
 case class TimestampSchemaEntry(val name: String, val fmt: String = "yyyyMMdd") extends SchemaEntry {
   // @transient val fmtObj = new java.text.SimpleDateFormat(fmt)
   val fmtObj = new java.text.SimpleDateFormat(fmt)
-  override def toValue(s:String) : Any = {
+  override def strToVal(s:String) : Any = {
     new java.sql.Timestamp(fmtObj.parse(s).getTime())
   }
   override val typeName = "Timestamp"
@@ -113,7 +114,7 @@ object SchemaEntry {
 class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   def getSize = entries.size
 
-  def toValue(ordinal: Int, sVal: String) = entries(ordinal).toValue(sVal)
+  def toValue(ordinal: Int, sVal: String) = entries(ordinal).strToVal(sVal)
 
   def colNames = entries.map(_.name)
   def colTypes = entries.map(_.dataType)
@@ -138,7 +139,7 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   }
 
   /**
-   * convert a data row to a delimiter csv string.
+   * convert a data row to a delimited csv string.
    * Handles delimiter and quote character appearing any any string value.
    */
   def rowToCsvString(row: Row, delimiter: Char = ',') = {
@@ -150,15 +151,16 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
       if (idx > 0)
         sb.append(delimiter)
 
-      (entries(idx).dataType: @switch) match {
+      val se = entries(idx)
+      (se.dataType: @switch) match {
         // TODO: handle timestamp here to convert to desired format
         case StringType => {
           // TODO: need to handle this better!
           sb.append("\"")
-          sb.append(row(idx))
+          sb.append(se.valToStr(row(idx)))
           sb.append("\"")
         }
-        case _ => sb.append(row(idx))
+        case _ => sb.append(se.valToStr(row(idx)))
       }
     }
 

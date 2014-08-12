@@ -61,8 +61,8 @@ class SchemaTest extends SparkTestUtil {
     assert(b === TimestampSchemaEntry("b", "yyyyMMdd"))
     assert(c === TimestampSchemaEntry("c", "yyyyMMdd"))
 
-    val date_a = a.toValue("2014").toString
-    val date_b = b.toValue("20140203").toString
+    val date_a = a.valToStr(a.strToVal("2014"))
+    val date_b = b.valToStr(b.strToVal("20140203"))
     assert(date_a === "2014-01-01 00:00:00.0") // 2014
     assert(date_b === "2014-02-03 00:00:00.0") // 20140203
   }

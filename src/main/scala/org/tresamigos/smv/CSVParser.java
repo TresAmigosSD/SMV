@@ -1,5 +1,3 @@
-package org.tresamigos.smv;
-
 /**
  Copyright 2005 Bytecode Pty Ltd.
 
@@ -15,6 +13,8 @@ package org.tresamigos.smv;
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
+package org.tresamigos.smv;
 
 import java.io.IOException;
 import java.util.ArrayList;
