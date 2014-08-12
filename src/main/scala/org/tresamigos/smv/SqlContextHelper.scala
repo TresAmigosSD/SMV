@@ -22,7 +22,7 @@ import org.apache.spark.sql.catalyst.expressions.{GenericMutableRow, Row}
 class SqlContextHelper(sqlContext: SQLContext) {
 
   // TODO: parameterize this on delimiter.
-  private def csvToRowRdd(schema: Schema, data: RDD[String], delimiter: Char): RDD[Row] = {
+  private def csvToRowRdd(schema: Schema, data: RDD[String], delimiter: Char)(implicit rejects: RejectLogger): RDD[Row] = {
     //import au.com.bytecode.opencsv.CSVParser
 
     data.mapPartitions { iterator =>
@@ -30,15 +30,21 @@ class SqlContextHelper(sqlContext: SQLContext) {
       val parser = new CSVParser(delimiter)
 
       iterator.map { r =>
-        val sr = parser.parseLine(r)
-        require(sr.size == schema.getSize)
+        try {
+          val sr = parser.parseLine(r)
+          require(sr.size == schema.getSize)
 
-        for (i <- 0 until schema.getSize) {
-          mutableRow.update(i, schema.toValue(i, sr(i)))
+          for (i <- 0 until schema.getSize) {
+            mutableRow.update(i, schema.toValue(i, sr(i)))
+          }
+
+          Some(mutableRow)
+        } catch {
+          case e:IllegalArgumentException  =>  rejects.addRejectedLineWithReason(r,e); None
+          case e:NumberFormatException  =>  rejects.addRejectedLineWithReason(r,e); None
+          case e:java.text.ParseException  =>  rejects.addRejectedLineWithReason(r,e); None
         }
-
-        mutableRow
-      }
+      }.collect{case Some(l) => l}
     }
   }
 
