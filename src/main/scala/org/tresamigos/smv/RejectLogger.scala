@@ -20,16 +20,23 @@ import scala.collection.mutable.MutableList
 
 abstract class RejectLogger extends Serializable {
   def addRejectedLineWithReason(r:String, e:Exception): Unit
-  def rejectReport(rejectFile: String): Unit
-}
-
-class NoOpRejectLogger extends RejectLogger {
-  def addRejectedLineWithReason(r:String, e:Exception): Unit = Unit
-  def rejectReport(rejectFile: String): Unit = Unit
+  def rejectReport: List[(String,String)] = Nil
 }
 
 object RejectLogger {
-  implicit val rejectLogger = new NoOpRejectLogger;
+  implicit val rejectLogger = TerminateRejectLogger;
+}
+
+object NoOpRejectLogger extends RejectLogger {
+  def addRejectedLineWithReason(r:String, e:Exception): Unit = Unit
+}
+
+/**TODO: Need to add a local counter */
+object TerminateRejectLogger extends RejectLogger {
+  def addRejectedLineWithReason(r:String, e:Exception): Unit = {
+    println(r)
+    throw e
+  }
 }
 
 class SCRejectLogger(sparkContext: SparkContext) extends RejectLogger {
@@ -41,19 +48,16 @@ class SCRejectLogger(sparkContext: SparkContext) extends RejectLogger {
     rejectedRecordCount += 1
   }
 
-  def rejectReport(rejectFile: String = ""): Unit = {
+  override def rejectReport: List[(String,String)] = {
     if (rejectedRecordCount.value > 0) {
       if (rejectedRecordCount.value > rejectedRecords.value.size){
         rejectedRecords += ((s"More rejects!! Total rejected records: $rejectedRecordCount",""))
       } else {
         rejectedRecords += ((s"Total rejected records: $rejectedRecordCount",""))
       }
-
-      if (rejectFile.isEmpty){
-        println(rejectedRecords.value.mkString("\n"))
-      }else{
-        sparkContext.parallelize(rejectedRecords.value).saveAsTextFile(rejectFile)
-      }
+      rejectedRecords.value.toList
+    } else {
+      Nil
     }
   }
 
