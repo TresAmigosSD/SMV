@@ -41,11 +41,11 @@ abstract class EDDTask extends java.io.Serializable {
   }
 }
    
-sealed trait StrTask extends EDDTask
-sealed trait NumTask extends EDDTask
+sealed trait StringTask extends EDDTask
+sealed trait NumericTask extends EDDTask
 sealed trait TimeTask extends EDDTask
 
-case class NumBase(expr: NamedExpression) extends EDDTask with NumTask{
+case class NumericBase(expr: NamedExpression) extends EDDTask with NumericTask{
   override def aggList = Seq(
     Alias(Count(expr),                 expr.name + "_cnt")(),
     Alias(OnlineAverage(expr),         expr.name + "_avg")(),
@@ -62,9 +62,9 @@ case class NumBase(expr: NamedExpression) extends EDDTask with NumTask{
   )
 }
 
-case class AmtHist(expr: NamedExpression) extends EDDTask with NumTask{
+case class AmountHistogram(expr: NamedExpression) extends EDDTask with NumericTask{
   override def aggList = Seq(
-    Alias(Histogram(AmtBin(expr)),     expr.name + "_amt")()
+    Alias(Histogram(AmountBin(expr)),  expr.name + "_amt")()
   )
   override def report(i: Iterator[Any]): Seq[String] = Seq(
     buildHistReport(expr.name + " as AMOUNT", 
@@ -72,9 +72,9 @@ case class AmtHist(expr: NamedExpression) extends EDDTask with NumTask{
   )
 }
 
-case class NumHist(expr: NamedExpression, min: Double, max: Double, n: Int) extends EDDTask with NumTask {
+case class NumericHistogram(expr: NamedExpression, min: Double, max: Double, n: Int) extends EDDTask with NumericTask {
   override def aggList = Seq(
-    Alias(Histogram(NumBin(expr, min, max, n)),     expr.name + "_nhi")()
+    Alias(Histogram(NumericBin(expr, min, max, n)),     expr.name + "_nhi")()
   )
   override def report(i: Iterator[Any]): Seq[String] = Seq(
     buildHistReport(expr.name + s" with $n fixed BINs",
@@ -82,7 +82,7 @@ case class NumHist(expr: NamedExpression, min: Double, max: Double, n: Int) exte
   )
 }
 
-case class BinNumHist(expr: NamedExpression, bin: Double) extends EDDTask with NumTask {
+case class BinNumericHistogram(expr: NamedExpression, bin: Double) extends EDDTask with NumericTask {
   override def aggList = Seq(
     Alias(Histogram(BinFloor(expr, bin)),           expr.name + "_bnh")()
   )
@@ -103,7 +103,7 @@ case class TimeBase(expr: NamedExpression) extends EDDTask with TimeTask {
   )
 }
 
-case class DateHist(expr: NamedExpression) extends EDDTask with TimeTask {
+case class DateHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
   override def aggList = Seq(
     Alias(Histogram(YEAR(expr)),       expr.name + "_yea")(),
     Alias(Histogram(MONTH(expr)),      expr.name + "_mon")(),
@@ -119,7 +119,7 @@ case class DateHist(expr: NamedExpression) extends EDDTask with TimeTask {
   )
 }
 
-case class HourHist(expr: NamedExpression) extends EDDTask with TimeTask {
+case class HourHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
   override def aggList = Seq(
     Alias(Histogram(HOUR(expr)),       expr.name + "_hou")()
   )
@@ -129,7 +129,7 @@ case class HourHist(expr: NamedExpression) extends EDDTask with TimeTask {
   )
 }
 
-case class StrBase(expr: NamedExpression) extends EDDTask with StrTask {
+case class StringBase(expr: NamedExpression) extends EDDTask with StringTask {
   override def aggList = {
     val relativeSD = 0.01 //Instead of using 0.05 as default
     Seq(
@@ -147,7 +147,7 @@ case class StrBase(expr: NamedExpression) extends EDDTask with StrTask {
   )
 }
 
-case class StrLenHist(expr: NamedExpression) extends EDDTask with StrTask {
+case class StringLengthHistogram(expr: NamedExpression) extends EDDTask with StringTask {
   override def aggList = Seq(
     Alias(Histogram(LENGTH(expr)),     expr.name + "_len")()
   )
@@ -157,7 +157,7 @@ case class StrLenHist(expr: NamedExpression) extends EDDTask with StrTask {
   )
 }
 
-case class StrKeyHist(expr: NamedExpression) extends EDDTask with StrTask {
+case class StringByKeyHistogram(expr: NamedExpression) extends EDDTask with StringTask {
   override def aggList = Seq(
     Alias(Histogram(expr),             expr.name + "_key")()
   )
@@ -167,7 +167,7 @@ case class StrKeyHist(expr: NamedExpression) extends EDDTask with StrTask {
   )
 }
 
-case class StrFreqHist(expr: NamedExpression) extends EDDTask with StrTask {
+case class StringByFreqHistogram(expr: NamedExpression) extends EDDTask with StringTask {
   override def aggList = Seq(
     Alias(Histogram(expr),             expr.name + "_frq")()
   )
@@ -177,7 +177,7 @@ case class StrFreqHist(expr: NamedExpression) extends EDDTask with StrTask {
   )
 }
 
-case class GroupPopKey(expr: NamedExpression) extends EDDTask {
+case class GroupPopulationKey(expr: NamedExpression) extends EDDTask {
   override def aggList = Seq(
     Alias(First(expr),                 expr.name + "_pop")()
   )
@@ -186,7 +186,7 @@ case class GroupPopKey(expr: NamedExpression) extends EDDTask {
   )
 }
 
-case object GroupPopCount extends EDDTask {
+case object GroupPopulationCount extends EDDTask {
   override def aggList = Seq(
     Alias(Count(Literal(1)),           "pop_tot")()
   )

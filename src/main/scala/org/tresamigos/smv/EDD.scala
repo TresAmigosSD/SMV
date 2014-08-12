@@ -22,7 +22,18 @@ import org.apache.spark.storage.StorageLevel
 
 /** EDD class as a Builder class 
  *
- * Call task-builder methods to create the task list
+ * Call the following task-builder methods to create the task list
+ *     addBaseTasks(list: Symbol* )
+ *     addHistogramTasks(list: Symbol*)
+ *     addAmountHistogramTasks(list: Symbol*)
+ *     addMoreTasks(more: EDDTask*)
+ * Clean task list and result SchemaRDD:
+ *     clean
+ * Generate SchemaRDD:
+ *     toSchemaRDD: SchemaRDD
+ * Generate report RDD:
+ *     createReport: RDD[String]
+ *
  * @param srdd the SchemaRDD this EDD works on
  * @param gExprs the group expressions this EDD cacluate over
  */
@@ -40,7 +51,7 @@ class EDD(srdd: SchemaRDD,
    *        if empty will use all fields in this SchemaRDD
    * @return this EDD
    */
-  def baseTasks(list: Symbol* ): EDD = {
+  def addBaseTasks(list: Symbol* ): EDD = {
     val listSeq =
       if (list.isEmpty)
         srdd.schema.colNames.map(Symbol(_))
@@ -51,21 +62,21 @@ class EDD(srdd: SchemaRDD,
       listSeq.map{ l =>
         val s =srdd.sqlContext.symbolToUnresolvedAttribute(l)
         srdd.schema.nameToType(l) match {
-          case _: NumericType => Seq(NumBase(s))
+          case _: NumericType => Seq(NumericBase(s))
           case TimestampType => Seq(
             TimeBase(s),
-            DateHist(s),
-            HourHist(s)
+            DateHistogram(s),
+            HourHistogram(s)
           )
-          case StringType => Seq(StrBase(s))
+          case StringType => Seq(StringBase(s))
         }
       }.flatMap{a=>a}
     this
   }
 
-  /** Add HISTogram tasks 
+  /** Add Histogram tasks 
    * 
-   * All simple histogram tasks: on StringType only
+   * All simple histogram tasks
    * @param list the Set of Symbols HISTogram tasks will be created on
    *        if empty will use all fields in this SchemaRDD
    * @param byFreq report histogram as sorted by value or not
@@ -74,7 +85,7 @@ class EDD(srdd: SchemaRDD,
    *        default = 100.0
    * @return this EDD
    */
-  def histTasks(list: Symbol*)(byFreq: Boolean = false, binSize: Double = 100.0): EDD = {
+  def addHistogramTasks(list: Symbol*)(byFreq: Boolean = false, binSize: Double = 100.0): EDD = {
     val listSeq =
       if (list.isEmpty)
         srdd.schema.colNames.map(Symbol(_))
@@ -86,28 +97,29 @@ class EDD(srdd: SchemaRDD,
         val s =srdd.sqlContext.symbolToUnresolvedAttribute(l)
         srdd.schema.nameToType(l) match {
           case StringType => 
-            if (byFreq) Seq(StrFreqHist(s))
-            else Seq(StrKeyHist(s))
-          case _: NumericType => Seq(BinNumHist(s, binSize))
+            if (byFreq) Seq(StringByFreqHistogram(s))
+            else Seq(StringByKeyHistogram(s))
+          case _: NumericType => Seq(BinNumericHistogram(s, binSize))
           case _ => Nil
         }
       }.flatMap{a=>a}
     this
   }
 
-  /** Add Amount HISTogram tasks 
+  /** Add Amount Histogram tasks 
    * 
-   * All simple histogram tasks: on NumericType only
+   * Use predefined Bin boundary for NumericType only. The Bin boundary 
+   * was defined for natural transaction dollar amount type of distribution
    * @param list the Set of Symbols tasks will be created on
    * @return this EDD
    */
-  def amtHistTasks(list: Symbol*): EDD = {
+  def addAmountHistogramTasks(list: Symbol*): EDD = {
     val listSeq = list.toSet.toSeq
     tasks ++=
       listSeq.map{ l =>
         val s =srdd.sqlContext.symbolToUnresolvedAttribute(l)
         srdd.schema.nameToType(l) match {
-          case DoubleType => Seq(AmtHist(s))
+          case DoubleType => Seq(AmountHistogram(s))
           case _ => Nil
         }
       }.flatMap{a=>a}
@@ -116,10 +128,21 @@ class EDD(srdd: SchemaRDD,
 
   /** Add all other tasks 
    * 
-   * @param more a Seq of EDDTask's 
+   * @param more a Seq of EDDTask's. Available Tasks:
+   *          NumericBase(expr: NamedExpression)
+   *          AmountHistogram(expr: NamedExpression)
+   *          NumericHistogram(expr: NamedExpression, min: Double, max: Double, n: Int)
+   *          BinNumericHistogram(expr: NamedExpression, bin: Double)
+   *          TimeBase(expr: NamedExpression)
+   *          DateHistogram(expr: NamedExpression)
+   *          HourHistogram(expr: NamedExpression)
+   *          StringBase(expr: NamedExpression)
+   *          StringLengthHistogram(expr: NamedExpression)
+   *          StringByKeyHistogram(expr: NamedExpression)
+   *          StringByFreqHistogram(expr: NamedExpression)
    * @return this EDD
    */
-  def moreTasks(more: EDDTask*): EDD = {
+  def addMoreTasks(more: EDDTask*): EDD = {
     tasks ++= more
     this
   }
@@ -134,8 +157,8 @@ class EDD(srdd: SchemaRDD,
   def toSchemaRDD: SchemaRDD = {
     if (eddRDD == emptySchemaRDD){
       val aggregateList: Seq[Alias] = 
-        gExprs.map{ GroupPopKey(_).aggList }.flatMap(a=>a) ++
-          GroupPopCount.aggList ++
+        gExprs.map{ GroupPopulationKey(_).aggList }.flatMap(a=>a) ++
+          GroupPopulationCount.aggList ++
           tasks.map{ t => t.aggList }.flatMap(a=>a)
       eddRDD = srdd.groupBy(gExprs: _*)(aggregateList: _*)
       eddRDD.persist(StorageLevel.MEMORY_AND_DISK)
@@ -145,7 +168,7 @@ class EDD(srdd: SchemaRDD,
 
   /** Return an RDD of String as the EDD report. One row for each group. If
    * EDD is on the population, this RDD will have only 1 row */
-  def report: RDD[String] = {
+  def createReport: RDD[String] = {
     val rdd = toSchemaRDD
 
     val tasks_ = tasks        // For Serialization
@@ -153,8 +176,8 @@ class EDD(srdd: SchemaRDD,
 
     rdd.map{ r => 
       val it = r.toIterator
-      ( gExprs_.map{ GroupPopKey(_).report(it) }.flatMap(a=>a) ++
-          GroupPopCount.report(it) ++
+      ( gExprs_.map{ GroupPopulationKey(_).report(it) }.flatMap(a=>a) ++
+          GroupPopulationCount.report(it) ++
           tasks_.map{ t => t.report(it) }.flatMap(a=>a)
       ).mkString("\n")
     }

@@ -144,7 +144,7 @@ case class HOUR(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
 }
 
 /* Bin lookup */
-case class AmtBin(child: Expression) extends UnaryFuncs[Double] {
+case class AmountBin(child: Expression) extends UnaryFuncs[Double] {
   override def toString = s"AmtBin( $child )"
   def dataType = DoubleType
   def func(v:Double): Double = {
@@ -167,7 +167,7 @@ case class AmtBin(child: Expression) extends UnaryFuncs[Double] {
   }
 }
 
-case class NumBin(child: Expression, min: Double, max: Double, n: Int) extends UnaryFuncs[Double] {
+case class NumericBin(child: Expression, min: Double, max: Double, n: Int) extends UnaryFuncs[Double] {
   override def toString = s"NumBin( $child )"
   def dataType = DoubleType
   val delta = (max-min)/n

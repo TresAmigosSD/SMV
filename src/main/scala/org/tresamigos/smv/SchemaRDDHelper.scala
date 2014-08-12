@@ -35,7 +35,6 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   /**
    * Create an EDD builder on SchemaRDD 
    * 
-   * Builder method need to be specified for EDD tasks
    * @param groupingExprs specify grouping expression(s) to compute EDD over
    * @return an EDD object 
    */

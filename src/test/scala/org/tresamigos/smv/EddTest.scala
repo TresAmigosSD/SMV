@@ -17,7 +17,7 @@ package org.tresamigos.smv
 class EddTest extends SparkTestUtil {
   sparkTest("test EDD on entire population") {
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
-    val edd = srdd.edd.baseTasks('a, 'b)
+    val edd = srdd.edd.addBaseTasks('a, 'b)
     val colNames = edd.toSchemaRDD.schema.colNames.mkString(",")
     assert(colNames === "pop_tot,a_cnt,a_avg,a_std,a_min,a_max,b_cnt,b_avg,b_std,b_min,b_max")
     val eddlist = edd.toSchemaRDD.collect()(0).toList
@@ -30,7 +30,7 @@ class EddTest extends SparkTestUtil {
 class EddReportTest extends SparkTestUtil {
   sparkTest("test EDD report on entire population") {
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test2")
-    val res = srdd.edd.baseTasks().report.first
+    val res = srdd.edd.addBaseTasks().createReport.first
     val expect = """Total Record Count:                        3
 id                   Non-Null Count:        3
 id                   Approx Distinct Count: 2
@@ -80,14 +80,14 @@ class EddHistTest extends SparkTestUtil {
     import org.apache.spark.sql.catalyst.dsl._
     val ssc = sqlContext; import ssc._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test2")
-    val edd = srdd.select('id, MONTH('val2) as 'month).edd.moreTasks(
-      StrKeyHist('id),StrKeyHist('month)
+    val edd = srdd.select('id, MONTH('val2) as 'month).edd.addMoreTasks(
+      StringByKeyHistogram('id),StringByKeyHistogram('month)
     )
     val res = edd.toSchemaRDD.collect()(0).toSeq
     val expect: Seq[Any] = Seq(3,Map("231" -> 1, "123" -> 2),Map("08" -> 1, "01" -> 1, "10" -> 1))
     assert(res === expect)
 
-    val res2 = edd.report.collect()
+    val res2 = edd.createReport.collect()
     val expect2 = Array("""Total Record Count:                        3
 Histogram of id sorted by KEY
 key                      count      Pct    cumCount   cumPct
@@ -102,8 +102,8 @@ key                      count      Pct    cumCount   cumPct
 -------------------------------------------------""")
     assert(res2 === expect2)
 
-    val edd3 = srdd.edd.amtHistTasks('val).histTasks('id)(byFreq = true)
-    val res3 = edd3.report.collect()
+    val edd3 = srdd.edd.addAmountHistogramTasks('val).addHistogramTasks('id)(byFreq = true)
+    val res3 = edd3.createReport.collect()
     val expect3 = Array("""Total Record Count:                        3
 Histogram of val as AMOUNT
 key                      count      Pct    cumCount   cumPct
@@ -117,10 +117,10 @@ key                      count      Pct    cumCount   cumPct
 -------------------------------------------------""")
     assert(res3 === expect3)
 
-    edd3.clean.histTasks('val)(binSize = 5.0).moreTasks(
-      NumHist('val, 12.5, 67.21, 2), 
-      StrLenHist('val3))
-    val res4 = edd3.report.collect()
+    edd3.clean.addHistogramTasks('val)(binSize = 5.0).addMoreTasks(
+      NumericHistogram('val, 12.5, 67.21, 2), 
+      StringLengthHistogram('val3))
+    val res4 = edd3.createReport.collect()
     val expect4 = Array("""Total Record Count:                        3
 Histogram of val with BIN size 5.0
 key                      count      Pct    cumCount   cumPct
