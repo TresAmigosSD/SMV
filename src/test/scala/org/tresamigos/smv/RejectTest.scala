@@ -28,10 +28,10 @@ class RejectTest extends SparkTestUtil {
     assert(res === exp)
   }
   sparkTest("test csvFile loader rejection") {
-    implicit val rejectLogger:RejectLogger  = new SCRejectLogger(sc)
+    implicit val rejectLogger:RejectLogger  = new SCRejectLogger(sc, 3)
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "RejectTest/test2")
     srdd.collect
-    val res = rejectLogger.rejectReport.map{ case (s,e) => s"$s ------ $e" }
+    val res = rejectLogger.rejectedLineReport.map{ case (s,e) => s"$s ------ $e" }
     println(res.mkString("\n"))
     val exp = """123,12.50  ,12102012 ------ java.lang.IllegalArgumentException: requirement failed
 123,001x  ,20130109130619,12102012 ------ java.lang.NumberFormatException: For input string: "001x"

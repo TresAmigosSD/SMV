@@ -19,8 +19,8 @@ import org.apache.spark.SparkContext._
 import scala.collection.mutable.MutableList
 
 abstract class RejectLogger extends Serializable {
-  def addRejectedLineWithReason(r:String, e:Exception): Unit
-  def rejectReport: List[(String,String)] = Nil
+  val addRejectedLineWithReason: (String,Exception) => Unit 
+  def rejectedLineReport: List[(String,String)] = Nil
 }
 
 object RejectLogger {
@@ -28,27 +28,33 @@ object RejectLogger {
 }
 
 object NoOpRejectLogger extends RejectLogger {
-  def addRejectedLineWithReason(r:String, e:Exception): Unit = Unit
+  val addRejectedLineWithReason: (String,Exception) => Unit = (r:String, e:Exception) => Unit
 }
 
-/**TODO: Need to add a local counter */
 object TerminateRejectLogger extends RejectLogger {
-  def addRejectedLineWithReason(r:String, e:Exception): Unit = {
-    println(r)
+  val addRejectedLineWithReason: (String,Exception) => Unit = (r:String, e:Exception) => {
     throw e
+    Unit
   }
 }
 
-class SCRejectLogger(sparkContext: SparkContext) extends RejectLogger {
+class SCRejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends RejectLogger {
   private val rejectedRecords = sparkContext.accumulableCollection(MutableList[(String,String)]())
   private val rejectedRecordCount = sparkContext.accumulator(0)
 
-  def addRejectedLineWithReason(r:String, e:Exception) {
-    rejectedRecords += ((r, e.toString))
-    rejectedRecordCount += 1
+  val addRejectedLineWithReason: (String,Exception) => Unit = {
+    var localCounter = 0
+    (r:String, e:Exception) => {
+      if (localCounter < localMax) {
+        rejectedRecords += ((r, e.toString))
+      }
+      localCounter = localCounter + 1
+      rejectedRecordCount += 1
+      Unit
+    }
   }
 
-  override def rejectReport: List[(String,String)] = {
+  override def rejectedLineReport: List[(String,String)] = {
     if (rejectedRecordCount.value > 0) {
       if (rejectedRecordCount.value > rejectedRecords.value.size){
         rejectedRecords += ((s"More rejects!! Total rejected records: $rejectedRecordCount",""))
