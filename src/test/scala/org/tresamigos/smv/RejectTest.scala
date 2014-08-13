@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.SparkException
+
 class RejectTest extends SparkTestUtil {
   sparkTest("test csvFile loader rejection with NoOp") {
     implicit val rejectLogger:RejectLogger  = NoOpRejectLogger
@@ -46,11 +48,11 @@ class RejectTest extends SparkTestUtil {
 
   }
 
-  /* Expect and Exception here. How to test this? 
-  sparkTest("test csvFile loader rejection with exception") {
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "RejectTest/test2")
-    println(srdd.collect.mkString("\n"))
+  sparkTest("test csvFile loader rejection with exception", disableLogging = true) {
+    intercept[SparkException] {
+      val srdd = sqlContext.csvFileWithSchema(testDataDir + "RejectTest/test2")
+      println(srdd.collect.mkString("\n"))
+    }
   }
-  */
 }
 

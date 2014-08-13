@@ -1,8 +1,4 @@
-// the format in this file is ugly on purpose to test parser
-// handling of spaces and comments all over the place!.
-id:    String // blah
-  val:double # hash comment
-  val2: timestamp[yyyyMMddHHmmss]
-  val3: String
-# hash comment line!
-   // leave above empty line!
+id: String
+val: double
+val2: timestamp[yyyyMMddHHmmss]
+val3: String

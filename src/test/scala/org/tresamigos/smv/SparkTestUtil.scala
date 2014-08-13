@@ -43,9 +43,12 @@ trait SparkTestUtil extends FunSuite {
    *
    * @param name the name of the test
    */
-  def sparkTest(name: String)(body: => Unit) {
+  def sparkTest(name: String, disableLogging: Boolean = false)(body: => Unit) {
     test(name) {
-      SparkTestUtil.setLoggingLevel(Level.ERROR)
+      if (disableLogging)
+        SparkTestUtil.setLoggingLevel(Level.OFF)
+      else
+        SparkTestUtil.setLoggingLevel(Level.ERROR)
       sc = new SparkContext("local[2]", name)
       sqlContext = new SQLContext(sc)
       try {
@@ -57,6 +60,10 @@ trait SparkTestUtil extends FunSuite {
         sqlContext = null
         // To avoid Akka rebinding to the same port, since it doesn't unbind immediately on shutdown
         System.clearProperty("spark.master.port")
+
+        // re-enable normal logging for next test if we disabled logging here.
+        if (disableLogging)
+          SparkTestUtil.setLoggingLevel(Level.ERROR)
       }
     }
   }
