@@ -15,54 +15,20 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.execution.{SparkLogicalPlan, ExistingRdd}
-import org.apache.spark.sql.catalyst.expressions.{GenericMutableRow, Row}
 
 class SqlContextHelper(sqlContext: SQLContext) {
 
-  // TODO: parameterize this on delimiter.
-  private def csvToRowRdd(schema: Schema, data: RDD[String], delimiter: Char)(rejects: RejectLogger): RDD[Row] = {
-    //import au.com.bytecode.opencsv.CSVParser
-
-    data.mapPartitions { iterator =>
-      val mutableRow = new GenericMutableRow(schema.getSize)
-      val parser = new CSVParser(delimiter)
-
-      iterator.map { r =>
-        try {
-          val sr = parser.parseLine(r)
-          require(sr.size == schema.getSize)
-
-          for (i <- 0 until schema.getSize) {
-            mutableRow.update(i, schema.toValue(i, sr(i)))
-          }
-
-          Some(mutableRow)
-        } catch {
-          case e:IllegalArgumentException  =>  rejects.addRejectedLineWithReason(r,e); None
-          case e:NumberFormatException  =>  rejects.addRejectedLineWithReason(r,e); None
-          case e:java.text.ParseException  =>  rejects.addRejectedLineWithReason(r,e); None
-        }
-      }.collect{case Some(l) => l}
-    }
+  def csvFileAddSchema(dataPath: String, schema: Schema, delimiter: Char = ',')(implicit rejects: RejectLogger) = {
+    val strRDD = sqlContext.sparkContext.textFile(dataPath)
+    strRDD.csvToSeqStringRDD(delimiter).seqStringRDDToSchemaRDD(sqlContext, schema)(rejects)
   }
 
-  // TODO: need to separate this out into two functions.  Allow user to apply schema to
-  // either RDD[String] or RDD[Row].
-  private def applySchemaToRDD(rdd: RDD[String], schema: Schema, delimiter: Char)(rejects: RejectLogger) = {
-    val rowRDD = csvToRowRdd(schema, rdd, delimiter)(rejects)
-    val eRDD = ExistingRdd(schema.toAttribSeq, rowRDD)
-    new SchemaRDD(sqlContext, SparkLogicalPlan(eRDD))
-  }
-
-  // TODO: provide a version that takes the Schema object instead of schemaPath.
   def csvFileWithSchema(dataPath: String, schemaPath: String = null, delimiter: Char = ',')(implicit rejects: RejectLogger) = {
     val sp = if (schemaPath==null) dataPath + ".schema" else schemaPath
     val sc = sqlContext.sparkContext
     val schema = Schema.fromFile(sc, sp)
-    val strRDD = sc.textFile(dataPath)
-    applySchemaToRDD(strRDD, schema, delimiter)(rejects)
+    csvFileAddSchema(dataPath, schema, delimiter)(rejects)
   }
 
   case object emptySchemaRDD extends SchemaRDD(sqlContext, 
