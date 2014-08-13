@@ -68,15 +68,30 @@ trait SparkTestUtil extends FunSuite {
   def assertDoubleSeqEqual(resultSeq: Seq[Any], expectSeq: Seq[Double], epsilon: Double = 0.01) {
     import java.lang.Math.abs
     assert(resultSeq.length === expectSeq.length)
-    resultSeq.map{
-      case l: Double => l
-      case l: Int => l.toDouble
+    resultSeq.map {
+      case d: Double => d
+      case i: Int => i.toDouble
       case l: Long => l.toDouble
-      case l: Float => l.toDouble
+      case f: Float => f.toDouble
       case _ => Double.MinValue
     }.zip(expectSeq).foreach {
       case (a,b) => assert(abs(a - b) < epsilon, s"because array element $a not equal $b")
     }
+  }
+
+  /**
+   * Ensure that two arbitrary sequences are equal regardless of the order of items in the sequence
+   */
+  def assertUnorderedSeqEqual[T: Ordering](resultSeq: Seq[T], expectSeq: Seq[T]) {
+    assert(resultSeq.length === expectSeq.length)
+
+    val sortedResSeq = resultSeq.sorted
+    val sortedExpSeq = expectSeq.sorted
+
+    sortedResSeq.zip(sortedExpSeq).foreach {
+      case (a,b) => assert(a == b, s"because array element $a not equal $b")
+    }
+
   }
 }
 
