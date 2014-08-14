@@ -15,8 +15,8 @@
 package org.tresamigos
 
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import scala.language.implicitConversions
 
 package object smv {
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
