@@ -22,28 +22,28 @@ import org.apache.spark.SparkContext._
 import scala.reflect.ClassTag
 
 
+class CSVStringParser[U](delimiter: Char, f: (String, Seq[String]) => U)(implicit ut: ClassTag[U]) extends Serializable {
+  //import au.com.bytecode.opencsv.CSVParser
+  def parseCSV(iterator: Iterator[String]): Iterator[U] ={
+    val parser = new CSVParser(delimiter)
+    iterator.map { r => 
+      val parsed = parser.parseLine(r)
+      f(r,parsed)
+    }
+  }
+}
+
 class CsvRDDHelper(rdd: RDD[String]) {
 
-  def csvToSeqStringRDD(delimiter: Char): RDD[Seq[String]] = {
-    //import au.com.bytecode.opencsv.CSVParser
-    rdd.mapPartitions { iterator =>
-      val parser = new CSVParser(delimiter)
-      iterator.map { r =>
-        parser.parseLine(r)
-      }
-    }
+  def csvToSeqStringRDD(delimiter: Char = ','): RDD[Seq[String]] = {
+    val parser = new CSVStringParser[Seq[String]](delimiter, (r:String, parsed:Seq[String]) => parsed)
+    rdd.mapPartitions{ parser.parseCSV(_) }
   }
 
-  // TODO: we need a separate out the csv parsing from the key creation.
-  // There is too much going on in here.  Need to create a csv parser class that converts a RDD[String]
-  // to RDD[Seq[Any]] or just RDD[Row].  Then the addKey can be done on any RDD[Row]
-  def csvAddKey(index: Int = 0, delimiter: Char = ',') = {
-    rdd.mapPartitions { iterator =>
-      val parser = new CSVParser(delimiter)
-      iterator.map { l => (parser.parseLine(l)(index),l) }
-    }
+  def csvAddKey(index: Int = 0, delimiter: Char = ','): RDD[(String,String)] = {
+    val parser = new CSVStringParser[(String, String)](delimiter, (r:String, parsed:Seq[String]) => (parsed(index), r))
+    rdd.mapPartitions{ parser.parseCSV(_) }
   }
-
 }
 
 abstract class SeqRDDHelper {
