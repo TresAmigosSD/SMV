@@ -25,7 +25,6 @@ package object smv {
 
   implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
   implicit def makeSeqStrRDDHelper(rdd: RDD[Seq[String]]) = new SeqStringRDDHelper(rdd)
-  implicit def makeSeqAnyRDDHelper(rdd: RDD[Seq[Any]]) = new SeqAnyRDDHelper(rdd)
   implicit def makeRDDHelper[T](rdd: RDD[T])(implicit tt: ClassTag[T]) = 
     new RDDHelper[T](rdd)
   implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) = 

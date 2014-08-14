@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.execution.{SparkLogicalPlan, ExistingRdd}
-import org.apache.spark.sql.catalyst.expressions.{GenericMutableRow, GenericRow, Row}
+import org.apache.spark.sql.catalyst.expressions.{GenericMutableRow, Row}
 import org.apache.spark.SparkContext._
 import scala.reflect.ClassTag
 
@@ -46,16 +46,9 @@ class CsvRDDHelper(rdd: RDD[String]) {
   }
 }
 
-abstract class SeqRDDHelper {
-  protected def rowRDDToSchemaRDD(sqlContext: SQLContext, data: RDD[Row], schema: Schema): SchemaRDD = {
-    val eRDD = ExistingRdd(schema.toAttribSeq, data)
-    new SchemaRDD(sqlContext, SparkLogicalPlan(eRDD))
-  }
-}
-
-class SeqStringRDDHelper(rdd: RDD[Seq[String]]) extends SeqRDDHelper {
-  private def seqStringRDDToRowRDD(data: RDD[Seq[String]], schema: Schema)(rejects: RejectLogger): RDD[Row] = {
-    data.mapPartitions { iterator =>
+class SeqStringRDDHelper(rdd: RDD[Seq[String]]) {
+  def seqStringRDDToRowRDD(schema: Schema)(rejects: RejectLogger): RDD[Row] = {
+    rdd.mapPartitions { iterator =>
       val mutableRow = new GenericMutableRow(schema.getSize)
       iterator.map { r =>
         try {
@@ -72,21 +65,7 @@ class SeqStringRDDHelper(rdd: RDD[Seq[String]]) extends SeqRDDHelper {
       }.collect{case Some(l) => l}
     }
   }
-
-  def seqStringRDDToSchemaRDD(sqlContext: SQLContext, schema: Schema)(implicit rejects: RejectLogger): SchemaRDD = {
-    //match rdd to Seq[String]
-    rowRDDToSchemaRDD(sqlContext, seqStringRDDToRowRDD(rdd, schema)(rejects), schema)
-  }
 }
-
-class SeqAnyRDDHelper(rdd: RDD[Seq[Any]]) extends SeqRDDHelper {
-  def seqAnyRDDToSchemaRDD(sqlContext: SQLContext, schema: Schema): SchemaRDD ={
-    rowRDDToSchemaRDD(sqlContext, rdd.map(r => new GenericRow(r.toArray)), schema)
-  }
-}
-
-// sc.textFile("datafile").csvToSeqStringRDD(',').seqStringRDDToSchemaRDD(sqlContext, schema)
-
 
 class RDDHelper[T](rdd: RDD[T])(implicit tt: ClassTag[T]){
   def saveAsGZFile(outFile: String) {

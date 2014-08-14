@@ -21,7 +21,7 @@ class SeqAnyRDDTest extends SparkTestUtil {
     val ssc = sqlContext; import ssc._
     val rdd = sc.parallelize(Seq(Seq(1, "a"), Seq(2, "b"), Seq(3, "c")))
     val schema = Schema.fromString("id:Integer; val:String")
-    val srdd = rdd.seqAnyRDDToSchemaRDD(sqlContext, schema)
+    val srdd = sqlContext.applySchemaToSeqAnyRDD(rdd, schema)
     val res = srdd.select('val).map(_(0)).collect
     val exp: Array[Any] = Array("a", "b", "c")
 

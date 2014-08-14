@@ -14,17 +14,29 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.sql.execution.{SparkLogicalPlan, ExistingRdd}
+import org.apache.spark.sql.catalyst.expressions.{GenericRow, Row}
 
 class SqlContextHelper(sqlContext: SQLContext) {
 
-  def csvFileAddSchema(dataPath: String, schema: Schema, delimiter: Char = ',')(implicit rejects: RejectLogger) = {
-    val strRDD = sqlContext.sparkContext.textFile(dataPath)
-    strRDD.csvToSeqStringRDD(delimiter).seqStringRDDToSchemaRDD(sqlContext, schema)(rejects)
+  def applySchemaToRowRDD(rdd: RDD[Row], schema: Schema): SchemaRDD = {
+    val eRDD = ExistingRdd(schema.toAttribSeq, rdd)
+    new SchemaRDD(sqlContext, SparkLogicalPlan(eRDD))
   }
 
-  def csvFileWithSchema(dataPath: String, schemaPath: String = null, delimiter: Char = ',')(implicit rejects: RejectLogger) = {
+  def applySchemaToSeqAnyRDD(rdd: RDD[Seq[Any]], schema: Schema): SchemaRDD = {
+    applySchemaToRowRDD(rdd.map(r => new GenericRow(r.toArray)), schema)
+  }
+
+  def csvFileAddSchema(dataPath: String, schema: Schema, delimiter: Char = ',')(implicit rejects: RejectLogger): SchemaRDD = {
+    val strRDD = sqlContext.sparkContext.textFile(dataPath)
+    val rowRDD = strRDD.csvToSeqStringRDD(delimiter).seqStringRDDToRowRDD(schema)(rejects)
+    applySchemaToRowRDD(rowRDD, schema)
+  }
+
+  def csvFileWithSchema(dataPath: String, schemaPath: String = null, delimiter: Char = ',')(implicit rejects: RejectLogger): SchemaRDD = {
     val sp = if (schemaPath==null) dataPath + ".schema" else schemaPath
     val sc = sqlContext.sparkContext
     val schema = Schema.fromFile(sc, sp)
