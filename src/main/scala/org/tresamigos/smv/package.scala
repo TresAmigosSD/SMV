@@ -17,15 +17,18 @@ package org.tresamigos
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.rdd.RDD
 import scala.language.implicitConversions
+import scala.reflect.ClassTag
 
 package object smv {
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
   implicit def makeSchemaRDDHelper(srdd: SchemaRDD) = new SchemaRDDHelper(srdd)
 
-  implicit def makeRDDHelper(rdd: RDD[String]) = new SingleStrRDDHelper(rdd)
-  implicit def makeKeyStrRDDHelper(rdd: RDD[(String, String)]) = new KeyStrRDDHelper(rdd)
-
   implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
   implicit def makeSeqStrRDDHelper(rdd: RDD[Seq[String]]) = new SeqStringRDDHelper(rdd)
   implicit def makeSeqAnyRDDHelper(rdd: RDD[Seq[Any]]) = new SeqAnyRDDHelper(rdd)
+  implicit def makeRDDHelper[T](rdd: RDD[T])(implicit tt: ClassTag[T]) = 
+    new RDDHelper[T](rdd)
+  implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) = 
+    new PairRDDHelper[K,V](rdd)
+
 }
