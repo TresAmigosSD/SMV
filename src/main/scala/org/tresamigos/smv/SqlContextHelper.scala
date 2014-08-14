@@ -21,21 +21,39 @@ import org.apache.spark.sql.catalyst.expressions.{GenericRow, Row}
 
 class SqlContextHelper(sqlContext: SQLContext) {
 
+  /** Create an SchemaRDD from RDD[Row] by applying an schema */
   def applySchemaToRowRDD(rdd: RDD[Row], schema: Schema): SchemaRDD = {
     val eRDD = ExistingRdd(schema.toAttribSeq, rdd)
     new SchemaRDD(sqlContext, SparkLogicalPlan(eRDD))
   }
 
+  /** Create an SchemaRDD from RDD[Seq[Any]] by applying an schema 
+  *  It's caller's responsibility to make sure the schma matches the data 
+  */
   def applySchemaToSeqAnyRDD(rdd: RDD[Seq[Any]], schema: Schema): SchemaRDD = {
     applySchemaToRowRDD(rdd.map(r => new GenericRow(r.toArray)), schema)
   }
 
+  /** Create an SchemaRDD from a file by applying an Schema object
+  *
+  *  @param dataPath CSV file location 
+  *  @param schema the Schema object to by applied
+  *  @param delimiter of the CSV file
+  *  @param rejects the global reject logger, could be override by implicit val
+  */
   def csvFileAddSchema(dataPath: String, schema: Schema, delimiter: Char = ',')(implicit rejects: RejectLogger): SchemaRDD = {
     val strRDD = sqlContext.sparkContext.textFile(dataPath)
     val rowRDD = strRDD.csvToSeqStringRDD(delimiter).seqStringRDDToRowRDD(schema)(rejects)
     applySchemaToRowRDD(rowRDD, schema)
   }
 
+  /** Create an SchemaRDD from a data file and an schema file
+  *
+  *  @param dataPath CSV file location 
+  *  @param schemaPath the Schema file
+  *  @param delimiter of the CSV file
+  *  @param rejects the global reject logger, could be override by implicit val
+  */
   def csvFileWithSchema(dataPath: String, schemaPath: String = null, delimiter: Char = ',')(implicit rejects: RejectLogger): SchemaRDD = {
     val sp = if (schemaPath==null) dataPath + ".schema" else schemaPath
     val sc = sqlContext.sparkContext
