@@ -32,43 +32,43 @@ abstract class SchemaEntry extends java.io.Serializable {
   override def toString = name + ": " + typeName
 }
 
-case class DoubleSchemaEntry(val name: String) extends SchemaEntry {
+case class DoubleSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toDouble
   override val typeName = "Double"
   override val dataType = DoubleType
 }
 
-case class FloatSchemaEntry(val name: String) extends SchemaEntry {
+case class FloatSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toFloat
   override val typeName = "Float"
   override val dataType = FloatType
 }
 
-case class IntegerSchemaEntry(val name: String) extends SchemaEntry {
+case class IntegerSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toInt
   override val typeName = "Integer"
   override val dataType = IntegerType
 }
 
-case class LongSchemaEntry(val name: String) extends SchemaEntry {
+case class LongSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toLong
   override val typeName = "Long"
   override val dataType = LongType
 }
 
-case class BooleanSchemaEntry(val name: String) extends SchemaEntry {
+case class BooleanSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toBoolean
   override val typeName = "Boolean"
   override val dataType = BooleanType
 }
 
-case class StringSchemaEntry(val name: String) extends SchemaEntry {
+case class StringSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s
   override val typeName = "String"
   override val dataType = StringType
 }
 
-case class TimestampSchemaEntry(val name: String, val fmt: String = "yyyyMMdd") extends SchemaEntry {
+case class TimestampSchemaEntry(name: String, fmt: String = "yyyyMMdd") extends SchemaEntry {
   // @transient val fmtObj = new java.text.SimpleDateFormat(fmt)
   val fmtObj = new java.text.SimpleDateFormat(fmt)
   override def strToVal(s:String) : Any = {
@@ -77,6 +77,25 @@ case class TimestampSchemaEntry(val name: String, val fmt: String = "yyyyMMdd") 
   override val typeName = "Timestamp"
   override val dataType = TimestampType
   override def toString = s"$name: $typeName[$fmt]"
+}
+
+// TODO: for now assume Map is String -> String map.  Will add parameterized type later.
+// TODO: map entries delimiter hardcoded to "|" for now.
+// TODO: not worrying about key/val values containing the delimiter for now.
+case class MapSchemaEntry(name: String) extends SchemaEntry {
+  override val typeName = "Map"
+  override val dataType = MapType(StringType, StringType)
+  override def strToVal(s: String) : Any = {
+    if (s.isEmpty)
+      null
+    else
+      // TODO: should probably use openCSV to parse the map to array
+      s.split("\\|").sliding(2,2).map(a => (a(0),a(1))).toMap
+  }
+  override def valToStr(v: Any) : String = {
+    val m = v.asInstanceOf[Map[String,String]]
+    m.map{ case (a,b) => s"$a|$b" }.mkString("|")
+  }
 }
 
 object SchemaEntry {
@@ -88,6 +107,8 @@ object SchemaEntry {
   private final val BooleanPattern = "[bB]oolean".r
   private final val TimestampPatternFmt = "[tT]imestamp\\[(.+)\\]".r
   private final val TimestampPattern = "[tT]imestamp".r
+  // TODO: add K,V types to map type
+  private final val MapPattern = "[mM]ap".r
 
   def apply(name: String, typeStr: String) = {
     val trimName = name.trim
@@ -100,6 +121,7 @@ object SchemaEntry {
       case BooleanPattern() => BooleanSchemaEntry(trimName)
       case TimestampPattern() => TimestampSchemaEntry(trimName)
       case TimestampPatternFmt(fmt) => TimestampSchemaEntry(trimName, fmt)
+      case MapPattern() => MapSchemaEntry(trimName)
       case _ => throw new IllegalArgumentException(s"unknown type: $typeStr")
     }
   }
@@ -154,12 +176,11 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
       val se = entries(idx)
       (se.dataType: @switch) match {
         // TODO: handle timestamp here to convert to desired format
-        case StringType => {
+        case StringType =>
           // TODO: need to handle this better!
           sb.append("\"")
           sb.append(se.valToStr(row(idx)))
           sb.append("\"")
-        }
         case _ => sb.append(se.valToStr(row(idx)))
       }
     }
