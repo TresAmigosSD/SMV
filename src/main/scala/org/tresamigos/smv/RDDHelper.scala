@@ -34,21 +34,26 @@ class CSVStringParser[U](delimiter: Char, f: (String, Seq[String]) => U)(implici
   //import au.com.bytecode.opencsv.CSVParser
 
   /** Parse an Iterator[String], apply function "f", adn return another Iterator */
-  def parseCSV(iterator: Iterator[String]): Iterator[U] ={
+  def parseCSV(iterator: Iterator[String])(rejects: RejectLogger): Iterator[U] ={
     val parser = new CSVParser(delimiter)
     iterator.map { r => 
-      val parsed = parser.parseLine(r)
-      f(r,parsed)
-    }
+      try {
+        val parsed = parser.parseLine(r)
+        Some(f(r,parsed))
+      } catch {
+        case e:java.io.IOException  =>  rejects.addRejectedLineWithReason(r,e); None
+        case e:IndexOutOfBoundsException  =>  rejects.addRejectedLineWithReason(r,e); None
+      }
+    }.collect{case Some(l) => l}
   }
 }
 
 class CsvRDDHelper(rdd: RDD[String]) {
 
   /** Parse an RDD[String] to RDD[Seq[String]] */
-  def csvToSeqStringRDD(delimiter: Char = ','): RDD[Seq[String]] = {
+  def csvToSeqStringRDD(delimiter: Char = ',')(implicit rejects: RejectLogger): RDD[Seq[String]] = {
     val parser = new CSVStringParser[Seq[String]](delimiter, (r:String, parsed:Seq[String]) => parsed)
-    rdd.mapPartitions{ parser.parseCSV(_) }
+    rdd.mapPartitions{ parser.parseCSV(_)(rejects) }
   }
 
   /** Add an Index Key to each record 
@@ -61,7 +66,7 @@ class CsvRDDHelper(rdd: RDD[String]) {
    *               considered as the Key(s)
    *  @param delimiter of the CSV records
    */
-  def csvAddKey(index: Int*)(delimiter: Char = ','): RDD[(String,String)] = {
+  def csvAddKey(index: Int*)(delimiter: Char = ',')(implicit rejects: RejectLogger): RDD[(String,String)] = {
     val i = if (index.isEmpty) Seq(0) else index
     val parser = new CSVStringParser[(String, String)](delimiter, 
       (r:String, parsed:Seq[String]) => {
@@ -69,7 +74,7 @@ class CsvRDDHelper(rdd: RDD[String]) {
         (key,r)
       }
     )
-    rdd.mapPartitions{ parser.parseCSV(_) }
+    rdd.mapPartitions{ parser.parseCSV(_)(rejects) }
   }
 
 }
@@ -77,7 +82,7 @@ class CsvRDDHelper(rdd: RDD[String]) {
 class SeqStringRDDHelper(rdd: RDD[Seq[String]]) {
 
   /** Convert RDD[Seq[String]] to RDD[Row] based on given schema */
-  def seqStringRDDToRowRDD(schema: Schema)(rejects: RejectLogger): RDD[Row] = {
+  def seqStringRDDToRowRDD(schema: Schema)(implicit rejects: RejectLogger): RDD[Row] = {
     rdd.mapPartitions { iterator =>
       val mutableRow = new GenericMutableRow(schema.getSize)
       iterator.map { r =>
