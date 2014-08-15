@@ -57,12 +57,18 @@ class CsvRDDHelper(rdd: RDD[String]) {
    *  "String" of each tuple is a key field specified by the parameters, and
    *  the second "String" is the original record line
    *
-   *  @param index the index of the field in the record which should be
-   *               considered as the Key
+   *  @param index the index of the field(s) in the record which should be
+   *               considered as the Key(s)
    *  @param delimiter of the CSV records
    */
-  def csvAddKey(index: Int = 0, delimiter: Char = ','): RDD[(String,String)] = {
-    val parser = new CSVStringParser[(String, String)](delimiter, (r:String, parsed:Seq[String]) => (parsed(index), r))
+  def csvAddKey(index: Int*)(delimiter: Char = ','): RDD[(String,String)] = {
+    val i = if (index.isEmpty) Seq(0) else index
+    val parser = new CSVStringParser[(String, String)](delimiter, 
+      (r:String, parsed:Seq[String]) => {
+        val key = i.map(parsed(_)).mkString("")
+        (key,r)
+      }
+    )
     rdd.mapPartitions{ parser.parseCSV(_) }
   }
 

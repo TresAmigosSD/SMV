@@ -18,11 +18,11 @@ class SingleStrRDDTest extends SparkTestUtil {
 
   sparkTest("Test hashSample, hashPartition and saveAsGZFile") {
     val f = sc.textFile(testDataDir + "SingleStrRDDTest/test1")
-    val sampled=f.csvAddKey().hashSample(0.5) // index=0, delimiter=','
+    val sampled=f.csvAddKey()().hashSample(0.5) // index=0, delimiter=','
     assert(sampled.count === 2)
     val random = scala.util.Random.nextInt(999999) // reduce chance of "file exist" issue of the second run
     val outf = testDataDir + s"/SingleStrRDDTest/out$random"
-    sampled.csvAddKey(index=2).hashPartition(8).saveAsGZFile(outf)
+    sampled.csvAddKey(2)().hashPartition(8).saveAsGZFile(outf)
     val newf = sc.textFile(outf + "/part-00002.gz")
     assert(newf.count === 1)
   }
