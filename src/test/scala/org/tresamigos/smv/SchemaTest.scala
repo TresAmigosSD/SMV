@@ -29,7 +29,7 @@ class SchemaTest extends SparkTestUtil {
   sparkTest("Test schema file parsing") {
     val s = Schema.fromFile(sc, testDataDir +  "SchemaTest/test1.schema")
     val entries = s.entries
-    assert(entries.size === 8)
+    assert(entries.size === 9)
     assert(entries(0) === StringSchemaEntry("id"))
     assert(entries(1) === DoubleSchemaEntry("val"))
     assert(entries(2) === TimestampSchemaEntry("val2"))
@@ -38,6 +38,7 @@ class SchemaTest extends SparkTestUtil {
     assert(entries(5) === IntegerSchemaEntry("val5"))
     assert(entries(6) === BooleanSchemaEntry("val6"))
     assert(entries(7) === FloatSchemaEntry("val7"))
+    assert(entries(8) === MapSchemaEntry("val8"))
   }
 
   test("Schema entry equality") {
@@ -65,6 +66,21 @@ class SchemaTest extends SparkTestUtil {
     val date_b = b.valToStr(b.strToVal("20140203"))
     assert(date_a === "2014-01-01 00:00:00.0") // 2014
     assert(date_b === "2014-02-03 00:00:00.0") // 20140203
+  }
+
+  test("Test Map Values") {
+    val s = Schema.fromString("a:map")
+    val a = s.entries(0)
+
+    assert(a === MapSchemaEntry("a"))
+
+    val map_a = a.strToVal("1|2|3|4")
+    assert(map_a === Map("1"->"2", "3"->"4"))
+
+    val str_a = a.valToStr(map_a)
+
+    // order is not guaranteed in map. so check for both possible results.
+    assert(List("1|2|3|4", "3|4|1|2").contains(str_a))
   }
 
   sparkTest("Test Timestamp in file") {
