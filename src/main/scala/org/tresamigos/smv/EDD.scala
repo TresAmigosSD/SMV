@@ -41,8 +41,7 @@ class EDD(srdd: SchemaRDD,
           gExprs: Seq[NamedExpression]) { 
 
   private var tasks: Seq[EDDTask] = Nil
-  private val emptySchemaRDD = srdd.sqlContext.emptySchemaRDD
-  private var eddRDD: SchemaRDD = emptySchemaRDD
+  private var eddRDD: SchemaRDD = null
 
   /** Add BASE tasks 
    * 
@@ -149,13 +148,13 @@ class EDD(srdd: SchemaRDD,
 
   def clean: EDD = {
     tasks = Nil
-    eddRDD = emptySchemaRDD
+    eddRDD = null
     this
   }
 
   /** Return the SchemaRDD of all EDD tasks' results */
   def toSchemaRDD: SchemaRDD = {
-    if (eddRDD == emptySchemaRDD){
+    if (eddRDD == null){
       val aggregateList: Seq[Alias] = 
         gExprs.map{ GroupPopulationKey(_).aggList }.flatMap(a=>a) ++
           GroupPopulationCount.aggList ++
