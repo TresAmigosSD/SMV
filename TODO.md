@@ -19,12 +19,10 @@ Framework
 * Allow labels in schema entry (should labels part of the syntax?)
 * DQM framework
 * Generate dependency graph (rdd and variable level)
-* How to handle reject records? output first N to log, or create reject RDD, or just exit.
 * Add collection types in schema entry
 
 EDD
 ---
-* review EDD interface and refine
 * create helper method at SchemaRDD level to impute null values (e.g. all missing doubles are 0)
     * perhaps allow user which columns the imputation should happen (regex, list, etc).
 
@@ -34,4 +32,4 @@ Testing
 Documentation
 -------------
 * SchemaRDD loader/writer doc
-* EDD interface doc
+* Readme
