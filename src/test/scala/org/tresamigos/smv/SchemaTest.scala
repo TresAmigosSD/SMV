@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+//import org.tresamigos.smv.StringSchemaEntry
+
 // TODO: test writing of schema to file
 // TODO: test reading/writing of data with different schema format (string quote, timestamp, etc).
 
@@ -38,7 +40,7 @@ class SchemaTest extends SparkTestUtil {
     assert(entries(5) === IntegerSchemaEntry("val5"))
     assert(entries(6) === BooleanSchemaEntry("val6"))
     assert(entries(7) === FloatSchemaEntry("val7"))
-    assert(entries(8) === MapSchemaEntry("val8"))
+    assert(entries(8) === MapSchemaEntry("val8", StringSchemaEntry("keyType"), IntegerSchemaEntry("valType")))
   }
 
   test("Schema entry equality") {
@@ -69,10 +71,10 @@ class SchemaTest extends SparkTestUtil {
   }
 
   test("Test Map Values") {
-    val s = Schema.fromString("a:map")
+    val s = Schema.fromString("a:map[integer, string]")
     val a = s.entries(0)
 
-    assert(a === MapSchemaEntry("a"))
+    assert(a === MapSchemaEntry("a", IntegerSchemaEntry("keyType"), StringSchemaEntry("valType")))
 
     val map_a = a.strToVal("1|2|3|4")
     assert(map_a === Map("1"->"2", "3"->"4"))

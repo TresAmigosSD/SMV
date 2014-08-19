@@ -82,7 +82,9 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyyMMdd") extends 
 // TODO: for now assume Map is String -> String map.  Will add parameterized type later.
 // TODO: map entries delimiter hardcoded to "|" for now.
 // TODO: not worrying about key/val values containing the delimiter for now.
-case class MapSchemaEntry(name: String) extends SchemaEntry {
+// TODO: only allow basic types to avoid creating a full parser for the sub-types.
+case class MapSchemaEntry(name: String,
+      keySchemaType: SchemaEntry, valSchemaEntry: SchemaEntry) extends SchemaEntry {
   override val typeName = "Map"
   override val dataType = MapType(StringType, StringType)
   override def strToVal(s: String) : Any = {
@@ -108,9 +110,9 @@ object SchemaEntry {
   private final val TimestampPatternFmt = "[tT]imestamp\\[(.+)\\]".r
   private final val TimestampPattern = "[tT]imestamp".r
   // TODO: add K,V types to map type
-  private final val MapPattern = "[mM]ap".r
+  private final val MapPattern = "[mM]ap\\[(.+),(.+)\\]".r
 
-  def apply(name: String, typeStr: String) = {
+  def apply(name: String, typeStr: String) : SchemaEntry = {
     val trimName = name.trim
     typeStr.trim match {
       case StringPattern() => StringSchemaEntry(trimName)
@@ -121,7 +123,10 @@ object SchemaEntry {
       case BooleanPattern() => BooleanSchemaEntry(trimName)
       case TimestampPattern() => TimestampSchemaEntry(trimName)
       case TimestampPatternFmt(fmt) => TimestampSchemaEntry(trimName, fmt)
-      case MapPattern() => MapSchemaEntry(trimName)
+      case MapPattern(keyTypeStr, valTypeStr) =>
+        MapSchemaEntry(trimName,
+          SchemaEntry("keyType", keyTypeStr),
+          SchemaEntry("valType", valTypeStr))
       case _ => throw new IllegalArgumentException(s"unknown type: $typeStr")
     }
   }

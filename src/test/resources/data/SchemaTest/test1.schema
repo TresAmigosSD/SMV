@@ -11,4 +11,4 @@ id:    String // blah
 val5: integer
 val6: boolean
 val7: float
-val8: map
+val8: Map[String, Integer]
