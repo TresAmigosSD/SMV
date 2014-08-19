@@ -79,12 +79,11 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyyMMdd") extends 
   override def toString = s"$name: $typeName[$fmt]"
 }
 
-// TODO: for now assume Map is String -> String map.  Will add parameterized type later.
 // TODO: map entries delimiter hardcoded to "|" for now.
 // TODO: not worrying about key/val values containing the delimiter for now.
 // TODO: only allow basic types to avoid creating a full parser for the sub-types.
 case class MapSchemaEntry(name: String,
-      keySchemaType: SchemaEntry, valSchemaEntry: SchemaEntry) extends SchemaEntry {
+      keySchemaEntry: SchemaEntry, valSchemaEntry: SchemaEntry) extends SchemaEntry {
   override val typeName = "Map"
   override val dataType = MapType(StringType, StringType)
   override def strToVal(s: String) : Any = {
@@ -92,11 +91,19 @@ case class MapSchemaEntry(name: String,
       null
     else
       // TODO: should probably use openCSV to parse the map to array
-      s.split("\\|").sliding(2,2).map(a => (a(0),a(1))).toMap
+      s.split("\\|").sliding(2,2).map { a =>
+        (keySchemaEntry.strToVal(a(0)), valSchemaEntry.strToVal(a(1)))
+      }.toMap
   }
   override def valToStr(v: Any) : String = {
-    val m = v.asInstanceOf[Map[String,String]]
-    m.map{ case (a,b) => s"$a|$b" }.mkString("|")
+    val keyNativeType = keySchemaEntry.dataType.asInstanceOf[NativeType]
+    val valNativeType = valSchemaEntry.dataType.asInstanceOf[NativeType]
+    val m = v.asInstanceOf[Map[keyNativeType.JvmType, valNativeType.JvmType]]
+    m.map{ case (k,v) =>
+      val keyAsStr = keySchemaEntry.valToStr(k)
+      val valAsStr = valSchemaEntry.valToStr(v)
+      s"${keyAsStr}|${valAsStr}"
+    }.mkString("|")
   }
 }
 

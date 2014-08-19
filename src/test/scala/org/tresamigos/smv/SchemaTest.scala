@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import scala.collection.SortedMap
+
 //import org.tresamigos.smv.StringSchemaEntry
 
 // TODO: test writing of schema to file
@@ -77,12 +79,12 @@ class SchemaTest extends SparkTestUtil {
     assert(a === MapSchemaEntry("a", IntegerSchemaEntry("keyType"), StringSchemaEntry("valType")))
 
     val map_a = a.strToVal("1|2|3|4")
-    assert(map_a === Map("1"->"2", "3"->"4"))
+    assert(map_a === Map(1->"2", 3->"4"))
 
-    val str_a = a.valToStr(map_a)
-
-    // order is not guaranteed in map. so check for both possible results.
-    assert(List("1|2|3|4", "3|4|1|2").contains(str_a))
+    // use a sorted map to ensure traversal order during serialization.
+    val map_a_sorted = SortedMap(1->"2", 3->"4")
+    val str_a = a.valToStr(map_a_sorted)
+    assert(str_a === "1|2|3|4")
   }
 
   sparkTest("Test Timestamp in file") {
