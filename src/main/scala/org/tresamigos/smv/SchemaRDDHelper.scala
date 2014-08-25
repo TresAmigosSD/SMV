@@ -46,4 +46,6 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
    * Create an EDD builder on SchemaRDD population
    */
   def edd: EDD = groupEdd()
+
+  def dfr: DFR = DFR(schemaRDD)
 }
