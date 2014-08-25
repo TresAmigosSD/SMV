@@ -36,17 +36,6 @@ case class CheckUdf(function: Seq[Any] => Boolean, children: Seq[Expression])
 
 class DFR(srdd: SchemaRDD) { 
 
-  import org.apache.spark.contrib.smv._
-  import org.apache.spark.sql.catalyst.analysis.SimpleAnalyzer
-  val lp = extractLogicalPlan(srdd)
-  val resolvedLP = SimpleAnalyzer(lp)
-
-  private def toResolved(s: Symbol): NamedExpression = {
-    val res = resolvedLP.output.filter(_.name == s.name)
-    require(res.size == 1)
-    res(0)
-  }
-
   private var restrictions: Seq[(NamedExpression, FRRule)] = Nil
   private var verifiedRDD: SchemaRDD = null
   private var fixedRDD: SchemaRDD = null
@@ -55,8 +44,9 @@ class DFR(srdd: SchemaRDD) {
   private val sqlContext = srdd.sqlContext
 
   def addBoundedRule(s: Symbol, lower: Any, upper: Any): DFR = {
-    val expr = toResolved(s)
-    expr.dataType match {
+    val dataType = schema.nameToType(s)
+    val expr = sqlContext.symbolToUnresolvedAttribute(s)
+    dataType match {
       case i: NativeType =>
         restrictions = restrictions :+ (expr, 
           BoundedRule[i.JvmType](
