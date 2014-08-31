@@ -22,8 +22,9 @@ class DFRTest extends SparkTestUtil {
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
     val dfr = srdd.dfr.addBoundedRule('b, 1.0, 20.0)
     val res = dfr.createVerifiedRDD.collect
-    println(res.size)
-    println(res.map(_.mkString(",")).mkString("\n"))
+    // TODO: this should be verifying the values, not printing them!
+    //println(res.size)
+    //println(res.map(_.mkString(",")).mkString("\n"))
   }
 }
 

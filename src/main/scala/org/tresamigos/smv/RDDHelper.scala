@@ -14,70 +14,11 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.execution.{SparkLogicalPlan, ExistingRdd}
 import org.apache.spark.sql.catalyst.expressions.{GenericMutableRow, Row}
 import org.apache.spark.SparkContext._
 import scala.reflect.ClassTag
 
-
-/** A wrapper class of the opencsv.CSVParser
- *
- *  Take a function as a parameter to apply the function on parsed result on
- *  each record.
- *
- *  @param delimiter of the CSV record
- *  @param f the function applyed to the parsed record
- */
-class CSVStringParser[U](delimiter: Char, f: (String, Seq[String]) => U)(implicit ut: ClassTag[U]) extends Serializable {
-  //import au.com.bytecode.opencsv.CSVParser
-
-  /** Parse an Iterator[String], apply function "f", adn return another Iterator */
-  def parseCSV(iterator: Iterator[String])(rejects: RejectLogger): Iterator[U] ={
-    val parser = new CSVParser(delimiter)
-    iterator.map { r => 
-      try {
-        val parsed = parser.parseLine(r)
-        Some(f(r,parsed))
-      } catch {
-        case e:java.io.IOException  =>  rejects.addRejectedLineWithReason(r,e); None
-        case e:IndexOutOfBoundsException  =>  rejects.addRejectedLineWithReason(r,e); None
-      }
-    }.collect{case Some(l) => l}
-  }
-}
-
-class CsvRDDHelper(rdd: RDD[String]) {
-
-  /** Parse an RDD[String] to RDD[Seq[String]] */
-  def csvToSeqStringRDD(delimiter: Char = ',')(implicit rejects: RejectLogger): RDD[Seq[String]] = {
-    val parser = new CSVStringParser[Seq[String]](delimiter, (r:String, parsed:Seq[String]) => parsed)
-    rdd.mapPartitions{ parser.parseCSV(_)(rejects) }
-  }
-
-  /** Add an Index Key to each record 
-   *
-   *  For an RDD[String], generate an RDD[(String, String)], where the first
-   *  "String" of each tuple is a key field specified by the parameters, and
-   *  the second "String" is the original record line
-   *
-   *  @param index the index of the field(s) in the record which should be
-   *               considered as the Key(s)
-   *  @param delimiter of the CSV records
-   */
-  def csvAddKey(index: Int*)(delimiter: Char = ',')(implicit rejects: RejectLogger): RDD[(String,String)] = {
-    val i = if (index.isEmpty) Seq(0) else index
-    val parser = new CSVStringParser[(String, String)](delimiter, 
-      (r:String, parsed:Seq[String]) => {
-        val key = i.map(parsed(_)).mkString("")
-        (key,r)
-      }
-    )
-    rdd.mapPartitions{ parser.parseCSV(_)(rejects) }
-  }
-
-}
 
 class SeqStringRDDHelper(rdd: RDD[Seq[String]]) {
 

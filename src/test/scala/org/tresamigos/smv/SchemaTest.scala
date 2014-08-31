@@ -16,8 +16,6 @@ package org.tresamigos.smv
 
 import scala.collection.SortedMap
 
-//import org.tresamigos.smv.StringSchemaEntry
-
 // TODO: test writing of schema to file
 // TODO: test reading/writing of data with different schema format (string quote, timestamp, etc).
 
