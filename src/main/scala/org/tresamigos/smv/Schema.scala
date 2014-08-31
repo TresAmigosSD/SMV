@@ -26,7 +26,7 @@ import scala.annotation.switch
 abstract class SchemaEntry extends java.io.Serializable {
   def name: String
   def strToVal(s: String) : Any
-  def valToStr(v: Any) : String = v.toString
+  def valToStr(v: Any) : String = if (v==null) "" else v.toString
   val typeName: String
   val dataType: DataType
   override def toString = name + ": " + typeName
@@ -96,6 +96,7 @@ case class MapSchemaEntry(name: String,
       }.toMap
   }
   override def valToStr(v: Any) : String = {
+    if (v==null) return ""
     val keyNativeType = keySchemaEntry.dataType.asInstanceOf[NativeType]
     val valNativeType = valSchemaEntry.dataType.asInstanceOf[NativeType]
     val m = v.asInstanceOf[Map[keyNativeType.JvmType, valNativeType.JvmType]]

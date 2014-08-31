@@ -72,7 +72,7 @@ class SchemaTest extends SparkTestUtil {
     assert(date_b === "2014-02-03 00:00:00.0") // 20140203
   }
 
-  test("Test Map Values") {
+  test("Test Serialize Map Values") {
     val s = Schema.fromString("a:map[integer, string]")
     val a = s.entries(0)
 
@@ -85,6 +85,17 @@ class SchemaTest extends SparkTestUtil {
     val map_a_sorted = SortedMap(1->"2", 3->"4")
     val str_a = a.valToStr(map_a_sorted)
     assert(str_a === "1|2|3|4")
+  }
+
+  test("Test Serialize with null values") {
+    val s = Schema.fromString("a:integer; b:string")
+    val a = s.entries(0)
+    val b = s.entries(1)
+
+    assert(a.valToStr(5) === "5")
+    assert(a.valToStr(null) === "")
+    assert(b.valToStr("x") === "x")
+    assert(b.valToStr(null) === "")
   }
 
   sparkTest("Test Timestamp in file") {
