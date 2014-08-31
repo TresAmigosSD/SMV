@@ -13,8 +13,9 @@
  */
 
 package org.tresamigos.smv
-import scala.reflect.ClassTag
 
+
+// TODO: missing doc.  What does FR stand for?
 abstract class FRRule extends Serializable {
   def check(c: Any): Boolean = true
   def fix(c: Any): Any = c

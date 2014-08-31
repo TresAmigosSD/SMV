@@ -14,12 +14,12 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.storage.StorageLevel
 
+// TODO: needs doc.
 case class CheckUdf(function: Seq[Any] => Boolean, children: Seq[Expression])
   extends Expression {
 
@@ -34,6 +34,8 @@ case class CheckUdf(function: Seq[Any] => Boolean, children: Seq[Expression])
   }
 }
 
+
+// TODO: needs doc.  What does DFR stand for.  how to use it.
 class DFR(srdd: SchemaRDD) { 
 
   private var restrictions: Seq[(NamedExpression, FRRule)] = Nil
@@ -83,7 +85,7 @@ class DFR(srdd: SchemaRDD) {
 
 }
 
-object DFR{
+object DFR {
   def apply(srdd: SchemaRDD) = {
     new DFR(srdd)
   }
