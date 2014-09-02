@@ -66,7 +66,7 @@ class RejectTest extends SparkTestUtil {
   sparkTest("test csvAddKey rejection with exception", disableLogging = true) {
     intercept[SparkException] {
       val rdd = sc.textFile(testDataDir + "RejectTest/test4")
-      val prdd = rdd.csvAddKey(2)()
+      val prdd = rdd.csvAddKey(2)
       println(prdd.collect.mkString("\n"))
     }
   }
