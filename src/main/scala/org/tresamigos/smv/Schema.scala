@@ -21,8 +21,6 @@ import org.apache.spark.sql.SchemaRDD
 
 import scala.annotation.switch
 
-//TODO: add support for other builtin types
-
 abstract class SchemaEntry extends java.io.Serializable {
   def name: String
   def strToVal(s: String) : Any
@@ -117,7 +115,6 @@ object SchemaEntry {
   private final val BooleanPattern = "[bB]oolean".r
   private final val TimestampPatternFmt = "[tT]imestamp\\[(.+)\\]".r
   private final val TimestampPattern = "[tT]imestamp".r
-  // TODO: add K,V types to map type
   private final val MapPattern = "[mM]ap\\[(.+),(.+)\\]".r
 
   def apply(name: String, typeStr: String) : SchemaEntry = {
@@ -175,16 +172,17 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
 
   /**
    * convert a data row to a delimited csv string.
-   * Handles delimiter and quote character appearing any any string value.
+   * Handles delimiter and quote character appearing anywhere in string value.
    */
-  def rowToCsvString(row: Row, delimiter: Char = ',') = {
+  def rowToCsvString(row: Row)(implicit ca: CsvAttributes) = {
     require(row.size == entries.size)
     val sb = new StringBuilder
 
+    // TODO: should be done using zip,map and mkstring rather than index.
     for (idx <- 0 until row.length) {
       // prepend delimiter except for first item.
       if (idx > 0)
-        sb.append(delimiter)
+        sb.append(ca.delimiter)
 
       val se = entries(idx)
       (se.dataType: @switch) match {

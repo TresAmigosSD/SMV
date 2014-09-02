@@ -31,7 +31,7 @@ object SimpleApp {
     import sqlContext._
 
     val srdd = sqlContext.csvFileWithSchema("data/in/test1_data.csv", "data/in/test1.schema")
-    srdd.saveAsCsvWithSchema("data/out/foo.csv", '|')
+    srdd.saveAsCsvWithSchema("data/out/foo.csv")(CsvAttributes(delimiter='|'))
 
     // TODO: read a previously written schema+data.
 

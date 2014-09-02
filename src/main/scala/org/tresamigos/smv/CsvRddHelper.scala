@@ -80,3 +80,11 @@ class CsvRDDHelper(rdd: RDD[String]) {
   }
 }
 
+case class CsvAttributes(
+  val delimiter: Char = ',',
+  val quotechar: Char = '\"')
+
+object CsvAttributes {
+  implicit val defaultCsvAttrib = new CsvAttributes();
+}
+
