@@ -88,6 +88,10 @@ case class CsvAttributes(
   val quotechar: Char = '\"')
 
 object CsvAttributes {
-  implicit val defaultCsvAttrib = new CsvAttributes();
+  implicit val defaultCsvAttrib = new CsvAttributes()
+
+  // common CsvAttributes combos to be imported explicitly
+  val defaultCsv = new CsvAttributes()
+  val defaultTsv = new CsvAttributes(delimiter = '\t')
 }
 
