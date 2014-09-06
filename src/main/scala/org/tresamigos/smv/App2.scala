@@ -20,6 +20,8 @@ import org.apache.spark.SparkConf
 
 import org.apache.spark.sql.SQLContext
 
+
+// TODO: need to get rid of this entire example.  Use the example from MVD project!
 object SimpleApp {
 
   def manOf[T: Manifest](t: T): Manifest[T] = manifest[T]
@@ -31,7 +33,8 @@ object SimpleApp {
     import sqlContext._
 
     val srdd = sqlContext.csvFileWithSchema("data/in/test1_data.csv", "data/in/test1.schema")
-    srdd.saveAsCsvWithSchema("data/out/foo.csv", '|')
+    //srdd.saveAsCsvWithSchema("data/out/foo.csv") // this uses default csv attributes
+    srdd.saveAsCsvWithSchema("data/out/foo.csv")(CsvAttributes(delimiter='|'))
 
     // TODO: read a previously written schema+data.
 

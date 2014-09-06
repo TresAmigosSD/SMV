@@ -14,9 +14,9 @@
 
 package org.tresamigos.smv
 
-class ParserBug extends SparkTestUtil {
+class OpenCsvParserBug extends SparkTestUtil {
 
-  test("Pure scala result"){
+  test("excersize opencsv parser bug") {
     import scala.io.Source
     //import au.com.bytecode.opencsv.CSVParser
     val parser = new CSVParser(',')
@@ -27,5 +27,4 @@ class ParserBug extends SparkTestUtil {
     val expect = List("123|20140817|81.87|1234", "|20110203|91.20|", "123|20120301|901.22|")
     assert(res.toList === expect)
   }
-
 }

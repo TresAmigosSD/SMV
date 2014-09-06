@@ -73,6 +73,16 @@ srdd.saveAsCsvWithSchema("/outdata/result")
 ```
 It will create csv files (in `result` directory) and a schema file with name `result.schema`
 
+User can also supply the implicit CsvAttributes argument to override the default CSV attributes.  For examples:
+```scala
+srdd.saveAsCsvWithSchema("/outdata/result")(CsvAttributes(quotechar="|")
+```
+or
+```scala
+implicit myCsvAttribs = CsvAttributes(quotechar="|"
+srdd.saveAsCsvWithSchema("/outdata/result")
+```
+
 # Run Spark Shell with SMV
 
 We can pre-load SMV jar when run spark-shell. 
