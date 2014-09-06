@@ -41,7 +41,17 @@ class SqlContextHelper(sqlContext: SQLContext) {
   def csvFileAddSchema(dataPath: String, schema: Schema)
                       (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD = {
     val strRDD = sqlContext.sparkContext.textFile(dataPath)
-    val rowRDD = strRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
+    val noHeadRDD = if (ca.hasHeader) {
+      // drop the first row in first partition (assumed to be header)
+      strRDD.mapPartitionsWithIndex((idx: Int, rows: Iterator[String]) => {
+        if (idx == 0)
+          rows.drop(1)
+        rows
+      })
+    } else {
+      strRDD
+    }
+    val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
     applySchemaToRowRDD(rowRDD, schema)
   }
 
