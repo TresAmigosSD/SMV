@@ -1,0 +1,85 @@
+@startuml
+
+abstract class TreeNode<Expression>{
+
+}
+
+abstract class Expression {
+  +def foldable : Boolean
+  +def nullable : Boolean
+  +def references : Set[Attribute]
+  +def eval(input : Row) : Expression.this.EvaluatedType
+  +val resolved : Boolean
+  +def dataType : DataType
+  +def childrenResolved : Boolean
+  +def n1(e : Expression, i : Row, f : Function2[Numeric[Any], Any, Any]) : Any
+  +def n2(i : Row, e1 : Expression, e2 : Expression, f : Function3[Numeric[Any], Any, Any, Any]) : Any
+  #def f2(i : Row, e1 : Expression, e2 : Expression, f : Function3[Fractional[Any], Any, Any, Any]) : Any
+  #def i2(i : Row, e1 : Expression, e2 : Expression, f : Function3[Integral[Any], Any, Any, Any]) : Any
+  #def c2(i : Row, e1 : Expression, e2 : Expression, f : Function3[Ordering[Any], Any, Any, Any]) : Any
+}
+
+TreeNode <|-- Expression
+
+abstract class BinaryExpression
+
+Expression <|-- BinaryExpression
+BinaryNode << (T,orchid) >> <|-- BinaryExpression
+
+
+BinaryExpression <|-- abstract BinaryPredicate
+BinaryPredicate <|-- And
+BinaryPredicate <|-- Or
+BinaryPredicate <|-- abstract BinaryComparison
+BinaryComparison <|-- EqualTo
+BinaryComparison <|-- GreaterThan
+
+BinaryExpression <|-- abstract BinaryArithmetic
+BinaryArithmetic <|-- Add
+BinaryArithmetic <|-- Multiply
+
+BinaryExpression <|-- Contains
+BinaryExpression <|-- RLike
+
+
+Expression <|-- abstract AggregateExpression
+
+AggregateExpression <|-- abstract AggregateFunction
+AggregateFunction <|-- AverageFunction
+AggregateFunction <|-- FirstFunction
+AggregateFunction <|-- MaxFunction
+AggregateFunction <|-- SumFunction
+
+AggregateExpression <|-- abstract PartialAggregate
+PartialAggregate <|-- Average
+PartialAggregate <|-- First
+PartialAggregate <|-- Max
+PartialAggregate <|-- Sum
+
+Expression <|-- abstract NamedExpression
+NamedExpression <|-- Alias
+NamedExpression <|-- abstract Attribute
+Attribute <|-- AttributeReference
+Attribute <|-- BoundedReference
+Attribute <|-- Star
+Attribute <|-- UnresolvedAttribute
+
+Expression <|-- IsNotNull
+Expression <|-- IsNull
+Expression <|-- If
+Expression <|-- Coalesce
+Expression <|-- WrapDynamic
+
+Expression <|-- abstract UnaryExpression
+UnaryExpression <|-- Cast
+UnaryExpression <|-- Not
+UnaryExpression <|-- Upper
+UnaryExpression <|-- UnaryMinus
+
+
+Expression <|-- abstract LeafExpression
+LeafExpression <|-- Literal
+LeafExpression <|-- MutableExpression
+LeafExpression <|-- Rand <<(O,orchid)>>
+
+@enduml
