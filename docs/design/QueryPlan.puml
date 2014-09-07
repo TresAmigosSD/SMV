@@ -1,0 +1,87 @@
+@startuml
+
+abstract class TreeNode<? extends TreeNode<BaseType>>{
++ val id : Long
++ def children : Seq[BaseType]
++ def transform(rule : PartialFunction[BaseType, BaseType]) : BaseType
+}
+
+AnyRef <|-- TreeNode
+
+abstract class QueryPlan<? extends TreeNode<PlanType>> {
+  + def output : Seq[Attribute]
+  + def outputSet : Set[Attribute]
+  + def schemaString : String
+  ==
+  + def transformExpressions(rule : PartialFunction[Expression, Expression]) : QueryPlan.this.type
+  + def transformExpressionsDown(rule : PartialFunction[Expression, Expression]) : QueryPlan.this.type
+  + def transformExpressionsUp(rule : PartialFunction[Expression, Expression]) : QueryPlan.this.type
+  + def transformAllExpressions(rule : PartialFunction[Expression, Expression]) : QueryPlan.this.type
+
+  # def generateSchemaString(schema : Seq[Attribute]) : String
+  # def generateSchemaString(schema : StructType, prefix : String, builder : StringBuilder) : StringBuilder
+
+  + def printSchema() : Unit
+}
+
+
+abstract class sql.catalyst.plans.logical.LogicalPlan {
+  + def references : Set[Attribute]
+  + val inputSet : Set[Attribute]
+  + val resolved : Boolean
+  + def childrenResolved : Boolean
+  + def resolve(name : String) : Option[NamedExpression]
+}
+
+abstract class  sql.catalyst.plans.logical.UnaryNode
+abstract class  sql.catalyst.plans.logical.BinaryNode
+abstract class  sql.catalyst.plans.logical.LeafNode
+
+sql.catalyst.plans.logical.LogicalPlan <|-- sql.catalyst.plans.logical.UnaryNode
+sql.catalyst.plans.logical.LogicalPlan <|-- sql.catalyst.plans.logical.BinaryNode
+sql.catalyst.plans.logical.LogicalPlan <|-- sql.catalyst.plans.logical.LeafNode
+
+sql.catalyst.plans.logical.UnaryNode <|-- sql.catalyst.plans.logical.Aggregate
+sql.catalyst.plans.logical.UnaryNode <|-- sql.catalyst.plans.logical.Filter
+sql.catalyst.plans.logical.UnaryNode <|-- sql.catalyst.plans.logical.Limit
+sql.catalyst.plans.logical.UnaryNode <|-- sql.catalyst.plans.logical.Sort
+
+sql.catalyst.plans.logical.BinaryNode <|-- sql.catalyst.plans.logical.Join
+sql.catalyst.plans.logical.BinaryNode <|-- sql.catalyst.plans.logical.Union
+
+sql.catalyst.plans.logical.LeafNode <|-- sql.catalyst.plans.logical.BaseRelation
+sql.catalyst.plans.logical.LeafNode <|-- sql.catalyst.plans.logical.CacheCommand
+sql.catalyst.plans.logical.LeafNode <|-- sql.catalyst.plans.logical.ParquetRelation
+
+
+
+abstract class sql.execution.SparkPlan {
++ def execute(): RDD[Row]
+}
+
+class sql.execution.UnaryNode << (T,orchid) >>
+class sql.execution.BinaryNode << (T,orchid) >>
+class sql.execution.LeafNode << (T,orchid) >>
+
+sql.execution.SparkPlan <|-- sql.execution.UnaryNode
+sql.execution.SparkPlan <|-- sql.execution.BinaryNode
+sql.execution.SparkPlan <|-- sql.execution.LeafNode
+
+sql.execution.BinaryNode <|-- sql.execution.CartesianProduct
+sql.execution.BinaryNode <|-- sql.execution.HashJoin
+
+sql.execution.LeafNode <|-- sql.execution.ExistingRdd
+sql.execution.LeafNode <|-- sql.execution.CacheCommand
+
+sql.execution.UnaryNode <|-- sql.execution.Aggregate
+sql.execution.UnaryNode <|-- sql.execution.Filter
+sql.execution.UnaryNode <|-- sql.execution.Sort
+sql.execution.UnaryNode <|-- sql.execution.Limit
+
+
+TreeNode <|-- QueryPlan
+
+QueryPlan <|-- sql.catalyst.plans.logical.LogicalPlan
+QueryPlan <|-- sql.execution.SparkPlan
+
+@enduml
