@@ -44,6 +44,6 @@ PrimitiveType <|-- BooleanType
 DataType <|-- DynamicType << (O,orchid) >>
 DataType <|-- MapType
 DataType <|-- ArrayType
-DataType <|-- NullType
+DataType <|-- NullType << (O,orchid) >>
 
 @enduml
