@@ -16,15 +16,13 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.catalyst.types._
 
-class DFRTest extends SparkTestUtil {
-  sparkTest("test DFR") {
+class DQMTest extends SparkTestUtil {
+  sparkTest("test DQM") {
     val ssc = sqlContext; import ssc._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
-    val dfr = srdd.dfr.addBoundedRule('b, 1.0, 20.0)
-    val res = dfr.createVerifiedRDD.collect
-    // TODO: this should be verifying the values, not printing them!
-    //println(res.size)
-    //println(res.map(_.mkString(",")).mkString("\n"))
+    val dqm = srdd.dqm.isBoundValue('b, 1.0, 20.0)
+    val res = dqm.verify.collect
+    assert(res.size === 2)
   }
 }
 

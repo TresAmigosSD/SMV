@@ -36,22 +36,22 @@ case class CheckUdf(function: Seq[Any] => Boolean, children: Seq[Expression])
 
 
 // TODO: needs doc.  What does DFR stand for.  how to use it.
-class DFR(srdd: SchemaRDD) { 
+class DQM(srdd: SchemaRDD) { 
 
-  private var restrictions: Seq[(NamedExpression, FRRule)] = Nil
+  private var isList: Seq[(NamedExpression, DQMRule)] = Nil
+  private var doList: Seq[(NamedExpression, DQMRule)] = Nil
   private var verifiedRDD: SchemaRDD = null
-  private var fixedRDD: SchemaRDD = null
 
   private val schema = srdd.schema
   private val sqlContext = srdd.sqlContext
 
-  def addBoundedRule(s: Symbol, lower: Any, upper: Any): DFR = {
+  def isBoundValue(s: Symbol, lower: Any, upper: Any): DQM = {
     val dataType = schema.nameToType(s)
     val expr = sqlContext.symbolToUnresolvedAttribute(s)
     dataType match {
       case i: NativeType =>
-        restrictions = restrictions :+ (expr, 
-          BoundedRule[i.JvmType](
+        isList = isList :+ (expr, 
+          BoundRule[i.JvmType](
             lower.asInstanceOf[i.JvmType], 
             upper.asInstanceOf[i.JvmType]
           )(i.ordering))
@@ -60,24 +60,25 @@ class DFR(srdd: SchemaRDD) {
     this
   }
 
-  def clean: DFR = {
-    restrictions = Nil
+  def clean: DQM = {
+    isList = Nil
+    doList = Nil
     verifiedRDD = null
-    fixedRDD = null
     this
   }
 
-  def createVerifiedRDD: SchemaRDD = {
+  def verify: SchemaRDD = {
     if (verifiedRDD == null){
-      val restr = restrictions // for serialization 
+      val exprList = isList.map{_._1} // for serialization 
+      val ruleList = isList.map{_._2} // for serialization 
 
       val checkRow: Seq[Any] => Boolean = { attrs =>
-        attrs.zip(restr).map{ case (v, (expr, rule)) =>
+        attrs.zip(ruleList).map{ case (v, rule) =>
           rule.check(v)
         }.reduce(_ && _)
       }
 
-      verifiedRDD = srdd.where(CheckUdf(checkRow, restr.map{_._1}))
+      verifiedRDD = srdd.where(CheckUdf(checkRow, exprList))
       verifiedRDD.persist(StorageLevel.MEMORY_AND_DISK)
     } 
     verifiedRDD
@@ -85,8 +86,8 @@ class DFR(srdd: SchemaRDD) {
 
 }
 
-object DFR {
+object DQM {
   def apply(srdd: SchemaRDD) = {
-    new DFR(srdd)
+    new DQM(srdd)
   }
 }

@@ -52,5 +52,5 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
    */
   def edd: EDD = groupEdd()
 
-  def dfr: DFR = DFR(schemaRDD)
+  def dqm: DQM = DQM(schemaRDD)
 }

@@ -16,20 +16,20 @@ package org.tresamigos.smv
 
 
 // TODO: missing doc.  What does FR stand for?
-abstract class FRRule extends Serializable {
+abstract class DQMRule extends Serializable {
   def check(c: Any): Boolean = true
   def fix(c: Any): Any = c
 }
 
-case object NoOpRule extends FRRule 
+case object NoOpRule extends DQMRule 
    
-case class BoundedRule[T](lower: T, upper: T)(implicit ord: Ordering[T]) extends FRRule {
+case class BoundRule[T](lower: T, upper: T)(implicit ord: Ordering[T]) extends DQMRule {
   override def check(c: Any): Boolean = {
     ord.lteq(lower, c.asInstanceOf[T]) && ord.lteq(c.asInstanceOf[T], upper) 
   }
 }
 
-case class SetRule[T](s: Set[T]) extends FRRule {
+case class SetRule[T](s: Set[T]) extends DQMRule {
   override def check(c: Any): Boolean = {
     s.contains(c.asInstanceOf[T])
   }

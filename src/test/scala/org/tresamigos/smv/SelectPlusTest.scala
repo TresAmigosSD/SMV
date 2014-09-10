@@ -20,7 +20,7 @@ class SelectPlusTest extends SparkTestUtil {
   sparkTest("test SelectPlus") {
     val ssc = sqlContext; import ssc._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
-    val res = srdd.selectPlus('b + 2.0).collect
+    val res = srdd.selectPlus('b + 2.0 as 'bplus2).collect
     assertDoubleSeqEqual(res(0), List(1.0, 10.0, 12.0))
   }
 }
