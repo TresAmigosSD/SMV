@@ -37,6 +37,12 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     schemaRDD.select( all ++ exprs : _* )
   }
 
+  def drop(exprs: Expression*): SchemaRDD = {
+    val all = schema.colNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
+    schemaRDD.select( (all diff exprs) : _* )
+  }
+
+
   /**
    * Create an EDD builder on SchemaRDD 
    * 

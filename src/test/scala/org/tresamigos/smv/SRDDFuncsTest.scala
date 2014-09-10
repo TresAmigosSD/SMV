@@ -25,3 +25,12 @@ class SelectPlusTest extends SparkTestUtil {
   }
 }
 
+class DropTest extends SparkTestUtil {
+  sparkTest("test Drop") {
+    val ssc = sqlContext; import ssc._
+    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
+    val res = srdd.drop('b).collect
+    assertDoubleSeqEqual(res(0), List(1.0))
+  }
+}
+
