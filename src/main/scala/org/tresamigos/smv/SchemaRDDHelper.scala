@@ -32,6 +32,11 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     schemaRDD.map(schema.rowToCsvString(_)).saveAsTextFile(path)
   }
 
+  def selectPlus(exprs: Expression*): SchemaRDD = {
+    val all = schema.colNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
+    schemaRDD.select( all ++ exprs : _* )
+  }
+
   /**
    * Create an EDD builder on SchemaRDD 
    * 
