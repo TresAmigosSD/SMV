@@ -1,0 +1,49 @@
+@startuml
+
+abstract class DataType {
+ + def isPrimitive : scala.Boolean
+ + def unapply(Expression) : scala.Boolean
+}
+
+AnyRef <|-- DataType
+
+abstract class NativeType
+abstract class NumericType
+class PrimitiveType << (T,orchid) >>
+abstract class FractionalType
+abstract class IntegralType
+
+DataType <|-- NativeType
+DataType <|-- PrimitiveType
+
+NativeType <|-- NumericType
+PrimitiveType <|-- NumericType
+
+NumericType <|-- FractionalType
+FractionalType <|-- DecimalType << (O,orchid) >>
+FractionalType <|-- FloatType << (O,orchid) >>
+FractionalType <|-- DoubleType << (O,orchid) >>
+
+NumericType <|-- IntegralType
+IntegralType <|-- ByteType << (O,orchid) >>
+IntegralType <|-- IntegerType << (O,orchid) >>
+IntegralType <|-- ShortType << (O,orchid) >>
+IntegralType <|-- LongType << (O,orchid) >>
+
+NativeType <|-- StringType << (O,orchid) >>
+PrimitiveType <|-- StringType
+
+NativeType <|-- TimestampType << (O,orchid) >>
+
+NativeType <|-- BinaryType << (O,orchid) >>
+PrimitiveType <|-- BinaryType
+
+NativeType <|-- BooleanType << (O,orchid) >>
+PrimitiveType <|-- BooleanType
+
+DataType <|-- DynamicType << (O,orchid) >>
+DataType <|-- MapType
+DataType <|-- ArrayType
+DataType <|-- NullType << (O,orchid) >>
+
+@enduml
