@@ -20,9 +20,12 @@ class DQMTest extends SparkTestUtil {
   sparkTest("test DQM") {
     val ssc = sqlContext; import ssc._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
-    val dqm = srdd.dqm.isBoundValue('b, 1.0, 20.0)
+    val dqm = srdd.dqm().isBoundValue('b, 1.0, 20.0)
     val res = dqm.verify.collect
     assert(res.size === 2)
+    val dqm2 = srdd.dqm(true).isBoundValue('b, 11.0, 30.0)
+    val res2 = dqm2.verify.where('_isRejected === true).select('_rejectReason).first
+    assert(res2(0) === "'b")
   }
 }
 

@@ -20,12 +20,11 @@ import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.storage.StorageLevel
 
 // TODO: needs doc.
-case class CheckUdf(function: Seq[Any] => Boolean, children: Seq[Expression])
+case class CheckUdf(function: Seq[Any] => Any, val dataType: DataType, children: Seq[Expression])
   extends Expression {
 
   type EvaluatedType = Any
 
-  val dataType = BooleanType
   def references = children.flatMap(_.references).toSet
   def nullable = true
 
@@ -34,9 +33,25 @@ case class CheckUdf(function: Seq[Any] => Boolean, children: Seq[Expression])
   }
 }
 
+case class RejectUdf(function: Seq[Any] => Array[Any], children: Seq[Expression])
+  extends Expression {
+
+  type EvaluatedType = Row
+  val dataType = StructType(Seq(StructField("_isRejected", BooleanType, false), 
+                            StructField("_rejectReason", StringType, true)))
+
+  def references = children.flatMap(_.references).toSet
+  def nullable = false
+
+  override def eval(input: Row): Row = {
+    new GenericRow(function(children.map(_.eval(input))))
+  }
+}
+
+
 
 // TODO: needs doc.  What does DFR stand for.  how to use it.
-class DQM(srdd: SchemaRDD) { 
+class DQM(srdd: SchemaRDD, keepRejected: Boolean) { 
 
   private var isList: Seq[(NamedExpression, DQMRule)] = Nil
   private var doList: Seq[(NamedExpression, DQMRule)] = Nil
@@ -78,7 +93,17 @@ class DQM(srdd: SchemaRDD) {
         }.reduce(_ && _)
       }
 
-      verifiedRDD = srdd.where(CheckUdf(checkRow, exprList))
+      val rejectReason: Seq[Any] => Array[Any] = { attrs =>
+        val rej = attrs.zip(ruleList).zip(exprList)
+          .filter{ case ((v, rule), expr) => ! rule.check(v)}
+        if (rej.isEmpty) Array(false, "") else Array(true, rej.head._2.toString)
+      }
+
+      verifiedRDD = if (keepRejected) 
+                      srdd.selectPlus(Alias(GetField(RejectUdf(rejectReason, exprList), "_isRejected"), "_isRejected")(),
+                                      Alias(GetField(RejectUdf(rejectReason, exprList), "_rejectReason"), "_rejectReason")() )
+                    else
+                      srdd.where(CheckUdf(checkRow, BooleanType, exprList))
       verifiedRDD.persist(StorageLevel.MEMORY_AND_DISK)
     } 
     verifiedRDD
@@ -87,7 +112,7 @@ class DQM(srdd: SchemaRDD) {
 }
 
 object DQM {
-  def apply(srdd: SchemaRDD) = {
-    new DQM(srdd)
+  def apply(srdd: SchemaRDD, keepReject: Boolean) = {
+    new DQM(srdd, keepReject)
   }
 }

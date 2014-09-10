@@ -52,5 +52,5 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
    */
   def edd: EDD = groupEdd()
 
-  def dqm: DQM = DQM(schemaRDD)
+  def dqm(keepReject: Boolean = false): DQM = DQM(schemaRDD, keepReject)
 }
