@@ -27,6 +27,12 @@ case class BoundRule[T](lower: T, upper: T)(implicit ord: Ordering[T]) extends D
   override def check(c: Any): Boolean = {
     ord.lteq(lower, c.asInstanceOf[T]) && ord.lteq(c.asInstanceOf[T], upper) 
   }
+
+  override def fix(c: Any): Any = {
+    if (ord.lteq(c.asInstanceOf[T], lower)) lower
+    else if (ord.lteq(upper, c.asInstanceOf[T])) upper
+    else c
+  }
 }
 
 case class SetRule[T](s: Set[T]) extends DQMRule {

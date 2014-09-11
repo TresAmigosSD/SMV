@@ -20,20 +20,24 @@ import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.storage.StorageLevel
 
 // TODO: needs doc.
-case class CheckUdf(function: Seq[Any] => Any, val dataType: DataType, children: Seq[Expression])
+case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression])
   extends Expression {
 
-  type EvaluatedType = Any
+  type EvaluatedType = Boolean
+  val dataType = BooleanType
 
   def references = children.flatMap(_.references).toSet
   def nullable = true
 
-  override def eval(input: Row): Any = {
-    function(children.map(_.eval(input)))
+  override def eval(input: Row): Boolean = {
+    children.zip(rules).map{ case (child, rule) => 
+      val v = child.eval(input)
+      rule.check(v)
+    }.reduce(_ && _)
   }
 }
 
-case class RejectUdf(function: Seq[Any] => Array[Any], children: Seq[Expression])
+case class CheckRejectLog(rules: Seq[DQMRule], children: Seq[NamedExpression])
   extends Expression {
 
   type EvaluatedType = Row
@@ -44,13 +48,15 @@ case class RejectUdf(function: Seq[Any] => Array[Any], children: Seq[Expression]
   def nullable = false
 
   override def eval(input: Row): Row = {
-    new GenericRow(function(children.map(_.eval(input))))
+    val rej = children.zip(rules).filter{ case (child, rule) =>
+      ! rule.check(child.eval(input))
+    }
+    val rejlog = if (rej.isEmpty) Array(false, "") else Array(true, rej.head._1.name)
+    new GenericRow(rejlog)
   }
 }
 
-
-
-// TODO: needs doc.  What does DFR stand for.  how to use it.
+// TODO: needs doc.
 class DQM(srdd: SchemaRDD, keepRejected: Boolean) { 
 
   private var isList: Seq[(NamedExpression, DQMRule)] = Nil
@@ -87,23 +93,11 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
       val exprList = isList.map{_._1} // for serialization 
       val ruleList = isList.map{_._2} // for serialization 
 
-      val checkRow: Seq[Any] => Boolean = { attrs =>
-        attrs.zip(ruleList).map{ case (v, rule) =>
-          rule.check(v)
-        }.reduce(_ && _)
-      }
-
-      val rejectReason: Seq[Any] => Array[Any] = { attrs =>
-        val rej = attrs.zip(ruleList).zip(exprList)
-          .filter{ case ((v, rule), expr) => ! rule.check(v)}
-        if (rej.isEmpty) Array(false, "") else Array(true, rej.head._2.name)
-      }
-
       verifiedRDD = if (keepRejected) 
-                      srdd.selectPlus(Alias(GetField(RejectUdf(rejectReason, exprList), "_isRejected"), "_isRejected")(),
-                                      Alias(GetField(RejectUdf(rejectReason, exprList), "_rejectReason"), "_rejectReason")() )
+                      srdd.selectPlus(Alias(GetField(CheckRejectLog(ruleList, exprList), "_isRejected"), "_isRejected")(),
+                                      Alias(GetField(CheckRejectLog(ruleList, exprList), "_rejectReason"), "_rejectReason")() )
                     else
-                      srdd.where(CheckUdf(checkRow, BooleanType, exprList))
+                      srdd.where(CheckPassed(ruleList, exprList))
       verifiedRDD.persist(StorageLevel.MEMORY_AND_DISK)
     } 
     verifiedRDD
