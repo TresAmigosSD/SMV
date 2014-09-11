@@ -96,7 +96,7 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
       val rejectReason: Seq[Any] => Array[Any] = { attrs =>
         val rej = attrs.zip(ruleList).zip(exprList)
           .filter{ case ((v, rule), expr) => ! rule.check(v)}
-        if (rej.isEmpty) Array(false, "") else Array(true, rej.head._2.toString)
+        if (rej.isEmpty) Array(false, "") else Array(true, rej.head._2.name)
       }
 
       verifiedRDD = if (keepRejected) 
