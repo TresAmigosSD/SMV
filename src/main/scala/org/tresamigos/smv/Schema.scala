@@ -211,6 +211,7 @@ object Schema {
     new Schema(
       strEntries.map(_.replaceFirst("(//|#).*", "")).
       filterNot(_.matches("^[ \t]*$")).
+      map(_.replaceFirst(";[ \t]*$", "")).
       map(SchemaEntry(_)).
       toList
     )
@@ -246,5 +247,18 @@ object Schema {
     new Schema(
       resolvedLP.output.map(a =>
         SchemaEntry(a.name, a.dataType.toString.dropRight(4))))
+  }
+
+  /**
+   * map the data file path to schema path.
+   * Ignores ".gz", ".csv", ".tsv" extensions when constructions schema file path.
+   * For example: "/a/b/foo.csv" --> "/a/b/foo.schema".  Makes for cleaner mapping.
+   */
+  private[smv] def dataPathToSchemaPath(dataPath: String): String = {
+    // remove all known data file extensions from path.
+    val exts = List("gz", "csv", "tsv").map("\\."+_+"$")
+    val dataPathNoExt = exts.foldLeft(dataPath)((s,e) => s.replaceFirst(e,""))
+
+    dataPathNoExt + ".schema"
   }
 }

@@ -55,19 +55,6 @@ class SqlContextHelper(sqlContext: SQLContext) {
     applySchemaToRowRDD(rowRDD, schema)
   }
 
-  /**
-   * map the data file path to schema path.
-   * Ignores ".gz", ".csv", ".tsv" extensions when constructions schema file path.
-   * For example: "/a/b/foo.csv" --> "/a/b/foo.schema".  Makes for cleaner mapping.
-   */
-  private[smv] def dataPathToSchemaPath(dataPath: String): String = {
-    // remove all known data file extensions from path.
-    val exts = List("gz", "csv", "tsv").map("\\."+_+"$")
-    val dataPathNoExt = exts.foldLeft(dataPath)((s,e) => s.replaceFirst(e,""))
-
-    dataPathNoExt + ".schema"
-  }
-
   /** Create an SchemaRDD from a data file and an schema file
    *
    *  @param dataPath CSV file location
@@ -76,7 +63,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
    */
   def csvFileWithSchema(dataPath: String, schemaPath: String = null)
                        (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD = {
-    val sp = if (schemaPath==null) dataPathToSchemaPath(dataPath) else schemaPath
+    val sp = if (schemaPath==null) Schema.dataPathToSchemaPath(dataPath) else schemaPath
     val sc = sqlContext.sparkContext
     val schema = Schema.fromFile(sc, sp)
     csvFileAddSchema(dataPath, schema)

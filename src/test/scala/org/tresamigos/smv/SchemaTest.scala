@@ -102,13 +102,12 @@ class SchemaTest extends SparkTestUtil {
   }
 
   test("Test schema name derivation from data file path") {
-    val sch = new SqlContextHelper(null)
-    assert(sch.dataPathToSchemaPath("/a/b/c.csv")    === "/a/b/c.schema")
-    assert(sch.dataPathToSchemaPath("/a/b/c.tsv")    === "/a/b/c.schema")
-    assert(sch.dataPathToSchemaPath("/a/b/c.csv.gz") === "/a/b/c.schema")
-    assert(sch.dataPathToSchemaPath("/a/b/c")        === "/a/b/c.schema")
+    assert(Schema.dataPathToSchemaPath("/a/b/c.csv")    === "/a/b/c.schema")
+    assert(Schema.dataPathToSchemaPath("/a/b/c.tsv")    === "/a/b/c.schema")
+    assert(Schema.dataPathToSchemaPath("/a/b/c.csv.gz") === "/a/b/c.schema")
+    assert(Schema.dataPathToSchemaPath("/a/b/c")        === "/a/b/c.schema")
 
     // check that csv is only removed at end of string.
-    assert(sch.dataPathToSchemaPath("/a/b/csv.foo") === "/a/b/csv.foo.schema")
+    assert(Schema.dataPathToSchemaPath("/a/b/csv.foo") === "/a/b/csv.foo.schema")
   }
 }

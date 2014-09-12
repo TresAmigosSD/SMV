@@ -26,10 +26,10 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   def schema = Schema.fromSchemaRDD(schemaRDD)
 
   // TODO: add schema file path as well.
-  def saveAsCsvWithSchema(path: String)(implicit ca: CsvAttributes) {
+  def saveAsCsvWithSchema(dataPath: String)(implicit ca: CsvAttributes) {
     val schema = Schema.fromSchemaRDD(schemaRDD)
-    schema.saveToFile(schemaRDD.context, path + ".schema")
-    schemaRDD.map(schema.rowToCsvString(_)).saveAsTextFile(path)
+    schema.saveToFile(schemaRDD.context, Schema.dataPathToSchemaPath(dataPath))
+    schemaRDD.map(schema.rowToCsvString(_)).saveAsTextFile(dataPath)
   }
 
   def selectPlus(exprs: Expression*): SchemaRDD = {
