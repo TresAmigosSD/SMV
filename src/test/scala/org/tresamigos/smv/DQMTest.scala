@@ -26,6 +26,9 @@ class DQMTest extends SparkTestUtil {
     val dqm2 = srdd.dqm(true).isBoundValue('b, 11.0, 30.0)
     val res2 = dqm2.verify.where('_isRejected === true).select('_rejectReason).first
     assert(res2(0) === "b")
+    val dqm3 = srdd.dqm().doBoundValue('b, 11.0, 30.0)
+    val res3 = dqm3.verify.first
+    assertDoubleSeqEqual(res3, List(1.0, 11.0))
   }
 }
 
