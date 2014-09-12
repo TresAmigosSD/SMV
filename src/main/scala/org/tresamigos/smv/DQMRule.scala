@@ -23,7 +23,10 @@ abstract class DQMRule extends Serializable {
 
 case object NoOpRule extends DQMRule 
    
-case class BoundRule[T](lower: T, upper: T)(implicit ord: Ordering[T]) extends DQMRule {
+case class BoundRule[T:Ordering](lower: T, upper: T) extends DQMRule {
+
+  private val ord = implicitly[Ordering[T]]
+
   override def check(c: Any): Boolean = {
     ord.lteq(lower, c.asInstanceOf[T]) && ord.lteq(c.asInstanceOf[T], upper) 
   }

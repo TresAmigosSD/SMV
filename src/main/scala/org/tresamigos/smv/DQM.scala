@@ -18,6 +18,7 @@ import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.storage.StorageLevel
+import scala.reflect.ClassTag
 
 // TODO: needs doc.
 case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression])
@@ -66,28 +67,13 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
   private val schema = srdd.schema
   private val sqlContext = srdd.sqlContext
 
-  private def addBoundRule(s: Symbol, lower: Any, upper: Any): (Symbol, DQMRule) = {
-    val dataType = schema.nameToType(s)
-    val rule = dataType match {
-      case i: NativeType =>
-          BoundRule[i.JvmType](
-            lower.asInstanceOf[i.JvmType], 
-            upper.asInstanceOf[i.JvmType]
-          )(i.ordering)
-      case other => 
-        sys.error(s"Type $other does not support BoundedRule")
-        null
-    }
-    (s, rule)
-  }
-
-  def isBoundValue(s: Symbol, lower: Any, upper: Any): DQM = {
-    isList = isList :+ addBoundRule(s, lower, upper)
+  def isBoundValue[T:Ordering](s: Symbol, lower: T, upper: T)(implicit tt: ClassTag[T]): DQM = {
+    isList = isList :+ (s, BoundRule[T](lower, upper))
     this
   }
 
-  def doBoundValue(s: Symbol, lower: Any, upper: Any): DQM = {
-    doList = doList :+ addBoundRule(s, lower, upper)
+  def doBoundValue[T:Ordering](s: Symbol, lower: T, upper: T)(implicit tt: ClassTag[T]): DQM = {
+    doList = doList :+ (s, BoundRule[T](lower, upper))
     this
   }
 
