@@ -37,9 +37,10 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     schemaRDD.select( all ++ exprs : _* )
   }
 
-  def selectMinus(exprs: Expression*): SchemaRDD = {
-    val all = schema.colNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
-    schemaRDD.select( (all diff exprs) : _* )
+  def selectMinus(symb: Symbol*): SchemaRDD = {
+    val all = schema.colNames.map{l=>Symbol(l)} diff symb
+    val allExprs = all.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(l)}
+    schemaRDD.select(allExprs : _* )
   }
 
 
