@@ -25,6 +25,16 @@ class EddTest extends SparkTestUtil {
       eddlist,
       List(3.0,3.0,2.0,1.0,1.0,3.0,3.0,20.0,10.0,10.0,30.0))
   }
+
+  sparkTest("test EDD Base on Non-double Numerics") {
+    import org.apache.spark.sql.catalyst.dsl._
+    val ssc = sqlContext; import ssc._
+    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test3.csv")
+    val edd = srdd.edd.addBaseTasks()
+    val res = edd.toSchemaRDD.collect()(0)
+    assertDoubleSeqEqual(res, List(2,2,17.5,7.7781745930520225,12,23,2,4011.5,785.5956338982543,3456,4567))
+  }
+ 
 }
 
 class EddReportTest extends SparkTestUtil {
@@ -138,6 +148,28 @@ key                      count      Pct    cumCount   cumPct
 -------------------------------------------------""")
     assert(res4 === expect4)
   }
+
+  sparkTest("test EDDHist with Bin on Non-double Numerics") {
+    import org.apache.spark.sql.catalyst.dsl._
+    val ssc = sqlContext; import ssc._
+    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test3.csv")
+    val edd = srdd.edd.addHistogramTasks('a)(binSize = 5.0).addMoreTasks(
+      NumericHistogram('b, 1, 8000, 3)
+    )
+    val res = edd.createReport.collect()
+    val expect = Array("""Total Record Count:                        2
+Histogram of a with BIN size 5.0
+key                      count      Pct    cumCount   cumPct
+10.0                         1   50.00%           1   50.00%
+20.0                         1   50.00%           2  100.00%
+-------------------------------------------------
+Histogram of b with 3 fixed BINs
+key                      count      Pct    cumCount   cumPct
+2667.3333333333335           2  100.00%           2  100.00%
+-------------------------------------------------""")
+    assert(res === expect)
+  }
+
 }
 
 

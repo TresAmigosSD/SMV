@@ -74,7 +74,7 @@ case class AmountHistogram(expr: NamedExpression) extends EDDTask with NumericTa
 
 case class NumericHistogram(expr: NamedExpression, min: Double, max: Double, n: Int) extends EDDTask with NumericTask {
   override def aggList = Seq(
-    Alias(Histogram(NumericBin(expr, min, max, n)),     expr.name + "_nhi")()
+    Alias(Histogram(NumericBin(Cast(expr, DoubleType), min, max, n)),     expr.name + "_nhi")()
   )
   override def report(i: Iterator[Any]): Seq[String] = Seq(
     buildHistReport(expr.name + s" with $n fixed BINs",
@@ -84,7 +84,7 @@ case class NumericHistogram(expr: NamedExpression, min: Double, max: Double, n: 
 
 case class BinNumericHistogram(expr: NamedExpression, bin: Double) extends EDDTask with NumericTask {
   override def aggList = Seq(
-    Alias(Histogram(BinFloor(expr, bin)),           expr.name + "_bnh")()
+    Alias(Histogram(BinFloor(Cast(expr, DoubleType), bin)),           expr.name + "_bnh")()
   )
   override def report(i: Iterator[Any]): Seq[String] = Seq(
     buildHistReport(expr.name + s" with BIN size $bin", 
