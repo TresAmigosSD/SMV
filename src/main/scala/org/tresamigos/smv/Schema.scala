@@ -22,48 +22,47 @@ import org.apache.spark.sql.SchemaRDD
 import scala.annotation.switch
 
 abstract class SchemaEntry extends java.io.Serializable {
-  def name: String
+  val structField: StructField
   def strToVal(s: String) : Any
   def valToStr(v: Any) : String = if (v==null) "" else v.toString
   val typeName: String
-  val dataType: DataType
-  override def toString = name + ": " + typeName
+  override def toString = structField.name + ": " + typeName
 }
 
 case class DoubleSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toDouble
   override val typeName = "Double"
-  override val dataType = DoubleType
+  val structField = StructField(name, DoubleType, true)
 }
 
 case class FloatSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toFloat
   override val typeName = "Float"
-  override val dataType = FloatType
+  val structField = StructField(name, FloatType, true)
 }
 
 case class IntegerSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toInt
   override val typeName = "Integer"
-  override val dataType = IntegerType
+  val structField = StructField(name, IntegerType, true)
 }
 
 case class LongSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toLong
   override val typeName = "Long"
-  override val dataType = LongType
+  val structField = StructField(name, LongType, true)
 }
 
 case class BooleanSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toBoolean
   override val typeName = "Boolean"
-  override val dataType = BooleanType
+  val structField = StructField(name, BooleanType, true)
 }
 
 case class StringSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s
   override val typeName = "String"
-  override val dataType = StringType
+  val structField = StructField(name, StringType, true)
 }
 
 case class TimestampSchemaEntry(name: String, fmt: String = "yyyyMMdd") extends SchemaEntry {
@@ -73,7 +72,7 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyyMMdd") extends 
     new java.sql.Timestamp(fmtObj.parse(s).getTime())
   }
   override val typeName = "Timestamp"
-  override val dataType = TimestampType
+  val structField = StructField(name, TimestampType, true)
   override def toString = s"$name: $typeName[$fmt]"
 }
 
@@ -83,7 +82,7 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyyMMdd") extends 
 case class MapSchemaEntry(name: String,
       keySchemaEntry: SchemaEntry, valSchemaEntry: SchemaEntry) extends SchemaEntry {
   override val typeName = "Map"
-  override val dataType = MapType(StringType, StringType)
+  val structField = StructField(name, MapType(StringType, StringType), true)
   override def strToVal(s: String) : Any = {
     if (s.isEmpty)
       null
@@ -95,8 +94,8 @@ case class MapSchemaEntry(name: String,
   }
   override def valToStr(v: Any) : String = {
     if (v==null) return ""
-    val keyNativeType = keySchemaEntry.dataType.asInstanceOf[NativeType]
-    val valNativeType = valSchemaEntry.dataType.asInstanceOf[NativeType]
+    val keyNativeType = keySchemaEntry.structField.dataType.asInstanceOf[NativeType]
+    val valNativeType = valSchemaEntry.structField.dataType.asInstanceOf[NativeType]
     val m = v.asInstanceOf[Map[keyNativeType.JvmType, valNativeType.JvmType]]
     m.map{ case (k,v) =>
       val keyAsStr = keySchemaEntry.valToStr(k)
@@ -148,8 +147,8 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
 
   def toValue(ordinal: Int, sVal: String) = entries(ordinal).strToVal(sVal)
 
-  def colNames = entries.map(_.name)
-  def colTypes = entries.map(_.dataType)
+  def colNames = entries.map(_.structField.name)
+  def colTypes = entries.map(_.structField.dataType)
   def colTypeNames = entries.map(_.typeName)
  
   private val nameTypeMap: Map[Symbol, DataType] = (colNames.map(Symbol(_)) zip colTypes).toMap
@@ -163,7 +162,7 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   override def toString = "Schema: " + entries.mkString("; ")
 
   def toAttribSeq : Seq[AttributeReference] = {
-    entries.map(se => AttributeReference(se.name, se.dataType)())
+    entries.map(se => AttributeReference(se.structField.name, se.structField.dataType)())
   }
 
   def saveToFile(sc: SparkContext, path: String) {
@@ -185,7 +184,7 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
         sb.append(ca.delimiter)
 
       val se = entries(idx)
-      (se.dataType: @switch) match {
+      (se.structField.dataType: @switch) match {
         // TODO: handle timestamp here to convert to desired format
         case StringType =>
           // TODO: need to handle this better!
