@@ -18,7 +18,7 @@ class EddTest extends SparkTestUtil {
   sparkTest("test EDD on entire population") {
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
     val edd = srdd.edd.addBaseTasks('a, 'b)
-    val colNames = edd.toSchemaRDD.schema.colNames.mkString(",")
+    val colNames = edd.toSchemaRDD.sch.colNames.mkString(",")
     assert(colNames === "pop_tot,a_cnt,a_avg,a_std,a_min,a_max,b_cnt,b_avg,b_std,b_min,b_max")
     val eddlist = edd.toSchemaRDD.collect()(0).toList
     assertDoubleSeqEqual(

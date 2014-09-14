@@ -206,11 +206,11 @@ case class HistogramFunction(
       updateFunction = { input: Row =>
         val evaluatedExpr = expr.eval(input)
         if (evaluatedExpr != null) {
-          val x = evaluatedExpr.asInstanceOf[i.JvmType]
+          val x = evaluatedExpr
           histMap += (x->(histMap.getOrElse(x,0L) + 1L))
         }
       }
-    case MapType(kType, LongType) => 
+    case MapType(kType, LongType, _) => 
       updateFunction = { input: Row =>
         val evaluatedExpr = expr.eval(input)
         if (evaluatedExpr != null) {

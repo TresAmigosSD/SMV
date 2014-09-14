@@ -27,7 +27,6 @@ case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression])
   type EvaluatedType = Boolean
   val dataType = BooleanType
 
-  def references = children.flatMap(_.references).toSet
   def nullable = true
 
   override def eval(input: Row): Boolean = {
@@ -38,21 +37,20 @@ case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression])
   }
 }
 
-case class CheckRejectLog(rules: Seq[DQMRule], children: Seq[NamedExpression])
+case class CheckRejectLog(rules: Seq[DQMRule], children: Seq[Expression])
   extends Expression {
 
   type EvaluatedType = Row
   val dataType = StructType(Seq(StructField("_isRejected", BooleanType, false), 
                             StructField("_rejectReason", StringType, true)))
 
-  def references = children.flatMap(_.references).toSet
   def nullable = false
 
   override def eval(input: Row): Row = {
     val rej = children.zip(rules).filter{ case (child, rule) =>
       ! rule.check(child.eval(input))
     }
-    val rejlog = if (rej.isEmpty) Array(false, "") else Array(true, rej.head._1.name)
+    val rejlog = if (rej.isEmpty) Array(false, "") else Array(true, rej.head._2.symbol.name)
     new GenericRow(rejlog)
   }
 }
@@ -60,20 +58,20 @@ case class CheckRejectLog(rules: Seq[DQMRule], children: Seq[NamedExpression])
 // TODO: needs doc.
 class DQM(srdd: SchemaRDD, keepRejected: Boolean) { 
 
-  private var isList: Seq[(Symbol, DQMRule)] = Nil
-  private var doList: Seq[(Symbol, DQMRule)] = Nil
+  private var isList: Seq[DQMRule] = Nil
+  private var doList: Seq[DQMRule] = Nil
   private var verifiedRDD: SchemaRDD = null
 
-  private val schema = srdd.schema
+  private val schema = srdd.sch
   private val sqlContext = srdd.sqlContext
 
   def isBoundValue[T:Ordering](s: Symbol, lower: T, upper: T)(implicit tt: ClassTag[T]): DQM = {
-    isList = isList :+ (s, BoundRule[T](lower, upper))
+    isList = isList :+ BoundRule[T](s, lower, upper)
     this
   }
 
   def doBoundValue[T:Ordering](s: Symbol, lower: T, upper: T)(implicit tt: ClassTag[T]): DQM = {
-    doList = doList :+ (s, BoundRule[T](lower, upper))
+    doList = doList :+ BoundRule[T](s, lower, upper)
     this
   }
 
@@ -84,8 +82,8 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
     this
   }
 
-  private def createDoSelect(rules: Seq[DQMRule], symbs: Seq[Symbol]): Seq[Expression] = {
-    val ruleMap = symbs.zip(rules).toMap
+  private def createDoSelect(rules: Seq[DQMRule]): Seq[Expression] = {
+    val ruleMap = rules.map{r => (r.symbol, r)}.toMap
     val all = schema.colNames.map{l => Symbol(l)}
     all.map{ sym => 
       val expr = sqlContext.symbolToUnresolvedAttribute(sym)
@@ -101,13 +99,12 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
 
   def verify: SchemaRDD = {
     if (verifiedRDD == null){
-      val isExprList = isList.map{l => sqlContext.symbolToUnresolvedAttribute(l._1)} // for serialization 
-      val isRuleList = isList.map{_._2} // for serialization 
-      val doSymbList = doList.map{_._1} // for serialization 
-      val doRuleList = doList.map{_._2} // for serialization 
+      val isExprList = isList.map{l => sqlContext.symbolToUnresolvedAttribute(l.symbol)} // for serialization 
+      val isRuleList = isList // for serialization 
+      val doRuleList = doList // for serialization 
 
       val doRdd = if (doRuleList.isEmpty) srdd 
-                  else srdd.select(createDoSelect(doRuleList, doSymbList): _*)
+                  else srdd.select(createDoSelect(doRuleList): _*)
 
       verifiedRDD = if (isRuleList.isEmpty) doRdd
                     else if (keepRejected) 

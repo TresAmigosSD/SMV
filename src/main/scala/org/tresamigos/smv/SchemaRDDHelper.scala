@@ -23,7 +23,7 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   /**
    * extract schema object from schemaRDD
    */
-  def schema = Schema.fromSchemaRDD(schemaRDD)
+  def sch = Schema.fromSchemaRDD(schemaRDD)
 
   // TODO: add schema file path as well.
   def saveAsCsvWithSchema(dataPath: String)(implicit ca: CsvAttributes) {
@@ -33,12 +33,12 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   }
 
   def selectPlus(exprs: Expression*): SchemaRDD = {
-    val all = schema.colNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
+    val all = sch.colNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
     schemaRDD.select( all ++ exprs : _* )
   }
 
   def selectMinus(symb: Symbol*): SchemaRDD = {
-    val all = schema.colNames.map{l=>Symbol(l)} diff symb
+    val all = sch.colNames.map{l=>Symbol(l)} diff symb
     val allExprs = all.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(l)}
     schemaRDD.select(allExprs : _* )
   }

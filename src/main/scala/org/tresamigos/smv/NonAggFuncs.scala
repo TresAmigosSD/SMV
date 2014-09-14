@@ -179,11 +179,10 @@ case class NumericBin(child: Expression, min: Double, max: Double, n: Int) exten
   }
 }
 
-case class BinFloor(child: Expression, bin: Double) extends UnaryFuncs[Any] {
+case class BinFloor(child: Expression, bin: Double) extends UnaryFuncs[Double] {
   override def toString = s"BinFloor( $child )"
   def dataType = DoubleType
-  def func(vAny: Any): Double = {
-    val v = child.dataType.asInstanceOf[NumericType].numeric.asInstanceOf[Numeric[Any]].toDouble(vAny)
+  def func(v: Double): Double = {
     math.floor(v / bin) * bin
   }
 }

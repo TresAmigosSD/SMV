@@ -23,8 +23,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
 
   /** Create a SchemaRDD from RDD[Row] by applying a schema */
   def applySchemaToRowRDD(rdd: RDD[Row], schema: Schema): SchemaRDD = {
-    val eRDD = ExistingRdd(schema.toAttribSeq, rdd)
-    new SchemaRDD(sqlContext, SparkLogicalPlan(eRDD))
+    sqlContext.applySchema(rdd, schema.toStructType)
   }
 
   /**
@@ -68,8 +67,5 @@ class SqlContextHelper(sqlContext: SQLContext) {
     val schema = Schema.fromFile(sc, sp)
     csvFileAddSchema(dataPath, schema)
   }
-
-  case object emptySchemaRDD extends SchemaRDD(sqlContext, 
-     SparkLogicalPlan(ExistingRdd(Nil, sqlContext.sparkContext.emptyRDD)))
 
 }

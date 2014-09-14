@@ -53,14 +53,14 @@ class EDD(srdd: SchemaRDD,
   def addBaseTasks(list: Symbol* ): EDD = {
     val listSeq =
       if (list.isEmpty)
-        srdd.schema.colNames.map(Symbol(_))
+        srdd.sch.colNames.map(Symbol(_))
       else
         list.toSet.toSeq
 
     tasks ++=
       listSeq.map{ l =>
         val s =srdd.sqlContext.symbolToUnresolvedAttribute(l)
-        srdd.schema.nameToType(l) match {
+        srdd.sch.nameToType(l) match {
           case _: NumericType => Seq(NumericBase(s))
           case TimestampType => Seq(
             TimeBase(s),
@@ -87,14 +87,14 @@ class EDD(srdd: SchemaRDD,
   def addHistogramTasks(list: Symbol*)(byFreq: Boolean = false, binSize: Double = 100.0): EDD = {
     val listSeq =
       if (list.isEmpty)
-        srdd.schema.colNames.map(Symbol(_))
+        srdd.sch.colNames.map(Symbol(_))
       else
         list.toSet.toSeq
 
     tasks ++=
       listSeq.map{ l =>
         val s =srdd.sqlContext.symbolToUnresolvedAttribute(l)
-        srdd.schema.nameToType(l) match {
+        srdd.sch.nameToType(l) match {
           case StringType => 
             if (byFreq) Seq(StringByFreqHistogram(s))
             else Seq(StringByKeyHistogram(s))
@@ -117,7 +117,7 @@ class EDD(srdd: SchemaRDD,
     tasks ++=
       listSeq.map{ l =>
         val s =srdd.sqlContext.symbolToUnresolvedAttribute(l)
-        srdd.schema.nameToType(l) match {
+        srdd.sch.nameToType(l) match {
           case DoubleType => Seq(AmountHistogram(s))
           case _ => Nil
         }

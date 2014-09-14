@@ -96,7 +96,7 @@ case class MapSchemaEntry(name: String,
     if (v==null) return ""
     val keyNativeType = keySchemaEntry.structField.dataType.asInstanceOf[NativeType]
     val valNativeType = valSchemaEntry.structField.dataType.asInstanceOf[NativeType]
-    val m = v.asInstanceOf[Map[keyNativeType.JvmType, valNativeType.JvmType]]
+    val m = v.asInstanceOf[Map[Any,Any]]
     m.map{ case (k,v) =>
       val keyAsStr = keySchemaEntry.valToStr(k)
       val valAsStr = valSchemaEntry.valToStr(v)
@@ -161,9 +161,7 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
 
   override def toString = "Schema: " + entries.mkString("; ")
 
-  def toAttribSeq : Seq[AttributeReference] = {
-    entries.map(se => AttributeReference(se.structField.name, se.structField.dataType)())
-  }
+  def toStructType : StructType = StructType(entries.map(se => se.structField))
 
   def saveToFile(sc: SparkContext, path: String) {
     sc.makeRDD(entries.map(_.toString), 1).saveAsTextFile(path)
