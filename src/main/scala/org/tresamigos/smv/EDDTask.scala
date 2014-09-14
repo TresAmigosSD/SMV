@@ -64,7 +64,7 @@ case class NumericBase(expr: NamedExpression) extends EDDTask with NumericTask{
 
 case class AmountHistogram(expr: NamedExpression) extends EDDTask with NumericTask{
   override def aggList = Seq(
-    Alias(Histogram(AmountBin(expr)),  expr.name + "_amt")()
+    Alias(Histogram(AmountBin(Cast(expr, DoubleType))),  expr.name + "_amt")()
   )
   override def report(i: Iterator[Any]): Seq[String] = Seq(
     buildHistReport(expr.name + " as AMOUNT", 

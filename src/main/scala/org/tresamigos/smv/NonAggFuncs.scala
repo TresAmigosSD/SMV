@@ -82,7 +82,6 @@ abstract class UnaryFuncs[T] extends UnaryExpression {
       null
     } else {
       func(v.asInstanceOf[T])
-      //func(v.asInstanceOf[java.sql.Timestamp])
     }
   }
 }
