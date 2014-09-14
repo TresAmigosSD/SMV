@@ -147,18 +147,6 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
 
   def toValue(ordinal: Int, sVal: String) = entries(ordinal).strToVal(sVal)
 
-  def colNames = entries.map(_.structField.name)
-  def colTypes = entries.map(_.structField.dataType)
-  def colTypeNames = entries.map(_.typeName)
- 
-  private val nameTypeMap: Map[Symbol, DataType] = (colNames.map(Symbol(_)) zip colTypes).toMap
-  private val typeNameMap: Map[String, List[Symbol]] = 
-    (colTypeNames zip colNames.map(Symbol(_))).foldRight(Map[String, List[Symbol]]()){
-      case ((k, v), m) => m.updated(k, v :: m.getOrElse(k,Nil))}
-
-  def nameToType(name: Symbol): DataType = nameTypeMap.getOrElse(name, NullType)
-  def typeNameToNames(typeName: String): List[Symbol] = typeNameMap.getOrElse(typeName, Nil)
-
   override def toString = "Schema: " + entries.mkString("; ")
 
   def toStructType : StructType = StructType(entries.map(se => se.structField))

@@ -62,7 +62,6 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
   private var doList: Seq[DQMRule] = Nil
   private var verifiedRDD: SchemaRDD = null
 
-  private val schema = srdd.sch
   private val sqlContext = srdd.sqlContext
 
   def isBoundValue[T:Ordering](s: Symbol, lower: T, upper: T)(implicit tt: ClassTag[T]): DQM = {
@@ -84,13 +83,13 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
 
   private def createDoSelect(rules: Seq[DQMRule]): Seq[Expression] = {
     val ruleMap = rules.map{r => (r.symbol, r)}.toMap
-    val all = schema.colNames.map{l => Symbol(l)}
-    all.map{ sym => 
+    val all = srdd.schema.fields
+    all.map{ field =>
+      val sym = Symbol(field.name)
       val expr = sqlContext.symbolToUnresolvedAttribute(sym)
       if (ruleMap.contains(sym)) {
         val rule = ruleMap.get(sym).get
-        val dataType = schema.nameToType(sym)
-        Alias(ScalaUdf(rule.fix, dataType, Seq(expr)), expr.name)() 
+        Alias(ScalaUdf(rule.fix, field.dataType, Seq(expr)), expr.name)() 
       } else {
         expr
       }

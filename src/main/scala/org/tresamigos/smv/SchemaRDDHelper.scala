@@ -20,11 +20,6 @@ import org.apache.spark.sql.catalyst.types._
 
 class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
-  /**
-   * extract schema object from schemaRDD
-   */
-  def sch = Schema.fromSchemaRDD(schemaRDD)
-
   // TODO: add schema file path as well.
   def saveAsCsvWithSchema(dataPath: String)(implicit ca: CsvAttributes) {
     val schema = Schema.fromSchemaRDD(schemaRDD)
@@ -33,12 +28,12 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   }
 
   def selectPlus(exprs: Expression*): SchemaRDD = {
-    val all = sch.colNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
+    val all = schemaRDD.schema.fieldNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
     schemaRDD.select( all ++ exprs : _* )
   }
 
   def selectMinus(symb: Symbol*): SchemaRDD = {
-    val all = sch.colNames.map{l=>Symbol(l)} diff symb
+    val all = schemaRDD.schema.fieldNames.map{l=>Symbol(l)} diff symb
     val allExprs = all.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(l)}
     schemaRDD.select(allExprs : _* )
   }
