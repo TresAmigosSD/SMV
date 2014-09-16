@@ -40,11 +40,14 @@ class SqlContextHelper(sqlContext: SQLContext) {
    */
   private def dropHeader(strRDD: RDD[String], ca: CsvAttributes) : RDD[String] = {
     val noHeadRDD = if (ca.hasHeader) {
-      // drop the first headerSize rows in first partition (assumed to be header)
-      // Also assuming that the entire header will be part of the first partition
+      // drop the first headerSize rows
+      // TODO: The assumption that the header will be contained in the first partition is wrong
       strRDD.mapPartitionsWithIndex((idx: Int, rows: Iterator[String]) => {
-        if (idx == 0)
+
+        if (idx == 0) {
           rows.drop(ca.headerSize)
+        }
+
         rows
       })
     } else {
@@ -79,7 +82,6 @@ class SqlContextHelper(sqlContext: SQLContext) {
     csvFileAddSchema(dataPath, schema)
   }
 
-  // TODO: Does the implementation of this method throw any exception
   /**
    * Extract the column names from the csv header if it has one. In case of multi-line header the last header line is
    * considered the one that holds the column names. If there is no header the columns will be named f1, f2, f3 ...
@@ -111,11 +113,6 @@ class SqlContextHelper(sqlContext: SQLContext) {
     }
   }
 
-  //TODO: Still need to think about the signature of this method. For now just returning false.
-  private def canConvertToMap(str: String ) : Boolean = {
-    false
-  }
-
   /**
    * Discover the time of a given column based on it value. Also perform type promotion to
    * accommodate all the possible values.
@@ -126,15 +123,18 @@ class SqlContextHelper(sqlContext: SQLContext) {
 
     curSchemaEntry match {
       //TODO: Still need to handle the case where a timestamp column get discovered as int when the date format is yyyyMMdd
+      //      Also I do not want to treat any 8 digits id as a date.
+
       //Handling the initial case where the current column schema entry is not set yet
       case null if canConvertToInt(valueStr) => IntegerSchemaEntry(colName)
       case null if canConvertToLong(valueStr) => LongSchemaEntry(colName)
       case null if canConvertToFloat(valueStr) => FloatSchemaEntry(colName)
       case null if canConvertToDouble(valueStr) => DoubleSchemaEntry(colName)
       case null if canConvertToBoolean(valueStr) => BooleanSchemaEntry(colName)
-      //TODO: Checking only for one date format
       case null if canConvertToDate(valueStr,"yyyyMMdd") => TimestampSchemaEntry(colName,"yyyyMMdd")
-      //TODO: Still need to check if we can convert to Map.
+      case null if canConvertToDate(valueStr,"dd/MM/yyyy") => TimestampSchemaEntry(colName,"dd/MM/yyyy")
+      case null if canConvertToDate(valueStr,"dd-MM-yyyy") => TimestampSchemaEntry(colName,"dd-MM-yyyy")
+      case null if canConvertToDate(valueStr,"dd-MMM-yyyy") => TimestampSchemaEntry(colName,"dd-MMM-yyyy")
       case null => StringSchemaEntry(colName)
 
       // Handling Integer type and its possible promotions
@@ -162,9 +162,19 @@ class SqlContextHelper(sqlContext: SQLContext) {
       case BooleanSchemaEntry( _ ) if canConvertToBoolean(valueStr) => curSchemaEntry
       case BooleanSchemaEntry( _ ) => StringSchemaEntry(colName)
 
-      //TODO: Need to think if we want to do the map key and value promotions as well.
-      case MapSchemaEntry(c, ktype, valType ) if canConvertToMap(valueStr) => curSchemaEntry
-      case MapSchemaEntry(c, ktype, valType ) => StringSchemaEntry(colName)
+      //The date format should not change, if it did then we will treat the column as String
+      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToDate(valueStr,"yyyyMMdd") =>  curSchemaEntry
+      case TimestampSchemaEntry(colName,"yyyyMMdd") => StringSchemaEntry(colName)
+
+
+      case TimestampSchemaEntry(colName,"dd/MM/yyyy") if canConvertToDate(valueStr,"dd/MM/yyyy") => curSchemaEntry
+      case TimestampSchemaEntry(colName,"dd/MM/yyyy") => StringSchemaEntry(colName)
+
+      case TimestampSchemaEntry(colName,"dd-MM-yyyy") if canConvertToDate(valueStr,"dd-MM-yyyy") => curSchemaEntry
+      case TimestampSchemaEntry(colName,"dd-MM-yyyy") => StringSchemaEntry(colName)
+
+      case TimestampSchemaEntry(colName,"dd-MMM-yyyy") if canConvertToDate(valueStr,"dd-MMM-yyyy") => curSchemaEntry
+      case TimestampSchemaEntry(colName,"dd-MMM-yyyy") => StringSchemaEntry(colName)
 
       case StringSchemaEntry( _ ) => curSchemaEntry
 
@@ -233,5 +243,4 @@ class SqlContextHelper(sqlContext: SQLContext) {
     val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
     applySchemaToRowRDD(rowRDD, schema)
   }
-
 }

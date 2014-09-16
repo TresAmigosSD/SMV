@@ -63,6 +63,7 @@ object StringConversionUtil {
   }
 
   def canConvertToDate(str: String, fmt: String) : Boolean = {
+
     try {
       val fmtObj = new java.text.SimpleDateFormat(fmt)
       fmtObj.parse(str)

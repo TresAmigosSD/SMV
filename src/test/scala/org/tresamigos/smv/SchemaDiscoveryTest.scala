@@ -14,14 +14,14 @@
 
 package org.tresamigos.smv
 
-// TODO: Still need to test more cases such as: Multiline header, empty column value, type promotion and so on.
+// TODO: Still need to test more cases such as: Multiline header, type promotion and so on.
 class SchemaDiscoveryTest extends SparkTestUtil {
   sparkTest("Test schema discovery 1 line header") {
     val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test1.csv")
     val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes.defaultCsvWithHeader)
     val entries = schema.entries
 
-    assert(entries.length === 5)
+    assert(entries.length === 7)
 
     assert(entries(0).structField.name === "id")
     assert(entries(0).typeName === "Integer")
@@ -33,6 +33,10 @@ class SchemaDiscoveryTest extends SparkTestUtil {
     assert(entries(3).typeName === "Float")
     assert(entries(4).structField.name === "active")
     assert(entries(4).typeName === "Boolean")
+    assert(entries(5).structField.name === "address")
+    assert(entries(5).typeName === "String")
+    assert(entries(6).structField.name === "registration_date")
+    assert(entries(6).typeName === "Timestamp")
   }
 
   sparkTest("Test schema discovery no header") {
@@ -53,5 +57,30 @@ class SchemaDiscoveryTest extends SparkTestUtil {
     assert(entries(4).structField.name === "f5")
     assert(entries(4).typeName === "Boolean")
   }
+
+  // TODO: Comment this code out as it is failing until I fix the assumption that the
+  //       header is contained within the first partition (partition with index 0)
+  /*
+  sparkTest("Test schema discovery multi-line header") {
+    val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test3.csv")
+    val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes(',','\"', true, 2))
+    val entries = schema.entries
+
+    for ( entry <- entries) {
+      println( entry.structField.name + " ==> " + entry.typeName )
+    }
+
+    assert(entries.length === 3)
+
+
+
+    assert(entries(0).structField.name === "id")
+    assert(entries(0).typeName === "Integer")
+    assert(entries(1).structField.name === "name")
+    assert(entries(1).typeName === "String")
+    assert(entries(2).structField.name === "age")
+    assert(entries(2).typeName === "Integer")
+  }
+*/
 }
 
