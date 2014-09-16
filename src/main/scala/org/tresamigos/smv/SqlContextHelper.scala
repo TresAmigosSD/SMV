@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.DropRDDFunctions
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.sql.execution.{SparkLogicalPlan, ExistingRdd}
 import org.apache.spark.sql.catalyst.expressions.{GenericRow, Row}
@@ -39,21 +40,12 @@ class SqlContextHelper(sqlContext: SQLContext) {
    * Drop the first rows that are considered as header if hasHeader flag is true.
    */
   private def dropHeader(strRDD: RDD[String], ca: CsvAttributes) : RDD[String] = {
-    val noHeadRDD = if (ca.hasHeader) {
-      // drop the first headerSize rows
-      // TODO: The assumption that the header will be contained in the first partition is wrong
-      strRDD.mapPartitionsWithIndex((idx: Int, rows: Iterator[String]) => {
-
-        if (idx == 0) {
-          rows.drop(ca.headerSize)
-        }
-
-        rows
-      })
-    } else {
-      strRDD
-    }
-
+     val noHeadRDD = if (ca.hasHeader) {
+      val dropFunc = new DropRDDFunctions(strRDD)
+       dropFunc.drop(ca.headerSize)
+     } else {
+       strRDD
+     }
     noHeadRDD
   }
 

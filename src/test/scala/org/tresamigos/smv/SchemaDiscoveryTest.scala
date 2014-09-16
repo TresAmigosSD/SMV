@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-// TODO: Still need to test more cases such as: Multiline header, type promotion and so on.
+// TODO: Still need to add more test cases mainly type promotion.
 class SchemaDiscoveryTest extends SparkTestUtil {
   sparkTest("Test schema discovery 1 line header") {
     val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test1.csv")
@@ -58,21 +58,12 @@ class SchemaDiscoveryTest extends SparkTestUtil {
     assert(entries(4).typeName === "Boolean")
   }
 
-  // TODO: Comment this code out as it is failing until I fix the assumption that the
-  //       header is contained within the first partition (partition with index 0)
-  /*
   sparkTest("Test schema discovery multi-line header") {
     val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test3.csv")
     val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes(',','\"', true, 2))
     val entries = schema.entries
 
-    for ( entry <- entries) {
-      println( entry.structField.name + " ==> " + entry.typeName )
-    }
-
     assert(entries.length === 3)
-
-
 
     assert(entries(0).structField.name === "id")
     assert(entries(0).typeName === "Integer")
@@ -81,6 +72,5 @@ class SchemaDiscoveryTest extends SparkTestUtil {
     assert(entries(2).structField.name === "age")
     assert(entries(2).typeName === "Integer")
   }
-*/
 }
 
