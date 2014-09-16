@@ -20,12 +20,15 @@ class DQMTest extends SparkTestUtil {
   sparkTest("test DQM is Rules") {
     val ssc = sqlContext; import ssc._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "DQMTest/test1.csv")
+    val rejectCounter = new SCCounter(sc)
     val dqm = srdd.dqm()
+                  .registerRejectCounter(rejectCounter)
                   .isBoundValue('age, 0, 100)
                   .isInSet('gender, Set("M", "F"))
                   .isStringFormat('name, """^[A-Z]""".r)
     val res = dqm.verify.collect.map{_.mkString(",")}
     assert(res === Array("Cindy,F,6"))
+    assert(rejectCounter.report === Map("name" -> 1, "age" -> 1, "gender" -> 1))
     val dqm2 = srdd.dqm(true)
                   .isBoundValue('age, 0, 100)
                   .isInSet('gender, Set("M", "F"))

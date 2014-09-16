@@ -20,7 +20,7 @@ import scala.util.matching.Regex
 abstract class DQMRule extends Serializable {
   def symbol: Symbol
   def check(c: Any): Boolean = true
-  def fix(c: Any)(fixCounter: DQMCounter) = c
+  def fix(c: Any)(fixCounter: SMVCounter) = c
 }
 
 case class NoOpRule(symbol: Symbol) extends DQMRule 
@@ -33,7 +33,7 @@ case class BoundRule[T:Ordering](symbol: Symbol, lower: T, upper: T) extends DQM
     ord.lteq(lower, c.asInstanceOf[T]) && ord.lteq(c.asInstanceOf[T], upper) 
   }
 
-  override def fix(c: Any)(fixCounter: DQMCounter) = {
+  override def fix(c: Any)(fixCounter: SMVCounter) = {
     if (ord.lteq(c.asInstanceOf[T], lower)) {
       fixCounter.add(symbol.name + ": toLowerBound")
       lower
@@ -50,7 +50,7 @@ case class SetRule(symbol: Symbol, s: Set[Any], default: Any = null) extends DQM
     s.contains(c)
   }
 
-  override def fix(c: Any)(fixCounter: DQMCounter) = {
+  override def fix(c: Any)(fixCounter: SMVCounter) = {
     if (! s.contains(c)){
       fixCounter.add(symbol.name)
       default
@@ -65,7 +65,7 @@ case class StringFormatRule(symbol: Symbol, r: Regex, default: String => String 
     r.findFirstIn(c.asInstanceOf[String]).nonEmpty
   }
 
-  override def fix(c: Any)(fixCounter: DQMCounter) = {
+  override def fix(c: Any)(fixCounter: SMVCounter) = {
     if (r.findFirstIn(c.asInstanceOf[String]).isEmpty){
       fixCounter.add(symbol.name)
       default(c.asInstanceOf[String])

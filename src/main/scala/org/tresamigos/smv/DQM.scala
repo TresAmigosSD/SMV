@@ -39,8 +39,10 @@ import scala.reflect.ClassTag
  *
  * Example:
  *  val fixCounter = new SCFixCounter(sparkContext)
+ *  val rejectCounter = new SCCounter(sc)
  *  val dqm = srdd.dqm(keepRejected = true)
  *                .registerFixCounter(fixCounter)
+ *                .registerRejectCounter(rejectCounter)
  *                .isBoundValue('age, 0, 100)
  *                .doInSet('gender, Set("M", "F"), "O")
  *                .isStringFormat('name, """^[A-Z]""".r)
@@ -55,7 +57,8 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
   private var isList: Seq[DQMRule] = Nil
   private var doList: Seq[DQMRule] = Nil
   private var verifiedRDD: SchemaRDD = null
-  private var fixCounter: DQMCounter = NoOpCounter
+  private var fixCounter: SMVCounter = NoOpCounter
+  private var rejectCounter: SMVCounter = NoOpCounter
 
   private val sqlContext = srdd.sqlContext
 
@@ -118,13 +121,22 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
     doList = Nil
     verifiedRDD = null
     fixCounter = NoOpCounter
+    rejectCounter = NoOpCounter
+    this
+  }
+
+  /** Register custom RejectCounter
+   *  Default RejectCounter is a NoOp dummy counter
+   */
+  def registerRejectCounter(customRejectCounter: SMVCounter): DQM = {
+    rejectCounter = customRejectCounter
     this
   }
 
   /** Register custom FixCounter
    *  Default FixCounter is a NoOp dummy counter
    */
-  def registerFixCounter(customFixCounter: DQMCounter): DQM = {
+  def registerFixCounter(customFixCounter: SMVCounter): DQM = {
     fixCounter = customFixCounter
     this
   }
@@ -157,7 +169,7 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
                       srdd.selectPlus(Alias(GetField(CheckRejectLog(isRuleList, isExprList), "_isRejected"), "_isRejected")(),
                                       Alias(GetField(CheckRejectLog(isRuleList, isExprList), "_rejectReason"), "_rejectReason")() )
                     else
-                      srdd.where(CheckPassed(isRuleList, isExprList))
+                      srdd.where(CheckPassed(isRuleList, isExprList, rejectCounter))
 
       verifiedRDD = if (doRuleList.isEmpty) isRdd 
                   else isRdd.select(createDoSelect(doRuleList): _*)
@@ -177,7 +189,7 @@ object DQM {
 
 /** Expression only used by DQM verify
  */
-case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression])
+case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression], rejectCounter: SMVCounter)
   extends Expression {
 
   type EvaluatedType = Boolean
@@ -186,9 +198,15 @@ case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression])
   def nullable = true
 
   override def eval(input: Row): Boolean = {
+    var isFirst = true
     children.zip(rules).map{ case (child, rule) => 
       val v = child.eval(input)
-      rule.check(v)
+      val pass = rule.check(v)
+      if (!pass && isFirst) {
+        rejectCounter.add(rule.symbol.name)
+        isFirst = false
+      }
+      pass
     }.reduce(_ && _)
   }
 }

@@ -19,15 +19,18 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import scala.collection.mutable.{Map => MutableMap}
 
-abstract class DQMCounter extends Serializable {
+/** 
+ * SMVCounter is a general logger which wrapped around an accumulable of a mutable Map
+ */
+abstract class SMVCounter extends Serializable {
   val add: String => Unit = {name:String => Unit}
   def report: Map[String, Long] = Map()
   def apply(name: String): Long = report.getOrElse(name, 0L)
 }
 
-object NoOpCounter extends DQMCounter 
+object NoOpCounter extends SMVCounter 
 
-class SCCounter(sparkContext: SparkContext) extends DQMCounter {
+class SCCounter(sparkContext: SparkContext) extends SMVCounter {
 
   implicit def histParam[T] = new AccumulableParam[MutableMap[T, Long], T]{
     def zero(initialValue: MutableMap[T, Long]): MutableMap[T, Long] = {
