@@ -30,5 +30,16 @@ class DQMTest extends SparkTestUtil {
     val res3 = dqm3.verify.first
     assertDoubleSeqEqual(res3, List(1.0, 11.0))
   }
+
+  sparkTest("test DQM fixCouner") {
+    val ssc = sqlContext; import ssc._
+    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
+    val fixCounter = new SCFixCounter(sc)
+    val dqm = srdd.dqm().registerFixCounter(fixCounter).doBoundValue('b, 11.0, 30.0)
+    val res = dqm.verify.first
+    assertDoubleSeqEqual(res, List(1.0, 11.0))
+    assert(fixCounter("b") === 1)
+    assert(fixCounter("a") === 0)
+  }
 }
 

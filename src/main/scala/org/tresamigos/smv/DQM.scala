@@ -14,6 +14,7 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types._
@@ -61,6 +62,7 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
   private var isList: Seq[DQMRule] = Nil
   private var doList: Seq[DQMRule] = Nil
   private var verifiedRDD: SchemaRDD = null
+  private var fixCounter: DQMFixCounter = NoOpFixCounter
 
   private val sqlContext = srdd.sqlContext
 
@@ -81,15 +83,20 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
     this
   }
 
+  def registerFixCounter(customFixCounter: DQMFixCounter): DQM = {
+    fixCounter = customFixCounter
+    this
+  }
+
   private def createDoSelect(rules: Seq[DQMRule]): Seq[Expression] = {
     val ruleMap = rules.map{r => (r.symbol, r)}.toMap
-    val all = srdd.schema.fields
-    all.map{ field =>
+    srdd.schema.fields.map{ field =>
       val sym = Symbol(field.name)
       val expr = sqlContext.symbolToUnresolvedAttribute(sym)
       if (ruleMap.contains(sym)) {
+        val counter = fixCounter  // for serialization. It will not work if moved out from this scope
         val rule = ruleMap.get(sym).get
-        Alias(ScalaUdf(rule.fix, field.dataType, Seq(expr)), expr.name)() 
+        Alias(ScalaUdf({x:Any => {rule.fix(x)(counter)}}, field.dataType, Seq(expr)), expr.name)() 
       } else {
         expr
       }

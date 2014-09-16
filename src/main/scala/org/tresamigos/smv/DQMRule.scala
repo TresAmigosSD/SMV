@@ -14,12 +14,11 @@
 
 package org.tresamigos.smv
 
-
 // TODO: missing doc.  What does FR stand for?
 abstract class DQMRule extends Serializable {
   def symbol: Symbol
   def check(c: Any): Boolean = true
-  val fix: Any => Any = {c => c}
+  def fix(c: Any)(fixCounter: DQMFixCounter) = c
 }
 
 case class NoOpRule(symbol: Symbol) extends DQMRule 
@@ -32,11 +31,16 @@ case class BoundRule[T:Ordering](symbol: Symbol, lower: T, upper: T) extends DQM
     ord.lteq(lower, c.asInstanceOf[T]) && ord.lteq(c.asInstanceOf[T], upper) 
   }
 
-  override val fix: Any => Any = { c =>
-    if (ord.lteq(c.asInstanceOf[T], lower)) lower
-    else if (ord.lteq(upper, c.asInstanceOf[T])) upper
-    else c
+  override def fix(c: Any)(fixCounter: DQMFixCounter) = {
+    if (ord.lteq(c.asInstanceOf[T], lower)) {
+      fixCounter.addFixed(symbol.name)
+      lower
+    } else if (ord.lteq(upper, c.asInstanceOf[T])) {
+      fixCounter.addFixed(symbol.name)
+      upper
+    } else c
   }
+
 }
 
 case class SetRule[T](symbol: Symbol, s: Set[T]) extends DQMRule {
