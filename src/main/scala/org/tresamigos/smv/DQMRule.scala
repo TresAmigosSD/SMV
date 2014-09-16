@@ -20,7 +20,7 @@ import scala.util.matching.Regex
 abstract class DQMRule extends Serializable {
   def symbol: Symbol
   def check(c: Any): Boolean = true
-  def fix(c: Any)(fixCounter: DQMFixCounter) = c
+  def fix(c: Any)(fixCounter: DQMCounter) = c
 }
 
 case class NoOpRule(symbol: Symbol) extends DQMRule 
@@ -33,12 +33,12 @@ case class BoundRule[T:Ordering](symbol: Symbol, lower: T, upper: T) extends DQM
     ord.lteq(lower, c.asInstanceOf[T]) && ord.lteq(c.asInstanceOf[T], upper) 
   }
 
-  override def fix(c: Any)(fixCounter: DQMFixCounter) = {
+  override def fix(c: Any)(fixCounter: DQMCounter) = {
     if (ord.lteq(c.asInstanceOf[T], lower)) {
-      fixCounter.addFixed(symbol.name)
+      fixCounter.add(symbol.name + ": toLowerBound")
       lower
     } else if (ord.lteq(upper, c.asInstanceOf[T])) {
-      fixCounter.addFixed(symbol.name)
+      fixCounter.add(symbol.name + ": toUpperBound")
       upper
     } else c
   }
@@ -50,9 +50,9 @@ case class SetRule(symbol: Symbol, s: Set[Any], default: Any = null) extends DQM
     s.contains(c)
   }
 
-  override def fix(c: Any)(fixCounter: DQMFixCounter) = {
+  override def fix(c: Any)(fixCounter: DQMCounter) = {
     if (! s.contains(c)){
-      fixCounter.addFixed(symbol.name)
+      fixCounter.add(symbol.name)
       default
     } else {
       c
@@ -60,21 +60,18 @@ case class SetRule(symbol: Symbol, s: Set[Any], default: Any = null) extends DQM
   }
 }
 
-case class StringFormatRule(symbol: Symbol, r: Regex, default: String = "") extends DQMRule {
+case class StringFormatRule(symbol: Symbol, r: Regex, default: String => String = {c => ""}) extends DQMRule {
   override def check(c: Any): Boolean = {
     r.findFirstIn(c.asInstanceOf[String]).nonEmpty
   }
 
-  override def fix(c: Any)(fixCounter: DQMFixCounter) = {
+  override def fix(c: Any)(fixCounter: DQMCounter) = {
     if (r.findFirstIn(c.asInstanceOf[String]).isEmpty){
-      fixCounter.addFixed(symbol.name)
-      default
+      fixCounter.add(symbol.name)
+      default(c.asInstanceOf[String])
     } else {
       c
     }
   }
 }
 
-//TODO: add reject loging
-//TODO: UpperBoundRule, LowerBoundRule, InYearRule, InPastRule, InFutureRule,
-//etc.

@@ -19,15 +19,15 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import scala.collection.mutable.{Map => MutableMap}
 
-abstract class DQMFixCounter extends Serializable {
-  val addFixed: String => Unit = {name:String => Unit}
+abstract class DQMCounter extends Serializable {
+  val add: String => Unit = {name:String => Unit}
   def report: Map[String, Long] = Map()
   def apply(name: String): Long = report.getOrElse(name, 0L)
 }
 
-object NoOpFixCounter extends DQMFixCounter 
+object NoOpCounter extends DQMCounter 
 
-class SCFixCounter(sparkContext: SparkContext) extends DQMFixCounter {
+class SCCounter(sparkContext: SparkContext) extends DQMCounter {
 
   implicit def histParam[T] = new AccumulableParam[MutableMap[T, Long], T]{
     def zero(initialValue: MutableMap[T, Long]): MutableMap[T, Long] = {
@@ -43,13 +43,13 @@ class SCFixCounter(sparkContext: SparkContext) extends DQMFixCounter {
     }
   }
 
-  private val fixedRecords = sparkContext.accumulable[MutableMap[String, Long], String](MutableMap[String, Long]())
+  private val records = sparkContext.accumulable[MutableMap[String, Long], String](MutableMap[String, Long]())
 
-  override val addFixed: String => Unit = {name => 
-    fixedRecords += name
+  override val add: String => Unit = {name => 
+    records += name
     Unit
   }
  
-  override def report: Map[String, Long] = fixedRecords.value.toMap
+  override def report: Map[String, Long] = records.value.toMap
 }
 

@@ -17,45 +17,41 @@ package org.tresamigos.smv
 import org.apache.spark.sql.catalyst.types._
 
 class DQMTest extends SparkTestUtil {
-  sparkTest("test DQM basic") {
+  sparkTest("test DQM is Rules") {
     val ssc = sqlContext; import ssc._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "DQMTest/test1.csv")
-    val dqm = srdd.dqm().isBoundValue('b, 1.0, 20.0)
-    val res = dqm.verify.collect
-    assert(res.size === 2)
-    val dqm2 = srdd.dqm(true).isBoundValue('b, 11.0, 30.0)
-    val res2 = dqm2.verify.where('_isRejected === true).select('_rejectReason).first
-    assert(res2(0) === "b")
-    val dqm3 = srdd.dqm().doBoundValue('b, 11.0, 30.0)
-    val res3 = dqm3.verify.first
-    assertDoubleSeqEqual(res3, List(1.0, 11.0))
+    val dqm = srdd.dqm()
+                  .isBoundValue('age, 0, 100)
+                  .isInSet('gender, Set("M", "F"))
+                  .isStringFormat('name, """^[A-Z]""".r)
+    val res = dqm.verify.collect.map{_.mkString(",")}
+    assert(res === Array("Cindy,F,6"))
+    val dqm2 = srdd.dqm(true)
+                  .isBoundValue('age, 0, 100)
+                  .isInSet('gender, Set("M", "F"))
+                  .isStringFormat('name, """^[A-Z]""".r)
+    val res2 = dqm2.verify.where('_isRejected === true).select('_rejectReason).collect
+    assert(res2.map(_(0)) === Array("age", "name", "gender"))
   }
 
-  sparkTest("test DQM fixCouner") {
+  sparkTest("test DQM do Rules") {
     val ssc = sqlContext; import ssc._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "DQMTest/test1.csv")
-    val fixCounter = new SCFixCounter(sc)
-    val dqm = srdd.dqm().registerFixCounter(fixCounter).doBoundValue('b, 11.0, 30.0)
-    val res = dqm.verify.first
-    assertDoubleSeqEqual(res, List(1.0, 11.0))
-    assert(fixCounter("b") === 1)
-    assert(fixCounter("a") === 0)
-  }
-
-  sparkTest("test DQM others") {
-    val ssc = sqlContext; import ssc._
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "DQMTest/test2.csv")
-    val fixCounter = new SCFixCounter(sc)
+    val fixCounter = new SCCounter(sc)
     val dqm = srdd.dqm()
                   .registerFixCounter(fixCounter)
                   .doBoundValue('age, 0, 100)
                   .doInSet('gender, Set("M", "F"), "O")
-                  .isStringFormat('name, """^[A-Z]""".r)
+                  .doStringFormat('name, """^[A-Z]""".r, {s => "X_" + s})
     val res = dqm.verify.collect.map{_.mkString(",")}
-    assert(res === Array("Jack,M,100", 
+    assert(res === Array("Jack,M,100",
+                         "X_jim,M,40",
+                         "Tom,O,29",
                          "Cindy,F,6"))
-    assert(fixCounter("age") === 1)
-    assert(fixCounter("gender") === 0) // is* rules always fire before do* rules
+
+    assert(fixCounter("age: toUpperBound") === 1)
+    assert(fixCounter("gender") === 1) 
+    assert(fixCounter("name") === 1) 
   }
  
 }

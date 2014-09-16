@@ -14,7 +14,6 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types._
@@ -22,90 +21,110 @@ import org.apache.spark.storage.StorageLevel
 import scala.util.matching.Regex
 import scala.reflect.ClassTag
 
-// TODO: needs doc.
-case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression])
-  extends Expression {
-
-  type EvaluatedType = Boolean
-  val dataType = BooleanType
-
-  def nullable = true
-
-  override def eval(input: Row): Boolean = {
-    children.zip(rules).map{ case (child, rule) => 
-      val v = child.eval(input)
-      rule.check(v)
-    }.reduce(_ && _)
-  }
-}
-
-case class CheckRejectLog(rules: Seq[DQMRule], children: Seq[Expression])
-  extends Expression {
-
-  type EvaluatedType = Row
-  val dataType = StructType(Seq(StructField("_isRejected", BooleanType, false), 
-                            StructField("_rejectReason", StringType, true)))
-
-  def nullable = false
-
-  override def eval(input: Row): Row = {
-    val rej = children.zip(rules).filter{ case (child, rule) =>
-      ! rule.check(child.eval(input))
-    }
-    val rejlog = if (rej.isEmpty) Array(false, "") else Array(true, rej.head._2.symbol.name)
-    new GenericRow(rejlog)
-  }
-}
-
-// TODO: needs doc.
+/** 
+ * DQM class for data quality check and fix
+ * 
+ * It is a builder class and support 2 types of tasks: is* and do*, 
+ * where is* is for data checking and do* is for fixing.
+ *
+ * Supported tasks:
+ *     isBoundValue, doBoundValue
+ *     isInSet, doInSet
+ *     isStringFormat, doStringFormat
+ * Other Methods:
+ *     clean: clean task lists
+ *     registerFixCounter: register a custom FixCounter for fix logging
+ * Generate result:
+ *     verify: return verified SchemaRDD 
+ *
+ * Example:
+ *  val fixCounter = new SCFixCounter(sparkContext)
+ *  val dqm = srdd.dqm(keepRejected = true)
+ *                .registerFixCounter(fixCounter)
+ *                .isBoundValue('age, 0, 100)
+ *                .doInSet('gender, Set("M", "F"), "O")
+ *                .isStringFormat('name, """^[A-Z]""".r)
+ *  val rejects = dqm2.verify.where('_isRejected === true).select('_rejectReason)
+ *
+ *  @param srdd the SchemaRDD this DQM works on
+ *  @param keepRejected keep rejected records with "_isRejected" and
+ *  "_rejectReason" fiels or filter out rejected records
+ */
 class DQM(srdd: SchemaRDD, keepRejected: Boolean) { 
 
   private var isList: Seq[DQMRule] = Nil
   private var doList: Seq[DQMRule] = Nil
   private var verifiedRDD: SchemaRDD = null
-  private var fixCounter: DQMFixCounter = NoOpFixCounter
+  private var fixCounter: DQMCounter = NoOpCounter
 
   private val sqlContext = srdd.sqlContext
 
+  /** Add BoundValue check task
+   *  Check whether value of field "s" in between of "lower" and "upper"
+   */
   def isBoundValue[T:Ordering](s: Symbol, lower: T, upper: T)(implicit tt: ClassTag[T]): DQM = {
     isList = isList :+ BoundRule[T](s, lower, upper)
     this
   }
 
+  /** Add BoundValue fix task
+   *  Check whether value of field "s" in between of "lower" and "upper", if
+   *  not, cap it.
+   */
   def doBoundValue[T:Ordering](s: Symbol, lower: T, upper: T)(implicit tt: ClassTag[T]): DQM = {
     doList = doList :+ BoundRule[T](s, lower, upper)
     this
   }
 
+  /** Add InSet check task
+   *  Check whether value of field "s" is in "set"
+   */
   def isInSet(s: Symbol, set: Set[Any]): DQM = {
     isList = isList :+ SetRule(s, set)
     this
   }
 
+  /** Add InSet fix task
+   *  Check whether value of field "s" is in "set", if not, replace by
+   *  "default"
+   */
   def doInSet(s: Symbol, set: Set[Any], default: Any): DQM = {
     doList = doList :+ SetRule(s, set, default)
     this
   }
 
+  /** Add StringFormat check task
+   *  Check whether value of field "s" matchs "r"
+   */
   def isStringFormat(s: Symbol, r: Regex): DQM = {
     isList = isList :+ StringFormatRule(s, r)
     this
   }
 
-  def doStringFormat(s: Symbol, r: Regex, default: String): DQM = {
+  /** Add StringFormat fix task
+   *  Check whether value of field "s" matchs "r", if not, convert "s" by
+   *  applying "default" function
+   */
+  def doStringFormat(s: Symbol, r: Regex, default: String => String): DQM = {
     doList = doList :+ StringFormatRule(s, r, default)
     this
   }
 
 
+  /** Clean up DQM by removing all existing tasks
+   */
   def clean: DQM = {
     isList = Nil
     doList = Nil
     verifiedRDD = null
+    fixCounter = NoOpCounter
     this
   }
 
-  def registerFixCounter(customFixCounter: DQMFixCounter): DQM = {
+  /** Register custom FixCounter
+   *  Default FixCounter is a NoOp dummy counter
+   */
+  def registerFixCounter(customFixCounter: DQMCounter): DQM = {
     fixCounter = customFixCounter
     this
   }
@@ -125,6 +144,8 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
     }
   }
 
+  /** Create verified SchemaRDD
+   */
   def verify: SchemaRDD = {
     if (verifiedRDD == null){
       val isExprList = isList.map{l => sqlContext.symbolToUnresolvedAttribute(l.symbol)} // for serialization 
@@ -153,3 +174,43 @@ object DQM {
     new DQM(srdd, keepReject)
   }
 }
+
+/** Expression only used by DQM verify
+ */
+case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression])
+  extends Expression {
+
+  type EvaluatedType = Boolean
+  val dataType = BooleanType
+
+  def nullable = true
+
+  override def eval(input: Row): Boolean = {
+    children.zip(rules).map{ case (child, rule) => 
+      val v = child.eval(input)
+      rule.check(v)
+    }.reduce(_ && _)
+  }
+}
+
+/** Expression only used by DQM verify
+ */
+case class CheckRejectLog(rules: Seq[DQMRule], children: Seq[Expression])
+  extends Expression {
+
+  type EvaluatedType = Row
+  val dataType = StructType(Seq(StructField("_isRejected", BooleanType, false), 
+                            StructField("_rejectReason", StringType, true)))
+
+  def nullable = false
+
+  override def eval(input: Row): Row = {
+    val rej = children.zip(rules).filter{ case (child, rule) =>
+      ! rule.check(child.eval(input))
+    }
+    val rejlog = if (rej.isEmpty) Array(false, "") else Array(true, rej.head._2.symbol.name)
+    new GenericRow(rejlog)
+  }
+}
+
+
