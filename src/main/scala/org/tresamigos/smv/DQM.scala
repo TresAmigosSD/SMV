@@ -19,6 +19,7 @@ import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.storage.StorageLevel
+import scala.util.matching.Regex
 import scala.reflect.ClassTag
 
 // TODO: needs doc.
@@ -76,6 +77,27 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
     this
   }
 
+  def isInSet(s: Symbol, set: Set[Any]): DQM = {
+    isList = isList :+ SetRule(s, set)
+    this
+  }
+
+  def doInSet(s: Symbol, set: Set[Any], default: Any): DQM = {
+    doList = doList :+ SetRule(s, set, default)
+    this
+  }
+
+  def isStringFormat(s: Symbol, r: Regex): DQM = {
+    isList = isList :+ StringFormatRule(s, r)
+    this
+  }
+
+  def doStringFormat(s: Symbol, r: Regex, default: String): DQM = {
+    doList = doList :+ StringFormatRule(s, r, default)
+    this
+  }
+
+
   def clean: DQM = {
     isList = Nil
     doList = Nil
@@ -109,15 +131,16 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
       val isRuleList = isList // for serialization 
       val doRuleList = doList // for serialization 
 
-      val doRdd = if (doRuleList.isEmpty) srdd 
-                  else srdd.select(createDoSelect(doRuleList): _*)
-
-      verifiedRDD = if (isRuleList.isEmpty) doRdd
+      val isRdd = if (isRuleList.isEmpty) srdd
                     else if (keepRejected) 
-                      doRdd.selectPlus(Alias(GetField(CheckRejectLog(isRuleList, isExprList), "_isRejected"), "_isRejected")(),
+                      srdd.selectPlus(Alias(GetField(CheckRejectLog(isRuleList, isExprList), "_isRejected"), "_isRejected")(),
                                       Alias(GetField(CheckRejectLog(isRuleList, isExprList), "_rejectReason"), "_rejectReason")() )
                     else
-                      doRdd.where(CheckPassed(isRuleList, isExprList))
+                      srdd.where(CheckPassed(isRuleList, isExprList))
+
+      verifiedRDD = if (doRuleList.isEmpty) isRdd 
+                  else isRdd.select(createDoSelect(doRuleList): _*)
+
       verifiedRDD.persist(StorageLevel.MEMORY_AND_DISK)
     } 
     verifiedRDD

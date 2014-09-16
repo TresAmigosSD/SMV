@@ -17,9 +17,9 @@ package org.tresamigos.smv
 import org.apache.spark.sql.catalyst.types._
 
 class DQMTest extends SparkTestUtil {
-  sparkTest("test DQM") {
+  sparkTest("test DQM basic") {
     val ssc = sqlContext; import ssc._
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
+    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "DQMTest/test1.csv")
     val dqm = srdd.dqm().isBoundValue('b, 1.0, 20.0)
     val res = dqm.verify.collect
     assert(res.size === 2)
@@ -33,7 +33,7 @@ class DQMTest extends SparkTestUtil {
 
   sparkTest("test DQM fixCouner") {
     val ssc = sqlContext; import ssc._
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
+    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "DQMTest/test1.csv")
     val fixCounter = new SCFixCounter(sc)
     val dqm = srdd.dqm().registerFixCounter(fixCounter).doBoundValue('b, 11.0, 30.0)
     val res = dqm.verify.first
@@ -41,5 +41,22 @@ class DQMTest extends SparkTestUtil {
     assert(fixCounter("b") === 1)
     assert(fixCounter("a") === 0)
   }
+
+  sparkTest("test DQM others") {
+    val ssc = sqlContext; import ssc._
+    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "DQMTest/test2.csv")
+    val fixCounter = new SCFixCounter(sc)
+    val dqm = srdd.dqm()
+                  .registerFixCounter(fixCounter)
+                  .doBoundValue('age, 0, 100)
+                  .doInSet('gender, Set("M", "F"), "O")
+                  .isStringFormat('name, """^[A-Z]""".r)
+    val res = dqm.verify.collect.map{_.mkString(",")}
+    assert(res === Array("Jack,M,100", 
+                         "Cindy,F,6"))
+    assert(fixCounter("age") === 1)
+    assert(fixCounter("gender") === 0) // is* rules always fire before do* rules
+  }
+ 
 }
 
