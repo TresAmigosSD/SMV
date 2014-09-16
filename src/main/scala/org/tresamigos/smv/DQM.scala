@@ -38,11 +38,9 @@ import scala.reflect.ClassTag
  *     verify: return verified SchemaRDD 
  *
  * Example:
- *  val fixCounter = new SCFixCounter(sparkContext)
- *  val rejectCounter = new SCCounter(sc)
+ *  val fixCounter = new SCCounter(sparkContext)
  *  val dqm = srdd.dqm(keepRejected = true)
  *                .registerFixCounter(fixCounter)
- *                .registerRejectCounter(rejectCounter)
  *                .isBoundValue('age, 0, 100)
  *                .doInSet('gender, Set("M", "F"), "O")
  *                .isStringFormat('name, """^[A-Z]""".r)
