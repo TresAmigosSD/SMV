@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import scala.util.matching.Regex
+
 // TODO: missing doc.  What does FR stand for?
 abstract class DQMRule extends Serializable {
   def symbol: Symbol
@@ -43,9 +45,33 @@ case class BoundRule[T:Ordering](symbol: Symbol, lower: T, upper: T) extends DQM
 
 }
 
-case class SetRule[T](symbol: Symbol, s: Set[T]) extends DQMRule {
+case class SetRule(symbol: Symbol, s: Set[Any], default: Any = null) extends DQMRule {
   override def check(c: Any): Boolean = {
-    s.contains(c.asInstanceOf[T])
+    s.contains(c)
+  }
+
+  override def fix(c: Any)(fixCounter: DQMFixCounter) = {
+    if (! s.contains(c)){
+      fixCounter.addFixed(symbol.name)
+      default
+    } else {
+      c
+    }
+  }
+}
+
+case class StringFormatRule(symbol: Symbol, r: Regex, default: String = "") extends DQMRule {
+  override def check(c: Any): Boolean = {
+    r.findFirstIn(c.asInstanceOf[String]).nonEmpty
+  }
+
+  override def fix(c: Any)(fixCounter: DQMFixCounter) = {
+    if (r.findFirstIn(c.asInstanceOf[String]).isEmpty){
+      fixCounter.addFixed(symbol.name)
+      default
+    } else {
+      c
+    }
   }
 }
 
