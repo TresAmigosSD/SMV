@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{DropRDDFunctions, RDD}
 import org.apache.spark.sql.catalyst.expressions.{GenericMutableRow, Row}
 import org.apache.spark.SparkContext._
 import scala.reflect.ClassTag
@@ -47,6 +47,19 @@ class RDDHelper[T](rdd: RDD[T])(implicit tt: ClassTag[T]){
   /** Same as rdd.saveAsTextFile, but save as gzip file */
   def saveAsGZFile(outFile: String) {
     rdd.saveAsTextFile(outFile,classOf[org.apache.hadoop.io.compress.GzipCodec])
+  }
+
+  /**
+   * Drop the specified number of first rows from the RDD and return the new one.
+   */
+  def dropRows( num: Int): RDD[T] = {
+    if (num > 0) {
+      val dropFunc = new DropRDDFunctions(rdd)
+      dropFunc.drop(num)
+    } else {
+      rdd
+    }
+
   }
 }
 

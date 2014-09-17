@@ -37,25 +37,12 @@ class SqlContextHelper(sqlContext: SQLContext) {
   }
 
   /**
-   * Drop the first rows that are considered as header if hasHeader flag is true.
-   */
-  private def dropHeader(strRDD: RDD[String], ca: CsvAttributes) : RDD[String] = {
-     val noHeadRDD = if (ca.hasHeader) {
-      val dropFunc = new DropRDDFunctions(strRDD)
-       dropFunc.drop(ca.headerSize)
-     } else {
-       strRDD
-     }
-    noHeadRDD
-  }
-
-  /**
    * Create a SchemaRDD from a file by applying a Schema object.
    */
   def csvFileAddSchema(dataPath: String, schema: Schema)
                       (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD = {
     val strRDD = sqlContext.sparkContext.textFile(dataPath)
-    val noHeadRDD = dropHeader(strRDD, ca)
+    val noHeadRDD = strRDD.dropRows(ca.headerSize)
     val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
     applySchemaToRowRDD(rowRDD, schema)
   }
@@ -84,7 +71,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
   private def getColumnNames(strRDD: RDD[String], ca: CsvAttributes) : Array[String] = {
     val parser = new CSVParser(ca.delimiter)
 
-    if (ca.hasHeader) {
+    if (ca.headerSize > 0) {
       val completeHeader = strRDD.take(ca.headerSize)
       // Assuming the column names are going to be the last line of the header.
       // Is this the wrong assumption? Maybe
@@ -187,7 +174,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
 
     val columns = getColumnNames(strRDD,ca)
 
-    val noHeadRDD = dropHeader(strRDD, ca)
+    val noHeadRDD = strRDD.dropRows(ca.headerSize)
 
     var schemaEntries = new scala.collection.mutable.ArrayBuffer[SchemaEntry]
     for (i <- 0 until columns.length) schemaEntries += null
@@ -231,7 +218,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
                                 (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD =  {
     val strRDD = sqlContext.sparkContext.textFile(dataPath)
     val schema = discoverSchema(strRDD, numLines, ca)
-    val noHeadRDD = dropHeader(strRDD, ca)
+    val noHeadRDD = strRDD.dropRows(ca.headerSize)
     val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
     applySchemaToRowRDD(rowRDD, schema)
   }

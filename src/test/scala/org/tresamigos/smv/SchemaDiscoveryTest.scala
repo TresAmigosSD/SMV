@@ -60,7 +60,7 @@ class SchemaDiscoveryTest extends SparkTestUtil {
 
   sparkTest("Test schema discovery multi-line header") {
     val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test3.csv")
-    val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes(',','\"', true, 2))
+    val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes(',','\"', 2))
     val entries = schema.entries
 
     assert(entries.length === 3)
