@@ -21,6 +21,7 @@ import scala.reflect.ClassTag
 
 package object smv {
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
+  implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
   implicit def makeSchemaRDDHelper(srdd: SchemaRDD) = new SchemaRDDHelper(srdd)
 
   implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
@@ -29,5 +30,4 @@ package object smv {
     new RDDHelper[T](rdd)
   implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) = 
     new PairRDDHelper[K,V](rdd)
-
 }
