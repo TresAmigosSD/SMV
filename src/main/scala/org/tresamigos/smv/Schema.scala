@@ -140,6 +140,18 @@ object SchemaEntry {
     require(nameAndTypeArray.size == 2)
     SchemaEntry(nameAndTypeArray(0), nameAndTypeArray(1))
   }
+
+  /**
+   * maps a given value of any type into a valid column name by transforming invalid
+   * characters to "_" and reducing multiple "_" into a single "_" and remove leading/trailing "_"
+   * For example:
+   * "5/14/2014" --> "5_14_2014"
+   * "Hello There !" --> "Hello_There"
+   * "Hi, bye" --> "Hi_bye"
+   */
+  def valueToColumnName(value: Any) : String = {
+    "[^a-zA-Z0-9]+".r.replaceAllIn(value.toString, "_").stripPrefix("_").stripSuffix("_")
+  }
 }
 
 class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {

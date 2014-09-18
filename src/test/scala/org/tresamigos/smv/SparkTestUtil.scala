@@ -100,6 +100,17 @@ trait SparkTestUtil extends FunSuite {
     }
 
   }
+
+  /**
+   * Create a schemaRDD from a schema string and a data string.
+   * The data string is assumed to be csv with no header and lines seperated by ";"
+   */
+  def createSchemaRdd(schemaStr: String, data: String) = {
+    val schema = Schema.fromString(schemaStr)
+    val dataArray = data.split(";").map(_.trim)
+    val rowRDD = sc.makeRDD(dataArray).csvToSeqStringRDD.seqStringRDDToRowRDD(schema)
+    sqlContext.applySchemaToRowRDD(rowRDD, schema)
+  }
 }
 
 object SparkTestUtil {
