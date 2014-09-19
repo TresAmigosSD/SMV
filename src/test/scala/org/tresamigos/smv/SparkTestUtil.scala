@@ -98,7 +98,6 @@ trait SparkTestUtil extends FunSuite {
     sortedResSeq.zip(sortedExpSeq).foreach {
       case (a,b) => assert(a == b, s"because array element $a not equal $b")
     }
-
   }
 
   /**

@@ -22,7 +22,7 @@ class PivotTest extends SparkTestUtil {
          x,p1_2,p2A,p3X,6;
          x,p1_1,p2B,p3X,7""")
 
-    val res = new PivotOp(srdd, 'k, Seq('p1, 'p2, 'p3), 'v).getFlatColumnNames
+    val res = new PivotOp(srdd, 'k, Seq('p1, 'p2, 'p3), 'v).outputColumnNames
     assertUnorderedSeqEqual(res, Seq(
       "v_p1_1_p2A_p3X",
       "v_p1_1_p2B_p3X",
@@ -36,7 +36,7 @@ class PivotTest extends SparkTestUtil {
          p1_1,p2/A,p3X,6;
          ,p2/B,p3X,7""")
 
-    val res = new PivotOp(srdd, 'k, Seq('p1, 'p2, 'p3), 'v).getFlatColumnNames
+    val res = new PivotOp(srdd, 'k, Seq('p1, 'p2, 'p3), 'v).outputColumnNames
     assertUnorderedSeqEqual(res, Seq(
       "v_p1_1_p2_B_p3X",
       "v_p1_1_p2_B",
@@ -51,7 +51,7 @@ class PivotTest extends SparkTestUtil {
   sparkTest("Test creation of unique column names with 1 pivot column") {
     val srdd = createSchemaRdd("p1:String; v:String","p1_1,5; p1_2, 6")
 
-    val res = new PivotOp(srdd, 'k, Seq('p1), 'v).getFlatColumnNames
+    val res = new PivotOp(srdd, 'k, Seq('p1), 'v).outputColumnNames
     assertUnorderedSeqEqual(res, Seq(
       "v_p1_1",
       "v_p1_2"))
@@ -63,7 +63,25 @@ class PivotTest extends SparkTestUtil {
 
     val res = new PivotOp(srdd, 'k, Seq('p1, 'p2), 'v).addSmvPivotValColumn.collect
     assertUnorderedSeqEqual(res.map(_.toString), Seq(
-      "[1,v_p1a_p2a]",
-      "[1,v_p1b_p2b]"))
+      "[1,v_p1a_p2a,5]",
+      "[1,v_p1b_p2b,6]"))
+  }
+
+  sparkTest("Test pivot_sum function") {
+    val srdd = createSchemaRdd("k:String; p1:String; p2:String; v:Integer",
+      "1,p1/a,p2a,100;" +
+      "1,p1!b,p2b,200;" +
+      "1,p1/a,p2b,300;" +
+      "1,p1!b,p2a,400;" +
+      "1,p1/a,p2a,500;" + // same key as first row!
+      "2,p1/a,p2a,600") // test with a single input row per key
+
+    val res = srdd.pivot_sum('k, Seq('p1, 'p2), 'v)
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1,600,300,400,200]",
+      "[2,600,0,0,0]"))
+
+    val fieldNames = res.schema.fieldNames.toList
+    assert(fieldNames === Seq("k", "v_p1_a_p2a", "v_p1_a_p2b", "v_p1_b_p2a", "v_p1_b_p2b"))
   }
 }

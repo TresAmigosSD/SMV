@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.{Sum, Row, Expression}
+import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types.{StringType, DataType}
 
 /**
@@ -51,15 +51,19 @@ class PivotOp(origSRDD: SchemaRDD,
   // TODO: allow multiple key columns.
   // TODO: allow multiple value columns.
 
+  import origSRDD.sqlContext._
+
+  val outputColumnNames = getFlatColumnNames()
+  val tempPivotValCol = '_smv_pivot_val
+  val keyColExpr = UnresolvedAttribute(keyCol.name)
+
   /**
    * Extract the column names from the data.
    * This is done by getting the distinct string values of each column and taking the cartesian product.
    * The value column name is then prepended to create the final column names.
    * Return: Seq["count_5_14_A", "count_5_14_B", ...]
    */
-  private[smv] def getFlatColumnNames() = {
-    import origSRDD.sqlContext._
-
+  private[smv] def getFlatColumnNames(): Seq[String] = {
     // create set of distinct values.
     // this is a seq of array strings where each array is distinct values for a column.
     val distinctVals = pivotCols.map(s => origSRDD.select(s).
@@ -72,32 +76,55 @@ class PivotOp(origSRDD: SchemaRDD,
       (l1,l2) => for(v1 <- l1; v2 <- l2) yield (v1 + "_" + v2))
 
     // prepend value column name to each column and ensure result column name is valid.
-    colNames.map(v => SchemaEntry.valueToColumnName(valueCol.name + "_" + v))
+    colNames.map(v => SchemaEntry.valueToColumnName(valueCol.name + "_" + v)).sorted
   }
 
   /**
    * Create a derived column that contains the concatenation of all the values in
    * the pivot columns.  From the above columns, create a new column with following values:
-   * | key | _smv_pivot_val |
-   * | --- | -------------- |
-   * |  1  | count_5_14_A   |
-   * |  1  | count_5_14_B   |
-   * |  1  | count_6_14_A   |
-   * |  1  | count_6_14_B   |
+   * | key | _smv_pivot_val | count |
+   * | --- | -------------- | ----- |
+   * |  1  | count_5_14_A   |   100 |
+   * |  1  | count_5_14_B   |   200 |
+   * |  1  | count_6_14_A   |   300 |
+   * |  1  | count_6_14_B   |   400 |
    */
   private[smv] def addSmvPivotValColumn() : SchemaRDD = {
     val pivotColsExpr = pivotCols.map(s => UnresolvedAttribute(s.name))
     origSRDD.select(
       UnresolvedAttribute(keyCol.name),
-      SmvPivotVal(pivotColsExpr, valueCol))
+      SmvPivotVal(pivotColsExpr, valueCol) as tempPivotValCol,
+      valueCol)
   }
 
+  /**
+   * Map the output column to the corresponding output column Given the output from addSmvPivotValColumn.
+   * The expected output is:
+   * | key | count_5_14_A | count_5_14_B | ... |
+   * | --- | ------------ | ------------ | --- |
+   * |  1  |     100      |       0      |  0  |
+   * |  1  |       0      |     300      |  0  |
+   * |  1  |       0      |       0      |  0  |
+   * |  1  |       0      |       0      |  0  |
+   */
+  private[smv] def mapValColToOutputCol(srddWithPivotValCol: SchemaRDD) = {
+    val outputColExprs = outputColumnNames.map { col =>
+      If(tempPivotValCol === col, valueCol, 0) as Symbol(col)
+    }
+    srddWithPivotValCol.select((keyColExpr as 'k) +: outputColExprs: _*)
+  }
+
+  /**
+   * Perform the actual pivot transformation.
+   * WARNING: this should not be called directly by user.  User should use the pivot_sum method.
+   */
   def transform = {
-    getFlatColumnNames
-    val rddWithPivotColVal = addSmvPivotValColumn
-    rddWithPivotColVal.collect.foreach(println)
-  }
+    val outColSumExprs = outputColumnNames.map(c => Sum(c.attr) as Symbol(c))
+    val keyColExpr = UnresolvedAttribute(keyCol.name)
 
+    mapValColToOutputCol(addSmvPivotValColumn).
+      groupBy(keyColExpr)(keyColExpr +: outColSumExprs: _*)
+  }
 }
 
 /**
