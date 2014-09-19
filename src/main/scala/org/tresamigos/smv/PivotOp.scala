@@ -15,6 +15,9 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.catalyst.expressions.{Sum, Row, Expression}
+import org.apache.spark.sql.catalyst.types.{StringType, DataType}
 
 /**
  * Pivot operation on SchemaRDD that transforms multiple rows per key into a single row for
@@ -41,8 +44,10 @@ import org.apache.spark.sql.SchemaRDD
  * 3. value column: the value that will be copied/aggregated to corresponding output column. `count` in our example.
  * 
  */
-class PivotOp(origSRDD: SchemaRDD) {
-  // TODO: add upper limit on number of columns for pivot op.
+class PivotOp(origSRDD: SchemaRDD,
+              keyCol: Symbol,
+              pivotCols: Seq[Symbol],
+              valueCol: Symbol) {
   // TODO: allow multiple key columns.
   // TODO: allow multiple value columns.
 
@@ -52,7 +57,7 @@ class PivotOp(origSRDD: SchemaRDD) {
    * The value column name is then prepended to create the final column names.
    * Return: Seq["count_5_14_A", "count_5_14_B", ...]
    */
-  private[smv] def getFlatColumnNames(pivotCols: Seq[Symbol], valueCol: Symbol) = {
+  private[smv] def getFlatColumnNames() = {
     import origSRDD.sqlContext._
 
     // create set of distinct values.
@@ -70,11 +75,49 @@ class PivotOp(origSRDD: SchemaRDD) {
     colNames.map(v => SchemaEntry.valueToColumnName(valueCol.name + "_" + v))
   }
 
-  def addColNameValue() = {
+  /**
+   * Create a derived column that contains the concatenation of all the values in
+   * the pivot columns.  From the above columns, create a new column with following values:
+   * | key | _smv_pivot_val |
+   * | --- | -------------- |
+   * |  1  | count_5_14_A   |
+   * |  1  | count_5_14_B   |
+   * |  1  | count_6_14_A   |
+   * |  1  | count_6_14_B   |
+   */
+  private[smv] def addSmvPivotValColumn() : SchemaRDD = {
+    val pivotColsExpr = pivotCols.map(s => UnresolvedAttribute(s.name))
+    origSRDD.select(
+      UnresolvedAttribute(keyCol.name),
+      SmvPivotVal(pivotColsExpr, valueCol))
   }
 
-  def pivot_sum(keyCol: Symbol, pivotCols: Seq[Symbol], valueCol: Symbol) = {
-    //getFlatColumnNames(pivotCols, valueCol)
+  def transform = {
+    getFlatColumnNames
+    val rddWithPivotColVal = addSmvPivotValColumn
+    rddWithPivotColVal.collect.foreach(println)
+  }
 
+}
+
+/**
+ * Expression that evaluates to a string concat of all pivot column (children) values.
+ * WARNING: this must be at the module top level and not embedded inside a function def
+ * as it would cause an exception during tree node copy.
+ */
+private [smv] case class SmvPivotVal(children: Seq[Expression], valueCol: Symbol)
+  extends Expression {
+  override type EvaluatedType = Any
+  override def dataType = StringType
+  override def nullable = true
+  override def toString = s"smvPivotVal(${children.mkString(",")})"
+
+  // concat all the children (pivot columns) values to form a single value
+  override def eval(input: Row): Any = {
+    valueCol.name + "_" + SchemaEntry.valueToColumnName(
+      children.map { c =>
+        val v = c.eval(input)
+        if (v == null) "" else v.toString
+      }.mkString("_"))
   }
 }

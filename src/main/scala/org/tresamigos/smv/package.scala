@@ -23,8 +23,6 @@ package object smv {
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
   implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
   implicit def makeSchemaRDDHelper(srdd: SchemaRDD) = new SchemaRDDHelper(srdd)
-  implicit def makePivotOp(srdd: SchemaRDD) = new PivotOp(srdd)
-
   implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
   implicit def makeSeqStrRDDHelper(rdd: RDD[Seq[String]]) = new SeqStringRDDHelper(rdd)
   implicit def makeRDDHelper[T](rdd: RDD[T])(implicit tt: ClassTag[T]) = 

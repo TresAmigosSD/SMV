@@ -38,6 +38,12 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     schemaRDD.select(allExprs : _* )
   }
 
+  /**
+   * See PivotOp class for documentation
+   */
+  def pivot_sum(keyCol: Symbol, pivotCols: Seq[Symbol], valueCol: Symbol) = {
+    new PivotOp(schemaRDD, keyCol, pivotCols, valueCol).transform
+  }
 
   /**
    * Create an EDD builder on SchemaRDD 
