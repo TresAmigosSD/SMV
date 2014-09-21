@@ -111,7 +111,7 @@ class PivotOp(origSRDD: SchemaRDD,
     val outputColExprs = outputColumnNames.map { col =>
       If(tempPivotValCol === col, valueCol, 0) as Symbol(col)
     }
-    srddWithPivotValCol.select((keyColExpr as 'k) +: outputColExprs: _*)
+    srddWithPivotValCol.select(keyColExpr +: outputColExprs: _*)
   }
 
   /**
