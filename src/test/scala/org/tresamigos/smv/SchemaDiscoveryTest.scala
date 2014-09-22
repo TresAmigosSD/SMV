@@ -21,7 +21,7 @@ class SchemaDiscoveryTest extends SparkTestUtil {
     val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes.defaultCsvWithHeader)
     val entries = schema.entries
 
-    assert(entries.length === 7)
+    assert(entries.length === 8)
 
     assert(entries(0).structField.name === "id")
     assert(entries(0).typeName === "Integer")
@@ -37,6 +37,8 @@ class SchemaDiscoveryTest extends SparkTestUtil {
     assert(entries(5).typeName === "String")
     assert(entries(6).structField.name === "registration_date")
     assert(entries(6).typeName === "Timestamp")
+    assert(entries(7).structField.name === "last_active_date")
+    assert(entries(7).typeName === "Timestamp")
   }
 
   sparkTest("Test schema discovery no header") {
@@ -56,6 +58,27 @@ class SchemaDiscoveryTest extends SparkTestUtil {
     assert(entries(3).typeName === "Float")
     assert(entries(4).structField.name === "f5")
     assert(entries(4).typeName === "Boolean")
+  }
+
+  sparkTest("Test schema discovery type promotion") {
+    val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test3.csv")
+    val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes.defaultCsvWithHeader)
+    val entries = schema.entries
+
+    assert(entries.length === 6)
+
+    assert(entries(0).structField.name === "id")
+    assert(entries(0).typeName === "Long")
+    assert(entries(1).structField.name === "name")
+    assert(entries(1).typeName === "String")
+    assert(entries(2).structField.name === "age")
+    assert(entries(2).typeName === "Integer")
+    assert(entries(3).structField.name === "salary")
+    assert(entries(3).typeName === "Float")
+    assert(entries(4).structField.name === "active")
+    assert(entries(4).typeName === "String")
+    assert(entries(5).structField.name === "last_active_date")
+    assert(entries(5).typeName === "String")
   }
 }
 

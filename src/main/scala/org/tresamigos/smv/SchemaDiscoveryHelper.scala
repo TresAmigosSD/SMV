@@ -17,6 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.tresamigos.smv.StringConversionUtil._
+import org.tresamigos.smv.TimestampSchemaEntry
 
 class SchemaDiscoveryHelper(sqlContext: SQLContext) {
   /**
@@ -46,6 +47,20 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
     }
   }
 
+  private def canConvertToyyyyMMddDate(str: String) : Boolean = {
+    if (str.length == 8) {
+     val monthVal = str.substring(4,6).toInt
+     if (monthVal < 1 || monthVal > 12) return false
+
+     val dayVal = str.substring(6,8).toInt
+     if (dayVal < 1 || dayVal > 31) return false
+
+     true
+    } else {
+      false
+    }
+  }
+
   /**
    * Discover the time of a given column based on it value. Also perform type promotion to
    * accommodate all the possible values.
@@ -55,16 +70,15 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       return curSchemaEntry
 
     curSchemaEntry match {
-      //TODO: Still need to handle the case where a timestamp column get discovered as int when the date format is yyyyMMdd
-      //      Also I do not want to treat any 8 digits id as a date.
 
       //Handling the initial case where the current column schema entry is not set yet
+      case null if canConvertToInt(valueStr) && canConvertToyyyyMMddDate(valueStr)
+                                             => TimestampSchemaEntry(colName,"yyyyMMdd")
       case null if canConvertToInt(valueStr) => IntegerSchemaEntry(colName)
       case null if canConvertToLong(valueStr) => LongSchemaEntry(colName)
       case null if canConvertToFloat(valueStr) => FloatSchemaEntry(colName)
       case null if canConvertToDouble(valueStr) => DoubleSchemaEntry(colName)
       case null if canConvertToBoolean(valueStr) => BooleanSchemaEntry(colName)
-      case null if canConvertToDate(valueStr,"yyyyMMdd") => TimestampSchemaEntry(colName,"yyyyMMdd")
       case null if canConvertToDate(valueStr,"dd/MM/yyyy") => TimestampSchemaEntry(colName,"dd/MM/yyyy")
       case null if canConvertToDate(valueStr,"dd-MM-yyyy") => TimestampSchemaEntry(colName,"dd-MM-yyyy")
       case null if canConvertToDate(valueStr,"dd-MMM-yyyy") => TimestampSchemaEntry(colName,"dd-MMM-yyyy")
@@ -98,9 +112,12 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       //TODO: Need to find a better way to match dates to avoid repetition.
 
       //The date format should not change, if it did then we will treat the column as String
-      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToDate(valueStr,"yyyyMMdd") =>  curSchemaEntry
+      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToyyyyMMddDate(valueStr) =>  curSchemaEntry
+      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToInt(valueStr) => IntegerSchemaEntry(colName)
+      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToLong(valueStr) => LongSchemaEntry(colName)
+      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToFloat(valueStr) => FloatSchemaEntry(colName)
+      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToDouble(valueStr) => DoubleSchemaEntry(colName)
       case TimestampSchemaEntry(colName,"yyyyMMdd") => StringSchemaEntry(colName)
-
 
       case TimestampSchemaEntry(colName,"dd/MM/yyyy") if canConvertToDate(valueStr,"dd/MM/yyyy") => curSchemaEntry
       case TimestampSchemaEntry(colName,"dd/MM/yyyy") => StringSchemaEntry(colName)
