@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.types.{StringType, DataType}
+import org.apache.spark.sql.catalyst.types.StringType
 
 /**
  * Pivot operation on SchemaRDD that transforms multiple rows per key into a single row for
@@ -108,8 +108,14 @@ class PivotOp(origSRDD: SchemaRDD,
    * |  1  |       0      |       0      |  0  |
    */
   private[smv] def mapValColToOutputCol(srddWithPivotValCol: SchemaRDD) = {
+    import srddWithPivotValCol.sqlContext._
+
+    // find zero value to match type of valueCol.  If type is mismatched, then we get
+    // a very weird attribute not resolved error.
+    val zeroVal = Schema.fromSchemaRDD(srddWithPivotValCol).findEntry(valueCol).get.zeroVal
+
     val outputColExprs = outputColumnNames.map { col =>
-      If(tempPivotValCol === col, valueCol, 0) as Symbol(col)
+      If(tempPivotValCol === col, valueCol, zeroVal) as Symbol(col)
     }
     srddWithPivotValCol.select(keyColExpr +: outputColExprs: _*)
   }

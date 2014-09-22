@@ -16,13 +16,14 @@ package org.tresamigos.smv
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.catalyst.types._
-import org.apache.spark.sql.catalyst.expressions.{Row, AttributeReference}
+import org.apache.spark.sql.catalyst.expressions.{Literal, Row, AttributeReference}
 import org.apache.spark.sql.SchemaRDD
 
 import scala.annotation.switch
 
 abstract class SchemaEntry extends java.io.Serializable {
   val structField: StructField
+  val zeroVal: Literal
   def strToVal(s: String) : Any
   def valToStr(v: Any) : String = if (v==null) "" else v.toString
   val typeName: String
@@ -30,42 +31,49 @@ abstract class SchemaEntry extends java.io.Serializable {
 }
 
 case class DoubleSchemaEntry(name: String) extends SchemaEntry {
+  override val zeroVal = Literal(0.0)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toDouble
   override val typeName = "Double"
   val structField = StructField(name, DoubleType, true)
 }
 
 case class FloatSchemaEntry(name: String) extends SchemaEntry {
+  override val zeroVal = Literal(0.0f)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toFloat
   override val typeName = "Float"
   val structField = StructField(name, FloatType, true)
 }
 
 case class IntegerSchemaEntry(name: String) extends SchemaEntry {
+  override val zeroVal = Literal(0)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toInt
   override val typeName = "Integer"
   val structField = StructField(name, IntegerType, true)
 }
 
 case class LongSchemaEntry(name: String) extends SchemaEntry {
+  override val zeroVal = Literal(0l)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toLong
   override val typeName = "Long"
   val structField = StructField(name, LongType, true)
 }
 
 case class BooleanSchemaEntry(name: String) extends SchemaEntry {
+  override val zeroVal = Literal(false)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toBoolean
   override val typeName = "Boolean"
   val structField = StructField(name, BooleanType, true)
 }
 
 case class StringSchemaEntry(name: String) extends SchemaEntry {
+  override val zeroVal = Literal("")
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s
   override val typeName = "String"
   val structField = StructField(name, StringType, true)
 }
 
 case class TimestampSchemaEntry(name: String, fmt: String = "yyyyMMdd") extends SchemaEntry {
+  override val zeroVal = Literal("") // TODO: should pick an epoch date instead.
   // @transient val fmtObj = new java.text.SimpleDateFormat(fmt)
   val fmtObj = new java.text.SimpleDateFormat(fmt)
   override def strToVal(s:String) : Any = {
@@ -81,6 +89,7 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyyMMdd") extends 
 // TODO: only allow basic types to avoid creating a full parser for the sub-types.
 case class MapSchemaEntry(name: String,
       keySchemaEntry: SchemaEntry, valSchemaEntry: SchemaEntry) extends SchemaEntry {
+  override val zeroVal = Literal(null)
   override val typeName = "Map"
   val structField = StructField(name, MapType(StringType, StringType), true)
   override def strToVal(s: String) : Any = {
@@ -163,6 +172,9 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
 
   def toStructType : StructType = StructType(entries.map(se => se.structField))
 
+  def findEntry(sym: Symbol) = {
+    entries.find(e => e.structField.name == sym.name)
+  }
   def saveToFile(sc: SparkContext, path: String) {
     sc.makeRDD(entries.map(_.toString), 1).saveAsTextFile(path)
   }
