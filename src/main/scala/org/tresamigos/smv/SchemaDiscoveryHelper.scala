@@ -32,8 +32,6 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
     if (ca.hasHeader) {
       val columnNamesRowStr = strRDD.first()
       var columnNames = parser.parseLine(columnNamesRowStr)
-      //Trim end spaces and replace whitespaces with _
-      //TODO: Need to replace other special characters such as ? * and so on
       columnNames = columnNames.map(_.trim).map(SchemaEntry.valueToColumnName(_))
 
       columnNames
