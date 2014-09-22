@@ -57,20 +57,5 @@ class SchemaDiscoveryTest extends SparkTestUtil {
     assert(entries(4).structField.name === "f5")
     assert(entries(4).typeName === "Boolean")
   }
-
-  sparkTest("Test schema discovery multi-line header") {
-    val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test3.csv")
-    val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes(',','\"', 2))
-    val entries = schema.entries
-
-    assert(entries.length === 3)
-
-    assert(entries(0).structField.name === "id")
-    assert(entries(0).typeName === "Integer")
-    assert(entries(1).structField.name === "name")
-    assert(entries(1).typeName === "String")
-    assert(entries(2).structField.name === "age")
-    assert(entries(2).typeName === "Integer")
-  }
 }
 

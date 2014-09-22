@@ -86,14 +86,14 @@ class CsvRDDHelper(rdd: RDD[String]) {
 case class CsvAttributes(
                           val delimiter: Char = ',',
                           val quotechar: Char = '\"',
-                          val headerSize: Int = 0)
+                          val hasHeader: Boolean = false)
 
 object CsvAttributes {
   implicit val defaultCsv = new CsvAttributes()
 
   // common CsvAttributes combos to be imported explicitly
   val defaultTsv = new CsvAttributes(delimiter = '\t')
-  val defaultCsvWithHeader = new CsvAttributes(headerSize = 1)
-  val defaultTsvWithHeader = new CsvAttributes(delimiter = '\t', headerSize = 1)
+  val defaultCsvWithHeader = new CsvAttributes(hasHeader = true)
+  val defaultTsvWithHeader = new CsvAttributes(delimiter = '\t', hasHeader = true)
 }
 

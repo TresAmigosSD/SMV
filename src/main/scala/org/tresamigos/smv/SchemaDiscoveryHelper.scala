@@ -29,14 +29,12 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
   private def getColumnNames(strRDD: RDD[String], ca: CsvAttributes) : Array[String] = {
     val parser = new CSVParser(ca.delimiter)
 
-    if (ca.headerSize > 0) {
-      val completeHeader = strRDD.take(ca.headerSize)
-      // Assuming the column names are going to be the last line of the header.
-      // Is this the wrong assumption? Maybe
-      val columnNamesRowStr = completeHeader.last
+    if (ca.hasHeader) {
+      val columnNamesRowStr = strRDD.first()
       var columnNames = parser.parseLine(columnNamesRowStr)
       //Trim end spaces and replace whitespaces with _
-      columnNames = columnNames.map(_.trim).map(_.replaceAll("\\s+", "_"))
+      //TODO: Need to replace other special characters such as ? * and so on
+      columnNames = columnNames.map(_.trim).map(SchemaEntry.valueToColumnName(_))
 
       columnNames
     } else {
@@ -134,7 +132,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
 
     val columns = getColumnNames(strRDD,ca)
 
-    val noHeadRDD = strRDD.dropRows(ca.headerSize)
+    val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD
 
     var schemaEntries = new scala.collection.mutable.ArrayBuffer[SchemaEntry]
     for (i <- 0 until columns.length) schemaEntries += null
@@ -178,7 +176,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
                                 (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD =  {
     val strRDD = sqlContext.sparkContext.textFile(dataPath)
     val schema = discoverSchema(strRDD, numLines, ca)
-    val noHeadRDD = strRDD.dropRows(ca.headerSize)
+    val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD
     val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
     sqlContext.applySchemaToRowRDD(rowRDD, schema)
   }

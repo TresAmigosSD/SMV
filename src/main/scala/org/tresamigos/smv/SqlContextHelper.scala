@@ -39,7 +39,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
   def csvFileAddSchema(dataPath: String, schema: Schema)
                       (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD = {
     val strRDD = sqlContext.sparkContext.textFile(dataPath)
-    val noHeadRDD = strRDD.dropRows(ca.headerSize)
+    val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD
     val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
     applySchemaToRowRDD(rowRDD, schema)
   }
