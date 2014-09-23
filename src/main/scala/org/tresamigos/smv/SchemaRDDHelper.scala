@@ -16,15 +16,28 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.types._
 
 class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
   // TODO: add schema file path as well.
   def saveAsCsvWithSchema(dataPath: String)(implicit ca: CsvAttributes) {
     val schema = Schema.fromSchemaRDD(schemaRDD)
+
+    //Adding the header to the saved file all the time even when ca.hasHeader is
+    //False.
+    val fieldNames = schemaRDD.schema.fieldNames
+    val headerStr = fieldNames.map(_.trim).map(fn => "\"" + fn + "\"").
+      mkString(ca.delimiter.toString)
+
+    val csvHeaderRDD = schemaRDD.sparkContext.parallelize(Array(headerStr),1)
+    val csvBodyRDD = schemaRDD.map(schema.rowToCsvString(_))
+
+    //As far as I know the union maintain the order. So the header will end up being the
+    //first line in the saved file.
+    val csvRDD = csvHeaderRDD.union(csvBodyRDD)
+
     schema.saveToFile(schemaRDD.context, Schema.dataPathToSchemaPath(dataPath))
-    schemaRDD.map(schema.rowToCsvString(_)).saveAsTextFile(dataPath)
+    csvRDD.saveAsTextFile(dataPath)
   }
 
   def selectPlus(exprs: Expression*): SchemaRDD = {
