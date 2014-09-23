@@ -40,9 +40,20 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     csvRDD.saveAsTextFile(dataPath)
   }
 
+  /**
+   * selects all the current columns in current SRDD plus the supplied expressions.
+   */
   def selectPlus(exprs: Expression*): SchemaRDD = {
     val all = schemaRDD.schema.fieldNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
     schemaRDD.select( all ++ exprs : _* )
+  }
+
+  /**
+   * Same as selectPlus but the new columns are prepended to result.
+   */
+  def selectPlusPrefix(exprs: Expression*): SchemaRDD = {
+    val all = schemaRDD.schema.fieldNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
+    schemaRDD.select( exprs ++ all : _* )
   }
 
   def selectMinus(symb: Symbol*): SchemaRDD = {
