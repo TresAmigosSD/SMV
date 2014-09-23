@@ -17,7 +17,6 @@ package org.tresamigos.smv
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.tresamigos.smv.StringConversionUtil._
-import org.tresamigos.smv.TimestampSchemaEntry
 
 class SchemaDiscoveryHelper(sqlContext: SQLContext) {
   /**

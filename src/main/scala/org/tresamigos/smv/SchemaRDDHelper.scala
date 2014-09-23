@@ -41,8 +41,8 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   /**
    * See PivotOp class for documentation
    */
-  def pivot_sum(keyCol: Symbol, pivotCols: Seq[Symbol], valueCol: Symbol) = {
-    new PivotOp(schemaRDD, keyCol, pivotCols, valueCol).transform
+  def pivot_sum(keyCol: Symbol, pivotCols: Seq[Symbol], valueCols: Seq[Symbol]) = {
+    new PivotOp(schemaRDD, keyCol, pivotCols, valueCols).transform
   }
 
   /**

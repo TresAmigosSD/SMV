@@ -47,23 +47,26 @@ import org.apache.spark.sql.catalyst.types.StringType
 class PivotOp(origSRDD: SchemaRDD,
               keyCol: Symbol,
               pivotCols: Seq[Symbol],
-              valueCol: Symbol) {
+              valueCols: Seq[Symbol]) {
   // TODO: allow multiple key columns.
   // TODO: allow multiple value columns.
 
   import origSRDD.sqlContext._
 
-  val outputColumnNames = getFlatColumnNames()
+  val baseOutputColumnNames = getBaseOutputColumnNames()
   val tempPivotValCol = '_smv_pivot_val
   val keyColExpr = UnresolvedAttribute(keyCol.name)
+  val pivotColsExpr = pivotCols.map(s => UnresolvedAttribute(s.name))
+  val valueColsExpr = valueCols.map(v => UnresolvedAttribute(v.name))
 
   /**
    * Extract the column names from the data.
    * This is done by getting the distinct string values of each column and taking the cartesian product.
-   * The value column name is then prepended to create the final column names.
-   * Return: Seq["count_5_14_A", "count_5_14_B", ...]
+   * For N value columns, the output shall have N times as many columns as the returned list as
+   * each item in the list would have the value column name(s) prepended.
+   * Return: Seq["5_14_A", "5_14_B", ...]
    */
-  private[smv] def getFlatColumnNames(): Seq[String] = {
+  private[smv] def getBaseOutputColumnNames(): Seq[String] = {
     // create set of distinct values.
     // this is a seq of array strings where each array is distinct values for a column.
     val distinctVals = pivotCols.map(s => origSRDD.select(s).
@@ -75,8 +78,8 @@ class PivotOp(origSRDD: SchemaRDD,
     val colNames = distinctVals.reduceLeft(
       (l1,l2) => for(v1 <- l1; v2 <- l2) yield (v1 + "_" + v2))
 
-    // prepend value column name to each column and ensure result column name is valid.
-    colNames.map(v => SchemaEntry.valueToColumnName(valueCol.name + "_" + v)).sorted
+    // ensure result column name is made up of valid characters.
+    colNames.map(c => SchemaEntry.valueToColumnName(c))
   }
 
   /**
@@ -90,11 +93,10 @@ class PivotOp(origSRDD: SchemaRDD,
    * |  1  | count_6_14_B   |   400 |
    */
   private[smv] def addSmvPivotValColumn() : SchemaRDD = {
-    val pivotColsExpr = pivotCols.map(s => UnresolvedAttribute(s.name))
     origSRDD.select(
-      UnresolvedAttribute(keyCol.name),
-      SmvPivotVal(pivotColsExpr, valueCol) as tempPivotValCol,
-      valueCol)
+      keyColExpr +:
+      (SmvPivotVal(pivotColsExpr) as tempPivotValCol) +:
+      valueColsExpr: _*)
   }
 
   /**
@@ -107,16 +109,19 @@ class PivotOp(origSRDD: SchemaRDD,
    * |  1  |       0      |       0      |  0  |
    * |  1  |       0      |       0      |  0  |
    */
-  private[smv] def mapValColToOutputCol(srddWithPivotValCol: SchemaRDD) = {
+  private[smv] def mapValColsToOutputCols(srddWithPivotValCol: SchemaRDD) = {
     import srddWithPivotValCol.sqlContext._
 
     // find zero value to match type of valueCol.  If type is mismatched, then we get
     // a very weird attribute not resolved error.
-    val zeroVal = Schema.fromSchemaRDD(srddWithPivotValCol).findEntry(valueCol).get.zeroVal
+    val schema = Schema.fromSchemaRDD(srddWithPivotValCol)
+    val valueColsZeroVals = valueCols.map(vc => schema.findEntry(vc).get.zeroVal)
 
-    val outputColExprs = outputColumnNames.map { col =>
-      If(tempPivotValCol === col, valueCol, zeroVal) as Symbol(col)
-    }
+    val outputColExprs = valueCols.zip(valueColsZeroVals).map { case (vcSymbol, vcZero) =>
+      baseOutputColumnNames.map { outCol =>
+        If(tempPivotValCol === outCol, vcSymbol, vcZero) as Symbol(vcSymbol.name + "_" + outCol)
+      }
+    }.flatten
     srddWithPivotValCol.select(keyColExpr +: outputColExprs: _*)
   }
 
@@ -125,10 +130,15 @@ class PivotOp(origSRDD: SchemaRDD,
    * WARNING: this should not be called directly by user.  User should use the pivot_sum method.
    */
   def transform = {
-    val outColSumExprs = outputColumnNames.map(c => Sum(c.attr) as Symbol(c))
+    val outColSumExprs = valueCols.map {vc =>
+      baseOutputColumnNames.map { c =>
+        val colName = vc.name + "_" + c
+        Sum(colName.attr) as Symbol(colName)
+      }
+    }.flatten
     val keyColExpr = UnresolvedAttribute(keyCol.name)
 
-    mapValColToOutputCol(addSmvPivotValColumn).
+    mapValColsToOutputCols(addSmvPivotValColumn).
       groupBy(keyColExpr)(keyColExpr +: outColSumExprs: _*)
   }
 }
@@ -138,7 +148,7 @@ class PivotOp(origSRDD: SchemaRDD,
  * WARNING: this must be at the module top level and not embedded inside a function def
  * as it would cause an exception during tree node copy.
  */
-private [smv] case class SmvPivotVal(children: Seq[Expression], valueCol: Symbol)
+private [smv] case class SmvPivotVal(children: Seq[Expression])
   extends Expression {
   override type EvaluatedType = Any
   override def dataType = StringType
@@ -147,7 +157,7 @@ private [smv] case class SmvPivotVal(children: Seq[Expression], valueCol: Symbol
 
   // concat all the children (pivot columns) values to form a single value
   override def eval(input: Row): Any = {
-    valueCol.name + "_" + SchemaEntry.valueToColumnName(
+    SchemaEntry.valueToColumnName(
       children.map { c =>
         val v = c.eval(input)
         if (v == null) "" else v.toString
