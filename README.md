@@ -83,6 +83,35 @@ implicit myCsvAttribs = CsvAttributes(quotechar="|"
 srdd.saveAsCsvWithSchema("/outdata/result")
 ```
 
+## Pivot Operations
+We may often need to "flatten out" the normalized data for easy manipulation within Excel.  Rather than create custom code for each pivot required, user should use the pivot_sum function in SMV.
+
+For Example:
+
+| id | month | product | count |
+| --- | --- | ---: | --- |
+| 1 | 5/14 | A | 100 |
+| 1 | 6/14 | B | 200 |
+| 1 | 5/14 | B | 300 |
+
+We would like to generate a single row for each unique id but still maintain the full granularity of the data.  The desired output is:
+
+| id | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+| --- | --- | --- | --- | --- |
+| 1 | 100 | 300 | 0 | 200
+
+The raw input is divided into three parts.
+* key column: part of the primary key that is preserved in the output.  That would be the `id` column in the above example.
+* pivot columns: the columns whose row values will become the new column names.  The cross product of all unique values for *each* column is used to generate the output column names.
+* value columns: the value that will be copied/aggregated to corresponding output column. `count` in our example.
+
+The command to transform the above data is:
+```scala
+srdd.pivot_sum('id, Seq('month, 'product), Seq('count))
+```
+
+*Note:* multiple value columns may be specified.
+
 # Run Spark Shell with SMV
 
 We can pre-load SMV jar when run spark-shell. 
