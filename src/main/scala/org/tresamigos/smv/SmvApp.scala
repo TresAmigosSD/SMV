@@ -22,7 +22,7 @@ case class SmvFile(nickName: String, basePath: String, csvAttributes: CsvAttribu
 trait SmvModule {
   def requires() : Seq[String]
   def provides() : Seq[String]
-  def run(inputs: Seq[SchemaRDD]) : Seq[SchemaRDD]
+  def run(inputs: Map[String, SchemaRDD]) : Map[String, SchemaRDD]
 }
 
 /**
@@ -41,25 +41,28 @@ abstract class SmvApp (val appName: String) {
   lazy private val allFilesByName = getFiles.map(f => (f.nickName, f)).toMap
 
   /**
-   * Transform sequence of required nicknames in given module to sequence of input SRDDs.
+   * Transform sequence of required nicknames in given module to a map from nickname
+   * to input SRDD.
    */
-  private def getRequiredSRDDs(module: SmvModule) : Seq[SchemaRDD] = {
+  private def getRequiredSRDDs(module: SmvModule) : Map[String, SchemaRDD] = {
     module.requires().map { n =>
       val smvFile = allFilesByName(n)
       implicit val ca = smvFile.csvAttributes
-      sqlContext.csvFileWithSchema(dataDir + "/" + smvFile.basePath)
-    }
+      (n, sqlContext.csvFileWithSchema(dataDir + "/" + smvFile.basePath))
+    }.toMap
   }
 
   /**
    * Persist the output SRDDs from the given module.
    */
-  private def saveProvidedSRDDs(module: SmvModule, outSRDDs: Seq[SchemaRDD]) = {
-    val outFiles = module.provides().map(allFilesByName(_))
-    require(outFiles.size == outSRDDs.size)
+  private def saveProvidedSRDDs(module: SmvModule, outSRDDs: Map[String, SchemaRDD]) = {
+    val outNames = module.provides()
+    require(outNames.size == outSRDDs.size)
 
-    outFiles.zip(outSRDDs).foreach { case (outFile, outSRDD) =>
-      outSRDD.saveAsCsvWithSchema(dataDir + "/" + outFile.basePath)(outFile.csvAttributes)
+    outNames.foreach { outName =>
+      val outFile = allFilesByName(outName)
+      val srdd = outSRDDs(outName)
+      srdd.saveAsCsvWithSchema(dataDir + "/" + outFile.basePath)(outFile.csvAttributes)
     }
   }
 
