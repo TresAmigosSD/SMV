@@ -79,7 +79,7 @@ class PivotOp(origSRDD: SchemaRDD,
       (l1,l2) => for(v1 <- l1; v2 <- l2) yield (v1 + "_" + v2))
 
     // ensure result column name is made up of valid characters.
-    colNames.map(c => SchemaEntry.valueToColumnName(c))
+    colNames.map(c => SchemaEntry.valueToColumnName(c)).sorted
   }
 
   /**
