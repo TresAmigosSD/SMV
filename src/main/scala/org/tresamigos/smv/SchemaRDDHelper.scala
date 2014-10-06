@@ -62,6 +62,16 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     schemaRDD.select(allExprs : _* )
   }
 
+  def renameField(namePairs: (Symbol,Symbol)*): SchemaRDD = {
+    import schemaRDD.sqlContext._
+
+    val namePairsMap = namePairs.toMap
+    val renamedFields = schemaRDD.schema.fieldNames.map {
+      fn => Symbol(fn) as namePairsMap.getOrElse(Symbol(fn), Symbol(fn))
+    }
+    schemaRDD.select(renamedFields: _*)
+  }
+
   /**
    * See PivotOp class for documentation
    */

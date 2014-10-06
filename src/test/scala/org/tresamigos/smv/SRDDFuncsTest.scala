@@ -34,3 +34,15 @@ class SelectMinusTest extends SparkTestUtil {
   }
 }
 
+class renameFieldTest extends SparkTestUtil {
+  sparkTest("test rename fields") {
+    val srdd = createSchemaRdd("a:Integer; b:Double; c:String",
+      "1,2.0,hello")
+
+    val result = srdd.renameField('a -> 'aa, 'c -> 'cc)
+
+    val fieldNames = result.schema.fieldNames
+    assert(fieldNames === Seq("aa", "b", "cc"))
+    assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
+  }
+}
