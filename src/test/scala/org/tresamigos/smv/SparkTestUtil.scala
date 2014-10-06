@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.log4j.{LogManager, Logger, Level}
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.scalatest.FunSuite
 
 trait SparkTestUtil extends FunSuite {
@@ -102,13 +102,43 @@ trait SparkTestUtil extends FunSuite {
 
   /**
    * Create a schemaRDD from a schema string and a data string.
-   * The data string is assumed to be csv with no header and lines seperated by ";"
+   * The data string is assumed to be csv with no header and lines separated by ";"
    */
   def createSchemaRdd(schemaStr: String, data: String) = {
     val schema = Schema.fromString(schemaStr)
     val dataArray = data.split(";").map(_.trim)
     val rowRDD = sc.makeRDD(dataArray).csvToSeqStringRDD.seqStringRDDToRowRDD(schema)
     sqlContext.applySchemaToRowRDD(rowRDD, schema)
+  }
+
+  /**
+   * Dump the schema and data of given srdd to screen for debugging purposes.
+   */
+  def dumpSRDD(srdd: SchemaRDD) = {
+    println(Schema.fromSchemaRDD(srdd))
+    srdd.collect.foreach(println)
+  }
+
+  /**
+   * Verify that the data in the srdd matches the expected result strings.
+   * The expectedRes is assumed to be a set of lines separated by ";"
+   * The order of the result strings is not important.
+   */
+  def assertSrddDataEqual(srdd: SchemaRDD, expectedRes: String) = {
+    val resLines = srdd.collect.map(_.toString.stripPrefix("[").stripSuffix("]"))
+    val expectedLines = expectedRes.split(";").map(_.trim)
+    assertUnorderedSeqEqual(resLines, expectedLines)
+  }
+
+  /**
+   * validates that the schema of the given SRDD matches the schema defined by
+   * the schemaStr parameter.  The schemaStr parameter is jsut a ";" list of
+   * schema entries.
+   */
+  def assertSrddSchemaEqual(srdd: SchemaRDD, schemaStr: String) = {
+    val expSchema = Schema.fromString(schemaStr)
+    val resSchema = Schema.fromSchemaRDD(srdd)
+    assert(resSchema.toString === expSchema.toString)
   }
 }
 
