@@ -46,3 +46,32 @@ class renameFieldTest extends SparkTestUtil {
     assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
   }
 }
+
+class dedupByKeyTest extends SparkTestUtil {
+  sparkTest("test dedupByKey") {
+    val srdd = createSchemaRdd("a:Integer; b:Double; c:String",
+      """1,2.0,hello;
+         1,3.0,hello;
+         2,10.0,hello2;
+         2,11.0,hello3"""
+    )
+
+    val result1 = srdd.dedupByKey('a)
+    assertUnorderedSeqEqual(result1.collect.map(_.toString), Seq(
+      "[1,2.0,hello]",
+      "[2,10.0,hello2]" ))
+
+    val fieldNames1 = result1.schema.fieldNames
+    assert(fieldNames1 === Seq("a", "b", "c"))
+
+    val result2 = srdd.dedupByKey('a, 'c)
+    assertUnorderedSeqEqual(result2.collect.map(_.toString), Seq(
+    "[1,2.0,hello]",
+    "[2,10.0,hello2]",
+    "[2,11.0,hello3]" ))
+
+    val fieldNames2 = result2.schema.fieldNames
+    assert(fieldNames2 === Seq("a", "b", "c"))
+
+  }
+}

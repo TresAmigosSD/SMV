@@ -72,6 +72,18 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     schemaRDD.select(renamedFields: _*)
   }
 
+  def dedupByKey(keys: Symbol*) : SchemaRDD = {
+    import schemaRDD.sqlContext._
+
+    val selectExpressions = schemaRDD.schema.fieldNames.map {
+      fn => First(Symbol(fn)) as Symbol(fn)
+    }
+
+    val allKeys = keys.map { k=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(k) }
+
+    schemaRDD.groupBy(allKeys: _*)(selectExpressions: _*)
+  }
+
   /**
    * See PivotOp class for documentation
    */
