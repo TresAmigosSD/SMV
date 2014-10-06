@@ -30,6 +30,11 @@ class RollupCubeOp(srdd: SchemaRDD, cols: Seq[Symbol], groupExprs: Seq[Expressio
     Seq.tabulate((1 << cols.length)-1)(i => i)
   }
 
+  /** for N rollup cols, we want to produce N-1 sentinel columns */
+  def rollupBitmasks() = {
+    Seq.tabulate(cols.length)(i => (1 << i) - 1)
+  }
+
   /** return list of non-rollup/cube columns in the given srdd. */
   def getNonRollupCols() = {
     val cubeColNames = cols.map(_.name)
@@ -76,7 +81,10 @@ class RollupCubeOp(srdd: SchemaRDD, cols: Seq[Symbol], groupExprs: Seq[Expressio
   /**
    * perform the cube operation on the SRDD and cube columns.
    */
-  def cube() = {
-    duplicateAndGroup(cubeBitmasks())
-  }
+  def cube() = duplicateAndGroup(cubeBitmasks())
+
+  /**
+   * perform the rollup operation on the SRDD and rollup columns.
+   */
+  def rollup() = duplicateAndGroup(rollupBitmasks())
 }

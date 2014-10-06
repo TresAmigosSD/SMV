@@ -23,6 +23,12 @@ class RollupCubeOpTest extends SparkTestUtil {
     assert(new RollupCubeOp(null, Seq('a,'b,'c)).cubeBitmasks() === Seq(0,1,2,3,4,5,6))
   }
 
+  test("Test rollup bitmask creation") {
+    assert(new RollupCubeOp(null, Seq('a,'b)).rollupBitmasks() === Seq(0,1))
+    assert(new RollupCubeOp(null, Seq('a,'b,'c)).rollupBitmasks() === Seq(0,1,3))
+    assert(new RollupCubeOp(null, Seq('a,'b,'c, 'd)).rollupBitmasks() === Seq(0,1,3,7))
+  }
+
   sparkTest("Test getNonRollupCols") {
     val srdd = createSchemaRdd("a:String; b:String; c:String; d:String", "a,b,c,d")
     assert(new RollupCubeOp(srdd, Seq('b,'c)).getNonRollupCols() === Seq("a", "d"))
@@ -61,8 +67,8 @@ class RollupCubeOpTest extends SparkTestUtil {
          a1,b2,cx,40;
          a2,b2,cx,50""")
     import srdd.sqlContext._
-    val res = new RollupCubeOp(srdd, Seq('a,'b), Seq(Sum('d) as 'sum_d)).cube
 
+    val res = srdd.smvCube('a, 'b)(Sum('d) as 'sum_d)
     assertSrddDataEqual(res,
       """a1,b1,30;
          a1,b2,40;
@@ -72,5 +78,28 @@ class RollupCubeOpTest extends SparkTestUtil {
          a1,*,70;
          a2,*,80""")
     assertSrddSchemaEqual(res, "a:String; b:String; sum_d:Long")
+  }
+
+  sparkTest("Test rollup") {
+    val srdd = createSchemaRdd("a:String; b:String; c:String; d:Integer",
+      """a1,b1,c1,10;
+         a1,b1,c1,20;
+         a1,b2,c2,30;
+         a1,b2,c3,40;
+         a2,b3,c4,50""")
+    import srdd.sqlContext._
+
+    val res = srdd.smvRollup('a, 'b, 'c)(Sum('d) as 'sum_d)
+    assertSrddDataEqual(res,
+    """a1,b1,c1,30;
+       a1,b2,c2,30;
+       a1,b2,c3,40;
+       a2,b3,c4,50;
+       a1,b1,*,30;
+       a1,b2,*,70;
+       a2,b3,*,50;
+       a1,*,*,100;
+       a2,*,*,50""")
+    assertSrddSchemaEqual(res, "a:String; b:String; c:String; sum_d:Long")
   }
 }

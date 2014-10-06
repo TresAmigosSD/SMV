@@ -84,11 +84,19 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     schemaRDD.groupBy(allKeys: _*)(selectExpressions: _*)
   }
 
-  /**
-   * See PivotOp class for documentation
-   */
+  /** See PivotOp class for documentation */
   def pivot_sum(keyCol: Symbol, pivotCols: Seq[Symbol], valueCols: Seq[Symbol]) = {
     new PivotOp(schemaRDD, keyCol, pivotCols, valueCols).transform
+  }
+
+  /** See RollupCubeOp for details. */
+  def smvCube(symbols: Symbol*)(groupExprs: Expression*) = {
+    new RollupCubeOp(schemaRDD, symbols, groupExprs).cube()
+  }
+
+  /** See RollupCubeOp for details. */
+  def smvRollup(symbols: Symbol*)(groupExprs: Expression*) = {
+    new RollupCubeOp(schemaRDD, symbols, groupExprs).rollup()
   }
 
   /**
