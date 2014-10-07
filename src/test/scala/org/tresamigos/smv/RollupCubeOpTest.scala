@@ -60,24 +60,25 @@ class RollupCubeOpTest extends SparkTestUtil {
   }
 
   sparkTest("Test cube") {
-    val srdd = createSchemaRdd("a:String; b:String; c:String; d:Integer",
-      """a1,b1,cx,10;
-         a1,b1,cx,20;
-         a2,b2,cx,30;
-         a1,b2,cx,40;
-         a2,b2,cx,50""")
+    val srdd = createSchemaRdd("a:String; b:String; f:String; d:Integer",
+      """a1,b1,F,10;
+         a1,b1,F,20;
+         a2,b2,G,30;
+         a1,b2,F,40;
+         a2,b2,G,50""")
     import srdd.sqlContext._
 
-    val res = srdd.smvCube('a, 'b)(Sum('d) as 'sum_d)
+    val res = srdd.smvCubeFixed('a, 'b)('f)(Sum('d) as 'sum_d)
     assertSrddDataEqual(res,
-      """a1,b1,30;
-         a1,b2,40;
-         a2,b2,80;
-         *,b1,30;
-         *,b2,120;
-         a1,*,70;
-         a2,*,80""")
-    assertSrddSchemaEqual(res, "a:String; b:String; sum_d:Long")
+      """a1,b1,F,30;
+         a1,b2,F,40;
+         a1,*,F,70;
+         *,b1,F,30;
+         *,b2,F,40;
+         a2,b2,G,80;
+         a2,*,G,80;
+         *,b2,G,80""")
+    assertSrddSchemaEqual(res, "a:String; b:String; f:String; sum_d:Long")
   }
 
   sparkTest("Test rollup") {

@@ -23,7 +23,10 @@ import org.apache.spark.sql.catalyst.expressions.{Alias, First, Literal, Express
  * See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
  * Rather than using nulls as the pig version, a sentinel value of "*" will be used
  */
-class RollupCubeOp(srdd: SchemaRDD, cols: Seq[Symbol], groupExprs: Seq[Expression] = Seq.empty) {
+class RollupCubeOp(srdd: SchemaRDD,
+                   cols: Seq[Symbol],
+                   fixedCols: Seq[Symbol] = Seq.empty,
+                   groupExprs: Seq[Expression] = Seq.empty) {
 
   /** for N cube cols, we want to produce 2**N columns (minus all "*") */
   def cubeBitmasks() = {
@@ -70,7 +73,7 @@ class RollupCubeOp(srdd: SchemaRDD, cols: Seq[Symbol], groupExprs: Seq[Expressio
    * perform the groupBy operation on the duplicated data set.
    */
   private def duplicateAndGroup(bitmasks: Seq[Int]) = {
-    val colNames = cols.map(_.name)
+    val colNames = (cols ++ fixedCols).map(_.name)
     val cubeCols = colNames.map(c => UnresolvedAttribute(c))
     val cubeColsFirst = colNames.map(c => Alias(First(UnresolvedAttribute(c)),c)())
 

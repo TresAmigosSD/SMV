@@ -90,13 +90,19 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   }
 
   /** See RollupCubeOp for details. */
-  def smvCube(symbols: Symbol*)(groupExprs: Expression*) = {
-    new RollupCubeOp(schemaRDD, symbols, groupExprs).cube()
+  def smvCube(cols: Symbol*)(groupExprs: Expression*) = {
+    new RollupCubeOp(schemaRDD, cols, Seq.empty, groupExprs).cube()
+  }
+  def smvCubeFixed(cols: Symbol*)(fixedCols: Symbol*)(groupExprs: Expression*) = {
+    new RollupCubeOp(schemaRDD, cols, fixedCols, groupExprs).cube()
   }
 
   /** See RollupCubeOp for details. */
-  def smvRollup(symbols: Symbol*)(groupExprs: Expression*) = {
-    new RollupCubeOp(schemaRDD, symbols, groupExprs).rollup()
+  def smvRollup(cols: Symbol*)(groupExprs: Expression*) = {
+    new RollupCubeOp(schemaRDD, cols, Seq.empty, groupExprs).rollup()
+  }
+  def smvRollupFixed(cols: Symbol*)(fixedCols: Symbol*)(groupExprs: Expression*) = {
+    new RollupCubeOp(schemaRDD, cols, fixedCols, groupExprs).rollup()
   }
 
   /**
