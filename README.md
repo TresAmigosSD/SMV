@@ -112,6 +112,44 @@ srdd.pivot_sum('id, Seq('month, 'product), Seq('count))
 
 *Note:* multiple value columns may be specified.
 
+## dedupByKey Operations
+The `dedupByKey` operation elimenate duplicate records on the primary key. It just arbitrarily picks the first record for a given key or keys combo. 
+
+Given the following srdd dataset: 
+
+| id | product | Company |
+| --- | --- | --- |
+| 1 | A | C1 |
+| 1 | C | C2 |
+| 2 | B | C3 |
+| 2 | B | C4 |
+
+
+```scala
+srdd.debupByKey('id)
+```
+will yield the following dataset/srdd:
+
+| id | product | Company |
+| --- | --- | --- |
+| 1 | A | C1 |
+| 2 | B | C3 |
+
+while
+
+```scala
+srdd.debupByKey('id, 'product)
+```
+
+will yield the following dataset/srdd:
+
+| id | product | Company |
+| --- | --- | --- |
+| 1 | A | C1 |
+| 1 | C | C2 |
+| 2 | B | C3 |
+
+
 ## Rollup/Cube Operations
 The `smvRollup` and `smvCube` operations add standard rollup/cube operations to a schema rdd.  By default, the "*" string is used as the sentinel value (hardcoded at this point).  For example:
 ```scala
