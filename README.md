@@ -150,6 +150,20 @@ will yield the following dataset/srdd:
 | 2 | B | C3 |
 
 
+## renameField Operation
+
+The `renameField` allows to rename a single or multiple fields of a given schemaRDD.
+Given a schemaRDD that has the following fields: a, b, c, d one can rename the "a" and "c" fields to "aa" and "cc" as follow
+
+```scala
+srdd.renameField('a -> 'aa, 'c -> 'cc)
+```
+
+Now the srdd will have the following fields: aa, b, cc, d
+
+The `renameField` comes very handy when for example trying to join two SchemaRDDs that have similar field names. In such case one can rename the fields of one the SchemaRDDs to something else to avoid field names conflict.
+
+
 ## Rollup/Cube Operations
 The `smvRollup` and `smvCube` operations add standard rollup/cube operations to a schema rdd.  By default, the "*" string is used as the sentinel value (hardcoded at this point).  For example:
 ```scala
