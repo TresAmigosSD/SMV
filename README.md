@@ -113,7 +113,7 @@ srdd.pivot_sum('id, Seq('month, 'product), Seq('count))
 *Note:* multiple value columns may be specified.
 
 ## dedupByKey Operations
-The `dedupByKey` operation elimenate duplicate records on the primary key. It just arbitrarily picks the first record for a given key or keys combo. 
+The `dedupByKey` operation eliminate duplicate records on the primary key. It just arbitrarily picks the first record for a given key or keys combo. 
 
 Given the following srdd dataset: 
 
