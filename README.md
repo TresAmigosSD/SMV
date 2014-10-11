@@ -172,7 +172,7 @@ srdd.smvRollup('a,'b,'c)(Sum('d))
 The above will create a *rollup* of the (a,b,c) columns.  In essance, calculate the `Sum(d)` for (a,b,c), (a,b), and (a).
 
 ```scala
-srdd.smvCube('a,'b,'c)(Sum('d))
+srdd.smvCubeFixed('a,'b,'c)(Sum('d))
 ```
 The above will create *cube* from the (a,b,c) columns.  It will calculate the `Sum(d)` for (a,b,c), (a,b), (a,c), (b,c), (a), (b), (c)
 *Note:* the cube for the global () selection is never computed.
