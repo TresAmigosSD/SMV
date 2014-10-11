@@ -167,16 +167,22 @@ The `renameField` comes very handy when for example trying to join two SchemaRDD
 ## Rollup/Cube Operations
 The `smvRollup` and `smvCube` operations add standard rollup/cube operations to a schema rdd.  By default, the "*" string is used as the sentinel value (hardcoded at this point).  For example:
 ```scala
-srdd.rollup('a,'b,'c)(Sum('d))
+srdd.smvRollup('a,'b,'c)(Sum('d))
 ```
 The above will create a *rollup* of the (a,b,c) columns.  In essance, calculate the `Sum(d)` for (a,b,c), (a,b), and (a).
 
 ```scala
-srdd.cube('a,'b,'c)(Sum('d))
+srdd.smvCube('a,'b,'c)(Sum('d))
 ```
 The above will create *cube* from the (a,b,c) columns.  It will calculate the `Sum(d)` for (a,b,c), (a,b), (a,c), (b,c), (a), (b), (c)
 *Note:* the cube for the global () selection is never computed.
 
+Both methods above have a version that allows the user to provide a set of fixed columns. `smvRollupFixed` and `smvCubeFixed`.
+
+```scala
+srdd.smvCube('a,'b,'c)('x)(Sum('d))
+```
+The output will be grouped on (a,b,c,x) instead of just (a,b,c) as as the case with normal cube function.
 
 # Run Spark Shell with SMV
 
