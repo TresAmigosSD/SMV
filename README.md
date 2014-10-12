@@ -83,6 +83,20 @@ implicit myCsvAttribs = CsvAttributes(quotechar="|"
 srdd.saveAsCsvWithSchema("/outdata/result")
 ```
 
+## Quantile operations
+The `smvQuantile` SchemaRDD helper method will compute the quantile (bin number) for each group within the source SchemaRDD.
+The algorithm assumes there are three columns in the input. (`group_id`, `key_id`, `value`).
+* group_id is the id used to segment the input before computing the quantiles.
+* key_id is a unique id within the group.  it will just be carried over into the output to help the caller to link the result back to the input.
+* the value column is the column that the quantile bins will be computed. This column must be numeric that can be converted to `Double`
+The output will contain the 3 input columns plus `value_total`, `value_rsum`, and `value_quantile` for the total of the value column, the running sum of the value column, and the quantile of the value respectively.
+
+A helper method `smvDecile` is provided as a shorthand for a quantile with 10 bins.
+```scala
+srdd.smvDecile('group_id, 'key, 'v)
+```
+The above will compute the decile for each group in `srdd` grouped by `group_id`.  Three additional columns will be produced: `v_total`, `v_rsum`, and `v_quantile`.
+
 ## Pivot Operations
 We may often need to "flatten out" the normalized data for easy manipulation within Excel.  Rather than create custom code for each pivot required, user should use the pivot_sum function in SMV.
 
