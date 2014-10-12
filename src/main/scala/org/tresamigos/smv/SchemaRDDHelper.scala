@@ -105,6 +105,14 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     new RollupCubeOp(schemaRDD, cols, fixedCols, groupExprs).rollup()
   }
 
+  /** See QuantileOp for details. */
+  def smvQuantile(groupCol: Symbol, keyCol: Symbol, valueCol: Symbol, numBins: Integer) = {
+    new QuantileOp(schemaRDD, groupCol, keyCol, valueCol, numBins).quantile()
+  }
+  def smvDecile(groupCol: Symbol, keyCol: Symbol, valueCol: Symbol) = {
+    new QuantileOp(schemaRDD, groupCol, keyCol, valueCol, 10).quantile()
+  }
+
   /**
    * Create an EDD builder on SchemaRDD 
    * 
