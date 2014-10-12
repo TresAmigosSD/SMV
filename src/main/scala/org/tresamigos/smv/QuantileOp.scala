@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import scala.math.floor
 import org.apache.spark.SparkContext._
 import org.apache.spark.sql.{Row, SchemaRDD}
-import org.apache.spark.sql.catalyst.expressions.{GenericRow, Cast, Sum}
+import org.apache.spark.sql.catalyst.expressions.{GenericRow, Cast}
 import org.apache.spark.sql.catalyst.types.{StructType, IntegerType, StructField, DoubleType}
 
 /**
@@ -29,8 +29,8 @@ import org.apache.spark.sql.catalyst.types.{StructType, IntegerType, StructField
  * And finally, the value column is the column that the quantile bins will be computed.
  * For now, the group and key columns must either be string or numeric and the value
  * column must be numeric (int, long, float, double).
- * The output will contain the 3 input columns plus value_bin column with a value in the
- * range 1 to num_bins.
+ * The output will contain the 3 input columns plus value_total, value_rsum, and
+ * value_quantile column with a value in the range 1 to num_bins.
  */
 class QuantileOp(origSRDD: SchemaRDD,
                  groupCol: Symbol,
