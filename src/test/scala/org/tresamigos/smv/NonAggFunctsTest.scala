@@ -37,8 +37,8 @@ class SmvStrCatTest extends SparkTestUtil {
     val ssc = sqlContext; import ssc._
     val srdd = createSchemaRdd("a:String; b:String; c:String; d:Integer",
       "a,b,c,1;x,y,z,2")
-    val res = srdd.select(SmvStrCat('a, "_", 'b, "+", 'c) as 'cat)
-    assertSrddDataEqual(res, "a_b+c;x_y+z")
+    val res = srdd.select(SmvStrCat('a, "_", 'b, "+", 'd) as 'cat)
+    assertSrddDataEqual(res, "a_b+1;x_y+2")
   }
 }
 
