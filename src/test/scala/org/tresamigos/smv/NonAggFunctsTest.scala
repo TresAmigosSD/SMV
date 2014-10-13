@@ -32,6 +32,17 @@ class LEFTTest extends SparkTestUtil {
   }
 }
 
+class SmvStrCatTest extends SparkTestUtil {
+  sparkTest("test SmvStrCat function") {
+    val ssc = sqlContext; import ssc._
+    val srdd = createSchemaRdd("a:String; b:String; c:String; d:Integer",
+      "a,b,c,1;x,y,z,2")
+    val res = srdd.select(SmvStrCat('a, "_", 'b, "+", 'c) as 'cat)
+    assertSrddDataEqual(res, "a_b+c;x_y+z")
+  }
+}
+
+
 class TimeFuncsTest extends SparkTestUtil {
   sparkTest("test YEAR, MONTH, DAYOFMOUNTH, DAYOFWEEK, HOUR") {
     val ssc = sqlContext; import ssc.symbolToUnresolvedAttribute

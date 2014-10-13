@@ -186,5 +186,19 @@ case class BinFloor(child: Expression, bin: Double) extends UnaryFuncs[Double] {
   }
 }
 
+case class SmvStrCat(children: Expression*)
+  extends Expression {
 
+  type EvaluatedType = String
+  val dataType = StringType
+
+  def nullable = true
+
+  override def eval(input: Row): String = {
+    children.map{ c => 
+      val v = c.eval(input)
+      if (v == null) "" else v.toString
+    }.reduce( _ + _ )
+  }
+}
 
