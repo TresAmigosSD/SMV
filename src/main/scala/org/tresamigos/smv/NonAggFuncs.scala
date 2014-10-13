@@ -195,7 +195,10 @@ case class SmvStrCat(children: Expression*)
   def nullable = true
 
   override def eval(input: Row): String = {
-    children.map{_.eval(input).toString}.reduce( _ + _ )
+    children.map{ c => 
+      val v = c.eval(input)
+      if (v == null) "" else v.toString
+    }.reduce( _ + _ )
   }
 }
 
