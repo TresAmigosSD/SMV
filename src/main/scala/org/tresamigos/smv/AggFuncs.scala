@@ -116,9 +116,9 @@ case class Histogram(child: Expression)
 }
 
 trait OnlineAvgStdDevFunctions {
-  protected var count: Long = _ 
-  protected var avg: Double = _
-  protected var m2: Double = _
+  protected var count: Long = 0L 
+  protected var avg: Double = 0.0
+  protected var m2: Double = 0.0
 
   def sharedUpdate(input: Row, expr: Expression): Unit = {
     val evaluatedExpr = expr.eval(input)
@@ -154,17 +154,19 @@ case class OnlineStdDevFunction(
 
 
 trait OnlineAvgStdDevMergeFunctions {
-  protected var count: Long = _ 
-  protected var avg: Double = _
-  protected var m2: Double = _
+  protected var count: Long = 0L 
+  protected var avg: Double = 0.0
+  protected var m2: Double = 0.0
 
   def sharedUpdate(input: Row, expr: Expression): Unit = {
     val evaluatedExpr = expr.eval(input)
     val (count_that, avg_that, m2_that) = evaluatedExpr.asInstanceOf[(Long, Double, Double)]
-    val delta = avg - avg_that
-    avg = ( avg * count + avg_that * count_that ) / (count + count_that)
-    m2 = m2 + m2_that + delta * delta * count * count_that / (count + count_that)
-    count += count_that
+    if (count_that > 0){
+      val delta = avg - avg_that
+      avg = ( avg * count + avg_that * count_that ) / (count + count_that)
+      m2 = m2 + m2_that + delta * delta * count * count_that / (count + count_that)
+      count += count_that
+    }
   }
 }
 
