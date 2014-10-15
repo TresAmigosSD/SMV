@@ -16,8 +16,8 @@ package org.tresamigos.smv
 
 import scala.math.floor
 import org.apache.spark.SparkContext._
-import org.apache.spark.sql.{Row, SchemaRDD}
-import org.apache.spark.sql.catalyst.expressions.{GenericRow, Cast}
+import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.catalyst.expressions.{Row, GenericRow, Cast}
 import org.apache.spark.sql.catalyst.types.{StructType, IntegerType, StructField, DoubleType}
 
 /**
@@ -63,22 +63,27 @@ class QuantileOp(origSRDD: SchemaRDD,
    * plus the sum and quantile columns.
    */
   def newSchema() = {
+    val smvSchema = Schema.fromSchemaRDD(origSRDD)
+    println(smvSchema)
+    val oldFields = Seq(groupCol, keyCol, valueCol).
+      map(cs => smvSchema.findEntry(cs).get)
     val newFields = List(
-      StructField(valueCol.name + "_total", DoubleType, false),
-      StructField(valueCol.name + "_rsum", DoubleType, false),
-      StructField(valueCol.name + "_quantile", IntegerType, false))
-    StructType(origSRDD.schema.fields ++ newFields)
+      DoubleSchemaEntry(valueCol.name + "_total"),
+      DoubleSchemaEntry(valueCol.name + "_rsum"),
+      IntegerSchemaEntry(valueCol.name + "_quantile"))
+    new Schema(oldFields ++ newFields)
   }
 
   /** do the actual quantile computation. */
   def quantile() : SchemaRDD = {
     import origSRDD.sqlContext._
 
-    val res = origSRDD.
+    val resRDD = origSRDD.
       select(groupCol, keyCol, valueCol, Cast(valueCol, DoubleType)).
       groupBy(_(0)).
       flatMapValues(rowsInGroup => addQuantile(rowsInGroup.toArray)).
       values
-    origSRDD.sqlContext.applySchema(res, newSchema())
+
+    origSRDD.sqlContext.applySchemaToRowRDD(resRDD, newSchema())
   }
 }

@@ -21,14 +21,14 @@ import org.apache.spark.sql.catalyst.expressions.Row
 class QuantileOpTest extends SparkTestUtil {
   sparkTest("Test smvDecile") {
 
-    // Creates a test data string of the format "G1,k1,1;G2,k2,2;..." but that is randomly
+    // Creates a test data string of the format "G1,k1,j1,1;G2,k2,j1,2;..." but that is randomly
     // shuffled to make sure the sort within quantile is working.
-    val testData_1to20 = 1.to(20).map(n => s"G1,k${n},${n}")
+    val testData_1to20 = 1.to(20).map(n => s"G1,k${n},j${n},${n}")
     val testData_1to20_str = Random.shuffle(testData_1to20).mkString(";")
 
     // create the input srdd with 22 rows.
-    val srdd = createSchemaRdd("g:String; k:String; v:Integer",
-      testData_1to20_str + """;G2,x,10;G2,y,30""")
+    val srdd = createSchemaRdd("g:String; k:String; junk:String; v:Integer",
+      testData_1to20_str + """;G2,x,J,10;G2,y,JJ,30""")
 
     val res = srdd.smvDecile('g, 'k, 'v)
 
