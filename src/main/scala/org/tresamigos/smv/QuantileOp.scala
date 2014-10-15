@@ -64,7 +64,6 @@ class QuantileOp(origSRDD: SchemaRDD,
    */
   def newSchema() = {
     val smvSchema = Schema.fromSchemaRDD(origSRDD)
-    println(smvSchema)
     val oldFields = Seq(groupCol, keyCol, valueCol).
       map(cs => smvSchema.findEntry(cs).get)
     val newFields = List(
