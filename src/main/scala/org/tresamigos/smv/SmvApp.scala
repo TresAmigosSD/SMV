@@ -29,10 +29,10 @@ trait SmvModule {
  * Driver for SMV applications.  An application needs to override the getFiles and getModules
  * methods that provide the list of ALL known SmvFiles (in/out) and the list of modules to run.
  */
-abstract class SmvApp (val appName: String) {
+abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
   private val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
   val conf = new SparkConf().setAppName(appName)
-  val sc = new SparkContext(conf)
+  val sc = _sc.getOrElse(new SparkContext(conf))
   val sqlContext = new SQLContext(sc)
 
   def getFiles(): Seq[SmvFile]
@@ -50,6 +50,12 @@ abstract class SmvApp (val appName: String) {
       implicit val ca = smvFile.csvAttributes
       (n, sqlContext.csvFileWithSchema(dataDir + "/" + smvFile.basePath))
     }.toMap
+  }
+
+  def getRddByName(rddName: String) = {
+    val smvFile = allFilesByName(rddName)
+    implicit val ca = smvFile.csvAttributes
+    sqlContext.csvFileWithSchema(dataDir + "/" + smvFile.basePath)
   }
 
   /**
