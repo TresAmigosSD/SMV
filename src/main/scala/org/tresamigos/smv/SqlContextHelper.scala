@@ -52,6 +52,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
    */
   def csvFileWithSchema(dataPath: String, schemaPath: String = null)
                        (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD = {
+    // TODO: the schemaPath should be an Option[String]
     val sp = if (schemaPath==null) Schema.dataPathToSchemaPath(dataPath) else schemaPath
     val sc = sqlContext.sparkContext
     val schema = Schema.fromFile(sc, sp)
