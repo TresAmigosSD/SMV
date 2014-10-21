@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import java.util.Calendar
+
 import org.apache.spark.sql.catalyst.expressions.{Row, BinaryArithmetic, BinaryExpression, UnaryExpression, Expression}
 import org.apache.spark.sql.catalyst.types._
 
@@ -91,6 +93,46 @@ case class LENGTH(child: Expression) extends UnaryFuncs[String] {
   def dataType = IntegerType
   def func(s:String): Int = {
     s.size
+  }
+}
+
+case class SmvYear(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
+  override def toString = s"SmvYear( $child )"
+  def dataType = IntegerType
+  def func(ts: java.sql.Timestamp): Int = {
+    var cal : Calendar = Calendar.getInstance();
+    cal.setTimeInMillis(ts.getTime())
+    cal.get(Calendar.YEAR)
+  }
+}
+
+case class SmvMonth(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
+  override def toString = s"SmvMonth( $child )"
+  def dataType = IntegerType
+  def func(ts: java.sql.Timestamp): Int = {
+    val cal : Calendar = Calendar.getInstance();
+    cal.setTimeInMillis(ts.getTime())
+    cal.get(Calendar.MONTH) + 1
+  }
+}
+
+case class SmvDayOfMonth(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
+  override def toString = s"SmvDayOfMonth( $child )"
+  def dataType = IntegerType
+  def func(ts: java.sql.Timestamp): Int = {
+    val cal : Calendar = Calendar.getInstance();
+    cal.setTimeInMillis(ts.getTime())
+    cal.get(Calendar.DAY_OF_MONTH)
+  }
+}
+
+case class SmvDayOfWeek(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
+  override def toString = s"SmvDayOfWeek( $child )"
+  def dataType = IntegerType
+  def func(ts: java.sql.Timestamp): Int = {
+    val cal : Calendar = Calendar.getInstance();
+    cal.setTimeInMillis(ts.getTime())
+    cal.get(Calendar.DAY_OF_WEEK)
   }
 }
 
