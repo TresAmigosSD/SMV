@@ -50,4 +50,25 @@ class TimeFuncsTest extends SparkTestUtil {
     val res = r.select('val2, YEAR('val2), MONTH('val2), DAYOFMONTH('val2), DAYOFWEEK('val2), HOUR('val2)).collect()(0).mkString(",")
     assert(res === "2013-01-09 13:06:19.0,2013,01,09,04,13")
   }
+
+  sparkTest("test SmvYear, SmvMonth, SmvDayOfWeek, SmvDayOfMonth") {
+    val ssc = sqlContext;
+    import ssc._
+    import ssc.symbolToUnresolvedAttribute
+
+    val srdd = createSchemaRdd(
+      // Schema
+      "time1:Timestamp[yyyy/dd/MM]; time2:Timestamp[yyyy-MM]",
+      // Values
+      """2014/05/03,2013-11;
+         2010/30/12,2012-01
+      """.stripMargin
+    )
+
+    val result = srdd.
+      select(SmvYear('time1) as 'year1, SmvMonth('time1) as 'month1, SmvDayOfMonth('time1) as 'dayOfMonth1,
+        SmvYear('time2) as 'year2, SmvMonth('time2) as 'month2, SmvDayOfMonth('time2) as 'dayOfMonth2)
+
+    assertUnorderedSeqEqual(result.collect.map(_.toString), Seq("[2014,3,5,2013,11,1]", "[2010,12,30,2012,1,1]"))
+  }
 }
