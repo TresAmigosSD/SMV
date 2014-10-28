@@ -53,10 +53,39 @@ class SmvAppTest extends SparkTestUtil {
     }
 
     val res = app.resolveRDD("C")
-    dumpSRDD(res)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
 
     // even though both B and C depended on A, A should have only run once!
     assert(A.moduleRunCount === 1)
+  }
+
+  object A_cycle extends SmvModule("A", "A Cycle") {
+    override def requires() = Seq("B")
+    override def run(inputs: Map[String, SchemaRDD]) = null
+  }
+
+  object B_cycle extends SmvModule("B", "B Cycle") {
+    override def requires() = Seq("A")
+    override def run(inputs: Map[String, SchemaRDD]) = null
+  }
+
+  sparkTest("Test cycle dependency execution") {
+    object app extends SmvApp("test dependency", Option(sc)) {
+      override def getDataSets() = Seq(A_cycle, B_cycle)
+    }
+
+    intercept[IllegalStateException] {
+      app.resolveRDD("B")
+    }
+  }
+
+  sparkTest("Test name not found") {
+    object app extends SmvApp("test dependency", Option(sc)) {
+      override def getDataSets() = Seq(A, B)
+    }
+
+    intercept[NoSuchElementException] {
+      app.resolveRDD("X")
+    }
   }
 }
