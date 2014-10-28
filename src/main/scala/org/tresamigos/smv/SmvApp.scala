@@ -25,7 +25,7 @@ import scala.collection.mutable
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result SchemaRDD.
  */
-abstract class SmvDataSet(val name: String, val description: String = "unknown") {
+abstract class SmvDataSet(val name: String, val description: String) {
   private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
 
   /** full path of file associated with this module/file */
@@ -61,7 +61,7 @@ case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes
  * will be provided the SchemaRDD result from the run method of this module.
  * Note: the module should *not* persist any RDD itself.
  */
-abstract class SmvModule(_name: String, _description: String) extends
+abstract class SmvModule(_name: String, _description: String = "unknown") extends
   SmvDataSet(_name, _description) {
 
   def requires() : Seq[String]
