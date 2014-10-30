@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv
+package org.tresamigos.smv {
 
 import org.apache.spark.sql.SchemaRDD
 
@@ -49,7 +49,7 @@ class SmvAppTest extends SparkTestUtil {
 
   sparkTest("Test normal dependency execution") {
     object app extends SmvApp("test dependency", Option(sc)) {
-      override def getDataSets() = Seq(A,B,C)
+      override def getDataSets() = Seq(A, B, C)
     }
 
     val res = app.resolveRDD("C")
@@ -88,4 +88,35 @@ class SmvAppTest extends SparkTestUtil {
       app.resolveRDD("X")
     }
   }
+
+  sparkTest("Test modulesInPackage method.") {
+    object app extends SmvApp("test modulesInPackage", Option(sc)) {
+      override def getDataSets() = Seq.empty
+    }
+    val modNames: Seq[String] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPackage").map(_.name)
+    assertUnorderedSeqEqual(modNames, Seq("X", "Y"))
+  }
+}
+}
+
+/**
+ * package below is used for testing the modulesInPackage method in SmvApp.
+ */
+package org.tresamigos.smv.smvAppTestPackage {
+
+  import org.apache.spark.sql.SchemaRDD
+  import org.tresamigos.smv.SmvModule
+
+  object X extends SmvModule("X", "X Module") {
+    override def requires() = Seq.empty
+    override def run(inputs: Map[String, SchemaRDD]) = null
+  }
+
+  object Y extends SmvModule("Y", "Y Module") {
+    override def requires() = Seq("X")
+    override def run(inputs: Map[String, SchemaRDD]) = null
+  }
+
+  // should still work even if we have a class X.
+  class X
 }

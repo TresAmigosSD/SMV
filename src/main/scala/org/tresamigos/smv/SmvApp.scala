@@ -68,7 +68,7 @@ abstract class SmvModule(_name: String, _description: String = "unknown") extend
   def run(inputs: Map[String, SchemaRDD]) : SchemaRDD
 
   // TODO: should probably convert "." in name to path separator "/"
-  override def fullPath() = dataDir + "/output/" + name
+  override def fullPath() = s"${dataDir}/output/${name}.csv"
 
   override def rdd(app: SmvApp): SchemaRDD = {
     run(requires().map(r => (r, app.resolveRDD(r))).toMap)
@@ -92,9 +92,17 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
   val rddCache: mutable.Map[String, SchemaRDD] = mutable.Map()
 
   /** concrete applications need to provide list of datasets in application. */
-  def getDataSets() : Seq[SmvDataSet]
+  def getDataSets() : Seq[SmvDataSet] = Seq.empty
 
-  lazy private val allDataSetsByName = getDataSets().map(ds => (ds.name, ds)).toMap
+  /** concrete applications can provide a list of package names containing modules. */
+  def getModulePackages() : Seq[String] = Seq.empty
+
+  /** sequence of ALL known datasets.  Those specified by users and discovered in packages. */
+  private def allDataSets(): Seq[SmvDataSet] = {
+    getDataSets ++ getModulePackages.map(modulesInPackage).flatten
+  }
+
+  lazy private val allDataSetsByName = allDataSets.map(ds => (ds.name, ds)).toMap
 
   /** Get the RDD associated with given name. */
   def resolveRDD(name: String) = {
@@ -114,7 +122,28 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
   }
 
   def run(name: String) = {
+    implicit val ca = CsvAttributes.defaultCsvWithHeader
+
     resolveRDD(name).saveAsCsvWithSchema(allDataSetsByName(name).fullPath)
+  }
+
+  /** extract instances (objects) in given package that implement SmvModule. */
+  private[smv] def modulesInPackage(pkgName: String): Seq[SmvModule] = {
+    import com.google.common.reflect.ClassPath
+    import scala.collection.JavaConversions._
+    import scala.reflect.runtime.{universe => ru}
+    import scala.util.Try
+
+    val cl = this.getClass.getClassLoader
+    val m = ru.runtimeMirror(cl)
+
+    ClassPath.from(cl).
+      getTopLevelClasses(pkgName).
+      map(c => Try(
+        m.reflectModule(m.staticModule(c.getName)).instance.asInstanceOf[SmvModule])).
+      filter(_.isSuccess).
+      map(_.get).
+      toSeq
   }
 }
 
