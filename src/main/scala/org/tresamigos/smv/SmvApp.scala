@@ -127,6 +127,32 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
     resolveRDD(name).saveAsCsvWithSchema(allDataSetsByName(name).fullPath)
   }
 
+  private def addDependencyEdges(nodeName: String, dependencyMap: mutable.Map[String, Set[String]]) {
+    if (!dependencyMap.contains(nodeName)) {
+      val ds = allDataSetsByName(nodeName)
+
+      dependencyMap(nodeName) = if (ds.isInstanceOf[SmvModule]) {
+        ds.asInstanceOf[SmvModule].requires().toSet
+      } else {
+        Set[String]()
+      }
+
+      dependencyMap(nodeName).foreach(d => addDependencyEdges(d, dependencyMap))
+    }
+  }
+
+  def dependencyGraph(startNode: String) = {
+    val sb = mutable.StringBuilder.newBuilder
+    val edges : mutable.Map[String, Set[String]] = mutable.Map()
+    addDependencyEdges(startNode, edges)
+
+    Seq(
+      "digraph G {",
+      "  node [style=filled,color=\"lightblue\"]") ++
+    edges.flatMap{case (k,vs) => vs.map(v => s"""  "${v}" -> "${k}" """ )} ++
+    Seq("}")
+  }
+
   /** extract instances (objects) in given package that implement SmvModule. */
   private[smv] def modulesInPackage(pkgName: String): Seq[SmvModule] = {
     import com.google.common.reflect.ClassPath

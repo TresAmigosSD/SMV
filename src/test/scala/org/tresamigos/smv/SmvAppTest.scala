@@ -96,6 +96,15 @@ class SmvAppTest extends SparkTestUtil {
     val modNames: Seq[String] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPackage").map(_.name)
     assertUnorderedSeqEqual(modNames, Seq("X", "Y"))
   }
+
+  sparkTest("Test dependency graph creation.") {
+    object app extends SmvApp("test dependency graph", Option(sc)) {
+      override def getDataSets() = Seq(A, B, C)
+    }
+
+    val g = app.dependencyGraph("C")
+    g.foreach(println)
+  }
 }
 }
 
