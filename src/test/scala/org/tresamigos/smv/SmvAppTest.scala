@@ -102,8 +102,13 @@ class SmvAppTest extends SparkTestUtil {
       override def getDataSets() = Seq(A, B, C)
     }
 
-    val g = app.dependencyGraph("C")
-    g.foreach(println)
+    val depGraph = new SmvModuleDependencyGraph("C", app)
+
+    val edges = depGraph.graph()
+    assert(edges.size === 3)
+    assert(edges("A") === Set())
+    assert(edges("B") === Set("A"))
+    assert(edges("C") === Set("A", "B"))
   }
 }
 }

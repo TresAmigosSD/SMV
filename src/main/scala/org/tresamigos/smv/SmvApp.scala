@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import java.io.{File, PrintWriter}
+
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
@@ -33,6 +35,9 @@ abstract class SmvDataSet(val name: String, val description: String) {
 
   /** returns the SchemaRDD from this dataset (file/module) */
   def rdd(app: SmvApp): SchemaRDD
+
+  /** set of data sets that this data set depends on. */
+  def requires() : Seq[String]
 }
 
 /**
@@ -51,6 +56,8 @@ case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes
 
     app.sqlContext.csvFileWithSchema(fullPath())
   }
+
+  override def requires() = Seq.empty
 }
 
 /**
@@ -64,7 +71,6 @@ case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes
 abstract class SmvModule(_name: String, _description: String = "unknown") extends
   SmvDataSet(_name, _description) {
 
-  def requires() : Seq[String]
   def run(inputs: Map[String, SchemaRDD]) : SchemaRDD
 
   // TODO: should probably convert "." in name to path separator "/"
@@ -102,7 +108,7 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
     getDataSets ++ getModulePackages.map(modulesInPackage).flatten
   }
 
-  lazy private val allDataSetsByName = allDataSets.map(ds => (ds.name, ds)).toMap
+  lazy private[smv] val allDataSetsByName = allDataSets.map(ds => (ds.name, ds)).toMap
 
   /** Get the RDD associated with given name. */
   def resolveRDD(name: String) = {
@@ -127,32 +133,6 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
     resolveRDD(name).saveAsCsvWithSchema(allDataSetsByName(name).fullPath)
   }
 
-  private def addDependencyEdges(nodeName: String, dependencyMap: mutable.Map[String, Set[String]]) {
-    if (!dependencyMap.contains(nodeName)) {
-      val ds = allDataSetsByName(nodeName)
-
-      dependencyMap(nodeName) = if (ds.isInstanceOf[SmvModule]) {
-        ds.asInstanceOf[SmvModule].requires().toSet
-      } else {
-        Set[String]()
-      }
-
-      dependencyMap(nodeName).foreach(d => addDependencyEdges(d, dependencyMap))
-    }
-  }
-
-  def dependencyGraph(startNode: String) = {
-    val sb = mutable.StringBuilder.newBuilder
-    val edges : mutable.Map[String, Set[String]] = mutable.Map()
-    addDependencyEdges(startNode, edges)
-
-    Seq(
-      "digraph G {",
-      "  node [style=filled,color=\"lightblue\"]") ++
-    edges.flatMap{case (k,vs) => vs.map(v => s"""  "${v}" -> "${k}" """ )} ++
-    Seq("}")
-  }
-
   /** extract instances (objects) in given package that implement SmvModule. */
   private[smv] def modulesInPackage(pkgName: String): Seq[SmvModule] = {
     import com.google.common.reflect.ClassPath
@@ -170,6 +150,40 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
       filter(_.isSuccess).
       map(_.get).
       toSeq
+  }
+}
+
+/**
+ * contains the module level dependency graph starting at the given startNode.
+ */
+class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp) {
+  type dependencyMap = Map[String, Set[String]]
+
+  private def depsByName(nodeName: String) = app.allDataSetsByName(nodeName).requires()
+
+  private def addDependencyEdges(nodeName: String, nodeDeps: Seq[String], map: dependencyMap): dependencyMap = {
+    if (map.contains(nodeName)) {
+      map
+    } else {
+      nodeDeps.foldLeft(map.updated(nodeName, nodeDeps.toSet))(
+        (m,r) => addDependencyEdges(r, depsByName(r), m))
+    }
+  }
+
+  private[smv] def graph() = addDependencyEdges(startNode, depsByName(startNode), Map())
+
+  private def generateGraphvisCode() = {
+    Seq(
+      "digraph G {",
+      "  node [style=filled,color=\"lightblue\"]") ++
+      graph().flatMap{case (k,vs) => vs.map(v => s"""  "${v}" -> "${k}" """ )} ++
+      Seq("}")
+  }
+
+  def saveToFile(filePath: String) = {
+    val pw = new PrintWriter(new File(filePath))
+    generateGraphvisCode().foreach(pw.println)
+    pw.close()
   }
 }
 
