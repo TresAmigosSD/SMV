@@ -170,13 +170,28 @@ class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp) {
     }
   }
 
-  private[smv] def graph() = addDependencyEdges(startNode, depsByName(startNode), Map())
+  private[smv] lazy val graph = addDependencyEdges(startNode, depsByName(startNode), Map())
+  private lazy val allFiles = graph.values.flatMap(vs =>
+    vs.filter(v => app.allDataSetsByName(v).isInstanceOf[SmvFile]))
+
+  private def q(s: String) = "\"" + s + "\""
+
+  private def fileStyles() = {
+    allFiles.map(f => s"  ${q(f)} " + "[shape=box, color=\"pink\"]")
+  }
+
+  private def filesRank() = {
+    Seq("{ rank = same; " + allFiles.map(f => s"${q(f)};").mkString(" ") + " }")
+  }
 
   private def generateGraphvisCode() = {
     Seq(
       "digraph G {",
+      "  rankdir=\"LR\";",
       "  node [style=filled,color=\"lightblue\"]") ++
-      graph().flatMap{case (k,vs) => vs.map(v => s"""  "${v}" -> "${k}" """ )} ++
+      fileStyles() ++
+      filesRank() ++
+      graph.flatMap{case (k,vs) => vs.map(v => s"""  "${v}" -> "${k}" """ )} ++
       Seq("}")
   }
 

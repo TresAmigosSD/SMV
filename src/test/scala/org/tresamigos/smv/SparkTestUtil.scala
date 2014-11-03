@@ -49,6 +49,7 @@ trait SparkTestUtil extends FunSuite {
         SparkTestUtil.setLoggingLevel(Level.OFF)
       else
         SparkTestUtil.setLoggingLevel(Level.ERROR)
+      sys.env
       sc = new SparkContext("local[2]", name)
       sqlContext = new SQLContext(sc)
       try {

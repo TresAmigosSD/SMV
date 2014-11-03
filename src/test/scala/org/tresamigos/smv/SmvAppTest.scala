@@ -17,14 +17,20 @@ package org.tresamigos.smv {
 import org.apache.spark.sql.SchemaRDD
 
 
+class SmvTestFile(override val _name: String) extends SmvFile(_name, null, null) {
+  override def rdd(app: SmvApp): SchemaRDD = null
+}
+
 class SmvAppTest extends SparkTestUtil {
+
+  val fx = new SmvTestFile("FX")
 
   object A extends SmvModule("A", "A Module") {
     var moduleRunCount = 0
-    override def requires() = Seq.empty
+    override def requires() = Seq("FX")
     override def run(inputs: Map[String, SchemaRDD]) = {
       moduleRunCount = moduleRunCount + 1
-      require(inputs.size === 0)
+      require(inputs.size === 1)
       createSchemaRdd("a:Integer", "1;2;3")
     }
   }
@@ -49,7 +55,7 @@ class SmvAppTest extends SparkTestUtil {
 
   sparkTest("Test normal dependency execution") {
     object app extends SmvApp("test dependency", Option(sc)) {
-      override def getDataSets() = Seq(A, B, C)
+      override def getDataSets() = Seq(fx, A, B, C)
     }
 
     val res = app.resolveRDD("C")
@@ -81,7 +87,7 @@ class SmvAppTest extends SparkTestUtil {
 
   sparkTest("Test name not found") {
     object app extends SmvApp("test dependency", Option(sc)) {
-      override def getDataSets() = Seq(A, B)
+      override def getDataSets() = Seq(fx, A, B)
     }
 
     intercept[NoSuchElementException] {
@@ -99,14 +105,16 @@ class SmvAppTest extends SparkTestUtil {
 
   sparkTest("Test dependency graph creation.") {
     object app extends SmvApp("test dependency graph", Option(sc)) {
-      override def getDataSets() = Seq(A, B, C)
+      override def getDataSets() = Seq(fx, A, B, C)
     }
 
     val depGraph = new SmvModuleDependencyGraph("C", app)
+    //depGraph.saveToFile("foo.dot")
 
-    val edges = depGraph.graph()
-    assert(edges.size === 3)
-    assert(edges("A") === Set())
+    val edges = depGraph.graph
+    assert(edges.size === 4)
+    assert(edges("FX") === Set())
+    assert(edges("A") === Set("FX"))
     assert(edges("B") === Set("A"))
     assert(edges("C") === Set("A", "B"))
   }
