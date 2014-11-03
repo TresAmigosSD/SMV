@@ -141,4 +141,10 @@ package org.tresamigos.smv.smvAppTestPackage {
 
   // should still work even if we have a class X.
   class X
+
+  // should not show as a valid module because it is a class and not an object instance.
+  class Z extends SmvModule("Z", "Z Class") {
+    override def requires = Seq()
+    override def run(inputs: Map[String, SchemaRDD]) = null
+  }
 }
