@@ -28,6 +28,7 @@ import scala.collection.mutable
  * be a single result SchemaRDD.
  */
 abstract class SmvDataSet(val name: String, val description: String) {
+  // dataDir should really be at the app level
   private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
 
   /** full path of file associated with this module/file */
@@ -38,6 +39,11 @@ abstract class SmvDataSet(val name: String, val description: String) {
 
   /** set of data sets that this data set depends on. */
   def requires() : Seq[String]
+
+  /** modules can override to provide set of datasets they depend on. */
+  def requiresDS() : Seq[SmvDataSet] = Seq.empty
+
+  def allRequireNames() = requires() ++ requiresDS().map(_.name)
 }
 
 /**
@@ -71,13 +77,14 @@ case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes
 abstract class SmvModule(_name: String, _description: String = "unknown") extends
   SmvDataSet(_name, _description) {
 
-  def run(inputs: Map[String, SchemaRDD]) : SchemaRDD
+  type runParams = Map[String, SchemaRDD]
+  def run(inputs: runParams) : SchemaRDD
 
   // TODO: should probably convert "." in name to path separator "/"
   override def fullPath() = s"${dataDir}/output/${name}.csv"
 
   override def rdd(app: SmvApp): SchemaRDD = {
-    run(requires().map(r => (r, app.resolveRDD(r))).toMap)
+    run(allRequireNames().map(r => (r, app.resolveRDD(r))).toMap)
   }
 }
 
@@ -159,7 +166,7 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
 class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp) {
   type dependencyMap = Map[String, Set[String]]
 
-  private def depsByName(nodeName: String) = app.allDataSetsByName(nodeName).requires()
+  private def depsByName(nodeName: String) = app.allDataSetsByName(nodeName).allRequireNames()
 
   private def addDependencyEdges(nodeName: String, nodeDeps: Seq[String], map: dependencyMap): dependencyMap = {
     if (map.contains(nodeName)) {
