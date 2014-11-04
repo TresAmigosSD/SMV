@@ -66,6 +66,16 @@ case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes
   override def requires() = Seq.empty
 }
 
+
+/**
+ * Wrapper around the run parameters to aid map Modules to their names and vice-versa.
+ */
+class SmvRunParam(val rddMap: Map[String, SchemaRDD]) {
+  def apply(rddName: String) = rddMap(rddName)
+  def apply(mod: SmvModule) = null
+  def size() = rddMap.size
+}
+
 /**
  * base module class.  All SMV modules need to extend this class and provide their
  * name, description and dependency requirements (what does it depend on).
@@ -77,14 +87,14 @@ case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes
 abstract class SmvModule(_name: String, _description: String = "unknown") extends
   SmvDataSet(_name, _description) {
 
-  type runParams = Map[String, SchemaRDD]
+  type runParams = SmvRunParam
   def run(inputs: runParams) : SchemaRDD
 
   // TODO: should probably convert "." in name to path separator "/"
   override def fullPath() = s"${dataDir}/output/${name}.csv"
 
   override def rdd(app: SmvApp): SchemaRDD = {
-    run(allRequireNames().map(r => (r, app.resolveRDD(r))).toMap)
+    run(new SmvRunParam(allRequireNames().map(r => (r, app.resolveRDD(r))).toMap))
   }
 }
 

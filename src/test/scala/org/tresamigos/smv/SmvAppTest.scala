@@ -28,7 +28,7 @@ class SmvAppTest extends SparkTestUtil {
   object A extends SmvModule("A", "A Module") {
     var moduleRunCount = 0
     override def requires() = Seq("FX")
-    override def run(inputs: Map[String, SchemaRDD]) = {
+    override def run(inputs: runParams) = {
       moduleRunCount = moduleRunCount + 1
       require(inputs.size === 1)
       createSchemaRdd("a:Integer", "1;2;3")
@@ -37,7 +37,7 @@ class SmvAppTest extends SparkTestUtil {
 
   object B extends SmvModule("B", "B Module") {
     override def requires() = Seq("A")
-    override def run(inputs: Map[String, SchemaRDD]) = {
+    override def run(inputs: runParams) = {
       val sc = inputs("A").sqlContext; import sc._
       require(inputs.size === 1)
       inputs("A").selectPlus('a + 1 as 'b)
@@ -46,7 +46,7 @@ class SmvAppTest extends SparkTestUtil {
 
   object C extends SmvModule("C", "C Module") {
     override def requires() = Seq("A", "B")
-    override def run(inputs: Map[String, SchemaRDD]) = {
+    override def run(inputs: runParams) = {
       val sc = inputs("A").sqlContext; import sc._
       require(inputs.size === 2)
       inputs("B").selectPlus('b + 1 as 'c)
@@ -67,12 +67,12 @@ class SmvAppTest extends SparkTestUtil {
 
   object A_cycle extends SmvModule("A", "A Cycle") {
     override def requires() = Seq("B")
-    override def run(inputs: Map[String, SchemaRDD]) = null
+    override def run(inputs: runParams) = null
   }
 
   object B_cycle extends SmvModule("B", "B Cycle") {
     override def requires() = Seq("A")
-    override def run(inputs: Map[String, SchemaRDD]) = null
+    override def run(inputs: runParams) = null
   }
 
   sparkTest("Test cycle dependency execution") {
@@ -126,17 +126,16 @@ class SmvAppTest extends SparkTestUtil {
  */
 package org.tresamigos.smv.smvAppTestPackage {
 
-  import org.apache.spark.sql.SchemaRDD
   import org.tresamigos.smv.SmvModule
 
   object X extends SmvModule("X", "X Module") {
     override def requires() = Seq.empty
-    override def run(inputs: Map[String, SchemaRDD]) = null
+    override def run(inputs: runParams) = null
   }
 
   object Y extends SmvModule("Y", "Y Module") {
     override def requires() = Seq("X")
-    override def run(inputs: Map[String, SchemaRDD]) = null
+    override def run(inputs: runParams) = null
   }
 
   // should still work even if we have a class X.
@@ -145,6 +144,6 @@ package org.tresamigos.smv.smvAppTestPackage {
   // should not show as a valid module because it is a class and not an object instance.
   class Z extends SmvModule("Z", "Z Class") {
     override def requires = Seq()
-    override def run(inputs: Map[String, SchemaRDD]) = null
+    override def run(inputs: runParams) = null
   }
 }
