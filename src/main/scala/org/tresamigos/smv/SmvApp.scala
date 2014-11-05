@@ -183,8 +183,13 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
 
 /**
  * contains the module level dependency graph starting at the given startNode.
+ * All prefixes given in packagePrefixes are removed from the output module/file name
+ * to make the graph cleaner.  For example, project X at com.foo should probably add
+ * a package prefix of "com.foo.X" to remove the repeated noise of "com.foo.X" before
+ * every module name in the graph.
  */
-class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp) {
+class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp,
+                               val packagePrefixes: Seq[String] = Seq.empty) {
   def this(startMod: SmvModule, app: SmvApp) = this(startMod.name, app)
 
   type dependencyMap = Map[String, Set[String]]
@@ -204,7 +209,11 @@ class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp) {
   private lazy val allFiles = graph.values.flatMap(vs =>
     vs.filter(v => app.allDataSetsByName(v).isInstanceOf[SmvFile]))
 
-  private def q(s: String) = "\"" + s + "\""
+  private def stripPackagePrefix(nodeName: String) =
+    packagePrefixes.map(_ + ".").foldLeft(nodeName)((s,p) => s.stripPrefix(p))
+
+  /** quoted/clean name in graph output */
+  private def q(s: String) = "\"" + stripPackagePrefix(s).filterNot(_=='$') + "\""
 
   private def fileStyles() = {
     allFiles.map(f => s"  ${q(f)} " + "[shape=box, color=\"pink\"]")
@@ -221,7 +230,7 @@ class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp) {
       "  node [style=filled,color=\"lightblue\"]") ++
       fileStyles() ++
       filesRank() ++
-      graph.flatMap{case (k,vs) => vs.map(v => s"""  "${v}" -> "${k}" """ )} ++
+      graph.flatMap{case (k,vs) => vs.map(v => s"""  ${q(v)} -> ${q(k)} """ )} ++
       Seq("}")
   }
 
