@@ -58,6 +58,7 @@ abstract class SmvDataSet(val description: String) {
 case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes) extends
     SmvDataSet(s"Input file: ${_name}@${basePath}") {
 
+  // TODO: name should be just the basePath? or basename of the basePath?
   override def name() = _name
   override def fullPath() = dataDir + "/" + basePath
 
@@ -76,7 +77,7 @@ case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes
  */
 class SmvRunParam(val rddMap: Map[String, SchemaRDD]) {
   def apply(rddName: String) = rddMap(rddName)
-  def apply(mod: SmvModule) = rddMap(mod.name)
+  def apply(ds: SmvDataSet) = rddMap(ds.name)
   def size() = rddMap.size
 }
 
