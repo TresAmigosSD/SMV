@@ -25,9 +25,9 @@ class SmvAppTest extends SparkTestUtil {
 
   val fx = new SmvTestFile("FX")
 
-  object A extends SmvModule("A", "A Module") {
+  object A extends SmvModule("A Module") {
     var moduleRunCount = 0
-    override def requires() = Seq("FX")
+    override def requiresDS() = Seq(fx)
     override def run(inputs: runParams) = {
       moduleRunCount = moduleRunCount + 1
       require(inputs.size === 1)
@@ -35,21 +35,21 @@ class SmvAppTest extends SparkTestUtil {
     }
   }
 
-  object B extends SmvModule("B", "B Module") {
-    override def requires() = Seq("A")
+  object B extends SmvModule("B Module") {
+    override def requiresDS() = Seq(A)
     override def run(inputs: runParams) = {
-      val sc = inputs("A").sqlContext; import sc._
+      val sc = inputs(A).sqlContext; import sc._
       require(inputs.size === 1)
-      inputs("A").selectPlus('a + 1 as 'b)
+      inputs(A).selectPlus('a + 1 as 'b)
     }
   }
 
-  object C extends SmvModule("C", "C Module") {
-    override def requires() = Seq("A", "B")
+  object C extends SmvModule("C Module") {
+    override def requiresDS() = Seq(A, B)
     override def run(inputs: runParams) = {
-      val sc = inputs("A").sqlContext; import sc._
+      val sc = inputs(A).sqlContext; import sc._
       require(inputs.size === 2)
-      inputs("B").selectPlus('b + 1 as 'c)
+      inputs(B).selectPlus('b + 1 as 'c)
     }
   }
 
@@ -58,20 +58,20 @@ class SmvAppTest extends SparkTestUtil {
       override def getDataSets() = Seq(fx, A, B, C)
     }
 
-    val res = app.resolveRDD("C")
+    val res = app.resolveRDD(C)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
 
     // even though both B and C depended on A, A should have only run once!
     assert(A.moduleRunCount === 1)
   }
 
-  object A_cycle extends SmvModule("A", "A Cycle") {
-    override def requires() = Seq("B")
+  object A_cycle extends SmvModule("A Cycle") {
+    override def requiresDS() = Seq(B_cycle)
     override def run(inputs: runParams) = null
   }
 
-  object B_cycle extends SmvModule("B", "B Cycle") {
-    override def requires() = Seq("A")
+  object B_cycle extends SmvModule("B Cycle") {
+    override def requiresDS() = Seq(A_cycle)
     override def run(inputs: runParams) = null
   }
 
@@ -81,7 +81,7 @@ class SmvAppTest extends SparkTestUtil {
     }
 
     intercept[IllegalStateException] {
-      app.resolveRDD("B")
+      app.resolveRDD(B_cycle)
     }
   }
 
@@ -108,15 +108,15 @@ class SmvAppTest extends SparkTestUtil {
       override def getDataSets() = Seq(fx, A, B, C)
     }
 
-    val depGraph = new SmvModuleDependencyGraph("C", app)
+    val depGraph = new SmvModuleDependencyGraph(C, app)
     //depGraph.saveToFile("foo.dot")
 
     val edges = depGraph.graph
     assert(edges.size === 4)
     assert(edges("FX") === Set())
-    assert(edges("A") === Set("FX"))
-    assert(edges("B") === Set("A"))
-    assert(edges("C") === Set("A", "B"))
+    assert(edges("org.tresamigos.smv.SmvAppTest$A$") === Set("FX"))
+    assert(edges("org.tresamigos.smv.SmvAppTest$B$") === Set("org.tresamigos.smv.SmvAppTest$A$"))
+    assert(edges("org.tresamigos.smv.SmvAppTest$C$") === Set("org.tresamigos.smv.SmvAppTest$A$", "org.tresamigos.smv.SmvAppTest$B$"))
   }
 }
 }
@@ -129,12 +129,12 @@ package org.tresamigos.smv.smvAppTestPackage {
   import org.tresamigos.smv.SmvModule
 
   object X extends SmvModule("X", "X Module") {
-    override def requires() = Seq.empty
+    override def requiresDS() = Seq.empty
     override def run(inputs: runParams) = null
   }
 
   object Y extends SmvModule("Y", "Y Module") {
-    override def requires() = Seq("X")
+    override def requiresDS() = Seq(X)
     override def run(inputs: runParams) = null
   }
 
