@@ -27,7 +27,10 @@ import scala.collection.mutable
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result SchemaRDD.
  */
-abstract class SmvDataSet(val name: String, val description: String) {
+abstract class SmvDataSet(val description: String) {
+
+  def name(): String
+
   // dataDir should really be at the app level
   private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
 
@@ -38,7 +41,7 @@ abstract class SmvDataSet(val name: String, val description: String) {
   def rdd(app: SmvApp): SchemaRDD
 
   /** set of data sets that this data set depends on. */
-  def requires() : Seq[String]
+  def requires() : Seq[String] = Seq.empty
 
   /** modules can override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet] = Seq.empty
@@ -53,8 +56,10 @@ abstract class SmvDataSet(val name: String, val description: String) {
  * nickname will be used to link modules together.
  */
 case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes) extends
-    SmvDataSet(_name, s"Input file: ${_name}@${basePath}") {
+    SmvDataSet(s"Input file: ${_name}@${basePath}") {
 
+  // TODO: name should be just the basePath? or basename of the basePath?
+  override def name() = _name
   override def fullPath() = dataDir + "/" + basePath
 
   override def rdd(app: SmvApp): SchemaRDD = {
@@ -72,7 +77,7 @@ case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes
  */
 class SmvRunParam(val rddMap: Map[String, SchemaRDD]) {
   def apply(rddName: String) = rddMap(rddName)
-  def apply(mod: SmvModule) = null
+  def apply(ds: SmvDataSet) = rddMap(ds.name)
   def size() = rddMap.size
 }
 
@@ -85,7 +90,11 @@ class SmvRunParam(val rddMap: Map[String, SchemaRDD]) {
  * Note: the module should *not* persist any RDD itself.
  */
 abstract class SmvModule(_name: String, _description: String = "unknown") extends
-  SmvDataSet(_name, _description) {
+  SmvDataSet(_description) {
+
+  def this(desc: String) = this(null, desc)
+
+  override val name = if (_name == null) this.getClass().getName() else _name
 
   type runParams = SmvRunParam
   def run(inputs: runParams) : SchemaRDD
@@ -128,7 +137,7 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
   lazy private[smv] val allDataSetsByName = allDataSets.map(ds => (ds.name, ds)).toMap
 
   /** Get the RDD associated with given name. */
-  def resolveRDD(name: String) = {
+  def resolveRDD(name: String): SchemaRDD = {
     if (resolveStack.contains(name))
       throw new IllegalStateException(s"cycle found while resolving ${name}: " +
         resolveStack.mkString(","))
@@ -143,6 +152,8 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
 
     resRdd
   }
+
+  def resolveRDD(mod: SmvModule): SchemaRDD = resolveRDD(mod.name)
 
   def run(name: String) = {
     implicit val ca = CsvAttributes.defaultCsvWithHeader
@@ -172,8 +183,15 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
 
 /**
  * contains the module level dependency graph starting at the given startNode.
+ * All prefixes given in packagePrefixes are removed from the output module/file name
+ * to make the graph cleaner.  For example, project X at com.foo should probably add
+ * a package prefix of "com.foo.X" to remove the repeated noise of "com.foo.X" before
+ * every module name in the graph.
  */
-class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp) {
+class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp,
+                               val packagePrefixes: Seq[String] = Seq.empty) {
+  def this(startMod: SmvModule, app: SmvApp) = this(startMod.name, app)
+
   type dependencyMap = Map[String, Set[String]]
 
   private def depsByName(nodeName: String) = app.allDataSetsByName(nodeName).allRequireNames()
@@ -191,7 +209,11 @@ class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp) {
   private lazy val allFiles = graph.values.flatMap(vs =>
     vs.filter(v => app.allDataSetsByName(v).isInstanceOf[SmvFile]))
 
-  private def q(s: String) = "\"" + s + "\""
+  private def stripPackagePrefix(nodeName: String) =
+    packagePrefixes.map(_ + ".").foldLeft(nodeName)((s,p) => s.stripPrefix(p))
+
+  /** quoted/clean name in graph output */
+  private def q(s: String) = "\"" + stripPackagePrefix(s).filterNot(_=='$') + "\""
 
   private def fileStyles() = {
     allFiles.map(f => s"  ${q(f)} " + "[shape=box, color=\"pink\"]")
@@ -208,7 +230,7 @@ class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp) {
       "  node [style=filled,color=\"lightblue\"]") ++
       fileStyles() ++
       filesRank() ++
-      graph.flatMap{case (k,vs) => vs.map(v => s"""  "${v}" -> "${k}" """ )} ++
+      graph.flatMap{case (k,vs) => vs.map(v => s"""  ${q(v)} -> ${q(k)} """ )} ++
       Seq("}")
   }
 
