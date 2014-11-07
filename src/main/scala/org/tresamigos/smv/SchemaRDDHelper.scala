@@ -129,4 +129,15 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   def edd: EDD = groupEdd()
 
   def dqm(keepReject: Boolean = false): DQM = DQM(schemaRDD, keepReject)
+
+  def chunkByPlus(keys: Symbol*)(func: SmvChunkFunc): SchemaRDD = {
+    val smvChunk = new SmvChunk(schemaRDD, keys, func, true)
+    smvChunk.toSchemaRDD
+  }
+
+  def chunkBy(keys: Symbol*)(func: SmvChunkFunc): SchemaRDD = {
+    val smvChunk = new SmvChunk(schemaRDD, keys, func, false)
+    smvChunk.toSchemaRDD
+  }
+
 }

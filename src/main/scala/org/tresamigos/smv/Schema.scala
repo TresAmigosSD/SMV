@@ -172,6 +172,10 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
 
   def toStructType : StructType = StructType(entries.map(se => se.structField))
 
+  def ++(that: Schema): Schema = {
+    new Schema(entries ++ that.entries)
+  }
+
   def findEntry(sym: Symbol) = {
     entries.find(e => e.structField.name == sym.name)
   }
