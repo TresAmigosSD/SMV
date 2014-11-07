@@ -23,6 +23,9 @@ trait SparkTestUtil extends FunSuite {
   var sc: SparkContext = _
   var sqlContext: SQLContext = _
 
+  var smvUtil = new SmvUtil(sqlContext)
+  import smvUtil._
+
   final val testDataDir = "target/test-classes/data/"
 
   /**
@@ -99,25 +102,6 @@ trait SparkTestUtil extends FunSuite {
     sortedResSeq.zip(sortedExpSeq).foreach {
       case (a,b) => assert(a == b, s"because array element $a not equal $b")
     }
-  }
-
-  /**
-   * Create a schemaRDD from a schema string and a data string.
-   * The data string is assumed to be csv with no header and lines separated by ";"
-   */
-  def createSchemaRdd(schemaStr: String, data: String) = {
-    val schema = Schema.fromString(schemaStr)
-    val dataArray = data.split(";").map(_.trim)
-    val rowRDD = sc.makeRDD(dataArray).csvToSeqStringRDD.seqStringRDDToRowRDD(schema)
-    sqlContext.applySchemaToRowRDD(rowRDD, schema)
-  }
-
-  /**
-   * Dump the schema and data of given srdd to screen for debugging purposes.
-   */
-  def dumpSRDD(srdd: SchemaRDD) = {
-    println(Schema.fromSchemaRDD(srdd))
-    srdd.collect.foreach(println)
   }
 
   /**
