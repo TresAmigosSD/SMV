@@ -41,6 +41,15 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   }
 
   /**
+   * Dump the schema and data of given srdd to screen for debugging purposes.
+   * TODO: add debug flag to turn on/off this method
+   */
+  def dumpSRDD = {
+    println(Schema.fromSchemaRDD(schemaRDD))
+    schemaRDD.collect.foreach(println)
+  }
+
+  /**
    * selects all the current columns in current SRDD plus the supplied expressions.
    */
   def selectPlus(exprs: Expression*): SchemaRDD = {

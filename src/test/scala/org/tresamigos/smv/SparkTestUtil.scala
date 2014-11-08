@@ -124,18 +124,16 @@ trait SparkTestUtil extends FunSuite {
   }
 
   /**
-   * delegate the schema creation helper to SmvUtil.
+   * schemaRdd creater is in SqlContextHelper now. This is just a wraper
    */
   def createSchemaRdd(schemaStr: String, data: String) = {
-    new SmvUtil(sqlContext).createSchemaRdd(schemaStr, data)
+    sqlContext.createSchemaRdd(schemaStr, data)
   }
 
   /**
-   * delegate the schema dump to SmvUtil.
+   * dumpSRDD(srdd) now changes to srdd.dumpSRDD, which implemented in
+   * SchemaRDDHelper
    */
-  def dumpSRDD(srdd: SchemaRDD) = {
-    new SmvUtil(sqlContext).dumpSRDD(srdd)
-  }
 }
 
 object SparkTestUtil {

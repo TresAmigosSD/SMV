@@ -7,9 +7,6 @@ import org.tresamigos.smv._
 val sqlContext = new SQLContext(sc)
 import sqlContext._
 
-val smvUtil = new SmvUtil(sqlContext)
-import smvUtil._
-
 object i {
   def smvSchema(srdd: SchemaRDD) = Schema.fromSchemaRDD(srdd)
   def open(fullPath: String) = {

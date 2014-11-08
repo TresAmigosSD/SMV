@@ -58,4 +58,17 @@ class SqlContextHelper(sqlContext: SQLContext) {
     val schema = Schema.fromFile(sc, sp)
     csvFileAddSchema(dataPath, schema)
   }
+
+  /**
+   * Create a schemaRDD from a schema string and a data string.
+   * The data string is assumed to be csv with no header and lines separated by ";"
+   */
+  def createSchemaRdd(schemaStr: String, data: String) = {
+    val schema = Schema.fromString(schemaStr)
+    val dataArray = data.split(";").map(_.trim)
+    val sc = sqlContext.sparkContext
+    val rowRDD = sc.makeRDD(dataArray).csvToSeqStringRDD.seqStringRDDToRowRDD(schema)
+    sqlContext.applySchemaToRowRDD(rowRDD, schema)
+  }
+
 }
