@@ -23,9 +23,6 @@ trait SparkTestUtil extends FunSuite {
   var sc: SparkContext = _
   var sqlContext: SQLContext = _
 
-  var smvUtil = new SmvUtil(sqlContext)
-  import smvUtil._
-
   final val testDataDir = "target/test-classes/data/"
 
   /**
@@ -86,7 +83,7 @@ trait SparkTestUtil extends FunSuite {
       case f: Float => f.toDouble
       case _ => Double.MinValue
     }.zip(expectSeq).foreach {
-      case (a,b) => assert(abs(a - b) < epsilon, s"because array element $a not equal $b")
+      case (a, b) => assert(abs(a - b) < epsilon, s"because array element $a not equal $b")
     }
   }
 
@@ -100,7 +97,7 @@ trait SparkTestUtil extends FunSuite {
     val sortedExpSeq = expectSeq.sorted
 
     sortedResSeq.zip(sortedExpSeq).foreach {
-      case (a,b) => assert(a == b, s"because array element $a not equal $b")
+      case (a, b) => assert(a == b, s"because array element $a not equal $b")
     }
   }
 
@@ -124,6 +121,20 @@ trait SparkTestUtil extends FunSuite {
     val expSchema = Schema.fromString(schemaStr)
     val resSchema = Schema.fromSchemaRDD(srdd)
     assert(resSchema.toString === expSchema.toString)
+  }
+
+  /**
+   * delegate the schema creation helper to SmvUtil.
+   */
+  def createSchemaRdd(schemaStr: String, data: String) = {
+    new SmvUtil(sqlContext).createSchemaRdd(schemaStr, data)
+  }
+
+  /**
+   * delegate the schema dump to SmvUtil.
+   */
+  def dumpSRDD(srdd: SchemaRDD) = {
+    new SmvUtil(sqlContext).dumpSRDD(srdd)
   }
 }
 
