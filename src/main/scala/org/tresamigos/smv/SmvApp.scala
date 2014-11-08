@@ -40,13 +40,10 @@ abstract class SmvDataSet(val description: String) {
   /** returns the SchemaRDD from this dataset (file/module) */
   def rdd(app: SmvApp): SchemaRDD
 
-  /** set of data sets that this data set depends on. */
-  def requires() : Seq[String] = Seq.empty
+  /** modules must override to provide set of datasets they depend on. */
+  def requiresDS() : Seq[SmvDataSet]
 
-  /** modules can override to provide set of datasets they depend on. */
-  def requiresDS() : Seq[SmvDataSet] = Seq.empty
-
-  def allRequireNames() = requires() ++ requiresDS().map(_.name)
+  def allRequireNames() = requiresDS().map(_.name)
 }
 
 /**
@@ -68,7 +65,7 @@ case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes
     app.sqlContext.csvFileWithSchema(fullPath())
   }
 
-  override def requires() = Seq.empty
+  override def requiresDS() = Seq.empty
 }
 
 
@@ -83,22 +80,21 @@ class SmvRunParam(val rddMap: Map[String, SchemaRDD]) {
 
 /**
  * base module class.  All SMV modules need to extend this class and provide their
- * name, description and dependency requirements (what does it depend on).
+ * description and dependency requirements (what does it depend on).
  * The module run method will be provided the result of all dependent inputs and the
  * result of the run is the result of the module.  All modules that depend on this module
  * will be provided the SchemaRDD result from the run method of this module.
  * Note: the module should *not* persist any RDD itself.
  */
-abstract class SmvModule(_name: String, _description: String = "unknown") extends
+abstract class SmvModule(_description: String) extends
   SmvDataSet(_description) {
 
-  def this(desc: String) = this(null, desc)
-
-  override val name = if (_name == null) this.getClass().getName() else _name
+  override val name = this.getClass().getName().filterNot(_=='$')
 
   type runParams = SmvRunParam
   def run(inputs: runParams) : SchemaRDD
 
+  // TODO: this shouldn't be part of SmvModule.  Only app should know about persistance.
   // TODO: should probably convert "." in name to path separator "/"
   override def fullPath() = s"${dataDir}/output/${name}.csv"
 
@@ -219,7 +215,7 @@ class SmvModuleDependencyGraph(val startMod: SmvModule, val app: SmvApp,
     packagePrefixes.map(_ + ".").foldLeft(nodeName)((s,p) => s.stripPrefix(p))
 
   /** quoted/clean name in graph output */
-  private def q(s: String) = "\"" + stripPackagePrefix(s).filterNot(_=='$') + "\""
+  private def q(s: String) = "\"" + stripPackagePrefix(s) + "\""
 
   private def fileStyles() = {
     allFiles.map(f => s"  ${q(f)} " + "[shape=box, color=\"pink\"]")

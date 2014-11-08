@@ -99,8 +99,10 @@ class SmvAppTest extends SparkTestUtil {
     object app extends SmvApp("test modulesInPackage", Option(sc)) {
       override def getDataSets() = Seq.empty
     }
-    val modNames: Seq[String] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPackage").map(_.name)
-    assertUnorderedSeqEqual(modNames, Seq("X", "Y"))
+    val mods: Seq[SmvModule] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPackage")
+    assertUnorderedSeqEqual(mods,
+      Seq(org.tresamigos.smv.smvAppTestPackage.X, org.tresamigos.smv.smvAppTestPackage.Y))(
+      Ordering.by[SmvModule, String](_.name))
   }
 
   sparkTest("Test dependency graph creation.") {
@@ -114,9 +116,9 @@ class SmvAppTest extends SparkTestUtil {
     val edges = depGraph.graph
     assert(edges.size === 4)
     assert(edges("FX") === Set())
-    assert(edges("org.tresamigos.smv.SmvAppTest$A$") === Set("FX"))
-    assert(edges("org.tresamigos.smv.SmvAppTest$B$") === Set("org.tresamigos.smv.SmvAppTest$A$"))
-    assert(edges("org.tresamigos.smv.SmvAppTest$C$") === Set("org.tresamigos.smv.SmvAppTest$A$", "org.tresamigos.smv.SmvAppTest$B$"))
+    assert(edges("org.tresamigos.smv.SmvAppTestA") === Set("FX"))
+    assert(edges("org.tresamigos.smv.SmvAppTestB") === Set("org.tresamigos.smv.SmvAppTestA"))
+    assert(edges("org.tresamigos.smv.SmvAppTestC") === Set("org.tresamigos.smv.SmvAppTestA", "org.tresamigos.smv.SmvAppTestB"))
   }
 }
 }
@@ -128,12 +130,12 @@ package org.tresamigos.smv.smvAppTestPackage {
 
   import org.tresamigos.smv.SmvModule
 
-  object X extends SmvModule("X", "X Module") {
+  object X extends SmvModule("X Module") {
     override def requiresDS() = Seq.empty
     override def run(inputs: runParams) = null
   }
 
-  object Y extends SmvModule("Y", "Y Module") {
+  object Y extends SmvModule("Y Module") {
     override def requiresDS() = Seq(X)
     override def run(inputs: runParams) = null
   }
@@ -142,8 +144,8 @@ package org.tresamigos.smv.smvAppTestPackage {
   class X
 
   // should not show as a valid module because it is a class and not an object instance.
-  class Z extends SmvModule("Z", "Z Class") {
-    override def requires = Seq()
+  class Z extends SmvModule("Z Class") {
+    override def requiresDS = Seq()
     override def run(inputs: runParams) = null
   }
 }
