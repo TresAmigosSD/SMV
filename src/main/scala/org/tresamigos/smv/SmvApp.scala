@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import java.io.{File, PrintWriter}
-
+import scala.reflect.runtime.{universe => ru}
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
@@ -116,6 +116,7 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
   val conf = new SparkConf().setAppName(appName)
   val sc = _sc.getOrElse(new SparkContext(conf))
   val sqlContext = new SQLContext(sc)
+  private val mirror = ru.runtimeMirror(this.getClass.getClassLoader)
 
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
@@ -155,26 +156,27 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
 
   def resolveRDD(mod: SmvModule): SchemaRDD = resolveRDD(mod.name)
 
+  /** maps the FQN of module name to the module object instance. */
+  private[smv] def moduleNametoObject(modName: String) = {
+    mirror.reflectModule(mirror.staticModule(modName)).instance.asInstanceOf[SmvModule]
+  }
+
   def run(name: String) = {
     implicit val ca = CsvAttributes.defaultCsvWithHeader
+    val modObject = moduleNametoObject(name)
 
-    resolveRDD(name).saveAsCsvWithSchema(allDataSetsByName(name).fullPath)
+    resolveRDD(modObject).saveAsCsvWithSchema(modObject.fullPath)
   }
 
   /** extract instances (objects) in given package that implement SmvModule. */
   private[smv] def modulesInPackage(pkgName: String): Seq[SmvModule] = {
     import com.google.common.reflect.ClassPath
     import scala.collection.JavaConversions._
-    import scala.reflect.runtime.{universe => ru}
     import scala.util.Try
 
-    val cl = this.getClass.getClassLoader
-    val m = ru.runtimeMirror(cl)
-
-    ClassPath.from(cl).
+    ClassPath.from(this.getClass.getClassLoader).
       getTopLevelClasses(pkgName).
-      map(c => Try(
-        m.reflectModule(m.staticModule(c.getName)).instance.asInstanceOf[SmvModule])).
+      map(c => Try(moduleNametoObject(c.getName))).
       filter(_.isSuccess).
       map(_.get).
       toSeq
@@ -188,9 +190,10 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
  * a package prefix of "com.foo.X" to remove the repeated noise of "com.foo.X" before
  * every module name in the graph.
  */
-class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp,
+class SmvModuleDependencyGraph(val startMod: SmvModule, val app: SmvApp,
                                val packagePrefixes: Seq[String] = Seq.empty) {
-  def this(startMod: SmvModule, app: SmvApp) = this(startMod.name, app)
+  def this(startNode: String, app: SmvApp, prefixes: Seq[String]) =
+    this(app.moduleNametoObject(startNode), app, prefixes)
 
   type dependencyMap = Map[String, Set[String]]
 
@@ -205,7 +208,10 @@ class SmvModuleDependencyGraph(val startNode: String, val app: SmvApp,
     }
   }
 
-  private[smv] lazy val graph = addDependencyEdges(startNode, depsByName(startNode), Map())
+  private[smv] lazy val graph = {
+    addDependencyEdges(startMod.name, startMod.allRequireNames(), Map())
+  }
+
   private lazy val allFiles = graph.values.flatMap(vs =>
     vs.filter(v => app.allDataSetsByName(v).isInstanceOf[SmvFile]))
 
