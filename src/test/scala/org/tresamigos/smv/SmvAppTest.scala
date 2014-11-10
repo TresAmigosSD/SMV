@@ -54,9 +54,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test normal dependency execution") {
-    object app extends SmvApp("test dependency", Option(sc)) {
-      override def getDataSets() = Seq(fx, A, B, C)
-    }
+    object app extends SmvApp("test dependency", Option(sc))
 
     val res = app.resolveRDD(C)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
@@ -76,29 +74,16 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test cycle dependency execution") {
-    object app extends SmvApp("test dependency", Option(sc)) {
-      override def getDataSets() = Seq(A_cycle, B_cycle)
-    }
+    object app extends SmvApp("test dependency", Option(sc))
 
     intercept[IllegalStateException] {
       app.resolveRDD(B_cycle)
     }
   }
 
-  sparkTest("Test name not found") {
-    object app extends SmvApp("test dependency", Option(sc)) {
-      override def getDataSets() = Seq(fx, A, B)
-    }
-
-    intercept[NoSuchElementException] {
-      app.resolveRDD("X")
-    }
-  }
-
   sparkTest("Test modulesInPackage method.") {
-    object app extends SmvApp("test modulesInPackage", Option(sc)) {
-      override def getDataSets() = Seq.empty
-    }
+    object app extends SmvApp("test modulesInPackage", Option(sc))
+
     val mods: Seq[SmvModule] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPackage")
     assertUnorderedSeqEqual(mods,
       Seq(org.tresamigos.smv.smvAppTestPackage.X, org.tresamigos.smv.smvAppTestPackage.Y))(
@@ -106,9 +91,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test dependency graph creation.") {
-    object app extends SmvApp("test dependency graph", Option(sc)) {
-      override def getDataSets() = Seq(fx, A, B, C)
-    }
+    object app extends SmvApp("test dependency graph", Option(sc))
 
     val depGraph = new SmvModuleDependencyGraph(C, app)
     //depGraph.saveToFile("foo.dot")

@@ -42,8 +42,6 @@ abstract class SmvDataSet(val description: String) {
 
   /** modules must override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet]
-
-  def allRequireNames() = requiresDS().map(_.name)
 }
 
 /**
@@ -68,16 +66,6 @@ case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes
   override def requiresDS() = Seq.empty
 }
 
-
-/**
- * Wrapper around the run parameters to aid map Modules to their names and vice-versa.
- */
-class SmvRunParam(val rddMap: Map[String, SchemaRDD]) {
-  def apply(rddName: String) = rddMap(rddName)
-  def apply(ds: SmvDataSet) = rddMap(ds.name)
-  def size() = rddMap.size
-}
-
 /**
  * base module class.  All SMV modules need to extend this class and provide their
  * description and dependency requirements (what does it depend on).
@@ -91,7 +79,7 @@ abstract class SmvModule(_description: String) extends
 
   override val name = this.getClass().getName().filterNot(_=='$')
 
-  type runParams = SmvRunParam
+  type runParams = Map[SmvDataSet, SchemaRDD]
   def run(inputs: runParams) : SchemaRDD
 
   // TODO: this shouldn't be part of SmvModule.  Only app should know about persistance.
@@ -99,13 +87,13 @@ abstract class SmvModule(_description: String) extends
   override def fullPath() = s"${dataDir}/output/${name}.csv"
 
   override def rdd(app: SmvApp): SchemaRDD = {
-    run(new SmvRunParam(allRequireNames().map(r => (r, app.resolveRDD(r))).toMap))
+    run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 }
 
 /**
- * Driver for SMV applications.  An application needs to override the getDataSets method
- * that provide the list of ALL known SmvFiles (in/out) and the list of modules to run.
+ * Driver for SMV applications.  The app may override the getModulesPackages method to
+ * provide list of modules to discover SmvModules (only needed for catalogs).
  */
 abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
 
@@ -118,39 +106,38 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
   /** cache of all RDD that have already been resolved (executed) */
+  // TODO: move the caching into the SmvDataSet object itself as we dont lookup a ds by name any longer.
   val rddCache: mutable.Map[String, SchemaRDD] = mutable.Map()
-
-  /** concrete applications need to provide list of datasets in application. */
-  def getDataSets() : Seq[SmvDataSet] = Seq.empty
 
   /** concrete applications can provide a list of package names containing modules. */
   def getModulePackages() : Seq[String] = Seq.empty
 
-  /** sequence of ALL known datasets.  Those specified by users and discovered in packages. */
-  private def allDataSets(): Seq[SmvDataSet] = {
-    getDataSets ++ getModulePackages.map(modulesInPackage).flatten
+  /** sequence of ALL known modules.  Those discovered in packages. */
+  private def allModules(): Seq[SmvDataSet] = {
+    getModulePackages.map(modulesInPackage).flatten
   }
 
-  lazy private[smv] val allDataSetsByName = allDataSets.map(ds => (ds.name, ds)).toMap
-
-  /** Get the RDD associated with given name. */
-  def resolveRDD(name: String): SchemaRDD = {
-    if (resolveStack.contains(name))
-      throw new IllegalStateException(s"cycle found while resolving ${name}: " +
+  /**
+   * Get the RDD associated with data set.  The rdd is cached so the plan is only built
+   * once for each unique data set.  This also means that a module run method may cache
+   * the result and the cache will be utilized by multiple users of the rdd.
+   */
+  def resolveRDD(ds: SmvDataSet): SchemaRDD = {
+    val dsName = ds.name
+    if (resolveStack.contains(dsName))
+      throw new IllegalStateException(s"cycle found while resolving ${dsName}: " +
         resolveStack.mkString(","))
 
-    resolveStack.push(name)
+    resolveStack.push(dsName)
 
-    val resRdd = rddCache.getOrElseUpdate(name, allDataSetsByName(name).rdd(this))
+    val resRdd = rddCache.getOrElseUpdate(dsName, ds.rdd(this))
 
     val popRdd = resolveStack.pop()
-    if (popRdd != name)
-      throw new IllegalStateException(s"resolveStack corrupted.  Got ${popRdd}, expected ")
+    if (popRdd != dsName)
+      throw new IllegalStateException(s"resolveStack corrupted.  Got ${popRdd}, expected ${dsName}")
 
     resRdd
   }
-
-  def resolveRDD(mod: SmvDataSet): SchemaRDD = resolveRDD(mod.name)
 
   /** maps the FQN of module name to the module object instance. */
   private[smv] def moduleNametoObject(modName: String) = {
