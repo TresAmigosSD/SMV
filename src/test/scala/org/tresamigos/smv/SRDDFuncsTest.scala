@@ -47,6 +47,32 @@ class renameFieldTest extends SparkTestUtil {
   }
 }
 
+class prefixFieldNamesTest extends SparkTestUtil {
+  sparkTest("test prefixing field names") {
+    val srdd = createSchemaRdd("a:Integer; b:Double; c:String",
+      "1,2.0,hello")
+
+    val result = srdd.prefixFieldNames("xx_")
+
+    val fieldNames = result.schema.fieldNames
+    assert(fieldNames === Seq("xx_a", "xx_b", "xx_c"))
+    assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
+  }
+}
+
+class postFieldNamesTest extends SparkTestUtil {
+  sparkTest("test postfixing field names") {
+    val srdd = createSchemaRdd("a:Integer; b:Double; c:String",
+      "1,2.0,hello")
+
+    val result = srdd.postfixFieldNames("_xx")
+
+    val fieldNames = result.schema.fieldNames
+    assert(fieldNames === Seq("a_xx", "b_xx", "c_xx"))
+    assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
+  }
+}
+
 class dedupByKeyTest extends SparkTestUtil {
   sparkTest("test dedupByKey") {
     val srdd = createSchemaRdd("a:Integer; b:Double; c:String",

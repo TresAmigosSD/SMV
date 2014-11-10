@@ -81,6 +81,22 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     schemaRDD.select(renamedFields: _*)
   }
 
+  def prefixFieldNames(prefix: String) : SchemaRDD = {
+    import schemaRDD.sqlContext._
+    val renamedFields = schemaRDD.schema.fieldNames.map {
+      fn => Symbol(fn) as Symbol(prefix + fn)
+    }
+    schemaRDD.select(renamedFields: _*)
+  }
+
+  def postfixFieldNames(postfix: String) : SchemaRDD = {
+    import schemaRDD.sqlContext._
+    val renamedFields = schemaRDD.schema.fieldNames.map {
+      fn => Symbol(fn) as Symbol(fn + postfix)
+    }
+    schemaRDD.select(renamedFields: _*)
+  }
+
   def dedupByKey(keys: Symbol*) : SchemaRDD = {
     import schemaRDD.sqlContext._
 
