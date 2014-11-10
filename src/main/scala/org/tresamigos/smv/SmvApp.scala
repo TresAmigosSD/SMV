@@ -150,7 +150,7 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
     resRdd
   }
 
-  def resolveRDD(mod: SmvModule): SchemaRDD = resolveRDD(mod.name)
+  def resolveRDD(mod: SmvDataSet): SchemaRDD = resolveRDD(mod.name)
 
   /** maps the FQN of module name to the module object instance. */
   private[smv] def moduleNametoObject(modName: String) = {
