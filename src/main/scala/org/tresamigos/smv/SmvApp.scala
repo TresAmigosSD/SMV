@@ -191,31 +191,28 @@ class SmvModuleDependencyGraph(val startMod: SmvModule, val app: SmvApp,
   def this(startNode: String, app: SmvApp, prefixes: Seq[String]) =
     this(app.moduleNametoObject(startNode), app, prefixes)
 
-  type dependencyMap = Map[String, Set[String]]
+  type dependencyMap = Map[SmvDataSet, Seq[SmvDataSet]]
 
-  private def depsByName(nodeName: String) = app.allDataSetsByName(nodeName).allRequireNames()
-
-  private def addDependencyEdges(nodeName: String, nodeDeps: Seq[String], map: dependencyMap): dependencyMap = {
-    if (map.contains(nodeName)) {
+  private def addDependencyEdges(node: SmvDataSet, nodeDeps: Seq[SmvDataSet], map: dependencyMap): dependencyMap = {
+    if (map.contains(node)) {
       map
     } else {
-      nodeDeps.foldLeft(map.updated(nodeName, nodeDeps.toSet))(
-        (m,r) => addDependencyEdges(r, depsByName(r), m))
+      nodeDeps.foldLeft(map.updated(node, nodeDeps))(
+        (curMap,child) => addDependencyEdges(child, child.requiresDS(), curMap))
     }
   }
 
   private[smv] lazy val graph = {
-    addDependencyEdges(startMod.name, startMod.allRequireNames(), Map())
+    addDependencyEdges(startMod, startMod.requiresDS(), Map())
   }
 
-  private lazy val allFiles = graph.values.flatMap(vs =>
-    vs.filter(v => app.allDataSetsByName(v).isInstanceOf[SmvFile]))
+  private lazy val allFiles = graph.values.flatMap(vs => vs.filter(v => v.isInstanceOf[SmvFile]))
 
   private def stripPackagePrefix(nodeName: String) =
     packagePrefixes.map(_ + ".").foldLeft(nodeName)((s,p) => s.stripPrefix(p))
 
   /** quoted/clean name in graph output */
-  private def q(s: String) = "\"" + stripPackagePrefix(s) + "\""
+  private def q(ds: SmvDataSet) = "\"" + stripPackagePrefix(ds.name) + "\""
 
   private def fileStyles() = {
     allFiles.map(f => s"  ${q(f)} " + "[shape=box, color=\"pink\"]")

@@ -115,10 +115,10 @@ class SmvAppTest extends SparkTestUtil {
 
     val edges = depGraph.graph
     assert(edges.size === 4)
-    assert(edges("FX") === Set())
-    assert(edges("org.tresamigos.smv.SmvAppTestA") === Set("FX"))
-    assert(edges("org.tresamigos.smv.SmvAppTestB") === Set("org.tresamigos.smv.SmvAppTestA"))
-    assert(edges("org.tresamigos.smv.SmvAppTestC") === Set("org.tresamigos.smv.SmvAppTestA", "org.tresamigos.smv.SmvAppTestB"))
+    assert(edges(fx) === Seq())
+    assert(edges(A) === Seq(fx))
+    assert(edges(B) === Seq(A))
+    assert(edges(C) === Seq(A,B))
   }
 }
 }
