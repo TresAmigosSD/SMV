@@ -14,21 +14,20 @@
 
 package org.tresamigos.smv
 
-class NullSubTest extends SparkTestUtil {
-  sparkTest("test NullSub function") {
-    val ssc = sqlContext; import ssc._
-    val r = sqlContext.csvFileWithSchema(testDataDir + "NonAggTest/nullsub_data.csv")
-    val res = r.select(NullSub('val, 100.0) as 'x).collect.map(_(0))
-    assertDoubleSeqEqual(res, List(1.0, 100.0, 1.1))
-  }
-}
+import org.apache.spark.sql.catalyst.types.{DoubleType, StringType}
 
-class LEFTTest extends SparkTestUtil {
-  sparkTest("test LEFT function") {
+class NullSubTest extends SparkTestUtil {
+  sparkTest("test NullSub with String and Numeric values") {
     val ssc = sqlContext; import ssc._
-    val r = sqlContext.csvFileWithSchema(testDataDir + "NonAggTest/LEFT.data.csv")
-    val res = r.select(LEFT('id, 3)).collect.map(_(0))
-    assert(res === Array("hoh", "foo", "hob" ))
+    val srdd = createSchemaRdd("a:String; b:Double", "A1,;,5") // B1,A2 are null!
+
+    val res = srdd.select(NullSub('a, "NA") as 'a2, NullSub('b, 6.0) as 'b2)
+    val fields = res.schema.fields
+    assert(res.collect.map(_(0)) === List("A1", "NA"))
+    assert(fields(0).dataType === StringType)
+
+    assert(res.collect.map(_(1)) === List(6.0, 5.0))
+    assert(fields(1).dataType === DoubleType)
   }
 }
 
@@ -39,6 +38,15 @@ class SmvStrCatTest extends SparkTestUtil {
       "a,b,c,1;x,y,z,2")
     val res = srdd.select(SmvStrCat('a, "_", 'b, "+", 'd) as 'cat)
     assertSrddDataEqual(res, "a_b+1;x_y+2")
+  }
+}
+
+class LEFTTest extends SparkTestUtil {
+  sparkTest("test LEFT function") {
+    val ssc = sqlContext; import ssc._
+    val r = sqlContext.csvFileWithSchema(testDataDir + "NonAggTest/LEFT.data.csv")
+    val res = r.select(LEFT('id, 3)).collect.map(_(0))
+    assert(res === Array("hoh", "foo", "hob" ))
   }
 }
 

@@ -16,7 +16,8 @@ package org.tresamigos.smv
 
 import java.util.Calendar
 
-import org.apache.spark.sql.catalyst.expressions.{Row, BinaryArithmetic, BinaryExpression, UnaryExpression, Expression}
+import org.apache.spark.sql.catalyst.analysis.UnresolvedException
+import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types._
 
 /**
@@ -27,16 +28,33 @@ import org.apache.spark.sql.catalyst.types._
 /**
  * NullSub will substitute the right expression if the left expression is null.
  */
-case class NullSub(left: Expression, right: Expression) extends BinaryArithmetic {
-  // TODO: should probably inherit from BinaryExpression but using Arithmetic as a quick hack for now.
-  def symbol = "ns"
+case class NullSub(left: Expression, right: Expression) extends BinaryExpression {
+  self: Product =>
+
+  def symbol = "NullSub"
+  override type EvaluatedType = Any
+  override def toString = s"NullSub($left,$right)"
+
+  def nullable = left.nullable || right.nullable
+
+  override lazy val resolved =
+    left.resolved && right.resolved && left.dataType == right.dataType
+
+  def dataType = {
+    if (!resolved) {
+      throw new UnresolvedException(this,
+        s"datatype. Can not resolve due to differing types ${left.dataType}, ${right.dataType}")
+    }
+    left.dataType
+  }
 
   override def eval(input: Row): Any = {
     val leftVal = left.eval(input)
-    if (leftVal == null)
+    if (leftVal == null) {
       right.eval(input)
-    else
+    } else {
       leftVal
+    }
   }
 }
 
