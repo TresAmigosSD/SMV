@@ -59,7 +59,7 @@ class TimeFuncsTest extends SparkTestUtil {
     assert(res === "2013-01-09 13:06:19.0,2013,01,09,04,13")
   }
 
-  sparkTest("test SmvYear, SmvMonth, SmvDayOfWeek, SmvDayOfMonth") {
+  sparkTest("test SmvYear, SmvMonth, SmvDayOfWeek, SmvDayOfMonth, SmvQuarter") {
     val ssc = sqlContext;
     import ssc._
     import ssc.symbolToUnresolvedAttribute
@@ -75,8 +75,9 @@ class TimeFuncsTest extends SparkTestUtil {
 
     val result = srdd.
       select(SmvYear('time1) as 'year1, SmvMonth('time1) as 'month1, SmvDayOfMonth('time1) as 'dayOfMonth1,
-        SmvYear('time2) as 'year2, SmvMonth('time2) as 'month2, SmvDayOfMonth('time2) as 'dayOfMonth2)
+        SmvYear('time2) as 'year2, SmvMonth('time2) as 'month2, SmvDayOfMonth('time2) as 'dayOfMonth2,
+        SmvQuarter('time1) as 'quarter1)
 
-    assertUnorderedSeqEqual(result.collect.map(_.toString), Seq("[2014,3,5,2013,11,1]", "[2010,12,30,2012,1,1]"))
+    assertUnorderedSeqEqual(result.collect.map(_.toString), Seq("[2014,3,5,2013,11,1,2014_Q1]", "[2010,12,30,2012,1,1,2010_Q4]"))
   }
 }
