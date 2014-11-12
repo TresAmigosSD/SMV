@@ -100,4 +100,23 @@ class PivotTest extends SparkTestUtil {
     val fieldNames = res.schema.fieldNames.toList
     assert(fieldNames === Seq("k", "v1_A", "v1_B", "v2_A", "v2_B"))
   }
+
+  sparkTest("Test pivot_sum function with multiple keys") {
+    val srdd = createSchemaRdd("k1:String; k2:String; p:String; v1:Integer; v2:Float",
+      "1,x,A,10,100.5;" +
+      "1,y,A,10,100.5;" +
+      "1,x,A,20,200.5;" +
+      "1,x,B,50,200.5;" +
+      "2,x,A,60,500")
+
+    val res = srdd.pivot_sum('k1, 'k2)('p)('v1, 'v2)
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[2,x,60,0,500.0,0.0]",
+      "[1,x,30,50,301.0,200.5]",
+      "[1,y,10,0,100.5,0.0]"))
+
+    val fieldNames = res.schema.fieldNames.toList
+    assert(fieldNames === Seq("k1", "k2", "v1_A", "v1_B", "v2_A", "v2_B"))
+  }
+
 }

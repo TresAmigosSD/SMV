@@ -45,17 +45,22 @@ import org.apache.spark.sql.catalyst.types.StringType
  * 
  */
 class PivotOp(origSRDD: SchemaRDD,
-              keyCol: Symbol,
+              keyCols: Seq[Symbol],
               pivotCols: Seq[Symbol],
               valueCols: Seq[Symbol]) {
   // TODO: allow multiple key columns.
   // TODO: allow multiple value columns.
 
+  def this(origSRDD: SchemaRDD,
+           keyCol: Symbol,
+           pivotCols: Seq[Symbol],
+           valueCols: Seq[Symbol]) = this(origSRDD, Seq(keyCol), pivotCols, valueCols)
+
   import origSRDD.sqlContext._
 
   val baseOutputColumnNames = getBaseOutputColumnNames()
   val tempPivotValCol = '_smv_pivot_val
-  val keyColExpr = UnresolvedAttribute(keyCol.name)
+  val keyColsExpr = keyCols.map(k => UnresolvedAttribute(k.name))
   val pivotColsExpr = pivotCols.map(s => UnresolvedAttribute(s.name))
   val valueColsExpr = valueCols.map(v => UnresolvedAttribute(v.name))
 
@@ -94,8 +99,7 @@ class PivotOp(origSRDD: SchemaRDD,
    */
   private[smv] def addSmvPivotValColumn() : SchemaRDD = {
     origSRDD.select(
-      keyColExpr +:
-      (SmvPivotVal(pivotColsExpr) as tempPivotValCol) +:
+      (keyColsExpr :+ (SmvPivotVal(pivotColsExpr) as tempPivotValCol)) ++
       valueColsExpr: _*)
   }
 
@@ -122,7 +126,7 @@ class PivotOp(origSRDD: SchemaRDD,
         If(tempPivotValCol === outCol, vcSymbol, vcZero) as Symbol(vcSymbol.name + "_" + outCol)
       }
     }.flatten
-    srddWithPivotValCol.select(keyColExpr +: outputColExprs: _*)
+    srddWithPivotValCol.select(keyColsExpr ++ outputColExprs: _*)
   }
 
   /**
@@ -136,10 +140,10 @@ class PivotOp(origSRDD: SchemaRDD,
         Sum(colName.attr) as Symbol(colName)
       }
     }.flatten
-    val keyColExpr = UnresolvedAttribute(keyCol.name)
+    val keyColsExpr = keyCols.map(k => UnresolvedAttribute(k.name))
 
     mapValColsToOutputCols(addSmvPivotValColumn).
-      groupBy(keyColExpr)(keyColExpr +: outColSumExprs: _*)
+      groupBy(keyColsExpr: _*)(keyColsExpr ++ outColSumExprs: _*)
   }
 }
 

@@ -114,6 +114,10 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     new PivotOp(schemaRDD, keyCol, pivotCols, valueCols).transform
   }
 
+  def pivot_sum(keyCols: Symbol*)(pivotCols: Symbol*)(valueCols: Symbol*) = {
+    new PivotOp(schemaRDD, keyCols, pivotCols, valueCols).transform
+  }
+
   /** See RollupCubeOp for details. */
   def smvCube(cols: Symbol*)(groupExprs: Expression*) = {
     new RollupCubeOp(schemaRDD, cols, Seq.empty, groupExprs).cube()
