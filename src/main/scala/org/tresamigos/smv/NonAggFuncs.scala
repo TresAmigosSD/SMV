@@ -136,14 +136,12 @@ case class SmvMonth(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
 
 case class SmvQuarter(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
   override def toString = s"SmvQuarter( $child )"
-  def dataType = StringType
-  def func(ts: java.sql.Timestamp): String = {
+  def dataType = IntegerType
+  def func(ts: java.sql.Timestamp): Int = {
     val cal : Calendar = Calendar.getInstance();
     cal.setTimeInMillis(ts.getTime())
-    val y = cal.get(Calendar.YEAR)
     val m = cal.get(Calendar.MONTH) + 1
-    val q = ((m - 1) / 3) + 1
-    y.toString + "_Q" + q
+    ((m - 1) / 3) + 1
   }
 }
 

@@ -78,6 +78,6 @@ class TimeFuncsTest extends SparkTestUtil {
         SmvYear('time2) as 'year2, SmvMonth('time2) as 'month2, SmvDayOfMonth('time2) as 'dayOfMonth2,
         SmvQuarter('time1) as 'quarter1)
 
-    assertUnorderedSeqEqual(result.collect.map(_.toString), Seq("[2014,3,5,2013,11,1,2014_Q1]", "[2010,12,30,2012,1,1,2010_Q4]"))
+    assertUnorderedSeqEqual(result.collect.map(_.toString), Seq("[2014,3,5,2013,11,1,1]", "[2010,12,30,2012,1,1,4]"))
   }
 }
