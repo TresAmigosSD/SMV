@@ -118,7 +118,7 @@ case class SmvYear(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
   override def toString = s"SmvYear( $child )"
   def dataType = IntegerType
   def func(ts: java.sql.Timestamp): Int = {
-    var cal : Calendar = Calendar.getInstance();
+    var cal : Calendar = Calendar.getInstance()
     cal.setTimeInMillis(ts.getTime())
     cal.get(Calendar.YEAR)
   }
@@ -128,7 +128,7 @@ case class SmvMonth(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
   override def toString = s"SmvMonth( $child )"
   def dataType = IntegerType
   def func(ts: java.sql.Timestamp): Int = {
-    val cal : Calendar = Calendar.getInstance();
+    val cal : Calendar = Calendar.getInstance()
     cal.setTimeInMillis(ts.getTime())
     cal.get(Calendar.MONTH) + 1
   }
@@ -138,10 +138,9 @@ case class SmvQuarter(child: Expression) extends UnaryFuncs[java.sql.Timestamp] 
   override def toString = s"SmvQuarter( $child )"
   def dataType = IntegerType
   def func(ts: java.sql.Timestamp): Int = {
-    val cal : Calendar = Calendar.getInstance();
+    val cal : Calendar = Calendar.getInstance()
     cal.setTimeInMillis(ts.getTime())
-    val m = cal.get(Calendar.MONTH) + 1
-    ((m - 1) / 3) + 1
+    cal.get(Calendar.MONTH)/3 + 1
   }
 }
 
