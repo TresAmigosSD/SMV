@@ -74,13 +74,9 @@ class TimeFuncsTest extends SparkTestUtil {
     )
 
     val result = srdd.
-      select(SmvYear('time1) as 'year1, SmvMonth('time1) as 'month1, SmvDayOfMonth('time1) as 'dayOfMonth1,
-        SmvYear('time2) as 'year2, SmvMonth('time2) as 'month2, SmvDayOfMonth('time2) as 'dayOfMonth2,
-        SmvQuarter('time1) as 'quarter1)
       select(SmvYear('time1) as 'year1, SmvQuarter('time1), SmvMonth('time1) as 'month1, SmvDayOfMonth('time1) as 'dayOfMonth1,
         SmvYear('time2) as 'year2, SmvQuarter('time2), SmvMonth('time2) as 'month2, SmvDayOfMonth('time2) as 'dayOfMonth2)
 
-    assertUnorderedSeqEqual(result.collect.map(_.toString), Seq("[2014,3,5,2013,11,1,1]", "[2010,12,30,2012,1,1,4]"))
     assertUnorderedSeqEqual(result.collect.map(_.toString), Seq("[2014,1,3,5,2013,4,11,1]", "[2010,4,12,30,2012,1,1,1]"))
   }
 }
