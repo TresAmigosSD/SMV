@@ -2,7 +2,7 @@
 // handling of spaces and comments all over the place!.
 id:    String // blah
   val:double # hash comment
-  val2: timestamp
+  val2: timestamp[yyyyMMdd]
   val3: Timestamp[ddMMyyyy] // reverse order format!
 # hash comment line!
    // leave above empty line!

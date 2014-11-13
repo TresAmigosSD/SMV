@@ -55,13 +55,12 @@ class SchemaTest extends SparkTestUtil {
   }
 
   test("Test Timestamp Format") {
-    val s = Schema.fromString("a:timestamp[yyyy]; b:Timestamp; c:Timestamp[yyyyMMdd]")
+    val s = Schema.fromString("a:timestamp[yyyy]; b:Timestamp[yyyyMMdd]; c:Timestamp[yyyyMMdd]")
     val a = s.entries(0)
     val b = s.entries(1)
     val c = s.entries(2)
 
     assert(a === TimestampSchemaEntry("a", "yyyy"))
-    assert(b === TimestampSchemaEntry("b", "yyyyMMdd"))
     assert(c === TimestampSchemaEntry("c", "yyyyMMdd"))
 
     val date_a = a.valToStr(a.strToVal("2014"))
@@ -99,6 +98,12 @@ class SchemaTest extends SparkTestUtil {
   sparkTest("Test Timestamp in file") {
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "SchemaTest/test2")
     assert(srdd.count === 3)
+  }
+
+  sparkTest("Test Timestamp default format") {
+    val srdd = createSchemaRdd("a:Timestamp", "2011-09-03 10:13:58.0") 
+    assert(srdd.collect()(0)(0).toString === "2011-09-03 10:13:58.0")
+    assert(Schema.fromSchemaRDD(srdd).toString === "Schema: a: Timestamp[yyyy-MM-dd hh:mm:ss.S]")
   }
 
   test("Test schema name derivation from data file path") {

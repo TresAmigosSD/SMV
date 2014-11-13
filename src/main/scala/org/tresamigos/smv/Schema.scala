@@ -72,7 +72,11 @@ case class StringSchemaEntry(name: String) extends SchemaEntry {
   val structField = StructField(name, StringType, true)
 }
 
-case class TimestampSchemaEntry(name: String, fmt: String = "yyyyMMdd") extends SchemaEntry {
+case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss.S") extends SchemaEntry {
+  /**
+   * The Default format should match the default "toString" format of
+   * java.sql.Timestamp
+   */ 
   override val zeroVal = Literal("") // TODO: should pick an epoch date instead.
   // @transient val fmtObj = new java.text.SimpleDateFormat(fmt)
   val fmtObj = new java.text.SimpleDateFormat(fmt)
@@ -145,9 +149,11 @@ object SchemaEntry {
   }
 
   def apply(nameAndType: String) : SchemaEntry = {
-    val nameAndTypeArray = nameAndType.split(":")
-    require(nameAndTypeArray.size == 2)
-    SchemaEntry(nameAndTypeArray(0), nameAndTypeArray(1))
+    val parseNT = """([^:]*):(.*)""".r
+    nameAndType match {
+      case parseNT(n, t) => SchemaEntry(n, t)
+      case _ => throw new IllegalArgumentException(s"Illegal SchemaEmtry string: $nameAndType")
+    }
   }
 
   /**
