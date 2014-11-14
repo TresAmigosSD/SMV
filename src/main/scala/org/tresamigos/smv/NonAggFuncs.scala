@@ -272,3 +272,28 @@ case class SmvStrCat(children: Expression*)
   }
 }
 
+/**
+ * Allows caller to create an array of expressions (usefull for using Explode later)
+ */
+case class SmvAsArray(elems: Expression*) extends Expression {
+
+  def children = elems.toList
+  override def nullable = elems.exists(_.nullable)
+
+  override lazy val resolved = childrenResolved && (elems.map(_.dataType).distinct.size == 1)
+
+  def dataType = {
+    if (!resolved) {
+      throw new UnresolvedException(this, "All children must be of same type")
+    }
+    ArrayType(elems(0).dataType, nullable)
+  }
+
+  type EvaluatedType = Any
+
+  override def eval(input: Row): Any = {
+    elems.toList.map(_.eval(input))
+  }
+
+  override def toString = s"SmvAsArray(${elems.mkString(",")})"
+}

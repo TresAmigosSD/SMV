@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.catalyst.types.{DoubleType, StringType}
+import org.apache.spark.sql.catalyst.types._
 
 class NullSubTest extends SparkTestUtil {
   sparkTest("test NullSub with String and Numeric values") {
@@ -78,5 +78,42 @@ class TimeFuncsTest extends SparkTestUtil {
         SmvYear('time2) as 'year2, SmvQuarter('time2), SmvMonth('time2) as 'month2, SmvDayOfMonth('time2) as 'dayOfMonth2)
 
     assertUnorderedSeqEqual(result.collect.map(_.toString), Seq("[2014,1,3,5,2013,4,11,1]", "[2010,4,12,30,2012,1,1,1]"))
+  }
+}
+
+class SmvAsArrayTest extends SparkTestUtil {
+  sparkTest("test SmvAsArray multi elements") {
+    val ssc = sqlContext; import ssc._
+    val srdd = createSchemaRdd("a:String; b:String; c:String; d:Integer",
+      "a,b,c,1;x,y,z,2")
+    val res = srdd.select(SmvAsArray('a, 'b, 'c) as 's)
+    assertSrddDataEqual(res, "List(a, b, c);List(x, y, z)")
+    assert(res.schema.fields(0).dataType === ArrayType(StringType))
+  }
+
+  sparkTest("test SmvAsArray single element") {
+    val ssc = sqlContext; import ssc._
+    val srdd = createSchemaRdd("a:String", "a;x")
+    val res = srdd.select(SmvAsArray('a) as 's)
+    assertSrddDataEqual(res, "List(a);List(x)")
+    assert(res.schema.fields(0).dataType === ArrayType(StringType))
+  }
+
+  sparkTest("test SmvAsArray integer elements") {
+    val ssc = sqlContext; import ssc._
+    val srdd = createSchemaRdd("i:Integer; j:Integer", "1,2;3,4")
+    val res = srdd.select(SmvAsArray('i, 'j) as 's)
+    assertSrddDataEqual(res, "List(1, 2);List(3, 4)")
+    assert(res.schema.fields(0).dataType === ArrayType(IntegerType))
+  }
+
+  sparkTest("test SmvAsArray mismatched types") {
+    val ssc = sqlContext; import ssc._
+    val srdd = createSchemaRdd("a:String; i:Integer", "a,1")
+
+    // Note: the UnresolvedException gets mapped to a TreeException[T?]
+    intercept[Exception] {
+      srdd.select(SmvAsArray('a, 'i) as 's).collect
+    }
   }
 }
