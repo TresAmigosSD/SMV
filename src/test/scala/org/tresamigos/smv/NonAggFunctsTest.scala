@@ -52,6 +52,21 @@ class LEFTTest extends SparkTestUtil {
 
 
 class TimeFuncsTest extends SparkTestUtil {
+  sparkTest("test SmvStrToTimestamp") {
+    val ssc = sqlContext; import ssc._
+    val srdd = createSchemaRdd("d1:String; d2:String",
+      "2013 Feb,2014/2/3;  2014 Dec,2010/11/12")
+
+    val res = srdd.select(
+      SmvStrToTimestamp('d1, "yyyy MMM") as 'dd1,
+      SmvStrToTimestamp('d2, "yyyy/MM/dd") as 'dd2)
+
+    assertSrddDataEqual(res,
+      """2013-02-01 00:00:00.0,2014-02-03 00:00:00.0;
+         2014-12-01 00:00:00.0,2010-11-12 00:00:00.0""")
+    assertSrddSchemaEqual(res, "dd1: Timestamp; dd2: Timestamp")
+  }
+
   sparkTest("test YEAR, MONTH, DAYOFMOUNTH, DAYOFWEEK, HOUR") {
     val ssc = sqlContext; import ssc.symbolToUnresolvedAttribute
     val r = sqlContext.csvFileWithSchema(testDataDir + "NonAggTest/test2")

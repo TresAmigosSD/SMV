@@ -85,6 +85,38 @@ case class LEFT(left: Expression, right: Expression) extends BinaryExpression {
 }
 
 /**
+ * SmvStrToTimestamp: convert a string value + format into a timestamp.
+ */
+case class SmvStrToTimestamp(value: Expression, format: Expression) extends Expression {
+
+  def children = value :: format :: Nil
+  override def nullable = value.nullable || format.nullable
+
+  override type EvaluatedType = Any
+
+  override lazy val resolved = childrenResolved &&
+    value.dataType == StringType && format.dataType == StringType
+
+  override def dataType = TimestampType
+  override def toString = s"SmvStrToTimestamp($value,$format)"
+
+  override def eval(input: Row): Any = {
+    val valueVal = value.eval(input)
+    if (valueVal == null) {
+      null
+    } else {
+      val formatVal = format.eval(input)
+      if (formatVal == null) {
+        null
+      } else {
+        val fmtObj = new java.text.SimpleDateFormat(formatVal.asInstanceOf[String])
+        new java.sql.Timestamp(fmtObj.parse(valueVal.asInstanceOf[String]).getTime())
+      }
+    }
+  }
+}
+
+/**
  * Functions on Timestamp
  */
 abstract class UnaryFuncs[T] extends UnaryExpression {
