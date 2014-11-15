@@ -265,6 +265,7 @@ case class SmvStrCat(children: Expression*)
   def nullable = true
 
   override def eval(input: Row): String = {
+    // TODO: should use string builder so we only create 1 object instead of N immutable strings
     children.map{ c => 
       val v = c.eval(input)
       if (v == null) "" else v.toString

@@ -118,6 +118,10 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     new PivotOp(schemaRDD, keyCols, pivotCols, valueCols).transform
   }
 
+  def smvUnpivot(valueCols: Seq[Symbol]) = {
+    new UnpivotOp(schemaRDD, valueCols).unpivot()
+  }
+
   /** See RollupCubeOp for details. */
   def smvCube(cols: Symbol*)(groupExprs: Expression*) = {
     new RollupCubeOp(schemaRDD, cols, Seq.empty, groupExprs).cube()

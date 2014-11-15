@@ -48,9 +48,6 @@ class PivotOp(origSRDD: SchemaRDD,
               keyCols: Seq[Symbol],
               pivotCols: Seq[Symbol],
               valueCols: Seq[Symbol]) {
-  // TODO: allow multiple key columns.
-  // TODO: allow multiple value columns.
-
   def this(origSRDD: SchemaRDD,
            keyCol: Symbol,
            pivotCols: Seq[Symbol],
