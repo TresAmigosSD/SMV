@@ -31,11 +31,7 @@ abstract class SmvDataSet(val description: String) {
 
   def name(): String
 
-  // dataDir should really be at the app level
-  private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
-
-  /** full path of file associated with this module/file */
-  def fullPath(): String
+  def basePath(): String
 
   /** returns the SchemaRDD from this dataset (file/module) */
   def rdd(app: SmvApp): SchemaRDD
@@ -50,20 +46,30 @@ abstract class SmvDataSet(val description: String) {
  * This is true even if the intermedidate step does *NOT* need to be persisted.  The
  * nickname will be used to link modules together.
  */
-case class SmvFile(_name: String, basePath: String, csvAttributes: CsvAttributes) extends
-    SmvDataSet(s"Input file: ${_name}@${basePath}") {
-
-  // TODO: name should be just the basePath? or basename of the basePath?
-  override def name() = _name
-  override def fullPath() = dataDir + "/" + basePath
+case class SmvFile(override val name: String, override val basePath: String, csvAttributes: CsvAttributes) extends
+    SmvDataSet(s"Input file: @${basePath}") {
 
   override def rdd(app: SmvApp): SchemaRDD = {
     implicit val ca = csvAttributes
 
-    app.sqlContext.csvFileWithSchema(fullPath())
+    app.sqlContext.csvFileWithSchema(app.fullPath(this))
   }
 
   override def requiresDS() = Seq.empty
+}
+
+/** 
+ * Provide an interface without the name field 
+ */
+object SmvFile {
+  def apply(basePath: String, csvAttributes: CsvAttributes) = {
+    val nameRex = """(.*/)*(.+).csv(.gz)*""".r
+    val name = basePath match {
+      case nameRex(_, v, _) => v
+      case _ => throw new IllegalArgumentException(s"Illegal base path format: $basePath")
+    }
+    new SmvFile(name, basePath, csvAttributes)
+  }
 }
 
 /**
@@ -79,12 +85,12 @@ abstract class SmvModule(_description: String) extends
 
   override val name = this.getClass().getName().filterNot(_=='$')
 
+  // TODO: basePath should only be s"${name}.csv". When we remove input/output
+  // dir structure, we can totally remove basePath and only use the name
+  override val basePath = s"output/${name}.csv"
+
   type runParams = Map[SmvDataSet, SchemaRDD]
   def run(inputs: runParams) : SchemaRDD
-
-  // TODO: this shouldn't be part of SmvModule.  Only app should know about persistance.
-  // TODO: should probably convert "." in name to path separator "/"
-  override def fullPath() = s"${dataDir}/output/${name}.csv"
 
   override def rdd(app: SmvApp): SchemaRDD = {
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
@@ -117,6 +123,10 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
     getModulePackages.map(modulesInPackage).flatten
   }
 
+  private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
+
+  private[smv] def fullPath(ds: SmvDataSet) = dataDir + "/" + ds.basePath
+
   /**
    * Get the RDD associated with data set.  The rdd is cached so the plan is only built
    * once for each unique data set.  This also means that a module run method may cache
@@ -148,7 +158,7 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
     implicit val ca = CsvAttributes.defaultCsvWithHeader
     val modObject = moduleNametoObject(name)
 
-    resolveRDD(modObject).saveAsCsvWithSchema(modObject.fullPath)
+    resolveRDD(modObject).saveAsCsvWithSchema(fullPath(modObject))
   }
 
   /** extract instances (objects) in given package that implement SmvModule. */

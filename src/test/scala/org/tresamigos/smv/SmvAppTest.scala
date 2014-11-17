@@ -17,7 +17,7 @@ package org.tresamigos.smv {
 import org.apache.spark.sql.SchemaRDD
 
 
-class SmvTestFile(override val _name: String) extends SmvFile(_name, null, null) {
+class SmvTestFile(override val name: String) extends SmvFile(name, null, null) {
   override def rdd(app: SmvApp): SchemaRDD = null
 }
 
