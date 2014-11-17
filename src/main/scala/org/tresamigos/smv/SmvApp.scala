@@ -101,12 +101,15 @@ abstract class SmvModule(_description: String) extends
  * Driver for SMV applications.  The app may override the getModulesPackages method to
  * provide list of modules to discover SmvModules (only needed for catalogs).
  */
-abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
+abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None, _isDev: Boolean = false) {
 
   val conf = new SparkConf().setAppName(appName)
   val sc = _sc.getOrElse(new SparkContext(conf))
   val sqlContext = new SQLContext(sc)
   private val mirror = ru.runtimeMirror(this.getClass.getClassLoader)
+
+  private val isDev = _isDev
+  private val defaultCA = CsvAttributes.defaultCsvWithHeader
 
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
@@ -127,6 +130,22 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
 
   private[smv] def fullPath(ds: SmvDataSet) = dataDir + "/" + ds.basePath
 
+  private def isFileExist(ds: SmvDataSet): SchemaRDD = {
+    ds match {
+      case _: SmvFile => ds.rdd(this)
+      case _: SmvModule =>
+        val dsFile = SmvFile(ds.basePath, defaultCA)
+        try {
+          dsFile.rdd(this)
+        } catch {
+          case _: Throwable => 
+            val rdd = ds.rdd(this)
+            rdd.saveAsCsvWithSchema(fullPath(ds))
+            rdd
+        }
+    }
+  }
+
   /**
    * Get the RDD associated with data set.  The rdd is cached so the plan is only built
    * once for each unique data set.  This also means that a module run method may cache
@@ -140,7 +159,10 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
 
     resolveStack.push(dsName)
 
-    val resRdd = rddCache.getOrElseUpdate(dsName, ds.rdd(this))
+    val resRdd = rddCache.getOrElseUpdate(dsName, 
+      if (isDev) isFileExist(ds)
+      else ds.rdd(this)
+    )
 
     val popRdd = resolveStack.pop()
     if (popRdd != dsName)
@@ -155,10 +177,11 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None) {
   }
 
   def run(name: String) = {
-    implicit val ca = CsvAttributes.defaultCsvWithHeader
+    implicit val ca = defaultCA
     val modObject = moduleNametoObject(name)
 
-    resolveRDD(modObject).saveAsCsvWithSchema(fullPath(modObject))
+    if (isDev) resolveRDD(modObject)
+    else resolveRDD(modObject).saveAsCsvWithSchema(fullPath(modObject))
   }
 
   /** extract instances (objects) in given package that implement SmvModule. */
