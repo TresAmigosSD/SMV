@@ -139,11 +139,11 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   }
 
   /** See QuantileOp for details. */
-  def smvQuantile(groupCol: Symbol, keyCol: Symbol, valueCol: Symbol, numBins: Integer) = {
-    new QuantileOp(schemaRDD, groupCol, keyCol, valueCol, numBins).quantile()
+  def smvQuantile(groupCols: Seq[Symbol], keyCol: Symbol, valueCol: Symbol, numBins: Integer) = {
+    new QuantileOp(schemaRDD, groupCols, keyCol, valueCol, numBins).quantile()
   }
-  def smvDecile(groupCol: Symbol, keyCol: Symbol, valueCol: Symbol) = {
-    new QuantileOp(schemaRDD, groupCol, keyCol, valueCol, 10).quantile()
+  def smvDecile(groupCols: Seq[Symbol], keyCol: Symbol, valueCol: Symbol) = {
+    new QuantileOp(schemaRDD, groupCols, keyCol, valueCol, 10).quantile()
   }
 
   /**

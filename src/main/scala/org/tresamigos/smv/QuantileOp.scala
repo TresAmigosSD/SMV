@@ -17,13 +17,13 @@ package org.tresamigos.smv
 import scala.math.floor
 import org.apache.spark.SparkContext._
 import org.apache.spark.sql.SchemaRDD
-import org.apache.spark.sql.catalyst.expressions.{Row, GenericRow, Cast}
+import org.apache.spark.sql.catalyst.expressions.{Expression, Row, GenericRow, Cast}
 import org.apache.spark.sql.catalyst.types.{StructType, IntegerType, StructField, DoubleType}
 
 /**
  * Compute the quantile bin number within a group in a given SchemaRDD.
  * The algorithm assumes there are three columns in the input.
- * (group_id, key_id, value).  The group_id is the is used to segment the input before
+ * (group_ids*, key_id, value).  The group_ids* are used to segment the input before
  * computing the quantiles.  The key_id is a unique id within the group.  it will just be
  * carried over into the output to help the caller to link the result back to the input.
  * And finally, the value column is the column that the quantile bins will be computed.
@@ -33,10 +33,13 @@ import org.apache.spark.sql.catalyst.types.{StructType, IntegerType, StructField
  * value_quantile column with a value in the range 1 to num_bins.
  */
 class QuantileOp(origSRDD: SchemaRDD,
-                 groupCol: Symbol,
+                 groupCols: Seq[Symbol],
                  keyCol: Symbol,
                  valueCol: Symbol,
                  numBins: Int) extends Serializable {
+
+  private val numGroupCols = groupCols.size
+  private val doubleValColIndex = numGroupCols + 2 // group + key + orig value
 
   /** bound bin number value to range [1,numBins] */
   def binBound(binNum: Int) = {
@@ -45,17 +48,21 @@ class QuantileOp(origSRDD: SchemaRDD,
 
   /**
    * compute the quantile for a given group of rows (all rows are assumed to have the same group id)
-   * Input: Array[Row(groupid, keyid, value, value_double)]
-   * Output: Array[Row(groupid, keyid, value, value_total, value_rsum, value_quantile)]
+   * Input: Array[Row(groupids*, keyid, value, value_double)]
+   * Output: Array[Row(groupids*, keyid, value, value_total, value_rsum, value_quantile)]
    */
   def addQuantile(inGroup: Array[Row]) : Array[Row] = {
-    val valueTotal = inGroup.map(_(3).asInstanceOf[Double]).sum
+    val rowToFirstN = createRowToFirstNFunc(doubleValColIndex) // copy everything upto double value
+    val valueTotal = inGroup.map(_(doubleValColIndex).asInstanceOf[Double]).sum
     val binSize = valueTotal / numBins
     var runSum: Double = 0.0
-    inGroup.sortBy(_(3).asInstanceOf[Double]).map{r =>
-      runSum = runSum + r(3).asInstanceOf[Double]
+    inGroup.sortBy(_(doubleValColIndex).asInstanceOf[Double]).map{r =>
+      runSum = runSum + r(doubleValColIndex).asInstanceOf[Double]
       val bin = binBound(floor(runSum / binSize).toInt + 1)
-      new GenericRow(Array[Any](r(0), r(1), r(2), valueTotal, runSum, bin))}
+      val oldVals = rowToFirstN(r)
+      val newValsDouble = Seq(valueTotal, runSum)
+      val newValsInt = Seq(bin)
+      new GenericRow(Array[Any](oldVals ++ newValsDouble ++ newValsInt: _*))}
   }
 
   /**
@@ -64,8 +71,7 @@ class QuantileOp(origSRDD: SchemaRDD,
    */
   def newSchema() = {
     val smvSchema = Schema.fromSchemaRDD(origSRDD)
-    val oldFields = Seq(groupCol, keyCol, valueCol).
-      map(cs => smvSchema.findEntry(cs).get)
+    val oldFields = (groupCols ++ Seq(keyCol, valueCol)).map(cs => smvSchema.findEntry(cs).get)
     val newFields = List(
       DoubleSchemaEntry(valueCol.name + "_total"),
       DoubleSchemaEntry(valueCol.name + "_rsum"),
@@ -73,13 +79,20 @@ class QuantileOp(origSRDD: SchemaRDD,
     new Schema(oldFields ++ newFields)
   }
 
+  /** creates a function that will return the first N columns from a row */
+  def createRowToFirstNFunc(numGroupCols: Int): Row => Seq[Any] = {
+    { row => 0.until(numGroupCols).map(i => row.apply(i)) }
+  }
+
   /** do the actual quantile computation. */
   def quantile() : SchemaRDD = {
     import origSRDD.sqlContext._
+    val groupColExprs : Seq[Expression] = groupCols.map(s => s.attr)
+    val otherColExprs : Seq[Expression] = Seq(keyCol, valueCol, Cast(valueCol, DoubleType))
 
     val resRDD = origSRDD.
-      select(groupCol, keyCol, valueCol, Cast(valueCol, DoubleType)).
-      groupBy(_(0)).
+      select((groupColExprs ++ otherColExprs): _*).
+      groupBy(createRowToFirstNFunc(numGroupCols)).
       flatMapValues(rowsInGroup => addQuantile(rowsInGroup.toArray)).
       values
 
