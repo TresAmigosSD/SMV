@@ -141,7 +141,7 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None, _i
           case _: Throwable => 
             val rdd = ds.rdd(this)
             rdd.saveAsCsvWithSchema(fullPath(ds))
-            rdd
+            SmvFile(ds.basePath, defaultCA).rdd(this)
         }
     }
   }
