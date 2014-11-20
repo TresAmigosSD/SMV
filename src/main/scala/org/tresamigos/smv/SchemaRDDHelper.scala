@@ -16,6 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
 class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
@@ -95,6 +96,27 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
       fn => Symbol(fn) as Symbol(fn + postfix)
     }
     schemaRDD.select(renamedFields: _*)
+  }
+
+  def joinUniqFieldNames(otherPlan: SchemaRDD, joinType: JoinType = Inner, on: Option[Expression] = None) : SchemaRDD = {
+    import schemaRDD.sqlContext._
+    val namesL = schemaRDD.schema.fieldNames.toSet
+    val namesR = otherPlan.schema.fieldNames.toSet
+
+    val dup = (namesL & namesR).toSeq
+    val renamedFields = dup.map{l => (Symbol(l) -> Symbol("_" + l))}
+
+    schemaRDD.join(otherPlan.renameField(renamedFields: _*), joinType, on)
+  }
+
+  def joinByKey(otherPlan: SchemaRDD, joinType: JoinType, keys: Seq[Symbol]): SchemaRDD = {
+    import schemaRDD.sqlContext._
+
+    val rightKeys = keys.map{k => Symbol("_" + k.name)}
+    val renamedFields = keys.zip(rightKeys).map{case (l,r) => (l -> r)}
+    val joinOpt = keys.zip(rightKeys).map{case (l, r) => (l === r).asInstanceOf[Expression]}.reduce(_ && _)
+
+    schemaRDD.joinUniqFieldNames(otherPlan.renameField(renamedFields: _*), joinType, Option(joinOpt)).selectMinus(rightKeys: _*)
   }
 
   def dedupByKey(keys: Symbol*) : SchemaRDD = {

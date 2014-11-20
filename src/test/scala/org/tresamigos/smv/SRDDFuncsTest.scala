@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.catalyst.types._
+import org.apache.spark.sql.catalyst.plans.Inner
 
 class SelectPlusTest extends SparkTestUtil {
   sparkTest("test SelectPlus") {
@@ -101,3 +102,55 @@ class dedupByKeyTest extends SparkTestUtil {
 
   }
 }
+
+class JoinHelperTest extends SparkTestUtil {
+  sparkTest("test joinUniqFieldNames") {
+    val ssc = sqlContext; import ssc._
+    val srdd1 = createSchemaRdd("a:Integer; b:Double; c:String",
+      """1,2.0,hello;
+         1,3.0,hello;
+         2,10.0,hello2;
+         2,11.0,hello3"""
+    )
+
+    val srdd2 = createSchemaRdd("a2:Integer; c:String",
+      """1,asdf;
+         2,asdfg"""
+    )
+
+    val result = srdd1.joinUniqFieldNames(srdd2, Inner, Option('a === 'a2))
+    val fieldNames = result.schema.fieldNames
+    assert(fieldNames === Seq("a", "b", "c", "a2", "_c"))
+    assertUnorderedSeqEqual(result.collect.map(_.toString), Seq(
+    "[1,2.0,hello,1,asdf]",
+    "[1,3.0,hello,1,asdf]",
+    "[2,10.0,hello2,2,asdfg]",
+    "[2,11.0,hello3,2,asdfg]"))
+  }
+
+  sparkTest("test joinByKey") {
+    val ssc = sqlContext; import ssc._
+    val srdd1 = createSchemaRdd("a:Integer; b:Double; c:String",
+      """1,2.0,hello;
+         1,3.0,hello;
+         2,10.0,hello2;
+         2,11.0,hello3"""
+    )
+
+    val srdd2 = createSchemaRdd("a:Integer; c:String",
+      """1,asdf;
+         2,asdfg"""
+    )
+
+    val result = srdd1.joinByKey(srdd2, Inner, Seq('a))
+    val fieldNames = result.schema.fieldNames
+    assert(fieldNames === Seq("a", "b", "c", "_c"))
+    assertUnorderedSeqEqual(result.collect.map(_.toString), Seq(
+    "[1,2.0,hello,asdf]",
+    "[1,3.0,hello,asdf]",
+    "[2,10.0,hello2,asdfg]",
+    "[2,11.0,hello3,asdfg]"))
+  }
+}
+
+
