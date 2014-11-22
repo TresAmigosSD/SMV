@@ -43,7 +43,7 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
   /**
    * Dump the schema and data of given srdd to screen for debugging purposes.
-   * TODO: add debug flag to turn on/off this method
+   * TODO: add debug flag to turn on/off this method.  Hmm, I think adding a flag would encourage people to leave this in code :-)
    */
   def dumpSRDD = {
     println(Schema.fromSchemaRDD(schemaRDD))
@@ -99,7 +99,6 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   }
 
   def joinUniqFieldNames(otherPlan: SchemaRDD, joinType: JoinType = Inner, on: Option[Expression] = None) : SchemaRDD = {
-    import schemaRDD.sqlContext._
     val namesL = schemaRDD.schema.fieldNames.toSet
     val namesR = otherPlan.schema.fieldNames.toSet
 
@@ -114,7 +113,7 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
     val rightKeys = keys.map{k => Symbol("_" + k.name)}
     val renamedFields = keys.zip(rightKeys).map{case (l,r) => (l -> r)}
-    val joinOpt = keys.zip(rightKeys).map{case (l, r) => (l === r).asInstanceOf[Expression]}.reduce(_ && _)
+    val joinOpt = keys.zip(rightKeys).map{case (l, r) => (l === r):Expression}.reduce(_ && _)
 
     schemaRDD.joinUniqFieldNames(otherPlan.renameField(renamedFields: _*), joinType, Option(joinOpt)).selectMinus(rightKeys: _*)
   }
