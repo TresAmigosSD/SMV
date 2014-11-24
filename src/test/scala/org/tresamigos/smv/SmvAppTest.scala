@@ -16,6 +16,20 @@ package org.tresamigos.smv {
 
 import org.apache.spark.sql.SchemaRDD
 
+class CmdLineArgsTest extends SparkTestUtil {
+  test("test command line parser") {
+    val cmd_args = new CmdLineArgsConf(Seq("--graph", "-d", "mod1", "mod2"))
+    assert(cmd_args.devMode())
+    assert(cmd_args.graph())
+    assert(cmd_args.modules() === Seq("mod1", "mod2"))
+  }
+  test("test command line parser with default args.") {
+    val cmd_args = new CmdLineArgsConf(Seq("mod1"))
+    assert(!cmd_args.devMode())
+    assert(!cmd_args.graph())
+    assert(cmd_args.modules() === Seq("mod1"))
+  }
+}
 
 class SmvTestFile(override val name: String) extends SmvFile(name, null, null) {
   override def rdd(app: SmvApp): SchemaRDD = null
@@ -54,7 +68,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test normal dependency execution") {
-    object app extends SmvApp("test dependency", Option(sc))
+    object app extends SmvApp("test dependency", Seq("C"), Option(sc))
 
     val res = app.resolveRDD(C)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
@@ -74,7 +88,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test cycle dependency execution") {
-    object app extends SmvApp("test dependency", Option(sc))
+    object app extends SmvApp("test dependency", Seq("None"), Option(sc))
 
     intercept[IllegalStateException] {
       app.resolveRDD(B_cycle)
@@ -82,7 +96,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test modulesInPackage method.") {
-    object app extends SmvApp("test modulesInPackage", Option(sc))
+    object app extends SmvApp("test modulesInPackage", Seq("None"), Option(sc))
 
     val mods: Seq[SmvModule] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPackage")
     assertUnorderedSeqEqual(mods,
@@ -91,7 +105,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test dependency graph creation.") {
-    object app extends SmvApp("test dependency graph", Option(sc))
+    object app extends SmvApp("test dependency graph", Seq("C"), Option(sc))
 
     val depGraph = new SmvModuleDependencyGraph(C, app)
     //depGraph.saveToFile("foo.dot")

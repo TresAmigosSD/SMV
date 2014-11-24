@@ -15,6 +15,8 @@
 package org.tresamigos.smv
 
 import java.io.{File, PrintWriter}
+import org.rogach.scallop.ScallopConf
+
 import scala.reflect.runtime.{universe => ru}
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
@@ -101,14 +103,14 @@ abstract class SmvModule(_description: String) extends
  * Driver for SMV applications.  The app may override the getModulesPackages method to
  * provide list of modules to discover SmvModules (only needed for catalogs).
  */
-abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None, _isDev: Boolean = false) {
+abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None) {
 
+  val cmdLineArgsConf = new CmdLineArgsConf(cmdLineArgs)
   val conf = new SparkConf().setAppName(appName)
   val sc = _sc.getOrElse(new SparkContext(conf))
   val sqlContext = new SQLContext(sc)
   private val mirror = ru.runtimeMirror(this.getClass.getClassLoader)
 
-  private val isDev = _isDev
   private val defaultCA = CsvAttributes.defaultCsvWithHeader
 
   /** stack of items currently being resolved.  Used for cyclic checks. */
@@ -160,7 +162,7 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None, _i
     resolveStack.push(dsName)
 
     val resRdd = rddCache.getOrElseUpdate(dsName, 
-      if (isDev) isFileExist(ds)
+      if (cmdLineArgsConf.devMode()) isFileExist(ds)
       else ds.rdd(this)
     )
 
@@ -176,13 +178,6 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None, _i
     mirror.reflectModule(mirror.staticModule(modName)).instance.asInstanceOf[SmvModule]
   }
 
-  def run(name: String) = {
-    implicit val ca = defaultCA
-    val modObject = moduleNametoObject(name)
-
-    if (isDev) resolveRDD(modObject)
-    else resolveRDD(modObject).saveAsCsvWithSchema(fullPath(modObject))
-  }
 
   /** extract instances (objects) in given package that implement SmvModule. */
   private[smv] def modulesInPackage(pkgName: String): Seq[SmvModule] = {
@@ -197,6 +192,42 @@ abstract class SmvApp (val appName: String, _sc: Option[SparkContext] = None, _i
       map(_.get).
       toSeq
   }
+
+  private def genDotGraph(moduleName: String) = {
+    val pathName = s"${moduleName}.dot"
+    new SmvModuleDependencyGraph(moduleName, this,
+      Seq("com.omnicis.lucentis")).saveToFile(pathName) // TODO: will not be needed once #99 is fixed.
+  }
+
+  def run() = {
+    cmdLineArgsConf.modules().foreach { module =>
+      if (cmdLineArgsConf.graph()) {
+        // TODO: need to combine the modules for graphs into a single graph.
+        genDotGraph(module)
+      } else {
+        implicit val ca = defaultCA
+        val modObject = moduleNametoObject(module)
+        val modResult = resolveRDD(modObject)
+
+        if (!cmdLineArgsConf.devMode())
+          modResult.saveAsCsvWithSchema(fullPath(modObject))
+      }
+    }
+  }
+}
+
+/**
+ * command line argumetn parsing using scallop library.
+ * See (https://github.com/scallop/scallop) for details on using scallop.
+ */
+private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) {
+  val devMode = toggle("dev", default=Some(false),
+    descrYes="enable dev mode (persist all intermediate module results",
+    descrNo="enable production mode (all modules are evaluated from scratch")
+  val graph = toggle("graph", default=Some(false),
+    descrYes="generate a dependency graph of the given modules (modules are not run)",
+    descrNo="do not generate a dependency graph")
+  val modules = trailArg[List[String]](descr="FQN of modules to run/graph")
 }
 
 /**

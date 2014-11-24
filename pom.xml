@@ -48,6 +48,11 @@
       <version>2.2.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.rogach</groupId>
+      <artifactId>scallop_2.10</artifactId>
+      <version>0.9.5</version>
+    </dependency>
   </dependencies>
 
   <build>
