@@ -116,6 +116,7 @@ class SmvAppTest extends SparkTestUtil {
     assert(edges(A) === Seq(fx))
     assert(edges(B) === Seq(A))
     assert(edges(C) === Seq(A,B))
+    assert(depGraph.packagesPrefix === "org.tresamigos.smv.")
   }
 }
 }

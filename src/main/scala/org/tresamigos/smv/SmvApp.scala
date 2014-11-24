@@ -193,20 +193,20 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
       toSeq
   }
 
-  private def genDotGraph(moduleName: String) = {
-    val pathName = s"${moduleName}.dot"
-    new SmvModuleDependencyGraph(moduleName, this,
-      Seq("com.omnicis.lucentis")).saveToFile(pathName) // TODO: will not be needed once #99 is fixed.
+  private def genDotGraph(module: SmvModule) = {
+    val pathName = s"${module.name}.dot"
+    new SmvModuleDependencyGraph(module, this).saveToFile(pathName)
   }
 
   def run() = {
     cmdLineArgsConf.modules().foreach { module =>
+      val modObject = moduleNametoObject(module)
+
       if (cmdLineArgsConf.graph()) {
         // TODO: need to combine the modules for graphs into a single graph.
-        genDotGraph(module)
+        genDotGraph(modObject)
       } else {
         implicit val ca = defaultCA
-        val modObject = moduleNametoObject(module)
         val modResult = resolveRDD(modObject)
 
         if (!cmdLineArgsConf.devMode())
@@ -237,11 +237,7 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
  * a package prefix of "com.foo.X" to remove the repeated noise of "com.foo.X" before
  * every module name in the graph.
  */
-class SmvModuleDependencyGraph(val startMod: SmvModule, val app: SmvApp,
-                               val packagePrefixes: Seq[String] = Seq.empty) {
-  def this(startNode: String, app: SmvApp, prefixes: Seq[String]) =
-    this(app.moduleNametoObject(startNode), app, prefixes)
-
+private[smv] class SmvModuleDependencyGraph(val startMod: SmvModule, val app: SmvApp) {
   type dependencyMap = Map[SmvDataSet, Seq[SmvDataSet]]
 
   private def addDependencyEdges(node: SmvDataSet, nodeDeps: Seq[SmvDataSet], map: dependencyMap): dependencyMap = {
@@ -258,12 +254,25 @@ class SmvModuleDependencyGraph(val startMod: SmvModule, val app: SmvApp,
   }
 
   private lazy val allFiles = graph.values.flatMap(vs => vs.filter(v => v.isInstanceOf[SmvFile]))
+  private lazy val allModules = graph.flatMap(kv => (Seq(kv._1) ++ kv._2).filter(v => v.isInstanceOf[SmvModule]))
 
-  private def stripPackagePrefix(nodeName: String) =
-    packagePrefixes.map(_ + ".").foldLeft(nodeName)((s,p) => s.stripPrefix(p))
+  /** creates a sequence of all module names (both key and value) */
+  private lazy val allModuleNames = allModules.map(_.name()).toSet
+
+  /** find a common prefix to all module names. */
+  private def findCommonPrefix(prefix: String): String = {
+    if (prefix.size == 0)
+      ""
+    else
+      if (allModuleNames.forall(m => m.startsWith(prefix)))
+        prefix
+      else
+        findCommonPrefix(prefix.split('.').dropRight(1).mkString("."))
+  }
+  private[smv] lazy val packagesPrefix = findCommonPrefix(allModuleNames.toSeq(0)) + "."
 
   /** quoted/clean name in graph output */
-  private def q(ds: SmvDataSet) = "\"" + stripPackagePrefix(ds.name) + "\""
+  private def q(ds: SmvDataSet) = "\"" + ds.name.stripPrefix(packagesPrefix) + "\""
 
   private def fileStyles() = {
     allFiles.map(f => s"  ${q(f)} " + "[shape=box, color=\"pink\"]")
