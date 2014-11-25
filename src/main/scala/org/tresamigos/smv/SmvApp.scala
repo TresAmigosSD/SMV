@@ -22,6 +22,7 @@ import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
+import scala.util.Try
 
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
@@ -32,8 +33,6 @@ import scala.collection.mutable
 abstract class SmvDataSet(val description: String) {
 
   def name(): String
-
-  def basePath(): String
 
   /** returns the SchemaRDD from this dataset (file/module) */
   def rdd(app: SmvApp): SchemaRDD
@@ -48,13 +47,12 @@ abstract class SmvDataSet(val description: String) {
  * This is true even if the intermedidate step does *NOT* need to be persisted.  The
  * nickname will be used to link modules together.
  */
-case class SmvFile(override val name: String, override val basePath: String, csvAttributes: CsvAttributes) extends
+case class SmvFile(override val name: String, val basePath: String, csvAttributes: CsvAttributes) extends
     SmvDataSet(s"Input file: @${basePath}") {
 
   override def rdd(app: SmvApp): SchemaRDD = {
     implicit val ca = csvAttributes
-
-    app.sqlContext.csvFileWithSchema(app.fullPath(this))
+    app.sqlContext.csvFileWithSchema(s"${app.dataDir}/${basePath}")
   }
 
   override def requiresDS() = Seq.empty
@@ -82,20 +80,40 @@ object SmvFile {
  * will be provided the SchemaRDD result from the run method of this module.
  * Note: the module should *not* persist any RDD itself.
  */
-abstract class SmvModule(_description: String) extends
-  SmvDataSet(_description) {
+abstract class SmvModule(_description: String) extends SmvDataSet(_description) {
 
   override val name = this.getClass().getName().filterNot(_=='$')
-
-  // TODO: basePath should only be s"${name}.csv". When we remove input/output
-  // dir structure, we can totally remove basePath and only use the name
-  override val basePath = s"output/${name}.csv"
 
   type runParams = Map[SmvDataSet, SchemaRDD]
   def run(inputs: runParams) : SchemaRDD
 
-  override def rdd(app: SmvApp): SchemaRDD = {
+  /** perform the actual run of this module to get the generated SRDD result. */
+  private def doRun(app: SmvApp): SchemaRDD = {
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
+  }
+
+  private def fullPath(app: SmvApp) = s"${app.dataDir}/output/${name}.csv"
+
+  private[smv] def persist(app: SmvApp, rdd: SchemaRDD) = {
+    implicit val ca = CsvAttributes.defaultCsvWithHeader
+    rdd.saveAsCsvWithSchema(fullPath(app))
+  }
+
+  private[smv] def readPersistedFile(app: SmvApp): Try[SchemaRDD] = {
+    implicit val ca = CsvAttributes.defaultCsvWithHeader
+    Try(app.sqlContext.csvFileWithSchema(fullPath(app)))
+  }
+
+  override def rdd(app: SmvApp): SchemaRDD = {
+    if (app.isDevMode) {
+      readPersistedFile(app).recoverWith { case e =>
+        // if unable to read persisted file, recover by running the module and persist.
+        persist(app, doRun(app))
+        readPersistedFile(app)
+      }.get
+    } else {
+      doRun(app)
+    }
   }
 }
 
@@ -106,11 +124,13 @@ abstract class SmvModule(_description: String) extends
 abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None) {
 
   val cmdLineArgsConf = new CmdLineArgsConf(cmdLineArgs)
-  val conf = new SparkConf().setAppName(appName)
-  val sc = _sc.getOrElse(new SparkContext(conf))
+  val isDevMode = cmdLineArgsConf.devMode()
+  val sparkConf = new SparkConf().setAppName(appName)
+  val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = new SQLContext(sc)
   private val mirror = ru.runtimeMirror(this.getClass.getClassLoader)
 
+  // TODO: remove this!
   private val defaultCA = CsvAttributes.defaultCsvWithHeader
 
   /** stack of items currently being resolved.  Used for cyclic checks. */
@@ -130,30 +150,12 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
 
   private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
 
-  private[smv] def fullPath(ds: SmvDataSet) = dataDir + "/" + ds.basePath
-
-  private def isFileExist(ds: SmvDataSet): SchemaRDD = {
-    ds match {
-      case _: SmvFile => ds.rdd(this)
-      case _: SmvModule =>
-        val dsFile = SmvFile(ds.basePath, defaultCA)
-        try {
-          dsFile.rdd(this)
-        } catch {
-          case _: Throwable => 
-            val rdd = ds.rdd(this)
-            rdd.saveAsCsvWithSchema(fullPath(ds))
-            SmvFile(ds.basePath, defaultCA).rdd(this)
-        }
-    }
-  }
-
   /**
    * Get the RDD associated with data set.  The rdd is cached so the plan is only built
    * once for each unique data set.  This also means that a module run method may cache
    * the result and the cache will be utilized by multiple users of the rdd.
    */
-  def resolveRDD(ds: SmvDataSet): SchemaRDD = {
+  private[smv] def resolveRDD(ds: SmvDataSet): SchemaRDD = {
     val dsName = ds.name
     if (resolveStack.contains(dsName))
       throw new IllegalStateException(s"cycle found while resolving ${dsName}: " +
@@ -161,10 +163,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
 
     resolveStack.push(dsName)
 
-    val resRdd = rddCache.getOrElseUpdate(dsName, 
-      if (cmdLineArgsConf.devMode()) isFileExist(ds)
-      else ds.rdd(this)
-    )
+    val resRdd = rddCache.getOrElseUpdate(dsName, ds.rdd(this))
 
     val popRdd = resolveStack.pop()
     if (popRdd != dsName)
@@ -183,7 +182,6 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   private[smv] def modulesInPackage(pkgName: String): Seq[SmvModule] = {
     import com.google.common.reflect.ClassPath
     import scala.collection.JavaConversions._
-    import scala.util.Try
 
     ClassPath.from(this.getClass.getClassLoader).
       getTopLevelClasses(pkgName).
@@ -198,6 +196,10 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
     new SmvModuleDependencyGraph(module, this).saveToFile(pathName)
   }
 
+  /**
+   * The main entry point into the app.  This will parse the command line arguments
+   * to determine which modules should be run/graphed/etc.
+   */
   def run() = {
     cmdLineArgsConf.modules().foreach { module =>
       val modObject = moduleNametoObject(module)
@@ -206,11 +208,10 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
         // TODO: need to combine the modules for graphs into a single graph.
         genDotGraph(modObject)
       } else {
-        implicit val ca = defaultCA
         val modResult = resolveRDD(modObject)
 
-        if (!cmdLineArgsConf.devMode())
-          modResult.saveAsCsvWithSchema(fullPath(modObject))
+        if (! isDevMode)
+          modObject.persist(this, modResult)
       }
     }
   }
