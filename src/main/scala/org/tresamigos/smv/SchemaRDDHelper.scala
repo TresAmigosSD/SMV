@@ -14,6 +14,7 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
@@ -165,6 +166,19 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   }
   def smvDecile(groupCols: Seq[Symbol], keyCol: Symbol, valueCol: Symbol) = {
     new QuantileOp(schemaRDD, groupCols, keyCol, valueCol, 10).quantile()
+  }
+
+  /** adds a rank column to an srdd. */
+  def smvRank(rankColumnName: String, startValue: Long = 0) = {
+    val oldSchema = Schema.fromSchemaRDD(schemaRDD)
+    val newSchema = oldSchema ++ new Schema(Seq(LongSchemaEntry(rankColumnName)))
+
+    val res: RDD[Row] = schemaRDD.
+      zipWithIndex().
+      map{ case (row, idx) =>
+        new GenericRow(Array[Any](row ++ Seq(idx + startValue): _*)) }
+
+    schemaRDD.sqlContext.applySchemaToRowRDD(res, newSchema)
   }
 
   /**
