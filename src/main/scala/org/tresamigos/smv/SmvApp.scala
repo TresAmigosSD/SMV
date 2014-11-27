@@ -155,7 +155,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
    * once for each unique data set.  This also means that a module run method may cache
    * the result and the cache will be utilized by multiple users of the rdd.
    */
-  private[smv] def resolveRDD(ds: SmvDataSet): SchemaRDD = {
+  def resolveRDD(ds: SmvDataSet): SchemaRDD = {
     val dsName = ds.name
     if (resolveStack.contains(dsName))
       throw new IllegalStateException(s"cycle found while resolving ${dsName}: " +
