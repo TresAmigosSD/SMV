@@ -27,6 +27,7 @@ abstract class SchemaEntry extends java.io.Serializable {
   def strToVal(s: String) : Any
   def valToStr(v: Any) : String = if (v==null) "" else v.toString
   val typeName: String
+  private[smv] var meta: String = ""
   override def toString = structField.name + ": " + typeName
 }
 
@@ -185,8 +186,17 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   def findEntry(sym: Symbol) = {
     entries.find(e => e.structField.name == sym.name)
   }
+
+  def addMeta(sym: Symbol, metaStr: String): Unit = {
+    findEntry(sym).get.meta = metaStr
+  }
+
+  def toStringWithMeta = entries.map{e => 
+    e.toString + (if (e.meta.isEmpty) "" else ("\t\t# " + e.meta))
+  }
+
   def saveToFile(sc: SparkContext, path: String) {
-    sc.makeRDD(entries.map(_.toString), 1).saveAsTextFile(path)
+    sc.makeRDD(toStringWithMeta, 1).saveAsTextFile(path)
   }
 
   /**

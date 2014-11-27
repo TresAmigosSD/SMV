@@ -153,4 +153,36 @@ class JoinHelperTest extends SparkTestUtil {
   }
 }
 
+class MetaTest extends SparkTestUtil {
+  sparkTest("test addMeta") {
+    val srdd = createSchemaRdd("a2:Integer; c:String",
+      """1,asdf;
+         2,asdfg"""
+    )
+
+    val sWithMeta = srdd.addMeta('a2 -> "a2 is a key", 'c -> "c is a value field")
+    assertUnorderedSeqEqual(sWithMeta.schemaWithMeta.toStringWithMeta, Seq(
+      "a2: Integer\t\t# a2 is a key",
+      "c: String\t\t# c is a value field"
+    ))
+  }
+
+  sparkTest("test renameWithMeta") {
+    val srdd = createSchemaRdd("a2:Integer; c:String",
+      """1,asdf;
+         2,asdfg"""
+    )
+
+    val sWithMeta = srdd.renameWithMeta(
+      'a2 -> ('new_a2, "new_a2 is a key")
+    )
+
+    assertUnorderedSeqEqual(sWithMeta.schemaWithMeta.toStringWithMeta, Seq(
+      "new_a2: Integer\t\t# new_a2 is a key",
+      "c: String"
+    ))
+  }
+
+}
+
 

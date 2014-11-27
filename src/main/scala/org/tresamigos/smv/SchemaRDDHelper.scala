@@ -21,9 +21,12 @@ import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
 class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
+  private[smv] var schemaWithMeta: Schema = null
+
   // TODO: add schema file path as well.
   def saveAsCsvWithSchema(dataPath: String)(implicit ca: CsvAttributes) {
-    val schema = Schema.fromSchemaRDD(schemaRDD)
+
+    val schema = if (schemaWithMeta == null) {Schema.fromSchemaRDD(schemaRDD)} else {schemaWithMeta}
 
     //Adding the header to the saved file all the time even when ca.hasHeader is
     //False.
@@ -81,6 +84,19 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
       fn => Symbol(fn) as namePairsMap.getOrElse(Symbol(fn), Symbol(fn))
     }
     schemaRDD.select(renamedFields: _*)
+  }
+
+  def addMeta(metaPairs: (Symbol, String)*): SchemaRDDHelper = {
+    if (schemaWithMeta == null) schemaWithMeta = Schema.fromSchemaRDD(schemaRDD)
+    metaPairs.foreach{case (v, m) => schemaWithMeta.addMeta(v, m)}
+    this
+  }
+
+  def renameWithMeta(nameMetaPairs: (Symbol, (Symbol, String))*): SchemaRDDHelper = {
+    val namePairs = nameMetaPairs.map{case (orig, (dest, meta)) => (orig, dest)}
+    val metaPairs = nameMetaPairs.map{case (orig, (dest, meta)) => (dest, meta)}
+
+    renameField(namePairs: _*).addMeta(metaPairs: _*)
   }
 
   def prefixFieldNames(prefix: String) : SchemaRDD = {
