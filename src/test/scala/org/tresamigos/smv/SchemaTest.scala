@@ -31,7 +31,7 @@ class SchemaTest extends SparkTestUtil {
   sparkTest("Test schema file parsing") {
     val s = Schema.fromFile(sc, testDataDir +  "SchemaTest/test1.schema")
     val entries = s.entries
-    assert(entries.size === 9)
+    assert(entries.size === 10)
     assert(entries(0) === StringSchemaEntry("id"))
     assert(entries(1) === DoubleSchemaEntry("val"))
     assert(entries(2) === TimestampSchemaEntry("val2"))
@@ -41,6 +41,7 @@ class SchemaTest extends SparkTestUtil {
     assert(entries(6) === BooleanSchemaEntry("val6"))
     assert(entries(7) === FloatSchemaEntry("val7"))
     assert(entries(8) === MapSchemaEntry("val8", StringSchemaEntry("keyType"), IntegerSchemaEntry("valType")))
+    assert(entries(9) === ArraySchemaEntry("val9", IntegerSchemaEntry("valType")))
   }
 
   test("Schema entry equality") {
@@ -82,6 +83,24 @@ class SchemaTest extends SparkTestUtil {
     val map_a_sorted = SortedMap(1->"2", 3->"4")
     val str_a = a.valToStr(map_a_sorted)
     assert(str_a === "1|2|3|4")
+  }
+
+  test("Test Serialize Array Values") {
+    val s = Schema.fromString("a:array[integer]")
+    val a = s.entries(0)
+
+    assert(a === ArraySchemaEntry("a", IntegerSchemaEntry("valType")))
+
+    val array_a = a.strToVal("1|2|3|4")
+    assert(array_a === Seq(1, 2, 3, 4))
+
+    val array_a1 = Seq(4, 3, 2, 1)
+    val str_a1 = a.valToStr(array_a1)
+    assert(str_a1 === "4|3|2|1")
+
+    val array_a2 = Seq(4, 3, 2, 1).toArray
+    val str_a2 = a.valToStr(array_a2)
+    assert(str_a2 === "4|3|2|1")
   }
 
   test("Test Serialize with null values") {

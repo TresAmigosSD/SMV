@@ -12,3 +12,4 @@ val5: integer
 val6: boolean
 val7: float
 val8: Map[String, Integer]
+val9: Array[Integer]

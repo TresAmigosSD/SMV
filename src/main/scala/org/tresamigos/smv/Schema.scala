@@ -96,6 +96,9 @@ case class MapSchemaEntry(name: String,
       keySchemaEntry: SchemaEntry, valSchemaEntry: SchemaEntry) extends SchemaEntry {
   override val zeroVal = Literal(null)
   override val typeName = "Map"
+
+  // TODO: should it be MapType(keySchemaEntry.structField.dataType,
+  // valSchemaEntry.structField.dataType) ????
   val structField = StructField(name, MapType(StringType, StringType), true)
   override def strToVal(s: String) : Any = {
     if (s.isEmpty)
@@ -118,7 +121,28 @@ case class MapSchemaEntry(name: String,
     }.mkString("|")
   }
 }
-
+ 
+case class ArraySchemaEntry(name: String, valSchemaEntry: SchemaEntry) extends SchemaEntry {
+  override val zeroVal = Literal(null)
+  override val typeName = "Array"
+  val structField = StructField(name, ArrayType(valSchemaEntry.structField.dataType), true)
+  override def strToVal(s: String) : Any = {
+    if (s.isEmpty)
+      null
+    else
+      // TODO: should probably use openCSV to parse the map to array
+      s.split("\\|").map { a => valSchemaEntry.strToVal(a) }
+  }
+  override def valToStr(v: Any) : String = {
+    if (v==null) return ""
+    val m = v match {
+      case a: Seq[Any] => a
+      case a: Array[_] => a.toSeq
+    }
+    m.map{r => valSchemaEntry.valToStr(r)}.mkString("|")
+  }
+}
+ 
 object SchemaEntry {
   private final val StringPattern = "[sS]tring".r
   private final val DoublePattern = "[dD]ouble".r
@@ -129,6 +153,7 @@ object SchemaEntry {
   private final val TimestampPatternFmt = "[tT]imestamp\\[(.+)\\]".r
   private final val TimestampPattern = "[tT]imestamp".r
   private final val MapPattern = "[mM]ap\\[(.+),(.+)\\]".r
+  private final val ArrayPattern = "[aA]rray\\[(.+)\\]".r
 
   def apply(name: String, typeStr: String) : SchemaEntry = {
     val trimName = name.trim
@@ -144,6 +169,9 @@ object SchemaEntry {
       case MapPattern(keyTypeStr, valTypeStr) =>
         MapSchemaEntry(trimName,
           SchemaEntry("keyType", keyTypeStr),
+          SchemaEntry("valType", valTypeStr))
+      case ArrayPattern(valTypeStr) =>
+        ArraySchemaEntry(trimName,
           SchemaEntry("valType", valTypeStr))
       case _ => throw new IllegalArgumentException(s"unknown type: $typeStr")
     }
