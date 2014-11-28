@@ -32,25 +32,34 @@ import scala.util.Try
  */
 abstract class SmvDataSet(val description: String) {
 
+  private var rddCache: SchemaRDD = null
+
   def name(): String
 
-  /** returns the SchemaRDD from this dataset (file/module) */
-  def rdd(app: SmvApp): SchemaRDD
+  /** concrete classes must implement this to supply the uncached RDD for data set */
+  def computeRDD(app: SmvApp): SchemaRDD
 
   /** modules must override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet]
+
+  /**
+   * returns the SchemaRDD from this dataset (file/module).
+   * The value is cached so this function can be called repeatedly.
+   */
+  def rdd(app: SmvApp) = {
+    if (rddCache == null)
+      rddCache = computeRDD(app)
+    rddCache
+  }
 }
 
 /**
- * Wrapper around a persistence point.  All input/output files in the application
- * (including intermediate steps from modules) must have a corresponding SmvFile instance.
- * This is true even if the intermedidate step does *NOT* need to be persisted.  The
- * nickname will be used to link modules together.
+ * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
 case class SmvFile(override val name: String, val basePath: String, csvAttributes: CsvAttributes) extends
     SmvDataSet(s"Input file: @${basePath}") {
 
-  override def rdd(app: SmvApp): SchemaRDD = {
+  override def computeRDD(app: SmvApp): SchemaRDD = {
     implicit val ca = csvAttributes
     app.sqlContext.csvFileWithSchema(s"${app.dataDir}/${basePath}")
   }
@@ -59,7 +68,8 @@ case class SmvFile(override val name: String, val basePath: String, csvAttribute
 }
 
 /** 
- * Provide an interface without the name field 
+ * Provide an interface without the name field
+ * TODO: this should be the only interface.  Need to remove support for "nickname" in SmvFile
  */
 object SmvFile {
   def apply(basePath: String, csvAttributes: CsvAttributes) = {
@@ -92,11 +102,21 @@ abstract class SmvModule(_description: String) extends SmvDataSet(_description) 
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 
-  private def fullPath(app: SmvApp) = s"${app.dataDir}/output/${name}.csv"
+  private def fullPath(app: SmvApp) = {
+    val prefix = s"${app.dataDir}/output/${name}.csv"
+    if (app.isDevMode) {
+      prefix // TODO: add hash here!!!
+    } else {
+      prefix
+    }
+  }
 
   private[smv] def persist(app: SmvApp, rdd: SchemaRDD) = {
+    val filePath = fullPath(app)
     implicit val ca = CsvAttributes.defaultCsvWithHeader
-    rdd.saveAsCsvWithSchema(fullPath(app))
+    rdd.saveAsCsvWithSchema(filePath)
+    if (app.isDevMode)
+      println(s"PERSIST: ${filePath}")
   }
 
   private[smv] def readPersistedFile(app: SmvApp): Try[SchemaRDD] = {
@@ -104,7 +124,7 @@ abstract class SmvModule(_description: String) extends SmvDataSet(_description) 
     Try(app.sqlContext.csvFileWithSchema(fullPath(app)))
   }
 
-  override def rdd(app: SmvApp): SchemaRDD = {
+  override def computeRDD(app: SmvApp): SchemaRDD = {
     if (app.isDevMode) {
       readPersistedFile(app).recoverWith { case e =>
         // if unable to read persisted file, recover by running the module and persist.
@@ -136,10 +156,6 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
-  /** cache of all RDD that have already been resolved (executed) */
-  // TODO: move the caching into the SmvDataSet object itself as we dont lookup a ds by name any longer.
-  val rddCache: mutable.Map[String, SchemaRDD] = mutable.Map()
-
   /** concrete applications can provide a list of package names containing modules. */
   def getModulePackages() : Seq[String] = Seq.empty
 
@@ -151,9 +167,11 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
 
   /**
-   * Get the RDD associated with data set.  The rdd is cached so the plan is only built
-   * once for each unique data set.  This also means that a module run method may cache
-   * the result and the cache will be utilized by multiple users of the rdd.
+   * Get the RDD associated with data set.  The rdd plan (not data) is cached in the SmvDataSet
+   * to ensure only a single SchemaRDD exists for a given data set (file/module).
+   * The module can create a data cache itself and the cached data will be used by all
+   * other modules that depend on the required module.
+   * This method also checks for cycles in the module dependency graph.
    */
   def resolveRDD(ds: SmvDataSet): SchemaRDD = {
     val dsName = ds.name
@@ -163,7 +181,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
 
     resolveStack.push(dsName)
 
-    val resRdd = rddCache.getOrElseUpdate(dsName, ds.rdd(this))
+    val resRdd = ds.rdd(this)
 
     val popRdd = resolveStack.pop()
     if (popRdd != dsName)
