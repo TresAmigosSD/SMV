@@ -125,6 +125,9 @@ case class MapSchemaEntry(name: String,
 case class ArraySchemaEntry(name: String, valSchemaEntry: SchemaEntry) extends SchemaEntry {
   override val zeroVal = Literal(null)
   override val typeName = "Array"
+
+  override def toString = s"$name: Array[${valSchemaEntry.typeName}]"
+
   val structField = StructField(name, ArrayType(valSchemaEntry.structField.dataType), true)
   override def strToVal(s: String) : Any = {
     if (s.isEmpty)
@@ -174,6 +177,27 @@ object SchemaEntry {
         ArraySchemaEntry(trimName,
           SchemaEntry("valType", valTypeStr))
       case _ => throw new IllegalArgumentException(s"unknown type: $typeStr")
+    }
+  }
+
+  def apply(name: String, dataType: DataType) : SchemaEntry = {
+    val trimName = name.trim
+    dataType match {
+      case StringType => StringSchemaEntry(trimName)
+      case DoubleType => DoubleSchemaEntry(trimName)
+      case FloatType => FloatSchemaEntry(trimName)
+      case LongType => LongSchemaEntry(trimName)
+      case IntegerType => IntegerSchemaEntry(trimName)
+      case BooleanType => BooleanSchemaEntry(trimName)
+      case TimestampType => TimestampSchemaEntry(trimName)
+      case MapType(keyType, valType, _) =>
+        MapSchemaEntry(trimName,
+          SchemaEntry("keyType", keyType),
+          SchemaEntry("valType", valType))
+      case ArrayType(valType, _) =>
+        ArraySchemaEntry(trimName,
+          SchemaEntry("valType", valType))
+      case _ => throw new IllegalArgumentException(s"unknown type: ${dataType.toString}")
     }
   }
 
@@ -302,8 +326,10 @@ object Schema {
     // from the attribute type because the attribute data type is of the
     // form DoubleType, IntType, XType (we want to drop the "Type")
     new Schema(
-      resolvedLP.output.map(a =>
-        SchemaEntry(a.name, a.dataType.toString.dropRight(4))))
+      resolvedLP.output.map{a =>
+        SchemaEntry(a.name, a.dataType)
+      }
+    )
   }
 
   /**

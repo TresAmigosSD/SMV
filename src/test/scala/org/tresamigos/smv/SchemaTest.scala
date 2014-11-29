@@ -141,4 +141,12 @@ class SchemaTest extends SparkTestUtil {
     assert(SchemaEntry.valueToColumnName(55) === "55")
     assert(SchemaEntry.valueToColumnName(List(1.0, 2, 3).mkString(",")) === "1_0_2_0_3_0")
   }
+
+  sparkTest("Test ArraySchema read and write") {
+    val srdd = createSchemaRdd("a:Integer; b:Array[Double]",
+      "1,0.3|0.11|0.1")
+
+    assert(Schema.fromSchemaRDD(srdd).toString === "Schema: a: Integer; b: Array[Double]")
+    assertDoubleSeqEqual(srdd.collect()(0)(1).asInstanceOf[Array[Any]], Seq(0.3,0.11,0.1))
+  }
 }
