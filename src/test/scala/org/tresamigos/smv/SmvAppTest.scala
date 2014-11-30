@@ -31,6 +31,32 @@ class CmdLineArgsTest extends SparkTestUtil {
   }
 }
 
+class SmvVersionTest extends SparkTestUtil {
+  sparkTest("Test module version") {
+    object X extends SmvModule("X Module") {
+      var v = 1
+      override def requiresDS() = Seq()
+      override def run(i: runParams) = createSchemaRdd("a:Integer", "1")
+      override def version = v
+    }
+    object Y extends SmvModule("Y Module") {
+      override def requiresDS() = Seq(X)
+      override def run(i: runParams) = createSchemaRdd("y:String", "y")
+      override def version = 10
+    }
+
+    object app extends SmvApp("test version", Seq("Y"), Option(sc))
+
+    X.v = 1
+    val v1 = Y.versionSum()
+    X.v = 2
+    val v2 = Y.versionSum()
+
+    // If the version of the dependent module changed, this module version sum should also change.
+    assert(v1 !== v2)
+  }
+}
+
 class SmvTestFile(override val name: String) extends SmvFile(name, null, null) {
   override def rdd(app: SmvApp): SchemaRDD = null
 }

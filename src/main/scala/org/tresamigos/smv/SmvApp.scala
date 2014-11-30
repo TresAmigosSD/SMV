@@ -42,6 +42,9 @@ abstract class SmvDataSet(val description: String) {
   /** modules must override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet]
 
+  /** code "version".  Derived classes should update the value when code or data */
+  def version() : Int = 0
+
   /**
    * returns the SchemaRDD from this dataset (file/module).
    * The value is cached so this function can be called repeatedly.
@@ -94,6 +97,9 @@ abstract class SmvModule(_description: String) extends SmvDataSet(_description) 
 
   override val name = this.getClass().getName().filterNot(_=='$')
 
+  /** The sum of all versions of this module and all its dependents. */
+  private[smv] def versionSum() = requiresDS().map(_.version).sum + version
+
   type runParams = Map[SmvDataSet, SchemaRDD]
   def run(inputs: runParams) : SchemaRDD
 
@@ -103,11 +109,11 @@ abstract class SmvModule(_description: String) extends SmvDataSet(_description) 
   }
 
   private def fullPath(app: SmvApp) = {
-    val prefix = s"${app.dataDir}/output/${name}.csv"
+    val prefix = s"${app.dataDir}/output/${name}"
     if (app.isDevMode) {
-      prefix // TODO: add hash here!!!
+      s"${prefix}_${versionSum()}.csv"
     } else {
-      prefix
+      s"${prefix}.csv"
     }
   }
 
