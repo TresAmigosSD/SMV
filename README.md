@@ -215,6 +215,21 @@ import sqlContext._
 import org.apache.spark.sql.catalyst.expressions._
 ```
 
+# Schema Discovery
+
+SMV can discover data schema from CSV file and create a schema file. Manual adjustment might be needed on the discovered schema file.
+
+Example of using the Schema Discovery in the interactive shell
+
+```scala
+scala> implicit val ca=CsvAttributes.defaultCsvWithHeader
+scala> val file=sqlContext.csvFileWithSchemaDiscovery("/path/to/file.csv", 100000)
+scala> val schema=Schema.fromSchemaRDD(file)
+scala> schema.saveToFile(sc, "/path/to/file.schema")
+```
+
+Here we assume that you have sqlContext defined in the spark-shell environment. 
+
 # EDD
 
 EDD stands for **Extended Data Dictionary**, which is a report run against the data file and typically provide 
