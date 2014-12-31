@@ -120,9 +120,9 @@ abstract class SmvModule(_description: String) extends SmvDataSet(_description) 
   private[smv] def persist(app: SmvApp, rdd: SchemaRDD) = {
     val filePath = fullPath(app)
     implicit val ca = CsvAttributes.defaultCsvWithHeader
-    rdd.saveAsCsvWithSchema(filePath)
     if (app.isDevMode)
-      println(s"PERSIST: ${filePath}")
+      println(s"PERSISTING: ${filePath}")
+    rdd.saveAsCsvWithSchema(filePath)
   }
 
   private[smv] def readPersistedFile(app: SmvApp): Try[SchemaRDD] = {
