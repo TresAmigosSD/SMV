@@ -4,3 +4,5 @@ target
 smv.iml
 /bin/
 /.settings/
+/.classpath
+/.project
