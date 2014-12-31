@@ -2,3 +2,5 @@ data/out
 target
 .idea
 smv.iml
+/bin/
+/.settings/
