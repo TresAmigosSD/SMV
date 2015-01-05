@@ -11,7 +11,6 @@ You must use maven version 3.0.4 or newer to build this project.
 
 ## Full example
 
-
 ```scala
 val sqlContext = new SQLContext(sc)
 import sqlContext._
@@ -31,9 +30,28 @@ edd.addHistogramTasks('tx_date, 'tx_type)
 // generate the histogram and save it.
 edd.createReport.saveAsGZFile(outreport)
 ```
-# CSV Handling
 
-## Schema Definition
+## Run Spark Shell with SMV
+
+We can pre-load SMV jar when run spark-shell. 
+
+```shell
+$ ADD_JARS=/path/to/smv/smv-1.0-SNAPSHOT.jar spark-shell -i sparkshellinclude.scala
+```
+where `sparkshellinclude.scala` will be loaded for convenience. It could look like the follows,
+
+```scala
+import org.apache.spark.sql.SQLContext
+import org.tresamigos.smv._
+val sqlContext = new SQLContext(sc)
+import sqlContext._
+import org.apache.spark.sql.catalyst.expressions._
+```
+
+
+## CSV Handling
+
+### Schema Definition
 
 Because CSV files do not describe the data, user must supply a schema definition 
 ```scala
@@ -66,7 +84,7 @@ str_to_int: map[string, integer];
 int_to_double: map[integer, double];
 ```
 
-## Save SchemaRDD
+### Save SchemaRDD
 
 ```scala
 srdd.saveAsCsvWithSchema("/outdata/result")
@@ -83,139 +101,7 @@ implicit myCsvAttribs = CsvAttributes(quotechar="|"
 srdd.saveAsCsvWithSchema("/outdata/result")
 ```
 
-## Quantile operations
-The `smvQuantile` SchemaRDD helper method will compute the quantile (bin number) for each group within the source SchemaRDD.
-The algorithm assumes there are three columns in the input. (`group_id`, `key_id`, `value`).
-* group_ids are the ids used to segment the input before computing the quantiles.
-* key_id is a unique id within the group.  it will just be carried over into the output to help the caller to link the result back to the input.
-* the value column is the column that the quantile bins will be computed. This column must be numeric that can be converted to `Double`
-The output will contain the 3 input columns plus `value_total`, `value_rsum`, and `value_quantile` for the total of the value column, the running sum of the value column, and the quantile of the value respectively.
-
-A helper method `smvDecile` is provided as a shorthand for a quantile with 10 bins.
-```scala
-srdd.smvDecile(Seq('group_id), 'key, 'v)
-```
-The above will compute the decile for each group in `srdd` grouped by `group_id`.  Three additional columns will be produced: `v_total`, `v_rsum`, and `v_quantile`.
-
-## Pivot Operations
-We may often need to "flatten out" the normalized data for easy manipulation within Excel.  Rather than create custom code for each pivot required, user should use the pivot_sum function in SMV.
-
-For Example:
-
-| id | month | product | count |
-| --- | --- | ---: | --- |
-| 1 | 5/14 | A | 100 |
-| 1 | 6/14 | B | 200 |
-| 1 | 5/14 | B | 300 |
-
-We would like to generate a single row for each unique id but still maintain the full granularity of the data.  The desired output is:
-
-| id | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
-| --- | --- | --- | --- | --- |
-| 1 | 100 | 300 | 0 | 200
-
-The raw input is divided into three parts.
-* key column: part of the primary key that is preserved in the output.  That would be the `id` column in the above example.
-* pivot columns: the columns whose row values will become the new column names.  The cross product of all unique values for *each* column is used to generate the output column names.
-* value columns: the value that will be copied/aggregated to corresponding output column. `count` in our example.
-
-The command to transform the above data is:
-```scala
-srdd.pivot_sum('id, Seq('month, 'product), Seq('count))
-```
-
-*Note:* multiple value columns may be specified.
-
-## dedupByKey Operations
-The `dedupByKey` operation eliminate duplicate records on the primary key. It just arbitrarily picks the first record for a given key or keys combo. 
-
-Given the following srdd dataset: 
-
-| id | product | Company |
-| --- | --- | --- |
-| 1 | A | C1 |
-| 1 | C | C2 |
-| 2 | B | C3 |
-| 2 | B | C4 |
-
-
-```scala
-srdd.debupByKey('id)
-```
-will yield the following dataset/srdd:
-
-| id | product | Company |
-| --- | --- | --- |
-| 1 | A | C1 |
-| 2 | B | C3 |
-
-while
-
-```scala
-srdd.debupByKey('id, 'product)
-```
-
-will yield the following dataset/srdd:
-
-| id | product | Company |
-| --- | --- | --- |
-| 1 | A | C1 |
-| 1 | C | C2 |
-| 2 | B | C3 |
-
-
-## renameField Operation
-
-The `renameField` allows to rename a single or multiple fields of a given schemaRDD.
-Given a schemaRDD that has the following fields: a, b, c, d one can rename the "a" and "c" fields to "aa" and "cc" as follow
-
-```scala
-srdd.renameField('a -> 'aa, 'c -> 'cc)
-```
-
-Now the srdd will have the following fields: aa, b, cc, d
-
-The `renameField` comes very handy when for example trying to join two SchemaRDDs that have similar field names. In such case one can rename the fields of one the SchemaRDDs to something else to avoid field names conflict.
-
-
-## Rollup/Cube Operations
-The `smvRollup` and `smvCube` operations add standard rollup/cube operations to a schema rdd.  By default, the "*" string is used as the sentinel value (hardcoded at this point).  For example:
-```scala
-srdd.smvRollup('a,'b,'c)(Sum('d))
-```
-The above will create a *rollup* of the (a,b,c) columns.  In essance, calculate the `Sum(d)` for (a,b,c), (a,b), and (a).
-
-```scala
-srdd.smvCubeFixed('a,'b,'c)(Sum('d))
-```
-The above will create *cube* from the (a,b,c) columns.  It will calculate the `Sum(d)` for (a,b,c), (a,b), (a,c), (b,c), (a), (b), (c)
-*Note:* the cube for the global () selection is never computed.
-
-Both methods above have a version that allows the user to provide a set of fixed columns. `smvRollupFixed` and `smvCubeFixed`.
-
-```scala
-srdd.smvCube('a,'b,'c)('x)(Sum('d))
-```
-The output will be grouped on (a,b,c,x) instead of just (a,b,c) as as the case with normal cube function.
-
-# Run Spark Shell with SMV
-
-We can pre-load SMV jar when run spark-shell. 
-
-```shell
-$ ADD_JARS=/path/to/smv/smv-1.0-SNAPSHOT.jar spark-shell -i sparkshellinclude.scala
-```
-where `sparkshellinclude.scala` will be loaded for convenience. It could look like the follows,
-
-```scala
-import org.apache.spark.sql.SQLContext
-import org.tresamigos.smv._
-val sqlContext = new SQLContext(sc)
-import sqlContext._
-import org.apache.spark.sql.catalyst.expressions._
-```
-
-# Schema Discovery
+### Schema Discovery
 
 SMV can discover data schema from CSV file and create a schema file. Manual adjustment might be needed on the discovered schema file.
 
@@ -230,7 +116,8 @@ scala> schema.saveToFile(sc, "/path/to/file.schema")
 
 Here we assume that you have sqlContext defined in the spark-shell environment. 
 
-# EDD
+
+## EDD
 
 EDD stands for **Extended Data Dictionary**, which is a report run against the data file and typically provide 
 
@@ -240,7 +127,7 @@ EDD stands for **Extended Data Dictionary**, which is a report run against the d
 
 EDD as a key component of SMV provides a **builder** interface on `SchemaRDD`, and also provides 2 action methods to generate EDD reports. 
 
-## Create an EDD builder object
+### Create an EDD builder object
 ```scala
 val edd = srdd.edd
 ```
@@ -251,7 +138,7 @@ val edd = srdd.groupEdd('key1, 'key2)
 
 The `edd` method will create an EDD builder on the entire population (all statistics will be on the whole population), and `groupEdd` method will create an EDD builder on group level, which defined by the group key(s). In other words, the `edd` will eventually generate a single report, while the `groupEdd` will have multiple report records, one for each key(s) value.
 
-## Add EDD tasks to the EDD builder
+### Add EDD tasks to the EDD builder
 
 ```scala
 edd.addBaseTasks('zip, 'mcc, 'amt, 'age).addHistogramTasks('zip, 'age)(byFreq = true, binSize = 10.0)
@@ -261,7 +148,7 @@ edd.addMoreTasks(StringLengthHistogram('zip))
 
 EDD builder object keeps a **task list**. The add* methods adding task items to that list. Please refer [EDD.scala](src/main/scala/org/tresamigos/smv/EDD.scala) for available building methods and available tasks. 
 
-## Generate EDD results
+### Generate EDD results
 
 ```scala
 val resultSRDD = edd.toSchemaRDD  // It is auto persisted
@@ -271,7 +158,7 @@ val report = edd.createReport // report is a RDD. The record count is 1 if the E
 report.saveAsTextFile("report//eddreport")
 ``` 
 
-## Example EDD report
+### Example EDD report
 
 ```
 Total Record Count:                        9153272
@@ -310,8 +197,126 @@ key                      count      Pct    cumCount   cumPct
 130.0                   198263    2.17%     7594675   82.97%
 ......
 ```
- 
-# DQM
+
+## Helper functions
+
+### Quantile operations
+The `smvQuantile` SchemaRDD helper method will compute the quantile (bin number) for each group within the source SchemaRDD.
+The algorithm assumes there are three columns in the input. (`group_id`, `key_id`, `value`).
+* group_ids are the ids used to segment the input before computing the quantiles.
+* key_id is a unique id within the group.  it will just be carried over into the output to help the caller to link the result back to the input.
+* the value column is the column that the quantile bins will be computed. This column must be numeric that can be converted to `Double`
+The output will contain the 3 input columns plus `value_total`, `value_rsum`, and `value_quantile` for the total of the value column, the running sum of the value column, and the quantile of the value respectively.
+
+A helper method `smvDecile` is provided as a shorthand for a quantile with 10 bins.
+```scala
+srdd.smvDecile(Seq('group_id), 'key, 'v)
+```
+The above will compute the decile for each group in `srdd` grouped by `group_id`.  Three additional columns will be produced: `v_total`, `v_rsum`, and `v_quantile`.
+
+### Pivot Operations
+We may often need to "flatten out" the normalized data for easy manipulation within Excel.  Rather than create custom code for each pivot required, user should use the pivot_sum function in SMV.
+
+For Example:
+
+| id | month | product | count |
+| --- | --- | ---: | --- |
+| 1 | 5/14 | A | 100 |
+| 1 | 6/14 | B | 200 |
+| 1 | 5/14 | B | 300 |
+
+We would like to generate a single row for each unique id but still maintain the full granularity of the data.  The desired output is:
+
+| id | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+| --- | --- | --- | --- | --- |
+| 1 | 100 | 300 | 0 | 200
+
+The raw input is divided into three parts.
+* key column: part of the primary key that is preserved in the output.  That would be the `id` column in the above example.
+* pivot columns: the columns whose row values will become the new column names.  The cross product of all unique values for *each* column is used to generate the output column names.
+* value columns: the value that will be copied/aggregated to corresponding output column. `count` in our example.
+
+The command to transform the above data is:
+```scala
+srdd.pivot_sum('id, Seq('month, 'product), Seq('count))
+```
+
+*Note:* multiple value columns may be specified.
+
+### dedupByKey Operations
+The `dedupByKey` operation eliminate duplicate records on the primary key. It just arbitrarily picks the first record for a given key or keys combo. 
+
+Given the following srdd dataset: 
+
+| id | product | Company |
+| --- | --- | --- |
+| 1 | A | C1 |
+| 1 | C | C2 |
+| 2 | B | C3 |
+| 2 | B | C4 |
+
+
+```scala
+srdd.debupByKey('id)
+```
+will yield the following dataset/srdd:
+
+| id | product | Company |
+| --- | --- | --- |
+| 1 | A | C1 |
+| 2 | B | C3 |
+
+while
+
+```scala
+srdd.debupByKey('id, 'product)
+```
+
+will yield the following dataset/srdd:
+
+| id | product | Company |
+| --- | --- | --- |
+| 1 | A | C1 |
+| 1 | C | C2 |
+| 2 | B | C3 |
+
+
+### renameField Operation
+
+The `renameField` allows to rename a single or multiple fields of a given schemaRDD.
+Given a schemaRDD that has the following fields: a, b, c, d one can rename the "a" and "c" fields to "aa" and "cc" as follow
+
+```scala
+srdd.renameField('a -> 'aa, 'c -> 'cc)
+```
+
+Now the srdd will have the following fields: aa, b, cc, d
+
+The `renameField` comes very handy when for example trying to join two SchemaRDDs that have similar field names. In such case one can rename the fields of one the SchemaRDDs to something else to avoid field names conflict.
+
+
+### Rollup/Cube Operations
+The `smvRollup` and `smvCube` operations add standard rollup/cube operations to a schema rdd.  By default, the "*" string is used as the sentinel value (hardcoded at this point).  For example:
+```scala
+srdd.smvRollup('a,'b,'c)(Sum('d))
+```
+The above will create a *rollup* of the (a,b,c) columns.  In essance, calculate the `Sum(d)` for (a,b,c), (a,b), and (a).
+
+```scala
+srdd.smvCubeFixed('a,'b,'c)(Sum('d))
+```
+The above will create *cube* from the (a,b,c) columns.  It will calculate the `Sum(d)` for (a,b,c), (a,b), (a,c), (b,c), (a), (b), (c)
+*Note:* the cube for the global () selection is never computed.
+
+Both methods above have a version that allows the user to provide a set of fixed columns. `smvRollupFixed` and `smvCubeFixed`.
+
+```scala
+srdd.smvCube('a,'b,'c)('x)(Sum('d))
+```
+The output will be grouped on (a,b,c,x) instead of just (a,b,c) as as the case with normal cube function.
+
+
+## DQM - Experimental
 
 DQM stands for **Data Quality Module**. In additional to check the data and generate report on the quality, SMV's DQM also do data cleaning in the same data flow.
 
@@ -325,7 +330,7 @@ Unless the reported log shows unacceptable error rate, the "verified" data shoul
 
 DQM class is a **builder** class interface on `SchemaRDD`. It has only 1 action method to generate verified SchemaRDD.
 
-## Create a DQM builder object
+### Create a DQM builder object
 ```scala
 val dqm = srdd.dqm()
 ```
@@ -336,7 +341,7 @@ val dqm = srdd.dqm(keepRejected = true)
 
 The default value of `keepRejected` is `false`, which means that any non-passed records should be rejected, and rejects are recorded in the rejectCounter. Otherwise, all records will be kept and 2 additional fields, `_isRejected` and `_rejectReason`, are appended.
 
-## Register DQM Counters
+### Register DQM Counters
 ```scala
 val fixCounter = new SCCounter(sparkContext)
 val rejectCounter = new SCCounter(sparkContext)
@@ -355,7 +360,7 @@ or
 fixCounter.report  //Map[String, Long]
 ```
 
-## Add DQM Rules
+### Add DQM Rules
 
 DQM rules are captured in `DQMRule` class. 
 
@@ -367,7 +372,7 @@ dqm.isBoundValue('age, 0, 100)
 
 Please refer [DQM.scala](src/main/scala/org/tresamigos/smv/DQM.scala) for the full list of rules
 
-## Full example
+### Full example
 ```scala
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "DQMTest/test1.csv")
     val rejectCounter = new SCCounter(sc)
