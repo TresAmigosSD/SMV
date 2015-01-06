@@ -214,6 +214,43 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
   def dqm(keepReject: Boolean = false): DQM = DQM(schemaRDD, keepReject)
 
+  /**
+   * chunkBy and chunkByPlus apply user defined functions to a group of
+   * records and out put a group of records
+   *
+   * @param keys specify the group key(s) to apply the UDF over
+   * @param func is an SmvChunkFunc object which defines the input, output and
+   * the UDF itself.
+   * 
+   * The chunkBy version will only output the keys and the columns output
+   * from the UDF, while the chunckByPlus version add the UDF output columns
+   * in addition to the input SchemaRDD columns
+   *
+   * The SmvChunkFunc interface:
+   * 
+   * SmvChunkFunc(para: Seq[Symbol], outSchema: Schema, eval: List[Seq[Any]] => List[Seq[Any]])
+   *
+   * @param para specify the columns in the SchemaRDD which will be used in
+   * the UDF
+   * @param outSchema is a SmvSchema object which specify how the out SRDD
+   * will interpret the UDF generated columns
+   * @param eval is a Scala function which does teh real work. It will refer
+   * the input columns by their indexs as ordered in the para
+   * 
+   * Example:
+   *   val srdd=sqlContext.createSchemaRdd("k:String; v:String", "z,1;a,3;a,2;z,8;")   
+   *   val runCat = (l: List[Seq[Any]]) => l.map{_(0)}.scanLeft(Seq("")){(a,b) => Seq(a(0) + b)}.tail
+   *   val runCatFunc = SmvChunkFunc(Seq('v), Schema.fromString("vcat:String"), runCat)
+   *   val res = srdd.orderBy('k.asc, 'v.asc).chunkBy('k)(runCatFunc)
+   *
+   * res of above code is 
+   *   Schema: k: String; vcat: String
+   *   [a,2]
+   *   [a,23]
+   *   [z,1]
+   *   [z,18]
+   * 
+   */
   def chunkByPlus(keys: Symbol*)(func: SmvChunkFunc): SchemaRDD = {
     val smvChunk = new SmvChunk(schemaRDD, keys, func, true)
     smvChunk.toSchemaRDD
