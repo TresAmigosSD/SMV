@@ -252,13 +252,13 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
    * 
    */
   def chunkByPlus(keys: Symbol*)(func: SmvChunkFunc): SchemaRDD = {
-    val smvChunk = new SmvChunk(schemaRDD, keys, func, true)
-    smvChunk.toSchemaRDD
+    val smvChunk = new SmvChunk(schemaRDD, keys)
+    smvChunk.applyUDF(func, true)
   }
 
   def chunkBy(keys: Symbol*)(func: SmvChunkFunc): SchemaRDD = {
-    val smvChunk = new SmvChunk(schemaRDD, keys, func, false)
-    smvChunk.toSchemaRDD
+    val smvChunk = new SmvChunk(schemaRDD, keys)
+    smvChunk.applyUDF(func, false)
   }
 
 }

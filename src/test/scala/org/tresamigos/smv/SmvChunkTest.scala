@@ -20,7 +20,7 @@ class SmvChunkTest extends SparkTestUtil {
     val ssc = sqlContext; import ssc._
     val srdd = createSchemaRdd("k:String;v:String", "k1,a;k1,b;k2,d;k2,c")
     val runCat = (l: List[Seq[Any]]) => l.map{_(0)}.scanLeft(Seq("")){(a,b) => Seq(a(0) + b)}.tail
-    val runCatFunc = SmvChunkFunc(Seq('v), Schema.fromString("vcat:String"), runCat)
+    val runCatFunc = SmvChunkUDF(Seq('v), Schema.fromString("vcat:String"), runCat)
 
     val res = srdd.orderBy('k.asc, 'v.asc).chunkBy('k)(runCatFunc)
     assertSrddSchemaEqual(res, "k:String; vcat:String")
