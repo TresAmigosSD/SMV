@@ -19,20 +19,22 @@ import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.SparkContext._
 import org.apache.spark.sql._
 //import org.apache.spark.sql.catalyst.types._
-import org.apache.spark.sql.catalyst.expressions.NamedExpression
+import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
 import java.sql.Timestamp
 import scala.reflect.ClassTag
 
 abstract class SmvChunkFunc{
   val para: Seq[Symbol]
-  val outSchema: Schema
+  val outSchema: Schema = null
   val eval: List[Seq[Any]] => List[Seq[Any]]
+  val vlistForOutSchema: Seq[(String, Expression)] = Nil
 }
 
 case class SmvChunkUDF(
-  para: Seq[Symbol], 
-  outSchema: Schema, 
-  eval: List[Seq[Any]] => List[Seq[Any]]) extends SmvChunkFunc 
+  override val para: Seq[Symbol], 
+  override val outSchema: Schema, 
+  override val eval: List[Seq[Any]] => List[Seq[Any]]
+) extends SmvChunkFunc 
 
 abstract class SmvChunkRange extends Serializable{
   def eval(value: Any, anchor: Any): Boolean
@@ -53,7 +55,7 @@ case class RunSum[T: Numeric](value: NamedExpression, time: NamedExpression, con
   override def toString = "RunSum_" + cond.toString + "_" + time.name + "_on_" + value.name
 
   val para = Seq(Symbol(time.name), Symbol(value.name))
-  val outSchema = new Schema(Seq(SchemaEntry(toString, DoubleType)))
+  override val vlistForOutSchema = Seq((toString, value))
 
   val eval: List[Seq[Any]] => List[Seq[Any]] = { 
     val nv = implicitly[Numeric[T]]
@@ -100,10 +102,19 @@ class SmvChunk(val srdd: SchemaRDD, keys: Seq[Symbol]){
         }
       }.flatMap{r => r.map(l => Row.fromSeq(l))}
 
+    val addedSchema = 
+      if (chunkFunc.outSchema == null) {
+        val sEntries = chunkFunc.vlistForOutSchema.map{case (n, e) => 
+          val s = Schema.fromSchemaRDD(srdd.select(e)).entries(0)
+          SchemaEntry(n, s.structField.dataType)
+        }
+        new Schema(sEntries)
+      } else chunkFunc.outSchema
+
     val schema = if (isPlus) 
-      Schema.fromSchemaRDD(srdd) ++ chunkFunc.outSchema
+      Schema.fromSchemaRDD(srdd) ++ addedSchema
     else
-      Schema.fromSchemaRDD(srdd.select(keys.map{symbolToUnresolvedAttribute(_)} : _*)) ++ chunkFunc.outSchema
+      Schema.fromSchemaRDD(srdd.select(keys.map{symbolToUnresolvedAttribute(_)} : _*)) ++ addedSchema
 
     srdd.sqlContext.applySchema(resRdd, schema.toStructType)
   }

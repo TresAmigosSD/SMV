@@ -26,5 +26,23 @@ class SmvChunkTest extends SparkTestUtil {
     assertSrddSchemaEqual(res, "k:String; vcat:String")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[k1,a]", "[k1,ab]", "[k2,c]", "[k2,cd]"))
+
+    val res2 = srdd.orderBy('k.asc, 'v.asc).chunkByPlus('k)(runCatFunc)
+    assertSrddSchemaEqual(res2, "k:String; v: String; vcat:String")
+    assertUnorderedSeqEqual(res2.collect.map(_.toString), Seq(
+      "[k1,a,a]", "[k1,b,ab]", "[k2,c,c]", "[k2,d,cd]"))
   }
+
+  sparkTest("Test RunSum") {
+    val ssc = sqlContext; import ssc._
+    val srdd=sqlContext.createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val res = srdd.orderBy('k.asc, 't.asc).chunkByPlus('k)(RunSum[Double]('v, 't, InLastN(3)))
+    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double; RunSum_InLast3_t_on_v: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3,0.3]",
+      "[z,1,0.2,0.2]",
+      "[z,2,1.4,1.5999999999999999]",
+      "[z,5,2.2,2.2]"))
+  }
+
 }
