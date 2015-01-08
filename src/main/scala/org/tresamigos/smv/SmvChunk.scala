@@ -39,25 +39,44 @@ case class InLastN[T:Numeric](n: T) extends SmvChunkRange{
 
 abstract class SmvChunkFunc{
   val para: Seq[Symbol]
+  val valueInferInput: Symbol = null
+  val valueInferOutput: Symbol = null
+  def evalWithSEntry(l: List[Seq[Any]], se: NumericSchemaEntry): List[Seq[Any]] = null 
 }
 
+trait KnowInputType{
+  val eval: List[Seq[Any]] => List[Seq[Any]]
+}
+
+trait KnowOutputType{
+  val outSchema: Schema
+}
+ 
 case class SmvChunkUDF(
   para: Seq[Symbol], 
   outSchema: Schema, 
   eval: List[Seq[Any]] => List[Seq[Any]]
-) extends SmvChunkFunc 
+) extends SmvChunkFunc with KnowInputType with KnowOutputType
 
-case class RunSum(value: NamedExpression, time: NamedExpression, cond: SmvChunkRange) extends SmvChunkFunc{
-  override def toString = "RunSum_" + cond.toString + "_" + time.name + "_on_" + value.name
+  
+case class RunSum(
+  value: Symbol, 
+  time: Symbol, 
+  anchorTime: Symbol,
+  cond: SmvChunkRange
+) extends SmvChunkFunc{ 
 
-  val para = Seq(Symbol(time.name), Symbol(value.name))
+  override def toString = "RunSum_" + time.name + "_" + cond.toString + "_" + anchorTime.name + "_on_" + value.name
+  val para = Seq(time, anchorTime, value)
+  override val valueInferInput = value
+  override val valueInferOutput = value
 
-  def evalWithSEntry(l: List[Seq[Any]], se: NumericSchemaEntry): List[Seq[Any]] = { 
+  override def evalWithSEntry(l: List[Seq[Any]], se: NumericSchemaEntry): List[Seq[Any]] = { 
     val nv = se.numeric
     l.map{ r => 
-      val anchor = r(0)
+      val anchor = r(1)
       val res = l.map{ rr => 
-        if(cond.eval(rr(0), anchor)) rr(1).asInstanceOf[se.JvmType]
+        if(cond.eval(rr(0), anchor)) rr(2).asInstanceOf[se.JvmType]
         else nv.zero
       }.reduceLeft{nv.plus(_, _)}
       Seq(res)
@@ -65,6 +84,9 @@ case class RunSum(value: NamedExpression, time: NamedExpression, cond: SmvChunkR
   }
 }
 
+object RunSum{
+  def apply(value: Symbol, time: Symbol, cond: SmvChunkRange) = new RunSum(value, time, time, cond)
+}
 
 class SmvChunk(val srdd: SchemaRDD, keys: Seq[Symbol]){
   import srdd.sqlContext._
@@ -76,15 +98,19 @@ class SmvChunk(val srdd: SchemaRDD, keys: Seq[Symbol]){
     val keyO = keyOrdinals // for parallelization 
     val ordinals = chunkFunc.para.map{s => names.indexWhere(s.name == _)}
 
-    val (eval, addedSchema) = chunkFunc match {
-      case f: SmvChunkUDF => 
-        (f.eval, f.outSchema)
-      case s: RunSum =>
-        val se = NumericSchemaEntry(s.toString, srdd.schema(s.value.name).dataType)
+    val eval = chunkFunc match {
+      case f: KnowInputType => f.eval
+      case s =>
+        val se = NumericSchemaEntry("dummy", srdd.schema(s.valueInferInput.name).dataType)
         val e: List[Seq[Any]] => List[Seq[Any]] = {l => s.evalWithSEntry(l, se)}
-        val as = new Schema(Seq(se))
-        (e, as)
-      case _ => throw new IllegalArgumentException(s"Unsupported SmvChunkFunc")
+        e
+    }
+
+    val addedSchema = chunkFunc match {
+      case f: KnowOutputType => f.outSchema
+      case s =>
+        val se = NumericSchemaEntry(s.toString, srdd.schema(s.valueInferOutput.name).dataType)
+        new Schema(Seq(se))
     }
 
     val resRdd = srdd.
