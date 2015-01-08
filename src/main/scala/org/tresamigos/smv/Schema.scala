@@ -31,28 +31,41 @@ abstract class SchemaEntry extends java.io.Serializable {
   override def toString = structField.name + ": " + typeName
 }
 
-case class DoubleSchemaEntry(name: String) extends SchemaEntry {
+abstract class NumericSchemaEntry extends SchemaEntry {
+  private[smv] type JvmType
+  private[smv] val numeric: Numeric[JvmType]
+}
+
+case class DoubleSchemaEntry(name: String) extends NumericSchemaEntry {
+  private[smv] type JvmType = Double
+  private[smv] val numeric = implicitly[Numeric[Double]]
   override val zeroVal = Literal(0.0)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toDouble
   override val typeName = "Double"
   val structField = StructField(name, DoubleType, true)
 }
 
-case class FloatSchemaEntry(name: String) extends SchemaEntry {
+case class FloatSchemaEntry(name: String) extends NumericSchemaEntry {
+  private[smv] type JvmType = Float
+  private[smv] val numeric = implicitly[Numeric[Float]]
   override val zeroVal = Literal(0.0f)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toFloat
   override val typeName = "Float"
   val structField = StructField(name, FloatType, true)
 }
 
-case class IntegerSchemaEntry(name: String) extends SchemaEntry {
+case class IntegerSchemaEntry(name: String) extends NumericSchemaEntry {
+  private[smv] type JvmType = Int
+  private[smv] val numeric = implicitly[Numeric[Int]]
   override val zeroVal = Literal(0)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toInt
   override val typeName = "Integer"
   val structField = StructField(name, IntegerType, true)
 }
 
-case class LongSchemaEntry(name: String) extends SchemaEntry {
+case class LongSchemaEntry(name: String) extends NumericSchemaEntry {
+  private[smv] type JvmType = Long
+  private[smv] val numeric = implicitly[Numeric[Long]]
   override val zeroVal = Literal(0l)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toLong
   override val typeName = "Long"
@@ -143,6 +156,19 @@ case class ArraySchemaEntry(name: String, valSchemaEntry: SchemaEntry) extends S
       case a: Array[_] => a.toSeq
     }
     m.map{r => valSchemaEntry.valToStr(r)}.mkString("|")
+  }
+}
+ 
+object NumericSchemaEntry {
+  def apply(name: String, dataType: DataType) : NumericSchemaEntry = {
+    val trimName = name.trim
+    dataType match {
+      case DoubleType => DoubleSchemaEntry(trimName)
+      case FloatType => FloatSchemaEntry(trimName)
+      case LongType => LongSchemaEntry(trimName)
+      case IntegerType => IntegerSchemaEntry(trimName)
+      case _ => throw new IllegalArgumentException(s"Type: ${dataType.toString} is not numeric")
+    }
   }
 }
  

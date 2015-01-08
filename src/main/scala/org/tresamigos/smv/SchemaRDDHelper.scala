@@ -226,9 +226,10 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
    * from the UDF, while the chunckByPlus version add the UDF output columns
    * in addition to the input SchemaRDD columns
    *
-   * The SmvChunkFunc interface:
+   * The SmvChunkFunc has multiple concrete versions, for UDF it is
+   * SmvChunkUDF
    * 
-   * SmvChunkFunc(para: Seq[Symbol], outSchema: Schema, eval: List[Seq[Any]] => List[Seq[Any]])
+   * SmvChunkUDF(para: Seq[Symbol], outSchema: Schema, eval: List[Seq[Any]] => List[Seq[Any]])
    *
    * @param para specify the columns in the SchemaRDD which will be used in
    * the UDF
@@ -240,7 +241,7 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
    * Example:
    *   val srdd=sqlContext.createSchemaRdd("k:String; v:String", "z,1;a,3;a,2;z,8;")   
    *   val runCat = (l: List[Seq[Any]]) => l.map{_(0)}.scanLeft(Seq("")){(a,b) => Seq(a(0) + b)}.tail
-   *   val runCatFunc = SmvChunkFunc(Seq('v), Schema.fromString("vcat:String"), runCat)
+   *   val runCatFunc = SmvChunkUDF(Seq('v), Schema.fromString("vcat:String"), runCat)
    *   val res = srdd.orderBy('k.asc, 'v.asc).chunkBy('k)(runCatFunc)
    *
    * res of above code is 

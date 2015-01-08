@@ -321,11 +321,11 @@ The `chunkBy` and `chunkByPlus` operations apply user defined functions to a gro
 ```scala
 srdd.orderBy('k.asc, 'v.asc).chunkBy('k)(runCatFunc)
 ```
-Will apply the user defined `SmvChunkFunc`, runCatFunc, to the `srdd` which chucked by key `k`, and sorted by `v.asc`. The data feed to the `SmvChunkFunc` will be records grouped by `k` and sorted by `v.asc`. 
+Will apply the user defined `SmvChunkUDF`, runCatFunc, to the `srdd` which chucked by key `k`, and sorted by `v.asc`. The data feed to the `SmvChunkFunc` will be records grouped by `k` and sorted by `v.asc`. 
 
-The `SmvChunkFunc` need to be defined separately as 
+The `SmvChunkUDF` need to be defined separately as 
 ```scala
-case class SmvChunkFunc(para: Seq[Symbol], outSchema: Schema, eval: List[Seq[Any]] => List[Seq[Any]])
+case class SmvChunkUDF(para: Seq[Symbol], outSchema: Schema, eval: List[Seq[Any]] => List[Seq[Any]])
 ```
 where `para` specify the columns in the SchemaRDD which will be used in the UDF; `outSchema` is a SmvSchema object which specify how the out SRDD will interpret the UDF generated columns; `eval` is a Scala function which does the real work. It will refer the input columns by their indexs as ordered in the `para`
 
@@ -333,7 +333,7 @@ where `para` specify the columns in the SchemaRDD which will be used in the UDF;
 ```scala
 scala> val srdd=sqlContext.createSchemaRdd("k:String; v:String", "z,1;a,3;a,2;z,8;")   
 scala> val runCat = (l: List[Seq[Any]]) => l.map{_(0)}.scanLeft(Seq("")){(a,b) => Seq(a(0) + b)}.tail
-scala> val runCatFunc = SmvChunkFunc(Seq('v), Schema.fromString("vcat:String"), runCat)
+scala> val runCatFunc = SmvChunkUDF(Seq('v), Schema.fromString("vcat:String"), runCat)
 scala> val res = srdd.orderBy('k.asc, 'v.asc).chunkBy('k)(runCatFunc)
 scala> res.dumpSRDD
 Schema: k: String; vcat: String
