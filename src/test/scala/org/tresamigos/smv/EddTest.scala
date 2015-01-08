@@ -170,6 +170,21 @@ key                      count      Pct    cumCount   cumPct
     assert(res === expect)
   }
 
+  sparkTest("test EDDHist with AmountHistogram on Non-double Numerics") {
+    import org.apache.spark.sql.catalyst.dsl._
+    val ssc = sqlContext; import ssc._
+    val srdd = createSchemaRdd("k:String;v:Long", "k1,1;k1,10023;k2,3312;k2,11231")
+    val res = srdd.edd.addAmountHistogramTasks('v).createReport.collect
+    val expect = Array("""Total Record Count:                        4
+Histogram of v as AMOUNT
+key                      count      Pct    cumCount   cumPct
+0.01                         1   25.00%           1   25.00%
+3000.0                       1   25.00%           2   50.00%
+10000.0                      2   50.00%           4  100.00%
+-------------------------------------------------""")
+    assert(res === expect)
+  }
+
 }
 
 

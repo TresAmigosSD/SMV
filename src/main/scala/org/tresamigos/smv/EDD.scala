@@ -118,7 +118,7 @@ class EDD(srdd: SchemaRDD,
       listSeq.map{ l =>
         val s =srdd.sqlContext.symbolToUnresolvedAttribute(l)
         srdd.schema(l.name).dataType match {
-          case DoubleType => Seq(AmountHistogram(s))
+          case _: NumericType => Seq(AmountHistogram(s))
           case _ => Nil
         }
       }.flatMap{a=>a}
