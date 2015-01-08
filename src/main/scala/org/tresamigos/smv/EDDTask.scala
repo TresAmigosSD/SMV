@@ -129,6 +129,16 @@ case class HourHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
   )
 }
 
+case class BooleanHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
+  override def aggList = Seq(
+    Alias(Histogram(expr),       expr.name)()
+  )
+  override def report(i: Iterator[Any]): Seq[String] = Seq(
+    buildHistReport(expr.name, 
+      i.next.asInstanceOf[Map[Boolean,Long]].toSeq.sortBy( _._1 ))
+  )
+}
+
 case class StringBase(expr: NamedExpression) extends EDDTask with StringTask {
   override def aggList = {
     val relativeSD = 0.01 //Instead of using 0.05 as default

@@ -62,6 +62,7 @@ class EDD(srdd: SchemaRDD,
         val s =srdd.sqlContext.symbolToUnresolvedAttribute(l)
         srdd.schema(l.name).dataType match {
           case _: NumericType => Seq(NumericBase(s))
+          case BooleanType => Seq(BooleanHistogram(s))
           case TimestampType => Seq(
             TimeBase(s),
             DateHistogram(s),
@@ -99,6 +100,7 @@ class EDD(srdd: SchemaRDD,
             if (byFreq) Seq(StringByFreqHistogram(s))
             else Seq(StringByKeyHistogram(s))
           case _: NumericType => Seq(BinNumericHistogram(s, binSize))
+          case BooleanType => Seq(BooleanHistogram(s))
           case _ => Nil
         }
       }.flatMap{a=>a}
