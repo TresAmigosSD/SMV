@@ -17,110 +17,115 @@ package org.tresamigos.smv
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.SparkContext._
-import org.apache.spark.sql._
-//import org.apache.spark.sql.catalyst.types._
-import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
-import java.sql.Timestamp
-import scala.reflect.ClassTag
+import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
+import org.apache.spark.sql.catalyst.types._
+import org.apache.spark.sql.catalyst.dsl.expressions._
+import org.apache.spark.sql.catalyst.dsl.plans._
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 
-abstract class SmvChunkRange extends Serializable{
-  def eval(value: Any, anchor: Any): Boolean
+abstract class SmvCDS {
+  val outGroupKeys: Seq[Symbol]
+  def outSchema(inSchema: StructType): StructType
+  def eval(inSchema: StructType): Seq[Row] => Seq[Row]
 }
 
-case class InLastN[T:Numeric](n: T) extends SmvChunkRange{
-  def eval(curr: Any, anchor: Any) = {
-    val a = anchor.asInstanceOf[T]
-    val v = curr.asInstanceOf[T]
-    val num = implicitly[Numeric[T]]
-    num.lteq(v, a) && num.gt(v, num.minus(a, n))
+case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDS{
+  require(condition.dataType == BooleanType)
+
+  def outSchema(inSchema: StructType) = {
+    val renamed = inSchema.fields.map{f => 
+      if (outGroupKeys.map{_.name}.contains(f.name)) StructField("_" + f.name, f.dataType, f.nullable)
+      else f
+    }
+    val added = inSchema.fields.collect{ case f if outGroupKeys.map{_.name}.contains(f.name) => f}
+    StructType(added ++ renamed)
   }
-  override def toString = s"InLast$n"
-}
 
-abstract class SmvChunkFunc{
-  val para: Seq[Symbol]
-  val valueInferInput: Symbol = null
-  val valueInferOutput: Symbol = null
-  def evalWithSEntry(l: List[Seq[Any]], se: NumericSchemaEntry): List[Seq[Any]] = null 
-}
+  def eval(inSchema: StructType): Seq[Row] => Seq[Row] = {
+    val attr = outSchema(inSchema).fields.map{f => AttributeReference(f.name, f.dataType, f.nullable)()}
+    val aOrdinal = outGroupKeys.map{a => inSchema.fields.indexWhere(a.name == _.name)}
+    val fPlan= LocalRelation(attr).where(condition).analyze
+    val filter = BindReferences.bindReference(fPlan.expressions(0), attr)
 
-trait KnowInputType{
-  val eval: List[Seq[Any]] => List[Seq[Any]]
-}
-
-trait KnowOutputType{
-  val outSchema: Schema
-}
- 
-case class SmvChunkUDF(
-  para: Seq[Symbol], 
-  outSchema: Schema, 
-  eval: List[Seq[Any]] => List[Seq[Any]]
-) extends SmvChunkFunc with KnowInputType with KnowOutputType
-
-  
-case class RunSum(
-  value: Symbol, 
-  time: Symbol, 
-  anchorTime: Symbol,
-  cond: SmvChunkRange
-) extends SmvChunkFunc{ 
-
-  override def toString = "RunSum_" + time.name + "_" + cond.toString + "_" + anchorTime.name + "_on_" + value.name
-  val para = Seq(time, anchorTime, value)
-  override val valueInferInput = value
-  override val valueInferOutput = value
-
-  override def evalWithSEntry(l: List[Seq[Any]], se: NumericSchemaEntry): List[Seq[Any]] = { 
-    val nv = se.numeric
-    l.map{ r => 
-      val anchor = r(1)
-      val res = l.map{ rr => 
-        if(cond.eval(rr(0), anchor)) rr(2).asInstanceOf[se.JvmType]
-        else nv.zero
-      }.reduceLeft{nv.plus(_, _)}
-      Seq(res)
+    {it =>
+      val f = filter
+      val anchors = it.toSeq.map{r => aOrdinal.map{r(_)}}.distinct
+      anchors.flatMap{ a => 
+        it.toSeq.map{r => 
+          new GenericRow((a ++ r).toArray)
+        }.collect{case r: Row if f.eval(r).asInstanceOf[Boolean] => r}
+      }
     }
   }
 }
 
-object RunSum{
-  def apply(value: Symbol, time: Symbol, cond: SmvChunkRange) = new RunSum(value, time, time, cond)
+object TimeInLastNFromAnchor {
+  def apply(t: Symbol, anchor: Symbol, n: Int) = {
+    val outGroupKeys = Seq(anchor)
+    val condition = (t <= anchor && t > anchor - n)
+
+    SmvCDSRange(outGroupKeys, condition)
+  }
 }
+
+object TimeInLastN {
+  def apply(t: Symbol, n: Int) = {
+    val outGroupKeys = Seq(t)
+    val withPrefix = Symbol("_" + t.name)
+    val condition = (withPrefix <= t &&  withPrefix > t - n)
+
+    SmvCDSRange(outGroupKeys, condition)
+  }
+}
+
+case class SmvChunkUDF(
+  para: Seq[Symbol], 
+  outSchema: Schema, 
+  eval: List[Seq[Any]] => List[Seq[Any]]
+)
 
 class SmvChunk(val srdd: SchemaRDD, keys: Seq[Symbol]){
   import srdd.sqlContext._
 
   def names = srdd.schema.fieldNames
-  def keyOrdinals = keys.map{s => names.indexWhere(s.name == _)}
+  def keyOrdinal = keys.map{s => names.indexWhere(s.name == _)}
 
-  def applyUDF(chunkFunc: SmvChunkFunc, isPlus: Boolean = true): SchemaRDD = {
-    val keyO = keyOrdinals // for parallelization 
-    val ordinals = chunkFunc.para.map{s => names.indexWhere(s.name == _)}
+  def applyCDS(smvCDS: SmvCDS)(aggregateExpressions: Seq[NamedExpression]): SchemaRDD = {
+    val keyO = keyOrdinal // for parallelization 
 
-    val eval = chunkFunc match {
-      case f: KnowInputType => f.eval
-      case s =>
-        val se = NumericSchemaEntry("dummy", srdd.schema(s.valueInferInput.name).dataType)
-        val e: List[Seq[Any]] => List[Seq[Any]] = {l => s.evalWithSEntry(l, se)}
-        e
-    }
+    val eval = smvCDS.eval(srdd.schema)
+    val outSchema = smvCDS.outSchema(srdd.schema)
 
-    val addedSchema = chunkFunc match {
-      case f: KnowOutputType => f.outSchema
-      case s =>
-        val se = NumericSchemaEntry(s.toString, srdd.schema(s.valueInferOutput.name).dataType)
-        new Schema(Seq(se))
-    }
+    val selfJoinedRdd = srdd.
+      map{r => (keyO.map{i => r(i)}, r)}.groupByKey.
+      map{case (k, rIter) => 
+        val rlist = rIter.toList
+        eval(rlist)
+      }.flatMap{r => r}
+
+    val toBeAggregated = srdd.sqlContext.applySchema(selfJoinedRdd, outSchema)
+
+    val keyColsExpr = (keys ++ smvCDS.outGroupKeys).map(k => UnresolvedAttribute(k.name))
+    val aggrExpr = keyColsExpr ++ aggregateExpressions
+    toBeAggregated.groupBy(keyColsExpr: _*)(aggrExpr: _*)
+  }
+
+  def applyUDF(chunkFuncs: Seq[SmvChunkUDF], isPlus: Boolean = true): SchemaRDD = {
+    val keyO = keyOrdinal // for parallelization 
+    val ordinals = chunkFuncs.map{l => l.para.map{s => names.indexWhere(s.name == _)}}
+
+    val eval = chunkFuncs.map{_.eval}
+    val addedSchema = chunkFuncs.map{_.outSchema}.reduce(_ ++ _)
 
     val resRdd = srdd.
       map{r => (keyO.map{i => r(i)}, r)}.groupByKey.
       map{case (k, rIter) => 
         val rlist = rIter.toList
-        val input = rlist.map{r => ordinals.map{i => r(i)}}
-        val v = eval(input)
+        val input = ordinals.map{o => rlist.map{r => o.map{i => r(i)}}}
+        val v = eval.zip(input).map{case (f, in) => f(in)}.transpose.map{a => a.flatMap{b => b}}
         if (isPlus) {
-          require(rlist.size == v.size)
+          rlist.size == v.size
           rlist.zip(v).map{case (orig, added) =>
             orig.toSeq ++ added
           }

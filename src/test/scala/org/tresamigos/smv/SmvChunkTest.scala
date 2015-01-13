@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.catalyst.expressions.{Sum, Count}
+
 class SmvChunkTest extends SparkTestUtil {
 
   sparkTest("Test chunkBy") {
@@ -36,13 +38,14 @@ class SmvChunkTest extends SparkTestUtil {
   sparkTest("Test RunSum") {
     val ssc = sqlContext; import ssc._
     val srdd=sqlContext.createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
-    val res = srdd.orderBy('k.asc, 't.asc).chunkByPlus('k)(RunSum('v, 't, InLastN(3)))
-    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double; RunSum_t_InLast3_t_on_v: Double")
+
+    val res = srdd.smvSingleCDSGroupBy('k)(TimeInLastN('t, 3))((Sum('v) as 'nv1), (Count('v) as 'nv2))
+    assertSrddSchemaEqual(res, "k: String; t: Integer; nv1: Double; nv2: Long")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[a,1,0.3,0.3]",
-      "[z,1,0.2,0.2]",
-      "[z,2,1.4,1.5999999999999999]",
-      "[z,5,2.2,2.2]"))
+      "[a,1,0.3,1]",
+      "[z,1,0.2,1]",
+      "[z,2,1.5999999999999999,2]",
+      "[z,5,2.2,1]"))
   }
 
 }

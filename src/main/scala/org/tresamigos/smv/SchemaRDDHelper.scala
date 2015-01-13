@@ -252,14 +252,18 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
    *   [z,18]
    * 
    */
-  def chunkByPlus(keys: Symbol*)(func: SmvChunkFunc): SchemaRDD = {
+  def chunkByPlus(keys: Symbol*)(funcs: SmvChunkUDF*): SchemaRDD = {
     val smvChunk = new SmvChunk(schemaRDD, keys)
-    smvChunk.applyUDF(func, true)
+    smvChunk.applyUDF(funcs, true)
   }
 
-  def chunkBy(keys: Symbol*)(func: SmvChunkFunc): SchemaRDD = {
+  def chunkBy(keys: Symbol*)(funcs: SmvChunkUDF*): SchemaRDD = {
     val smvChunk = new SmvChunk(schemaRDD, keys)
-    smvChunk.applyUDF(func, false)
+    smvChunk.applyUDF(funcs, false)
   }
 
+  def smvSingleCDSGroupBy(keys: Symbol*)(cds: SmvCDS)(aggrExprs: NamedExpression*): SchemaRDD = {
+    val smvChunk = new SmvChunk(schemaRDD, keys)
+    smvChunk.applyCDS(cds)(aggrExprs)
+  }
 }
