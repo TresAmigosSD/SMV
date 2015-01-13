@@ -264,6 +264,6 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
   def smvSingleCDSGroupBy(keys: Symbol*)(cds: SmvCDS)(aggrExprs: NamedExpression*): SchemaRDD = {
     val smvChunk = new SmvChunk(schemaRDD, keys)
-    smvChunk.applyCDS(cds)(aggrExprs)
+    smvChunk.singleCDSGroupBy(cds)(aggrExprs)
   }
 }

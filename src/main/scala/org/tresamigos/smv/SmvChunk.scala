@@ -18,66 +18,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.SparkContext._
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
-import org.apache.spark.sql.catalyst.types._
-import org.apache.spark.sql.catalyst.dsl.expressions._
-import org.apache.spark.sql.catalyst.dsl.plans._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-
-abstract class SmvCDS {
-  val outGroupKeys: Seq[Symbol]
-  def outSchema(inSchema: StructType): StructType
-  def eval(inSchema: StructType): Seq[Row] => Seq[Row]
-}
-
-case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDS{
-  require(condition.dataType == BooleanType)
-
-  def outSchema(inSchema: StructType) = {
-    val renamed = inSchema.fields.map{f => 
-      if (outGroupKeys.map{_.name}.contains(f.name)) StructField("_" + f.name, f.dataType, f.nullable)
-      else f
-    }
-    val added = inSchema.fields.collect{ case f if outGroupKeys.map{_.name}.contains(f.name) => f}
-    StructType(added ++ renamed)
-  }
-
-  def eval(inSchema: StructType): Seq[Row] => Seq[Row] = {
-    val attr = outSchema(inSchema).fields.map{f => AttributeReference(f.name, f.dataType, f.nullable)()}
-    val aOrdinal = outGroupKeys.map{a => inSchema.fields.indexWhere(a.name == _.name)}
-    val fPlan= LocalRelation(attr).where(condition).analyze
-    val filter = BindReferences.bindReference(fPlan.expressions(0), attr)
-
-    {it =>
-      val f = filter
-      val anchors = it.toSeq.map{r => aOrdinal.map{r(_)}}.distinct
-      anchors.flatMap{ a => 
-        it.toSeq.map{r => 
-          new GenericRow((a ++ r).toArray)
-        }.collect{case r: Row if f.eval(r).asInstanceOf[Boolean] => r}
-      }
-    }
-  }
-}
-
-object TimeInLastNFromAnchor {
-  def apply(t: Symbol, anchor: Symbol, n: Int) = {
-    val outGroupKeys = Seq(anchor)
-    val condition = (t <= anchor && t > anchor - n)
-
-    SmvCDSRange(outGroupKeys, condition)
-  }
-}
-
-object TimeInLastN {
-  def apply(t: Symbol, n: Int) = {
-    val outGroupKeys = Seq(t)
-    val withPrefix = Symbol("_" + t.name)
-    val condition = (withPrefix <= t &&  withPrefix > t - n)
-
-    SmvCDSRange(outGroupKeys, condition)
-  }
-}
 
 case class SmvChunkUDF(
   para: Seq[Symbol], 
@@ -91,7 +32,10 @@ class SmvChunk(val srdd: SchemaRDD, keys: Seq[Symbol]){
   def names = srdd.schema.fieldNames
   def keyOrdinal = keys.map{s => names.indexWhere(s.name == _)}
 
-  def applyCDS(smvCDS: SmvCDS)(aggregateExpressions: Seq[NamedExpression]): SchemaRDD = {
+  /**
+   * apply CDS and create the self-joined SRDD 
+   **/
+  def applyCDS(smvCDS: SmvCDS): SchemaRDD = {
     val keyO = keyOrdinal // for parallelization 
 
     val eval = smvCDS.eval(srdd.schema)
@@ -104,8 +48,11 @@ class SmvChunk(val srdd: SchemaRDD, keys: Seq[Symbol]){
         eval(rlist)
       }.flatMap{r => r}
 
-    val toBeAggregated = srdd.sqlContext.applySchema(selfJoinedRdd, outSchema)
+    srdd.sqlContext.applySchema(selfJoinedRdd, outSchema)
+  }
 
+  def singleCDSGroupBy(smvCDS: SmvCDS)(aggregateExpressions: Seq[NamedExpression]): SchemaRDD = {
+    val toBeAggregated = applyCDS(smvCDS)
     val keyColsExpr = (keys ++ smvCDS.outGroupKeys).map(k => UnresolvedAttribute(k.name))
     val aggrExpr = keyColsExpr ++ aggregateExpressions
     toBeAggregated.groupBy(keyColsExpr: _*)(aggrExpr: _*)
