@@ -33,6 +33,7 @@ import scala.util.Try
 abstract class SmvDataSet(val description: String) {
 
   private var rddCache: SchemaRDD = null
+  private var versionSumCache : Int = -1
 
   def name(): String
 
@@ -44,6 +45,16 @@ abstract class SmvDataSet(val description: String) {
 
   /** code "version".  Derived classes should update the value when code or data */
   def version() : Int = 0
+  
+  /**
+    * the version of this dataset plus the versions of all dependent data sets.
+    * Need to cache the computed value to avoid a O(n!) algorithm.
+    */
+  private[smv] def versionSum() : Int = {
+    if (versionSumCache < 0)
+      versionSumCache = requiresDS().map(_.versionSum).sum + version
+    versionSumCache
+  }
 
   /**
    * returns the SchemaRDD from this dataset (file/module).
@@ -96,9 +107,6 @@ object SmvFile {
 abstract class SmvModule(_description: String) extends SmvDataSet(_description) {
 
   override val name = this.getClass().getName().filterNot(_=='$')
-
-  /** The sum of all versions of this module and all its dependents. */
-  private[smv] def versionSum() = requiresDS().map(_.version).sum + version
 
   type runParams = Map[SmvDataSet, SchemaRDD]
   def run(inputs: runParams) : SchemaRDD
