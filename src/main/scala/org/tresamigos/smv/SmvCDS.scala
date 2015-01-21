@@ -20,12 +20,49 @@ import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.dsl.plans._
 
+/**
+ * SmvCDS - SMV Custom Data Seletor 
+ *
+ * As generalizing the idea of running sum and similar requirements, we define
+ * an abstract class as CDS. Using the running sum as an example, the overall
+ * client code will look like
+ *
+ * srdd.smvSingleCDSGroupBy('k)(TimeInLastN('t, 3))((Sum('v) as 'nv1), (Count('v) as 'nv2))
+ *
+ * where TimeInLastN('t, 3) is a concrete SmvCDS 
+ *
+ * Future could also implement custom Catalyst expressions to integrate SmvCDS into expressions. 
+ * The client code looks like
+ *
+ * srdd.smvGroupBy('k)(
+ *     Sum('v1) from TimeInLastN('t, 3) as 'nv1,
+ *         Count('v2) from TimeInLastN('t, 6) as 'nv2
+ *       )
+ **/
+
 abstract class SmvCDS {
   val outGroupKeys: Seq[Symbol]
   def outSchema(inSchema: StructType): StructType
   def eval(inSchema: StructType): Seq[Row] => Seq[Row]
 }
 
+/** 
+ *  NoOpCDS
+ *  With it smvSingleCDSGroupBy will behave like SchemaRDD groupBy 
+ *  smvSingleCDSGroupBy(keys)(NoOpCDS(more_keys))(...)  is the same as 
+ *  groupBy(keys ++ more_keys)(keys ++ more_keys ++ ...)
+ **/
+case class NoOpCDS(outGroupKeys: Seq[Symbol]) extends SmvCDS{
+  def outSchema(inSchema: StructType) = inSchema
+  def eval(inSchema: StructType): Seq[Row] => Seq[Row] = {l => l}
+}
+
+/**
+ *  SmvCDSRange(outGroupKeys, condition)
+ *
+ *  Defines a "self-joined" data for further aggregation with this logic
+ *  srdd.select(outGroupKeys).distinct.join(srdd, Inner, Option(condition)
+ **/
 case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDS{
   require(condition.dataType == BooleanType)
 
@@ -56,6 +93,12 @@ case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends
   }
 }
 
+/**
+ * TimeInLastNFromAnchor(t, anchor, n)
+ *
+ * Defince a self-join with condition: "t" in the last "n" from "anchor"
+ * (t <= anchor && t > anchor - n)
+ **/
 object TimeInLastNFromAnchor {
   def apply(t: Symbol, anchor: Symbol, n: Int) = {
     val outGroupKeys = Seq(anchor)
@@ -65,6 +108,11 @@ object TimeInLastNFromAnchor {
   }
 }
 
+/** 
+ * TimeInLastN(t, n)
+ * 
+ * Defince a self-join with "t" in the last "n" from the current "t"
+ */
 object TimeInLastN {
   def apply(t: Symbol, n: Int) = {
     val outGroupKeys = Seq(t)

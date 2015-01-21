@@ -52,7 +52,10 @@ class SmvChunk(val srdd: SchemaRDD, keys: Seq[Symbol]){
   }
 
   def singleCDSGroupBy(smvCDS: SmvCDS)(aggregateExpressions: Seq[NamedExpression]): SchemaRDD = {
-    val toBeAggregated = applyCDS(smvCDS)
+    val toBeAggregated = smvCDS match {
+      case NoOpCDS(_) => srdd
+      case _ => applyCDS(smvCDS)
+    }
     val keyColsExpr = (keys ++ smvCDS.outGroupKeys).map(k => UnresolvedAttribute(k.name))
     val aggrExpr = keyColsExpr ++ aggregateExpressions
     toBeAggregated.groupBy(keyColsExpr: _*)(aggrExpr: _*)
