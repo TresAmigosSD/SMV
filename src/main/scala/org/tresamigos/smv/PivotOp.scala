@@ -25,12 +25,12 @@ import org.apache.spark.sql.catalyst.dsl.expressions._
  **/
 abstract class PivotAggregate {
   val valueCol: Symbol
-  def createColName(baseOutCol: String): String
+  val prefix: String
+  def createColName(baseOutCol: String): String = prefix + valueCol.name + "_" + baseOutCol
   def createExpr(baseOutputColumnNames: Seq[String]): Seq[NamedExpression]
 }
 
-case class PivotSum(valueCol: Symbol) extends PivotAggregate {
-  def createColName(baseOutCol: String): String = valueCol.name + "_" + baseOutCol
+case class PivotSum(valueCol: Symbol, prefix: String = "") extends PivotAggregate {
   def createExpr(baseOutputColumnNames: Seq[String]): Seq[NamedExpression] = {
     baseOutputColumnNames.map { c =>
       val colName = createColName(c)
@@ -39,8 +39,7 @@ case class PivotSum(valueCol: Symbol) extends PivotAggregate {
   }
 }
 
-case class PivotCountDistinct(valueCol: Symbol) extends PivotAggregate {
-  def createColName(baseOutCol: String): String = "dist_cnt_" + valueCol.name + "_" + baseOutCol
+case class PivotCountDistinct(valueCol: Symbol, prefix: String = "dist_cnt_") extends PivotAggregate {
   def createExpr(baseOutputColumnNames: Seq[String]): Seq[NamedExpression] = {
     baseOutputColumnNames.map { c =>
       val colName = createColName(c)
