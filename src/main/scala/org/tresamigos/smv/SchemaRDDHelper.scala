@@ -149,11 +149,17 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
   /** See PivotOp class for documentation */
   def pivot_sum(keyCol: Symbol, pivotCols: Seq[Symbol], valueCols: Seq[Symbol]) = {
-    new PivotOp(schemaRDD, keyCol, pivotCols, valueCols).transform
+    val valueAggrs = valueCols.map{v => PivotSum(v)}
+    new PivotOp(schemaRDD, keyCol, pivotCols, valueAggrs).transform
   }
 
   def pivot_sum(keyCols: Symbol*)(pivotCols: Symbol*)(valueCols: Symbol*) = {
-    new PivotOp(schemaRDD, keyCols, pivotCols, valueCols).transform
+    val valueAggrs = valueCols.map{v => PivotSum(v)}
+    new PivotOp(schemaRDD, keyCols, pivotCols, valueAggrs).transform
+  }
+
+  def smvPivot(keyCols: Symbol*)(pivotCols: Symbol*)(valueAggrs: PivotAggregate*) = {
+    new PivotOp(schemaRDD, keyCols, pivotCols, valueAggrs).transform
   }
 
   def smvUnpivot(valueCols: Seq[Symbol]) = {

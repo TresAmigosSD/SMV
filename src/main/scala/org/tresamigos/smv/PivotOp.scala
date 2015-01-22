@@ -18,6 +18,36 @@ import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types.StringType
+import org.apache.spark.sql.catalyst.dsl.expressions._
+
+/**
+ * General Pivot aggregation operation 
+ **/
+abstract class PivotAggregate {
+  val valueCol: Symbol
+  def createColName(baseOutCol: String): String
+  def createExpr(baseOutputColumnNames: Seq[String]): Seq[NamedExpression]
+}
+
+case class PivotSum(valueCol: Symbol) extends PivotAggregate {
+  def createColName(baseOutCol: String): String = valueCol.name + "_" + baseOutCol
+  def createExpr(baseOutputColumnNames: Seq[String]): Seq[NamedExpression] = {
+    baseOutputColumnNames.map { c =>
+      val colName = createColName(c)
+      Sum(colName.attr) as Symbol(colName)
+    }
+  }
+}
+
+case class PivotCountDistinct(valueCol: Symbol) extends PivotAggregate {
+  def createColName(baseOutCol: String): String = "dist_cnt_" + valueCol.name + "_" + baseOutCol
+  def createExpr(baseOutputColumnNames: Seq[String]): Seq[NamedExpression] = {
+    baseOutputColumnNames.map { c =>
+      val colName = createColName(c)
+      CountDistinct(Seq(colName.attr)) as Symbol(colName)
+    }
+  }
+}
 
 /**
  * Pivot operation on SchemaRDD that transforms multiple rows per key into a single row for
@@ -47,11 +77,11 @@ import org.apache.spark.sql.catalyst.types.StringType
 class PivotOp(origSRDD: SchemaRDD,
               keyCols: Seq[Symbol],
               pivotCols: Seq[Symbol],
-              valueCols: Seq[Symbol]) {
+              valueAggrs: Seq[PivotAggregate]) {
   def this(origSRDD: SchemaRDD,
            keyCol: Symbol,
            pivotCols: Seq[Symbol],
-           valueCols: Seq[Symbol]) = this(origSRDD, Seq(keyCol), pivotCols, valueCols)
+           valueAggrs: Seq[PivotAggregate]) = this(origSRDD, Seq(keyCol), pivotCols, valueAggrs)
 
   import origSRDD.sqlContext._
 
@@ -59,6 +89,7 @@ class PivotOp(origSRDD: SchemaRDD,
   val tempPivotValCol = '_smv_pivot_val
   val keyColsExpr = keyCols.map(k => UnresolvedAttribute(k.name))
   val pivotColsExpr = pivotCols.map(s => UnresolvedAttribute(s.name))
+  val valueCols = valueAggrs.map(_.valueCol)
   val valueColsExpr = valueCols.map(v => UnresolvedAttribute(v.name))
 
   /**
@@ -113,14 +144,20 @@ class PivotOp(origSRDD: SchemaRDD,
   private[smv] def mapValColsToOutputCols(srddWithPivotValCol: SchemaRDD) = {
     import srddWithPivotValCol.sqlContext._
 
-    // find zero value to match type of valueCol.  If type is mismatched, then we get
-    // a very weird attribute not resolved error.
     val schema = Schema.fromSchemaRDD(srddWithPivotValCol)
-    val valueColsZeroVals = valueCols.map(vc => schema.findEntry(vc).get.zeroVal)
 
-    val outputColExprs = valueCols.zip(valueColsZeroVals).map { case (vcSymbol, vcZero) =>
+    val outputColExprs = valueAggrs.map {aggr =>
+      // find zero value to match type of valueCol.  If type is mismatched, then we get
+      // a very weird attribute not resolved error.
+      /*  Zero filling here is replaced by Null filling to handle CountDistinc
+       *  right
+      val vcZero = schema.findEntry(aggr.valueCol).get.zeroVal
       baseOutputColumnNames.map { outCol =>
-        If(tempPivotValCol === outCol, vcSymbol, vcZero) as Symbol(vcSymbol.name + "_" + outCol)
+        If(tempPivotValCol === outCol, aggr.valueCol, vcZero) as Symbol(aggr.createColName(outCol))
+      }
+      */
+      baseOutputColumnNames.map { outCol =>
+        SmvIfElseNull(tempPivotValCol === outCol, aggr.valueCol) as Symbol(aggr.createColName(outCol))
       }
     }.flatten
     srddWithPivotValCol.select(keyColsExpr ++ outputColExprs: _*)
@@ -131,11 +168,8 @@ class PivotOp(origSRDD: SchemaRDD,
    * WARNING: this should not be called directly by user.  User should use the pivot_sum method.
    */
   def transform = {
-    val outColSumExprs = valueCols.map {vc =>
-      baseOutputColumnNames.map { c =>
-        val colName = vc.name + "_" + c
-        Sum(colName.attr) as Symbol(colName)
-      }
+    val outColSumExprs = valueAggrs.map {aggr =>
+      aggr.createExpr(baseOutputColumnNames)
     }.flatten
     val keyColsExpr = keyCols.map(k => UnresolvedAttribute(k.name))
 
