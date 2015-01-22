@@ -71,7 +71,8 @@ case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends
       if (outGroupKeys.map{_.name}.contains(f.name)) StructField("_" + f.name, f.dataType, f.nullable)
       else f
     }
-    val added = inSchema.fields.collect{ case f if outGroupKeys.map{_.name}.contains(f.name) => f}
+    //val added = inSchema.fields.collect{ case f if outGroupKeys.map{_.name}.contains(f.name) => f}
+    val added = outGroupKeys.collect{case a if(inSchema.fields.map{_.name}.contains(a.name)) => inSchema(a.name)}
     StructType(added ++ renamed)
   }
 
