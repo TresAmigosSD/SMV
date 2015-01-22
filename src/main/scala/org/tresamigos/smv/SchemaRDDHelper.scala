@@ -159,7 +159,8 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   }
 
   def smvPivot(keyCols: Symbol*)(pivotCols: Symbol*)(valueAggrs: PivotAggregate*) = {
-    new PivotOp(schemaRDD, keyCols, pivotCols, valueAggrs).transform
+    val pivot = new PivotOp(schemaRDD, keyCols, pivotCols, valueAggrs)
+    if (valueAggrs.isEmpty) pivot.toBeAggregated else pivot.transform
   }
 
   def smvUnpivot(valueCols: Seq[Symbol]) = {
@@ -269,7 +270,10 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   }
 
   def smvSingleCDSGroupBy(keys: Symbol*)(cds: SmvCDS)(aggrExprs: NamedExpression*): SchemaRDD = {
-    val smvChunk = new SmvChunk(schemaRDD, keys)
-    smvChunk.singleCDSGroupBy(cds)(aggrExprs)
+    val smvCDSGroupBy = new SmvCDSGroupBy(schemaRDD, keys)
+    if (aggrExprs.isEmpty) 
+      smvCDSGroupBy.toBeAggregated(cds)
+    else 
+      smvCDSGroupBy.singleCDSGroupBy(cds)(aggrExprs)
   }
 }

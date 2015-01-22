@@ -162,6 +162,10 @@ class PivotOp(origSRDD: SchemaRDD,
     srddWithPivotValCol.select(keyColsExpr ++ outputColExprs: _*)
   }
 
+  def toBeAggregated = {
+    mapValColsToOutputCols(addSmvPivotValColumn)
+  }
+
   /**
    * Perform the actual pivot transformation.
    * WARNING: this should not be called directly by user.  User should use the pivot_sum method.

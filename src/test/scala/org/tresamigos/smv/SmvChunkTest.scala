@@ -36,36 +36,4 @@ class SmvChunkTest extends SparkTestUtil {
       "[k1,a,a]", "[k1,b,ab]", "[k2,c,c]", "[k2,d,cd]"))
   }
 
-  sparkTest("Test RunSum") {
-    val ssc = sqlContext; import ssc._
-    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
-
-    val res = srdd.smvSingleCDSGroupBy('k)(TimeInLastN('t, 3))((Sum('v) as 'nv1), (Count('v) as 'nv2))
-    assertSrddSchemaEqual(res, "k: String; t: Integer; nv1: Double; nv2: Long")
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[a,1,0.3,1]",
-      "[z,1,0.2,1]",
-      "[z,2,1.5999999999999999,2]",
-      "[z,5,2.2,1]"))
-  }
-
-  sparkTest("Test out of order CDS keys") {
-    val ssc = sqlContext; import ssc._
-    val srdd = createSchemaRdd("time_type:String;v:String;time_value:Integer", 
-      "k1,a,10;k1,b,100;k2,d,3;k2,c,12")
-
-    val f = {in:Int => in - 3}
-    val cds = SmvCDSRange(
-      Seq('time_type, 'time_value), 
-      ('_time_value > ScalaUdf(f, IntegerType, Seq('time_value)) && ('_time_value <= 'time_value))
-    )
-    val s2 = srdd.selectMinus('time_type).selectPlus(Literal("MONTHR3") as 'time_type)
-    val res = s2.smvSingleCDSGroupBy('v)(cds)(Count('v) as 'cv)
-    assertSrddSchemaEqual(res, "v: String; time_type: String; time_value: Integer; cv: Long")
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[d,MONTHR3,3,1]",
-      "[c,MONTHR3,12,1]",
-      "[a,MONTHR3,10,1]",
-      "[b,MONTHR3,100,1]"))
-  }
 }

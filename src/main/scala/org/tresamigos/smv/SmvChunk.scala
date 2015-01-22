@@ -18,7 +18,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.SparkContext._
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 
 case class SmvChunkUDF(
   para: Seq[Symbol], 
@@ -31,35 +30,6 @@ class SmvChunk(val srdd: SchemaRDD, keys: Seq[Symbol]){
 
   def names = srdd.schema.fieldNames
   def keyOrdinal = keys.map{s => names.indexWhere(s.name == _)}
-
-  /**
-   * apply CDS and create the self-joined SRDD 
-   **/
-  def applyCDS(smvCDS: SmvCDS): SchemaRDD = {
-    val keyO = keyOrdinal // for parallelization 
-
-    val eval = smvCDS.eval(srdd.schema)
-    val outSchema = smvCDS.outSchema(srdd.schema)
-
-    val selfJoinedRdd = srdd.
-      map{r => (keyO.map{i => r(i)}, r)}.groupByKey.
-      map{case (k, rIter) => 
-        val rlist = rIter.toList
-        eval(rlist)
-      }.flatMap{r => r}
-
-    srdd.sqlContext.applySchema(selfJoinedRdd, outSchema)
-  }
-
-  def singleCDSGroupBy(smvCDS: SmvCDS)(aggregateExpressions: Seq[NamedExpression]): SchemaRDD = {
-    val toBeAggregated = smvCDS match {
-      case NoOpCDS(_) => srdd
-      case _ => applyCDS(smvCDS)
-    }
-    val keyColsExpr = (keys ++ smvCDS.outGroupKeys).map(k => UnresolvedAttribute(k.name))
-    val aggrExpr = keyColsExpr ++ aggregateExpressions
-    toBeAggregated.groupBy(keyColsExpr: _*)(aggrExpr: _*)
-  }
 
   def applyUDF(chunkFuncs: Seq[SmvChunkUDF], isPlus: Boolean = true): SchemaRDD = {
     val keyO = keyOrdinal // for parallelization 
