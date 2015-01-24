@@ -50,6 +50,8 @@ class SmvVersionTest extends SparkTestUtil {
     X.v = 1
     val v1 = Y.versionSum()
     X.v = 2
+    X.versionSumCache = -1 // reset the cached version sum values.
+    Y.versionSumCache = -1
     val v2 = Y.versionSum()
 
     // If the version of the dependent module changed, this module version sum should also change.
