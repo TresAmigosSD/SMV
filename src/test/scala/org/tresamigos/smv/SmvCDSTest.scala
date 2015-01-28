@@ -51,4 +51,25 @@ class SmvCDSTest extends SparkTestUtil {
       "[a,MONTHR3,10,1]",
       "[b,MONTHR3,100,1]"))
   }
+
+  sparkTest("Test CDS chaining"){
+    val ssc = sqlContext; import ssc._
+    val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; p: String; v:Double", 
+      """z,1,a,0.2;
+         z,2,a,1.4;
+         z,5,b,2.2;
+         a,1,a,0.3""")
+    val pCDS = PivotCDS(Seq(Seq('p)), Seq(('v, "v")), Seq("a", "b"))
+    val res = srdd.smvApplyCDS('k)(TimeInLastN('t, 3)).
+                   smvSingleCDSGroupBy('k, 't)(pCDS)(
+                     Sum('v_a) as 'v_a, 
+                     Sum('v_b) as 'v_b
+                   )
+    assertSrddSchemaEqual(res, "k: String; t: Integer; v_a: Double; v_b: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3,0.0]",
+      "[z,1,0.2,0.0]",
+      "[z,2,1.5999999999999999,0.0]",
+      "[z,5,0.0,2.2]"))
+  }
 }
