@@ -33,7 +33,7 @@ import scala.util.Try
 abstract class SmvDataSet(val description: String) {
 
   private var rddCache: SchemaRDD = null
-  private var versionSumCache : Int = -1
+  private[smv] var versionSumCache : Int = -1
 
   def name(): String
 
