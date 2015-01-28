@@ -147,21 +147,7 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     schemaRDD.groupBy(allKeys: _*)(selectExpressions: _*)
   }
 
-  /** See PivotOp class for documentation */
-  def pivot_sum(keyCol: Symbol, pivotCols: Seq[Symbol], valueCols: Seq[Symbol]) = {
-    val valueAggrs = valueCols.map{v => PivotSum(v)}
-    new PivotOp(schemaRDD, keyCol, pivotCols, valueAggrs).transform
-  }
-
-  def pivot_sum(keyCols: Symbol*)(pivotCols: Symbol*)(valueCols: Symbol*) = {
-    val valueAggrs = valueCols.map{v => PivotSum(v)}
-    new PivotOp(schemaRDD, keyCols, pivotCols, valueAggrs).transform
-  }
-
-  def smvPivot(keyCols: Symbol*)(pivotCols: Symbol*)(valueAggrs: PivotAggregate*) = {
-    val pivot = new PivotOp(schemaRDD, keyCols, pivotCols, valueAggrs)
-    if (valueAggrs.isEmpty) pivot.toBeAggregated else pivot.transform
-  }
+  // pivot_sum is moved to SmvCDSFunctions.scala 
 
   def smvUnpivot(valueCols: Seq[Symbol]) = {
     new UnpivotOp(schemaRDD, valueCols).unpivot()
@@ -267,13 +253,5 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   def chunkBy(keys: Symbol*)(funcs: SmvChunkUDF*): SchemaRDD = {
     val smvChunk = new SmvChunk(schemaRDD, keys)
     smvChunk.applyUDF(funcs, false)
-  }
-
-  def smvSingleCDSGroupBy(keys: Symbol*)(cds: SmvCDS)(aggrExprs: NamedExpression*): SchemaRDD = {
-    val smvCDSGroupBy = new SmvCDSGroupBy(schemaRDD, keys)
-    if (aggrExprs.isEmpty) 
-      smvCDSGroupBy.toBeAggregated(cds)
-    else 
-      smvCDSGroupBy.singleCDSGroupBy(cds)(aggrExprs)
   }
 }

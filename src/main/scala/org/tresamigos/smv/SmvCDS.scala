@@ -14,6 +14,9 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.SparkContext._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
 import org.apache.spark.sql.catalyst.types._
@@ -42,8 +45,7 @@ import org.apache.spark.sql.catalyst.dsl.plans._
 
 abstract class SmvCDS {
   val outGroupKeys: Seq[Symbol]
-  def outSchema(inSchema: StructType): StructType
-  def eval(inSchema: StructType): Seq[Row] => Seq[Row]
+  def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]): SchemaRDD
 }
 
 /** 
@@ -53,8 +55,34 @@ abstract class SmvCDS {
  *  groupBy(keys ++ more_keys)(keys ++ more_keys ++ ...)
  **/
 case class NoOpCDS(outGroupKeys: Seq[Symbol]) extends SmvCDS{
-  def outSchema(inSchema: StructType) = inSchema
-  def eval(inSchema: StructType): Seq[Row] => Seq[Row] = {l => l}
+  def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]): SchemaRDD = srdd
+}
+
+
+abstract class SmvCDSInMem extends SmvCDS {
+
+  def outSchema(inSchema: StructType): StructType
+  def eval(inSchema: StructType): Seq[Row] => Seq[Row]
+
+  /**
+   * Create the self-joined SRDD 
+   **/
+  def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]): SchemaRDD = {
+    def names = srdd.schema.fieldNames
+    val keyO = keys.map{s => names.indexWhere(s.name == _)}
+
+    val evalrow = eval(srdd.schema)
+    val outS = outSchema(srdd.schema)
+
+    val selfJoinedRdd = srdd.
+      map{r => (keyO.map{i => r(i)}, r)}.groupByKey.
+      map{case (k, rIter) => 
+        val rlist = rIter.toList
+        evalrow(rlist)
+      }.flatMap{r => r}
+
+    srdd.sqlContext.applySchema(selfJoinedRdd, outS)
+  }
 }
 
 /**
@@ -63,7 +91,7 @@ case class NoOpCDS(outGroupKeys: Seq[Symbol]) extends SmvCDS{
  *  Defines a "self-joined" data for further aggregation with this logic
  *  srdd.select(outGroupKeys).distinct.join(srdd, Inner, Option(condition)
  **/
-case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDS{
+case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDSInMem {
   require(condition.dataType == BooleanType)
 
   def outSchema(inSchema: StructType) = {

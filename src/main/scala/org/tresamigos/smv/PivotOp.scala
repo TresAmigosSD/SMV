@@ -21,35 +21,9 @@ import org.apache.spark.sql.catalyst.types.StringType
 import org.apache.spark.sql.catalyst.dsl.expressions._
 
 /**
- * General Pivot aggregation operation 
- **/
-abstract class PivotAggregate {
-  val valueCol: Symbol
-  val prefix: String
-  def createColName(baseOutCol: String): String = prefix + valueCol.name + "_" + baseOutCol
-  def createExpr(baseOutputColumnNames: Seq[String]): Seq[NamedExpression]
-}
-
-case class PivotSum(valueCol: Symbol, prefix: String = "") extends PivotAggregate {
-  def createExpr(baseOutputColumnNames: Seq[String]): Seq[NamedExpression] = {
-    baseOutputColumnNames.map { c =>
-      val colName = createColName(c)
-      Sum(colName.attr) as Symbol(colName)
-    }
-  }
-}
-
-case class PivotCountDistinct(valueCol: Symbol, prefix: String = "dist_cnt_") extends PivotAggregate {
-  def createExpr(baseOutputColumnNames: Seq[String]): Seq[NamedExpression] = {
-    baseOutputColumnNames.map { c =>
-      val colName = createColName(c)
-      CountDistinct(Seq(colName.attr)) as Symbol(colName)
-    }
-  }
-}
-
-/**
- * Pivot operation on SchemaRDD that transforms multiple rows per key into a single row for
+ * SmvCDS for Pivot Operations:
+ *
+ * Pivot Operation on SchemaRDD that transforms multiple rows per key into a single row for
  * a given key while preserving all the data variance by turning row values into columns.
  * For Example:
  * | id  | month | product | count |
@@ -58,12 +32,14 @@ case class PivotCountDistinct(valueCol: Symbol, prefix: String = "dist_cnt_") ex
  * | 1   | 6/14  |   B     |   200 |
  * | 1   | 5/14  |   B     |   300 |
  * 
- * We would like to generate a single row for each unique id but still maintain the full granularity of the data.
+ * We would like to generate a data set to be ready for aggregations.
  * The desired output is:
  * 
  * | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
  * | --- | ------------ | ------------ | ------------ | ------------ |
- * | 1   | 100          | 300          | 0            | 200          |
+ * | 1   | 100          | NULL         | NULL         | NULL         |
+ * | 1   | NULL         | NULL         | NULL         | 200          |
+ * | 1   | NULL         | 300          | NULL         | NULL         |
  * 
  * The raw input is divided into three parts.
  * 1. key column: part of the primary key that is preserved in the output.
@@ -72,112 +48,110 @@ case class PivotCountDistinct(valueCol: Symbol, prefix: String = "dist_cnt_") ex
  *    The cross product of all unique values for *each* column is used to generate the output column names.
  * 3. value column: the value that will be copied/aggregated to corresponding output column. `count` in our example.
  * 
+ * @param pivotColSets specify the pivot columns, on above example, it is
+ *        Seq(Seq('month, 'product)). If Seq(Seq('month), Seq('month,'product)) is 
+ *        used, the output columns will have "count_5_14" and "count_6_14" as
+ *        addition to the example. 
+ * @param valueColPrefixMap specify the value column and how it will be used
+ *        to create the output columns. In above example, it is Seq(('count, "count")).
+ *        If we use Seq(('count, "num")) instead, the output column names will
+ *        be "num_5_14_A" etc.
+ * @param baseOutputColumnNames specify the base names of the output columns.
+ *        In above example, it is Seq("5_14_A", "5_14_B", "6_14_A", "6_14_B").
+ *        We assume that the output columns are predefined here. In case that
+ *        we truly want to have a data driven pivoting, we can call a helper
+ *        function, PivotOp.getBaseOutputColumnNames(schemaRDD, Seq(pivotCols))
+ *        to generate baseOutputColumnNames. 
  */
-class PivotOp(origSRDD: SchemaRDD,
-              keyCols: Seq[Symbol],
-              pivotCols: Seq[Symbol],
-              valueAggrs: Seq[PivotAggregate]) {
-  def this(origSRDD: SchemaRDD,
-           keyCol: Symbol,
-           pivotCols: Seq[Symbol],
-           valueAggrs: Seq[PivotAggregate]) = this(origSRDD, Seq(keyCol), pivotCols, valueAggrs)
 
-  import origSRDD.sqlContext._
+case class PivotCDS(
+        pivotColSets: Seq[Seq[Symbol]],
+        valueColPrefixMap: Seq[(Symbol, String)],
+        baseOutputColumnNames: Seq[String]) extends SmvCDS{
 
-  val baseOutputColumnNames = getBaseOutputColumnNames()
-  val tempPivotValCol = '_smv_pivot_val
-  val keyColsExpr = keyCols.map(k => UnresolvedAttribute(k.name))
-  val pivotColsExpr = pivotCols.map(s => UnresolvedAttribute(s.name))
-  val valueCols = valueAggrs.map(_.valueCol)
-  val valueColsExpr = valueCols.map(v => UnresolvedAttribute(v.name))
+  val outGroupKeys = Nil
+  def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]): SchemaRDD = 
+    mapValColsToOutputCols(addSmvPivotValColumn(srdd), keys)
 
-  /**
-   * Extract the column names from the data.
-   * This is done by getting the distinct string values of each column and taking the cartesian product.
-   * For N value columns, the output shall have N times as many columns as the returned list as
-   * each item in the list would have the value column name(s) prepended.
-   * Return: Seq["5_14_A", "5_14_B", ...]
-   */
-  private[smv] def getBaseOutputColumnNames(): Seq[String] = {
-    // create set of distinct values.
-    // this is a seq of array strings where each array is distinct values for a column.
-    val distinctVals = pivotCols.map(s => origSRDD.select(s).
-      distinct.collect.map { r =>
-        Option(r(0)).getOrElse("").toString
-      })
-
-    // get the cartesian product of all column values.
-    val colNames = distinctVals.reduceLeft(
-      (l1,l2) => for(v1 <- l1; v2 <- l2) yield (v1 + "_" + v2))
-
-    // ensure result column name is made up of valid characters.
-    colNames.map(c => SchemaEntry.valueToColumnName(c)).sorted
-  }
+  private val tempPivotValCol = '_smv_pivot_val
 
   /**
    * Create a derived column that contains the concatenation of all the values in
    * the pivot columns.  From the above columns, create a new column with following values:
    * | key | _smv_pivot_val | count |
    * | --- | -------------- | ----- |
-   * |  1  | count_5_14_A   |   100 |
-   * |  1  | count_5_14_B   |   200 |
-   * |  1  | count_6_14_A   |   300 |
-   * |  1  | count_6_14_B   |   400 |
+   * |  1  |       5_14_A   |   100 |
+   * |  1  |       5_14_B   |   200 |
+   * |  1  |       6_14_A   |   300 |
+   * |  1  |       6_14_B   |   400 |
    */
-  private[smv] def addSmvPivotValColumn() : SchemaRDD = {
-    origSRDD.select(
-      (keyColsExpr :+ (SmvPivotVal(pivotColsExpr) as tempPivotValCol)) ++
-      valueColsExpr: _*)
+  private[smv] def addSmvPivotValColumn(origSRDD: SchemaRDD) : SchemaRDD = {
+    import origSRDD.sqlContext._
+    val pivotColsExprSets = pivotColSets.map(a => a.map(s => UnresolvedAttribute(s.name)))
+
+    pivotColsExprSets.map{ pivotColsExpr =>
+      origSRDD.selectPlus(SmvPivotVal(pivotColsExpr) as tempPivotValCol)
+    }.reduceLeft(_.unionAll(_))
   }
 
   /**
    * Map the output column to the corresponding output column Given the output from addSmvPivotValColumn.
    * The expected output is:
-   * | key | count_5_14_A | count_5_14_B | ... |
-   * | --- | ------------ | ------------ | --- |
-   * |  1  |     100      |       0      |  0  |
-   * |  1  |       0      |     300      |  0  |
-   * |  1  |       0      |       0      |  0  |
-   * |  1  |       0      |       0      |  0  |
+   * | key | count_5_14_A | count_5_14_B | .... |
+   * | --- | ------------ | ------------ | ---- |
+   * |  1  |     100      |    NULL      | NULL |
+   * |  1  |    NULL      |     300      | NULL |
+   * |  1  |    NULL      |    NULL      | NULL |
+   * |  1  |    NULL      |    NULL      | NULL |
    */
-  private[smv] def mapValColsToOutputCols(srddWithPivotValCol: SchemaRDD) = {
+  private[smv] def mapValColsToOutputCols(srddWithPivotValCol: SchemaRDD, keyCols: Seq[Symbol]) = {
     import srddWithPivotValCol.sqlContext._
 
     val schema = Schema.fromSchemaRDD(srddWithPivotValCol)
+    val createColName = (prefix: String, baseOutCol: String) => prefix + "_" + baseOutCol
+    val keyColsExpr = keyCols.map(k => UnresolvedAttribute(k.name))
 
-    val outputColExprs = valueAggrs.map {aggr =>
-      // find zero value to match type of valueCol.  If type is mismatched, then we get
-      // a very weird attribute not resolved error.
-      /*  Zero filling here is replaced by Null filling to handle CountDistinc
-       *  right
-      val vcZero = schema.findEntry(aggr.valueCol).get.zeroVal
+    val outputColExprs = valueColPrefixMap.map {case (valueCol, prefix) =>
+      //  Zero filling is replaced by Null filling to handle CountDistinct right 
       baseOutputColumnNames.map { outCol =>
-        If(tempPivotValCol === outCol, aggr.valueCol, vcZero) as Symbol(aggr.createColName(outCol))
-      }
-      */
-      baseOutputColumnNames.map { outCol =>
-        SmvIfElseNull(tempPivotValCol === outCol, aggr.valueCol) as Symbol(aggr.createColName(outCol))
+        SmvIfElseNull(tempPivotValCol === outCol, valueCol) as Symbol(createColName(prefix, outCol))
       }
     }.flatten
+
     srddWithPivotValCol.select(keyColsExpr ++ outputColExprs: _*)
   }
 
-  def toBeAggregated = {
-    mapValColsToOutputCols(addSmvPivotValColumn)
-  }
+}
 
+object PivotOp {
   /**
-   * Perform the actual pivot transformation.
-   * WARNING: this should not be called directly by user.  User should use the pivot_sum method.
+   * Extract the column names from the data.
+   * This is done by getting the distinct string values of each column and taking the cartesian product.
+   * For N value columns, the output shall have N times as many columns as the returned list as
+   * each item in the list would have the value column name(s) prepended.
+   * Return: Seq["5_14_A", "5_14_B", ...]
+   *
+   * WARNING: This operation have to scan the entire RDD 1 or more times. For
+   * most production system, the result of this operation should be static, in
+   * that case the result should be coded in modules instead of calling this
+   * operation every time.
    */
-  def transform = {
-    val outColSumExprs = valueAggrs.map {aggr =>
-      aggr.createExpr(baseOutputColumnNames)
-    }.flatten
-    val keyColsExpr = keyCols.map(k => UnresolvedAttribute(k.name))
+  private[smv] def getBaseOutputColumnNames(schemaRDD: SchemaRDD, pivotColsExprSets: Seq[Seq[Symbol]]): Seq[String] = {
+    // create set of distinct values.
+    // this is a seq of array strings where each array is distinct values for a column.
+    pivotColsExprSets.map{ pivotColsExpr =>
+      val distinctVals = pivotColsExpr.map{s => schemaRDD.select(s).
+        distinct.collect.map { r =>
+          Option(r(0)).getOrElse("").toString
+        }}
 
-    mapValColsToOutputCols(addSmvPivotValColumn).
-      groupBy(keyColsExpr: _*)(keyColsExpr ++ outColSumExprs: _*)
+      // get the cartesian product of all column values.
+      val colNames = distinctVals.reduceLeft(
+        (l1,l2) => for(v1 <- l1; v2 <- l2) yield (v1 + "_" + v2))
+
+      // ensure result column name is made up of valid characters.
+      colNames.map(c => SchemaEntry.valueToColumnName(c)).sorted
+    }.flatten
   }
 }
 
