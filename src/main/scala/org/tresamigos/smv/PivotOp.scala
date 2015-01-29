@@ -89,9 +89,11 @@ case class PivotCDS(
     import origSRDD.sqlContext._
     val pivotColsExprSets = pivotColSets.map(a => a.map(s => UnresolvedAttribute(s.name)))
 
-    pivotColsExprSets.map{ pivotColsExpr =>
-      origSRDD.selectPlus(SmvPivotVal(pivotColsExpr) as tempPivotValCol)
-    }.reduceLeft(_.unionAll(_))
+    val arrayExp = pivotColsExprSets.map{ pivotColsExpr =>
+      SmvPivotVal(pivotColsExpr)
+    }
+
+    origSRDD.generate(Explode(Seq(tempPivotValCol.name), SmvAsArray(arrayExp: _*)), true)
   }
 
   /**
