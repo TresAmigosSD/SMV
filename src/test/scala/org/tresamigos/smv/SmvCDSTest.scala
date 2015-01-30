@@ -72,4 +72,20 @@ class SmvCDSTest extends SparkTestUtil {
       "[z,2,1.5999999999999999,0.0]",
       "[z,5,0.0,2.2]"))
   }
+
+  sparkTest("Test SmvCDSTopRec"){
+    val ssc = sqlContext; import ssc._
+    val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; p: String; v:Double", 
+      """z,1,a,0.2;
+         z,2,a,1.4;
+         z,5,b,2.2;
+         a,1,a,0.3""")
+    val cds = SmvCDSTopRec('t.desc)
+    val res=srdd.smvApplyCDS('k)(cds)
+
+    assertSrddSchemaEqual(res, "k: String; t: Integer; p: String; v: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,a,0.3]",
+      "[z,5,b,2.2]"))
+  }
 }

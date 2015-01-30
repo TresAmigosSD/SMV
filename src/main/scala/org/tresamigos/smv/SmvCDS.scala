@@ -59,10 +59,19 @@ case class NoOpCDS(outGroupKeys: Seq[Symbol]) extends SmvCDS{
 }
 
 
-abstract class SmvCDSInMem extends SmvCDS {
+/** 
+ *  SmvCDSOnRdd is a type of SmvCDS implementation which use the groupByKey
+ *  method of Rdd to create an Iterable[Row] and send to the concrete class'
+ *  eval function to get back an Iterable[Row]. 
+ * 
+ *  SmvCDSOnRdd by itself does not require in memory procession of the
+ *  Iterable[Row]. However the concrete class of it may need to load
+ *  Iterable[Row] to memory.
+ **/
+abstract class SmvCDSOnRdd extends SmvCDS {
 
   def outSchema(inSchema: StructType): StructType
-  def eval(inSchema: StructType): Seq[Row] => Seq[Row]
+  def eval(inSchema: StructType): Iterable[Row] => Iterable[Row]
 
   /**
    * Create the self-joined SRDD 
@@ -77,9 +86,8 @@ abstract class SmvCDSInMem extends SmvCDS {
     val selfJoinedRdd = srdd.
       map{r => (keyO.map{i => r(i)}, r)}.groupByKey.
       map{case (k, rIter) => 
-        val rlist = rIter.toList
-        evalrow(rlist)
-      }.flatMap{r => r}
+        evalrow(rIter)
+      }.flatMap(r => r)
 
     srdd.sqlContext.applySchema(selfJoinedRdd, outS)
   }
@@ -91,7 +99,7 @@ abstract class SmvCDSInMem extends SmvCDS {
  *  Defines a "self-joined" data for further aggregation with this logic
  *  srdd.select(outGroupKeys).distinct.join(srdd, Inner, Option(condition)
  **/
-case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDSInMem {
+case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDSOnRdd {
   require(condition.dataType == BooleanType)
 
   def outSchema(inSchema: StructType) = {
@@ -104,7 +112,7 @@ case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends
     StructType(added ++ renamed)
   }
 
-  def eval(inSchema: StructType): Seq[Row] => Seq[Row] = {
+  def eval(inSchema: StructType): Iterable[Row] => Iterable[Row] = {
     val attr = outSchema(inSchema).fields.map{f => AttributeReference(f.name, f.dataType, f.nullable)()}
     val aOrdinal = outGroupKeys.map{a => inSchema.fields.indexWhere(a.name == _.name)}
     val fPlan= LocalRelation(attr).where(condition).analyze
@@ -112,9 +120,10 @@ case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends
 
     {it =>
       val f = filter
-      val anchors = it.toSeq.map{r => aOrdinal.map{r(_)}}.distinct
+      val itSeq = it.toSeq
+      val anchors = itSeq.map{r => aOrdinal.map{r(_)}}.distinct
       anchors.flatMap{ a => 
-        it.toSeq.map{r => 
+        itSeq.map{r => 
           new GenericRow((a ++ r).toArray)
         }.collect{case r: Row if f.eval(r).asInstanceOf[Boolean] => r}
       }
@@ -149,5 +158,59 @@ object TimeInLastN {
     val condition = (withPrefix <= t &&  withPrefix > t - n)
 
     SmvCDSRange(outGroupKeys, condition)
+  }
+}
+
+/**
+ *  SmvCDSTopRec is a SmvCDS to support smvTopRec(keys)(order) method, which
+ *  logically equivalent to
+ *  
+ *  srdd.orderBy(order).groupBy(keys)(First(f1), First(f2) ...)
+ *  
+ *  But should be a lot more efficient, since the CDS implementation does not
+ *  need sorting the entire Srdd. 
+ *
+ *  TODO: multiple order keys, and multiple output Records - SmvCDSTopNRecs
+ *
+ **/
+case class SmvCDSTopRec(orderKey: SortOrder) extends SmvCDSOnRdd {
+  val outGroupKeys = Nil
+  def outSchema(inSchema: StructType) = inSchema
+
+  private val keyCol = orderKey.child.asInstanceOf[NamedExpression].name
+
+  private val cmpCurrentToTop =  
+    if (orderKey.direction == Ascending) {
+      If(IsNull('top), Literal(true), ('curr < 'top))
+    } else {
+      If(IsNull('top), Literal(true), ('curr > 'top))
+    }
+
+
+
+  def eval(inSchema: StructType): Iterable[Row] => Iterable[Row] = {
+    val ordinal = inSchema.fields.indexWhere(keyCol == _.name)
+    val col = inSchema(keyCol)
+
+    val attr = Seq(
+      AttributeReference("top", col.dataType, true)(),
+      AttributeReference("curr", col.dataType, col.nullable)()
+    )
+    val fPlan= LocalRelation(attr).select(cmpCurrentToTop as 'newtop).analyze
+    val isReplace = BindReferences.bindReference(fPlan.expressions(0), attr)
+
+    {it => 
+      var topVal: Any = null
+      var res: Row = EmptyRow
+      it.map{r =>
+        val v = r(ordinal)
+        if (isReplace.eval(new GenericRow(Array(topVal, v): Array[Any])).asInstanceOf[Boolean]) {
+          topVal = v
+          res = r
+        }
+      }
+      if (res == EmptyRow) Seq()
+      else(Seq(res))
+    }
   }
 }

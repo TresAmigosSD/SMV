@@ -83,6 +83,11 @@ class SmvCDSFunctions(schemaRDD: SchemaRDD){
     pivot_sum(keyCol)(pivotCols: _*)(valueCols: _*)
   }
 
+  /**
+   * Use this version of Pivot Sum if you do know the output column names.
+   * For above example, BaseOutput should be ("5_14_A", "5_14_B",
+   * "6_14_A", "6_14_B")
+   */
   def pivot_sum_knownOutput(keyCols: Symbol*)(pivotCols: Symbol*)(valueCols: Symbol*)(baseOutput: String*): SchemaRDD = {
     val pivotCDS = PivotCDS(Seq(pivotCols), valueCols.map{v => (v, v.name)}, baseOutput)
     val outColSumExprs = valueCols.map {v =>
@@ -93,5 +98,13 @@ class SmvCDSFunctions(schemaRDD: SchemaRDD){
     }.flatten
 
     smvSingleCDSGroupBy(keyCols: _*)(pivotCDS)(outColSumExprs: _*)
+  }
+
+  /**
+   * See SmvCDSTopRec for document 
+   **/
+  def smvTopRec(keys: Symbol*)(order: SortOrder): SchemaRDD = {
+    val cds=SmvCDSTopRec(order)
+    smvApplyCDS(keys: _*)(cds)
   }
 }
