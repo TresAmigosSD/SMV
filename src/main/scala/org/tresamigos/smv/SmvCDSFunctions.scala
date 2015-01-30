@@ -76,18 +76,22 @@ class SmvCDSFunctions(schemaRDD: SchemaRDD){
     */
   def pivot_sum(keyCols: Symbol*)(pivotCols: Symbol*)(valueCols: Symbol*): SchemaRDD = {
     val baseOutputColumnNames = PivotOp.getBaseOutputColumnNames(schemaRDD, Seq(pivotCols)) 
-    val pivotCDS = PivotCDS(Seq(pivotCols), valueCols.map{v => (v, v.name)}, baseOutputColumnNames)
+    pivot_sum_knownOutput(keyCols: _*)(pivotCols: _*)(valueCols: _*)(baseOutputColumnNames: _*)
+  }
+
+  def pivot_sum(keyCol: Symbol, pivotCols: Seq[Symbol], valueCols: Seq[Symbol]) : SchemaRDD = {
+    pivot_sum(keyCol)(pivotCols: _*)(valueCols: _*)
+  }
+
+  def pivot_sum_knownOutput(keyCols: Symbol*)(pivotCols: Symbol*)(valueCols: Symbol*)(baseOutput: String*): SchemaRDD = {
+    val pivotCDS = PivotCDS(Seq(pivotCols), valueCols.map{v => (v, v.name)}, baseOutput)
     val outColSumExprs = valueCols.map {v =>
-      baseOutputColumnNames.map { c =>
+      baseOutput.map { c =>
         val colName = v.name + "_" + c
         Sum(colName.attr) as Symbol(colName)
       }
     }.flatten
 
     smvSingleCDSGroupBy(keyCols: _*)(pivotCDS)(outColSumExprs: _*)
-  }
-
-  def pivot_sum(keyCol: Symbol, pivotCols: Seq[Symbol], valueCols: Seq[Symbol]) : SchemaRDD = {
-    pivot_sum(keyCol)(pivotCols: _*)(valueCols: _*)
   }
 }
