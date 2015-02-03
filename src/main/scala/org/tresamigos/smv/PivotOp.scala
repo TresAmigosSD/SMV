@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.types.StringType
+import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.sql.catalyst.dsl.expressions._
 
 /**
@@ -93,7 +93,8 @@ case class PivotCDS(
       SmvPivotVal(pivotColsExpr)
     }
 
-    origSRDD.generate(Explode(Seq(tempPivotValCol.name), SmvAsArray(arrayExp: _*)), true)
+    origSRDD.selectPlus(SmvAsArray(arrayExp: _*) as tempPivotValCol)
+    //origSRDD.generate(Explode(Seq(tempPivotValCol.name), SmvAsArray(arrayExp: _*)), true)
   }
 
   /**
@@ -113,10 +114,14 @@ case class PivotCDS(
     val createColName = (prefix: String, baseOutCol: String) => prefix + "_" + baseOutCol
     val keyColsExpr = keyCols.map(k => UnresolvedAttribute(k.name))
 
+    val contains: (Seq[Any], Any) => Boolean = { (a, v) =>
+      a.contains(v)
+    }
+
     val outputColExprs = valueColPrefixMap.map {case (valueCol, prefix) =>
       //  Zero filling is replaced by Null filling to handle CountDistinct right 
       baseOutputColumnNames.map { outCol =>
-        SmvIfElseNull(tempPivotValCol === outCol, valueCol) as Symbol(createColName(prefix, outCol))
+        SmvIfElseNull(ScalaUdf(contains, BooleanType, Seq(tempPivotValCol, outCol)), valueCol) as Symbol(createColName(prefix, outCol))
       }
     }.flatten
 

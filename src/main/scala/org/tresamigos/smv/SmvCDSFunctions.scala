@@ -109,7 +109,8 @@ class SmvCDSFunctions(schemaRDD: SchemaRDD){
    **/
   def smvPivotAddKnownOutput(pivotCols: Seq[Symbol]*)(valueCols: Symbol*)(baseOutput: String*): SchemaRDD = {
     val keyCols = schemaRDD.schema.fieldNames.map(n => Symbol(n))
-    smvPivotSumKnownOutput(keyCols: _*)(pivotCols: _*)(valueCols: _*)(baseOutput: _*)
+    val pivotCDS = PivotCDS(pivotCols, valueCols.map{v => (v, v.name)}, baseOutput)
+    smvApplyCDS(keyCols: _*)(pivotCDS)
   }
 
   /**

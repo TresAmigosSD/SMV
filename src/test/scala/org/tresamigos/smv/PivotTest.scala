@@ -192,4 +192,24 @@ class PivotTest extends SparkTestUtil {
       "dist_cnt_v2_y_B"))
   }
 
+  sparkTest("Test smvPivotAddKnownOutput function with pivotColSets") {
+    val ssc = sqlContext; import ssc._
+    val srdd = createSchemaRdd("k1:String; k2:String; p:String; v1:Integer; v2:Float",
+      "1,x,A,10,100.5;" +
+      "1,y,A,10,100.5;" +
+      "1,x,A,20,200.5;" +
+      "1,x,A,10,200.5;" +
+      "1,x,B,50,200.5;" +
+      "2,x,A,60,500")
+
+    val res = srdd.smvPivotAddKnownOutput(Seq('k2), Seq('k2, 'p))('v2)("x", "x_A", "y_B")
+    assertSrddSchemaEqual(res, "k1: String; k2: String; p: String; v1: Integer; v2: Float; v2_x: Float; v2_x_A: Float; v2_y_B: Float")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1,x,A,10,100.5,100.5,100.5,null]",
+      "[1,y,A,10,100.5,null,null,null]",
+      "[1,x,A,20,200.5,200.5,200.5,null]",
+      "[1,x,A,10,200.5,200.5,200.5,null]",
+      "[1,x,B,50,200.5,200.5,null,null]",
+      "[2,x,A,60,500.0,500.0,500.0,null]"))
+  }
 }
