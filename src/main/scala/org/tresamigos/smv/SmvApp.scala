@@ -23,6 +23,7 @@ import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
 import scala.util.Try
+import java.util.Calendar
 
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
@@ -128,8 +129,11 @@ abstract class SmvModule(_description: String) extends SmvDataSet(_description) 
   private[smv] def persist(app: SmvApp, rdd: SchemaRDD) = {
     val filePath = fullPath(app)
     implicit val ca = CsvAttributes.defaultCsvWithHeader
-    if (app.isDevMode)
-      println(s"PERSISTING: ${filePath}")
+    if (app.isDevMode){
+      val fmtObj = new java.text.SimpleDateFormat("HH:mm:ss")
+      val now = fmtObj.format(java.util.Calendar.getInstance().getTime())
+      println(s"${now} PERSISTING: ${filePath}")
+    }
     rdd.saveAsCsvWithSchema(filePath)
   }
 
