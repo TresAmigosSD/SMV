@@ -133,10 +133,10 @@ case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends
 }
 
 /**
- *  SmvCDSRange(outGroupKeys, condition)
+ *  SmvCDSRangeSelfJoin(outGroupKeys, condition)
  *
  *  Defines a "self-joined" data for further aggregation with this logic
- *  srdd.select(outGroupKeys).distinct.join(srdd, Inner, Option(condition)
+ *  srdd.select(keys ++ outGroupKeys).distinct.joinByKey(srdd, Inner,keys).where(condition)
  **/
 case class SmvCDSRangeSelfJoin(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDS {
   require(condition.dataType == BooleanType)
@@ -144,6 +144,7 @@ case class SmvCDSRangeSelfJoin(outGroupKeys: Seq[Symbol], condition: Expression)
   def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]) = {
     val srdd_right = srdd.renameField(outGroupKeys.map{s => s -> Symbol("_" + s.name)}: _*)
     srdd.select((keys ++ outGroupKeys).map{_.attr}: _*).
+      distinct.
       joinByKey(srdd_right, Inner, keys).where(condition)
   }
 }
