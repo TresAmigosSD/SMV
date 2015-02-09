@@ -22,6 +22,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
 import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.dsl.plans._
+import org.apache.spark.sql.catalyst.plans.{Inner}
 
 /**
  * SmvCDS - SMV Custom Data Seletor 
@@ -130,6 +131,23 @@ case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends
     }
   }
 }
+
+/**
+ *  SmvCDSRange(outGroupKeys, condition)
+ *
+ *  Defines a "self-joined" data for further aggregation with this logic
+ *  srdd.select(outGroupKeys).distinct.join(srdd, Inner, Option(condition)
+ **/
+case class SmvCDSRangeSelfJoin(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDS {
+  require(condition.dataType == BooleanType)
+
+  def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]) = {
+    val srdd_right = srdd.renameField(outGroupKeys.map{s => s -> Symbol("_" + s.name)}: _*)
+    srdd.select((keys ++ outGroupKeys).map{_.attr}: _*).
+      joinByKey(srdd_right, Inner, keys).where(condition)
+  }
+}
+
 
 /**
  * TimeInLastNFromAnchor(t, anchor, n)

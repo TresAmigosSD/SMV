@@ -52,6 +52,27 @@ class SmvCDSTest extends SparkTestUtil {
       "[b,MONTHR3,100,1]"))
   }
 
+  sparkTest("Test SmvCDSRangeSelfJoin") {
+    val ssc = sqlContext; import ssc._
+    val srdd = createSchemaRdd("time_type:String;v:String;time_value:Integer", 
+      "k1,a,10;k1,b,100;k2,d,3;k2,c,12")
+
+    val f = {in:Int => in - 3}
+    val cds = SmvCDSRangeSelfJoin(
+      Seq('time_type, 'time_value), 
+      ('_time_value > ScalaUdf(f, IntegerType, Seq('time_value)) && ('_time_value <= 'time_value))
+    )
+    val s2 = srdd.selectMinus('time_type).selectPlus(Literal("MONTHR3") as 'time_type)
+    val res = s2.smvSingleCDSGroupBy('v)(cds)(Count('v) as 'cv)
+    assertSrddSchemaEqual(res, "v: String; time_type: String; time_value: Integer; cv: Long")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[d,MONTHR3,3,1]",
+      "[c,MONTHR3,12,1]",
+      "[a,MONTHR3,10,1]",
+      "[b,MONTHR3,100,1]"))
+  }
+
+
   sparkTest("Test CDS chaining"){
     val ssc = sqlContext; import ssc._
     val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; p: String; v:Double", 
