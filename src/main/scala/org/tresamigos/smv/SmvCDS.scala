@@ -98,7 +98,7 @@ abstract class SmvCDSOnRdd extends SmvCDS {
  *  SmvCDSRange(outGroupKeys, condition)
  *
  *  Defines a "self-joined" data for further aggregation with this logic
- *  srdd.select(outGroupKeys).distinct.join(srdd, Inner, Option(condition)
+ *  srdd.select(keys ++ outGroupKeys).distinct.joinByKey(srdd, Inner,keys).where(condition)
  **/
 case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDSOnRdd {
   require(condition.dataType == BooleanType)
@@ -135,17 +135,34 @@ case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends
 /**
  *  SmvCDSRangeSelfJoin(outGroupKeys, condition)
  *
+ *  The self-join is to handle "panel" data instead of transactional data 
+ *  Here is an example:
+ *  Id  | Month | value
+ *  A   |    1  | 0.1
+ *  B   |    2  | 0.3
+ *
+ *  For panel data, we want to have all the Ids on all the Months, so the
+ *  desire output for a range "in last 3 months" of above data should be
+ *  Id  | Month | _Month |value
+ *  A   |    1  |     1  | 0.1
+ *  A   |    2  |     1  | 0.1
+ *  B   |    2  |     2  | 0.3
+ *
  *  Defines a "self-joined" data for further aggregation with this logic
- *  srdd.select(keys ++ outGroupKeys).distinct.joinByKey(srdd, Inner,keys).where(condition)
+ *  srdd.select(keys).distinct.join(srdd.select(outGroupKeys).distinct).
+ *    join(srdd, Inner, Option(conditionWithKeyMatch))
  **/
 case class SmvCDSRangeSelfJoin(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDS {
   require(condition.dataType == BooleanType)
 
   def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]) = {
-    val srdd_right = srdd.renameField(outGroupKeys.map{s => s -> Symbol("_" + s.name)}: _*)
-    srdd.select((keys ++ outGroupKeys).map{_.attr}: _*).
-      distinct.
-      joinByKey(srdd_right, Inner, keys).where(condition)
+    val srdd_right = srdd.renameField((keys ++ outGroupKeys).map{s => s -> Symbol("_" + s.name)}: _*)
+    val srdd_outGroupKeys = srdd.select(outGroupKeys.map{_.attr}: _*).distinct
+    val srdd_keys = srdd.select(keys.map{_.attr}: _*).distinct
+
+    val condWithKeys = keys.map{l => (l === Symbol("_" + l.name)):Expression}.reduce(_ && _) && condition
+    srdd_keys.join(srdd_outGroupKeys).
+      join(srdd_right, Inner, Option(condWithKeys))
   }
 }
 

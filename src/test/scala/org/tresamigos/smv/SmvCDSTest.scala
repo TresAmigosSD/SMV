@@ -66,6 +66,7 @@ class SmvCDSTest extends SparkTestUtil {
     val res = s2.smvSingleCDSGroupBy('v)(cds)(Count('v) as 'cv)
     assertSrddSchemaEqual(res, "v: String; time_type: String; time_value: Integer; cv: Long")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,MONTHR3,12,1]",
       "[d,MONTHR3,3,1]",
       "[c,MONTHR3,12,1]",
       "[a,MONTHR3,10,1]",
