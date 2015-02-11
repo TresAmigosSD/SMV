@@ -156,13 +156,11 @@ case class SmvCDSRangeSelfJoin(outGroupKeys: Seq[Symbol], condition: Expression)
   require(condition.dataType == BooleanType)
 
   def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]) = {
-    val srdd_right = srdd.renameField((keys ++ outGroupKeys).map{s => s -> Symbol("_" + s.name)}: _*)
-    val srdd_outGroupKeys = srdd.select(outGroupKeys.map{_.attr}: _*).distinct
-    val srdd_keys = srdd.select(keys.map{_.attr}: _*).distinct
+    val srdd_right = srdd.renameField(outGroupKeys.map{s => s -> Symbol("_" + s.name)}: _*)
+    val srdd_outGroupKeys = srdd.select(outGroupKeys.map{_.attr}: _*).distinct(2)
 
-    val condWithKeys = keys.map{l => (l === Symbol("_" + l.name)):Expression}.reduce(_ && _) && condition
-    srdd_keys.join(srdd_outGroupKeys).
-      join(srdd_right, Inner, Option(condWithKeys))
+    srdd_outGroupKeys.
+      join(srdd_right, Inner, Option(condition))
   }
 }
 
@@ -217,30 +215,22 @@ case class SmvCDSTopRec(orderKey: SortOrder) extends SmvCDSOnRdd {
 
   private val cmpCurrentToTop =  
     if (orderKey.direction == Ascending) {
-      If(IsNull('top), Literal(true), ('curr < 'top))
+      1
     } else {
-      If(IsNull('top), Literal(true), ('curr > 'top))
+      -1
     }
-
-
 
   def eval(inSchema: StructType): Iterable[Row] => Iterable[Row] = {
     val ordinal = inSchema.fields.indexWhere(keyCol == _.name)
     val col = inSchema(keyCol)
-
-    val attr = Seq(
-      AttributeReference("top", col.dataType, true)(),
-      AttributeReference("curr", col.dataType, col.nullable)()
-    )
-    val fPlan= LocalRelation(attr).select(cmpCurrentToTop as 'newtop).analyze
-    val isReplace = BindReferences.bindReference(fPlan.expressions(0), attr)
+    val ordering = SchemaEntry(col).asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
 
     {it => 
       var topVal: Any = null
       var res: Row = EmptyRow
       it.map{r =>
         val v = r(ordinal)
-        if (isReplace.eval(new GenericRow(Array(topVal, v): Array[Any])).asInstanceOf[Boolean]) {
+        if (v != null && (topVal == null || ordering.compare(v, topVal) * cmpCurrentToTop < 0)) {
           topVal = v
           res = r
         }

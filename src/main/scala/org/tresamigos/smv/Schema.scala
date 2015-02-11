@@ -31,13 +31,18 @@ abstract class SchemaEntry extends java.io.Serializable {
   override def toString = structField.name + ": " + typeName
 }
 
-abstract class NumericSchemaEntry extends SchemaEntry {
+abstract class NativeSchemaEntry extends SchemaEntry {
   private[smv] type JvmType
+  private[smv] val ordering: Ordering[JvmType]
+}
+
+abstract class NumericSchemaEntry extends NativeSchemaEntry {
   private[smv] val numeric: Numeric[JvmType]
 }
 
 case class DoubleSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] type JvmType = Double
+  private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Double]]
   override val zeroVal = Literal(0.0)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toDouble
@@ -47,6 +52,7 @@ case class DoubleSchemaEntry(name: String) extends NumericSchemaEntry {
 
 case class FloatSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] type JvmType = Float
+  private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Float]]
   override val zeroVal = Literal(0.0f)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toFloat
@@ -56,6 +62,7 @@ case class FloatSchemaEntry(name: String) extends NumericSchemaEntry {
 
 case class IntegerSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] type JvmType = Int
+  private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Int]]
   override val zeroVal = Literal(0)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toInt
@@ -65,6 +72,7 @@ case class IntegerSchemaEntry(name: String) extends NumericSchemaEntry {
 
 case class LongSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] type JvmType = Long
+  private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Long]]
   override val zeroVal = Literal(0l)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toLong
@@ -72,25 +80,33 @@ case class LongSchemaEntry(name: String) extends NumericSchemaEntry {
   val structField = StructField(name, LongType, true)
 }
 
-case class BooleanSchemaEntry(name: String) extends SchemaEntry {
+case class BooleanSchemaEntry(name: String) extends NativeSchemaEntry {
+  private[smv] type JvmType = Boolean
+  private[smv] val ordering = implicitly[Ordering[JvmType]]
   override val zeroVal = Literal(false)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toBoolean
   override val typeName = "Boolean"
   val structField = StructField(name, BooleanType, true)
 }
 
-case class StringSchemaEntry(name: String) extends SchemaEntry {
+case class StringSchemaEntry(name: String) extends NativeSchemaEntry {
+  private[smv] type JvmType = String
+  private[smv] val ordering = implicitly[Ordering[JvmType]]
   override val zeroVal = Literal("")
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s
   override val typeName = "String"
   val structField = StructField(name, StringType, true)
 }
 
-case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss.S") extends SchemaEntry {
+case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss.S") extends NativeSchemaEntry {
   /**
    * The Default format should match the default "toString" format of
    * java.sql.Timestamp
    */ 
+  private[smv] type JvmType = java.sql.Timestamp
+  private[smv] val ordering = new Ordering[JvmType] {
+    def compare(x: java.sql.Timestamp, y: java.sql.Timestamp) = x.compareTo(y)
+  }
   override val zeroVal = Literal("") // TODO: should pick an epoch date instead.
   // @transient val fmtObj = new java.text.SimpleDateFormat(fmt)
   val fmtObj = new java.text.SimpleDateFormat(fmt)
@@ -225,6 +241,10 @@ object SchemaEntry {
           SchemaEntry("valType", valType))
       case _ => throw new IllegalArgumentException(s"unknown type: ${dataType.toString}")
     }
+  }
+
+  def apply(structField: StructField) : SchemaEntry = {
+    SchemaEntry(structField.name, structField.dataType)
   }
 
   def apply(nameAndType: String) : SchemaEntry = {

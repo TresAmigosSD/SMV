@@ -311,6 +311,10 @@ private[smv] class SmvModuleDependencyGraph(val startMod: SmvModule, val app: Sm
   /** quoted/clean name in graph output */
   private def q(ds: SmvDataSet) = "\"" + ds.name.stripPrefix(packagesPrefix) + "\""
 
+  private def moduleStyles() = {
+    allModules.map(m => s"  ${q(m)} " + "[tooltip=\"" + s"${m.description}" + "\"]")
+  }
+
   private def fileStyles() = {
     allFiles.map(f => s"  ${q(f)} " + "[shape=box, color=\"pink\"]")
   }
@@ -322,10 +326,11 @@ private[smv] class SmvModuleDependencyGraph(val startMod: SmvModule, val app: Sm
   private def generateGraphvisCode() = {
     Seq(
       "digraph G {",
-      "  rankdir=\"LR\";",
+      "  rankdir=\"TB\";",
       "  node [style=filled,color=\"lightblue\"]") ++
       fileStyles() ++
       filesRank() ++
+      moduleStyles() ++
       graph.flatMap{case (k,vs) => vs.map(v => s"""  ${q(v)} -> ${q(k)} """ )} ++
       Seq("}")
   }
