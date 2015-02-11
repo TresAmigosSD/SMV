@@ -135,6 +135,8 @@ case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends
 /**
  *  SmvCDSRangeSelfJoin(outGroupKeys, condition)
  *
+ *  TODO: This CDS is not generic enough to be in SMV core. Should be moved.
+ *
  *  The self-join is to handle "panel" data instead of transactional data 
  *  Here is an example:
  *  Id  | Month | value
