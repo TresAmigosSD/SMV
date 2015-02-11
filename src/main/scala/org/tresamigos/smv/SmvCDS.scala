@@ -155,12 +155,47 @@ case class SmvCDSRange(outGroupKeys: Seq[Symbol], condition: Expression) extends
 case class SmvCDSRangeSelfJoin(outGroupKeys: Seq[Symbol], condition: Expression) extends SmvCDS {
   require(condition.dataType == BooleanType)
 
-  def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]) = {
-    val srdd_right = srdd.renameField(outGroupKeys.map{s => s -> Symbol("_" + s.name)}: _*)
-    val srdd_outGroupKeys = srdd.select(outGroupKeys.map{_.attr}: _*).distinct(2)
+  def outSchema(inSchema: StructType) = {
+    val renamed = inSchema.fields.map{f => 
+      if (outGroupKeys.map{_.name}.contains(f.name)) StructField("_" + f.name, f.dataType, f.nullable)
+      else f
+    }
+    val added = outGroupKeys.collect{case a if(inSchema.fields.map{_.name}.contains(a.name)) => inSchema(a.name)}
+    StructType(added ++ renamed)
+  }
 
-    srdd_outGroupKeys.
-      join(srdd_right, Inner, Option(condition))
+  def eval(inSchema: StructType, anchors: Seq[Row]): Iterable[Row] => Iterable[Row] = {
+    val attr = outSchema(inSchema).fields.map{f => AttributeReference(f.name, f.dataType, f.nullable)()}
+    val aOrdinal = outGroupKeys.map{a => inSchema.fields.indexWhere(a.name == _.name)}
+    val fPlan= LocalRelation(attr).where(condition).analyze
+    val filter = BindReferences.bindReference(fPlan.expressions(0), attr)
+
+    {it =>
+      val f = filter
+      val itSeq = it.toSeq
+      anchors.flatMap{ a => 
+        itSeq.map{r => 
+          new GenericRow((a ++ r).toArray)
+        }.collect{case r: Row if f.eval(r).asInstanceOf[Boolean] => r}
+      }
+    }
+  }
+
+  def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]): SchemaRDD = {
+    def names = srdd.schema.fieldNames
+    val keyO = keys.map{s => names.indexWhere(s.name == _)}
+    val outGroupKeyArray = srdd.select(outGroupKeys.map{_.attr}: _*).distinct(1).collect
+
+    val evalrow = eval(srdd.schema, outGroupKeyArray.toSeq)
+    val outS = outSchema(srdd.schema)
+
+    val selfJoinedRdd = srdd.
+      map{r => (keyO.map{i => r(i)}, r)}.groupByKey.
+      map{case (k, rIter) => 
+        evalrow(rIter)
+      }.flatMap(r => r)
+
+    srdd.sqlContext.applySchema(selfJoinedRdd, outS)
   }
 }
 
