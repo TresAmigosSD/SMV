@@ -68,11 +68,46 @@ class EDD(srdd: SchemaRDD,
             DateHistogram(s),
             HourHistogram(s)
           )
+          case StringType => Seq(
+            StringBase(s),
+            StringDistinctCount(s)
+          )
+        }
+      }.flatMap{a=>a}
+    this
+  }
+
+  /** Add DataQA tasks 
+   * 
+   * All base tasks for compare different version of data
+   * 
+   * Should be only used by SmvApp. User should use addBasesTasks for analysis
+   * and reporting 
+   *
+   * @param list the Set of Symbols BASE tasks will be created on
+   *        if empty will use all fields in this SchemaRDD
+   * @return this EDD
+   */
+  private def addDataQATasks(list: Symbol* ): EDD = {
+    val listSeq =
+      if (list.isEmpty)
+        srdd.schema.fieldNames.map(Symbol(_))
+      else
+        list.toSet.toSeq
+
+    tasks ++=
+      listSeq.map{ l =>
+        val s =srdd.sqlContext.symbolToUnresolvedAttribute(l)
+        srdd.schema(l.name).dataType match {
+          case _: NumericType => Seq(NumericBase(s))
+          case BooleanType => Seq(BooleanHistogram(s))
+          case TimestampType => Seq(TimeBase(s))
           case StringType => Seq(StringBase(s))
         }
       }.flatMap{a=>a}
     this
   }
+
 
   /** Add Histogram tasks 
    * 

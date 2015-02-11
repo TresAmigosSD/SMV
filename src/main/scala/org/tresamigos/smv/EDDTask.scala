@@ -20,6 +20,7 @@ import org.apache.spark.sql.catalyst.types._
 abstract class EDDTask extends java.io.Serializable {
   def aggList: Seq[Alias]
   def report(it: Iterator[Any]): Seq[String]
+  def reportJSON(it: Iterator[Any]): String
 
   protected def buildHistReport (
     name: String, 
@@ -39,8 +40,10 @@ abstract class EDDTask extends java.io.Serializable {
       out +
       "\n-------------------------------------------------" 
   }
+  protected def buildHistJSON( hist: Map[_ <: Any,Long] ): String = 
+    "{" + hist.map{ case (k, c) => s""""$k":$c""" }.mkString(",") + "}"
 }
-   
+
 sealed trait StringTask extends EDDTask
 sealed trait NumericTask extends EDDTask
 sealed trait TimeTask extends EDDTask
@@ -60,6 +63,13 @@ case class NumericBase(expr: NamedExpression) extends EDDTask with NumericTask{
     f"${expr.name}%-20s Min:                   ${i.next}%s",
     f"${expr.name}%-20s Max:                   ${i.next}%s"
   )
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "NumericBase", "data":{""" +
+    s""""cnt": ${i.next},""" +
+    s""""avg": ${i.next},""" +
+    s""""std": ${i.next},""" +
+    s""""min": ${i.next},""" +
+    s""""max": ${i.next}}}"""
 }
 
 case class AmountHistogram(expr: NamedExpression) extends EDDTask with NumericTask{
@@ -70,6 +80,9 @@ case class AmountHistogram(expr: NamedExpression) extends EDDTask with NumericTa
     buildHistReport(expr.name + " as AMOUNT", 
       i.next.asInstanceOf[Map[Double,Long]].toSeq.sortBy( _._1 ))
   )
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "AmountHistogram", "data":{""" +
+    buildHistJSON(i.next.asInstanceOf[Map[Double,Long]]) + "}"
 }
 
 case class NumericHistogram(expr: NamedExpression, min: Double, max: Double, n: Int) extends EDDTask with NumericTask {
@@ -80,6 +93,9 @@ case class NumericHistogram(expr: NamedExpression, min: Double, max: Double, n: 
     buildHistReport(expr.name + s" with $n fixed BINs",
       i.next.asInstanceOf[Map[Double,Long]].toSeq.sortBy( _._1 ))
   )
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "NumericHistogram", "data":{""" +
+    buildHistJSON(i.next.asInstanceOf[Map[Double,Long]]) + "}"
 }
 
 case class BinNumericHistogram(expr: NamedExpression, bin: Double) extends EDDTask with NumericTask {
@@ -90,6 +106,9 @@ case class BinNumericHistogram(expr: NamedExpression, bin: Double) extends EDDTa
     buildHistReport(expr.name + s" with BIN size $bin", 
       i.next.asInstanceOf[Map[Double,Long]].toSeq.sortBy( _._1 ))
   )
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "BinNumericHistogram", "data":{""" +
+    buildHistJSON(i.next.asInstanceOf[Map[Double,Long]]) + "}"
 }
 
 case class TimeBase(expr: NamedExpression) extends EDDTask with TimeTask {
@@ -101,6 +120,11 @@ case class TimeBase(expr: NamedExpression) extends EDDTask with TimeTask {
     f"${expr.name}%-20s Min:                   ${i.next}%s",
     f"${expr.name}%-20s Max:                   ${i.next}%s"
   )
+
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "TimeBase", "data":{""" +
+    s""""min": ${i.next},""" +
+    s""""max": ${i.next}}}"""
 }
 
 case class DateHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
@@ -117,6 +141,13 @@ case class DateHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
     buildHistReport(expr.name + "'s DAY OF WEEK", 
       i.next.asInstanceOf[Map[String,Long]].toSeq.sortBy( _._1 ))
   )
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "DateHistogramYear", "data":""" +
+    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}," +
+    s"""{"var":"${expr.name}", "task": "DateHistogramMonth", "data":""" +
+    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}," +
+    s"""{"var":"${expr.name}", "task": "DateHistogramDOW", "data":""" +
+    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}"
 }
 
 case class HourHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
@@ -127,6 +158,9 @@ case class HourHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
     buildHistReport(expr.name + "'s HOUR", 
       i.next.asInstanceOf[Map[String,Long]].toSeq.sortBy( _._1 ))
   )
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "HourHistogram", "data":""" +
+    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}"
 }
 
 case class BooleanHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
@@ -137,24 +171,43 @@ case class BooleanHistogram(expr: NamedExpression) extends EDDTask with TimeTask
     buildHistReport(expr.name, 
       i.next.asInstanceOf[Map[Boolean,Long]].toSeq.sortBy( _._1 ))
   )
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "BooleanHistogram", "data":""" +
+    buildHistJSON(i.next.asInstanceOf[Map[BooleanHistogram,Long]]) + "}"
 }
 
 case class StringBase(expr: NamedExpression) extends EDDTask with StringTask {
   override def aggList = {
-    val relativeSD = 0.01 //Instead of using 0.05 as default
     Seq(
       Alias(Count(expr),                             expr.name + "_cnt")(),
-      Alias(ApproxCountDistinct(expr, relativeSD),   expr.name + "_dct")(),
       Alias(Min(LENGTH(expr)),                       expr.name + "_mil")(),
       Alias(Max(LENGTH(expr)),                       expr.name + "_mal")()
     )
   }
   override def report(i: Iterator[Any]): Seq[String] = Seq(
     f"${expr.name}%-20s Non-Null Count:        ${i.next}%s",
-    f"${expr.name}%-20s Approx Distinct Count: ${i.next}%s",
     f"${expr.name}%-20s Min Length:            ${i.next}%s",
     f"${expr.name}%-20s Max Length:            ${i.next}%s"
   )
+
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "StringBase", "data":{""" +
+    s""""cnt": ${i.next},""" +
+    s""""mil": ${i.next},""" +
+    s""""mal": ${i.next}}}"""
+}
+
+case class StringDistinctCount(expr: NamedExpression) extends EDDTask with StringTask {
+  override def aggList = {
+    val relativeSD = 0.01 //Instead of using 0.05 as default
+    Seq(
+      Alias(ApproxCountDistinct(expr, relativeSD),   expr.name + "_dct")()
+    )
+  }
+  override def report(i: Iterator[Any]): Seq[String] = Seq(
+    f"${expr.name}%-20s Approx Distinct Count: ${i.next}%s"
+  )
+  override def reportJSON(i: Iterator[Any]): String = throw new UnsupportedOperationException
 }
 
 case class StringLengthHistogram(expr: NamedExpression) extends EDDTask with StringTask {
@@ -165,6 +218,9 @@ case class StringLengthHistogram(expr: NamedExpression) extends EDDTask with Str
     buildHistReport(expr.name + " Length", 
       i.next.asInstanceOf[Map[Int,Long]].toSeq.sortBy( _._1 ))
   )
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "StringLengthHistogram", "data":""" +
+    buildHistJSON(i.next.asInstanceOf[Map[Int,Long]]) + "}"
 }
 
 case class StringByKeyHistogram(expr: NamedExpression) extends EDDTask with StringTask {
@@ -175,6 +231,9 @@ case class StringByKeyHistogram(expr: NamedExpression) extends EDDTask with Stri
     buildHistReport(expr.name + " sorted by KEY", 
       i.next.asInstanceOf[Map[String,Long]].toSeq.sortBy( _._1 ))
   )
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "StringByKeyHistogram", "data":""" +
+    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}"
 }
 
 case class StringByFreqHistogram(expr: NamedExpression) extends EDDTask with StringTask {
@@ -185,6 +244,9 @@ case class StringByFreqHistogram(expr: NamedExpression) extends EDDTask with Str
     buildHistReport(expr.name + " sorted by Population", 
       i.next.asInstanceOf[Map[String,Long]].toSeq.sortBy( - _._2 ))
   )
+  override def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "StringByFreqHistogram", "data":""" +
+    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}"
 }
 
 case class GroupPopulationKey(expr: NamedExpression) extends EDDTask {
@@ -194,6 +256,7 @@ case class GroupPopulationKey(expr: NamedExpression) extends EDDTask {
   override def report(i: Iterator[Any]): Seq[String] = Seq(
     f"${expr.name}%-20s as Population Key =    ${i.next}%s"
   )
+  override def reportJSON(i: Iterator[Any]): String = throw new UnsupportedOperationException
 }
 
 case object GroupPopulationCount extends EDDTask {
@@ -203,5 +266,6 @@ case object GroupPopulationCount extends EDDTask {
   override def report(i: Iterator[Any]): Seq[String] = Seq(
     f"Total Record Count:                        ${i.next}%s"
   )
+  override def reportJSON(i: Iterator[Any]): String = throw new UnsupportedOperationException
 }
 
