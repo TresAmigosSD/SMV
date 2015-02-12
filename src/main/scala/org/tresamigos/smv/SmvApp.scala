@@ -178,7 +178,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   def getModulePackages() : Seq[String] = Seq.empty
 
   /** sequence of ALL known modules.  Those discovered in packages. */
-  private def allModules(): Seq[SmvDataSet] = {
+  private[smv] def allModules(): Seq[SmvDataSet] = {
     getModulePackages.map(modulesInPackage).flatten
   }
 
@@ -227,9 +227,32 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
       toSeq
   }
 
+  /** find a common prefix to all module names. */
+  private def findCommonPrefix(prefix: String, allModuleNames: Seq[String]): String = {
+    if (prefix.size == 0)
+      ""
+    else
+      if (allModuleNames.forall(m => m.startsWith(prefix)))
+        prefix
+      else
+        findCommonPrefix(prefix.split('.').dropRight(1).mkString("."), allModuleNames)
+  }
+
+  private def allMNames = allModules.map(_.name()).toSet.toSeq
+  private[smv] lazy val packagesPrefix = findCommonPrefix(allMNames(0), allMNames) + "."
+
+  /** clean name in graph output */
+  private[smv] def moduleNameForPrint(ds: SmvDataSet) = ds.name.stripPrefix(packagesPrefix) 
+
+
   private def genDotGraph(module: SmvModule) = {
     val pathName = s"${module.name}.dot"
     new SmvModuleDependencyGraph(module, this).saveToFile(pathName)
+  }
+
+  private def genJSON = {
+    val pathName = s"${appName}.json"
+    new SmvModuleJSON(this).saveToFile(pathName)
   }
 
   /**
@@ -237,6 +260,10 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
    * to determine which modules should be run/graphed/etc.
    */
   def run() = {
+    if (cmdLineArgsConf.json()) {
+      genJSON
+    }
+
     cmdLineArgsConf.modules().foreach { module =>
       val modObject = moduleNametoObject(module)
 
@@ -264,9 +291,34 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val graph = toggle("graph", default=Some(false),
     descrYes="generate a dependency graph of the given modules (modules are not run)",
     descrNo="do not generate a dependency graph")
+  val json = toggle("json", default=Some(false),
+    descrYes="generate a json object to represent entire app's module dependency (modules are not run)",
+    descrNo="do not generate a json")
   val modules = trailArg[List[String]](descr="FQN of modules to run/graph")
 }
 
+private[smv] class SmvModuleJSON(val app: SmvApp) {
+  private def allModules = app.allModules
+  private def allFiles = allModules.flatMap(m => m.requiresDS().filter(v => v.isInstanceOf[SmvFile]))
+
+  private def printName(m: SmvDataSet) = app.moduleNameForPrint(m)
+
+  def generateJSON() = {
+    "{\n" +
+    allModules.map{m => 
+      s"""  "${printName(m)}": {""" + "\n" +
+      s"""    "version": ${m.versionSum()},""" + "\n" +
+      s"""    "dependents": [""" + m.requiresDS().map{v => s""""${printName(v)}""""}.mkString(",") + "]}"
+    }.mkString(",\n") +
+    "}"
+  }
+
+  def saveToFile(filePath: String) = {
+    val pw = new PrintWriter(new File(filePath))
+    pw.println(generateJSON())
+    pw.close()
+  }
+}
 /**
  * contains the module level dependency graph starting at the given startNode.
  * All prefixes given in packagePrefixes are removed from the output module/file name
@@ -290,26 +342,11 @@ private[smv] class SmvModuleDependencyGraph(val startMod: SmvModule, val app: Sm
     addDependencyEdges(startMod, startMod.requiresDS(), Map())
   }
 
-  private lazy val allFiles = graph.values.flatMap(vs => vs.filter(v => v.isInstanceOf[SmvFile]))
-  private lazy val allModules = graph.flatMap(kv => (Seq(kv._1) ++ kv._2).filter(v => v.isInstanceOf[SmvModule]))
-
-  /** creates a sequence of all module names (both key and value) */
-  private lazy val allModuleNames = allModules.map(_.name()).toSet
-
-  /** find a common prefix to all module names. */
-  private def findCommonPrefix(prefix: String): String = {
-    if (prefix.size == 0)
-      ""
-    else
-      if (allModuleNames.forall(m => m.startsWith(prefix)))
-        prefix
-      else
-        findCommonPrefix(prefix.split('.').dropRight(1).mkString("."))
-  }
-  private[smv] lazy val packagesPrefix = findCommonPrefix(allModuleNames.toSeq(0)) + "."
+  private lazy val allFiles = graph.values.flatMap(vs => vs.filter(v => v.isInstanceOf[SmvFile])).toSet.toSeq
+  private lazy val allModules = graph.flatMap(kv => (Seq(kv._1) ++ kv._2).filter(v => v.isInstanceOf[SmvModule])).toSet.toSeq
 
   /** quoted/clean name in graph output */
-  private def q(ds: SmvDataSet) = "\"" + ds.name.stripPrefix(packagesPrefix) + "\""
+  private def q(ds: SmvDataSet) = "\"" + app.moduleNameForPrint(ds) + "\""
 
   private def moduleStyles() = {
     allModules.map(m => s"  ${q(m)} " + "[tooltip=\"" + s"${m.description}" + "\"]")

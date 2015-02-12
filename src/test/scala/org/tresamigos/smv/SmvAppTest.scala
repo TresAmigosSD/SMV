@@ -124,12 +124,27 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test modulesInPackage method.") {
-    object app extends SmvApp("test modulesInPackage", Seq("None"), Option(sc))
+    object app extends SmvApp("test modulesInPackage", Seq("None"), Option(sc)) {
+      override def getModulePackages() = Seq(
+        "org.tresamigos.smv.smvAppTestPackage"
+      )
+    }
 
     val mods: Seq[SmvModule] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPackage")
     assertUnorderedSeqEqual(mods,
       Seq(org.tresamigos.smv.smvAppTestPackage.X, org.tresamigos.smv.smvAppTestPackage.Y))(
       Ordering.by[SmvModule, String](_.name))
+    assert(app.moduleNameForPrint(org.tresamigos.smv.smvAppTestPackage.X) === "X")
+
+    val app2JSON = new SmvModuleJSON(app)
+    val expect = """{
+  "X": {
+    "version": 0,
+    "dependents": []},
+  "Y": {
+    "version": 0,
+    "dependents": ["X"]}}"""
+    assert(app2JSON.generateJSON === expect)
   }
 
   sparkTest("Test dependency graph creation.") {
@@ -144,7 +159,6 @@ class SmvAppTest extends SparkTestUtil {
     assert(edges(A) === Seq(fx))
     assert(edges(B) === Seq(A))
     assert(edges(C) === Seq(A,B))
-    assert(depGraph.packagesPrefix === "org.tresamigos.smv.")
   }
 }
 }
