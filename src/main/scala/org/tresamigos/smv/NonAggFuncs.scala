@@ -196,6 +196,15 @@ case class SmvDayOfWeek(child: Expression) extends UnaryFuncs[java.sql.Timestamp
   }
 }
 
+case class SmvHour(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
+  override def toString = s"SmvHour( $child )"
+  def dataType = IntegerType
+  def func(ts:java.sql.Timestamp): Int = {
+    val fmtObj=new java.text.SimpleDateFormat("HH")
+    fmtObj.format(ts).toInt
+  }
+}
+
 case class YEAR(child: Expression) extends UnaryFuncs[java.sql.Timestamp] {
   override def toString = s"YEAR( $child )"
   def dataType = StringType

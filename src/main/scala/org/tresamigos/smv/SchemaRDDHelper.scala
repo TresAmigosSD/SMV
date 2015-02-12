@@ -46,6 +46,18 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   }
 
   /**
+   * Save 4 files *.csv, *.schema, *.edd.csv, and *.edd.schema
+   **/
+  def saveAsCsvWithSchemaAndEdd(dataPath: String)(implicit ca: CsvAttributes) {
+
+    val dataQAedd = schemaRDD.edd.addDataQATasks().toSchemaRDD
+
+    dataQAedd.saveAsCsvWithSchema(EDD.dataPathToEddPath(dataPath))
+    saveAsCsvWithSchema(dataPath)
+  }
+
+
+  /**
    * Dump the schema and data of given srdd to screen for debugging purposes.
    * TODO: add debug flag to turn on/off this method.  Hmm, I think adding a flag would encourage people to leave this in code :-)
    */

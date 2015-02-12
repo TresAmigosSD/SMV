@@ -18,16 +18,46 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types._
 
 abstract class EDDTask extends java.io.Serializable {
+  val expr: NamedExpression
+  val taskName: String
   def aggList: Seq[Alias]
   def report(it: Iterator[Any]): Seq[String]
   def reportJSON(it: Iterator[Any]): String
+}
 
-  protected def buildHistReport (
-    name: String, 
-    hist: Seq[(Any,Long)]
-  ) = {
-    val csum = hist.scanLeft(0l){(c,m)=>c+m._2}.tail
-    val total = csum(csum.size-1)
+abstract class BaseTask extends EDDTask {
+  val exprList: Seq[Expression]
+  val nameList: Seq[String]
+  val dscrList: Seq[String]
+
+  def aggList = exprList.zip(nameList).map{ case (e, n) => 
+    Alias(e, expr.name + "_" + n)()
+  }
+
+  def report(i: Iterator[Any]): Seq[String] = dscrList.map{ d =>
+    f"${expr.name}%-20s ${d}%-22s ${i.next}%s"
+  }
+
+  def reportJSON(i: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "${taskName}", "data":{""" +
+    nameList.map{ n => s""""${n}": ${i.next}""" }.mkString(",") + "}}"
+}
+
+abstract class HistogramTask extends EDDTask {
+  val reportDisc: String
+  val keyType: SchemaEntry
+  def isSortByValue: Boolean = false
+
+  def report(it: Iterator[Any]): Seq[String] = {
+    val ordering = keyType.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
+    val rec = it.next.asInstanceOf[Map[Any,Long]].toSeq
+    val hist = if(isSortByValue) 
+        rec.sortWith((l, r) => l._2 > r._2)
+      else
+        rec.sortWith((l, r) => ordering.compare( l._1,  r._1) < 0)
+
+    val csum = hist.scanLeft(0l){(c,m) => c + m._2}.tail
+    val total = csum(csum.size - 1)
     val out = (hist zip csum).map{
       case ((k,c), sum) =>
         val pct = c.toDouble/total*100
@@ -35,237 +65,180 @@ abstract class EDDTask extends java.io.Serializable {
         f"$k%-20s$c%10d$pct%8.2f%%$sum%12d$cpct%8.2f%%"
     }.mkString("\n")
 
-    s"Histogram of $name\n" + 
+    Seq(s"Histogram of ${expr.name}: $reportDisc\n" + 
       "key                      count      Pct    cumCount   cumPct\n" +
       out +
-      "\n-------------------------------------------------" 
+      "\n-------------------------------------------------")
   }
-  protected def buildHistJSON( hist: Map[_ <: Any,Long] ): String = 
-    "{" + hist.map{ case (k, c) => s""""$k":$c""" }.mkString(",") + "}"
+ 
+  def reportJSON(it: Iterator[Any]): String = 
+    s"""{"var":"${expr.name}", "task": "${taskName}", "data":{""" +
+    it.next.asInstanceOf[Map[Any,Long]].map{
+      case (k, c) => s""""$k":$c"""
+    }.mkString(",") + "}}"
 }
 
-sealed trait StringTask extends EDDTask
-sealed trait NumericTask extends EDDTask
-sealed trait TimeTask extends EDDTask
-
-case class NumericBase(expr: NamedExpression) extends EDDTask with NumericTask{
-  override def aggList = Seq(
-    Alias(Count(expr),                 expr.name + "_cnt")(),
-    Alias(OnlineAverage(expr),         expr.name + "_avg")(),
-    Alias(OnlineStdDev(expr),          expr.name + "_std")(),
-    Alias(Min(expr),                   expr.name + "_min")(),
-    Alias(Max(expr),                   expr.name + "_max")()
-  )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    f"${expr.name}%-20s Non-Null Count:        ${i.next}%s",
-    f"${expr.name}%-20s Average:               ${i.next}%s",
-    f"${expr.name}%-20s Standard Deviation:    ${i.next}%s",
-    f"${expr.name}%-20s Min:                   ${i.next}%s",
-    f"${expr.name}%-20s Max:                   ${i.next}%s"
-  )
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "NumericBase", "data":{""" +
-    s""""cnt": ${i.next},""" +
-    s""""avg": ${i.next},""" +
-    s""""std": ${i.next},""" +
-    s""""min": ${i.next},""" +
-    s""""max": ${i.next}}}"""
+case class NumericBase(expr: NamedExpression) extends BaseTask {
+  val taskName = "NumericBase"
+  val exprList = Seq(Count(expr), OnlineAverage(expr), OnlineStdDev(expr), Min(expr), Max(expr))
+  val nameList = Seq("cnt", "avg", "std", "min", "max")
+  val dscrList = Seq("Non-Null Count:", "Average:", "Standard Deviation:", "Min:", "Max:")
 }
 
-case class AmountHistogram(expr: NamedExpression) extends EDDTask with NumericTask{
-  override def aggList = Seq(
-    Alias(Histogram(AmountBin(Cast(expr, DoubleType))),  expr.name + "_amt")()
-  )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    buildHistReport(expr.name + " as AMOUNT", 
-      i.next.asInstanceOf[Map[Double,Long]].toSeq.sortBy( _._1 ))
-  )
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "AmountHistogram", "data":{""" +
-    buildHistJSON(i.next.asInstanceOf[Map[Double,Long]]) + "}"
+case class TimeBase(expr: NamedExpression) extends BaseTask {
+  val taskName = "TimeBase"
+  val exprList = Seq(Min(expr), Max(expr))
+  val nameList = Seq("min", "max")
+  val dscrList = Seq("Min:", "Max:")
 }
 
-case class NumericHistogram(expr: NamedExpression, min: Double, max: Double, n: Int) extends EDDTask with NumericTask {
-  override def aggList = Seq(
-    Alias(Histogram(NumericBin(Cast(expr, DoubleType), min, max, n)),     expr.name + "_nhi")()
-  )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    buildHistReport(expr.name + s" with $n fixed BINs",
-      i.next.asInstanceOf[Map[Double,Long]].toSeq.sortBy( _._1 ))
-  )
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "NumericHistogram", "data":{""" +
-    buildHistJSON(i.next.asInstanceOf[Map[Double,Long]]) + "}"
+case class StringBase(expr: NamedExpression) extends BaseTask {
+  val taskName = "StringBase"
+  val exprList = Seq(Count(expr), Min(LENGTH(expr)), Max(LENGTH(expr)))
+  val nameList = Seq("cnt", "mil", "mal")
+  val dscrList = Seq("Non-Null Count:", "Min Length:", "Max Length:")
 }
 
-case class BinNumericHistogram(expr: NamedExpression, bin: Double) extends EDDTask with NumericTask {
-  override def aggList = Seq(
+case class StringDistinctCount(expr: NamedExpression) extends BaseTask {
+  val taskName = "StringDistinctCount"
+  private val relativeSD = 0.01 //Instead of using 0.05 as default
+  val exprList = Seq(ApproxCountDistinct(expr, relativeSD))
+  val nameList = Seq("dct")
+  val dscrList = Seq("Approx Distinct Count:")
+}
+
+
+case class AmountHistogram(expr: NamedExpression) extends HistogramTask {
+  val name = expr.name + "_amt"
+  val taskName = "AmountHistogram"
+  val reportDisc = "as Amount"
+  def aggList = Seq(
+    Alias(Histogram(AmountBin(Cast(expr, DoubleType))),  name)()
+  )
+  val keyType = SchemaEntry(name, DoubleType)
+}
+
+case class NumericHistogram(expr: NamedExpression, min: Double, max: Double, n: Int) extends HistogramTask {
+  val name = expr.name + "_nhi"
+  val taskName = "NumericHistogram"
+  val reportDisc = s"with $n fixed BINs"
+  def aggList = Seq(
+    Alias(Histogram(NumericBin(Cast(expr, DoubleType), min, max, n)),     name)()
+  )
+  val keyType = SchemaEntry(name, DoubleType)
+}
+
+case class BinNumericHistogram(expr: NamedExpression, bin: Double) extends HistogramTask {
+  val name = expr.name + "_bnh"
+  val taskName = "BinNumericHistogram"
+  val reportDisc = s"with BIN size $bin"
+  def aggList = Seq(
     Alias(Histogram(BinFloor(Cast(expr, DoubleType), bin)),           expr.name + "_bnh")()
   )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    buildHistReport(expr.name + s" with BIN size $bin", 
-      i.next.asInstanceOf[Map[Double,Long]].toSeq.sortBy( _._1 ))
-  )
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "BinNumericHistogram", "data":{""" +
-    buildHistJSON(i.next.asInstanceOf[Map[Double,Long]]) + "}"
+  val keyType = SchemaEntry(name, DoubleType)
 }
 
-case class TimeBase(expr: NamedExpression) extends EDDTask with TimeTask {
+case class YearHistogram(expr: NamedExpression) extends HistogramTask {
+  val name = expr.name + "_yea"
+  val taskName = "YearHistogram"
+  val reportDisc = "Year"
   override def aggList = Seq(
-    Alias(Min(expr),                   expr.name + "_min")(),
-    Alias(Max(expr),                   expr.name + "_max")()
+    Alias(Histogram(SmvYear(expr)),       name)()
   )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    f"${expr.name}%-20s Min:                   ${i.next}%s",
-    f"${expr.name}%-20s Max:                   ${i.next}%s"
-  )
-
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "TimeBase", "data":{""" +
-    s""""min": ${i.next},""" +
-    s""""max": ${i.next}}}"""
+  val keyType = SchemaEntry(name, IntegerType)
 }
 
-case class DateHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
-  override def aggList = Seq(
-    Alias(Histogram(YEAR(expr)),       expr.name + "_yea")(),
-    Alias(Histogram(MONTH(expr)),      expr.name + "_mon")(),
-    Alias(Histogram(DAYOFWEEK(expr)),  expr.name + "_dow")()
+case class MonthHistogram(expr: NamedExpression) extends HistogramTask {
+  val name = expr.name + "_mon"
+  val taskName = "MonthHistogram"
+  val reportDisc = "Month"
+  def aggList = Seq(
+    Alias(Histogram(SmvMonth(expr)),       name)()
   )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    buildHistReport(expr.name + "'s YEAR", 
-      i.next.asInstanceOf[Map[String,Long]].toSeq.sortBy( _._1 )),
-    buildHistReport(expr.name + "'s MONTH", 
-      i.next.asInstanceOf[Map[String,Long]].toSeq.sortBy( _._1 )),
-    buildHistReport(expr.name + "'s DAY OF WEEK", 
-      i.next.asInstanceOf[Map[String,Long]].toSeq.sortBy( _._1 ))
-  )
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "DateHistogramYear", "data":""" +
-    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}," +
-    s"""{"var":"${expr.name}", "task": "DateHistogramMonth", "data":""" +
-    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}," +
-    s"""{"var":"${expr.name}", "task": "DateHistogramDOW", "data":""" +
-    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}"
+  val keyType = SchemaEntry(name, IntegerType)
 }
 
-case class HourHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
-  override def aggList = Seq(
-    Alias(Histogram(HOUR(expr)),       expr.name + "_hou")()
+case class DoWHistogram(expr: NamedExpression) extends HistogramTask {
+  val name = expr.name + "_dow"
+  val taskName = "DowHistogram"
+  val reportDisc = "Day of Week"
+  def aggList = Seq(
+    Alias(Histogram(SmvDayOfWeek(expr)),  name)()
   )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    buildHistReport(expr.name + "'s HOUR", 
-      i.next.asInstanceOf[Map[String,Long]].toSeq.sortBy( _._1 ))
-  )
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "HourHistogram", "data":""" +
-    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}"
+  val keyType = SchemaEntry(name, IntegerType)
 }
 
-case class BooleanHistogram(expr: NamedExpression) extends EDDTask with TimeTask {
-  override def aggList = Seq(
-    Alias(Histogram(expr),       expr.name)()
+case class HourHistogram(expr: NamedExpression) extends HistogramTask {
+  val name = expr.name + "_hou"
+  val taskName = "HourHistogram"
+  val reportDisc = "Hour"
+  def aggList = Seq(
+    Alias(Histogram(SmvHour(expr)),  name)()
   )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    buildHistReport(expr.name, 
-      i.next.asInstanceOf[Map[Boolean,Long]].toSeq.sortBy( _._1 ))
-  )
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "BooleanHistogram", "data":""" +
-    buildHistJSON(i.next.asInstanceOf[Map[BooleanHistogram,Long]]) + "}"
+  val keyType = SchemaEntry(name, IntegerType)
 }
 
-case class StringBase(expr: NamedExpression) extends EDDTask with StringTask {
-  override def aggList = {
-    Seq(
-      Alias(Count(expr),                             expr.name + "_cnt")(),
-      Alias(Min(LENGTH(expr)),                       expr.name + "_mil")(),
-      Alias(Max(LENGTH(expr)),                       expr.name + "_mal")()
-    )
-  }
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    f"${expr.name}%-20s Non-Null Count:        ${i.next}%s",
-    f"${expr.name}%-20s Min Length:            ${i.next}%s",
-    f"${expr.name}%-20s Max Length:            ${i.next}%s"
+case class BooleanHistogram(expr: NamedExpression) extends HistogramTask {
+  val name = expr.name
+  val taskName = "BooleanHistogram"
+  val reportDisc = ""
+  def aggList = Seq(
+    Alias(Histogram(expr),  name)()
   )
-
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "StringBase", "data":{""" +
-    s""""cnt": ${i.next},""" +
-    s""""mil": ${i.next},""" +
-    s""""mal": ${i.next}}}"""
+  val keyType = SchemaEntry(name, BooleanType)
 }
 
-case class StringDistinctCount(expr: NamedExpression) extends EDDTask with StringTask {
-  override def aggList = {
-    val relativeSD = 0.01 //Instead of using 0.05 as default
-    Seq(
-      Alias(ApproxCountDistinct(expr, relativeSD),   expr.name + "_dct")()
-    )
-  }
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    f"${expr.name}%-20s Approx Distinct Count: ${i.next}%s"
+case class StringLengthHistogram(expr: NamedExpression) extends HistogramTask {
+  val name = expr.name + "_len"
+  val taskName = "StringLengthHistogram"
+  val reportDisc = "Length"
+  def aggList = Seq(
+    Alias(Histogram(LENGTH(expr)),     name)()
   )
-  override def reportJSON(i: Iterator[Any]): String = throw new UnsupportedOperationException
+  val keyType = SchemaEntry(name, IntegerType)
 }
 
-case class StringLengthHistogram(expr: NamedExpression) extends EDDTask with StringTask {
-  override def aggList = Seq(
-    Alias(Histogram(LENGTH(expr)),     expr.name + "_len")()
+case class StringByKeyHistogram(expr: NamedExpression) extends HistogramTask {
+  val name = expr.name + "_key"
+  val taskName = "StringByKeyHistogram"
+  val reportDisc = "sorted by Key"
+  def aggList = Seq(
+    Alias(Histogram(expr),             name)()
   )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    buildHistReport(expr.name + " Length", 
-      i.next.asInstanceOf[Map[Int,Long]].toSeq.sortBy( _._1 ))
-  )
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "StringLengthHistogram", "data":""" +
-    buildHistJSON(i.next.asInstanceOf[Map[Int,Long]]) + "}"
+  val keyType = SchemaEntry(name, StringType)
 }
 
-case class StringByKeyHistogram(expr: NamedExpression) extends EDDTask with StringTask {
-  override def aggList = Seq(
-    Alias(Histogram(expr),             expr.name + "_key")()
+case class StringByFreqHistogram(expr: NamedExpression) extends HistogramTask {
+  val name = expr.name + "_frq"
+  val taskName = "StringByFreqHistogram"
+  val reportDisc = "sorted by Frequency"
+  override val isSortByValue: Boolean = true
+  def aggList = Seq(
+    Alias(Histogram(expr),             name)()
   )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    buildHistReport(expr.name + " sorted by KEY", 
-      i.next.asInstanceOf[Map[String,Long]].toSeq.sortBy( _._1 ))
-  )
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "StringByKeyHistogram", "data":""" +
-    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}"
-}
-
-case class StringByFreqHistogram(expr: NamedExpression) extends EDDTask with StringTask {
-  override def aggList = Seq(
-    Alias(Histogram(expr),             expr.name + "_frq")()
-  )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
-    buildHistReport(expr.name + " sorted by Population", 
-      i.next.asInstanceOf[Map[String,Long]].toSeq.sortBy( - _._2 ))
-  )
-  override def reportJSON(i: Iterator[Any]): String = 
-    s"""{"var":"${expr.name}", "task": "StringByFreqHistogram", "data":""" +
-    buildHistJSON(i.next.asInstanceOf[Map[String,Long]]) + "}"
+  val keyType = SchemaEntry(name, StringType)
 }
 
 case class GroupPopulationKey(expr: NamedExpression) extends EDDTask {
-  override def aggList = Seq(
+  val taskName = "GroupPopulationKey"
+  def aggList = Seq(
     Alias(First(expr),                 expr.name + "_pop")()
   )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
+  def report(i: Iterator[Any]): Seq[String] = Seq(
     f"${expr.name}%-20s as Population Key =    ${i.next}%s"
   )
-  override def reportJSON(i: Iterator[Any]): String = throw new UnsupportedOperationException
+  def reportJSON(i: Iterator[Any]): String = throw new UnsupportedOperationException
 }
 
 case object GroupPopulationCount extends EDDTask {
-  override def aggList = Seq(
+  val expr = Alias(Literal(1), "pop")() //dummy
+  val taskName = "GroupPopulationCount"
+  def aggList = Seq(
     Alias(Count(Literal(1)),           "pop_tot")()
   )
-  override def report(i: Iterator[Any]): Seq[String] = Seq(
+  def report(i: Iterator[Any]): Seq[String] = Seq(
     f"Total Record Count:                        ${i.next}%s"
   )
-  override def reportJSON(i: Iterator[Any]): String = throw new UnsupportedOperationException
+  def reportJSON(i: Iterator[Any]): String = s""""totalcnt":${i.next}"""
 }
 

@@ -65,7 +65,9 @@ class EDD(srdd: SchemaRDD,
           case BooleanType => Seq(BooleanHistogram(s))
           case TimestampType => Seq(
             TimeBase(s),
-            DateHistogram(s),
+            YearHistogram(s),
+            MonthHistogram(s),
+            DoWHistogram(s),
             HourHistogram(s)
           )
           case StringType => Seq(
@@ -88,7 +90,7 @@ class EDD(srdd: SchemaRDD,
    *        if empty will use all fields in this SchemaRDD
    * @return this EDD
    */
-  private def addDataQATasks(list: Symbol* ): EDD = {
+  private[smv] def addDataQATasks(list: Symbol* ): EDD = {
     val listSeq =
       if (list.isEmpty)
         srdd.schema.fieldNames.map(Symbol(_))
@@ -224,6 +226,13 @@ class EDD(srdd: SchemaRDD,
     createReport.collect.foreach(println)
   }
 
+  def createJSON: String = {
+    require(gExprs.isEmpty)
+    val r = toSchemaRDD.first
+    val it = r.toIterator
+    "{" + GroupPopulationCount.reportJSON(it) + ",\n" +
+    " \"edd\":[\n      " + tasks.map{ t => t.reportJSON(it) }.mkString(",\n      ") + "]}"
+  }
 }
 
 object EDD{
@@ -245,7 +254,7 @@ object EDD{
    * Ignores ".gz", ".csv", ".tsv" extensions when constructions schema file path.
    * For example: "/a/b/foo.csv" --> "/a/b/foo.edd".  Makes for cleaner mapping.
    */
-  private[smv] def dataPathToEDDPath(dataPath: String): String = {
+  private[smv] def dataPathToEddPath(dataPath: String): String = {
     // remove all known data file extensions from path.
     val exts = List("gz", "csv", "tsv").map("\\."+_+"$")
     val dataPathNoExt = exts.foldLeft(dataPath)((s,e) => s.replaceFirst(e,""))
