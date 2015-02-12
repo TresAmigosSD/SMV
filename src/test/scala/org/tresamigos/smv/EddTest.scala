@@ -43,9 +43,9 @@ class EddReportTest extends SparkTestUtil {
     val res = srdd.edd.addBaseTasks().createReport.first
     val expect = """Total Record Count:                        3
 id                   Non-Null Count:        3
-id                   Approx Distinct Count: 2
 id                   Min Length:            3
 id                   Max Length:            3
+id                   Approx Distinct Count: 2
 val                  Non-Null Count:        2
 val                  Average:               39.855
 val                  Standard Deviation:    38.68581199871601
@@ -78,9 +78,9 @@ key                      count      Pct    cumCount   cumPct
 13                           1   33.33%           3  100.00%
 -------------------------------------------------
 val3                 Non-Null Count:        3
-val3                 Approx Distinct Count: 3
 val3                 Min Length:            8
-val3                 Max Length:            8"""
+val3                 Max Length:            8
+val3                 Approx Distinct Count: 3"""
     assert(res === expect)
   }
 }

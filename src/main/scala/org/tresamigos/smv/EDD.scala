@@ -218,6 +218,12 @@ class EDD(srdd: SchemaRDD,
       ).mkString("\n")
     }
   }
+
+  /** Dump EDD report on screen */
+  def dump: Unit = {
+    createReport.collect.foreach(println)
+  }
+
 }
 
 object EDD{
@@ -233,4 +239,18 @@ object EDD{
 
     new EDD(srdd, gExprs)
   }
+
+  /**
+   * map the data file path to edd path.
+   * Ignores ".gz", ".csv", ".tsv" extensions when constructions schema file path.
+   * For example: "/a/b/foo.csv" --> "/a/b/foo.edd".  Makes for cleaner mapping.
+   */
+  private[smv] def dataPathToEDDPath(dataPath: String): String = {
+    // remove all known data file extensions from path.
+    val exts = List("gz", "csv", "tsv").map("\\."+_+"$")
+    val dataPathNoExt = exts.foldLeft(dataPath)((s,e) => s.replaceFirst(e,""))
+
+    dataPathNoExt + ".edd"
+  }
+
 }
