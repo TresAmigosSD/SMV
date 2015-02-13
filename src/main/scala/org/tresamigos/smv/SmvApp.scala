@@ -308,8 +308,8 @@ private[smv] class SmvModuleJSON(val app: SmvApp) {
     allModules.map{m => 
       s"""  "${printName(m)}": {""" + "\n" +
       s"""    "version": ${m.versionSum()},""" + "\n" +
-      s"""    "dependents": [""" + m.requiresDS().map{v => s""""${printName(v)}""""}.mkString(",") + "\n" +
-      s"""    "description": "${m.description}"""" + "]}" 
+      s"""    "dependents": [""" + m.requiresDS().map{v => s""""${printName(v)}""""}.mkString(",") + "],\n" +
+      s"""    "description": "${m.description}"""" + "}" 
     }.mkString(",\n") +
     "}"
   }
