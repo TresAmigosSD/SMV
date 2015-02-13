@@ -298,7 +298,7 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
 }
 
 private[smv] class SmvModuleJSON(val app: SmvApp) {
-  private def allModules = app.allModules
+  private def allModules = app.allModules.sortWith{(a,b) => a.name < b.name}
   private def allFiles = allModules.flatMap(m => m.requiresDS().filter(v => v.isInstanceOf[SmvFile]))
 
   private def printName(m: SmvDataSet) = app.moduleNameForPrint(m)
@@ -308,7 +308,8 @@ private[smv] class SmvModuleJSON(val app: SmvApp) {
     allModules.map{m => 
       s"""  "${printName(m)}": {""" + "\n" +
       s"""    "version": ${m.versionSum()},""" + "\n" +
-      s"""    "dependents": [""" + m.requiresDS().map{v => s""""${printName(v)}""""}.mkString(",") + "]}"
+      s"""    "dependents": [""" + m.requiresDS().map{v => s""""${printName(v)}""""}.mkString(",") + "\n" +
+      s"""    "description": "${m.description}"""" + "]}" 
     }.mkString(",\n") +
     "}"
   }

@@ -140,10 +140,12 @@ class SmvAppTest extends SparkTestUtil {
     val expect = """{
   "X": {
     "version": 0,
-    "dependents": []},
+    "dependents": [
+    "description": "X Module"]},
   "Y": {
     "version": 0,
-    "dependents": ["X"]}}"""
+    "dependents": ["X"
+    "description": "Y Module"]}}"""
     assert(app2JSON.generateJSON === expect)
   }
 
