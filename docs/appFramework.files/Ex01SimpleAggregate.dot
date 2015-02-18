@@ -1,0 +1,10 @@
+digraph G {
+  rankdir="TB";
+  node [style=filled,color="lightblue"]
+  "cms_raw_no_2nd_line" [shape=box, color="pink"]
+{ rank = same; "cms_raw_no_2nd_line"; }
+  "adhoc.Ex01SimpleAggregate" [tooltip="Example 01: to demo simple use"]
+  "phase1.CmsRaw" [tooltip="Load cms raw data"]
+  "phase1.CmsRaw" -> "adhoc.Ex01SimpleAggregate" 
+  "cms_raw_no_2nd_line" -> "phase1.CmsRaw" 
+}

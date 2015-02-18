@@ -1,0 +1,57 @@
+@startuml
+
+hide empty methods
+hide empty fields
+hide circle
+
+package SMV {
+  class SmvDataSet {
+    +{abstract} requiresDS() : Seq[SmvDataSet]
+    +{abstract} computeRDD(app: SmvApp): SRDD
+    +rdd(): SRDD
+    +name: String
+    +version: Int
+    +description: String
+  }
+  
+  class SmvFile extends SmvDataSet {
+    +basePath : String
+    +csvAttributes : CsvAttributes
+  }
+
+  class SmvModule <<Abstract>> extends SmvDataSet {
+    +{abstract} run(in: runParams) : SRDD
+  }
+
+  class SmvApp <<Abstract>> {
+    -sparkContext
+    -sqlContext
+    +appName: String
+    +resolveRDD(ds: SmvDataSet): SchemaRDD
+    +{abstract} getModulePackages() : Seq[String]
+    +run(inputs: Map[SmvDataSet, SchemaRDD])
+  }
+
+  SmvApp *-R- "*" SmvDataSet
+}
+
+package ExampleApp {
+  class Module1 extends SmvModule {
+    +override version()
+    +override requiresDS()
+    +override run(inputs)
+  }
+  class Module2 extends SmvModule {
+    +override version()
+    +override requiresDS()
+    +override run(inputs)
+  }
+
+  class ExampleApp extends SmvApp {
+    +getModulePackages(): Seq[String]
+  }
+
+  ExampleApp .l.> Module1
+  ExampleApp ..> Module2
+}
+@enduml
