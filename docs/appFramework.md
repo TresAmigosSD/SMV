@@ -15,7 +15,8 @@ The SmvApp is a very simple data application framework to support:
 The SmvApp has 3 components: ```SmvApp``` class, ```SmvFile``` and ```SmvModule```. Both ```SmvFile``` and ```SmvModule``` classes extends an abstract class ```SmvDataSet```. 
 The core concept of the framework is the ```SmvModule```. ```SmvModule``` is an higher level data representation than SchemaRDD. It basically defines a dataflow block, which has multiple data souses (SchenaRDD) in and ONE data out (SchemaRDD). 
 
-[Design Diagram](appFramework.files/appFramework.svg)
+Design Diagram:
+![Alt text](https://rawgit.com/TresAmigosSD/SMV/master/docs/appFramework.files/appFramework.svg)
 
 ## Define Your First App/Module
 
@@ -113,5 +114,6 @@ override def version() = 1
 
 Since the default value of version is 0, above line changes the version number of ```CmsRaw```, and more importantly, since the persisted data file's version is actually the sum of the version numbers of SmvModule's it depends on, the App will know that all the existing persisted files which depend on ```CmsRaw``` are out of date and need to be re-generated. So you simply need to re-run the submit command on the most downstream Module and all the modules depend on ```CmsRaw``` will be updated.
 
-As a bonus, the same SmvApp submit command with a parameter ```-g``` instead of ```-d``` will create a ```dot``` file to show the decency graph of the specified module. You can use Graphviz ```dot``` command to convert the graph to either ```png``` or ```svg``` file. For the example above, a [dot file](appFramework.files/Ex01SimpleAggregate.dot) will be created, and the [png](appFramework.files/Ex01SimpleAggregate.png) version. 
+As a bonus, the same SmvApp submit command with a parameter ```-g``` instead of ```-d``` will create a ```dot``` file to show the decency graph of the specified module. You can use Graphviz ```dot``` command to convert the graph to either ```png``` or ```svg``` file. For the example above, a [dot file](appFramework.files/Ex01SimpleAggregate.dot) will be created, and the png version:
+![Alt text](https://rawgit.com/TresAmigosSD/SMV/master/docs/appFramework.files/Ex01SimpleAggregate.png)
 
