@@ -379,6 +379,28 @@ object Schema {
   }
 
   /**
+   * read a schema file and extract field length from schema file entries for 
+   * Fixed Record Length data
+   * 
+   * Assume the schema file have part of the comment as "$12" to indicate this 
+   * field has fixed length 12. Assume all the schema entries in the schema 
+   * file have the field length number. 
+   * Example Schema Entry:
+   * 
+   * Customer_ID: String  #customer id: $16
+   * 
+   **/
+  private[smv] def slicesFromFile(sc: SparkContext, path: String) = {
+    sc.textFile(path).collect.map{s =>
+      try{
+        Some(s.replaceFirst(".*#.*\\$([0-9])[ \t]*$", "$1").toInt)
+      } catch {
+        case _ : Throwable => None
+      }
+    }.collect{case Some(c) => c}
+  }
+    
+  /**
    * map the data file path to schema path.
    * Ignores ".gz", ".csv", ".tsv" extensions when constructions schema file path.
    * For example: "/a/b/foo.csv" --> "/a/b/foo.schema".  Makes for cleaner mapping.

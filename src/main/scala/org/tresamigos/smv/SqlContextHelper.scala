@@ -59,6 +59,26 @@ class SqlContextHelper(sqlContext: SQLContext) {
     csvFileAddSchema(dataPath, schema)
   }
 
+  /** Create an SchemaRDD from a data file as in Fixed Recode Length format and 
+   * an schema file with each schema entry with a field length comment 
+   * 
+   * @param dataPath FRL file location
+   * @param schemaPath schema file location (default as derived from dataPath)
+   * @param rejects the global reject logger, could be override by implicit val
+   */
+  def frlFileWithSchema(dataPath: String, schemaPath: Option[String] = None)
+                       (implicit rejects: RejectLogger): SchemaRDD = {
+    val sp = schemaPath.getOrElse(Schema.dataPathToSchemaPath(dataPath))
+    val sc = sqlContext.sparkContext
+    val slices = Schema.slicesFromFile(sc, sp)
+    val schema = Schema.fromFile(sc, sp)
+    require(slices.size == schema.getSize)
+      
+    val strRDD = sc.textFile(dataPath)
+    val rowRDD = strRDD.frlToSeqStringRDD(slices).seqStringRDDToRowRDD(schema)
+    applySchemaToRowRDD(rowRDD, schema)
+  }
+    
   /**
    * Create a schemaRDD from a schema string and a data string.
    * The data string is assumed to be csv with no header and lines separated by ";"
