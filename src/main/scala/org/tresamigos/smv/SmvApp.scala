@@ -75,9 +75,9 @@ abstract class SmvFile extends SmvDataSet{
   override def requiresDS() = Seq.empty
   
   override def name() = {
-    val nameRex = """(.*/)*(.+).csv(.gz)*""".r
+    val nameRex = """(.*/)*(.+)(.csv)*(.gz)*""".r
     basePath match {
-      case nameRex(_, v, _) => v
+      case nameRex(_, v, _, _) => v
       case _ => throw new IllegalArgumentException(s"Illegal base path format: $basePath")
     }
   }

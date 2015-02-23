@@ -393,7 +393,7 @@ object Schema {
   private[smv] def slicesFromFile(sc: SparkContext, path: String) = {
     sc.textFile(path).collect.map{s =>
       try{
-        Some(s.replaceFirst(".*#.*\\$([0-9])[ \t]*$", "$1").toInt)
+        Some(s.replaceFirst(".*#.*\\$([0-9]+)[ \t]*$", "$1").toInt)
       } catch {
         case _ : Throwable => None
       }
