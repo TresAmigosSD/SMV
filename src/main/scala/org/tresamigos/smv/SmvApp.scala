@@ -31,12 +31,13 @@ import java.util.Calendar
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result SchemaRDD.
  */
-abstract class SmvDataSet(val description: String) {
+abstract class SmvDataSet {
 
   private var rddCache: SchemaRDD = null
   private[smv] var versionSumCache : Int = -1
 
   def name(): String
+  def description(): String
 
   /** concrete classes must implement this to supply the uncached RDD for data set */
   def computeRDD(app: SmvApp): SchemaRDD
@@ -68,33 +69,47 @@ abstract class SmvDataSet(val description: String) {
   }
 }
 
+abstract class SmvFile extends SmvDataSet{
+  val basePath: String
+  override def description() = s"Input file: @${basePath}"
+  override def requiresDS() = Seq.empty
+  
+  override def name() = {
+    val nameRex = """(.*/)*(.+).csv(.gz)*""".r
+    basePath match {
+      case nameRex(_, v, _) => v
+      case _ => throw new IllegalArgumentException(s"Illegal base path format: $basePath")
+    }
+  }
+}
+
 /**
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
-case class SmvFile(override val name: String, val basePath: String, csvAttributes: CsvAttributes) extends
-    SmvDataSet(s"Input file: @${basePath}") {
+case class SmvCsvFile(basePath: String, csvAttributes: CsvAttributes) extends
+  SmvFile{
 
   override def computeRDD(app: SmvApp): SchemaRDD = {
     implicit val ca = csvAttributes
     app.sqlContext.csvFileWithSchema(s"${app.dataDir}/${basePath}")
   }
-
-  override def requiresDS() = Seq.empty
+  
 }
 
-/** 
- * Provide an interface without the name field
- * TODO: this should be the only interface.  Need to remove support for "nickname" in SmvFile
- */
-object SmvFile {
-  def apply(basePath: String, csvAttributes: CsvAttributes) = {
-    val nameRex = """(.*/)*(.+).csv(.gz)*""".r
-    val name = basePath match {
-      case nameRex(_, v, _) => v
-      case _ => throw new IllegalArgumentException(s"Illegal base path format: $basePath")
-    }
-    new SmvFile(name, basePath, csvAttributes)
+case class SmvFrlFile(basePath: String) extends
+    SmvFile{
+      
+  override def computeRDD(app: SmvApp): SchemaRDD = {
+    app.sqlContext.frlFileWithSchema(s"${app.dataDir}/${basePath}")
   }
+}
+
+/** Keep this interface for existing application code, will be removed when application code cleaned up */
+object SmvFile {
+  def apply(basePath: String, csvAttributes: CsvAttributes) = 
+    new SmvCsvFile(basePath, csvAttributes)
+  def apply(name: String, basePath: String, csvAttributes: CsvAttributes) = 
+    new SmvCsvFile(basePath, csvAttributes)
 }
 
 /**
@@ -105,7 +120,7 @@ object SmvFile {
  * will be provided the SchemaRDD result from the run method of this module.
  * Note: the module should *not* persist any RDD itself.
  */
-abstract class SmvModule(_description: String) extends SmvDataSet(_description) {
+abstract class SmvModule(val description: String) extends SmvDataSet {
 
   override val name = this.getClass().getName().filterNot(_=='$')
 

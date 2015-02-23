@@ -59,8 +59,9 @@ class SmvVersionTest extends SparkTestUtil {
   }
 }
 
-class SmvTestFile(override val name: String) extends SmvFile(name, null, null) {
-  override def rdd(app: SmvApp): SchemaRDD = null
+class SmvTestFile(override val name: String) extends SmvFile {
+  val basePath = null
+  def computeRDD(app: SmvApp): SchemaRDD = null
 }
 
 class SmvAppTest extends SparkTestUtil {
