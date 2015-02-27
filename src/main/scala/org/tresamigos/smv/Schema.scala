@@ -126,9 +126,9 @@ case class MapSchemaEntry(name: String,
   override val zeroVal = Literal(null)
   override val typeName = "Map"
 
-  // TODO: should it be MapType(keySchemaEntry.structField.dataType,
-  // valSchemaEntry.structField.dataType) ????
-  val structField = StructField(name, MapType(StringType, StringType), true)
+  override def toString = s"$name: Map[${keySchemaEntry.typeName},${valSchemaEntry.typeName}]"
+
+  val structField = StructField(name, MapType(keySchemaEntry.structField.dataType, valSchemaEntry.structField.dataType), true)
   override def strToVal(s: String) : Any = {
     if (s.isEmpty)
       null

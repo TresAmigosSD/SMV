@@ -265,7 +265,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
     new SmvModuleDependencyGraph(module, this).saveToFile(pathName)
   }
 
-  private def genJSON = {
+  def genJSON() = {
     val pathName = s"${appName}.json"
     new SmvModuleJSON(this).saveToFile(pathName)
   }
