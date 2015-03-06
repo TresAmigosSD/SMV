@@ -137,7 +137,7 @@ class SmvAppTest extends SparkTestUtil {
       Ordering.by[SmvModule, String](_.name))
     assert(app.moduleNameForPrint(org.tresamigos.smv.smvAppTestPackage.X) === "X")
 
-    val app2JSON = new SmvModuleJSON(app)
+    val app2JSON = new SmvModuleJSON(app, Seq())
     val expect = """{
   "X": {
     "version": 0,
@@ -153,7 +153,7 @@ class SmvAppTest extends SparkTestUtil {
   sparkTest("Test dependency graph creation.") {
     object app extends SmvApp("test dependency graph", Seq("C"), Option(sc))
 
-    val depGraph = new SmvModuleDependencyGraph(C, app)
+    val depGraph = new SmvModuleDependencyGraph(C, app.packagesPrefix)
     //depGraph.saveToFile("foo.dot")
 
     val edges = depGraph.graph

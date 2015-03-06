@@ -75,9 +75,9 @@ abstract class SmvFile extends SmvDataSet{
   override def requiresDS() = Seq.empty
   
   override def name() = {
-    val nameRex = """(.*/)*(.+)(.csv)*(.gz)*""".r
+    val nameRex = """(.+)(.csv)*(.gz)*""".r
     basePath match {
-      case nameRex(_, v, _, _) => v
+      case nameRex(v, _, _) => v
       case _ => throw new IllegalArgumentException(s"Illegal base path format: $basePath")
     }
   }
@@ -183,19 +183,11 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   val sqlContext = new SQLContext(sc)
   private val mirror = ru.runtimeMirror(this.getClass.getClassLoader)
 
-  // TODO: remove this!
-  private val defaultCA = CsvAttributes.defaultCsvWithHeader
-
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
   /** concrete applications can provide a list of package names containing modules. */
   def getModulePackages() : Seq[String] = Seq.empty
-
-  /** sequence of ALL known modules.  Those discovered in packages. */
-  private[smv] def allModules(): Seq[SmvDataSet] = {
-    getModulePackages.map(modulesInPackage).flatten
-  }
 
   private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
 
@@ -243,6 +235,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   }
 
   /** find a common prefix to all module names. */
+  /* we should be more functional than this :-) 
   private def findCommonPrefix(prefix: String, allModuleNames: Seq[String]): String = {
     if (prefix.size == 0)
       ""
@@ -252,22 +245,29 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
       else
         findCommonPrefix(prefix.split('.').dropRight(1).mkString("."), allModuleNames)
   }
+  */
 
-  private def allMNames = allModules.map(_.name()).toSet.toSeq
-  private[smv] lazy val packagesPrefix = findCommonPrefix(allMNames(0), allMNames) + "."
+  def allModules() = getModulePackages.map(modulesInPackage).flatten
+  def packagesPrefix() = {
+    val m = allModules()
+    if (m.isEmpty) ""
+    else m.map(_.name).reduce{(l,r) => 
+        (l.split('.') zip r.split('.')).
+          collect{ case (a, b) if (a==b) => a}.mkString(".")
+      } + "."
+  }
 
   /** clean name in graph output */
   private[smv] def moduleNameForPrint(ds: SmvDataSet) = ds.name.stripPrefix(packagesPrefix) 
 
-
   private def genDotGraph(module: SmvModule) = {
     val pathName = s"${module.name}.dot"
-    new SmvModuleDependencyGraph(module, this).saveToFile(pathName)
+    new SmvModuleDependencyGraph(module, packagesPrefix).saveToFile(pathName)
   }
-
-  def genJSON() = {
+  
+  def genJSON(packages: Seq[String] = Seq()) = {
     val pathName = s"${appName}.json"
-    new SmvModuleJSON(this).saveToFile(pathName)
+    new SmvModuleJSON(this, packages).saveToFile(pathName)
   }
 
   /**
@@ -276,7 +276,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
    */
   def run() = {
     if (cmdLineArgsConf.json()) {
-      genJSON
+      genJSON();
     }
 
     cmdLineArgsConf.modules().foreach { module =>
@@ -312,11 +312,15 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val modules = trailArg[List[String]](descr="FQN of modules to run/graph")
 }
 
-private[smv] class SmvModuleJSON(val app: SmvApp) {
-  private def allModules = app.allModules.sortWith{(a,b) => a.name < b.name}
+private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
+  private def allModules = {
+    if (packages.isEmpty) app.allModules
+    else packages.map{app.packagesPrefix + _}.map(app.modulesInPackage).flatten
+  }.sortWith{(a,b) => a.name < b.name}
+  
   private def allFiles = allModules.flatMap(m => m.requiresDS().filter(v => v.isInstanceOf[SmvFile]))
 
-  private def printName(m: SmvDataSet) = app.moduleNameForPrint(m)
+  private def printName(m: SmvDataSet) = m.name.stripPrefix(app.packagesPrefix) 
 
   def generateJSON() = {
     "{\n" +
@@ -342,7 +346,7 @@ private[smv] class SmvModuleJSON(val app: SmvApp) {
  * a package prefix of "com.foo.X" to remove the repeated noise of "com.foo.X" before
  * every module name in the graph.
  */
-private[smv] class SmvModuleDependencyGraph(val startMod: SmvModule, val app: SmvApp) {
+private[smv] class SmvModuleDependencyGraph(val startMod: SmvModule, packagesPrefix: String) {
   type dependencyMap = Map[SmvDataSet, Seq[SmvDataSet]]
 
   private def addDependencyEdges(node: SmvDataSet, nodeDeps: Seq[SmvDataSet], map: dependencyMap): dependencyMap = {
@@ -361,8 +365,9 @@ private[smv] class SmvModuleDependencyGraph(val startMod: SmvModule, val app: Sm
   private lazy val allFiles = graph.values.flatMap(vs => vs.filter(v => v.isInstanceOf[SmvFile])).toSet.toSeq
   private lazy val allModules = graph.flatMap(kv => (Seq(kv._1) ++ kv._2).filter(v => v.isInstanceOf[SmvModule])).toSet.toSeq
 
+  private def printName(m: SmvDataSet) = m.name.stripPrefix(packagesPrefix) 
   /** quoted/clean name in graph output */
-  private def q(ds: SmvDataSet) = "\"" + app.moduleNameForPrint(ds) + "\""
+  private def q(ds: SmvDataSet) = "\"" + printName(ds) + "\""
 
   private def moduleStyles() = {
     allModules.map(m => s"  ${q(m)} " + "[tooltip=\"" + s"${m.description}" + "\"]")
