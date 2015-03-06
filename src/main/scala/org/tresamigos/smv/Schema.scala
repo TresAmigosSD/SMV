@@ -111,7 +111,8 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss
   // @transient val fmtObj = new java.text.SimpleDateFormat(fmt)
   val fmtObj = new java.text.SimpleDateFormat(fmt)
   override def strToVal(s:String) : Any = {
-    new java.sql.Timestamp(fmtObj.parse(s).getTime())
+    if(s.isEmpty) null 
+    else new java.sql.Timestamp(fmtObj.parse(s).getTime())
   }
   override val typeName = "Timestamp"
   val structField = StructField(name, TimestampType, true)

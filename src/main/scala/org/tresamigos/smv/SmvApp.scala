@@ -91,6 +91,7 @@ case class SmvCsvFile(basePath: String, csvAttributes: CsvAttributes) extends
 
   override def computeRDD(app: SmvApp): SchemaRDD = {
     implicit val ca = csvAttributes
+    implicit val rejectLogger = app.rejectLogger
     app.sqlContext.csvFileWithSchema(s"${app.dataDir}/${basePath}")
   }
   
@@ -100,6 +101,7 @@ case class SmvFrlFile(basePath: String) extends
     SmvFile{
       
   override def computeRDD(app: SmvApp): SchemaRDD = {
+    implicit val rejectLogger = app.rejectLogger
     app.sqlContext.frlFileWithSchema(s"${app.dataDir}/${basePath}")
   }
 }
@@ -189,6 +191,21 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   /** concrete applications can provide a list of package names containing modules. */
   def getModulePackages() : Seq[String] = Seq.empty
 
+  /** concrete applications can provide a more interesting RejectLogger. 
+   *  Example: override val rejectLogger = new SCRejectLogger(sc, 3)
+   */
+  def rejectLogger() : RejectLogger = TerminateRejectLogger
+  
+  def saveRejects(path: String) = {
+    if(rejectLogger.isInstanceOf[SCRejectLogger]){
+      val r = rejectLogger.rejectedReport
+      if(!r.isEmpty){
+        sc.makeRDD(r, 1).saveAsTextFile(path)
+        println(s"RejectLogger is not empty, please check ${path}")
+      }
+    }
+  }
+  
   private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
 
   /**

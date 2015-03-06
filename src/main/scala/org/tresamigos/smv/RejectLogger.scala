@@ -65,11 +65,10 @@ class SCRejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends
     if (rejectedRecordCount.value > 0) {
       val rep = rejectedRecords.value
       if (rejectedRecordCount.value > rep.size){
-        rep += ((s"More rejects!! Total rejected records: $rejectedRecordCount",""))
+        (rep :+ ((s"More rejects!! Total rejected records: $rejectedRecordCount",""))).toList
       } else {
-        rep += ((s"Total rejected records: $rejectedRecordCount",""))
+        (rep :+ ((s"Total rejected records: $rejectedRecordCount",""))).toList
       }
-      rep.toList
     } else {
       Nil
     }
