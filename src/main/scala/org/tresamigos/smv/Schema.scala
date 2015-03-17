@@ -38,6 +38,7 @@ abstract class NativeSchemaEntry extends SchemaEntry {
 
 abstract class NumericSchemaEntry extends NativeSchemaEntry {
   private[smv] val numeric: Numeric[JvmType]
+  private[smv] def trim(s: String) = s.replaceAll("""(^ +| +$)""", "")
 }
 
 case class DoubleSchemaEntry(name: String) extends NumericSchemaEntry {
@@ -45,7 +46,7 @@ case class DoubleSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Double]]
   override val zeroVal = Literal(0.0)
-  override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toDouble
+  override def strToVal(s:String) : Any = if (s.isEmpty) null else trim(s).toDouble
   override val typeName = "Double"
   val structField = StructField(name, DoubleType, true)
 }
@@ -55,7 +56,7 @@ case class FloatSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Float]]
   override val zeroVal = Literal(0.0f)
-  override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toFloat
+  override def strToVal(s:String) : Any = if (s.isEmpty) null else trim(s).toFloat
   override val typeName = "Float"
   val structField = StructField(name, FloatType, true)
 }
@@ -65,7 +66,7 @@ case class IntegerSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Int]]
   override val zeroVal = Literal(0)
-  override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toInt
+  override def strToVal(s:String) : Any = if (s.isEmpty) null else trim(s).toInt
   override val typeName = "Integer"
   val structField = StructField(name, IntegerType, true)
 }
@@ -75,7 +76,7 @@ case class LongSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Long]]
   override val zeroVal = Literal(0l)
-  override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toLong
+  override def strToVal(s:String) : Any = if (s.isEmpty) null else trim(s).toLong
   override val typeName = "Long"
   val structField = StructField(name, LongType, true)
 }
