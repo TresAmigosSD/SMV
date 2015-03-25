@@ -20,7 +20,7 @@ class DQMTest extends SparkTestUtil {
   sparkTest("test DQM is Rules") {
     val ssc = sqlContext; import ssc._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "DQMTest/test1.csv")
-    val rejectCounter = new SCCounter(sc)
+    val rejectCounter = new ScCounter(sc)
     val dqm = srdd.dqm()
                   .registerRejectCounter(rejectCounter)
                   .isBoundValue('age, 0, 100)
@@ -40,7 +40,7 @@ class DQMTest extends SparkTestUtil {
   sparkTest("test DQM do Rules") {
     val ssc = sqlContext; import ssc._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "DQMTest/test1.csv")
-    val fixCounter = new SCCounter(sc)
+    val fixCounter = new ScCounter(sc)
     val dqm = srdd.dqm()
                   .registerFixCounter(fixCounter)
                   .doBoundValue('age, 0, 100)

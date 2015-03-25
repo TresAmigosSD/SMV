@@ -266,4 +266,24 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     val smvChunk = new SmvChunk(schemaRDD, keys)
     smvChunk.applyUDF(funcs, false)
   }
+  
+  /**
+   * pipeCount
+   * Generate record count whenever the SRDD get processed
+   * 
+   * Example:
+   *   val c = new ScCounter(sc)
+   *   val s1 = srdd.pipeCount(c)
+   *   ....
+   *   s1.saveAsCsvWithSchema("file")
+   *   println(c.report())
+   */
+  def pipeCount(counter: SmvCounter): SchemaRDD = {
+    counter.reset()
+    val dummyFunc: Row => Boolean = {r =>
+      counter.add("N")
+      true
+    }
+    schemaRDD.filter(dummyFunc)
+  }
 }

@@ -38,7 +38,7 @@ import scala.reflect.ClassTag
  *     verify: return verified SchemaRDD 
  *
  * Example:
- *  val fixCounter = new SCCounter(sparkContext)
+ *  val fixCounter = new ScCounter(sparkContext)
  *  val dqm = srdd.dqm(keepRejected = true)
  *                .registerFixCounter(fixCounter)
  *                .isBoundValue('age, 0, 100)
@@ -55,8 +55,8 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
   private var isList: Seq[DQMRule] = Nil
   private var doList: Seq[DQMRule] = Nil
   private var verifiedRDD: SchemaRDD = null
-  private var fixCounter: SMVCounter = NoOpCounter
-  private var rejectCounter: SMVCounter = NoOpCounter
+  private var fixCounter: SmvCounter = NoOpCounter
+  private var rejectCounter: SmvCounter = NoOpCounter
 
   private val sqlContext = srdd.sqlContext
 
@@ -126,7 +126,7 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
   /** Register custom RejectCounter
    *  Default RejectCounter is a NoOp dummy counter
    */
-  def registerRejectCounter(customRejectCounter: SMVCounter): DQM = {
+  def registerRejectCounter(customRejectCounter: SmvCounter): DQM = {
     rejectCounter = customRejectCounter
     this
   }
@@ -134,7 +134,7 @@ class DQM(srdd: SchemaRDD, keepRejected: Boolean) {
   /** Register custom FixCounter
    *  Default FixCounter is a NoOp dummy counter
    */
-  def registerFixCounter(customFixCounter: SMVCounter): DQM = {
+  def registerFixCounter(customFixCounter: SmvCounter): DQM = {
     fixCounter = customFixCounter
     this
   }
@@ -187,7 +187,7 @@ object DQM {
 
 /** Expression only used by DQM verify
  */
-case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression], rejectCounter: SMVCounter)
+case class CheckPassed(rules: Seq[DQMRule], children: Seq[Expression], rejectCounter: SmvCounter)
   extends Expression {
 
   type EvaluatedType = Boolean

@@ -20,17 +20,18 @@ import org.apache.spark.SparkContext._
 import scala.collection.mutable.{Map => MutableMap}
 
 /** 
- * SMVCounter is a general logger which wrapped around an accumulable of a mutable Map
+ * SmvCounter is a general logger which wrapped around an accumulable of a mutable Map
  */
-abstract class SMVCounter extends Serializable {
+abstract class SmvCounter extends Serializable {
   val add: String => Unit = {name:String => Unit}
   def report: Map[String, Long] = Map()
+  def reset(): Unit = {}
   def apply(name: String): Long = report.getOrElse(name, 0L)
 }
 
-object NoOpCounter extends SMVCounter 
+object NoOpCounter extends SmvCounter 
 
-class SCCounter(sparkContext: SparkContext) extends SMVCounter {
+class ScCounter(sparkContext: SparkContext) extends SmvCounter {
 
   implicit def histParam[T] = new AccumulableParam[MutableMap[T, Long], T]{
     def zero(initialValue: MutableMap[T, Long]): MutableMap[T, Long] = {
@@ -54,5 +55,10 @@ class SCCounter(sparkContext: SparkContext) extends SMVCounter {
   }
  
   override def report: Map[String, Long] = records.value.toMap
+  
+  override def reset() = {
+    records.setValue(MutableMap[String, Long]())
+    Unit
+  }
 }
 

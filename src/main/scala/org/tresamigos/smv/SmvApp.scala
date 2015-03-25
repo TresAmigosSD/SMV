@@ -146,12 +146,17 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   private[smv] def persist(app: SmvApp, rdd: SchemaRDD) = {
     val filePath = fullPath(app)
     implicit val ca = CsvAttributes.defaultCsvWithHeader
+    val fmtObj = new java.text.SimpleDateFormat("HH:mm:ss")
     if (app.isDevMode){
-      val fmtObj = new java.text.SimpleDateFormat("HH:mm:ss")
-      val now = fmtObj.format(java.util.Calendar.getInstance().getTime())
+      val c = new ScCounter(app.sc)
+      var now = fmtObj.format(java.util.Calendar.getInstance().getTime())
       println(s"${now} PERSISTING: ${filePath}")
+      rdd.pipeCount(c).saveAsCsvWithSchema(filePath)
+      now = fmtObj.format(java.util.Calendar.getInstance().getTime())
+      println(s"${now} Number of records persisted: " + c("N"))
+    } else {
+      rdd.saveAsCsvWithSchema(filePath)
     }
-    rdd.saveAsCsvWithSchema(filePath)
   }
 
   private[smv] def readPersistedFile(app: SmvApp): Try[SchemaRDD] = {
