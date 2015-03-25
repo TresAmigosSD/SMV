@@ -23,7 +23,9 @@ import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
 import scala.util.Try
-import java.util.Calendar
+import org.joda.time._
+import org.joda.convert._
+import org.joda.time.format._
 
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
@@ -146,14 +148,16 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   private[smv] def persist(app: SmvApp, rdd: SchemaRDD) = {
     val filePath = fullPath(app)
     implicit val ca = CsvAttributes.defaultCsvWithHeader
-    val fmtObj = new java.text.SimpleDateFormat("HH:mm:ss")
+    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
     if (app.isDevMode){
-      val c = new ScCounter(app.sc)
-      var now = fmtObj.format(java.util.Calendar.getInstance().getTime())
-      println(s"${now} PERSISTING: ${filePath}")
-      rdd.pipeCount(c).saveAsCsvWithSchema(filePath)
-      now = fmtObj.format(java.util.Calendar.getInstance().getTime())
-      println(s"${now} Number of records persisted: " + c("N"))
+      val counter = new ScCounter(app.sc)
+      val before = DateTime.now()
+      println(s"${fmt.print(before)} PERSISTING: ${filePath}")
+      rdd.pipeCount(counter).saveAsCsvWithSchema(filePath)
+      val after = DateTime.now()
+      val runTime = PeriodFormat.getDefault().print(new Period(before, after))
+      val n = counter("N")
+      println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
     } else {
       rdd.saveAsCsvWithSchema(filePath)
     }
