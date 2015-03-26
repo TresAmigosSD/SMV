@@ -19,6 +19,7 @@ import java.util.Calendar
 import org.apache.spark.sql.catalyst.analysis.UnresolvedException
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types._
+import com.rockymadden.stringmetric.phonetic.SoundexAlgorithm
 
 /**
  * Just a collection of Catalyst Expression Non Aggregate Functions.
@@ -294,6 +295,14 @@ case class BinFloor(child: Expression, bin: Double) extends UnaryFuncs[Double] {
   def dataType = DoubleType
   def func(v: Double): Double = {
     math.floor(v / bin) * bin
+  }
+}
+
+case class SmvSoundex(child: Expression) extends UnaryFuncs[String] {
+  override def toString = s"Soundex( $child )"
+  def dataType = StringType
+  def func(s:String): Any = {
+    SoundexAlgorithm.compute(s.replaceAll("""[^a-zA-Z]""", "")).getOrElse(null)
   }
 }
 

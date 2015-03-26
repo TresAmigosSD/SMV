@@ -41,6 +41,15 @@ class SmvStrCatTest extends SparkTestUtil {
   }
 }
 
+class SmvSoundexTest extends SparkTestUtil {
+  sparkTest("test SmvSoundex function") {
+    val ssc = sqlContext; import ssc._
+    val srdd = createSchemaRdd("a:String", "Smith;Liu;Brown;  Funny ;Obama;0Obama")
+    val res = srdd.select(SmvSoundex('a))
+    assertSrddDataEqual(res, "s530;l000;b650;f500;o150;o150")
+  }
+}
+
 class LEFTTest extends SparkTestUtil {
   sparkTest("test LEFT function") {
     val ssc = sqlContext; import ssc._

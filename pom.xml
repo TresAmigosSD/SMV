@@ -65,6 +65,11 @@
       <artifactId>joda-time</artifactId>
       <version>2.7</version>
     </dependency>
+    <dependency> <!-- for string matching -->
+      <groupId>com.rockymadden.stringmetric</groupId>
+      <artifactId>stringmetric-core_2.10</artifactId>
+      <version>0.27.2</version>
+    </dependency>
   </dependencies>
 
   <build>
