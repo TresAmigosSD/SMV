@@ -20,29 +20,13 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.storage.StorageLevel
 
-/** EDD class as a Builder class 
- *
- * Call the following task-builder methods to create the task list
- *     addBaseTasks(list: Symbol* )
- *     addHistogramTasks(list: Symbol*)
- *     addAmountHistogramTasks(list: Symbol*)
- *     addMoreTasks(more: EDDTask*)
- * Clean task list and result SchemaRDD:
- *     clean
- * Generate SchemaRDD:
- *     toSchemaRDD: SchemaRDD
- * Generate report RDD:
- *     createReport: RDD[String]
- *
- * @param srdd the SchemaRDD this EDD works on
- * @param gExprs the group expressions this EDD cacluate over
- */
-class EDD(srdd: SchemaRDD,
-          gExprs: Seq[NamedExpression]) { 
+abstract class EDDTaskBuilder[T] {
+  
+  val srdd: SchemaRDD
+  protected var tasks: Seq[EDDTask] = Nil
 
-  private var tasks: Seq[EDDTask] = Nil
-  private var eddRDD: SchemaRDD = null
-
+  protected def self(): T
+  
   /** Add BASE tasks 
    * 
    * All simple tasks: no histograms except the timestamps
@@ -50,7 +34,7 @@ class EDD(srdd: SchemaRDD,
    *        if empty will use all fields in this SchemaRDD
    * @return this EDD
    */
-  def addBaseTasks(list: Symbol* ): EDD = {
+  def addBaseTasks(list: Symbol* ) = {
     val listSeq =
       if (list.isEmpty)
         srdd.schema.fieldNames.map(Symbol(_))
@@ -76,7 +60,7 @@ class EDD(srdd: SchemaRDD,
           )
         }
       }.flatMap{a=>a}
-    this
+    self()
   }
 
   /** Add DataQA tasks 
@@ -90,7 +74,7 @@ class EDD(srdd: SchemaRDD,
    *        if empty will use all fields in this SchemaRDD
    * @return this EDD
    */
-  private[smv] def addDataQATasks(list: Symbol* ): EDD = {
+  private[smv] def addDataQATasks(list: Symbol* ) = {
     val listSeq =
       if (list.isEmpty)
         srdd.schema.fieldNames.map(Symbol(_))
@@ -107,7 +91,7 @@ class EDD(srdd: SchemaRDD,
           case StringType => Seq(StringBase(s))
         }
       }.flatMap{a=>a}
-    this
+    self()
   }
 
 
@@ -122,7 +106,7 @@ class EDD(srdd: SchemaRDD,
    *        default = 100.0
    * @return this EDD
    */
-  def addHistogramTasks(list: Symbol*)(byFreq: Boolean = false, binSize: Double = 100.0): EDD = {
+  def addHistogramTasks(list: Symbol*)(byFreq: Boolean = false, binSize: Double = 100.0) = {
     val listSeq =
       if (list.isEmpty)
         srdd.schema.fieldNames.map(Symbol(_))
@@ -141,7 +125,7 @@ class EDD(srdd: SchemaRDD,
           case _ => Nil
         }
       }.flatMap{a=>a}
-    this
+    self()
   }
 
   /** Add Amount Histogram tasks 
@@ -151,7 +135,7 @@ class EDD(srdd: SchemaRDD,
    * @param list the Set of Symbols tasks will be created on
    * @return this EDD
    */
-  def addAmountHistogramTasks(list: Symbol*): EDD = {
+  def addAmountHistogramTasks(list: Symbol*) = {
     val listSeq = list.toSet.toSeq
     tasks ++=
       listSeq.map{ l =>
@@ -161,7 +145,7 @@ class EDD(srdd: SchemaRDD,
           case _ => Nil
         }
       }.flatMap{a=>a}
-    this
+    self()
   }
 
   /** Add all other tasks 
@@ -180,11 +164,36 @@ class EDD(srdd: SchemaRDD,
    *          StringByFreqHistogram(expr: NamedExpression)
    * @return this EDD
    */
-  def addMoreTasks(more: EDDTask*): EDD = {
+  def addMoreTasks(more: EDDTask*) = {
     tasks ++= more
-    this
+    self()
   }
+}
 
+/** EDD class as a Builder class 
+ *
+ * Call the following task-builder methods to create the task list
+ *     addBaseTasks(list: Symbol* )
+ *     addHistogramTasks(list: Symbol*)
+ *     addAmountHistogramTasks(list: Symbol*)
+ *     addMoreTasks(more: EDDTask*)
+ * Clean task list and result SchemaRDD:
+ *     clean
+ * Generate SchemaRDD:
+ *     toSchemaRDD: SchemaRDD
+ * Generate report RDD:
+ *     createReport: RDD[String]
+ *
+ * @param srdd the SchemaRDD this EDD works on
+ * @param gExprs the group expressions this EDD cacluate over
+ */
+class EDD(val srdd: SchemaRDD,
+          gExprs: Seq[NamedExpression]) extends EDDTaskBuilder[EDD] { 
+
+  private var eddRDD: SchemaRDD = null
+  
+  def self() = this
+  
   def clean: EDD = {
     tasks = Nil
     eddRDD = null
