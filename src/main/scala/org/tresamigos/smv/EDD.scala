@@ -199,14 +199,42 @@ class EDD(val srdd: SchemaRDD,
     eddRDD = null
     this
   }
+  
+  private def createAggList(_tasks: Seq[EDDTask]) = {
+    val exprLists = 
+      _tasks.map{ t => t match {
+        case NumericBase(expr) => Seq(Count(expr), OnlineAverage(expr), OnlineStdDev(expr), Min(expr), Max(expr))
+        case TimeBase(expr) => Seq(Min(expr), Max(expr))
+        case StringBase(expr) => Seq(Count(expr), Min(LENGTH(expr)), Max(LENGTH(expr)))
+        case StringDistinctCount(expr) => 
+          val relativeSD = 0.01 
+          Seq(ApproxCountDistinct(expr, relativeSD))
+        case AmountHistogram(expr) => Seq(Histogram(AmountBin(Cast(expr, DoubleType))))
+        case NumericHistogram(expr, min, max, n) => Seq(Histogram(NumericBin(Cast(expr, DoubleType), min, max, n)))
+        case BinNumericHistogram(expr, bin) => Seq(Histogram(BinFloor(Cast(expr, DoubleType), bin)))
+        case YearHistogram(expr) => Seq(Histogram(SmvYear(expr)))
+        case MonthHistogram(expr) => Seq(Histogram(SmvMonth(expr)))
+        case DoWHistogram(expr) => Seq(Histogram(SmvDayOfWeek(expr)))
+        case HourHistogram(expr) => Seq(Histogram(SmvHour(expr)))
+        case BooleanHistogram(expr) => Seq(Histogram(expr))
+        case StringLengthHistogram(expr) => Seq(Histogram(LENGTH(expr)))
+        case StringByKeyHistogram(expr) => Seq(Histogram(expr))
+        case StringByFreqHistogram(expr) => Seq(Histogram(expr))
+        case GroupPopulationKey(expr) => Seq(First(expr))
+        case GroupPopulationCount => Seq(Count(Literal(1)))
+      }}
+    exprLists.zip(_tasks).map{ case (exprList, t) => 
+      exprList.zip(t.nameList).map{ case (e, n) => 
+        Alias(e, t.expr.name + "_" + n)()
+      }
+    }.flatten
+  }
 
   /** Return the SchemaRDD of all EDD tasks' results */
   def toSchemaRDD: SchemaRDD = {
     if (eddRDD == null){
-      val aggregateList: Seq[Alias] = 
-        gExprs.map{ GroupPopulationKey(_).aggList }.flatMap(a=>a) ++
-          GroupPopulationCount.aggList ++
-          tasks.map{ t => t.aggList }.flatMap(a=>a)
+      val groupTasks = gExprs.map{ expr => GroupPopulationKey(expr) } ++ Seq(GroupPopulationCount)
+      val aggregateList = createAggList(groupTasks) ++ createAggList(tasks)
       eddRDD = srdd.groupBy(gExprs: _*)(aggregateList: _*)
       eddRDD.persist(StorageLevel.MEMORY_AND_DISK)
     } 

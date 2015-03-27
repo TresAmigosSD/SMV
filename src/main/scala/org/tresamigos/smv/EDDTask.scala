@@ -17,23 +17,22 @@ package org.tresamigos.smv
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.types._
 
+/**
+ * EDDTask only define "what" need to be done. The "how" part will leave to a concrete class 
+ * of the EDDTaskBuilder
+ * */
 abstract class EDDTask extends java.io.Serializable {
   val expr: NamedExpression
   val taskName: String
-  def aggList: Seq[Alias]
+  
+  val nameList: Seq[String]
+  val dscrList: Seq[String]
+
   def report(it: Iterator[Any]): Seq[String]
   def reportJSON(it: Iterator[Any]): String
 }
 
 abstract class BaseTask extends EDDTask {
-  val exprList: Seq[Expression]
-  val nameList: Seq[String]
-  val dscrList: Seq[String]
-
-  def aggList = exprList.zip(nameList).map{ case (e, n) => 
-    Alias(e, expr.name + "_" + n)()
-  }
-
   def report(i: Iterator[Any]): Seq[String] = dscrList.map{ d =>
     f"${expr.name}%-20s ${d}%-22s ${i.next}%s"
   }
@@ -44,7 +43,6 @@ abstract class BaseTask extends EDDTask {
 }
 
 abstract class HistogramTask extends EDDTask {
-  val reportDisc: String
   val keyType: SchemaEntry
   def isSortByValue: Boolean = false
 
@@ -65,7 +63,7 @@ abstract class HistogramTask extends EDDTask {
         f"$k%-20s$c%10d$pct%8.2f%%$sum%12d$cpct%8.2f%%"
     }.mkString("\n")
 
-    Seq(s"Histogram of ${expr.name}: $reportDisc\n" + 
+    Seq(s"Histogram of ${expr.name}: ${dscrList(0)}\n" + 
       "key                      count      Pct    cumCount   cumPct\n" +
       out +
       "\n-------------------------------------------------")
@@ -80,162 +78,119 @@ abstract class HistogramTask extends EDDTask {
 
 case class NumericBase(expr: NamedExpression) extends BaseTask {
   val taskName = "NumericBase"
-  val exprList = Seq(Count(expr), OnlineAverage(expr), OnlineStdDev(expr), Min(expr), Max(expr))
   val nameList = Seq("cnt", "avg", "std", "min", "max")
   val dscrList = Seq("Non-Null Count:", "Average:", "Standard Deviation:", "Min:", "Max:")
 }
 
 case class TimeBase(expr: NamedExpression) extends BaseTask {
   val taskName = "TimeBase"
-  val exprList = Seq(Min(expr), Max(expr))
   val nameList = Seq("min", "max")
   val dscrList = Seq("Min:", "Max:")
 }
 
 case class StringBase(expr: NamedExpression) extends BaseTask {
   val taskName = "StringBase"
-  val exprList = Seq(Count(expr), Min(LENGTH(expr)), Max(LENGTH(expr)))
   val nameList = Seq("cnt", "mil", "mal")
   val dscrList = Seq("Non-Null Count:", "Min Length:", "Max Length:")
 }
 
 case class StringDistinctCount(expr: NamedExpression) extends BaseTask {
   val taskName = "StringDistinctCount"
-  private val relativeSD = 0.01 //Instead of using 0.05 as default
-  val exprList = Seq(ApproxCountDistinct(expr, relativeSD))
   val nameList = Seq("dct")
   val dscrList = Seq("Approx Distinct Count:")
 }
 
 
 case class AmountHistogram(expr: NamedExpression) extends HistogramTask {
-  val name = expr.name + "_amt"
   val taskName = "AmountHistogram"
-  val reportDisc = "as Amount"
-  def aggList = Seq(
-    Alias(Histogram(AmountBin(Cast(expr, DoubleType))),  name)()
-  )
-  val keyType = SchemaEntry(name, DoubleType)
+  val nameList = Seq("amt")
+  val dscrList = Seq("as Amount")
+  val keyType = SchemaEntry("dummy", DoubleType)
 }
 
 case class NumericHistogram(expr: NamedExpression, min: Double, max: Double, n: Int) extends HistogramTask {
-  val name = expr.name + "_nhi"
   val taskName = "NumericHistogram"
-  val reportDisc = s"with $n fixed BINs"
-  def aggList = Seq(
-    Alias(Histogram(NumericBin(Cast(expr, DoubleType), min, max, n)),     name)()
-  )
-  val keyType = SchemaEntry(name, DoubleType)
+  val nameList = Seq("nhi")
+  val dscrList = Seq(s"with $n fixed BINs")
+  val keyType = SchemaEntry("dummy", DoubleType)
 }
 
 case class BinNumericHistogram(expr: NamedExpression, bin: Double) extends HistogramTask {
-  val name = expr.name + "_bnh"
   val taskName = "BinNumericHistogram"
-  val reportDisc = s"with BIN size $bin"
-  def aggList = Seq(
-    Alias(Histogram(BinFloor(Cast(expr, DoubleType), bin)),           expr.name + "_bnh")()
-  )
-  val keyType = SchemaEntry(name, DoubleType)
+  val nameList = Seq("bnh")
+  val dscrList = Seq(s"with BIN size $bin")
+  val keyType = SchemaEntry("dummy", DoubleType)
 }
 
 case class YearHistogram(expr: NamedExpression) extends HistogramTask {
-  val name = expr.name + "_yea"
   val taskName = "YearHistogram"
-  val reportDisc = "Year"
-  override def aggList = Seq(
-    Alias(Histogram(SmvYear(expr)),       name)()
-  )
-  val keyType = SchemaEntry(name, IntegerType)
+  val nameList = Seq("yea")
+  val dscrList = Seq("Year")
+  val keyType = SchemaEntry("dummy", IntegerType)
 }
 
 case class MonthHistogram(expr: NamedExpression) extends HistogramTask {
-  val name = expr.name + "_mon"
   val taskName = "MonthHistogram"
-  val reportDisc = "Month"
-  def aggList = Seq(
-    Alias(Histogram(SmvMonth(expr)),       name)()
-  )
-  val keyType = SchemaEntry(name, IntegerType)
+  val nameList = Seq("mon")
+  val dscrList = Seq("Month")
+  val keyType = SchemaEntry("dummy", IntegerType)
 }
 
 case class DoWHistogram(expr: NamedExpression) extends HistogramTask {
-  val name = expr.name + "_dow"
   val taskName = "DowHistogram"
-  val reportDisc = "Day of Week"
-  def aggList = Seq(
-    Alias(Histogram(SmvDayOfWeek(expr)),  name)()
-  )
-  val keyType = SchemaEntry(name, IntegerType)
+  val nameList = Seq("dow")
+  val dscrList = Seq("Day of Week")
+  val keyType = SchemaEntry("dummy", IntegerType)
 }
 
 case class HourHistogram(expr: NamedExpression) extends HistogramTask {
-  val name = expr.name + "_hou"
   val taskName = "HourHistogram"
-  val reportDisc = "Hour"
-  def aggList = Seq(
-    Alias(Histogram(SmvHour(expr)),  name)()
-  )
-  val keyType = SchemaEntry(name, IntegerType)
+  val nameList = Seq("hou")
+  val dscrList = Seq("Hour")
+  val keyType = SchemaEntry("dummy", IntegerType)
 }
 
 case class BooleanHistogram(expr: NamedExpression) extends HistogramTask {
-  val name = expr.name
   val taskName = "BooleanHistogram"
-  val reportDisc = ""
-  def aggList = Seq(
-    Alias(Histogram(expr),  name)()
-  )
-  val keyType = SchemaEntry(name, BooleanType)
+  val nameList = Seq("boo")
+  val dscrList = Seq("")
+  val keyType = SchemaEntry("dummy", BooleanType)
 }
 
 case class StringLengthHistogram(expr: NamedExpression) extends HistogramTask {
-  val name = expr.name + "_len"
   val taskName = "StringLengthHistogram"
-  val reportDisc = "Length"
-  def aggList = Seq(
-    Alias(Histogram(LENGTH(expr)),     name)()
-  )
-  val keyType = SchemaEntry(name, IntegerType)
+  val nameList = Seq("len")
+  val dscrList = Seq("Length")
+  val keyType = SchemaEntry("dummy", IntegerType)
 }
 
 case class StringByKeyHistogram(expr: NamedExpression) extends HistogramTask {
-  val name = expr.name + "_key"
   val taskName = "StringByKeyHistogram"
-  val reportDisc = "sorted by Key"
-  def aggList = Seq(
-    Alias(Histogram(expr),             name)()
-  )
-  val keyType = SchemaEntry(name, StringType)
+  val nameList = Seq("key")
+  val dscrList = Seq("sorted by Key")
+  val keyType = SchemaEntry("dummy", StringType)
 }
 
 case class StringByFreqHistogram(expr: NamedExpression) extends HistogramTask {
-  val name = expr.name + "_frq"
   val taskName = "StringByFreqHistogram"
-  val reportDisc = "sorted by Frequency"
   override val isSortByValue: Boolean = true
-  def aggList = Seq(
-    Alias(Histogram(expr),             name)()
-  )
-  val keyType = SchemaEntry(name, StringType)
+  val nameList = Seq("frq")
+  val dscrList = Seq("sorted by Frequency")
+  val keyType = SchemaEntry("dummy", StringType)
 }
 
-case class GroupPopulationKey(expr: NamedExpression) extends EDDTask {
+case class GroupPopulationKey(expr: NamedExpression) extends BaseTask {
   val taskName = "GroupPopulationKey"
-  def aggList = Seq(
-    Alias(First(expr),                 expr.name + "_pop")()
-  )
-  def report(i: Iterator[Any]): Seq[String] = Seq(
-    f"${expr.name}%-20s as Population Key =    ${i.next}%s"
-  )
-  def reportJSON(i: Iterator[Any]): String = throw new UnsupportedOperationException
+  val nameList = Seq("pop")
+  val dscrList = Seq("as Population Key =")
+  override def reportJSON(i: Iterator[Any]): String = throw new UnsupportedOperationException
 }
 
 case object GroupPopulationCount extends EDDTask {
   val expr = Alias(Literal(1), "pop")() //dummy
   val taskName = "GroupPopulationCount"
-  def aggList = Seq(
-    Alias(Count(Literal(1)),           "pop_tot")()
-  )
+  val nameList = Seq("tot")
+  val dscrList = Seq("")
   def report(i: Iterator[Any]): Seq[String] = Seq(
     f"Total Record Count:                        ${i.next}%s"
   )
