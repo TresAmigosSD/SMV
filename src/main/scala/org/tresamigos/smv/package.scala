@@ -32,7 +32,17 @@ package object smv {
     new RDDHelper[T](rdd)
   implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) = 
     new PairRDDHelper[K,V](rdd)
+    
+  /* Aggregate Function wrappers */
   def histogram(c: Column) = {
     new Column(Histogram(UnresolvedAttribute(c.toString)))
+  }
+  
+  def onlineAverage(c: Column) = {
+    new Column(OnlineAverage(UnresolvedAttribute(c.toString)))
+  }
+  
+  def onlineStdDev(c: Column) = {
+    new Column(OnlineStdDev(UnresolvedAttribute(c.toString)))
   }
 }
