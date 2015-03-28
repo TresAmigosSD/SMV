@@ -45,11 +45,11 @@ trait SparkTestUtil extends FunSuite {
    */
   def sparkTest(name: String, disableLogging: Boolean = false)(body: => Unit) {
     test(name) {
+      sys.env
       if (disableLogging)
         SparkTestUtil.setLoggingLevel(Level.OFF)
       else
         SparkTestUtil.setLoggingLevel(Level.ERROR)
-      sys.env
       sc = new SparkContext("local[2]", name)
       sqlContext = new SQLContext(sc)
       try {

@@ -16,7 +16,10 @@ package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
 class SchemaRDDHelper(schemaRDD: SchemaRDD) {
@@ -34,28 +37,16 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     val headerStr = fieldNames.map(_.trim).map(fn => "\"" + fn + "\"").
       mkString(ca.delimiter.toString)
 
-    val csvHeaderRDD = schemaRDD.sparkContext.parallelize(Array(headerStr),1)
+    val csvHeaderRDD = schemaRDD.sqlContext.sparkContext.parallelize(Array(headerStr),1)
     val csvBodyRDD = schemaRDD.map(schema.rowToCsvString(_))
 
     //As far as I know the union maintain the order. So the header will end up being the
     //first line in the saved file.
     val csvRDD = csvHeaderRDD.union(csvBodyRDD)
 
-    schema.saveToFile(schemaRDD.context, Schema.dataPathToSchemaPath(dataPath))
+    schema.saveToFile(schemaRDD.sqlContext.sparkContext, Schema.dataPathToSchemaPath(dataPath))
     csvRDD.saveAsTextFile(dataPath)
   }
-
-  /**
-   * Save 4 files *.csv, *.schema, *.edd.csv, and *.edd.schema
-   **/
-  def saveAsCsvWithSchemaAndEdd(dataPath: String)(implicit ca: CsvAttributes) {
-
-    val dataQAedd = schemaRDD.edd.addDataQATasks().toSchemaRDD
-
-    dataQAedd.saveAsCsvWithSchema(EDD.dataPathToEddPath(dataPath))
-    saveAsCsvWithSchema(dataPath)
-  }
-
 
   /**
    * Dump the schema and data of given srdd to screen for debugging purposes.
@@ -69,64 +60,47 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   /**
    * selects all the current columns in current SRDD plus the supplied expressions.
    */
-  def selectPlus(exprs: Expression*): SchemaRDD = {
-    val all = schemaRDD.schema.fieldNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
+  def selectPlus(exprs: Column*): SchemaRDD = {
+    val all = schemaRDD.columns.map{l=>schemaRDD(l)}
     schemaRDD.select( all ++ exprs : _* )
   }
 
   /**
    * Same as selectPlus but the new columns are prepended to result.
    */
-  def selectPlusPrefix(exprs: Expression*): SchemaRDD = {
-    val all = schemaRDD.schema.fieldNames.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(Symbol(l))}
+  def selectPlusPrefix(exprs: Column*): SchemaRDD = {
+    val all = schemaRDD.columns.map{l=>schemaRDD(l)}
     schemaRDD.select( exprs ++ all : _* )
   }
 
   def selectMinus(symb: Symbol*): SchemaRDD = {
-    val all = schemaRDD.schema.fieldNames.map{l=>Symbol(l)} diff symb
-    val allExprs = all.map{l=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(l)}
-    schemaRDD.select(allExprs : _* )
+    val all = schemaRDD.columns diff symb.map{_.name}
+    schemaRDD.select(all.map{l=>schemaRDD(l)} : _* )
   }
 
-  def renameField(namePairs: (Symbol,Symbol)*): SchemaRDD = {
-    import schemaRDD.sqlContext._
-
-    val namePairsMap = namePairs.toMap
-    val renamedFields = schemaRDD.schema.fieldNames.map {
-      fn => Symbol(fn) as namePairsMap.getOrElse(Symbol(fn), Symbol(fn))
+  def renameField(namePairs: (Symbol, Symbol)*): SchemaRDD = {
+    val namePairsMap = namePairs.map{case (a,b) => (a.name, b.name)}.toMap
+    val renamedFields = schemaRDD.columns.map {
+      fn => schemaRDD(fn) as namePairsMap.getOrElse(fn, fn)
     }
     schemaRDD.select(renamedFields: _*)
   }
 
-  def addMeta(metaPairs: (Symbol, String)*): SchemaRDDHelper = {
-    if (schemaWithMeta == null) schemaWithMeta = Schema.fromSchemaRDD(schemaRDD)
-    metaPairs.foreach{case (v, m) => schemaWithMeta.addMeta(v, m)}
-    this
-  }
-
-  def renameWithMeta(nameMetaPairs: (Symbol, (Symbol, String))*): SchemaRDDHelper = {
-    val namePairs = nameMetaPairs.map{case (orig, (dest, meta)) => (orig, dest)}
-    val metaPairs = nameMetaPairs.map{case (orig, (dest, meta)) => (dest, meta)}
-
-    renameField(namePairs: _*).addMeta(metaPairs: _*)
-  }
-
   def prefixFieldNames(prefix: String) : SchemaRDD = {
-    import schemaRDD.sqlContext._
-    val renamedFields = schemaRDD.schema.fieldNames.map {
-      fn => Symbol(fn) as Symbol(prefix + fn)
+    val renamedFields = schemaRDD.columns.map {
+      fn => schemaRDD(fn) as (prefix + fn)
     }
     schemaRDD.select(renamedFields: _*)
   }
 
   def postfixFieldNames(postfix: String) : SchemaRDD = {
-    import schemaRDD.sqlContext._
-    val renamedFields = schemaRDD.schema.fieldNames.map {
-      fn => Symbol(fn) as Symbol(fn + postfix)
+    val renamedFields = schemaRDD.columns.map {
+      fn => schemaRDD(fn) as (fn + postfix)
     }
     schemaRDD.select(renamedFields: _*)
   }
 
+   /*
   def joinUniqFieldNames(otherPlan: SchemaRDD, joinType: JoinType = Inner, on: Option[Expression] = None) : SchemaRDD = {
     val namesL = schemaRDD.schema.fieldNames.toSet
     val namesR = otherPlan.schema.fieldNames.toSet
@@ -146,144 +120,16 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
     schemaRDD.joinUniqFieldNames(otherPlan.renameField(renamedFields: _*), joinType, Option(joinOpt)).selectMinus(rightKeys: _*)
   }
+  */
 
   def dedupByKey(keys: Symbol*) : SchemaRDD = {
-    import schemaRDD.sqlContext._
-
-    val selectExpressions = schemaRDD.schema.fieldNames.map {
-      fn => First(Symbol(fn)) as Symbol(fn)
+    val selectExpressions = schemaRDD.columns.map {
+      fn => first(fn) as fn
     }
 
-    val allKeys = keys.map { k=>schemaRDD.sqlContext.symbolToUnresolvedAttribute(k) }
+    val allKeys = keys.map { k=>schemaRDD(k.name) }
 
-    schemaRDD.groupBy(allKeys: _*)(selectExpressions: _*)
+    schemaRDD.groupBy(allKeys: _*).agg(selectExpressions(0), selectExpressions.tail: _*)
   }
 
-  // pivot_sum is moved to SmvCDSFunctions.scala 
-
-  def smvUnpivot(valueCols: Seq[Symbol]) = {
-    new UnpivotOp(schemaRDD, valueCols).unpivot()
-  }
-
-  /** See RollupCubeOp for details. */
-  def smvCube(cols: Symbol*)(groupExprs: Expression*) = {
-    new RollupCubeOp(schemaRDD, cols, Seq.empty, groupExprs).cube()
-  }
-  def smvCubeFixed(cols: Symbol*)(fixedCols: Symbol*)(groupExprs: Expression*) = {
-    new RollupCubeOp(schemaRDD, cols, fixedCols, groupExprs).cube()
-  }
-
-  /** See RollupCubeOp for details. */
-  def smvRollup(cols: Symbol*)(groupExprs: Expression*) = {
-    new RollupCubeOp(schemaRDD, cols, Seq.empty, groupExprs).rollup()
-  }
-  def smvRollupFixed(cols: Symbol*)(fixedCols: Symbol*)(groupExprs: Expression*) = {
-    new RollupCubeOp(schemaRDD, cols, fixedCols, groupExprs).rollup()
-  }
-
-  /** See QuantileOp for details. */
-  def smvQuantile(groupCols: Seq[Symbol], keyCol: Symbol, valueCol: Symbol, numBins: Integer) = {
-    new QuantileOp(schemaRDD, groupCols, keyCol, valueCol, numBins).quantile()
-  }
-  def smvDecile(groupCols: Seq[Symbol], keyCol: Symbol, valueCol: Symbol) = {
-    new QuantileOp(schemaRDD, groupCols, keyCol, valueCol, 10).quantile()
-  }
-
-  /** adds a rank column to an srdd. */
-  def smvRank(rankColumnName: String, startValue: Long = 0) = {
-    val oldSchema = Schema.fromSchemaRDD(schemaRDD)
-    val newSchema = oldSchema ++ new Schema(Seq(LongSchemaEntry(rankColumnName)))
-
-    val res: RDD[Row] = schemaRDD.
-      zipWithIndex().
-      map{ case (row, idx) =>
-        new GenericRow(Array[Any](row ++ Seq(idx + startValue): _*)) }
-
-    schemaRDD.sqlContext.applySchemaToRowRDD(res, newSchema)
-  }
-
-  /**
-   * Create an EDD builder on SchemaRDD 
-   * 
-   * @param groupingExprs specify grouping expression(s) to compute EDD over
-   * @return an EDD object 
-   */
-  def groupEdd(groupingExprs : Expression*): EDD = {
-    EDD(schemaRDD, groupingExprs)
-  }
-
-  /**
-   * Create an EDD builder on SchemaRDD population
-   */
-  def edd: EDD = groupEdd()
-
-  def dqm(keepReject: Boolean = false): DQM = DQM(schemaRDD, keepReject)
-
-  /**
-   * chunkBy and chunkByPlus apply user defined functions to a group of
-   * records and out put a group of records
-   *
-   * @param keys specify the group key(s) to apply the UDF over
-   * @param func is an SmvChunkFunc object which defines the input, output and
-   * the UDF itself.
-   * 
-   * The chunkBy version will only output the keys and the columns output
-   * from the UDF, while the chunckByPlus version add the UDF output columns
-   * in addition to the input SchemaRDD columns
-   *
-   * The SmvChunkFunc has multiple concrete versions, for UDF it is
-   * SmvChunkUDF
-   * 
-   * SmvChunkUDF(para: Seq[Symbol], outSchema: Schema, eval: List[Seq[Any]] => List[Seq[Any]])
-   *
-   * @param para specify the columns in the SchemaRDD which will be used in
-   * the UDF
-   * @param outSchema is a SmvSchema object which specify how the out SRDD
-   * will interpret the UDF generated columns
-   * @param eval is a Scala function which does teh real work. It will refer
-   * the input columns by their indexs as ordered in the para
-   * 
-   * Example:
-   *   val srdd=sqlContext.createSchemaRdd("k:String; v:String", "z,1;a,3;a,2;z,8;")   
-   *   val runCat = (l: List[Seq[Any]]) => l.map{_(0)}.scanLeft(Seq("")){(a,b) => Seq(a(0) + b)}.tail
-   *   val runCatFunc = SmvChunkUDF(Seq('v), Schema.fromString("vcat:String"), runCat)
-   *   val res = srdd.orderBy('k.asc, 'v.asc).chunkBy('k)(runCatFunc)
-   *
-   * res of above code is 
-   *   Schema: k: String; vcat: String
-   *   [a,2]
-   *   [a,23]
-   *   [z,1]
-   *   [z,18]
-   * 
-   */
-  def chunkByPlus(keys: Symbol*)(funcs: SmvChunkUDF*): SchemaRDD = {
-    val smvChunk = new SmvChunk(schemaRDD, keys)
-    smvChunk.applyUDF(funcs, true)
-  }
-
-  def chunkBy(keys: Symbol*)(funcs: SmvChunkUDF*): SchemaRDD = {
-    val smvChunk = new SmvChunk(schemaRDD, keys)
-    smvChunk.applyUDF(funcs, false)
-  }
-  
-  /**
-   * pipeCount
-   * Generate record count whenever the SRDD get processed
-   * 
-   * Example:
-   *   val c = new ScCounter(sc)
-   *   val s1 = srdd.pipeCount(c)
-   *   ....
-   *   s1.saveAsCsvWithSchema("file")
-   *   println(c.report())
-   */
-  def pipeCount(counter: SmvCounter): SchemaRDD = {
-    counter.reset()
-    val dummyFunc: Row => Boolean = {r =>
-      counter.add("N")
-      true
-    }
-    schemaRDD.filter(dummyFunc)
-  }
 }

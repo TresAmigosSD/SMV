@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.catalyst.types._
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions.{Literal, Row, AttributeReference}
 import org.apache.spark.sql.SchemaRDD
 
@@ -365,16 +365,8 @@ object Schema {
   }
 
   def fromSchemaRDD(schemaRDD: SchemaRDD) = {
-    import org.apache.spark.contrib.smv._
-    import org.apache.spark.sql.catalyst.analysis.SimpleAnalyzer
-    val lp = extractLogicalPlan(schemaRDD)
-    val resolvedLP = SimpleAnalyzer(lp)
-    // Convert a sequence of attributes from the resolved logical plan
-    // into a sequence of schema entries.  We drop the last 4 characters
-    // from the attribute type because the attribute data type is of the
-    // form DoubleType, IntType, XType (we want to drop the "Type")
     new Schema(
-      resolvedLP.output.map{a =>
+      schemaRDD.schema.fields.map{a =>
         SchemaEntry(a.name, a.dataType)
       }
     )

@@ -17,8 +17,7 @@ package org.tresamigos.smv
 
 class SeqAnyRDDTest extends SparkTestUtil {
   sparkTest("test SeqAnyRDD to SchemaRDD") {
-    import org.apache.spark.sql.catalyst.dsl._
-    val ssc = sqlContext; import ssc._
+    val ssc = sqlContext; import ssc.implicits._
     val rdd = sc.parallelize(Seq(Seq(1, "a"), Seq(2, "b"), Seq(3, "c")))
     val schema = Schema.fromString("id:Integer; val:String")
     val srdd = sqlContext.applySchemaToSeqAnyRDD(rdd, schema)
