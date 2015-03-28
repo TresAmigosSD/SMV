@@ -15,6 +15,8 @@
 package org.tresamigos
 
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.rdd.RDD
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -30,4 +32,7 @@ package object smv {
     new RDDHelper[T](rdd)
   implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) = 
     new PairRDDHelper[K,V](rdd)
+  def histogram(c: Column) = {
+    new Column(Histogram(UnresolvedAttribute(c.toString)))
+  }
 }
