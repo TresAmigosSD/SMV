@@ -73,19 +73,24 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     schemaRDD.select( exprs ++ all : _* )
   }
 
-  def selectMinus(symb: Symbol*): SchemaRDD = {
-    val all = schemaRDD.columns diff symb.map{_.name}
+  def selectMinus(symb: String*): SchemaRDD = {
+    val all = schemaRDD.columns diff symb
     schemaRDD.select(all.map{l=>schemaRDD(l)} : _* )
   }
-
-  def renameField(namePairs: (Symbol, Symbol)*): SchemaRDD = {
-    val namePairsMap = namePairs.map{case (a,b) => (a.name, b.name)}.toMap
+  def selectMinus(s1: Symbol, sleft: Symbol*): SchemaRDD = 
+    selectMinus((s1 +: sleft).map{l=>l.name}: _*)
+  
+  def renameField(namePairs: (String, String)*): SchemaRDD = {
+    val namePairsMap = namePairs.toMap
     val renamedFields = schemaRDD.columns.map {
       fn => schemaRDD(fn) as namePairsMap.getOrElse(fn, fn)
     }
     schemaRDD.select(renamedFields: _*)
   }
+  def renameField(n1: (Symbol, Symbol), nleft: (Symbol, Symbol)*): SchemaRDD = 
+    renameField((n1 +: nleft).map{case(l, r) => (l.name, r.name)}: _*)
 
+   /*
   def prefixFieldNames(prefix: String) : SchemaRDD = {
     val renamedFields = schemaRDD.columns.map {
       fn => schemaRDD(fn) as (prefix + fn)
@@ -99,37 +104,37 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
     }
     schemaRDD.select(renamedFields: _*)
   }
-
-   /*
-  def joinUniqFieldNames(otherPlan: SchemaRDD, joinType: JoinType = Inner, on: Option[Expression] = None) : SchemaRDD = {
-    val namesL = schemaRDD.schema.fieldNames.toSet
-    val namesR = otherPlan.schema.fieldNames.toSet
-
-    val dup = (namesL & namesR).toSeq
-    val renamedFields = dup.map{l => (Symbol(l) -> Symbol("_" + l))}
-
-    schemaRDD.join(otherPlan.renameField(renamedFields: _*), joinType, on)
-  }
-
-  def joinByKey(otherPlan: SchemaRDD, joinType: JoinType, keys: Seq[Symbol]): SchemaRDD = {
-    import schemaRDD.sqlContext._
-
-    val rightKeys = keys.map{k => Symbol("_" + k.name)}
-    val renamedFields = keys.zip(rightKeys).map{case (l,r) => (l -> r)}
-    val joinOpt = keys.zip(rightKeys).map{case (l, r) => (l === r):Expression}.reduce(_ && _)
-
-    schemaRDD.joinUniqFieldNames(otherPlan.renameField(renamedFields: _*), joinType, Option(joinOpt)).selectMinus(rightKeys: _*)
-  }
   */
 
-  def dedupByKey(keys: Symbol*) : SchemaRDD = {
+  private[smv] def joinUniqFieldNames(otherPlan: SchemaRDD, on: Column, joinType: String = "inner") : SchemaRDD = {
+    val namesL = schemaRDD.columns.toSet
+    val namesR = otherPlan.columns.toSet
+
+    val dup = (namesL & namesR).toSeq
+    val renamedFields = dup.map{l => l -> ("_" + l)}
+
+    schemaRDD.join(otherPlan.renameField(renamedFields: _*), on: Column, joinType)
+  }
+
+  def joinByKey(otherPlan: SchemaRDD, keys: Seq[String], joinType: String): SchemaRDD = {
+    import schemaRDD.sqlContext.implicits._
+
+    val rightKeys = keys.map{k => "_" + k}
+    val renamedFields = keys.zip(rightKeys).map{case (l,r) => (l -> r)}
+    val newOther = otherPlan.renameField(renamedFields: _*)
+    val joinOpt = keys.zip(rightKeys).map{case (l, r) => ($"$l" === $"$r")}.reduce(_ && _)
+
+    schemaRDD.joinUniqFieldNames(newOther, joinOpt, joinType).selectMinus(rightKeys: _*)
+  }
+
+  def dedupByKey(keys: String*) : SchemaRDD = {
+    import schemaRDD.sqlContext.implicits._
     val selectExpressions = schemaRDD.columns.map {
       fn => first(fn) as fn
     }
-
-    val allKeys = keys.map { k=>schemaRDD(k.name) }
-
-    schemaRDD.groupBy(allKeys: _*).agg(selectExpressions(0), selectExpressions.tail: _*)
+    schemaRDD.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*)
   }
+  def dedupByKey(k1: Symbol, kleft: Symbol*): SchemaRDD = 
+    dedupByKey((k1 +: kleft).map{l=>l.name}: _*)
 
 }
