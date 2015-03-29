@@ -18,7 +18,13 @@ the Symbol is implicitly converted to analysis.UnresolvedAttribut, which is an E
 
 Since 1.3, an implicit conversion from Symbol to Column is provided by ```import sqlContext.implicits._```. However, 
 both example code and convenience alternative methods are more toward using ```String``` to represent Column names instead 
-of using Symbol. Eg. even without ```import sqlContext.implicits._```, you can do
+of using Symbol. 
+Also it specifically defined the "Symbol" or "String" represented column names as a class ```ColumnName``` which is a
+subclass of ```Column```. 
+
+Here are some examples:
+
+Even without ```import sqlContext.implicits._```, you can do
 ```scala
 df.select("field1")
 ```
@@ -60,7 +66,7 @@ df.select(keys: _*) //will not work!
 ```
 df("a")
 ```
-literally search for column "a" in Dataframe "df". However sometimes we want to construct some general ```Column``` without
+Is actually ```DataFrame.apply("a")```, literally search for column "a" in Dataframe "df". However sometimes we want to construct some general ```Column``` without
 specifying any Dataframe. We need the next method to do so.
 
 ### General Column from String
@@ -82,4 +88,66 @@ val keys=Seq("a", "b").map(l=>$"$l")
 df.select(keys: _*)
 ```
  
- 
+### Symbol still works through implicit conversion
+```scala
+df.select('single * 2) 
+```
+will still work. 
+
+However since it was through implicit conversion, the following doesn't work just like the string case:
+```scala
+val keys=Seq('a, 'b)
+df.select(keys: _*) //doesn't work
+``` 
+
+You need to do
+```scala
+df.select(keys.map(l=>$"${l.name}"): _*)
+```
+
+### What "as" do
+
+Here is what we do in the past to define new variables:
+```scala
+df.select('a * 2 as 'b)
+```
+It will still work in 1.3 as long as you ```import df.sqlContext.implicits._```. 
+
+Here is what happened:
+
+* The ```'a``` implicitly converted to a ColumnName (which is a Column)
+* ```*``` is a method of ```Column``` which take 2 (as Any) as parameter 
+* ```as``` is another method of ```Column```, which can take String or Symbol, 
+```'b```, as parameter and return a ```Column```.
+
+So basically if we consider ```as``` as an operator, left of it should be a ```Column``` 
+and right of it should be either a ```Symbol``` or a ```String```.
+
+To follow the 1.3 document examples, using String instead of Symbol to represent 
+column names:
+```scala
+df.select($"a" * 2 as "b")
+```
+
+### No Expressions for the end users
+
+As adding the ```Column``` class and refined the ```DataFrame``` interface, the end user interface is focused 
+on only 2 concepts: 
+
+* The DataFrame to hold the data, and
+* The Column defines the element within a DataFrame
+  
+And
+
+* ```select```, ```groupBy```, ```agg```, etc. are DataFrame methods.
+* ```as```, ```+```, ```*```, ```substr```, ```in```, etc. are Column methods.
+
+Other "Expressions" are interfaced through ```org.appache.spark.sql.functions```, such as
+
+* ```avg```, ```sum```, ```abs```, ```sqrt```, etc.
+
+For SMV, we should follow the same principle and provide interfaces through extending those 3 groups:
+
+* DataFrameHelper (now SchemaRDDHelper) to extend DataFrame methods
+* ColumnHelper (some of the nonaggregate functions now) to extend Column methods 
+* package (or explicitly org.tresamigos.smv.functions._) to extend sql.functions
