@@ -151,3 +151,32 @@ For SMV, we should follow the same principle and provide interfaces through exte
 * DataFrameHelper (now SchemaRDDHelper) to extend DataFrame methods
 * ColumnHelper (some of the nonaggregate functions now) to extend Column methods 
 * package (or explicitly org.tresamigos.smv.functions._) to extend sql.functions
+
+## Changes on ```groupBy```
+
+Before 1.3, we do group-by aggregation as
+```scala
+srdd.groupBy('key1, 'key2)(Sum('v1) as 'sv1, Count('v2) as 'cv2)
+```
+
+One of the biggest change of 1.3 is to separate the 2 functions of ```groupBy```. Now the way we should do above is
+```scala
+df.groupBy('key1, 'key2).agg(sum('v1) as 'sv1, count('v2) as 'cv2)
+```
+
+Or using String for column names
+```scala
+df.groupBy("key1", "key2").agg(sum("v1") as "sv1", count("v2") "cv2")
+```
+
+Although when we using Symbol, the change looks minimal, behind the sign the change is fundamental. In 1.3, ```groupBy```
+as DataFrame method, returns a ```GroupedData``` object, and ```agg``` is a method of ```GroupedData``` class. Although 
+there are not too many methods supported by ```GroupedData``` yet, the introducing of the ```GroupedData``` class opens
+a door of much more flexible DataFrame processing. 
+
+Let's review our need of the ```smvChunkBy``` method of SchemaRDD in current SMV. It's basically create a ```GroupedData```
+object and expose it to Scala as iterators to process. Within the new framework, we can simply create a ```GroupedDataHelper``` 
+class and implicitly convert ```GroupedData```. Through the helper, we can add methods fulfill the requirements of 
+```smvChunkBy```. Though this way, we don't need to go back to RDD and do what we need in DF end-to-end.
+
+We can even extend ```GroupedData``` method to return a ```GroupedData``` method to chain things together.   
