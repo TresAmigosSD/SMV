@@ -290,35 +290,32 @@ case class SmvCDSTopRec(orderKey: SortOrder) extends SmvCDSOnRdd {
  *  (which means it can also return botton N records)
  *
  *  TODO: multiple order keys, and multiple output Records - SmvCDSTopNRecs
+ *  TODO: make TopRec an optimization of TopNRecs (that only keeps one rec instead of pqueue)
  *
  **/
 case class SmvCDSTopNRecs(maxElems: Int, orderKey: SortOrder) extends SmvCDSOnRdd {
   val outGroupKeys = Nil
   def outSchema(inSchema: StructType) = inSchema
 
-  private val keyCol = orderKey.child.asInstanceOf[NamedExpression].name
-
-  private val cmpCurrentToTop =
-    if (orderKey.direction == Ascending) {
-      1
-    } else {
-      -1
-    }
+  private val keyColName = orderKey.child.asInstanceOf[NamedExpression].name
 
   def eval(inSchema: StructType): Iterable[Row] => Iterable[Row] = {
-    val colIdx = inSchema.fields.indexWhere(keyCol == _.name)
-    val col = inSchema(keyCol)
+    val colIdx = inSchema.fields.indexWhere(keyColName == _.name)
+    val col = inSchema(keyColName)
     val nativeSchemaEntry = SchemaEntry(col).asInstanceOf[NativeSchemaEntry]
-    //val normColOrdering = nativeSchemaEntry.ordering.asInstanceOf[Ordering[Any]]
-    val colOrdering = nativeSchemaEntry.ordering.asInstanceOf[Ordering[Any]]
+    val normColOrdering = nativeSchemaEntry.ordering.asInstanceOf[Ordering[Any]]
+    val colOrdering = if (orderKey.direction == Ascending) normColOrdering.reverse else normColOrdering
 
+    // create an implicit instance of Ordering[Row] so that it will be picked up by
+    // implict order required by BoundedPriorityQueue below.  Therefore, order of row is
+    // based on order of specified column.
     implicit object RowOrdering extends Ordering[Row] {
       def compare(a:Row, b:Row) = colOrdering.compare(a(colIdx),b(colIdx))
     }
 
     {it =>
       val bpq = BoundedPriorityQueue[Row](maxElems)
-      it.map{ r => bpq += r}
+      it.foreach(r => bpq += r)
       bpq.toList
     }
   }

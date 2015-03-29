@@ -14,9 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
-import org.apache.spark.SparkContext._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 
@@ -114,10 +112,18 @@ class SmvCDSFunctions(schemaRDD: SchemaRDD){
   }
 
   /**
-   * See SmvCDSTopRec for document 
+   * See SmvCDSTopRec for documentation
    **/
   def smvTopRec(keys: Symbol*)(order: SortOrder): SchemaRDD = {
     val cds=SmvCDSTopRec(order)
+    smvApplyCDS(keys: _*)(cds)
+  }
+
+  /**
+   * See SmvCDSTopRec for documentation
+   **/
+  def smvTopNRecs(keys: Symbol*)(maxElems: Int, order: SortOrder): SchemaRDD = {
+    val cds = SmvCDSTopNRecs(maxElems, order)
     smvApplyCDS(keys: _*)(cds)
   }
 }

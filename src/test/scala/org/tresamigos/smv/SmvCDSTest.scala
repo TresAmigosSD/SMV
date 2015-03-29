@@ -120,13 +120,27 @@ class SmvCDSTest extends SparkTestUtil {
          z,3,1.1;
          z,2,1.4;
          a,1,0.3""")
-    val cds = SmvCDSTopNRecs(2, 't.desc)
-    val res = srdd.smvApplyCDS('k)(cds)
 
-    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double")
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+    // test TopN (with descending ordering)
+    val t_cds = SmvCDSTopNRecs(2, 't.desc)
+    val t_res = srdd.smvApplyCDS('k)(t_cds)
+
+    assertSrddSchemaEqual(t_res, "k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(t_res.collect.map(_.toString), Seq(
       "[a,1,0.3]",
       "[z,3,1.1]",
       "[z,5,2.2]"))
+
+    // test BottomN (using ascending ordering)
+    val b_cds = SmvCDSTopNRecs(2, 't.asc)
+    val b_res = srdd.smvApplyCDS('k)(b_cds)
+
+    assertSrddSchemaEqual(b_res, "k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(b_res.collect.map(_.toString), Seq(
+      "[a,1,0.3]",
+      "[z,1,0.2]",
+      "[z,-5,0.8]"))
+
+
   }
 }
