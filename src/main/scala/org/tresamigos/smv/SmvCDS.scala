@@ -25,7 +25,7 @@ import org.apache.spark.sql.catalyst.dsl.plans._
 import org.apache.spark.sql.catalyst.plans.{Inner}
 
 /**
- * SmvCDS - SMV Custom Data Seletor 
+ * SmvCDS - SMV Custom Data Selector
  *
  * As generalizing the idea of running sum and similar requirements, we define
  * an abstract class as CDS. Using the running sum as an example, the overall
@@ -71,14 +71,19 @@ case class NoOpCDS(outGroupKeys: Seq[Symbol]) extends SmvCDS{
  **/
 abstract class SmvCDSOnRdd extends SmvCDS {
 
+  // TODO: should use SmvSchema instead of StructType as we add additional functions.
   def outSchema(inSchema: StructType): StructType
+
+  // TODO: need to rename this to something like evalFunc as it is DOES NOT evaluate
+  // the expression.  Rather, it returns a function that will do the eventual evaluation.
   def eval(inSchema: StructType): Iterable[Row] => Iterable[Row]
 
   /**
-   * Create the self-joined SRDD 
+   * Create the self-joined SRDD. TODO: this is not a self joined SRDD!!!
    **/
   def createSrdd(srdd: SchemaRDD, keys: Seq[Symbol]): SchemaRDD = {
     def names = srdd.schema.fieldNames
+    // TODO: the mapping to indicies should really be in SmvSchema
     val keyO = keys.map{s => names.indexWhere(s.name == _)}
 
     val evalrow = eval(srdd.schema)
@@ -274,6 +279,47 @@ case class SmvCDSTopRec(orderKey: SortOrder) extends SmvCDSOnRdd {
       }
       if (res == EmptyRow) Seq()
       else(Seq(res))
+    }
+  }
+}
+
+
+/**
+ *  SmvCDSTopNRecs is a SmvCDS to support smvTopNRecs(keys)(order) method,
+ *  which returns the TopN records based on the order key
+ *  (which means it can also return botton N records)
+ *
+ *  TODO: multiple order keys, and multiple output Records - SmvCDSTopNRecs
+ *
+ **/
+case class SmvCDSTopNRecs(maxElems: Int, orderKey: SortOrder) extends SmvCDSOnRdd {
+  val outGroupKeys = Nil
+  def outSchema(inSchema: StructType) = inSchema
+
+  private val keyCol = orderKey.child.asInstanceOf[NamedExpression].name
+
+  private val cmpCurrentToTop =
+    if (orderKey.direction == Ascending) {
+      1
+    } else {
+      -1
+    }
+
+  def eval(inSchema: StructType): Iterable[Row] => Iterable[Row] = {
+    val colIdx = inSchema.fields.indexWhere(keyCol == _.name)
+    val col = inSchema(keyCol)
+    val nativeSchemaEntry = SchemaEntry(col).asInstanceOf[NativeSchemaEntry]
+    //val normColOrdering = nativeSchemaEntry.ordering.asInstanceOf[Ordering[Any]]
+    val colOrdering = nativeSchemaEntry.ordering.asInstanceOf[Ordering[Any]]
+
+    implicit object RowOrdering extends Ordering[Row] {
+      def compare(a:Row, b:Row) = colOrdering.compare(a(colIdx),b(colIdx))
+    }
+
+    {it =>
+      val bpq = BoundedPriorityQueue[Row](maxElems)
+      it.map{ r => bpq += r}
+      bpq.toList
     }
   }
 }
