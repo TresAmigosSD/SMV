@@ -16,14 +16,14 @@ package org.tresamigos
 
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.rdd.RDD
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 package object smv {
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
-//  implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
+  implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
   implicit def makeSchemaRDDHelper(srdd: SchemaRDD) = new SchemaRDDHelper(srdd)
 //  implicit def makeSmvCDSFunctions(srdd: SchemaRDD) = new SmvCDSFunctions(srdd)
   implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
@@ -35,14 +35,14 @@ package object smv {
     
   /* Aggregate Function wrappers */
   def histogram(c: Column) = {
-    new Column(Histogram(UnresolvedAttribute(c.toString)))
+    new Column(Histogram(toExpr(c)))
   }
   
   def onlineAverage(c: Column) = {
-    new Column(OnlineAverage(UnresolvedAttribute(c.toString)))
+    new Column(OnlineAverage(toExpr(c)))
   }
   
   def onlineStdDev(c: Column) = {
-    new Column(OnlineStdDev(UnresolvedAttribute(c.toString)))
+    new Column(OnlineStdDev(toExpr(c)))
   }
 }

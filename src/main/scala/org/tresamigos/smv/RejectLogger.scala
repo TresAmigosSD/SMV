@@ -41,7 +41,6 @@ object TerminateRejectLogger extends RejectLogger {
   }
 }
 
-/*
 class SCRejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends RejectLogger {
   private val rejectedRecords = sparkContext.accumulableCollection(MutableList[(String, String)]())
   private val rejectedRecordCount = sparkContext.accumulator(0)
@@ -76,5 +75,3 @@ class SCRejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends
   }
 
 }
-
-*/
