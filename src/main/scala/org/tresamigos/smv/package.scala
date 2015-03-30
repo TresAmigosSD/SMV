@@ -15,7 +15,8 @@
 package org.tresamigos
 
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.{Column, ColumnName}
+import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.rdd.RDD
@@ -24,9 +25,11 @@ import scala.reflect.ClassTag
 
 package object smv {
   implicit def makeColHelper(col: Column) = new ColumnHelper(col)
+  implicit def makeSymColHelper(sym: Symbol) = new ColumnHelper(new ColumnName(sym.name))
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
   implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
   implicit def makeSchemaRDDHelper(srdd: SchemaRDD) = new SchemaRDDHelper(srdd)
+  implicit def makeGroupedDataHelper(gdata: GroupedData) = new GroupedDataHelper(gdata)
 //  implicit def makeSmvCDSFunctions(srdd: SchemaRDD) = new SmvCDSFunctions(srdd)
   implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
   implicit def makeSeqStrRDDHelper(rdd: RDD[Seq[String]]) = new SeqStringRDDHelper(rdd)

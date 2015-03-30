@@ -17,6 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.Column
+import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.analysis._
@@ -90,7 +91,7 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   def renameField(n1: (Symbol, Symbol), nleft: (Symbol, Symbol)*): SchemaRDD = 
     renameField((n1 +: nleft).map{case(l, r) => (l.name, r.name)}: _*)
 
-   /*
+   /* Do we still need these 2?
   def prefixFieldNames(prefix: String) : SchemaRDD = {
     val renamedFields = schemaRDD.columns.map {
       fn => schemaRDD(fn) as (prefix + fn)
@@ -137,4 +138,36 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   def dedupByKey(k1: Symbol, kleft: Symbol*): SchemaRDD = 
     dedupByKey((k1 +: kleft).map{l=>l.name}: _*)
 
+
+  /**
+   * Create an Edd builder on SchemaRDD 
+   * 
+   * @param groupingExprs specify grouping expression(s) to compute Edd over
+   * @return an Edd object 
+   */
+  def groupEdd(groupingExprs : Column*): Edd = {
+    Edd(schemaRDD, groupingExprs)
+  }
+
+  /**
+   * Create an Edd builder on SchemaRDD population
+   */
+  def edd: Edd = groupEdd()
+
+
+  /**
+   * df.aggregate(count("a"))
+   **/
+  def aggregate(cols: Column*) = {
+    schemaRDD.agg(cols(0), cols.tail: _*)
+  }
+}
+
+class GroupedDataHelper(gdata: GroupedData) {
+  /**
+   * df.groupBy("key").aggregate(count("a"))
+   **/
+  def aggregate(cols: Column*) = {
+    gdata.agg(cols(0), cols.tail: _*)
+  }
 }
