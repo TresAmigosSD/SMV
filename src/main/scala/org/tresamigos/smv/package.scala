@@ -16,12 +16,14 @@ package org.tresamigos
 
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.sql.Column
+import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.rdd.RDD
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 package object smv {
+  implicit def makeColHelper(col: Column) = new ColumnHelper(col)
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
   implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
   implicit def makeSchemaRDDHelper(srdd: SchemaRDD) = new SchemaRDDHelper(srdd)
@@ -33,16 +35,25 @@ package object smv {
   implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) = 
     new PairRDDHelper[K,V](rdd)
     
+  /***************************************************************************
+   * Functions 
+   ***************************************************************************/
+  
   /* Aggregate Function wrappers */
   def histogram(c: Column) = {
-    new Column(Histogram(toExpr(c)))
+    new Column(Histogram(c.toExpr))
   }
   
   def onlineAverage(c: Column) = {
-    new Column(OnlineAverage(toExpr(c)))
+    new Column(OnlineAverage(c.toExpr))
   }
   
   def onlineStdDev(c: Column) = {
-    new Column(OnlineStdDev(toExpr(c)))
+    new Column(OnlineStdDev(c.toExpr))
+  }
+  
+  /* NonAggregate Function warppers */
+  def colIf(cond: Column, l: Column, r: Column) = {
+    new Column(If(cond.toExpr, l.toExpr, r.toExpr))
   }
 }

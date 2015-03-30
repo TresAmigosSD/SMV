@@ -17,6 +17,6 @@ package org.apache.spark.sql.contrib
 import org.apache.spark.sql.Column
 
 package object smv {
-  def toExpr(c: Column) = c.expr
+  def extractExpr(c: Column) = c.expr
 }
 
