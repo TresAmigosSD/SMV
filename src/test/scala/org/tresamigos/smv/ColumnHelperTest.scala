@@ -45,4 +45,27 @@ class ColumnHelperTest extends SparkTestUtil {
       "2019-01-01 00:00:00.0;" +
       "null")
   }
+  
+  sparkTest("test smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek"){
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = sqlContext.createSchemaRdd("k:Timestamp[yyyyMMdd]; v:String;", "20190101,a;,b")
+    val res = srdd.select($"k".smvYear, $"k".smvMonth, $"k".smvQuarter, $"k".smvDayOfMonth, $"k".smvDayOfWeek, $"k".smvHour)
+    assertSrddSchemaEqual(res, "SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer")
+    assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
+  }
+  
+  sparkTest("test smvAmtBin, smvNumericBin, smvCoarseGrain"){
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = sqlContext.createSchemaRdd("k:Timestamp[yyyyMMdd]; v:Double;", "20190101,1213.3;,31312.9")
+    val res = srdd.select($"v".smvAmtBin, $"v".smvNumericBin(40000,0,4), $"v".smvCoarseGrain(1000))
+    assertSrddSchemaEqual(res, "SmvAmtBin(v): Double; SmvNumericBin(v,40000.0,0.0,4): Double; SmvCoarseGrain(v,1000.0): Double")
+    assertSrddDataEqual(res, "1000.0,10000.0,1000.0;" + "30000.0,40000.0,31000.0")
+  }
+  
+  sparkTest("test SmvSoundex function") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("a:String", "Smith;Liu;Brown;  Funny ;Obama;0Obama")
+    val res = srdd.select($"a".smvSoundex)
+    assertSrddDataEqual(res, "s530;l000;b650;f500;o150;o150")
+  } 
 }

@@ -180,3 +180,42 @@ class and implicitly convert ```GroupedData```. Through the helper, we can add m
 ```smvChunkBy```. Though this way, we don't need to go back to RDD and do what we need in DF end-to-end.
 
 We can even extend ```GroupedData``` method to return a ```GroupedData``` method to chain things together.   
+
+
+## Column methods/operators and function
+
+One big benefit of wrapping Expression with Column is that we can define methods/operators on Column class, 
+which make Column more like a Scala data type instead of a totally different DSL. 
+
+So now 
+
+* ```+```, ```-```, ```*```, ```/```
+* ```<```, ```>```, etc.
+* ```&&```, ```||```, etc.
+
+are all Column methods/operators as other Scala classes which supporting arithmetics.
+
+Also some string operations are supported, such as ```substr```
+
+Those methods are all defined in [Column class](http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.Column)
+
+Another class operate on Column's is [sql.functions](http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.functions$)
+
+Basically there are 3 types of functions:
+
+* Aggregate functions
+* NonAggregate functions
+* UDF
+
+The Aggregate functions are pretty much wrappers of Aggregate Expressions. 
+All the NonAggregate functions could be implemented as methods. Some of them are mainly used by people
+as functions instead of method, for example we typically do ```sqrt($"a")``` instead of ```$"a".sqrt```. 
+Some of them act on multiple Columns, such as ```coalesce```. 
+However, there are still some I don't know why they should be functions instead of method of Column, such as
+```lower``` and ```upper```.
+
+```udf``` is really handy if you are sure that the Column you are dealing with has no nulls. The issue is that
+although udf simply wrapped around ```ScalaUdf```, it determines the ```DataType``` from the Scala function,
+which passed to it. Since Scala is strongly typed, I can't pass a Double with ```nullable = true```. 
+
+I think next version they will fix it. For now we can still use ScalaUdf in SMV code. 
