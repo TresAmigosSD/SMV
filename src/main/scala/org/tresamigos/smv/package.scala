@@ -53,7 +53,15 @@ package object smv {
   }
   
   /* NonAggregate Function warppers */
-  def colIf(cond: Column, l: Column, r: Column) = {
+  def columnIf(cond: Column, l: Column, r: Column) = {
     new Column(If(cond.toExpr, l.toExpr, r.toExpr))
+  }
+  
+  def smvStrCat(columns: Column*) = {
+    new Column(SmvStrCat(columns.map{c => c.toExpr}: _*))
+  }
+  
+  def smvAsArray(columns: Column*) = {
+    new Column(SmvAsArray(columns.map{c => c.toExpr}: _*))
   }
 }
