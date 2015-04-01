@@ -267,6 +267,15 @@ class Edd(val srdd: SchemaRDD,
       (gtasks_ ++ tasks_).map{ t => t.report(it) }.flatten.mkString("\n")
     }
   }
+  
+  /** save a local copy of report */
+  def saveReport(path: String): Unit = {
+    import java.io.{File, PrintWriter}
+    val res = createReport().mkString("\n")
+    val pw = new PrintWriter(new File(path))
+    pw.println(res)
+    pw.close()
+  }
 
   /** Dump Edd report on screen */
   def dump: Unit = {

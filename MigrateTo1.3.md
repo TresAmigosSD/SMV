@@ -219,3 +219,13 @@ although udf simply wrapped around ```ScalaUdf```, it determines the ```DataType
 which passed to it. Since Scala is strongly typed, I can't pass a Double with ```nullable = true```. 
 
 I think next version they will fix it. For now we can still use ScalaUdf in SMV code. 
+
+# To be converted
+
+* smvQuantile
+* smvCDS and all smvCDSFuncs
+* smvUnpivot
+* smvCube, smvCubeFixed
+* smvRollup, smvCubeFixed
+* chunkBy -- replaced by smvCDS interface
+* DQM -- low priority, should be redesigned with SmvApp logging

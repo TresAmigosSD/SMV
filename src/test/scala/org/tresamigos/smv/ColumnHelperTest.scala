@@ -68,4 +68,15 @@ class ColumnHelperTest extends SparkTestUtil {
     val res = srdd.select($"a".smvSoundex)
     assertSrddDataEqual(res, "s530;l000;b650;f500;o150;o150")
   } 
+  
+  sparkTest("test SmvSafeDiv function") {
+    import org.apache.spark.sql.functions._
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("a:Double;b:Integer", "0.4,5;0,0;,")
+    val res = srdd.select(lit(10.0).smvSafeDiv($"a",100), lit(10.0).smvSafeDiv($"b",200))
+    assertSrddDataEqual(res, 
+      "25.0,2.0;" +
+      "100.0,200.0;" +
+      "null,null")
+  }
 }

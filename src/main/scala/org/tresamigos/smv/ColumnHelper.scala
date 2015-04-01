@@ -49,7 +49,7 @@ class ColumnHelper(column: Column) {
   /** LENGTH */ 
   def smvLength = {
     val name = s"SmvLength($column)"
-    val f = (s:Any) => if(s == null) null else s.asInstanceOf[String].size
+    val f: String => Integer = (s:String) => if(s == null) null else s.size
     new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)())
   }
   
@@ -57,9 +57,9 @@ class ColumnHelper(column: Column) {
   def smvStrToTimestamp(fmt: String) = {
     val name = s"SmvStrToTimestamp($column,$fmt)"
     val fmtObj = new java.text.SimpleDateFormat(fmt)
-    val f = (s:Any) => 
+    val f = (s:String) => 
       if(s == null) null 
-      else new Timestamp(fmtObj.parse(s.asInstanceOf[String]).getTime())
+      else new Timestamp(fmtObj.parse(s).getTime())
     new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)())
   }
   
@@ -67,10 +67,10 @@ class ColumnHelper(column: Column) {
   def smvYear = {
     val name = s"SmvYear($column)"
     val cal : Calendar = Calendar.getInstance()
-    val f = (ts:Any) => 
+    val f = (ts:Timestamp) => 
       if(ts == null) null 
       else {
-        cal.setTimeInMillis(ts.asInstanceOf[Timestamp].getTime())
+        cal.setTimeInMillis(ts.getTime())
         cal.get(Calendar.YEAR)
       }
       
@@ -81,10 +81,10 @@ class ColumnHelper(column: Column) {
   def smvMonth = {
     val name = s"SmvMonth($column)"
     val cal : Calendar = Calendar.getInstance()
-    val f = (ts:Any) => 
+    val f = (ts:Timestamp) => 
       if(ts == null) null 
       else {
-        cal.setTimeInMillis(ts.asInstanceOf[Timestamp].getTime())
+        cal.setTimeInMillis(ts.getTime())
         cal.get(Calendar.MONTH) + 1
       }
       
@@ -95,10 +95,10 @@ class ColumnHelper(column: Column) {
   def smvQuarter = {
     val name = s"SmvQuarter($column)"
     val cal : Calendar = Calendar.getInstance()
-    val f = (ts:Any) => 
+    val f = (ts:Timestamp) => 
       if(ts == null) null 
       else {
-        cal.setTimeInMillis(ts.asInstanceOf[Timestamp].getTime())
+        cal.setTimeInMillis(ts.getTime())
         cal.get(Calendar.MONTH)/3 + 1
       }
       
@@ -109,10 +109,10 @@ class ColumnHelper(column: Column) {
   def smvDayOfMonth = {
     val name = s"SmvDayOfMonth($column)"
     val cal : Calendar = Calendar.getInstance()
-    val f = (ts:Any) => 
+    val f = (ts:Timestamp) => 
       if(ts == null) null 
       else {
-        cal.setTimeInMillis(ts.asInstanceOf[Timestamp].getTime())
+        cal.setTimeInMillis(ts.getTime())
         cal.get(Calendar.DAY_OF_MONTH)
       }
       
@@ -123,10 +123,10 @@ class ColumnHelper(column: Column) {
   def smvDayOfWeek = {
     val name = s"SmvDayOfWeek($column)"
     val cal : Calendar = Calendar.getInstance()
-    val f = (ts:Any) => 
+    val f = (ts:Timestamp) => 
       if(ts == null) null 
       else {
-        cal.setTimeInMillis(ts.asInstanceOf[Timestamp].getTime())
+        cal.setTimeInMillis(ts.getTime())
         cal.get(Calendar.DAY_OF_WEEK)
       }
       
@@ -137,9 +137,9 @@ class ColumnHelper(column: Column) {
   def smvHour = {
     val name = s"SmvHour($column)"
     val fmtObj=new java.text.SimpleDateFormat("HH")
-    val f = (ts:Any) => 
+    val f = (ts:Timestamp) => 
       if(ts == null) null 
-      else fmtObj.format(ts.asInstanceOf[Timestamp]).toInt
+      else fmtObj.format(ts).toInt
       
     new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
   }
@@ -199,11 +199,27 @@ class ColumnHelper(column: Column) {
   /** SmvSoundex */
   def smvSoundex = {
     val name = s"SmvSoundex($column)"
-    val f = (s:Any) => 
+    val f = (s:String) => 
       if(s == null) null 
-      else SoundexAlgorithm.compute(s.asInstanceOf[String].replaceAll("""[^a-zA-Z]""", "")).getOrElse(null)
-    new Column(Alias(ScalaUdf(f, DoubleType, Seq(expr)), name)() )
+      else SoundexAlgorithm.compute(s.replaceAll("""[^a-zA-Z]""", "")).getOrElse(null)
+    new Column(Alias(ScalaUdf(f, StringType, Seq(expr)), name)() )
   }
+  
+  /** SmvSafeDiv 
+   * 
+   * lit(1.0).smvSafeDiv(lit(0.0), 1000.0) => 1000.0
+   * lit(1.0).smvSafeDiv(lit(null), 1000.0) => null
+   * 
+   */
+  def smvSafeDiv(other: Column, defaultv: Column) = {
+    val name = s"SmvSafeDiv($column, $other, $defaultv)"
+    val t = Cast(expr, DoubleType)
+    val o = Cast(extractExpr(other), DoubleType)
+    val d = Cast(extractExpr(defaultv), DoubleType)
+    new Column(Alias(If(EqualTo(o, Literal(0.0)), d, Divide(t,o)), name)())
+  }
+  def smvSafeDiv(other: Column, defaultv: Double): Column =
+    smvSafeDiv(other, lit(defaultv))
   
   /** SmvStrCat will be defined as a function */
   /** SmvAsArray will be defiend as a function */
