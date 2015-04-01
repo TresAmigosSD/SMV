@@ -119,6 +119,7 @@ class SmvCDSTest extends SparkTestUtil {
          z,-5,0.8;
          z,3,1.1;
          z,2,1.4;
+         z,,3.0;
          a,1,0.3""")
 
     // test TopN (with descending ordering)

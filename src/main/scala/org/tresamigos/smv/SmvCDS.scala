@@ -315,7 +315,11 @@ case class SmvCDSTopNRecs(maxElems: Int, orderKey: SortOrder) extends SmvCDSOnRd
 
     {it =>
       val bpq = BoundedPriorityQueue[Row](maxElems)
-      it.foreach(r => bpq += r)
+      it.foreach{ r =>
+        val v = r(colIdx)
+        if (v != null)
+          bpq += r
+      }
       bpq.toList
     }
   }
