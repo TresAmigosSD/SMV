@@ -65,3 +65,26 @@ case class SmvAsArray(elems: Expression*) extends Expression {
   override def toString = s"SmvAsArray(${elems.mkString(",")})"
 }
 
+/**
+ * Do Null-filling 
+ * if(left) right else null
+ **/ 
+case class SmvIfElseNull(left: Expression, right: Expression) extends BinaryExpression {
+  self: Product =>
+
+  def symbol = "?:null"
+  override type EvaluatedType = Any
+  override def dataType = right.dataType
+  override def nullable = true
+  override def toString = s"SmvIfElseNull($left,$right)"
+
+  override def eval(input: Row): Any = {
+    val leftVal = left.eval(input)
+    if (leftVal.asInstanceOf[Boolean]) {
+      right.eval(input)
+    } else {
+      null
+    }
+  }
+}
+

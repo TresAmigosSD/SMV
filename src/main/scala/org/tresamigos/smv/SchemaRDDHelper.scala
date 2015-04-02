@@ -150,6 +150,38 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
 
     schemaRDD.sqlContext.applySchemaToRowRDD(res, newSchema)
   }
+  
+  /**
+   * smvPivot adds the pivoted columns without additional
+   * aggregation. In other words N records in, N records out
+   *
+   * Please note that no keyCols need to be provided, since all original
+   * columns will be kept
+   * 
+   * Eg.
+   *   srdd.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+   * 
+   * Input
+   * | id  | month | product | count |
+   * | --- | ----- | ------- | ----- |
+   * | 1   | 5/14  |   A     |   100 |
+   * | 1   | 6/14  |   B     |   200 |
+   * | 1   | 5/14  |   B     |   300 |
+   * 
+   * Output
+   * | id  | month | product | count | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+   * | --- | ----- | ------- | ----- | ------------ | ------------ | ------------ | ------------ |
+   * | 1   | 5/14  |   A     |   100 | 100          | NULL         | NULL         | NULL         |
+   * | 1   | 6/14  |   B     |   200 | NULL         | NULL         | NULL         | 200          |
+   * | 1   | 5/14  |   B     |   300 | NULL         | 300          | NULL         | NULL         |
+   * 
+   **/
+  def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SchemaRDD = {
+    val keyCols = schemaRDD.columns
+    val pivotCDS = SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
+    pivotCDS.createSrdd(schemaRDD, keyCols)
+  }
+
   /**
    * Create an Edd builder on SchemaRDD 
    * 

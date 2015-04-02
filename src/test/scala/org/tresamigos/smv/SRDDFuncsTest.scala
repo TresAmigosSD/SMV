@@ -163,3 +163,16 @@ class dedupByKeyTest extends SparkTestUtil {
 
   }
 }
+
+class SmvPivotTest extends SparkTestUtil {
+  sparkTest("test smvPivot") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("id:Integer;month:String;product:String;count:Integer", 
+      "1,5_14,A,100;1,6_14,B,200;1,5_14,B,300")
+    val res = srdd.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+    assertSrddDataEqual(res, 
+      "1,5_14,A,100,100,null,null,null;" +
+      "1,6_14,B,200,null,null,null,200;" +
+      "1,5_14,B,300,null,300,null,null")
+  }
+}
