@@ -68,3 +68,47 @@ record out
 * Need to support all type of aggregation including distinct count 
 * Also need to support top-N on top of Cycle CDS. Eg. top-3 spend items in the
 last 3 months for the 201401 report cycle
+
+## Current (Spark 1.1 version) Implementation 
+
+### SmvCDS abstract class
+Only have 2 members:
+
+* output key
+* method to create SRDD
+
+### SmvCDSOnRDD abstract class extends SmvCDS
+
+Provides a general implementation of the SRDD creation method of SmvCDS by apply an ```Iterable => Iterable``` 
+function to a RDD with groupByKey. The ```Iterable => Iterable``` method should be provided by it's concrete 
+subclasses.
+
+### SmvCDSRange class extends SmvCDSOnRDD
+
+Concrete class to handle Use Case 1 on the time window case (but not the last N case)
+
+### SmvCDSRangeSelfJoin class extend SmvCDS
+
+Experimental. Intend to handle Use Case 3. 
+Although also use RDD in the middle, it does not extend SmvCDSOnRDD since the Cycle keys are calculated 
+on-the-fly and join back to the "Local SRDD". 
+
+This implementation is far from optimal. At least we should pre-determine the Cycle keys, instead of 
+calculate it from scan the entire data. 
+
+The "Local SRDD" idea was tested here.
+
+### SchemaRDD method extension on SmvCDS
+
+2 major methods defined in SmvCDSFounctions
+
+* ```smvApplyCDS``` and
+* ```smvSingleCDSGroupBy```
+
+The second one is the first one plus a groupBy aggregation step. 
+
+```smvApplyCDS``` takes a group of keys and a CDS as parameters. It creates a SRDD with the original group
+of keys and also potential keys from the CDS output. The groupBy step in ```smvSingleCDSGroupBy``` after 
+```smvApplyCDS``` apply keys of both the original keys and the keys added by the CDS.
+
+
