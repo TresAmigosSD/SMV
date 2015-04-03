@@ -25,10 +25,8 @@ import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
 class SmvDFHelper(df: DataFrame) {
 
-  private[smv] var schemaWithMeta: Schema = null
-
   // TODO: add schema file path as well.
-  def saveAsCsvWithSchema(dataPath: String)(implicit ca: CsvAttributes) {
+  def saveAsCsvWithSchema(dataPath: String, schemaWithMeta: Schema = null)(implicit ca: CsvAttributes) {
 
     val schema = if (schemaWithMeta == null) {Schema.fromSchemaRDD(df)} else {schemaWithMeta}
 

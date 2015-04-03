@@ -287,8 +287,14 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
     entries.find(e => e.structField.name == sym.name)
   }
 
-  def addMeta(sym: Symbol, metaStr: String): Unit = {
+  def addMeta(sym: Symbol, metaStr: String): Schema = {
     findEntry(sym).get.meta = metaStr
+    this
+  }
+  
+  def addMeta(metaPairs: (Symbol, String)*): Schema = {
+    metaPairs.foreach{case (v, m) => addMeta(v, m)}
+    this
   }
 
   def toStringWithMeta = entries.map{e => 
