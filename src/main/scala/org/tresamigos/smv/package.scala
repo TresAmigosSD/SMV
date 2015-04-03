@@ -28,7 +28,7 @@ package object smv {
   implicit def makeSymColHelper(sym: Symbol) = new ColumnHelper(new ColumnName(sym.name))
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
   implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
-  implicit def makeSchemaRDDHelper(srdd: SchemaRDD) = new SchemaRDDHelper(srdd)
+  implicit def makeDFHelper(srdd: SchemaRDD) = new SmvDFHelper(srdd)
   implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.df.groupBy(sgd.keys(0), sgd.keys.tail: _*)
   implicit def makeGroupedDataHelper(gdata: GroupedData) = new GroupedDataHelper(gdata)
 //  implicit def makeSmvCDSFunctions(srdd: SchemaRDD) = new SmvCDSFunctions(srdd)
