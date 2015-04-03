@@ -16,6 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.functions._
@@ -178,8 +179,8 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
    **/
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SchemaRDD = {
     val keyCols = schemaRDD.columns
-    val pivotCDS = SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
-    pivotCDS.createSrdd(schemaRDD, keyCols)
+    val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
+    pivot.createSrdd(schemaRDD, keyCols)
   }
 
   /**
@@ -204,6 +205,10 @@ class SchemaRDDHelper(schemaRDD: SchemaRDD) {
   def aggregate(cols: Column*) = {
     schemaRDD.agg(cols(0), cols.tail: _*)
   }
+  
+  def smvGroupBy(cols: String*) = {
+    SmvGroupedData(schemaRDD, cols)
+  }
 }
 
 class GroupedDataHelper(gdata: GroupedData) {
@@ -212,5 +217,20 @@ class GroupedDataHelper(gdata: GroupedData) {
    **/
   def aggregate(cols: Column*) = {
     gdata.agg(cols(0), cols.tail: _*)
+  }
+}
+
+case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
+  def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SmvGroupedData = {
+    val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
+    SmvGroupedData(pivot.createSrdd(df, keys), keys)
+  }
+  
+  def smvPivotSum(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SchemaRDD = {
+    import df.sqlContext.implicits._
+    val keyCols = keys.map{l=>$"$l"}
+    val outCols = valueCols.map {v => baseOutput.map { c => v + "_" + c } }.flatten.map{l => sum(l) as l}
+    smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).df.
+      groupBy(keyCols: _*).aggregate((keyCols ++ outCols): _*)
   }
 }
