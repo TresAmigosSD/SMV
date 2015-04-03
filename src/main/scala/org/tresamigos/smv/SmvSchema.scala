@@ -270,7 +270,7 @@ object SchemaEntry {
   }
 }
 
-class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
+class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   def getSize = entries.size
 
   def toValue(ordinal: Int, sVal: String) = entries(ordinal).strToVal(sVal)
@@ -279,20 +279,20 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
 
   def toStructType : StructType = StructType(entries.map(se => se.structField))
 
-  def ++(that: Schema): Schema = {
-    new Schema(entries ++ that.entries)
+  def ++(that: SmvSchema): SmvSchema = {
+    new SmvSchema(entries ++ that.entries)
   }
 
   def findEntry(sym: Symbol) = {
     entries.find(e => e.structField.name == sym.name)
   }
 
-  def addMeta(sym: Symbol, metaStr: String): Schema = {
+  def addMeta(sym: Symbol, metaStr: String): SmvSchema = {
     findEntry(sym).get.meta = metaStr
     this
   }
   
-  def addMeta(metaPairs: (Symbol, String)*): Schema = {
+  def addMeta(metaPairs: (Symbol, String)*): SmvSchema = {
     metaPairs.foreach{case (v, m) => addMeta(v, m)}
     this
   }
@@ -335,7 +335,7 @@ class Schema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   }
 }
 
-object Schema {
+object SmvSchema {
 
   /**
    * creates a schema object from an array of raw schema entry strings.
@@ -343,7 +343,7 @@ object Schema {
    * from each line.
    */
   private def schemaFromEntryStrings(strEntries : Array[String]) = {
-    new Schema(
+    new SmvSchema(
       strEntries.map(_.replaceFirst("(//|#).*", "")).
       filterNot(_.matches("^[ \t]*$")).
       map(_.replaceFirst(";[ \t]*$", "")).
@@ -371,7 +371,7 @@ object Schema {
   }
 
   def fromSchemaRDD(schemaRDD: SchemaRDD) = {
-    new Schema(
+    new SmvSchema(
       schemaRDD.schema.fields.map{a =>
         SchemaEntry(a.name, a.dataType)
       }

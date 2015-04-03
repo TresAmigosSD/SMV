@@ -26,9 +26,9 @@ import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 class SmvDFHelper(df: DataFrame) {
 
   // TODO: add schema file path as well.
-  def saveAsCsvWithSchema(dataPath: String, schemaWithMeta: Schema = null)(implicit ca: CsvAttributes) {
+  def saveAsCsvWithSchema(dataPath: String, schemaWithMeta: SmvSchema = null)(implicit ca: CsvAttributes) {
 
-    val schema = if (schemaWithMeta == null) {Schema.fromSchemaRDD(df)} else {schemaWithMeta}
+    val schema = if (schemaWithMeta == null) {SmvSchema.fromSchemaRDD(df)} else {schemaWithMeta}
 
     //Adding the header to the saved file all the time even when ca.hasHeader is
     //False.
@@ -43,7 +43,7 @@ class SmvDFHelper(df: DataFrame) {
     //first line in the saved file.
     val csvRDD = csvHeaderRDD.union(csvBodyRDD)
 
-    schema.saveToFile(df.sqlContext.sparkContext, Schema.dataPathToSchemaPath(dataPath))
+    schema.saveToFile(df.sqlContext.sparkContext, SmvSchema.dataPathToSchemaPath(dataPath))
     csvRDD.saveAsTextFile(dataPath)
   }
 
@@ -52,7 +52,7 @@ class SmvDFHelper(df: DataFrame) {
    * TODO: add debug flag to turn on/off this method.  Hmm, I think adding a flag would encourage people to leave this in code :-)
    */
   def dumpSRDD = {
-    println(Schema.fromSchemaRDD(df))
+    println(SmvSchema.fromSchemaRDD(df))
     df.collect.foreach(println)
   }
 
@@ -138,8 +138,8 @@ class SmvDFHelper(df: DataFrame) {
 
   /** adds a rank column to an srdd. */
   def smvRank(rankColumnName: String, startValue: Long = 0) = {
-    val oldSchema = Schema.fromSchemaRDD(df)
-    val newSchema = oldSchema ++ new Schema(Seq(LongSchemaEntry(rankColumnName)))
+    val oldSchema = SmvSchema.fromSchemaRDD(df)
+    val newSchema = oldSchema ++ new SmvSchema(Seq(LongSchemaEntry(rankColumnName)))
 
     val res: RDD[Row] = df.rdd.
       zipWithIndex().

@@ -118,8 +118,8 @@ trait SparkTestUtil extends FunSuite {
    * schema entries.
    */
   def assertSrddSchemaEqual(srdd: SchemaRDD, schemaStr: String) = {
-    val expSchema = Schema.fromString(schemaStr)
-    val resSchema = Schema.fromSchemaRDD(srdd)
+    val expSchema = SmvSchema.fromString(schemaStr)
+    val resSchema = SmvSchema.fromSchemaRDD(srdd)
     assert(resSchema.toString === expSchema.toString)
   }
 

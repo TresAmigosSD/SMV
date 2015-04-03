@@ -23,7 +23,7 @@ import scala.reflect.ClassTag
 class SeqStringRDDHelper(rdd: RDD[Seq[String]]) {
 
   /** Convert RDD[Seq[String]] to RDD[Row] based on given schema */
-  def seqStringRDDToRowRDD(schema: Schema)(implicit rejects: RejectLogger): RDD[Row] = {
+  def seqStringRDDToRowRDD(schema: SmvSchema)(implicit rejects: RejectLogger): RDD[Row] = {
     rdd.mapPartitions { iterator =>
       val mutableRow = new GenericMutableRow(schema.getSize)
       iterator.map { r =>
