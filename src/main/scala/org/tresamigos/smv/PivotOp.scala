@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.sql.SchemaRDD
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.{Column, ColumnName}
 import org.apache.spark.sql.functions._
 
 /**
@@ -74,6 +74,23 @@ case class SmvPivot(
 
   private val tempPivotValCol = "_smv_pivot_val"
 
+  private val createColName = (prefix: String, baseOutCol: String) => prefix + "_" + baseOutCol
+  private val contains: (Seq[Any], Any) => Boolean = { (a, v) => a.contains(v) }
+
+  private val outputColExprs = valueColPrefixMap.map {case (valueCol, prefix) =>
+    //  Zero filling is replaced by Null filling to handle CountDistinct right 
+    baseOutputColumnNames.map { outCol =>
+      new Column(SmvIfElseNull(
+        ScalaUdf(contains, BooleanType, Seq((new ColumnName(tempPivotValCol)).toExpr, Literal(outCol))),
+        (new ColumnName(valueCol)).toExpr
+      )) as createColName(prefix, outCol)
+    }
+  }.flatten
+
+  def outCols(): Seq[String] = {
+    outputColExprs.map{l => l.toExpr.asInstanceOf[NamedExpression].name}
+  }
+  
   /**
    * Create a derived column that contains the concatenation of all the values in
    * the pivot columns.  From the above columns, create a new column with following values:
@@ -107,24 +124,7 @@ case class SmvPivot(
    */
   private[smv] def mapValColsToOutputCols(srddWithPivotValCol: SchemaRDD, keyCols: Seq[String]) = {
     import srddWithPivotValCol.sqlContext.implicits._
-
-    val createColName = (prefix: String, baseOutCol: String) => prefix + "_" + baseOutCol
     val keyColsExpr = keyCols.map(k => $"$k")
-
-    val contains: (Seq[Any], Any) => Boolean = { (a, v) =>
-      a.contains(v)
-    }
-
-    val outputColExprs = valueColPrefixMap.map {case (valueCol, prefix) =>
-      //  Zero filling is replaced by Null filling to handle CountDistinct right 
-      baseOutputColumnNames.map { outCol =>
-        new Column(SmvIfElseNull(
-          ScalaUdf(contains, BooleanType, Seq($"$tempPivotValCol".toExpr, Literal(outCol))),
-          $"${valueCol}".toExpr
-        )) as createColName(prefix, outCol)
-      }
-    }.flatten
-
     srddWithPivotValCol.select(keyColsExpr ++ outputColExprs: _*)
   }
 

@@ -226,7 +226,8 @@ case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
   def smvPivotSum(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
     import df.sqlContext.implicits._
     val keyCols = keys.map{l=>$"$l"}
-    val outCols = valueCols.map {v => baseOutput.map { c => v + "_" + c } }.flatten.map{l => sum(l) as l}
+    val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
+    val outCols = pivot.outCols().map{l=>$"$l"}
     smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).df.
       groupBy(keyCols: _*).aggregate((keyCols ++ outCols): _*)
   }
