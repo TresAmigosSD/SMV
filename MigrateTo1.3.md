@@ -216,9 +216,25 @@ However, there are still some I don't know why they should be functions instead 
 
 ```udf``` is really handy if you are sure that the Column you are dealing with has no nulls. The issue is that
 although udf simply wrapped around ```ScalaUdf```, it determines the ```DataType``` from the Scala function,
-which passed to it. Since Scala is strongly typed, I can't pass a Double with ```nullable = true```. 
+which passed to it. This caused a problem that I can't define a function which returns ```Double``` and make it ```nullable```, 
+since Scala will not allow null be a ```Double```. 
 
-I think next version they will fix it. For now we can still use ScalaUdf in SMV code. 
+Instead, the right way to do it is to define the function to return ```java.lang.Double```, which actually allows 
+```null``` value. Here is an example which convert string like ```12,345``` to a double ```12345.0```.
+
+```scala
+    val nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.US)
+    val s2d: String => java.lang.Double = { s => 
+      if (s == null) null
+      else nf.parse(s).doubleValue()
+    }
+```
+
+Within Scala there are actually 3 types for double: ```Double``` is a Scala class, ```java.lang.Double``` is a java class, and
+```double``` is a JVM type. Internally a Scala ```Double``` can be implicitly converted to either the a boxed java ```java.lang.Double``` 
+object, or directly to ```double``` as the primitive data type. It is clear the since ```double``` is a data type, it can't be ```null```.
+Since Scala ```Double``` need to convert to both, it can't be ```null``` either. Scala will generate error if you try to pass ```null``` to 
+a ```Double```. However, the boxed ```java.lang.Double``` is a normal java object, ```null``` IS a valid value. 
 
 # To be converted
 
