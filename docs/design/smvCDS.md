@@ -146,7 +146,6 @@ Id, time, amt
 1, 20140201, 30.0
 1, 20140202, 10.0
 ```
-where the first parameter of smvCDSlast7D is the time key, and the second is a list a vars to be passed down to the final result.
 
 The output from ```smvApplyCDS``` step is a GroupedData, with keys ```Id, time```, and the records are
 ```
