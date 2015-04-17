@@ -29,8 +29,8 @@ package object smv {
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
   implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
   implicit def makeDFHelper(srdd: SchemaRDD) = new SmvDFHelper(srdd)
-  implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.df.groupBy(sgd.keys(0), sgd.keys.tail: _*)
-  implicit def makeGroupedDataHelper(gdata: GroupedData) = new GroupedDataHelper(gdata)
+  implicit def makeSmvGDFunc(sgd: SmvGroupedData) = new SmvGroupedDataFunc(sgd)
+  implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.toGroupedData
 //  implicit def makeSmvCDSFunctions(srdd: SchemaRDD) = new SmvCDSFunctions(srdd)
   implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
   implicit def makeSeqStrRDDHelper(rdd: RDD[Seq[String]]) = new SeqStringRDDHelper(rdd)
