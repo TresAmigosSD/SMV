@@ -111,4 +111,129 @@ The second one is the first one plus a groupBy aggregation step.
 of keys and also potential keys from the CDS output. The groupBy step in ```smvSingleCDSGroupBy``` after 
 ```smvApplyCDS``` apply keys of both the original keys and the keys added by the CDS.
 
+## New Design (Spark 1.3)
+Need to separate CDS itself from the functions on GroupedData 
 
+### Defination of CDS
+A CDS defines a method on a single group of records in a GroupedData. The method will return another group of records, and 
+optionally an additional group of keys
+
+### Methods on GroupedData needed for supporting CDS
+There is only one core method needed, smvApplyCDS. 
+
+#### smvApplyCDS
+Client code
+```scala
+val newGD = df.groupBy('k1, 'k2).smvApplyCDS(cds1)
+```
+It will return a new GroupedData object with the same grouped keys ```k1, k2``` and additional keys from ```cds1```. 
+
+#### toDF
+GroupedData should have a method as simply drop the grouped key info and return the DF. 
+
+### CDSs for the 3 use cases
+
+#### Case 1: Running Sum
+In this case, the client code will look like
+```scala
+val res = df.groupBy('Id).smvApplyCDS(smvCDSlast7D('time)).agg(first('amt) as 'amt, sum('amt) as 'runamt)
+```
+
+For this input
+```
+Id, time, amt
+1, 20140102, 100.0
+1, 20140201, 30.0
+1, 20140202, 10.0
+```
+where the first parameter of smvCDSlast7D is the time key, and the second is a list a vars to be passed down to the final result.
+
+The output from ```smvApplyCDS``` step is a GroupedData, with keys ```Id, time```, and the records are
+```
+Id, time, runningtime, amt, 
+1, 20140102, 20140102, 100.0
+1, 20140201, 20140201, 30.0
+1, 20140202, 20140202, 10.0
+1, 20140202, 20140201, 30.0
+```
+
+The output is 
+```
+Id, time, amt, runamt
+1, 20140102, 100.0, 100.0
+1, 20140201, 30.0, 30.0
+1, 20140202, 10.0, 40.0
+```
+
+Please note since we need to pass some vars to the final result, ```smvCDSlast7D``` need to make sure that for each time group, 
+the runningtime of the first record should be the same as the time itself, so that ```agg``` can use first to retrive the original 
+variable values.
+
+#### Case 2: Give me top-5
+In this case the client code will look like
+```scala
+val res = df.groupBy('Id).smvApplyCDS(smvCDSTop5('amt)).toDF
+```
+
+#### Case 3: Monthly Cycle data from transaction data
+Need a Panel Time Generator helper for this use case. Assume we have
+```scala
+val anchorTimeRange = PanelTimeGenerator(Month, 3, 201401, 201406)
+```
+which create an array likes
+```
+[(201401, (20131101, 20140201)), (201402, (20131201, 20140301)) ... (201406, (20140401, 201407010)]
+```
+
+The client code of the monthly summary will look like
+```scala
+val res = def.groupBy('Id).smvApplyCDS(smvCDSPanel(anchorTimeRange, 'time)).agg(sum('amt) as 'amtSum3m)
+```
+
+Input
+```
+Id, time, amt
+1, 20140102, 100.0
+1, 20140201, 30.0
+1, 20140202, 10.0
+```
+
+Output from smvApplyCDS
+```
+Id, time, runningtime, amt
+1, 201401, 20140102, 100
+1, 201402, 20140102, 100
+1, 201402, 20140201, 30
+1, 201402, 20140202, 10
+1, 201403, 20140102, 100
+1, 201403, 20140201, 30
+1, 201403, 20140202, 10
+1, 201404, 20140201, 30
+1, 201404, 20140202, 10
+1, 201405, null, null
+1, 201406, null, null
+```
+
+Output
+```
+Id, time, amtSum3m
+1, 201401, 100
+1, 201402, 140
+1, 201403, 140
+1, 201404, 40
+1, 201405, 0
+1, 201406, 0
+```
+
+### Implementation
+Please note in above examples, the output from ```smvApplyCDS``` is purly logical. In other words, ```smvApplyCDS``` will define the 
+method to calculate those but does NOT do the real calculation. 
+
+Since we actually replaced the Spark ```GroupedData``` class by our own ```SmvGroupedData``` class, we have enouph control over what we want
+to do within ```agg``` method. 
+
+One optimization could be that we create a ```inGroupIterator``` method in ```SmvGroupedData``` class, so whatever methods, including ```agg``` 
+defined on ```SmvGroupedData``` could use that iterator to physically process the data. 
+
+It's also covered the CunckBy function, where we only need to provide a ```NoOp``` ```CDS```, which just add an ```inGroupIterator``` to the 
+generated ```SmvGroupedData```.
