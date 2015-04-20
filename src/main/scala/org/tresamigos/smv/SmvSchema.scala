@@ -17,6 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions.{Literal, Row, AttributeReference}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SchemaRDD
 
 import scala.annotation.switch
@@ -282,10 +283,19 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   def ++(that: SmvSchema): SmvSchema = {
     new SmvSchema(entries ++ that.entries)
   }
-
-  def findEntry(sym: Symbol) = {
-    entries.find(e => e.structField.name == sym.name)
+  
+  def names: Seq[String] = {
+    entries.map(e => e.structField.name)
   }
+  
+  def getIndices(keys: String*): Seq[Int] = {
+    keys.map{s => names.indexWhere(s == _)}
+  }
+
+  def findEntry(s: String): Option[SchemaEntry] = {
+    entries.find(e => e.structField.name == s)
+  }
+  def findEntry(sym: Symbol): Option[SchemaEntry] = findEntry(sym.name)
 
   def addMeta(sym: Symbol, metaStr: String): SmvSchema = {
     findEntry(sym).get.meta = metaStr
@@ -370,13 +380,16 @@ object SmvSchema {
     schemaFromEntryStrings(sc.textFile(path).collect)
   }
 
-  def fromSchemaRDD(schemaRDD: SchemaRDD) = {
+  
+  def fromDataFrame(df: DataFrame) = {
     new SmvSchema(
-      schemaRDD.schema.fields.map{a =>
+      df.schema.fields.map{a =>
         SchemaEntry(a.name, a.dataType)
       }
     )
   }
+  
+  def fromSchemaRDD(schemaRDD: SchemaRDD) = fromDataFrame(schemaRDD)
 
   /**
    * read a schema file and extract field length from schema file entries for 

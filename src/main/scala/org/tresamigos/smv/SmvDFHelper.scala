@@ -175,9 +175,8 @@ class SmvDFHelper(df: DataFrame) {
    * 
    **/
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
-    val keyCols = df.columns.map{c => new ColumnName(c)}
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
-    pivot.createSrdd(df, keyCols)
+    pivot.createSrdd(df, df.columns)
   }
 
   /**
@@ -195,20 +194,16 @@ class SmvDFHelper(df: DataFrame) {
    */
   def edd: Edd = groupEdd()
 
-
   /**
-   * df.aggregate(count("a"))
-   **/
-  def aggregate(cols: Column*) = {
-    df.agg(cols(0), cols.tail: _*)
-  }
-  
-  def smvGroupBy(cols: Column*) = {
+   *  Similar to groupBy, instead of creating GroupedData,
+   *  create an SmvGroupedData object 
+   */
+  def smvGroupBy(cols: String*) = {
     SmvGroupedData(df, cols)
   }
   
-  def smvGroupBy(col: String, others: String*) = {
+  def smvGroupBy(col: Symbol, others: Symbol*) = {
     val cols = col +: others
-    SmvGroupedData(df, cols.map{c => new ColumnName(c)})
+    SmvGroupedData(df, cols.map{c => c.name})
   }
 }

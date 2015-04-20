@@ -249,7 +249,7 @@ class Edd(val srdd: SchemaRDD,
   def toSchemaRDD: SchemaRDD = {
     if (eddRDD == null){
       val aggregateList = createAggList(groupTasks) ++ createAggList(tasks)
-      eddRDD = srdd.smvGroupBy(gCol: _*).aggregate(aggregateList: _*)
+      eddRDD = srdd.groupBy(gCol: _*).agg(aggregateList(0), aggregateList.tail: _*)
       eddRDD.persist(StorageLevel.MEMORY_AND_DISK)
     } 
     eddRDD

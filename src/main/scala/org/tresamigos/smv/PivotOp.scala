@@ -69,8 +69,8 @@ case class SmvPivot(
         valueColPrefixMap: Seq[(String, String)],
         baseOutputColumnNames: Seq[String]) {
 
-  def createSrdd(srdd: SchemaRDD, keys: Seq[Column]): SchemaRDD = 
-    mapValColsToOutputCols(addSmvPivotValColumn(srdd), keys)
+  def createSrdd(srdd: SchemaRDD, keys: Seq[String]): SchemaRDD = 
+    mapValColsToOutputCols(addSmvPivotValColumn(srdd), keys.map{k => new ColumnName(k)})
 
   private val tempPivotValCol = "_smv_pivot_val"
 

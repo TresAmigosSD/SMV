@@ -23,7 +23,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
-case class SmvGroupedData(df: DataFrame, keys: Seq[Column])
+case class SmvGroupedData(df: DataFrame, keys: Seq[String])
 
 class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   private val df = smvGD.df
@@ -31,7 +31,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   
   def toDF: DataFrame = df
   
-  def toGroupedData: GroupedData = df.groupBy(keys: _*)
+  def toGroupedData: GroupedData = df.groupBy(keys(0), keys.tail: _*)
   
   def aggregate(cols: Column*) = {
     toGroupedData.agg(cols(0), cols.tail: _*)
@@ -47,6 +47,17 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
     val outCols = pivot.outCols().map{l=>$"$l"}
     smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).df.
-      smvGroupBy(keys: _*).aggregate((keys ++ outCols): _*)
+      smvGroupBy(keys: _*).aggregate((keys.map{k => df(k)} ++ outCols): _*)
   }
+  
+  def smvApplyCDS(cds: SmvCDS) = new SmvCDSGroupedData(smvGD, Seq(cds))
+  
+  /* TODO
+   * Need to create CDSColumn extents Column with method "from(cds: SmvCDS)"
+  def smvCDSAgg(aggExprs: CDSColumn*) = {
+    val cdsList = ...
+    val smvCGD = new SmvCDSGroupedData(smvGD, cdsList)
+    smvCGD.agg(aggExprs: _*)
+  }
+  */
 }
