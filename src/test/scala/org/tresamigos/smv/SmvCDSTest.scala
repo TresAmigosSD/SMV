@@ -16,9 +16,26 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.functions._
 
 class SmvCDSTest extends SparkTestUtil {
 
+  sparkTest("Test RunSum") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+
+    val res = srdd.smvGroupBy('k).
+      smvApplyCDS(TimeInLastN("t", 3)).
+      agg(first('k) as 'k, first('t) as 't, sum('v) as 'nv1, count('v) as 'nv2)
+      
+    assertSrddSchemaEqual(res, "k: String; t: Integer; nv1: Double; nv2: Long")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3,1]",
+      "[z,1,0.2,1]",
+      "[z,2,1.5999999999999999,2]",
+      "[z,5,2.2,1]"))
+  }
+  
   sparkTest("Test SmvCDSTopNRecs") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; v:Double",
@@ -49,7 +66,5 @@ class SmvCDSTest extends SparkTestUtil {
       "[a,1,0.3]",
       "[z,1,0.2]",
       "[z,-5,0.8]"))
-
-
   }
 }

@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.{Column, ColumnName}
 import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.functions._
 
@@ -165,13 +165,14 @@ object TimeInLastNFromAnchor {
  * TimeInLastN(t, n)
  * 
  * Defince a self-join with "t" in the last "n" from the current "t"
+ **/
 object TimeInLastN {
-  def apply(t: Symbol, n: Int) = {
-    val outGroupKeys = Seq(t)
-    val withPrefix = Symbol("_" + t.name)
-    val condition = (withPrefix <= t &&  withPrefix > t - n)
+  def apply(t: String, n: Int) = {
+    val inGroupKeys = Seq(t)
+    val withPrefix = new ColumnName("_" + t)
+    val tCol = new ColumnName(t)
+    val condition = ((withPrefix <= tCol) && (withPrefix > (tCol - lit(n))))
 
-    SmvCDSRange(outGroupKeys, condition)
+    new SmvCDSRange(inGroupKeys, condition)
   }
 }
- */
