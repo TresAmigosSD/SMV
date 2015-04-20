@@ -166,7 +166,8 @@ Id, time, amt, runamt
 
 Please note since we need to pass some vars to the final result, ```smvCDSlast7D``` need to make sure that for each time group, 
 the runningtime of the first record should be the same as the time itself, so that ```agg``` can use first to retrive the original 
-variable values.
+variable values. The example here is the ```20140202``` time group, 3rd and 4th records in ```smvApplyCDS``` 
+output.
 
 #### Case 2: Give me top-5
 In this case the client code will look like
@@ -184,9 +185,14 @@ which create an array likes
 [(201401, (20131101, 20140201)), (201402, (20131201, 20140301)) ... (201406, (20140401, 201407010)]
 ```
 
+Each element of the array defines 
+```
+(timeLabel, (RangeLowBound, RangeHighBound))
+```
+
 The client code of the monthly summary will look like
 ```scala
-val res = def.groupBy('Id).smvApplyCDS(smvCDSPanel(anchorTimeRange, 'time)).agg(sum('amt) as 'amtSum3m)
+val res = df.groupBy('Id).smvApplyCDS(smvCDSPanel(anchorTimeRange, 'time)).agg(sum('amt) as 'amtSum3m)
 ```
 
 Input
@@ -224,15 +230,52 @@ Id, time, amtSum3m
 1, 201406, 0
 ```
 
-### Implementation
-Please note in above examples, the output from ```smvApplyCDS``` is purly logical. In other words, ```smvApplyCDS``` will define the 
+### smvGroupBy and SmvGroupedData
+
+Since Spark 1.3 didn't open access to the DF and key columns in ```GroupedData```, we have to create our own ```smvGroupBy``` to replace ```groupBy``` and
+return a ```SmvGroupedData``` object instead of ```GroupedData```. 
+
+We can make the ```SmvGroupedData``` as simple as a case class only with 2 members 
+```scala
+case class SmvGroupedData(df: DataFrame, keys: Seq[Column])
+```
+so that when Spark provides access to dataframe and keys, we can switch back. 
+
+Because of this, ```smvApplyCDS``` is actually a method on ```SmvGroupedData```. To keep ```SmvGroupedData``` class simple, we put ```smvApplyCDS``` and 
+other methods to a new class ```SmvGroupedDataFunc```, and implicitly convert ```SmvGroupedData``` to it. 
+
+### Make the intermediate step purely logical
+
+Please note that the output from ```smvApplyCDS``` could be purely logical. In other words, ```smvApplyCDS``` will define the 
 method to calculate those but does NOT do the real calculation. 
 
-Since we actually replaced the Spark ```GroupedData``` class by our own ```SmvGroupedData``` class, we have enouph control over what we want
-to do within ```agg``` method. 
+To make it happen, we could let ```smvApplyCDS``` to pass an ```inGroupIterator``` method to the aggregation step, so that the ```agg``` operation can 
+operate on the iterator instead of a real DataFrame. 
 
-One optimization could be that we create a ```inGroupIterator``` method in ```SmvGroupedData``` class, so whatever methods, including ```agg``` 
-defined on ```SmvGroupedData``` could use that iterator to physically process the data. 
+Because of the additional content to be passed down, we need to change the output of ```smvApplyCDS``` from a pure ```SmvGroupedData``` to a new class,
+```SmvCDSGroupedData```, which replace the ```df: DataFrame``` member to some methods including ```inGroupIterator```. 
 
-It's also covered the CunckBy function, where we only need to provide a ```NoOp``` ```CDS```, which just add an ```inGroupIterator``` to the 
-generated ```SmvGroupedData```.
+This new class actually opens a door for a ```smvCDSAgg``` method which could apply multiple CDS's on different columns. 
+
+### Final Design
+
+#### New classes
+```scala
+case class SmvGroupedData(df: DataFrame, keys: Seq[Column])
+class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
+  ....
+}
+class SmvCDSGroupedData(dfIn: DataFrame, groupKeys: Seq[Column], cds: SmvCDS){
+  def inGroupIterator = ...
+  def inGroupKeys = ...
+  ....
+}
+```
+
+#### Client code
+```scala
+val res1 = df.smvGroupBy('k).smvApplyCDS(cds1).agg(sum('v) as 'sumv)
+val res2 = df.smvGroupBy('k).smvApplyCDS(cds2).toDF
+val res3 = df.smvGroupBy('k).smvCDSAgg(sum('v1) from cds1 as 'v1, count('v2) from cds2 as 'v2)
+```
+

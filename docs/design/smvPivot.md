@@ -1,7 +1,9 @@
 # SMV 1.3 Pivot Interface
 
 ## smvPivot on DF
+smvPivot on DF will output 1 record per input record, and all input fiels are kept.
 
+Client code looks like
 ```scala
    df.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
 ```
@@ -42,7 +44,8 @@ Output
  | 1   | NULL         | 300          | NULL         | NULL         |
 ```
 
-Content-wise returns the similar thing as above, but it's a GroupedData object, so you can do
+Content-wise returns the similar thing as the DataFrame version without unspecified columns. Also has 1-1 map between input 
+and output. But the output of it is a GroupedData object (actually SmvGroupedData), so you can do
 ```scala
 df.groupBy('id).smvPivot(...)(...)(...).sum("count_5_14_A", "count_6_14_B")
 ```
