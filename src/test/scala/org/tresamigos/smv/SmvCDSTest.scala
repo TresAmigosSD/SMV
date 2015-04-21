@@ -36,6 +36,26 @@ class SmvCDSTest extends SparkTestUtil {
       "[z,5,2.2,1]"))
   }
   
+  sparkTest("Test out of order CDS keys") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("time_type:String;v:String;time_value:Integer",
+      "k1,a,10;k1,b,100;k2,d,3;k2,c,12")
+
+    val f = udf({in:Int => in - 3})
+    val cds = new SmvCDSRange(
+      Seq("time_type", "time_value"),
+      ('_time_value > f('time_value) && ('_time_value <= 'time_value))
+    )
+    val s2 = srdd.selectMinus('time_type).selectPlus(lit("MONTHR3") as 'time_type)
+    val res = s2.smvGroupBy('v).smvApplyCDS(cds).agg(first('v) as 'v, first('time_type) as 'time_type, first('time_value) as 'time_value, count('v) as 'cv)
+    assertSrddSchemaEqual(res, "v: String; time_type: String; time_value: Integer; cv: Long")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[d,MONTHR3,3,1]",
+      "[c,MONTHR3,12,1]",
+      "[a,MONTHR3,10,1]",
+      "[b,MONTHR3,100,1]"))
+  }
+
   sparkTest("Test SmvCDSTopNRecs") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; v:Double",
