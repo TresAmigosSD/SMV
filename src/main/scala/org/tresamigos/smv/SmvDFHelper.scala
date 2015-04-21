@@ -179,6 +179,12 @@ class SmvDFHelper(df: DataFrame) {
     pivot.createSrdd(df, df.columns)
   }
 
+  def smvUnpivot(valueCols: String*): DataFrame = {
+    new UnpivotOp(df, valueCols).unpivot()
+  }
+  def smvUnpivot(valueCol: Symbol, others: Symbol*): DataFrame = 
+    smvUnpivot((valueCol +: others).map{s => s.name}: _*)
+  
   /**
    * Create an Edd builder on DataFrame 
    * 
