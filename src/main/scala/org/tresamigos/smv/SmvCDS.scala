@@ -31,22 +31,6 @@ import org.apache.spark.sql.catalyst.plans.{Inner}
 
 /**
  * SmvCDS - SMV Custom Data Selector
- *
- * As generalizing the idea of running sum and similar requirements, we define
- * an abstract class as CDS. Using the running sum as an example, the overall
- * client code will look like
- *
- * srdd.smvSingleCDSGroupBy('k)(TimeInLastN('t, 3))((Sum('v) as 'nv1), (Count('v) as 'nv2))
- *
- * where TimeInLastN('t, 3) is a concrete SmvCDS 
- *
- * Future could also implement custom Catalyst expressions to integrate SmvCDS into expressions. 
- * The client code looks like
- *
- * srdd.smvGroupBy('k)(
- *     Sum('v1) from TimeInLastN('t, 3) as 'nv1,
- *         Count('v2) from TimeInLastN('t, 6) as 'nv2
- *       )
  **/
 
 abstract class SmvCDS extends Serializable{
@@ -69,20 +53,19 @@ abstract class SmvCDS extends Serializable{
 
 /**
  *  SmvCDSRange(inGroupKeys, condition)
+ * 
+ *  condition is an Expression instead of Column, since Column is NOT serializable
  *
- *  Defines a "self-joined" data for further aggregation with this logic
- *  srdd.select(keys ++ outGroupKeys).distinct.joinByKey(srdd, Inner,keys).where(condition)
  **/
-class SmvCDSRange(val inGroupKeys: Seq[String], condition: Column) extends SmvCDS {
-  val conditionExpr = condition.toExpr
-  require(conditionExpr.dataType == BooleanType)
-
+case class SmvCDSRange(inGroupKeys: Seq[String], condition: Expression) extends SmvCDS {
+  require(condition.dataType == BooleanType)
+  
   def inGroupIterator(inSchema: SmvSchema) = {
     val attr = outSchema(inSchema).entries.map{e => 
       val f = e.structField
       AttributeReference(f.name, f.dataType, f.nullable)()
     }
-    val fPlan= LocalRelation(attr).where(conditionExpr).analyze
+    val fPlan= LocalRelation(attr).where(condition).analyze
     val filter = BindReferences.bindReference(fPlan.expressions(0), attr)
     val ordinals = inSchema.getIndices(inGroupKeys: _*)
 
@@ -99,42 +82,47 @@ class SmvCDSRange(val inGroupKeys: Seq[String], condition: Column) extends SmvCD
   }
 }
 
+/* provide a user friendly interface to use Column in parameter */
+object SmvCDSRange {
+  def apply(inGK: Seq[String], condCol: Column) = {
+    val conditionExpr = condCol.toExpr
+    new SmvCDSRange(inGK, conditionExpr)
+  }
+}
+
 /**
  *  SmvCDSTopNRecs is a SmvCDS to support smvTopNRecs(keys)(order) method,
  *  which returns the TopN records based on the order key
  *  (which means it can also return botton N records)
- *
- *  TODO: multiple order keys, and multiple output Records - SmvCDSTopNRecs
- *  TODO: make TopRec an optimization of TopNRecs (that only keeps one rec instead of pqueue)
- *
  **/
-class SmvCDSTopNRecs(val maxElems: Int, orderCol: Column) extends SmvCDS {
+case class SmvCDSTopNRecs(maxElems: Int, orderExprs: Seq[Expression]) extends SmvCDS {
   val inGroupKeys = Nil
   override def outSchema(inSchema: SmvSchema) = inSchema
 
-  private val orderKey = orderCol.toExpr.asInstanceOf[SortOrder]
-  private val keyColName = orderKey.child.asInstanceOf[NamedExpression].name
-  private val direction = orderKey.direction
+  private val orderKeys = orderExprs.map{o => o.asInstanceOf[SortOrder]}
+  private val keys = orderKeys.map{k => k.child.asInstanceOf[NamedExpression].name}
+  private val directions = orderKeys.map{k => k.direction}
 
   def inGroupIterator(inSchema: SmvSchema) = {
-    val colIdx = inSchema.names.indexWhere(keyColName == _)
-    val col = inSchema.findEntry(keyColName).get
-    val nativeSchemaEntry = col.asInstanceOf[NativeSchemaEntry]
-    val normColOrdering = nativeSchemaEntry.ordering.asInstanceOf[Ordering[Any]]
-    val colOrdering = if (direction == Ascending) normColOrdering.reverse else normColOrdering
+    val ordinals = inSchema.getIndices(keys: _*)
+    val ordering = (keys zip directions).map{case (k, d) =>
+      val normColOrdering = inSchema.findEntry(k).get.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
+      if (d == Ascending) normColOrdering.reverse else normColOrdering
+    }
 
     // create an implicit instance of Ordering[Row] so that it will be picked up by
     // implict order required by BoundedPriorityQueue below.  Therefore, order of row is
     // based on order of specified column.
     implicit object RowOrdering extends Ordering[Row] {
-      def compare(a:Row, b:Row) = colOrdering.compare(a(colIdx),b(colIdx))
+      def compare(a:Row, b:Row) = (ordinals zip ordering).map{case (i, order) => order.compare(a(i),b(i)).signum}
+        .reduceLeft((s, i) => s << 1 + i)
     }
 
     {it: Iterable[Row] =>
       val bpq = BoundedPriorityQueue[Row](maxElems)
       it.foreach{ r =>
-        val v = r(colIdx)
-        if (v != null)
+        val v = ordinals.map{i => r(i)}
+        if (! v.contains(null))
           bpq += r
       }
       bpq.toList
@@ -143,23 +131,8 @@ class SmvCDSTopNRecs(val maxElems: Int, orderCol: Column) extends SmvCDS {
 }
 
 object SmvCDSTopNRecs {
-  def apply(maxElems: Int, orderCol: Column) = new SmvCDSTopNRecs(maxElems: Int, orderCol: Column)
+  def apply(maxElems: Int, orderCol: Column, otherOrder: Column*) = new SmvCDSTopNRecs(maxElems, (orderCol +: otherOrder).map{o => o.toExpr})
 }
-
-/**
- * TimeInLastNFromAnchor(t, anchor, n)
- *
- * Defince a self-join with condition: "t" in the last "n" from "anchor"
- * (t <= anchor && t > anchor - n)
-object TimeInLastNFromAnchor {
-  def apply(t: Symbol, anchor: Symbol, n: Int) = {
-    val outGroupKeys = Seq(anchor)
-    val condition = (t <= anchor && t > anchor - n)
-
-    SmvCDSRange(outGroupKeys, condition)
-  }
-}
- **/
 
 /** 
  * TimeInLastN(t, n)
@@ -173,6 +146,6 @@ object TimeInLastN {
     val tCol = new ColumnName(t)
     val condition = ((withPrefix <= tCol) && (withPrefix > (tCol - lit(n))))
 
-    new SmvCDSRange(inGroupKeys, condition)
+    SmvCDSRange(inGroupKeys, condition)
   }
 }

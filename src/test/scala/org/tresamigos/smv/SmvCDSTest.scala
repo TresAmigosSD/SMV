@@ -42,7 +42,7 @@ class SmvCDSTest extends SparkTestUtil {
       "k1,a,10;k1,b,100;k2,d,3;k2,c,12")
 
     val f = udf({in:Int => in - 3})
-    val cds = new SmvCDSRange(
+    val cds = SmvCDSRange(
       Seq("time_type", "time_value"),
       ('_time_value > f('time_value) && ('_time_value <= 'time_value))
     )
@@ -86,5 +86,25 @@ class SmvCDSTest extends SparkTestUtil {
       "[a,1,0.3]",
       "[z,1,0.2]",
       "[z,-5,0.8]"))
+  }
+  
+  sparkTest("Test SmvCDSTopNRecs multiple orderings") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; v:Double",
+      """z,1,0.2;
+         z,5,2.2;
+         z,2,1.4;
+         z,2,3.0;
+         a,1,0.3""")
+             // test TopN (with descending ordering)
+             
+    val tv_cds = SmvCDSTopNRecs(2, 't.desc, 'v.asc)
+    val res = srdd.smvGroupBy('k).smvApplyCDS(tv_cds).toDF
+
+    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3]",
+      "[z,2,1.4]",
+      "[z,5,2.2]"))
   }
 }
