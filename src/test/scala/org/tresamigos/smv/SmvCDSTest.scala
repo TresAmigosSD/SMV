@@ -36,6 +36,21 @@ class SmvCDSTest extends SparkTestUtil {
       "[z,5,2.2,1]"))
   }
   
+  sparkTest("Test Anchor RunSum") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+
+    val res = srdd.smvGroupBy('k).
+      smvApplyCDS(TimeInLastNFromAnchors("at", $"t", Seq((3, (1, 4)), (4, (2, 5))))).
+      agg(first('k) as 'k, first('at) as 'at, sum('v) as 'nv1, count('v) as 'nv2)
+      
+    assertSrddSchemaEqual(res, "k: String; at: Integer; nv1: Double; nv2: Long")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,3,0.3,1]",
+      "[z,3,1.5999999999999999,2]",
+      "[z,4,1.4,1]"))
+  }
+  
   sparkTest("Test out of order CDS keys") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("time_type:String;v:String;time_value:Integer",

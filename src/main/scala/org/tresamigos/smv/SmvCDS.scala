@@ -19,14 +19,16 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.{Column, ColumnName}
 import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{BooleanType}
 
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.dsl.plans._
-import org.apache.spark.sql.catalyst.plans.{Inner}
+
+import org.apache.spark.sql.catalyst.ScalaReflection
+import scala.reflect.runtime.universe.{TypeTag, typeTag}
 /*
+import org.apache.spark.sql.catalyst.dsl.expressions._
 */
 
 /**
@@ -54,7 +56,17 @@ abstract class SmvCDS extends Serializable{
 /**
  *  SmvCDSRange(inGroupKeys, condition)
  * 
- *  condition is an Expression instead of Column, since Column is NOT serializable
+ *  Within each record group, named as "gRecs", the logic in DF sytax
+ *    res = gRecs.select(inGroupKeys: _*).join(gRecs, condition, "inner")
+ *  
+ *  Eg. Last 3 days
+ *    If we have a field represent number of days since 19700101, 'day, last 3 day CDS is
+ *    val inLast3days = SmvCDSRange(Seq("day"), (($"_day" <= $"day") && ($"_day" + 3 > $"day"))
+ * 
+ *  Within condition, the newly joined keys have names with prefix of "_"
+ * 
+ *  In the case class definition, condition is an Expression instead of Column, since Column is 
+ *  NOT serializable. An overload of the constructor is created to support Column as parameter
  *
  **/
 case class SmvCDSRange(inGroupKeys: Seq[String], condition: Expression) extends SmvCDS {
@@ -72,7 +84,7 @@ case class SmvCDSRange(inGroupKeys: Seq[String], condition: Expression) extends 
     {it: Iterable[Row] =>
       val f = filter
       val itSeq = it.toSeq
-      val anchors = itSeq.map{r => ordinals.map{r(_)}}.distinct
+      val anchors = itSeq.map{r => ordinals.map{r(_)}}
       anchors.flatMap{ a => 
         itSeq.map{r => 
           new GenericRow((a ++ r.toSeq).toArray)
@@ -90,9 +102,49 @@ object SmvCDSRange {
   }
 }
 
+case class SmvCDSGroupedRanges[T: TypeTag](labelColName: String, ranges: Seq[(T, Expression)]) extends SmvCDS {
+  val inGroupKeys = Seq(labelColName)
+  override def outSchema(inSchema: SmvSchema) = {
+    val dataType = ScalaReflection.schemaFor(typeTag[T]).dataType
+    val labelCol = SchemaEntry(labelColName, dataType)
+    new SmvSchema((labelCol +: inSchema.entries))
+  }
+  
+  def inGroupIterator(inSchema: SmvSchema) = {
+    val attr = outSchema(inSchema).entries.map{e => 
+      val f = e.structField
+      AttributeReference(f.name, f.dataType, f.nullable)()
+    }
+    val filters = ranges.map{case (l, c) => 
+      val fPlan = LocalRelation(attr).where(c).analyze
+      (l, BindReferences.bindReference(fPlan.expressions(0), attr))
+    }
+    val ordinals = inSchema.getIndices(inGroupKeys: _*)
+
+    {it: Iterable[Row] =>
+      val _filters = filters
+      it.map{r =>
+        _filters.map{ case (l, f) => 
+          (new GenericRow((l +: r.toSeq).toArray), f)
+        }.collect{case (newr, f) if f.eval(newr).asInstanceOf[Boolean] => newr}
+      }.flatten
+    }
+  }
+}
+
+object TimeInLastNFromAnchors {
+  def apply(anchorColName: String, valCol: Column, ranges: Seq[(Int, (Int, Int))]) = {
+    val exprs = ranges.map{case (v, (l,u)) => 
+      val cond = ((valCol < lit(u)) && (valCol >= lit(l))).toExpr
+      (v, cond)
+    }
+    new SmvCDSGroupedRanges[Int](anchorColName, exprs)
+  }
+}
+
 /**
- *  SmvCDSTopNRecs is a SmvCDS to support smvTopNRecs(keys)(order) method,
- *  which returns the TopN records based on the order key
+ *  SmvCDSTopNRecs is a SmvCDS 
+ *  which returns the TopN records based on the order keys
  *  (which means it can also return botton N records)
  **/
 case class SmvCDSTopNRecs(maxElems: Int, orderExprs: Seq[Expression]) extends SmvCDS {
