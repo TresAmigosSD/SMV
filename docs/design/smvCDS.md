@@ -111,27 +111,78 @@ The second one is the first one plus a groupBy aggregation step.
 of keys and also potential keys from the CDS output. The groupBy step in ```smvSingleCDSGroupBy``` after 
 ```smvApplyCDS``` apply keys of both the original keys and the keys added by the CDS.
 
+## Apply Multiple SmvCDS'
+
+For either the use case 1 or 3, there is a need to support different running window lengths for each opeartions. The client
+code could look like
+```scala
+val res1 = df.groupBy('k).smvCDSAgg(sum('amt) from last7days('t) as 'amt7, sum('amt) from last30days('t) as 'amt30)
+```
+
 ## New Design (Spark 1.3)
-Need to separate CDS itself from the functions on GroupedData 
+Need to separate CDS itself from the functions on GroupedData.
 
-### Defination of CDS
-A CDS defines a method on a single group of records in a GroupedData. The method will return another group of records, and 
-optionally an additional group of keys
+Without the multiple CDS requirement, any single CDS can be implemented as a GroupedData Operation. GroupedData
+Operation can also support PivotOp, QuantileOp etc. We will define SmvGDO (Smv GroupedData Operation) first, and then see 
+whatelse are still missing for CDS.
 
-### Methods on GroupedData needed for supporting CDS
-There is only one core method needed, smvApplyCDS. 
+### Defination of SmvGDO
+An SmvGDO defines a method on a single group of records in a GroupedData. The method will return another group of records, and 
+optionally additional group of keys
 
-#### smvApplyCDS
+### Methods on GroupedData needed for supporting SmvGDO
+There is only one core method needed, smvApplyGDO. 
+
+#### smvApplyGDO
 Client code
 ```scala
-val newGD = df.groupBy('k1, 'k2).smvApplyCDS(cds1)
+val newGD = df.groupBy('k1, 'k2).smvApplyGDO(gdo1)
 ```
-It will return a new GroupedData object with the same grouped keys ```k1, k2``` and additional keys from ```cds1```. 
+It will return a new GroupedData object with the same grouped keys ```k1, k2``` and additional keys from ```gdo1```. 
 
 #### toDF
 GroupedData should have a method as simply drop the grouped key info and return the DF. 
 
-### CDSs for the 3 use cases
+### smvGroupBy and SmvGroupedData
+
+Since Spark 1.3 didn't open access to the DF and key columns in ```GroupedData```, we have to create our own ```smvGroupBy``` to replace ```groupBy``` and
+return a ```SmvGroupedData``` object instead of ```GroupedData```. 
+
+We can make the ```SmvGroupedData``` as simple as a case class only with 2 members 
+```scala
+case class SmvGroupedData(df: DataFrame, keys: Seq[Column])
+```
+so that when Spark provides access to dataframe and keys, we can switch back. 
+
+Because of this, ```smvApplyGDO``` is actually a method on ```SmvGroupedData```. 
+
+### SmvGDO Design
+
+New classes
+```scala
+case class SmvGroupedData(df: DataFrame, keys: Seq[Column]){
+  def smvApplyGDO(gdo: SmvGDO): SmvGroupedData = {...}
+  def toDF(): DataFrame
+}
+
+abstract class SmvGDO {
+  def inGroupKeys: Seq[String]
+  def inGroupIterator(inSchema: SmvSchema): Iterable[Row] => Iterable[Row]
+  def outSchema(inSchema: SmvSchema): SmvSchema
+}
+```
+
+Supported client code:
+```scala
+val res1 = df.smvGroupBy('k).smvApplyGDO(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
+val res2 = df.smvGroupBy('k).smvApplyGDO(gdo2).toDF
+```
+
+### GDO implementation for the 3 use cases
+As long as we have a way to convert a CDS to a GDO, we can use above GDO interface to support the 3 CDS use cases, 
+without considering the multiple CDS or optimizations with knowing what aggregation functions to be applied.
+
+Assume we have a ```smvApplyCDS``` method which convert CDS to GDO and then do ```smvApplyGDO```:
 
 #### Case 1: Running Sum
 In this case, the client code will look like
@@ -167,16 +218,18 @@ Id, time, amt, runamt
 Please note since we need to pass some vars to the final result, ```smvCDSlast7D``` need to make sure that for each time group, 
 the runningtime of the first record should be the same as the time itself, so that ```agg``` can use first to retrive the original 
 variable values. The example here is the ```20140202``` time group, 3rd and 4th records in ```smvApplyCDS``` 
-output.
+output. (Need to re-consider how to implement this requirement)
 
 #### Case 2: Give me top-5
 In this case the client code will look like
 ```scala
 val res = df.groupBy('Id).smvApplyCDS(smvCDSTop5('amt)).toDF
 ```
+Please note that this type of usage of GDO coule be the most common one. 
 
 #### Case 3: Monthly Cycle data from transaction data
-Need a Panel Time Generator helper for this use case. Assume we have
+Need a Panel Time Generator helper for this use case (could use onther designes, details need to be done later). 
+Assume we have
 ```scala
 val anchorTimeRange = PanelTimeGenerator(Month, 3, 201401, 201406)
 ```
@@ -203,7 +256,7 @@ Id, time, amt
 1, 20140202, 10.0
 ```
 
-Output from smvApplyCDS
+Output from smvApplyGDO
 ```
 Id, time, runningtime, amt
 1, 201401, 20140102, 100
@@ -230,47 +283,46 @@ Id, time, amtSum3m
 1, 201406, 0
 ```
 
-### smvGroupBy and SmvGroupedData
+### Which parts of CDS are not supported by SmvGDO
 
-Since Spark 1.3 didn't open access to the DF and key columns in ```GroupedData```, we have to create our own ```smvGroupBy``` to replace ```groupBy``` and
-return a ```SmvGroupedData``` object instead of ```GroupedData```. 
+* Use case 2 is totally covered by SmvGDO
+* Both use case 1 and 3 could have multiple time windows (or record windows) in the same operation, which is not covered by SmvGDO
+* Both 1 and 3 could have some optimiztions when we have more knowledge on the aggregation functions, which is not covered by SmvGDO
 
-We can make the ```SmvGroupedData``` as simple as a case class only with 2 members 
+For the multiple CDS requirement, it only make sense to mix CDS's with the same number of output rows. For example, "in last 30 days" and 
+"in last 7 records" can be mixed; but "in last 30 days" and "in last 3 month on every calender month" can't be mixed. In other words, use 
+case 1 and use case 3 are actully define 2 different types of CDS's. Let's call them ```SmvRunningCDS``` and ```SmvAnchorCDS``` for now. 
+May need to rename them with better names.
+
+Regardless of how many CDS we want to apply at the same time, 
 ```scala
-case class SmvGroupedData(df: DataFrame, keys: Seq[Column])
+df.smvGroupBy(keys).smvRunningAgg(...) 
 ```
-so that when Spark provides access to dataframe and keys, we can switch back. 
-
-Because of this, ```smvApplyCDS``` is actually a method on ```SmvGroupedData```. To keep ```SmvGroupedData``` class simple, we put ```smvApplyCDS``` and 
-other methods to a new class ```SmvGroupedDataFunc```, and implicitly convert ```SmvGroupedData``` to it. 
-
-### Make the intermediate step purely logical
-
-Please note that the output from ```smvApplyCDS``` could be purely logical. In other words, ```smvApplyCDS``` will define the 
-method to calculate those but does NOT do the real calculation. 
-
-To make it happen, we could let ```smvApplyCDS``` to pass an ```inGroupIterator``` method to the aggregation step, so that the ```agg``` operation can 
-operate on the iterator instead of a real DataFrame. 
-
-Because of the additional content to be passed down, we need to change the output of ```smvApplyCDS``` from a pure ```SmvGroupedData``` to a new class,
-```SmvCDSGroupedData```, which replace the ```df: DataFrame``` member to some methods including ```inGroupIterator```. 
-
-This new class actually opens a door for a ```smvCDSAgg``` method which could apply multiple CDS's on different columns. 
-
-### Final Design
-
-#### New classes
+will return the same number of records as the input ```df```, and also the grouping structure is actually kept. Similarly:
 ```scala
-case class SmvGroupedData(df: DataFrame, keys: Seq[Column])
-class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
-  ....
+df.smvGroupBy(keys).smvAnchorAgg(...) 
+```
+for each group, the number of records it returns always matches the number of predefined anchors. 
+
+Since for both cases the group structure are actually kept, we can let ```smvRunningAgg/smvAnchorAgg``` methods return an object of ```SmvGroupedData```. 
+In that sense, the entire ```smvRunningAgg/smvAnchorAgg(....)``` are actually equivalent to applying a single GDO. In other words, for any given set of 
+aggregate functions on any given CDS's, ```smvRunningAgg/smvAnchorAgg(....)``` need to define ```inGroupKeys```, ```inGroupIterator```, and ```outSchema```.
+
+### SmvCDS 
+
+New classes
+```scala
+case class SmvRunningCDS(condition: Expression) extend SmvCDS {
+  def toSmvGDO() 
 }
-class SmvCDSGroupedData(dfIn: DataFrame, groupKeys: Seq[Column], cds: SmvCDS){
-  def inGroupIterator = ...
-  def inGroupKeys = ...
-  ....
+
+case class SmvAnchorCDS[T](anchors: Seq[T], condition: Expression) extend SmvCDS {
+  def toSmvGDO()
 }
 ```
+
+Also need two methods on ```SmvGroupedData```: ```smvRunningAgg``` and ```smvAnchorAgg```. Interally they create a ```SmvGDO``` from all the 
+aggregations and do ```smvApplyGDO```.
 
 #### Client code
 ```scala
