@@ -23,18 +23,34 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
-case class SmvGroupedData(df: DataFrame, keys: Seq[String])
+case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
+  def toDF: DataFrame = df
+  def toGroupedData: GroupedData = df.groupBy(keys(0), keys.tail: _*)
+}
 
 class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   private val df = smvGD.df
   private val keys = smvGD.keys
   
-  def toDF: DataFrame = df
-  
-  def toGroupedData: GroupedData = df.groupBy(keys(0), keys.tail: _*)
+  def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
+    val smvSchema = SmvSchema.fromDataFrame(df)
+    val ordinals = smvSchema.getIndices(keys: _*)
+    val rowToKeys: Row => Seq[Any] = {row =>
+      ordinals.map{i => row(i)}
+    }
+
+    val inGroupIterator =  gdo.inGroupIterator(smvSchema) 
+    val rdd = df.rdd.
+      groupBy(rowToKeys).
+      flatMapValues(rowsInGroup => inGroupIterator(rowsInGroup)).
+      values
+
+    val newdf = df.sqlContext.applySchemaToRowRDD(rdd, gdo.outSchema(smvSchema))
+    SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
+  }
   
   def aggregate(cols: Column*) = {
-    toGroupedData.agg(cols(0), cols.tail: _*)
+    smvGD.toGroupedData.agg(cols(0), cols.tail: _*)
   }
   
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SmvGroupedData = {
