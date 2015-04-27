@@ -140,6 +140,8 @@ object SmvPivot {
    * most production system, the result of this operation should be static, in
    * that case the result should be coded in modules instead of calling this
    * operation every time.
+   * 
+   * TODO: Add a java log warning message
    */
   private[smv] def getBaseOutputColumnNames(schemaRDD: SchemaRDD, pivotColsSets: Seq[Seq[String]]): Seq[String] = {
     // create set of distinct values.

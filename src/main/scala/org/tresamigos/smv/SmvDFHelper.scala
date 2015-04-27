@@ -175,6 +175,7 @@ class SmvDFHelper(df: DataFrame) {
    * 
    **/
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
+    // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
     pivot.createSrdd(df, df.columns)
   }

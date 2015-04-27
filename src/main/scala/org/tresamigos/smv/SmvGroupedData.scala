@@ -74,6 +74,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *    "5_14_A", "5_14_B", "6_14_A", "6_14_B")
    **/
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SmvGroupedData = {
+    // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
     SmvGroupedData(pivot.createSrdd(df, keys), keys)
   }
@@ -90,8 +91,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    **/
   def smvPivotSum(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
     import df.sqlContext.implicits._
+    // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
-    val outCols = pivot.outCols().map{l=>sum(l)}
+    val outCols = pivot.outCols().map{l=>(sum(l) as l)}
     smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).df.
       smvGroupBy(keys: _*).aggregate((keys.map{k => df(k)} ++ outCols): _*)
   }
