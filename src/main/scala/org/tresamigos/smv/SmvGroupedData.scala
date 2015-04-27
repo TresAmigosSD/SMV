@@ -53,15 +53,45 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     smvGD.toGroupedData.agg(cols(0), cols.tail: _*)
   }
   
+  /**
+   * smvPivot on SmvGroupedData is similar to smvPivot on DF
+   * 
+   * Input
+   *  | id  | month | product | count |
+   *  | --- | ----- | ------- | ----- |
+   *  | 1   | 5/14  |   A     |   100 |
+   *  | 1   | 6/14  |   B     |   200 |
+   *  | 1   | 5/14  |   B     |   300 |
+   * 
+   * Output
+   *  | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+   *  | --- | ------------ | ------------ | ------------ | ------------ |
+   *  | 1   | 100          | NULL         | NULL         | NULL         |
+   *  | 1   | NULL         | NULL         | NULL         | 200          |
+   *  | 1   | NULL         | 300          | NULL         | NULL         |
+   * 
+   * df.groupBy("id").smvPivot(Seq("month", "product"))("count")(
+   *    "5_14_A", "5_14_B", "6_14_A", "6_14_B")
+   **/
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SmvGroupedData = {
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
     SmvGroupedData(pivot.createSrdd(df, keys), keys)
   }
   
+  /**
+   * smvPivotSum is a helper function on smvPivot
+   * 
+   * df.groupBy("id").smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+   * 
+   * Output
+   *  | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+   *  | --- | ------------ | ------------ | ------------ | ------------ |
+   *  | 1   | 100          | 300          | NULL         | 200          |
+   **/
   def smvPivotSum(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
     import df.sqlContext.implicits._
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
-    val outCols = pivot.outCols().map{l=>$"$l"}
+    val outCols = pivot.outCols().map{l=>sum(l)}
     smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).df.
       smvGroupBy(keys: _*).aggregate((keys.map{k => df(k)} ++ outCols): _*)
   }

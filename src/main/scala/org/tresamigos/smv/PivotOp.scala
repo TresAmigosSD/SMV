@@ -21,7 +21,7 @@ import org.apache.spark.sql.{Column, ColumnName}
 import org.apache.spark.sql.functions._
 
 /**
- * SmvCDS for Pivot Operations:
+ * SmvPivot for Pivot Operations:
  *
  * Pivot Operation on SchemaRDD that transforms multiple rows per key into a single row for
  * a given key while preserving all the data variance by turning row values into columns.
@@ -120,7 +120,6 @@ case class SmvPivot(
    * |  1  |     100      |    NULL      | NULL |
    * |  1  |    NULL      |     300      | NULL |
    * |  1  |    NULL      |    NULL      | NULL |
-   * |  1  |    NULL      |    NULL      | NULL |
    */
   private[smv] def mapValColsToOutputCols(srddWithPivotValCol: SchemaRDD, keyCols: Seq[Column]) = {
     import srddWithPivotValCol.sqlContext.implicits._
@@ -129,7 +128,7 @@ case class SmvPivot(
 
 }
 
-object PivotOp {
+object SmvPivot {
   /**
    * Extract the column names from the data.
    * This is done by getting the distinct string values of each column and taking the cartesian product.
