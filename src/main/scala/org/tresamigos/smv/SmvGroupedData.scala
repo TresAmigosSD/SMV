@@ -98,7 +98,37 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       smvGroupBy(keys: _*).aggregate((keys.map{k => df(k)} ++ outCols): _*)
   }
   
-//  def smvApplyCDS(cds: SmvCDS) = new SmvCDSGroupedData(smvGD, Seq(cds))
+  def runAgg(aggCols: Seq[SmvCDSAggColumn]): DataFrame = {
+    val cdsAggsList: Seq[SmvSingleCDSAggs] = SmvCDS.combineCDS(aggCols) 
+    
+    val smvSchema = SmvSchema.fromDataFrame(df)
+    val ordinals = smvSchema.getIndices(keys: _*)
+    val rowToKeys: Row => Seq[Any] = {row =>
+      ordinals.map{i => row(i)}
+    }
+    
+    val executers = cdsAggsList.map{aggs => aggs.createExecuter(smvSchema)}
+    def outSchema = {
+      val nes = cdsAggsList.flatMap{aggs => aggs.resolvedExprs(smvSchema).map{e => e.asInstanceOf[NamedExpression]}}
+      new SmvSchema(nes.map{expr => SchemaEntry(expr.name, expr.dataType)})
+    }
+    
+    val eval: Iterable[Row] => Iterable[Row] = {rows =>
+      val rSeq = rows.toSeq
+      rSeq.map{currentRow => 
+        val out = executers.flatMap{ex => ex(currentRow.toSeq)(rSeq)}
+        new GenericRow(out.toArray)
+      }
+    }
+        
+    val rdd = df.rdd.
+      groupBy(rowToKeys).
+      flatMapValues(rowsInGroup => eval(rowsInGroup)).
+      values
+
+    val newdf = df.sqlContext.applySchemaToRowRDD(rdd, outSchema)
+    newdf
+  }
   
   /* TODO
    * Need to create CDSColumn extents Column with method "from(cds: SmvCDS)"

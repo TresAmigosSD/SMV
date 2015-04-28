@@ -36,37 +36,68 @@ import scala.reflect.runtime.universe.{TypeTag, typeTag}
  * SmvCDS - SMV Custom Data Selector
  **/
 abstract class SmvCDS extends Serializable{
-  def inGroupIterator(it:Iterable[Row]): Iterable[Row]
+  def inGroupIterator(inSchema: SmvSchema)(toBeCompared: Seq[Any]): Iterable[Row] => Iterable[Row]
 }
 
-class SmvCDSAggColumn(aggExpr: NamedExpression) {
+case class SmvCDSChain(cdsList: Array[SmvCDS]) extends SmvCDS {
+  def inGroupIterator(inSchema: SmvSchema)(toBeCompared: Seq[Any]): Iterable[Row] => Iterable[Row] = {it =>
+    cdsList.scanRight(it)((c, i) => c.inGroupIterator(inSchema)(toBeCompared)(i)).head
+  }
+}
+
+class SmvCDSAggColumn(aggExpr: AggregateExpression) {
   private val cdsList: ArrayBuffer[SmvCDS] = ArrayBuffer()
+  private var name: String = null;
   
+  def clear = cdsList.clear
+
   def from(cds: SmvCDS): SmvCDSAggColumn = {
     cdsList += cds
     this
   }
   
-  def clear = cdsList.clear
-
-  def inGroupIterator: Iterable[Row] => Iterable[Row] = {it =>
-    cdsList.scanRight(it)((c, i) => c.inGroupIterator(i)).head
+  def as(n: String): SmvCDSAggColumn = {
+    name = n
+    this
   }
   
-  def execute(inSchema: SmvSchema): Iterable[Row] => Any = {
-    //TODO: this part could be in runAgg method
+  def cdsChain = SmvCDSChain(cdsList.toArray)
+  def namedExpr = Alias(aggExpr, name)()
+}
+  
+case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
+  private def analyzeExprs(inSchema: SmvSchema) = {
     val schemaAttr = inSchema.entries.map{e =>
       val s = e.structField
       AttributeReference(s.name, s.dataType, s.nullable)()
     }
-    val p = LocalRelation(schemaAttr).groupBy()(aggExpr).analyze
+    LocalRelation(schemaAttr).groupBy()(aggExprs: _*).analyze
+  }
+  
+  def resolvedExprs(inSchema: SmvSchema) = analyzeExprs(inSchema).expressions
+  
+  def createExecuter(inSchema: SmvSchema): Seq[Any] => (Iterable[Row] => Seq[Any]) = {
+    val p = analyzeExprs(inSchema)
     val aes = p.expressions.map{case Alias(ex, n) => 
       BindReferences.bindReference(ex, p.inputSet.toSeq)}
     val cum = aes.map{e => e.asInstanceOf[AggregateExpression].newInstance()}
+    val itMapGen = cds.inGroupIterator(inSchema)_
     
-    {it =>
-      inGroupIterator(it).foreach{r => cum.foreach(c => c.update(r))}
-      cum.map{c => c.eval(null)}.head
+    {toBeCompared =>
+      val itMap = itMapGen(toBeCompared)
+      
+      {it =>
+        itMap(it).foreach{r => cum.foreach(c => c.update(r))}
+        cum.map{c => c.eval(null)}
+      }
+    }
+  }
+}
+
+object SmvCDS {
+  def combineCDS(aggCols: Seq[SmvCDSAggColumn]): Seq[SmvSingleCDSAggs] = {
+    aggCols.groupBy(_.cdsChain).mapValues(vl => vl.map(_.namedExpr)).toSeq.map{case (k,vl) =>
+      SmvSingleCDSAggs(k, vl)
     }
   }
 }
