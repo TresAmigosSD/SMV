@@ -157,21 +157,41 @@ val res3 = df.smvGroupBy('k).panelAgg(month12to14)(
 where ```last7days```, ```last3m```, etc. are ```SmvCDS```s.
 
 ## Implementation
+When user applys smvGroupBy, he does know that the task either has a lot small groups or a small set
+of large groups. From implementation angle those 2 cases could have different optimizations.
+
+In most of our use cases, CDS typically applys to cases with a lot small groups. In other words, 
+we can assume that for every group, the records in that group can be load into local nodes' 
+memory as a Scala object. Some other SmvGDO also belongs to this case.
+
+To make it safe, we need to let the user explicitly specify that the groups are small and 
+records can be load into memory:
+
+```scala
+df.smvGroupBy('k)(inMemory = true)
+```
+or 
+```scala
+df.smvInMemGroupBy('k)
+```
+
+We will implement in the in-memory version of CDS first.
+
 ### SmvCDS
 Each SmvCDS defines a method 
 ```scala
 def inGroupIterator(inSchema: SmvSchema): Iterable[Row] => Iterable[Row]
 ```
 
-### SmvCDSAggregateColumn
-```Column``` can be implicitly converted to ```SmvCDSAggregateColumn```. 
+### SmvCDSAggColumn
+```Column``` can be implicitly converted to ```SmvCDSAggColumn```. 
 
-```SmvCDSAggregateColumn``` has a method
+```SmvCDSAggColumn``` has a method
 ```scala
-def from(cds: SmvCDS): SmvCDSAggregateColumn 
+def from(cds: SmvCDS): SmvCDSAggColumn 
 ```
 
-SmvCDSAggregateColumn is a builder class, and has a list of SmvCDS
+SmvCDSAggColumn is a builder class, and has a list of SmvCDS
 ```scala
 var cdsList: Seq[SmvCDS]
 ```
@@ -189,4 +209,16 @@ method, and at the end, call AggregateExpression's ```eval``` method as the retu
 ### agg, runAgg, and panelAgg on SmvGroupedData
 
 Those different versions of "agg" basically will prepare the input ```Iterable[Row]``` for each 
-```SmvCDSAggregateColumn``` and collect the output.
+```SmvCDSAggColumn``` and collect the output.
+
+### smvMapGroup takes SmvCDS as parameter
+For the 2nd use case, Give me top-5, there are no aggregations. The same ```top5('v)``` 
+SmvCDS could be used also in ```runAgg``` operation. 
+
+For the non-aggregation case, the SmvCDS could be considered as an SmvGDO with 
+```scala
+def inGroupKeys = Nil
+def outSchema(inSchema: SmvSchema) = inSchema
+```
+
+So we can make ```smvMapGroup``` method to take either SmvGDO or SmvCDS as parameter.
