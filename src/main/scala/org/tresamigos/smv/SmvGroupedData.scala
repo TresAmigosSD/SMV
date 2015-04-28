@@ -98,7 +98,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       smvGroupBy(keys: _*).aggregate((keys.map{k => df(k)} ++ outCols): _*)
   }
   
-  def smvApplyCDS(cds: SmvCDS) = new SmvCDSGroupedData(smvGD, Seq(cds))
+//  def smvApplyCDS(cds: SmvCDS) = new SmvCDSGroupedData(smvGD, Seq(cds))
   
   /* TODO
    * Need to create CDSColumn extents Column with method "from(cds: SmvCDS)"
