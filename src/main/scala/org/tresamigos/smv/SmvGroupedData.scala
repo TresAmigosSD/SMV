@@ -32,13 +32,14 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   private val df = smvGD.df
   private val keys = smvGD.keys
   
+  
   def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
     val smvSchema = SmvSchema.fromDataFrame(df)
     val ordinals = smvSchema.getIndices(keys: _*)
     val rowToKeys: Row => Seq[Any] = {row =>
       ordinals.map{i => row(i)}
     }
-
+    
     val inGroupIterator =  gdo.inGroupIterator(smvSchema) 
     val rdd = df.rdd.
       groupBy(rowToKeys).
@@ -98,8 +99,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       smvGroupBy(keys: _*).aggregate((keys.map{k => df(k)} ++ outCols): _*)
   }
   
-  def runAgg(aggCols: Seq[SmvCDSAggColumn]): DataFrame = {
+  def runAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
     val cdsAggsList: Seq[SmvSingleCDSAggs] = SmvCDS.combineCDS(aggCols) 
+    
+    //TODO: Need to have a way to keep keys
+    //TODO: Keep input Expressions ordering
+    
+    //println(cdsAggsList(0).aggExprs.map(_.name))
     
     val smvSchema = SmvSchema.fromDataFrame(df)
     val ordinals = smvSchema.getIndices(keys: _*)
@@ -107,7 +113,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       ordinals.map{i => row(i)}
     }
     
-    val executers = cdsAggsList.map{aggs => aggs.createExecuter(smvSchema)}
+    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema)(r)(it)}}
     def outSchema = {
       val nes = cdsAggsList.flatMap{aggs => aggs.resolvedExprs(smvSchema).map{e => e.asInstanceOf[NamedExpression]}}
       new SmvSchema(nes.map{expr => SchemaEntry(expr.name, expr.dataType)})
@@ -116,7 +122,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val eval: Iterable[Row] => Iterable[Row] = {rows =>
       val rSeq = rows.toSeq
       rSeq.map{currentRow => 
-        val out = executers.flatMap{ex => ex(currentRow.toSeq)(rSeq)}
+        val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
         new GenericRow(out.toArray)
       }
     }
@@ -129,13 +135,4 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val newdf = df.sqlContext.applySchemaToRowRDD(rdd, outSchema)
     newdf
   }
-  
-  /* TODO
-   * Need to create CDSColumn extents Column with method "from(cds: SmvCDS)"
-  def smvCDSAgg(aggExprs: CDSColumn*) = {
-    val cdsList = ...
-    val smvCGD = new SmvCDSGroupedData(smvGD, cdsList)
-    smvCGD.agg(aggExprs: _*)
-  }
-  */
 }

@@ -36,12 +36,12 @@ import scala.reflect.runtime.universe.{TypeTag, typeTag}
  * SmvCDS - SMV Custom Data Selector
  **/
 abstract class SmvCDS extends Serializable{
-  def inGroupIterator(inSchema: SmvSchema)(toBeCompared: Seq[Any]): Iterable[Row] => Iterable[Row]
+  def inGroupIterator(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row])
 }
 
-case class SmvCDSChain(cdsList: Array[SmvCDS]) extends SmvCDS {
-  def inGroupIterator(inSchema: SmvSchema)(toBeCompared: Seq[Any]): Iterable[Row] => Iterable[Row] = {it =>
-    cdsList.scanRight(it)((c, i) => c.inGroupIterator(inSchema)(toBeCompared)(i)).head
+case class SmvCDSChain(cdsList: SmvCDS*) extends SmvCDS {
+  def inGroupIterator(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = {toBeCompared =>
+    {it => cdsList.scanRight(it)((c, i) => c.inGroupIterator(inSchema)(toBeCompared)(i)).head}
   }
 }
 
@@ -61,7 +61,7 @@ class SmvCDSAggColumn(aggExpr: AggregateExpression) {
     this
   }
   
-  def cdsChain = SmvCDSChain(cdsList.toArray)
+  def cdsChain = SmvCDSChain(cdsList.toSeq: _*)
   def namedExpr = Alias(aggExpr, name)()
 }
   
@@ -76,12 +76,12 @@ case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
   
   def resolvedExprs(inSchema: SmvSchema) = analyzeExprs(inSchema).expressions
   
-  def createExecuter(inSchema: SmvSchema): Seq[Any] => (Iterable[Row] => Seq[Any]) = {
+  def createExecuter(inSchema: SmvSchema): Row => (Iterable[Row] => Seq[Any]) = {
     val p = analyzeExprs(inSchema)
     val aes = p.expressions.map{case Alias(ex, n) => 
       BindReferences.bindReference(ex, p.inputSet.toSeq)}
     val cum = aes.map{e => e.asInstanceOf[AggregateExpression].newInstance()}
-    val itMapGen = cds.inGroupIterator(inSchema)_
+    val itMapGen = cds.inGroupIterator(inSchema)
     
     {toBeCompared =>
       val itMap = itMapGen(toBeCompared)
@@ -98,6 +98,29 @@ object SmvCDS {
   def combineCDS(aggCols: Seq[SmvCDSAggColumn]): Seq[SmvSingleCDSAggs] = {
     aggCols.groupBy(_.cdsChain).mapValues(vl => vl.map(_.namedExpr)).toSeq.map{case (k,vl) =>
       SmvSingleCDSAggs(k, vl)
+    }
+  }
+}
+
+case class TimeInLastN(t: String, n: Int) extends SmvCDS {
+  def inGroupIterator(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = {
+    val ordinal = inSchema.getIndices(t)(0)
+    val valueEntry = inSchema.findEntry(t).get.asInstanceOf[NumericSchemaEntry]
+    val getValueAsInt: Row => Int = {r =>
+      valueEntry.numeric.toInt(r(ordinal).asInstanceOf[valueEntry.JvmType])
+    }
+    
+    val condition: (Int, Row) => Boolean = {(anchor, r) =>
+      val value = getValueAsInt(r)
+      anchor >= value && anchor < (value + n)
+    }
+    
+    {toBeCompared =>
+      val anchor = getValueAsInt(toBeCompared)
+      
+      {it =>
+        it.collect{ case r if condition(anchor, r) => r }
+      }
     }
   }
 }
