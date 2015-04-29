@@ -31,11 +31,7 @@ package object smv {
   implicit def makeDFHelper(srdd: SchemaRDD) = new SmvDFHelper(srdd)
   implicit def makeSmvGDFunc(sgd: SmvGroupedData) = new SmvGroupedDataFunc(sgd)
   implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.toGroupedData
-  
-  implicit def makeSmvCDSAggColumn(col: Column) = {
-    new SmvCDSAggColumn(col.toExpr.asInstanceOf[AggregateExpression])
-  }
-//  implicit def makeSmvCDSFunctions(srdd: SchemaRDD) = new SmvCDSFunctions(srdd)
+  implicit def makeSmvCDSAggColumn(col: Column) = SmvCDSAggColumn(col.toExpr)
   implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
   implicit def makeSeqStrRDDHelper(rdd: RDD[Seq[String]]) = new SeqStringRDDHelper(rdd)
   implicit def makeRDDHelper[T](rdd: RDD[T])(implicit tt: ClassTag[T]) = 

@@ -100,7 +100,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
   
   def runAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
-    val gdo = new SmvRunAggGDO(aggCols)
+    val gdo = new SmvCDSRunAggGDO(aggCols)
     smvMapGroup(gdo).toDF
   }
 }

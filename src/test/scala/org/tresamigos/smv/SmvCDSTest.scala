@@ -26,14 +26,16 @@ class SmvCDSTest extends SparkTestUtil {
 
     val last3 = TimeInLastN("t", 3)
     val res = srdd.smvGroupBy('k).runAgg(
+      $"k",
+      $"t",
       sum('v) from last3 as "nv1",
       count('v) from last3 as "nv2")
       
-    assertSrddSchemaEqual(res, "nv1: Double; nv2: Long")
+    assertSrddSchemaEqual(res, "k: String; t: Integer; nv1: Double; nv2: Long")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[0.3,1]",
-      "[0.2,1]",
-      "[1.5999999999999999,2]",
-      "[2.2,1]"))
+      "[a,1,0.3,1]",
+      "[z,1,0.2,1]",
+      "[z,2,1.5999999999999999,2]",
+      "[z,5,2.2,1]"))
   }
 }

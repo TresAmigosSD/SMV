@@ -39,13 +39,19 @@ abstract class SmvCDS extends Serializable{
   def inGroupIterator(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row])
 }
 
+/**
+ * SmvCDSChain is an SmvCDS. it chain all the SmvCDS's together
+ **/
 case class SmvCDSChain(cdsList: SmvCDS*) extends SmvCDS {
   def inGroupIterator(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = {toBeCompared =>
     {it => cdsList.scanRight(it)((c, i) => c.inGroupIterator(inSchema)(toBeCompared)(i)).head}
   }
 }
 
-class SmvCDSAggColumn(aggExpr: AggregateExpression) {
+/**
+ * SmvCDSAggColumn wraps around a Column to suppot keyword "from"
+ **/
+case class SmvCDSAggColumn(aggExpr: Expression) {
   private val cdsList: ArrayBuffer[SmvCDS] = ArrayBuffer()
   private var name: String = null;
   
@@ -65,6 +71,12 @@ class SmvCDSAggColumn(aggExpr: AggregateExpression) {
   def namedExpr = Alias(aggExpr, name)()
 }
   
+/** 
+ * SmvSingleCDSAggs 
+ *   - Different aggregation expressions with the same CDS are capsulated
+ *   - Resolve the expressions on a given input schema
+ *   - Provide executor creater 
+ **/
 case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
   private def analyzeExprs(inSchema: SmvSchema) = {
     val schemaAttr = inSchema.entries.map{e =>
@@ -94,33 +106,16 @@ case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
   }
 }
 
-class SmvRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
-  private val cdsAggsList: Seq[SmvSingleCDSAggs] = SmvCDS.combineCDS(aggCols) 
-  //TODO: Need to have a way to keep keys
-  //TODO: Keep input Expressions ordering
-  
-  //println(cdsAggsList(0).aggExprs.map(_.name))
-  
-  def inGroupKeys = Nil
-  def outSchema(smvSchema: SmvSchema) = {
-    val nes = cdsAggsList.flatMap{aggs => aggs.resolvedExprs(smvSchema).map{e => e.asInstanceOf[NamedExpression]}}
-    new SmvSchema(nes.map{expr => SchemaEntry(expr.name, expr.dataType)})
-  }
-  
-  def inGroupIterator(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
-    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema)(r)(it)}}
-    
-    {rows =>
-      val rSeq = rows.toSeq
-      rSeq.map{currentRow => 
-        val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
-        new GenericRow(out.toArray)
-      }
-    }
-  }
-}
-
+/** 
+ * Provide functions shared by multiple agg operations 
+ **/
 object SmvCDS {
+  def findAggCols(cols: Seq[SmvCDSAggColumn]): Seq[SmvCDSAggColumn] = 
+    cols.collect{l => l match {case SmvCDSAggColumn(e: AggregateExpression) => l}}
+    
+  def findKeptCols(cols: Seq[SmvCDSAggColumn]): Seq[String] = 
+    cols.diff(findAggCols(cols)).map{c => c.aggExpr.asInstanceOf[NamedExpression].name}
+    
   def combineCDS(aggCols: Seq[SmvCDSAggColumn]): Seq[SmvSingleCDSAggs] = {
     aggCols.groupBy(_.cdsChain).mapValues(vl => vl.map(_.namedExpr)).toSeq.map{case (k,vl) =>
       SmvSingleCDSAggs(k, vl)
@@ -128,6 +123,40 @@ object SmvCDS {
   }
 }
 
+/** 
+ * SmvCDSRunAggGDO
+ *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by runAgg operation on SmvGroupedData
+ **/
+class SmvCDSRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
+  private val keptCols = SmvCDS.findKeptCols(aggCols)
+  private val cdsAggsList: Seq[SmvSingleCDSAggs] = SmvCDS.combineCDS(SmvCDS.findAggCols(aggCols)) 
+  //TODO: Keep input Expressions ordering
+  
+  def inGroupKeys = Nil
+  
+  def inGroupIterator(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
+    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema)(r)(it)}}
+    val getKept: Row => Seq[Any] = {r => smvSchema.getIndices(keptCols: _*).map{i => r(i)}}
+    
+    {rows =>
+      val rSeq = rows.toSeq
+      rSeq.map{currentRow => 
+        val kept = getKept(currentRow)
+        val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
+        new GenericRow((kept ++ out).toArray)
+      }
+    }
+  }
+  
+  def outSchema(smvSchema: SmvSchema) = {
+    val ketpEntries = keptCols.map{n => smvSchema.findEntry(n).get}
+    val nes = cdsAggsList.flatMap{aggs => aggs.resolvedExprs(smvSchema).map{e => e.asInstanceOf[NamedExpression]}}
+    new SmvSchema(ketpEntries ++ nes.map{expr => SchemaEntry(expr.name, expr.dataType)})
+  }
+}
+
+
+/* Example SmvCDS */
 case class TimeInLastN(t: String, n: Int) extends SmvCDS {
   def inGroupIterator(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = {
     val ordinal = inSchema.getIndices(t)(0)
