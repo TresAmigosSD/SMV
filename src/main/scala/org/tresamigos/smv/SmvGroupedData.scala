@@ -50,10 +50,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
   
-  def aggregate(cols: Column*) = {
-    smvGD.toGroupedData.agg(cols(0), cols.tail: _*)
-  }
-  
   /**
    * smvPivot on SmvGroupedData is similar to smvPivot on DF
    * 
@@ -74,10 +70,10 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * df.groupBy("id").smvPivot(Seq("month", "product"))("count")(
    *    "5_14_A", "5_14_B", "6_14_A", "6_14_B")
    **/
-  def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SmvGroupedData = {
+  def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): GroupedData = {
     // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
-    SmvGroupedData(pivot.createSrdd(df, keys), keys)
+    SmvGroupedData(pivot.createSrdd(df, keys), keys).toGroupedData
   }
   
   /**
@@ -95,12 +91,28 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
     val outCols = pivot.outCols().map{l=>(sum(l) as l)}
-    smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).df.
-      smvGroupBy(keys: _*).aggregate((keys.map{k => df(k)} ++ outCols): _*)
+    val aggCols = keys.map{k => df(k)} ++ outCols
+    smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).agg(aggCols(0), aggCols.tail: _*)
+  }
+  
+  /*
+  def agg(cols: Column*) = {
+    smvGD.toGroupedData.agg(cols(0), cols.tail: _*)
+  }
+  */
+  
+  def agg(aggCols: SmvCDSAggColumn*): DataFrame = {
+    val gdo = new SmvCDSAggGDO(aggCols)
+    
+    /* Since SmvCDSAggGDO grouped aggregations with the same CDS together, the ordering of the 
+       columns is no more the same as the input list specified. Here to put them in order */
+    val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
+    smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
   }
   
   def runAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
     val gdo = new SmvCDSRunAggGDO(aggCols)
-    smvMapGroup(gdo).toDF
+    val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
+    smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
   }
 }

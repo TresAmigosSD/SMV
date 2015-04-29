@@ -70,18 +70,6 @@ class SmvPivotTest extends SparkTestUtil {
       "1,5_14,B,300,null,300,null,null")
   }
   
-  sparkTest("test smvPivot on GD") {
-    val ssc = sqlContext; import ssc.implicits._
-    val srdd = createSchemaRdd("id:Integer;month:String;product:String;count:Integer", 
-      "1,5_14,A,100;1,6_14,B,200;1,5_14,B,300")
-    val res = srdd.smvGroupBy('id).smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B").toDF
-    assertSrddSchemaEqual(res, "id: Integer; count_5_14_A: Integer; count_5_14_B: Integer; count_6_14_A: Integer; count_6_14_B: Integer")
-    assertSrddDataEqual(res, 
-      "1,100,null,null,null;" +
-      "1,null,null,null,200;" +
-      "1,null,300,null,null")
-  }
-  
   sparkTest("test smvPivotSum on GD") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("id:Integer;month:String;product:String;count:Integer", 

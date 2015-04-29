@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions._
 
 class SmvCDSTest extends SparkTestUtil {
 
-  sparkTest("Test RunSum") {
+  sparkTest("Test runAgg") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
@@ -37,5 +37,23 @@ class SmvCDSTest extends SparkTestUtil {
       "[z,1,0.2,1]",
       "[z,2,1.5999999999999999,2]",
       "[z,5,2.2,1]"))
+  }
+  
+  sparkTest("Test agg") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+
+    val last3 = TimeInLastN("t", 3)
+    val res = srdd.smvGroupBy('k).agg(
+      $"k",
+      $"t",
+      sum('v) from last3 as "nv1",
+      count('v) from last3 as "nv2",
+      sum('v) as "nv3")
+      
+    assertSrddSchemaEqual(res, "k: String; t: Integer; nv1: Double; nv2: Long; nv3: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3,1,0.3]",
+      "[z,5,2.2,1,3.8]"))
   }
 }
