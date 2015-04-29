@@ -100,39 +100,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
   
   def runAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
-    val cdsAggsList: Seq[SmvSingleCDSAggs] = SmvCDS.combineCDS(aggCols) 
-    
-    //TODO: Need to have a way to keep keys
-    //TODO: Keep input Expressions ordering
-    
-    //println(cdsAggsList(0).aggExprs.map(_.name))
-    
-    val smvSchema = SmvSchema.fromDataFrame(df)
-    val ordinals = smvSchema.getIndices(keys: _*)
-    val rowToKeys: Row => Seq[Any] = {row =>
-      ordinals.map{i => row(i)}
-    }
-    
-    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema)(r)(it)}}
-    def outSchema = {
-      val nes = cdsAggsList.flatMap{aggs => aggs.resolvedExprs(smvSchema).map{e => e.asInstanceOf[NamedExpression]}}
-      new SmvSchema(nes.map{expr => SchemaEntry(expr.name, expr.dataType)})
-    }
-    
-    val eval: Iterable[Row] => Iterable[Row] = {rows =>
-      val rSeq = rows.toSeq
-      rSeq.map{currentRow => 
-        val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
-        new GenericRow(out.toArray)
-      }
-    }
-        
-    val rdd = df.rdd.
-      groupBy(rowToKeys).
-      flatMapValues(rowsInGroup => eval(rowsInGroup)).
-      values
-
-    val newdf = df.sqlContext.applySchemaToRowRDD(rdd, outSchema)
-    newdf
+    val gdo = new SmvRunAggGDO(aggCols)
+    smvMapGroup(gdo).toDF
   }
 }
