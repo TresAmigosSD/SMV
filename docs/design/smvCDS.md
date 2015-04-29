@@ -183,6 +183,9 @@ Each SmvCDS defines a method
 def inGroupIterator(inSchema: SmvSchema): Iterable[Row] => Iterable[Row]
 ```
 
+### SmvCDSChain
+Since SmvCDS could chain together, SmvCDSChain is the chained CDS, which is also a CDS.
+
 ### SmvCDSAggColumn
 ```Column``` can be implicitly converted to ```SmvCDSAggColumn```. 
 
@@ -198,18 +201,25 @@ var cdsList: Seq[SmvCDS]
 
 ```from``` method basically adding it's parameter to the ```cdsList```.
 
-It also has an ```execute``` method
-```
-def execute: Iterable[Row] => Any
-```
-which feeds the input to each of the SmvCDS in ```cdsList``` in reverse order and get another 
-Iterable[Row], and then it will be iterated through and feed to the AggregateExpression's ```update```
-method, and at the end, call AggregateExpression's ```eval``` method as the return value.
+### SmvSingleCDSAggs
+Since multiple ```SmvCDSAggColumn```'s could share the same ```cdsList```, of a list of ```SmvCDSAggColumn```,
+we re-organize them by unique ```SmvCDSChain```, and put all the aggregations in a list as a member of ```SmvSingleCDSAggs```.
+
+It also has an ```createExecuter``` method, which resove the expressions and create an executer to 
+map grouped Rows to an array of output values (the real aggregation operation).
 
 ### agg, runAgg, and panelAgg on SmvGroupedData
 
 Those different versions of "agg" basically will prepare the input ```Iterable[Row]``` for each 
 ```SmvCDSAggColumn``` and collect the output.
+
+Since the aggregation operation is basically an smvMapGroup(SmvGDO) operation, we create 
+
+* SmvCDSAggGDO
+* SmvCDSRunAggGDO
+* SmvCDSPanelAggGDO 
+
+and make "agg" operation just a smvMapGroup operation.
 
 ### smvMapGroup takes SmvCDS as parameter
 For the 2nd use case, Give me top-5, there are no aggregations. The same ```top5('v)``` 
