@@ -56,4 +56,22 @@ class SmvCDSTest extends SparkTestUtil {
       "[a,1,0.3,1,0.3]",
       "[z,5,2.2,1,3.8]"))
   }
+   
+  sparkTest("Test SmvTopNRecsCDS") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+
+    val last2 = SmvTopNRecsCDS(2, $"v".desc) 
+    val res = srdd.smvGroupBy('k).agg(
+      $"k",
+      $"t",
+      sum('v) from last2 as "nv1",
+      count('v) from last2 as "nv2")
+      
+    assertSrddSchemaEqual(res, "k: String; t: Integer; nv1: Double; nv2: Long")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3,1]",
+      "[z,5,3.6,2]"))
+  }
+   
 }

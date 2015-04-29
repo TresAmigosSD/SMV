@@ -16,6 +16,7 @@ package org.tresamigos.smv
 
 import scala.collection.mutable.ArrayBuffer
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.dsl.plans._
@@ -81,21 +82,15 @@ case class SmvCDSAggColumn(aggExpr: Expression) {
  *   - Provide executor creater 
  **/
 case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
-  private def analyzeExprs(inSchema: SmvSchema) = {
-    val schemaAttr = inSchema.entries.map{e =>
-      val s = e.structField
-      AttributeReference(s.name, s.dataType, s.nullable)()
-    }
-    LocalRelation(schemaAttr).groupBy()(aggExprs: _*).analyze
-  }
-  
-  def resolvedExprs(inSchema: SmvSchema) = analyzeExprs(inSchema).expressions
+  def resolvedExprs(inSchema: SmvSchema) = 
+    inSchema.toLocalRelation.groupBy()(aggExprs: _*).analyze.expressions
   
   def createExecuter(inSchema: SmvSchema): Row => (Iterable[Row] => Seq[Any]) = {
-    val p = analyzeExprs(inSchema)
-    val aes = p.expressions.map{case Alias(ex, n) => 
-      BindReferences.bindReference(ex, p.inputSet.toSeq)}
-    val cum = aes.map{e => e.asInstanceOf[AggregateExpression].newInstance()}
+    val locRel = inSchema.toLocalRelation
+    val cum = locRel.groupBy()(aggExprs: _*).analyze.expressions.
+      map{case Alias(ex, n) =>  BindReferences.bindReference(ex, locRel.output)}.
+      map{e => e.asInstanceOf[AggregateExpression].newInstance()}
+      
     val itMapGen = cds.inGroupIterator(inSchema)
     
     {toBeCompared =>
@@ -185,8 +180,9 @@ class SmvCDSRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvCDSAggGDO(aggCol
 }
 
 
-/* Example SmvCDS */
-case class TimeInLastN(t: String, n: Int) extends SmvCDS {
+/*************** The code below are specific CDS's. Should consider to put in another file ******/
+/* This implementation resolve the cloumns manually, it is replaced by an implementation using Expressions
+case class TimeInLastN2(t: String, n: Int) extends SmvCDS {
   def inGroupIterator(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = {
     val ordinal = inSchema.getIndices(t)(0)
     val valueEntry = inSchema.findEntry(t).get.asInstanceOf[NumericSchemaEntry]
@@ -207,4 +203,72 @@ case class TimeInLastN(t: String, n: Int) extends SmvCDS {
       }
     }
   }
+}
+*/
+
+abstract class SmvSelfCompareCDS extends SmvCDS {
+  val condition: Expression 
+  
+  def inGroupIterator(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = {
+    val cond = condition as "condition"
+    
+    val combinedSchema = inSchema.selfJoined
+    val locRel = combinedSchema.toLocalRelation()
+    val es = locRel.select(cond).analyze.expressions.
+      map{ex => BindReferences.bindReference(ex, locRel.output)}.head
+      
+    {toBeCompared =>
+      
+      {it =>
+        it.collect{ case r if (es.eval(Row.merge(toBeCompared, r)).asInstanceOf[Boolean]) => r}
+      }
+    }
+  } 
+}
+
+case class TimeInLastN(t: String, n: Int) extends SmvSelfCompareCDS {
+  val condition = ($"$t" >= $"_$t" && $"$t" < ($"_$t" + n)) 
+}
+
+/**
+ *  SmvTopNRecsCDS 
+ *  Returns the TopN records based on the order keys
+ *  (which means it can also return botton N records)
+ **/
+case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends SmvCDS {
+
+  private val orderKeys = orderCols.map{o => o.asInstanceOf[SortOrder]}
+  private val keys = orderKeys.map{k => k.child.asInstanceOf[NamedExpression].name}
+  private val directions = orderKeys.map{k => k.direction}
+
+  def inGroupIterator(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = { dummyRow =>
+    val ordinals = inSchema.getIndices(keys: _*)
+    val ordering = (keys zip directions).map{case (k, d) =>
+      val normColOrdering = inSchema.findEntry(k).get.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
+      if (d == Ascending) normColOrdering.reverse else normColOrdering
+    }
+
+    // create an implicit instance of Ordering[Row] so that it will be picked up by
+    // implict order required by BoundedPriorityQueue below.  Therefore, order of row is
+    // based on order of specified column.
+    implicit object RowOrdering extends Ordering[Row] {
+      def compare(a:Row, b:Row) = (ordinals zip ordering).map{case (i, order) => order.compare(a(i),b(i)).signum}
+        .reduceLeft((s, i) => s << 1 + i)
+    }
+
+    {it: Iterable[Row] =>
+      val bpq = BoundedPriorityQueue[Row](maxElems)
+      it.foreach{ r =>
+        val v = ordinals.map{i => r(i)}
+        if (! v.contains(null))
+          bpq += r
+      }
+      bpq.toList
+    }
+  }
+}
+
+object SmvTopNRecsCDS {
+  def apply(maxElems: Int, orderCol: Column, otherOrder: Column*): SmvTopNRecsCDS = 
+    SmvTopNRecsCDS(maxElems, (orderCol +: otherOrder).map{o => o.toExpr})
 }

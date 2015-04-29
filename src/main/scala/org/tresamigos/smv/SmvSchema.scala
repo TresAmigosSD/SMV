@@ -20,6 +20,9 @@ import org.apache.spark.sql.catalyst.expressions.{Literal, Row, AttributeReferen
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SchemaRDD
 
+import org.apache.spark.sql.catalyst.plans.logical._
+
+
 import scala.annotation.switch
 
 abstract class SchemaEntry extends java.io.Serializable {
@@ -284,6 +287,11 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
     new SmvSchema(entries ++ that.entries)
   }
   
+  def selfJoined(): SmvSchema = {
+    val renamed = entries.map{e => SchemaEntry("_" + e.structField.name, e.structField.dataType)}
+    new SmvSchema(entries ++ renamed)
+  }
+  
   def names: Seq[String] = {
     entries.map(e => e.structField.name)
   }
@@ -297,6 +305,14 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   }
   def findEntry(sym: Symbol): Option[SchemaEntry] = findEntry(sym.name)
 
+  def toLocalRelation(): LocalRelation = {
+    val schemaAttr = entries.map{e =>
+      val s = e.structField
+      AttributeReference(s.name, s.dataType, s.nullable)()
+    }
+    LocalRelation(schemaAttr)
+  }
+  
   def addMeta(sym: Symbol, metaStr: String): SmvSchema = {
     findEntry(sym).get.meta = metaStr
     this
