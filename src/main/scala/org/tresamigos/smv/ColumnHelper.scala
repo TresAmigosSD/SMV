@@ -24,6 +24,13 @@ import java.util.Calendar
 import java.sql.Timestamp
 import com.rockymadden.stringmetric.phonetic.SoundexAlgorithm
 
+/** 
+ * ColumnHelper class provides additional methods/operators on Column
+ * 
+ * import org.tresamigos.smv
+ * 
+ * will import the implicit convertion from Column to ColumnHelper
+ **/
 class ColumnHelper(column: Column) {
   
   private val expr = extractExpr(column)
@@ -33,27 +40,33 @@ class ColumnHelper(column: Column) {
   
   /** NullSub 
    *  Should consider use coalesce(c1, c2) function going forward
-   */
+   **/
   def smvNullSub[T](newv: T) = {
-    val name = s"NullSub($column,$newv)"
-    new Column(Alias(If(IsNull(expr), Literal(newv), expr), name)())
+    coalesce(column, lit(newv))
   }
   
   def smvNullSub(that: Column) = {
-    val name = s"NullSub($column,$that)"
-    new Column(Alias(If(IsNull(expr), extractExpr(that), expr), name)())
+    coalesce(column, that)
   }
   
   /** LEFT(5) should be replaced by substr(0,5) */
   
-  /** LENGTH */ 
+  /** 
+   * Length 
+   * 
+   * df.select($"name".smvLength as "namelen")
+   */ 
   def smvLength = {
     val name = s"SmvLength($column)"
     val f: String => Integer = (s:String) => if(s == null) null else s.size
     new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)())
   }
   
-  /** SmvStrToTimestamp */
+  /**
+   * smvStrToTimestamp 
+   * 
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd")
+   */
   def smvStrToTimestamp(fmt: String) = {
     val name = s"SmvStrToTimestamp($column,$fmt)"
     val fmtObj = new java.text.SimpleDateFormat(fmt)
@@ -63,7 +76,11 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)())
   }
   
-  /** SmvYear */
+  /** 
+   * smvYear
+   * 
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvYear
+   */
   def smvYear = {
     val name = s"SmvYear($column)"
     val cal : Calendar = Calendar.getInstance()
@@ -77,7 +94,11 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
   }
   
-  /** SmvMonth */
+  /** 
+   * smvMonth
+   * 
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvMonth
+   */
   def smvMonth = {
     val name = s"SmvMonth($column)"
     val cal : Calendar = Calendar.getInstance()
@@ -91,7 +112,11 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
   }
   
-  /** SmvQuarter */
+  /** 
+   * smvQuarter
+   * 
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvQuarter
+   */
   def smvQuarter = {
     val name = s"SmvQuarter($column)"
     val cal : Calendar = Calendar.getInstance()
@@ -105,7 +130,11 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
   }
    
-  /** SmvDayOfMonth */
+  /** 
+   * smvDayOfMonth 
+   * 
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvDayOfMonth
+   */
   def smvDayOfMonth = {
     val name = s"SmvDayOfMonth($column)"
     val cal : Calendar = Calendar.getInstance()
@@ -119,7 +148,11 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
   }
     
-  /** SmvDayOfWeek */
+  /** 
+   * smvDayOfWeek 
+   * 
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvDayOfWeek
+   */
   def smvDayOfWeek = {
     val name = s"SmvDayOfWeek($column)"
     val cal : Calendar = Calendar.getInstance()
@@ -133,7 +166,11 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
   }
   
-  /** SmvHour */
+  /** 
+   * smvHour 
+   * 
+   * lit("2014-04-25 13:45").smvStrToTimestamp("yyyy-MM-dd HH:mm").smvHour
+   */
   def smvHour = {
     val name = s"SmvHour($column)"
     val fmtObj=new java.text.SimpleDateFormat("HH")
@@ -144,7 +181,11 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
   }
    
-  /** AmountBin */
+  /** 
+   * smvAmtBin: Pre-defined binning for dollar ammount type of column
+   * 
+   * $"amt".smvAmtBin
+   */
   def smvAmtBin = {
     val name = s"SmvAmtBin($column)"
     val f = (rawv:Any) => 
@@ -172,7 +213,11 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, DoubleType, Seq(expr)), name)() )
   }
   
-  /** NumericBin */
+  /** 
+   * smvNumericBin: Binning by min, max and number of bins
+   * 
+   * $"amt".smvNumericBin(0, 1000000, 100)
+   */
   def smvNumericBin(min: Double, max: Double, n: Int) = {
     val name = s"SmvNumericBin($column,$min,$max,$n)"
     val delta = (max - min) / n
@@ -187,7 +232,12 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, DoubleType, Seq(expr)), name)() )
   }
   
-  /** BinFLoor */
+  /** 
+   * smvCoarseGrain: Map double to the lower bound of bins with bin-size specified
+   * 
+   * $"amt".smvCoarseGrain(100)  // 122.34 => 100.0, 2230.21 => 2200.0
+   * 
+   **/
   def smvCoarseGrain(bin: Double) = {
     val name = s"SmvCoarseGrain($column,$bin)"
     val f = (v:Any) => 
@@ -196,7 +246,11 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, DoubleType, Seq(expr)), name)() )
   }
   
-  /** SmvSoundex */
+  /** 
+   * smvSoundex: Map a string to it's Soundex
+   * 
+   * See http://en.wikipedia.org/wiki/Soundex for details
+   */
   def smvSoundex = {
     val name = s"SmvSoundex($column)"
     val f = (s:String) => 
@@ -205,7 +259,8 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, StringType, Seq(expr)), name)() )
   }
   
-  /** SmvSafeDiv 
+  /** 
+   * smvSafeDiv 
    * 
    * lit(1.0).smvSafeDiv(lit(0.0), 1000.0) => 1000.0
    * lit(1.0).smvSafeDiv(lit(null), 1000.0) => null

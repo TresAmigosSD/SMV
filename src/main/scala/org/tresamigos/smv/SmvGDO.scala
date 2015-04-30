@@ -30,8 +30,13 @@ import org.apache.spark.sql.catalyst.dsl.expressions._
 
 /**
  * SmvGDO - SMV GroupedData Operator
+ * 
+ * Used with smvMapGroup method of SmvGroupedData.
+ * 
+ * Examples:
+ *   val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
+ *   val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
  **/
-
 abstract class SmvGDO extends Serializable{
   def inGroupKeys: Seq[String]
   def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row]
@@ -41,13 +46,9 @@ abstract class SmvGDO extends Serializable{
 /**
  * Compute the quantile bin number within a group in a given SchemaRDD.
  * The algorithm assumes there are three columns in the input.
- * (group_ids*, key_id, value).  The group_ids* are used to segment the input before
- * computing the quantiles.  The key_id is a unique id within the group.  it will just be
- * carried over into the output to help the caller to link the result back to the input.
- * And finally, the value column is the column that the quantile bins will be computed.
- * For now, the group and key columns must either be string or numeric and the value
- * column must be numeric (int, long, float, double).
- * The output will contain the 3 input columns plus value_total, value_rsum, and
+ * The value column is the column that the quantile bins will be computed.
+ * The value column must be numeric (int, long, float, double).
+ * The output will contain all the input columns plus value_total, value_rsum, and
  * value_quantile column with a value in the range 1 to num_bins.
  */
 class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {

@@ -32,7 +32,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   private val df = smvGD.df
   private val keys = smvGD.keys
   
-  
+  /**
+   * smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData
+   * 
+   * Example:
+   * val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
+   * val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
+   **/
   def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
     val smvSchema = SmvSchema.fromDataFrame(df)
     val ordinals = smvSchema.getIndices(keys: _*)
@@ -100,6 +106,17 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).agg(aggCols(0), aggCols.tail: _*)
   }
   
+  /**
+   * smvQuantile: Compute the quantile bin number within a group in a given DF
+   * 
+   * Example:
+   * df.smvGroupBy('g, 'g2).smvQuantile("v", 100)
+   * 
+   * For the colume it calculate quatile for (say named "v"), 3 more columns are added in the output
+   * v_total, v_rsum, v_quantile
+   * 
+   * All other columns are kept
+   **/
   def smvQuantile(valueCol: String, numBins: Integer): DataFrame = {
     smvMapGroup(new SmvQuantile(valueCol, numBins)).toDF
   }
@@ -155,16 +172,40 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     new RollupCubeOp(df, keys, cols).rollup()
   }
   
+  /**
+   * smvTopNRecs: for each group, return the top N records according to an ordering
+   * 
+   * Example:
+   *   df.smvGroupBy("id").smvTopNRecs(3, $"amt".desc)
+   * 
+   * Will keep the 3 largest amt records for each id 
+   **/
   def smvTopNRecs(maxElems: Int, orders: Column*) = {
     val cds = SmvTopNRecsCDS(maxElems, orders.map{o => o.toExpr})
     smvMapGroup(cds).toDF
   }
   
+  /**
+   * aggWithKeys: same as agg, but by default, keep all keys
+   **/
   def aggWithKeys(cols: Column*) = {
     val allCols = keys.map{k => new ColumnName(k)} ++ cols
     smvGD.toGroupedData.agg(allCols(0), allCols.tail: _*)
   }
   
+  /**
+   * inMemAgg: take SmvCDSAggColumn instead of just Columnm, and since CDS is implmented in memory 
+   * for now, it is an in-memory aggregation. When CDS can handle not-in-momory case, we need to 
+   * create another agg method
+   * 
+   * Example:
+   *       val res = srdd.smvGroupBy('k).inMemAgg(
+   *                            $"k",
+   *                            $"t",
+   *                            sum('v) from last3 as "nv1",
+   *                            count('v) from last3 as "nv2",
+   *                            sum('v) as "nv3")
+   **/
   def inMemAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
     val gdo = new SmvCDSAggGDO(aggCols)
     
@@ -174,6 +215,20 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
   }
   
+  /**
+   * runAgg
+   * 
+   * See SmvCDS document for details
+   * 
+   * Example:
+   *   val res = srdd.smvGroupBy('k).runAgg(
+   *                    $"k",
+   *                    $"t",
+   *                    $"v",
+   *                    sum('v) from top2 from last3 as "nv1",
+   *                    sum('v) from last3 from top2 as "nv2",
+   *                    sum('v) as "nv3")
+   **/
   def runAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
     val gdo = new SmvCDSRunAggGDO(aggCols)
     val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
