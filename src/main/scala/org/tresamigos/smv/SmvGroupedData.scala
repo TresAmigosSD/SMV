@@ -75,10 +75,10 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * df.groupBy("id").smvPivot(Seq("month", "product"))("count")(
    *    "5_14_A", "5_14_B", "6_14_A", "6_14_B")
    **/
-  def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): GroupedData = {
+  def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SmvGroupedData = {
     // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
-    SmvGroupedData(pivot.createSrdd(df, keys), keys).toGroupedData
+    SmvGroupedData(pivot.createSrdd(df, keys), keys)
   }
   
   /**
@@ -158,7 +158,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
   */
   
-  def agg(aggCols: SmvCDSAggColumn*): DataFrame = {
+  def inMemAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
     val gdo = new SmvCDSAggGDO(aggCols)
     
     /* Since SmvCDSAggGDO grouped aggregations with the same CDS together, the ordering of the 
