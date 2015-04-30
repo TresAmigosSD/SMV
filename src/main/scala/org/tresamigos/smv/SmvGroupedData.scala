@@ -40,13 +40,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       ordinals.map{i => row(i)}
     }
     
-    val inGroupIterator =  gdo.inGroupIterator(smvSchema) 
+    val inGroupMapping =  gdo.createInGroupMapping(smvSchema) 
     val rdd = df.rdd.
       groupBy(rowToKeys).
-      flatMapValues(rowsInGroup => inGroupIterator(rowsInGroup)).
+      flatMapValues(rowsInGroup => inGroupMapping(rowsInGroup)).
       values
 
-    val newdf = df.sqlContext.applySchemaToRowRDD(rdd, gdo.outSchema(smvSchema))
+    val newdf = df.sqlContext.applySchemaToRowRDD(rdd, gdo.createOutSchema(smvSchema))
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
  

@@ -34,12 +34,8 @@ import org.apache.spark.sql.catalyst.dsl.expressions._
 
 abstract class SmvGDO extends Serializable{
   def inGroupKeys: Seq[String]
-  
-  /* inGroupIterator in SmvCDS should be independent of what aggregation function will be performed, so 
-   * it has too be very general and as a result, may not be very efficiant */
-  def inGroupIterator(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row]
-  
-  def outSchema(inSchema: SmvSchema): SmvSchema 
+  def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row]
+  def createOutSchema(inSchema: SmvSchema): SmvSchema 
 }
 
 /**
@@ -58,7 +54,7 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
 
   val inGroupKeys = Nil 
   
-  def outSchema(inSchema: SmvSchema) = {
+  def createOutSchema(inSchema: SmvSchema) = {
     val oldFields = inSchema.entries
     val newFields = List(
       DoubleSchemaEntry(valueCol + "_total"),
@@ -77,7 +73,7 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
    * Input: Array[Row(groupids*, keyid, value, value_double)]
    * Output: Array[Row(groupids*, keyid, value, value_total, value_rsum, value_quantile)]
    */
-  def inGroupIterator(inSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
+  def createInGroupMapping(inSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
     val ordinal = inSchema.getIndices(valueCol)(0)
     val valueEntry = inSchema.findEntry(valueCol).get.asInstanceOf[NumericSchemaEntry]
     val getValueAsDouble: Row => Double = {r =>
