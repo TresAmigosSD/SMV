@@ -91,7 +91,7 @@ class RollupCubeOpTest extends SparkTestUtil {
          a2,b3,c4,50""")
     import srdd.sqlContext.implicits._
 
-    val res = srdd.smvRollup("a", "b", "c").agg($"a", $"b", $"c", sum("d") as "sum_d")
+    val res = srdd.smvRollup("a", "b", "c").aggWithKeys(sum("d") as "sum_d")
     assertSrddDataEqual(res,
     """a1,b1,c1,30;
        a1,b2,c2,30;

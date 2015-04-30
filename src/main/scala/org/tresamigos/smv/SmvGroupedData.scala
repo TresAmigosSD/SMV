@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.{Column, ColumnName}
 import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
@@ -100,6 +100,14 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).agg(aggCols(0), aggCols.tail: _*)
   }
   
+  def smvQuantile(valueCol: String, numBins: Integer): DataFrame = {
+    smvMapGroup(new SmvQuantile(valueCol, numBins)).toDF
+  }
+  
+  def smvDecile(valueCol: String): DataFrame = {
+    smvMapGroup(new SmvQuantile(valueCol, 10)).toDF
+  }
+  
   /**
    * See RollupCubeOp for details.
    * 
@@ -122,7 +130,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * 
    * Also have a version on DF.
    **/
-  def smvCube(cols: String*): GroupedData = {
+  def smvCube(cols: String*): SmvGroupedData = {
     new RollupCubeOp(df, keys, cols).cube()
   }
   
@@ -143,7 +151,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * 
    * Also have a version on DF
    **/
-  def smvRollup(cols: String*): GroupedData = {
+  def smvRollup(cols: String*): SmvGroupedData = {
     new RollupCubeOp(df, keys, cols).rollup()
   }
   
@@ -152,11 +160,10 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     smvMapGroup(cds).toDF
   }
   
-  /*
-  def agg(cols: Column*) = {
-    smvGD.toGroupedData.agg(cols(0), cols.tail: _*)
+  def aggWithKeys(cols: Column*) = {
+    val allCols = keys.map{k => new ColumnName(k)} ++ cols
+    smvGD.toGroupedData.agg(allCols(0), allCols.tail: _*)
   }
-  */
   
   def inMemAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
     val gdo = new SmvCDSAggGDO(aggCols)

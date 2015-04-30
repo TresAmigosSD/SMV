@@ -194,7 +194,7 @@ class SmvDFHelper(df: DataFrame) {
    * 
    * Also have a version on SmvGroupedData.
    **/
-  def smvCube(cols: String*): GroupedData = {
+  def smvCube(cols: String*): SmvGroupedData = {
     new RollupCubeOp(df, Nil, cols).cube()
   }
   
@@ -206,7 +206,7 @@ class SmvDFHelper(df: DataFrame) {
    * 
    * Also have a version on SmvGroupedData
    **/
-  def smvRollup(cols: String*): GroupedData = {
+  def smvRollup(cols: String*): SmvGroupedData = {
     new RollupCubeOp(df, Nil, cols).rollup()
   }
   
