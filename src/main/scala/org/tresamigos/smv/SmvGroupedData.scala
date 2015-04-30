@@ -100,6 +100,53 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).agg(aggCols(0), aggCols.tail: _*)
   }
   
+  /**
+   * See RollupCubeOp for details.
+   * 
+   * Example:
+   *   df.smvGroupBy("year").smvCube("zip", "month").agg("year", "zip", "month", sum("v") as "v")
+   * 
+   * For zip & month columns with input values:
+   *   90001, 201401
+   *   10001, 201501
+   * 
+   * The "cubed" values on those 2 columns are:
+   *   90001, *
+   *   10001, *
+   *   *, 201401
+   *   *, 201501
+   *   90001, 201401
+   *   10001, 201501
+   * 
+   * where * stand for "any" 
+   * 
+   * Also have a version on DF.
+   **/
+  def smvCube(cols: String*): GroupedData = {
+    new RollupCubeOp(df, keys, cols).cube()
+  }
+  
+  /**
+   * See RollupCubeOp for details.
+   * 
+   * Example:
+   *   df.smvGroupBy("year").smvRollup("county", "zip").agg("year", "county", "zip", sum("v") as "v")
+   * 
+   * For county & zip with input values:
+   *   10234, 92101
+   *   10234, 10019
+   * 
+   * The "rolluped" values are:
+   *   10234, *
+   *   10234, 92101
+   *   10234, 10019
+   * 
+   * Also have a version on DF
+   **/
+  def smvRollup(cols: String*): GroupedData = {
+    new RollupCubeOp(df, keys, cols).rollup()
+  }
+  
   def smvTopNRecs(maxElems: Int, orders: Column*) = {
     val cds = SmvTopNRecsCDS(maxElems, orders.map{o => o.toExpr})
     smvMapGroup(cds).toDF

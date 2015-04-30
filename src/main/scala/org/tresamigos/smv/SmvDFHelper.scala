@@ -187,6 +187,30 @@ class SmvDFHelper(df: DataFrame) {
     smvUnpivot((valueCol +: others).map{s => s.name}: _*)
   
   /**
+   * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
+   * 
+   * Example:
+   *   df.smvCube("zip", "month").agg("zip", "month", sum("v") as "v")
+   * 
+   * Also have a version on SmvGroupedData.
+   **/
+  def smvCube(cols: String*): GroupedData = {
+    new RollupCubeOp(df, Nil, cols).cube()
+  }
+  
+  /**
+   * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
+   * 
+   * Example:
+   *   df.smvRollup("county", "zip").agg("county", "zip", sum("v") as "v")
+   * 
+   * Also have a version on SmvGroupedData
+   **/
+  def smvRollup(cols: String*): GroupedData = {
+    new RollupCubeOp(df, Nil, cols).rollup()
+  }
+  
+  /**
    * Create an Edd builder on DataFrame 
    * 
    * @param groupingExprs specify grouping expression(s) to compute Edd over

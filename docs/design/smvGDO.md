@@ -1,5 +1,5 @@
 # SMV GroupedData Operator (SmvGDO) and smvMapGroup
-GroupedData Map can support PivotOp, QuantileOp etc.
+GroupedData Operator can support PivotOp, QuantileOp etc.
 
 ## smvGroupBy and SmvGroupedData
 Since Spark 1.3 didn't open access to the DF and key columns in ```GroupedData```, we have to create our own 
@@ -15,7 +15,7 @@ so that when Spark provides access to dataframe and keys, we can switch back.
 ```scala
 val newGD = df.smvGroupBy('k1, 'k2).smvMapGroup(gdo1)
 ```
-where ```gdo1``` is a ```SmvGDO``` , smvMapGroup is a method on a GroupedData and return another GroupedData.
+where ```gdo1``` is an ```SmvGDO``` , smvMapGroup is a method on a SmvGroupedData and return another SmvGroupedData.
 
 ## SmvGDO
 An SmvGDO defines a method on a single group of records in a GroupedData. The method will return another group of records, and 
@@ -24,8 +24,8 @@ optionally additional group of keys
 ```scala
 abstract class SmvGDO {
   def inGroupKeys: Seq[String]
-  def inGroupIterator(inSchema: SmvSchema): Iterable[Row] => Iterable[Row]
-  def outSchema(inSchema: SmvSchema): SmvSchema
+  def createInGroupMapping(inSchema: SmvSchema): Iterable[Row] => Iterable[Row]
+  def createOutSchema(inSchema: SmvSchema): SmvSchema
 }
 ```
 

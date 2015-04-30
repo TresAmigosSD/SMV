@@ -238,10 +238,7 @@ a ```Double```. However, the boxed ```java.lang.Double``` is a normal java objec
 
 # To be converted
 
-* smvQuantile
 * smvCDS and all smvCDSFuncs
-* smvUnpivot
 * smvCube, smvCubeFixed
 * smvRollup, smvCubeFixed
-* chunkBy -- replaced by smvCDS interface
 * DQM -- low priority, should be redesigned with SmvApp logging
