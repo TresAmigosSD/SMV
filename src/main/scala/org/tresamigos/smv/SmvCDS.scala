@@ -40,6 +40,14 @@ abstract class SmvCDS extends Serializable{
   def inGroupIterator(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row])
 }
 
+class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
+  def inGroupKeys = Nil
+  def outSchema(inSchema: SmvSchema) = inSchema
+  def inGroupIterator(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
+    cds.inGroupIterator(smvSchema)(null)
+  }
+}
+
 /**
  * SmvCDSChain is an SmvCDS. it chain all the SmvCDS's together
  **/

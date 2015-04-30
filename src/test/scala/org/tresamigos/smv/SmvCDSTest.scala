@@ -72,6 +72,14 @@ class SmvCDSTest extends SparkTestUtil {
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,1,0.3,1]",
       "[z,5,3.6,2]"))
+      
+    val res2 = srdd.smvGroupBy("k").smvTopNRecs(2, $"v".desc)
+    assertSrddSchemaEqual(res2, "k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(res2.collect.map(_.toString), Seq(
+      "[a,1,0.3]",
+      "[z,2,1.4]",
+      "[z,5,2.2]"))
+    
   }
    
 }

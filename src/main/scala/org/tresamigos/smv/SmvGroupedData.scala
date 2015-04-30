@@ -49,6 +49,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val newdf = df.sqlContext.applySchemaToRowRDD(rdd, gdo.outSchema(smvSchema))
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
+ 
+  def smvMapGroup(cds: SmvCDS): SmvGroupedData = {
+    val gdo = new SmvCDSAsGDO(cds)
+    smvMapGroup(gdo)
+  }
   
   /**
    * smvPivot on SmvGroupedData is similar to smvPivot on DF
@@ -93,6 +98,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val outCols = pivot.outCols().map{l=>(sum(l) as l)}
     val aggCols = keys.map{k => df(k)} ++ outCols
     smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).agg(aggCols(0), aggCols.tail: _*)
+  }
+  
+  def smvTopNRecs(maxElems: Int, orders: Column*) = {
+    val cds = SmvTopNRecsCDS(maxElems, orders.map{o => o.toExpr})
+    smvMapGroup(cds).toDF
   }
   
   /*
