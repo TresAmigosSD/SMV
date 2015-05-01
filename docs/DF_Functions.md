@@ -187,19 +187,19 @@ Client code looks like
  
 Input
 
- | id  | month | product | count |
- | --- | ----- | ------- | ----- |
- | 1   | 5/14  |   A     |   100 |
- | 1   | 6/14  |   B     |   200 |
- | 1   | 5/14  |   B     |   300 |
+| id  | month | product | count |
+| --- | ----- | ------- | ----- |
+| 1   | 5/14  |   A     |   100 |
+| 1   | 6/14  |   B     |   200 |
+| 1   | 5/14  |   B     |   300 |
  
 Output
 
- | id  | month | product | count | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
- | --- | ----- | ------- | ----- | ------------ | ------------ | ------------ | ------------ |
- | 1   | 5/14  |   A     |   100 | 100          | NULL         | NULL         | NULL         |
- | 1   | 6/14  |   B     |   200 | NULL         | NULL         | NULL         | 200          |
- | 1   | 5/14  |   B     |   300 | NULL         | 300          | NULL         | NULL         |
+| id  | month | product | count | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+| --- | ----- | ------- | ----- | ------------ | ------------ | ------------ | ------------ |
+| 1   | 5/14  |   A     |   100 | 100          | NULL         | NULL         | NULL         |
+| 1   | 6/14  |   B     |   200 | NULL         | NULL         | NULL         | 200          |
+| 1   | 5/14  |   B     |   300 | NULL         | 300          | NULL         | NULL         |
 
 
 #### smvPivot on GD
@@ -213,11 +213,11 @@ df.groupBy("id").smvPivot(
 
 Output
 
- | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
- | --- | ------------ | ------------ | ------------ | ------------ |
- | 1   | 100          | NULL         | NULL         | NULL         |
- | 1   | NULL         | NULL         | NULL         | 200          |
- | 1   | NULL         | 300          | NULL         | NULL         |
+| id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+| --- | ------------ | ------------ | ------------ | ------------ |
+| 1   | 100          | NULL         | NULL         | NULL         |
+| 1   | NULL         | NULL         | NULL         | 200          |
+| 1   | NULL         | 300          | NULL         | NULL         |
 
 Content-wise returns the similar thing as the DataFrame version without unspecified columns. Also has 1-1 map between input 
 and output. But the output of it is a GroupedData object (actually SmvGroupedData), so you can do
@@ -234,9 +234,9 @@ It will sum on all derived columns.
 
 Output
 
- | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
- | --- | ------------ | ------------ | ------------ | ------------ |
- | 1   | 100          | 300          | NULL         | 200          |
+| id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+| --- | ------------ | ------------ | ------------ | ------------ |
+| 1   | 100          | 300          | NULL         | 200          |
 
 #### Multiple Pivot Column Sets
 You can actually specify multiple pivot column sets in a Pivot Operation as below:
@@ -248,14 +248,14 @@ It will pivot on value of `a` and the combination of `a`, `b` values separately.
 For example:
 Input
 
- |k1 |k2 |p |v1 |v2    |
- |---|---|--|---|------|
- |1  |x  |A |10 |100.5 |
- |1  |y  |A |10 |100.5 |
- |1  |x  |A |20 |200.5 |
- |1  |x  |A |10 |200.5 |
- |1  |x  |B |50 |200.5 |
- |2  |x  |A |60 |500.0 |
+|k1 |k2 |p |v1 |v2    |
+|---|---|--|---|------|
+|1  |x  |A |10 |100.5 |
+|1  |y  |A |10 |100.5 |
+|1  |x  |A |20 |200.5 |
+|1  |x  |A |10 |200.5 |
+|1  |x  |B |50 |200.5 |
+|2  |x  |A |60 |500.0 |
 
 ```scala
     val res = srdd.smvGroupBy('k1).smvPivot(Seq("k2"), Seq("k2", "p"))("v2")("x", "x_A", "y_B").agg(
@@ -268,10 +268,10 @@ Input
 
 Output
 
- |k1 |dist_cnt_v2_x |dist_cnt_v2_x_A |dist_cnt_v2_y_B|                                        
- |---|--------------|----------------|---------------|
- |1  |2             |2               |0              | 
- |2  |1             |1               |0              |
+|k1 |dist_cnt_v2_x |dist_cnt_v2_x_A |dist_cnt_v2_y_B|                                        
+|---|--------------|----------------|---------------|
+|1  |2             |2               |0              | 
+|2  |1             |1               |0              |
  
 ### Rollup/Cube Operations
 The `smvRollup` and `smvCube` operations add standard rollup/cube operations to a DataFrame.  By default, the "*" string is used as the sentinel value (hardcoded at this point).  For example:
@@ -298,13 +298,13 @@ Example:
 
 Input
 
- |a  |b  |c  |d  |
- |---|---|---|---|
- |a1 |b1 |c1 |10 |
- |a1 |b1 |c1 |20 |
- |a1 |b2 |c2 |30 |
- |a1 |b2 |c3 |40 |
- |a2 |b3 |c4 |50 |
+|a  |b  |c  |d  |
+|---|---|---|---|
+|a1 |b1 |c1 |10 |
+|a1 |b1 |c1 |20 |
+|a1 |b2 |c2 |30 |
+|a1 |b2 |c3 |40 |
+|a2 |b3 |c4 |50 |
 
 ```scala
 df.smvRollup("a", "b", "c").aggWithKeys(sum("d") as "sum_d")
@@ -312,17 +312,17 @@ df.smvRollup("a", "b", "c").aggWithKeys(sum("d") as "sum_d")
 
 Output
 
- |a  |b  |c  |sum_d |  
- |---|---|---|------|
- |a1 |b2 |c2 |30    |
- |a1 |b2 |c3 |40    |
- |a2 |b3 |c4 |50    |
- |a1 |*  |*  |100   |
- |a1 |b1 |*  |30    |
- |a1 |b2 |*  |70    |
- |a2 |b3 |*  |50    |
- |a1 |b1 |c1 |30    |
- |a2 |*  |*  |50    |
+|a  |b  |c  |sum_d |  
+|---|---|---|------|
+|a1 |b2 |c2 |30    |
+|a1 |b2 |c3 |40    |
+|a2 |b3 |c4 |50    |
+|a1 |*  |*  |100   |
+|a1 |b1 |*  |30    |
+|a1 |b2 |*  |70    |
+|a2 |b3 |*  |50    |
+|a1 |b1 |c1 |30    |
+|a2 |*  |*  |50    |
 
 
 ### Quantile operations
