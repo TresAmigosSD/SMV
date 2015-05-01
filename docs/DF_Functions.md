@@ -248,8 +248,8 @@ It will pivot on value of `a` and the combination of `a`, `b` values separately.
 For example:
 Input
 
-|k1 |k2 |p |v1 |v2    |
-|---|---|--|---|------|
+|k1 |k2 |p |v1 |v2 |
+|---|---|---|---|------|
 |1  |x  |A |10 |100.5 |
 |1  |y  |A |10 |100.5 |
 |1  |x  |A |20 |200.5 |
