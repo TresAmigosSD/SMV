@@ -52,12 +52,18 @@ df.selectMinus('toBeRemoved2)
 ```
 
 ### renameField
+The `renameField` allows to rename a single or multiple fields of a given schemaRDD.
+Given a DataFrame that has the following fields: a, b, c, d one can rename the "a" and "c" fields to "aa" and "cc" as follow
 
-Eg.
 ```scala
-df.renameField( "v1" -> "newv1",
-                "v2" -> "newv2")
+df.renameField('a -> 'aa, 'c -> 'cc)
 ```
+or 
+```scala
+df.renameField("a" -> "aa", "c" -> "cc")
+```
+
+Now the DF will have the following fields: aa, b, cc, d
 
 ### joinByKey
 Since ```join``` operation does not check column name duplication and inconvience to join 2 DFs 
@@ -72,29 +78,71 @@ If both df1 and df2 have column with name "v", both will be kept, but the df2 ve
 will be renamed as "_v". Only one copy of keys will be kept.
 
 ### dedupByKey
-Dedup DF on the specified key(s). Only kept the first record for each duplication.
+The `dedupByKey` operation eliminate duplicate records on the primary key. It just arbitrarily picks the first record for a given key or keys combo. 
+
+Given the following DataFrame: 
+
+| id | product | Company |
+| --- | --- | --- |
+| 1 | A | C1 |
+| 1 | C | C2 |
+| 2 | B | C3 |
+| 2 | B | C4 |
+
+
+```scala
+df.debupByKey('id)
+```
+will yield the following dataset:
+
+| id | product | Company |
+| --- | --- | --- |
+| 1 | A | C1 |
+| 2 | B | C3 |
+
+while
+
+```scala
+df.debupByKey('id, 'product)
+```
+
+will yield the following dataset:
+
+| id | product | Company |
+| --- | --- | --- |
+| 1 | A | C1 |
+| 1 | C | C2 |
+| 2 | B | C3 |
+
+
+### smvRank
+Add a rank/sequence column to a DataFrame.
+
+It uses ```zipWithIndex``` method of ```RDD``` to add a sequence number to records in a DF. It ranks records one partition by another. Please refer to Spark's document for the detail behavior of ```zipWithIndex```.
 
 Eg.
 ```scala
-df.dedupByKey("id", "time")
+df.smvRank("seqId", 0L) 
 ```
+It will create a new column with name "seqId" and start from 0L.
 
-### Quantile operations
-The `smvQuantile` SchemaRDD helper method will compute the quantile (bin number) for each group within the source SchemaRDD.
-The algorithm assumes there are three columns in the input. (`group_id`, `key_id`, `value`).
-* group_ids are the ids used to segment the input before computing the quantiles.
-* key_id is a unique id within the group.  it will just be carried over into the output to help the caller to link the result back to the input.
-* the value column is the column that the quantile bins will be computed. This column must be numeric that can be converted to `Double`
-The output will contain the 3 input columns plus `value_total`, `value_rsum`, and `value_quantile` for the total of the value column, the running sum of the value column, and the quantile of the value respectively.
+### smvPivot, smvCube, smvRollup
+Please see the "SmvGroupedData Functions" session
 
-A helper method `smvDecile` is provided as a shorthand for a quantile with 10 bins.
+
+## SmvGroupedData Functions
+
+### aggWithKeys
+Same as agg, but by default, keep all the keys.
+
+Example:
 ```scala
-srdd.smvDecile(Seq('group_id), 'key, 'v)
+df.groupBy("a","b").aggWithKeys(sum("x") as "x") 
 ```
-The above will compute the decile for each group in `srdd` grouped by `group_id`.  Three additional columns will be produced: `v_total`, `v_rsum`, and `v_quantile`.
+will output 3 columns: `a`, `b` and `x`.
 
 ### Pivot Operations
-We may often need to "flatten out" the normalized data for easy manipulation within Excel.  Rather than create custom code for each pivot required, user should use the pivot_sum function in SMV.
+We may often need to "flatten out" the normalized data for easy manipulation.  Rather than create custom code for each pivot required, user should use the smvPivot functions in SMV.
 
 For Example:
 
@@ -108,116 +156,201 @@ We would like to generate a single row for each unique id but still maintain the
 
 | id | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
 | --- | --- | --- | --- | --- |
-| 1 | 100 | 300 | 0 | 200
+| 1 | 100 | 300 | NULL | 200
 
-The raw input is divided into three parts.
+The raw input is divided into 4 parts.
+
 * key column: part of the primary key that is preserved in the output.  That would be the `id` column in the above example.
 * pivot columns: the columns whose row values will become the new column names.  The cross product of all unique values for *each* column is used to generate the output column names.
 * value columns: the value that will be copied/aggregated to corresponding output column. `count` in our example.
+* output postfix: the list of postfix for the pivoted column. "5_14_A", "5_14_B", "6_14_A", "6_14_B" in our example.
 
 The command to transform the above data is:
 ```scala
-srdd.pivot_sum('id, Seq('month, 'product), Seq('count))
+df.smvGroupBy("id").smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B"))
 ```
+*Note:* multiple pivot column sequences and value columns may be specified.
 
-*Note:* multiple value columns may be specified.
+There are actually a group of functions on both DataFrame and SmvGroupedData to make the Pivot operation flexible.
 
-### dedupByKey Operations
-The `dedupByKey` operation eliminate duplicate records on the primary key. It just arbitrarily picks the first record for a given key or keys combo. 
+* smvPivot on DF
+* smvPivot on SmvGroupedData
+* smvPivotSum on SmvGroupedData 
 
-Given the following srdd dataset: 
+#### smvPivot on DF
+smvPivot on DF will output 1 record per input record, and all input fields are kept.
 
-| id | product | Company |
-| --- | --- | --- |
-| 1 | A | C1 |
-| 1 | C | C2 |
-| 2 | B | C3 |
-| 2 | B | C4 |
+Client code looks like
+```scala
+   df.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+```
+ 
+Input
 
+ | id  | month | product | count |
+ | --- | ----- | ------- | ----- |
+ | 1   | 5/14  |   A     |   100 |
+ | 1   | 6/14  |   B     |   200 |
+ | 1   | 5/14  |   B     |   300 |
+ 
+Output
+
+ | id  | month | product | count | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+ | --- | ----- | ------- | ----- | ------------ | ------------ | ------------ | ------------ |
+ | 1   | 5/14  |   A     |   100 | 100          | NULL         | NULL         | NULL         |
+ | 1   | 6/14  |   B     |   200 | NULL         | NULL         | NULL         | 200          |
+ | 1   | 5/14  |   B     |   300 | NULL         | 300          | NULL         | NULL         |
+
+
+#### smvPivot on GD
 
 ```scala
-srdd.debupByKey('id)
+df.groupBy("id").smvPivot(
+    Seq("month", "product"))(
+    "count")(
+    "5_14_A", "5_14_B", "6_14_A", "6_14_B")
 ```
-will yield the following dataset/srdd:
 
-| id | product | Company |
-| --- | --- | --- |
-| 1 | A | C1 |
-| 2 | B | C3 |
+Output
 
-while
+ | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+ | --- | ------------ | ------------ | ------------ | ------------ |
+ | 1   | 100          | NULL         | NULL         | NULL         |
+ | 1   | NULL         | NULL         | NULL         | 200          |
+ | 1   | NULL         | 300          | NULL         | NULL         |
+
+Content-wise returns the similar thing as the DataFrame version without unspecified columns. Also has 1-1 map between input 
+and output. But the output of it is a GroupedData object (actually SmvGroupedData), so you can do
+```scala
+df.groupBy('id).smvPivot(...)(...)(...).sum("count_5_14_A", "count_6_14_B")
+```
+or other aggregate functions with ```agg```.
+
+A convienience function is 
+```scala
+df.groupBy("id").smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+```
+It will sum on all derived columns.
+
+Output
+
+ | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+ | --- | ------------ | ------------ | ------------ | ------------ |
+ | 1   | 100          | 300          | NULL         | 200          |
+
+#### Multiple Pivot Column Sets
+You can actually specify multiple pivot column sets in a Pivot Operation as below:
+```scala
+df.smvPivot(Seq("a","b"), Seq("a"))......
+```
+It will pivot on value of `a` and the combination of `a`, `b` values separately. 
+
+For example:
+Input
+
+ |k1 |k2 |p |v1 |v2    |
+ |---|---|--|---|------|
+ |1  |x  |A |10 |100.5 |
+ |1  |y  |A |10 |100.5 |
+ |1  |x  |A |20 |200.5 |
+ |1  |x  |A |10 |200.5 |
+ |1  |x  |B |50 |200.5 |
+ |2  |x  |A |60 |500.0 |
 
 ```scala
-srdd.debupByKey('id, 'product)
+    val res = srdd.smvGroupBy('k1).smvPivot(Seq("k2"), Seq("k2", "p"))("v2")("x", "x_A", "y_B").agg(
+      $"k1",
+      countDistinct("v2_x") as 'dist_cnt_v2_x, 
+      countDistinct("v2_x_A") as 'dist_cnt_v2_x_A, 
+      countDistinct("v2_y_B") as 'dist_cnt_v2_y_B 
+    )
 ```
 
-will yield the following dataset/srdd:
+Output
 
-| id | product | Company |
-| --- | --- | --- |
-| 1 | A | C1 |
-| 1 | C | C2 |
-| 2 | B | C3 |
-
-
-### renameField Operation
-
-The `renameField` allows to rename a single or multiple fields of a given schemaRDD.
-Given a schemaRDD that has the following fields: a, b, c, d one can rename the "a" and "c" fields to "aa" and "cc" as follow
-
-```scala
-srdd.renameField('a -> 'aa, 'c -> 'cc)
-```
-
-Now the srdd will have the following fields: aa, b, cc, d
-
-The `renameField` comes very handy when for example trying to join two SchemaRDDs that have similar field names. In such case one can rename the fields of one the SchemaRDDs to something else to avoid field names conflict.
-
-
+ |k1 |dist_cnt_v2_x |dist_cnt_v2_x_A |dist_cnt_v2_y_B|                                        
+ |---|--------------|----------------|---------------|
+ |1  |2             |2               |0              | 
+ |2  |1             |1               |0              |
+ 
 ### Rollup/Cube Operations
-The `smvRollup` and `smvCube` operations add standard rollup/cube operations to a schema rdd.  By default, the "*" string is used as the sentinel value (hardcoded at this point).  For example:
+The `smvRollup` and `smvCube` operations add standard rollup/cube operations to a DataFrame.  By default, the "*" string is used as the sentinel value (hardcoded at this point).  For example:
 ```scala
-srdd.smvRollup('a,'b,'c)(Sum('d))
+df.smvRollup("a","b","c").agg(sum("d") as "d")
 ```
 The above will create a *rollup* of the (a,b,c) columns.  In essance, calculate the `Sum(d)` for (a,b,c), (a,b), and (a).
 
 ```scala
-srdd.smvCubeFixed('a,'b,'c)(Sum('d))
+df.smvCube("a","b","c").agg(sum("d") as "d")
 ```
 The above will create *cube* from the (a,b,c) columns.  It will calculate the `Sum(d)` for (a,b,c), (a,b), (a,c), (b,c), (a), (b), (c)
 *Note:* the cube for the global () selection is never computed.
 
-Both methods above have a version that allows the user to provide a set of fixed columns. `smvRollupFixed` and `smvCubeFixed`.
+Both methods above have a version on ```SmvGroupedData``` that allows the user to provide a set of fixed columns. 
 
 ```scala
-srdd.smvCube('a,'b,'c)('x)(Sum('d))
+df.smvGroupBy("x").smvCube("a", "b", "c").agg(sum("d") as "d")
 ```
-The output will be grouped on (a,b,c,x) instead of just (a,b,c) as as the case with normal cube function.
 
-### ChunkBy/ChunkByPlus Operations
-The `chunkBy` and `chunkByPlus` operations apply user defined functions to a group of records and out put a group of records.
+The output will be grouped on (x,a,b,c) instead of just (a,b,c) as as the case with normal cube function.
+
+Example:
+
+Input
+
+ |a  |b  |c  |d  |
+ |---|---|---|---|
+ |a1 |b1 |c1 |10 |
+ |a1 |b1 |c1 |20 |
+ |a1 |b2 |c2 |30 |
+ |a1 |b2 |c3 |40 |
+ |a2 |b3 |c4 |50 |
 
 ```scala
-srdd.orderBy('k.asc, 'v.asc).chunkBy('k)(runCatFunc)
+df.smvRollup("a", "b", "c").aggWithKeys(sum("d") as "sum_d")
 ```
-Will apply the user defined `SmvChunkUDF`, runCatFunc, to the `srdd` which chucked by key `k`, and sorted by `v.asc`. The data feed to the `SmvChunkFunc` will be records grouped by `k` and sorted by `v.asc`. 
 
-The `SmvChunkUDF` need to be defined separately as 
-```scala
-case class SmvChunkUDF(para: Seq[Symbol], outSchema: Schema, eval: List[Seq[Any]] => List[Seq[Any]])
-```
-where `para` specify the columns in the SchemaRDD which will be used in the UDF; `outSchema` is a SmvSchema object which specify how the out SRDD will interpret the UDF generated columns; `eval` is a Scala function which does the real work. It will refer the input columns by their indexs as ordered in the `para`
+Output
 
-#### Full Example:
+ |a  |b  |c  |sum_d |  
+ |---|---|---|------|
+ |a1 |b2 |c2 |30    |
+ |a1 |b2 |c3 |40    |
+ |a2 |b3 |c4 |50    |
+ |a1 |*  |*  |100   |
+ |a1 |b1 |*  |30    |
+ |a1 |b2 |*  |70    |
+ |a2 |b3 |*  |50    |
+ |a1 |b1 |c1 |30    |
+ |a2 |*  |*  |50    |
+
+
+### Quantile operations
+The `smvQuantile` method will compute the quantile (bin number) for each group within the source DataFrame.
+The algorithm assumes there are group keys and a `VALUE` column
+* group keys are the ids used to segment the input before computing the quantiles.
+* the value column is the column that the quantile bins will be computed. This column must be numeric that can be converted to `Double`
+The output will contain three additional columns, `value_total`, `value_rsum`, and `value_quantile` for the total of the value column, the running sum of the value column, and the quantile of the value respectively.
+
+A helper method `smvDecile` is provided as a shorthand for a quantile with 10 bins.
+
+Example:
 ```scala
-scala> val srdd=sqlContext.createSchemaRdd("k:String; v:String", "z,1;a,3;a,2;z,8;")   
-scala> val runCat = (l: List[Seq[Any]]) => l.map{_(0)}.scanLeft(Seq("")){(a,b) => Seq(a(0) + b)}.tail
-scala> val runCatFunc = SmvChunkUDF(Seq('v), Schema.fromString("vcat:String"), runCat)
-scala> val res = srdd.orderBy('k.asc, 'v.asc).chunkBy('k)(runCatFunc)
-scala> res.dumpSRDD
-Schema: k: String; vcat: String
-[a,2]
-[a,23]
-[z,1]
-[z,18]
+df.smvGroupBy('g, 'g2).smvQuantile("v", 100)
 ```
+
+The above will compute the percentile for each group in `df` grouped by `g` and `g2`.  Three additional columns will be produced: `v_total`, `v_rsum`, and `v_quantile`.
+
+### smvTopNRecs
+For each group, return the top N records according to an ordering
+
+Example:
+```scala
+  df.smvGroupBy("id").smvTopNRecs(3, $"amt".desc)
+```
+
+Will keep the 3 largest `amt` records for each `id`.
+
+### inMemAgg & runAgg
+
+Please see "SmvCDS" document.
