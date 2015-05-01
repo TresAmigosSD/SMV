@@ -238,5 +238,4 @@ a ```Double```. However, the boxed ```java.lang.Double``` is a normal java objec
 
 # To be converted
 
-* smvCDS and all smvCDSFuncs
 * DQM -- low priority, should be redesigned with SmvApp logging
