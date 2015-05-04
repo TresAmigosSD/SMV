@@ -61,7 +61,9 @@ You can put utility functions for the interactive shell in the ```shell_init.sca
 
 ## [Extended Data Dictionary](docs/Edd.md)
 
-## [Helper functions](docs/functions.md)
+## [Column Helper functions](docs/ColumnFunctions.md)
+
+## [DataFrame Helper functions](docs/DF_Functions.md)
 
 ## [DQM - Experimental](docs/Dqm.md)
 

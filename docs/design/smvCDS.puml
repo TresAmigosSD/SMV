@@ -1,0 +1,51 @@
+@startuml
+hide empty methods
+hide empty fields
+hide circle
+
+
+
+package SMV {
+  class Expression {
+  }
+  
+  class SmvGDO <<Abstract>> {
+  }
+  
+  class SmvCDS <<Abstract>> {
+  }
+
+  class SmvCDSChain extends SmvCDS {
+  }
+
+  class SmvCDSAggColumn {
+  }
+
+  SmvCDSAggColumn *-- "1" SmvCDSChain
+  SmvCDSAggColumn *-- "1" Expression
+  
+  class SmvSingleCDSAggs {
+  }
+  
+  SmvSingleCDSAggs *-- "1" SmvCDS
+  SmvSingleCDSAggs *-- "*" Expression
+  
+  SmvCDSAggColumn "*".L."*" SmvSingleCDSAggs
+  
+  class SmvCDSAggGDO extends SmvGDO {
+  }
+  
+  SmvCDSAggGDO *-- "*" SmvCDSAggColumn
+  SmvCDSAggGDO *-- "*" SmvSingleCDSAggs
+}
+
+package App {
+  SmvCDS <|-- mod3
+  SmvCDS <|-- mod2
+  SmvCDS <|-- mod1
+  Expression <|-- exp1
+  Expression <|-- exp2
+  Expression <|-- exp3
+}
+
+@enduml

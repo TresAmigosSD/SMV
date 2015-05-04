@@ -214,6 +214,15 @@ case class TimeInLastN2(t: String, n: Int) extends SmvCDS {
 }
 */
 
+/**
+ * SmvSelfCompareCDS
+ * 
+ * An abstract class of SmvCDS which
+ *  - Self-join Schema, with the "toBeCompared" Row with original column names, and 
+ *    the "running" Rows with "_"-prefixed names
+ *  - Apply the "condition", which will be defined in a concrete class, on the 
+ *    "running" Rows for each "toBeCompared" Row
+ **/
 abstract class SmvSelfCompareCDS extends SmvCDS {
   val condition: Expression 
   
