@@ -38,9 +38,23 @@ import scala.reflect.runtime.universe.{TypeTag, typeTag}
  **/
 abstract class SmvCDS extends Serializable{
   def createInGroupMapping(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row])
+  def from(that: SmvCDS): SmvCDS = new SmvCDSCombined(this, that)
 }
 
-class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
+private[smv] class SmvCDSCombined(cds1: SmvCDS, cds2: SmvCDS) extends SmvCDS {
+  def createInGroupMapping(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = 
+    {toBeCompared =>
+      {it => cds1.createInGroupMapping(inSchema)(toBeCompared)(cds2.createInGroupMapping(inSchema)(toBeCompared)(it))}
+    }
+}
+
+private[smv] case object NoOpCDS extends SmvCDS {
+  def createInGroupMapping(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = {toBeCompared =>
+    {it => it}
+  }
+}
+
+private[smv] class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
   def inGroupKeys = Nil
   def createOutSchema(inSchema: SmvSchema) = inSchema
   def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
@@ -49,38 +63,21 @@ class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
 }
 
 /**
- * SmvCDSChain is an SmvCDS. it chain all the SmvCDS's together
- **/
-case class SmvCDSChain(cdsList: SmvCDS*) extends SmvCDS {
-  def createInGroupMapping(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = {toBeCompared =>
-    {it => cdsList.scanRight(it)((c, i) => c.createInGroupMapping(inSchema)(toBeCompared)(i)).head}
-  }
-}
-
-/**
  * SmvCDSAggColumn wraps around a Column to suppot keyword "from"
  **/
-case class SmvCDSAggColumn(aggExpr: Expression) {
-  private val cdsList: ArrayBuffer[SmvCDS] = ArrayBuffer()
+case class SmvCDSAggColumn(aggExpr: Expression, cds: SmvCDS = NoOpCDS) {
   
-  def clear = cdsList.clear
+  def from(otherCds: SmvCDS): SmvCDSAggColumn = 
+    new SmvCDSAggColumn(aggExpr, cds.from(otherCds))
   
-  def setList(newList: Seq[SmvCDS]): Unit = {
-    cdsList ++= newList
+  def as(n: String): SmvCDSAggColumn = 
+    new SmvCDSAggColumn(Alias(aggExpr, n)(), cds)
+    
+  def isAgg(): Boolean = aggExpr match {
+    case Alias(e: AggregateExpression, n) => true
+    case _: AggregateExpression => true
+    case _ => false 
   }
-
-  def from(cds: SmvCDS): SmvCDSAggColumn = {
-    cdsList += cds
-    this
-  }
-  
-  def as(n: String): SmvCDSAggColumn = {
-    val res = SmvCDSAggColumn(Alias(aggExpr, n)())
-    res.setList(cdsList.toSeq)
-    res
-  }
-  
-  def cdsChain = SmvCDSChain(cdsList.toSeq: _*)
 }
   
 /** 
@@ -122,16 +119,15 @@ object SmvCDS {
    *   
    *   sum(...) [from cds ] as name
    **/
-  def findAggCols(cols: Seq[SmvCDSAggColumn]): Seq[SmvCDSAggColumn] = 
-    cols.collect{l => l match {case SmvCDSAggColumn(Alias(e: AggregateExpression, n)) => l}}
+  def findAggCols(cols: Seq[SmvCDSAggColumn]): Seq[SmvCDSAggColumn] =  cols.filter{_.isAgg()}
     
   /** Anything other than real aggregations should be the columns to be kept from original rec */
   def findKeptCols(cols: Seq[SmvCDSAggColumn]): Seq[String] = 
-    cols.diff(findAggCols(cols)).map{c => c.aggExpr.asInstanceOf[NamedExpression].name}
+    cols.filter{! _.isAgg()}.map{c => c.aggExpr.asInstanceOf[NamedExpression].name}
     
   /** Put all aggregations with the same CDS chain together */
   def combineCDS(aggCols: Seq[SmvCDSAggColumn]): Seq[SmvSingleCDSAggs] = {
-    aggCols.groupBy(_.cdsChain).
+    aggCols.groupBy(_.cds).
       mapValues{vl => vl.map(_.aggExpr.asInstanceOf[NamedExpression])}.
       toSeq.map{case (k,v) => SmvSingleCDSAggs(k, v)}
   }

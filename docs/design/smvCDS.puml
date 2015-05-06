@@ -6,35 +6,32 @@ hide circle
 
 
 package SMV {
-  class Expression 
-  class SmvGDO <<Abstract>>
-  class SmvCDS <<Abstract>> 
-  class SmvCDSChain extends SmvCDS 
-  class SmvCDSAggColumn 
-
-  SmvCDSAggColumn *-- "1" SmvCDSChain
+  class SmvCDS <<Abstract>> {
+    createInGroupMapping(*)
+    from(that: SmvCDS): SmvCDS
+  }
+  
+  class SmvCDSCombined extends SmvCDS
+  class NoOpCDS extends SmvCDS
+  
+  SmvCDSCombined *-- "2" SmvCDS
+  
+  class SmvCDSAggColumn{
+    aggExpr: Expression
+    cds: SmvCDS
+    from(otherCds): SmvCDSAggColumn
+    as(name): SmvCDSAggColumn
+    isAgg(): Boolean
+  }
+  
   SmvCDSAggColumn *-- "1" Expression
+  SmvCDSAggColumn *-- "1" SmvCDS
   
-  class SmvSingleCDSAggs 
-  
-  SmvSingleCDSAggs *-- "1" SmvCDS
-  SmvSingleCDSAggs *-- "*" Expression
-  
-  SmvCDSAggColumn "*".L."*" SmvSingleCDSAggs
-  
-  class SmvCDSAggGDO extends SmvGDO 
-  
-  SmvCDSAggGDO *-- "*" SmvCDSAggColumn
-  SmvCDSAggGDO *-- "*" SmvSingleCDSAggs
 }
 
-package App {
-  SmvCDS <|-- mod3
-  SmvCDS <|-- mod2
-  SmvCDS <|-- mod1
-  Expression <|-- exp1
-  Expression <|-- exp2
-  Expression <|-- exp3
+package ClientApp {
+  class cds1 extends SmvCDS
+  class cds2 extends SmvCDS
 }
 
 @enduml
