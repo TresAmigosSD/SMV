@@ -36,28 +36,37 @@ import scala.reflect.runtime.universe.{TypeTag, typeTag}
 /**
  * SmvCDS - SMV Custom Data Selector
  **/
-abstract class SmvCDS extends Serializable{
-  def createInGroupMapping(inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row]
+
+abstract class SmvCDS extends Serializable {
+  def createInGroupMapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row]
   def from(that: SmvCDS): SmvCDS = new SmvCDSCombined(this, that)
 }
 
-private[smv] class SmvCDSCombined(cds1: SmvCDS, cds2: SmvCDS) extends SmvCDS {
-  def createInGroupMapping(inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = 
+/** 
+ * Used in "form" method of SmvCDS 
+ **/
+private[smv] case class SmvCDSCombined(cds1: SmvCDS, cds2: SmvCDS) extends SmvCDS {
+  def createInGroupMapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = 
     {(toBeCompared, it) =>
-      cds1.createInGroupMapping(inSchema)(toBeCompared, cds2.createInGroupMapping(inSchema)(toBeCompared, it))
+      cds1.createInGroupMapping(toBeComparedSchema,inSchema)(toBeCompared, 
+        cds2.createInGroupMapping(toBeComparedSchema, inSchema)(toBeCompared, it)
+      )
     }
 }
 
+/**
+ * NoOpCDS: pass down the iterator
+ **/
 private[smv] case object NoOpCDS extends SmvCDS {
-  def createInGroupMapping(inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = 
-    {(toBeCompared,it) => it}
+  def createInGroupMapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = 
+  {(toBeCompared, i) => i}
 }
 
 private[smv] class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
   def inGroupKeys = Nil
   def createOutSchema(inSchema: SmvSchema) = inSchema
   def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
-    cds.createInGroupMapping(smvSchema)(null, _)
+    cds.createInGroupMapping(null, smvSchema)(null, _)
   }
 }
 
@@ -89,13 +98,13 @@ case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
   def resolvedExprs(inSchema: SmvSchema) = 
     inSchema.toLocalRelation.groupBy()(aggExprs: _*).analyze.expressions
   
-  def createExecuter(inSchema: SmvSchema): (Row, Iterable[Row]) => Seq[Any] = {
+  def createExecuter(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Seq[Any] = {
     val locRel = inSchema.toLocalRelation
     val cum = locRel.groupBy()(aggExprs: _*).analyze.expressions.
       map{case Alias(ex, n) =>  BindReferences.bindReference(ex, locRel.output)}.
       map{e => e.asInstanceOf[AggregateExpression].newInstance()}
       
-    val itMap = cds.createInGroupMapping(inSchema)
+    val itMap = cds.createInGroupMapping(toBeComparedSchema, inSchema)
     
     {(toBeCompared, it) =>
       itMap(toBeCompared, it).foreach{r => cum.foreach(c => c.update(r))}
@@ -140,7 +149,7 @@ class SmvCDSAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
   
   def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
     //val executers = cdsAggsList.map{_.createExecuter(smvSchema)} - DOESN'T WORK! need to redefine as below for serialization 
-    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema)(r, it)}}
+    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
     val getKept: Row => Seq[Any] = {r => smvSchema.getIndices(keptCols: _*).map{i => r(i)}}
     
     {rows =>
@@ -165,7 +174,7 @@ class SmvCDSAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
  **/
 class SmvCDSRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvCDSAggGDO(aggCols) {
   override def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
-    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema)(r, it)}}
+    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
     val getKept: Row => Seq[Any] = {r => smvSchema.getIndices(keptCols: _*).map{i => r(i)}}
     
     {rows =>
@@ -179,32 +188,12 @@ class SmvCDSRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvCDSAggGDO(aggCol
   }
 }
 
+/**
+ * TODO: SmvCDSPanelAggGDO
+ **/
+ 
 
 /*************** The code below are specific CDS's. Should consider to put in another file ******/
-/* This implementation resolve the cloumns manually, it is replaced by an implementation using Expressions
-case class TimeInLastN2(t: String, n: Int) extends SmvCDS {
-  def createInGroupMapping(inSchema: SmvSchema): Row => (Iterable[Row] => Iterable[Row]) = {
-    val ordinal = inSchema.getIndices(t)(0)
-    val valueEntry = inSchema.findEntry(t).get.asInstanceOf[NumericSchemaEntry]
-    val getValueAsInt: Row => Int = {r =>
-      valueEntry.numeric.toInt(r(ordinal).asInstanceOf[valueEntry.JvmType])
-    }
-    
-    val condition: (Int, Row) => Boolean = {(anchor, r) =>
-      val value = getValueAsInt(r)
-      anchor >= value && anchor < (value + n)
-    }
-    
-    {toBeCompared =>
-      val anchor = getValueAsInt(toBeCompared)
-      
-      {it =>
-        it.collect{ case r if condition(anchor, r) => r }
-      }
-    }
-  }
-}
-*/
 
 /**
  * SmvSelfCompareCDS
@@ -215,10 +204,8 @@ case class TimeInLastN2(t: String, n: Int) extends SmvCDS {
  *  - Apply the "condition", which will be defined in a concrete class, on the 
  *    "running" Rows for each "toBeCompared" Row
  **/
-abstract class SmvSelfCompareCDS extends SmvCDS {
-  val condition: Expression 
-  
-  def createInGroupMapping(inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = {
+case class SmvSelfCompareCDS(condition: Expression) extends SmvCDS {
+  def createInGroupMapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = {
     val cond = condition as "condition"
     
     val combinedSchema = inSchema.selfJoined
@@ -232,8 +219,11 @@ abstract class SmvSelfCompareCDS extends SmvCDS {
   } 
 }
 
-case class TimeInLastN(t: String, n: Int) extends SmvSelfCompareCDS {
-  val condition = ($"$t" >= $"_$t" && $"$t" < ($"_$t" + n)) 
+object TimeInLastN {
+  def apply (t: String, n: Int) = {
+    val condition = ($"$t" >= $"_$t" && $"$t" < ($"_$t" + n)) 
+    SmvSelfCompareCDS(condition)
+  }
 }
 
 /**
@@ -242,12 +232,11 @@ case class TimeInLastN(t: String, n: Int) extends SmvSelfCompareCDS {
  *  (which means it can also return botton N records)
  **/
 case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends SmvCDS {
-
   private val orderKeys = orderCols.map{o => o.asInstanceOf[SortOrder]}
   private val keys = orderKeys.map{k => k.child.asInstanceOf[NamedExpression].name}
   private val directions = orderKeys.map{k => k.direction}
-
-  def createInGroupMapping(inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = { 
+  
+  def createInGroupMapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = {
     val ordinals = inSchema.getIndices(keys: _*)
     val ordering = (keys zip directions).map{case (k, d) =>
       val normColOrdering = inSchema.findEntry(k).get.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
@@ -262,7 +251,7 @@ case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends Smv
         .reduceLeft((s, i) => s << 1 + i)
     }
 
-    {(dummyRow, it) =>
+    {(dummy, it) =>
       val bpq = BoundedPriorityQueue[Row](maxElems)
       it.foreach{ r =>
         val v = ordinals.map{i => r(i)}

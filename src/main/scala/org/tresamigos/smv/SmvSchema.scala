@@ -284,6 +284,10 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   def toStructType : StructType = StructType(entries.map(se => se.structField))
 
   def ++(that: SmvSchema): SmvSchema = {
+    val thisNames = names.toSet
+    val thatNames = that.names.toSet
+    require(thisNames.intersect(thisNames).isEmpty)
+    
     new SmvSchema(entries ++ that.entries)
   }
   

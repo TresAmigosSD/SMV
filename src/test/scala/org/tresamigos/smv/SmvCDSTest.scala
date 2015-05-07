@@ -81,6 +81,18 @@ class SmvCDSTest extends SparkTestUtil {
       "[z,5,2.2]"))
   }
   
+  sparkTest("Test CDS Chaining compare") {
+    val ssc = sqlContext; import ssc.implicits._
+    
+    val last3t = TimeInLastN("t", 3)
+    val top2 = SmvTopNRecsCDS(2, $"v".desc)
+    
+    val aggCol1 = sum($"v") from last3t from top2
+    val aggCol2 = count($"i") from last3t from SmvTopNRecsCDS(2, $"v".desc)
+    
+    assert (aggCol1.cds === aggCol2.cds)
+  }
+  
   sparkTest("Test CDS Chaining") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
@@ -99,7 +111,20 @@ class SmvCDSTest extends SparkTestUtil {
       "[a,1,0.3,0.3,0.3]",
       "[z,6,2.4000000000000004,3.6,4.1]"))
   }
-  /*
-  */
+      
+  sparkTest("Test CDS Chaining with smvMapGroup") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
+
+    val last3 = SmvTopNRecsCDS(3, $"t".desc)
+    val top2 = SmvTopNRecsCDS(2, $"v".desc)
+    val res = srdd.smvGroupBy("k").smvMapGroup(top2 from last3).toDF
+    
+    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+        "[a,1,0.3]",
+        "[z,4,0.2]",
+        "[z,5,2.2]"))
+  }
    
 }
