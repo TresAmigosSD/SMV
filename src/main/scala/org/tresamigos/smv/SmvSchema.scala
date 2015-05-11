@@ -286,7 +286,7 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   def ++(that: SmvSchema): SmvSchema = {
     val thisNames = names.toSet
     val thatNames = that.names.toSet
-    require(thisNames.intersect(thisNames).isEmpty)
+    require(thisNames.intersect(thatNames).isEmpty)
     
     new SmvSchema(entries ++ that.entries)
   }

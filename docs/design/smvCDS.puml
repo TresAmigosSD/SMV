@@ -22,15 +22,17 @@ package SMV {
     mapping(schema): Iterable => Iterable
   }
   
+  class SelfCompareToFullCompare extends FullCompareCDS
+  class FilterToSelfCompare extends SelfCompareCDS
+  
+  SelfCompareToFullCompare o-- "1" SelfCompareCDS
+  FilterToSelfCompare o-- "1" FilterCDS
+  
   class CombinedFullCDS extends FullCompareCDS 
   class CombinedSelfCDS extends SelfCompareCDS 
   class CombinedFilterCDS extends FilterCDS 
   
   class NoOpCDS extends FilterCDS
-  
-  CombinedFullCDS *-- "2" FullCompareCDS 
-  CombinedSelfCDS *-- "2" SelfCompareCDS 
-  CombinedFilterCDS *-- "2" FilterCDS 
   
   class SmvCDSAggColumn{
     from(otherCds): SmvCDSAggColumn
@@ -41,9 +43,9 @@ package SMV {
   SmvCDSAggColumn *-- "1" Expression
   SmvCDSAggColumn *-- "1" SmvCDS
   
-  class cds1 extends FullCompareCDS
-  class cds2 extends SelfCompareCDS
-  class cds3 extends FilterCDS
+  class SmvPanelCompareCDS extends FullCompareCDS
+  class SmvSelfCompareCDS extends SelfCompareCDS
+  class SmvTopNRecsCDS extends FilterCDS
   
   class SmvSingleCDSAggs{
     createOutSchema(schema2)
@@ -72,11 +74,9 @@ package SMV {
   SmvCDSPanelAggGDO *-- "*" SmvCDSAggColumn
   SmvCDSPanelAggGDO *-- "*" SmvSingleCDSAggs
   
-  class SelfCompareCDSAsGDO extends SmvGDO
-  class FilterCDSAsGDO extends SmvGDO
+  class SmvCDSAsGDO extends SmvGDO
   
-  SelfCompareCDSAsGDO *-- "1" SelfCompareCDS
-  FilterCDSAsGDO *-- "1" FilterCDS
+  SmvCDSAsGDO *-- "1" SmvCDS
   
 }
 

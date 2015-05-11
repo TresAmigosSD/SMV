@@ -23,50 +23,96 @@ import org.apache.spark.sql.catalyst.dsl.plans._
 
 import org.apache.spark.sql.catalyst.expressions._
 
-/*
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.{Column, ColumnName}
-import org.apache.spark.sql.GroupedData
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.catalyst.ScalaReflection
-import scala.reflect.runtime.universe.{TypeTag, typeTag}
-*/
-
 /**
  * SmvCDS - SMV Custom Data Selector
  **/
-
 abstract class SmvCDS extends Serializable {
-  def createInGroupMapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row]
-  def from(that: SmvCDS): SmvCDS = new SmvCDSCombined(this, that)
+  def toFullCompare(): FullCompareCDS = throw new IllegalArgumentException("Cont' convert to FullCompareCDS")
+  def toSelfCompare(): SelfCompareCDS = throw new IllegalArgumentException("Cont' convert to SelfCompareCDS")
+  def from(that: SmvCDS): SmvCDS = {
+    (this, that) match {
+      case (l: FullCompareCDS, r: FullCompareCDS) => CombinedFullCDS(l,r)
+      case (l: FullCompareCDS, r: SelfCompareCDS) => CombinedFullCDS(l,r)
+      case (l: FullCompareCDS, r: FilterCDS) => CombinedFullCDS(l,r)
+      case (l: SelfCompareCDS, r: FullCompareCDS) => CombinedFullCDS(l,r)
+      case (l: SelfCompareCDS, r: SelfCompareCDS) => CombinedSelfCDS(l,r)
+      case (l: SelfCompareCDS, r: FilterCDS) => CombinedSelfCDS(l,r)
+      case (l: FilterCDS, r: FullCompareCDS) => CombinedFullCDS(l,r)
+      case (l: FilterCDS, r: SelfCompareCDS) => CombinedSelfCDS(l,r)
+      case (l: FilterCDS, r: FilterCDS) => CombinedFilterCDS(l,r)
+    }
+  }
 }
 
-/** 
- * Used in "form" method of SmvCDS 
- **/
-private[smv] case class SmvCDSCombined(cds1: SmvCDS, cds2: SmvCDS) extends SmvCDS {
-  def createInGroupMapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = 
+abstract class FullCompareCDS extends SmvCDS {
+  def mapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row]
+  override def toFullCompare() = this
+}
+
+abstract class SelfCompareCDS extends SmvCDS {
+  def mapping(inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row]
+  override def toFullCompare() = new SelfCompareToFullCompare(this)
+  override def toSelfCompare() = this
+}
+
+abstract class FilterCDS extends SmvCDS {
+  def mapping(inSchema: SmvSchema): Iterable[Row] => Iterable[Row]
+  override def toSelfCompare() = new FilterToSelfCompare(this)
+  override def toFullCompare() = toSelfCompare().toFullCompare
+}
+
+private[smv] class SelfCompareToFullCompare(cds: SelfCompareCDS) extends FullCompareCDS {
+  def mapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema) = cds.mapping(inSchema)
+}
+
+private[smv] class FilterToSelfCompare(cds: FilterCDS) extends SelfCompareCDS {
+  def mapping(inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = { (toBeCompared, it) => cds.mapping(inSchema)(it) }
+}
+
+private[smv] case class CombinedFullCDS(cds1: SmvCDS, cds2: SmvCDS) extends FullCompareCDS {
+  def mapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] =
     {(toBeCompared, it) =>
-      cds1.createInGroupMapping(toBeComparedSchema,inSchema)(toBeCompared, 
-        cds2.createInGroupMapping(toBeComparedSchema, inSchema)(toBeCompared, it)
-      )
+      cds1.toFullCompare().mapping(toBeComparedSchema, inSchema)(toBeCompared, 
+      cds2.toFullCompare().mapping(toBeComparedSchema, inSchema)(toBeCompared, it))
+    }
+}
+
+private[smv] case class CombinedSelfCDS(cds1: SmvCDS, cds2: SmvCDS) extends SelfCompareCDS {
+  def mapping(inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] =
+    {(toBeCompared, it) =>
+      cds1.toSelfCompare().mapping(inSchema)(toBeCompared, 
+      cds2.toSelfCompare().mapping(inSchema)(toBeCompared, it))
+    }
+}
+
+private[smv] case class CombinedFilterCDS(cds1: FilterCDS, cds2: FilterCDS) extends FilterCDS {
+  def mapping(inSchema: SmvSchema): Iterable[Row] => Iterable[Row] =
+    {it =>
+      cds1.mapping(inSchema)(cds2.mapping(inSchema)(it))
     }
 }
 
 /**
  * NoOpCDS: pass down the iterator
  **/
-private[smv] case object NoOpCDS extends SmvCDS {
-  def createInGroupMapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = 
-  {(toBeCompared, i) => i}
+private[smv] case object NoOpCDS extends FilterCDS {
+  def mapping(schema: SmvSchema): Iterable[Row] => Iterable[Row] = {it => it}
 }
 
+/**
+ * 
+ **/
 private[smv] class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
   def inGroupKeys = Nil
   def createOutSchema(inSchema: SmvSchema) = inSchema
-  def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
-    cds.createInGroupMapping(null, smvSchema)(null, _)
+  def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = { it =>
+    cds match {
+      //TODO: Need a way to apply FullCompareCDS as GDO
+      case full: FullCompareCDS => throw new IllegalArgumentException("FullCompareCDS is not supported to be converted to GDO")
+      //TODO: Should we use "null" or the last Record?
+      case self: SelfCompareCDS =>  self.mapping(smvSchema)(null, it)
+      case filter: FilterCDS => filter.mapping(smvSchema)(it)
+    }
   }
 }
 
@@ -94,7 +140,7 @@ case class SmvCDSAggColumn(aggExpr: Expression, cds: SmvCDS = NoOpCDS) {
  *   - Resolve the expressions on a given input schema
  *   - Provide executor creater 
  **/
-case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
+private[smv] case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
   def resolvedExprs(inSchema: SmvSchema) = 
     inSchema.toLocalRelation.groupBy()(aggExprs: _*).analyze.expressions
   
@@ -104,7 +150,11 @@ case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
       map{case Alias(ex, n) =>  BindReferences.bindReference(ex, locRel.output)}.
       map{e => e.asInstanceOf[AggregateExpression].newInstance()}
       
-    val itMap = cds.createInGroupMapping(toBeComparedSchema, inSchema)
+    val itMap = cds match {
+      case full: FullCompareCDS => full.mapping(toBeComparedSchema, inSchema)
+      case self: SelfCompareCDS => self.mapping(inSchema)
+      case filter: FilterCDS => filter.toSelfCompare.mapping(inSchema)
+    }
     
     {(toBeCompared, it) =>
       itMap(toBeCompared, it).foreach{r => cum.foreach(c => c.update(r))}
@@ -116,7 +166,7 @@ case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
 /** 
  * Provide functions shared by multiple agg operations 
  **/
-object SmvCDS {
+private[smv] object SmvCDS {
   /** 
    * The list of column agg/runAgg takes could be a mix of real aggregations or columns to be kept
    * from the original record. Real aggregations should always be something like
@@ -141,9 +191,12 @@ object SmvCDS {
  * SmvCDSAggGDO
  *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by agg operation on SmvGroupedData
  **/
-class SmvCDSAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
+private[smv] class SmvCDSAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
   protected val keptCols = SmvCDS.findKeptCols(aggCols)
   protected val cdsAggsList: Seq[SmvSingleCDSAggs] = SmvCDS.combineCDS(SmvCDS.findAggCols(aggCols)) 
+  
+  private val hasFullCDS = cdsAggsList.map{_.cds.isInstanceOf[FullCompareCDS]}.reduce(_ || _)
+  require(!hasFullCDS)
   
   def inGroupKeys = Nil
   
@@ -172,7 +225,7 @@ class SmvCDSAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
  * SmvCDSRunAggGDO
  *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by runAgg operation on SmvGroupedData
  **/
-class SmvCDSRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvCDSAggGDO(aggCols) {
+private[smv] class SmvCDSRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvCDSAggGDO(aggCols) {
   override def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
     val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
     val getKept: Row => Seq[Any] = {r => smvSchema.getIndices(keptCols: _*).map{i => r(i)}}
@@ -193,19 +246,25 @@ class SmvCDSRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvCDSAggGDO(aggCol
  **/
  
 
-/*************** The code below are specific CDS's. Should consider to put in another file ******/
+/*************** The code below is for CDS developer interface ******/
 
 /**
  * SmvSelfCompareCDS
  * 
- * An abstract class of SmvCDS which
+ * A concrete class of SelfCompareCDS, which has
  *  - Self-join Schema, with the "toBeCompared" Row with original column names, and 
  *    the "running" Rows with "_"-prefixed names
- *  - Apply the "condition", which will be defined in a concrete class, on the 
- *    "running" Rows for each "toBeCompared" Row
+ *  - Apply the "condition", on the "running" Rows for each "toBeCompared" Row
+ * 
+ * Example:
+ * SmvSelfCompareCDS($"t" >= $"_t" && $"t" < ($"_t" + 3))
+ * 
+ * For each "toBeCompared" record with column "t", above SmvCDS defines a group of 
+ * records which has "_t" in the range of (t-3, t]. 
  **/
-case class SmvSelfCompareCDS(condition: Expression) extends SmvCDS {
-  def createInGroupMapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = {
+ 
+case class SmvSelfCompareCDS(condition: Expression) extends SelfCompareCDS {
+  def mapping(inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = {
     val cond = condition as "condition"
     
     val combinedSchema = inSchema.selfJoined
@@ -216,27 +275,25 @@ case class SmvSelfCompareCDS(condition: Expression) extends SmvCDS {
     {(toBeCompared, it) =>
       it.collect{ case r if (es.eval(Row.merge(toBeCompared, r)).asInstanceOf[Boolean]) => r}
     }
-  } 
-}
-
-object TimeInLastN {
-  def apply (t: String, n: Int) = {
-    val condition = ($"$t" >= $"_$t" && $"$t" < ($"_$t" + n)) 
-    SmvSelfCompareCDS(condition)
   }
 }
 
+/**
+ * TODO: SmvPanelCompareCDS(condition: Expression) extends FullCompareCDS 
+ **/
+ 
 /**
  *  SmvTopNRecsCDS 
  *  Returns the TopN records based on the order keys
  *  (which means it can also return botton N records)
  **/
-case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends SmvCDS {
+
+case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends FilterCDS {
   private val orderKeys = orderCols.map{o => o.asInstanceOf[SortOrder]}
   private val keys = orderKeys.map{k => k.child.asInstanceOf[NamedExpression].name}
   private val directions = orderKeys.map{k => k.direction}
   
-  def createInGroupMapping(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Iterable[Row] = {
+  def mapping(inSchema: SmvSchema): Iterable[Row] => Iterable[Row] = {
     val ordinals = inSchema.getIndices(keys: _*)
     val ordering = (keys zip directions).map{case (k, d) =>
       val normColOrdering = inSchema.findEntry(k).get.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
@@ -251,7 +308,7 @@ case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends Smv
         .reduceLeft((s, i) => s << 1 + i)
     }
 
-    {(dummy, it) =>
+    {it =>
       val bpq = BoundedPriorityQueue[Row](maxElems)
       it.foreach{ r =>
         val v = ordinals.map{i => r(i)}
@@ -260,10 +317,33 @@ case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends Smv
       }
       bpq.toList
     }
-  }
+  } 
 }
 
 object SmvTopNRecsCDS {
-  def apply(maxElems: Int, orderCol: Column, otherOrder: Column*): SmvTopNRecsCDS = 
-    SmvTopNRecsCDS(maxElems, (orderCol +: otherOrder).map{o => o.toExpr})
+  def apply(maxElems: Int, orderCol: Column, others: Column*): FilterCDS = {
+    new SmvTopNRecsCDS(maxElems, (orderCol +: others).map{o => o.toExpr})
+  }
 }
+
+/************************* Example SmvCDS's *************************/
+object IntInLastN {
+  def apply (t: String, n: Int) = {
+    val condition = ($"$t" >= $"_$t" && $"$t" < ($"_$t" + n)) 
+    SmvSelfCompareCDS(condition)
+  }
+}
+
+object TillNow {
+  def apply (t: String) = {
+    SmvSelfCompareCDS($"$t" >= $"_$t")
+  }
+}
+
+/**
+ * TODO:
+ *   - TimeInLastNDays/Months/Weeks/Quarters/Years
+ *   - PanelInLastNDays/Months/Weeks/Quarters/Years
+ *   - InLastNRec/InFirstNRec as SelfCompareCDS 
+ *       SmvTopNRecsCDS from TillNow
+ **/
