@@ -14,8 +14,6 @@
 
 package org.tresamigos.smv
 
-import scala.collection.mutable.ArrayBuffer
-
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.plans.logical._
@@ -320,30 +318,3 @@ case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends Fil
   } 
 }
 
-object SmvTopNRecsCDS {
-  def apply(maxElems: Int, orderCol: Column, others: Column*): FilterCDS = {
-    new SmvTopNRecsCDS(maxElems, (orderCol +: others).map{o => o.toExpr})
-  }
-}
-
-/************************* Example SmvCDS's *************************/
-object IntInLastN {
-  def apply (t: String, n: Int) = {
-    val condition = ($"$t" >= $"_$t" && $"$t" < ($"_$t" + n)) 
-    SmvSelfCompareCDS(condition)
-  }
-}
-
-object TillNow {
-  def apply (t: String) = {
-    SmvSelfCompareCDS($"$t" >= $"_$t")
-  }
-}
-
-/**
- * TODO:
- *   - TimeInLastNDays/Months/Weeks/Quarters/Years
- *   - PanelInLastNDays/Months/Weeks/Quarters/Years
- *   - InLastNRec/InFirstNRec as SelfCompareCDS 
- *       SmvTopNRecsCDS from TillNow
- **/

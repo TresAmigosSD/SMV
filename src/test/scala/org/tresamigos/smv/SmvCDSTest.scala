@@ -61,7 +61,7 @@ class SmvCDSTest extends SparkTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
-    val last2 = SmvTopNRecsCDS(2, $"v".desc) 
+    val last2 = TopNRecs(2, $"v".desc) 
     val res = srdd.smvGroupBy('k).inMemAgg(
       $"k",
       $"t",
@@ -85,10 +85,10 @@ class SmvCDSTest extends SparkTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     
     val last3t = IntInLastN("t", 3)
-    val top2 = SmvTopNRecsCDS(2, $"v".desc)
+    val top2 = TopNRecs(2, $"v".desc)
     
     val aggCol1 = sum($"v") from last3t from top2
-    val aggCol2 = count($"i") from last3t from SmvTopNRecsCDS(2, $"v".desc)
+    val aggCol2 = count($"i") from last3t from TopNRecs(2, $"v".desc)
     
     assert (aggCol1.cds === aggCol2.cds)
   }
@@ -97,8 +97,8 @@ class SmvCDSTest extends SparkTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
 
-    val last3 = SmvTopNRecsCDS(3, $"t".desc)
-    val top2 = SmvTopNRecsCDS(2, $"v".desc)
+    val last3 = TopNRecs(3, $"t".desc)
+    val top2 = TopNRecs(2, $"v".desc)
     val res = srdd.smvGroupBy('k).inMemAgg(
       $"k",
       $"t",
@@ -116,8 +116,8 @@ class SmvCDSTest extends SparkTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
 
-    val last3 = SmvTopNRecsCDS(3, $"t".desc)
-    val top2 = SmvTopNRecsCDS(2, $"v".desc)
+    val last3 = TopNRecs(3, $"t".desc)
+    val top2 = TopNRecs(2, $"v".desc)
     val res = srdd.smvGroupBy("k").smvMapGroup(top2 from last3).toDF
     
     assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double")

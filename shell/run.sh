@@ -1,5 +1,8 @@
 #!/bin/bash
 
-export SPARK_MEM=2G
-ADD_JARS=./target/smv-1.3-SNAPSHOT.jar ~/spark-1.3.0-bin-hadoop1/bin/spark-shell -i shell/shell_init.scala
+SPARK_SHELL="${HOME}/spark-1.3.0/bin/spark-shell"
+JARS="./target/smv-1.3-SNAPSHOT.jar" 
+JARS+=",${HOME}/.m2/repository/joda-time/joda-time/2.7/joda-time-2.7.jar"
+
+${SPARK_SHELL} --executor-memory 2g --jars ${JARS} -i shell/shell_init.scala
 
