@@ -36,7 +36,7 @@ past
 Here is how we calculate `runAgg` with CDS:
 ```scala
 val inLast7d = TimeInLastNDays("time", 7)
-df.smvGroupBy("Id").runAgg("Id", "time", "amt", sum("amt") from inLast7d as "runamt")
+df.smvGroupBy("Id").runAgg($"Id", $"time", $"amt", sum($"amt") from inLast7d as "runamt")
 ```
 
 The first line defined a CDS with a buildin CDS factory `TimeInLastNDays`. The second 
@@ -62,18 +62,24 @@ days; the `cds2  defines "for the record in last 7 days what are the top 10 reco
 We also extends the `Column` class to support the `from` keyword, so that is why 
 we can do 
 ```scala
-sum("amt") from inLast7d as "runamt"
+sum($"amt") from inLast7d as "runamt"
 ```
 
 ## Other Use-Cases
+For some use cases we don't need to calculate the running aggregations on every records. Instead, we 
+just need to calculate on the latest record for each group.
 
 ```scala
-df.smvGroupBy("Id").inMemAgg("Id", "time", "amt", sum("amt") from inLast7d as "runamt")
+df.orderBy($"time".asc).smvGroupBy("Id").inMemAgg($"Id", $"time", $"amt", sum($"amt") from inLast7d as "amt7d")
 ```
+
+Instead of doing aggregation on the top N records, we may just need to get them in a new DF:
 
 ```scala
 df.smvGroupBy("Id").smvMapGroup(TopNRecs(3, $"amt".desc)).toDF
 ```
+Here we introduced a new operation `smvMapGroup`, which can apply a CDSs. More general, `smvMapGroup` can take 
+a Grouped Data Operator (GDO) as parameter and apply it.
 
 ## GDO and smvMapGroup
 Supported client code:
@@ -82,6 +88,42 @@ val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as
 val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
 ```
 
-## Buildin CDS builders
+Each GDO defined a map from a group of records to another group of records, could be even in differnt Schema. Also GDO can introduce 
+new keys to the existing grouped key. 
+
+`SmvQuantile` is implemented as a GDO
+
+## CDS Types
+
+There are 3 types of CDS: 
+
+* FilterCDS
+* SelfCompareCDS
+* FullCompareCDS
+
+### FilterCDS
+Filter on the input group of records without anyother information from the data. 
+Eg., `TopNRecs(10, $"amt"desc)`
+
+### SelfCompareCDS
+Filter on the input group of records according to a refering record with the same schema.
+
+Eg. `TimeInLastNDays("time", 7)`
+It actually defined the filter according to current record. If we pretend the input group of records as a "Local DataFrame", 
+which is not supported in Spark yet, we can write the logic as peudo code
+```scala
+ld.join(ld.renameFieldsWithPrefix("_"), "inner", ($"_time" is in past 7 days from $"time"))
+```
+Basicall SelfCompareCDS implemented above pattern.
+
+### FullCompareCDS
+No concreate examples been implemented yet.
+
+The logic in peudo code is 
+```scala
+additionalLd.join(ld, "inner", condition)
+```
+
+## Buildin CDS Factories
 
 ## CDS developer interface
