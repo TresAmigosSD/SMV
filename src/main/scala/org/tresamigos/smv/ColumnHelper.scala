@@ -23,6 +23,8 @@ import org.apache.spark.sql.types._
 import java.util.Calendar
 import java.sql.Timestamp
 import com.rockymadden.stringmetric.phonetic.SoundexAlgorithm
+import org.joda.time._
+import org.joda.convert._
 
 /** 
  * ColumnHelper class provides additional methods/operators on Column
@@ -278,4 +280,53 @@ class ColumnHelper(column: Column) {
   
   /** SmvStrCat will be defined as a function */
   /** SmvAsArray will be defiend as a function */
+  
+  /**
+   * smvPlusDays: Add days to a Timestamp
+   * smvPlusWeeks: Add weeks to a Timestamp
+   * smvPlusMonths: Add months to a Timestamp
+   * smvPlusYears: Add years to a Timestamp
+   * 
+   * Using joda-time functions. 
+   * For PlusMonths, the calculation will do its best to only change the month field 
+   * retaining the same day of month. However, in certain circumstances, it may be 
+   * necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot 
+   * result in 2007-04-31, so the day of month is adjusted to 2007-04-30.
+   * 
+   * PlusYears is similar.
+   * 
+   * Eg.
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvPlusDays(3)
+   */
+  def smvPlusDays(n: Int) = {
+    val name = s"SmvPlusDays($column, $n)"
+    val f = (t:Timestamp) =>
+      if(t == null) null
+      else new Timestamp((new DateTime(t)).plusDays(n).getMillis())
+    new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)() )
+  }
+  
+  def smvPlusWeeks(n: Int) = {
+    val name = s"SmvPlusWeeks($column, $n)"
+    val f = (t:Timestamp) =>
+      if(t == null) null
+      else new Timestamp((new DateTime(t)).plusWeeks(n).getMillis())
+    new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)() )
+  }  
+  
+  def smvPlusMonths(n: Int) = {
+    val name = s"SmvPlusMonths($column, $n)"
+    val f = (t:Timestamp) =>
+      if(t == null) null
+      else new Timestamp((new DateTime(t)).plusMonths(n).getMillis())
+    new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)() )
+  }  
+  
+  def smvPlusYears(n: Int) = {
+    val name = s"SmvPlusYears($column, $n)"
+    val f = (t:Timestamp) =>
+      if(t == null) null
+      else new Timestamp((new DateTime(t)).plusYears(n).getMillis())
+    new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)() )
+  }
 }

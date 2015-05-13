@@ -1,12 +1,12 @@
 # SMV Custom Data Selector (CDS) and Grouped Data Operator (GDO)
 
 A SMV Custom Data Selector (CDS) defines a sub-set of a group of records within a GroupedData, 
-and user can define aggregations on this sub-set if data. 
+and user can define aggregations on this sub-set of data. 
 
 A Grouped Data Operator (GDO) is a more general concept, which defines a way one GroupedData 
 object can be mapped to another GroupedData object. 
 
-## The `runAgg` Use Case and Client Code with CDS
+## The `runAgg` Use-Case and Client Code with CDS
 
 Consider credit card transaction data. For each transaction record, we want to calculate the sum of the 
 dollar spend on the passed 7 days.
@@ -53,11 +53,11 @@ def from(otherCDS: SmvCDS): SmvCDS
 
 The `from` method allow us to chain CDS's together. For examples,
 ```scala
-val cds1 = TimeInLastNDays("time", 7) from TopNRecs(10, "amt")
-val cds2 = TopNRecs(10, "amt") from TimeInLastNDays("time", 7)
+val cds1 = TimeInLastNDays("time", 7) from TopNRecs(10, $"amt".desc)
+val cds2 = TopNRecs(10, $"amt".desc) from TimeInLastNDays("time", 7)
 ```
-where `cds1` defines "within the top 10 amt records, which are within the last 7 
-days; the `cds2  defines "for the record in last 7 days what are the top 10 amt records".
+where `cds1` defines "in the top 10 records by amt, which of them are within the last 7 
+days; the `cds2  defines "for the record in last 7 days what are the top 10 records by amt".
 
 We also extends the `Column` class to support the `from` keyword, so that is why 
 we can do 
@@ -65,14 +65,14 @@ we can do
 sum("amt") from inLast7d as "runamt"
 ```
 
-## Other Use Cases
+## Other Use-Cases
 
 ```scala
 df.smvGroupBy("Id").inMemAgg("Id", "time", "amt", sum("amt") from inLast7d as "runamt")
 ```
 
 ```scala
-df.smvGroupBy("Id").smvMapGroup(TopNRecs(3, "amt")).toDF
+df.smvGroupBy("Id").smvMapGroup(TopNRecs(3, $"amt".desc)).toDF
 ```
 
 ## GDO and smvMapGroup

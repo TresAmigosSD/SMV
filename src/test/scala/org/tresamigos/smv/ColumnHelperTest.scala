@@ -79,4 +79,32 @@ class ColumnHelperTest extends SparkTestUtil {
       "100.0,200.0;" +
       "null,null")
   }
+  
+  sparkTest("test smvPlusDays/smvPlusMonths/smvPlusWeeks/smvPlusYears") {
+    import org.apache.spark.sql.functions._
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120229")
+    val res1 = srdd.select($"t".smvPlusDays(-10))
+    val res2 = srdd.select($"t".smvPlusMonths(1))
+    val res3 = srdd.select($"t".smvPlusWeeks(3))
+    val res4 = srdd.select($"t".smvPlusYears(2))
+    val res5 = srdd.select($"t".smvPlusYears(4))
+    
+    assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddDataEqual(res1, 
+      "1976-01-21 00:00:00.0;" +
+      "2012-02-19 00:00:00.0")
+    assertSrddDataEqual(res2, 
+      "1976-02-29 00:00:00.0;" +
+      "2012-03-29 00:00:00.0")
+    assertSrddDataEqual(res3, 
+      "1976-02-21 00:00:00.0;" +
+      "2012-03-21 00:00:00.0")
+    assertSrddDataEqual(res4, 
+      "1978-01-31 00:00:00.0;" +
+      "2014-02-28 00:00:00.0")
+    assertSrddDataEqual(res5, 
+      "1980-01-31 00:00:00.0;" +
+      "2016-02-29 00:00:00.0")
+  }
 }

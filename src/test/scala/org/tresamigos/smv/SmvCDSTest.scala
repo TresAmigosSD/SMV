@@ -127,4 +127,48 @@ class SmvCDSTest extends SparkTestUtil {
         "[z,5,2.2]"))
   }
    
+  sparkTest("Test TimeInLastNDays") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    
+    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNDays("t", 40) as "nt")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1976-01-31 00:00:00.0,1]",
+      "[2012-01-25 00:00:00.0,1]",
+      "[2012-02-29 00:00:00.0,2]"))
+  }
+  
+  sparkTest("Test TimeInLastNMonths") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    
+    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNMonths("t", 1) as "nt")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1976-01-31 00:00:00.0,1]",
+      "[2012-01-25 00:00:00.0,1]",
+      "[2012-02-29 00:00:00.0,1]"))
+  }
+  
+  sparkTest("Test TimeInLastNWeeks") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    
+    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNWeeks("t", 6) as "nt")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1976-01-31 00:00:00.0,1]",
+      "[2012-01-25 00:00:00.0,1]",
+      "[2012-02-29 00:00:00.0,2]"))
+  }
+  
+  sparkTest("Test TimeInLastNYears") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    
+    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNYears("t", 40) as "nt")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1976-01-31 00:00:00.0,1]",
+      "[2012-01-25 00:00:00.0,2]",
+      "[2012-02-29 00:00:00.0,3]"))
+  }
+  
 }

@@ -107,8 +107,10 @@ private[smv] class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
     cds match {
       //TODO: Need a way to apply FullCompareCDS as GDO
       case full: FullCompareCDS => throw new IllegalArgumentException("FullCompareCDS is not supported to be converted to GDO")
-      //TODO: Should we use "null" or the last Record?
-      case self: SelfCompareCDS =>  self.mapping(smvSchema)(null, it)
+      case self: SelfCompareCDS =>  {
+        val lastRow = it.toSeq.last
+        self.mapping(smvSchema)(lastRow, it)
+      }
       case filter: FilterCDS => filter.mapping(smvSchema)(it)
     }
   }
@@ -318,3 +320,19 @@ case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends Fil
   } 
 }
 
+/**
+ * SmvFirstNRecsCDS/SmvLastNRecsCDS
+ * Return first/last N records of each group. User should specify "orderBy" keys to make this CDS meaningful
+ **/ 
+ 
+case class SmvFirstNRecsCDS(n: Int) extends FilterCDS {
+  def mapping(inSchema: SmvSchema): Iterable[Row] => Iterable[Row] = { it =>
+    it.toSeq.take(n)
+  }
+}
+
+case class SmvLastNRecsCDS(n: Int) extends FilterCDS {
+  def mapping(inSchema: SmvSchema): Iterable[Row] => Iterable[Row] = { it =>
+    it.toSeq.takeRight(n)
+  }
+}
