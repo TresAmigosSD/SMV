@@ -3,7 +3,7 @@
 ## What is SMV? 
 SMV is a Spark library to enable quickly variable creations for real world data application 
 development. The relation to Spark Stack is the following
-![Alt text](https://rawgit.com/TresAmigosSD/SMV/master/docs/images/teck_stack.png)
+![Alt text](https://rawgit.com/TresAmigosSD/SMV/master/docs/images/tech_stack.png)
 
 ## Who are the users of SMV
 SMV could be used for either Data Engineers or Data Scientists.
