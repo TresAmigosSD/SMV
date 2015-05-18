@@ -87,7 +87,13 @@ with minimal Spark/Scala programing knowledge and skills.
 * [DataFrame Helper functions](docs/DF_Functions.md)
 * [DQM - Experimental](docs/Dqm.md)
 
+## Start with the Example Project
+[Example: 01GetStart](docs/examples/01GetStart) is an example project to help the 
+user to quickly try oit SMV with some real data and also makes setting up their own project 
+easy. 
+
 ## Migrate to Spark 1.3
 Since Spark 1.3.0, there quite some interface changes on SparkSQL. Please refer 
 [Migrate to Spark 1.3](docs/MigrateTo1.3.md) for details.
+
 

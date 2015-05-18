@@ -66,7 +66,7 @@ scala> findSchema("data/input/employment/CB1200CZ11.csv")(p.caBar)
 The string in the first parameter list is the path of the data file. It is a relative path 
 to the running dir, which is 01GetStart for this project.
 
-The parameter in the second parameter list, `p.caBar`, specifys the CSV attriputes for the 
+The parameter in the second parameter list, `p.caBar`, specifies the CSV attributes for the 
 input data. `p` is a brief name of the ExampleApp object, which is defined in 
 `src/main/scala/org/tresamigos/getstart/core/ExampleApp.scala`. 
 
