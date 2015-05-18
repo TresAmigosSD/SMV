@@ -334,6 +334,13 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   def saveToFile(sc: SparkContext, path: String) {
     sc.makeRDD(toStringWithMeta, 1).saveAsTextFile(path)
   }
+  
+  def saveToLocalFile(path: String) {
+    import java.io.{File, PrintWriter}
+    val pw = new PrintWriter(new File(path))
+    pw.println(toStringWithMeta.mkString("\n"))
+    pw.close()
+  }
 
   /**
    * convert a data row to a delimited csv string.
@@ -438,7 +445,7 @@ object SmvSchema {
    * Ignores ".gz", ".csv", ".tsv" extensions when constructions schema file path.
    * For example: "/a/b/foo.csv" --> "/a/b/foo.schema".  Makes for cleaner mapping.
    */
-  private[smv] def dataPathToSchemaPath(dataPath: String): String = {
+  def dataPathToSchemaPath(dataPath: String): String = {
     // remove all known data file extensions from path.
     val exts = List("gz", "csv", "tsv").map("\\."+_+"$")
     val dataPathNoExt = exts.foldLeft(dataPath)((s,e) => s.replaceFirst(e,""))
