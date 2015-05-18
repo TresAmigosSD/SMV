@@ -27,7 +27,7 @@ edd.addAmountHistogramTasks('amt)
 edd.addMoreTasks(StringLengthHistogram('zip))
 ```
 
-EDD builder object keeps a **task list**. The add* methods adding task items to that list. Please refer [EDD.scala](../src/main/scala/org/tresamigos/smv/EDD.scala) for available building methods and available tasks. 
+EDD builder object keeps a **task list**. The add* methods adding task items to that list. Please refer [Edd.scala](../src/main/scala/org/tresamigos/smv/Edd.scala) for available building methods and available tasks. 
 
 ## Generate EDD results
 
