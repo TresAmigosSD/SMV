@@ -15,15 +15,16 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.functions._
 
-class PivotTest extends SparkTestUtil {
+class SmvPivotTest extends SparkTestUtil {
   sparkTest("Test creation of unique column names") {
     val srdd = createSchemaRdd("k:String; p1:String; p2:String; p3:String; v:String; v2:Float",
       """x,p1_1,p2A,p3X,5,8;
          x,p1_2,p2A,p3X,6,9;
          x,p1_1,p2B,p3X,7,10""")
 
-    val res = PivotOp.getBaseOutputColumnNames(srdd, Seq(Seq('p1, 'p2, 'p3)))
+    val res = SmvPivot.getBaseOutputColumnNames(srdd, Seq(Seq("p1", "p2", "p3")))
     assertUnorderedSeqEqual(res, Seq(
       "p1_1_p2A_p3X",
       "p1_1_p2B_p3X",
@@ -37,7 +38,7 @@ class PivotTest extends SparkTestUtil {
          p1_1,p2/A,p3X,6;
          ,p2/B,p3X,7""")
 
-    val res = PivotOp.getBaseOutputColumnNames(srdd, Seq(Seq('p1, 'p2, 'p3)))
+    val res = SmvPivot.getBaseOutputColumnNames(srdd, Seq(Seq("p1", "p2", "p3")))
     assertUnorderedSeqEqual(res, Seq(
       "p1_1_p2_B_p3X",
       "p1_1_p2_B",
@@ -52,32 +53,63 @@ class PivotTest extends SparkTestUtil {
   sparkTest("Test creation of unique column names with 1 pivot column") {
     val srdd = createSchemaRdd("p1:String; v:String","p1_1,5; p1_2, 6")
 
-    val res = PivotOp.getBaseOutputColumnNames(srdd, Seq(Seq('p1)))
+    val res = SmvPivot.getBaseOutputColumnNames(srdd, Seq(Seq("p1")))
     assertUnorderedSeqEqual(res, Seq(
       "p1_1",
       "p1_2"))
   }
-
-  sparkTest("Test creation of smv pivot value column") {
-    val srdd = createSchemaRdd("k:String; p1:String; p2:String; v:String; v2:String",
-      "1,p1a,p2a,5,100; 1,p1b,p2b,6,200")
-
-    val cds = PivotCDS(
-      Seq(Seq('p1, 'p2)), 
-      Seq(('v, "v"), ('v2, "v2")), 
-      Seq("p1a_p2a", "p1a_p2b", "p1b_p2a", "p1b_p2b")
-    )
-    val res = srdd.smvApplyCDS('k)(cds)
-
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[1,5,null,null,null,100,null,null,null]",
-      "[1,null,null,null,6,null,null,null,200]"))
-
-    val fieldNames = res.schema.fieldNames.toList
-    assert(fieldNames === Seq("k", "v_p1a_p2a", "v_p1a_p2b", "v_p1b_p2a", 
-      "v_p1b_p2b", "v2_p1a_p2a", "v2_p1a_p2b", "v2_p1b_p2a", "v2_p1b_p2b"))
+  
+  sparkTest("test smvPivot on DF") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("id:Integer;month:String;product:String;count:Integer", 
+      "1,5_14,A,100;1,6_14,B,200;1,5_14,B,300")
+    val res = srdd.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+    assertSrddDataEqual(res, 
+      "1,5_14,A,100,100,null,null,null;" +
+      "1,6_14,B,200,null,null,null,200;" +
+      "1,5_14,B,300,null,300,null,null")
+  }
+  
+  sparkTest("test smvPivotSum on GD") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("id:Integer;month:String;product:String;count:Integer", 
+      "1,5_14,A,100;1,6_14,B,200;1,5_14,B,300")
+    val res = srdd.smvGroupBy('id).smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+    assertSrddSchemaEqual(res, "id: Integer; count_5_14_A: Long; count_5_14_B: Long; count_6_14_A: Long; count_6_14_B: Long")
+    assertSrddDataEqual(res, 
+      "1,100,300,null,200")
   }
 
+  sparkTest("Test smvPivot with pivotColSets") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k1:String; k2:String; p:String; v1:Integer; v2:Float",
+      "1,x,A,10,100.5;" +
+      "1,y,A,10,100.5;" +
+      "1,x,A,20,200.5;" +
+      "1,x,A,10,200.5;" +
+      "1,x,B,50,200.5;" +
+      "2,x,A,60,500")
+
+    val res = srdd.smvGroupBy('k1).smvPivot(Seq("k2"), Seq("k2", "p"))("v2")("x", "x_A", "y_B").agg(
+      $"k1",
+      countDistinct("v2_x") as 'dist_cnt_v2_x, 
+      countDistinct("v2_x_A") as 'dist_cnt_v2_x_A, 
+      countDistinct("v2_y_B") as 'dist_cnt_v2_y_B 
+    )
+    
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1,2,2,0]",
+      "[2,1,1,0]"))
+
+    val fieldNames = res.schema.fieldNames.toList
+    assert(fieldNames === Seq(
+      "k1", 
+      "dist_cnt_v2_x", 
+      "dist_cnt_v2_x_A", 
+      "dist_cnt_v2_y_B"))
+  }
+
+/* 
   sparkTest("Test pivot_sum function") {
     val srdd = createSchemaRdd("k:String; p1:String; p2:String; v:Integer",
       "1,p1/a,p2a,100;" +
@@ -112,104 +144,6 @@ class PivotTest extends SparkTestUtil {
     assert(fieldNames === Seq("k", "v1_A", "v1_B", "v2_A", "v2_B"))
   }
 
-  sparkTest("Test pivot_sum function with multiple keys") {
-    val srdd = createSchemaRdd("k1:String; k2:String; p:String; v1:Integer; v2:Float",
-      "1,x,A,10,100.5;" +
-      "1,y,A,10,100.5;" +
-      "1,x,A,20,200.5;" +
-      "1,x,B,50,200.5;" +
-      "2,x,A,60,500")
+  */
 
-    val res = srdd.pivot_sum('k1, 'k2)('p)('v1, 'v2)
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[2,x,60,0,500.0,0.0]",
-      "[1,x,30,50,301.0,200.5]",
-      "[1,y,10,0,100.5,0.0]"))
-
-    val fieldNames = res.schema.fieldNames.toList
-    assert(fieldNames === Seq("k1", "k2", "v1_A", "v1_B", "v2_A", "v2_B"))
-  }
-
-  sparkTest("Test Pivot function with Sum and CountDistinct") {
-    val ssc = sqlContext; import ssc._
-    val srdd = createSchemaRdd("k1:String; k2:String; p:String; v1:Integer; v2:Float",
-      "1,x,A,10,100.5;" +
-      "1,y,A,10,100.5;" +
-      "1,x,A,20,200.5;" +
-      "1,x,A,10,200.5;" +
-      "1,x,B,50,200.5;" +
-      "2,x,A,60,500")
-
-    val cds = PivotCDS(Seq(Seq('p)), Seq(('v1, "v1"), ('v2, "v2")), Seq("A", "B"))
-
-    val res = srdd.smvSingleCDSGroupBy('k1, 'k2)(cds)(
-      Sum('v1_A) as 'v1_A, 
-      Sum('v1_B) as 'v1_B, 
-      CountDistinct(Seq('v2_A)) as 'dist_cnt_v2_A, 
-      CountDistinct(Seq('v2_B)) as 'dist_cnt_v2_B
-    )
-
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[2,x,60,0,1,0]",
-      "[1,x,40,50,2,1]",
-      "[1,y,10,0,1,0]"))
-
-    val fieldNames = res.schema.fieldNames.toList
-    assert(fieldNames === Seq("k1", "k2", "v1_A", "v1_B", "dist_cnt_v2_A", "dist_cnt_v2_B"))
-  }
-
-  sparkTest("Test smvPivot function with pivotColSets") {
-    val ssc = sqlContext; import ssc._
-    val srdd = createSchemaRdd("k1:String; k2:String; p:String; v1:Integer; v2:Float",
-      "1,x,A,10,100.5;" +
-      "1,y,A,10,100.5;" +
-      "1,x,A,20,200.5;" +
-      "1,x,A,10,200.5;" +
-      "1,x,B,50,200.5;" +
-      "2,x,A,60,500")
-
-    val cds = PivotCDS(
-      Seq(Seq('k2), Seq('k2, 'p)), 
-      Seq(('v2, "v2")), 
-      Seq("x", "x_A", "y_B")
-    )
-
-    val res = srdd.smvSingleCDSGroupBy('k1)(cds)(
-      CountDistinct(Seq('v2_x)) as 'dist_cnt_v2_x, 
-      CountDistinct(Seq('v2_x_A)) as 'dist_cnt_v2_x_A, 
-      CountDistinct(Seq('v2_y_B)) as 'dist_cnt_v2_y_B 
-    )
-
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[1,2,2,0]",
-      "[2,1,1,0]"))
-
-    val fieldNames = res.schema.fieldNames.toList
-    assert(fieldNames === Seq(
-      "k1", 
-      "dist_cnt_v2_x", 
-      "dist_cnt_v2_x_A", 
-      "dist_cnt_v2_y_B"))
-  }
-
-  sparkTest("Test smvPivotAddKnownOutput function with pivotColSets") {
-    val ssc = sqlContext; import ssc._
-    val srdd = createSchemaRdd("k1:String; k2:String; p:String; v1:Integer; v2:Float",
-      "1,x,A,10,100.5;" +
-      "1,y,A,10,100.5;" +
-      "1,x,A,20,200.5;" +
-      "1,x,A,10,200.5;" +
-      "1,x,B,50,200.5;" +
-      "2,x,A,60,500")
-
-    val res = srdd.smvPivotAddKnownOutput(Seq('k2), Seq('k2, 'p))('v2)("x", "x_A", "y_B")
-    assertSrddSchemaEqual(res, "k1: String; k2: String; p: String; v1: Integer; v2: Float; v2_x: Float; v2_x_A: Float; v2_y_B: Float")
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[1,x,A,10,100.5,100.5,100.5,null]",
-      "[1,y,A,10,100.5,null,null,null]",
-      "[1,x,A,20,200.5,200.5,200.5,null]",
-      "[1,x,A,10,200.5,200.5,200.5,null]",
-      "[1,x,B,50,200.5,200.5,null,null]",
-      "[2,x,A,60,500.0,500.0,500.0,null]"))
-  }
 }

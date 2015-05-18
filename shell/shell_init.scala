@@ -8,7 +8,7 @@ val sqlContext = new SQLContext(sc)
 import sqlContext._
 
 object i {
-  def smvSchema(srdd: SchemaRDD) = Schema.fromSchemaRDD(srdd)
+  def smvSchema(srdd: SchemaRDD) = SmvSchema.fromSchemaRDD(srdd)
   def open(fullPath: String) = {
     implicit val ca = CsvAttributes.defaultCsvWithHeader
     sqlContext.csvFileWithSchema(fullPath)

@@ -15,15 +15,22 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.types._
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.functions._
 
 class SmvCDSTest extends SparkTestUtil {
 
-  sparkTest("Test RunSum") {
-    val ssc = sqlContext; import ssc._
+  sparkTest("Test runAgg") {
+    val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
-    val res = srdd.smvSingleCDSGroupBy('k)(TimeInLastN('t, 3))((Sum('v) as 'nv1), (Count('v) as 'nv2))
+    val last3 = IntInLastN("t", 3)
+    val res = srdd.smvGroupBy('k).runAgg(
+      $"k",
+      $"t",
+      sum('v) from last3 as "nv1",
+      count('v) from last3 as "nv2")
+      
     assertSrddSchemaEqual(res, "k: String; t: Integer; nv1: Double; nv2: Long")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,1,0.3,1]",
@@ -31,117 +38,137 @@ class SmvCDSTest extends SparkTestUtil {
       "[z,2,1.5999999999999999,2]",
       "[z,5,2.2,1]"))
   }
+  
+  sparkTest("Test agg with no-from-aggregation") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
-  sparkTest("Test out of order CDS keys") {
-    val ssc = sqlContext; import ssc._
-    val srdd = createSchemaRdd("time_type:String;v:String;time_value:Integer",
-      "k1,a,10;k1,b,100;k2,d,3;k2,c,12")
-
-    val f = {in:Int => in - 3}
-    val cds = SmvCDSRange(
-      Seq('time_type, 'time_value),
-      ('_time_value > ScalaUdf(f, IntegerType, Seq('time_value)) && ('_time_value <= 'time_value))
-    )
-    val s2 = srdd.selectMinus('time_type).selectPlus(Literal("MONTHR3") as 'time_type)
-    val res = s2.smvSingleCDSGroupBy('v)(cds)(Count('v) as 'cv)
-    assertSrddSchemaEqual(res, "v: String; time_type: String; time_value: Integer; cv: Long")
+    val last3 = IntInLastN("t", 3)
+    val res = srdd.smvGroupBy('k).inMemAgg(
+      $"k",
+      $"t",
+      sum('v) from last3 as "nv1",
+      count('v) from last3 as "nv2",
+      sum('v) as "nv3")
+      
+    assertSrddSchemaEqual(res, "k: String; t: Integer; nv1: Double; nv2: Long; nv3: Double")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[d,MONTHR3,3,1]",
-      "[c,MONTHR3,12,1]",
-      "[a,MONTHR3,10,1]",
-      "[b,MONTHR3,100,1]"))
+      "[a,1,0.3,1,0.3]",
+      "[z,5,2.2,1,3.8]"))
   }
+   
+  sparkTest("Test SmvTopNRecsCDS") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
-  sparkTest("Test SmvCDSRangeSelfJoin") {
-    val ssc = sqlContext; import ssc._
-    val srdd = createSchemaRdd("time_type:String;v:String;time_value:Integer",
-      "k1,a,10;k1,b,100;k2,d,3;k2,c,12")
-
-    val f = {in:Int => in - 3}
-    val cds = SmvCDSRangeSelfJoin(
-      Seq('time_type, 'time_value),
-      ('_time_value > ScalaUdf(f, IntegerType, Seq('time_value)) && ('_time_value <= 'time_value))
-    )
-    val s2 = srdd.selectMinus('time_type).selectPlus(Literal("MONTHR3") as 'time_type)
-    val res = s2.smvSingleCDSGroupBy('v)(cds)(Count('v) as 'cv)
-    assertSrddSchemaEqual(res, "v: String; time_type: String; time_value: Integer; cv: Long")
+    val last2 = TopNRecs(2, $"v".desc) 
+    val res = srdd.smvGroupBy('k).inMemAgg(
+      $"k",
+      $"t",
+      sum('v) from last2 as "nv1",
+      count('v) from last2 as "nv2")
+      
+    assertSrddSchemaEqual(res, "k: String; t: Integer; nv1: Double; nv2: Long")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[a,MONTHR3,12,1]",
-      "[d,MONTHR3,3,1]",
-      "[c,MONTHR3,12,1]",
-      "[a,MONTHR3,10,1]",
-      "[b,MONTHR3,100,1]"))
-  }
-
-
-  sparkTest("Test CDS chaining"){
-    val ssc = sqlContext; import ssc._
-    val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; p: String; v:Double",
-      """z,1,a,0.2;
-         z,2,a,1.4;
-         z,5,b,2.2;
-         a,1,a,0.3""")
-    val pCDS = PivotCDS(Seq(Seq('p)), Seq(('v, "v")), Seq("a", "b"))
-    val res = srdd.smvApplyCDS('k)(TimeInLastN('t, 3)).
-                   smvSingleCDSGroupBy('k, 't)(pCDS)(
-                     Sum('v_a) as 'v_a,
-                     Sum('v_b) as 'v_b
-                   )
-    assertSrddSchemaEqual(res, "k: String; t: Integer; v_a: Double; v_b: Double")
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[a,1,0.3,0.0]",
-      "[z,1,0.2,0.0]",
-      "[z,2,1.5999999999999999,0.0]",
-      "[z,5,0.0,2.2]"))
-  }
-
-  sparkTest("Test SmvCDSTopRec") {
-    val ssc = sqlContext; import ssc._
-    val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; p: String; v:Double",
-      """z,1,a,0.2;
-         z,2,a,1.4;
-         z,5,b,2.2;
-         a,1,a,0.3""")
-    val cds = SmvCDSTopRec('t.desc)
-    val res=srdd.smvApplyCDS('k)(cds)
-
-    assertSrddSchemaEqual(res, "k: String; t: Integer; p: String; v: Double")
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[a,1,a,0.3]",
-      "[z,5,b,2.2]"))
-  }
-
-  sparkTest("Test SmvCDSTopNRecs") {
-    val ssc = sqlContext; import ssc._
-    val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; v:Double",
-      """z,1,0.2;
-         z,5,2.2;
-         z,-5,0.8;
-         z,3,1.1;
-         z,2,1.4;
-         z,,3.0;
-         a,1,0.3""")
-
-    // test TopN (with descending ordering)
-    val t_cds = SmvCDSTopNRecs(2, 't.desc)
-    val t_res = srdd.smvApplyCDS('k)(t_cds)
-
-    assertSrddSchemaEqual(t_res, "k: String; t: Integer; v: Double")
-    assertUnorderedSeqEqual(t_res.collect.map(_.toString), Seq(
+      "[a,1,0.3,1]",
+      "[z,5,3.6,2]"))
+      
+    val res2 = srdd.smvGroupBy("k").smvTopNRecs(2, $"v".desc)
+    assertSrddSchemaEqual(res2, "k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(res2.collect.map(_.toString), Seq(
       "[a,1,0.3]",
-      "[z,3,1.1]",
+      "[z,2,1.4]",
       "[z,5,2.2]"))
-
-    // test BottomN (using ascending ordering)
-    val b_cds = SmvCDSTopNRecs(2, 't.asc)
-    val b_res = srdd.smvApplyCDS('k)(b_cds)
-
-    assertSrddSchemaEqual(b_res, "k: String; t: Integer; v: Double")
-    assertUnorderedSeqEqual(b_res.collect.map(_.toString), Seq(
-      "[a,1,0.3]",
-      "[z,1,0.2]",
-      "[z,-5,0.8]"))
-
-
   }
+  
+  sparkTest("Test CDS Chaining compare") {
+    val ssc = sqlContext; import ssc.implicits._
+    
+    val last3t = IntInLastN("t", 3)
+    val top2 = TopNRecs(2, $"v".desc)
+    
+    val aggCol1 = sum($"v") from last3t from top2
+    val aggCol2 = count($"i") from last3t from TopNRecs(2, $"v".desc)
+    
+    assert (aggCol1.cds === aggCol2.cds)
+  }
+  
+  sparkTest("Test CDS Chaining") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
+
+    val last3 = TopNRecs(3, $"t".desc)
+    val top2 = TopNRecs(2, $"v".desc)
+    val res = srdd.smvGroupBy('k).inMemAgg(
+      $"k",
+      $"t",
+      sum('v) from top2 from last3 as "nv1",
+      sum('v) from last3 from top2 as "nv2",
+      sum('v) as "nv3")
+      
+    assertSrddSchemaEqual(res, "k: String; t: Integer; nv1: Double; nv2: Double; nv3: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3,0.3,0.3]",
+      "[z,6,2.4000000000000004,3.6,4.1]"))
+  }
+      
+  sparkTest("Test CDS Chaining with smvMapGroup") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
+
+    val last3 = TopNRecs(3, $"t".desc)
+    val top2 = TopNRecs(2, $"v".desc)
+    val res = srdd.smvGroupBy("k").smvMapGroup(top2 from last3).toDF
+    
+    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+        "[a,1,0.3]",
+        "[z,4,0.2]",
+        "[z,5,2.2]"))
+  }
+   
+  sparkTest("Test TimeInLastNDays") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    
+    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNDays("t", 40) as "nt")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1976-01-31 00:00:00.0,1]",
+      "[2012-01-25 00:00:00.0,1]",
+      "[2012-02-29 00:00:00.0,2]"))
+  }
+  
+  sparkTest("Test TimeInLastNMonths") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    
+    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNMonths("t", 1) as "nt")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1976-01-31 00:00:00.0,1]",
+      "[2012-01-25 00:00:00.0,1]",
+      "[2012-02-29 00:00:00.0,1]"))
+  }
+  
+  sparkTest("Test TimeInLastNWeeks") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    
+    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNWeeks("t", 6) as "nt")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1976-01-31 00:00:00.0,1]",
+      "[2012-01-25 00:00:00.0,1]",
+      "[2012-02-29 00:00:00.0,2]"))
+  }
+  
+  sparkTest("Test TimeInLastNYears") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    
+    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNYears("t", 40) as "nt")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1976-01-31 00:00:00.0,1]",
+      "[2012-01-25 00:00:00.0,2]",
+      "[2012-02-29 00:00:00.0,3]"))
+  }
+  
 }

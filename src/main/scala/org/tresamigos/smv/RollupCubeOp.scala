@@ -14,7 +14,9 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{ColumnName}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.{Alias, First, Literal, Expression}
 
@@ -23,10 +25,9 @@ import org.apache.spark.sql.catalyst.expressions.{Alias, First, Literal, Express
  * See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
  * Rather than using nulls as the pig version, a sentinel value of "*" will be used
  */
-class RollupCubeOp(srdd: SchemaRDD,
-                   cols: Seq[Symbol],
-                   fixedCols: Seq[Symbol] = Seq.empty,
-                   groupExprs: Seq[Expression] = Seq.empty) {
+class RollupCubeOp(df: DataFrame,
+                   keyCols: Seq[String],
+                   cols: Seq[String]) {
 
   /** for N cube cols, we want to produce 2**N columns (minus all "*") */
   def cubeBitmasks() = {
@@ -40,8 +41,7 @@ class RollupCubeOp(srdd: SchemaRDD,
 
   /** return list of non-rollup/cube columns in the given srdd. */
   def getNonRollupCols() = {
-    val cubeColNames = cols.map(_.name)
-    srdd.schema.fieldNames.filterNot(n => cubeColNames.contains(n))
+    df.schema.fieldNames.filterNot(n => cols.contains(n))
   }
 
   /**
@@ -49,15 +49,15 @@ class RollupCubeOp(srdd: SchemaRDD,
    * based on the bitmask value.
    */
   def createSRDDWithSentinel(bitmask: Int) = {
-    import srdd.sqlContext._
+    import df.sqlContext.implicits._
 
     val cubeColsSelect = cols.zipWithIndex.map { case (s, i) =>
       val idx = cols.length - i - 1
-      if (((1 << idx) & bitmask) != 0) Literal("*") as s else UnresolvedAttribute(s.name)
+      if (((1 << idx) & bitmask) != 0) lit("*") as s else $"$s"
     }
-    val otherColsSelect = getNonRollupCols().map(n => UnresolvedAttribute(n))
+    val otherColsSelect = getNonRollupCols().map(n => $"$n")
 
-    srdd.select(cubeColsSelect ++ otherColsSelect: _*)
+    df.select(cubeColsSelect ++ otherColsSelect: _*)
   }
 
   /**
@@ -73,12 +73,9 @@ class RollupCubeOp(srdd: SchemaRDD,
    * perform the groupBy operation on the duplicated data set.
    */
   private def duplicateAndGroup(bitmasks: Seq[Int]) = {
-    val colNames = (cols ++ fixedCols).map(_.name)
-    val cubeCols = colNames.map(c => UnresolvedAttribute(c))
-    val cubeColsFirst = colNames.map(c => Alias(First(UnresolvedAttribute(c)),c)())
-
+    val cubeCols = keyCols ++ cols
     duplicateSRDDByBitmasks(bitmasks).
-      groupBy(cubeCols: _*)(cubeColsFirst ++ groupExprs: _*)
+      smvGroupBy(cubeCols: _*)
   }
 
   /**

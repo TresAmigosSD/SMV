@@ -15,7 +15,6 @@
 package org.tresamigos.smv
 
 import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext._
 import scala.collection.mutable.MutableList
 
 abstract class RejectLogger extends Serializable {
@@ -75,5 +74,3 @@ class SCRejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends
   }
 
 }
-
-

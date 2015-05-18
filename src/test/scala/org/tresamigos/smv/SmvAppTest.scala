@@ -81,7 +81,7 @@ class SmvAppTest extends SparkTestUtil {
   object B extends SmvModule("B Module") {
     override def requiresDS() = Seq(A)
     override def run(inputs: runParams) = {
-      val sc = inputs(A).sqlContext; import sc._
+      val sc = inputs(A).sqlContext; import sc.implicits._
       require(inputs.size === 1)
       inputs(A).selectPlus('a + 1 as 'b)
     }
@@ -90,7 +90,7 @@ class SmvAppTest extends SparkTestUtil {
   object C extends SmvModule("C Module") {
     override def requiresDS() = Seq(A, B)
     override def run(inputs: runParams) = {
-      val sc = inputs(A).sqlContext; import sc._
+      val sc = inputs(A).sqlContext; import sc.implicits._
       require(inputs.size === 2)
       inputs(B).selectPlus('b + 1 as 'c)
     }

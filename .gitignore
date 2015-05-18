@@ -8,3 +8,5 @@ smv.iml
 /.project
 /.cache
 **/.c9*
+derby.log
+metastore_db/

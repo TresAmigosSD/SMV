@@ -1,0 +1,83 @@
+@startuml
+hide empty methods
+hide empty fields
+hide circle
+
+
+
+package SMV {
+  class SmvCDS <<Abstract>> {
+    from(that): SmvCDS
+  }
+  
+  class FullCompareCDS <<Abstract>> extends SmvCDS {
+    mapping(schema1, schema2): (Row, Iterable) => Iterable
+  }
+  
+  class SelfCompareCDS <<Abstract>> extends SmvCDS {
+    mapping(schema): (Row, Iterable) => Iterable
+  }
+  
+  class FilterCDS <<Abstract>> extends SmvCDS {
+    mapping(schema): Iterable => Iterable
+  }
+  
+  class SelfCompareToFullCompare extends FullCompareCDS
+  class FilterToSelfCompare extends SelfCompareCDS
+  
+  SelfCompareToFullCompare o-- "1" SelfCompareCDS
+  FilterToSelfCompare o-- "1" FilterCDS
+  
+  class CombinedFullCDS extends FullCompareCDS 
+  class CombinedSelfCDS extends SelfCompareCDS 
+  class CombinedFilterCDS extends FilterCDS 
+  
+  class NoOpCDS extends FilterCDS
+  
+  class SmvCDSAggColumn{
+    from(otherCds): SmvCDSAggColumn
+    as(name): SmvCDSAggColumn
+    isAgg(): Boolean
+  }
+  
+  SmvCDSAggColumn *-- "1" Expression
+  SmvCDSAggColumn *-- "1" SmvCDS
+  
+  class SmvPanelCompareCDS extends FullCompareCDS
+  class SmvSelfCompareCDS extends SelfCompareCDS
+  class SmvTopNRecsCDS extends FilterCDS
+  
+  class SmvSingleCDSAggs{
+    createOutSchema(schema2)
+    createExecuter(schema1, schema2)
+  }
+  
+  SmvSingleCDSAggs o-L- "*" SmvCDSAggColumn
+  SmvSingleCDSAggs *-- "*" Expression
+  SmvSingleCDSAggs *-- "1" SmvCDS
+  
+  class SmvGDO <<Abstract>> {
+    inGroupKeys
+    createInGroupMapping(*)
+    createOutSchema(*)
+  }
+  
+  class SmvCDSAggGDO extends SmvGDO
+  SmvCDSAggGDO *-- "*" SmvCDSAggColumn
+  SmvCDSAggGDO *-- "*" SmvSingleCDSAggs
+  
+  class SmvCDSRunAggGDO extends SmvGDO
+  SmvCDSRunAggGDO *-- "*" SmvCDSAggColumn
+  SmvCDSRunAggGDO *-- "*" SmvSingleCDSAggs
+  
+  class SmvCDSPanelAggGDO extends SmvGDO
+  SmvCDSPanelAggGDO *-- "*" SmvCDSAggColumn
+  SmvCDSPanelAggGDO *-- "*" SmvSingleCDSAggs
+  
+  class SmvCDSAsGDO extends SmvGDO
+  
+  SmvCDSAsGDO *-- "1" SmvCDS
+  
+}
+
+@enduml

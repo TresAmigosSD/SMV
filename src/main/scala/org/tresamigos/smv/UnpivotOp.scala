@@ -15,8 +15,11 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.ColumnName
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions._
+import scala.reflect.runtime.universe.{TypeTag, typeTag}
 
 
 /**
@@ -39,31 +42,34 @@ import org.apache.spark.sql.catalyst.expressions._
  *
  * This only works for String columns for now (due to limitation of Explode method)
  */
-class UnpivotOp(val srdd: SchemaRDD, val valueCols: Seq[Symbol]) {
+class UnpivotOp(val srdd: SchemaRDD, val valueCols: Seq[String]) {
   // TODO: should not hardcode the column/value column names in the result.
   // TODO: perhaps accept multiple valueCols sets.
-
+  
+  val types = valueCols.map{c => srdd(c).toExpr.dataType}.toSet.toSeq
+  require(types.size == 1)
+  val dataType = types(0)
+  
+  val dummyEntry = SchemaEntry("dummy", dataType).asInstanceOf[NativeSchemaEntry]
+  
   /**
    * Creates the projection array expression required to unpivot the pivoted data:
    * Given value columns (X,Y,Z), this produces:
    * Array( Array("X", 'X), Array("Y", 'Y), Array("Z", 'Z) )
    */
   private def unpivotExplodeArray() = {
-    SmvAsArray(valueCols.
-      map(_.name).
-      map(vn => SmvAsArray(Literal(vn), UnresolvedAttribute(vn))): _*
+    smvAsArray(valueCols.
+      map(vn => smvAsArray(lit(vn), srdd(vn))): _*
     )
   }
 
   def unpivot() = {
-    import srdd.sqlContext._
+    import srdd.sqlContext.implicits._
 
-    srdd.
-      generate(Explode(Seq("_unpivot_vals"), unpivotExplodeArray()), true).
-      selectMinus(valueCols: _*).
-      selectPlus(
-        GetItem("_unpivot_vals".attr, 0) as 'column,
-        GetItem("_unpivot_vals".attr, 1) as 'value).
-      selectMinus(Symbol("_unpivot_vals"))
+    srdd.selectPlus(unpivotExplodeArray() as "_unpivot_vals").
+      explode("_unpivot_vals", "_kvpair")((a: Seq[Seq[String]]) => a).
+      selectPlus($"_kvpair".getItem(0) as 'column, $"_kvpair".getItem(1) as 'value).
+      selectMinus("_unpivot_vals", "_kvpair").
+      selectMinus(valueCols: _*)
   }
 }

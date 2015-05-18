@@ -20,7 +20,7 @@ class UnpivotTest extends SparkTestUtil {
     val srdd = createSchemaRdd("id:String; X:String; Y:String; Z:String",
       """1,A,B,C; 2,D,E,F""")
 
-    val res = srdd.smvUnpivot(Seq('X, 'Y, 'Z))
+    val res = srdd.smvUnpivot('X, 'Y, 'Z)
     assertSrddSchemaEqual(res, "id:String; column:String; value:String")
     assertSrddDataEqual(res,
     """1,X,A;1,Y,B;1,Z,C;

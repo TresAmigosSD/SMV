@@ -141,7 +141,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
    * @param numLines the number of rows to process to discover the type of the columns
    * @param ca  the csv file attributes
    */
-  private[smv] def discoverSchema(strRDD: RDD[String], numLines: Int, ca: CsvAttributes) : Schema = {
+  private[smv] def discoverSchema(strRDD: RDD[String], numLines: Int, ca: CsvAttributes) : SmvSchema = {
     val parser = new CSVParser(ca.delimiter)
 
     val columns = getColumnNames(strRDD,ca)
@@ -177,7 +177,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       }
     }
 
-    new Schema(schemaEntries.toSeq)
+    new SmvSchema(schemaEntries.toSeq)
   }
 
   /**

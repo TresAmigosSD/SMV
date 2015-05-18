@@ -15,19 +15,57 @@
 package org.tresamigos
 
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
+import org.apache.spark.sql.{Column, ColumnName}
+import org.apache.spark.sql.GroupedData
+import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.rdd.RDD
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 package object smv {
+  implicit def makeColHelper(col: Column) = new ColumnHelper(col)
+  implicit def makeSymColHelper(sym: Symbol) = new ColumnHelper(new ColumnName(sym.name))
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
   implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
-  implicit def makeSchemaRDDHelper(srdd: SchemaRDD) = new SchemaRDDHelper(srdd)
-  implicit def makeSmvCDSFunctions(srdd: SchemaRDD) = new SmvCDSFunctions(srdd)
+  implicit def makeDFHelper(srdd: SchemaRDD) = new SmvDFHelper(srdd)
+  implicit def makeSmvGDFunc(sgd: SmvGroupedData) = new SmvGroupedDataFunc(sgd)
+  implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.toGroupedData
+  implicit def makeSmvCDSAggColumn(col: Column) = SmvCDSAggColumn(col.toExpr)
   implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
   implicit def makeSeqStrRDDHelper(rdd: RDD[Seq[String]]) = new SeqStringRDDHelper(rdd)
   implicit def makeRDDHelper[T](rdd: RDD[T])(implicit tt: ClassTag[T]) = 
     new RDDHelper[T](rdd)
   implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) = 
     new PairRDDHelper[K,V](rdd)
+    
+  /***************************************************************************
+   * Functions 
+   ***************************************************************************/
+  
+  /* Aggregate Function wrappers */
+  def histogram(c: Column) = {
+    new Column(Histogram(c.toExpr))
+  }
+  
+  def onlineAverage(c: Column) = {
+    new Column(OnlineAverage(c.toExpr))
+  }
+  
+  def onlineStdDev(c: Column) = {
+    new Column(OnlineStdDev(c.toExpr))
+  }
+  
+  /* NonAggregate Function warppers */
+  def columnIf(cond: Column, l: Column, r: Column) = {
+    new Column(If(cond.toExpr, l.toExpr, r.toExpr))
+  }
+  
+  def smvStrCat(columns: Column*) = {
+    new Column(SmvStrCat(columns.map{c => c.toExpr}: _*))
+  }
+  
+  def smvAsArray(columns: Column*) = {
+    new Column(SmvAsArray(columns.map{c => c.toExpr}: _*))
+  }
 }

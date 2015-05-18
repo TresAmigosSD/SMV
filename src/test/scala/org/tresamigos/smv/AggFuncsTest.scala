@@ -16,21 +16,23 @@ package org.tresamigos.smv
 
 class AggFuncsTest extends SparkTestUtil {
   sparkTest("test OnlineAverage") {
-    val ssc = sqlContext; import ssc._
+    val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test1.csv")
-    val avg = srdd.aggregate(OnlineAverage('a), OnlineAverage('b))
-    assertDoubleSeqEqual(avg.collect()(0), List(2.0, 20.0))
+    val avg = srdd.agg(onlineAverage('a), onlineAverage('b))
+    assertDoubleSeqEqual(avg.collect()(0).toSeq, List(2.0, 20.0))
   }
   sparkTest("test OnlineStdDev") {
-    val ssc = sqlContext; import ssc._
+    val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test1.csv")
-    val stddev = srdd.aggregate(OnlineStdDev('a), OnlineStdDev('b))
-    assertDoubleSeqEqual(stddev.collect()(0), List(1.0, 10.0))
+    val stddev = srdd.agg(onlineStdDev('a), onlineStdDev('b))
+    assertDoubleSeqEqual(stddev.collect()(0).toSeq, List(1.0, 10.0))
   }
+  /*d
+  */
   sparkTest("test Histogram") {
-    val ssc = sqlContext; import ssc._
+    val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test2.csv")
-    val hist = srdd.aggregate(Histogram('id)).collect()(0)(0).asInstanceOf[Map[String,Long]] //Array[Row(Map[String,Long])]=> Any=Map[..]
+    val hist = srdd.agg(histogram('id)).collect()(0)(0).asInstanceOf[Map[String,Long]] //Array[Row(Map[String,Long])]=> Any=Map[..]
     assert(hist === Map("231"->1l,"123"->2l))
   }
 }
