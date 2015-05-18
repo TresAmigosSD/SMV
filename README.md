@@ -1,13 +1,17 @@
 # Spark Model Variables (SMV)
-
 Spark Model Variables enables users to quickly build model variables on Apache Spark platform.
+Please refer [FAQ](docs/FAQ.md) for details.
 
 ## Build
 To build this package, use maven as follows:
 ```shell
 $ mvn clean install
 ```
-You must use maven version 3.0.4 or newer to build this project. In some system, instead of comand `mvn`, you may need to use `mvn3`.
+You must use maven version 3.0.4 or newer to build this project. 
+In some system, instead of comand `mvn`, you may need to use `mvn3`.
+
+For more details of setting up the system from scretch, please refer 
+[Smv Installation](docs/SMV-Installation.md).
 
 ## Run Spark Shell with SMV
 
