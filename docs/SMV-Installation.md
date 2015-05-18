@@ -6,6 +6,9 @@ Spark Model Variables
 This page will illustrate how to install [SMV](https://github.com/TresAmigosSD/SMV) in 
 a Ubuntu machine step by step.
 
+This page described earlier version of SMV with Spark 1.1. The latest SMV snapshot 
+actually works with Spark 1.3.  
+
 Install JDK
 ===========
 Spark should work on all kinds of JDK's. Here is only one way to set it up.

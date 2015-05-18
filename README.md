@@ -10,24 +10,31 @@ $ mvn clean install
 You must use maven version 3.0.4 or newer to build this project. 
 In some system, instead of comand `mvn`, you may need to use `mvn3`.
 
+After Spark 1.3, you need to set the Maven memory to avoid compile failure  
+```shell
+export MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m"
+```
+
 For more details of setting up the system from scretch, please refer 
 [Smv Installation](docs/SMV-Installation.md).
+It was written for earlier SMV version with Spark 1.1. Although the latest version 
+of SMV actually work with Spark 1.3, the document could still be helpful for the overall 
+process.
 
 ## Run Spark Shell with SMV
 
 We can pre-load SMV jar when run spark-shell. 
 
 ```shell
-$ ADD_JARS=/path/to/smv/smv-1.0-SNAPSHOT.jar spark-shell -i sparkshellinclude.scala
+$ spark-shell --executor-memory 2g --jars ./target/smv-1.0-SNAPSHOT.jar -i sparkshellinclude.scala
 ```
 where `sparkshellinclude.scala` will be loaded for convenience. It could look like the follows,
 
 ```scala
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql._, functions._ 
 import org.tresamigos.smv._
 val sqlContext = new SQLContext(sc)
-import sqlContext._
-import org.apache.spark.sql.catalyst.expressions._
+import sqlContext.implicits._
 ```
 
 Or you can use the existing script under ```shell``` directory.
@@ -45,30 +52,30 @@ val sqlContext = new SQLContext(sc)
 import sqlContext._
 
 val srdd = sqlContext.csvFileWithSchema("/data/input", "/data/input.schema")
-val mini_srdd = srdd.select('tx_id, 'tx_amt, 'tx_date, 'tx_type)
+val mini_srdd = srdd.select($"tx_id", $"tx_amt", $"tx_date", $"tx_type")
 
 // create EDD base tasks (see description under EDD section below)
 val edd = mini_srdd.edd.addBaseTasks()
 
 // add histogram to enumerated "amount" types.
-edd.addAmountHistogramTasks('tx_amt)
+edd.addAmountHistogramTasks("tx_amt")
 
 // add generic histogram calcuation for given fields.
-edd.addHistogramTasks('tx_date, 'tx_type)
+edd.addHistogramTasks("tx_date", "tx_type")()
 
 // generate the histogram and save it.
-edd.createReport.saveAsFile(outreport)
+edd.saveReport("outreport")
 ```
 
 ## Ad Hoc Data Discovery VS. App Development 
 The nature of Data Application development is the circle of Data Discovery -> Variable Coding -> Data Discovery. 
-SMV is designed to support seamlessly switch between those 2 modes. 
+SMV is designed to support seamlessly switching between those 2 modes. 
 
 In a nutshell, SMV extends Spark Shell with additional function and components to provide an interactive environment 
 for ad hoc Data Discovery; Also the SMV provides an [Application Framework](docs/appFramework.md) for easier Variable 
 Development with Spark (and Scala).
 
-With the SmvApp framework and all the additional functions is to make user's experience closer to solve the data problem 
+The SmvApp framework with all the additional functions is to make user's experience closer to solve the data problem 
 with minimal Spark/Scala programing knowledge and skills. 
 
 ## [Application Framework](docs/appFramework.md)
@@ -81,4 +88,6 @@ with minimal Spark/Scala programing knowledge and skills.
 * [DQM - Experimental](docs/Dqm.md)
 
 ## Migrate to Spark 1.3
-Since Spark 1.3.0, there quite some interface changes on SparkSQL. Please refer [Migrate to Spark 1.3](docs/MigrateTo1.3.md) for details.
+Since Spark 1.3.0, there quite some interface changes on SparkSQL. Please refer 
+[Migrate to Spark 1.3](docs/MigrateTo1.3.md) for details.
+

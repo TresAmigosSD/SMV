@@ -10,15 +10,15 @@ SMV could be used for either Data Engineers or Data Scientists.
 
 SMV could help Data Engineers on:
 * A very simple modularized framework for data ETL and manipulation
-* Similar concepts of data manipulation as table operations and queries in DW
+* Similar concepts of data manipulation as table operations and queries in Data Warehouse
 * Software development style code management and more importantly data management
-* Obvious variable creation functions and syntax to capture the intend instead
+* Obvious variable creation functions and syntax to capture the intention instead
   of implementation details. Easy to share with non-technical people
 * SmvModule management with meta data to easily visualize, analyze and
   optimize data flow  
 
 SMV could help Data Scientists on:
-* Simple variable creating functions and languages which translate the intend
+* Simple variable creating functions and languages which translate the intention
   or meaning of the variable logic, instead of spend time of figuring out how
   to implement a logic 
 * Utilize the power of Spark without very deep knowledge of how Spark core or
@@ -35,7 +35,7 @@ SMV document, especially the application framework doc and interactive shell doc
 a good starting point. Most relevant knowledge on Spark is the DataFrame operation session
 of the [Spark SQL and DataFrame](http://spark.apache.org/docs/latest/sql-programming-guide.html).  
 
-We are creating a project template for quick start.
+We also have an [example project](examples/01GetStart/README.md) to help users to jump start.
 
 ## Do I need to setup a cluster to start using SMV?
 No. Spark and SMV both works well on local machines. 
@@ -46,6 +46,7 @@ Simply install JDK and Maven, and download a Spark pre-build package, your syste
 using SMV.
 
 ## I setup my SMV, what's next?
-How to run? How to check the results?
+Please follow the [example project](examples/01GetStart/README.md). It will help you to 
+quickly start using SMV and setup your own project. 
 
-## How to explore?
+Also you can read all the SMV document and try out functions with the example project.

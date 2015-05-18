@@ -33,10 +33,14 @@ EDD builder object keeps a **task list**. The add* methods adding task items to 
 
 ```scala
 val resultSRDD = edd.toSchemaRDD  // It is auto persisted
-resultSRDD.saveAsCsvWithSchema("/report/eddSRDD")
+resultSRDD.saveAsCsvWithSchema("report/eddSRDD")
 
-val report = edd.createReport // report is a RDD. The record count is 1 if the EDD is on the population. 
-report.saveAsTextFile("report//eddreport")
+val report = edd.createReport // report is an arry of strings . The record count is 1 if the EDD is on the population. 
+```
+
+You can save a local copy of the report
+```scala
+edd.saveReport("report/eddreport")
 ``` 
 
 Within the interactive shell, you can do
