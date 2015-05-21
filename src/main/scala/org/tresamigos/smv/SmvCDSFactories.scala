@@ -26,29 +26,9 @@ import org.apache.spark.sql.catalyst.dsl.expressions._
  * Return the 3 records with largest "amount" field
  **/
 object TopNRecs {
-  def apply(maxElems: Int, orderCols: Column*): FilterCDS = {
+  def apply(maxElems: Int, orderCols: Column*): SmvCDS = {
     new SmvTopNRecsCDS(maxElems, orderCols.map{o => o.toExpr})
   }
-}
-
-/**
- * FirstNRecs: Return first N records in a group
- * 
- * Eg.
- * df.orderBy($"time".asc).smvGroupBy("id").inMemAgg(sum("v") from FirstNRecs(3) as "first3v")
- * 
- * To use it with "runAgg", you need to chain it with "TillNow":
- * FirstNRecs(3) from TillNow("time")
- **/
-object FirstNRecs {
-  def apply(n: Int): FilterCDS = new SmvFirstNRecsCDS(n)
-}
-
-/**
- * LastNRecs: Return last N records in a group
- **/ 
-object LastNRecs {
-  def apply(n: Int): FilterCDS = new SmvLastNRecsCDS(n)
 }
 
 /**

@@ -6,33 +6,22 @@ hide circle
 
 
 package SMV {
+  class CDSSubGroup {
+    currentSchema: SmvSchema
+    crossSchema: SmvSchema
+    currentRow: Row
+    crossRows: Iterable[Row]
+  }
+    
   class SmvCDS <<Abstract>> {
     from(that): SmvCDS
+    mapping(input: CDSSubGroup): CDSSubGroup
   }
   
-  class FullCompareCDS <<Abstract>> extends SmvCDS {
-    mapping(schema1, schema2): (Row, Iterable) => Iterable
-  }
+  class CombinedCDS extends SmvCDS 
+  class NoOpCDS extends SmvCDS
   
-  class SelfCompareCDS <<Abstract>> extends SmvCDS {
-    mapping(schema): (Row, Iterable) => Iterable
-  }
-  
-  class FilterCDS <<Abstract>> extends SmvCDS {
-    mapping(schema): Iterable => Iterable
-  }
-  
-  class SelfCompareToFullCompare extends FullCompareCDS
-  class FilterToSelfCompare extends SelfCompareCDS
-  
-  SelfCompareToFullCompare o-- "1" SelfCompareCDS
-  FilterToSelfCompare o-- "1" FilterCDS
-  
-  class CombinedFullCDS extends FullCompareCDS 
-  class CombinedSelfCDS extends SelfCompareCDS 
-  class CombinedFilterCDS extends FilterCDS 
-  
-  class NoOpCDS extends FilterCDS
+  CombinedCDS o-- "2" SmvCDS
   
   class SmvCDSAggColumn{
     from(otherCds): SmvCDSAggColumn
@@ -43,12 +32,11 @@ package SMV {
   SmvCDSAggColumn *-- "1" Expression
   SmvCDSAggColumn *-- "1" SmvCDS
   
-  class SmvPanelCompareCDS extends FullCompareCDS
-  class SmvSelfCompareCDS extends SelfCompareCDS
-  class SmvTopNRecsCDS extends FilterCDS
+  class SmvSelfCompareCDS extends SmvCDS
+  class SmvTopNRecsCDS extends SmvCDS
   
   class SmvSingleCDSAggs{
-    createOutSchema(schema2)
+    resolvedExprs(schema2)
     createExecuter(schema1, schema2)
   }
   
