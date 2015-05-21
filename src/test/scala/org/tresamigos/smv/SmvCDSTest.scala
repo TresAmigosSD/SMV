@@ -39,6 +39,21 @@ class SmvCDSTest extends SparkTestUtil {
       "[z,5,2.2,1]"))
   }
   
+  sparkTest("Test FastRunAgg") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+
+    val res = srdd.orderBy($"t".asc).smvGroupBy("k").
+      smvMapGroup(new SmvFastRunAgg("t")(sum("v") as "v_runSum")).toDF
+      
+    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double; v_runSum: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3,0.3]",
+      "[z,1,0.2,0.2]",
+      "[z,2,1.4,1.5999999999999999]",
+      "[z,5,2.2,3.8]"))
+  }
+  
   sparkTest("Test agg with no-from-aggregation") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")

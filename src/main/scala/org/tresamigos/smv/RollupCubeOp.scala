@@ -75,7 +75,7 @@ class RollupCubeOp(df: DataFrame,
   private def duplicateAndGroup(bitmasks: Seq[Int]) = {
     val cubeCols = keyCols ++ cols
     duplicateSRDDByBitmasks(bitmasks).
-      smvGroupBy(cubeCols: _*)
+      smvGroupBy(cubeCols.map{c=> new ColumnName(c)}: _*)
   }
 
   /**

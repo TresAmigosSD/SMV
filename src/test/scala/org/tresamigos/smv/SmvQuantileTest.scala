@@ -30,7 +30,7 @@ class SmvQuantileTest extends SparkTestUtil {
     val srdd = createSchemaRdd("g:String; g2:Integer; k:String; junk:String; v:Integer",
       testData_1to20_str + """;G2,0,x,J,10;G2,0,y,JJ,30""")
 
-    val res = srdd.smvGroupBy('g, 'g2).smvDecile("v")
+    val res = srdd.smvGroupBy("g", "g2").smvDecile("v")
     //res.dumpSRDD
 
     /* expected output:

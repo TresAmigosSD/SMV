@@ -229,12 +229,11 @@ class SmvDFHelper(df: DataFrame) {
    *  Similar to groupBy, instead of creating GroupedData,
    *  create an SmvGroupedData object 
    */
-  def smvGroupBy(cols: String*) = {
-    SmvGroupedData(df, cols)
+  def smvGroupBy(cols: Column*) = {
+    val names = cols.map{c => c.toName}
+    SmvGroupedData(df, names)
   }
-  
-  def smvGroupBy(col: Symbol, others: Symbol*) = {
-    val cols = col +: others
-    SmvGroupedData(df, cols.map{c => c.name})
+  def smvGroupBy(col: String, others: String*) = {
+    SmvGroupedData(df, (col +: others))
   }
 }

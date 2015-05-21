@@ -40,6 +40,12 @@ class ColumnHelper(column: Column) {
   /** convert Column to Expression */
   def toExpr = extractExpr(column)
   
+  /** toName */
+  def toName = expr match {
+    case e: NamedExpression => e.name
+    case e: Expression => e.prettyString
+  }
+  
   /** NullSub 
    *  Should consider use coalesce(c1, c2) function going forward
    **/

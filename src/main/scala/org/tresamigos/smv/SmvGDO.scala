@@ -16,6 +16,12 @@ package org.tresamigos.smv
 
 import scala.math.floor
 
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.catalyst.dsl.expressions._
+import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.catalyst.dsl.plans._
+
+import org.apache.spark.sql.catalyst.analysis.SimpleAnalyzer
 import org.apache.spark.sql.catalyst.expressions._
 /*
 import org.apache.spark.sql.functions._
@@ -92,6 +98,40 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
         val newValsDouble = Seq(valueTotal, runSum)
         val newValsInt = Seq(bin)
         new GenericRow(Array[Any](r.toSeq ++ newValsDouble ++ newValsInt: _*))
+      }
+    }
+  }
+}
+
+class SmvFastRunAgg(timeCol: String)(aggCol: Column) extends SmvGDO {
+  private val aggExpr = aggCol.toExpr match {
+    case e: NamedExpression => e
+    case e: Expression => Alias(e, s"${e.toString}")()
+  }
+  
+  def inGroupKeys = Nil
+  
+  def createOutSchema(inSchema: SmvSchema) = {
+    val oldFields = inSchema.entries
+    val expr = SmvLocalRelation(inSchema).resolveAggExprs(aggExpr)(0)
+    val newField = SchemaEntry(aggExpr.name, expr.dataType)
+    new SmvSchema(oldFields :+ newField)
+  }
+  
+  def createInGroupMapping(inSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
+    val timeOrdinal = inSchema.getIndices(timeCol)(0)
+    val order = inSchema.findEntry(timeCol).get.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
+    implicit object RowOrdering extends Ordering[Row] {
+      def compare(a:Row, b:Row) = order.compare(a(timeOrdinal),b(timeOrdinal))
+    }
+    val cum = SmvLocalRelation(inSchema).bindAggExprs(aggExpr)(0)
+    
+    {it: Iterable[Row] =>
+      val newcum = cum.newInstance()
+      it.toSeq.sorted.map{r =>
+        newcum.update(r)
+        val sum = newcum.eval(null)
+        new GenericRow(Array[Any](r.toSeq :+ sum: _*))
       }
     }
   }

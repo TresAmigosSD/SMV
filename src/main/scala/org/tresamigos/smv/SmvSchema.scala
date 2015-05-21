@@ -309,14 +309,6 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   }
   def findEntry(sym: Symbol): Option[SchemaEntry] = findEntry(sym.name)
 
-  def toLocalRelation(): LocalRelation = {
-    val schemaAttr = entries.map{e =>
-      val s = e.structField
-      AttributeReference(s.name, s.dataType, s.nullable)()
-    }
-    LocalRelation(schemaAttr)
-  }
-  
   def addMeta(sym: Symbol, metaStr: String): SmvSchema = {
     findEntry(sym).get.meta = metaStr
     this
