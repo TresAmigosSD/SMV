@@ -1,12 +1,3 @@
-<pre>
-      _/_/_/  _/      _/  _/      _/   
-   _/        _/_/  _/_/  _/      _/    
-    _/_/    _/  _/  _/  _/      _/     
-       _/  _/      _/    _/  _/        
-_/_/_/    _/      _/      _/           
-
-</pre>
-
 # Spark Model Variables (SMV)
 Spark Model Variables enables users to quickly build model variables on Apache Spark platform.
 Please refer [FAQ](docs/FAQ.md) for details.
@@ -19,10 +10,14 @@ $ mvn clean install
 You must use maven version 3.0.4 or newer to build this project. 
 In some system, instead of comand `mvn`, you may need to use `mvn3`.
 
-After Spark 1.3, you need to set the Maven memory to avoid compile failure  
+With Spark version 1.3, you need to set the Maven memory to avoid compile failure  
 ```shell
 export MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m"
 ```
+
+Current version depend on Spark 1.3.0. It should also works under 1.3.1. Please modify 
+`pom.xml` to change Maven dependency configuration on Spark if you want to compile it with 
+Spark 1.3.1 library. 
 
 For more details of setting up the system from scretch, please refer 
 [Smv Installation](docs/SMV-Installation.md).
@@ -51,8 +46,10 @@ Or you can use the existing script under ```shell``` directory.
 ./shell/run.sh
 ```
 You may need to modify the script a little for your own environment.
-
 You can put utility functions for the interactive shell in the ```shell_init.scala``` file. 
+
+Please note that the Spark Shell should in the same version as the SMV build on. Current version 
+SMV uses Spark 1.3.0, so you need the spark-shell in 1.3.0 package.
 
 ## Full example for ad hoc data discovery
 

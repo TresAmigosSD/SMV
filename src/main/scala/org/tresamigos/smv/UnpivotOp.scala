@@ -70,6 +70,6 @@ class UnpivotOp(val srdd: SchemaRDD, val valueCols: Seq[String]) {
       explode("_unpivot_vals", "_kvpair")((a: Seq[Seq[String]]) => a).
       selectPlus($"_kvpair".getItem(0) as 'column, $"_kvpair".getItem(1) as 'value).
       selectMinus("_unpivot_vals", "_kvpair").
-      selectMinus(valueCols: _*)
+      selectMinus(valueCols(0), valueCols.tail: _*)
   }
 }

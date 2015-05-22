@@ -121,10 +121,19 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     smvMapGroup(new SmvQuantile(valueCol, numBins)).toDF
   }
   
+  def smvQuantile(valueCol: Column, numBins: Integer): DataFrame = {
+    val name = valueCol.getName
+    smvMapGroup(new SmvQuantile(name, numBins)).toDF
+  }
+  
   def smvDecile(valueCol: String): DataFrame = {
     smvMapGroup(new SmvQuantile(valueCol, 10)).toDF
   }
   
+  def smvDecile(valueCol: Column): DataFrame = {
+    val name = valueCol.getName
+    smvMapGroup(new SmvQuantile(name, 10)).toDF
+  }
   /**
    * See RollupCubeOp for details.
    * 
@@ -147,10 +156,14 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * 
    * Also have a version on DF.
    **/
-  def smvCube(cols: String*): SmvGroupedData = {
-    new RollupCubeOp(df, keys, cols).cube()
+  def smvCube(col: String, others: String*): SmvGroupedData = {
+    new RollupCubeOp(df, keys, (col +: others)).cube()
   }
   
+  def smvCube(cols: Column*): SmvGroupedData = {
+    val names = cols.map(_.getName)
+    new RollupCubeOp(df, keys, names).cube()
+  }
   /**
    * See RollupCubeOp for details.
    * 
@@ -168,10 +181,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * 
    * Also have a version on DF
    **/
-  def smvRollup(cols: String*): SmvGroupedData = {
-    new RollupCubeOp(df, keys, cols).rollup()
+  def smvRollup(col: String, others: String*): SmvGroupedData = {
+    new RollupCubeOp(df, keys, (col +: others)).rollup()
   }
   
+  def smvRollup(cols: Column*): SmvGroupedData = {
+    new RollupCubeOp(df, keys, cols.map(_.getName)).rollup()
+  }
   /**
    * smvTopNRecs: for each group, return the top N records according to an ordering
    * 
@@ -206,7 +222,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *                            count('v) from last3 as "nv2",
    *                            sum('v) as "nv3")
    **/
-  def inMemAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
+  def oneAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
     val gdo = new SmvCDSAggGDO(aggCols)
     
     /* Since SmvCDSAggGDO grouped aggregations with the same CDS together, the ordering of the 
@@ -239,4 +255,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val gdo = new SmvFastRunAgg(timeCol, aggCols)
     smvMapGroup(gdo).toDF
   }
+  def smvFastRunAgg(timeCol: Column)(aggCols: Column*): DataFrame = 
+      smvFastRunAgg(timeCol.getName)(aggCols: _*)
 }

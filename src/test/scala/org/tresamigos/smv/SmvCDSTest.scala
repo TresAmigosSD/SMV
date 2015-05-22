@@ -58,7 +58,7 @@ class SmvCDSTest extends SparkTestUtil {
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
     val last3 = IntInLastN("t", 3)
-    val res = srdd.smvGroupBy('k).inMemAgg(
+    val res = srdd.smvGroupBy('k).oneAgg(
       $"k",
       $"t",
       sum('v) from last3 as "nv1",
@@ -76,7 +76,7 @@ class SmvCDSTest extends SparkTestUtil {
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
     val last2 = TopNRecs(2, $"v".desc) 
-    val res = srdd.smvGroupBy('k).inMemAgg(
+    val res = srdd.smvGroupBy('k).oneAgg(
       $"k",
       $"t",
       sum('v) from last2 as "nv1",
@@ -113,7 +113,7 @@ class SmvCDSTest extends SparkTestUtil {
 
     val last3 = TopNRecs(3, $"t".desc)
     val top2 = TopNRecs(2, $"v".desc)
-    val res = srdd.smvGroupBy('k).inMemAgg(
+    val res = srdd.smvGroupBy('k).oneAgg(
       $"k",
       $"t",
       sum('v) from top2 from last3 as "nv1",

@@ -57,6 +57,13 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
+   * checkNames: Require all the list of strings are real column names
+   */
+  private[smv] def checkNames(names: Seq[String]) = {
+    require(names.toSet subsetOf df.columns.toSet)
+  }
+  
+  /**
    * selects all the current columns in current SRDD plus the supplied expressions.
    */
   def selectPlus(exprs: Column*): DataFrame = {
@@ -72,12 +79,23 @@ class SmvDFHelper(df: DataFrame) {
     df.select( exprs ++ all : _* )
   }
 
-  def selectMinus(symb: String*): DataFrame = {
-    val all = df.columns diff symb
+  /**
+   * Remove columns from current DF
+   */
+  def selectMinus(s: String, others: String*): DataFrame = {
+    val names = s +: others
+    checkNames(names)
+    val all = df.columns diff names
     df.select(all.map{l=>df(l)} : _* )
   }
+  
+  def selectMinus(cols: Column*): DataFrame = {
+    val names = cols.map(_.getName)
+    selectMinus(names(0), names.tail: _*)
+  }
+  
   def selectMinus(s1: Symbol, sleft: Symbol*): DataFrame = 
-    selectMinus((s1 +: sleft).map{l=>l.name}: _*)
+    selectMinus(s1.name, sleft.map{l=>l.name}: _*)
   
   def renameField(namePairs: (String, String)*): DataFrame = {
     val namePairsMap = namePairs.toMap
@@ -89,7 +107,6 @@ class SmvDFHelper(df: DataFrame) {
   def renameField(n1: (Symbol, Symbol), nleft: (Symbol, Symbol)*): DataFrame = 
     renameField((n1 +: nleft).map{case(l, r) => (l.name, r.name)}: _*)
 
-   /* Do we still need these 2?
   def prefixFieldNames(prefix: String) : DataFrame = {
     val renamedFields = df.columns.map {
       fn => df(fn) as (prefix + fn)
@@ -103,7 +120,6 @@ class SmvDFHelper(df: DataFrame) {
     }
     df.select(renamedFields: _*)
   }
-  */
 
   private[smv] def joinUniqFieldNames(otherPlan: DataFrame, on: Column, joinType: String = "inner") : DataFrame = {
     val namesL = df.columns.toSet
@@ -123,18 +139,23 @@ class SmvDFHelper(df: DataFrame) {
     val newOther = otherPlan.renameField(renamedFields: _*)
     val joinOpt = keys.zip(rightKeys).map{case (l, r) => ($"$l" === $"$r")}.reduce(_ && _)
 
-    df.joinUniqFieldNames(newOther, joinOpt, joinType).selectMinus(rightKeys: _*)
+    df.joinUniqFieldNames(newOther, joinOpt, joinType).selectMinus(rightKeys(0), rightKeys.tail: _*)
   }
 
-  def dedupByKey(keys: String*) : DataFrame = {
+  def dedupByKey(k1:String, kleft: String*) : DataFrame = {
     import df.sqlContext.implicits._
+    val keys = k1 +: kleft
     val selectExpressions = df.columns.map {
       fn => first(fn) as fn
     }
     df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*)
   }
+  def dedupByKey(cols: Column*): DataFrame = {
+    val names = cols.map(_.getName)
+    dedupByKey(names(0), names.tail: _*)
+  }
   def dedupByKey(k1: Symbol, kleft: Symbol*): DataFrame = 
-    dedupByKey((k1 +: kleft).map{l=>l.name}: _*)
+    dedupByKey(k1.name, kleft.map{l=>l.name}: _*)
 
   /** adds a rank column to an srdd. */
   def smvRank(rankColumnName: String, startValue: Long = 0) = {
@@ -194,10 +215,14 @@ class SmvDFHelper(df: DataFrame) {
    * 
    * Also have a version on SmvGroupedData.
    **/
-  def smvCube(cols: String*): SmvGroupedData = {
-    new RollupCubeOp(df, Nil, cols).cube()
+  def smvCube(col: String, others: String*): SmvGroupedData = {
+    new RollupCubeOp(df, Nil, (col +: others)).cube()
   }
   
+  def smvCube(cols: Column*): SmvGroupedData = {
+    val names = cols.map(_.getName)
+    new RollupCubeOp(df, Nil, names).cube()
+  }
   /**
    * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
    * 
@@ -206,10 +231,14 @@ class SmvDFHelper(df: DataFrame) {
    * 
    * Also have a version on SmvGroupedData
    **/
-  def smvRollup(cols: String*): SmvGroupedData = {
-    new RollupCubeOp(df, Nil, cols).rollup()
+  def smvRollup(col: String, others: String*): SmvGroupedData = {
+    new RollupCubeOp(df, Nil, (col +: others)).rollup()
   }
   
+  def smvRollup(cols: Column*): SmvGroupedData = {
+    val names = cols.map(_.getName)
+    new RollupCubeOp(df, Nil, names).rollup()
+  }
   /**
    * Create an Edd builder on DataFrame 
    * 
@@ -230,9 +259,10 @@ class SmvDFHelper(df: DataFrame) {
    *  create an SmvGroupedData object 
    */
   def smvGroupBy(cols: Column*) = {
-    val names = cols.map{c => c.toName}
+    val names = cols.map{c => c.getName}
     SmvGroupedData(df, names)
   }
+  
   def smvGroupBy(col: String, others: String*) = {
     SmvGroupedData(df, (col +: others))
   }
