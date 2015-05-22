@@ -85,8 +85,6 @@ val3                 Approx Distinct Count: 3"""
     val edd = srdd.edd.addMoreTasks(
       StringByKeyHistogram(srdd("id")),MonthHistogram(srdd("val2"))
     )
-    val res = edd.toSchemaRDD
-    assertSrddDataEqual(res, "3,Map(231 -> 1, 123 -> 2),Map(8 -> 1, 1 -> 1, 10 -> 1)")
 
     val res2 = edd.createReport()
     val expect2 = Array("""Total Record Count:                        3

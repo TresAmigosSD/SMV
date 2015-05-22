@@ -1,3 +1,12 @@
+<pre>
+      _/_/_/  _/      _/  _/      _/   
+   _/        _/_/  _/_/  _/      _/    
+    _/_/    _/  _/  _/  _/      _/     
+       _/  _/      _/    _/  _/        
+_/_/_/    _/      _/      _/           
+
+</pre>
+
 # Spark Model Variables (SMV)
 Spark Model Variables enables users to quickly build model variables on Apache Spark platform.
 Please refer [FAQ](docs/FAQ.md) for details.

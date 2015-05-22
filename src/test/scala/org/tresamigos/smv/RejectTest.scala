@@ -32,17 +32,18 @@ class RejectTest extends SparkTestUtil {
   }
 
   sparkTest("test csvFile loader rejection") {
-    implicit val rejectLogger:RejectLogger  = new SCRejectLogger(sc, 3)
+    implicit val rejectLogger:RejectLogger  = new SCRejectLogger(sc, 10)
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "RejectTest/test2")
     srdd.collect
     val res = rejectLogger.rejectedReport.map{ case (s,e) => s"$s -- $e" }
     val exp = List(
-      "123,12.50  ,12102012 -- java.lang.IllegalArgumentException: requirement failed",
-      "123,001x  ,20130109130619,12102012 -- java.lang.NumberFormatException: For input string: \"001x\"",
-      "123,  ,20130109130619,12102012 -- java.lang.NumberFormatException: empty String",
-      "123,12.50  ,109130619,12102012 -- java.text.ParseException: Unparseable date: \"109130619\"",
-      "123,12.50  ,130109130619,12102012 -- java.text.ParseException: Unparseable date: \"130109130619\"",
-      "More rejects!! Total rejected records: 6 -- ")
+      "123,12.50  ,130109130619,12102012 -- java.text.ParseException: Unparseable date: \"130109130619\"", 
+      "123,12.50  ,109130619,12102012 -- java.text.ParseException: Unparseable date: \"109130619\"", 
+      "123,12.50  ,201309130619,12102012 -- java.text.ParseException: Unparseable date: \"201309130619\"",
+      "123,  ,20130109130619,12102012 -- java.lang.NumberFormatException: empty String", 
+      "123,12.50  ,12102012 -- java.lang.IllegalArgumentException: requirement failed", 
+      "123,001x  ,20130109130619,12102012 -- java.lang.NumberFormatException: For input string: \"001x\"", 
+      "Total rejected records: 6 -- ")
 
     assertUnorderedSeqEqual(res, exp)
 

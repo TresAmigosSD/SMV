@@ -36,7 +36,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
   /**
    * Create a SchemaRDD from a file by applying a Schema object.
    */
-  def csvFileAddSchema(dataPath: String, schema: SmvSchema)
+  private[smv] def csvFileAddSchema(dataPath: String, schema: SmvSchema)
                       (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD = {
     val strRDD = sqlContext.sparkContext.textFile(dataPath)
     val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD
@@ -50,10 +50,9 @@ class SqlContextHelper(sqlContext: SQLContext) {
    *  @param schemaPath the Schema file
    *  @param rejects the global reject logger, could be override by implicit val
    */
-  def csvFileWithSchema(dataPath: String, schemaPath: String = null)
+  def csvFileWithSchema(dataPath: String, schemaPath: Option[String] = None)
                        (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD = {
-    // TODO: the schemaPath should be an Option[String]
-    val sp = if (schemaPath==null) SmvSchema.dataPathToSchemaPath(dataPath) else schemaPath
+    val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
     val sc = sqlContext.sparkContext
     val schema = SmvSchema.fromFile(sc, sp)
     csvFileAddSchema(dataPath, schema)
