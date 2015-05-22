@@ -29,19 +29,19 @@ case class SmvLocalRelation(schema: SmvSchema) {
     LocalRelation(schemaAttr)
   }
   
-  def resolveAggExprs(exprs: Expression*) = {
+  def resolveAggExprs(exprs: Seq[Expression]) = {
     locRel.groupBy()(exprs: _*).analyze.expressions
   }
   
-  def bindAggExprs(exprs: Expression*) = {
-    val aggExprs = resolveAggExprs(exprs: _*).map{
+  def bindAggExprs(exprs: Seq[Expression]) = {
+    val aggExprs = resolveAggExprs(exprs).map{
       case Alias(e: AggregateExpression, n) => e
       case e: AggregateExpression => e
     }
     aggExprs.map{e => BindReferences.bindReference(e, locRel.output)}
   }
   
-  def resolveExprs(exprs: Expression*) = {
+  def resolveExprs(exprs: Seq[Expression]) = {
     val withName = exprs map {
       case e: NamedExpression => e
       case e: Expression => Alias(e, s"${e.toString}")()
@@ -49,7 +49,7 @@ case class SmvLocalRelation(schema: SmvSchema) {
     locRel.select(withName: _*).analyze.expressions
   }
   
-  def bindExprs(exprs: Expression*) = {
-    resolveExprs(exprs: _*).map{e => BindReferences.bindReference(e, locRel.output)}
+  def bindExprs(exprs: Seq[Expression]) = {
+    resolveExprs(exprs).map{e => BindReferences.bindReference(e, locRel.output)}
   }
 }

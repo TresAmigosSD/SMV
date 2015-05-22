@@ -103,19 +103,18 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
   }
 }
 
-class SmvFastRunAgg(timeCol: String)(aggCol: Column) extends SmvGDO {
-  private val aggExpr = aggCol.toExpr match {
+class SmvFastRunAgg(timeCol: String, aggCols: Seq[Column]) extends SmvGDO {
+  val aggExprs = aggCols.map{_.toExpr match {
     case e: NamedExpression => e
     case e: Expression => Alias(e, s"${e.toString}")()
-  }
-  
+  }}
   def inGroupKeys = Nil
   
   def createOutSchema(inSchema: SmvSchema) = {
     val oldFields = inSchema.entries
-    val expr = SmvLocalRelation(inSchema).resolveAggExprs(aggExpr)(0)
-    val newField = SchemaEntry(aggExpr.name, expr.dataType)
-    new SmvSchema(oldFields :+ newField)
+    val exprs = SmvLocalRelation(inSchema).resolveAggExprs(aggExprs)
+    val newFields = exprs.map{e => SchemaEntry(e.asInstanceOf[NamedExpression].name, e.dataType)}
+    new SmvSchema(oldFields ++ newFields)
   }
   
   def createInGroupMapping(inSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
@@ -124,14 +123,14 @@ class SmvFastRunAgg(timeCol: String)(aggCol: Column) extends SmvGDO {
     implicit object RowOrdering extends Ordering[Row] {
       def compare(a:Row, b:Row) = order.compare(a(timeOrdinal),b(timeOrdinal))
     }
-    val cum = SmvLocalRelation(inSchema).bindAggExprs(aggExpr)(0)
+    val cum = SmvLocalRelation(inSchema).bindAggExprs(aggExprs).toList //toList is for Serialization
     
     {it: Iterable[Row] =>
-      val newcum = cum.newInstance()
+      val newcum = cum.map{_.newInstance()}
       it.toSeq.sorted.map{r =>
-        newcum.update(r)
-        val sum = newcum.eval(null)
-        new GenericRow(Array[Any](r.toSeq :+ sum: _*))
+        newcum.map{_.update(r)}
+        val sum = newcum.map{_.eval(null)}
+        new GenericRow(Array[Any](r.toSeq ++ sum: _*))
       }
     }
   }

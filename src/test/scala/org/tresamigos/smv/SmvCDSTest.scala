@@ -43,8 +43,7 @@ class SmvCDSTest extends SparkTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
-    val res = srdd.orderBy($"t".asc).smvGroupBy("k").
-      smvMapGroup(new SmvFastRunAgg("t")(sum("v") as "v_runSum")).toDF
+    val res = srdd.orderBy($"t".asc).smvGroupBy("k").smvFastRunAgg("t")(sum("v") as "v_runSum")
       
     assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double; v_runSum: Double")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(

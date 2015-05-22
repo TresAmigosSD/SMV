@@ -93,10 +93,10 @@ case class SmvCDSAggColumn(aggExpr: Expression, cds: SmvCDS = NoOpCDS) {
  **/
 private[smv] case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
   def resolvedExprs(inSchema: SmvSchema) = 
-    SmvLocalRelation(inSchema).resolveAggExprs(aggExprs: _*)
+    SmvLocalRelation(inSchema).resolveAggExprs(aggExprs)
   
   def createExecuter(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Seq[Any] = {
-    val cum = SmvLocalRelation(inSchema).bindAggExprs(aggExprs: _*).map{_.newInstance()}
+    val cum = SmvLocalRelation(inSchema).bindAggExprs(aggExprs).map{_.newInstance()}
     val itMap = cds.createIteratorMap(toBeComparedSchema, inSchema)
     
     {(toBeCompared, it) =>
@@ -208,7 +208,7 @@ case class SmvSelfCompareCDS(condition: Expression) extends SmvCDS {
     val cond = condition as "condition"
     val inSchema = input.crossSchema
     val combinedSchema = inSchema.selfJoined
-    val ex = SmvLocalRelation(combinedSchema).bindExprs(cond)(0)
+    val ex = SmvLocalRelation(combinedSchema).bindExprs(Seq(cond))(0)
     
     val outIt = input.crossRows.collect{
       case r if (ex.eval(Row.merge(input.currentRow, r)).asInstanceOf[Boolean]) => r
