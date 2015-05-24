@@ -223,7 +223,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *                            sum('v) as "nv3")
    **/
   def oneAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
-    val gdo = new SmvCDSAggGDO(aggCols)
+    val gdo = new SmvOneAggGDO(aggCols)
     
     /* Since SmvCDSAggGDO grouped aggregations with the same CDS together, the ordering of the 
        columns is no more the same as the input list specified. Here to put them in order */
@@ -246,7 +246,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *                    sum('v) as "nv3")
    **/
   def runAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
-    val gdo = new SmvCDSRunAggGDO(aggCols)
+    val gdo = new SmvRunAggGDO(aggCols)
     val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
     smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
   }

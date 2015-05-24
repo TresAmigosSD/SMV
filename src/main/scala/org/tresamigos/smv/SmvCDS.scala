@@ -32,18 +32,28 @@ private[smv] case class CDSSubGroup(
  **/
  
 abstract class SmvCDS extends Serializable {
-  def from(that: SmvCDS): SmvCDS = CombinedCDS(this, that)
-  def mapping(input: CDSSubGroup): CDSSubGroup
+  def from(that: SmvCDS): SmvCDS = this match{
+    case NoOpCDS => that
+    case _ => CombinedCDS(this, that)
+  }
+  
+  def filter(input: CDSSubGroup): CDSSubGroup
   
   def createIteratorMap(currentSchema: SmvSchema,  crossSchema: SmvSchema) = { 
     (curr: Row, it: Iterable[Row]) => 
-      mapping(CDSSubGroup(currentSchema, crossSchema, curr, it)).crossRows
+      filter(CDSSubGroup(currentSchema, crossSchema, curr, it)).crossRows
   }
 }
 
+trait RunAggOptimizable {
+  def createRunAggIterator(
+    crossSchema: SmvSchema, 
+    cum: Seq[AggregateFunction]): (Iterable[Row]) => Iterable[Row]
+}
+
 private[smv] case class CombinedCDS(cds1: SmvCDS, cds2: SmvCDS) extends SmvCDS {
-  def mapping(input: CDSSubGroup) = {
-    cds1.mapping(cds2.mapping(input))
+  def filter(input: CDSSubGroup) = {
+    cds1.filter(cds2.filter(input))
   }
 }
 
@@ -51,7 +61,7 @@ private[smv] case class CombinedCDS(cds1: SmvCDS, cds2: SmvCDS) extends SmvCDS {
  * NoOpCDS: pass down the iterator
  **/
 private[smv] case object NoOpCDS extends SmvCDS {
-  def mapping(input: CDSSubGroup) = input
+  def filter(input: CDSSubGroup) = input
 }
 
 /**
@@ -63,7 +73,7 @@ private[smv] class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
   def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = { it =>
     //TODO: Should consider to pass the last row as current row
     val input = CDSSubGroup(null, smvSchema, null, it)
-    cds.mapping(input).crossRows
+    cds.filter(input).crossRows
   }
 }
 
@@ -95,8 +105,11 @@ private[smv] case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpress
   def resolvedExprs(inSchema: SmvSchema) = 
     SmvLocalRelation(inSchema).resolveAggExprs(aggExprs)
   
+  def aggFunctions(inSchema: SmvSchema): Seq[AggregateFunction] = 
+    SmvLocalRelation(inSchema).bindAggExprs(aggExprs).map{_.newInstance()}
+    
   def createExecuter(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Seq[Any] = {
-    val cum = SmvLocalRelation(inSchema).bindAggExprs(aggExprs).map{_.newInstance()}
+    val cum = aggFunctions(inSchema)
     val itMap = cds.createIteratorMap(toBeComparedSchema, inSchema)
     
     {(toBeCompared, it) =>
@@ -104,6 +117,7 @@ private[smv] case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpress
       cum.map{c => c.eval(null)}
     }
   }
+
 }
 
 /** 
@@ -131,54 +145,78 @@ private[smv] object SmvCDS {
 }
 
 /** 
- * SmvCDSAggGDO
- *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by agg operation on SmvGroupedData
+ * SmvAggGDO
  **/
-private[smv] class SmvCDSAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
+private[smv] abstract class SmvAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
   protected val keptCols = SmvCDS.findKeptCols(aggCols)
   protected val cdsAggsList: Seq[SmvSingleCDSAggs] = SmvCDS.combineCDS(SmvCDS.findAggCols(aggCols)) 
   
+  def createCurrentSchema(crossSchema: SmvSchema): SmvSchema
+  def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] 
+  
   def inGroupKeys = Nil
   
-  def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
-    //val executers = cdsAggsList.map{_.createExecuter(smvSchema)} - DOESN'T WORK! need to redefine as below for serialization 
-    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
-    val getKept: Row => Seq[Any] = {r => smvSchema.getIndices(keptCols: _*).map{i => r(i)}}
-    
-    {rows =>
-      val rSeq = rows.toSeq
-      val currentRow = rSeq.last
-      val kept = getKept(currentRow)
-      val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
-      Seq(new GenericRow((kept ++ out).toArray))
-    }
-  }
-  
   def createOutSchema(smvSchema: SmvSchema) = {
-    val ketpEntries = keptCols.map{n => smvSchema.findEntry(n).get}
+    val ketpEntries = keptCols.map{n => createCurrentSchema(smvSchema).findEntry(n).get}
     val nes = cdsAggsList.flatMap{aggs => aggs.resolvedExprs(smvSchema)}
     new SmvSchema(ketpEntries ++ nes.map{expr => SchemaEntry(expr.asInstanceOf[NamedExpression].name, expr.dataType)})
   }
 }
 
 /** 
- * SmvCDSRunAggGDO
- *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by runAgg operation on SmvGroupedData
+ * SmvOneAggGDO
+ *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by agg operation on SmvGroupedData
  **/
-private[smv] class SmvCDSRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvCDSAggGDO(aggCols) {
-  override def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
+private[smv] class SmvOneAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO(aggCols) {
+  def run(executers: Seq[(Row, Iterable[Row]) => Seq[Any]], getKept: Row => Seq[Any]): Iterable[Row] => Iterable[Row] = {
+    rows =>
+      val rSeq = rows.toSeq
+      val currentRow = rSeq.last
+      val kept = getKept(currentRow)
+      val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
+      Seq(new GenericRow((kept ++ out).toArray))
+  }
+ def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
     val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
     val getKept: Row => Seq[Any] = {r => smvSchema.getIndices(keptCols: _*).map{i => r(i)}}
-    
-    {rows =>
+    {rows => run(executers, getKept)(rows)}
+  }
+  
+  def createCurrentSchema(crossSchema: SmvSchema) = crossSchema
+}
+
+/** 
+ * SmvRunAggGDO
+ *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by runAgg operation on SmvGroupedData
+ **/
+private[smv] class SmvRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO(aggCols) {
+  def run(executers: Seq[(Row, Iterable[Row]) => Seq[Any]], getKept: Row => Seq[Any]): Iterable[Row] => Iterable[Row] = {
+    rows =>
       val rSeq = rows.toSeq
       rSeq.map{currentRow => 
         val kept = getKept(currentRow)
         val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
         new GenericRow((kept ++ out).toArray)
       }
+  }
+  def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
+    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
+    val getKept: Row => Seq[Any] = {r => smvSchema.getIndices(keptCols: _*).map{i => r(i)}}
+    
+    if (cdsAggsList.size == 1){
+      cdsAggsList(0).cds match {
+        case c: RunAggOptimizable => 
+          val cum = cdsAggsList(0).aggFunctions(smvSchema).toList; //toList: for serialization
+          {rows => c.createRunAggIterator(smvSchema, cum)(rows)} 
+        case _ =>
+          {rows => run(executers, getKept)(rows)}
+      }
+    } else {
+      {rows => run(executers, getKept)(rows)}
     }
   }
+  
+  def createCurrentSchema(crossSchema: SmvSchema) = crossSchema
 }
 
 /**
@@ -203,8 +241,10 @@ private[smv] class SmvCDSRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvCDS
  * records which has "_t" in the range of (t-3, t]. 
  **/
  
-case class SmvSelfCompareCDS(condition: Expression) extends SmvCDS {
-  def mapping(input: CDSSubGroup) = {
+abstract class SmvSelfCompareCDS extends SmvCDS {
+  val condition: Expression
+  
+  def filter(input: CDSSubGroup) = {
     val cond = condition as "condition"
     val inSchema = input.crossSchema
     val combinedSchema = inSchema.selfJoined
@@ -233,7 +273,7 @@ case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends Smv
   private val keys = orderKeys.map{k => k.child.asInstanceOf[NamedExpression].name}
   private val directions = orderKeys.map{k => k.direction}
   
-  def mapping(input: CDSSubGroup) = {
+  def filter(input: CDSSubGroup) = {
     val inSchema = input.crossSchema
     val ordinals = inSchema.getIndices(keys: _*)
     val ordering = (keys zip directions).map{case (k, d) =>

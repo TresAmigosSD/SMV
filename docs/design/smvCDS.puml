@@ -15,7 +15,7 @@ package SMV {
     
   class SmvCDS <<Abstract>> {
     from(that): SmvCDS
-    mapping(input: CDSSubGroup): CDSSubGroup
+    filter(input: CDSSubGroup): CDSSubGroup
   }
   
   class CombinedCDS extends SmvCDS 
@@ -50,17 +50,15 @@ package SMV {
     createOutSchema(*)
   }
   
-  class SmvCDSAggGDO extends SmvGDO
-  SmvCDSAggGDO *-- "*" SmvCDSAggColumn
-  SmvCDSAggGDO *-- "*" SmvSingleCDSAggs
+  class SmvAggGDO <<Abstract>> extends SmvGDO {
+  }
   
-  class SmvCDSRunAggGDO extends SmvGDO
-  SmvCDSRunAggGDO *-- "*" SmvCDSAggColumn
-  SmvCDSRunAggGDO *-- "*" SmvSingleCDSAggs
+  SmvAggGDO o-- "*" SmvCDSAggColumn
+  SmvAggGDO *-- "*" SmvSingleCDSAggs
   
-  class SmvCDSPanelAggGDO extends SmvGDO
-  SmvCDSPanelAggGDO *-- "*" SmvCDSAggColumn
-  SmvCDSPanelAggGDO *-- "*" SmvSingleCDSAggs
+  class SmvOneAggGDO extends SmvAggGDO
+  class SmvRunAggGDO extends SmvAggGDO
+  class SmvPanelAggGDO extends SmvAggGDO
   
   class SmvCDSAsGDO extends SmvGDO
   
