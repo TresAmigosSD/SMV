@@ -22,6 +22,7 @@ import org.apache.spark.sql.SchemaRDD
 
 import org.apache.spark.sql.catalyst.plans.logical._
 
+import java.text.{DateFormat, SimpleDateFormat}
 
 import scala.annotation.switch
 
@@ -113,8 +114,9 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss
     def compare(x: java.sql.Timestamp, y: java.sql.Timestamp) = x.compareTo(y)
   }
   override val zeroVal = Literal("") // TODO: should pick an epoch date instead.
-  // @transient val fmtObj = new java.text.SimpleDateFormat(fmt)
-  val fmtObj = new java.text.SimpleDateFormat(fmt)
+  // `SimpleDateFormat` is not thread-safe.
+  val fmtObj = SmvSchema.threadLocalDateFormat(fmt).get()
+  //val fmtObj = new java.text.SimpleDateFormat(fmt)
   override def strToVal(s:String) : Any = {
     if(s.isEmpty) null 
     else new java.sql.Timestamp(fmtObj.parse(s).getTime())
@@ -124,6 +126,28 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss
   override def toString = s"$name: $typeName[$fmt]"
 }
 
+case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd") extends NativeSchemaEntry {
+  private[smv] type JvmType = Int
+  private[smv] val ordering = implicitly[Ordering[JvmType]]
+  override val zeroVal = Literal(0)
+  
+  // `SimpleDateFormat` is not thread-safe.
+  val fmtObj = SmvSchema.threadLocalDateFormat(fmt).get()
+  
+  override def strToVal(s:String) : Any = {
+    if (s.isEmpty) null 
+    else DateUtils.millisToDays(fmtObj.parse(s).getTime())
+  }
+  
+  override def valToStr(v: Any) : String = {
+    if (v==null) "" 
+    else fmtObj.format(DateUtils.toJavaDate(v.asInstanceOf[Int]))
+  }
+  
+  override val typeName = "Date"
+  val structField = StructField(name, DateType, true)
+  override def toString = s"$name: $typeName[$fmt]"
+}
 // TODO: map entries delimiter hardcoded to "|" for now.
 // TODO: not worrying about key/val values containing the delimiter for now.
 // TODO: only allow basic types to avoid creating a full parser for the sub-types.
@@ -203,6 +227,8 @@ object SchemaEntry {
   private final val BooleanPattern = "[bB]oolean".r
   private final val TimestampPatternFmt = "[tT]imestamp\\[(.+)\\]".r
   private final val TimestampPattern = "[tT]imestamp".r
+  private final val DatePatternFmt = "[dD]ate\\[(.+)\\]".r
+  private final val DatePattern = "[dD]ate".r
   private final val MapPattern = "[mM]ap\\[(.+),(.+)\\]".r
   private final val ArrayPattern = "[aA]rray\\[(.+)\\]".r
 
@@ -217,6 +243,8 @@ object SchemaEntry {
       case BooleanPattern() => BooleanSchemaEntry(trimName)
       case TimestampPattern() => TimestampSchemaEntry(trimName)
       case TimestampPatternFmt(fmt) => TimestampSchemaEntry(trimName, fmt)
+      case DatePattern() => DateSchemaEntry(trimName)
+      case DatePatternFmt(fmt) => DateSchemaEntry(trimName, fmt)
       case MapPattern(keyTypeStr, valTypeStr) =>
         MapSchemaEntry(trimName,
           SchemaEntry("keyType", keyTypeStr),
@@ -238,6 +266,7 @@ object SchemaEntry {
       case IntegerType => IntegerSchemaEntry(trimName)
       case BooleanType => BooleanSchemaEntry(trimName)
       case TimestampType => TimestampSchemaEntry(trimName)
+      case DateType => DateSchemaEntry(trimName)
       case MapType(keyType, valType, _) =>
         MapSchemaEntry(trimName,
           SchemaEntry("keyType", keyType),
@@ -444,4 +473,11 @@ object SmvSchema {
 
     dataPathNoExt + ".schema"
   }
+  
+  // `SimpleDateFormat` is not thread-safe.
+  val threadLocalDateFormat = {fmt: String => new ThreadLocal[DateFormat] {
+    override def initialValue() = {
+      new SimpleDateFormat(fmt)
+    }
+  }}
 }

@@ -251,10 +251,4 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
   }
   
-  def smvFastRunAgg(timeCol: String)(aggCols: Column*): DataFrame = {
-    val gdo = new SmvFastRunAgg(timeCol, aggCols)
-    smvMapGroup(gdo).toDF
-  }
-  def smvFastRunAgg(timeCol: Column)(aggCols: Column*): DataFrame = 
-      smvFastRunAgg(timeCol.getName)(aggCols: _*)
 }
