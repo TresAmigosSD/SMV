@@ -134,8 +134,8 @@ private[smv] object SmvCDS {
   def findAggCols(cols: Seq[SmvCDSAggColumn]): Seq[SmvCDSAggColumn] =  cols.filter{_.isAgg()}
     
   /** Anything other than real aggregations should be the columns to be kept from original rec */
-  def findKeptCols(cols: Seq[SmvCDSAggColumn]): Seq[String] = 
-    cols.filter{! _.isAgg()}.map{c => c.aggExpr.asInstanceOf[NamedExpression].name}
+  def findKeptCols(cols: Seq[SmvCDSAggColumn]): Seq[NamedExpression] =
+    cols.filter{! _.isAgg()}.map{c => c.aggExpr.asInstanceOf[NamedExpression]}
     
   /** Put all aggregations with the same CDS chain together */
   def combineCDS(aggCols: Seq[SmvCDSAggColumn]): Seq[SmvSingleCDSAggs] = {
@@ -158,9 +158,10 @@ private[smv] abstract class SmvAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends Smv
   def inGroupKeys = Nil
   
   def createOutSchema(smvSchema: SmvSchema) = {
-    val ketpEntries = keptCols.map{n => createCurrentSchema(smvSchema).findEntry(n).get}
+    val keptEntries = SmvLocalRelation(createCurrentSchema(smvSchema)).resolveExprs(keptCols)
     val nes = cdsAggsList.flatMap{aggs => aggs.resolvedExprs(smvSchema)}
-    new SmvSchema(ketpEntries ++ nes.map{expr => SchemaEntry(expr.asInstanceOf[NamedExpression].name, expr.dataType)})
+    new SmvSchema((keptEntries ++ nes).map{expr =>
+      SchemaEntry(expr.asInstanceOf[NamedExpression].name, expr.dataType)})
   }
 }
 
@@ -177,9 +178,11 @@ private[smv] class SmvOneAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO
       val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
       Seq(new GenericRow((kept ++ out).toArray))
   }
- def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
+  def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
     val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
-    val getKept: Row => Seq[Any] = {r => smvSchema.getIndices(keptCols: _*).map{i => r(i)}}
+    val keptExprs = SmvLocalRelation(smvSchema).bindExprs(keptCols).toList
+    val getKept: Row => Seq[Any] = { r => keptExprs.map { e => e.eval(r) } }
+
     {rows => run(executers, getKept)(rows)}
   }
   
@@ -200,10 +203,12 @@ private[smv] class SmvRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO
         new GenericRow((kept ++ out).toArray)
       }
   }
+
   def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
     val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
-    val getKept: Row => Seq[Any] = {r => smvSchema.getIndices(keptCols: _*).map{i => r(i)}}
-    
+    val keptExprs = SmvLocalRelation(smvSchema).bindExprs(keptCols).toList
+    val getKept: Row => Seq[Any] = { r => keptExprs.map { e => e.eval(r) } }
+
     if (cdsAggsList.size == 1){
       cdsAggsList(0).cds match {
         case c: RunAggOptimizable => 
