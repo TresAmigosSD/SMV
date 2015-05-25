@@ -47,7 +47,8 @@ abstract class SmvCDS extends Serializable {
 
 trait RunAggOptimizable {
   def createRunAggIterator(
-    crossSchema: SmvSchema, 
+    crossSchema: SmvSchema,
+    getKept: Row => Seq[Any],
     cum: Seq[AggregateFunction]): (Iterable[Row]) => Iterable[Row]
 }
 
@@ -207,7 +208,7 @@ private[smv] class SmvRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO
       cdsAggsList(0).cds match {
         case c: RunAggOptimizable => 
           val cum = cdsAggsList(0).aggFunctions(smvSchema).toList; //toList: for serialization
-          {rows => c.createRunAggIterator(smvSchema, cum)(rows)} 
+          {rows => c.createRunAggIterator(smvSchema, getKept, cum)(rows)}
         case _ =>
           {rows => run(executers, getKept)(rows)}
       }

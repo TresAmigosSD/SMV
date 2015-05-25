@@ -170,5 +170,41 @@ class SmvCDSTest extends SparkTestUtil {
       "[2012-01-25 00:00:00.0,2]",
       "[2012-02-29 00:00:00.0,3]"))
   }
+
+  sparkTest("Test Till and Before") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
+
+    val res1 = srdd.smvGroupBy("k").runAgg($"k", $"t", sum($"v") from Till("t") as "vsum_tillnow")
+    val res2 = srdd.smvGroupBy("k").runAgg($"k", $"t", sum($"v") from Before("t") as "vsum_beforenow")
+    val res3 = srdd.smvGroupBy("k").runAgg($"k", $"t",
+      sum($"v") from Before("t") as "vsum_beforenow",
+      sum($"v") from Till("t") as "vsum_tillnow")
+
+    assertSrddSchemaEqual(res1, "k: String; t: Integer; vsum_tillnow: Double")
+    assertSrddSchemaEqual(res2, "k: String; t: Integer; vsum_beforenow: Double")
+    assertSrddSchemaEqual(res3, "k: String; t: Integer; vsum_beforenow: Double; vsum_tillnow: Double")
+    assertUnorderedSeqEqual(res1.collect.map(_.toString), Seq(
+      "[a,1,0.3]",
+      "[z,1,0.2]",
+      "[z,2,1.5999999999999999]",
+      "[z,4,1.7999999999999998]",
+      "[z,5,4.0]",
+      "[z,6,4.1]"))
+    assertUnorderedSeqEqual(res2.collect.map(_.toString), Seq(
+      "[a,1,null]",
+      "[z,1,null]",
+      "[z,2,0.2]",
+      "[z,4,1.5999999999999999]",
+      "[z,5,1.7999999999999998]",
+      "[z,6,4.0]"))
+    assertUnorderedSeqEqual(res3.collect.map(_.toString), Seq(
+      "[a,1,null,0.3]",
+      "[z,1,null,0.2]",
+      "[z,2,0.2,1.5999999999999999]",
+      "[z,4,1.5999999999999999,1.7999999999999998]",
+      "[z,5,1.7999999999999998,4.0]",
+      "[z,6,4.0,4.1]"))
+  }
   
 }
