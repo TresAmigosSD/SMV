@@ -124,6 +124,12 @@ class SmvSchemaTest extends SparkTestUtil {
     assert(srdd.collect()(0)(0).toString === "2011-09-03 10:13:58.0")
     assert(SmvSchema.fromSchemaRDD(srdd).toString === "Schema: a: Timestamp[yyyy-MM-dd hh:mm:ss.S]")
   }
+  
+  sparkTest("Test Date default format") {
+    val srdd = createSchemaRdd("a:Date", "2011-09-03") 
+    assertSrddSchemaEqual(srdd, "a: Date[yyyy-MM-dd]")
+    assertSrddDataEqual(srdd, "2011-09-03")
+  }
 
   test("Test schema name derivation from data file path") {
     assert(SmvSchema.dataPathToSchemaPath("/a/b/c.csv")    === "/a/b/c.schema")
