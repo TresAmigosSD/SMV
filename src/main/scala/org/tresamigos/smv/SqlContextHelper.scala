@@ -15,14 +15,14 @@
 package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{SchemaRDD, SQLContext}
+import org.apache.spark.sql.{DataFrame, SchemaRDD, SQLContext}
 import org.apache.spark.sql.catalyst.expressions.{GenericRow, Row}
 
 class SqlContextHelper(sqlContext: SQLContext) {
 
   /** Create a SchemaRDD from RDD[Row] by applying a schema */
-  def applySchemaToRowRDD(rdd: RDD[Row], schema: SmvSchema): SchemaRDD = {
-    sqlContext.applySchema(rdd, schema.toStructType)
+  def applySchemaToRowRDD(rdd: RDD[Row], schema: SmvSchema): DataFrame = {
+    sqlContext.createDataFrame(rdd, schema.toStructType)
   }
 
   /**

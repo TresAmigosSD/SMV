@@ -21,6 +21,7 @@ import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.analysis._
+import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
 case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
@@ -52,7 +53,14 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       flatMapValues(rowsInGroup => inGroupMapping(rowsInGroup)).
       values
 
-    val newdf = df.sqlContext.applySchemaToRowRDD(rdd, gdo.createOutSchema(smvSchema))
+    val outSchema = gdo.createOutSchema(smvSchema)
+    val structType = outSchema.toStructType
+    val converted = rdd.map{row =>
+      Row(row.toSeq.zip(structType.fields).
+        map { case (elem, field) =>
+          ScalaReflection.convertToCatalyst(elem, field.dataType)
+        }: _*)}
+    val newdf = df.sqlContext.applySchemaToRowRDD(converted, gdo.createOutSchema(smvSchema))
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
  
@@ -250,5 +258,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
     smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
   }
-  
+
+  def fillPanelWithNull(timeCol: String, pan: panel.Panel): DataFrame = {
+    val gdo = new FillPanelWithNull(timeCol, pan, keys)
+    smvMapGroup(gdo).toDF
+  }
 }

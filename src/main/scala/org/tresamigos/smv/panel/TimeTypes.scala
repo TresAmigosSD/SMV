@@ -16,21 +16,40 @@ package org.tresamigos.smv.panel
 
 import org.joda.time._
 
-case class Year(year: Int) extends Ordered[Year] {
-  def compare(that: Year) = this.year - that.year
+trait PartialTime extends Ordered[PartialTime] with Serializable {
+  def getValue(): Int
+  def compare(that: PartialTime) = (this.getValue() - that.getValue()).signum
 }
 
-
-case class Month(year: Int, month: Int) extends Ordered[Month] {
-  val month70 = (year - 1970) * 12 + month
-  def compare(that: Month) = this.month70 - that.month70
+case class Month(year: Int, month: Int) extends PartialTime {
+  val month70: Int = (year - 1970) * 12 + month
+  def getValue() = month70
 }
 
-case class Day(year: Int, month: Int, day: Int) extends Ordered[Day] {
+case class Day(year: Int, month: Int, day: Int) extends PartialTime {
   private val MILLIS_PER_DAY = 86400000
-  val day70: Long = new LocalDate(year, month, day).
+  val day70: Int = (new LocalDate(year, month, day).
          toDateTimeAtStartOfDay(DateTimeZone.UTC).
-         getMillis / MILLIS_PER_DAY
-
-  def compare(that: Day) = (this.day70 - that.day70).signum
+         getMillis / MILLIS_PER_DAY).toInt
+  def getValue() = day70
 }
+
+abstract class Panel extends Serializable {
+  val start: PartialTime
+  val end: PartialTime
+  val startValue = start.getValue()
+  val endValue = end.getValue()
+  def hasInRange(t: PartialTime) = (start <= t && t <= end)
+  def hasInRange(t: Int) = (startValue <= t && t <= endValue)
+
+  def createValues(): Iterable[Int]
+}
+
+abstract class ContinuousPanel extends Panel {
+  def createValues(): Iterable[Int] = {
+    startValue + 1 until endValue
+  }
+}
+
+case class MonthlyPanel(start: Month, end: Month) extends ContinuousPanel
+case class DailyPanel(start: Day, end: Day) extends ContinuousPanel

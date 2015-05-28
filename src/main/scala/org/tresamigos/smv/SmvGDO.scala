@@ -14,24 +14,20 @@
 
 package org.tresamigos.smv
 
-import scala.math.floor
+import org.apache.spark.sql.types.DateUtils
 
+import scala.math.floor
+import scala.collection.mutable.{Map => MutableMap}
+
+import org.apache.spark.sql.catalyst.expressions._
+
+/*
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.dsl.plans._
 
 import org.apache.spark.sql.catalyst.analysis.SimpleAnalyzer
-import org.apache.spark.sql.catalyst.expressions._
-/*
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.GroupedData
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
-import org.apache.spark.sql.catalyst.dsl.plans._
-import org.apache.spark.sql.catalyst.ScalaReflection
-import scala.reflect.runtime.universe.{TypeTag, typeTag}
-import org.apache.spark.sql.catalyst.dsl.expressions._
 */
 
 /**
@@ -99,6 +95,40 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
         val newValsInt = Seq(bin)
         new GenericRow(Array[Any](r.toSeq ++ newValsDouble ++ newValsInt: _*))
       }
+    }
+  }
+}
+
+class FillPanelWithNull(t: String, p: panel.Panel, keys: Seq[String]) extends  SmvGDO {
+  val inGroupKeys = Nil
+
+  def createOutSchema(inSchema: SmvSchema) = inSchema
+
+  def createInGroupMapping(inSchema: SmvSchema): Iterable[Row] => Iterable[Row] = {
+    val keyOrdinals = inSchema.getIndices(keys: _*).toList
+    val timeOrdinal = inSchema.getIndices(t)(0)
+    println(timeOrdinal)
+    println(inSchema.entries.size)
+    val tmplt = new GenericMutableRow(inSchema.entries.size)
+    var rows: Map[Int, Row] = Map()
+
+    { it =>
+      it.zipWithIndex.foreach { case (r, i) =>
+        if (i == 0) {
+          keyOrdinals.foreach(ki => tmplt.update(ki, r(ki)))
+          rows = rows ++ p.createValues().map { rt =>
+            tmplt.update(timeOrdinal, rt)
+            (rt, tmplt.copy())
+          }
+        }
+        val rt = r(timeOrdinal) match {
+          case d: java.sql.Date => DateUtils.fromJavaDate(d)
+          case d: Int => d
+          case _ => throw new IllegalArgumentException(s"types other than Date or Int are not supported")
+        }
+        if (p.hasInRange(rt)) rows = rows.updated(rt, r)
+      }
+      rows.values
     }
   }
 }
