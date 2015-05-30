@@ -17,18 +17,8 @@ package org.tresamigos.smv
 import org.apache.spark.sql.types.DateUtils
 
 import scala.math.floor
-import scala.collection.mutable.{Map => MutableMap}
 
 import org.apache.spark.sql.catalyst.expressions._
-
-/*
-import org.apache.spark.sql.Column
-import org.apache.spark.sql.catalyst.dsl.expressions._
-import org.apache.spark.sql.catalyst.plans.logical._
-import org.apache.spark.sql.catalyst.dsl.plans._
-
-import org.apache.spark.sql.catalyst.analysis.SimpleAnalyzer
-*/
 
 /**
  * SmvGDO - SMV GroupedData Operator
@@ -117,7 +107,7 @@ class FillPanelWithNull(t: String, p: panel.Panel, keys: Seq[String]) extends  S
         if (i == 0) {
           keyOrdinals.foreach(ki => tmplt.update(ki, r(ki)))
           rows = rows ++ p.createValues().map { rt =>
-            tmplt.update(timeOrdinal, rt)
+            tmplt.update(timeOrdinal, DateUtils.toJavaDate(rt))
             (rt, tmplt.copy())
           }
         }

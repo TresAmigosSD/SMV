@@ -6,5 +6,5 @@ JARS="./target/smv-1.3-SNAPSHOT.jar"
 # Other jars can be added like this:
 JARS+=",${HOME}/.m2/repository/joda-time/joda-time/2.7/joda-time-2.7.jar"
 
-${SPARK_SHELL} --executor-memory 2g --jars ${JARS} -i shell/shell_init.scala
+${SPARK_SHELL} -deprecation --driver-memory 2g --executor-memory 2g --jars ${JARS} -i shell/shell_init.scala
 

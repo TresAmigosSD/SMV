@@ -14,15 +14,12 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.{Column, ColumnName}
 import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.ScalaReflection
-import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
 case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
   def toDF: DataFrame = df
@@ -53,6 +50,12 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       flatMapValues(rowsInGroup => inGroupMapping(rowsInGroup)).
       values
 
+    /* since df.rdd method called ScalaReflection.convertToScala at the end on each row, here
+       after process, we need to convert them all back by calling convertToCatalyst. One key difference
+       between the Scala and Catalyst representation is the DateType, which is Scala RDD, it is a
+       java.sql.Date, and in Catalyst RDD, it is an Int. Please note, since df.rdd always convert Catalyst RDD
+       to Scala RDD, user should have no chance work on Catalyst RDD outside of DF.
+     */
     val outSchema = gdo.createOutSchema(smvSchema)
     val structType = outSchema.toStructType
     val converted = rdd.map{row =>

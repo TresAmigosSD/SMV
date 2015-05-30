@@ -120,7 +120,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   */
 
   def allModules() = getModulePackages.map(modulesInPackage).flatten
-  def packagesPrefix() = {
+  lazy val packagesPrefix = {
     val m = allModules()
     if (m.isEmpty) ""
     else m.map(_.name).reduce{(l,r) => 
