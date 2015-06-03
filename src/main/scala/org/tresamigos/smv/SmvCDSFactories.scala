@@ -33,52 +33,25 @@ object TopNRecs {
   }
 }
 
-/**
- * Till(t): Return records "before" current record and current record, based on column $"$t"
- **/
-case class Till(t: String) extends SmvSelfCompareCDS with RunAggOptimizable {
-  val condition = ($"$t" >= $"_$t")
-  
-  def createRunAggIterator(inSchema: SmvSchema, getKept: Row => Seq[Any], cum: Seq[AggregateFunction]): (Iterable[Row]) => Iterable[Row] = {
-    val timeOrdinal = inSchema.getIndices(t)(0)
-    val order = inSchema.findEntry(t).get.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
-    implicit object RowOrdering extends Ordering[Row] {
-      def compare(a:Row, b:Row) = order.compare(a(timeOrdinal),b(timeOrdinal))
-    }
-    
-    {it: Iterable[Row] =>
-      val newcum = cum.map{_.newInstance()}
-      it.toSeq.sorted.map{r =>
-        newcum.map{_.update(r)}
-        val sum = newcum.map{_.eval(null)}
-        new GenericRow(Array[Any](getKept(r) ++ sum: _*))
-      }
-    }
+case class InFirstN(n: Int) extends SmvCDS {
+  def filter(input: CDSSubGroup) = {
+    val outIt = input.crossRows.toSeq.take(n)
+    CDSSubGroup(input.currentSchema, input.crossSchema, input.currentRow, outIt)
+  }
+}
+
+case class InLastN(n: Int) extends SmvCDS {
+  def filter(input: CDSSubGroup) = {
+    val outIt = input.crossRows.toSeq.takeRight(n)
+    CDSSubGroup(input.currentSchema, input.crossSchema, input.currentRow, outIt)
   }
 }
 
 /**
  * Before(t): Return records "before" current record based on column $"$t"
  **/
-case class Before(t: String) extends SmvSelfCompareCDS with RunAggOptimizable {
+case class Before(t: String) extends SmvSelfCompareCDS {
   val condition = ($"$t" > $"_$t")
-
-  def createRunAggIterator(inSchema: SmvSchema, getKept: Row => Seq[Any], cum: Seq[AggregateFunction]): (Iterable[Row]) => Iterable[Row] = {
-    val timeOrdinal = inSchema.getIndices(t)(0)
-    val order = inSchema.findEntry(t).get.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
-    implicit object RowOrdering extends Ordering[Row] {
-      def compare(a:Row, b:Row) = order.compare(a(timeOrdinal),b(timeOrdinal))
-    }
-
-    {it: Iterable[Row] =>
-      val newcum = cum.map{_.newInstance()}
-      it.toSeq.sorted.map{r =>
-        val sum = newcum.map{_.eval(null)}
-        newcum.map{_.update(r)}
-        new GenericRow(Array[Any](getKept(r) ++ sum: _*))
-      }
-    }
-  }
 }
 
 /**

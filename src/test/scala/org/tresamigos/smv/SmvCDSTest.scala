@@ -26,7 +26,7 @@ class SmvCDSTest extends SparkTestUtil {
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
     val last3 = IntInLastN("t", 3)
-    val res = srdd.smvGroupBy('k).runAgg(
+    val res = srdd.smvGroupBy('k).runAgg("t")(
       $"k",
       $"t",
       sum('v) from last3 as "nv1",
@@ -46,7 +46,7 @@ class SmvCDSTest extends SparkTestUtil {
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
     val last3 = IntInLastN("t", 3)
-    val res = srdd.smvGroupBy('k).oneAgg(
+    val res = srdd.smvGroupBy('k).oneAgg("t")(
       $"k",
       $"t",
       sum('v) from last3 as "nv1",
@@ -65,7 +65,7 @@ class SmvCDSTest extends SparkTestUtil {
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
     val last2 = TopNRecs(2, $"v".desc)
-    val res = srdd.smvGroupBy('k).oneAgg(
+    val res = srdd.smvGroupBy('k).oneAgg("t")(
       $"k",
       $"t",
       sum('v) from last2 as "nv1",
@@ -104,7 +104,7 @@ class SmvCDSTest extends SparkTestUtil {
 
     val last3 = TopNRecs(3, $"t".desc)
     val top2 = TopNRecs(2, $"v".desc)
-    val res = srdd.smvGroupBy('k).oneAgg(
+    val res = srdd.smvGroupBy('k).oneAgg("t")(
       $"k",
       $"t",
       sum('v) from top2 from last3 as "nv1",
@@ -138,7 +138,7 @@ class SmvCDSTest extends SparkTestUtil {
     import ssc.implicits._
     val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
 
-    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNDays("t", 40) as "nt")
+    val res = srdd.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNDays("t", 40) as "nt")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1976-01-31 00:00:00.0,1]",
       "[2012-01-25 00:00:00.0,1]",
@@ -150,7 +150,7 @@ class SmvCDSTest extends SparkTestUtil {
     import ssc.implicits._
     val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
 
-    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNMonths("t", 1) as "nt")
+    val res = srdd.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNMonths("t", 1) as "nt")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1976-01-31 00:00:00.0,1]",
       "[2012-01-25 00:00:00.0,1]",
@@ -162,7 +162,7 @@ class SmvCDSTest extends SparkTestUtil {
     import ssc.implicits._
     val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
 
-    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNWeeks("t", 6) as "nt")
+    val res = srdd.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNWeeks("t", 6) as "nt")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1976-01-31 00:00:00.0,1]",
       "[2012-01-25 00:00:00.0,1]",
@@ -174,23 +174,23 @@ class SmvCDSTest extends SparkTestUtil {
     import ssc.implicits._
     val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
 
-    val res = srdd.smvGroupBy().runAgg($"t", count("t") from TimeInLastNYears("t", 40) as "nt")
+    val res = srdd.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNYears("t", 40) as "nt")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1976-01-31 00:00:00.0,1]",
       "[2012-01-25 00:00:00.0,2]",
       "[2012-02-29 00:00:00.0,3]"))
   }
 
-  sparkTest("Test Till and Before") {
+  sparkTest("Test Before") {
     val ssc = sqlContext;
     import ssc.implicits._
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
 
-    val res1 = srdd.smvGroupBy("k").runAgg($"k", $"t", sum($"v") from Till("t") as "vsum_tillnow")
-    val res2 = srdd.smvGroupBy("k").runAgg($"k", $"t", sum($"v") from Before("t") as "vsum_beforenow")
-    val res3 = srdd.smvGroupBy("k").runAgg($"k", $"t",
+    val res1 = srdd.smvGroupBy("k").runAgg("t")($"k", $"t", sum($"v") as "vsum_tillnow")
+    val res2 = srdd.smvGroupBy("k").runAgg("t")($"k", $"t", sum($"v") from Before("t") as "vsum_beforenow")
+    val res3 = srdd.smvGroupBy("k").runAgg("t")($"k", $"t",
       sum($"v") from Before("t") as "vsum_beforenow",
-      sum($"v") from Till("t") as "vsum_tillnow")
+      sum($"v") as "vsum_tillnow")
 
     assertSrddSchemaEqual(res1, "k: String; t: Integer; vsum_tillnow: Double")
     assertSrddSchemaEqual(res2, "k: String; t: Integer; vsum_beforenow: Double")
@@ -223,7 +223,7 @@ class SmvCDSTest extends SparkTestUtil {
     import ssc.implicits._
     val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,;")
 
-    val res = srdd.smvGroupBy("k").runAgg($"k", $"t", sum($"v") from Till("t") as "vsum_tillnow",
+    val res = srdd.smvGroupBy("k").runAgg("t")($"k", $"t", sum($"v") as "vsum_tillnow",
       $"v".smvNullSub(0) as "newv")
 
     assertSrddSchemaEqual(res, "k: String; t: Integer; vsum_tillnow: Double; newv: Double")

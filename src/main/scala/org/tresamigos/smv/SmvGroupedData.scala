@@ -221,34 +221,49 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
   
   /**
-   * inMemAgg: take SmvCDSAggColumn instead of just Columnm, and since CDS is implmented in memory 
-   * for now, it is an in-memory aggregation. When CDS can handle not-in-momory case, we need to 
-   * create another agg method
-   * 
+   * oneAgg
+   *
+   * Please see the SmvCDS documnet for details.
+   * OneAgg uses the last record according to an ordering (Syntax is the same as orderBy) as the reference
+   * record, and apply CDSs to all the records in the group. For each group of input records, there is a
+   * single output record.
+   *
    * Example:
-   *       val res = srdd.smvGroupBy('k).inMemAgg(
+   *       val res = srdd.smvGroupBy('k).oneAgg($"t")(
    *                            $"k",
    *                            $"t",
    *                            sum('v) from last3 as "nv1",
    *                            count('v) from last3 as "nv2",
    *                            sum('v) as "nv3")
+   *
+   * Use "t" cloumn for ordering, so the biggest "t" record in a group is the reference record.
+   * Keep "k" and "t" column from the reference record. Sum "v" from last 3, depend on how we defined
+   * the SmvCDS "last3", which should refere to the reference record.
    **/
-  def oneAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
-    val gdo = new SmvOneAggGDO(aggCols)
+  def oneAgg(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
+    val gdo = new SmvOneAggGDO(orders.map{o => o.toExpr}, aggCols)
     
     /* Since SmvCDSAggGDO grouped aggregations with the same CDS together, the ordering of the 
        columns is no more the same as the input list specified. Here to put them in order */
+
     val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
     smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
   }
+  def oneAgg(order: String, others: String*)(aggCols: SmvCDSAggColumn*): DataFrame =
+    oneAgg((order +: others).map{o => new ColumnName(o)}: _*)(aggCols: _*)
   
   /**
    * runAgg
    * 
-   * See SmvCDS document for details
+   * See SmvCDS document for details.
+   * RunAgg will sort the records in the each group according to the specified ordering (syntax is the same
+   * as orderBy). For each record, it uses the current record as the reference record, and apply the CDS
+   * and aggregation on all the records "till this point". Here "till this point" means that ever record less
+   * than or equal current record according to the given ordering.
+   * For N records as input, runAgg will generate N records as output.
    * 
    * Example:
-   *   val res = srdd.smvGroupBy('k).runAgg(
+   *   val res = srdd.smvGroupBy('k).runAgg($"t")(
    *                    $"k",
    *                    $"t",
    *                    $"v",
@@ -256,11 +271,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *                    sum('v) from last3 from top2 as "nv2",
    *                    sum('v) as "nv3")
    **/
-  def runAgg(aggCols: SmvCDSAggColumn*): DataFrame = {
-    val gdo = new SmvRunAggGDO(aggCols)
+  def runAgg(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
+    val gdo = new SmvRunAggGDO(orders.map{o => o.toExpr}.toList, aggCols.toList)
     val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
     smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
   }
+  def runAgg(order: String, others: String*)(aggCols: SmvCDSAggColumn*): DataFrame =
+    runAgg((order +: others).map{s => new ColumnName(s)}: _*)(aggCols: _*)
 
   def fillPanelWithNull(timeCol: String, pan: panel.Panel): DataFrame = {
     val gdo = new FillPanelWithNull(timeCol, pan, keys)

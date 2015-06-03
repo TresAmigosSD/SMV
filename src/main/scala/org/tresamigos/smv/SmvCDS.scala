@@ -48,8 +48,8 @@ abstract class SmvCDS extends Serializable {
 trait RunAggOptimizable {
   def createRunAggIterator(
     crossSchema: SmvSchema,
-    getKept: Row => Seq[Any],
-    cum: Seq[AggregateFunction]): (Iterable[Row]) => Iterable[Row]
+    cum: Seq[AggregateFunction],
+    getKept: Row => Seq[Any]): (Iterable[Row]) => Iterable[Row]
 }
 
 private[smv] case class CombinedCDS(cds1: SmvCDS, cds2: SmvCDS) extends SmvCDS {
@@ -143,6 +143,35 @@ private[smv] object SmvCDS {
       mapValues{vl => vl.map(_.aggExpr.asInstanceOf[NamedExpression])}.
       toSeq.map{case (k,v) => SmvSingleCDSAggs(k, v)}
   }
+
+  def orderColsToOrdering(inSchema: SmvSchema, orderCols: Seq[Expression]): Ordering[Row] = {
+    val keyOrderPair: Seq[(NamedExpression, SortDirection)] = orderCols.map{c => c match {
+      case SortOrder(e: NamedExpression, dircation: SortDirection) => (e, dircation)
+      case e: NamedExpression => (e, Ascending)
+    }}
+
+    val ordinals = inSchema.getIndices(keyOrderPair.map{case (e, d) => e.name}: _*)
+    val ordering = keyOrderPair.map{case (e, d) =>
+      val normColOrdering = inSchema.findEntry(e.name).get.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
+      if (d == Descending) normColOrdering.reverse else normColOrdering
+    }
+
+    new Ordering[Row] {
+      override def compare(a:Row, b:Row) = (ordinals zip ordering).map{case (i, order) =>
+        if(a(i) == null && b(i) == null) 0
+        else if(a(i) == null) -1
+        else if (b(i) == null) 1
+        else order.compare(a(i),b(i)).signum
+      }.reduceLeft((s, i) => s << 1 + i)
+    }
+  }
+
+  def topNfromRows(input: Iterable[Row], n: Int, ordering: Ordering[Row]): Iterable[Row] = {
+    implicit val rowOrdering: Ordering[Row] = ordering
+    val bpq = BoundedPriorityQueue[Row](n)
+    input.foreach{ r => bpq += r }
+    bpq.toList
+  }
 }
 
 /** 
@@ -169,10 +198,10 @@ private[smv] abstract class SmvAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends Smv
  * SmvOneAggGDO
  *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by agg operation on SmvGroupedData
  **/
-private[smv] class SmvOneAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO(aggCols) {
-  def run(executers: Seq[(Row, Iterable[Row]) => Seq[Any]], getKept: Row => Seq[Any]): Iterable[Row] => Iterable[Row] = {
-    rows =>
-      val rSeq = rows.toSeq
+private[smv] class SmvOneAggGDO(orders: Seq[Expression], aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO(aggCols) {
+  def run(
+           executers: Seq[(Row, Iterable[Row]) => Seq[Any]],
+           getKept: Row => Seq[Any]): Iterable[Row] => Iterable[Row] = {rSeq =>
       val currentRow = rSeq.last
       val kept = getKept(currentRow)
       val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
@@ -182,8 +211,9 @@ private[smv] class SmvOneAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO
     val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
     val keptExprs = SmvLocalRelation(smvSchema).bindExprs(keptCols).toList
     val getKept: Row => Seq[Any] = { r => keptExprs.map { e => e.eval(r) } }
+    val rowOrdering = SmvCDS.orderColsToOrdering(smvSchema, orders);
 
-    {rows => run(executers, getKept)(rows)}
+    {rows => run(executers, getKept)(rows.toSeq.sorted(rowOrdering))}
   }
   
   def createCurrentSchema(crossSchema: SmvSchema) = crossSchema
@@ -193,32 +223,49 @@ private[smv] class SmvOneAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO
  * SmvRunAggGDO
  *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by runAgg operation on SmvGroupedData
  **/
-private[smv] class SmvRunAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO(aggCols) {
-  def run(executers: Seq[(Row, Iterable[Row]) => Seq[Any]], getKept: Row => Seq[Any]): Iterable[Row] => Iterable[Row] = {
-    rows =>
-      val rSeq = rows.toSeq
-      rSeq.map{currentRow => 
+private[smv] class SmvRunAggGDO(orders: Seq[Expression], aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO(aggCols) {
+  private def runGeneral(
+                        executers: Seq[(Row, Iterable[Row]) => Seq[Any]],
+                        getKept: Row => Seq[Any]
+                          ): Seq[Row] => Iterable[Row] = {rSeq =>
+      rSeq.zipWithIndex.map{case (currentRow, i) =>
         val kept = getKept(currentRow)
-        val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
+        val crossRows = rSeq.slice(0, i+1)
+        val out = executers.flatMap{ ex => ex(currentRow, crossRows) }
         new GenericRow((kept ++ out).toArray)
       }
   }
 
+  private def runNoOpCDS(
+                         cum: Seq[AggregateFunction],
+                         getKept: Row => Seq[Any]
+                           ): Seq[Row] => Iterable[Row] = {rSeq =>
+    val newcum = cum.map{_.newInstance()}
+    rSeq.map{r =>
+      newcum.map{_.update(r)}
+      val sum = newcum.map{_.eval(null)}
+      new GenericRow(Array[Any](getKept(r) ++ sum: _*))
+    }
+  }
+
   def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
-    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
+    val executers = cdsAggsList.map{aggs => {(r: Row, it: Iterable[Row]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}.toList
     val keptExprs = SmvLocalRelation(smvSchema).bindExprs(keptCols).toList
     val getKept: Row => Seq[Any] = { r => keptExprs.map { e => e.eval(r) } }
+    val rowOrdering = SmvCDS.orderColsToOrdering(smvSchema, orders);
 
     if (cdsAggsList.size == 1){
+      val cum = cdsAggsList(0).aggFunctions(smvSchema).toList; //toList: for serialization
       cdsAggsList(0).cds match {
-        case c: RunAggOptimizable => 
-          val cum = cdsAggsList(0).aggFunctions(smvSchema).toList; //toList: for serialization
-          {rows => c.createRunAggIterator(smvSchema, getKept, cum)(rows)}
+        case NoOpCDS =>
+          {rows => runNoOpCDS(cum, getKept)(rows.toSeq.sorted(rowOrdering))}
+        case c: RunAggOptimizable =>
+          {rows => c.createRunAggIterator(smvSchema, cum, getKept)(rows.toSeq.sorted(rowOrdering))}
         case _ =>
-          {rows => run(executers, getKept)(rows)}
+          {rows => runGeneral(executers, getKept)(rows.toSeq.sorted(rowOrdering))}
       }
     } else {
-      {rows => run(executers, getKept)(rows)}
+      {rows => runGeneral(executers, getKept)(rows.toSeq.sorted(rowOrdering))}
     }
   }
   
@@ -277,34 +324,13 @@ abstract class SmvSelfCompareCDS extends SmvCDS {
 case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends SmvCDS {
   private val orderKeys = orderCols.map{o => o.asInstanceOf[SortOrder]}
   private val keys = orderKeys.map{k => k.child.asInstanceOf[NamedExpression].name}
-  private val directions = orderKeys.map{k => k.direction}
-  
+
   def filter(input: CDSSubGroup) = {
     val inSchema = input.crossSchema
-    val ordinals = inSchema.getIndices(keys: _*)
-    val ordering = (keys zip directions).map{case (k, d) =>
-      val normColOrdering = inSchema.findEntry(k).get.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
-      if (d == Ascending) normColOrdering.reverse else normColOrdering
-    }
-
-    // create an implicit instance of Ordering[Row] so that it will be picked up by
-    // implict order required by BoundedPriorityQueue below.  Therefore, order of row is
-    // based on order of specified column.
-    implicit object RowOrdering extends Ordering[Row] {
-      def compare(a:Row, b:Row) = (ordinals zip ordering).map{case (i, order) => order.compare(a(i),b(i)).signum}
-        .reduceLeft((s, i) => s << 1 + i)
-    }
-
-    val outIt = {
-      val bpq = BoundedPriorityQueue[Row](maxElems)
-      input.crossRows.foreach{ r =>
-        val v = ordinals.map{i => r(i)}
-        if (! v.contains(null))
-          bpq += r
-      }
-      bpq.toList
-    }
-    
+    val rowOrdering = SmvCDS.orderColsToOrdering(inSchema, orderCols).reverse
+    val outIt = SmvCDS.topNfromRows(input.crossRows, maxElems, rowOrdering)
     CDSSubGroup(input.currentSchema, inSchema, input.currentRow, outIt)
   } 
 }
+
+
