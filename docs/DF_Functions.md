@@ -351,6 +351,6 @@ Example:
 
 Will keep the 3 largest `amt` records for each `id`.
 
-### inMemAgg & runAgg
+### oneAgg & runAgg
 
-Please see "SmvCDS" document.
+Please see [SmvCDS document](CDS_GDO.md).
