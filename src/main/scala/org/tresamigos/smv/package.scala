@@ -14,6 +14,7 @@
 
 package org.tresamigos
 
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.sql.{Column, ColumnName}
 import org.apache.spark.sql.GroupedData
@@ -22,6 +23,7 @@ import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.rdd.RDD
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe.TypeTag
 
 package object smv {
   implicit def makeColHelper(col: Column) = new ColumnHelper(col)
@@ -67,5 +69,10 @@ package object smv {
   
   def smvAsArray(columns: Column*) = {
     new Column(SmvAsArray(columns.map{c => c.toExpr}: _*))
+  }
+
+  def smvCreateLookUp[S,D](map: Map[S,D])(implicit st: TypeTag[S], dt: TypeTag[D]) = {
+    val func: S => Option[D] = {s => map.get(s)}
+    udf(func)
   }
 }

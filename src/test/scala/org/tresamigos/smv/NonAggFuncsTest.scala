@@ -32,4 +32,15 @@ class NonAggFuncsTest extends SparkTestUtil {
       "List(a, 1);" +
       "List(test, 2)")
   }
+
+  sparkTest("test smvCreateLookUp") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("first:String;last:String", "John, Brown;TestFirst, ")
+
+    val nameMap: Map[String, String] = Map("John" -> "J")
+    val mapUdf = smvCreateLookUp(nameMap)
+    var res = srdd.select(mapUdf($"first") as "shortFirst")
+    assertSrddDataEqual(res, "J;null")
+  }
+
 }
