@@ -86,8 +86,7 @@ Example of using the Schema Discovery in the interactive shell
 
 ```scala
 scala> implicit val ca=CsvAttributes.defaultCsvWithHeader
-scala> val file=sqlContext.csvFileWithSchemaDiscovery("/path/to/file.csv", 100000)
-scala> val schema=Schema.fromSchemaRDD(file)
+scala> val schema=sqlContext.discoverSchemaFromFile("/path/to/file.csv", 100000)
 scala> schema.saveToLocalFile("/path/to/file.schema")
 ```
 

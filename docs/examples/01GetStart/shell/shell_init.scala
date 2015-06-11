@@ -47,8 +47,7 @@ object i {
   }
   
   def findSchema(path: String, n: Int = 100000)(implicit csvAttributes: CsvAttributes) = {
-    val file = sqlContext.csvFileWithSchemaDiscovery(path, n)
-    val schema = SmvSchema.fromSchemaRDD(file)
+    val schema = sqlContext.discoverSchemaFromFile(path, n)
     val outpath = SmvSchema.dataPathToSchemaPath(path)
     schema.saveToLocalFile(outpath)
   }
