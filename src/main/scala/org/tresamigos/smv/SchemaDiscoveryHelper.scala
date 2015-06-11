@@ -81,6 +81,8 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       case null if canConvertToDate(valueStr,"dd/MM/yyyy") => TimestampSchemaEntry(colName,"dd/MM/yyyy")
       case null if canConvertToDate(valueStr,"dd-MM-yyyy") => TimestampSchemaEntry(colName,"dd-MM-yyyy")
       case null if canConvertToDate(valueStr,"dd-MMM-yyyy") => TimestampSchemaEntry(colName,"dd-MMM-yyyy")
+      case null if canConvertToDate(valueStr,"ddMMMyyyy") => TimestampSchemaEntry(colName,"ddMMMyyyy")
+      case null if canConvertToDate(valueStr,"yyyy-MM-dd") => TimestampSchemaEntry(colName,"yyyy-MM-dd")
       case null => StringSchemaEntry(colName)
 
       // Handling Integer type and its possible promotions
@@ -126,6 +128,12 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
 
       case TimestampSchemaEntry(colName,"dd-MMM-yyyy") if canConvertToDate(valueStr,"dd-MMM-yyyy") => curSchemaEntry
       case TimestampSchemaEntry(colName,"dd-MMM-yyyy") => StringSchemaEntry(colName)
+
+      case TimestampSchemaEntry(colName,"ddMMMyyyy") if canConvertToDate(valueStr,"ddMMMyyyy") => curSchemaEntry
+      case TimestampSchemaEntry(colName,"ddMMMyyyy") => StringSchemaEntry(colName)
+
+      case TimestampSchemaEntry(colName,"yyyy-MM-dd") if canConvertToDate(valueStr,"yyyy-MM-dd") => curSchemaEntry
+      case TimestampSchemaEntry(colName,"yyyy-MM-dd") => StringSchemaEntry(colName)
 
       case StringSchemaEntry( _ ) => curSchemaEntry
 
@@ -178,6 +186,12 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
     }
 
     new SmvSchema(schemaEntries.toSeq)
+  }
+
+  def discoverSchemaFromFile(dataPath: String, numLines: Int = 1000)
+                            (implicit ca: CsvAttributes): SmvSchema = {
+    val strRDD = sqlContext.sparkContext.textFile(dataPath)
+    discoverSchema(strRDD, numLines, ca)
   }
 
   /**

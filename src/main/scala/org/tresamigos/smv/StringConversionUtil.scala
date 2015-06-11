@@ -66,6 +66,7 @@ object StringConversionUtil {
 
     try {
       val fmtObj = new java.text.SimpleDateFormat(fmt)
+      fmtObj.setLenient(false)
       fmtObj.parse(str)
       true
     } catch {
