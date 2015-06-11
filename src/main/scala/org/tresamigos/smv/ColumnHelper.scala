@@ -22,7 +22,7 @@ import org.apache.spark.sql.types._
 
 import java.util.Calendar
 import java.sql.Timestamp
-import com.rockymadden.stringmetric.phonetic.SoundexAlgorithm
+import com.rockymadden.stringmetric.phonetic.{MetaphoneAlgorithm, SoundexAlgorithm}
 import org.joda.time._
 import org.joda.convert._
 
@@ -264,6 +264,14 @@ class ColumnHelper(column: Column) {
     val f = (s:String) => 
       if(s == null) null 
       else SoundexAlgorithm.compute(s.replaceAll("""[^a-zA-Z]""", "")).getOrElse(null)
+    new Column(Alias(ScalaUdf(f, StringType, Seq(expr)), name)() )
+  }
+
+  def smvMetaphone = {
+    val name = s"SmvMetaphone($column)"
+    val f = (s:String) =>
+      if(s == null) null
+      else MetaphoneAlgorithm.compute(s.replaceAll("""[^a-zA-Z]""", "")).getOrElse(null)
     new Column(Alias(ScalaUdf(f, StringType, Seq(expr)), name)() )
   }
   
