@@ -41,7 +41,11 @@ class SmvDFHelper(df: DataFrame) {
 
     //As far as I know the union maintain the order. So the header will end up being the
     //first line in the saved file.
-    val csvRDD = csvHeaderRDD.union(csvBodyRDD)
+
+    // Since on Linux, when file stored on local file system, the partitions are not
+    // guaranteed in order when read back in, we need to only store the body w/o the header
+    // val csvRDD = csvHeaderRDD.union(csvBodyRDD)
+    val csvRDD = csvBodyRDD
 
     schema.saveToFile(df.sqlContext.sparkContext, SmvSchema.dataPathToSchemaPath(dataPath))
     csvRDD.saveAsTextFile(dataPath)

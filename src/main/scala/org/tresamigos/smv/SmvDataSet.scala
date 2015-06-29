@@ -166,7 +166,10 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   }
 
   private[smv] def readPersistedFile(app: SmvApp): Try[SchemaRDD] = {
-    implicit val ca = CsvAttributes.defaultCsvWithHeader
+    // Since on Linux, when file stored on local file system, the partitions are not
+    // guaranteed in order when read back in, we need to only store the body w/o the header
+    // implicit val ca = CsvAttributes.defaultCsvWithHeader
+    implicit val ca = CsvAttributes.defaultCsv
     Try(app.sqlContext.csvFileWithSchema(fullPath(app)))
   }
 
