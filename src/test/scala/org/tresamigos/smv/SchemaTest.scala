@@ -153,6 +153,9 @@ class SmvSchemaTest extends SparkTestUtil {
       "1,0.3|0.11|0.1")
 
     assert(SmvSchema.fromSchemaRDD(srdd).toString === "Schema: a: Integer; b: Array[Double]")
-    assertDoubleSeqEqual(srdd.collect()(0)(1).asInstanceOf[Array[Any]], Seq(0.3,0.11,0.1))
+    import srdd.sqlContext.implicits._
+    val res = srdd.select($"b".getItem(0), $"b".getItem(1), $"b".getItem(2))
+
+    assertDoubleSeqEqual(res.collect()(0).toSeq, Seq(0.3,0.11,0.1))
   }
 }

@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.SparkContext
+import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions.{Literal, Row, AttributeReference}
 import org.apache.spark.sql.DataFrame
@@ -306,7 +307,20 @@ object SchemaEntry {
 class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   def getSize = entries.size
 
-  def toValue(ordinal: Int, sVal: String) = entries(ordinal).strToVal(sVal)
+  /* Since Spark-1.3.0, Catalyst started to maintain its own type, we always need to call
+     ScalaReflection.convertToCatalyst when we construct a Row from Scala.
+     However in Spark-1.3.1, the createDataFrame method of SQLContext always call
+     a private version with "needsConversion = true", so it always do the conversion on
+     Row constructed on Scala. Therefore, the following code with the conversion is only
+     need for Spark-1.3.0 but not in Spark-1.3.1 (althogh other than repeate the work
+     no real harm either).
+   */
+  def toValue(ordinal: Int, sVal: String) = {
+    val entry = entries(ordinal)
+    val elem = entry.strToVal(sVal)
+    val dataType = entry.structField.dataType
+    ScalaReflection.convertToCatalyst(elem, dataType)
+  }
 
   override def toString = "Schema: " + entries.mkString("; ")
 
