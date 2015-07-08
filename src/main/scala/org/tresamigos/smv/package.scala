@@ -40,7 +40,19 @@ package object smv {
     new RDDHelper[T](rdd)
   implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) = 
     new PairRDDHelper[K,V](rdd)
-    
+
+  /**
+   * Spark(as of 1.4)'s join type is a String.  Could use enum or case objects here,
+   * but there are clients using the String api, so will push that change till later.
+   */
+  object SmvJoinType {
+    val Inner = "inner"
+    val Outer = "outer"
+    val LeftOuter = "left_outer"
+    val RightOuter = "right_outer"
+    val Semi = "semijoin"
+  }
+
   /***************************************************************************
    * Functions 
    ***************************************************************************/
