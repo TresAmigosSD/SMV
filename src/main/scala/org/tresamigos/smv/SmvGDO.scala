@@ -22,9 +22,9 @@ import org.apache.spark.sql.catalyst.expressions._
 
 /**
  * SmvGDO - SMV GroupedData Operator
- * 
+ *
  * Used with smvMapGroup method of SmvGroupedData.
- * 
+ *
  * Examples:
  *   val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
  *   val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
@@ -32,7 +32,7 @@ import org.apache.spark.sql.catalyst.expressions._
 abstract class SmvGDO extends Serializable{
   def inGroupKeys: Seq[String]
   def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row]
-  def createOutSchema(inSchema: SmvSchema): SmvSchema 
+  def createOutSchema(inSchema: SmvSchema): SmvSchema
 }
 
 /**
@@ -45,8 +45,8 @@ abstract class SmvGDO extends Serializable{
  */
 class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
 
-  val inGroupKeys = Nil 
-  
+  val inGroupKeys = Nil
+
   def createOutSchema(inSchema: SmvSchema) = {
     val oldFields = inSchema.entries
     val newFields = List(
@@ -55,12 +55,12 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
       IntegerSchemaEntry(valueCol + "_quantile"))
     new SmvSchema(oldFields ++ newFields)
   }
-  
+
   /** bound bin number value to range [1,numBins] */
   private def binBound(binNum: Int) = {
     if (binNum < 1) 1 else if (binNum > numBins) numBins else binNum
   }
-  
+
   /**
    * compute the quantile for a given group of rows (all rows are assumed to have the same group id)
    * Input: Array[Row(groupids*, keyid, value, value_double)]
@@ -72,7 +72,7 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
     val getValueAsDouble: Row => Double = {r =>
       valueEntry.numeric.toDouble(r(ordinal).asInstanceOf[valueEntry.JvmType])
     }
-    
+
     {it: Iterable[Row] =>
       val inGroup = it.toSeq
       val valueTotal = inGroup.map(r => getValueAsDouble(r)).sum
@@ -84,6 +84,41 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
         val newValsDouble = Seq(valueTotal, runSum)
         val newValsInt = Seq(bin)
         new GenericRow(Array[Any](r.toSeq ++ newValsDouble ++ newValsInt: _*))
+      }
+    }
+  }
+}
+
+/* Add back chunkByPlus for project migration */
+case class SmvChunkUDF(
+  para: Seq[Symbol],
+  outSchema: SmvSchema,
+  eval: List[Seq[Any]] => List[Seq[Any]]
+)
+
+class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends SmvGDO {
+  val inGroupKeys = Nil
+
+  def createOutSchema(inSchema: SmvSchema) = {
+    if (isPlus)
+      inSchema ++ cudf.outSchema
+    else
+      cudf.outSchema
+  }
+
+  def createInGroupMapping(inSchema: SmvSchema) = {
+    val ordinals = inSchema.getIndices(cudf.para.map{s => s.name}: _*)
+
+    { it: Iterable[Row] =>
+      val inGroup = it.toList
+      val input = inGroup.map{r => ordinals.map{i => r(i)}.toSeq}
+      val output = cudf.eval(input)
+      if (isPlus) {
+        inGroup.zip(output).map{case (orig, added) =>
+          Row((orig.toSeq ++ added): _*)
+        }
+      } else {
+        output.map{r => Row(r: _*)}
       }
     }
   }
@@ -122,4 +157,3 @@ class FillPanelWithNull(t: String, p: panel.Panel, keys: Seq[String]) extends  S
     }
   }
 }
-

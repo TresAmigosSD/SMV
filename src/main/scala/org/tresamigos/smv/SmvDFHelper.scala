@@ -66,7 +66,7 @@ class SmvDFHelper(df: DataFrame) {
   private[smv] def checkNames(names: Seq[String]) = {
     require(names.toSet subsetOf df.columns.toSet)
   }
-  
+
   /**
    * selects all the current columns in current SRDD plus the supplied expressions.
    */
@@ -92,15 +92,15 @@ class SmvDFHelper(df: DataFrame) {
     val all = df.columns diff names
     df.select(all.map{l=>df(l)} : _* )
   }
-  
+
   def selectMinus(cols: Column*): DataFrame = {
     val names = cols.map(_.getName)
     selectMinus(names(0), names.tail: _*)
   }
-  
-  def selectMinus(s1: Symbol, sleft: Symbol*): DataFrame = 
+
+  def selectMinus(s1: Symbol, sleft: Symbol*): DataFrame =
     selectMinus(s1.name, sleft.map{l=>l.name}: _*)
-  
+
   def renameField(namePairs: (String, String)*): DataFrame = {
     val namePairsMap = namePairs.toMap
     val renamedFields = df.columns.map {
@@ -108,7 +108,7 @@ class SmvDFHelper(df: DataFrame) {
     }
     df.select(renamedFields: _*)
   }
-  def renameField(n1: (Symbol, Symbol), nleft: (Symbol, Symbol)*): DataFrame = 
+  def renameField(n1: (Symbol, Symbol), nleft: (Symbol, Symbol)*): DataFrame =
     renameField((n1 +: nleft).map{case(l, r) => (l.name, r.name)}: _*)
 
   def prefixFieldNames(prefix: String) : DataFrame = {
@@ -158,7 +158,7 @@ class SmvDFHelper(df: DataFrame) {
     val names = cols.map(_.getName)
     dedupByKey(names(0), names.tail: _*)
   }
-  def dedupByKey(k1: Symbol, kleft: Symbol*): DataFrame = 
+  def dedupByKey(k1: Symbol, kleft: Symbol*): DataFrame =
     dedupByKey(k1.name, kleft.map{l=>l.name}: _*)
 
   /** adds a rank column to an srdd. */
@@ -173,31 +173,31 @@ class SmvDFHelper(df: DataFrame) {
 
     df.sqlContext.applySchemaToRowRDD(res, newSchema)
   }
-  
+
   /**
    * smvPivot adds the pivoted columns without additional
    * aggregation. In other words N records in, N records out
    *
    * Please note that no keyCols need to be provided, since all original
    * columns will be kept
-   * 
+   *
    * Eg.
    *   srdd.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
-   * 
+   *
    * Input
    * | id  | month | product | count |
    * | --- | ----- | ------- | ----- |
    * | 1   | 5/14  |   A     |   100 |
    * | 1   | 6/14  |   B     |   200 |
    * | 1   | 5/14  |   B     |   300 |
-   * 
+   *
    * Output
    * | id  | month | product | count | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
    * | --- | ----- | ------- | ----- | ------------ | ------------ | ------------ | ------------ |
    * | 1   | 5/14  |   A     |   100 | 100          | NULL         | NULL         | NULL         |
    * | 1   | 6/14  |   B     |   200 | NULL         | NULL         | NULL         | 200          |
    * | 1   | 5/14  |   B     |   300 | NULL         | 300          | NULL         | NULL         |
-   * 
+   *
    **/
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
     // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
@@ -208,46 +208,46 @@ class SmvDFHelper(df: DataFrame) {
   def smvUnpivot(valueCols: String*): DataFrame = {
     new UnpivotOp(df, valueCols).unpivot()
   }
-  def smvUnpivot(valueCol: Symbol, others: Symbol*): DataFrame = 
+  def smvUnpivot(valueCol: Symbol, others: Symbol*): DataFrame =
     smvUnpivot((valueCol +: others).map{s => s.name}: _*)
-  
+
   /**
    * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
-   * 
+   *
    * Example:
    *   df.smvCube("zip", "month").agg("zip", "month", sum("v") as "v")
-   * 
+   *
    * Also have a version on SmvGroupedData.
    **/
   def smvCube(col: String, others: String*): SmvGroupedData = {
     new RollupCubeOp(df, Nil, (col +: others)).cube()
   }
-  
+
   def smvCube(cols: Column*): SmvGroupedData = {
     val names = cols.map(_.getName)
     new RollupCubeOp(df, Nil, names).cube()
   }
   /**
    * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
-   * 
+   *
    * Example:
    *   df.smvRollup("county", "zip").agg("county", "zip", sum("v") as "v")
-   * 
+   *
    * Also have a version on SmvGroupedData
    **/
   def smvRollup(col: String, others: String*): SmvGroupedData = {
     new RollupCubeOp(df, Nil, (col +: others)).rollup()
   }
-  
+
   def smvRollup(cols: Column*): SmvGroupedData = {
     val names = cols.map(_.getName)
     new RollupCubeOp(df, Nil, names).rollup()
   }
   /**
-   * Create an Edd builder on DataFrame 
-   * 
+   * Create an Edd builder on DataFrame
+   *
    * @param groupingExprs specify grouping expression(s) to compute Edd over
-   * @return an Edd object 
+   * @return an Edd object
    */
   def groupEdd(groupingExprs : Column*): Edd = {
     Edd(df, groupingExprs)
@@ -260,14 +260,21 @@ class SmvDFHelper(df: DataFrame) {
 
   /**
    *  Similar to groupBy, instead of creating GroupedData,
-   *  create an SmvGroupedData object 
+   *  create an SmvGroupedData object
    */
   def smvGroupBy(cols: Column*) = {
     val names = cols.map{c => c.getName}
     SmvGroupedData(df, names)
   }
-  
+
   def smvGroupBy(col: String, others: String*) = {
     SmvGroupedData(df, (col +: others))
+  }
+
+  /* Add back chunkByPlus for code migration */
+  def chunkByPlus(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
+    val kStr = keys.map{_.name}
+    df.smvGroupBy(kStr(0), kStr.tail: _*).
+      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, true)).toDF
   }
 }
