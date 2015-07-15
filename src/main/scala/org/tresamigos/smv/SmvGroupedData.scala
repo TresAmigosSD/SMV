@@ -71,7 +71,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val gdo = new SmvCDSAsGDO(cds)
     smvMapGroup(gdo)
   }
-  
+
   /**
    * smvPivot on SmvGroupedData is similar to smvPivot on DF
    * 
@@ -93,10 +93,22 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *    "5_14_A", "5_14_B", "6_14_A", "6_14_B")
    **/
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SmvGroupedData = {
-    // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
     SmvGroupedData(pivot.createSrdd(df, keys), keys)
   }
+  
+  /**
+   * If no baseOutput is supplied, run a full scan to extract the
+   * unique values in the pivot and return as base output column
+   * names.
+   *
+   * NOTE: this will have a serious performance impact.
+   */
+  private[this] def ensureBaseOutput(baseOutput: Seq[String], pivotCols: Seq[Seq[String]]): Seq[String] =
+    if (baseOutput.isEmpty)
+      SmvPivot.getBaseOutputColumnNames(smvGD.df, pivotCols)
+    else
+      baseOutput
   
   /**
    * smvPivotSum is a helper function on smvPivot
@@ -110,11 +122,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    **/
   def smvPivotSum(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
     import df.sqlContext.implicits._
-    // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
-    val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
+    val output = ensureBaseOutput(baseOutput, pivotCols)
+    val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, output)
     val outCols = pivot.outCols().map{l=>(sum(l) as l)}
     val aggCols = keys.map{k => df(k)} ++ outCols
-    smvPivot(pivotCols: _*)(valueCols: _*)(baseOutput: _*).agg(aggCols(0), aggCols.tail: _*)
+    smvPivot(pivotCols: _*)(valueCols: _*)(output: _*).agg(aggCols(0), aggCols.tail: _*)
   }
   
   /**

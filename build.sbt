@@ -6,6 +6,8 @@ version := "1.3-SNAPSHOT"
 
 scalaVersion := "2.10.4"
 
+scalacOptions ++= Seq("-deprecation", "-feature")
+
 val sparkVersion = "1.3.0"
 
 libraryDependencies ++= Seq(

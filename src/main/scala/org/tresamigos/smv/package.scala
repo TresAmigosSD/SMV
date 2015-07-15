@@ -71,9 +71,19 @@ package object smv {
   }
   
   /* NonAggregate Function warppers */
-  def columnIf(cond: Column, l: Column, r: Column) = {
+  def columnIf(cond: Column, l: Column, r: Column): Column = {
     new Column(If(cond.toExpr, l.toExpr, r.toExpr))
   }
+
+  /**
+   * A typed form of if where one or both branches are literals.
+   *
+   * We use overloading instead of implicit conversion here to minimize
+   * the scope of change.
+   */
+  def columnIf[T](cond: Column, l: T, r: T): Column = columnIf(cond, lit(l), lit(r))
+  def columnIf[T](cond: Column, l: T, r: Column): Column = columnIf(cond, lit(l), r)
+  def columnIf[T](cond: Column, l: Column, r: T): Column = columnIf(cond, l, lit(r))
   
   def smvStrCat(columns: Column*) = {
     new Column(SmvStrCat(columns.map{c => c.toExpr}: _*))

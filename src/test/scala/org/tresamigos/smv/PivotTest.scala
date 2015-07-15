@@ -109,7 +109,6 @@ class SmvPivotTest extends SparkTestUtil {
       "dist_cnt_v2_y_B"))
   }
 
-/* 
   sparkTest("Test pivot_sum function") {
     val srdd = createSchemaRdd("k:String; p1:String; p2:String; v:Integer",
       "1,p1/a,p2a,100;" +
@@ -119,10 +118,12 @@ class SmvPivotTest extends SparkTestUtil {
       "1,p1/a,p2a,500;" + // same key as first row!
       "2,p1/a,p2a,600") // test with a single input row per key
 
-    val res = srdd.pivot_sum('k, Seq('p1, 'p2), Seq('v))
+    import srdd.sqlContext._, implicits._
+    // val res = srdd.pivot_sum('k, Seq('p1, 'p2), Seq('v))
+    val res = srdd.smvGroupBy('k).smvPivotSum(Seq("p1", "p2"))("v")()
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1,600,300,400,200]",
-      "[2,600,0,0,0]"))
+      "[2,600,null,null,null]"))
 
     val fieldNames = res.schema.fieldNames.toList
     assert(fieldNames === Seq("k", "v_p1_a_p2a", "v_p1_a_p2b", "v_p1_b_p2a", "v_p1_b_p2b"))
@@ -135,15 +136,14 @@ class SmvPivotTest extends SparkTestUtil {
       "1,B,50,200.5;" +
       "2,A,60,500")
 
-    val res = srdd.pivot_sum('k, Seq('p), Seq('v1, 'v2))
+    import srdd.sqlContext._, implicits._
+    // val res = srdd.pivot_sum('k, Seq('p), Seq('v1, 'v2))
+    val res = srdd.smvGroupBy('k).smvPivotSum(Seq("p"))("v1", "v2")()
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1,30,50,301.0,200.5]",
-      "[2,60,0,500.0,0.0]"))
+      "[2,60,null,500.0,null]"))
 
     val fieldNames = res.schema.fieldNames.toList
     assert(fieldNames === Seq("k", "v1_A", "v1_B", "v2_A", "v2_B"))
   }
-
-  */
-
 }

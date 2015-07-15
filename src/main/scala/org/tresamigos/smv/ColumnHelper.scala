@@ -56,6 +56,10 @@ class ColumnHelper(column: Column) {
   def smvNullSub(that: Column) = {
     coalesce(column, that)
   }
+
+  val IsNaNFunc: Double => Boolean = x => x.isNaN()
+  def smvIsNaN: Column =
+    new Column(Alias(ScalaUdf(IsNaNFunc, BooleanType, Seq(expr)), s"SmvIsNaN($column)")())
   
   /** LEFT(5) should be replaced by substr(0,5) */
   

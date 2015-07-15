@@ -68,8 +68,9 @@ case class SmvPivot(
         pivotColSets: Seq[Seq[String]],
         valueColPrefixMap: Seq[(String, String)],
         baseOutputColumnNames: Seq[String]) {
+  require(!baseOutputColumnNames.isEmpty, "Pivot requires the output column names to be known")
 
-  def createSrdd(srdd: SchemaRDD, keys: Seq[String]): SchemaRDD = 
+  def createSrdd(srdd: SchemaRDD, keys: Seq[String]): SchemaRDD =
     mapValColsToOutputCols(addSmvPivotValColumn(srdd), keys.map{k => new ColumnName(k)})
 
   private val tempPivotValCol = "_smv_pivot_val"
