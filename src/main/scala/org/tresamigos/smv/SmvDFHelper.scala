@@ -125,7 +125,7 @@ class SmvDFHelper(df: DataFrame) {
     df.select(renamedFields: _*)
   }
 
-  private[smv] def joinUniqFieldNames(otherPlan: DataFrame, on: Column, joinType: String = "inner") : DataFrame = {
+  def joinUniqFieldNames(otherPlan: DataFrame, on: Column, joinType: String = "inner") : DataFrame = {
     val namesL = df.columns.toSet
     val namesR = otherPlan.columns.toSet
 
