@@ -21,26 +21,27 @@ import org.apache.spark.sql.catalyst.dsl.plans._
 
 import org.apache.spark.sql.catalyst.expressions._
 
-private[smv] case class CDSSubGroup(
-  currentSchema: SmvSchema, 
+//TODO: make it private whe fixed the to1.3 migration
+case class CDSSubGroup(
+  currentSchema: SmvSchema,
   crossSchema: SmvSchema,
   currentRow: Row,
   crossRows: Iterable[Row]) extends Serializable
-  
+
 /**
  * SmvCDS - SMV Custom Data Selector
  **/
- 
+
 abstract class SmvCDS extends Serializable {
   def from(that: SmvCDS): SmvCDS = this match{
     case NoOpCDS => that
     case _ => CombinedCDS(this, that)
   }
-  
+
   def filter(input: CDSSubGroup): CDSSubGroup
-  
-  def createIteratorMap(currentSchema: SmvSchema,  crossSchema: SmvSchema) = { 
-    (curr: Row, it: Iterable[Row]) => 
+
+  def createIteratorMap(currentSchema: SmvSchema,  crossSchema: SmvSchema) = {
+    (curr: Row, it: Iterable[Row]) =>
       filter(CDSSubGroup(currentSchema, crossSchema, curr, it)).crossRows
   }
 }
@@ -66,7 +67,7 @@ private[smv] case object NoOpCDS extends SmvCDS {
 }
 
 /**
- * 
+ *
  **/
 private[smv] class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
   def inGroupKeys = Nil
@@ -82,37 +83,37 @@ private[smv] class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
  * SmvCDSAggColumn wraps around a Column to suppot keyword "from"
  **/
 case class SmvCDSAggColumn(aggExpr: Expression, cds: SmvCDS = NoOpCDS) {
-  
-  def from(otherCds: SmvCDS): SmvCDSAggColumn = 
+
+  def from(otherCds: SmvCDS): SmvCDSAggColumn =
     new SmvCDSAggColumn(aggExpr, cds.from(otherCds))
-  
-  def as(n: String): SmvCDSAggColumn = 
+
+  def as(n: String): SmvCDSAggColumn =
     new SmvCDSAggColumn(Alias(aggExpr, n)(), cds)
-    
+
   def isAgg(): Boolean = aggExpr match {
     case Alias(e: AggregateExpression, n) => true
     case _: NamedExpression => false
-    case _ => throw new IllegalArgumentException(s"${aggExpr.toString} need  to be a NamedExpression") 
+    case _ => throw new IllegalArgumentException(s"${aggExpr.toString} need  to be a NamedExpression")
   }
 }
-  
-/** 
- * SmvSingleCDSAggs 
+
+/**
+ * SmvSingleCDSAggs
  *   - Different aggregation expressions with the same CDS are capsulated
  *   - Resolve the expressions on a given input schema
- *   - Provide executor creater 
+ *   - Provide executor creater
  **/
 private[smv] case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpression]){
-  def resolvedExprs(inSchema: SmvSchema) = 
+  def resolvedExprs(inSchema: SmvSchema) =
     SmvLocalRelation(inSchema).resolveAggExprs(aggExprs)
-  
-  def aggFunctions(inSchema: SmvSchema): Seq[AggregateFunction] = 
+
+  def aggFunctions(inSchema: SmvSchema): Seq[AggregateFunction] =
     SmvLocalRelation(inSchema).bindAggExprs(aggExprs).map{_.newInstance()}
-    
+
   def createExecuter(toBeComparedSchema: SmvSchema, inSchema: SmvSchema): (Row, Iterable[Row]) => Seq[Any] = {
     val cum = aggFunctions(inSchema)
     val itMap = cds.createIteratorMap(toBeComparedSchema, inSchema)
-    
+
     {(toBeCompared, it) =>
       itMap(toBeCompared, it).foreach{r => cum.foreach(c => c.update(r))}
       cum.map{c => c.eval(null)}
@@ -121,22 +122,22 @@ private[smv] case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpress
 
 }
 
-/** 
- * Provide functions shared by multiple agg operations 
+/**
+ * Provide functions shared by multiple agg operations
  **/
 private[smv] object SmvCDS {
-  /** 
+  /**
    * The list of column agg/runAgg takes could be a mix of real aggregations or columns to be kept
    * from the original record. Real aggregations should always be something like
-   *   
+   *
    *   sum(...) [from cds ] as name
    **/
   def findAggCols(cols: Seq[SmvCDSAggColumn]): Seq[SmvCDSAggColumn] =  cols.filter{_.isAgg()}
-    
+
   /** Anything other than real aggregations should be the columns to be kept from original rec */
   def findKeptCols(cols: Seq[SmvCDSAggColumn]): Seq[NamedExpression] =
     cols.filter{! _.isAgg()}.map{c => c.aggExpr.asInstanceOf[NamedExpression]}
-    
+
   /** Put all aggregations with the same CDS chain together */
   def combineCDS(aggCols: Seq[SmvCDSAggColumn]): Seq[SmvSingleCDSAggs] = {
     aggCols.groupBy(_.cds).
@@ -174,18 +175,18 @@ private[smv] object SmvCDS {
   }
 }
 
-/** 
+/**
  * SmvAggGDO
  **/
 private[smv] abstract class SmvAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
   protected val keptCols = SmvCDS.findKeptCols(aggCols)
-  protected val cdsAggsList: Seq[SmvSingleCDSAggs] = SmvCDS.combineCDS(SmvCDS.findAggCols(aggCols)) 
-  
+  protected val cdsAggsList: Seq[SmvSingleCDSAggs] = SmvCDS.combineCDS(SmvCDS.findAggCols(aggCols))
+
   def createCurrentSchema(crossSchema: SmvSchema): SmvSchema
-  def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row] 
-  
+  def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row]
+
   def inGroupKeys = Nil
-  
+
   def createOutSchema(smvSchema: SmvSchema) = {
     val keptEntries = SmvLocalRelation(createCurrentSchema(smvSchema)).resolveExprs(keptCols)
     val nes = cdsAggsList.flatMap{aggs => aggs.resolvedExprs(smvSchema)}
@@ -194,7 +195,7 @@ private[smv] abstract class SmvAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends Smv
   }
 }
 
-/** 
+/**
  * SmvOneAggGDO
  *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by agg operation on SmvGroupedData
  **/
@@ -215,11 +216,11 @@ private[smv] class SmvOneAggGDO(orders: Seq[Expression], aggCols: Seq[SmvCDSAggC
 
     {rows => run(executers, getKept)(rows.toSeq.sorted(rowOrdering))}
   }
-  
+
   def createCurrentSchema(crossSchema: SmvSchema) = crossSchema
 }
 
-/** 
+/**
  * SmvRunAggGDO
  *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by runAgg operation on SmvGroupedData
  **/
@@ -268,55 +269,55 @@ private[smv] class SmvRunAggGDO(orders: Seq[Expression], aggCols: Seq[SmvCDSAggC
       {rows => runGeneral(executers, getKept)(rows.toSeq.sorted(rowOrdering))}
     }
   }
-  
+
   def createCurrentSchema(crossSchema: SmvSchema) = crossSchema
 }
 
 /**
  * TODO: SmvCDSPanelAggGDO
  **/
- 
+
 
 /*************** The code below is for CDS developer interface ******/
 
 /**
  * SmvSelfCompareCDS
- * 
+ *
  * A concrete class of SelfCompareCDS, which has
- *  - Self-join Schema, with the "toBeCompared" Row with original column names, and 
+ *  - Self-join Schema, with the "toBeCompared" Row with original column names, and
  *    the "running" Rows with "_"-prefixed names
  *  - Apply the "condition", on the "running" Rows for each "toBeCompared" Row
- * 
+ *
  * Example:
  * SmvSelfCompareCDS($"t" >= $"_t" && $"t" < ($"_t" + 3))
- * 
- * For each "toBeCompared" record with column "t", above SmvCDS defines a group of 
- * records which has "_t" in the range of (t-3, t]. 
+ *
+ * For each "toBeCompared" record with column "t", above SmvCDS defines a group of
+ * records which has "_t" in the range of (t-3, t].
  **/
- 
+
 abstract class SmvSelfCompareCDS extends SmvCDS {
   val condition: Expression
-  
+
   def filter(input: CDSSubGroup) = {
     val cond = condition as "condition"
     val inSchema = input.crossSchema
     val combinedSchema = inSchema.selfJoined
     val ex = SmvLocalRelation(combinedSchema).bindExprs(Seq(cond))(0)
-    
+
     val outIt = input.crossRows.collect{
       case r if (ex.eval(Row.merge(input.currentRow, r)).asInstanceOf[Boolean]) => r
     }
-    
+
     CDSSubGroup(input.currentSchema, inSchema, input.currentRow, outIt)
   }
 }
 
 /**
- * TODO: SmvPanelCompareCDS(condition: Expression) extends FullCompareCDS 
+ * TODO: SmvPanelCompareCDS(condition: Expression) extends FullCompareCDS
  **/
- 
+
 /**
- *  SmvTopNRecsCDS 
+ *  SmvTopNRecsCDS
  *  Returns the TopN records based on the order keys
  *  (which means it can also return botton N records)
  **/
@@ -330,7 +331,5 @@ case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends Smv
     val rowOrdering = SmvCDS.orderColsToOrdering(inSchema, orderCols).reverse
     val outIt = SmvCDS.topNfromRows(input.crossRows, maxElems, rowOrdering)
     CDSSubGroup(input.currentSchema, inSchema, input.currentRow, outIt)
-  } 
+  }
 }
-
-
