@@ -21,27 +21,27 @@ class SelectPlusMinusTest extends SparkTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
     val res = srdd.selectPlus('b + 2.0 as 'bplus2)
-    assertSrddDataEqual(res, 
+    assertSrddDataEqual(res,
       "1.0,10.0,12.0;" +
       "2.0,20.0,22.0;" +
       "3.0,30.0,32.0")
   }
-  
+
   sparkTest("test SelectPlusPrefix") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
     val res = srdd.selectPlusPrefix('b + 2.0 as 'bplus2)
-    assertSrddDataEqual(res, 
+    assertSrddDataEqual(res,
       "12.0,1.0,10.0;" +
       "22.0,2.0,20.0;" +
       "32.0,3.0,30.0")
   }
-  
+
   sparkTest("test SelectMinus") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
     val res = srdd.selectMinus('b)
-    assertSrddDataEqual(res, 
+    assertSrddDataEqual(res,
       "1.0;" +
       "2.0;" +
       "3.0")
@@ -59,7 +59,7 @@ class renameFieldTest extends SparkTestUtil {
     assert(fieldNames === Seq("aa", "b", "cc"))
     assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
   }
-  
+
   /*
   sparkTest("test prefixing field names") {
     val srdd = createSchemaRdd("a:Integer; b:Double; c:String",
@@ -71,7 +71,7 @@ class renameFieldTest extends SparkTestUtil {
     assert(fieldNames === Seq("xx_a", "xx_b", "xx_c"))
     assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
   }
-  
+
   sparkTest("test postfixing field names") {
     val srdd = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
@@ -164,3 +164,18 @@ class dedupByKeyTest extends SparkTestUtil {
   }
 }
 
+class overlapCheckTest extends SparkTestUtil {
+  sparkTest("test overlapCheck") {
+    val s1 = createSchemaRdd("k: String", "a;b;c")
+    val s2 = createSchemaRdd("k: String", "a;b;c;d")
+    val s3 = createSchemaRdd("k: String", "c;d")
+
+    val res = s1.overlapCheck("k")(s2, s3)
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,110]",
+      "[b,110]",
+      "[c,111]",
+      "[d,011]"))
+
+  }
+}

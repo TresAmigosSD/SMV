@@ -277,4 +277,43 @@ class SmvDFHelper(df: DataFrame) {
     df.smvGroupBy(kStr(0), kStr.tail: _*).
       smvMapGroup(new SmvChunkUDFGDO(chunkUDF, true)).toDF
   }
+
+  /**
+   * For a set of DFs, which share the same key column, check the overlap across them.
+   *
+   *   df1.overlapCheck("key")(df2, df3, df4)
+   *
+   * The output is another DF with 2 columns:
+   *    key, flag
+   * where flag is a bit string, e.g. 0110. Each bit represent whether the original DF has
+   * this key.
+   *
+   * It can be used with EDD to summarize on the flag:
+   *
+   *   df1.overlapCheck("key")(df2, df3).edd.addHistogramTasks("flag")().Dump
+   **/
+  def overlapCheck(key: String, partition: Int = 4)(dfother: DataFrame*) = {
+    import df.sqlContext.implicits._
+
+    val dfSimple = df.select($"${key}", $"${key}" as s"${key}_0").repartition(partition)
+    val otherSimple = dfother.zipWithIndex.map{case (df, i) =>
+      val newkey = s"${key}_${i+1}"
+      (newkey, df.select($"${key}" as newkey).repartition(partition))
+    }
+
+    val joined = otherSimple.foldLeft(dfSimple){(c, p) =>
+      val newkey = p._1
+      val r = p._2
+      c.join(r, $"${key}" === $"${newkey}", SmvJoinType.Outer).
+        selectPlus(coalesce($"${key}", $"${newkey}") as "tmp").
+        selectMinus(key).renameField("tmp" -> key)
+    }
+
+    val hasCols = Range(0, otherSimple.size + 1).map{i =>
+      val newkey = s"${key}_${i}"
+      columnIf($"${newkey}".isNull, "0", "1")
+    }
+
+    joined.select($"${key}", smvStrCat(hasCols: _*) as "flag")
+  }
 }
