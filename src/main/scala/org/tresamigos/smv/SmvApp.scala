@@ -162,6 +162,12 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
 
         if (! isDevMode)
           modObject.persist(this, modResult)
+
+        // create edd dump of the module in this directory
+        cmdLineArgsConf.eddDir.get map { dir =>
+          val simpleName = module.split('.').last
+          modResult.edd.addBaseTasks().saveReport(s"${dir}/${simpleName}")
+        }
       }
     }
   }
@@ -181,6 +187,10 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val json = toggle("json", default=Some(false),
     descrYes="generate a json object to represent entire app's module dependency (modules are not run)",
     descrNo="do not generate a json")
+
+  val eddDir = opt[String]("outdir",
+    descr = "if provided, dumps the module's edd to the specified output directory")
+
   val modules = trailArg[List[String]](descr="FQN of modules to run/graph")
 }
 
