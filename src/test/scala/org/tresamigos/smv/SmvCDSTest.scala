@@ -84,6 +84,24 @@ class SmvCDSTest extends SparkTestUtil {
       "[z,5,2.2]"))
   }
 
+  sparkTest("Test Lag inplemented with InLastN") {
+    val ssc = sqlContext;
+    import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+
+    val res = srdd.smvGroupBy("k").runAgg("t")(
+      $"k",
+      $"t",
+      $"v",
+      $"v".smvLag(1) as "v_lag"
+    )
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3,0.3]",
+      "[z,1,0.2,0.2]",
+      "[z,2,1.4,0.2]",
+      "[z,5,2.2,1.4]"))
+  }
+
   sparkTest("Test CDS Chaining compare") {
     val ssc = sqlContext;
     import ssc.implicits._
