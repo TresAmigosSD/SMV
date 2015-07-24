@@ -13,6 +13,7 @@
  */
 
 package org.tresamigos.smv
+import org.apache.spark.sql.functions._
 
 class AggFuncsTest extends SparkTestUtil {
   sparkTest("test OnlineAverage") {
@@ -34,5 +35,21 @@ class AggFuncsTest extends SparkTestUtil {
     val srdd = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test2.csv")
     val hist = srdd.agg(histogram('id)).collect()(0)(0).asInstanceOf[Map[String,Long]] //Array[Row(Map[String,Long])]=> Any=Map[..]
     assert(hist === Map("231"->1l,"123"->2l))
+  }
+
+  sparkTest("test SmvFirst") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,;z,2,1.4;z,5,2.2;a,1,0.3;")
+
+    val res = srdd.groupBy("k").agg(
+      $"k",
+      first($"t"),
+      first($"v") as "first_v",
+      smvFirst($"v") as "smvFirst_v"
+    )
+
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3,0.3]",
+      "[z,1,1.4,null]"))
   }
 }

@@ -47,7 +47,7 @@ case class OnlineStdDevMerge(child: Expression)
   override def newInstance() = new OnlineStdDevMergeFunction(child, this)
 }
 
-case class OnlineAverage(child: Expression) 
+case class OnlineAverage(child: Expression)
   extends PartialAggregate with trees.UnaryNode[Expression] {
   override def references = child.references
   override def nullable = false
@@ -62,14 +62,14 @@ case class OnlineAverage(child: Expression)
       partialNAM :: Nil)
   }
 
-  /* Not sure whether we need to implement this at all. 
-   * Replaced AverageFunction with DummyFuncation, OnlineAverage still worked 
+  /* Not sure whether we need to implement this at all.
+   * Replaced AverageFunction with DummyFuncation, OnlineAverage still worked
    * Can we just use Dummy in the OnlineStdDev function?
    */
   override def newInstance() = new AverageFunction(child, this)
 }
 
-case class OnlineStdDev(child: Expression) 
+case class OnlineStdDev(child: Expression)
   extends PartialAggregate with trees.UnaryNode[Expression] {
   override def references = child.references
   override def nullable = false
@@ -97,7 +97,7 @@ case class HistogramMerge(child: Expression)
 }
 
 
-case class Histogram(child: Expression) 
+case class Histogram(child: Expression)
   extends PartialAggregate with trees.UnaryNode[Expression] {
   override def references = child.references
   override def nullable = false
@@ -116,7 +116,7 @@ case class Histogram(child: Expression)
 }
 
 trait OnlineAvgStdDevFunctions {
-  protected var count: Long = 0L 
+  protected var count: Long = 0L
   protected var avg: Double = 0.0
   protected var m2: Double = 0.0
 
@@ -124,7 +124,7 @@ trait OnlineAvgStdDevFunctions {
     val evaluatedExpr = expr.eval(input)
     if (evaluatedExpr != null) {
       val x = evaluatedExpr.asInstanceOf[Double]
-      val delta = x - avg 
+      val delta = x - avg
       count += 1
       avg = avg + delta / count
       m2 = m2 + delta * ( x - avg )
@@ -133,7 +133,7 @@ trait OnlineAvgStdDevFunctions {
 }
 
 case class OnlineAveragePartitionFunction(
-    expr: Expression, 
+    expr: Expression,
     base: AggregateExpression
   ) extends AggregateFunction with OnlineAvgStdDevFunctions {
 
@@ -143,7 +143,7 @@ case class OnlineAveragePartitionFunction(
 }
 
 case class OnlineStdDevFunction(
-    expr: Expression, 
+    expr: Expression,
     base: AggregateExpression
   ) extends AggregateFunction with OnlineAvgStdDevFunctions {
 
@@ -154,7 +154,7 @@ case class OnlineStdDevFunction(
 
 
 trait OnlineAvgStdDevMergeFunctions {
-  protected var count: Long = 0L 
+  protected var count: Long = 0L
   protected var avg: Double = 0.0
   protected var m2: Double = 0.0
 
@@ -171,7 +171,7 @@ trait OnlineAvgStdDevMergeFunctions {
 }
 
 case class OnlineAverageMergeFunction(
-    expr: Expression, 
+    expr: Expression,
     base: AggregateExpression
   ) extends AggregateFunction with OnlineAvgStdDevMergeFunctions {
 
@@ -181,7 +181,7 @@ case class OnlineAverageMergeFunction(
 }
 
 case class OnlineStdDevMergeFunction(
-    expr: Expression, 
+    expr: Expression,
     base: AggregateExpression
   ) extends AggregateFunction with OnlineAvgStdDevMergeFunctions {
 
@@ -191,7 +191,7 @@ case class OnlineStdDevMergeFunction(
 }
 
 case class HistogramFunction(
-    expr: Expression, 
+    expr: Expression,
     base: AggregateExpression
   ) extends AggregateFunction {
 
@@ -204,7 +204,7 @@ case class HistogramFunction(
 
   var updateFunction: Row => Unit = null
   expr.dataType match {
-    case i: NativeType => 
+    case i: NativeType =>
       updateFunction = { input: Row =>
         val evaluatedExpr = expr.eval(input)
         if (evaluatedExpr != null) {
@@ -212,7 +212,7 @@ case class HistogramFunction(
           histMap += (x->(histMap.getOrElse(x,0L) + 1L))
         }
       }
-    case MapType(kType, LongType, _) => 
+    case MapType(kType, LongType, _) =>
       updateFunction = { input: Row =>
         val evaluatedExpr = expr.eval(input)
         if (evaluatedExpr != null) {
@@ -227,6 +227,31 @@ case class HistogramFunction(
 
 }
 
+case class SmvFirst(child: Expression) extends AggregateExpression with trees.UnaryNode[Expression] {
+  def this() = this(null)
+
+  override def nullable: Boolean = true
+  override def dataType: DataType = child.dataType
+  override def toString: String = s"SmvFirst($child)"
+  override def newInstance(): SmvFirstFunction =
+    new SmvFirstFunction(child, this)
+}
+
+case class SmvFirstFunction(expr: Expression, base: AggregateExpression) extends AggregateFunction {
+  def this() = this(null, null)
+
+  var calculated = false
+  var result: Any = null
+
+  override def update(input: Row): Unit = {
+    if(! calculated){
+      result = expr.eval(input)
+      calculated = true
+    }
+  }
+
+  override def eval(input: Row): Any = result
+}
 
   /*
 case class DummyFunction(expr: Expression, base: AggregateExpression)

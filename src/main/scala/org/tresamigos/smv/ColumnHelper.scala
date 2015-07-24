@@ -349,6 +349,6 @@ class ColumnHelper(column: Column) {
   }
 
   def smvLag(n: Int) = {
-    first(column).from(InLastN(n + 1))
+    smvFirst(column).from(InLastNWithNull(n + 1))
   }
 }

@@ -20,11 +20,11 @@ import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.expressions._
 
 /**
- * TopNRecs: Return top N records on a given order 
- * 
+ * TopNRecs: Return top N records on a given order
+ *
  * Eg.
- * TopNRecs(3, $"amount".desc) 
- * 
+ * TopNRecs(3, $"amount".desc)
+ *
  * Return the 3 records with largest "amount" field
  **/
 object TopNRecs {
@@ -47,6 +47,21 @@ case class InLastN(n: Int) extends SmvCDS {
   }
 }
 
+
+case class InLastNWithNull(n: Int) extends SmvCDS {
+  def filter(input: CDSSubGroup) = {
+    val outIt = {
+      val rows = input.crossRows.toSeq.takeRight(n)
+      val resSize = rows.size
+      if (resSize < n) {
+        val nullArr:Array[Any] = new Array(input.crossSchema.getSize)
+        Range(0, n - resSize).map{i => Row(nullArr: _*)} ++ rows
+      } else rows
+    }
+    CDSSubGroup(input.currentSchema, input.crossSchema, input.currentRow, outIt)
+  }
+}
+
 /**
  * Before(t): Return records "before" current record based on column $"$t"
  **/
@@ -58,7 +73,7 @@ case class Before(t: String) extends SmvSelfCompareCDS {
  * IntInLastN: Return records within current value of an Int column and (current value - N)
  **/
 case class IntInLastN(t: String, n: Int) extends SmvSelfCompareCDS {
-  val condition = ($"$t" >= $"_$t" && $"$t" < ($"_$t" + n)) 
+  val condition = ($"$t" >= $"_$t" && $"$t" < ($"_$t" + n))
 }
 
 /**
@@ -92,6 +107,6 @@ case class TimeInLastNYears(t: String, n: Int) extends SmvSelfCompareCDS {
 /**
  * TODO:
  *   - PanelInLastNDays/Months/Weeks/Quarters/Years
- *   - InLastNRec/InFirstNRec as SelfCompareCDS 
+ *   - InLastNRec/InFirstNRec as SelfCompareCDS
  *       SmvTopNRecsCDS from TillNow
  **/

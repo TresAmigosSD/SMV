@@ -36,9 +36,9 @@ package object smv {
   implicit def makeSmvCDSAggColumn(col: Column) = SmvCDSAggColumn(col.toExpr)
   implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
   implicit def makeSeqStrRDDHelper(rdd: RDD[Seq[String]]) = new SeqStringRDDHelper(rdd)
-  implicit def makeRDDHelper[T](rdd: RDD[T])(implicit tt: ClassTag[T]) = 
+  implicit def makeRDDHelper[T](rdd: RDD[T])(implicit tt: ClassTag[T]) =
     new RDDHelper[T](rdd)
-  implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) = 
+  implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) =
     new PairRDDHelper[K,V](rdd)
 
   /**
@@ -54,22 +54,32 @@ package object smv {
   }
 
   /***************************************************************************
-   * Functions 
+   * Functions
    ***************************************************************************/
-  
+
   /* Aggregate Function wrappers */
   def histogram(c: Column) = {
     new Column(Histogram(c.toExpr))
   }
-  
+
   def onlineAverage(c: Column) = {
     new Column(OnlineAverage(c.toExpr))
   }
-  
+
   def onlineStdDev(c: Column) = {
     new Column(OnlineStdDev(c.toExpr))
   }
-  
+
+  /**
+   * smvFirst: Return null if the first record is null
+   *
+   * Since Spark "first" will return the first non-null value, we have to create
+   * our version smvFirst which to retune the real first value, even if it's null
+   **/
+  def smvFirst(c: Column) = {
+    new Column(SmvFirst(c.toExpr))
+  }
+
   /* NonAggregate Function warppers */
   def columnIf(cond: Column, l: Column, r: Column): Column = {
     new Column(If(cond.toExpr, l.toExpr, r.toExpr))
@@ -84,11 +94,11 @@ package object smv {
   def columnIf[T](cond: Column, l: T, r: T): Column = columnIf(cond, lit(l), lit(r))
   def columnIf[T](cond: Column, l: T, r: Column): Column = columnIf(cond, lit(l), r)
   def columnIf[T](cond: Column, l: Column, r: T): Column = columnIf(cond, l, lit(r))
-  
+
   def smvStrCat(columns: Column*) = {
     new Column(SmvStrCat(columns.map{c => c.toExpr}: _*))
   }
-  
+
   def smvAsArray(columns: Column*) = {
     new Column(SmvAsArray(columns.map{c => c.toExpr}: _*))
   }

@@ -96,8 +96,8 @@ class SmvCDSTest extends SparkTestUtil {
       $"v".smvLag(1) as "v_lag"
     )
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[a,1,0.3,0.3]",
-      "[z,1,0.2,0.2]",
+      "[a,1,0.3,null]",
+      "[z,1,0.2,null]",
       "[z,2,1.4,0.2]",
       "[z,5,2.2,1.4]"))
   }
