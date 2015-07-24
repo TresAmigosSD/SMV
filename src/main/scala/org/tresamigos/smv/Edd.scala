@@ -272,7 +272,10 @@ class Edd(val srdd: SchemaRDD,
   def saveReport(path: String): Unit = {
     import java.io.{File, PrintWriter}
     val res = createReport().mkString("\n")
-    val pw = new PrintWriter(new File(path))
+    val file = new File(path)
+    // ensure parent directories exist
+    file.getParentFile.mkdirs
+    val pw = new PrintWriter(file)
     pw.println(res)
     pw.close()
   }
