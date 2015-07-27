@@ -29,10 +29,10 @@ case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
 class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   private val df = smvGD.df
   private val keys = smvGD.keys
-  
+
   /**
    * smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData
-   * 
+   *
    * Example:
    * val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
    * val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
@@ -43,8 +43,8 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val rowToKeys: Row => Seq[Any] = {row =>
       ordinals.map{i => row(i)}
     }
-    
-    val inGroupMapping =  gdo.createInGroupMapping(smvSchema) 
+
+    val inGroupMapping =  gdo.createInGroupMapping(smvSchema)
     val rdd = df.rdd.
       groupBy(rowToKeys).
       flatMapValues(rowsInGroup => inGroupMapping(rowsInGroup)).
@@ -66,7 +66,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val newdf = df.sqlContext.applySchemaToRowRDD(converted, gdo.createOutSchema(smvSchema))
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
- 
+
   def smvMapGroup(cds: SmvCDS): SmvGroupedData = {
     val gdo = new SmvCDSAsGDO(cds)
     smvMapGroup(gdo)
@@ -74,21 +74,21 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
   /**
    * smvPivot on SmvGroupedData is similar to smvPivot on DF
-   * 
+   *
    * Input
    *  | id  | month | product | count |
    *  | --- | ----- | ------- | ----- |
    *  | 1   | 5/14  |   A     |   100 |
    *  | 1   | 6/14  |   B     |   200 |
    *  | 1   | 5/14  |   B     |   300 |
-   * 
+   *
    * Output
    *  | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
    *  | --- | ------------ | ------------ | ------------ | ------------ |
    *  | 1   | 100          | NULL         | NULL         | NULL         |
    *  | 1   | NULL         | NULL         | NULL         | 200          |
    *  | 1   | NULL         | 300          | NULL         | NULL         |
-   * 
+   *
    * df.groupBy("id").smvPivot(Seq("month", "product"))("count")(
    *    "5_14_A", "5_14_B", "6_14_A", "6_14_B")
    **/
@@ -96,7 +96,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
     SmvGroupedData(pivot.createSrdd(df, keys), keys)
   }
-  
+
   /**
    * If no baseOutput is supplied, run a full scan to extract the
    * unique values in the pivot and return as base output column
@@ -109,12 +109,12 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       SmvPivot.getBaseOutputColumnNames(smvGD.df, pivotCols)
     else
       baseOutput
-  
+
   /**
    * smvPivotSum is a helper function on smvPivot
-   * 
+   *
    * df.groupBy("id").smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
-   * 
+   *
    * Output
    *  | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
    *  | --- | ------------ | ------------ | ------------ | ------------ |
@@ -128,45 +128,123 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val aggCols = keys.map{k => df(k)} ++ outCols
     smvPivot(pivotCols: _*)(valueCols: _*)(output: _*).agg(aggCols(0), aggCols.tail: _*)
   }
-  
+
   /**
    * smvQuantile: Compute the quantile bin number within a group in a given DF
-   * 
+   *
    * Example:
    * df.smvGroupBy('g, 'g2).smvQuantile("v", 100)
-   * 
+   *
    * For the colume it calculate quatile for (say named "v"), 3 more columns are added in the output
    * v_total, v_rsum, v_quantile
-   * 
+   *
    * All other columns are kept
    **/
   def smvQuantile(valueCol: String, numBins: Integer): DataFrame = {
     smvMapGroup(new SmvQuantile(valueCol, numBins)).toDF
   }
-  
+
   def smvQuantile(valueCol: Column, numBins: Integer): DataFrame = {
     val name = valueCol.getName
     smvMapGroup(new SmvQuantile(name, numBins)).toDF
   }
-  
+
   def smvDecile(valueCol: String): DataFrame = {
     smvMapGroup(new SmvQuantile(valueCol, 10)).toDF
   }
-  
+
   def smvDecile(valueCol: Column): DataFrame = {
     val name = valueCol.getName
     smvMapGroup(new SmvQuantile(name, 10)).toDF
   }
+
+  /**
+   * Scale a group of columns to given ranges
+   *
+   * Example:
+   *   df.smvGroupBy("k").smvScale($"v1" -> (0.0, 100.0), $"v2" -> (100.0, 200.0))()
+   *
+   * In this example, "v1" column within each k-group, the lowest value is scaled to 0.0 and
+   * highest value is scaled to 100.0. The scaled column is called "v1_scaled".
+   *
+   * Two optional parameters:
+   *   withZeroPivot: Boolean = false
+   *   doDropRange: Boolean = true
+   *
+   * When "withZeroPivot" is set, the scaling ensures that the zero point pivot is maintained.
+   * For example, if the input range is [-5,15] and the desired output ranges are [-100,100],
+   * then instead of mapping -5 -> -100 and 15 -> 100, we would maintain the zero pivot by mapping
+   * [-15,15] to [-100,100] so a zero input will map to a zero output. Basically we extend the input
+   * range to the abs max of the low/high values.
+   *
+   * When "doDropRange" is set, the upper and lower bound of the unscaled value will be droped
+   * from the output. Otherwise, the lower and upper bound of the unscaled value will be names as
+   * "v1_min" and "v1_max" as for the example. Please note that is "withZeroPivot" also set, the
+   * lower and upper bounds will be the abs max.
+  **/
+  def smvScale(ranges: (Column, (Double, Double))*)
+    (withZeroPivot: Boolean = false, doDropRange: Boolean = true): DataFrame = {
+
+    import df.sqlContext.implicits._
+
+    val cols = ranges.map{case (c, (_,_)) => c}
+    val keyCols = keys.map{k => $"$k"}
+
+    val aggExprs = keyCols ++ cols.flatMap{v =>
+      val name = v.getName
+      Seq(min(v).cast("double") as s"${name}_min", max(v).cast("double") as s"${name}_max")
+    }
+
+    val withRanges = if(withZeroPivot) {
+      val absMax : (Double, Double) => Double = (l,h) => scala.math.max(scala.math.abs(l), scala.math.abs(h))
+      val absMaxUdf = udf(absMax)
+      df.groupBy(keyCols: _*).agg(aggExprs.head, aggExprs.tail: _*).select((keyCols ++
+        cols.flatMap{v =>
+          val name = v.getName
+          Seq(absMaxUdf($"${name}_min", $"${name}_max") * -1.0 as s"${name}_min",
+              absMaxUdf($"${name}_min", $"${name}_max")        as s"${name}_max")
+        }
+      ): _*)
+    } else {
+      df.groupBy(keyCols: _*).agg(aggExprs.head, aggExprs.tail: _*)
+    }
+
+    /* When value all the same, return the middle value of the target range */
+    def createScaleUdf(low: Double, high: Double) = udf({(v: Double, l: Double, h: Double) =>
+      if (h == l){
+        (low + high) / 2.0
+      } else {
+        (v - l) / (h - l) * (high - low) + low
+      }
+    })
+
+    val scaleExprs = ranges.map{case (v, (low, high)) =>
+      val sUdf = createScaleUdf(low, high)
+      val name = v.getName
+      sUdf(v.cast("double"), $"${name}_min", $"${name}_max") as s"${name}_scaled"
+    }
+
+    if(doDropRange){
+      df.joinByKey(withRanges, keys, SmvJoinType.Inner).selectPlus(scaleExprs: _*).
+        selectMinus(cols.flatMap{v =>
+          val name = v.getName
+          Seq($"${name}_min", $"${name}_max")
+        }: _*)
+    } else {
+      df.joinByKey(withRanges, keys, SmvJoinType.Inner).selectPlus(scaleExprs: _*)
+    }
+  }
+
   /**
    * See RollupCubeOp for details.
-   * 
+   *
    * Example:
    *   df.smvGroupBy("year").smvCube("zip", "month").agg("year", "zip", "month", sum("v") as "v")
-   * 
+   *
    * For zip & month columns with input values:
    *   90001, 201401
    *   10001, 201501
-   * 
+   *
    * The "cubed" values on those 2 columns are:
    *   90001, *
    *   10001, *
@@ -174,56 +252,56 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *   *, 201501
    *   90001, 201401
    *   10001, 201501
-   * 
-   * where * stand for "any" 
-   * 
+   *
+   * where * stand for "any"
+   *
    * Also have a version on DF.
    **/
   def smvCube(col: String, others: String*): SmvGroupedData = {
     new RollupCubeOp(df, keys, (col +: others)).cube()
   }
-  
+
   def smvCube(cols: Column*): SmvGroupedData = {
     val names = cols.map(_.getName)
     new RollupCubeOp(df, keys, names).cube()
   }
   /**
    * See RollupCubeOp for details.
-   * 
+   *
    * Example:
    *   df.smvGroupBy("year").smvRollup("county", "zip").agg("year", "county", "zip", sum("v") as "v")
-   * 
+   *
    * For county & zip with input values:
    *   10234, 92101
    *   10234, 10019
-   * 
+   *
    * The "rolluped" values are:
    *   10234, *
    *   10234, 92101
    *   10234, 10019
-   * 
+   *
    * Also have a version on DF
    **/
   def smvRollup(col: String, others: String*): SmvGroupedData = {
     new RollupCubeOp(df, keys, (col +: others)).rollup()
   }
-  
+
   def smvRollup(cols: Column*): SmvGroupedData = {
     new RollupCubeOp(df, keys, cols.map(_.getName)).rollup()
   }
   /**
    * smvTopNRecs: for each group, return the top N records according to an ordering
-   * 
+   *
    * Example:
    *   df.smvGroupBy("id").smvTopNRecs(3, $"amt".desc)
-   * 
-   * Will keep the 3 largest amt records for each id 
+   *
+   * Will keep the 3 largest amt records for each id
    **/
   def smvTopNRecs(maxElems: Int, orders: Column*) = {
     val cds = SmvTopNRecsCDS(maxElems, orders.map{o => o.toExpr})
     smvMapGroup(cds).toDF
   }
-  
+
   /**
    * aggWithKeys: same as agg, but by default, keep all keys
    **/
@@ -231,7 +309,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val allCols = keys.map{k => new ColumnName(k)} ++ cols
     smvGD.toGroupedData.agg(allCols(0), allCols.tail: _*)
   }
-  
+
   /**
    * oneAgg
    *
@@ -254,8 +332,8 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    **/
   def oneAgg(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
     val gdo = new SmvOneAggGDO(orders.map{o => o.toExpr}, aggCols)
-    
-    /* Since SmvCDSAggGDO grouped aggregations with the same CDS together, the ordering of the 
+
+    /* Since SmvCDSAggGDO grouped aggregations with the same CDS together, the ordering of the
        columns is no more the same as the input list specified. Here to put them in order */
 
     val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
@@ -263,17 +341,17 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
   def oneAgg(order: String, others: String*)(aggCols: SmvCDSAggColumn*): DataFrame =
     oneAgg((order +: others).map{o => new ColumnName(o)}: _*)(aggCols: _*)
-  
+
   /**
    * runAgg
-   * 
+   *
    * See SmvCDS document for details.
    * RunAgg will sort the records in the each group according to the specified ordering (syntax is the same
    * as orderBy). For each record, it uses the current record as the reference record, and apply the CDS
    * and aggregation on all the records "till this point". Here "till this point" means that ever record less
    * than or equal current record according to the given ordering.
    * For N records as input, runAgg will generate N records as output.
-   * 
+   *
    * Example:
    *   val res = srdd.smvGroupBy('k).runAgg($"t")(
    *                    $"k",
