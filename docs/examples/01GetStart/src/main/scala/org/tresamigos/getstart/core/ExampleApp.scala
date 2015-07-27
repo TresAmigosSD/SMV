@@ -8,11 +8,11 @@ import org.tresamigos.smv._
  * The app name is taken as a parameter to allow individual modules to override the app name
  * in their standalone run mode.
  */
-class ExampleApp(_appName: String,
+class ExampleApp(
                   _args: Seq[String],
                   _sc: Option[SparkContext] = None
                   )
-      extends SmvApp(_appName, _args, _sc) {
+      extends SmvApp(_args, _sc) {
 
   val num_partitions = sys.env.getOrElse("PARTITIONS", "64")
   sqlContext.setConf("spark.sql.shuffle.partitions", num_partitions)
@@ -32,7 +32,7 @@ object ExampleApp {
    ********************************************************************/
   val employment = SmvCsvFile("input/employment/CB1200CZ11.csv", caBar)
   def main(args: Array[String]) {
-    new ExampleApp("ExampleApp", args).run()
+    new ExampleApp(args).run()
   }
 }
 

@@ -19,14 +19,16 @@ import java.util.{InvalidPropertiesFormatException, Properties}
 
 import org.rogach.scallop.ScallopConf
 
+import scala.util.Try
+
 
 /**
  * command line argumetn parsing using scallop library.
  * See (https://github.com/scallop/scallop) for details on using scallop.
  */
 private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) {
-  val DEFAULT_SMV_APP_CONF_FILE = "conf/smv-app-conf"
-  val DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf"
+  val DEFAULT_SMV_APP_CONF_FILE = "conf/smv-app-conf.props"
+  val DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
 
   val smvProps = propsLong[String]("smv-props", "key=value command line props override")
   val smvAppConfFile = opt("smv-app-conf", noshort = true,
@@ -52,7 +54,7 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val modules = trailArg[List[String]](descr="FQN of modules to run/graph")
 }
 
-class SmvStage(val name: String, val pkgs: Seq[String]) {
+class SmvStage(val name: String, val pkgs: Seq[String], val version: Int) {
   override def toString = s"SmvStage<${name}>"
 }
 
@@ -62,11 +64,18 @@ object SmvStage {
    * The packages in stage X are assumed to be provided by property "smv.stages.X.packages"
    */
   def apply(name: String, conf: SmvConfig) = {
-    val pkgPropName = s"smv.stages.${name}.packages"
-    val pkgs = conf.propAsArray(pkgPropName)
+    val stagePropPrefix = s"smv.stages.${name}"
+
+    // get stage packages.
+    val pkgPropName = stagePropPrefix + ".packages"
+    val pkgs = conf.splitProp(pkgPropName)
     if (pkgs.isEmpty)
       throw new InvalidPropertiesFormatException(s"property ${pkgPropName} is empty")
-    new SmvStage(name, pkgs.toList)
+
+    // get stage version (if any)
+    val version = conf.getPropAsInt(stagePropPrefix + ".version").getOrElse(0)
+
+    new SmvStage(name, pkgs.toList, version)
   }
 }
 
@@ -74,11 +83,11 @@ object SmvStage {
  * Container of all SMV config driven elements (cmd line, app props, user props, etc).
  */
 class SmvConfig(cmdLineArgs: Seq[String]) {
-  val cmdLineArgsConf = new CmdLineArgsConf(cmdLineArgs)
+  val cmdLine = new CmdLineArgsConf(cmdLineArgs)
 
-  private val appConfProps = _loadProps(cmdLineArgsConf.smvAppConfFile())
-  private val usrConfProps = _loadProps(cmdLineArgsConf.smvUserConfFile())
-  private val cmdLineProps = cmdLineArgsConf.smvProps
+  private val appConfProps = _loadProps(cmdLine.smvAppConfFile())
+  private val usrConfProps = _loadProps(cmdLine.smvUserConfFile())
+  private val cmdLineProps = cmdLine.smvProps
   private val defaultProps = Map(
     "smv.appName" -> "Smv Application",
     "smv.stages" -> ""
@@ -89,7 +98,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // --- config params.  App should access configs through vals below rather than from props maps
   val appName = mergedProps("smv.appName")
-  val stages = propAsArray("smv.stages") map {s => SmvStage(s, this)}
+  val stages = splitProp("smv.stages") map {s => SmvStage(s, this)}
 
   /**
    * load the given properties file and return the resulting props as a scala Map.
@@ -126,12 +135,16 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
    * convert the property value to an array of strings.
    * Return empty array if original prop value was an empty string
    */
-  private[smv] def propAsArray(propName: String) = {
+  private[smv] def splitProp(propName: String) = {
     val propVal = mergedProps(propName)
     if (propVal == "")
       Array[String]()
     else
       propVal.split(',').map(_.trim)
+  }
+
+  private[smv] def getPropAsInt(propName: String) : Option[Int] = {
+    mergedProps.get(propName).flatMap { s: String => Try(s.toInt).toOption }
   }
 }
 

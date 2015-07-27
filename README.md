@@ -84,7 +84,9 @@ Development with Spark (and Scala).
 The SmvApp framework with all the additional functions is to make user's experience closer to solve the data problem 
 with minimal Spark/Scala programing knowledge and skills. 
 
-## [Application Framework](docs/appFramework.md)
+## Application Framework
+* [Application Framework Intro](docs/appFramework.md)
+* [Application Configuration](docs/appConfig.md)
 
 ## Smv Functions
 * [CSV Handling](docs/csvHandling.md)

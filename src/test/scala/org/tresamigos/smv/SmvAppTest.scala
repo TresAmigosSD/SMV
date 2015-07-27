@@ -30,7 +30,7 @@ class SmvVersionTest extends SparkTestUtil {
       override def version = 10
     }
 
-    object app extends SmvApp("test version", Seq("Y"), Option(sc))
+    object app extends SmvApp(Seq("Y"), Option(sc))
 
     X.v = 1
     val v1 = Y.versionSum()
@@ -82,7 +82,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test normal dependency execution") {
-    object app extends SmvApp("test dependency", Seq("C"), Option(sc))
+    object app extends SmvApp(Seq("C"), Option(sc))
 
     val res = app.resolveRDD(C)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
@@ -102,7 +102,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test cycle dependency execution") {
-    object app extends SmvApp("test dependency", Seq("None"), Option(sc))
+    object app extends SmvApp(Seq("None"), Option(sc))
 
     intercept[IllegalStateException] {
       app.resolveRDD(B_cycle)
@@ -110,7 +110,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test modulesInPackage method.") {
-    object app extends SmvApp("test modulesInPackage", Seq("None"), Option(sc)) {
+    object app extends SmvApp(Seq("None"), Option(sc)) {
       override def getModulePackages() = Seq(
         "org.tresamigos.smv.smvAppTestPackage"
       )
@@ -136,7 +136,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test dependency graph creation.") {
-    object app extends SmvApp("test dependency graph", Seq("C"), Option(sc))
+    object app extends SmvApp(Seq("C"), Option(sc))
 
     val depGraph = new SmvModuleDependencyGraph(C, app.packagesPrefix)
     //depGraph.saveToFile("foo.dot")

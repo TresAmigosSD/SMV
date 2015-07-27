@@ -1,0 +1,78 @@
+# SMV Application Configuration
+
+SMV provides multiple ways to set the runtime configuration.  Multiple config files are utilized to
+facilitate the ability to define static application level configuration and easily allow the user to
+provide their own configuration.  This also allows the static application level configuration to be
+"checked-in" with the individual apps.  In addition to the configuration files, the user is able
+to override any of the options using the command line interface.
+
+## Command line override
+
+For any given option X, the user may override the value specified in any of the configuration files as follows:
+
+```
+./tools/run_module.sh --smv-props X=55 ... module_to_run
+```
+
+multiple properties may be specified at the same time:
+
+```
+./tools/run_module.sh --smv-props smv.appName="myApp" smv.stages="s1,s2" ... module_to_run
+```
+
+## Name conflict resolution
+
+If a configuration parameter appears in multiple places, then the conflict is resolved by picking the value from the higher priority source.
+The sources are ordered from high to low priority as follows:
+
+* command line options
+* user level config file (default: conf/smv-user-conf.props)
+* app level config file (default: conf/smv-app-conf.props)
+* smv default options
+
+## SMV Config Parameters
+
+<table>
+<tr>
+<th>Property Name</th>
+<th>Default</th>
+<th>Required/<br>Optional</th>
+<th>Description</th>
+</tr>
+
+<tr>
+<td>smv.appName</td>
+<td>"SMV Application"</td>
+<td>Optional</td>
+<td>The application name</td>
+</tr>
+
+<tr>
+<td>smv.stages</td>
+<td>empty</td>
+<td>Required</td>
+<td>List of stage names in application.<br>Example: "etl, model, ui"</td>
+</tr>
+
+<tr>
+<td>smv.stages.X.packages</td>
+<td>empty</td>
+<td>Required</td>
+<td>List of package names in stage X.  The package names must be the fully qualified name.<br>
+Example: "com.company.proj.etl, com.company.proj.model"</td>
+</tr>
+
+<tr>
+<td>smv.stages.X.version</td>
+<td>0</td>
+<td>Optional</td>
+<td>Current version of stage X. See [TODO: add link here] for details on stage versions</td>
+</tr>
+</table>
+
+## Spark SQL configuration parameters.
+
+For small projects, user may also provide spark SQL configuration properties along with the SMV properties.
+This reduces the number of configuration files to maintain and also allows the application to specify a better default
+spark configuration parameter depending on its needs.  All properties starting with "spark.sql" will be added to the
+runtime SqlContext configuration.

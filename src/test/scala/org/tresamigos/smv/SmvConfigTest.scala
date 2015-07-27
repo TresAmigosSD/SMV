@@ -63,7 +63,9 @@ class SmvConfigTest extends SparkTestUtil {
     assert(s.size === 2)
     assert(s(0).name === "stage1")
     assert(s(0).pkgs === Seq("pkg1a", "pkg1b"))
+    assert(s(0).version === 5)
     assert(s(1).name === "stage2")
     assert(s(1).pkgs === Seq("pkg2a", "pkg2b"))
+    assert(s(1).version === 0)
   }
 }

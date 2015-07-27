@@ -24,14 +24,14 @@ import scala.collection.mutable
 import scala.util.Try
 
 /**
- * Driver for SMV applications.  The app may override the getModulesPackages method to
- * provide list of modules to discover SmvModules (only needed for catalogs).
+ * Driver for SMV applications.  Most apps do not need to override this class and should just be
+ * launched using the SmvApp object (defined below)
  */
-abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None) {
+class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None) {
 
-  val cmdLineArgsConf = new CmdLineArgsConf(cmdLineArgs)
-  val isDevMode = cmdLineArgsConf.devMode()
-  val sparkConf = new SparkConf().setAppName(appName)
+  val smvConfig = new SmvConfig(cmdLineArgs)
+  val isDevMode = smvConfig.cmdLine.devMode()
+  val sparkConf = new SparkConf().setAppName(smvConfig.appName)
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = new SQLContext(sc)
   private val mirror = ru.runtimeMirror(this.getClass.getClassLoader)
@@ -40,6 +40,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
   /** concrete applications can provide a list of package names containing modules. */
+  // TODO: remove this once stages are implemented.
   def getModulePackages() : Seq[String] = Seq.empty
 
   /** concrete applications can provide a more interesting RejectLogger. 
@@ -102,19 +103,6 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
       toSeq
   }
 
-  /** find a common prefix to all module names. */
-  /* we should be more functional than this :-) 
-  private def findCommonPrefix(prefix: String, allModuleNames: Seq[String]): String = {
-    if (prefix.size == 0)
-      ""
-    else
-      if (allModuleNames.forall(m => m.startsWith(prefix)))
-        prefix
-      else
-        findCommonPrefix(prefix.split('.').dropRight(1).mkString("."), allModuleNames)
-  }
-  */
-
   def allModules() = getModulePackages.map(modulesInPackage).flatten
   lazy val packagesPrefix = {
     val m = allModules()
@@ -134,7 +122,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   }
   
   def genJSON(packages: Seq[String] = Seq()) = {
-    val pathName = s"${appName}.json"
+    val pathName = s"${smvConfig.appName}.json"
     new SmvModuleJSON(this, packages).saveToFile(pathName)
   }
 
@@ -143,14 +131,14 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
    * to determine which modules should be run/graphed/etc.
    */
   def run() = {
-    if (cmdLineArgsConf.json()) {
-      genJSON();
+    if (smvConfig.cmdLine.json()) {
+      genJSON()
     }
 
-    cmdLineArgsConf.modules().foreach { module =>
+    smvConfig.cmdLine.modules().foreach { module =>
       val modObject = moduleNametoObject(module)
 
-      if (cmdLineArgsConf.graph()) {
+      if (smvConfig.cmdLine.graph()) {
         // TODO: need to combine the modules for graphs into a single graph.
         genDotGraph(modObject)
       } else {
@@ -160,7 +148,7 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
           modObject.persist(this, modResult)
 
         // create edd dump of the module in this directory
-        cmdLineArgsConf.eddDir.get map { dir =>
+        smvConfig.cmdLine.eddDir.get map { dir =>
           val simpleName = module.split('.').last
           modResult.edd.addBaseTasks().saveReport(s"${dir}/${simpleName}")
         }
@@ -169,6 +157,17 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
   }
 }
 
+/**
+ * Common entry point for all SMV applications.  This is the object that should be provided to spark-submit.
+ */
+object SmvApp {
+  def main(args: Array[String]) {
+    new SmvApp(args).run()
+  }
+}
+
+
+// TODO: json is a representation.  Need to rename this class to indicate WHAT it is actually generating not just the type.
 private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
   private def allModules = {
     if (packages.isEmpty) app.allModules
