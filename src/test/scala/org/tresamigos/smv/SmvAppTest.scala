@@ -16,21 +16,6 @@ package org.tresamigos.smv {
 
 import org.apache.spark.sql.SchemaRDD
 
-class CmdLineArgsTest extends SparkTestUtil {
-  test("test command line parser") {
-    val cmd_args = new CmdLineArgsConf(Seq("--graph", "-d", "mod1", "mod2"))
-    assert(cmd_args.devMode())
-    assert(cmd_args.graph())
-    assert(cmd_args.modules() === Seq("mod1", "mod2"))
-  }
-  test("test command line parser with default args.") {
-    val cmd_args = new CmdLineArgsConf(Seq("mod1"))
-    assert(!cmd_args.devMode())
-    assert(!cmd_args.graph())
-    assert(cmd_args.modules() === Seq("mod1"))
-  }
-}
-
 class SmvVersionTest extends SparkTestUtil {
   sparkTest("Test module version") {
     object X extends SmvModule("X Module") {
