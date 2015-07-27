@@ -15,7 +15,6 @@
 package org.tresamigos.smv
 
 import java.io.{File, PrintWriter}
-import org.rogach.scallop.ScallopConf
 
 import scala.reflect.runtime.{universe => ru}
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
@@ -23,9 +22,6 @@ import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
 import scala.util.Try
-import org.joda.time._
-import org.joda.convert._
-import org.joda.time.format._
 
 /**
  * Driver for SMV applications.  The app may override the getModulesPackages method to
@@ -171,27 +167,6 @@ abstract class SmvApp (val appName: String, private val cmdLineArgs: Seq[String]
       }
     }
   }
-}
-
-/**
- * command line argumetn parsing using scallop library.
- * See (https://github.com/scallop/scallop) for details on using scallop.
- */
-private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) {
-  val devMode = toggle("dev", default=Some(false),
-    descrYes="enable dev mode (persist all intermediate module results",
-    descrNo="enable production mode (all modules are evaluated from scratch")
-  val graph = toggle("graph", default=Some(false),
-    descrYes="generate a dependency graph of the given modules (modules are not run)",
-    descrNo="do not generate a dependency graph")
-  val json = toggle("json", default=Some(false),
-    descrYes="generate a json object to represent entire app's module dependency (modules are not run)",
-    descrNo="do not generate a json")
-
-  val eddDir = opt[String]("outdir",
-    descr = "if provided, dumps the module's edd to the specified output directory")
-
-  val modules = trailArg[List[String]](descr="FQN of modules to run/graph")
 }
 
 private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
