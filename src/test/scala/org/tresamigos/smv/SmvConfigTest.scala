@@ -30,10 +30,13 @@ class CmdLineArgsTest extends SparkTestUtil {
 }
 
 class SmvConfigTest extends SparkTestUtil {
+  val confFileArgs = Seq(
+    "--smv-app-conf", testDataDir + "SmvConfigTest/app.conf",
+    "--smv-user-conf", testDataDir + "SmvConfigTest/user.conf"
+  )
+
   test("test basic props override/priority") {
-    val conf = new SmvConfig(Seq(
-      "--smv-app-conf", testDataDir + "SmvConfigTest/app.conf",
-      "--smv-user-conf", testDataDir + "SmvConfigTest/user.conf",
+    val conf = new SmvConfig(confFileArgs ++ Seq(
       "--smv-props", "smv.inAppAndCmd=cmd", "smv.inUserAndCmd=cmd", "smv.cmdLineOnly=cmd",
       "mod1"))
 
@@ -52,5 +55,15 @@ class SmvConfigTest extends SparkTestUtil {
     for ((key, value) <- expectedProps) {
       assert(props(key) === value)
     }
+  }
+
+  test("test stage configuration") {
+    val conf = new SmvConfig(confFileArgs ++ Seq("mod1"))
+    val s = conf.stages
+    assert(s.size === 2)
+    assert(s(0).name === "stage1")
+    assert(s(0).pkgs === Seq("pkg1a", "pkg1b"))
+    assert(s(1).name === "stage2")
+    assert(s(1).pkgs === Seq("pkg2a", "pkg2b"))
   }
 }
