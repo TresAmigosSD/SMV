@@ -109,12 +109,24 @@ class SmvAppTest extends SparkTestUtil {
     }
   }
 
+  sparkTest("Test getAllPackages method.") {
+    object app extends SmvApp(Seq(
+      "--smv-props",
+      "smv.stages=s1:s2",
+      "smv.stages.s1.packages=pkg1:pkg2",
+      "smv.stages.s2.packages=pkg3:pkg4",
+      "None"), Some(sc)) {}
+
+    val expPkgs = Seq("pkg1", "pkg2", "pkg3", "pkg4")
+    assert(app.getAllPackages() === expPkgs)
+  }
+
   sparkTest("Test modulesInPackage method.") {
-    object app extends SmvApp(Seq("None"), Option(sc)) {
-      override def getModulePackages() = Seq(
-        "org.tresamigos.smv.smvAppTestPackage"
-      )
-    }
+    object app extends SmvApp(Seq(
+      "--smv-props",
+      "smv.stages=s1",
+      "smv.stages.s1.packages=org.tresamigos.smv.smvAppTestPackage",
+      "None"), Some(sc)) {}
 
     val mods: Seq[SmvModule] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPackage")
     assertUnorderedSeqEqual(mods,

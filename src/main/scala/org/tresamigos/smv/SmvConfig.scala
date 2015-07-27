@@ -54,6 +54,7 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val modules = trailArg[List[String]](descr="FQN of modules to run/graph")
 }
 
+// TODO: should this be a case class?
 class SmvStage(val name: String, val pkgs: Seq[String], val version: Int) {
   override def toString = s"SmvStage<${name}>"
 }
@@ -140,7 +141,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     if (propVal == "")
       Array[String]()
     else
-      propVal.split(',').map(_.trim)
+      propVal.split(Array(',', ':')).map(_.trim)
   }
 
   private[smv] def getPropAsInt(propName: String) : Option[Int] = {

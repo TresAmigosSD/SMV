@@ -18,10 +18,6 @@ class ExampleApp(
   sqlContext.setConf("spark.sql.shuffle.partitions", num_partitions)
   
   override val rejectLogger = new SCRejectLogger(sc, 3)
-  override def getModulePackages() = Seq(
-    "org.tresamigos.getstart.etl",
-    "org.tresamigos.getstart.adhoc"
-  )
 }
 
 object ExampleApp {

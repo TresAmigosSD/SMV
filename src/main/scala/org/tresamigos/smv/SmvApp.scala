@@ -31,6 +31,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   val smvConfig = new SmvConfig(cmdLineArgs)
   val isDevMode = smvConfig.cmdLine.devMode()
+  val stages = smvConfig.stages
   val sparkConf = new SparkConf().setAppName(smvConfig.appName)
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = new SQLContext(sc)
@@ -39,9 +40,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
-  /** concrete applications can provide a list of package names containing modules. */
-  // TODO: remove this once stages are implemented.
-  def getModulePackages() : Seq[String] = Seq.empty
+  /** get list of all packages in this app (union of all stage packages) **/
+  def getAllPackages() : Seq[String] = {
+    stages.flatMap(s => s.pkgs)
+  }
 
   /** concrete applications can provide a more interesting RejectLogger. 
    *  Example: override val rejectLogger = new SCRejectLogger(sc, 3)
@@ -49,6 +51,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   def rejectLogger() : RejectLogger = TerminateRejectLogger
   
   def saveRejects(path: String) = {
+    // TODO: isInstanceOf is evil.  Use a property of the logger instance instead!!!
     if(rejectLogger.isInstanceOf[SCRejectLogger]){
       val r = rejectLogger.rejectedReport
       if(!r.isEmpty){
@@ -103,7 +106,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       toSeq
   }
 
-  def allModules() = getModulePackages.map(modulesInPackage).flatten
+  def allModules() = getAllPackages.map(modulesInPackage).flatten
   lazy val packagesPrefix = {
     val m = allModules()
     if (m.isEmpty) ""

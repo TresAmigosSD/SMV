@@ -32,6 +32,11 @@ The sources are ordered from high to low priority as follows:
 
 ## SMV Config Parameters
 
+The table below describes all available SMV configuration parameters.
+Note that for sequence/list type parameters (e.g. smv.stages), a "," or ":" can be used to separate out the items in the list.
+**For command line arguments, only the ":" can be used as a separator.**
+
+<br>
 <table>
 <tr>
 <th>Property Name</th>
