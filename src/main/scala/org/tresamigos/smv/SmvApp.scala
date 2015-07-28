@@ -130,10 +130,22 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /**
+   * pass on the spark sql props set in the smv config file(s) to spark.
+   * This is just for convenience so user can manage both smv/spark props in a single file.
+   */
+  private def setSparkSqlConfigParams() = {
+    for ((key, value) <- smvConfig.sparkSqlProps) {
+      sqlContext.setConf(key, value)
+    }
+  }
+
+  /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
    */
   def run() = {
+    setSparkSqlConfigParams()
+
     if (smvConfig.cmdLine.json()) {
       genJSON()
     }

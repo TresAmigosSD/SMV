@@ -101,6 +101,8 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   val appName = mergedProps("smv.appName")
   val stages = splitProp("smv.stages") map {s => SmvStage(s, this)}
 
+  val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
+
   /**
    * load the given properties file and return the resulting props as a scala Map.
    * Note: if the provided file does not exit, this will just silently return an empty map.
