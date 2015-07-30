@@ -37,6 +37,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val sqlContext = new SQLContext(sc)
   private val mirror = ru.runtimeMirror(this.getClass.getClassLoader)
 
+  // configure spark sql params here rather in run so that it would be done even if we use the shell.
+  setSparkSqlConfigParams()
+
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
@@ -144,8 +147,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * to determine which modules should be run/graphed/etc.
    */
   def run() = {
-    setSparkSqlConfigParams()
-
     if (smvConfig.cmdLine.json()) {
       genJSON()
     }
