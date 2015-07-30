@@ -159,10 +159,7 @@ private[smv] object SmvCDS {
 
     new Ordering[Row] {
       override def compare(a:Row, b:Row) = (ordinals zip ordering).map{case (i, order) =>
-        if(a(i) == null && b(i) == null) 0
-        else if(a(i) == null) -1
-        else if (b(i) == null) 1
-        else order.compare(a(i),b(i)).signum
+        order.compare(a(i),b(i)).signum
       }.reduceLeft((s, i) => s << 1 + i)
     }
   }
