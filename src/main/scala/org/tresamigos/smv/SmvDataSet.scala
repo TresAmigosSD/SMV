@@ -136,17 +136,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 
-  private def fullPath(app: SmvApp) = {
-    val prefix = s"${app.dataDir}/output/${name}"
-    if (app.isDevMode) {
-      s"${prefix}_${versionSum()}.csv"
-    } else {
-      s"${prefix}.csv"
-    }
-  }
-
   private[smv] def persist(app: SmvApp, rdd: SchemaRDD) = {
-    val filePath = fullPath(app)
+    val filePath = app.moduleCsvPath(this)
     implicit val ca = CsvAttributes.defaultCsvWithHeader
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
     if (app.isDevMode){
@@ -170,7 +161,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     // guaranteed in order when read back in, we need to only store the body w/o the header
     // implicit val ca = CsvAttributes.defaultCsvWithHeader
     implicit val ca = CsvAttributes.defaultCsv
-    Try(app.sqlContext.csvFileWithSchema(fullPath(app)))
+    Try(app.sqlContext.csvFileWithSchema(app.moduleCsvPath(this)))
   }
 
   override def computeRDD(app: SmvApp): SchemaRDD = {

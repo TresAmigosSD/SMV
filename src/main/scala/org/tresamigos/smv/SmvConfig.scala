@@ -40,16 +40,15 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val devMode = toggle("dev", default=Some(false),
     descrYes="enable dev mode (persist all intermediate module results",
     descrNo="enable production mode (all modules are evaluated from scratch")
+  val genEdd = toggle("edd", default = Some(false),
+    descrYes = "summarize data and generate an edd file in the same directory as csv and schema",
+    descrNo  = "do not summarize data")
   val graph = toggle("graph", default=Some(false),
     descrYes="generate a dependency graph of the given modules (modules are not run)",
     descrNo="do not generate a dependency graph")
   val json = toggle("json", default=Some(false),
     descrYes="generate a json object to represent entire app's module dependency (modules are not run)",
     descrNo="do not generate a json")
-  // TODO: rename this to "edddir" as it is not a generic output dir and add as config prop.
-  // TODO: probably need to rethink if this should be a dir or just a flag and edd goes along with csv/schema files (as meta data)
-  val eddDir = opt[String]("outdir",
-    descr = "if provided, dumps the module's edd to the specified output directory")
 
   val modules = trailArg[List[String]](descr="FQN of modules to run/graph")
 }

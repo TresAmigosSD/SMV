@@ -58,6 +58,16 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   
   private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
 
+  /** Returns the path for the module's csv output */
+  private[smv] def moduleCsvPath(mod: SmvModule): String =
+    s"""${dataDir}/output/${versionedNameInDev(mod)}.csv"""
+
+  @inline private def versionedNameInDev(mod: SmvModule): String =
+    if (isDevMode) mod.name + "_" + mod.versionSum() else mod.name
+
+  /** Returns the path for the module's edd */
+  private[this] def moduleEddPath(mod: SmvModule): String = moduleCsvPath(mod) + ".edd"
+
   /**
    * Get the RDD associated with data set.  The rdd plan (not data) is cached in the SmvDataSet
    * to ensure only a single SchemaRDD exists for a given data set (file/module).
@@ -135,11 +145,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
         if (! isDevMode)
           modObject.persist(this, modResult)
 
-        // create edd dump of the module in this directory
-        smvConfig.cmdLine.eddDir.get map { dir =>
-          val simpleName = module.split('.').last
-          modResult.edd.addBaseTasks().saveReport(s"${dir}/${simpleName}")
-        }
+        if (smvConfig.cmdLine.genEdd())
+          modResult.edd.addBaseTasks().saveReport(moduleEddPath(modObject))
       }
     }
   }
