@@ -186,3 +186,9 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   }
 }
 
+/**
+ * A marker trait that indicates that a module decorated with this trait is an output module.
+ */
+trait SmvOutput {
+  this : SmvModule =>
+}

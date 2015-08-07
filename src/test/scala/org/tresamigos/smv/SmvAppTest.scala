@@ -12,9 +12,27 @@
  * limitations under the License.
  */
 
+
+// TODO: need to split this file into multiple files with related tests grouped together.
+
 package org.tresamigos.smv {
 
-import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.DataFrame
+
+object commonAppArgs {
+  // single stage config with 1 package in stage s1.
+  val singleStage = Seq(
+    "--smv-props",
+    "smv.stages=s1",
+    "smv.stages.s1.packages=org.tresamigos.smv.smvAppTestPkg1")
+
+  // multiple stages.  s1 has pkg1 and pkg2, s2 only has pkg3.
+  val multiStage = Seq(
+    "--smv-props",
+    "smv.stages=s1:s2",
+    "smv.stages.s1.packages=org.tresamigos.smv.smvAppTestPkg1:org.tresamigos.smv.smvAppTestPkg2",
+    "smv.stages.s2.packages=org.tresamigos.smv.smvAppTestPkg3")
+}
 
 class SmvVersionTest extends SparkTestUtil {
   sparkTest("Test module version") {
@@ -46,7 +64,7 @@ class SmvVersionTest extends SparkTestUtil {
 
 class SmvTestFile(override val name: String) extends SmvFile {
   val basePath = null
-  def computeRDD(app: SmvApp): SchemaRDD = null
+  def computeRDD(app: SmvApp): DataFrame = null
 }
 
 class SmvAppTest extends SparkTestUtil {
@@ -109,7 +127,7 @@ class SmvAppTest extends SparkTestUtil {
     }
   }
 
-  sparkTest("Test getAllPackages method.") {
+  sparkTest("Test getAllPackagesInApp method.") {
     object app extends SmvApp(Seq(
       "--smv-props",
       "smv.stages=s1:s2",
@@ -118,21 +136,11 @@ class SmvAppTest extends SparkTestUtil {
       "None"), Some(sc)) {}
 
     val expPkgs = Seq("pkg1", "pkg2", "pkg3", "pkg4")
-    assert(app.getAllPackages() === expPkgs)
+    assert(app.getAllPackagesInApp() === expPkgs)
   }
 
-  sparkTest("Test modulesInPackage method.") {
-    object app extends SmvApp(Seq(
-      "--smv-props",
-      "smv.stages=s1",
-      "smv.stages.s1.packages=org.tresamigos.smv.smvAppTestPackage",
-      "None"), Some(sc)) {}
-
-    val mods: Seq[SmvModule] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPackage")
-    assertUnorderedSeqEqual(mods,
-      Seq(org.tresamigos.smv.smvAppTestPackage.X, org.tresamigos.smv.smvAppTestPackage.Y))(
-      Ordering.by[SmvModule, String](_.name))
-    assert(app.moduleNameForPrint(org.tresamigos.smv.smvAppTestPackage.X) === "X")
+  sparkTest("Test SmvModuleJSON") {
+    object app extends SmvApp(commonAppArgs.singleStage ++ Seq("None"), Some(sc)) {}
 
     val app2JSON = new SmvModuleJSON(app, Seq())
     val expect = """{
@@ -161,21 +169,55 @@ class SmvAppTest extends SparkTestUtil {
     assert(edges(C) === Seq(A,B))
   }
 }
+
+class SmvAppModuleDiscoveryTests extends SparkTestUtil {
+  sparkTest("Test modulesInPackage method.") {
+    object app extends SmvApp(commonAppArgs.singleStage ++ Seq("None"), Some(sc)) {}
+
+    val mods: Seq[SmvModule] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPkg1")
+    assertUnorderedSeqEqual(mods,
+      Seq(org.tresamigos.smv.smvAppTestPkg1.X, org.tresamigos.smv.smvAppTestPkg1.Y))(
+        Ordering.by[SmvModule, String](_.name))
+    assert(app.moduleNameForPrint(org.tresamigos.smv.smvAppTestPkg1.X) === "X")
+  }
+
+  sparkTest("Test modules in stage.") {
+    object app extends SmvApp(commonAppArgs.multiStage ++ Seq("None"), Some(sc)) {}
+
+    val s1mods = app.allModulesInStage("s1").map(m => m.name)
+    val s1out = app.outputModulesInStage("s1").map(m => m.name)
+    val s2mods = app.allModulesInStage("s2").map(m => m.name)
+
+    assertUnorderedSeqEqual(s1mods, Seq(
+      "org.tresamigos.smv.smvAppTestPkg1.X",
+      "org.tresamigos.smv.smvAppTestPkg1.Y",
+      "org.tresamigos.smv.smvAppTestPkg2.Z"))
+    assertUnorderedSeqEqual(s1out, Seq(
+      "org.tresamigos.smv.smvAppTestPkg1.Y",
+      "org.tresamigos.smv.smvAppTestPkg2.Z"))
+    assertUnorderedSeqEqual(s2mods, Seq(
+      "org.tresamigos.smv.smvAppTestPkg3.T"))
+  }
 }
+} // package: org.tresamigos.smv
 
 /**
- * package below is used for testing the modulesInPackage method in SmvApp.
+ * packages below are used for testing the modulesInPackage, outputModulesInStage, etc methods in SmvApp.
+ * There are three packages:
+ * 1. smvAppTestPkg1: Modules X,Y (X is output)
+ * 1. smvAppTestPkg2: Module Z (output)
+ * 1. smvAppTestPkg3: Module T (no output modules!!!)
  */
-package org.tresamigos.smv.smvAppTestPackage {
+package org.tresamigos.smv.smvAppTestPkg1 {
 
-  import org.tresamigos.smv.SmvModule
+  import org.tresamigos.smv.{SmvOutput, SmvModule}
 
   object X extends SmvModule("X Module") {
     override def requiresDS() = Seq.empty
     override def run(inputs: runParams) = null
   }
 
-  object Y extends SmvModule("Y Module") {
+  object Y extends SmvModule("Y Module") with SmvOutput {
     override def requiresDS() = Seq(X)
     override def run(inputs: runParams) = null
   }
@@ -188,4 +230,26 @@ package org.tresamigos.smv.smvAppTestPackage {
     override def requiresDS = Seq()
     override def run(inputs: runParams) = null
   }
+}
+
+package org.tresamigos.smv.smvAppTestPkg2 {
+
+import org.tresamigos.smv.{SmvOutput, SmvModule}
+
+object Z extends SmvModule("Z Module") with SmvOutput {
+  override def requiresDS() = Seq.empty
+  override def run(inputs: runParams) = null
+}
+
+}
+
+package org.tresamigos.smv.smvAppTestPkg3 {
+
+import org.tresamigos.smv.SmvModule
+
+object T extends SmvModule("T Module") {
+  override def requiresDS() = Seq.empty
+  override def run(inputs: runParams) = null
+}
+
 }

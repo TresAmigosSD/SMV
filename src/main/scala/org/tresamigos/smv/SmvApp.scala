@@ -43,9 +43,24 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
+  // TODO: move getStage into SmvStages (plural)
+
+  /** get stage object with given name from list of configured stages */
+  def getStage(stageName: String) : SmvStage = {
+    stages.find(s => s.name == stageName).get
+  }
+
+  // TODO: getAllPackgesInApp/getAllModules should move to SmvStages (plural)
+  // TODO: should move getAllPackagesInStage to SmvStage (singular)
+
   /** get list of all packages in this app (union of all stage packages) **/
-  def getAllPackages() : Seq[String] = {
+  private[smv] def getAllPackagesInApp() : Seq[String] = {
     stages.flatMap(s => s.pkgs)
+  }
+
+  /** get all packages in a given stage. */
+  private[smv] def getAllPackagesInStage(stageName: String) : Seq[String] = {
+    getStage(stageName).pkgs
   }
 
   /** concrete applications can provide a more interesting RejectLogger. 
@@ -91,10 +106,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /** maps the FQN of module name to the module object instance. */
-  private[smv] def moduleNametoObject(modName: String) = {
+  private[smv] def moduleNameToObject(modName: String) = {
     mirror.reflectModule(mirror.staticModule(modName)).instance.asInstanceOf[SmvModule]
   }
-
 
   /** extract instances (objects) in given package that implement SmvModule. */
   private[smv] def modulesInPackage(pkgName: String): Seq[SmvModule] = {
@@ -103,15 +117,21 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
     ClassPath.from(this.getClass.getClassLoader).
       getTopLevelClasses(pkgName).
-      map(c => Try(moduleNametoObject(c.getName))).
+      map(c => Try(moduleNameToObject(c.getName))).
       filter(_.isSuccess).
       map(_.get).
       toSeq
   }
 
-  def allModules() = getAllPackages.map(modulesInPackage).flatten
+  private[smv] def allModulesInApp() = getAllPackagesInApp.map(modulesInPackage).flatten
+
+  private[smv] def allModulesInStage(stageName: String) = getAllPackagesInStage(stageName).map(modulesInPackage).flatten
+  private[smv] def outputModulesInStage(stageName: String) = {
+    allModulesInStage(stageName).filter(m => m.isInstanceOf[SmvOutput])
+  }
+
   lazy val packagesPrefix = {
-    val m = allModules()
+    val m = allModulesInApp()
     if (m.isEmpty) ""
     else m.map(_.name).reduce{(l,r) => 
         (l.split('.') zip r.split('.')).
@@ -152,7 +172,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
 
     smvConfig.cmdLine.modules().foreach { module =>
-      val modObject = moduleNametoObject(module)
+      val modObject = moduleNameToObject(module)
 
       if (smvConfig.cmdLine.graph()) {
         // TODO: need to combine the modules for graphs into a single graph.
@@ -186,7 +206,7 @@ object SmvApp {
 // TODO: json is a representation.  Need to rename this class to indicate WHAT it is actually generating not just the type.
 private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
   private def allModules = {
-    if (packages.isEmpty) app.allModules
+    if (packages.isEmpty) app.allModulesInApp
     else packages.map{app.packagesPrefix + _}.map(app.modulesInPackage).flatten
   }.sortWith{(a,b) => a.name < b.name}
   
@@ -211,6 +231,8 @@ private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
     pw.close()
   }
 }
+
+
 /**
  * contains the module level dependency graph starting at the given startNode.
  * All prefixes given in packagePrefixes are removed from the output module/file name
