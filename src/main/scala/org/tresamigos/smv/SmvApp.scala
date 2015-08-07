@@ -16,12 +16,10 @@ package org.tresamigos.smv
 
 import java.io.{File, PrintWriter}
 
-import scala.reflect.runtime.{universe => ru}
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
-import scala.util.Try
 
 /**
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
@@ -35,7 +33,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val sparkConf = new SparkConf().setAppName(smvConfig.appName)
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = new SQLContext(sc)
-  private val mirror = ru.runtimeMirror(this.getClass.getClassLoader)
 
   // configure spark sql params here rather in run so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
@@ -43,27 +40,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
-  // TODO: move getStage into SmvStages (plural)
-
-  /** get stage object with given name from list of configured stages */
-  def getStage(stageName: String) : SmvStage = {
-    stages.find(s => s.name == stageName).get
-  }
-
-  // TODO: getAllPackgesInApp/getAllModules should move to SmvStages (plural)
-  // TODO: should move getAllPackagesInStage to SmvStage (singular)
-
-  /** get list of all packages in this app (union of all stage packages) **/
-  private[smv] def getAllPackagesInApp() : Seq[String] = {
-    stages.flatMap(s => s.pkgs)
-  }
-
-  /** get all packages in a given stage. */
-  private[smv] def getAllPackagesInStage(stageName: String) : Seq[String] = {
-    getStage(stageName).pkgs
-  }
-
-  /** concrete applications can provide a more interesting RejectLogger. 
+  /** concrete applications can provide a more interesting RejectLogger.
    *  Example: override val rejectLogger = new SCRejectLogger(sc, 3)
    */
   def rejectLogger() : RejectLogger = TerminateRejectLogger
@@ -105,33 +82,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     resRdd
   }
 
-  /** maps the FQN of module name to the module object instance. */
-  private[smv] def moduleNameToObject(modName: String) = {
-    mirror.reflectModule(mirror.staticModule(modName)).instance.asInstanceOf[SmvModule]
-  }
-
-  /** extract instances (objects) in given package that implement SmvModule. */
-  private[smv] def modulesInPackage(pkgName: String): Seq[SmvModule] = {
-    import com.google.common.reflect.ClassPath
-    import scala.collection.JavaConversions._
-
-    ClassPath.from(this.getClass.getClassLoader).
-      getTopLevelClasses(pkgName).
-      map(c => Try(moduleNameToObject(c.getName))).
-      filter(_.isSuccess).
-      map(_.get).
-      toSeq
-  }
-
-  private[smv] def allModulesInApp() = getAllPackagesInApp.map(modulesInPackage).flatten
-
-  private[smv] def allModulesInStage(stageName: String) = getAllPackagesInStage(stageName).map(modulesInPackage).flatten
-  private[smv] def outputModulesInStage(stageName: String) = {
-    allModulesInStage(stageName).filter(m => m.isInstanceOf[SmvOutput])
-  }
-
   lazy val packagesPrefix = {
-    val m = allModulesInApp()
+    val m = stages.getAllModules()
     if (m.isEmpty) ""
     else m.map(_.name).reduce{(l,r) => 
         (l.split('.') zip r.split('.')).
@@ -172,7 +124,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
 
     smvConfig.cmdLine.modules().foreach { module =>
-      val modObject = moduleNameToObject(module)
+      val modObject = SmvReflection.moduleNameToObject(module)
 
       if (smvConfig.cmdLine.graph()) {
         // TODO: need to combine the modules for graphs into a single graph.
@@ -204,10 +156,11 @@ object SmvApp {
 
 
 // TODO: json is a representation.  Need to rename this class to indicate WHAT it is actually generating not just the type.
+// TODO: this should be moved into stages (and accept a list of stages rather than packages)
 private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
   private def allModules = {
-    if (packages.isEmpty) app.allModulesInApp
-    else packages.map{app.packagesPrefix + _}.map(app.modulesInPackage).flatten
+    if (packages.isEmpty) app.stages.getAllModules()
+    else packages.map{app.packagesPrefix + _}.map(SmvReflection.modulesInPackage).flatten
   }.sortWith{(a,b) => a.name < b.name}
   
   private def allFiles = allModules.flatMap(m => m.requiresDS().filter(v => v.isInstanceOf[SmvFile]))

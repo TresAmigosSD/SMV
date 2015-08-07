@@ -59,13 +59,17 @@ class SmvConfigTest extends SparkTestUtil {
 
   test("test stage configuration") {
     val conf = new SmvConfig(confFileArgs ++ Seq("mod1"))
-    val s = conf.stages
-    assert(s.size === 2)
-    assert(s(0).name === "stage1")
-    assert(s(0).pkgs === Seq("pkg1a", "pkg1b"))
-    assert(s(0).version === 5)
-    assert(s(1).name === "stage2")
-    assert(s(1).pkgs === Seq("pkg2a", "pkg2b"))
-    assert(s(1).version === 0)
+
+    val ss = conf.stages
+    assert(ss.numStages === 2)
+    assertUnorderedSeqEqual(ss.stageNames, Seq("stage1", "stage2"))
+
+    val s1 = ss.findStage("stage1")
+    assert(s1.pkgs === Seq("pkg1a", "pkg1b"))
+    assert(s1.version === 5)
+
+    val s2 = ss.findStage("stage2")
+    assert(s2.pkgs === Seq("pkg2a", "pkg2b"))
+    assert(s2.version === 0)
   }
 }

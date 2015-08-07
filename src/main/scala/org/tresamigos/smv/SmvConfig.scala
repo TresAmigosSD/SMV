@@ -14,12 +14,12 @@
 
 package org.tresamigos.smv
 
+import scala.util.Try
+
 import java.io.{IOException, InputStreamReader, FileInputStream, File}
-import java.util.{InvalidPropertiesFormatException, Properties}
+import java.util.Properties
 
 import org.rogach.scallop.ScallopConf
-
-import scala.util.Try
 
 
 /**
@@ -54,32 +54,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val modules = trailArg[List[String]](descr="FQN of modules to run/graph")
 }
 
-// TODO: should this be a case class?
-class SmvStage(val name: String, val pkgs: Seq[String], val version: Int) {
-  override def toString = s"SmvStage<${name}>"
-}
-
-object SmvStage {
-  /**
-   * construct an SmvStage instance from the stage name and the config object.
-   * The packages in stage X are assumed to be provided by property "smv.stages.X.packages"
-   */
-  def apply(name: String, conf: SmvConfig) = {
-    val stagePropPrefix = s"smv.stages.${name}"
-
-    // get stage packages.
-    val pkgPropName = stagePropPrefix + ".packages"
-    val pkgs = conf.splitProp(pkgPropName)
-    if (pkgs.isEmpty)
-      throw new InvalidPropertiesFormatException(s"property ${pkgPropName} is empty")
-
-    // get stage version (if any)
-    val version = conf.getPropAsInt(stagePropPrefix + ".version").getOrElse(0)
-
-    new SmvStage(name, pkgs.toList, version)
-  }
-}
-
 /**
  * Container of all SMV config driven elements (cmd line, app props, user props, etc).
  */
@@ -99,7 +73,8 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // --- config params.  App should access configs through vals below rather than from props maps
   val appName = mergedProps("smv.appName")
-  val stages = splitProp("smv.stages") map {s => SmvStage(s, this)}
+  private val stagesList = splitProp("smv.stages") map {s => SmvStage(s, this)}
+  val stages = new SmvStages(stagesList.toSeq)
 
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
 

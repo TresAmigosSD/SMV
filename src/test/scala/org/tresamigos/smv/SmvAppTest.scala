@@ -127,7 +127,7 @@ class SmvAppTest extends SparkTestUtil {
     }
   }
 
-  sparkTest("Test getAllPackagesInApp method.") {
+  sparkTest("Test getAllPckageNames method.") {
     object app extends SmvApp(Seq(
       "--smv-props",
       "smv.stages=s1:s2",
@@ -136,7 +136,7 @@ class SmvAppTest extends SparkTestUtil {
       "None"), Some(sc)) {}
 
     val expPkgs = Seq("pkg1", "pkg2", "pkg3", "pkg4")
-    assert(app.getAllPackagesInApp() === expPkgs)
+    assert(app.stages.getAllPackageNames() === expPkgs)
   }
 
   sparkTest("Test SmvModuleJSON") {
@@ -174,7 +174,7 @@ class SmvAppModuleDiscoveryTests extends SparkTestUtil {
   sparkTest("Test modulesInPackage method.") {
     object app extends SmvApp(commonAppArgs.singleStage ++ Seq("None"), Some(sc)) {}
 
-    val mods: Seq[SmvModule] = app.modulesInPackage("org.tresamigos.smv.smvAppTestPkg1")
+    val mods: Seq[SmvModule] = SmvReflection.modulesInPackage("org.tresamigos.smv.smvAppTestPkg1")
     assertUnorderedSeqEqual(mods,
       Seq(org.tresamigos.smv.smvAppTestPkg1.X, org.tresamigos.smv.smvAppTestPkg1.Y))(
         Ordering.by[SmvModule, String](_.name))
@@ -184,9 +184,9 @@ class SmvAppModuleDiscoveryTests extends SparkTestUtil {
   sparkTest("Test modules in stage.") {
     object app extends SmvApp(commonAppArgs.multiStage ++ Seq("None"), Some(sc)) {}
 
-    val s1mods = app.allModulesInStage("s1").map(m => m.name)
-    val s1out = app.outputModulesInStage("s1").map(m => m.name)
-    val s2mods = app.allModulesInStage("s2").map(m => m.name)
+    val s1mods = app.stages.findStage("s1").getAllModules().map(m => m.name)
+    val s1out =  app.stages.findStage("s1").getAllOutputModules().map(m => m.name)
+    val s2mods = app.stages.findStage("s2").getAllModules().map(m => m.name)
 
     assertUnorderedSeqEqual(s1mods, Seq(
       "org.tresamigos.smv.smvAppTestPkg1.X",
@@ -202,7 +202,7 @@ class SmvAppModuleDiscoveryTests extends SparkTestUtil {
 } // package: org.tresamigos.smv
 
 /**
- * packages below are used for testing the modulesInPackage, outputModulesInStage, etc methods in SmvApp.
+ * packages below are used for testing the modules in package, modules in stage, etc.
  * There are three packages:
  * 1. smvAppTestPkg1: Modules X,Y (X is output)
  * 1. smvAppTestPkg2: Module Z (output)
