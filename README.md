@@ -51,6 +51,118 @@ You can put utility functions for the interactive shell in the ```shell_init.sca
 Please note that the Spark Shell should in the same version as the SMV build on. Current version 
 SMV uses Spark 1.3.0, so you need the spark-shell in 1.3.0 package.
 
+## Run SMV Application using spark-submit
+
+SMV applications can be run using standard spark submit.
+```shell
+$ spark-submit [standard spark-submit-options] --class SmvApp [options] [what-to-run]
+```
+
+<br>
+<table>
+
+<tr>
+<th colspan="3">Options</th>
+</tr>
+
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+
+<tr>
+<td>--smv-props</td>
+<td>None</td>
+<td>allow user to specify a set of config properties on the command line.
+<br>
+<code>$ ... --smv-props "smv.stages=s1"</code>
+<br>
+See <a href="docs/appConfig.md">Application Configuration</a> for details.
+</td>
+</tr>
+
+<tr>
+<td>--smv-app-conf</td>
+<td>conf/smv-app-conf.props</td>
+<td>option to override default location of application level configuration file.</td>
+</tr>
+
+<tr>
+<td>--smv-user-conf</td>
+<td>conf/smv-user-conf.props</td>
+<td>option to override default location of user level configuration file.</td>
+</tr>
+
+<tr>
+<td>--dev / -d</td>
+<td>off</td>
+<td>toggle development mode on/off.
+<br>
+In development mode, all intermediate modules are persisted and versioned not only the output modules.
+</td>
+</tr>
+
+<tr>
+<td>--edd</td>
+<td>off</td>
+<td>toggle edd creation on/off.
+<br>
+When enabled, all persisted modules will have a corresponding EDD file that shows some standard statistical information about the result.
+</td>
+</tr>
+
+<tr>
+<td>--graph / -g</td>
+<td>off</td>
+<td>Generate a dependency graph ".dot" file instead of running the given modules.<br>
+graphvis must be used to convert the ".dot" file to an image or doc.  For example:<br>
+<code>$ dot -Tpng com.foo.mod.dot -o graph.png</code>
+</td>
+</tr>
+
+<tr>
+<td>--json</td>
+<td>off</td>
+<td>Generate a json file of the provided modules and their dependencies.</td>
+</tr>
+
+<tr>
+<th colspan="3">What To Run
+<br>
+One one of the options below must be specified.
+</th>
+</tr>
+
+<tr>
+<th colspan="2">Option</th>
+<th>Description</th>
+</tr>
+
+<tr>
+<td colspan="2">--run-module mod1 [mod2 ...] / -m</td>
+<td>Run the provided list of modules directly (even if they are not marked as SmvOutput module)
+<br>Note: Not implemented yet.
+</td>
+</tr>
+
+<tr>
+<td colspan="2">--run-stage stage1 [stage2 ...] / -s</td>
+<td>Run all output modules in given stages.
+<br>Note: Not implemented yet.
+</td>
+</tr>
+
+<tr>
+<td colspan="2">--run-app / -a</td>
+<td>Run all modules in all configured stages in current app.
+<br>Note: Not implemented yet.
+</td>
+</tr>
+
+</table>
+
+
 ## Full example for ad hoc data discovery
 
 ```scala

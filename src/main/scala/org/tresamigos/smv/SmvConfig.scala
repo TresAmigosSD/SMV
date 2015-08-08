@@ -40,13 +40,13 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val devMode = toggle("dev", default=Some(false),
     descrYes="enable dev mode (persist all intermediate module results",
     descrNo="enable production mode (all modules are evaluated from scratch")
-  val genEdd = toggle("edd", default = Some(false),
+  val genEdd = toggle("edd", default = Some(false), noshort = true,
     descrYes = "summarize data and generate an edd file in the same directory as csv and schema",
     descrNo  = "do not summarize data")
   val graph = toggle("graph", default=Some(false),
     descrYes="generate a dependency graph of the given modules (modules are not run)",
     descrNo="do not generate a dependency graph")
-  val json = toggle("json", default=Some(false),
+  val json = toggle("json", default=Some(false), noshort=true,
     descrYes="generate a json object to represent entire app's module dependency (modules are not run)",
     descrNo="do not generate a json")
 

@@ -145,6 +145,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
         if (! isDevMode)
           modObject.persist(this, modResult)
 
+        // TODO: this might be best to be moved to modObject.persist so that we would generate edd for every persisted module not just the "run" modules.
         if (smvConfig.cmdLine.genEdd())
           modResult.edd.addBaseTasks().saveReport(moduleEddPath(modObject))
       }
