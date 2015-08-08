@@ -16,16 +16,17 @@ package org.tresamigos.smv
 
 class CmdLineArgsTest extends SparkTestUtil {
   test("test command line parser") {
-    val cmd_args = new CmdLineArgsConf(Seq("--graph", "-d", "mod1", "mod2"))
+    val cmd_args = new CmdLineArgsConf(Seq("--graph", "-d", "-m", "mod1", "mod2"))
     assert(cmd_args.devMode())
     assert(cmd_args.graph())
-    assert(cmd_args.modules() === Seq("mod1", "mod2"))
+    assert(cmd_args.modsToRun() === Seq("mod1", "mod2"))
   }
+
   test("test command line parser with default args.") {
-    val cmd_args = new CmdLineArgsConf(Seq("mod1"))
+    val cmd_args = new CmdLineArgsConf(Seq("--run-module", "mod1"))
     assert(!cmd_args.devMode())
     assert(!cmd_args.graph())
-    assert(cmd_args.modules() === Seq("mod1"))
+    assert(cmd_args.modsToRun() === Seq("mod1"))
   }
 }
 
@@ -38,7 +39,7 @@ class SmvConfigTest extends SparkTestUtil {
   test("test basic props override/priority") {
     val conf = new SmvConfig(confFileArgs ++ Seq(
       "--smv-props", "smv.inAppAndCmd=cmd", "smv.inUserAndCmd=cmd", "smv.cmdLineOnly=cmd",
-      "mod1"))
+      "-m", "mod1"))
 
     val props = conf.mergedProps
     val expectedProps = Map(
@@ -58,7 +59,7 @@ class SmvConfigTest extends SparkTestUtil {
   }
 
   test("test stage configuration") {
-    val conf = new SmvConfig(confFileArgs ++ Seq("mod1"))
+    val conf = new SmvConfig(confFileArgs ++ Seq("-m", "mod1"))
 
     val ss = conf.stages
     assert(ss.numStages === 2)

@@ -55,7 +55,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       }
     }
   }
-  
+
   private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/DATA_DIR_ENV_NOT_SET")
 
   /** Returns the path for the module's csv output */
@@ -108,7 +108,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     val pathName = s"${module.name}.dot"
     new SmvModuleDependencyGraph(module, packagesPrefix).saveToFile(pathName)
   }
-  
+
   def genJSON(packages: Seq[String] = Seq()) = {
     val pathName = s"${smvConfig.appName}.json"
     new SmvModuleJSON(this, packages).saveToFile(pathName)
@@ -133,7 +133,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       genJSON()
     }
 
-    smvConfig.cmdLine.modules().foreach { module =>
+    smvConfig.cmdLine.modsToRun().foreach { module =>
       val modObject = SmvReflection.moduleNameToObject(module)
 
       if (smvConfig.cmdLine.graph()) {

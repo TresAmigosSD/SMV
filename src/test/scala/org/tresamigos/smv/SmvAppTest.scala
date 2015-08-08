@@ -100,7 +100,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test normal dependency execution") {
-    object app extends SmvApp(Seq("C"), Option(sc))
+    object app extends SmvApp(Seq("-m", "C"), Option(sc))
 
     val res = app.resolveRDD(C)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
@@ -120,7 +120,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test cycle dependency execution") {
-    object app extends SmvApp(Seq("None"), Option(sc))
+    object app extends SmvApp(Seq("-m", "None"), Option(sc))
 
     intercept[IllegalStateException] {
       app.resolveRDD(B_cycle)
@@ -133,14 +133,14 @@ class SmvAppTest extends SparkTestUtil {
       "smv.stages=s1:s2",
       "smv.stages.s1.packages=pkg1:pkg2",
       "smv.stages.s2.packages=pkg3:pkg4",
-      "None"), Some(sc)) {}
+      "-m", "None"), Some(sc)) {}
 
     val expPkgs = Seq("pkg1", "pkg2", "pkg3", "pkg4")
     assert(app.stages.getAllPackageNames() === expPkgs)
   }
 
   sparkTest("Test SmvModuleJSON") {
-    object app extends SmvApp(commonAppArgs.singleStage ++ Seq("None"), Some(sc)) {}
+    object app extends SmvApp(commonAppArgs.singleStage ++ Seq("-m", "None"), Some(sc)) {}
 
     val app2JSON = new SmvModuleJSON(app, Seq())
     val expect = """{
@@ -156,7 +156,7 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test dependency graph creation.") {
-    object app extends SmvApp(Seq("C"), Option(sc))
+    object app extends SmvApp(Seq("-m", "C"), Option(sc))
 
     val depGraph = new SmvModuleDependencyGraph(C, app.packagesPrefix)
     //depGraph.saveToFile("foo.dot")
@@ -172,7 +172,7 @@ class SmvAppTest extends SparkTestUtil {
 
 class SmvAppModuleDiscoveryTests extends SparkTestUtil {
   sparkTest("Test modulesInPackage method.") {
-    object app extends SmvApp(commonAppArgs.singleStage ++ Seq("None"), Some(sc)) {}
+    object app extends SmvApp(commonAppArgs.singleStage ++ Seq("-m", "None"), Some(sc)) {}
 
     val mods: Seq[SmvModule] = SmvReflection.modulesInPackage("org.tresamigos.smv.smvAppTestPkg1")
     assertUnorderedSeqEqual(mods,
@@ -182,7 +182,7 @@ class SmvAppModuleDiscoveryTests extends SparkTestUtil {
   }
 
   sparkTest("Test modules in stage.") {
-    object app extends SmvApp(commonAppArgs.multiStage ++ Seq("None"), Some(sc)) {}
+    object app extends SmvApp(commonAppArgs.multiStage ++ Seq("-m", "None"), Some(sc)) {}
 
     val s1mods = app.stages.findStage("s1").getAllModules().map(m => m.name)
     val s1out =  app.stages.findStage("s1").getAllOutputModules().map(m => m.name)
