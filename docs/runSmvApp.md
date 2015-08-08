@@ -34,13 +34,13 @@ See <a href="docs/appConfig.md">Application Configuration</a> for details.
 </tr>
 
 <tr>
-<td>--smv-app-conf</td>
+<td>&#8209;&#8209;smv&#8209;app&#8209;conf</td>
 <td>conf/smv-app-conf.props</td>
 <td>option to override default location of application level configuration file.</td>
 </tr>
 
 <tr>
-<td>--smv-user-conf</td>
+<td>&#8209;&#8209;smv&#8209;user&#8209;conf</td>
 <td>conf/smv-user-conf.props</td>
 <td>option to override default location of user level configuration file.</td>
 </tr>
@@ -91,14 +91,14 @@ One one of the options below must be specified.
 </tr>
 
 <tr>
-<td colspan="2">--run-module mod1 [mod2 ...] / -m</td>
+<td colspan="2">--run-module mod1 [mod2 ...] / &#8209;m</td>
 <td>Run the provided list of modules directly (even if they are not marked as SmvOutput module)
 <br>Note: Not implemented yet.
 </td>
 </tr>
 
 <tr>
-<td colspan="2">--run-stage stage1 [stage2 ...] / -s</td>
+<td colspan="2">--run-stage stage1 [stage2 ...] / &#8209;s</td>
 <td>Run all output modules in given stages.
 <br>Note: Not implemented yet.
 </td>
