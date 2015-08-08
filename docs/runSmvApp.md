@@ -6,7 +6,7 @@ An SMV application can be run using the standard "spark-submit" method or run us
 
 The format of the "spark-submit" call is:
 ```shell
-$ spark-submit [standard spark-submit-options] --class SmvApp [options] [what-to-run]
+$ spark-submit [standard spark-submit-options] --class org.tresamigos.smv.SmvApp [options] [what-to-run]
 ```
 
 <br>
