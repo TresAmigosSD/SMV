@@ -83,7 +83,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     "smv.stages" -> ""
   )
 
-  // merge order is important here.  Highest priority comes last as it will ride all previous
+  // merge order is important here.  Highest priority comes last as it will override all previous
   private[smv] val mergedProps = defaultProps ++ appConfProps ++ usrConfProps ++ cmdLineProps
 
   // --- config params.  App should access configs through vals below rather than from props maps
