@@ -77,7 +77,7 @@ class SmvPivotTest extends SparkTestUtil {
     val res = srdd.smvGroupBy('id).smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
     assertSrddSchemaEqual(res, "id: Integer; count_5_14_A: Long; count_5_14_B: Long; count_6_14_A: Long; count_6_14_B: Long")
     assertSrddDataEqual(res, 
-      "1,100,300,null,200")
+      "1,100,300,0,200")
   }
 
   sparkTest("Test smvPivot with pivotColSets") {
@@ -123,7 +123,7 @@ class SmvPivotTest extends SparkTestUtil {
     val res = srdd.smvGroupBy('k).smvPivotSum(Seq("p1", "p2"))("v")()
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1,600,300,400,200]",
-      "[2,600,null,null,null]"))
+      "[2,600,0,0,0]"))
 
     val fieldNames = res.schema.fieldNames.toList
     assert(fieldNames === Seq("k", "v_p1_a_p2a", "v_p1_a_p2b", "v_p1_b_p2a", "v_p1_b_p2b"))
@@ -141,7 +141,7 @@ class SmvPivotTest extends SparkTestUtil {
     val res = srdd.smvGroupBy('k).smvPivotSum(Seq("p"))("v1", "v2")()
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1,30,50,301.0,200.5]",
-      "[2,60,null,500.0,null]"))
+      "[2,60,0,500.0,0.0]"))
 
     val fieldNames = res.schema.fieldNames.toList
     assert(fieldNames === Seq("k", "v1_A", "v1_B", "v2_A", "v2_B"))

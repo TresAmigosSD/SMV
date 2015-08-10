@@ -124,9 +124,14 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     import df.sqlContext.implicits._
     val output = ensureBaseOutput(baseOutput, pivotCols)
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, output)
-    val outCols = pivot.outCols().map{l=>(sum(l) as l)}
-    val aggCols = keys.map{k => df(k)} ++ outCols
-    smvPivot(pivotCols: _*)(valueCols: _*)(output: _*).agg(aggCols(0), aggCols.tail: _*)
+    val pivotRes = smvPivot(pivotCols: _*)(valueCols: _*)(output: _*)
+    // in spark1.3, sum may return null for all null values.  In 1.4, sum(all_null) will be 0.
+    // TODO: remove the coalesce to zero once we port to 1.4.
+    val aggOutCols = pivot.outCols().map { c =>
+      val cZero = lit(0).cast(pivotRes.df(c).toExpr.dataType)
+      (coalesce(sum(c), cZero) as c)}
+    val keysAndAggCols = keys.map{k => pivotRes.df(k)} ++ aggOutCols
+    pivotRes.agg(keysAndAggCols(0), keysAndAggCols.tail: _*)
   }
 
   /**
