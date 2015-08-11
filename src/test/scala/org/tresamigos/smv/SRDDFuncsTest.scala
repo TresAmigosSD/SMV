@@ -164,13 +164,13 @@ class dedupByKeyTest extends SparkTestUtil {
   }
 }
 
-class overlapCheckTest extends SparkTestUtil {
-  sparkTest("test overlapCheck") {
+class smvOverlapCheckTest extends SparkTestUtil {
+  sparkTest("test smvOverlapCheck") {
     val s1 = createSchemaRdd("k: String", "a;b;c")
     val s2 = createSchemaRdd("k: String", "a;b;c;d")
     val s3 = createSchemaRdd("k: String", "c;d")
 
-    val res = s1.overlapCheck("k")(s2, s3)
+    val res = s1.smvOverlapCheck("k")(s2, s3)
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,110]",
       "[b,110]",
@@ -180,11 +180,11 @@ class overlapCheckTest extends SparkTestUtil {
   }
 }
 
-class hashSampleTest extends SparkTestUtil {
-  sparkTest("test hashSample") {
+class smvHashSampleTest extends SparkTestUtil {
+  sparkTest("test smvHashSample") {
     val ssc = sqlContext; import ssc.implicits._
     val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
-    val res = a.unionAll(a).hashSample($"key", 0.3)
+    val res = a.unionAll(a).smvHashSample($"key", 0.3)
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a]",
       "[g]",
