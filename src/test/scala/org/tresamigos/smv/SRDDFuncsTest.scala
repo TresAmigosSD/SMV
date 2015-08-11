@@ -179,3 +179,18 @@ class overlapCheckTest extends SparkTestUtil {
 
   }
 }
+
+class hashSampleTest extends SparkTestUtil {
+  sparkTest("test hashSample") {
+    val ssc = sqlContext; import ssc.implicits._
+    val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
+    val res = a.unionAll(a).hashSample($"key", 0.3)
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a]",
+      "[g]",
+      "[i]",
+      "[a]",
+      "[g]",
+      "[i]"))
+  }
+}

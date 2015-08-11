@@ -316,4 +316,12 @@ class SmvDFHelper(df: DataFrame) {
 
     joined.select($"${key}", smvStrCat(hasCols: _*) as "flag")
   }
+
+  def hashSample(key: Column, rate: Double = 0.01, seed: Int = 23) = {
+    import scala.util.hashing.{MurmurHash3=>MH3}
+    val cutoff = Int.MaxValue * rate
+    val getHash = {s: Any => MH3.stringHash(s.toString, seed) & Int.MaxValue}
+    val hashUdf = udf(getHash)
+    df.where(hashUdf(key) < lit(cutoff))
+  }
 }
