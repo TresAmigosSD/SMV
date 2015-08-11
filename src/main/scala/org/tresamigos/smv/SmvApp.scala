@@ -133,21 +133,26 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       genJSON()
     }
 
-    smvConfig.cmdLine.modsToRun().foreach { module =>
-      val modObject = SmvReflection.moduleNameToObject(module)
+    println("Modules to run")
+    println("--------------")
+    smvConfig.modulesToRun().foreach(m => println(m.name))
+    println("--------------")
+
+    smvConfig.modulesToRun().foreach { module =>
 
       if (smvConfig.cmdLine.graph()) {
         // TODO: need to combine the modules for graphs into a single graph.
-        genDotGraph(modObject)
+        genDotGraph(module)
       } else {
-        val modResult = resolveRDD(modObject)
+        val modResult = resolveRDD(module)
 
+        // if in dev mode, then the module would have already been persisted.
         if (! isDevMode)
-          modObject.persist(this, modResult)
+          module.persist(this, modResult)
 
-        // TODO: this might be best to be moved to modObject.persist so that we would generate edd for every persisted module not just the "run" modules.
+        // TODO: this might be best to be moved to module.persist so that we would generate edd for every persisted module not just the "run" modules.
         if (smvConfig.cmdLine.genEdd())
-          modResult.edd.addBaseTasks().saveReport(moduleEddPath(modObject))
+          modResult.edd.addBaseTasks().saveReport(moduleEddPath(module))
       }
     }
   }

@@ -52,7 +52,8 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
 
   val modsToRun = opt[List[String]]("run-module", 'm', descr = "run specified list of module FQNs")
   val stagesToRun = opt[List[String]]("run-stage", 's', descr = "run all output modules in specified stages")
-  val runAllApp = toggle("run-app", default = Some(false), short = 'a', descrYes = "run all output modules in all stages in app.")
+  val runAllApp = toggle("run-app", noshort = true, default = Some(false),
+                  descrYes = "run all output modules in all stages in app.")
 
   // make sure something was specified to run!!!
   validateOpt (modsToRun, stagesToRun, runAllApp) {
@@ -92,6 +93,20 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   val stages = new SmvStages(stagesList.toSeq)
 
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
+
+  /**
+   * sequence of SmvModules to run based on the command line arguments.
+   * Returns the union of -a/-m/-s command line flags.
+   */
+  private[smv] def modulesToRun() : Seq[SmvModule] = {
+
+    val empty = Some(Seq.empty[String])
+    val directMods = cmdLine.modsToRun.orElse(empty)().map { m => SmvReflection.moduleNameToObject(m) }
+    val stageMods = cmdLine.stagesToRun.orElse(empty)().flatMap(s => stages.findStage(s).getAllOutputModules())
+    val appMods = if (cmdLine.runAllApp()) stages.getAllOutputModules() else Seq.empty[SmvModule]
+
+    directMods ++ stageMods ++ appMods
+  }
 
   /**
    * load the given properties file and return the resulting props as a scala Map.
