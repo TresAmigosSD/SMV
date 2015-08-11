@@ -281,7 +281,7 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * For a set of DFs, which share the same key column, check the overlap across them.
    *
-   *   df1.overlapCheck("key")(df2, df3, df4)
+   *   df1.smvOverlapCheck("key")(df2, df3, df4)
    *
    * The output is another DF with 2 columns:
    *    key, flag
@@ -290,9 +290,9 @@ class SmvDFHelper(df: DataFrame) {
    *
    * It can be used with EDD to summarize on the flag:
    *
-   *   df1.overlapCheck("key")(df2, df3).edd.addHistogramTasks("flag")().Dump
+   *   df1.smvOverlapCheck("key")(df2, df3).edd.addHistogramTasks("flag")().Dump
    **/
-  def overlapCheck(key: String, partition: Int = 4)(dfother: DataFrame*) = {
+  def smvOverlapCheck(key: String, partition: Int = 4)(dfother: DataFrame*) = {
     import df.sqlContext.implicits._
 
     val dfSimple = df.select($"${key}", $"${key}" as s"${key}_0").repartition(partition)
@@ -315,5 +315,24 @@ class SmvDFHelper(df: DataFrame) {
     }
 
     joined.select($"${key}", smvStrCat(hasCols: _*) as "flag")
+  }
+
+  /**
+   * Sample the df according to the hash of a column.
+   *
+   *  df.smvHashSample($"key", rate=0.1, seed=123)
+   *
+   * where rate is ranged (0, 1], seed is an Int. Both has default values, rate defaults to
+   * 0.01 (1%), seed defaults to 23
+   *
+   * MurmurHash3 is used for generating the hash
+   **/
+
+  def smvHashSample(key: Column, rate: Double = 0.01, seed: Int = 23) = {
+    import scala.util.hashing.{MurmurHash3=>MH3}
+    val cutoff = Int.MaxValue * rate
+    val getHash = {s: Any => MH3.stringHash(s.toString, seed) & Int.MaxValue}
+    val hashUdf = udf(getHash)
+    df.where(hashUdf(key) < lit(cutoff))
   }
 }

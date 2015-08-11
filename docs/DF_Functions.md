@@ -1,10 +1,10 @@
 # Helper functions on DataFrame
 
 Since Spark 1.3 introduced the ```GroupedData``` concept, we followed this idea and splited the DataFrame helpers to 2 groups, one is still
-on DataFrame, the other is on ```GroupedData```. 
+on DataFrame, the other is on ```GroupedData```.
 
-Also since Spark's ```GroupedData``` didn't give us access to it's data and keys, we have to create our own ```SmvGroupedData``` and ```smvGroupBy``` 
-method on DataFrame. 
+Also since Spark's ```GroupedData``` didn't give us access to it's data and keys, we have to create our own ```SmvGroupedData``` and ```smvGroupBy```
+method on DataFrame.
 
 Here are the typical syntax for the 2 types of helper functions:
 ```scala
@@ -25,9 +25,9 @@ df.saveAsCsvWithSchema("output/test.csv")
 ```
 
 ### dumpSRDD
-Similar to ```show()``` method of DF from Spark 1.3, although the format is slightly different. 
-Since we have this one in place from the past and typically only used in interactive shell, and 
-also for creating test cases, this function's format is more convenience for 
+Similar to ```show()``` method of DF from Spark 1.3, although the format is slightly different.
+Since we have this one in place from the past and typically only used in interactive shell, and
+also for creating test cases, this function's format is more convenience for
 out test case creation.
 
 ### selectPlus
@@ -58,7 +58,7 @@ Given a DataFrame that has the following fields: a, b, c, d one can rename the "
 ```scala
 df.renameField('a -> 'aa, 'c -> 'cc)
 ```
-or 
+or
 ```scala
 df.renameField("a" -> "aa", "c" -> "cc")
 ```
@@ -66,21 +66,21 @@ df.renameField("a" -> "aa", "c" -> "cc")
 Now the DF will have the following fields: aa, b, cc, d
 
 ### joinByKey
-Since ```join``` operation does not check column name duplication and inconvience to join 2 DFs 
-with the same key name, we create this helper function. 
+Since ```join``` operation does not check column name duplication and inconvience to join 2 DFs
+with the same key name, we create this helper function.
 
 Eg.
 ```scala
 df1.joinByKey(df2, Seq("k"), "inner")
 ```
 
-If both df1 and df2 have column with name "v", both will be kept, but the df2 version 
+If both df1 and df2 have column with name "v", both will be kept, but the df2 version
 will be renamed as "_v". Only one copy of keys will be kept.
 
 ### dedupByKey
-The `dedupByKey` operation eliminate duplicate records on the primary key. It just arbitrarily picks the first record for a given key or keys combo. 
+The `dedupByKey` operation eliminate duplicate records on the primary key. It just arbitrarily picks the first record for a given key or keys combo.
 
-Given the following DataFrame: 
+Given the following DataFrame:
 
 | id | product | Company |
 | --- | --- | --- |
@@ -122,9 +122,45 @@ It uses ```zipWithIndex``` method of ```RDD``` to add a sequence number to recor
 
 Eg.
 ```scala
-df.smvRank("seqId", 0L) 
+df.smvRank("seqId", 0L)
 ```
 It will create a new column with name "seqId" and start from 0L.
+
+### smvOverlapCheck
+For a set of DFs, which share the same key column, check the overlap across them.
+
+Eg.
+```scala
+df1.smvOverlapCheck("key")(df2, df3, df4)
+```
+
+The output is another DF with 2 columns:
+```
+key
+flag
+```
+where flag is a bit string, e.g. 0110. Each bit represent whether the original DF has this key.
+
+It can be used with EDD to summarize on the flag:
+
+```scala
+df1.smvOverlapCheck("key")(df2, df3).edd.addHistogramTasks("flag")().Dump
+```
+
+### smvHashSample
+Sample the df according to the hash of a column.
+```scala
+df.smvHashSample($"key", rate=0.1, seed=123)
+```
+where rate is ranged ```(0, 1]```, seed is an Int. Both has default values, rate defaults to
+0.01 (1%), seed defaults to 23
+
+MurmurHash3 is used for generating the hash
+
+If you need to hash on multiple columns, just concatenate them as the following
+```scala
+df.smvHashSample(smvStrCat($"k1".cast("string"), $"k2"), 0.1)
+```
 
 ### smvPivot, smvCube, smvRollup
 Please see the "SmvGroupedData Functions" session
@@ -137,7 +173,7 @@ Same as agg, but by default, keep all the keys.
 
 Example:
 ```scala
-df.groupBy("a","b").aggWithKeys(sum("x") as "x") 
+df.groupBy("a","b").aggWithKeys(sum("x") as "x")
 ```
 will output 3 columns: `a`, `b` and `x`.
 
@@ -175,7 +211,7 @@ There are actually a group of functions on both DataFrame and SmvGroupedData to 
 
 * smvPivot on DF
 * smvPivot on SmvGroupedData
-* smvPivotSum on SmvGroupedData 
+* smvPivotSum on SmvGroupedData
 
 #### smvPivot on DF
 smvPivot on DF will output 1 record per input record, and all input fields are kept.
@@ -184,7 +220,7 @@ Client code looks like
 ```scala
    df.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
 ```
- 
+
 Input
 
 | id  | month | product | count |
@@ -192,7 +228,7 @@ Input
 | 1   | 5/14  |   A     |   100 |
 | 1   | 6/14  |   B     |   200 |
 | 1   | 5/14  |   B     |   300 |
- 
+
 Output
 
 | id  | month | product | count | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
@@ -219,14 +255,14 @@ Output
 | 1   | NULL         | NULL         | NULL         | 200          |
 | 1   | NULL         | 300          | NULL         | NULL         |
 
-Content-wise returns the similar thing as the DataFrame version without unspecified columns. Also has 1-1 map between input 
+Content-wise returns the similar thing as the DataFrame version without unspecified columns. Also has 1-1 map between input
 and output. But the output of it is a GroupedData object (actually SmvGroupedData), so you can do
 ```scala
 df.groupBy('id).smvPivot(...)(...)(...).sum("count_5_14_A", "count_6_14_B")
 ```
 or other aggregate functions with ```agg```.
 
-A convienience function is 
+A convienience function is
 ```scala
 df.groupBy("id").smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
 ```
@@ -243,7 +279,7 @@ You can actually specify multiple pivot column sets in a Pivot Operation as belo
 ```scala
 df.smvPivot(Seq("a","b"), Seq("a"))......
 ```
-It will pivot on value of `a` and the combination of `a`, `b` values separately. 
+It will pivot on value of `a` and the combination of `a`, `b` values separately.
 
 For example:
 Input
@@ -260,19 +296,19 @@ Input
 ```scala
     val res = srdd.smvGroupBy('k1).smvPivot(Seq("k2"), Seq("k2", "p"))("v2")("x", "x_A", "y_B").agg(
       $"k1",
-      countDistinct("v2_x") as 'dist_cnt_v2_x, 
-      countDistinct("v2_x_A") as 'dist_cnt_v2_x_A, 
-      countDistinct("v2_y_B") as 'dist_cnt_v2_y_B 
+      countDistinct("v2_x") as 'dist_cnt_v2_x,
+      countDistinct("v2_x_A") as 'dist_cnt_v2_x_A,
+      countDistinct("v2_y_B") as 'dist_cnt_v2_y_B
     )
 ```
 
 Output
 
-|k1 |dist_cnt_v2_x |dist_cnt_v2_x_A |dist_cnt_v2_y_B|                                        
+|k1 |dist_cnt_v2_x |dist_cnt_v2_x_A |dist_cnt_v2_y_B|
 |---|--------------|----------------|---------------|
-|1  |2             |2               |0              | 
+|1  |2             |2               |0              |
 |2  |1             |1               |0              |
- 
+
 ### Rollup/Cube Operations
 The `smvRollup` and `smvCube` operations add standard rollup/cube operations to a DataFrame.  By default, the "*" string is used as the sentinel value (hardcoded at this point).  For example:
 ```scala
@@ -286,7 +322,7 @@ df.smvCube("a","b","c").agg(sum("d") as "d")
 The above will create *cube* from the (a,b,c) columns.  It will calculate the `Sum(d)` for (a,b,c), (a,b), (a,c), (b,c), (a), (b), (c)
 *Note:* the cube for the global () selection is never computed.
 
-Both methods above have a version on ```SmvGroupedData``` that allows the user to provide a set of fixed columns. 
+Both methods above have a version on ```SmvGroupedData``` that allows the user to provide a set of fixed columns.
 
 ```scala
 df.smvGroupBy("x").smvCube("a", "b", "c").agg(sum("d") as "d")
