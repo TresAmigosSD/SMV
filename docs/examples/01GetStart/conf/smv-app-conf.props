@@ -1,0 +1,10 @@
+# application name
+smv.appName = Example App
+
+# stage definitions
+smv.stages = etl, adhoc
+smv.stages.etl.packages = org.tresamigos.getstart.etl
+smv.stages.adhoc.packages = org.tresamigos.getstart.adhoc
+
+# spark sql properties
+spark.sql.shuffle.partitions = 64
