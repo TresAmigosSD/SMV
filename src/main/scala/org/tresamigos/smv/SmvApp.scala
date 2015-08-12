@@ -125,6 +125,14 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /**
+   * delete the current output files of the modules to run (and not all the intermediate modules).
+   */
+  private def deleteOutputModules() = {
+    // TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
+    smvConfig.modulesToRun().foreach {m => m.deleteOutputs(this)}
+  }
+
+  /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
    */
@@ -137,6 +145,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     println("--------------")
     smvConfig.modulesToRun().foreach(m => println(m.name))
     println("--------------")
+
+    deleteOutputModules()
 
     smvConfig.modulesToRun().foreach { module =>
 

@@ -136,6 +136,17 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 
+  /**
+   * delete the output(s) associated with this module (csv file and schema).
+   * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
+   */
+  private[smv] def deleteOutputs(app: SmvApp) = {
+    val csvPath = app.moduleCsvPath(this)
+    val schemaPath = (".csv$"r).replaceAllIn(csvPath, ".schema")
+    SmvHDFS.deleteFile(csvPath)
+    SmvHDFS.deleteFile(schemaPath)
+  }
+
   private[smv] def persist(app: SmvApp, rdd: SchemaRDD) = {
     val filePath = app.moduleCsvPath(this)
     implicit val ca = CsvAttributes.defaultCsvWithHeader
