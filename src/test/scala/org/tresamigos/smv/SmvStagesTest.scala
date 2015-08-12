@@ -52,19 +52,6 @@ class SmvStagesTest extends SparkTestUtil {
   }
 }
 
-class SmvReflectionTest extends SparkTestUtil {
-  sparkTest("Test SmvReflection.modulesInPackage method.") {
-    object app extends SmvApp(testAppArgs.singleStage ++ Seq("-m", "None"), Some(sc)) {}
-
-    val mods: Seq[SmvModule] = SmvReflection.modulesInPackage("org.tresamigos.smv.smvAppTestPkg1")
-    assertUnorderedSeqEqual(mods,
-      Seq(org.tresamigos.smv.smvAppTestPkg1.X, org.tresamigos.smv.smvAppTestPkg1.Y))(
-        Ordering.by[SmvModule, String](_.name))
-    assert(app.moduleNameForPrint(org.tresamigos.smv.smvAppTestPkg1.X) === "X")
-  }
-
-}
-
 /**
  * test the "what modules to run" method in SmvConfig.
  * While this only calls SmvConfig methods, it is affected by SmvStages so the test belongs in this file.
