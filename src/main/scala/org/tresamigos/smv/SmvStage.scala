@@ -58,6 +58,14 @@ trait SmvPackageManager {
   def getAllOutputModules() : Seq[SmvModule] = {
     getAllModules().filter(m => m.isInstanceOf[SmvOutput])
   }
+
+  /**
+   * inject the given app in all known modules managed by this package manager.
+   */
+  def injectApp(app: SmvApp) = {
+    // TODO: this should inject into all DATASETS (change comment above too!)
+    getAllModules().foreach(_.injectApp(app))
+  }
 }
 
 /**

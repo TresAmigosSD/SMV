@@ -34,13 +34,16 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = new SQLContext(sc)
 
-  // configure spark sql params here rather in run so that it would be done even if we use the shell.
+  // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
+
+  injectAppIntoAllDatasets()
 
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
-  /** concrete applications can provide a more interesting RejectLogger.
+  /**
+   * concrete applications can provide a more interesting RejectLogger.
    *  Example: override val rejectLogger = new SCRejectLogger(sc, 3)
    */
   def rejectLogger() : RejectLogger = TerminateRejectLogger
@@ -122,6 +125,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     for ((key, value) <- smvConfig.sparkSqlProps) {
       sqlContext.setConf(key, value)
     }
+  }
+
+  /**
+   * inject the current app into all known data sets.
+   */
+  private def injectAppIntoAllDatasets() = {
+    smvConfig.stages.injectApp(this)
   }
 
   /**

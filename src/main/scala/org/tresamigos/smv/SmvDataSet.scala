@@ -14,17 +14,10 @@
 
 package org.tresamigos.smv
 
-import java.io.{File, PrintWriter}
-import org.rogach.scallop.ScallopConf
+import org.apache.spark.sql.SchemaRDD
 
-import scala.reflect.runtime.{universe => ru}
-import org.apache.spark.sql.{SchemaRDD, SQLContext}
-import org.apache.spark.{SparkContext, SparkConf}
-
-import scala.collection.mutable
 import scala.util.Try
 import org.joda.time._
-import org.joda.convert._
 import org.joda.time.format._
 
 /**
@@ -35,6 +28,7 @@ import org.joda.time.format._
  */
 abstract class SmvDataSet {
 
+  private var app: SmvApp = _
   private var rddCache: SchemaRDD = null
   private[smv] var versionSumCache : Int = -1
 
@@ -65,13 +59,18 @@ abstract class SmvDataSet {
    * The value is cached so this function can be called repeatedly.
    */
   def rdd(app: SmvApp) = {
+    // TODO: use the injected app instead!
     if (rddCache == null)
       rddCache = computeRDD(app)
     rddCache
   }
+
+  def injectApp(_app: SmvApp) = {
+    app = _app
+  }
 }
 
-abstract class SmvFile extends SmvDataSet{
+abstract class SmvFile extends SmvDataSet {
   val basePath: String
   override def description() = s"Input file: @${basePath}"
   override def requiresDS() = Seq.empty
