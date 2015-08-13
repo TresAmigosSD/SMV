@@ -49,7 +49,7 @@ abstract class SmvDataSet {
 
   /** code "version".  Derived classes should update the value when code or data */
   def version() : Int = 0
-  
+
   /**
     * the version of this dataset plus the versions of all dependent data sets.
     * Need to cache the computed value to avoid a O(n!) algorithm.
@@ -75,7 +75,7 @@ abstract class SmvFile extends SmvDataSet{
   val basePath: String
   override def description() = s"Input file: @${basePath}"
   override def requiresDS() = Seq.empty
-  
+
   override def name() = {
     val nameRex = """(.+)(.csv)*(.gz)*""".r
     basePath match {
@@ -83,36 +83,49 @@ abstract class SmvFile extends SmvDataSet{
       case _ => throw new IllegalArgumentException(s"Illegal base path format: $basePath")
     }
   }
+
+  def createLogger(app: SmvApp, errPolicy: SmvErrorPolicy.ReadPolicy) = {
+    errPolicy match {
+      case SmvErrorPolicy.Terminate => TerminateRejectLogger
+      case SmvErrorPolicy.Ignore => NoOpRejectLogger
+      case SmvErrorPolicy.Log => app.rejectLogger
+    }
+  }
 }
 
 /**
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
-case class SmvCsvFile(basePath: String, csvAttributes: CsvAttributes) extends
-  SmvFile{
+case class SmvCsvFile(
+    basePath: String,
+    csvAttributes: CsvAttributes,
+    errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate
+  ) extends SmvFile {
 
   override def computeRDD(app: SmvApp): SchemaRDD = {
     implicit val ca = csvAttributes
-    implicit val rejectLogger = app.rejectLogger
+    implicit val rejectLogger = createLogger(app, errPolicy)
     app.sqlContext.csvFileWithSchema(s"${app.dataDir}/${basePath}")
   }
-  
+
 }
 
-case class SmvFrlFile(basePath: String) extends
-    SmvFile{
-      
+case class SmvFrlFile(
+    basePath: String,
+    errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate
+  ) extends SmvFile {
+
   override def computeRDD(app: SmvApp): SchemaRDD = {
-    implicit val rejectLogger = app.rejectLogger
+    implicit val rejectLogger = createLogger(app, errPolicy)
     app.sqlContext.frlFileWithSchema(s"${app.dataDir}/${basePath}")
   }
 }
 
 /** Keep this interface for existing application code, will be removed when application code cleaned up */
 object SmvFile {
-  def apply(basePath: String, csvAttributes: CsvAttributes) = 
+  def apply(basePath: String, csvAttributes: CsvAttributes) =
     new SmvCsvFile(basePath, csvAttributes)
-  def apply(name: String, basePath: String, csvAttributes: CsvAttributes) = 
+  def apply(name: String, basePath: String, csvAttributes: CsvAttributes) =
     new SmvCsvFile(basePath, csvAttributes)
 }
 
