@@ -16,10 +16,11 @@ package org.tresamigos.smv
 
 class CmdLineArgsTest extends SparkTestUtil {
   test("test command line parser") {
-    val cmd_args = new CmdLineArgsConf(Seq("--graph", "-d", "-m", "mod1", "mod2"))
+    val cmd_args = new CmdLineArgsConf(Seq("--graph", "-d", "--run-app", "-m", "mod1", "mod2"))
     assert(cmd_args.devMode())
     assert(cmd_args.graph())
     assert(cmd_args.modsToRun() === Seq("mod1", "mod2"))
+    assert(cmd_args.runAllApp())
   }
 
   test("test command line parser with default args.") {

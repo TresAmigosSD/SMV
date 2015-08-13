@@ -53,9 +53,9 @@ class SmvDFHelper(df: DataFrame) {
 
   /**
    * Dump the schema and data of given srdd to screen for debugging purposes.
-   * TODO: add debug flag to turn on/off this method.  Hmm, I think adding a flag would encourage people to leave this in code :-)
    */
   def dumpSRDD = {
+    // TODO: use printSchema on df.
     println(SmvSchema.fromSchemaRDD(df))
     df.collect.foreach(println)
   }

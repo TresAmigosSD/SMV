@@ -47,20 +47,40 @@ class SmvStagesTest extends SparkTestUtil {
       "org.tresamigos.smv.smvAppTestPkg1.Y",
       "org.tresamigos.smv.smvAppTestPkg2.Z"))
     assertUnorderedSeqEqual(s2mods, Seq(
-      "org.tresamigos.smv.smvAppTestPkg3.T"))
+      "org.tresamigos.smv.smvAppTestPkg3.T",
+      "org.tresamigos.smv.smvAppTestPkg3.U"))
   }
 }
 
-class SmvReflectionTest extends SparkTestUtil {
-  sparkTest("Test SmvReflection.modulesInPackage method.") {
-    object app extends SmvApp(testAppArgs.singleStage ++ Seq("-m", "None"), Some(sc)) {}
-
-    val mods: Seq[SmvModule] = SmvReflection.modulesInPackage("org.tresamigos.smv.smvAppTestPkg1")
-    assertUnorderedSeqEqual(mods,
-      Seq(org.tresamigos.smv.smvAppTestPkg1.X, org.tresamigos.smv.smvAppTestPkg1.Y))(
-        Ordering.by[SmvModule, String](_.name))
-    assert(app.moduleNameForPrint(org.tresamigos.smv.smvAppTestPkg1.X) === "X")
+/**
+ * test the "what modules to run" method in SmvConfig.
+ * While this only calls SmvConfig methods, it is affected by SmvStages so the test belongs in this file.
+ */
+class SmvWhatModulesToRunTest extends SparkTestUtil {
+  sparkTest("Test modules to run (none output module)") {
+    object app extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "org.tresamigos.smv.smvAppTestPkg3.T"), Some(sc)) {}
+    val mods = app.smvConfig.modulesToRun().map(_.name)
+    assertUnorderedSeqEqual(mods, Seq("org.tresamigos.smv.smvAppTestPkg3.T"))
   }
+
+  sparkTest("Test modules to run (mods in stage)") {
+    object app extends SmvApp(testAppArgs.multiStage ++ Seq("-s", "s1"), Some(sc)) {}
+    val mods = app.smvConfig.modulesToRun().map(_.name)
+    assertUnorderedSeqEqual(mods, Seq(
+      "org.tresamigos.smv.smvAppTestPkg1.Y",
+      "org.tresamigos.smv.smvAppTestPkg2.Z"))
+  }
+
+  sparkTest("Test modules to run (mods in app)") {
+    object app extends SmvApp(testAppArgs.multiStage ++ Seq("--run-app"), Some(sc)) {}
+    val mods = app.smvConfig.modulesToRun().map(_.name)
+    mods.foreach(println)
+    assertUnorderedSeqEqual(mods, Seq(
+      "org.tresamigos.smv.smvAppTestPkg1.Y",
+      "org.tresamigos.smv.smvAppTestPkg2.Z",
+      "org.tresamigos.smv.smvAppTestPkg3.U"))
+  }
+
 }
 
 } // end: package org.tresamigos.smv
@@ -69,8 +89,8 @@ class SmvReflectionTest extends SparkTestUtil {
  * packages below are used for testing the modules in package, modules in stage, etc.
  * There are three packages:
  * 1. smvAppTestPkg1: Modules X,Y (X is output)
- * 1. smvAppTestPkg2: Module Z (output)
- * 1. smvAppTestPkg3: Module T (no output modules!!!)
+ * 2. smvAppTestPkg2: Module Z (output)
+ * 3. smvAppTestPkg3: Module T, U (U is output)
  */
 package org.tresamigos.smv.smvAppTestPkg1 {
 
@@ -109,11 +129,18 @@ object Z extends SmvModule("Z Module") with SmvOutput {
 
 package org.tresamigos.smv.smvAppTestPkg3 {
 
-import org.tresamigos.smv.SmvModule
+import org.tresamigos.smv.{SmvOutput, SmvModule}
 
 object T extends SmvModule("T Module") {
   override def requiresDS() = Seq.empty
   override def run(inputs: runParams) = null
 }
 
+// this should not be included in any package out directly (children will though)
+abstract class UBase extends SmvModule("U Base") with SmvOutput
+
+object U extends UBase {
+  override def requiresDS() = Seq.empty
+  override def run(inputs: runParams) = null
+}
 }

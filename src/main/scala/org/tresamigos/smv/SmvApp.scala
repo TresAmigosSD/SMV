@@ -34,13 +34,16 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = new SQLContext(sc)
 
-  // configure spark sql params here rather in run so that it would be done even if we use the shell.
+  // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
+
+  injectAppIntoAllDatasets()
 
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
-  /** concrete applications can provide a more interesting RejectLogger.
+  /**
+   * concrete applications can provide a more interesting RejectLogger.
    *  Example: override val rejectLogger = new SCRejectLogger(sc, 3)
    */
   lazy val rejectLogger : RejectLogger = new SCRejectLogger(sc, 10)
@@ -125,6 +128,21 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /**
+   * inject the current app into all known data sets.
+   */
+  private def injectAppIntoAllDatasets() = {
+    smvConfig.stages.injectApp(this)
+  }
+
+  /**
+   * delete the current output files of the modules to run (and not all the intermediate modules).
+   */
+  private def deleteOutputModules() = {
+    // TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
+    smvConfig.modulesToRun().foreach {m => m.deleteOutputs(this)}
+  }
+
+  /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
    */
@@ -133,21 +151,28 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       genJSON()
     }
 
-    smvConfig.cmdLine.modsToRun().foreach { module =>
-      val modObject = SmvReflection.moduleNameToObject(module)
+    println("Modules to run")
+    println("--------------")
+    smvConfig.modulesToRun().foreach(m => println(m.name))
+    println("--------------")
+
+    deleteOutputModules()
+
+    smvConfig.modulesToRun().foreach { module =>
 
       if (smvConfig.cmdLine.graph()) {
         // TODO: need to combine the modules for graphs into a single graph.
-        genDotGraph(modObject)
+        genDotGraph(module)
       } else {
-        val modResult = resolveRDD(modObject)
+        val modResult = resolveRDD(module)
 
+        // if in dev mode, then the module would have already been persisted.
         if (! isDevMode)
-          modObject.persist(this, modResult)
+          module.persist(this, modResult)
 
-        // TODO: this might be best to be moved to modObject.persist so that we would generate edd for every persisted module not just the "run" modules.
+        // TODO: this might be best to be moved to module.persist so that we would generate edd for every persisted module not just the "run" modules.
         if (smvConfig.cmdLine.genEdd())
-          modResult.edd.addBaseTasks().saveReport(moduleEddPath(modObject))
+          modResult.edd.addBaseTasks().saveReport(moduleEddPath(module))
       }
     }
   }
