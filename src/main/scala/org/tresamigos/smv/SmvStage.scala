@@ -23,20 +23,17 @@ trait SmvPackageManager {
   /** any class extending SmvPackageManager must at a minimum implement getAllPackageNames. */
   def getAllPackageNames() : Seq[String]
 
-  def getAllModules() : Seq[SmvModule] = {
-    getAllPackageNames.flatMap(SmvReflection.modulesInPackage)
-  }
+  lazy val allModules : Seq[SmvModule] =
+    getAllPackageNames.flatMap{ p => SmvReflection.objectsInPackage[SmvModule](p) }
 
-  def getAllOutputModules() : Seq[SmvModule] = {
-    getAllModules().filter(m => m.isInstanceOf[SmvOutput])
-  }
+  lazy val allOutputModules : Seq[SmvModule] =
+    allModules.filter(m => m.isInstanceOf[SmvOutput])
 
   /**
-   * inject the given app in all known modules managed by this package manager.
+   * inject the given app in all modules managed by this package manager.
    */
   def injectApp(app: SmvApp) = {
-    // TODO: this should inject into all DATASETS (change comment above too!)
-    getAllModules().foreach(_.injectApp(app))
+    allModules.foreach(_.injectApp(app))
   }
 }
 
@@ -49,7 +46,7 @@ class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManager {
   def stageNames = stages map {s => s.name}
   def findStage(stageName: String) : SmvStage = stages.find(s => s.name == stageName).get
 
-  override def getAllPackageNames() = stages.flatMap(s => s.pkgs)
+  override def getAllPackageNames() = stages.flatMap(s => s.getAllPackageNames())
 }
 
 /**

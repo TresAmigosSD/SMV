@@ -96,7 +96,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   lazy val packagesPrefix = {
-    val m = stages.getAllModules()
+    val m = stages.allModules
     if (m.isEmpty) ""
     else m.map(_.name).reduce{(l,r) => 
         (l.split('.') zip r.split('.')).
@@ -192,8 +192,8 @@ object SmvApp {
 // TODO: this should be moved into stages (and accept a list of stages rather than packages)
 private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
   private def allModules = {
-    if (packages.isEmpty) app.stages.getAllModules()
-    else packages.map{app.packagesPrefix + _}.map(SmvReflection.modulesInPackage).flatten
+    if (packages.isEmpty) app.stages.allModules
+    else packages.map{app.packagesPrefix + _}.flatMap{ p => SmvReflection.objectsInPackage[SmvModule](p) }
   }.sortWith{(a,b) => a.name < b.name}
   
   private def allFiles = allModules.flatMap(m => m.requiresDS().filter(v => v.isInstanceOf[SmvFile]))

@@ -101,9 +101,9 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private[smv] def modulesToRun() : Seq[SmvModule] = {
 
     val empty = Some(Seq.empty[String])
-    val directMods = cmdLine.modsToRun.orElse(empty)().map { m => SmvReflection.moduleNameToObject(m) }
-    val stageMods = cmdLine.stagesToRun.orElse(empty)().flatMap(s => stages.findStage(s).getAllOutputModules())
-    val appMods = if (cmdLine.runAllApp()) stages.getAllOutputModules() else Seq.empty[SmvModule]
+    val directMods = cmdLine.modsToRun.orElse(empty)().map { m => SmvReflection.objectNameToInstance[SmvModule](m) }
+    val stageMods = cmdLine.stagesToRun.orElse(empty)().flatMap(s => stages.findStage(s).allOutputModules)
+    val appMods = if (cmdLine.runAllApp()) stages.allOutputModules else Seq.empty[SmvModule]
 
     directMods ++ stageMods ++ appMods
   }

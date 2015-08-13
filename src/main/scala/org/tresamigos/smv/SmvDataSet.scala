@@ -28,7 +28,7 @@ import org.joda.time.format._
  */
 abstract class SmvDataSet {
 
-  private var app: SmvApp = _
+  var app: SmvApp = _
   private var rddCache: SchemaRDD = null
   private[smv] var versionSumCache : Int = -1
 
@@ -65,8 +65,16 @@ abstract class SmvDataSet {
     rddCache
   }
 
-  def injectApp(_app: SmvApp) = {
-    app = _app
+  /**
+   * Inject the given app into this dataset and all datasets that this depends on.
+   * Note: only the first setting is honored (as an optimization)
+   */
+  def injectApp(_app: SmvApp) : Unit = {
+    // short circuit the setting if this was already done.
+    if (app == null) {
+      app = _app
+      requiresDS().foreach( ds => ds.injectApp(app))
+    }
   }
 }
 
@@ -87,8 +95,7 @@ abstract class SmvFile extends SmvDataSet {
 /**
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
-case class SmvCsvFile(basePath: String, csvAttributes: CsvAttributes) extends
-  SmvFile{
+case class SmvCsvFile(basePath: String, csvAttributes: CsvAttributes) extends SmvFile {
 
   override def computeRDD(app: SmvApp): SchemaRDD = {
     implicit val ca = csvAttributes
@@ -98,8 +105,7 @@ case class SmvCsvFile(basePath: String, csvAttributes: CsvAttributes) extends
   
 }
 
-case class SmvFrlFile(basePath: String) extends
-    SmvFile{
+case class SmvFrlFile(basePath: String) extends SmvFile {
       
   override def computeRDD(app: SmvApp): SchemaRDD = {
     implicit val rejectLogger = app.rejectLogger
