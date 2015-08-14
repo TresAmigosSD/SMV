@@ -194,3 +194,24 @@ class smvHashSampleTest extends SparkTestUtil {
       "[i]"))
   }
 }
+
+class smvCoalesceTest extends SparkTestUtil {
+  sparkTest("Test smvCoalesce") {
+    val ssc = sqlContext; import ssc.implicits._
+    val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k").repartition(4)
+    val res = a.smvCoalesce(1)
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a]",
+      "[b]",
+      "[c]",
+      "[d]",
+      "[e]",
+      "[f]",
+      "[g]",
+      "[h]",
+      "[i]",
+      "[j]",
+      "[k]"))
+    assert(res.rdd.partitions.size === 1)
+  }
+}
