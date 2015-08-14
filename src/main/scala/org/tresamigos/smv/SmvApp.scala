@@ -29,6 +29,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   val smvConfig = new SmvConfig(cmdLineArgs)
   val isDevMode = smvConfig.cmdLine.devMode()
+  val genEdd = smvConfig.cmdLine.genEdd()
   val stages = smvConfig.stages
   val sparkConf = new SparkConf().setAppName(smvConfig.appName)
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
@@ -69,7 +70,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     if (isDevMode) mod.name + "_" + mod.versionSum() else mod.name
 
   /** Returns the path for the module's edd */
-  private[this] def moduleEddPath(mod: SmvModule): String = moduleCsvPath(mod) + ".edd"
+  private[smv] def moduleEddPath(mod: SmvModule): String = moduleCsvPath(mod) + ".edd"
 
   /**
    * Get the RDD associated with data set.  The rdd plan (not data) is cached in the SmvDataSet
@@ -169,10 +170,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
         // if in dev mode, then the module would have already been persisted.
         if (! isDevMode)
           module.persist(this, modResult)
-
-        // TODO: this might be best to be moved to module.persist so that we would generate edd for every persisted module not just the "run" modules.
-        if (smvConfig.cmdLine.genEdd())
-          modResult.edd.addBaseTasks().saveReport(moduleEddPath(module))
       }
     }
   }

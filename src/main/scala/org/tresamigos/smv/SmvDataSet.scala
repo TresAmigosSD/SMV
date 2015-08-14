@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.{DataFrame, SchemaRDD}
 
 import scala.util.Try
 import org.joda.time._
@@ -162,15 +162,18 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    */
   private[smv] def deleteOutputs(app: SmvApp) = {
     val csvPath = app.moduleCsvPath(this)
+    val eddPath = app.moduleEddPath(this)
     val schemaPath = (".csv$"r).replaceAllIn(csvPath, ".schema")
     SmvHDFS.deleteFile(csvPath)
     SmvHDFS.deleteFile(schemaPath)
+    SmvHDFS.deleteFile(eddPath)
   }
 
-  private[smv] def persist(app: SmvApp, rdd: SchemaRDD) = {
+  private[smv] def persist(app: SmvApp, rdd: DataFrame) = {
     val filePath = app.moduleCsvPath(this)
     implicit val ca = CsvAttributes.defaultCsvWithHeader
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
+
     if (app.isDevMode){
       val counter = new ScCounter(app.sc)
       val before = DateTime.now()
@@ -185,17 +188,20 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     } else {
       rdd.saveAsCsvWithSchema(filePath)
     }
+
+    // if EDD flag was specified, generate EDD for the just saved file!
+    // Use the "cached" file that was just saved rather than cause an action
+    // on the input RDD which may cause some expensive computation to re-occur.
+    if (app.genEdd)
+      readPersistedFile(app).get.edd.addBaseTasks().saveReport(app.moduleEddPath(this))
   }
 
-  private[smv] def readPersistedFile(app: SmvApp): Try[SchemaRDD] = {
-    // Since on Linux, when file stored on local file system, the partitions are not
-    // guaranteed in order when read back in, we need to only store the body w/o the header
-    // implicit val ca = CsvAttributes.defaultCsvWithHeader
+  private[smv] def readPersistedFile(app: SmvApp): Try[DataFrame] = {
     implicit val ca = CsvAttributes.defaultCsv
     Try(app.sqlContext.csvFileWithSchema(app.moduleCsvPath(this)))
   }
 
-  override def computeRDD(app: SmvApp): SchemaRDD = {
+  override def computeRDD(app: SmvApp): DataFrame = {
     if (app.isDevMode) {
       readPersistedFile(app).recoverWith { case e =>
         // if unable to read persisted file, recover by running the module and persist.
