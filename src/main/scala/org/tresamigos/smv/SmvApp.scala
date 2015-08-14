@@ -46,8 +46,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * concrete applications can provide a more interesting RejectLogger.
    *  Example: override val rejectLogger = new SCRejectLogger(sc, 3)
    */
-  def rejectLogger() : RejectLogger = TerminateRejectLogger
-  
+  lazy val rejectLogger : RejectLogger = new SCRejectLogger(sc, 10)
+
   def saveRejects(path: String) = {
     // TODO: isInstanceOf is evil.  Use a property of the logger instance instead!!!
     if(rejectLogger.isInstanceOf[SCRejectLogger]){
@@ -98,14 +98,14 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   lazy val packagesPrefix = {
     val m = stages.allModules
     if (m.isEmpty) ""
-    else m.map(_.name).reduce{(l,r) => 
+    else m.map(_.name).reduce{(l,r) =>
         (l.split('.') zip r.split('.')).
           collect{ case (a, b) if (a==b) => a}.mkString(".")
       } + "."
   }
 
   /** clean name in graph output */
-  private[smv] def moduleNameForPrint(ds: SmvDataSet) = ds.name.stripPrefix(packagesPrefix) 
+  private[smv] def moduleNameForPrint(ds: SmvDataSet) = ds.name.stripPrefix(packagesPrefix)
 
   private def genDotGraph(module: SmvModule) = {
     val pathName = s"${module.name}.dot"
@@ -195,18 +195,18 @@ private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
     if (packages.isEmpty) app.stages.allModules
     else packages.map{app.packagesPrefix + _}.flatMap{ p => SmvReflection.objectsInPackage[SmvModule](p) }
   }.sortWith{(a,b) => a.name < b.name}
-  
+
   private def allFiles = allModules.flatMap(m => m.requiresDS().filter(v => v.isInstanceOf[SmvFile]))
 
-  private def printName(m: SmvDataSet) = m.name.stripPrefix(app.packagesPrefix) 
+  private def printName(m: SmvDataSet) = m.name.stripPrefix(app.packagesPrefix)
 
   def generateJSON() = {
     "{\n" +
-    allModules.map{m => 
+    allModules.map{m =>
       s"""  "${printName(m)}": {""" + "\n" +
       s"""    "version": ${m.versionSum()},""" + "\n" +
       s"""    "dependents": [""" + m.requiresDS().map{v => s""""${printName(v)}""""}.mkString(",") + "],\n" +
-      s"""    "description": "${m.description}"""" + "}" 
+      s"""    "description": "${m.description}"""" + "}"
     }.mkString(",\n") +
     "}"
   }
@@ -245,7 +245,7 @@ private[smv] class SmvModuleDependencyGraph(val startMod: SmvModule, packagesPre
   private lazy val allFiles = graph.values.flatMap(vs => vs.filter(v => v.isInstanceOf[SmvFile])).toSet.toSeq
   private lazy val allModules = graph.flatMap(kv => (Seq(kv._1) ++ kv._2).filter(v => v.isInstanceOf[SmvModule])).toSet.toSeq
 
-  private def printName(m: SmvDataSet) = m.name.stripPrefix(packagesPrefix) 
+  private def printName(m: SmvDataSet) = m.name.stripPrefix(packagesPrefix)
   /** quoted/clean name in graph output */
   private def q(ds: SmvDataSet) = "\"" + printName(ds) + "\""
 
@@ -279,4 +279,3 @@ private[smv] class SmvModuleDependencyGraph(val startMod: SmvModule, packagesPre
     pw.close()
   }
 }
-
