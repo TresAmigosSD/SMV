@@ -35,9 +35,9 @@ class SmvStagesTest extends SparkTestUtil {
   sparkTest("Test modules in stage.") {
     object app extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "None"), Some(sc)) {}
 
-    val s1mods = app.stages.findStage("s1").getAllModules().map(m => m.name)
-    val s1out =  app.stages.findStage("s1").getAllOutputModules().map(m => m.name)
-    val s2mods = app.stages.findStage("s2").getAllModules().map(m => m.name)
+    val s1mods = app.stages.findStage("s1").allModules.map(m => m.name)
+    val s1out =  app.stages.findStage("s1").allOutputModules.map(m => m.name)
+    val s2mods = app.stages.findStage("s2").allModules.map(m => m.name)
 
     assertUnorderedSeqEqual(s1mods, Seq(
       "org.tresamigos.smv.smvAppTestPkg1.X",
@@ -113,6 +113,11 @@ class X
 class Z extends SmvModule("Z Class") {
   override def requiresDS = Seq()
   override def run(inputs: runParams) = null
+}
+
+// some random object that should not be included in list of modules.
+object StandaloneObject {
+  val x = 5
 }
 }
 
