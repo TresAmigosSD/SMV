@@ -169,8 +169,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     SmvHDFS.deleteFile(eddPath)
   }
 
-  private[smv] def persist(app: SmvApp, rdd: DataFrame) = {
-    val filePath = app.moduleCsvPath(this)
+  private[smv] def persist(app: SmvApp, rdd: DataFrame, prefix: String = "") = {
+    val filePath = app.moduleCsvPath(this, prefix)
     implicit val ca = CsvAttributes.defaultCsvWithHeader
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
@@ -193,12 +193,21 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     // Use the "cached" file that was just saved rather than cause an action
     // on the input RDD which may cause some expensive computation to re-occur.
     if (app.genEdd)
-      readPersistedFile(app).get.edd.addBaseTasks().saveReport(app.moduleEddPath(this))
+      readPersistedFile(app, prefix).get.edd.addBaseTasks().saveReport(app.moduleEddPath(this, prefix))
   }
 
-  private[smv] def readPersistedFile(app: SmvApp): Try[DataFrame] = {
+  private[smv] def readPersistedFile(app: SmvApp, prefix: String = ""): Try[DataFrame] = {
     implicit val ca = CsvAttributes.defaultCsv
-    Try(app.sqlContext.csvFileWithSchema(app.moduleCsvPath(this)))
+    Try(app.sqlContext.csvFileWithSchema(app.moduleCsvPath(this, prefix)))
+  }
+
+  /**
+   * Create a snapshot in the current module at some result DataFrame.
+   * This is usefull for debugging a long SmvModule by creating snapshots along the way.
+   */
+  def snapshot(df: DataFrame, prefix: String) : DataFrame = {
+    persist(app, df, prefix)
+    readPersistedFile(app, prefix).get
   }
 
   override def computeRDD(app: SmvApp): DataFrame = {
