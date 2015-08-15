@@ -24,7 +24,6 @@ import java.util.Calendar
 import java.sql.Timestamp
 import com.rockymadden.stringmetric.phonetic.{MetaphoneAlgorithm, SoundexAlgorithm}
 import org.joda.time._
-import org.joda.convert._
 
 /**
  * ColumnHelper class provides additional methods/operators on Column

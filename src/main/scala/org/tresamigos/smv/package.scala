@@ -107,4 +107,13 @@ package object smv {
     val func: S => Option[D] = {s => map.get(s)}
     udf(func)
   }
+
+  /**
+   * restore 1.1 sum behaviour (and what is coming back in 1.4) where if all values are null, sum is 0
+   * Note: passed in column must be resolved (can not be just the name)
+   */
+  def smvSum0(col: Column) : Column = {
+    val cZero = lit(0).cast(col.toExpr.dataType)
+    coalesce(sum(col), cZero)
+  }
 }
