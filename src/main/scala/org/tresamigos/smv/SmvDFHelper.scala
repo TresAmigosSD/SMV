@@ -335,4 +335,11 @@ class SmvDFHelper(df: DataFrame) {
     val hashUdf = udf(getHash)
     df.where(hashUdf(key) < lit(cutoff))
   }
+
+  /**
+   * DF level coalesce, for Spark 1.3 only. Should be removed and use DF method coalesce in 1.4
+   **/
+  def smvCoalesce(n: Int) = {
+    df.sqlContext.createDataFrame(df.rdd.coalesce(n).map{r => Row.fromSeq(r.toSeq)}, df.schema)
+  }
 }
