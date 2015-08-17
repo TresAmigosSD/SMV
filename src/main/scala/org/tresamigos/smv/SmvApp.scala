@@ -87,7 +87,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
     resolveStack.push(dsName)
 
-    val resRdd = ds.rdd(this)
+    val resRdd = ds.rdd()
 
     val popRdd = resolveStack.pop()
     if (popRdd != dsName)
@@ -169,7 +169,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
         // if in dev mode, then the module would have already been persisted.
         if (! isDevMode)
-          module.persist(this, modResult)
+          module.persist(modResult)
       }
     }
   }

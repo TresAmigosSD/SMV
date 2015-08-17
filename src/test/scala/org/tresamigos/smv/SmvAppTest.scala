@@ -47,7 +47,7 @@ class SmvVersionTest extends SparkTestUtil {
 
 class SmvTestFile(override val name: String) extends SmvFile {
   val basePath = null
-  def computeRDD(app: SmvApp): DataFrame = null
+  def computeRDD(): DataFrame = null
 }
 
 class SmvAppTest extends SparkTestUtil {
@@ -85,6 +85,7 @@ class SmvAppTest extends SparkTestUtil {
   sparkTest("Test normal dependency execution") {
     object app extends SmvApp(Seq("-m", "C"), Option(sc))
 
+    C.injectApp(app)
     val res = app.resolveRDD(C)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
 
@@ -105,6 +106,8 @@ class SmvAppTest extends SparkTestUtil {
   sparkTest("Test cycle dependency execution") {
     object app extends SmvApp(Seq("-m", "None"), Option(sc))
 
+    A_cycle.injectApp(app)
+    B_cycle.injectApp(app)
     intercept[IllegalStateException] {
       app.resolveRDD(B_cycle)
     }

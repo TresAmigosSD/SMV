@@ -36,7 +36,7 @@ abstract class SmvDataSet {
   def description(): String
 
   /** concrete classes must implement this to supply the uncached RDD for data set */
-  def computeRDD(app: SmvApp): SchemaRDD
+  def computeRDD: DataFrame
 
   /** modules must override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet]
@@ -57,11 +57,11 @@ abstract class SmvDataSet {
   /**
    * returns the SchemaRDD from this dataset (file/module).
    * The value is cached so this function can be called repeatedly.
+   * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */
-  def rdd(app: SmvApp) = {
-    // TODO: use the injected app instead!
+  def rdd() = {
     if (rddCache == null)
-      rddCache = computeRDD(app)
+      rddCache = computeRDD
     rddCache
   }
 
@@ -109,7 +109,7 @@ case class SmvCsvFile(
     errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate
   ) extends SmvFile {
 
-  override def computeRDD(app: SmvApp): SchemaRDD = {
+  override def computeRDD: DataFrame = {
     implicit val ca = csvAttributes
     implicit val rejectLogger = createLogger(app, errPolicy)
     app.sqlContext.csvFileWithSchema(s"${app.dataDir}/${basePath}")
@@ -122,7 +122,7 @@ case class SmvFrlFile(
     errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate
   ) extends SmvFile {
 
-  override def computeRDD(app: SmvApp): SchemaRDD = {
+  override def computeRDD: DataFrame = {
     implicit val rejectLogger = createLogger(app, errPolicy)
     app.sqlContext.frlFileWithSchema(s"${app.dataDir}/${basePath}")
   }
@@ -140,19 +140,19 @@ object SmvFile {
  * base module class.  All SMV modules need to extend this class and provide their
  * description and dependency requirements (what does it depend on).
  * The module run method will be provided the result of all dependent inputs and the
- * result of the run is the result of the module.  All modules that depend on this module
- * will be provided the SchemaRDD result from the run method of this module.
+ * result of the run is the result of this module.  All modules that depend on this module
+ * will be provided the DataFrame result from the run method of this module.
  * Note: the module should *not* persist any RDD itself.
  */
 abstract class SmvModule(val description: String) extends SmvDataSet {
 
   override val name = this.getClass().getName().filterNot(_=='$')
 
-  type runParams = Map[SmvDataSet, SchemaRDD]
-  def run(inputs: runParams) : SchemaRDD
+  type runParams = Map[SmvDataSet, DataFrame]
+  def run(inputs: runParams) : DataFrame
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  private def doRun(app: SmvApp): SchemaRDD = {
+  private def doRun(): DataFrame = {
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 
@@ -169,7 +169,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     SmvHDFS.deleteFile(eddPath)
   }
 
-  private[smv] def persist(app: SmvApp, rdd: DataFrame, prefix: String = "") = {
+  private[smv] def persist(rdd: DataFrame, prefix: String = "") = {
     val filePath = app.moduleCsvPath(this, prefix)
     implicit val ca = CsvAttributes.defaultCsvWithHeader
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
@@ -193,10 +193,10 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     // Use the "cached" file that was just saved rather than cause an action
     // on the input RDD which may cause some expensive computation to re-occur.
     if (app.genEdd)
-      readPersistedFile(app, prefix).get.edd.addBaseTasks().saveReport(app.moduleEddPath(this, prefix))
+      readPersistedFile(prefix).get.edd.addBaseTasks().saveReport(app.moduleEddPath(this, prefix))
   }
 
-  private[smv] def readPersistedFile(app: SmvApp, prefix: String = ""): Try[DataFrame] = {
+  private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] = {
     implicit val ca = CsvAttributes.defaultCsv
     Try(app.sqlContext.csvFileWithSchema(app.moduleCsvPath(this, prefix)))
   }
@@ -206,19 +206,19 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    * This is usefull for debugging a long SmvModule by creating snapshots along the way.
    */
   def snapshot(df: DataFrame, prefix: String) : DataFrame = {
-    persist(app, df, prefix)
-    readPersistedFile(app, prefix).get
+    persist(df, prefix)
+    readPersistedFile(prefix).get
   }
 
-  override def computeRDD(app: SmvApp): DataFrame = {
+  override def computeRDD: DataFrame = {
     if (app.isDevMode) {
-      readPersistedFile(app).recoverWith { case e =>
+      readPersistedFile().recoverWith { case e =>
         // if unable to read persisted file, recover by running the module and persist.
-        persist(app, doRun(app))
-        readPersistedFile(app)
+        persist(doRun())
+        readPersistedFile()
       }.get
     } else {
-      doRun(app)
+      doRun()
     }
   }
 }
