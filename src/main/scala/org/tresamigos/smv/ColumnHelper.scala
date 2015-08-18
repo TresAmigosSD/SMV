@@ -283,15 +283,24 @@ class ColumnHelper(column: Column) {
    *
    * lit(1.0).smvSafeDiv(lit(0.0), 1000.0) => 1000.0
    * lit(1.0).smvSafeDiv(lit(null), 1000.0) => null
+   * null.smvSafeDiv(?,?) => null
    *
    */
-  def smvSafeDiv(other: Column, defaultv: Column) = {
-    val name = s"SmvSafeDiv($column, $other, $defaultv)"
-    val t = Cast(expr, DoubleType)
-    val o = Cast(extractExpr(other), DoubleType)
-    val d = Cast(extractExpr(defaultv), DoubleType)
-    new Column(Alias(If(EqualTo(o, Literal(0.0)), d, Divide(t,o)), name)())
+  def smvSafeDiv(denom: Column, defaultValue: Column) : Column = {
+    val numDouble = column.cast(DoubleType)
+    val denDouble = denom.cast(DoubleType)
+    val defDouble = defaultValue.cast(DoubleType)
+
+    // TODO: use "when".."otherwise" when we port to Spark 1.4
+    columnIf(column.isNull || denom.isNull, lit(null).cast(DoubleType),
+      columnIf(numDouble === lit(0.0), 0.0,
+        columnIf(denDouble === lit(0.0), defDouble,
+          numDouble / denDouble
+        )
+      )
+    )
   }
+
   def smvSafeDiv(other: Column, defaultv: Double): Column =
     smvSafeDiv(other, lit(defaultv))
 

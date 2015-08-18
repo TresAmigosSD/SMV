@@ -76,17 +76,6 @@ class ColumnHelperTest extends SparkTestUtil {
     assertSrddDataEqual(res, "sm0;l;brn;fn;obm;obm")
   }
 
-  sparkTest("test SmvSafeDiv function") {
-    import org.apache.spark.sql.functions._
-    val ssc = sqlContext; import ssc.implicits._
-    val srdd = createSchemaRdd("a:Double;b:Integer", "0.4,5;0,0;,")
-    val res = srdd.select(lit(10.0).smvSafeDiv($"a",100), lit(10.0).smvSafeDiv($"b",200))
-    assertSrddDataEqual(res, 
-      "25.0,2.0;" +
-      "100.0,200.0;" +
-      "null,null")
-  }
-  
   sparkTest("test smvPlusDays/smvPlusMonths/smvPlusWeeks/smvPlusYears") {
     import org.apache.spark.sql.functions._
     val ssc = sqlContext; import ssc.implicits._
@@ -115,3 +104,26 @@ class ColumnHelperTest extends SparkTestUtil {
       "2016-02-29 00:00:00.0")
   }
 }
+
+class testSmvSafeDiv extends SparkTestUtil {
+
+  sparkTest("test SmvSafeDiv function") {
+    import org.apache.spark.sql.functions._
+    val ssc = sqlContext;
+    import ssc.implicits._
+    val srdd = createSchemaRdd("a:Double;b:Integer", "0.4,5;0,0;,")
+    val res = srdd.select(
+      lit(10.0).smvSafeDiv($"a", 100),
+      lit(10.0).smvSafeDiv($"b",200),
+      $"a".smvSafeDiv(lit(2.0), lit(300.0)), // to test case where numerator is null
+      $"a".smvSafeDiv(lit(0.0), lit(400.0))  // to test case where numerator is null/0, denom = 0
+    )
+
+    assertSrddDataEqual(res,
+      "25.0,2.0,0.2,400.0;" +
+        "100.0,200.0,0.0,0.0;" +
+        "null,null,null,null")
+  }
+}
+
+
