@@ -92,7 +92,9 @@ case class NumericBase(col: Column) extends BaseTask {
    */
   override def formatValue(value: Any) : String = {
     def doubleAsStr(d: Double) = {
-      if (d < 0.05)
+      if (d == 0.0)
+        "0.0"
+      else if (d < 0.05)
         f"$d%.3e"
       else
         f"$d%.3f"
