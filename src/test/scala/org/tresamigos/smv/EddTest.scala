@@ -42,9 +42,9 @@ id                   Max Length:            3
 id                   Approx Distinct Count: 2
 val                  Non-Null Count:        2
 val                  Average:               39.855
-val                  Standard Deviation:    38.68581199871601
-val                  Min:                   12.5
-val                  Max:                   67.21
+val                  Standard Deviation:    38.686
+val                  Min:                   12.500
+val                  Max:                   67.210
 val2                 Min:                   2012-10-09 10:16:21.0
 val2                 Max:                   2014-08-17 01:01:56.0
 Histogram of val2: Year

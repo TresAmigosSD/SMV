@@ -198,7 +198,7 @@ abstract class EddTaskBuilder[T] {
  *     createReport: RDD[String]
  *
  * @param srdd the SchemaRDD this Edd works on
- * @param gExprs the group expressions this Edd cacluate over
+ * @param gCol the group expressions this Edd cacluate over
  */
 class Edd(val srdd: SchemaRDD,
           gCol: Seq[Column]) extends EddTaskBuilder[Edd] { 
@@ -212,7 +212,8 @@ class Edd(val srdd: SchemaRDD,
     eddRDD = null
     this
   }
-  
+
+  // TODO: CLEANUP: this mapping should be done by the concrete Task class and not here.
   private def createAggList(_tasks: Seq[EddTask]) = {
     val colLists = 
       _tasks.map{ t => t match {
@@ -250,7 +251,7 @@ class Edd(val srdd: SchemaRDD,
     if (eddRDD == null){
       val aggregateList = createAggList(groupTasks) ++ createAggList(tasks)
       eddRDD = srdd.groupBy(gCol: _*).agg(aggregateList(0), aggregateList.tail: _*)
-      eddRDD.persist(StorageLevel.MEMORY_AND_DISK)
+      //eddRDD.persist(StorageLevel.MEMORY_AND_DISK)
     } 
     eddRDD
   }

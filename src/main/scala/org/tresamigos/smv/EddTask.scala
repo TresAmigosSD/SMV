@@ -35,8 +35,12 @@ abstract class EddTask {
 }
 
 abstract class BaseTask extends EddTask {
+  /** format the Any value into a string representation.  Derived Tasks can override formatter */
+  def formatValue(value: Any) : String = value.toString
+
   def report(i: Iterator[Any]): Seq[String] = dscrList.map{ d =>
-    f"${col}%-20s ${d}%-22s ${i.next}%s"
+    val valueStr = formatValue(i.next)
+    f"${col}%-20s ${d}%-22s ${valueStr}%s"
   }
 
   def reportJSON(i: Iterator[Any]): String = 
@@ -82,6 +86,23 @@ case class NumericBase(col: Column) extends BaseTask {
   val taskName = "NumericBase"
   val nameList = Seq("cnt", "avg", "std", "min", "max")
   val dscrList = Seq("Non-Null Count:", "Average:", "Standard Deviation:", "Min:", "Max:")
+
+  /**
+   * format the numeric decimal values (Float/Double) to limit them to 3 decimal places.
+   */
+  override def formatValue(value: Any) : String = {
+    def doubleAsStr(d: Double) = {
+      if (d < 0.05)
+        f"$d%.3e"
+      else
+        f"$d%.3f"
+    }
+    value match {
+      case d: Double => doubleAsStr(d)
+      case f: Float => doubleAsStr(f)
+      case v => v.toString
+    }
+  }
 }
 
 case class TimeBase(col: Column) extends BaseTask {
