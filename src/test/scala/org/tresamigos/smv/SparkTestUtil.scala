@@ -45,7 +45,6 @@ trait SparkTestUtil extends FunSuite {
    */
   def sparkTest(name: String, disableLogging: Boolean = false)(body: => Unit) {
     test(name) {
-      sys.env
       if (disableLogging)
         SparkTestUtil.setLoggingLevel(Level.OFF)
       else
