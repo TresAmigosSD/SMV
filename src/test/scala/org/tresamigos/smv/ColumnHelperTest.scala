@@ -120,6 +120,20 @@ class SmvPrintToStrTest extends SparkTestUtil {
   }
 }
 
+class SmvStrTrim extends SparkTestUtil {
+  sparkTest("test smvStrTrim") {
+    val ssc =sqlContext;
+    import ssc.implicits._
+    val srdd = createSchemaRdd("k:String", "z ; 1; 3 ;")
+    val res = srdd.select($"k".smvStrTrim)
+    assertSrddDataEqual(res,
+      "z;" +
+      "1;" +
+      "3"
+    )
+  }
+}
+
 class testSmvSafeDiv extends SparkTestUtil {
 
   sparkTest("test SmvSafeDiv function") {

@@ -118,9 +118,9 @@ calculation in a separate "selectPlus". For example, to calculate the difference
  Convert values to String by applying "printf" type of format
  Example:
  ```scala
-     df.select($zipAsNumber.smvPrintToStr("%05d") as "zip")
+     df.select($"zipAsNumber".smvPrintToStr("%05d") as "zip")
  ```
- 
+
 ## Functions on Column
 
 ### smvStrCat

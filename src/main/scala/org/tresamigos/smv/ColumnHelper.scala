@@ -383,11 +383,23 @@ class ColumnHelper(column: Column) {
    * Convert values to String by applying "printf" type of format
    *
    * Example:
-   *     df.select($zipAsNumber.smvPrintToStr("%05d") as "zip")
+   *     df.select($"zipAsNumber".smvPrintToStr("%05d") as "zip")
    **/
   def smvPrintToStr(fmt: String) = {
     val name = s"SmvPrintToStr($column, $fmt)"
     val f = udf({(v: Any) => fmt.format(v)})
+    f(column).as(name)
+  }
+
+  /**
+   * Trim string
+   *
+   * Example:
+   *    df.selectPlus($"sWithBlank".smvStrTrim() as "sTrimmed")
+   **/
+  def smvStrTrim() = {
+    val name = s"SmvStrTrim($column)"
+    val f = udf({v: String => v.trim()})
     f(column).as(name)
   }
 }
