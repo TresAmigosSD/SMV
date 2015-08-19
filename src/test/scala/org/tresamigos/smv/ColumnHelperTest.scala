@@ -19,33 +19,33 @@ class ColumnHelperTest extends SparkTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.createSchemaRdd("k:String; v:String;", "1,a;2,")
     val res = srdd.select($"v".smvNullSub("test"))
-    assertSrddDataEqual(res, 
+    assertSrddDataEqual(res,
       "a;" +
       "test")
     val res2 = srdd.select($"v".smvNullSub($"k"))
-    assertSrddDataEqual(res2, 
+    assertSrddDataEqual(res2,
       "a;" +
       "2")
   }
-  
+
   sparkTest("test smvLength"){
     val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.createSchemaRdd("k:String; v:String;", "1,a;2,")
     val res = srdd.select($"v".smvLength)
-    assertSrddDataEqual(res, 
+    assertSrddDataEqual(res,
       "1;" +
       "null")
   }
-  
+
   sparkTest("test smvStrToTimestamp"){
     val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.createSchemaRdd("k:String; v:String;", "20190101,a;,b")
     val res = srdd.select($"k".smvStrToTimestamp("yyyyMMdd"))
-    assertSrddDataEqual(res, 
+    assertSrddDataEqual(res,
       "2019-01-01 00:00:00.0;" +
       "null")
   }
-  
+
   sparkTest("test smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek"){
     val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.createSchemaRdd("k:Timestamp[yyyyMMdd]; v:String;", "20190101,a;,b")
@@ -53,7 +53,7 @@ class ColumnHelperTest extends SparkTestUtil {
     assertSrddSchemaEqual(res, "SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer")
     assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
   }
-  
+
   sparkTest("test smvAmtBin, smvNumericBin, smvCoarseGrain"){
     val ssc = sqlContext; import ssc.implicits._
     val srdd = sqlContext.createSchemaRdd("k:Timestamp[yyyyMMdd]; v:Double;", "20190101,1213.3;,31312.9")
@@ -61,7 +61,7 @@ class ColumnHelperTest extends SparkTestUtil {
     assertSrddSchemaEqual(res, "SmvAmtBin(v): Double; SmvNumericBin(v,40000.0,0.0,4): Double; SmvCoarseGrain(v,1000.0): Double")
     assertSrddDataEqual(res, "1000.0,10000.0,1000.0;" + "30000.0,40000.0,31000.0")
   }
-  
+
   sparkTest("test SmvSoundex function") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("a:String", "Smith;Liu;Brown;  Funny ;Obama;0Obama")
@@ -85,23 +85,52 @@ class ColumnHelperTest extends SparkTestUtil {
     val res3 = srdd.select($"t".smvPlusWeeks(3))
     val res4 = srdd.select($"t".smvPlusYears(2))
     val res5 = srdd.select($"t".smvPlusYears(4))
-    
+
     assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
-    assertSrddDataEqual(res1, 
+    assertSrddDataEqual(res1,
       "1976-01-21 00:00:00.0;" +
       "2012-02-19 00:00:00.0")
-    assertSrddDataEqual(res2, 
+    assertSrddDataEqual(res2,
       "1976-02-29 00:00:00.0;" +
       "2012-03-29 00:00:00.0")
-    assertSrddDataEqual(res3, 
+    assertSrddDataEqual(res3,
       "1976-02-21 00:00:00.0;" +
       "2012-03-21 00:00:00.0")
-    assertSrddDataEqual(res4, 
+    assertSrddDataEqual(res4,
       "1978-01-31 00:00:00.0;" +
       "2014-02-28 00:00:00.0")
-    assertSrddDataEqual(res5, 
+    assertSrddDataEqual(res5,
       "1980-01-31 00:00:00.0;" +
       "2016-02-29 00:00:00.0")
+  }
+}
+
+class SmvPrintToStrTest extends SparkTestUtil {
+  sparkTest("test smvPrintToStr") {
+    val ssc =sqlContext;
+    import ssc.implicits._
+    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val res = srdd.select($"t".smvPrintToStr("%03d") as "tstr", $"v".smvPrintToStr("%.3e") as "vstr")
+    assertSrddDataEqual(res,
+      "001,2.000e-01;" +
+      "002,1.400e+00;" +
+      "005,2.200e+00;" +
+      "001,3.000e-01"
+    )
+  }
+}
+
+class SmvStrTrim extends SparkTestUtil {
+  sparkTest("test smvStrTrim") {
+    val ssc =sqlContext;
+    import ssc.implicits._
+    val srdd = createSchemaRdd("k:String", "z ; 1; 3 ;")
+    val res = srdd.select($"k".smvStrTrim)
+    assertSrddDataEqual(res,
+      "z;" +
+      "1;" +
+      "3"
+    )
   }
 }
 
@@ -125,5 +154,3 @@ class testSmvSafeDiv extends SparkTestUtil {
         "null,null,null,null")
   }
 }
-
-

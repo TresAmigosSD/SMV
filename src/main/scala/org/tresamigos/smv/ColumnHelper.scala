@@ -356,7 +356,50 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)() )
   }
 
+  /**
+   * Lag function implemented using SmvCDS.
+   * should always be used in smvGroupBy(...).runAgg() context.
+   *
+   * Example:
+   *     val res = srdd.smvGroupBy("k").runAgg("t")(
+   *       $"k",
+   *       $"t",
+   *       $"v",
+   *       $"v".smvLag(1) as "v_lag"
+   *     )
+   *
+   * Since runAgg can't perform expressions on columns with SmvCDS, you need to do additional
+   * calculation in a separate "selectPlus". For example, to calculate the difference between
+   * "v" and "v_lag", you need to and another step
+   *
+   *    val resWithDiff = res.selectPlus($"v" - $v_lag" as "v_increase")
+   *
+   **/
   def smvLag(n: Int) = {
     smvFirst(column).from(InLastNWithNull(n + 1))
+  }
+
+  /**
+   * Convert values to String by applying "printf" type of format
+   *
+   * Example:
+   *     df.select($"zipAsNumber".smvPrintToStr("%05d") as "zip")
+   **/
+  def smvPrintToStr(fmt: String) = {
+    val name = s"SmvPrintToStr($column, $fmt)"
+    val f = udf({(v: Any) => fmt.format(v)})
+    f(column).as(name)
+  }
+
+  /**
+   * Trim string
+   *
+   * Example:
+   *    df.selectPlus($"sWithBlank".smvStrTrim() as "sTrimmed")
+   **/
+  def smvStrTrim() = {
+    val name = s"SmvStrTrim($column)"
+    val f = udf({v: String => v.trim()})
+    f(column).as(name)
   }
 }
