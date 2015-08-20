@@ -30,7 +30,6 @@ abstract class SmvDataSet {
 
   var app: SmvApp = _
   private var rddCache: SchemaRDD = null
-  private[smv] var versionSumCache : Int = -1
 
   def name(): String
   def description(): String
@@ -41,17 +40,20 @@ abstract class SmvDataSet {
   /** modules must override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet]
 
-  /** code "version".  Derived classes should update the value when code or data */
+  /** user tagged code "version".  Derived classes should update the value when code or data */
   def version() : Int = 0
 
+  /** CRC computed from the dataset "code" (not data) */
+  def classCodeCRC() : Int = 0
+
   /**
-    * the version of this dataset plus the versions of all dependent data sets.
-    * Need to cache the computed value to avoid a O(n!) algorithm.
-    */
-  private[smv] def versionSum() : Int = {
-    if (versionSumCache < 0)
-      versionSumCache = requiresDS().map(_.versionSum).sum + version
-    versionSumCache
+   * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
+   * This way, if this module or any of the modules it depends on changes, the HOH should change.
+   * The "version" of the current dataset is also used in the computation to allow user to force
+   * a change in the hash of hash if some external dependency changed as well.
+   */
+  private[smv] lazy val hashOfHash : Int = {
+    (requiresDS().map(_.hashOfHash) ++ Seq(version, classCodeCRC)).hashCode()
   }
 
   /**
@@ -150,13 +152,20 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 
   override val name = this.getClass().getName().filterNot(_=='$')
 
+  /**
+   * module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
+   */
+  val moduleCRC = ClassCRC(this.getClass.getName)
+
+  override def classCodeCRC() : Int = moduleCRC.crc.toInt
+
   /** Returns the path for the module's csv output */
   private def moduleCsvPath(prefix: String = ""): String =
     s"""${app.dataDir}/output/${prefix}${versionedNameInDev}.csv"""
 
   /** The "versioned" file name in dev mode or the regular name when in production. */
   private def versionedNameInDev: String =
-    if (app.isDevMode) name + "_" + versionSum() else name
+    if (app.isDevMode) name + "_" + f"${hashOfHash}%08x" else name
 
   /** Returns the path for the module's edd report output */
   private def moduleEddPath(prefix: String = ""): String =
@@ -181,7 +190,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   private[smv] def deleteOutputs(app: SmvApp) = {
     val csvPath = moduleCsvPath()
     val eddPath = moduleEddPath()
-    val schemaPath = (".csv$"r).replaceAllIn(csvPath, ".schema")
+    val schemaPath = moduleSchemaPath()
     SmvHDFS.deleteFile(csvPath)
     SmvHDFS.deleteFile(schemaPath)
     SmvHDFS.deleteFile(eddPath)

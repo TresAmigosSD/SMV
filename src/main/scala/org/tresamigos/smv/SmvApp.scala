@@ -193,7 +193,7 @@ private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
     "{\n" +
     allModules.map{m =>
       s"""  "${printName(m)}": {""" + "\n" +
-      s"""    "version": ${m.versionSum()},""" + "\n" +
+      s"""    "version": ${m.version},""" + "\n" +
       s"""    "dependents": [""" + m.requiresDS().map{v => s""""${printName(v)}""""}.mkString(",") + "],\n" +
       s"""    "description": "${m.description}"""" + "}"
     }.mkString(",\n") +
