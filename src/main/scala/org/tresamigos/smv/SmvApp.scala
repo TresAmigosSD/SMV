@@ -33,6 +33,11 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val genEdd = smvConfig.cmdLine.genEdd()
   val stages = smvConfig.stages
   val sparkConf = new SparkConf().setAppName(smvConfig.appName)
+
+  /** Register Kryo Classes **/
+  val allSerializables = SmvReflection.objectsInPackage[Serializable]("org.tresamigos.smv")
+  sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
+  
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = new SQLContext(sc)
 

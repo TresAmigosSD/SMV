@@ -59,22 +59,21 @@ class CsvRDDHelper(rdd: RDD[String]) {
     val c = slices.scanLeft(0){_ + _}.dropRight(1).zip(slices)
     val parser: Iterator[String] => Iterator[Seq[String]] = { iterator =>
       val rej = rejects
-      iterator.map{r => 
+      iterator.map{r =>
         try {
           val parsed =  c.map{ case (start, len) =>
-            val a: Array[Char] = new Array(len)
-            r.getChars(start, start + len, a, 0)
-            a.mkString("") }
+            r.substring(start, start + len)
+          }
           Some(parsed)
         } catch {
           case e:Exception => rej.addRejectedLineWithReason(r, e); None
         }
       }.collect{case Some(l) => l}
     }
- 
+
     rdd.mapPartitions{ parser(_) }
   }
- 
+
   /**
    * Add an Index Key to each record.
    *
@@ -117,4 +116,3 @@ object CsvAttributes {
   val defaultCsvWithHeader = new CsvAttributes(hasHeader = true)
   val defaultTsvWithHeader = new CsvAttributes(delimiter = '\t', hasHeader = true)
 }
-

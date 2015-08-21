@@ -20,7 +20,7 @@ object SmvReflection {
   }
 
   /** extract instances (objects) in given package that implement type T. */
-  private[smv] def objectsInPackage[T: ClassTag](pkgName: String): Seq[T] = {
+  def objectsInPackage[T: ClassTag](pkgName: String): Seq[T] = {
     import com.google.common.reflect.ClassPath
     import scala.collection.JavaConversions._
 
