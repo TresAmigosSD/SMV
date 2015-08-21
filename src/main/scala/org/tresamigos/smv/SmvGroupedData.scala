@@ -20,6 +20,7 @@ import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.Partitioner
 
 case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
   def toDF: DataFrame = df
@@ -377,5 +378,33 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   def fillPanelWithNull(timeCol: String, pan: panel.Panel): DataFrame = {
     val gdo = new FillPanelWithNull(timeCol, pan, keys)
     smvMapGroup(gdo).toDF
+  }
+
+  /**
+   * smvRePartition
+   *
+   * Repartition SmvGroupedData using specified partitioner on the keys. Could take
+   * a user defined partitioner or an integer. It the parameter is an integer, a
+   * HashPartitioner with the specified number of partitions will be used.
+   *
+   * Example:
+   *      df.smvGroupBy("k1", "k2").smvRePartition(32).aggWithKeys(sum($"v") as "v")
+   **/
+  def smvRePartition(partitioner: Partitioner): SmvGroupedData = {
+    val fields = df.columns
+
+    val keyColsStr = keys.map{k => df(k).cast("string")}
+    val keyDf = df.selectPlusPrefix(smvStrCat(keyColsStr: _*) as "_smvRePartition_key_")
+
+    val resRdd = keyDf.rdd.keyBy({r => r(0)}).partitionBy(partitioner).values
+    val resDf = df.sqlContext.createDataFrame(resRdd.map{r => Row.fromSeq(r.toSeq)}, keyDf.schema)
+
+    resDf.select(fields.head, fields.tail:_*).smvGroupBy(keys.head, keys.tail: _*)
+  }
+
+  def smvRePartition(numParts: Int): SmvGroupedData = {
+    import org.apache.spark.HashPartitioner
+    val hashPart = new HashPartitioner(numParts)
+    smvRePartition(hashPart)
   }
 }

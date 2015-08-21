@@ -14,8 +14,8 @@
 
 package org.tresamigos.smv
 
-class SmvScaleTest extends SparkTestUtil {
-  sparkTest("Test the SmvScale function") {
+class SmvGroupedDataTest extends SparkTestUtil {
+  sparkTest("Test the Scale function") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd = createSchemaRdd("k:String; v:Integer;",
       """a,0; a,3; a,10; a,20; b,-2; b,30; b,10""")
@@ -47,5 +47,19 @@ class SmvScaleTest extends SparkTestUtil {
       "[b,-2,-30.0,30.0,46.666666666666664]",
       "[b,30,-30.0,30.0,100.0]",
       "[b,10,-30.0,30.0,66.66666666666666]"))
+  }
+
+  sparkTest("Test smvRePartition function") {
+    val ssc = sqlContext; import ssc.implicits._
+
+    val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val res = srdd.smvGroupBy("k").smvRePartition(2).toDF
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3]",
+      "[z,1,0.2]",
+      "[z,2,1.4]",
+      "[z,5,2.2]"
+    ))
+    assert(res.rdd.partitions.size === 2)
   }
 }
