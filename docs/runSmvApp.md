@@ -29,7 +29,7 @@ $ spark-submit [standard spark-submit-options] --class org.tresamigos.smv.SmvApp
 <br>
 <code>$ ... --smv-props "smv.stages=s1"</code>
 <br>
-See <a href="docs/appConfig.md">Application Configuration</a> for details.
+See <a href="appConfig.md">Application Configuration</a> for details.
 </td>
 </tr>
 
