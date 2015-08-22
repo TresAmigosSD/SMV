@@ -46,15 +46,6 @@ See <a href="appConfig.md">Application Configuration</a> for details.
 </tr>
 
 <tr>
-<td>--dev / -d</td>
-<td>off</td>
-<td>toggle development mode on/off.
-<br>
-In development mode, all intermediate modules are persisted and versioned not only the output modules.
-</td>
-</tr>
-
-<tr>
 <td>--edd</td>
 <td>off</td>
 <td>toggle edd creation on/off.
