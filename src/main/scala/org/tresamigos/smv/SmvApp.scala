@@ -29,7 +29,6 @@ import scala.collection.mutable
 class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None) {
 
   val smvConfig = new SmvConfig(cmdLineArgs)
-  val isDevMode = smvConfig.cmdLine.devMode()
   val genEdd = smvConfig.cmdLine.genEdd()
   val stages = smvConfig.stages
   val sparkConf = new SparkConf().setAppName(smvConfig.appName)
@@ -164,8 +163,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       } else {
         val modResult = resolveRDD(module)
 
-        // if in dev mode, then the module would have already been persisted.
-        if (! isDevMode)
+        // if module was ephemeral, then it was not saved during graph execution and we need
+        // to persist it here explicitly.
+        if (module.isEphemeral)
           module.persist(modResult)
       }
     }

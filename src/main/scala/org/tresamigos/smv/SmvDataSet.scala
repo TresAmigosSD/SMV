@@ -153,19 +153,26 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   override val name = this.getClass().getName().filterNot(_=='$')
 
   /**
+   * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
+   * This is quite handy for "filter" or "map" type modules so that we don't force an extra I/O step when it
+   * is not needed.  By default all modules are persisted unless the flag is overriden to true.
+   * Note: the module will still be persisted if it was specifically selected to run by the user.
+   */
+  val isEphemeral = false
+
+  /**
    * module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
    */
   val moduleCRC = ClassCRC(this.getClass.getName)
 
   override def classCodeCRC() : Int = moduleCRC.crc.toInt
 
+  /** The "versioned" module file name. */
+  private def versionedName: String = name + "_" + f"${hashOfHash}%08x"
+
   /** Returns the path for the module's csv output */
   private def moduleCsvPath(prefix: String = ""): String =
-    s"""${app.dataDir}/output/${prefix}${versionedNameInDev}.csv"""
-
-  /** The "versioned" file name in dev mode or the regular name when in production. */
-  private def versionedNameInDev: String =
-    if (app.isDevMode) name + "_" + f"${hashOfHash}%08x" else name
+    s"""${app.dataDir}/output/${prefix}${versionedName}.csv"""
 
   /** Returns the path for the module's edd report output */
   private def moduleEddPath(prefix: String = ""): String =
@@ -201,20 +208,16 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     implicit val ca = CsvAttributes.defaultCsvWithHeader
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
-    if (app.isDevMode){
-      val counter = new ScCounter(app.sc)
-      val before = DateTime.now()
-      println(s"${fmt.print(before)} PERSISTING: ${filePath}")
-//      rdd.pipeCount(counter).saveAsCsvWithSchema(filePath)
-      rdd.saveAsCsvWithSchema(filePath)
-      val after = DateTime.now()
-      val runTime = PeriodFormat.getDefault().print(new Period(before, after))
-      //val n = counter("N")
-      //println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
-      println(s"${fmt.print(after)} RunTime: ${runTime}")
-    } else {
-      rdd.saveAsCsvWithSchema(filePath)
-    }
+    val counter = new ScCounter(app.sc)
+    val before = DateTime.now()
+    println(s"${fmt.print(before)} PERSISTING: ${filePath}")
+    //      rdd.pipeCount(counter).saveAsCsvWithSchema(filePath)
+    rdd.saveAsCsvWithSchema(filePath)
+    val after = DateTime.now()
+    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
+    //val n = counter("N")
+    //println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
+    println(s"${fmt.print(after)} RunTime: ${runTime}")
 
     // if EDD flag was specified, generate EDD for the just saved file!
     // Use the "cached" file that was just saved rather than cause an action
@@ -230,7 +233,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 
   /**
    * Create a snapshot in the current module at some result DataFrame.
-   * This is usefull for debugging a long SmvModule by creating snapshots along the way.
+   * This is useful for debugging a long SmvModule by creating snapshots along the way.
    */
   def snapshot(df: DataFrame, prefix: String) : DataFrame = {
     persist(df, prefix)
@@ -238,14 +241,15 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   }
 
   override def computeRDD: DataFrame = {
-    if (app.isDevMode) {
+    if (isEphemeral) {
+      // if module is ephemeral, just add it to the DAG and return resulting DF.  Do not persist.
+      doRun()
+    } else {
       readPersistedFile().recoverWith { case e =>
         // if unable to read persisted file, recover by running the module and persist.
         persist(doRun())
         readPersistedFile()
       }.get
-    } else {
-      doRun()
     }
   }
 }

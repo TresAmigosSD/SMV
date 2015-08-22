@@ -50,6 +50,7 @@ class SmvAppTest extends SparkTestUtil {
       require(inputs.size === 1)
       createSchemaRdd("a:Integer", "1;2;3")
     }
+    override val isEphemeral = true
   }
 
   object B extends SmvModule("B Module") {
@@ -59,6 +60,7 @@ class SmvAppTest extends SparkTestUtil {
       require(inputs.size === 1)
       inputs(A).selectPlus('a + 1 as 'b)
     }
+    override val isEphemeral = true
   }
 
   object C extends SmvModule("C Module") {
@@ -68,6 +70,7 @@ class SmvAppTest extends SparkTestUtil {
       require(inputs.size === 2)
       inputs(B).selectPlus('b + 1 as 'c)
     }
+    override val isEphemeral = true
   }
 
   sparkTest("Test normal dependency execution") {
