@@ -95,7 +95,7 @@ One one of the options below must be specified.
 
 <tr>
 <td colspan="2">--run-app </td>
-<td>Run all modules in all configured stages in current app.
+<td>Run all output modules in all configured stages in current app.
 </td>
 </tr>
 
