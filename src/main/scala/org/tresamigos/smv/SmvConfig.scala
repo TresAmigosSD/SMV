@@ -37,6 +37,7 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val smvUserConfFile = opt("smv-user-conf", noshort = true,
     default = Some(DEFAULT_SMV_USER_CONF_FILE),
     descr = "user level (dynamic) SMV configuration file path")
+  // TODO: DEPRECATED: flag is now ignored.  Remove once we modify all script to remove "-d"
   val devMode = toggle("dev", default=Some(false),
     descrYes="enable dev mode (persist all intermediate module results",
     descrNo="enable production mode (all modules are evaluated from scratch")
