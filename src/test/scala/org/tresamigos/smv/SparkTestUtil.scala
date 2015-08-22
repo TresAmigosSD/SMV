@@ -133,6 +133,13 @@ trait SparkTestUtil extends FunSuite {
    * dumpSRDD(srdd) now changes to srdd.dumpSRDD, which implemented in
    * SchemaRDDHelper
    */
+
+  /**
+   * Check whether a string matches a Regex
+   **/
+  def assertStrMatches(haystack: String, needle: scala.util.matching.Regex) = {
+    assert(needle.findFirstIn(haystack) != None, s"because $haystack does not match $needle")
+  }
 }
 
 object SparkTestUtil {

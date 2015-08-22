@@ -37,12 +37,12 @@ class RejectTest extends SparkTestUtil {
     srdd.collect
     val res = rejectLogger.rejectedReport.map{ case (s,e) => s"$s -- $e" }
     val exp = List(
-      "123,12.50  ,130109130619,12102012 -- java.text.ParseException: Unparseable date: \"130109130619\"", 
-      "123,12.50  ,109130619,12102012 -- java.text.ParseException: Unparseable date: \"109130619\"", 
+      "123,12.50  ,130109130619,12102012 -- java.text.ParseException: Unparseable date: \"130109130619\"",
+      "123,12.50  ,109130619,12102012 -- java.text.ParseException: Unparseable date: \"109130619\"",
       "123,12.50  ,201309130619,12102012 -- java.text.ParseException: Unparseable date: \"201309130619\"",
-      "123,  ,20130109130619,12102012 -- java.lang.NumberFormatException: empty String", 
-      "123,12.50  ,12102012 -- java.lang.IllegalArgumentException: requirement failed", 
-      "123,001x  ,20130109130619,12102012 -- java.lang.NumberFormatException: For input string: \"001x\"", 
+      "123,  ,20130109130619,12102012 -- java.lang.NumberFormatException: empty String",
+      "123,12.50  ,12102012 -- java.lang.IllegalArgumentException: requirement failed",
+      "123,001x  ,20130109130619,12102012 -- java.lang.NumberFormatException: For input string: \"001x\"",
       "Total rejected records: 6 -- ")
 
     assertUnorderedSeqEqual(res, exp)
@@ -50,26 +50,32 @@ class RejectTest extends SparkTestUtil {
   }
 
   sparkTest("test csvFile loader rejection with exception", disableLogging = true) {
-    intercept[SparkException] {
+    val e = intercept[SparkException] {
       val srdd = sqlContext.csvFileWithSchema(testDataDir + "RejectTest/test2")
       println(srdd.collect.mkString("\n"))
     }
+    val m = e.getMessage
+    assertStrMatches(m, "org.tresamigos.smv.ReadingError.*\nERROR RECORD:.*\nERROR CAUSED BY"r)
   }
 
   sparkTest("test csvParser rejection with exception", disableLogging = true) {
-    intercept[SparkException] {
+    val e = intercept[SparkException] {
       val rdd = sc.textFile(testDataDir + "RejectTest/test3")
       val prdd = rdd.csvToSeqStringRDD()
       println(prdd.collect.mkString("\n"))
     }
+    val m = e.getMessage
+    assertStrMatches(m, "org.tresamigos.smv.ReadingError.*\nERROR RECORD:.*\nERROR CAUSED BY"r)
   }
 
   sparkTest("test csvAddKey rejection with exception", disableLogging = true) {
-    intercept[SparkException] {
+    val e = intercept[SparkException] {
       val rdd = sc.textFile(testDataDir + "RejectTest/test4")
       val prdd = rdd.csvAddKey(2)
       println(prdd.collect.mkString("\n"))
     }
+    val m = e.getMessage
+    assertStrMatches(m, "org.tresamigos.smv.ReadingError.*\nERROR RECORD:.*\nERROR CAUSED BY"r)
   }
 
   sparkTest("test csvParser rejection") {
@@ -84,4 +90,3 @@ class RejectTest extends SparkTestUtil {
     assertUnorderedSeqEqual(res, exp)
   }
 }
-
