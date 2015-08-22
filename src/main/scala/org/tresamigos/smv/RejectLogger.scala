@@ -17,6 +17,9 @@ package org.tresamigos.smv
 import org.apache.spark.SparkContext
 import scala.collection.mutable.MutableList
 
+class ReadingError(msg: String, cause: Throwable)
+  extends Exception(s"\nERROR RECORD: ${msg}\nERROR CAUSED BY ${cause.getClass().getSimpleName()}: ${cause.getMessage()}")
+
 abstract class RejectLogger extends Serializable {
   val addRejectedLineWithReason: (String, Exception) => Unit = (r:String, e:Exception) => Unit
   val addRejectedSeqWithReason: (Seq[Any], Exception) => Unit = (r:Seq[Any], e:Exception) => Unit
@@ -27,15 +30,15 @@ object RejectLogger {
   implicit val rejectLogger = TerminateRejectLogger;
 }
 
-object NoOpRejectLogger extends RejectLogger 
+object NoOpRejectLogger extends RejectLogger
 
 object TerminateRejectLogger extends RejectLogger {
   override val addRejectedLineWithReason: (String, Exception) => Unit = (r:String, e:Exception) => {
-    throw e
+    throw new ReadingError(r, e)
     Unit
   }
   override val addRejectedSeqWithReason: (Seq[Any], Exception) => Unit = (r:Seq[Any], e:Exception) => {
-    throw e
+    throw new ReadingError(r.mkString(","), e)
     Unit
   }
 }
@@ -55,8 +58,8 @@ class SCRejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends
       Unit
     }
   }
- 
-  override val addRejectedSeqWithReason: (Seq[Any], Exception) => Unit = 
+
+  override val addRejectedSeqWithReason: (Seq[Any], Exception) => Unit =
     (r:Seq[Any], e:Exception) => addRejectedLineWithReason(r.mkString(","), e)
 
 
