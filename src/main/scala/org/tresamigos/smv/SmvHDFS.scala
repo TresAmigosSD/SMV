@@ -1,5 +1,7 @@
 package org.tresamigos.smv
 
+import java.io.File
+
 import org.apache.hadoop.fs.FileSystem
 
 import scala.util.Try
@@ -45,5 +47,24 @@ object SmvHDFS {
       val hdfs = getFileSystem(dirName)
       hdfs.listStatus(path).map(_.getPath.getName).toSeq
     }.getOrElse(Seq.empty[String])
+  }
+
+  /**
+   * Returns the basename of a given file path (the last part of the full path)
+   */
+  def baseName(pathName: String) : String = new File(pathName).getName
+
+  /**
+   * Purge the contents of the given directory that are not in the keep list.
+   * This is a shallow purge, subdirs in dirName are not inspected.
+   * @param dirName directory to purge.
+   * @param keepFiles base names of files in above directory to keep
+   */
+  def purgeDirectory(dirName: String, keepFiles: Seq[String]) = {
+    val dirFiles = dirList(dirName)
+
+    (dirFiles.toSet -- keepFiles).foreach { f =>
+      deleteFile(s"${dirName}/${f}")
+    }
   }
 }

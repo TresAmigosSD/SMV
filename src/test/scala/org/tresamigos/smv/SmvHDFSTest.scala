@@ -52,9 +52,29 @@ class SmvHDFSTest extends SparkTestUtil {
     assertUnorderedSeqEqual(files, Seq("F1.csv", "F2.csv", "F3.csv"))
   }
 
-  test("Test HDFS list non-existant directory") {
+  test("Test HDFS list non-existent directory") {
     resetTestDir
     val files = SmvHDFS.dirList("/Some_Directory_That_Does_Not_Exist")
     assert(files === Seq.empty[String])
+  }
+
+  test("Test the basename function in HDFS") {
+    assert(SmvHDFS.baseName("/tmp/a/x.csv") === "x.csv")
+    assert(SmvHDFS.baseName("file://tmp/a/y.csv") === "y.csv")
+    assert(SmvHDFS.baseName("hdfs:localhost:4040/tmp/a/z.csv") === "z.csv")
+  }
+
+  test("Test purging old files from directory") {
+    resetTestDir
+    createDummyFile("F1.csv")
+    createDummyFile("F2.csv")
+    createDummyFile("F3.csv")
+
+    SmvHDFS.purgeDirectory(hdfsTestDir.getAbsolutePath, Seq("F3.csv"))
+
+    // only F3.csv should remain in the dir now.
+    val files = SmvHDFS.dirList(hdfsTestDir.getAbsolutePath)
+    assertUnorderedSeqEqual(files, Seq("F3.csv"))
+
   }
 }
