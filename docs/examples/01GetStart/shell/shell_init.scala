@@ -14,14 +14,14 @@ val sqlContext = app.sqlContext; import sqlContext.implicits._
 object i {
   import java.io.{File, PrintWriter}
 
-  implicit class ShellSrddHelper(srdd: DataFrame) {
+  implicit class ShellSrddHelper(df: DataFrame) {
     def save(path: String) = {
-      var helper = new org.tresamigos.smv.SmvDFHelper(srdd)
+      var helper = new org.tresamigos.smv.SmvDFHelper(df)
       helper.saveAsCsvWithSchema(path)(CsvAttributes.defaultCsvWithHeader)
     }
 
     def savel(path: String) = {
-      var res = srdd.collect.map{r => r.mkString(",")}.mkString("\n")
+      var res = df.collect.map{r => r.mkString(",")}.mkString("\n")
       val pw = new PrintWriter(new File(path))
       pw.println(res)
       pw.close()

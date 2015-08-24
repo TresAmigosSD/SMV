@@ -18,10 +18,10 @@ class RankTest extends SparkTestUtil {
 
   sparkTest("Test the SmvRank function") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = createSchemaRdd("k:Integer; v:String;",
+    val df = createSchemaRdd("k:Integer; v:String;",
       """1,B; 2,C; 3,E; 4,D; 5,A""")
 
-    val res = srdd.orderBy('v.asc).smvRank("rank", 100)
+    val res = df.orderBy('v.asc).smvRank("rank", 100)
     assertSrddDataEqual(res, "5,A,100; 1,B,101; 2,C,102; 4,D,103; 3,E,104")
     assertSrddSchemaEqual(res, "k:Integer; v:String; rank:Long")
   }

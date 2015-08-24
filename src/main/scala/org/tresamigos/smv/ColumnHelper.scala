@@ -361,7 +361,7 @@ class ColumnHelper(column: Column) {
    * should always be used in smvGroupBy(...).runAgg() context.
    *
    * Example:
-   *     val res = srdd.smvGroupBy("k").runAgg("t")(
+   *     val res = df.smvGroupBy("k").runAgg("t")(
    *       $"k",
    *       $"t",
    *       $"v",

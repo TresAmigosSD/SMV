@@ -325,7 +325,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * single output record.
    *
    * Example:
-   *       val res = srdd.smvGroupBy('k).oneAgg($"t")(
+   *       val res = df.smvGroupBy('k).oneAgg($"t")(
    *                            $"k",
    *                            $"t",
    *                            sum('v) from last3 as "nv1",
@@ -359,7 +359,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * For N records as input, runAgg will generate N records as output.
    *
    * Example:
-   *   val res = srdd.smvGroupBy('k).runAgg($"t")(
+   *   val res = df.smvGroupBy('k).runAgg($"t")(
    *                    $"k",
    *                    $"t",
    *                    $"v",

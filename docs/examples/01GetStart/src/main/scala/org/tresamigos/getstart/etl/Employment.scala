@@ -13,10 +13,10 @@ object EmploymentRaw extends SmvModule("ETL Example: Employment") {
   override def requiresDS() = Seq(ExampleApp.employment);
  
   override def run(i: runParams) = {
-    val srdd = i(ExampleApp.employment)
-    import srdd.sqlContext.implicits._
+    val df = i(ExampleApp.employment)
+    import df.sqlContext.implicits._
     
-    srdd.select(
+    df.select(
       "EMP"
       )
   }

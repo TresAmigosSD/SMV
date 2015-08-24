@@ -20,8 +20,8 @@ import org.apache.spark.sql.functions._
 class NonAggFuncsTest extends SparkTestUtil {
   sparkTest("test smvStrCat") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = sqlContext.createSchemaRdd("k:String; v:String;", "1,a;2,")
-    val res = srdd.select(smvStrCat($"v".smvNullSub("test"), $"k"))
+    val df = sqlContext.createSchemaRdd("k:String; v:String;", "1,a;2,")
+    val res = df.select(smvStrCat($"v".smvNullSub("test"), $"k"))
     assertSrddDataEqual(res,
       "a1;" +
       "test2")
@@ -29,8 +29,8 @@ class NonAggFuncsTest extends SparkTestUtil {
 
   sparkTest("test smvAsArray") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = sqlContext.createSchemaRdd("k:String; v:String;", "1,a;2,")
-    val res = srdd.select(smvAsArray($"v".smvNullSub("test"), $"k"))
+    val df = sqlContext.createSchemaRdd("k:String; v:String;", "1,a;2,")
+    val res = df.select(smvAsArray($"v".smvNullSub("test"), $"k"))
     assertSrddDataEqual(res,
       "List(a, 1);" +
       "List(test, 2)")
@@ -38,11 +38,11 @@ class NonAggFuncsTest extends SparkTestUtil {
 
   sparkTest("test smvCreateLookUp") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = createSchemaRdd("first:String;last:String", "John, Brown;TestFirst, ")
+    val df = createSchemaRdd("first:String;last:String", "John, Brown;TestFirst, ")
 
     val nameMap: Map[String, String] = Map("John" -> "J")
     val mapUdf = smvCreateLookUp(nameMap)
-    var res = srdd.select(mapUdf($"first") as "shortFirst")
+    var res = df.select(mapUdf($"first") as "shortFirst")
     assertSrddDataEqual(res, "J;null")
   }
 

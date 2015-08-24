@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.{DataFrame, SchemaRDD}
+import org.apache.spark.sql.DataFrame
 
 import scala.util.Try
 import org.joda.time._
@@ -24,12 +24,12 @@ import org.joda.time.format._
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
  * Instances of this class can either be a file or a module. In either case, there would
- * be a single result SchemaRDD.
+ * be a single result DataFrame.
  */
 abstract class SmvDataSet {
 
   var app: SmvApp = _
-  private var rddCache: SchemaRDD = null
+  private var rddCache: DataFrame = null
 
   def name(): String
   def description(): String
@@ -57,7 +57,7 @@ abstract class SmvDataSet {
   }
 
   /**
-   * returns the SchemaRDD from this dataset (file/module).
+   * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */

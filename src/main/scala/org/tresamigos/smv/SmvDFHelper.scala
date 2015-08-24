@@ -28,7 +28,7 @@ class SmvDFHelper(df: DataFrame) {
   // TODO: add schema file path as well.
   def saveAsCsvWithSchema(dataPath: String, schemaWithMeta: SmvSchema = null)(implicit ca: CsvAttributes) {
 
-    val schema = if (schemaWithMeta == null) {SmvSchema.fromSchemaRDD(df)} else {schemaWithMeta}
+    val schema = if (schemaWithMeta == null) {SmvSchema.fromDataFrame(df)} else {schemaWithMeta}
 
     //Adding the header to the saved file all the time even when ca.hasHeader is
     //False.
@@ -52,11 +52,11 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
-   * Dump the schema and data of given srdd to screen for debugging purposes.
+   * Dump the schema and data of given df to screen for debugging purposes.
    */
   def dumpSRDD = {
     // TODO: use printSchema on df.
-    println(SmvSchema.fromSchemaRDD(df))
+    println(SmvSchema.fromDataFrame(df))
     df.collect.foreach(println)
   }
 
@@ -161,9 +161,9 @@ class SmvDFHelper(df: DataFrame) {
   def dedupByKey(k1: Symbol, kleft: Symbol*): DataFrame =
     dedupByKey(k1.name, kleft.map{l=>l.name}: _*)
 
-  /** adds a rank column to an srdd. */
+  /** adds a rank column to an df. */
   def smvRank(rankColumnName: String, startValue: Long = 0) = {
-    val oldSchema = SmvSchema.fromSchemaRDD(df)
+    val oldSchema = SmvSchema.fromDataFrame(df)
     val newSchema = oldSchema ++ new SmvSchema(Seq(LongSchemaEntry(rankColumnName)))
 
     val res: RDD[Row] = df.rdd.
@@ -182,7 +182,7 @@ class SmvDFHelper(df: DataFrame) {
    * columns will be kept
    *
    * Eg.
-   *   srdd.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+   *   df.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
    *
    * Input
    * | id  | month | product | count |

@@ -18,7 +18,7 @@ import java.io.{PrintWriter, File}
 
 import org.apache.log4j.{LogManager, Logger, Level}
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{SchemaRDD, SQLContext}
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.scalatest.FunSuite
 
 trait SparkTestUtil extends FunSuite {
@@ -122,12 +122,12 @@ trait SparkTestUtil extends FunSuite {
   }
 
   /**
-   * Verify that the data in the srdd matches the expected result strings.
+   * Verify that the data in the df matches the expected result strings.
    * The expectedRes is assumed to be a set of lines separated by ";"
    * The order of the result strings is not important.
    */
-  def assertSrddDataEqual(srdd: SchemaRDD, expectedRes: String) = {
-    val resLines = srdd.collect.map(_.toString.stripPrefix("[").stripSuffix("]"))
+  def assertSrddDataEqual(df: DataFrame, expectedRes: String) = {
+    val resLines = df.collect.map(_.toString.stripPrefix("[").stripSuffix("]"))
     val expectedLines = expectedRes.split(";").map(_.trim)
     assertUnorderedSeqEqual(resLines, expectedLines)
   }
@@ -137,9 +137,9 @@ trait SparkTestUtil extends FunSuite {
    * the schemaStr parameter.  The schemaStr parameter is jsut a ";" list of
    * schema entries.
    */
-  def assertSrddSchemaEqual(srdd: SchemaRDD, schemaStr: String) = {
+  def assertSrddSchemaEqual(df: DataFrame, schemaStr: String) = {
     val expSchema = SmvSchema.fromString(schemaStr)
-    val resSchema = SmvSchema.fromSchemaRDD(srdd)
+    val resSchema = SmvSchema.fromDataFrame(df)
     assert(resSchema.toString === expSchema.toString)
   }
 
@@ -151,8 +151,8 @@ trait SparkTestUtil extends FunSuite {
   }
 
   /**
-   * dumpSRDD(srdd) now changes to srdd.dumpSRDD, which implemented in
-   * SchemaRDDHelper
+   * dumpSRDD(df) now changes to df.dumpSRDD, which implemented in
+   * DataFrameHelper
    */
 
   /**

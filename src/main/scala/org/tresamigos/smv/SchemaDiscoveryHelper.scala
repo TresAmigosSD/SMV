@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{SchemaRDD, SQLContext}
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.tresamigos.smv.StringConversionUtil._
 
 class SchemaDiscoveryHelper(sqlContext: SQLContext) {
@@ -195,13 +195,13 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
   }
 
   /**
-   * Create a SchemaRDD from a file after discovering its schema
+   * Create a DataFrame from a file after discovering its schema
    * @param dataPath the path to the csv file
    * @param numLines the number of rows to process in order to discover the column types
    * @param ca the csv file attributes
    */
   def csvFileWithSchemaDiscovery(dataPath: String, numLines: Int = 1000)
-                                (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD =  {
+                                (implicit ca: CsvAttributes, rejects: RejectLogger): DataFrame =  {
     val strRDD = sqlContext.sparkContext.textFile(dataPath)
     val schema = discoverSchema(strRDD, numLines, ca)
     val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD

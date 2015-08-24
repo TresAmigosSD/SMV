@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import java.io.{File, PrintWriter}
 import java.security.InvalidKeyException
 
-import org.apache.spark.sql.{SchemaRDD, SQLContext}
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
@@ -92,7 +92,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * other modules that depend on the required module.
    * This method also checks for cycles in the module dependency graph.
    */
-  def resolveRDD(ds: SmvDataSet): SchemaRDD = {
+  def resolveRDD(ds: SmvDataSet): DataFrame = {
     val dsName = ds.name
     if (resolveStack.contains(dsName))
       throw new IllegalStateException(s"cycle found while resolving ${dsName}: " +
