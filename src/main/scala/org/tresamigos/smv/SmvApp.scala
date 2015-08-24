@@ -40,7 +40,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * val allSerializables = SmvReflection.objectsInPackage[Serializable]("org.tresamigos.smv")
    * sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
    **/
-   
+
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = new SQLContext(sc)
 
@@ -56,16 +56,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * concrete applications can provide a more interesting RejectLogger.
    *  Example: override val rejectLogger = new SCRejectLogger(sc, 3)
    */
-  lazy val rejectLogger : RejectLogger = new SCRejectLogger(sc, 10)
+  val rejectLogger : RejectLogger = new SCRejectLogger(sc, 10)
 
-  def saveRejects(path: String) = {
-    // TODO: isInstanceOf is evil.  Use a property of the logger instance instead!!!
-    if(rejectLogger.isInstanceOf[SCRejectLogger]){
-      val r = rejectLogger.rejectedReport
-      if(!r.isEmpty){
-        sc.makeRDD(r, 1).saveAsTextFile(path)
-        println(s"RejectLogger is not empty, please check ${path}")
-      }
+  def checkAndSaveRejects(path: String) = {
+    val r = rejectLogger.rejectedReport
+    if(!r.isEmpty){
+      sc.makeRDD(r, 1).saveAsTextFile(path)
+      println(s"WARNING: RejectLogger is not empty, please check ${path}")
     }
   }
 

@@ -178,6 +178,10 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   private def moduleEddPath(prefix: String = ""): String =
     (".csv$"r).replaceAllIn(moduleCsvPath(prefix), ".edd")
 
+  /** Returns the path for the module's reject report output */
+  private def moduleRejectPath(prefix: String = ""): String =
+    (".csv$"r).replaceAllIn(moduleCsvPath(prefix), ".reject")
+
   /** Returns the path for the module's schema file */
   private def moduleSchemaPath(prefix: String = ""): String =
     (".csv$"r).replaceAllIn(moduleCsvPath(prefix), ".schema")
@@ -198,9 +202,11 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     val csvPath = moduleCsvPath()
     val eddPath = moduleEddPath()
     val schemaPath = moduleSchemaPath()
+    val rejectPath = moduleRejectPath()
     SmvHDFS.deleteFile(csvPath)
     SmvHDFS.deleteFile(schemaPath)
     SmvHDFS.deleteFile(eddPath)
+    SmvHDFS.deleteFile(rejectPath)
   }
 
   private[smv] def persist(rdd: DataFrame, prefix: String = "") = {
@@ -218,6 +224,9 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     //val n = counter("N")
     //println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
     println(s"${fmt.print(after)} RunTime: ${runTime}")
+
+    /** Check and Save RejectLogger **/
+    app.checkAndSaveRejects(moduleRejectPath(prefix))
 
     // if EDD flag was specified, generate EDD for the just saved file!
     // Use the "cached" file that was just saved rather than cause an action
