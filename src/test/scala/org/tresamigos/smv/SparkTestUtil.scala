@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import java.io.{PrintWriter, File}
+
 import org.apache.log4j.{LogManager, Logger, Level}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{SchemaRDD, SQLContext}
@@ -23,6 +25,7 @@ trait SparkTestUtil extends FunSuite {
   var sc: SparkContext = _
   var sqlContext: SQLContext = _
 
+  /** top of data dir to be used by tests.  For per testcase temp directory, use testcaseTempDir instead */
   final val testDataDir = "target/test-classes/data/"
 
   /**
@@ -66,6 +69,24 @@ trait SparkTestUtil extends FunSuite {
           SparkTestUtil.setLoggingLevel(Level.ERROR)
       }
     }
+  }
+
+  /** name of a scratch test directory specific to this test case. */
+  def testcaseTempDir = testDataDir + this.getClass.getName
+
+  /** wipe out the temp test directory and recreate an empty instance. */
+  def resetTestcaseTempDir() = {
+    SmvHDFS.deleteFile(testcaseTempDir)
+    new File(testcaseTempDir).mkdir()
+  }
+
+  /** create a temp file in the test case temp dir with the given contents. */
+  def createTempFile(baseName: String, fileContents: String = "xxx"): File = {
+    val outFile = new File(testcaseTempDir, baseName)
+    val pw = new PrintWriter(outFile)
+    pw.write(fileContents)
+    pw.close
+    outFile
   }
 
   /**

@@ -51,14 +51,16 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrYes="generate a json object to represent entire app's module dependency (modules are not run)",
     descrNo="do not generate a json")
 
+  val purgeOldOutput = toggle("purge-old-output", noshort = true, default = Some(false),
+    descrYes = "remove all old output files in output dir ")
   val modsToRun = opt[List[String]]("run-module", 'm', descr = "run specified list of module FQNs")
   val stagesToRun = opt[List[String]]("run-stage", 's', descr = "run all output modules in specified stages")
   val runAllApp = toggle("run-app", noshort = true, default = Some(false),
                   descrYes = "run all output modules in all stages in app.")
 
   // make sure something was specified to run!!!
-  validateOpt (modsToRun, stagesToRun, runAllApp) {
-    case (None, None, Some(false)) => Left("Must supply an app, stage, or module to run!")
+  validateOpt (purgeOldOutput, modsToRun, stagesToRun, runAllApp) {
+    case (Some(false), None, None, Some(false)) => Left("Must supply an app, stage, or module to run or cleanup!")
     case _ => Right(Unit)
   }
 

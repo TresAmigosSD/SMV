@@ -133,6 +133,35 @@ class SmvAppTest extends SparkTestUtil {
     assert(edges(B) === Seq(A))
     assert(edges(C) === Seq(A,B))
   }
+
+  sparkTest("Test purgeOldOutputFiles") {
+    resetTestcaseTempDir()
+
+    /** create a test module with a fixed csv file name */
+    object m extends SmvModule("my module") {
+      override def requiresDS() = Seq()
+      override def run(i: runParams) = null
+      override def moduleCsvPath(prefix: String) = "com.foo.mymodule_555.csv"
+    }
+    /** create a dummy app that only has the module above as its only module. */
+    object app extends SmvApp(Seq("--purge-old-output"), Option(sc)) {
+      // TODO: remove this once we implement --output-dir command line option / conf.
+      override def outputDirectory() = testcaseTempDir
+      override def allAppModules = Seq(m)
+    }
+    m.injectApp(app)
+
+    // create multiple versions of the module file in the output dir (one with a later time stamp too!)
+    createTempFile("com.foo.mymodule_444.csv")
+    createTempFile("com.foo.mymodule_555.csv")
+    createTempFile("com.foo.mymodule_666.csv")
+
+    app.purgeOldOutputFiles()
+
+    // Only the current file should remain after purge.
+    val files = SmvHDFS.dirList(testcaseTempDir)
+    assertUnorderedSeqEqual(files, Seq("com.foo.mymodule_555.csv"))
+  }
 }
 
 } // package: org.tresamigos.smv

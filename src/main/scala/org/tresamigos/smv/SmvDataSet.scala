@@ -171,8 +171,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   private def versionedName: String = name + "_" + f"${hashOfHash}%08x"
 
   /** Returns the path for the module's csv output */
-  private def moduleCsvPath(prefix: String = ""): String =
-    s"""${app.dataDir}/output/${prefix}${versionedName}.csv"""
+  private[smv] def moduleCsvPath(prefix: String = ""): String =
+    s"""${app.outputDirectory()}/${prefix}${versionedName}.csv"""
 
   /** Returns the path for the module's edd report output */
   private def moduleEddPath(prefix: String = ""): String =
@@ -194,13 +194,20 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    * delete the output(s) associated with this module (csv file and schema).
    * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
    */
-  private[smv] def deleteOutputs(app: SmvApp) = {
+  private[smv] def deleteOutputs() = {
     val csvPath = moduleCsvPath()
     val eddPath = moduleEddPath()
     val schemaPath = moduleSchemaPath()
     SmvHDFS.deleteFile(csvPath)
     SmvHDFS.deleteFile(schemaPath)
     SmvHDFS.deleteFile(eddPath)
+  }
+
+  /**
+   * Returns current valid outputs produced by this module.
+   */
+  private[smv] def currentModuleOutputFiles() : Seq[String] = {
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath())
   }
 
   private[smv] def persist(rdd: DataFrame, prefix: String = "") = {
