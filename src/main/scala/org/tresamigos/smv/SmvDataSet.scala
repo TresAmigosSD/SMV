@@ -167,24 +167,27 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 
   override def classCodeCRC() : Int = moduleCRC.crc.toInt
 
-  /** The "versioned" module file name. */
-  private def versionedName: String = name + "_" + f"${hashOfHash}%08x"
+  /** The "versioned" module file base name. */
+  private def versionedBasePath(prefix: String): String = {
+    val verHex = f"${hashOfHash}%08x"
+    s"""${app.outputDirectory()}/${prefix}${name}_${verHex}"""
+  }
 
   /** Returns the path for the module's csv output */
   private[smv] def moduleCsvPath(prefix: String = ""): String =
-    s"""${app.outputDirectory()}/${prefix}${versionedName}.csv"""
-
-  /** Returns the path for the module's edd report output */
-  private def moduleEddPath(prefix: String = ""): String =
-    (".csv$"r).replaceAllIn(moduleCsvPath(prefix), ".edd")
-
-  /** Returns the path for the module's reject report output */
-  private def moduleRejectPath(prefix: String = ""): String =
-    (".csv$"r).replaceAllIn(moduleCsvPath(prefix), ".reject")
+    versionedBasePath(prefix) + ".csv"
 
   /** Returns the path for the module's schema file */
-  private def moduleSchemaPath(prefix: String = ""): String =
-    (".csv$"r).replaceAllIn(moduleCsvPath(prefix), ".schema")
+  private[smv] def moduleSchemaPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".schema"
+
+  /** Returns the path for the module's edd report output */
+  private[smv] def moduleEddPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".edd"
+
+  /** Returns the path for the module's reject report output */
+  private[smv] def moduleRejectPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".reject"
 
   type runParams = Map[SmvDataSet, DataFrame]
   def run(inputs: runParams) : DataFrame
