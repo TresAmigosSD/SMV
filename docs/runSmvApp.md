@@ -46,15 +46,6 @@ See <a href="appConfig.md">Application Configuration</a> for details.
 </tr>
 
 <tr>
-<td>--dev / -d</td>
-<td>off</td>
-<td>toggle development mode on/off.
-<br>
-In development mode, all intermediate modules are persisted and versioned not only the output modules.
-</td>
-</tr>
-
-<tr>
 <td>--edd</td>
 <td>off</td>
 <td>toggle edd creation on/off.
@@ -93,21 +84,18 @@ One one of the options below must be specified.
 <tr>
 <td colspan="2">--run-module mod1 [mod2 ...] / &#8209;m</td>
 <td>Run the provided list of modules directly (even if they are not marked as SmvOutput module)
-<br>Note: Not implemented yet.
 </td>
 </tr>
 
 <tr>
 <td colspan="2">--run-stage stage1 [stage2 ...] / &#8209;s</td>
 <td>Run all output modules in given stages.
-<br>Note: Not implemented yet.
 </td>
 </tr>
 
 <tr>
-<td colspan="2">--run-app / -a</td>
-<td>Run all modules in all configured stages in current app.
-<br>Note: Not implemented yet.
+<td colspan="2">--run-app </td>
+<td>Run all output modules in all configured stages in current app.
 </td>
 </tr>
 
