@@ -23,10 +23,10 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test runAgg") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
     val last3 = IntInLastN("t", 3)
-    val res = srdd.smvGroupBy('k).runAgg("t")(
+    val res = df.smvGroupBy('k).runAgg("t")(
       $"k",
       $"t",
       sum('v) from last3 as "nv1",
@@ -43,10 +43,10 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test agg with no-from-aggregation") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
     val last3 = IntInLastN("t", 3)
-    val res = srdd.smvGroupBy('k).oneAgg("t")(
+    val res = df.smvGroupBy('k).oneAgg("t")(
       $"k",
       $"t",
       sum('v) from last3 as "nv1",
@@ -62,10 +62,10 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test SmvTopNRecsCDS") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
     val last2 = TopNRecs(2, $"v".desc)
-    val res = srdd.smvGroupBy('k).oneAgg("t")(
+    val res = df.smvGroupBy('k).oneAgg("t")(
       $"k",
       $"t",
       sum('v) from last2 as "nv1",
@@ -76,7 +76,7 @@ class SmvCDSTest extends SparkTestUtil {
       "[a,1,0.3,1]",
       "[z,5,3.6,2]"))
 
-    val res2 = srdd.smvGroupBy("k").smvTopNRecs(2, $"v".desc)
+    val res2 = df.smvGroupBy("k").smvTopNRecs(2, $"v".desc)
     assertSrddSchemaEqual(res2, "k: String; t: Integer; v: Double")
     assertUnorderedSeqEqual(res2.collect.map(_.toString), Seq(
       "[a,1,0.3]",
@@ -87,9 +87,9 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test Lag inplemented with InLastN") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
 
-    val res = srdd.smvGroupBy("k").runAgg("t")(
+    val res = df.smvGroupBy("k").runAgg("t")(
       $"k",
       $"t",
       $"v",
@@ -118,11 +118,11 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test CDS Chaining") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
 
     val last3 = TopNRecs(3, $"t".desc)
     val top2 = TopNRecs(2, $"v".desc)
-    val res = srdd.smvGroupBy('k).oneAgg("t")(
+    val res = df.smvGroupBy('k).oneAgg("t")(
       $"k",
       $"t",
       sum('v) from top2 from last3 as "nv1",
@@ -138,11 +138,11 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test CDS Chaining with smvMapGroup") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
 
     val last3 = TopNRecs(3, $"t".desc)
     val top2 = TopNRecs(2, $"v".desc)
-    val res = srdd.smvGroupBy("k").smvMapGroup(top2 from last3).toDF
+    val res = df.smvGroupBy("k").smvMapGroup(top2 from last3).toDF
 
     assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
@@ -154,9 +154,9 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test TimeInLastNDays") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
 
-    val res = srdd.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNDays("t", 40) as "nt")
+    val res = df.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNDays("t", 40) as "nt")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1976-01-31 00:00:00.0,1]",
       "[2012-01-25 00:00:00.0,1]",
@@ -166,9 +166,9 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test TimeInLastNMonths") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
 
-    val res = srdd.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNMonths("t", 1) as "nt")
+    val res = df.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNMonths("t", 1) as "nt")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1976-01-31 00:00:00.0,1]",
       "[2012-01-25 00:00:00.0,1]",
@@ -178,9 +178,9 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test TimeInLastNWeeks") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
 
-    val res = srdd.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNWeeks("t", 6) as "nt")
+    val res = df.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNWeeks("t", 6) as "nt")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1976-01-31 00:00:00.0,1]",
       "[2012-01-25 00:00:00.0,1]",
@@ -190,9 +190,9 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test TimeInLastNYears") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
+    val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
 
-    val res = srdd.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNYears("t", 40) as "nt")
+    val res = df.smvGroupBy().runAgg("t")($"t", count("t") from TimeInLastNYears("t", 40) as "nt")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1976-01-31 00:00:00.0,1]",
       "[2012-01-25 00:00:00.0,2]",
@@ -202,11 +202,11 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test Before") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
 
-    val res1 = srdd.smvGroupBy("k").runAgg("t")($"k", $"t", sum($"v") as "vsum_tillnow")
-    val res2 = srdd.smvGroupBy("k").runAgg("t")($"k", $"t", sum($"v") from Before("t") as "vsum_beforenow")
-    val res3 = srdd.smvGroupBy("k").runAgg("t")($"k", $"t",
+    val res1 = df.smvGroupBy("k").runAgg("t")($"k", $"t", sum($"v") as "vsum_tillnow")
+    val res2 = df.smvGroupBy("k").runAgg("t")($"k", $"t", sum($"v") from Before("t") as "vsum_beforenow")
+    val res3 = df.smvGroupBy("k").runAgg("t")($"k", $"t",
       sum($"v") from Before("t") as "vsum_beforenow",
       sum($"v") as "vsum_tillnow")
 
@@ -239,9 +239,9 @@ class SmvCDSTest extends SparkTestUtil {
   sparkTest("Test keep none-travial expression") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,;")
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,;")
 
-    val res = srdd.smvGroupBy("k").runAgg("t")($"k", $"t", sum($"v") as "vsum_tillnow",
+    val res = df.smvGroupBy("k").runAgg("t")($"k", $"t", sum($"v") as "vsum_tillnow",
       $"v".smvNullSub(0) as "newv")
 
     assertSrddSchemaEqual(res, "k: String; t: Integer; vsum_tillnow: Double; newv: Double")

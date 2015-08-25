@@ -17,10 +17,10 @@ package org.tresamigos.smv
 class SmvGroupedDataTest extends SparkTestUtil {
   sparkTest("Test the Scale function") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; v:Integer;",
+    val df = createSchemaRdd("k:String; v:Integer;",
       """a,0; a,3; a,10; a,20; b,-2; b,30; b,10""")
 
-    val res = srdd.smvGroupBy("k").smvScale($"v" -> (0.0, 100.0))()
+    val res = df.smvGroupBy("k").smvScale($"v" -> (0.0, 100.0))()
     assertSrddSchemaEqual(res, "k:String; v:Integer; v_scaled:Double")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,0,0.0]",
@@ -34,10 +34,10 @@ class SmvGroupedDataTest extends SparkTestUtil {
 
   sparkTest("Test the SmvScale with withZeroPivot set") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; v:Integer;",
+    val df = createSchemaRdd("k:String; v:Integer;",
       """a,0; a,3; a,10; a,20; b,-2; b,30; b,10""")
 
-    val res = srdd.smvGroupBy("k").smvScale($"v" -> (0.0, 100.0))(withZeroPivot = true, doDropRange = false)
+    val res = df.smvGroupBy("k").smvScale($"v" -> (0.0, 100.0))(withZeroPivot = true, doDropRange = false)
     assertSrddSchemaEqual(res, "k: String; v: Integer; v_min: Double; v_max: Double; v_scaled: Double")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,0,-20.0,20.0,50.0]",
@@ -52,8 +52,8 @@ class SmvGroupedDataTest extends SparkTestUtil {
   sparkTest("Test smvRePartition function") {
     val ssc = sqlContext; import ssc.implicits._
 
-    val srdd = sqlContext.createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
-    val res = srdd.smvGroupBy("k").smvRePartition(2).toDF
+    val df = sqlContext.createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val res = df.smvGroupBy("k").smvRePartition(2).toDF
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,1,0.3]",
       "[z,1,0.2]",

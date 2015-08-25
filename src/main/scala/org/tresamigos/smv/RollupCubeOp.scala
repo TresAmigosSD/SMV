@@ -39,7 +39,7 @@ class RollupCubeOp(df: DataFrame,
     Seq.tabulate(cols.length)(i => (1 << i) - 1)
   }
 
-  /** return list of non-rollup/cube columns in the given srdd. */
+  /** return list of non-rollup/cube columns in the given df. */
   def getNonRollupCols() = {
     df.schema.fieldNames.filterNot(n => cols.contains(n))
   }

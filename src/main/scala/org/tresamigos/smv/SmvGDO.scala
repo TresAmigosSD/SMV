@@ -36,7 +36,7 @@ abstract class SmvGDO extends Serializable{
 }
 
 /**
- * Compute the quantile bin number within a group in a given SchemaRDD.
+ * Compute the quantile bin number within a group in a given DataFrame.
  * The algorithm assumes there are three columns in the input.
  * The value column is the column that the quantile bins will be computed.
  * The value column must be numeric (int, long, float, double).

@@ -19,8 +19,8 @@ import org.apache.spark.sql.types._
 class SelectPlusMinusTest extends SparkTestUtil {
   sparkTest("test SelectPlus") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
-    val res = srdd.selectPlus('b + 2.0 as 'bplus2)
+    val df = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
+    val res = df.selectPlus('b + 2.0 as 'bplus2)
     assertSrddDataEqual(res,
       "1.0,10.0,12.0;" +
       "2.0,20.0,22.0;" +
@@ -29,8 +29,8 @@ class SelectPlusMinusTest extends SparkTestUtil {
 
   sparkTest("test SelectPlusPrefix") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
-    val res = srdd.selectPlusPrefix('b + 2.0 as 'bplus2)
+    val df = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
+    val res = df.selectPlusPrefix('b + 2.0 as 'bplus2)
     assertSrddDataEqual(res,
       "12.0,1.0,10.0;" +
       "22.0,2.0,20.0;" +
@@ -39,8 +39,8 @@ class SelectPlusMinusTest extends SparkTestUtil {
 
   sparkTest("test SelectMinus") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
-    val res = srdd.selectMinus('b)
+    val df = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
+    val res = df.selectMinus('b)
     assertSrddDataEqual(res,
       "1.0;" +
       "2.0;" +
@@ -50,22 +50,23 @@ class SelectPlusMinusTest extends SparkTestUtil {
 
 class renameFieldTest extends SparkTestUtil {
   sparkTest("test rename fields") {
-    val srdd = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
-    val result = srdd.renameField('a -> 'aa, 'c -> 'cc)
+    val result = df.renameField('a -> 'aa, 'c -> 'cc)
 
     val fieldNames = result.schema.fieldNames
     assert(fieldNames === Seq("aa", "b", "cc"))
     assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
   }
 
+  // TODO: what are these tests commented out?  Are they still valid?
   /*
   sparkTest("test prefixing field names") {
-    val srdd = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
-    val result = srdd.prefixFieldNames("xx_")
+    val result = df.prefixFieldNames("xx_")
 
     val fieldNames = result.schema.fieldNames
     assert(fieldNames === Seq("xx_a", "xx_b", "xx_c"))
@@ -73,10 +74,10 @@ class renameFieldTest extends SparkTestUtil {
   }
 
   sparkTest("test postfixing field names") {
-    val srdd = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
-    val result = srdd.postfixFieldNames("_xx")
+    val result = df.postfixFieldNames("_xx")
 
     val fieldNames = result.schema.fieldNames
     assert(fieldNames === Seq("a_xx", "b_xx", "c_xx"))
@@ -137,14 +138,14 @@ class JoinHelperTest extends SparkTestUtil {
 
 class dedupByKeyTest extends SparkTestUtil {
   sparkTest("test dedupByKey") {
-    val srdd = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = createSchemaRdd("a:Integer; b:Double; c:String",
       """1,2.0,hello;
          1,3.0,hello;
          2,10.0,hello2;
          2,11.0,hello3"""
     )
 
-    val result1 = srdd.dedupByKey('a)
+    val result1 = df.dedupByKey('a)
     assertUnorderedSeqEqual(result1.collect.map(_.toString), Seq(
       "[1,2.0,hello]",
       "[2,10.0,hello2]" ))
@@ -152,7 +153,7 @@ class dedupByKeyTest extends SparkTestUtil {
     val fieldNames1 = result1.schema.fieldNames
     assert(fieldNames1 === Seq("a", "b", "c"))
 
-    val result2 = srdd.dedupByKey('a, 'c)
+    val result2 = df.dedupByKey('a, 'c)
     assertUnorderedSeqEqual(result2.collect.map(_.toString), Seq(
     "[1,2.0,hello]",
     "[2,10.0,hello2]",

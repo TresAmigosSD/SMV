@@ -19,8 +19,8 @@ import org.apache.spark.SparkException
 class RejectTest extends SparkTestUtil {
   sparkTest("test csvFile loader rejection with NoOp") {
     implicit val rejectLogger:RejectLogger  = NoOpRejectLogger
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "RejectTest/test2")
-    val res = srdd.collect.map(_.mkString(","))
+    val df = sqlContext.csvFileWithSchema(testDataDir +  "RejectTest/test2")
+    val res = df.collect.map(_.mkString(","))
     val exp = List(
       "123,12.5,2013-01-09 13:06:19.0,12102012",
       "123,null,2013-01-09 13:06:19.0,12102012",
@@ -34,8 +34,8 @@ class RejectTest extends SparkTestUtil {
 
   sparkTest("test csvFile loader rejection") {
     implicit val rejectLogger:RejectLogger  = new SCRejectLogger(sc, 10)
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "RejectTest/test2")
-    srdd.collect
+    val df = sqlContext.csvFileWithSchema(testDataDir +  "RejectTest/test2")
+    df.collect
     val res = rejectLogger.rejectedReport.map{ case (s,e) => s"$s -- $e" }
     val exp = List(
       "123,12.50  ,130109130619,12102012 -- java.text.ParseException: Unparseable date: \"130109130619\"",
@@ -51,8 +51,8 @@ class RejectTest extends SparkTestUtil {
 
   sparkTest("test csvFile loader rejection with exception", disableLogging = true) {
     val e = intercept[SparkException] {
-      val srdd = sqlContext.csvFileWithSchema(testDataDir + "RejectTest/test2")
-      println(srdd.collect.mkString("\n"))
+      val df = sqlContext.csvFileWithSchema(testDataDir + "RejectTest/test2")
+      println(df.collect.mkString("\n"))
     }
     val m = e.getMessage
     assertStrMatches(m, "org.tresamigos.smv.ReadingError.*\nERROR RECORD:.*\nERROR CAUSED BY"r)

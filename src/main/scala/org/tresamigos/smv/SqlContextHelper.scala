@@ -15,50 +15,50 @@
 package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, SchemaRDD, SQLContext}
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.catalyst.expressions.{GenericRow, Row}
 
 class SqlContextHelper(sqlContext: SQLContext) {
 
-  /** Create a SchemaRDD from RDD[Row] by applying a schema */
+  /** Create a DataFrame from RDD[Row] by applying a schema */
   def applySchemaToRowRDD(rdd: RDD[Row], schema: SmvSchema): DataFrame = {
     sqlContext.createDataFrame(rdd, schema.toStructType)
   }
 
   /**
-   * Create a SchemaRDD from RDD[Seq[Any]] by applying a schema.
+   * Create a DataFrame from RDD[Seq[Any]] by applying a schema.
    * It's the caller's responsibility to make sure the schema matches the data.
    */
-  def applySchemaToSeqAnyRDD(rdd: RDD[Seq[Any]], schema: SmvSchema): SchemaRDD = {
+  def applySchemaToSeqAnyRDD(rdd: RDD[Seq[Any]], schema: SmvSchema): DataFrame = {
     applySchemaToRowRDD(rdd.map(r => new GenericRow(r.toArray)), schema)
   }
 
   /**
-   * Create a SchemaRDD from a file by applying a Schema object.
+   * Create a DataFrame from a file by applying a Schema object.
    */
   private[smv] def csvFileAddSchema(dataPath: String, schema: SmvSchema)
-                      (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD = {
+                      (implicit ca: CsvAttributes, rejects: RejectLogger): DataFrame = {
     val strRDD = sqlContext.sparkContext.textFile(dataPath)
     val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD
     val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
     applySchemaToRowRDD(rowRDD, schema)
   }
 
-  /** Create an SchemaRDD from a data file and an schema file
+  /** Create an DataFrame from a data file and an schema file
    *
    *  @param dataPath CSV file location
    *  @param schemaPath the Schema file
    *  @param rejects the global reject logger, could be override by implicit val
    */
   def csvFileWithSchema(dataPath: String, schemaPath: Option[String] = None)
-                       (implicit ca: CsvAttributes, rejects: RejectLogger): SchemaRDD = {
+                       (implicit ca: CsvAttributes, rejects: RejectLogger): DataFrame = {
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
     val sc = sqlContext.sparkContext
     val schema = SmvSchema.fromFile(sc, sp)
     csvFileAddSchema(dataPath, schema)
   }
 
-  /** Create an SchemaRDD from a data file as in Fixed Recode Length format and 
+  /** Create an DataFrame from a data file as in Fixed Recode Length format and 
    * an schema file with each schema entry with a field length comment 
    * 
    * @param dataPath FRL file location
@@ -66,7 +66,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
    * @param rejects the global reject logger, could be override by implicit val
    */
   def frlFileWithSchema(dataPath: String, schemaPath: Option[String] = None)
-                       (implicit rejects: RejectLogger): SchemaRDD = {
+                       (implicit rejects: RejectLogger): DataFrame = {
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
     val sc = sqlContext.sparkContext
     val slices = SmvSchema.slicesFromFile(sc, sp)
@@ -79,7 +79,7 @@ class SqlContextHelper(sqlContext: SQLContext) {
   }
     
   /**
-   * Create a schemaRDD from a schema string and a data string.
+   * Create a df from a schema string and a data string.
    * The data string is assumed to be csv with no header and lines separated by ";"
    */
   def createSchemaRdd(schemaStr: String, data: String) = {

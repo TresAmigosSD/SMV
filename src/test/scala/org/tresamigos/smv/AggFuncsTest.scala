@@ -18,30 +18,30 @@ import org.apache.spark.sql.functions._
 class AggFuncsTest extends SparkTestUtil {
   sparkTest("test OnlineAverage") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test1.csv")
-    val avg = srdd.agg(onlineAverage('a), onlineAverage('b))
+    val df = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test1.csv")
+    val avg = df.agg(onlineAverage('a), onlineAverage('b))
     assertDoubleSeqEqual(avg.collect()(0).toSeq, List(2.0, 20.0))
   }
   sparkTest("test OnlineStdDev") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test1.csv")
-    val stddev = srdd.agg(onlineStdDev('a), onlineStdDev('b))
+    val df = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test1.csv")
+    val stddev = df.agg(onlineStdDev('a), onlineStdDev('b))
     assertDoubleSeqEqual(stddev.collect()(0).toSeq, List(1.0, 10.0))
   }
   /*d
   */
   sparkTest("test Histogram") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test2.csv")
-    val hist = srdd.agg(histogram('id)).collect()(0)(0).asInstanceOf[Map[String,Long]] //Array[Row(Map[String,Long])]=> Any=Map[..]
+    val df = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test2.csv")
+    val hist = df.agg(histogram('id)).collect()(0)(0).asInstanceOf[Map[String,Long]] //Array[Row(Map[String,Long])]=> Any=Map[..]
     assert(hist === Map("231"->1l,"123"->2l))
   }
 
   sparkTest("test SmvFirst") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,;z,2,1.4;z,5,2.2;a,1,0.3;")
 
-    val res = srdd.groupBy("k").agg(
+    val res = df.groupBy("k").agg(
       $"k",
       first($"t"),
       first($"v") as "first_v",

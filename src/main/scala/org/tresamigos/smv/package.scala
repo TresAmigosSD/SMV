@@ -15,7 +15,7 @@
 package org.tresamigos
 
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{SchemaRDD, SQLContext}
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.{Column, ColumnName}
 import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.catalyst.expressions._
@@ -30,7 +30,7 @@ package object smv {
   implicit def makeSymColHelper(sym: Symbol) = new ColumnHelper(new ColumnName(sym.name))
   implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
   implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
-  implicit def makeDFHelper(srdd: SchemaRDD) = new SmvDFHelper(srdd)
+  implicit def makeDFHelper(df: DataFrame) = new SmvDFHelper(df)
   implicit def makeSmvGDFunc(sgd: SmvGroupedData) = new SmvGroupedDataFunc(sgd)
   implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.toGroupedData
   implicit def makeSmvCDSAggColumn(col: Column) = SmvCDSAggColumn(col.toExpr)

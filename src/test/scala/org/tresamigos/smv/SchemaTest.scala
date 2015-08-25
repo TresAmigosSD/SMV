@@ -115,20 +115,20 @@ class SmvSchemaTest extends SparkTestUtil {
   }
 
   sparkTest("Test Timestamp in file") {
-    val srdd = sqlContext.csvFileWithSchema(testDataDir +  "SchemaTest/test2")
-    assert(srdd.count === 3)
+    val df = sqlContext.csvFileWithSchema(testDataDir +  "SchemaTest/test2")
+    assert(df.count === 3)
   }
 
   sparkTest("Test Timestamp default format") {
-    val srdd = createSchemaRdd("a:Timestamp", "2011-09-03 10:13:58.0") 
-    assert(srdd.collect()(0)(0).toString === "2011-09-03 10:13:58.0")
-    assert(SmvSchema.fromSchemaRDD(srdd).toString === "Schema: a: Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    val df = createSchemaRdd("a:Timestamp", "2011-09-03 10:13:58.0") 
+    assert(df.collect()(0)(0).toString === "2011-09-03 10:13:58.0")
+    assert(SmvSchema.fromDataFrame(df).toString === "Schema: a: Timestamp[yyyy-MM-dd hh:mm:ss.S]")
   }
   
   sparkTest("Test Date default format") {
-    val srdd = createSchemaRdd("a:Date", "2011-09-03") 
-    assertSrddSchemaEqual(srdd, "a: Date[yyyy-MM-dd]")
-    assertSrddDataEqual(srdd, "2011-09-03")
+    val df = createSchemaRdd("a:Date", "2011-09-03") 
+    assertSrddSchemaEqual(df, "a: Date[yyyy-MM-dd]")
+    assertSrddDataEqual(df, "2011-09-03")
   }
 
   test("Test schema name derivation from data file path") {
@@ -149,12 +149,12 @@ class SmvSchemaTest extends SparkTestUtil {
   }
 
   sparkTest("Test ArraySchema read and write") {
-    val srdd = createSchemaRdd("a:Integer; b:Array[Double]",
+    val df = createSchemaRdd("a:Integer; b:Array[Double]",
       "1,0.3|0.11|0.1")
 
-    assert(SmvSchema.fromSchemaRDD(srdd).toString === "Schema: a: Integer; b: Array[Double]")
-    import srdd.sqlContext.implicits._
-    val res = srdd.select($"b".getItem(0), $"b".getItem(1), $"b".getItem(2))
+    assert(SmvSchema.fromDataFrame(df).toString === "Schema: a: Integer; b: Array[Double]")
+    import df.sqlContext.implicits._
+    val res = df.select($"b".getItem(0), $"b".getItem(1), $"b".getItem(2))
 
     assertDoubleSeqEqual(res.collect()(0).toSeq, Seq(0.3,0.11,0.1))
   }

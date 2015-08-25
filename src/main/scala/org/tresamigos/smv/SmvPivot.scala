@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, ColumnName}
@@ -23,7 +23,7 @@ import org.apache.spark.sql.functions._
 /**
  * SmvPivot for Pivot Operations:
  *
- * Pivot Operation on SchemaRDD that transforms multiple rows per key into a single row for
+ * Pivot Operation on DataFrame that transforms multiple rows per key into a single row for
  * a given key while preserving all the data variance by turning row values into columns.
  * For Example:
  * | id  | month | product | count |
@@ -60,7 +60,7 @@ import org.apache.spark.sql.functions._
  *        In above example, it is Seq("5_14_A", "5_14_B", "6_14_A", "6_14_B").
  *        We assume that the output columns are predefined here. In case that
  *        we truly want to have a data driven pivoting, we can call a helper
- *        function, PivotOp.getBaseOutputColumnNames(schemaRDD, Seq(pivotCols))
+ *        function, PivotOp.getBaseOutputColumnNames(df, Seq(pivotCols))
  *        to generate baseOutputColumnNames. 
  */
 
@@ -70,8 +70,8 @@ case class SmvPivot(
         baseOutputColumnNames: Seq[String]) {
   require(!baseOutputColumnNames.isEmpty, "Pivot requires the output column names to be known")
 
-  def createSrdd(srdd: SchemaRDD, keys: Seq[String]): SchemaRDD =
-    mapValColsToOutputCols(addSmvPivotValColumn(srdd), keys.map{k => new ColumnName(k)})
+  def createSrdd(df: DataFrame, keys: Seq[String]): DataFrame =
+    mapValColsToOutputCols(addSmvPivotValColumn(df), keys.map{k => new ColumnName(k)})
 
   private val tempPivotValCol = "_smv_pivot_val"
 
@@ -101,16 +101,16 @@ case class SmvPivot(
    * |  1  | Array(5_14_B)   |   300 |
    * |  1  | Array(6_14_B)   |   200 |
    */
-  private[smv] def addSmvPivotValColumn(origSRDD: SchemaRDD) : SchemaRDD = {
-    import origSRDD.sqlContext.implicits._
+  private[smv] def addSmvPivotValColumn(origDF: DataFrame) : DataFrame = {
+    import origDF.sqlContext.implicits._
     val pivotColsExprSets = pivotColSets.map(a => a.map(s => $"$s".toExpr))
 
     val arrayExp = pivotColsExprSets.map{ pivotColsExpr =>
       SmvPivotVal(pivotColsExpr)
     }
 
-    origSRDD.selectPlus(new Column(SmvAsArray(arrayExp: _*)) as tempPivotValCol)
-    //origSRDD.generate(Explode(Seq(tempPivotValCol.name), SmvAsArray(arrayExp: _*)), true)
+    origDF.selectPlus(new Column(SmvAsArray(arrayExp: _*)) as tempPivotValCol)
+    //origDF.generate(Explode(Seq(tempPivotValCol.name), SmvAsArray(arrayExp: _*)), true)
   }
 
   /**
@@ -122,7 +122,7 @@ case class SmvPivot(
    * |  1  |    NULL      |     300      | NULL |
    * |  1  |    NULL      |    NULL      | NULL |
    */
-  private[smv] def mapValColsToOutputCols(srddWithPivotValCol: SchemaRDD, keyCols: Seq[Column]) = {
+  private[smv] def mapValColsToOutputCols(srddWithPivotValCol: DataFrame, keyCols: Seq[Column]) = {
     import srddWithPivotValCol.sqlContext.implicits._
     srddWithPivotValCol.select(keyCols ++ outputColExprs: _*)
   }
@@ -144,11 +144,11 @@ object SmvPivot {
    * 
    * TODO: Add a java log warning message
    */
-  private[smv] def getBaseOutputColumnNames(schemaRDD: SchemaRDD, pivotColsSets: Seq[Seq[String]]): Seq[String] = {
+  private[smv] def getBaseOutputColumnNames(df: DataFrame, pivotColsSets: Seq[Seq[String]]): Seq[String] = {
     // create set of distinct values.
     // this is a seq of array strings where each array is distinct values for a column.
     pivotColsSets.map{ pivotCols =>
-      val distinctVals = pivotCols.map{s => schemaRDD.select(s).
+      val distinctVals = pivotCols.map{s => df.select(s).
         distinct.collect.map { r =>
           Option(r(0)).getOrElse("").toString
         }}

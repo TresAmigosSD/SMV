@@ -16,12 +16,12 @@ package org.tresamigos.smv
 
 
 class SeqAnyRDDTest extends SparkTestUtil {
-  sparkTest("test SeqAnyRDD to SchemaRDD") {
+  sparkTest("test SeqAnyRDD to DataFrame") {
     val ssc = sqlContext; import ssc.implicits._
     val rdd = sc.parallelize(Seq(Seq(1, "a"), Seq(2, "b"), Seq(3, "c")))
     val schema = SmvSchema.fromString("id:Integer; val:String")
-    val srdd = sqlContext.applySchemaToSeqAnyRDD(rdd, schema)
-    val res = srdd.select('val).map(_(0)).collect
+    val df = sqlContext.applySchemaToSeqAnyRDD(rdd, schema)
+    val res = df.select('val).map(_(0)).collect
     val exp: Array[Any] = Array("a", "b", "c")
 
     assert(res === exp)

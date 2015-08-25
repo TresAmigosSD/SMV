@@ -74,7 +74,6 @@ class SmvWhatModulesToRunTest extends SparkTestUtil {
   sparkTest("Test modules to run (mods in app)") {
     object app extends SmvApp(testAppArgs.multiStage ++ Seq("--run-app"), Some(sc)) {}
     val mods = app.smvConfig.modulesToRun().map(_.name)
-    mods.foreach(println)
     assertUnorderedSeqEqual(mods, Seq(
       "org.tresamigos.smv.smvAppTestPkg1.Y",
       "org.tresamigos.smv.smvAppTestPkg2.Z",

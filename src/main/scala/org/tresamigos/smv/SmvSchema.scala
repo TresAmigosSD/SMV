@@ -19,7 +19,6 @@ import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions.{Literal, Row, AttributeReference}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SchemaRDD
 
 import org.apache.spark.sql.catalyst.plans.logical._
 
@@ -151,7 +150,7 @@ case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd") extends Nat
     if (s.isEmpty) null
     else DateUtils.millisToDays(fmtObj.parse(s).getTime())
   }
-  
+
   override def valToStr(v: Any) : String = {
     if (v==null) ""
     else fmtObj.format(DateUtils.toJavaDate(v.asInstanceOf[Int]))
@@ -462,9 +461,7 @@ object SmvSchema {
       }
     )
   }
-
-  def fromSchemaRDD(schemaRDD: SchemaRDD) = fromDataFrame(schemaRDD)
-
+  
   /**
    * read a schema file and extract field length from schema file entries for
    * Fixed Record Length data

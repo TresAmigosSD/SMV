@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import java.io.{File, PrintWriter}
 import java.security.InvalidKeyException
 
-import org.apache.spark.sql.{SchemaRDD, SQLContext}
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
@@ -66,17 +66,33 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
   }
 
+  /** all modules known to this app. */
+  private[smv] def allAppModules = stages.allModules
+
+  /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
+  private[smv] def validFilesInOutputDir() : Seq[String] = {
+    allAppModules.
+      flatMap(_.currentModuleOutputFiles).
+      map(SmvHDFS.baseName(_))
+  }
+
+  /** remove all non-current files in the output directory */
+  private[smv] def purgeOldOutputFiles() = {
+    SmvHDFS.purgeDirectory(outputDirectory(), validFilesInOutputDir())
+  }
+
 //  private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", throw new InvalidKeyException("DATA_DIR is not defined in environment"))
   private[smv] val dataDir = sys.env.getOrElse("DATA_DIR", "/UNDEFINED_DATA_DIR") // keep until all tests migrate to --data-dir
+  private[smv] def outputDirectory() = dataDir + "/output"
 
   /**
    * Get the RDD associated with data set.  The rdd plan (not data) is cached in the SmvDataSet
-   * to ensure only a single SchemaRDD exists for a given data set (file/module).
+   * to ensure only a single DataFrame exists for a given data set (file/module).
    * The module can create a data cache itself and the cached data will be used by all
    * other modules that depend on the required module.
    * This method also checks for cycles in the module dependency graph.
    */
-  def resolveRDD(ds: SmvDataSet): SchemaRDD = {
+  def resolveRDD(ds: SmvDataSet): DataFrame = {
     val dsName = ds.name
     if (resolveStack.contains(dsName))
       throw new IllegalStateException(s"cycle found while resolving ${dsName}: " +
@@ -94,7 +110,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   lazy val packagesPrefix = {
-    val m = stages.allModules
+    val m = allAppModules
     if (m.isEmpty) ""
     else m.map(_.name).reduce{(l,r) =>
         (l.split('.') zip r.split('.')).
@@ -137,7 +153,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   private def deleteOutputModules() = {
     // TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
-    smvConfig.modulesToRun().foreach {m => m.deleteOutputs(this)}
+    smvConfig.modulesToRun().foreach {m => m.deleteOutputs()}
   }
 
   /**
@@ -155,6 +171,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     println("--------------")
 
     deleteOutputModules()
+
+    if (smvConfig.cmdLine.purgeOldOutput()) {
+      purgeOldOutputFiles()
+    }
 
     smvConfig.modulesToRun().foreach { module =>
 
@@ -187,7 +207,7 @@ object SmvApp {
 // TODO: this should be moved into stages (and accept a list of stages rather than packages)
 private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
   private def allModules = {
-    if (packages.isEmpty) app.stages.allModules
+    if (packages.isEmpty) app.allAppModules
     else packages.map{app.packagesPrefix + _}.flatMap{ p => SmvReflection.objectsInPackage[SmvModule](p) }
   }.sortWith{(a,b) => a.name < b.name}
 

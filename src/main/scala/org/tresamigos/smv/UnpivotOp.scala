@@ -14,12 +14,8 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.SchemaRDD
-import org.apache.spark.sql.ColumnName
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions._
-import scala.reflect.runtime.universe.{TypeTag, typeTag}
 
 
 /**
@@ -42,11 +38,11 @@ import scala.reflect.runtime.universe.{TypeTag, typeTag}
  *
  * This only works for String columns for now (due to limitation of Explode method)
  */
-class UnpivotOp(val srdd: SchemaRDD, val valueCols: Seq[String]) {
+class UnpivotOp(val df: DataFrame, val valueCols: Seq[String]) {
   // TODO: should not hardcode the column/value column names in the result.
   // TODO: perhaps accept multiple valueCols sets.
   
-  val types = valueCols.map{c => srdd(c).toExpr.dataType}.toSet.toSeq
+  val types = valueCols.map{c => df(c).toExpr.dataType}.toSet.toSeq
   require(types.size == 1)
   val dataType = types(0)
   
@@ -59,14 +55,14 @@ class UnpivotOp(val srdd: SchemaRDD, val valueCols: Seq[String]) {
    */
   private def unpivotExplodeArray() = {
     smvAsArray(valueCols.
-      map(vn => smvAsArray(lit(vn), srdd(vn))): _*
+      map(vn => smvAsArray(lit(vn), df(vn))): _*
     )
   }
 
   def unpivot() = {
-    import srdd.sqlContext.implicits._
+    import df.sqlContext.implicits._
 
-    srdd.selectPlus(unpivotExplodeArray() as "_unpivot_vals").
+    df.selectPlus(unpivotExplodeArray() as "_unpivot_vals").
       explode("_unpivot_vals", "_kvpair")((a: Seq[Seq[String]]) => a).
       selectPlus($"_kvpair".getItem(0) as 'column, $"_kvpair".getItem(1) as 'value).
       selectMinus("_unpivot_vals", "_kvpair").

@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.{DataFrame, SchemaRDD}
+import org.apache.spark.sql.DataFrame
 
 import scala.util.Try
 import org.joda.time._
@@ -24,12 +24,12 @@ import org.joda.time.format._
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
  * Instances of this class can either be a file or a module. In either case, there would
- * be a single result SchemaRDD.
+ * be a single result DataFrame.
  */
 abstract class SmvDataSet {
 
   var app: SmvApp = _
-  private var rddCache: SchemaRDD = null
+  private var rddCache: DataFrame = null
 
   def name(): String
   def description(): String
@@ -57,7 +57,7 @@ abstract class SmvDataSet {
   }
 
   /**
-   * returns the SchemaRDD from this dataset (file/module).
+   * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */
@@ -167,24 +167,27 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 
   override def classCodeCRC() : Int = moduleCRC.crc.toInt
 
-  /** The "versioned" module file name. */
-  private def versionedName: String = name + "_" + f"${hashOfHash}%08x"
+  /** The "versioned" module file base name. */
+  private def versionedBasePath(prefix: String): String = {
+    val verHex = f"${hashOfHash}%08x"
+    s"""${app.outputDirectory()}/${prefix}${name}_${verHex}"""
+  }
 
   /** Returns the path for the module's csv output */
-  private def moduleCsvPath(prefix: String = ""): String =
-    s"""${app.dataDir}/output/${prefix}${versionedName}.csv"""
-
-  /** Returns the path for the module's edd report output */
-  private def moduleEddPath(prefix: String = ""): String =
-    (".csv$"r).replaceAllIn(moduleCsvPath(prefix), ".edd")
-
-  /** Returns the path for the module's reject report output */
-  private def moduleRejectPath(prefix: String = ""): String =
-    (".csv$"r).replaceAllIn(moduleCsvPath(prefix), ".reject")
+  private[smv] def moduleCsvPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".csv"
 
   /** Returns the path for the module's schema file */
-  private def moduleSchemaPath(prefix: String = ""): String =
-    (".csv$"r).replaceAllIn(moduleCsvPath(prefix), ".schema")
+  private[smv] def moduleSchemaPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".schema"
+
+  /** Returns the path for the module's edd report output */
+  private[smv] def moduleEddPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".edd"
+
+  /** Returns the path for the module's reject report output */
+  private[smv] def moduleRejectPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".reject"
 
   type runParams = Map[SmvDataSet, DataFrame]
   def run(inputs: runParams) : DataFrame
@@ -198,7 +201,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    * delete the output(s) associated with this module (csv file and schema).
    * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
    */
-  private[smv] def deleteOutputs(app: SmvApp) = {
+  private[smv] def deleteOutputs() = {
     val csvPath = moduleCsvPath()
     val eddPath = moduleEddPath()
     val schemaPath = moduleSchemaPath()
@@ -207,6 +210,13 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     SmvHDFS.deleteFile(schemaPath)
     SmvHDFS.deleteFile(eddPath)
     SmvHDFS.deleteFile(rejectPath)
+  }
+
+  /**
+   * Returns current valid outputs produced by this module.
+   */
+  private[smv] def currentModuleOutputFiles() : Seq[String] = {
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath())
   }
 
   private[smv] def persist(rdd: DataFrame, prefix: String = "") = {

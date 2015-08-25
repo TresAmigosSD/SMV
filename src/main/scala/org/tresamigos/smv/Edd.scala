@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SchemaRDD
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
@@ -24,7 +24,7 @@ import org.apache.spark.storage.StorageLevel
 
 abstract class EddTaskBuilder[T] {
   
-  val srdd: SchemaRDD
+  val df: DataFrame
   
   protected var tasks: Seq[EddTask] = Nil
 
@@ -34,20 +34,20 @@ abstract class EddTaskBuilder[T] {
    * 
    * All simple tasks: no histograms except the timestamps
    * @param list the Set of Symbols BASE tasks will be created on
-   *        if empty will use all fields in this SchemaRDD
+   *        if empty will use all fields in this DataFrame
    * @return this Edd
    */
   def addBaseTasks(list: String* ) = {
     val listSeq =
       if (list.isEmpty)
-        srdd.columns.toSeq
+        df.columns.toSeq
       else
         list.toSet.toSeq
 
     tasks ++=
       listSeq.map{ l =>
-        val s = srdd(l)
-        srdd.schema(l).dataType match {
+        val s = df(l)
+        df.schema(l).dataType match {
           case _: NumericType => Seq(NumericBase(s))
           case BooleanType => Seq(BooleanHistogram(s))
           case TimestampType => Seq(
@@ -77,20 +77,20 @@ abstract class EddTaskBuilder[T] {
    * and reporting 
    *
    * @param list the Set of Symbols BASE tasks will be created on
-   *        if empty will use all fields in this SchemaRDD
+   *        if empty will use all fields in this DataFrame
    * @return this Edd
    */
   private[smv] def addDataQATasks(list: String* ) = {
     val listSeq =
       if (list.isEmpty)
-        srdd.columns.toSeq
+        df.columns.toSeq
       else
         list.toSet.toSeq
 
     tasks ++=
       listSeq.map{ l =>
-        val s =srdd(l)
-        srdd.schema(l).dataType match {
+        val s =df(l)
+        df.schema(l).dataType match {
           case _: NumericType => Seq(NumericBase(s))
           case BooleanType => Seq(BooleanHistogram(s))
           case TimestampType => Seq(TimeBase(s))
@@ -105,7 +105,7 @@ abstract class EddTaskBuilder[T] {
    * 
    * All simple histogram tasks
    * @param list the Set of Symbols HISTogram tasks will be created on
-   *        if empty will use all fields in this SchemaRDD
+   *        if empty will use all fields in this DataFrame
    * @param byFreq report histogram as sorted by value or not
    *        default = false (sort by key)
    * @param binSize set bin size for histograms on Numeric fields
@@ -115,14 +115,14 @@ abstract class EddTaskBuilder[T] {
   def addHistogramTasks(list: String*)(byFreq: Boolean = false, binSize: Double = 100.0) = {
     val listSeq =
       if (list.isEmpty)
-        srdd.columns.toSeq
+        df.columns.toSeq
       else
         list.toSet.toSeq
 
     tasks ++=
       listSeq.map{ l =>
-        val s =srdd(l)
-        srdd.schema(l).dataType match {
+        val s =df(l)
+        df.schema(l).dataType match {
           case StringType => 
             if (byFreq) Seq(StringByFreqHistogram(s))
             else Seq(StringByKeyHistogram(s))
@@ -149,8 +149,8 @@ abstract class EddTaskBuilder[T] {
     val listSeq = list.toSet.toSeq
     tasks ++=
       listSeq.map{ l =>
-        val s =srdd(l)
-        srdd.schema(l).dataType match {
+        val s =df(l)
+        df.schema(l).dataType match {
           case _: NumericType => Seq(AmountHistogram(s))
           case _ => Nil
         }
@@ -190,20 +190,20 @@ abstract class EddTaskBuilder[T] {
  *     addHistogramTasks(list: Symbol*)
  *     addAmountHistogramTasks(list: Symbol*)
  *     addMoreTasks(more: EddTask*)
- * Clean task list and result SchemaRDD:
+ * Clean task list and result DataFrame:
  *     clean
- * Generate SchemaRDD:
- *     toSchemaRDD: SchemaRDD
+ * Generate DataFrame:
+ *     toDataFrame: DataFrame
  * Generate report RDD:
  *     createReport: RDD[String]
  *
- * @param srdd the SchemaRDD this Edd works on
+ * @param df the DataFrame this Edd works on
  * @param gCol the group expressions this Edd cacluate over
  */
-class Edd(val srdd: SchemaRDD,
+class Edd(val df: DataFrame,
           gCol: Seq[Column]) extends EddTaskBuilder[Edd] { 
 
-  private var eddRDD: SchemaRDD = null
+  private var eddRDD: DataFrame = null
   
   def self() = this
   
@@ -246,11 +246,11 @@ class Edd(val srdd: SchemaRDD,
 
   private def groupTasks = gCol.map{ col => GroupPopulationKey(col) } ++ Seq(GroupPopulationCount)
   
-  /** Return the SchemaRDD of all Edd tasks' results */
-  def toSchemaRDD: SchemaRDD = {
+  /** Return the DataFrame of all Edd tasks' results */
+  def toDataFrame: DataFrame = {
     if (eddRDD == null){
       val aggregateList = createAggList(groupTasks) ++ createAggList(tasks)
-      eddRDD = srdd.groupBy(gCol: _*).agg(aggregateList(0), aggregateList.tail: _*)
+      eddRDD = df.groupBy(gCol: _*).agg(aggregateList(0), aggregateList.tail: _*)
       //eddRDD.persist(StorageLevel.MEMORY_AND_DISK)
     } 
     eddRDD
@@ -259,7 +259,7 @@ class Edd(val srdd: SchemaRDD,
   /** Return an RDD of String as the Edd report. One row for each group. If
    * Edd is on the population, this RDD will have only 1 row */
   def createReport(): Array[String] = {
-    val rdd = toSchemaRDD
+    val rdd = toDataFrame
 
     rdd.collect.map{ r => 
       val tasks_ = tasks        // For Serialization
@@ -288,7 +288,7 @@ class Edd(val srdd: SchemaRDD,
 
   def createJSON: String = {
     require(gCol.isEmpty)
-    val r = toSchemaRDD.first
+    val r = toDataFrame.first
     val it = r.toSeq.toIterator
     "{" + GroupPopulationCount.reportJSON(it) + ",\n" +
     " \"edd\":[\n      " + tasks.map{ t => t.reportJSON(it) }.mkString(",\n      ") + "]}"
@@ -296,10 +296,10 @@ class Edd(val srdd: SchemaRDD,
 }
 
 object Edd{
-  def apply(srdd: SchemaRDD,
+  def apply(df: DataFrame,
           groupingCols : Seq[Column]) = {
 
-    new Edd(srdd, groupingCols)
+    new Edd(df, groupingCols)
   }
 
   /**
