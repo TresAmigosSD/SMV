@@ -2,7 +2,8 @@ package org.tresamigos.getstart.core
 
 import org.tresamigos.smv._
 
-/** define all the raw inputs into the App */
+/** define all the raw inputs into the stage */
+// TODO: add extend SmvInputSet once that is implemented
 object ExampleApp {
   val caBar = new CsvAttributes(delimiter = '|', hasHeader = true)
 

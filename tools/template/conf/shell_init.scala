@@ -1,3 +1,5 @@
+// TODO: Need to clean this up a bit
+
 import org.apache.spark.sql._, functions._
 import org.apache.spark.rdd.RDD
 import org.tresamigos.smv._
