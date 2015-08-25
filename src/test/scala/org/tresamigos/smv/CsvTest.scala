@@ -11,4 +11,13 @@ class CsvTest extends SparkTestUtil {
     assert(res === "(Bob,1),(Fred,2)")
   }
 
+  sparkTest("Test column with pure blanks converts to null as Integer or Double") {
+    val df = createSchemaRdd("a:Integer;b:Double", "1 , 0.2 ; 2, 1 ;3, ; , ;5, 3.")
+    assertSrddDataEqual(df,
+      "1,0.2;" +
+      "2,1.0;" +
+      "3,null;" +
+      "null,null;" +
+      "5,3.0")
+  }
 }
