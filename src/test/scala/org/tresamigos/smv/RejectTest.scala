@@ -23,6 +23,7 @@ class RejectTest extends SparkTestUtil {
     val res = df.collect.map(_.mkString(","))
     val exp = List(
       "123,12.5,2013-01-09 13:06:19.0,12102012",
+      "123,null,2013-01-09 13:06:19.0,12102012",
       "123,12.5,2013-01-09 13:06:19.0,12102012",
       "123,12.5,2015-07-09 13:06:19.0,12102012",
       "231,67.21,2012-10-09 10:16:21.0,02122011",
@@ -40,10 +41,9 @@ class RejectTest extends SparkTestUtil {
       "123,12.50  ,130109130619,12102012 -- java.text.ParseException: Unparseable date: \"130109130619\"",
       "123,12.50  ,109130619,12102012 -- java.text.ParseException: Unparseable date: \"109130619\"",
       "123,12.50  ,201309130619,12102012 -- java.text.ParseException: Unparseable date: \"201309130619\"",
-      "123,  ,20130109130619,12102012 -- java.lang.NumberFormatException: empty String",
       "123,12.50  ,12102012 -- java.lang.IllegalArgumentException: requirement failed",
       "123,001x  ,20130109130619,12102012 -- java.lang.NumberFormatException: For input string: \"001x\"",
-      "Total rejected records: 6 -- ")
+      "Total rejected records: 5 -- ")
 
     assertUnorderedSeqEqual(res, exp)
 

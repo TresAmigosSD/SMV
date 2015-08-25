@@ -51,7 +51,10 @@ case class DoubleSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Double]]
   override val zeroVal = Literal(0.0)
-  override def strToVal(s:String) : Any = if (s.isEmpty) null else trim(s).toDouble
+  override def strToVal(s:String) : Any = {
+    val trimedS = trim(s)
+    if (trimedS.isEmpty) null else trimedS.toDouble
+  }
   override val typeName = "Double"
   val structField = StructField(name, DoubleType, true)
 }
@@ -61,7 +64,10 @@ case class FloatSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Float]]
   override val zeroVal = Literal(0.0f)
-  override def strToVal(s:String) : Any = if (s.isEmpty) null else trim(s).toFloat
+  override def strToVal(s:String) : Any = {
+    val trimedS = trim(s)
+    if (trimedS.isEmpty) null else trimedS.toFloat
+  }
   override val typeName = "Float"
   val structField = StructField(name, FloatType, true)
 }
@@ -71,7 +77,10 @@ case class IntegerSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Int]]
   override val zeroVal = Literal(0)
-  override def strToVal(s:String) : Any = if (s.isEmpty) null else trim(s).toInt
+  override def strToVal(s:String) : Any = {
+    val trimedS = trim(s)
+    if (trimedS.isEmpty) null else trimedS.toInt
+  }
   override val typeName = "Integer"
   val structField = StructField(name, IntegerType, true)
 }
@@ -81,7 +90,10 @@ case class LongSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Long]]
   override val zeroVal = Literal(0l)
-  override def strToVal(s:String) : Any = if (s.isEmpty) null else trim(s).toLong
+  override def strToVal(s:String) : Any = {
+    val trimedS = trim(s)
+    if (trimedS.isEmpty) null else trimedS.toLong
+  }
   override val typeName = "Long"
   val structField = StructField(name, LongType, true)
 }
@@ -108,7 +120,7 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss
   /**
    * The Default format should match the default "toString" format of
    * java.sql.Timestamp
-   */ 
+   */
   private[smv] type JvmType = java.sql.Timestamp
   private[smv] val ordering = new Ordering[JvmType] {
     def compare(x: java.sql.Timestamp, y: java.sql.Timestamp) = x.compareTo(y)
@@ -118,7 +130,7 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss
   val fmtObj = SmvSchema.threadLocalDateFormat(fmt).get()
   //val fmtObj = new java.text.SimpleDateFormat(fmt)
   override def strToVal(s:String) : Any = {
-    if(s.isEmpty) null 
+    if(s.isEmpty) null
     else new java.sql.Timestamp(fmtObj.parse(s).getTime())
   }
   override val typeName = "Timestamp"
@@ -130,20 +142,20 @@ case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd") extends Nat
   private[smv] type JvmType = Int
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   override val zeroVal = Literal(0)
-  
+
   // `SimpleDateFormat` is not thread-safe.
   val fmtObj = SmvSchema.threadLocalDateFormat(fmt).get()
-  
+
   override def strToVal(s:String) : Any = {
-    if (s.isEmpty) null 
+    if (s.isEmpty) null
     else DateUtils.millisToDays(fmtObj.parse(s).getTime())
   }
-  
+
   override def valToStr(v: Any) : String = {
-    if (v==null) "" 
+    if (v==null) ""
     else fmtObj.format(DateUtils.toJavaDate(v.asInstanceOf[Int]))
   }
-  
+
   override val typeName = "Date"
   val structField = StructField(name, DateType, true)
   override def toString = s"$name: $typeName[$fmt]"
@@ -180,7 +192,7 @@ case class MapSchemaEntry(name: String,
     }.mkString("|")
   }
 }
- 
+
 case class ArraySchemaEntry(name: String, valSchemaEntry: SchemaEntry) extends SchemaEntry {
   override val zeroVal = Literal(null)
   override val typeName = "Array"
@@ -204,7 +216,7 @@ case class ArraySchemaEntry(name: String, valSchemaEntry: SchemaEntry) extends S
     m.map{r => valSchemaEntry.valToStr(r)}.mkString("|")
   }
 }
- 
+
 object NumericSchemaEntry {
   def apply(name: String, dataType: DataType) : NumericSchemaEntry = {
     val trimName = name.trim
@@ -217,7 +229,7 @@ object NumericSchemaEntry {
     }
   }
 }
- 
+
 object SchemaEntry {
   private final val StringPattern = "[sS]tring".r
   private final val DoublePattern = "[dD]ouble".r
@@ -329,19 +341,19 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
     val thisNames = names.toSet
     val thatNames = that.names.toSet
     require(thisNames.intersect(thatNames).isEmpty)
-    
+
     new SmvSchema(entries ++ that.entries)
   }
-  
+
   def selfJoined(): SmvSchema = {
     val renamed = entries.map{e => SchemaEntry("_" + e.structField.name, e.structField.dataType)}
     new SmvSchema(entries ++ renamed)
   }
-  
+
   def names: Seq[String] = {
     entries.map(e => e.structField.name)
   }
-  
+
   def getIndices(keys: String*): Seq[Int] = {
     keys.map{s => names.indexWhere(s == _)}
   }
@@ -355,20 +367,20 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
     findEntry(sym).get.meta = metaStr
     this
   }
-  
+
   def addMeta(metaPairs: (Symbol, String)*): SmvSchema = {
     metaPairs.foreach{case (v, m) => addMeta(v, m)}
     this
   }
 
-  def toStringWithMeta = entries.map{e => 
+  def toStringWithMeta = entries.map{e =>
     e.toString + (if (e.meta.isEmpty) "" else ("\t\t# " + e.meta))
   }
 
   def saveToFile(sc: SparkContext, path: String) {
     sc.makeRDD(toStringWithMeta, 1).saveAsTextFile(path)
   }
-  
+
   def saveToLocalFile(path: String) {
     import java.io.{File, PrintWriter}
     val pw = new PrintWriter(new File(path))
@@ -441,7 +453,7 @@ object SmvSchema {
     schemaFromEntryStrings(sc.textFile(path).collect)
   }
 
-  
+
   def fromDataFrame(df: DataFrame) = {
     new SmvSchema(
       df.schema.fields.map{a =>
@@ -451,16 +463,16 @@ object SmvSchema {
   }
   
   /**
-   * read a schema file and extract field length from schema file entries for 
+   * read a schema file and extract field length from schema file entries for
    * Fixed Record Length data
-   * 
-   * Assume the schema file have part of the comment as "$12" to indicate this 
-   * field has fixed length 12. Assume all the schema entries in the schema 
-   * file have the field length number. 
+   *
+   * Assume the schema file have part of the comment as "$12" to indicate this
+   * field has fixed length 12. Assume all the schema entries in the schema
+   * file have the field length number.
    * Example Schema Entry:
-   * 
+   *
    * Customer_ID: String  #customer id: $16
-   * 
+   *
    **/
   private[smv] def slicesFromFile(sc: SparkContext, path: String) = {
     sc.textFile(path).collect.map{s =>
@@ -471,7 +483,7 @@ object SmvSchema {
       }
     }.collect{case Some(c) => c}
   }
-    
+
   /**
    * map the data file path to schema path.
    * Ignores ".gz", ".csv", ".tsv" extensions when constructions schema file path.
@@ -484,7 +496,7 @@ object SmvSchema {
 
     dataPathNoExt + ".schema"
   }
-  
+
   // `SimpleDateFormat` is not thread-safe.
   val threadLocalDateFormat = {fmt: String => new ThreadLocal[DateFormat] {
     override def initialValue() = {
