@@ -54,6 +54,7 @@ function copy_with_inject()
     mkdir -p "$(dirname "$DST")"
     sed -e "s/_GROUP_ID_/$PROJ_GROUP_ID/" \
         -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
+        -e "s/_PROJ_CLASS_/$PROJ_CLASS/" \
         < "$SRC" > "$DST"
 }
 

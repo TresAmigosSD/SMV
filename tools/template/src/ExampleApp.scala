@@ -1,4 +1,4 @@
-package org.tresamigos.getstart.core
+package _PROJ_CLASS_.stage1
 
 import org.tresamigos.smv._
 

@@ -1,6 +1,6 @@
-package org.tresamigos.getstart.etl
+package _PROJ_CLASS_.stage1.etl
 
-import org.tresamigos.getstart.core._
+import _PROJ_CLASS_.stage1._
 import org.tresamigos.smv._
 
 /**
@@ -9,14 +9,12 @@ import org.tresamigos.smv._
 
 object EmploymentRaw extends SmvModule("ETL Example: Employment") {
 
-  override def version() = 0;
   override def requiresDS() = Seq(ExampleApp.employment);
  
   override def run(i: runParams) = {
     val df = i(ExampleApp.employment)
-    import df.sqlContext.implicits._
-    
-    df.select(
+
+    df.limit(10).select(
       "EMP"
       )
   }
