@@ -20,6 +20,8 @@ multiple properties may be specified at the same time:
 ./tools/run_module.sh --smv-props smv.appName="myApp" smv.stages="s1,s2" ... module_to_run
 ```
 
+Some configuration parameters have a shorthand direct command line override (e.g. --data-dir)
+
 ## Name conflict resolution
 
 If a configuration parameter appears in multiple places, then the conflict is resolved by picking the value from the higher priority source.
@@ -73,6 +75,35 @@ Example: "com.company.proj.etl, com.company.proj.model"</td>
 <td>Optional</td>
 <td>Current version of stage X. See [TODO: add link here] for details on stage versions</td>
 </tr>
+
+<tr>
+<th colspan="4">Data Directories Parameters</th>
+</tr>
+
+<tr>
+<td>smv.dataDir</td>
+<td>N/A</td>
+<td>Required</td>
+<td>The top level data directory.
+Can be overridden using <code>--data-dir</code> command line option</td>
+</tr>
+
+<tr>
+<td>smv.inputDir</td>
+<td>dataDir<code>/input</code></td>
+<td>Optional</td>
+<td>Data input directory (not currently used)
+Can be overridden using <code>--input-dir</code> command line option</td>
+</tr>
+
+<tr>
+<td>smv.outputDir</td>
+<td>dataDir<code>/output</code></td>
+<td>Optional</td>
+<td>Data output directory
+Can be overridden using <code>--output-dir</code> command line option</td>
+</tr>
+
 </table>
 
 ## Spark SQL configuration parameters.

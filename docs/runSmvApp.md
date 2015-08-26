@@ -106,6 +106,34 @@ One one of the options below must be specified.
 </td>
 </tr>
 
+<tr>
+<th colspan="3">Data Directories Config Override</th>
+</tr>
+
+<tr>
+<th>Option</th>
+<th>Config<br>Override</th>
+<th>Description</th>
+</tr>
+
+<tr>
+<td>&#8209;&#8209;data&#8209;dir</td>
+<td>smv.dataDir</td>
+<td>option to override default location of top level data directory</td>
+</tr>
+
+<tr>
+<td>&#8209;&#8209;input&#8209;dir</td>
+<td>smv.inputDir</td>
+<td>option to override default location of input data directory</td>
+</tr>
+
+<tr>
+<td>&#8209;&#8209;output&#8209;dir</td>
+<td>smv.outputDir</td>
+<td>option to override default location of output data directory</td>
+</tr>
+
 </table>
 
 ## Run Spark Shell with SMV

@@ -144,9 +144,8 @@ class SmvAppTest extends SparkTestUtil {
       override def moduleCsvPath(prefix: String) = "com.foo.mymodule_555.csv"
     }
     /** create a dummy app that only has the module above as its only module. */
-    object app extends SmvApp(Seq("--purge-old-output"), Option(sc)) {
-      // TODO: remove this once we implement --output-dir command line option / conf.
-      override def outputDirectory() = testcaseTempDir
+    object app extends SmvApp(
+      Seq("--purge-old-output", "--output-dir", testcaseTempDir), Option(sc)) {
       override def allAppModules = Seq(m)
     }
     m.injectApp(app)

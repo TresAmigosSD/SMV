@@ -72,4 +72,14 @@ class SmvConfigTest extends SparkTestUtil {
     assert(s2.pkgs === Seq("pkg2a", "pkg2b"))
     assert(s2.version === 0)
   }
+
+  test("test input/output/data dir command line override") {
+    val conf = new SmvConfig(confFileArgs ++ Seq(
+      "--smv-props", "smv.dataDir=D1", "smv.inputDir=I1", "--input-dir", "I2",
+      "-m", "mod1"))
+
+    assert(conf.dataDir === "D1")
+    assert(conf.inputDir === "I2") // should use command line override rather than prop.
+    assert(conf.outputDir === "D1/output") // should use default derived from data dir
+  }
 }

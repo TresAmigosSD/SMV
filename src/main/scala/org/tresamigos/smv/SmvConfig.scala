@@ -51,6 +51,11 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrYes="generate a json object to represent entire app's module dependency (modules are not run)",
     descrNo="do not generate a json")
 
+  // --- data directories override
+  val dataDir   = opt[String]("data-dir",   noshort = true, descr = "specify the top level data directory")
+  val inputDir  = opt[String]("input-dir",  noshort = true, descr = "specify the input directory (default: datadir/input")
+  val outputDir = opt[String]("output-dir", noshort = true, descr = "specify the output directory (default: datadir/output")
+
   val purgeOldOutput = toggle("purge-old-output", noshort = true, default = Some(false),
     descrYes = "remove all old output files in output dir ")
   val modsToRun = opt[List[String]]("run-module", 'm', descr = "run specified list of module FQNs")
@@ -77,6 +82,11 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
  * Container of all SMV config driven elements (cmd line, app props, user props, etc).
  */
 class SmvConfig(cmdLineArgs: Seq[String]) {
+  // check for deprecated DATA_DIR environment variable.
+  sys.env.get("DATA_DIR").foreach { d =>
+    println("WARNING: use of DATA_DIR environment variable is deprecated. use smv.dataDir instead!!!")
+  }
+
   val cmdLine = new CmdLineArgsConf(cmdLineArgs)
 
   private val appConfProps = _loadProps(cmdLine.smvAppConfFile())
@@ -109,6 +119,29 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     val appMods = if (cmdLine.runAllApp()) stages.allOutputModules else Seq.empty[SmvModule]
 
     directMods ++ stageMods ++ appMods
+  }
+
+  // ---------- hierarchy of data / input / output directories
+
+  // TODO: need to remove requirement that data dir is specified (need to start using input dir and if both inpput/output are specified, we dont need datadir
+  /** the configured data dir (command line OR props) */
+  def dataDir : String = {
+    cmdLine.dataDir.get.
+      orElse(mergedProps.get("smv.dataDir")).
+      orElse(sys.env.get("DATA_DIR")).
+      getOrElse(throw new IllegalArgumentException("Must specify a data-dir either on command line or in conf."))
+  }
+
+  def inputDir : String = {
+    cmdLine.inputDir.get.
+      orElse(mergedProps.get("smv.inputDir")).
+      getOrElse(dataDir + "/input")
+  }
+
+  def outputDir : String = {
+    cmdLine.outputDir.get.
+      orElse(mergedProps.get("smv.outputDir")).
+      getOrElse(dataDir + "/output")
   }
 
   /**

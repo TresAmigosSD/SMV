@@ -114,7 +114,8 @@ case class SmvCsvFile(
   override def computeRDD: DataFrame = {
     implicit val ca = csvAttributes
     implicit val rejectLogger = createLogger(app, errPolicy)
-    app.sqlContext.csvFileWithSchema(s"${app.dataDir}/${basePath}")
+    // TODO: this should use inputDir instead of dataDir
+    app.sqlContext.csvFileWithSchema(s"${app.smvConfig.dataDir}/${basePath}")
   }
 
 }
@@ -126,7 +127,8 @@ case class SmvFrlFile(
 
   override def computeRDD: DataFrame = {
     implicit val rejectLogger = createLogger(app, errPolicy)
-    app.sqlContext.frlFileWithSchema(s"${app.dataDir}/${basePath}")
+    // TODO: this should use inputDir instead of dataDir
+    app.sqlContext.frlFileWithSchema(s"${app.smvConfig.dataDir}/${basePath}")
   }
 }
 
@@ -170,7 +172,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   /** The "versioned" module file base name. */
   private def versionedBasePath(prefix: String): String = {
     val verHex = f"${hashOfHash}%08x"
-    s"""${app.outputDirectory()}/${prefix}${name}_${verHex}"""
+    s"""${app.smvConfig.outputDir}/${prefix}${name}_${verHex}"""
   }
 
   /** Returns the path for the module's csv output */
