@@ -82,6 +82,8 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
  * Container of all SMV config driven elements (cmd line, app props, user props, etc).
  */
 class SmvConfig(cmdLineArgs: Seq[String]) {
+  val DEFAULT_SMV_HOME_CONF_FILE = sys.env.getOrElse("HOME", "") + "/.smv/smv-user-conf.props"
+
   // check for deprecated DATA_DIR environment variable.
   sys.env.get("DATA_DIR").foreach { d =>
     println("WARNING: use of DATA_DIR environment variable is deprecated. use smv.dataDir instead!!!")
@@ -91,6 +93,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   private val appConfProps = _loadProps(cmdLine.smvAppConfFile())
   private val usrConfProps = _loadProps(cmdLine.smvUserConfFile())
+  private val homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
   private val cmdLineProps = cmdLine.smvProps
   private val defaultProps = Map(
     "smv.appName" -> "Smv Application",
@@ -98,7 +101,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   )
 
   // merge order is important here.  Highest priority comes last as it will override all previous
-  private[smv] val mergedProps = defaultProps ++ appConfProps ++ usrConfProps ++ cmdLineProps
+  private[smv] val mergedProps = defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps
 
   // --- config params.  App should access configs through vals below rather than from props maps
   val appName = mergedProps("smv.appName")
