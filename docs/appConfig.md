@@ -28,7 +28,8 @@ If a configuration parameter appears in multiple places, then the conflict is re
 The sources are ordered from high to low priority as follows:
 
 * command line options
-* user level config file (default: conf/smv-user-conf.props)
+* project user level config file (default: conf/smv-user-conf.props)
+* global user level config file (~/.smv/smv-user-conf.props)
 * app level config file (default: conf/smv-app-conf.props)
 * smv default options
 
