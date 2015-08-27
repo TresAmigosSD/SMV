@@ -229,13 +229,14 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     val counter = new ScCounter(app.sc)
     val before = DateTime.now()
     println(s"${fmt.print(before)} PERSISTING: ${filePath}")
-    //      rdd.pipeCount(counter).saveAsCsvWithSchema(filePath)
-    rdd.saveAsCsvWithSchema(filePath)
+
+    rdd.smvPipeCount(counter).saveAsCsvWithSchema(filePath)
+
     val after = DateTime.now()
     val runTime = PeriodFormat.getDefault().print(new Period(before, after))
-    //val n = counter("N")
-    //println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
-    println(s"${fmt.print(after)} RunTime: ${runTime}")
+    val n = counter("N")
+
+    println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
 
     /** Check and Save RejectLogger **/
     app.checkAndSaveRejects(moduleRejectPath(prefix))

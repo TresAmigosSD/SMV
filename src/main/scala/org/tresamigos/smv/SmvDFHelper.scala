@@ -342,4 +342,29 @@ class SmvDFHelper(df: DataFrame) {
   def smvCoalesce(n: Int) = {
     df.sqlContext.createDataFrame(df.rdd.coalesce(n).map{r => Row.fromSeq(r.toSeq)}, df.schema)
   }
+
+  /**
+   * smvPipeCount
+   * Generate record count whenever the SRDD get processed
+   *
+   * Example:
+   *   val c = new ScCounter(sc)
+   *   val s1 = srdd.pipeCount(c)
+   *   ....
+   *   s1.saveAsCsvWithSchema("file")
+   *   println(c.report())
+   *
+   * Since using accumulator (ScCounter) in process can't guarantee results when recover from
+   * failures, we will only use this method to report processed records when persist SmvModule
+   * and potentially other SMV functions.
+   */
+  private[smv] def smvPipeCount(counter: SmvCounter): DataFrame = {
+    counter.reset()
+    val dummyFunc = udf({() =>
+      counter.add("N")
+      true
+    })
+
+    df.where(dummyFunc())
+  }
 }
