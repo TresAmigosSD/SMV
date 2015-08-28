@@ -161,6 +161,27 @@ class SmvAppTest extends SparkTestUtil {
     val files = SmvHDFS.dirList(testcaseTempDir)
     assertUnorderedSeqEqual(files, Seq("com.foo.mymodule_555.csv"))
   }
+
+  sparkTest("Test SmvFile crc") {
+    resetTestcaseTempDir
+    createTempFile("F1.csv")
+    createTempFile("F2.csv")
+
+    object f1 extends SmvFile {
+      val basePath = "F1.csv"
+      def computeRDD(): DataFrame = null
+    }
+    object f2 extends SmvFile {
+      val basePath = "F2.csv"
+      def computeRDD(): DataFrame = null
+    }
+
+    object app extends SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))
+
+    f1.injectApp(app)
+    f2.injectApp(app)
+    assert(f1.classCodeCRC() !== f2.classCodeCRC)
+  }
 }
 
 } // package: org.tresamigos.smv

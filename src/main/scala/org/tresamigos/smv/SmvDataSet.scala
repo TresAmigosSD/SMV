@@ -85,6 +85,16 @@ abstract class SmvFile extends SmvDataSet {
   override def description() = s"Input file: @${basePath}"
   override def requiresDS() = Seq.empty
 
+  def fullPath = s"${app.smvConfig.dataDir}/${basePath}"
+
+  override def classCodeCRC() = {
+    val fileName = fullPath
+    val mTime = SmvHDFS.modificationTime(fileName)
+    val crc = new java.util.zip.CRC32
+    crc.update(fileName.toCharArray.map(_.toByte))
+    (crc.getValue + mTime).toInt
+  }
+
   override def name() = {
     val nameRex = """(.+)(.csv)*(.gz)*""".r
     basePath match {
@@ -115,7 +125,7 @@ case class SmvCsvFile(
     implicit val ca = csvAttributes
     implicit val rejectLogger = createLogger(app, errPolicy)
     // TODO: this should use inputDir instead of dataDir
-    app.sqlContext.csvFileWithSchema(s"${app.smvConfig.dataDir}/${basePath}")
+    app.sqlContext.csvFileWithSchema(fullPath)
   }
 
 }
@@ -128,7 +138,7 @@ case class SmvFrlFile(
   override def computeRDD: DataFrame = {
     implicit val rejectLogger = createLogger(app, errPolicy)
     // TODO: this should use inputDir instead of dataDir
-    app.sqlContext.frlFileWithSchema(s"${app.smvConfig.dataDir}/${basePath}")
+    app.sqlContext.frlFileWithSchema(fullPath)
   }
 }
 

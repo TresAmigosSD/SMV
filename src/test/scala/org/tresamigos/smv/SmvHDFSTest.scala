@@ -59,4 +59,13 @@ class SmvHDFSTest extends SparkTestUtil {
     val files = SmvHDFS.dirList(testcaseTempDir)
     assertUnorderedSeqEqual(files, Seq("F3.csv"))
   }
+
+  test("Test file modificationTime") {
+    resetTestcaseTempDir
+    createTempFile("F1.csv")
+
+    val mt0 = SmvHDFS.modificationTime("target")
+    val mt1 = SmvHDFS.modificationTime(s"${testcaseTempDir}/F1.csv")
+    assert (mt0 < mt1)
+  }
 }

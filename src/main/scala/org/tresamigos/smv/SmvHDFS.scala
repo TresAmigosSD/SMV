@@ -35,6 +35,16 @@ object SmvHDFS {
   }
 
   /**
+   * get modification time of a HDFS file
+   **/
+
+  def modificationTime(fileName: String) : Long = {
+    val path = new org.apache.hadoop.fs.Path(fileName)
+    val hdfs = getFileSystem(fileName)
+
+    hdfs.getFileStatus(path).getModificationTime()
+  }
+  /**
    * Return a list of files in the given directory.
    * Note that we don't use hdfs.listFiles as it was not available in earlier
    * version of hadoop and we don't want to force our users to upgrade.
