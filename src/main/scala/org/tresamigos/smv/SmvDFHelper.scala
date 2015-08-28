@@ -68,6 +68,60 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
+   * Add, or replace, columns to the data frame.
+   *
+   * Each column expression in the argument list is added to the data
+   * frame.  If the column is an alias (NamedExpression), any existing
+   * column by the same name as the alias will be replaced by the new
+   * column data.
+   *
+   * Example:
+   *
+   * 1.  <code>
+   *   df.selectWithReplace($"age" + 1 as "age")
+   * </code>
+   *
+   * will create a new data frame with the same schema and with all
+   * values in the "age" column incremented by 1
+   *
+   * 2. <code>
+   *   df.selectWithReplace($"age" + 1)
+   * </code>
+   *
+   * will create a new data frame with an additional column (named
+   * automatically by spark sql) containing the incremented values in
+   * the "age" column, unless there is already another column that
+   * happens to have the same spark-generated name (in which case that
+   * column will be replaced with the new expression)
+   */
+  def selectWithReplace(columns: Column*): DataFrame = {
+    val currColNames: Seq[String] = df.columns
+
+    // separate columns into an overwrite set and the rest, which will be simply added
+    val (overwrite, add) = columns.partition(c => c.toExpr match {
+      case alias: NamedExpression => currColNames.contains(alias.name)
+      case _ => false
+    })
+
+    // Update the overwritten columns first, working with a smaller
+    // set of total columns, then add the rest
+    val edited = if (overwrite.isEmpty) df else {
+      val origColNames: Seq[String] = overwrite.map(_.getName)
+      val uniquelyNamed: Seq[Column] =
+        overwrite.map(c => c as "_SelectWithReplace_" + c.getName) // expecting this to be good-enough to ensure column name uniqueness in the schema
+      val renameArgs: Seq[(String, String)] = uniquelyNamed.map(_.getName) zip origColNames
+
+      // add the new columns first, because they could (and usually)
+      // refer to the columns being updated
+      df.selectPlus(uniquelyNamed:_*).
+        selectMinus(origColNames.head, origColNames.tail:_*).
+        renameField(renameArgs:_*)
+    }
+
+    edited.selectPlus(add: _*)
+  }
+
+  /**
    * selects all the current columns in current SRDD plus the supplied expressions.
    */
   def selectPlus(exprs: Column*): DataFrame = {

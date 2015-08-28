@@ -14,7 +14,30 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.types._
+import org.apache.spark.sql._, types._
+
+class SelectWithReplaceTest extends SparkTestUtil {
+  def testDf(sqlContext: SQLContext): DataFrame =
+    sqlContext.createSchemaRdd(
+      "name:String;friends:Integer",
+      "Adam,1;Beth,2;Caleb,3;David,4")
+
+  sparkTest("SelectWithReplace should add new columns without modification") {
+    val input = testDf(sqlContext)
+    val res = input.selectWithReplace(input("friends") + 1 as "newfriends")
+    assertSrddSchemaEqual(res, "name:String;friends:Integer;newfriends:Integer")
+    assertSrddDataEqual(res,
+      "Adam,1,2;Beth,2,3;Caleb,3,4;David,4,5")
+  }
+
+  sparkTest("SelectWithReplace should overwrite existing columsn with the name") {
+    val input = testDf(sqlContext)
+    val res = input.selectWithReplace(input("friends") + 1 as "friends")
+    assertSrddSchemaEqual(res, "name:String;friends:Integer")
+    assertSrddDataEqual(res,
+      "Adam,2;Beth,3;Caleb,4;David,5")
+  }
+}
 
 class SelectPlusMinusTest extends SparkTestUtil {
   sparkTest("test SelectPlus") {
