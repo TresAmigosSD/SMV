@@ -2,9 +2,8 @@
 smv.appName = Example App
 
 # stage definitions
-smv.stages = etl, adhoc
-smv.stages.etl.packages = org.tresamigos.getstart.etl
-smv.stages.adhoc.packages = org.tresamigos.getstart.adhoc
+smv.stages = stage1
 
-# spark sql properties
-spark.sql.shuffle.partitions = 64
+# this example has a single stage named "stage1".
+# Best practice is to create a separate package to enclose all the inputs into a stage.
+smv.stages.stage1.packages = _PROJ_CLASS_.stage1.input, _PROJ_CLASS_.stage1.etl

@@ -54,7 +54,7 @@ function copy_with_inject()
     mkdir -p "$(dirname "$DST")"
     sed -e "s/_GROUP_ID_/$PROJ_GROUP_ID/" \
         -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
-        -e "s/_PROJ_CLASS_/$PROJ_CLASS/" \
+        -e "s/_PROJ_CLASS_/$PROJ_CLASS/g" \
         < "$SRC" > "$DST"
 }
 
@@ -80,9 +80,8 @@ function copy_src_files()
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
     STAGE1_PKG_PATH="${PROJ_DIR}/src/main/scala/${PROJ_CLASS_PATH}/stage1"
 
-    # TODO: rename ExampleApp to Stage1InputSet.scala
-    SRC_INPUT_SET="${TEMPLATE_DIR}/src/ExampleApp.scala"
-    DST_INPUT_SET="${STAGE1_PKG_PATH}/Stage1InputSet.scala"
+    SRC_INPUT_SET="${TEMPLATE_DIR}/src/InputFiles.scala"
+    DST_INPUT_SET="${STAGE1_PKG_PATH}/input/InputFiles.scala"
     copy_with_inject "$SRC_INPUT_SET" "$DST_INPUT_SET"
 
     SRC_EMPLOYMENT="${TEMPLATE_DIR}/src/Employment.scala"
