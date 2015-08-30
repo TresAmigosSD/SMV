@@ -9,7 +9,7 @@ FOOTID_NAICS: String
 YEAR: String
 ESTAB: String
 ESTAB_F: String
-EMP: String
+EMP: Integer
 EMP_F: String
 EMP_N: String
 EMP_N_F: String

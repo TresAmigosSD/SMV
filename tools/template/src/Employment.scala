@@ -1,5 +1,9 @@
 package _PROJ_CLASS_.stage1.etl
 
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+import org.apache.spark.sql._
+
 import _PROJ_CLASS_.stage1.input._
 import org.tresamigos.smv._
 
@@ -14,8 +18,9 @@ object EmploymentRaw extends SmvModule("ETL Example: Employment") with SmvOutput
   override def run(i: runParams) = {
     val df = i(employment)
 
-    df.limit(10).select(
-      "EMP"
-      )
+    df.groupBy("ST").agg(
+      first("ST"),
+      sum("EMP") as "EMP"
+    )
   }
 }
