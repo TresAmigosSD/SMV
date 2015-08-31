@@ -11,7 +11,6 @@ scalacOptions ++= Seq("-deprecation", "-feature")
 val sparkVersion = "1.3.0"
 
 libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
   "org.scalatest" %% "scalatest" % "2.2.0" % "test",
   "com.google.guava" % "guava" % "14.0.1",
