@@ -6,7 +6,7 @@ development. The relation to Spark Stack is the following
 ![Alt text](https://rawgit.com/TresAmigosSD/SMV/master/docs/images/tech_stack.png)
 
 ## Who are the users of SMV
-SMV could be used for either Data Engineers or Data Scientists.
+SMV could be used by either Data Engineers or Data Scientists.
 
 SMV could help Data Engineers on:
 * A very simple modularized framework for data ETL and manipulation
@@ -27,7 +27,7 @@ SMV could help Data Scientists on:
 * Discovery and Development iterations all combined in the same framework for
   quickly automating discovered insights to product ready code
 
-## What is the pre-request of using SMV
+## What is the prerequisite of using SMV
 Although SMV is a Scala library on top of Spark stack, to use it for basic data discovery
 and data development, the user does not need to know too much on either Spark or Scala.
 

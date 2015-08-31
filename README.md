@@ -2,28 +2,6 @@
 Spark Model Variables enables users to quickly build model variables on Apache Spark platform.
 Please refer [FAQ](docs/FAQ.md) for details.
 
-## Build
-To build this package, use maven as follows:
-```shell
-$ mvn clean install
-```
-You must use maven version 3.0.4 or newer to build this project. 
-In some system, instead of comand `mvn`, you may need to use `mvn3`.
-
-With Spark version 1.3, you need to set the Maven memory to avoid compile failure  
-```shell
-export MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m"
-```
-
-Current version depend on Spark 1.3.0. It should also works under 1.3.1. Please modify 
-`pom.xml` to change Maven dependency configuration on Spark if you want to compile it with 
-Spark 1.3.1 library. 
-
-For more details of setting up the system from scretch, please refer 
-[Smv Installation](docs/SMV-Installation.md).
-It was written for earlier SMV version with Spark 1.1. Although the latest version 
-of SMV actually work with Spark 1.3, the document could still be helpful for the overall 
-process.
 
 ## Running
 
