@@ -43,6 +43,8 @@ The SmvApp framework with all the additional functions is to make user's experie
 with minimal Spark/Scala programing knowledge and skills. 
 
 ## Application Framework
+* [User Guide](docs/user/0_user_toc.md)
+* [Reference Guide](docs/ref/0_ref_toc.md)
 * [Application Framework Intro](docs/appFramework.md)
 * [Running SMV Application](docs/runSmvApp.md)
 * [Application Configuration](docs/appConfig.md)

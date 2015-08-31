@@ -11,13 +11,13 @@ to override any of the options using the command line interface.
 For any given option X, the user may override the value specified in any of the configuration files as follows:
 
 ```
-./tools/run_module.sh --smv-props X=55 ... module_to_run
+_SMV_HOME_/tools/run_app.sh --smv-props X=55 ... -m module_to_run
 ```
 
 multiple properties may be specified at the same time:
 
 ```
-./tools/run_module.sh --smv-props smv.appName="myApp" smv.stages="s1,s2" ... module_to_run
+_SMV_HOME_/tools/run_module.sh --smv-props smv.appName="myApp" smv.stages="s1,s2" ... -m module_to_run
 ```
 
 Some configuration parameters have a shorthand direct command line override (e.g. --data-dir)
