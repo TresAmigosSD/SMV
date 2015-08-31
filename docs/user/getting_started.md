@@ -106,6 +106,8 @@ EMP: Long
 TODO: add pointer to run_app.sh reference doc!
 
 ### Run Example App using `run_shell.sh`
+
+#### Launch shell
 Spark shell can be used to allow the user to run individual modules interactively.
 The `run_shell.sh` script is provided by SMV to make it easy to launch the Spark shell with the "fat" jar attached.
 
@@ -113,8 +115,11 @@ The `run_shell.sh` script is provided by SMV to make it easy to launch the Spark
 $ _SMV_HOME_/tools/run_shell.sh
 ```
 
-Once we are inside the spark shell, we can "source" (using the s() smv shell helper function) any `SmvFile` or `SmvModule` instance
-and inspect the contents.
+TODO: add link to run_shell.sh reference doc!
+
+#### Exploring SmvDataSets (SmvFiles and SmvModules)
+Once we are inside the spark shell, we can "source" (using the `s()` smv shell helper function) any `SmvFile` or `SmvModule` instance
+and inspect the contents (because the `s` function returns a standard Spark `DataFrame` object)
 
 ```scala
 scala> val d1=s(employment)
@@ -135,8 +140,61 @@ ZIPCODE YEAR ESTAB EMP
 ...
 ```
 
-TODO: add SmvModule use
+You can also access SmvModules defined in the code.
+This is **not** limited to output modules.
 
-TODO: add EDD use here.
+```scala
+scala> val d2 = s(EmploymentRaw)
+d2: org.apache.spark.sql.DataFrame = [FIRST('ST): string, EMP: bigint]
 
-TODO: add link to run_shell.sh reference doc!
+scala> d2.printSchema
+root
+ |-- FIRST('ST): string (nullable = true)
+ |-- EMP: long (nullable = true)
+
+
+scala> d2.count
+res2: Long = 52
+```
+
+`EmploymentRaw` is defined in the `etl` package `Employment.scala` file.
+As you can see above, when you try to refer to a SmvModule, it will do the calculation and
+then persist it for future use. Now you can use `d2`, a DataFrame, to refer to the
+SmvModule output, although in this example, there are nothing intersecting in that
+data other than the `EMP` field.
+
+#### Run EDD on data
+To quickly get an overall idea of the input data, we can use the SMV EDD (Extended Data Dictionary) tool.
+
+```scala
+scala> d1.select("ZIPCODE", "YEAR", "ESTAB", "EMP").edd.addBaseTasks().addHistogramTasks("ESTAB", "EMP")().dump
+Total Record Count:                         38818
+ZIPCODE              Non-Null Count:        38818
+ZIPCODE              Average:               49750.09928383732
+ZIPCODE              Standard Deviation:    27804.662445936523
+ZIPCODE              Min:                   501
+ZIPCODE              Max:                   99999
+...
+Histogram of ESTAB: with BIN size 100.0
+key                      count      Pct    cumCount   cumPct
+0.0                      26060   67.13%       26060   67.13%
+100.0                     3129    8.06%       29189   75.19%
+200.0                     1960    5.05%       31149   80.24%
+300.0                     1445    3.72%       32594   83.97%
+400.0                     1136    2.93%       33730   86.89%
+500.0                      937    2.41%       34667   89.31%
+...
+-------------------------------------------------
+Histogram of EMP: with BIN size 100.0
+key                      count      Pct    cumCount   cumPct
+0.0                      15792   40.68%       15792   40.68%
+100.0                     3132    8.07%       18924   48.75%
+200.0                     1844    4.75%       20768   53.50%
+300.0                     1235    3.18%       22003   56.68%
+400.0                      988    2.55%       22991   59.23%
+500.0                      738    1.90%       23729   61.13%
+...
+```
+
+TODO: add link to EDD ref guide here
+
