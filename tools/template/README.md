@@ -1,4 +1,8 @@
 # TODO: Need to update this.
+
+# TODO: Add link to the getting_started page on github!!!
+
+
 # An Example App for Quick Start
 
 This is a dummy app on US employment data. Please see `data/input/employment/info.md` for basic 
@@ -9,28 +13,6 @@ With SMV package installed, you can compile and then run this App on the Spark S
 
 ## Explore SmvFile and SmvModules 
 
-For the input data, you can check it as below
-```scala
-scala> val d1=s(p.employment)
-scala> d1.printSchema
-scala> d1.show(1)
-scala> d1.select("ZIPCODE", "YEAR", "ESTAB", "EMP").show(10)
-```
-
-The output of last command will show something like
-```
-ZIPCODE YEAR ESTAB EMP  
-35004   2012 167   2574 
-35005   2012 88    665  
-35006   2012 20    0    
-35007   2012 596   10347
-35010   2012 463   6725 
-35011   2012 30    0    
-35013   2012 3     0    
-35014   2012 23    106  
-35015   2012 4     0    
-35016   2012 313   3306 
-```
 
 You can also access SmvModules defined in the code.
 ```
@@ -107,52 +89,4 @@ key                      count      Pct    cumCount   cumPct
 
 Please refer SMV document on EDD for more details.
 
-## Create Your Own Project
 
-You can use this project as a template to create your own project. You need to 
-make some changes on the files to reflect your orginzation name and project name.
-
-### pom.xml
-Those 2 lines,
-
-```xml
-  <groupId>org.tresamigos</groupId>
-  <artifactId>getstart</artifactId>
-```
-
-### shell/run.sh
-Rename the `getstart` in this line,
-`./target/getstart-1.0-SNAPSHOT-jar-with-dependencies.jar`,
-to your project name.
-
-### shell/shell_init.scala
-Rename the package name in this line
-```
-import org.tresamigos.getstart._, core._ , etl._
-```
-
-### Rename the directory 
-```
-src/main/scala/org/tresamigos/getstart/
-```
-
-### core/ExampleApp.scala
-Rename package name and 
-```scala
-  override def getModulePackages() = Seq(
-    "org.tresamigos.getstart.etl",
-    "org.tresamigos.getstart.adhoc"
-  )
-```
-to include your project packages.
-
-Also change the file references in `object ExampleApp`,
-```scala
-val employment = SmvCsvFile("input/employment/CB1200CZ11.csv", caBar)
-```
-
-### etl/*scala
-Rename the package names. 
-
-Please refer to SMV document on "Application Framework" for more details on where to 
-go from this point.

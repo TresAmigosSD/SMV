@@ -57,6 +57,86 @@ The input files and their DQM rules/policies are put in the `input` sub-package
 
 The generated `etl` package contains a single sample module for processing the provided employment data.
 
-## Run Example App
+## Build Example App
+The generated application must be built before it is run.  This is simply done by running the following maven command:
 
-TODO: add run_app and run_shell here!!!!
+```shell
+$ mvn clean install
+```
+
+The above command should generate a target directory that contains the application "fat" jar `myapp-1.0-SNAPSHOT-jar-with-dependencies.jar`.
+This jar file will contain the compiled application class files, all the SMV class files and everything else that SMV depends on (except for the Spark libraries)
+
+## Run Example App
+The built app can be run by two methods.
+* `run_app.sh` : used to run specific modules, stages, or entire app from the command line.
+* `run_shell.sh` : uses the Spark Shell to interactively run and explore the output of individual modules and files.
+
+### Run Example App using `run_app.sh`
+```shell
+\# run entire app (run all output modules in all stages)
+$ _SMV_HOME_/tools/run_app.sh --run-app
+
+\# run stage1 (all output modules in stage1)
+$ _SMV_HOME_/tools/run_app.sh -s stage1
+
+\# run specific module (any module can be run this way, does not have to be an output module)
+$ _SMV_HOME_/tools/run_app.sh -m com.mycompany.myapp.stage1.etl.EmploymentRaw
+```
+
+See [Output Modules](output_modules.md) for more details on how to mark a module as an output module.
+
+The output csv file and schema can be found in the `data/output` directory (as configured in the `conf/smv-user-conf.props` files).
+
+```shell
+$ cat data/output/com.mycompany.myapp.stage1.etl.EmploymentRaw_XXXXXXXX.csv/part-* | head -5
+"32",981295
+"33",508120
+"34",3324188
+"35",579916
+"36",7279345
+
+$ cat data/output/com.mycompany.myapp.stage1.etl.EmploymentRaw_XXXXXXXX.schema/part-*
+FIRST('ST): String
+EMP: Long
+```
+
+**Note**: the output above may be different as it depends on order of execution of partitions.
+
+TODO: add pointer to run_app.sh reference doc!
+
+### Run Example App using `run_shell.sh`
+Spark shell can be used to allow the user to run individual modules interactively.
+The `run_shell.sh` script is provided by SMV to make it easy to launch the Spark shell with the "fat" jar attached.
+
+```shell
+$ _SMV_HOME_/tools/run_shell.sh
+```
+
+Once we are inside the spark shell, we can "source" (using the s() smv shell helper function) any `SmvFile` or `SmvModule` instance
+and inspect the contents.
+
+```scala
+scala> val d1=s(employment)
+
+scala> d1.count
+res1: Long = 38818
+
+scala> d1.printSchema
+root
+ |-- ST: string (nullable = true)
+ |-- ZIPCODE: string (nullable = true)
+...
+
+scala> d1.select("ZIPCODE", "YEAR", "ESTAB", "EMP").show(10)
+ZIPCODE YEAR ESTAB EMP
+35004   2012 167   2574
+35005   2012 88    665
+...
+```
+
+TODO: add SmvModule use
+
+TODO: add EDD use here.
+
+TODO: add link to run_shell.sh reference doc!

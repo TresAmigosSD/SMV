@@ -17,7 +17,7 @@ _SMV_HOME_/tools/run_app.sh --smv-props X=55 ... -m module_to_run
 multiple properties may be specified at the same time:
 
 ```
-_SMV_HOME_/tools/run_module.sh --smv-props smv.appName="myApp" smv.stages="s1,s2" ... -m module_to_run
+_SMV_HOME_/tools/run_app.sh --smv-props smv.appName="myApp" smv.stages="s1,s2" ... -m module_to_run
 ```
 
 Some configuration parameters have a shorthand direct command line override (e.g. --data-dir)
