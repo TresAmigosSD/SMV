@@ -399,7 +399,7 @@ class ColumnHelper(column: Column) {
    **/
   def smvStrTrim() = {
     val name = s"SmvStrTrim($column)"
-    val f = udf({v: String => v.trim()})
+    val f = udf({v: String => if (null == v) null else v.trim()})
     f(column).as(name)
   }
 }
