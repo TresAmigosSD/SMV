@@ -1,5 +1,6 @@
-# SMV Output Modules
+# SmvModule
 
+# Output Modules
 As the number of modules in a given SMV stage grows, it becomes more difficult to track which
 modules are the "leaf"/output modules within the stage.
 Any module within the stage can be marked as an output module by mixing-in the `SmvOutput` trait.
@@ -22,3 +23,6 @@ In addition to the above, the ability to mark certain modules as output has the 
 * We may add a future option to `SmvApp` that allows the user to display a "catalog" of output modules and their description.
 
 See [Smv Stages](smv_stages.md) for details on how to configure multiple stages.
+
+TODO: renmae this to smv_modules.md and add info about modules in general (not just output) with examples!
+TODO: add explanation about requireDS, run, etc for a normal module.  dependency on SmvFile vs SmvModule, ...

@@ -84,7 +84,7 @@ $ _SMV_HOME_/tools/run_app.sh -s stage1
 $ _SMV_HOME_/tools/run_app.sh -m com.mycompany.myapp.stage1.etl.EmploymentRaw
 ```
 
-See [Output Modules](output_modules.md) for more details on how to mark a module as an output module.
+See [SMV Output Modules](smv_module.md#output-modules) for more details on how to mark a module as an output module.
 
 The output csv file and schema can be found in the `data/output` directory (as configured in the `conf/smv-user-conf.props` files).
 
