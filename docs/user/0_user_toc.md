@@ -3,8 +3,8 @@
 * [Installation](smv_install.md)
 * [Getting Started](getting_started.md)
 * [Output Modules](output_modules.md)
+* [Smv Stages](smv_stages.md)
 * Adding a new CSV input file (with schema discovery)
-* Adding a new stage.
 * Using SMV non-aggregate functions
 * Using SMV aggregate functions
 * CDS / GDO?
