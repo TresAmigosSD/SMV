@@ -1,0 +1,85 @@
+@startuml
+hide empty methods
+hide empty fields
+hide circle
+
+package SMV {
+  class DQMLogger {
+    recordCounter: SmvCounter
+    ruleCounter: SmvCounter
+    ruleLog: SmvLogger
+  }
+
+  class DQMTask <<Abstract>> {
+    name: String
+  }
+
+  class DQMRule extends DQMTask {
+    rule: Column
+    name: String
+    createCheckCol(logger: DQMLogger): (Column, Column)
+  }
+
+  class DQMFix extends DQMTask {
+    condition: Column
+    fix: Column
+    name: String
+    createFixCol(logger: DQMLogger): Column
+  }
+
+  class DQMPolicy <<Abstract>>{
+    name: String
+    checkPolicy(df: DataFrame, logger: DQMLogger): Boolean
+  }
+
+  class DQMSimplePolicy <<Abstract>> extends DQMPolicy {
+    checkPolicy(logger: DQMLogger): Boolean
+    report(logger: DQMLogger): String
+  }
+
+  class FailCountPolicy extends DQMSimplePolicy {
+    taskName: String
+    threshold: Int
+  }
+
+  class FailTotalCountPolicy extends DQMSimplePolicy {
+    threshold: Int
+  }
+
+  class FailPercentPolicy extends DQMSimplePolicy {
+    taskName: String
+    threshold: Double
+  }
+
+  class FailTotalPercentPolicy extends DQMSimplePolicy {
+    threshold: Double
+  }
+
+  class DQMTaskPolicy <<Abstract>> {
+    createPolicy(name: String): DQMSimplyPolicy
+  }
+
+  class FailNone extends DQMTaskPolicy
+  class FailAny extends DQMTaskPolicy
+  class FailCount extends DQMTaskPolicy {
+    threshold: Int
+  }
+  class FailPercent extends DQMTaskPolicy {
+    threshold: Double
+  }
+
+  class SmvDQM {
+    tasks: Seq[DQMTask, DQMTaskPolicy]
+    policies: Seq[DQMPolicy]
+    add(task: DQMTask, t_policy: DQMTaskPolicy = FailNone): SmvDQM
+    add(policy: DQMPolicy)
+    attachTasks(df: DataFrame, logger: DQMLogger): DataFrame
+  }
+
+  SmvDQM *-- "*" DQMTask
+  SmvDQM *-- "*" DQMTaskPolicy
+  SmvDQM *-- "*" DQMPolicy
+
+}
+
+@enduml
