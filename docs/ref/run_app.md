@@ -1,14 +1,14 @@
 # Running SMV Application
 
-An SMV application can be run using the standard "spark-submit" method or run using "spark-shell"
+While an SMV application can be run using the standard "spark-submit" command,
+a convenient script `run_app.sh` is provided to make it easy to run an application built using maven.
 
-## Run SMV Application using spark-submit
-
-The format of the "spark-submit" call is:
+## Synopsis
 ```shell
-$ spark-submit [standard spark-submit-options] --class org.tresamigos.smv.SmvApp [options] [what-to-run]
+$ _SMV_HOME_/tools/run_app.sh [standard spark-submit-options] [smv-options] [what-to-run]
 ```
 
+## Options
 <br>
 <table>
 
@@ -20,6 +20,27 @@ $ spark-submit [standard spark-submit-options] --class org.tresamigos.smv.SmvApp
 <th>Option</th>
 <th>Default</th>
 <th>Description</th>
+</tr>
+
+<tr>
+<td>--master</td>
+<td>local[*]</td>
+<td>Specify the spark master to use (standard spark option)</td>
+</tr>
+
+<tr>
+<td>--class</td>
+<td>org.tresamigos.smv.SmvApp</td>
+<td>Specify the application entry point.
+The default should suffice unless the user wants to create some special initialization code and implement their own object main()</td>
+</tr>
+
+<tr>
+<td>--jar</td>
+<td>target/*jar-with-dependencies.jar</td>
+<td>Specify the application fat jar.
+This is the jar built using the package command using the supplied `pom.xml` example.
+The default is to use the latest (by time, not version) that is found in the target directory
 </tr>
 
 <tr>
@@ -79,7 +100,7 @@ graphvis must be used to convert the ".dot" file to an image or doc.  For exampl
 <tr>
 <th colspan="3">What To Run
 <br>
-One one of the options below must be specified.
+One of the options below must be specified.
 </th>
 </tr>
 
@@ -135,30 +156,4 @@ One one of the options below must be specified.
 </tr>
 
 </table>
-
-## Run Spark Shell with SMV
-
-We can pre-load SMV jar when run spark-shell.
-
-```shell
-$ spark-shell --executor-memory 2g --jars ./target/smv-1.0-SNAPSHOT.jar -i sparkshellinclude.scala
-```
-where `sparkshellinclude.scala` will be loaded for convenience. It could look like the follows,
-
-```scala
-import org.apache.spark.sql._, functions._
-import org.tresamigos.smv._
-val sqlContext = new SQLContext(sc)
-import sqlContext.implicits._
-```
-
-Or you can use the existing script under ```shell``` directory.
-```shell
-./shell/run.sh
-```
-You may need to modify the script a little for your own environment.
-You can put utility functions for the interactive shell in the ```shell_init.scala``` file.
-
-Please note that the Spark Shell should in the same version as the SMV build on. Current version
-SMV uses Spark 1.3.0, so you need the spark-shell in 1.3.0 package.
 

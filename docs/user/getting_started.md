@@ -103,7 +103,7 @@ EMP: Long
 
 **Note**: the output above may be different as it depends on order of execution of partitions.
 
-TODO: add pointer to run_app.sh reference doc!
+See [Run SMV Application](../ref/run_app.md) for further details.
 
 ### Run Example App using `run_shell.sh`
 
