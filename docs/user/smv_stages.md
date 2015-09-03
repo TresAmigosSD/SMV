@@ -19,7 +19,7 @@ For example, given an app with 2 stages (stage1, stage2) and each stage with 2 p
     +-- stage2
         +-- input
         +-- pkg3
-        +-- pkg4
+        +-- pkg4  (package FQN = com.mycom.myproj.stage2.pkg4)
 ```
 
 A couple of things to note about the above file hierarchy
@@ -66,5 +66,54 @@ Therefore, stage X needs to be run first before Stage Y can run (so that `accoun
 See [Publishing Stage Output](publishing.md) for details on how to pin dependency to a specific published version
 
 # Adding a stage
+As the project grows, it may become necessary to add additional stages.
+We will utilize the example app described in [Getting Started](getting_started.md) as the starting point.
 
-TODO: add info about adding a new stage.
+```bash
+$ _SMV_HOME_/tools/bin/smv_init.sh MyApp com.mycompany.myapp
+```
+
+To review, the above will create a sample app `MyApp` with a single stage `stage1` which has two packages `input` and `etl`.
+To add an additional `modeling` stage which has `vars` package (plus the usual `input` package), we need to do the following:
+
+**1. add the stage to the app configuration file (`conf/smv-app-conf.props`).**
+
+```
+...
+# add modeling below
+smv.stages = stage1, modeling
+
+# add packages in modeling stage
+smv.stages.modeling.packages = com.mycompany.myapp.modeling.input, com.mycompany.myapp.modeling.vars
+...
+
+```
+
+TODO: we will get rid of "smv.stages.stage_name.packages" config in the future.
+
+**2. add the `input` package to the source tree.**
+
+Create the file `src/main/scala/com/mycompany/myapp/modeling/input/InputFiles.scala` and add `SmvFile` and `SmvModuleOutputFile` objects
+in the file as described in [Stage Input](#stage-input) section above.
+
+**3. add the modules to the `vars` package.**
+
+Create the file `src/main/scala/com/mycompany/myapp/modeling/vars/AccountVars.scala` which defines the `AccountVars` module.
+
+```scala
+package com.mycompany.myapp.modeling.vars
+import com.mycompany.myapp.modeling.input._
+
+object AccountVars extends SmvModule("add model variables to accounts") {
+  override def requiresDS() = Seq(accounts) # accounts is defined in modeling.input
+
+  override def run(i: runParams) = {
+    val raw_accounts = i(accounts)
+    ...
+  }
+}
+```
+
+We can now run the `AccountVars` module by providing the module FQN `com.mycompany.myapp.modeling.vars.AccountVars` to the `run_app.sh` command
+or by marking the module using the `SmvOutput` trait and running the entire stage ("-s modeling").
+See [Smv Modules](smv_module.md) for details.
