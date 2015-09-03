@@ -80,10 +80,10 @@ To add an additional `modeling` stage which has `vars` package (plus the usual `
 
 ```
 ...
-\# add modeling below
+# add modeling below
 smv.stages = stage1, modeling
 
-\# add packages in modeling stage
+# add packages in modeling stage
 smv.stages.modeling.packages = com.mycompany.myapp.modeling.input, com.mycompany.myapp.modeling.vars
 ...
 
