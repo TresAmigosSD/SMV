@@ -74,13 +74,13 @@ The built app can be run by two methods.
 
 ### Run Example App using `run_app.sh`
 ```shell
-\# run entire app (run all output modules in all stages)
+# run entire app (run all output modules in all stages)
 $ _SMV_HOME_/tools/run_app.sh --run-app
 
-\# run stage1 (all output modules in stage1)
+# run stage1 (all output modules in stage1)
 $ _SMV_HOME_/tools/run_app.sh -s stage1
 
-\# run specific module (any module can be run this way, does not have to be an output module)
+# run specific module (any module can be run this way, does not have to be an output module)
 $ _SMV_HOME_/tools/run_app.sh -m com.mycompany.myapp.stage1.etl.EmploymentRaw
 ```
 
