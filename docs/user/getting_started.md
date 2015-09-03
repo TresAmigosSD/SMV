@@ -105,6 +105,8 @@ EMP: Long
 
 See [Run SMV Application](../ref/run_app.md) for further details.
 
+TODO: add example of running with -g (graph) command.
+
 ### Run Example App using `run_shell.sh`
 
 #### Launch shell

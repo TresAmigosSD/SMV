@@ -3,12 +3,14 @@
 While an SMV application can be run using the standard "spark-submit" command,
 a convenient script `run_app.sh` is provided to make it easy to run an application built using maven.
 
-## Synopsis
+### Synopsis
 ```shell
 $ _SMV_HOME_/tools/run_app.sh [standard spark-submit-options] [smv-options] [what-to-run]
 ```
 
-## Options
+**Note:**  The above command should be run from the project top level directory.
+
+### Options
 <br>
 <table>
 
@@ -51,6 +53,7 @@ The default is to use the latest (by time, not version) that is found in the tar
 <code>$ ... --smv-props "smv.stages=s1"</code>
 <br>
 See <a href="appConfig.md">Application Configuration</a> for details.
+TODO: fix appConfig.md reference above.
 </td>
 </tr>
 
@@ -157,3 +160,5 @@ One of the options below must be specified.
 
 </table>
 
+### Examples
+TODO: add run_app examples below
