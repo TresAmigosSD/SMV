@@ -3,7 +3,6 @@ package org.tresamigos.smv
 class CsvTest extends SparkTestUtil {
 
   sparkTest("Test loading of csv file with header") {
-    object app extends SmvApp(Seq("-m", "None"), Option(sc))
     val file = SmvCsvFile("./" + testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader)
     file.injectApp(app)
     val df = file.rdd

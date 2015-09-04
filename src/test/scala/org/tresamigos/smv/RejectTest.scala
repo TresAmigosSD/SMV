@@ -18,7 +18,6 @@ import org.apache.spark.SparkException
 
 class RejectTest extends SparkTestUtil {
   sparkTest("test csvFile loader rejection with NoOp") {
-    object app extends SmvApp(Seq("-m", "None"), Option(sc))
     val file = SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv, SmvErrorPolicy.Ignore)
     file.injectApp(app)
     val df = file.rdd
@@ -36,7 +35,6 @@ class RejectTest extends SparkTestUtil {
   }
 
   sparkTest("test csvFile loader rejection") {
-    object app extends SmvApp(Seq("-m", "None"), Option(sc))
     val file = SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv, SmvErrorPolicy.Log)
     file.injectApp(app)
     val df = file.rdd

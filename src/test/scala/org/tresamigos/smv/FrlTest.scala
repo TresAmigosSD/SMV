@@ -16,7 +16,6 @@ package org.tresamigos.smv
 
 class FrlTest extends SparkTestUtil {
   sparkTest("test frlFile loader with NoOp rejectlogger") {
-    object app extends SmvApp(Seq("-m", "None"), Option(sc))
     val file = SmvFrlFile("./" + testDataDir + "FrlTest/test", SmvErrorPolicy.Ignore)
     file.injectApp(app)
 

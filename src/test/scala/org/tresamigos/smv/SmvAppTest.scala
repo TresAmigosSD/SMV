@@ -74,10 +74,10 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test normal dependency execution") {
-    object app extends SmvApp(Seq("-m", "C"), Option(sc))
+    object testApp extends SmvApp(Seq("-m", "C"), Option(sc))
 
-    C.injectApp(app)
-    val res = app.resolveRDD(C)
+    C.injectApp(testApp)
+    val res = testApp.resolveRDD(C)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
 
     // even though both B and C depended on A, A should have only run once!
@@ -95,8 +95,6 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test cycle dependency execution") {
-    object app extends SmvApp(Seq("-m", "None"), Option(sc))
-
     A_cycle.injectApp(app)
     B_cycle.injectApp(app)
     intercept[IllegalStateException] {
@@ -105,9 +103,9 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test SmvModuleJSON") {
-    object app extends SmvApp(testAppArgs.singleStage ++ Seq("-m", "None"), Some(sc)) {}
+    object testApp extends SmvApp(testAppArgs.singleStage ++ Seq("-m", "None"), Some(sc)) {}
 
-    val app2JSON = new SmvModuleJSON(app, Seq())
+    val app2JSON = new SmvModuleJSON(testApp, Seq())
     val expect = """{
   "X": {
     "version": 0,
@@ -121,9 +119,9 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test dependency graph creation.") {
-    object app extends SmvApp(Seq("-m", "C"), Option(sc))
+    object testApp extends SmvApp(Seq("-m", "C"), Option(sc))
 
-    val depGraph = new SmvModuleDependencyGraph(C, app.packagesPrefix)
+    val depGraph = new SmvModuleDependencyGraph(C, testApp.packagesPrefix)
     //depGraph.saveToFile("foo.dot")
 
     val edges = depGraph.graph
@@ -144,18 +142,18 @@ class SmvAppTest extends SparkTestUtil {
       override def moduleCsvPath(prefix: String) = "com.foo.mymodule_555.csv"
     }
     /** create a dummy app that only has the module above as its only module. */
-    object app extends SmvApp(
+    object testApp extends SmvApp(
       Seq("--purge-old-output", "--output-dir", testcaseTempDir), Option(sc)) {
       override def allAppModules = Seq(m)
     }
-    m.injectApp(app)
+    m.injectApp(testApp)
 
     // create multiple versions of the module file in the output dir (one with a later time stamp too!)
     createTempFile("com.foo.mymodule_444.csv")
     createTempFile("com.foo.mymodule_555.csv")
     createTempFile("com.foo.mymodule_666.csv")
 
-    app.purgeOldOutputFiles()
+    testApp.purgeOldOutputFiles()
 
     // Only the current file should remain after purge.
     val files = SmvHDFS.dirList(testcaseTempDir)
@@ -176,10 +174,10 @@ class SmvAppTest extends SparkTestUtil {
       def computeRDD(): DataFrame = null
     }
 
-    object app extends SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))
+    object testApp extends SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))
 
-    f1.injectApp(app)
-    f2.injectApp(app)
+    f1.injectApp(testApp)
+    f2.injectApp(testApp)
     assert(f1.classCodeCRC() !== f2.classCodeCRC)
   }
 }

@@ -66,6 +66,17 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
   }
 
+  /**
+   * Create a DataFrame from string for temporary use (in test or shell)
+   **/
+  def createDF(schemaStr: String, data: String) = {
+    val schema = SmvSchema.fromString(schemaStr)
+    val dataArray = data.split(";").map(_.trim)
+
+    val smvCF = SmvCsvFile(null, CsvAttributes.defaultCsv)
+    smvCF.csvStringRDDToDF(sqlContext, sc.makeRDD(dataArray), schema, TerminateRejectLogger)
+  }
+
   /** all modules known to this app. */
   private[smv] def allAppModules = stages.allModules
 

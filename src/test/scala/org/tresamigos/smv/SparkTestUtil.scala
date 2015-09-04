@@ -24,6 +24,7 @@ import org.scalatest.FunSuite
 trait SparkTestUtil extends FunSuite {
   var sc: SparkContext = _
   var sqlContext: SQLContext = _
+  var app: SmvApp = _
 
   /** top of data dir to be used by tests.  For per testcase temp directory, use testcaseTempDir instead */
   final val testDataDir = "target/test-classes/data/"
@@ -54,6 +55,7 @@ trait SparkTestUtil extends FunSuite {
         SparkTestUtil.setLoggingLevel(Level.ERROR)
       sc = new SparkContext("local[2]", name)
       sqlContext = new SQLContext(sc)
+      app = new SmvApp(Seq("-m", "None"), Option(sc))
       try {
         body
       }
@@ -108,7 +110,6 @@ trait SparkTestUtil extends FunSuite {
   }
 
   def open(path: String) ={
-    object app extends SmvApp(Seq("-m", "None"), Option(sc))
     val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv)
     file.injectApp(app)
     file.rdd
@@ -154,12 +155,7 @@ trait SparkTestUtil extends FunSuite {
    * schemaRdd creater is in SqlContextHelper now. This is just a wraper
    */
   def createSchemaRdd(schemaStr: String, data: String) = {
-    val schema = SmvSchema.fromString(schemaStr)
-    val dataArray = data.split(";").map(_.trim)
-    val sc = sqlContext.sparkContext
-
-    val smvCF = SmvCsvFile(null, CsvAttributes.defaultCsv)
-    smvCF.csvStringRDDToDF(sqlContext, sc.makeRDD(dataArray), schema, TerminateRejectLogger)
+    app.createDF(schemaStr, data)
   }
 
   /**
