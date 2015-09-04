@@ -64,7 +64,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
         map { case (elem, field) =>
           ScalaReflection.convertToCatalyst(elem, field.dataType)
         }: _*)}
-    val newdf = df.sqlContext.applySchemaToRowRDD(converted, gdo.createOutSchema(smvSchema))
+    val newdf = df.sqlContext.createDataFrame(converted, gdo.createOutSchema(smvSchema).toStructType)
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
 

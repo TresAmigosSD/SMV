@@ -66,18 +66,8 @@ class RejectTest extends SparkTestUtil {
 
   sparkTest("test csvParser rejection with exception", disableLogging = true) {
     val e = intercept[SparkException] {
-      val rdd = sc.textFile(testDataDir + "RejectTest/test3")
-      val prdd = rdd.csvToSeqStringRDD()
-      println(prdd.collect.mkString("\n"))
-    }
-    val m = e.getMessage
-    assertStrMatches(m, "org.tresamigos.smv.ReadingError.*\nERROR RECORD:.*\nERROR CAUSED BY"r)
-  }
-
-  sparkTest("test csvAddKey rejection with exception", disableLogging = true) {
-    val e = intercept[SparkException] {
-      val rdd = sc.textFile(testDataDir + "RejectTest/test4")
-      val prdd = rdd.csvAddKey(2)
+      val dataStr = """231,67.21  ,20121009101621,"02122011"""
+      val prdd = createSchemaRdd("a:String;b:Double;c:String;d:String", dataStr)
       println(prdd.collect.mkString("\n"))
     }
     val m = e.getMessage
@@ -85,9 +75,16 @@ class RejectTest extends SparkTestUtil {
   }
 
   sparkTest("test csvParser rejection") {
-    implicit val rejectLogger:RejectLogger  = new SCRejectLogger(sc, 3)
-    val rdd = sc.textFile(testDataDir + "RejectTest/test3")
-    val prdd = rdd.csvToSeqStringRDD()
+    val rejectLogger:RejectLogger  = new SCRejectLogger(sc, 3)
+    val data = """231,67.21  ,20121009101621,"02122011"""
+    val schemaStr = "a:String;b:Double;c:String;d:String"
+
+    val schema = SmvSchema.fromString(schemaStr)
+    val dataArray = data.split(";").map(_.trim)
+
+    val smvCF = SmvCsvFile(null, CsvAttributes.defaultCsv)
+    val prdd = smvCF.csvStringRDDToDF(sqlContext, sc.makeRDD(dataArray), schema, rejectLogger)
+
     prdd.collect
     val res = rejectLogger.rejectedReport.map{ case (s,e) => s"$s -- $e" }
     val exp = List(

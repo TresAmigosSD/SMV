@@ -28,18 +28,11 @@ import scala.reflect.runtime.universe.TypeTag
 package object smv {
   implicit def makeColHelper(col: Column) = new ColumnHelper(col)
   implicit def makeSymColHelper(sym: Symbol) = new ColumnHelper(new ColumnName(sym.name))
-  implicit def makeSRHelper(sc: SQLContext) = new SqlContextHelper(sc)
   implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
   implicit def makeDFHelper(df: DataFrame) = new SmvDFHelper(df)
   implicit def makeSmvGDFunc(sgd: SmvGroupedData) = new SmvGroupedDataFunc(sgd)
   implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.toGroupedData
   implicit def makeSmvCDSAggColumn(col: Column) = SmvCDSAggColumn(col.toExpr)
-  implicit def makeCsvRDDHelper(rdd: RDD[String]) = new CsvRDDHelper(rdd)
-  implicit def makeSeqStrRDDHelper(rdd: RDD[Seq[String]]) = new SeqStringRDDHelper(rdd)
-  implicit def makeRDDHelper[T](rdd: RDD[T])(implicit tt: ClassTag[T]) =
-    new RDDHelper[T](rdd)
-  implicit def makePairRDDHelper[K,V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]) =
-    new PairRDDHelper[K,V](rdd)
 
   /**
    * Spark(as of 1.4)'s join type is a String.  Could use enum or case objects here,

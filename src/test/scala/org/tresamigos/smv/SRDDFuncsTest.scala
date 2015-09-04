@@ -22,7 +22,7 @@ class SelectWithReplaceTest extends SparkTestUtil {
   val data = Seq("Adam,1", "Beth,2", "Caleb,3", "David,4")
 
   def testDf(sqlContext: SQLContext): DataFrame =
-    sqlContext.createSchemaRdd(schema, data.mkString(";"))
+    createSchemaRdd(schema, data.mkString(";"))
 
   sparkTest("should add new columns without modification") {
     val input = testDf(sqlContext)
@@ -231,7 +231,7 @@ class smvHashSampleTest extends SparkTestUtil {
 class smvCoalesceTest extends SparkTestUtil {
   sparkTest("Test smvCoalesce") {
     val ssc = sqlContext; import ssc.implicits._
-    val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k").repartition(4)
+    val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
     val res = a.smvCoalesce(1)
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a]",

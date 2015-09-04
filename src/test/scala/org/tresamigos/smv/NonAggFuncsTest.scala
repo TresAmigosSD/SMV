@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions._
 class NonAggFuncsTest extends SparkTestUtil {
   sparkTest("test smvStrCat") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.createSchemaRdd("k:String; v:String;", "1,a;2,")
+    val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
     val res = df.select(smvStrCat($"v".smvNullSub("test"), $"k"))
     assertSrddDataEqual(res,
       "a1;" +
@@ -29,7 +29,7 @@ class NonAggFuncsTest extends SparkTestUtil {
 
   sparkTest("test smvAsArray") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.createSchemaRdd("k:String; v:String;", "1,a;2,")
+    val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
     val res = df.select(smvAsArray($"v".smvNullSub("test"), $"k"))
     assertSrddDataEqual(res,
       "List(a, 1);" +
@@ -48,7 +48,7 @@ class NonAggFuncsTest extends SparkTestUtil {
 
   sparkTest("test smvSum0") {
     val ssc = sqlContext;
-    val df = sqlContext.createSchemaRdd("k:String; v1:Integer; v2:Double", "X,,;X,,")
+    val df = createSchemaRdd("k:String; v1:Integer; v2:Double", "X,,;X,,")
     val res = df.groupBy("k").agg(
       sum("v1") as "v1_null",
       sum("v2") as "v2_null",

@@ -17,7 +17,7 @@ package org.tresamigos.smv
 class ColumnHelperTest extends SparkTestUtil {
   sparkTest("test smvNullSub") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.createSchemaRdd("k:String; v:String;", "1,a;2,")
+    val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
     val res = df.select($"v".smvNullSub("test"))
     assertSrddDataEqual(res,
       "a;" +
@@ -30,7 +30,7 @@ class ColumnHelperTest extends SparkTestUtil {
 
   sparkTest("test smvLength"){
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.createSchemaRdd("k:String; v:String;", "1,a;2,")
+    val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
     val res = df.select($"v".smvLength)
     assertSrddDataEqual(res,
       "1;" +
@@ -39,7 +39,7 @@ class ColumnHelperTest extends SparkTestUtil {
 
   sparkTest("test smvStrToTimestamp"){
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.createSchemaRdd("k:String; v:String;", "20190101,a;,b")
+    val df = createSchemaRdd("k:String; v:String;", "20190101,a;,b")
     val res = df.select($"k".smvStrToTimestamp("yyyyMMdd"))
     assertSrddDataEqual(res,
       "2019-01-01 00:00:00.0;" +
@@ -48,7 +48,7 @@ class ColumnHelperTest extends SparkTestUtil {
 
   sparkTest("test smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek"){
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.createSchemaRdd("k:Timestamp[yyyyMMdd]; v:String;", "20190101,a;,b")
+    val df = createSchemaRdd("k:Timestamp[yyyyMMdd]; v:String;", "20190101,a;,b")
     val res = df.select($"k".smvYear, $"k".smvMonth, $"k".smvQuarter, $"k".smvDayOfMonth, $"k".smvDayOfWeek, $"k".smvHour)
     assertSrddSchemaEqual(res, "SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer")
     assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
@@ -56,7 +56,7 @@ class ColumnHelperTest extends SparkTestUtil {
 
   sparkTest("test smvAmtBin, smvNumericBin, smvCoarseGrain"){
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.createSchemaRdd("k:Timestamp[yyyyMMdd]; v:Double;", "20190101,1213.3;,31312.9")
+    val df = createSchemaRdd("k:Timestamp[yyyyMMdd]; v:Double;", "20190101,1213.3;,31312.9")
     val res = df.select($"v".smvAmtBin, $"v".smvNumericBin(40000,0,4), $"v".smvCoarseGrain(1000))
     assertSrddSchemaEqual(res, "SmvAmtBin(v): Double; SmvNumericBin(v,40000.0,0.0,4): Double; SmvCoarseGrain(v,1000.0): Double")
     assertSrddDataEqual(res, "1000.0,10000.0,1000.0;" + "30000.0,40000.0,31000.0")

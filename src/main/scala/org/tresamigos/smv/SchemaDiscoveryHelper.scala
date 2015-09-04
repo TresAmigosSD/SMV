@@ -154,7 +154,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
 
     val columns = getColumnNames(strRDD,ca)
 
-    val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD
+    val noHeadRDD = if (ca.hasHeader) CsvAttributes.dropHeader(strRDD) else strRDD
 
     var schemaEntries = new scala.collection.mutable.ArrayBuffer[SchemaEntry]
     for (i <- 0 until columns.length) schemaEntries += null
@@ -188,24 +188,15 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
     new SmvSchema(schemaEntries.toSeq)
   }
 
+  /**
+   * Discover schema from file
+   * @param dataPath the path to the csv file (a schema file should be a sister file of the csv)
+   * @param numLines the number of rows to process in order to discover the column types
+   * @param ca the csv file attributes
+   */
   def discoverSchemaFromFile(dataPath: String, numLines: Int = 1000)
                             (implicit ca: CsvAttributes): SmvSchema = {
     val strRDD = sqlContext.sparkContext.textFile(dataPath)
     discoverSchema(strRDD, numLines, ca)
-  }
-
-  /**
-   * Create a DataFrame from a file after discovering its schema
-   * @param dataPath the path to the csv file
-   * @param numLines the number of rows to process in order to discover the column types
-   * @param ca the csv file attributes
-   */
-  def csvFileWithSchemaDiscovery(dataPath: String, numLines: Int = 1000)
-                                (implicit ca: CsvAttributes, rejects: RejectLogger): DataFrame =  {
-    val strRDD = sqlContext.sparkContext.textFile(dataPath)
-    val schema = discoverSchema(strRDD, numLines, ca)
-    val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD
-    val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
-    sqlContext.applySchemaToRowRDD(rowRDD, schema)
   }
 }

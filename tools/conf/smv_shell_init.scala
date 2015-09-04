@@ -23,9 +23,10 @@ object i {
   // deprecated, should use df instead!!!
   def s(ds: SmvDataSet) = df(ds)
 
-  def open(fullPath: String) = {
-    implicit val ca = CsvAttributes.defaultCsvWithHeader
-    sqlContext.csvFileWithSchema(fullPath)
+  def open(path: String) ={
+    val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsvWithHeader)
+    file.injectApp(app)
+    file.rdd
   }
 
   implicit class ShellSrddHelper(df: DataFrame) {
@@ -54,8 +55,7 @@ object i {
 
   def discoverSchema(path: String, n: Int = 100000) = {
     implicit val ca=CsvAttributes.defaultCsvWithHeader
-    val file=sqlContext.csvFileWithSchemaDiscovery(path, n)
-    val schema=SmvSchema.fromDataFrame(file)
+    val schema=sqlContext.discoverSchemaFromFile(path, n)
     val outpath = path + ".schema"
     schema.saveToFile(sc, outpath)
   }

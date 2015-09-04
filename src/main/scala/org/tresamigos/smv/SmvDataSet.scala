@@ -14,7 +14,9 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.catalyst.expressions.{GenericMutableRow, Row}
 
 import scala.util.Try
 import org.joda.time._
@@ -114,6 +116,31 @@ abstract class SmvFile extends SmvDataSet {
       case SmvErrorPolicy.Log => app.rejectLogger
     }
   }
+
+  protected def seqStringRDDToDF(
+    sqlContext: SQLContext,
+    rdd: RDD[Seq[String]],
+    schema: SmvSchema,
+    rejects: RejectLogger
+  ) = {
+    val rowRdd = rdd.mapPartitions{ iterator =>
+      val mutableRow = new GenericMutableRow(schema.getSize)
+      iterator.map { r =>
+        try {
+          require(r.size == schema.getSize)
+          for (i <- 0 until schema.getSize) {
+            mutableRow.update(i, schema.toValue(i, r(i)))
+          }
+          Some(mutableRow)
+        } catch {
+          case e:IllegalArgumentException  =>  rejects.addRejectedSeqWithReason(r,e); None
+          case e:NumberFormatException  =>  rejects.addRejectedSeqWithReason(r,e); None
+          case e:java.text.ParseException  =>  rejects.addRejectedSeqWithReason(r,e); None
+        }
+      }.collect{case Some(l) => l.asInstanceOf[Row]}
+    }
+    sqlContext.createDataFrame(rowRdd, schema.toStructType)
+  }
 }
 
 /**
@@ -126,26 +153,39 @@ case class SmvCsvFile(
     schemaPath: Option[String] = None
   ) extends SmvFile {
 
-  private[smv] def csvFileWithSchema(dataPath: String, schemaPath: String)
-                       (implicit ca: CsvAttributes, rejects: RejectLogger): DataFrame = {
+  def csvStringRDDToDF(
+    sqlContext: SQLContext,
+    rdd: RDD[String],
+    schema: SmvSchema,
+    rejects: RejectLogger
+  ) = {
+    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed)
+    val seqStringRdd = rdd.mapPartitions{ parser.parseCSV(_)(csvAttributes, rejects) }
+    seqStringRDDToDF(sqlContext, seqStringRdd, schema, rejects)
+  }
+
+  private def csvFileWithSchema(
+    dataPath: String,
+    schemaPath: String,
+    rejects: RejectLogger
+  ): DataFrame = {
     val sc = app.sqlContext.sparkContext
     val schema = SmvSchema.fromFile(sc, schemaPath)
 
     val strRDD = sc.textFile(dataPath)
-    val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD
-    val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
-    app.sqlContext.applySchemaToRowRDD(rowRDD, schema)
+    val noHeadRDD = if (csvAttributes.hasHeader) CsvAttributes.dropHeader(strRDD) else strRDD
+
+    csvStringRDDToDF(app.sqlContext, noHeadRDD, schema, rejects)
   }
 
   override def computeRDD: DataFrame = {
-    implicit val ca = csvAttributes
-    implicit val rejectLogger = createLogger(app, errPolicy)
+    val rejectLogger = createLogger(app, errPolicy)
     // TODO: this should use inputDir instead of dataDir
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
-    csvFileWithSchema(fullPath, sp)
+    csvFileWithSchema(fullPath, sp, rejectLogger)
   }
-
 }
+
 
 case class SmvFrlFile(
     basePath: String,
@@ -153,7 +193,20 @@ case class SmvFrlFile(
     schemaPath: Option[String] = None
   ) extends SmvFile {
 
-  private[smv] def frlFileWithSchema(dataPath: String, schemaPath: String)
+  def frlStringRDDToDF(
+    sqlContext: SQLContext,
+    rdd: RDD[String],
+    schema: SmvSchema,
+    slices: Seq[Int],
+    rejects: RejectLogger
+  ) = {
+    val startLen = slices.scanLeft(0){_ + _}.dropRight(1).zip(slices)
+    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed)
+    val seqStringRdd = rdd.mapPartitions{ parser.parseFrl(_, startLen)(rejects) }
+    seqStringRDDToDF(sqlContext, seqStringRdd, schema, rejects)
+  }
+
+  private def frlFileWithSchema(dataPath: String, schemaPath: String)
                        (implicit rejects: RejectLogger): DataFrame = {
     val sc = app.sqlContext.sparkContext
     val slices = SmvSchema.slicesFromFile(sc, schemaPath)
@@ -162,8 +215,7 @@ case class SmvFrlFile(
 
     // TODO: show we allow header in Frl files?
     val strRDD = sc.textFile(dataPath)
-    val rowRDD = strRDD.frlToSeqStringRDD(slices).seqStringRDDToRowRDD(schema)(rejects)
-    app.sqlContext.applySchemaToRowRDD(rowRDD, schema)
+    frlStringRDDToDF(app.sqlContext, strRDD, schema, slices, rejects)
   }
 
   override def computeRDD: DataFrame = {

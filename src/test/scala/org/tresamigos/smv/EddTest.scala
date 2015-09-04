@@ -176,7 +176,7 @@ key                      count      Pct    cumCount   cumPct
 
   sparkTest("test Edd Histogram on Boolean") {
     val ssc = sqlContext; import ssc._
-    val df = sqlContext.createSchemaRdd("k:String;v:Boolean", "k1,True;k1,True;k2,False;k2,False")
+    val df = createSchemaRdd("k:String;v:Boolean", "k1,True;k1,True;k2,False;k2,False")
     val res = df.edd.addHistogramTasks("v")().createReport
     val expect = Array("Total Record Count:                        4\n" +
 "Histogram of v: \n" +
@@ -188,7 +188,7 @@ true                         2   50.00%           4  100.00%
   }
 
   sparkTest("test Edd createJSON") {
-    val df = sqlContext.createSchemaRdd("k:String; t:Integer; p: String; v:Double",
+    val df = createSchemaRdd("k:String; t:Integer; p: String; v:Double",
       """z,1,a,0.2;
          z,2,a,1.4;
          z,5,b,2.2;

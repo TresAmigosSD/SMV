@@ -225,7 +225,7 @@ class SmvDFHelper(df: DataFrame) {
       map{ case (row, idx) =>
         new GenericRow(Array[Any](row.toSeq ++ Seq(idx + startValue): _*)) }
 
-    df.sqlContext.applySchemaToRowRDD(res, newSchema)
+    df.sqlContext.createDataFrame(res, newSchema.toStructType)
   }
 
   /**

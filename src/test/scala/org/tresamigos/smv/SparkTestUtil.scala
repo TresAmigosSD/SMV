@@ -154,7 +154,12 @@ trait SparkTestUtil extends FunSuite {
    * schemaRdd creater is in SqlContextHelper now. This is just a wraper
    */
   def createSchemaRdd(schemaStr: String, data: String) = {
-    sqlContext.createSchemaRdd(schemaStr, data)
+    val schema = SmvSchema.fromString(schemaStr)
+    val dataArray = data.split(";").map(_.trim)
+    val sc = sqlContext.sparkContext
+
+    val smvCF = SmvCsvFile(null, CsvAttributes.defaultCsv)
+    smvCF.csvStringRDDToDF(sqlContext, sc.makeRDD(dataArray), schema, TerminateRejectLogger)
   }
 
   /**
