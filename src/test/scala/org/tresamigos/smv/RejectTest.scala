@@ -18,8 +18,11 @@ import org.apache.spark.SparkException
 
 class RejectTest extends SparkTestUtil {
   sparkTest("test csvFile loader rejection with NoOp") {
-    implicit val rejectLogger:RejectLogger  = NoOpRejectLogger
-    val df = sqlContext.csvFileWithSchema(testDataDir +  "RejectTest/test2")
+    object app extends SmvApp(Seq("-m", "None"), Option(sc))
+    val file = SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv, SmvErrorPolicy.Ignore)
+    file.injectApp(app)
+    val df = file.rdd
+
     val res = df.collect.map(_.mkString(","))
     val exp = List(
       "123,12.5,2013-01-09 13:06:19.0,12102012",
@@ -33,10 +36,13 @@ class RejectTest extends SparkTestUtil {
   }
 
   sparkTest("test csvFile loader rejection") {
-    implicit val rejectLogger:RejectLogger  = new SCRejectLogger(sc, 10)
-    val df = sqlContext.csvFileWithSchema(testDataDir +  "RejectTest/test2")
+    object app extends SmvApp(Seq("-m", "None"), Option(sc))
+    val file = SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv, SmvErrorPolicy.Log)
+    file.injectApp(app)
+    val df = file.rdd
+
     df.collect
-    val res = rejectLogger.rejectedReport.map{ case (s,e) => s"$s -- $e" }
+    val res = app.rejectLogger.rejectedReport.map{ case (s,e) => s"$s -- $e" }
     val exp = List(
       "123,12.50  ,130109130619,12102012 -- java.text.ParseException: Unparseable date: \"130109130619\"",
       "123,12.50  ,109130619,12102012 -- java.text.ParseException: Unparseable date: \"109130619\"",
@@ -51,7 +57,7 @@ class RejectTest extends SparkTestUtil {
 
   sparkTest("test csvFile loader rejection with exception", disableLogging = true) {
     val e = intercept[SparkException] {
-      val df = sqlContext.csvFileWithSchema(testDataDir + "RejectTest/test2")
+      val df = open(testDataDir + "RejectTest/test2")
       println(df.collect.mkString("\n"))
     }
     val m = e.getMessage

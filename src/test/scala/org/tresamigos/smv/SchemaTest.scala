@@ -115,18 +115,18 @@ class SmvSchemaTest extends SparkTestUtil {
   }
 
   sparkTest("Test Timestamp in file") {
-    val df = sqlContext.csvFileWithSchema(testDataDir +  "SchemaTest/test2")
+    val df = open(testDataDir +  "SchemaTest/test2")
     assert(df.count === 3)
   }
 
   sparkTest("Test Timestamp default format") {
-    val df = createSchemaRdd("a:Timestamp", "2011-09-03 10:13:58.0") 
+    val df = createSchemaRdd("a:Timestamp", "2011-09-03 10:13:58.0")
     assert(df.collect()(0)(0).toString === "2011-09-03 10:13:58.0")
     assert(SmvSchema.fromDataFrame(df).toString === "Schema: a: Timestamp[yyyy-MM-dd hh:mm:ss.S]")
   }
-  
+
   sparkTest("Test Date default format") {
-    val df = createSchemaRdd("a:Date", "2011-09-03") 
+    val df = createSchemaRdd("a:Date", "2011-09-03")
     assertSrddSchemaEqual(df, "a: Date[yyyy-MM-dd]")
     assertSrddDataEqual(df, "2011-09-03")
   }

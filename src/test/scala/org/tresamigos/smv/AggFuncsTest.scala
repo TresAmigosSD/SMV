@@ -18,13 +18,13 @@ import org.apache.spark.sql.functions._
 class AggFuncsTest extends SparkTestUtil {
   sparkTest("test OnlineAverage") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test1.csv")
+    val df = open(testDataDir +  "AggTest/test1.csv")
     val avg = df.agg(onlineAverage('a), onlineAverage('b))
     assertDoubleSeqEqual(avg.collect()(0).toSeq, List(2.0, 20.0))
   }
   sparkTest("test OnlineStdDev") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test1.csv")
+    val df = open(testDataDir +  "AggTest/test1.csv")
     val stddev = df.agg(onlineStdDev('a), onlineStdDev('b))
     assertDoubleSeqEqual(stddev.collect()(0).toSeq, List(1.0, 10.0))
   }
@@ -32,7 +32,7 @@ class AggFuncsTest extends SparkTestUtil {
   */
   sparkTest("test Histogram") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.csvFileWithSchema(testDataDir +  "AggTest/test2.csv")
+    val df = open(testDataDir +  "AggTest/test2.csv")
     val hist = df.agg(histogram('id)).collect()(0)(0).asInstanceOf[Map[String,Long]] //Array[Row(Map[String,Long])]=> Any=Map[..]
     assert(hist === Map("231"->1l,"123"->2l))
   }

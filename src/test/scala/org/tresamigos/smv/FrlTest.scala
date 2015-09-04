@@ -16,8 +16,12 @@ package org.tresamigos.smv
 
 class FrlTest extends SparkTestUtil {
   sparkTest("test frlFile loader with NoOp rejectlogger") {
-    implicit val rejectLogger:RejectLogger  = NoOpRejectLogger
-    val res = sqlContext.frlFileWithSchema(testDataDir +  "FrlTest/test")
+    object app extends SmvApp(Seq("-m", "None"), Option(sc))
+    val file = SmvFrlFile("./" + testDataDir + "FrlTest/test", SmvErrorPolicy.Ignore)
+    file.injectApp(app)
+
+    val res = file.rdd
+
     assertSrddSchemaEqual(res, "id: String; v: String")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[12,34]",
@@ -26,4 +30,3 @@ class FrlTest extends SparkTestUtil {
       "[qa,da]"))
   }
 }
-

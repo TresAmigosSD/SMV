@@ -26,59 +26,6 @@ class SqlContextHelper(sqlContext: SQLContext) {
   }
 
   /**
-   * Create a DataFrame from RDD[Seq[Any]] by applying a schema.
-   * It's the caller's responsibility to make sure the schema matches the data.
-   */
-  def applySchemaToSeqAnyRDD(rdd: RDD[Seq[Any]], schema: SmvSchema): DataFrame = {
-    applySchemaToRowRDD(rdd.map(r => new GenericRow(r.toArray)), schema)
-  }
-
-  /**
-   * Create a DataFrame from a file by applying a Schema object.
-   */
-  private[smv] def csvFileAddSchema(dataPath: String, schema: SmvSchema)
-                      (implicit ca: CsvAttributes, rejects: RejectLogger): DataFrame = {
-    val strRDD = sqlContext.sparkContext.textFile(dataPath)
-    val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD
-    val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
-    applySchemaToRowRDD(rowRDD, schema)
-  }
-
-  /** Create an DataFrame from a data file and an schema file
-   *
-   *  @param dataPath CSV file location
-   *  @param schemaPath the Schema file
-   *  @param rejects the global reject logger, could be override by implicit val
-   */
-  def csvFileWithSchema(dataPath: String, schemaPath: Option[String] = None)
-                       (implicit ca: CsvAttributes, rejects: RejectLogger): DataFrame = {
-    val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
-    val sc = sqlContext.sparkContext
-    val schema = SmvSchema.fromFile(sc, sp)
-    csvFileAddSchema(dataPath, schema)
-  }
-
-  /** Create an DataFrame from a data file as in Fixed Recode Length format and 
-   * an schema file with each schema entry with a field length comment 
-   * 
-   * @param dataPath FRL file location
-   * @param schemaPath schema file location (default as derived from dataPath)
-   * @param rejects the global reject logger, could be override by implicit val
-   */
-  def frlFileWithSchema(dataPath: String, schemaPath: Option[String] = None)
-                       (implicit rejects: RejectLogger): DataFrame = {
-    val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
-    val sc = sqlContext.sparkContext
-    val slices = SmvSchema.slicesFromFile(sc, sp)
-    val schema = SmvSchema.fromFile(sc, sp)
-    require(slices.size == schema.getSize)
-      
-    val strRDD = sc.textFile(dataPath)
-    val rowRDD = strRDD.frlToSeqStringRDD(slices).seqStringRDDToRowRDD(schema)
-    applySchemaToRowRDD(rowRDD, schema)
-  }
-    
-  /**
    * Create a df from a schema string and a data string.
    * The data string is assumed to be csv with no header and lines separated by ";"
    */

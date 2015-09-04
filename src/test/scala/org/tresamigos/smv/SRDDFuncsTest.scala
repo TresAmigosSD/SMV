@@ -51,7 +51,7 @@ class SelectWithReplaceTest extends SparkTestUtil {
 class SelectPlusMinusTest extends SparkTestUtil {
   sparkTest("test SelectPlus") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
+    val df = open(testDataDir +  "EddTest/test1.csv")
     val res = df.selectPlus('b + 2.0 as 'bplus2)
     assertSrddDataEqual(res,
       "1.0,10.0,12.0;" +
@@ -61,7 +61,7 @@ class SelectPlusMinusTest extends SparkTestUtil {
 
   sparkTest("test SelectPlusPrefix") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
+    val df = open(testDataDir +  "EddTest/test1.csv")
     val res = df.selectPlusPrefix('b + 2.0 as 'bplus2)
     assertSrddDataEqual(res,
       "12.0,1.0,10.0;" +
@@ -71,7 +71,7 @@ class SelectPlusMinusTest extends SparkTestUtil {
 
   sparkTest("test SelectMinus") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = sqlContext.csvFileWithSchema(testDataDir +  "EddTest/test1.csv")
+    val df = open(testDataDir +  "EddTest/test1.csv")
     val res = df.selectMinus('b)
     assertSrddDataEqual(res,
       "1.0;" +

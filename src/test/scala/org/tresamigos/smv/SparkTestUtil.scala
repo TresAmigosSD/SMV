@@ -107,6 +107,13 @@ trait SparkTestUtil extends FunSuite {
     }
   }
 
+  def open(path: String) ={
+    object app extends SmvApp(Seq("-m", "None"), Option(sc))
+    val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv)
+    file.injectApp(app)
+    file.rdd
+  }
+
   /**
    * Ensure that two arbitrary sequences are equal regardless of the order of items in the sequence
    */

@@ -85,7 +85,11 @@ abstract class SmvFile extends SmvDataSet {
   override def description() = s"Input file: @${basePath}"
   override def requiresDS() = Seq.empty
 
-  def fullPath = s"${app.smvConfig.dataDir}/${basePath}"
+  def fullPath = {
+    if (("""^[\.\/]"""r).findFirstIn(basePath) != None) basePath
+    else if (app == null) throw new IllegalArgumentException(s"app == null and $basePath is not an absolute path")
+    else s"${app.smvConfig.dataDir}/${basePath}"
+  }
 
   override def classCodeCRC() = {
     val fileName = fullPath
@@ -118,27 +122,55 @@ abstract class SmvFile extends SmvDataSet {
 case class SmvCsvFile(
     basePath: String,
     csvAttributes: CsvAttributes,
-    errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate
+    errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate,
+    schemaPath: Option[String] = None
   ) extends SmvFile {
+
+  private[smv] def csvFileWithSchema(dataPath: String, schemaPath: String)
+                       (implicit ca: CsvAttributes, rejects: RejectLogger): DataFrame = {
+    val sc = app.sqlContext.sparkContext
+    val schema = SmvSchema.fromFile(sc, schemaPath)
+
+    val strRDD = sc.textFile(dataPath)
+    val noHeadRDD = if (ca.hasHeader) strRDD.dropRows(1) else strRDD
+    val rowRDD = noHeadRDD.csvToSeqStringRDD.seqStringRDDToRowRDD(schema)(rejects)
+    app.sqlContext.applySchemaToRowRDD(rowRDD, schema)
+  }
 
   override def computeRDD: DataFrame = {
     implicit val ca = csvAttributes
     implicit val rejectLogger = createLogger(app, errPolicy)
     // TODO: this should use inputDir instead of dataDir
-    app.sqlContext.csvFileWithSchema(fullPath)
+    val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
+    csvFileWithSchema(fullPath, sp)
   }
 
 }
 
 case class SmvFrlFile(
     basePath: String,
-    errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate
+    errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate,
+    schemaPath: Option[String] = None
   ) extends SmvFile {
+
+  private[smv] def frlFileWithSchema(dataPath: String, schemaPath: String)
+                       (implicit rejects: RejectLogger): DataFrame = {
+    val sc = app.sqlContext.sparkContext
+    val slices = SmvSchema.slicesFromFile(sc, schemaPath)
+    val schema = SmvSchema.fromFile(sc, schemaPath)
+    require(slices.size == schema.getSize)
+
+    // TODO: show we allow header in Frl files?
+    val strRDD = sc.textFile(dataPath)
+    val rowRDD = strRDD.frlToSeqStringRDD(slices).seqStringRDDToRowRDD(schema)(rejects)
+    app.sqlContext.applySchemaToRowRDD(rowRDD, schema)
+  }
 
   override def computeRDD: DataFrame = {
     implicit val rejectLogger = createLogger(app, errPolicy)
     // TODO: this should use inputDir instead of dataDir
-    app.sqlContext.frlFileWithSchema(fullPath)
+    val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
+    frlFileWithSchema(fullPath, sp)
   }
 }
 
@@ -260,7 +292,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] = {
     implicit val ca = CsvAttributes.defaultCsv
-    Try(app.sqlContext.csvFileWithSchema(moduleCsvPath(prefix)))
+    Try(SmvCsvFile(moduleCsvPath(prefix), ca).rdd)
   }
 
   /**
