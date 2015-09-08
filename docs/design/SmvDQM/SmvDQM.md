@@ -55,88 +55,128 @@ We need to collect the results when the first action happens on the df.
 ### Check DQM results and apply policy
 There are 2 types of approaches to collect the results and apply policies:
 
-* For any `SmvDataSet` with none empty `dqm`, force an action. For example, do a count or persist
 * Create an monitoring mechanism to keep tracking of the actions on the df created by a `SmvDataSet`
+* For any `SmvDataSet` with none empty `dqm`, force an action. For example, do a count or persist
+
+The "monitoring" approach is very hard to implement, since although we can keep an eye on all
+the actions triggered by the `SmvApp` framework, there is no obvious way for us to keep tracking
+of actions within client code.
 
 For the "force-an-action" approach, we can either do the action just after attaching dqm in the
 `doRun` method:
 ```scala
 def doRun {
   val resultDf = run().attachDQM(dqm)
-  resultDf.checkDQM(dqm) // call count at the beginning of checkDQM
+  resultDf.checkDQM(dqm, isForceAction) // call count at the beginning of checkDQM
   resultDf
 }
 ```
 
-Or we can override `isEphemeral` to false to force an persist and call `checkDQM` after
-persisting
-```scala
-def persist() {
-  ...
-  rdd.saveAsCsvWithSchema(filePath)
-  val rddReadBack = readPersistedFile(prefix).get
-  rddReadBack.checkDQM(dqm) // no need to call count within checkDQM
-  ...
-}
-```
-
-The "monitoring" approach is very hard to implement, since although we can keep an eye on all
-the actions triggered by the `SmvApp` framework, there is no obvious way for us to keep tracking
-of actions within client code.
-
-Let's keep the problem simple and take the "force-an-action" approach.
-
-The only disadvantage is that when the `SmvDataSet` is labeled `isEphemeral`, we still need to
-take some actions on it. However, we could honer the flag by not persisting the data.
+Or we can call `checkDQM` after persisting or force an action for `isEphemeral` case.
 ```scala
 def computeRDD() {
   if(isEphemeral) {
     val resultDf = doRun()        // attachDQM is in the doRun method
-    resultDf.checkDQMForceAction(dqm)
+    resultDf.checkDQM(dqm, isForceAction = true)
     resultDf
   } else {
     readPersistedFile() recoverWith {case e =>
       persist(doRun)
       val rddReadBack = readPersistedFile(prefix).get
-      rddReadBack.checkDQMNoForceAction(dqm)
+      rddReadBack.checkDQM(dqm, isForceAction = false)
       rddReadBack
     }
   }
 }
 ```
 
-### Persist DQM results
+We will take the "force-an-action" approach and do it in the `compureRDD` method, so that we
+don't need to apply an extra action when `persist` happens.
 
-By default a `SmvFile` "isEphemeral". In that case as long as the file has none empty dqm, it
-will be forced to do an action whenever it is accessed. However since the data file itself does
-not changed, the DQM results should be the same. We can actually persist the DQM result in a "filename.hashOfHash.dqm" file, and as long as that file is there, we don't need to run the
-`checkDQMForceAction` anymore.
+### Handle Data parsing rejections
 
-Let's redefined the interface to
+In the current file reading reject logging implementation, there is an `SmvApp` level
+`RejectLogger`. Depend of the error handling policy for each `SmvFile`, they could log
+the rejected records to the app level logger.
+
+It was designed that way since before the `DQM` idea, we don't have control on when a data
+read action really happens.
+
+With the DQM framework, since we will either force an action or do a persist
+(also an action) before we hand over the DF to downstream `SmvModule`s, at the same time we
+check the DQM, we should check the `RejectLogger`. Therefore we can keep the logger to `SmvFile`
+level.
+
+Since both parser and `DQM` can reject records, we will rename the `RejectLogger` to
+`ParserLogger`.
+
+Since only `SmvFile` can potentially reject records from the parser, we need to add the
+ `checkParserLogger` into `SmvFile`'s `computeRDD` method.
+
+In case of parsing error happens, we either
+* Print the log and keep going, or
+* Print the log and Terminate
+
+A `SmvFile` level flag `failAtParsingError` will be defined with default value `true`. User
+defined `SmvFile` can override it.
+`checkParserLogger` with take that flag and determine whether the check is passed or not.
+
+Both `checkDQM` and `checkParserLogger` will return a `CheckResult` object which contains:
+* `passed: Boolean` - whether the DQM is passed
+* `errorMessages: Seq[(String, String)]` - list of policy name - error message pair on failed policies
+* `checkLog`: Seq[String] - all (including non-critical) reports on all the DQM and parser
+loggers
+
+`CheckResult` will have a `++` operator which combines multiple check results.
+
+Neither `checkDQM` nor `checkParserLogger` will terminate the process. Another method,
+`terminateAtError`, will take `CheckRule` object as input and determine whether terminate or
+not.
+
+With all those together, the `computeRDD` method on `SmvFile` will looks like,
 ```scala
-checkDQM(dqm, isForceAction)
+def computeRDD() {
+  val (df, hasActionYet) = if(isEphemeral) {
+    (doRun(), false)
+  } else {
+    val resultDf = readPersistedFile() recoverWith {case e =>
+      persist(doRun)
+      readPersistedFile(prefix).get
+    }
+    (resultDf, true)
+  }
+
+  val checkResult = {
+    if(!hasActionYet) df.count
+    checkParserLogger ++ df.checkDQM
+  }
+
+  terminateAtErrot(checkResult)
+  df
+}
 ```
 
-Within this method, we will try to read the persisted dqm file first and than recover with
-a real check.
+### Persist DQM results
 
+By default a `SmvFile` "isEphemeral". In that case, it
+will be forced to do an action whenever it is accessed. However since the data file itself does
+not change, the DQM results and the parsing logger should be the same. We can actually
+persist the results in a "filename.hashOfHash.check" file, and as long as that file is there,
+we don't need to run `checkDQM` or `checkParserLogger` anymore.
+
+Let's modify the `checkResult` part of the `computeRDD` method
 ```scala
-private def checkDQMNoForceAction
-private def checkDQMForceAction
-
-def checkDQM(dqm, isForceAction) = {
-  readPersistedDQM() recoverWith {case e =>
-    if(isForceAction) checkDQMForceAction
-    else checkDQMNoForceAction
-  }
+val checkResult = readPersistsedCheckFile() recoverWith {case e =>
+  if(!hasAction) df.count
+  val res = checkParserLogger ++ df.checkDQM
+  res.persist
+  res
 }
 ```
 
 Please not that the `hashOfHash` is part of the file name, so that if either of the original
-file changed or the code of the SmvFile changed (including dqm defination part) the
-`readPersistedDQM` will fail and new check will be performed.
-
-### Handle Data read rejections as part of DQM 
+file changed or the code of the SmvFile changed (including dqm definition part) the
+`readPersistedCheckFile` will fail and new check will be performed.
 
 ## DQM interface (To Be Updated)
 
