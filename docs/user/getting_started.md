@@ -29,7 +29,7 @@ The generated example app contains two configuration files.
 * `smv-app-conf.props` : The application level configuration parameters.  This file should define the application name and the configured stages.
 * `smv-user-conf.props` : The user level configuration parameters.  This file is normally **NOT** checked in
 
-See [Application Configuration](docs/ref/app_config.md) for more details about availabe configuration parameters.
+See [Application Configuration](app_config.md) for more details about available configuration parameters.
 
 ### Example App data directory
 
@@ -103,7 +103,7 @@ EMP: Long
 
 **Note**: the output above may be different as it depends on order of execution of partitions.
 
-See [Run SMV Application](../ref/run_app.md) for further details.
+See [Run SMV Application](run_app.md) for further details.
 
 TODO: add example of running with -g (graph) command.
 
