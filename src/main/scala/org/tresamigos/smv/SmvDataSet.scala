@@ -344,9 +344,11 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] = {
     implicit val ca = CsvAttributes.defaultCsv
-    val smvFile = SmvCsvFile(moduleCsvPath(prefix), ca)
-    smvFile.injectApp(this.app)
-    Try(smvFile.rdd)
+    Try({
+      val smvFile = SmvCsvFile(moduleCsvPath(prefix), ca)
+      smvFile.injectApp(this.app)
+      smvFile.rdd
+    })
   }
 
   /**
