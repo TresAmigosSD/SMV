@@ -96,7 +96,7 @@ don't need to apply an extra action when `persist` happens.
 ### Handle Data parsing rejections
 
 In the current file reading reject logging implementation, there is an `SmvApp` level
-`RejectLogger`. Depend of the error handling policy for each `SmvFile`, they could log
+`RejectLogger`. Depend on the error handling policy for each `SmvFile`, they could log
 the rejected records to the app level logger.
 
 It was designed that way since before the `DQM` idea, we don't have control on when a data
@@ -107,8 +107,8 @@ With the DQM framework, since we will either force an action or do a persist
 check the DQM, we should check the `RejectLogger`. Therefore we can keep the logger to `SmvFile`
 level.
 
-Since both parser and `DQM` can reject records, we will rename the `RejectLogger` to
-`ParserLogger`.
+Since both parser and `DQM` can reject records, we will name the `RejectLogger` in `SmvFile` as
+`parserLogger`.
 
 Since only `SmvFile` can potentially reject records from the parser, we need to add the
  `checkParserLogger` into `SmvFile`'s `computeRDD` method.
@@ -179,36 +179,46 @@ file changed or the code of the SmvFile changed (including dqm definition part) 
 `readPersistedCheckFile` will fail and new check will be performed.
 
 ## DQM interface (To Be Updated)
+DQM is a sub-package, `org.tresamigos.smv.dqm`, of SMV.
 
 ### Creating Rules
 
 ```scala
 val rules = SmvDQM().
-    add(Rule($"age" < 150), FailAny, "ageLT150").
+    add(Rule($"age" < 150, "ageLT150"), FailAny).
     add(BoundRule($"age", 1, 150), FailCount(10)).
-    add(Fix( $"age" > 150, lit(150) as 'age), "ageFix150").
-    add(BoundFix($"age", 1, 150), "ageFix1-150").
+    add(Fix( $"age" > 150, lit(150) as 'age, name = "ageFix150")).
+    add(BoundFix($"age", 1, 150, name = "ageFix1-150")).
+    add(FailTotalRuleCountPolicy(30))
     ...
 ```
 
-The `SmvDQM` is a builder which takes `add` method with 3 signatures
-* `add(rule: DQMRule, rulePolicy: DQMRulePolicy = FailNone, name: String = null)`
-* `add(fix: DQMFix, name: String = null)`
-* `add(policy: DQMPolicy, name: String = null)`
+The `SmvDQM` is a builder which takes `add` method with 2 signatures
+* `add(task: DQMTask, rulePolicy: DQMRulePolicy = FailNone)`
+* `add(policy: DQMPolicy)`
 
-A `DQMRule` is applied on records. If any record violates the Rule, the entire record will be rejected. A `DQMFix` is applied to a cell of a record and fix the cell while keep the record. A `DQMPolicy` is applied on the entire DF with the DQMResult (see below).
+`DQMTask` is an abstract class with 2 concrete classes: `DQMRule` and `DQMFix`.
+* A `DQMRule` is applied on records. If any record violates the Rule, the entire record will be rejected.
+* A `DQMFix` is applied to a cell of a record and fix the cell while keep the record.
 
-A `DQMRulePolicy` is a `DQMPolicy` which only depends on the specific Rule's result. It has 4 case class/objects:
+A `DQMPolicy` is applied on the entire DF with checking both the DF and the log of the
+`DQMTask` results.
+
+Each `DQMTask` associates with a `DQMTaskPolicy`.
+
+A `DQMTaskPolicy` is a `DQMPolicy` which only depends on the specific Task's result. It has 4 case class/objects:
 * `FailNone` - policy check never fails even if some records are rejected
-* `FailAny` - policy check fails if any record get rejected by the CheckRule
-* `FailCount(n)` - policy check fails if more than n records get rejected by the CheckRule
-* `FailPercent(r)` - policy check fails is more than r percent records get rejected by the CheckRule. The percentage `r` is a float between 0 and 1.
+* `FailAny` - policy check fails if any record get rejected by the CheckRule (same as FailCount(1))
+* `FailCount(n)` - policy check fails if more than or equal n records get rejected by the CheckRule
+* `FailPercent(r)` - policy check fails is more than or equal r percent records get rejected by the CheckRule. The percentage `r` is a float between 0 and 1.
 
-For now we only implement 2 case classes
-* `TotalFailCountPolicy(n)`
-* `TotalFailPercentPolicy(r)`
+There are 4 public case class extends `DQMPolicy`:
+* `FailTotalRuleCountPolicy(n)`
+* `FailTotalRulePercentPolicy(r)`
+* `FailTotalFixCountPolicy(n)`
+* `FailTotalFixPercentPolicy(r)`
 
-Which will combine all the rule rejected counts and check the policies. For example, if in total there are 2 rules defined, one for checking the `age` field and the other checking `amt` field, we can defined a `TotalFailCountPolicy(1000)`. The `DF` will fail the policy if add up together there are more than 1000 records get rejected by the 2 rules.
+Which will combine all the rule rejected counts and check the policies. For example, if in total there are 2 rules defined, one for checking the `age` field and the other checking `amt` field, we can defined a `FailTotalRuleCountPolicy(1000)`. The `DF` will fail the policy if add up together there are more than or equal 1000 records get rejected by the 2 rules.
 
 We can extend DQMRule and DQMFix for specific common cases to make the code clearer.  See example below. Note: only the rules are shown below, there would be an equivalent "Fix" method that takes a default value.
 ```scala
@@ -223,58 +233,63 @@ val rules = SmvDQM().
 A Rule can be defined with a `Column` which returns a BooleanType. So user can extends `DQMRule` to define new rules. For example,
 ```scala
 case class DoubleOpenBoundRule(c: Column, upper: Double, lower: Double)
-  extends DQMRule(c < lit(upper) && c > lit(lower))
+  extends DQMRule(c < lit(upper) && c > lit(lower), name = s"OpenBound(${c})")
 ```
 
 User defined `DQMFix` interface
 ```scala
 case class SetFix(c: Column, validVals: Seq[String], default: String)
-  extends DQMFix(! c.in(validVals.map{s => lit(s)}: _*), lit(default))
+  extends DQMFix(! c.in(validVals.map{s => lit(s)}: _*), lit(default), name = "SetFix(${c})")
 ```
 
 User defined `DQMPolicy` interface
 ```scala
-DQMPolicy((DataFrame, DQMLogger) => Boolean)
+DQMPolicy(policy: (DataFrame, DQMLogger) => Boolean, name: String)
 ```
 
 ### Applying the DQM
 Once the DQM (set of rules, fixes, policies) have been created, they can be applied to a `DataFrame`.  As a matter of fact, the same set of rules can be applied to multiple `DataFrame`s.
+```scala
+dqm.applyOnDF(df)
+```
 
-However, since we want to avoid introducing an extra *Action* to the `DataFrame` just for DQM, internally we will split the applying DQM to 2 steps:
-* attachDQM, and
-* checkDQMPolicy
+Internally, since we want to avoid introducing an extra *Action* to the `DataFrame` just for DQM, we split the `applyToDF` method to 2 steps:
+* attachTasks, and
+* checkPolicies
 
 where the first step will simply apply the Rules and Fixes to the DF as projections and filters (*Transformations*, instead of *Actions*).
+After that we could trigger an *Action* Within SmvApp framework. After the action, `checkPolicies` will be called, which will collect the results from the Rules and Fixes and
+also potentially apply checks agains any operation on the output DF.
 
-After that user could trigger an *Action*, within SmvApp framework it will be the persist step of a SmvModule which depends on the DF. After the action, `checkDQMPolicy` should be called, which will collect the results from the Rules and Fixes and also potentially apply checks agains any operation on the output DF.
+When `DQM` is used outside of the App framework, the `applyOnDF` method should be used, which actually force an action on the DF.
 
-In between of the `attachDQM` and `checkDQMPolicy` methods, a `DQMLogger` objects will be used to pass the results.
+#### Accumulators (SmvCounter and RejectLogger)
+In between of the `attachTasks` and `checkPolicies` methods, a group of accumulators will be used to pass the information. They are either `SmvCounter`s or `RejectLogger`s.
 
-#### `DQMLogger`
-The following counters and logger are needed to store the DQM results
-* recordCounter
-* fixCounter
-* rejectCounter
-* rejectLog
+* An `SmvCounter` is an accumulator on Map, and
+* A `RejectLogger` is a class with one accumulator on Long and another accumulator on `List[String]`
 
-All of them are accumulators. Counters are accumulators on Map, and Loggers are accumulator on List[String].
+Both of them are `private[smv]`. And both have 2 methods:
+* add()
+* report()
 
-#### `attachDQM` (private[smv])
+Each `DQMRule` has 1 `RejectLogger`, and each `DQMFix` has 1 `SmvCounter`. The `SmvDQM` class has an additional `SmvCounter` to keep tracking of the total records.
+
+#### `attachTasks` (private[smv])
 ```scala
-val resDf = df.applyDQM(dqm, dqmLogger)
+val resDf = dqm.attachTasks(df)
 ```
-Applying the DQM is a transformation on the df will not force an action.  The results of the DQM will be stored in the `dqmLogger`.
 
-#### `checkDQMPolicie` (private[smv])
-DQM rule and fix results, which stored in the `DQMLogger`, will be checked when action happened on a `DataFrame`.
+This method will convert the `DQMRule`s an `DQMFix`s to a group of transformations on the DF. Also an `pipeCount` will be attached.
+
+#### `checkPolicies` (private[smv])
 ```scala
-val dqmRes = df.checkPolicy(dqm, dqmLogger)
+val dqmRes = dqm.checkPolicies(df)
 ```
-Depending on the policies, a `checkPolicy` method could be a transformation or an action.
-By splitting `applyDQM` and `checkPolicy`, we don't need to force an action just for DQM check. Instead, we can wait for a downstream action and then call the `checkPolicy`. In case that policies in the DQM are all based on the results in the `dqmLogger` we can save an unnecessary action.
+Depending on the policies, a `checkPolicies` method could be a transformation or an action.
 
-#### `applyDQM`
-We will provide a single method, `applyDQM`, to users with combining the `attachDQM` and `checkDQMPolicy` methods. In this method, we will force an action (could be a `count`) in between of those 2 methods.
+#### `applyToDF`
+We will provide a single method, `applyToDF`, to users with combining the `attachTasks` and `checkPolicies` methods. In this method, we will force an action (could be a `count`) in between of those 2 methods.
 
 #### DQMResult
 The returned `DQMResult` object will have the following attributes:
