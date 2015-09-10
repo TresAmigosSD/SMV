@@ -178,7 +178,7 @@ Please not that the `hashOfHash` is part of the file name, so that if either of 
 file changed or the code of the SmvFile changed (including dqm definition part) the
 `readPersistedCheckFile` will fail and new check will be performed.
 
-## DQM interface (To Be Updated)
+## DQM interface
 DQM is a sub-package, `org.tresamigos.smv.dqm`, of SMV.
 
 ### Creating Rules
@@ -194,7 +194,8 @@ val rules = SmvDQM().
 ```
 
 The `SmvDQM` is a builder which takes `add` method with 2 signatures
-* `add(task: DQMTask, rulePolicy: DQMRulePolicy = FailNone)`
+* `add(rule: DQMRule, taskPolicy: DQMTaskPolicy = FailNone)`
+* `add(fix: DQMFix, taskPolicy: DQMTaskPolicy = FailNone)`
 * `add(policy: DQMPolicy)`
 
 `DQMTask` is an abstract class with 2 concrete classes: `DQMRule` and `DQMFix`.
@@ -206,11 +207,12 @@ A `DQMPolicy` is applied on the entire DF with checking both the DF and the log 
 
 Each `DQMTask` associates with a `DQMTaskPolicy`.
 
-A `DQMTaskPolicy` is a `DQMPolicy` which only depends on the specific Task's result. It has 4 case class/objects:
-* `FailNone` - policy check never fails even if some records are rejected
-* `FailAny` - policy check fails if any record get rejected by the CheckRule (same as FailCount(1))
-* `FailCount(n)` - policy check fails if more than or equal n records get rejected by the CheckRule
-* `FailPercent(r)` - policy check fails is more than or equal r percent records get rejected by the CheckRule. The percentage `r` is a float between 0 and 1.
+A `DQMTaskPolicy` can be mapped to a `DQMPolicy` which only depends on the specific Task's result.
+`DQMTaskPolicy` has 4 case class/objects:
+* `FailNone` - policy check never fails even if some records are rejected. Map to an empty policy
+* `FailAny` - policy check fails if any record get rejected by the CheckRule (same as FailCount(1)), map to `ImplementFailCountPolicy`
+* `FailCount(n)` - policy check fails if more than or equal n records get rejected by the CheckRule, map to `ImplementFailCountPolicy`
+* `FailPercent(r)` - policy check fails is more than or equal r percent records get rejected by the CheckRule. The percentage `r` is a float between 0 and 1, map to `ImplementFailPercentPolicy`
 
 There are 4 public case class extends `DQMPolicy`:
 * `FailTotalRuleCountPolicy(n)`
@@ -218,7 +220,7 @@ There are 4 public case class extends `DQMPolicy`:
 * `FailTotalFixCountPolicy(n)`
 * `FailTotalFixPercentPolicy(r)`
 
-Which will combine all the rule rejected counts and check the policies. For example, if in total there are 2 rules defined, one for checking the `age` field and the other checking `amt` field, we can defined a `FailTotalRuleCountPolicy(1000)`. The `DF` will fail the policy if add up together there are more than or equal 1000 records get rejected by the 2 rules.
+Which will combine all the rule or fix counts and check the policies. For example, if in total there are 2 rules defined, one for checking the `age` field and the other checking `amt` field, we can defined a `FailTotalRuleCountPolicy(1000)`. The `DF` will fail the policy if add up together there are more than or equal 1000 records get rejected by the 2 rules.
 
 We can extend DQMRule and DQMFix for specific common cases to make the code clearer.  See example below. Note: only the rules are shown below, there would be an equivalent "Fix" method that takes a default value.
 ```scala
@@ -244,7 +246,7 @@ case class SetFix(c: Column, validVals: Seq[String], default: String)
 
 User defined `DQMPolicy` interface
 ```scala
-DQMPolicy(policy: (DataFrame, DQMLogger) => Boolean, name: String)
+DQMPolicy(policy: (DataFrame, DQMState) => Boolean, name: String)
 ```
 
 ### Applying the DQM
@@ -263,17 +265,20 @@ also potentially apply checks agains any operation on the output DF.
 
 When `DQM` is used outside of the App framework, the `applyOnDF` method should be used, which actually force an action on the DF.
 
-#### Accumulators (SmvCounter and RejectLogger)
-In between of the `attachTasks` and `checkPolicies` methods, a group of accumulators will be used to pass the information. They are either `SmvCounter`s or `RejectLogger`s.
+#### DQMState
+In between of the `attachTasks` and `checkPolicies` methods, a `DQMState` will be used to pass the
+information.
 
-* An `SmvCounter` is an accumulator on Map, and
-* A `RejectLogger` is a class with one accumulator on Long and another accumulator on `List[String]`
+There are a group of accumulators in the `DQMState`:
+* One `Accumulator[Long]` for overall number of records
+* Each `DQMRule` has one `RejectLogger`, which has the number of rejected records and some examples for debug
+* Each `DQMFix` has one `Accumulator[Long]` for number of fixes
 
-Both of them are `private[smv]`. And both have 2 methods:
-* add()
-* report()
+A group of methods in `DQMState` should be used to add records and report.
 
-Each `DQMRule` has 1 `RejectLogger`, and each `DQMFix` has 1 `SmvCounter`. The `SmvDQM` class has an additional `SmvCounter` to keep tracking of the total records.
+When the action on a DF happens, a specific method, `snapshot`, need to be called on `DQMState` to get the
+static copy of the result. The reason is that the `Accumulator`s could keep accumulating when there are
+multiple actions in the policies.
 
 #### `attachTasks` (private[smv])
 ```scala
@@ -288,10 +293,14 @@ val dqmRes = dqm.checkPolicies(df)
 ```
 Depending on the policies, a `checkPolicies` method could be a transformation or an action.
 
-#### `applyToDF`
-We will provide a single method, `applyToDF`, to users with combining the `attachTasks` and `checkPolicies` methods. In this method, we will force an action (could be a `count`) in between of those 2 methods.
+`checkPolicies` returns a `CheckResult` object.
 
-#### DQMResult
-The returned `DQMResult` object will have the following attributes:
-* `passed: Boolean` - whether the DQM is passed
-* `errorMessages: Seq[(String, String)]` - list of policy name - error message pair on failed policies
+## Break things down
+
+### Move some of the `SmvModule` method to `SmvDataSet` (type 1)
+Unify `SmvFile` with `SmvModule`. The difference will mainly be the signature of the run method and requiresDS.
+
+### Implement CheckResult and refine RejectLogger (type 1)
+Implement `CheckResult`, `checkParserLogger`, `terminateAtError`, and check log persisting.
+
+### Implement the dqm package (type 2)

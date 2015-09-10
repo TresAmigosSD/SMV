@@ -27,9 +27,12 @@ namespace smv {
   }
 
   class RejectLogger {
-  }
+    -counter: Accumulator[Long]
+    -logger: Accumulator[MutableList[String]]
 
-  class SmvCounter {
+    add(message: String)
+    getCount()
+    getReport()
   }
 
   SmvDataSet *-- "1" smv.dqm.SmvDQM
@@ -41,7 +44,7 @@ namespace smv.dqm {
 
   class DQMPolicy <<Abstract>>{
     name: String
-    checkPolicy(df: DataFrame, logger: DQMLogger): Boolean
+    policy: (DataFrame, DQMState) => Boolean
   }
 
   class ImplementFailCountPolicy <<Private>> extends DQMPolicy {
@@ -83,21 +86,15 @@ namespace smv.dqm {
 
   class DQMRule extends DQMTask {
     rule: Column
-    name: String
-    taskPolicy: DQMTaskPolicy
-    -logger: RejectLogger
     cnstr(rule, name = null, taskPolicy = FailNone)
-    createCheckCol(logger: DQMLogger): (Column, Column)
+    createCheckCol(dqmState: DQMState): (Column, Column)
   }
 
   class DQMFix extends DQMTask {
     condition: Column
     fix: Column
-    name: String
-    taskPolicy: DQMTaskPolicy
-    -counter: SmvCounter
     cnstr(condition, rule, name = null, taskPolicy = FailNone)
-    createFixCol(logger: DQMLogger): Column
+    createFixCol(dqmState: DQMState): Column
   }
 
   class DQMTaskPolicy <<Abstract>> {
@@ -113,12 +110,30 @@ namespace smv.dqm {
     threshold: Double
   }
 
+  class DQMState <<Serializable>> {
+    -recordCounter: Acumulator[Long]
+    -fixCounters: Map[String, Acumulator[Long]]
+    -ruleLogger: Map[String, RejectLogger]
+    addRec()
+    addFixRec(fixName: String)
+    addRuleRec(ruleName: String, rec: String)
+    snapshot()
+    getRecCount()
+    getFixCount(fixName: String)
+    getRuleCount(ruleName: String)
+    getRuleLog(ruleName: String)
+    getTotalFixCount()
+    getTotalRuleCount()
+  }
+
   class SmvDQM {
-    tasks: Seq[DQMTask]
+    fixes: Seq[DQMFix]
+    rules: Seq[DQMRule]
     policies: Seq[DQMPolicy]
-    -recordCounter: SmvCounter
-    cnstr(tasks, policies)
-    add(task: DQMTask): SmvDQM
+    -dqmState: DQMState
+    -cnstr(fixes, rules, policies)
+    add(fix: DQMFix): SmvDQM
+    add(rule: DQMRule): SmvDQM
     add(policy: DQMPolicy): SmvDQM
     -policiesFromTasks(): Seq[DQMPolicy]
     ~isEmpty(): Boolean
@@ -129,11 +144,9 @@ namespace smv.dqm {
 
   SmvDQM *-- "*" DQMTask
   SmvDQM *-- "*" DQMPolicy
+  SmvDQM *-- "1" DQMState
   DQMTask *-- "1" DQMTaskPolicy
 }
 
-smv.dqm.DQMRule *-- "1" smv.RejectLogger
-smv.dqm.DQMFix *-- "1" smv.SmvCounter
-smv.dqm.SmvDQM *-- "1" smv.SmvCounter
-
+smv.dqm.DQMState *-- "*" smv.RejectLogger
 @enduml
