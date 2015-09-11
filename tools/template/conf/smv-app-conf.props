@@ -1,9 +1,0 @@
-# application name
-smv.appName = Example App
-
-# stage definitions
-smv.stages = stage1
-
-# this example has a single stage named "stage1".
-# Best practice is to create a separate package to enclose all the inputs into a stage.
-smv.stages.stage1.packages = _PROJ_CLASS_.stage1.input, _PROJ_CLASS_.stage1.etl
