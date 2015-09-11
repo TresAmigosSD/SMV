@@ -90,7 +90,7 @@ def computeRDD() {
 }
 ```
 
-We will take the "force-an-action" approach and do it in the `compureRDD` method, so that we
+We will take above approach and do it in the `compureRDD` method, so that we
 don't need to apply an extra action when `persist` happens.
 
 ### Handle Data parsing rejections
@@ -177,6 +177,56 @@ val checkResult = readPersistsedCheckFile() recoverWith {case e =>
 Please not that the `hashOfHash` is part of the file name, so that if either of the original
 file changed or the code of the SmvFile changed (including dqm definition part) the
 `readPersistedCheckFile` will fail and new check will be performed.
+
+### Combine Parser check and DQM to a single ValidationSet
+
+Since parser check and DQM check shares the same need of handling the timing of the action on the result
+DF of a `SmvDataSet`, we can create an abstract class `ValidationTask` and make `SmvDQM` and
+`ParserValidation` as 2 concrete class of `ValidationTask`. Also we will create `ValidationSet` class, which
+will contain one or more `ValidationTask`s.
+
+We will move the following functions to methods of `ValidationSet`:
+* Force action on a DF
+* `CheckResult` operation
+* Terminate at error
+* `CheckResult` persisting and read back
+
+With this framework, the `computeRDD` method can be uniquely defined in `SmvDataSet` level without
+splitting to different versions in `SmvFile` and `SmvModule`
+```scala
+def computeRDD() {
+  val (df, hasActionYet) = if(isEphemeral) {
+    (doRun(), false)
+  } else {
+    val resultDf = readPersistedFile() recoverWith {case e =>
+      persist(doRun)
+      readPersistedFile(prefix).get
+    }
+    (resultDf, true)
+  }
+
+  dataValidationSet.validate(df, hasActionYet)
+  df
+}
+```
+
+The difference between `SmvFile` and `SmvModule` will be the set of `ValidationTask`s in the `ValidationSet`.
+In general, an `SmvFile` will have a `ParserValidation` task, and an `SmvDQM` task, while `SmvModule` only
+will only have an `SmvDQM` task.
+
+The `validate` method of `ValidationSet` will looks like:
+```scala
+def validate(df: DataFrame, hasActionYet: Boolean) = {
+  val needAction = tasks.map{t => t.needAction}.reduce(_ || _)
+  val result = readPersistsedCheckFile() recover with {case e =>
+    if((!hasActionYet) && needAction) forceAction(df)
+    val res = tasks.map{t => t.validate(df)}.reduce(_ ++ _)
+    persiste(res)
+    res
+  }
+  terminateAtError(result)
+}
+```
 
 ## DQM interface
 DQM is a sub-package, `org.tresamigos.smv.dqm`, of SMV.
