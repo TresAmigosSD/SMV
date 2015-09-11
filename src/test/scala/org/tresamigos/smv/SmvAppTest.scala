@@ -35,7 +35,7 @@ class SmvHashOfHashTest extends SparkTestUtil {
 
 class SmvTestFile(override val name: String) extends SmvFile {
   val basePath = null
-  def computeRDD(): DataFrame = null
+  def doRun(): DataFrame = null
 }
 
 class SmvAppTest extends SparkTestUtil {
@@ -167,11 +167,11 @@ class SmvAppTest extends SparkTestUtil {
 
     object f1 extends SmvFile {
       val basePath = "F1.csv"
-      def computeRDD(): DataFrame = null
+      def doRun(): DataFrame = null
     }
     object f2 extends SmvFile {
       val basePath = "F2.csv"
-      def computeRDD(): DataFrame = null
+      def doRun(): DataFrame = null
     }
 
     object testApp extends SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))

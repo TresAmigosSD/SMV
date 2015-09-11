@@ -36,9 +36,6 @@ abstract class SmvDataSet {
   def name(): String
   def description(): String
 
-  /** concrete classes must implement this to supply the uncached RDD for data set */
-  def computeRDD: DataFrame
-
   /** modules must override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet]
 
@@ -57,6 +54,14 @@ abstract class SmvDataSet {
   private[smv] lazy val hashOfHash : Int = {
     (requiresDS().map(_.hashOfHash) ++ Seq(version, classCodeCRC)).hashCode()
   }
+
+  /**
+   * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
+   * This is quite handy for "filter" or "map" type modules so that we don't force an extra I/O step when it
+   * is not needed.  By default all modules are persisted unless the flag is overriden to true.
+   * Note: the module will still be persisted if it was specifically selected to run by the user.
+   */
+  def isEphemeral: Boolean
 
   /**
    * returns the DataFrame from this dataset (file/module).
@@ -80,12 +85,109 @@ abstract class SmvDataSet {
       requiresDS().foreach( ds => ds.injectApp(app))
     }
   }
+
+  /** The "versioned" module file base name. */
+  private def versionedBasePath(prefix: String): String = {
+    val verHex = f"${hashOfHash}%08x"
+    s"""${app.smvConfig.outputDir}/${prefix}${name}_${verHex}"""
+  }
+
+  /** Returns the path for the module's csv output */
+  private[smv] def moduleCsvPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".csv"
+
+  /** Returns the path for the module's schema file */
+  private[smv] def moduleSchemaPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".schema"
+
+  /** Returns the path for the module's edd report output */
+  private[smv] def moduleEddPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".edd"
+
+  /** Returns the path for the module's reject report output */
+  private[smv] def moduleRejectPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".reject"
+
+  /** perform the actual run of this module to get the generated SRDD result. */
+  private[smv] def doRun(): DataFrame
+
+  /**
+   * delete the output(s) associated with this module (csv file and schema).
+   * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
+   */
+  private[smv] def deleteOutputs() = {
+    val csvPath = moduleCsvPath()
+    val eddPath = moduleEddPath()
+    val schemaPath = moduleSchemaPath()
+    val rejectPath = moduleRejectPath()
+    SmvHDFS.deleteFile(csvPath)
+    SmvHDFS.deleteFile(schemaPath)
+    SmvHDFS.deleteFile(eddPath)
+    SmvHDFS.deleteFile(rejectPath)
+  }
+
+  /**
+   * Returns current valid outputs produced by this module.
+   */
+  private[smv] def currentModuleOutputFiles() : Seq[String] = {
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleRejectPath())
+  }
+
+  private[smv] def persist(rdd: DataFrame, prefix: String = "") = {
+    val filePath = moduleCsvPath(prefix)
+    implicit val ca = CsvAttributes.defaultCsvWithHeader
+    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
+
+    val counter = new ScCounter(app.sc)
+    val before = DateTime.now()
+    println(s"${fmt.print(before)} PERSISTING: ${filePath}")
+
+    rdd.smvPipeCount(counter).saveAsCsvWithSchema(filePath)
+
+    val after = DateTime.now()
+    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
+    val n = counter("N")
+
+    println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
+
+    /** Check and Save RejectLogger **/
+    app.checkAndSaveRejects(moduleRejectPath(prefix))
+
+    // if EDD flag was specified, generate EDD for the just saved file!
+    // Use the "cached" file that was just saved rather than cause an action
+    // on the input RDD which may cause some expensive computation to re-occur.
+    if (app.genEdd)
+      readPersistedFile(prefix).get.edd.addBaseTasks().saveReport(moduleEddPath(prefix))
+  }
+
+  private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] = {
+    implicit val ca = CsvAttributes.defaultCsv
+    Try({
+      val smvFile = SmvCsvFile(moduleCsvPath(prefix), ca)
+      smvFile.injectApp(this.app)
+      smvFile.rdd
+    })
+  }
+
+  def computeRDD: DataFrame = {
+    if (isEphemeral) {
+      // if module is ephemeral, just add it to the DAG and return resulting DF.  Do not persist.
+      doRun()
+    } else {
+      readPersistedFile().recoverWith { case e =>
+        // if unable to read persisted file, recover by running the module and persist.
+        persist(doRun())
+        readPersistedFile()
+      }.get
+    }
+  }
 }
 
 abstract class SmvFile extends SmvDataSet {
   val basePath: String
   override def description() = s"Input file: @${basePath}"
   override def requiresDS() = Seq.empty
+  override val isEphemeral = true
 
   def fullPath = {
     if (("""^[\.\/]"""r).findFirstIn(basePath) != None) basePath
@@ -141,17 +243,20 @@ abstract class SmvFile extends SmvDataSet {
     }
     sqlContext.createDataFrame(rowRdd, schema.toStructType)
   }
+
+  def run(df: DataFrame) = df
 }
 
 /**
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
 case class SmvCsvFile(
-    basePath: String,
-    csvAttributes: CsvAttributes,
-    errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate,
-    schemaPath: Option[String] = None
-  ) extends SmvFile {
+  basePath: String,
+  csvAttributes: CsvAttributes,
+  errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate,
+  schemaPath: Option[String] = None
+) extends SmvFile {
+
 
   def csvStringRDDToDF(
     sqlContext: SQLContext,
@@ -160,7 +265,8 @@ case class SmvCsvFile(
     rejects: RejectLogger
   ) = {
     val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed)
-    val seqStringRdd = rdd.mapPartitions{ parser.parseCSV(_)(csvAttributes, rejects) }
+    val _ca = csvAttributes
+    val seqStringRdd = rdd.mapPartitions{ parser.parseCSV(_)(_ca, rejects) }
     seqStringRDDToDF(sqlContext, seqStringRdd, schema, rejects)
   }
 
@@ -178,14 +284,15 @@ case class SmvCsvFile(
     csvStringRDDToDF(app.sqlContext, noHeadRDD, schema, rejects)
   }
 
-  override def computeRDD: DataFrame = {
+  val runf: DataFrame => DataFrame = {df => run(df)}
+  private[smv] def doRun(): DataFrame = {
     val rejectLogger = createLogger(app, errPolicy)
     // TODO: this should use inputDir instead of dataDir
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
-    csvFileWithSchema(fullPath, sp, rejectLogger)
+    val df = csvFileWithSchema(fullPath, sp, rejectLogger)
+    runf(df)
   }
 }
-
 
 case class SmvFrlFile(
     basePath: String,
@@ -206,8 +313,7 @@ case class SmvFrlFile(
     seqStringRDDToDF(sqlContext, seqStringRdd, schema, rejects)
   }
 
-  private def frlFileWithSchema(dataPath: String, schemaPath: String)
-                       (implicit rejects: RejectLogger): DataFrame = {
+  private def frlFileWithSchema(dataPath: String, schemaPath: String, rejects: RejectLogger): DataFrame = {
     val sc = app.sqlContext.sparkContext
     val slices = SmvSchema.slicesFromFile(sc, schemaPath)
     val schema = SmvSchema.fromFile(sc, schemaPath)
@@ -218,11 +324,12 @@ case class SmvFrlFile(
     frlStringRDDToDF(app.sqlContext, strRDD, schema, slices, rejects)
   }
 
-  override def computeRDD: DataFrame = {
-    implicit val rejectLogger = createLogger(app, errPolicy)
+  private[smv] def doRun(): DataFrame = {
+    val rejectLogger = createLogger(app, errPolicy)
     // TODO: this should use inputDir instead of dataDir
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
-    frlFileWithSchema(fullPath, sp)
+    val df = frlFileWithSchema(fullPath, sp, rejectLogger)
+    run(df)
   }
 }
 
@@ -254,7 +361,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    * is not needed.  By default all modules are persisted unless the flag is overriden to true.
    * Note: the module will still be persisted if it was specifically selected to run by the user.
    */
-  val isEphemeral = false
+  override val isEphemeral = false
 
   /**
    * module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
@@ -263,92 +370,12 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 
   override def classCodeCRC() : Int = moduleCRC.crc.toInt
 
-  /** The "versioned" module file base name. */
-  private def versionedBasePath(prefix: String): String = {
-    val verHex = f"${hashOfHash}%08x"
-    s"""${app.smvConfig.outputDir}/${prefix}${name}_${verHex}"""
-  }
-
-  /** Returns the path for the module's csv output */
-  private[smv] def moduleCsvPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".csv"
-
-  /** Returns the path for the module's schema file */
-  private[smv] def moduleSchemaPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".schema"
-
-  /** Returns the path for the module's edd report output */
-  private[smv] def moduleEddPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".edd"
-
-  /** Returns the path for the module's reject report output */
-  private[smv] def moduleRejectPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".reject"
-
   type runParams = Map[SmvDataSet, DataFrame]
   def run(inputs: runParams) : DataFrame
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  private def doRun(): DataFrame = {
+  private[smv] def doRun(): DataFrame = {
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
-  }
-
-  /**
-   * delete the output(s) associated with this module (csv file and schema).
-   * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
-   */
-  private[smv] def deleteOutputs() = {
-    val csvPath = moduleCsvPath()
-    val eddPath = moduleEddPath()
-    val schemaPath = moduleSchemaPath()
-    val rejectPath = moduleRejectPath()
-    SmvHDFS.deleteFile(csvPath)
-    SmvHDFS.deleteFile(schemaPath)
-    SmvHDFS.deleteFile(eddPath)
-    SmvHDFS.deleteFile(rejectPath)
-  }
-
-  /**
-   * Returns current valid outputs produced by this module.
-   */
-  private[smv] def currentModuleOutputFiles() : Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath())
-  }
-
-  private[smv] def persist(rdd: DataFrame, prefix: String = "") = {
-    val filePath = moduleCsvPath(prefix)
-    implicit val ca = CsvAttributes.defaultCsvWithHeader
-    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
-
-    val counter = new ScCounter(app.sc)
-    val before = DateTime.now()
-    println(s"${fmt.print(before)} PERSISTING: ${filePath}")
-
-    rdd.smvPipeCount(counter).saveAsCsvWithSchema(filePath)
-
-    val after = DateTime.now()
-    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
-    val n = counter("N")
-
-    println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
-
-    /** Check and Save RejectLogger **/
-    app.checkAndSaveRejects(moduleRejectPath(prefix))
-
-    // if EDD flag was specified, generate EDD for the just saved file!
-    // Use the "cached" file that was just saved rather than cause an action
-    // on the input RDD which may cause some expensive computation to re-occur.
-    if (app.genEdd)
-      readPersistedFile(prefix).get.edd.addBaseTasks().saveReport(moduleEddPath(prefix))
-  }
-
-  private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] = {
-    implicit val ca = CsvAttributes.defaultCsv
-    Try({
-      val smvFile = SmvCsvFile(moduleCsvPath(prefix), ca)
-      smvFile.injectApp(this.app)
-      smvFile.rdd
-    })
   }
 
   /**
@@ -358,19 +385,6 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   def snapshot(df: DataFrame, prefix: String) : DataFrame = {
     persist(df, prefix)
     readPersistedFile(prefix).get
-  }
-
-  override def computeRDD: DataFrame = {
-    if (isEphemeral) {
-      // if module is ephemeral, just add it to the DAG and return resulting DF.  Do not persist.
-      doRun()
-    } else {
-      readPersistedFile().recoverWith { case e =>
-        // if unable to read persisted file, recover by running the module and persist.
-        persist(doRun())
-        readPersistedFile()
-      }.get
-    }
   }
 }
 

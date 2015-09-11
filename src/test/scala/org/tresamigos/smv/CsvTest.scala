@@ -1,5 +1,7 @@
 package org.tresamigos.smv
 
+import org.apache.spark.sql.DataFrame
+
 class CsvTest extends SparkTestUtil {
 
   sparkTest("Test loading of csv file with header") {
@@ -19,5 +21,19 @@ class CsvTest extends SparkTestUtil {
       "3,null;" +
       "null,null;" +
       "5,3.0")
+  }
+
+  sparkTest("Test run method in SmvFile") {
+    object TestFile extends SmvCsvFile("./" + testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader) {
+      override def run(df: DataFrame) = {
+        import df.sqlContext.implicits._
+        df.selectPlus(smvStrCat($"name", $"id") as "name_id")
+      }
+    }
+    TestFile.injectApp(app)
+    val df = TestFile.rdd
+    assertSrddDataEqual(df,
+      "Bob,1,Bob1;" +
+      "Fred,2,Fred2")
   }
 }
