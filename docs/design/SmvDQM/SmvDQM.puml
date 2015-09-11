@@ -7,23 +7,43 @@ namespace smv {
   class SmvDataSet <<Abstract>> {
     isEphemeral: Boolean
     dqm(): SmvDQM
-    -terminateAtError(checkResult: CheckResult): Unit
-    -doRun(): DataFrame
-    -computeRDD(): DataFrame
+    dataValidationSet(): ValidationSet
+    doRun(): DataFrame
+    computeRDD(): DataFrame
   }
 
-  class CheckResult {
+  class ValidationSet {
+    -tasks: Seq[ValidationTask]
+    -path: String
+    cnstr(path: String, tasks: Seq[ValidationTask]): ValidationSet
+    add(newTask: ValidationTask): ValidationSet
+    -persistResult(chechResult: CheckResult): Unit
+    -readPersistedResult(): CheckResult
+    -terminateAtError(checkResult: CheckResult): Unit
+    validate(df: DataFrame, hasActionYet: Boolean): Unit
+  }
+
+  class ValidationTask <<Abstract>> {
+    needAction(): Boolean
+    validate(df: DataFrame): CheckResult
+  }
+
+  class ParserValidation extends ValidationTask {
+    -parserLogger: RejectLogger
+    -failAtError: Boolean
+    cnstr(failAtError)
+  }
+
+  class ValidationResult {
     passed: Boolean
     errorMessages: Seq[String, String]
     checkLog: Seq[String]
-    \++(that: CheckResult): CheckResult
+    \++(that: ValidationResult): ValidationResult
   }
 
   class SmvFile <<Abstract>> extends SmvDataSet {
     failAtParsingError: Boolean
-    -parserLogger: RejectLogger
-    -checkParserLogger(): CheckResult
-    -computeRDD()
+    -parserValidator: ParserValidation
   }
 
   class RejectLogger {
@@ -35,9 +55,11 @@ namespace smv {
     getReport()
   }
 
+  SmvDataSet *-- "1" ValidationSet
   SmvDataSet *-- "1" smv.dqm.SmvDQM
-  SmvDataSet *-- "*" CheckResult
-  SmvFile *-- "1" RejectLogger
+  ValidationSet *-- "*" ValidationTask
+  ParserValidation *-- "1" RejectLogger
+  SmvFile *-- "1" ParserValidation
 }
 
 namespace smv.dqm {
@@ -126,7 +148,7 @@ namespace smv.dqm {
     getTotalRuleCount()
   }
 
-  class SmvDQM {
+  class SmvDQM extends smv.ValidationTask {
     fixes: Seq[DQMFix]
     rules: Seq[DQMRule]
     policies: Seq[DQMPolicy]
