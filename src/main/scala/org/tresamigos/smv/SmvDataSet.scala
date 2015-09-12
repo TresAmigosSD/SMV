@@ -284,13 +284,12 @@ case class SmvCsvFile(
     csvStringRDDToDF(app.sqlContext, noHeadRDD, schema, rejects)
   }
 
-  val runf: DataFrame => DataFrame = {df => run(df)}
   private[smv] def doRun(): DataFrame = {
     val rejectLogger = createLogger(app, errPolicy)
     // TODO: this should use inputDir instead of dataDir
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
     val df = csvFileWithSchema(fullPath, sp, rejectLogger)
-    runf(df)
+    run(df)
   }
 }
 
