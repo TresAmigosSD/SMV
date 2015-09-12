@@ -14,6 +14,11 @@
 
 package org.tresamigos.smv
 
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.DataFrame
+
 /*
 class ValidationSet {
   -tasks: Seq[ValidationTask]
@@ -44,6 +49,7 @@ class ValidationResult {
   \++(that: ValidationResult): ValidationResult
 }
 */
+
 case class ValidationResult (
   passed: Boolean,
   errorMessages: Seq[(String, String)] = Nil,
@@ -57,11 +63,9 @@ case class ValidationResult (
     )
   }
 
-  private def rmNl(s: String) = {
-    ("""\n"""r).replaceAllIn(s, """\\n""")
-  }
+  def toJSON() = {
+    val rmNl: String => String = {s => ("""\n"""r).replaceAllIn(s, """\\n""")}
 
-  def prettyJSON() = {
     "{\n" ++
     """  "passed":%s,""".format(passed) ++ "\n" ++
     """  "errorMessages": [""" ++ "\n" ++
@@ -71,5 +75,46 @@ case class ValidationResult (
     checkLog.map{l => """    "%s"""".format(rmNl(l))}.mkString(",\n") ++ "\n" ++
     "  ]\n" ++
     "}"
+  }
+}
+
+object ValidationResult {
+  def apply(jsonStr: String) = {
+    val json = parse(jsonStr)
+    val (passed, errorList, checkList) = json match {
+      case JObject(List((_,JBool(p)), (_,JArray(e)), (_,JArray(c)))) => (p, e, c)
+      case _ => throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+    }
+    val errorMessages = errorList.map{e =>
+      e match {
+        case JObject(List((k,JString(v)))) => (k, v)
+        case _ => throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+      }
+    }
+    val checkLog = checkList.map{e =>
+      e match {
+        case JString(l) => l
+        case _ => throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+      }
+    }
+
+    new ValidationResult(passed, errorMessages, checkLog)
+  }
+}
+
+abstract class ValidationTask {
+  def needAction(): Boolean
+  def validate(df: DataFrame): ValidationResult
+}
+
+class ParserValidation(sc: SparkContext, failAtError: Boolean = true) extends ValidationTask {
+
+  def needAction = true
+  val parserLogger = new SCRejectLogger(sc, 10)
+  def addWithReason(e: Exception, rec: String) = parserLogger.addRejectedLineWithReason(rec,e)
+  def validate(df: DataFrame) = {
+    val report = parserLogger.rejectedReport
+    val passed = (!failAtError) || report.isEmpty
+    ValidationResult(passed, report)
   }
 }

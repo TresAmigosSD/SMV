@@ -18,13 +18,14 @@ import org.json4s.jackson.JsonMethods._
 
 class ValidationTest extends SparkTestUtil {
 
-  test("Test ValidationResult") {
+  test("Test ValidationResult json convertion test") {
     val v = ValidationResult(
       false,
       Seq(("p1", "many issues:\n Issue1: ...\n Issue2: ..."), ("p2", "Simpy issue")),
       Seq("log1", "log2")
     )
-    val res = pretty(parse(v.prettyJSON))
+    val str = v.toJSON
+    val res = pretty(parse(str))
     assert(res ===
 """{
   "passed" : false,
@@ -35,5 +36,37 @@ class ValidationTest extends SparkTestUtil {
   } ],
   "checkLog" : [ "log1", "log2" ]
 }""")
+
+    val v2 = ValidationResult(str)
+    assert(v === v2)
+  }
+
+  test("Test ValidationResult ++ operator") {
+    val v1 = ValidationResult(
+      true,
+      Nil,
+      Seq("log1")
+    )
+    val v2 = ValidationResult(
+      false,
+      Seq(("p2", "issue message2")),
+      Seq("log2")
+    )
+
+    val v3 = ValidationResult(
+      false,
+      Seq(("p2", "issue message2")),
+      Seq("log1","log2")
+    )
+
+    assert( (v1 ++ v2) === v3 )
+  }
+
+  sparkTest("Test ParserValidation") {
+    val pv = new ParserValidation(sc)
+    pv.addWithReason(new IllegalArgumentException("test logger"), "Test")
+    val res = pv.validate(null)
+    //println(pretty(parse(res.toJSON)))
+    assert(res.passed === false)
   }
 }
