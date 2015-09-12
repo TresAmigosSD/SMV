@@ -26,7 +26,7 @@ function gen_user_guide()
 }
 
 SMV_HOME="$(cd "`dirname "$0"`"/..; pwd)"
-OUTPUT_DIR=target/_site
+OUTPUT_DIR=target/site
 
 verify_pandoc
 gen_user_guide
