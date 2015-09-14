@@ -7,7 +7,7 @@
   <packaging>jar</packaging>
   <inceptionYear>2014</inceptionYear>
   <properties>
-    <scala.version>2.10.4</scala.version>
+      <scala.version>2.10.4</scala.version>
   </properties>
 
   <repositories>
@@ -167,6 +167,105 @@
         </executions>
       </plugin>
 
+        <!-- plugin to execute the gen_docs.sh script to generate the user guide (during site phase) -->
+        <plugin>
+            <artifactId>exec-maven-plugin</artifactId>
+            <groupId>org.codehaus.mojo</groupId>
+            <executions>
+                <execution>
+                    <id>gen-user-guide</id>
+                    <phase>site</phase>
+                    <goals>
+                        <goal>exec</goal>
+                    </goals>
+                    <configuration>
+                        <executable>./tools/gen_docs.sh</executable>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
+        <!-- disable standard maven site plugin from trying to deploy (we are using github plugin instead) -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-site-plugin</artifactId>
+            <version>3.1</version>
+            <dependencies>
+                <dependency>
+                    <!--
+                    | allows markdown syntax for site generation. To use it place files below
+                    | src/site/markdown/[filename].md
+                    -->
+                    <groupId>org.apache.maven.doxia</groupId>
+                    <artifactId>doxia-module-markdown</artifactId>
+                    <version>1.3</version>
+                </dependency>
+            </dependencies>
+            <configuration>
+                <skipDeploy>true</skipDeploy>
+            </configuration>
+        </plugin>
+
+        <!-- github site publishing plugin. -->
+        <plugin>
+            <groupId>com.github.github</groupId>
+            <artifactId>site-maven-plugin</artifactId>
+            <configuration>
+                <message>Creating site for ${project.version}</message>
+                <repositoryName>SMV</repositoryName>
+                <repositoryOwner>TresAmigosSD</repositoryOwner>
+                <merge>false</merge>
+                <server>github</server>
+                <noJekyll>true</noJekyll>
+                <dryRun>false</dryRun>
+            </configuration>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>site</goal>
+                    </goals>
+                    <phase>site-deploy</phase>
+                </execution>
+            </executions>
+        </plugin>
+
     </plugins>
   </build>
+
+    <reporting>
+        <plugins>
+            <!-- enable plugin for generating scaladoc -->
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+            </plugin>
+
+            <!-- configure site plugin to not generate too much info (sloooow) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+
+                <configuration>
+                    <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
+                    <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+                </configuration>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>summary</report>
+                            <!--<report>index</report>-->
+                            <!--<report>dependencies</report>-->
+                            <!--<report>project-team</report>-->
+                            <!--<report>issue-tracking</report>-->
+                            <!--<report>scm</report>-->
+                            <!--<report>cim</report>-->
+                            <!--<report>modules</report>-->
+                            <!--<report>plugins</report>-->
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
+
 </project>
