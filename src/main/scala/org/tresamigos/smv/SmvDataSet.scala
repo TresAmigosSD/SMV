@@ -45,6 +45,7 @@ abstract class SmvDataSet {
   /** CRC computed from the dataset "code" (not data) */
   def classCodeCRC() : Int = 0
 
+  def validations(): ValidationSet = new ValidationSet(Nil)
   /**
    * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
    * This way, if this module or any of the modules it depends on changes, the HOH should change.
@@ -150,9 +151,6 @@ abstract class SmvDataSet {
 
     println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
 
-    /** Check and Save RejectLogger **/
-    app.checkAndSaveRejects(moduleRejectPath(prefix))
-
     // if EDD flag was specified, generate EDD for the just saved file!
     // Use the "cached" file that was just saved rather than cause an action
     // on the input RDD which may cause some expensive computation to re-occur.
@@ -170,16 +168,18 @@ abstract class SmvDataSet {
   }
 
   def computeRDD: DataFrame = {
-    if (isEphemeral) {
-      // if module is ephemeral, just add it to the DAG and return resulting DF.  Do not persist.
-      doRun()
+    val (df, hasActionYet) = if(isEphemeral) {
+      (doRun(), false)
     } else {
-      readPersistedFile().recoverWith { case e =>
-        // if unable to read persisted file, recover by running the module and persist.
+      val resultDf = readPersistedFile().recoverWith {case e =>
         persist(doRun())
         readPersistedFile()
       }.get
+      (resultDf, true)
     }
+
+    validations.validate(df, hasActionYet)
+    df
   }
 }
 
@@ -188,6 +188,12 @@ abstract class SmvFile extends SmvDataSet {
   override def description() = s"Input file: @${basePath}"
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
+  val failAtParsingError = true
+
+  //TODO: split this to 2
+  lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
+
+  override def validations() = new ValidationSet(Seq(parserValidator))
 
   def fullPath = {
     if (("""^[\.\/]"""r).findFirstIn(basePath) != None) basePath
@@ -211,20 +217,14 @@ abstract class SmvFile extends SmvDataSet {
     }
   }
 
-  def createLogger(app: SmvApp, errPolicy: SmvErrorPolicy.ReadPolicy) = {
-    errPolicy match {
-      case SmvErrorPolicy.Terminate => TerminateRejectLogger
-      case SmvErrorPolicy.Ignore => NoOpRejectLogger
-      case SmvErrorPolicy.Log => app.rejectLogger
-    }
-  }
-
   protected def seqStringRDDToDF(
     sqlContext: SQLContext,
     rdd: RDD[Seq[String]],
     schema: SmvSchema,
-    rejects: RejectLogger
+    parserV: ParserValidation
+    //rejects: RejectLogger
   ) = {
+    val add: (Exception, String) => Unit = {(e,r) => parserV.addWithReason(e,r)}
     val rowRdd = rdd.mapPartitions{ iterator =>
       val mutableRow = new GenericMutableRow(schema.getSize)
       iterator.map { r =>
@@ -235,9 +235,9 @@ abstract class SmvFile extends SmvDataSet {
           }
           Some(mutableRow)
         } catch {
-          case e:IllegalArgumentException  =>  rejects.addRejectedSeqWithReason(r,e); None
-          case e:NumberFormatException  =>  rejects.addRejectedSeqWithReason(r,e); None
-          case e:java.text.ParseException  =>  rejects.addRejectedSeqWithReason(r,e); None
+          case e:IllegalArgumentException  => add(e, r.mkString(",")); None
+          case e:NumberFormatException  => add(e, r.mkString(",")); None
+          case e:java.text.ParseException  =>  add(e, r.mkString(",")); None
         }
       }.collect{case Some(l) => l.asInstanceOf[Row]}
     }
@@ -253,27 +253,24 @@ abstract class SmvFile extends SmvDataSet {
 case class SmvCsvFile(
   basePath: String,
   csvAttributes: CsvAttributes,
-  errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate,
   schemaPath: Option[String] = None
 ) extends SmvFile {
 
-
-  def csvStringRDDToDF(
+  private[smv] def csvStringRDDToDF(
     sqlContext: SQLContext,
     rdd: RDD[String],
     schema: SmvSchema,
-    rejects: RejectLogger
+    parserV: ParserValidation
   ) = {
-    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed)
+    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed, parserV)
     val _ca = csvAttributes
-    val seqStringRdd = rdd.mapPartitions{ parser.parseCSV(_)(_ca, rejects) }
-    seqStringRDDToDF(sqlContext, seqStringRdd, schema, rejects)
+    val seqStringRdd = rdd.mapPartitions{ parser.parseCSV(_)(_ca) }
+    seqStringRDDToDF(sqlContext, seqStringRdd, schema, parserV)
   }
 
   private def csvFileWithSchema(
     dataPath: String,
-    schemaPath: String,
-    rejects: RejectLogger
+    schemaPath: String
   ): DataFrame = {
     val sc = app.sqlContext.sparkContext
     val schema = SmvSchema.fromFile(sc, schemaPath)
@@ -281,21 +278,19 @@ case class SmvCsvFile(
     val strRDD = sc.textFile(dataPath)
     val noHeadRDD = if (csvAttributes.hasHeader) CsvAttributes.dropHeader(strRDD) else strRDD
 
-    csvStringRDDToDF(app.sqlContext, noHeadRDD, schema, rejects)
+    csvStringRDDToDF(app.sqlContext, noHeadRDD, schema, parserValidator)
   }
 
   private[smv] def doRun(): DataFrame = {
-    val rejectLogger = createLogger(app, errPolicy)
     // TODO: this should use inputDir instead of dataDir
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
-    val df = csvFileWithSchema(fullPath, sp, rejectLogger)
+    val df = csvFileWithSchema(fullPath, sp)
     run(df)
   }
 }
 
 case class SmvFrlFile(
     basePath: String,
-    errPolicy: SmvErrorPolicy.ReadPolicy = SmvErrorPolicy.Terminate,
     schemaPath: Option[String] = None
   ) extends SmvFile {
 
@@ -304,15 +299,15 @@ case class SmvFrlFile(
     rdd: RDD[String],
     schema: SmvSchema,
     slices: Seq[Int],
-    rejects: RejectLogger
+    parserV: ParserValidation
   ) = {
     val startLen = slices.scanLeft(0){_ + _}.dropRight(1).zip(slices)
-    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed)
-    val seqStringRdd = rdd.mapPartitions{ parser.parseFrl(_, startLen)(rejects) }
-    seqStringRDDToDF(sqlContext, seqStringRdd, schema, rejects)
+    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed, parserV)
+    val seqStringRdd = rdd.mapPartitions{ parser.parseFrl(_, startLen) }
+    seqStringRDDToDF(sqlContext, seqStringRdd, schema, parserV)
   }
 
-  private def frlFileWithSchema(dataPath: String, schemaPath: String, rejects: RejectLogger): DataFrame = {
+  private def frlFileWithSchema(dataPath: String, schemaPath: String): DataFrame = {
     val sc = app.sqlContext.sparkContext
     val slices = SmvSchema.slicesFromFile(sc, schemaPath)
     val schema = SmvSchema.fromFile(sc, schemaPath)
@@ -320,14 +315,13 @@ case class SmvFrlFile(
 
     // TODO: show we allow header in Frl files?
     val strRDD = sc.textFile(dataPath)
-    frlStringRDDToDF(app.sqlContext, strRDD, schema, slices, rejects)
+    frlStringRDDToDF(app.sqlContext, strRDD, schema, slices, parserValidator)
   }
 
   private[smv] def doRun(): DataFrame = {
-    val rejectLogger = createLogger(app, errPolicy)
     // TODO: this should use inputDir instead of dataDir
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
-    val df = frlFileWithSchema(fullPath, sp, rejectLogger)
+    val df = frlFileWithSchema(fullPath, sp)
     run(df)
   }
 }

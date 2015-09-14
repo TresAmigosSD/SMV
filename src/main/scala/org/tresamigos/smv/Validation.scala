@@ -19,37 +19,6 @@ import org.json4s.jackson.JsonMethods._
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 
-/*
-class ValidationSet {
-  -tasks: Seq[ValidationTask]
-  -path: String
-  cnstr(path: String, tasks: Seq[ValidationTask]): ValidationSet
-  add(newTask: ValidationTask): ValidationSet
-  -persistResult(chechResult: CheckResult): Unit
-  -readPersistedResult(): CheckResult
-  -terminateAtError(checkResult: CheckResult): Unit
-  validate(df: DataFrame, hasActionYet: Boolean): Unit
-}
-
-class ValidationTask <<Abstract>> {
-  needAction(): Boolean
-  validate(df: DataFrame): CheckResult
-}
-
-class ParserValidation extends ValidationTask {
-  -parserLogger: RejectLogger
-  -failAtError: Boolean
-  cnstr(failAtError)
-}
-
-class ValidationResult {
-  passed: Boolean
-  errorMessages: Seq[String, String]
-  checkLog: Seq[String]
-  \++(that: ValidationResult): ValidationResult
-}
-*/
-
 case class ValidationResult (
   passed: Boolean,
   errorMessages: Seq[(String, String)] = Nil,
@@ -107,14 +76,49 @@ abstract class ValidationTask {
   def validate(df: DataFrame): ValidationResult
 }
 
-class ParserValidation(sc: SparkContext, failAtError: Boolean = true) extends ValidationTask {
+class ParserValidation(sc: SparkContext, failAtError: Boolean = true) extends ValidationTask with Serializable {
 
   def needAction = true
-  val parserLogger = new SCRejectLogger(sc, 10)
+  val parserLogger = new RejectLogger(sc, 10)
   def addWithReason(e: Exception, rec: String) = parserLogger.addRejectedLineWithReason(rec,e)
   def validate(df: DataFrame) = {
-    val report = parserLogger.rejectedReport
-    val passed = (!failAtError) || report.isEmpty
-    ValidationResult(passed, report)
+    val (nOfRejects, log) = parserLogger.report
+    val passed = (!failAtError) || (nOfRejects == 0)
+    val errorMessages = if (nOfRejects == 0) Nil else Seq(("ParserError", s"Totally ${nOfRejects} records get rejected"))
+    ValidationResult(passed, errorMessages, log)
   }
 }
+
+class ValidationSet(val tasks: Seq[ValidationTask]) {
+  def add(task: ValidationTask) = {
+    new ValidationSet(tasks :+ task)
+  }
+
+  private def forceAction(df: DataFrame) = {
+    df.count
+    Unit
+  }
+
+  private def terminateAtError(result: ValidationResult) = {
+    if (!result.passed) {
+      val r = result.errorMessages.map{case (e,m) => s"$m CAUSED BY $e"}.mkString("\n")
+      throw new ValidationError(r)
+    }
+  }
+
+  def validate(df: DataFrame, hasActionYet: Boolean) = {
+    if (!tasks.isEmpty) {
+      val needAction = tasks.map{t => t.needAction}.reduce(_ || _)
+  //    val result = readPersistsedCheckFile() recover with {case e =>
+      val result = {
+        if((!hasActionYet) && needAction) forceAction(df)
+        val res = tasks.map{t => t.validate(df)}.reduce(_ ++ _)
+        //persiste(res)
+        res
+      }
+      terminateAtError(result)
+    }
+  }
+}
+
+class ValidationError(msg: String) extends Exception(msg)

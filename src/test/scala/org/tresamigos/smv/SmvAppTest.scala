@@ -36,6 +36,7 @@ class SmvHashOfHashTest extends SparkTestUtil {
 class SmvTestFile(override val name: String) extends SmvFile {
   val basePath = null
   def doRun(): DataFrame = null
+  override def validations() = new ValidationSet(Nil)
 }
 
 class SmvAppTest extends SparkTestUtil {

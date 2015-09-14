@@ -24,26 +24,27 @@ import scala.reflect.ClassTag
  *
  *  @param f the function applied to the parsed record
  */
-class CSVStringParser[U](f: (String, Seq[String]) => U)(implicit ut: ClassTag[U]) extends Serializable {
+class CSVStringParser[U](f: (String, Seq[String]) => U, parserV: ParserValidation)(implicit ut: ClassTag[U]) extends Serializable {
   //import au.com.bytecode.opencsv.CSVParser
 
   /** Parse an Iterator[String], apply function "f", and return another Iterator */
   def parseCSV(iterator: Iterator[String])
-              (implicit ca: CsvAttributes, rejects: RejectLogger): Iterator[U] = {
+              (implicit ca: CsvAttributes): Iterator[U] = {
     val parser = new CSVParser(ca.delimiter)
+    val add: (Exception, String) => Unit = {(e,r) => parserV.addWithReason(e,r)}
     iterator.map { r =>
       try {
         val parsed = parser.parseLine(r)
         Some(f(r,parsed))
       } catch {
-        case e:java.io.IOException  =>  rejects.addRejectedLineWithReason(r,e); None
-        case e:IndexOutOfBoundsException  =>  rejects.addRejectedLineWithReason(r,e); None
+        case e:java.io.IOException  =>  add(e, r); None
+        case e:IndexOutOfBoundsException  =>  add(e, r); None
       }
     }.collect{case Some(l) => l}
   }
 
-  def parseFrl(iterator: Iterator[String], startLenPairs: Seq[(Int, Int)])
-              (implicit rejects: RejectLogger): Iterator[U] = {
+  def parseFrl(iterator: Iterator[String], startLenPairs: Seq[(Int, Int)]): Iterator[U] = {
+    val add: (Exception, String) => Unit = {(e,r) => parserV.addWithReason(e,r)}
     iterator.map{r =>
       try {
         val parsed =  startLenPairs.map{ case (start, len) =>
@@ -51,7 +52,7 @@ class CSVStringParser[U](f: (String, Seq[String]) => U)(implicit ut: ClassTag[U]
         }
         Some(f(r,parsed))
       } catch {
-        case e:Exception => rejects.addRejectedLineWithReason(r, e); None
+        case e:Exception => add(e,r); None
       }
     }.collect{case Some(l) => l}
   }

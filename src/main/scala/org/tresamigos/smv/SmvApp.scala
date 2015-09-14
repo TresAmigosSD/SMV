@@ -53,28 +53,19 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
   /**
-   * concrete applications can provide a more interesting RejectLogger.
-   *  Example: override val rejectLogger = new SCRejectLogger(sc, 3)
-   */
-  val rejectLogger : RejectLogger = new SCRejectLogger(sc, 10)
-
-  def checkAndSaveRejects(path: String) = {
-    val r = rejectLogger.rejectedReport
-    if(!r.isEmpty){
-      sc.makeRDD(r, 1).saveAsTextFile(path)
-      println(s"WARNING: RejectLogger is not empty, please check ${path}")
-    }
-  }
-
-  /**
    * Create a DataFrame from string for temporary use (in test or shell)
    **/
   def createDF(schemaStr: String, data: String) = {
     val schema = SmvSchema.fromString(schemaStr)
     val dataArray = data.split(";").map(_.trim)
 
-    val smvCF = SmvCsvFile(null, CsvAttributes.defaultCsv)
-    smvCF.csvStringRDDToDF(sqlContext, sc.makeRDD(dataArray), schema, TerminateRejectLogger)
+    object smvCF extends SmvCsvFile(null, CsvAttributes.defaultCsv){
+      override def doRun(): DataFrame = {
+        csvStringRDDToDF(app.sqlContext, sc.makeRDD(dataArray), schema, parserValidator)
+      }
+    }
+    smvCF.injectApp(this)
+    smvCF.rdd
   }
 
   /** all modules known to this app. */

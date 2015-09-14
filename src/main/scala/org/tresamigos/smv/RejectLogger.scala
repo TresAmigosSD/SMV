@@ -17,41 +17,15 @@ package org.tresamigos.smv
 import org.apache.spark.SparkContext
 import scala.collection.mutable.MutableList
 
-class ReadingError(msg: String, cause: Throwable)
-  extends Exception(s"\nERROR RECORD: ${msg}\nERROR CAUSED BY ${cause.getClass().getSimpleName()}: ${cause.getMessage()}")
-
-abstract class RejectLogger extends Serializable {
-  val addRejectedLineWithReason: (String, Exception) => Unit = (r:String, e:Exception) => Unit
-  val addRejectedSeqWithReason: (Seq[Any], Exception) => Unit = (r:Seq[Any], e:Exception) => Unit
-  def rejectedReport: List[(String, String)] = Nil
-}
-
-object RejectLogger {
-  implicit val rejectLogger = TerminateRejectLogger;
-}
-
-object NoOpRejectLogger extends RejectLogger
-
-object TerminateRejectLogger extends RejectLogger {
-  override val addRejectedLineWithReason: (String, Exception) => Unit = (r:String, e:Exception) => {
-    throw new ReadingError(r, e)
-    Unit
-  }
-  override val addRejectedSeqWithReason: (Seq[Any], Exception) => Unit = (r:Seq[Any], e:Exception) => {
-    throw new ReadingError(r.mkString(","), e)
-    Unit
-  }
-}
-
-class SCRejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends RejectLogger {
-  private val rejectedRecords = sparkContext.accumulableCollection(MutableList[(String, String)]())
+class RejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends Serializable {
+  private val rejectedRecords = sparkContext.accumulableCollection(MutableList[String]())
   private val rejectedRecordCount = sparkContext.accumulator(0)
 
-  override val addRejectedLineWithReason: (String, Exception) => Unit = {
+  val addRejectedLineWithReason: (String, Exception) => Unit = {
     var localCounter = 0
     (r:String, e:Exception) => {
       if (localCounter < localMax) {
-        rejectedRecords += ((r, e.toString))
+        rejectedRecords += s"${e.toString} @RECORD: ${r}"
       }
       localCounter = localCounter + 1
       rejectedRecordCount += 1
@@ -59,21 +33,8 @@ class SCRejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends
     }
   }
 
-  override val addRejectedSeqWithReason: (Seq[Any], Exception) => Unit =
-    (r:Seq[Any], e:Exception) => addRejectedLineWithReason(r.mkString(","), e)
-
-
-  override def rejectedReport: List[(String, String)] = {
-    if (rejectedRecordCount.value > 0) {
-      val rep = rejectedRecords.value
-      if (rejectedRecordCount.value > rep.size){
-        (rep :+ ((s"More rejects!! Total rejected records: $rejectedRecordCount",""))).toList
-      } else {
-        (rep :+ ((s"Total rejected records: $rejectedRecordCount",""))).toList
-      }
-    } else {
-      Nil
-    }
+  def report: (Int, List[String]) = {
+    (rejectedRecordCount.value, rejectedRecords.value.toList)
   }
 
 }
