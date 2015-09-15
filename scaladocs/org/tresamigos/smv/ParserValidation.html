@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>NoOpRejectLogger - Spark Model Variables 1.3-SNAPSHOT API - org.tresamigos.smv.NoOpRejectLogger</title>
-          <meta name="description" content="NoOpRejectLogger - Spark Model Variables 1.3 - SNAPSHOT API - org.tresamigos.smv.NoOpRejectLogger" />
-          <meta name="keywords" content="NoOpRejectLogger Spark Model Variables 1.3 SNAPSHOT API org.tresamigos.smv.NoOpRejectLogger" />
+          <title>ParserValidation - Spark Model Variables 1.3-SNAPSHOT API - org.tresamigos.smv.ParserValidation</title>
+          <meta name="description" content="ParserValidation - Spark Model Variables 1.3 - SNAPSHOT API - org.tresamigos.smv.ParserValidation" />
+          <meta name="keywords" content="ParserValidation Spark Model Variables 1.3 SNAPSHOT API org.tresamigos.smv.ParserValidation" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -12,7 +12,7 @@
       <script type="text/javascript">
          if(top === self) {
             var url = '../../../index.html';
-            var hash = 'org.tresamigos.smv.NoOpRejectLogger$';
+            var hash = 'org.tresamigos.smv.ParserValidation';
             var anchor = window.location.hash;
             var anchor_opt = '';
             if (anchor.length >= 1)
@@ -22,26 +22,26 @@
    	  </script>
     
         </head>
-        <body class="value">
+        <body class="type">
       <div id="definition">
-        <img src="../../../lib/object_big.png" />
+        <img src="../../../lib/class_big.png" />
         <p id="owner"><a href="../../package.html" class="extype" name="org">org</a>.<a href="../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
-        <h1>NoOpRejectLogger</h1>
+        <h1>ParserValidation</h1>
       </div>
 
       <h4 id="signature" class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">object</span>
+        <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">NoOpRejectLogger</span><span class="result"> extends <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></span>
+        <span class="name">ParserValidation</span><span class="result"> extends <a href="ValidationTask.html" class="extype" name="org.tresamigos.smv.ValidationTask">ValidationTask</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
           <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a>, <span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="ValidationTask.html" class="extype" name="org.tresamigos.smv.ValidationTask">ValidationTask</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -59,7 +59,7 @@
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.NoOpRejectLogger"><span>NoOpRejectLogger</span></li><li class="in" name="org.tresamigos.smv.RejectLogger"><span>RejectLogger</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.ParserValidation"><span>ParserValidation</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="org.tresamigos.smv.ValidationTask"><span>ValidationTask</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -77,7 +77,23 @@
 
       <div id="template">
         <div id="allMembers">
-        
+        <div id="constructors" class="members">
+              <h3>Instance Constructors</h3>
+              <ol><li name="org.tresamigos.smv.ParserValidation#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(sc:org.apache.spark.SparkContext,failAtError:Boolean):org.tresamigos.smv.ParserValidation"></a>
+      <a id="&lt;init&gt;:ParserValidation"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ParserValidation</span><span class="params">(<span name="sc">sc: <span class="extype" name="org.apache.spark.SparkContext">SparkContext</span></span>, <span name="failAtError">failAtError: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
 
         
 
@@ -150,32 +166,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.RejectLogger#addRejectedLineWithReason" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="addRejectedLineWithReason:(String,Exception)=&gt;Unit"></a>
-      <a id="addRejectedLineWithReason:(String,Exception)⇒Unit"></a>
+    </li><li name="org.tresamigos.smv.ParserValidation#addWithReason" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="addWithReason(e:Exception,rec:String):Unit"></a>
+      <a id="addWithReason(Exception,String):Unit"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">val</span>
+        <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">addRejectedLineWithReason</span><span class="result">: (<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Exception">Exception</span>) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">addWithReason</span><span class="params">(<span name="e">e: <span class="extype" name="scala.Exception">Exception</span></span>, <span name="rec">rec: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></dd></dl></div>
-    </li><li name="org.tresamigos.smv.RejectLogger#addRejectedSeqWithReason" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="addRejectedSeqWithReason:(Seq[Any],Exception)=&gt;Unit"></a>
-      <a id="addRejectedSeqWithReason:(Seq[Any],Exception)⇒Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">addRejectedSeqWithReason</span><span class="result">: (<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Any">Any</span>], <span class="extype" name="scala.Exception">Exception</span>) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></dd></dl></div>
+      
     </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <a id="asInstanceOf[T0]:T0"></a>
@@ -305,6 +308,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.ParserValidation#needAction" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="needAction():Boolean"></a>
+      <a id="needAction():Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">needAction</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.ParserValidation">ParserValidation</a> → <a href="ValidationTask.html" class="extype" name="org.tresamigos.smv.ValidationTask">ValidationTask</a></dd></dl></div>
     </li><li name="scala.AnyRef#notify" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notify():Unit"></a>
       <a id="notify():Unit"></a>
@@ -331,19 +347,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.RejectLogger#rejectedReport" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="rejectedReport:List[(String,String)]"></a>
-      <a id="rejectedReport:List[(String,String)]"></a>
+    </li><li name="org.tresamigos.smv.ParserValidation#parserLogger" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="parserLogger:org.tresamigos.smv.RejectLogger"></a>
+      <a id="parserLogger:RejectLogger"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">def</span>
+        <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">rejectedReport</span><span class="result">: <span class="extype" name="scala.List">List</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>)]</span>
+        <span class="name">parserLogger</span><span class="result">: <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></span>
       </span>
       </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></dd></dl></div>
+      
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>
@@ -370,6 +386,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.ParserValidation#validate" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="validate(df:org.apache.spark.sql.DataFrame):org.tresamigos.smv.ValidationResult"></a>
+      <a id="validate(DataFrame):ValidationResult"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">validate</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span><span class="result">: <a href="ValidationResult.html" class="extype" name="org.tresamigos.smv.ValidationResult">ValidationResult</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.ParserValidation">ParserValidation</a> → <a href="ValidationTask.html" class="extype" name="org.tresamigos.smv.ValidationTask">ValidationTask</a></dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <a id="wait():Unit"></a>
@@ -436,12 +465,12 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="org.tresamigos.smv.RejectLogger">
-              <h3>Inherited from <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></h3>
-            </div><div class="parent" name="scala.Serializable">
+        <div class="parent" name="scala.Serializable">
               <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
             </div><div class="parent" name="java.io.Serializable">
               <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="org.tresamigos.smv.ValidationTask">
+              <h3>Inherited from <a href="ValidationTask.html" class="extype" name="org.tresamigos.smv.ValidationTask">ValidationTask</a></h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">

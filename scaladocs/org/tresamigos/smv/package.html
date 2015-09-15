@@ -747,25 +747,25 @@ scala.</p>
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.ReadingError" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ReadingErrorextendsException"></a>
-      <a id="ReadingError:ReadingError"></a>
+    </li><li name="org.tresamigos.smv.ParserValidation" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ParserValidationextendsValidationTaskwithSerializable"></a>
+      <a id="ParserValidation:ParserValidation"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="ReadingError.html"><span class="name">ReadingError</span></a><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span></span>
+        <a href="ParserValidation.html"><span class="name">ParserValidation</span></a><span class="result"> extends <a href="ValidationTask.html" class="extype" name="org.tresamigos.smv.ValidationTask">ValidationTask</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.RejectLogger" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.RejectLogger" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="RejectLoggerextendsSerializable"></a>
       <a id="RejectLogger:RejectLogger"></a>
       <h4 class="signature">
       <span class="modifier_kind">
-        <span class="modifier">abstract </span>
+        <span class="modifier"></span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
@@ -796,19 +796,6 @@ scala.</p>
       </span>
       <span class="symbol">
         <a href="RunAggOptimizable.html"><span class="name">RunAggOptimizable</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.SCRejectLogger" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SCRejectLoggerextendsRejectLogger"></a>
-      <a id="SCRejectLogger:SCRejectLogger"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="SCRejectLogger.html"><span class="name">SCRejectLogger</span></a><span class="result"> extends <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></span>
       </span>
       </h4>
       
@@ -968,7 +955,7 @@ scala.</p>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="SmvCsvFile.html"><span class="name">SmvCsvFile</span></a><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttributes">csvAttributes: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="errPolicy">errPolicy: <a href="SmvErrorPolicy$$ReadPolicy.html" class="extype" name="org.tresamigos.smv.SmvErrorPolicy.ReadPolicy">ReadPolicy</a> = <span class="symbol">SmvErrorPolicy.Terminate</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="SmvCsvFile.html"><span class="name">SmvCsvFile</span></a><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttributes">csvAttributes: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       <p class="comment cmt">Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.</p>
@@ -1046,7 +1033,7 @@ scala.</p>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="SmvFrlFile.html"><span class="name">SmvFrlFile</span></a><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="errPolicy">errPolicy: <a href="SmvErrorPolicy$$ReadPolicy.html" class="extype" name="org.tresamigos.smv.SmvErrorPolicy.ReadPolicy">ReadPolicy</a> = <span class="symbol">SmvErrorPolicy.Terminate</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="SmvFrlFile.html"><span class="name">SmvFrlFile</span></a><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
@@ -1437,6 +1424,58 @@ if(left) right else null
       </span>
       </h4>
       <p class="comment cmt">Almost the oppisite of the pivot operation.</p>
+    </li><li name="org.tresamigos.smv.ValidationError" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ValidationErrorextendsException"></a>
+      <a id="ValidationError:ValidationError"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ValidationError.html"><span class="name">ValidationError</span></a><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.ValidationResult" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ValidationResultextendsProductwithSerializable"></a>
+      <a id="ValidationResult:ValidationResult"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ValidationResult.html"><span class="name">ValidationResult</span></a><span class="params">(<span name="passed">passed: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="errorMessages">errorMessages: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>)] = <span class="symbol">immutable.this.Nil</span></span>, <span name="checkLog">checkLog: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">immutable.this.Nil</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.ValidationSet" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ValidationSetextendsAnyRef"></a>
+      <a id="ValidationSet:ValidationSet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ValidationSet.html"><span class="name">ValidationSet</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.ValidationTask" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ValidationTaskextendsAnyRef"></a>
+      <a id="ValidationTask:ValidationTask"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ValidationTask.html"><span class="name">ValidationTask</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.YearHistogram" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="YearHistogramextendsHistogramTaskwithProductwithSerializable"></a>
       <a id="YearHistogram:YearHistogram"></a>
@@ -1522,19 +1561,6 @@ if(left) right else null
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.NoOpRejectLogger" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="NoOpRejectLogger"></a>
-      <a id="NoOpRejectLogger:NoOpRejectLogger"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="NoOpRejectLogger$.html"><span class="name">NoOpRejectLogger</span></a><span class="result"> extends <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></span>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.NumericSchemaEntry" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="NumericSchemaEntry"></a>
       <a id="NumericSchemaEntry:NumericSchemaEntry"></a>
@@ -1545,19 +1571,6 @@ if(left) right else null
       </span>
       <span class="symbol">
         <a href="NumericSchemaEntry$.html"><span class="name">NumericSchemaEntry</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.RejectLogger" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="RejectLogger"></a>
-      <a id="RejectLogger:RejectLogger"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="RejectLogger$.html"><span class="name">RejectLogger</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
@@ -1705,19 +1718,6 @@ if(left) right else null
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.TerminateRejectLogger" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="TerminateRejectLogger"></a>
-      <a id="TerminateRejectLogger:TerminateRejectLogger"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="TerminateRejectLogger$.html"><span class="name">TerminateRejectLogger</span></a><span class="result"> extends <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></span>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.TopNRecs" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="TopNRecs"></a>
       <a id="TopNRecs:TopNRecs"></a>
@@ -1731,6 +1731,19 @@ if(left) right else null
       </span>
       </h4>
       <p class="comment cmt">TopNRecs: Return top N records on a given order</p>
+    </li><li name="org.tresamigos.smv.ValidationResult" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ValidationResult"></a>
+      <a id="ValidationResult:ValidationResult"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="ValidationResult$.html"><span class="name">ValidationResult</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.package#columnIf" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="columnIf[T](cond:org.apache.spark.sql.Column,l:org.apache.spark.sql.Column,r:T):org.apache.spark.sql.Column"></a>
       <a id="columnIf[T](Column,Column,T):Column"></a>

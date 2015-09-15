@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" type="text/css" href="github.css">
+</head>
+<body>
+<table class="nav-table">
+    <tr>
+        <td class="nav-left">&lArr;&nbsp;<a href="run_app.html">Run Application</a></td>
+        <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
+        <td class="nav-right"><a href="smv_module.html">SMV Modules</a>&nbsp;&rArr;</td>
+    </tr>
+</table>
+<hr>
+
+<article class="markdown-body">
+<h1 id="run-smv-app-using-spark-shell">Run SMV App using Spark Shell</h1>
+<h3 id="synopsis">Synopsis</h3>
+<pre class="shell"><code>$ _SMV_HOME_/tools/run_shell.sh [standard spark-shell-options] [smv-options]</code></pre>
+<p><strong>Note:</strong> The above command should be run from the project top level directory.</p>
+<h3 id="options">Options</h3>
+<p>By default, the <code>run_shell.sh</code> command will use the latest &quot;fat&quot; jar in the tools directory to use with Spark Shell.<br />
+The user can provide <code>--jar</code> option to override the default. See <a href="run_app.html">Run Application</a> for details about this flag.</p>
+<h2 id="shell-init">Shell init</h2>
+<p>When <code>run.shell.sh</code> is launched, it will source the file <code>_SMV_HOME_/tools/conf/smv_shell_init.scala</code> to provide some<br />
+helper functions and create a default SMV dummy application (<code>app</code>)</p>
+<ul>
+<li><code>df(data_set)</code> : Source/Run the given dataset and return the resulting <code>DataFrame</code></li>
+<li><code>open(path)</code> : open the csv/schema file at the given path and return the corresponding <code>DataFrame</code></li>
+<li><code>df.save(path)</code> : save the given df to a csv/schema file pair at the given path.</li>
+<li><code>df.savel(path)</code> : save the contents of the <code>DataFrame</code> to a local (none HDFS) filesystem. WARNING: The contents must be able to fit in memory!!!</li>
+<li><code>discoverSchema(path, n)</code> : use the first <code>n</code> (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules. The discovered schema is saved to the path + &quot;.schema&quot; file</li>
+<li><code>dumpEdd(data_set)</code> : Generate base EDD results for given <code>SmvDataSet</code> and dump the results to the screen.</li>
+</ul>
+<h2 id="project-shell-init">Project Shell Init</h2>
+<p>In addition to the standard <code>smv_shell_init.scala</code> file, the <code>run_shell.sh</code> script will look for an optional <code>conf/shell_init.sh</code> file and source it if found.<br />
+Project specific initialization code, such as common imports, and functions, can be put in the <code>conf/shell_init.sh</code> file. For example:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// create the app init object &quot;a&quot; rather than create initialization at top level because shell</span>
+<span class="co">// would launch a separate command for each evaluation which slows down startup considerably.</span>
+<span class="kw">object</span> a {
+  <span class="co">//---- common project imports</span>
+  <span class="kw">import</span> com.<span class="fu">mycompany</span>.<span class="fu">myproject</span>.<span class="fu">stage1</span>.<span class="fu">input</span>.<span class="fu">_</span>
+  <span class="kw">import</span> com.<span class="fu">mycompany</span>.<span class="fu">myproject</span>.<span class="fu">stage1</span>.<span class="fu">etl</span>.<span class="fu">_</span>
+  ...
+
+  <span class="co">//---- common inputs/functions</span>
+  <span class="kw">lazy</span> <span class="kw">val</span> account_sample = <span class="fu">df</span>(Accounts).<span class="fu">sample</span>(...)
+  <span class="kw">def</span> totalAcounts = <span class="fu">df</span>(Accounts).<span class="fu">count</span>
+  ...
+}
+
+<span class="co">// move the above imports/functions/etc into global namespace for easy access.</span>
+<span class="kw">import</span> a.<span class="fu">_</span></code></pre></div>
+<h2 id="examples">Examples</h2>
+<p>TODO: add shell usage examples below.</p>
+</article>
+</body>
+</html>

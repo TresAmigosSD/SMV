@@ -35,7 +35,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">SmvCsvFile</span><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttributes">csvAttributes: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="errPolicy">errPolicy: <a href="SmvErrorPolicy$$ReadPolicy.html" class="extype" name="org.tresamigos.smv.SmvErrorPolicy.ReadPolicy">ReadPolicy</a> = <span class="symbol">SmvErrorPolicy.Terminate</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">SmvCsvFile</span><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttributes">csvAttributes: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
@@ -81,7 +81,7 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="org.tresamigos.smv.SmvCsvFile#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(basePath:String,csvAttributes:org.tresamigos.smv.CsvAttributes,errPolicy:org.tresamigos.smv.SmvErrorPolicy.ReadPolicy,schemaPath:Option[String]):org.tresamigos.smv.SmvCsvFile"></a>
+      <a id="&lt;init&gt;(basePath:String,csvAttributes:org.tresamigos.smv.CsvAttributes,schemaPath:Option[String]):org.tresamigos.smv.SmvCsvFile"></a>
       <a id="&lt;init&gt;:SmvCsvFile"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -89,7 +89,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">SmvCsvFile</span><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttributes">csvAttributes: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="errPolicy">errPolicy: <a href="SmvErrorPolicy$$ReadPolicy.html" class="extype" name="org.tresamigos.smv.SmvErrorPolicy.ReadPolicy">ReadPolicy</a> = <span class="symbol">SmvErrorPolicy.Terminate</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span>
+        <span class="name">SmvCsvFile</span><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttributes">csvAttributes: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span>
       </span>
       </h4>
       
@@ -238,7 +238,7 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvCsvFile#computeRDD" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.SmvDataSet#computeRDD" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="computeRDD:org.apache.spark.sql.DataFrame"></a>
       <a id="computeRDD:DataFrame"></a>
       <h4 class="signature">
@@ -250,20 +250,7 @@
         <span class="name">computeRDD</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">concrete classes must implement this to supply the uncached RDD for data set</p><div class="fullcomment"><div class="comment cmt"><p>concrete classes must implement this to supply the uncached RDD for data set</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvCsvFile">SmvCsvFile</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvFile#createLogger" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="createLogger(app:org.tresamigos.smv.SmvApp,errPolicy:org.tresamigos.smv.SmvErrorPolicy.ReadPolicy):org.tresamigos.smv.RejectLogger"></a>
-      <a id="createLogger(SmvApp,ReadPolicy):RejectLogger"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">createLogger</span><span class="params">(<span name="app">app: <a href="SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>, <span name="errPolicy">errPolicy: <a href="SmvErrorPolicy$$ReadPolicy.html" class="extype" name="org.tresamigos.smv.SmvErrorPolicy.ReadPolicy">ReadPolicy</a></span>)</span><span class="result">: <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvCsvFile#csvAttributes" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="csvAttributes:org.tresamigos.smv.CsvAttributes"></a>
       <a id="csvAttributes:CsvAttributes"></a>
@@ -274,19 +261,6 @@
       </span>
       <span class="symbol">
         <span class="name">csvAttributes</span><span class="result">: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.SmvCsvFile#csvStringRDDToDF" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="csvStringRDDToDF(sqlContext:org.apache.spark.sql.SQLContext,rdd:org.apache.spark.rdd.RDD[String],schema:org.tresamigos.smv.SmvSchema,rejects:org.tresamigos.smv.RejectLogger):org.apache.spark.sql.DataFrame"></a>
-      <a id="csvStringRDDToDF(SQLContext,RDD[String],SmvSchema,RejectLogger):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">csvStringRDDToDF</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="rdd">rdd: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="schema">schema: <a href="SmvSchema.html" class="extype" name="org.tresamigos.smv.SmvSchema">SmvSchema</a></span>, <span name="rejects">rejects: <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
       
@@ -316,19 +290,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvCsvFile#errPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="errPolicy:org.tresamigos.smv.SmvErrorPolicy.ReadPolicy"></a>
-      <a id="errPolicy:ReadPolicy"></a>
+    </li><li name="org.tresamigos.smv.SmvFile#failAtParsingError" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="failAtParsingError:Boolean"></a>
+      <a id="failAtParsingError:Boolean"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">errPolicy</span><span class="result">: <a href="SmvErrorPolicy$$ReadPolicy.html" class="extype" name="org.tresamigos.smv.SmvErrorPolicy.ReadPolicy">ReadPolicy</a></span>
+        <span class="name">failAtParsingError</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       </h4>
-      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a></dd></dl></div>
     </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <a id="finalize():Unit"></a>
@@ -389,6 +363,23 @@
       <p class="shortcomment cmt">Inject the given app into this dataset and all datasets that this depends on.</p><div class="fullcomment"><div class="comment cmt"><p>Inject the given app into this dataset and all datasets that this depends on.
 Note: only the first setting is honored (as an optimization)
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvFile#isEphemeral" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isEphemeral:Boolean"></a>
+      <a id="isEphemeral:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isEphemeral</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.</p><div class="fullcomment"><div class="comment cmt"><p>flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
+This is quite handy for &quot;filter&quot; or &quot;map&quot; type modules so that we don't force an extra I/O step when it
+is not needed.  By default all modules are persisted unless the flag is overriden to true.
+Note: the module will still be persisted if it was specifically selected to run by the user.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -454,6 +445,19 @@ Note: only the first setting is honored (as an optimization)
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvFile#parserValidator" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="parserValidator:org.tresamigos.smv.ParserValidation"></a>
+      <a id="parserValidator:ParserValidation"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">parserValidator</span><span class="result">: <a href="ParserValidation.html" class="extype" name="org.tresamigos.smv.ParserValidation">ParserValidation</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#rdd" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="rdd():org.apache.spark.sql.DataFrame"></a>
       <a id="rdd():DataFrame"></a>
@@ -483,6 +487,19 @@ Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called her
       </span>
       </h4>
       <p class="shortcomment cmt">modules must override to provide set of datasets they depend on.</p><div class="fullcomment"><div class="comment cmt"><p>modules must override to provide set of datasets they depend on.</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvFile#run" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="run(df:org.apache.spark.sql.DataFrame):org.apache.spark.sql.DataFrame"></a>
+      <a id="run(DataFrame):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">run</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvCsvFile#schemaPath" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="schemaPath:Option[String]"></a>
       <a id="schemaPath:Option[String]"></a>
@@ -497,15 +514,15 @@ Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called her
       </h4>
       
     </li><li name="org.tresamigos.smv.SmvFile#seqStringRDDToDF" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="seqStringRDDToDF(sqlContext:org.apache.spark.sql.SQLContext,rdd:org.apache.spark.rdd.RDD[Seq[String]],schema:org.tresamigos.smv.SmvSchema,rejects:org.tresamigos.smv.RejectLogger):org.apache.spark.sql.DataFrame"></a>
-      <a id="seqStringRDDToDF(SQLContext,RDD[Seq[String]],SmvSchema,RejectLogger):DataFrame"></a>
+      <a id="seqStringRDDToDF(sqlContext:org.apache.spark.sql.SQLContext,rdd:org.apache.spark.rdd.RDD[Seq[String]],schema:org.tresamigos.smv.SmvSchema,parserV:org.tresamigos.smv.ParserValidation):org.apache.spark.sql.DataFrame"></a>
+      <a id="seqStringRDDToDF(SQLContext,RDD[Seq[String]],SmvSchema,ParserValidation):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">seqStringRDDToDF</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="rdd">rdd: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]]</span>, <span name="schema">schema: <a href="SmvSchema.html" class="extype" name="org.tresamigos.smv.SmvSchema">SmvSchema</a></span>, <span name="rejects">rejects: <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">seqStringRDDToDF</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="rdd">rdd: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]]</span>, <span name="schema">schema: <a href="SmvSchema.html" class="extype" name="org.tresamigos.smv.SmvSchema">SmvSchema</a></span>, <span name="parserV">parserV: <a href="ParserValidation.html" class="extype" name="org.tresamigos.smv.ParserValidation">ParserValidation</a></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a></dd></dl></div>
@@ -522,6 +539,19 @@ Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called her
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvFile#validations" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="validations():org.tresamigos.smv.ValidationSet"></a>
+      <a id="validations():ValidationSet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">validations</span><span class="params">()</span><span class="result">: <a href="ValidationSet.html" class="extype" name="org.tresamigos.smv.ValidationSet">ValidationSet</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#version" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="version():Int"></a>
       <a id="version():Int"></a>

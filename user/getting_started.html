@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" type="text/css" href="github.css">
+</head>
+<body>
+<table class="nav-table">
+    <tr>
+        <td class="nav-left">&lArr;&nbsp;<a href="smv_install.html">Installation</a></td>
+        <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
+        <td class="nav-right"><a href="app_config.html">Application Configuration</a>&nbsp;&rArr;</td>
+    </tr>
+</table>
+<hr>
+
+<article class="markdown-body">
+<h1 id="smv-getting-started">SMV Getting Started</h1>
+<h2 id="create-example-app">Create example App</h2>
+<p>SMV provides a shell script to easily create an example application.<br />
+The example app can be used for exploring SVM and it can also be used as an initialization script for a new project.</p>
+<p>The <code>smv_init.sh</code> script can be used to create the initial SMV app.<br />
+smv_init.sh only requires two parameters.</p>
+<ul>
+<li>The name of the directory to create for the application</li>
+<li>The FQN of the package to use for Maven and source files.<br />
+For example:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">_SMV_HOME_/tools/bin/smv_init.sh</span> MyApp com.mycompany.myapp</code></pre></div>
+<p>The above command will create the <code>MyApp</code> directory and<br />
+install the source, configuration, and build files required for a minimal example SMV app.</p>
+<p>The rest of this document assumes the above command was run to show what is generated and how to use it.</p>
+<p><strong>Note:</strong> User can skip to the &quot;Run Example App&quot; section if they are not interested in exploring the output from <code>smv_init.sh</code></p>
+<h3 id="example-app-configuration-files">Example App Configuration Files</h3>
+<p>The generated example app contains two configuration files.</p>
+<ul>
+<li><code>smv-app-conf.props</code> : The application level configuration parameters. This file should define the application name and the configured stages.</li>
+<li><code>smv-user-conf.props</code> : The user level configuration parameters. This file is normally <strong>NOT</strong> checked in</li>
+</ul>
+<p>See <a href="app_config.html">Application Configuration</a> for more details about available configuration parameters.</p>
+<h3 id="example-app-data-directory">Example App data directory</h3>
+<h4 id="example-data-source">Example data source</h4>
+<p>The data directory contains a sample file extracted from US employment data.</p>
+<pre class="shell"><code>$ wget http://www2.census.gov/econ2012/CB/sector00/CB1200CZ11.zip
+$ unzip CB1200CZ11.zip
+$ mv CB1200CZ11.dat CB1200CZ11.csv</code></pre>
+<p>More info can be found on <a href="http://factfinder.census.gov/faces/tableservices/jsf/pages/productview.xhtml?pid=BP_2012_00CZ1&amp;prodType=table">US Census site</a></p>
+<h3 id="example-app-pom.xml">Example App pom.xml</h3>
+<p>A valid pom.xml file is generated using the package name provided on the command line.<br />
+The last part of the provided package name is used as the Maven &quot;artifactID&quot; and the first section is used as the &quot;groupID&quot;<br />
+In the example above, the artifactId will be set to <code>myapp</code> and the groupID will be <code>com.mycompany</code></p>
+<h3 id="example-app-sources">Example App sources</h3>
+<p>The example app generates an app with a single stage <code>stage1</code> and two packages.<br />
+While a single package would have sufficed, it is best to separate out all the input files<br />
+of a stage into a separate package.<br />
+The input files and their DQM rules/policies are put in the <code>input</code> sub-package</p>
+<p>The generated <code>etl</code> package contains a single sample module for processing the provided employment data.</p>
+<h2 id="build-example-app">Build Example App</h2>
+<p>The generated application must be built before it is run. This is simply done by running the following maven command:</p>
+<pre class="shell"><code>$ mvn clean install</code></pre>
+<p>The above command should generate a target directory that contains the application &quot;fat&quot; jar <code>myapp-1.0-SNAPSHOT-jar-with-dependencies.jar</code>.<br />
+This jar file will contain the compiled application class files, all the SMV class files and everything else that SMV depends on (except for the Spark libraries)</p>
+<h2 id="run-example-app">Run Example App</h2>
+<p>The built app can be run by two methods.</p>
+<ul>
+<li><code>run_app.sh</code> : used to run specific modules, stages, or entire app from the command line.</li>
+<li><code>run_shell.sh</code> : uses the Spark Shell to interactively run and explore the output of individual modules and files.</li>
+</ul>
+<h3 id="run-example-app-using-run_app.sh">Run Example App using <code>run_app.sh</code></h3>
+<pre class="shell"><code># run entire app (run all output modules in all stages)
+$ _SMV_HOME_/tools/run_app.sh --run-app
+
+# run stage1 (all output modules in stage1)
+$ _SMV_HOME_/tools/run_app.sh -s stage1
+
+# run specific module (any module can be run this way, does not have to be an output module)
+$ _SMV_HOME_/tools/run_app.sh -m com.mycompany.myapp.stage1.etl.EmploymentRaw</code></pre>
+<p>See <a href="smv_module.md#output-modules">SMV Output Modules</a> for more details on how to mark a module as an output module.</p>
+<p>The output csv file and schema can be found in the <code>data/output</code> directory (as configured in the <code>conf/smv-user-conf.props</code> files).</p>
+<pre class="shell"><code>$ cat data/output/com.mycompany.myapp.stage1.etl.EmploymentRaw_XXXXXXXX.csv/part-* | head -5
+&quot;32&quot;,981295
+&quot;33&quot;,508120
+&quot;34&quot;,3324188
+&quot;35&quot;,579916
+&quot;36&quot;,7279345
+
+$ cat data/output/com.mycompany.myapp.stage1.etl.EmploymentRaw_XXXXXXXX.schema/part-*
+FIRST(&#39;ST): String
+EMP: Long</code></pre>
+<p><strong>Note</strong>: the output above may be different as it depends on order of execution of partitions.</p>
+<p>See <a href="run_app.html">Run SMV Application</a> for further details.</p>
+<p>TODO: add example of running with -g (graph) command.</p>
+<h3 id="run-example-app-using-run_shell.sh">Run Example App using <code>run_shell.sh</code></h3>
+<h4 id="launch-shell">Launch shell</h4>
+<p>Spark shell can be used to allow the user to run individual modules interactively.<br />
+The <code>run_shell.sh</code> script is provided by SMV to make it easy to launch the Spark shell with the &quot;fat&quot; jar attached.</p>
+<pre class="shell"><code>$ _SMV_HOME_/tools/run_shell.sh</code></pre>
+<p>TODO: add link to run_shell.sh reference doc!</p>
+<h4 id="exploring-smvdatasets-smvfiles-and-smvmodules">Exploring SmvDataSets (SmvFiles and SmvModules)</h4>
+<p>Once we are inside the spark shell, we can &quot;source&quot; (using the <code>s()</code> smv shell helper function) any <code>SmvFile</code> or <code>SmvModule</code> instance<br />
+and inspect the contents (because the <code>s</code> function returns a standard Spark <code>DataFrame</code> object)</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d1=<span class="fu">s</span>(employment)
+
+scala&gt; d1.<span class="fu">count</span>
+res1: Long = <span class="dv">38818</span>
+
+scala&gt; d1.<span class="fu">printSchema</span>
+root
+ |-- ST: <span class="fu">string</span> (nullable = <span class="kw">true</span>)
+ |-- ZIPCODE: <span class="fu">string</span> (nullable = <span class="kw">true</span>)
+...
+
+scala&gt; d1.<span class="fu">select</span>(<span class="st">&quot;ZIPCODE&quot;</span>, <span class="st">&quot;YEAR&quot;</span>, <span class="st">&quot;ESTAB&quot;</span>, <span class="st">&quot;EMP&quot;</span>).<span class="fu">show</span>(<span class="dv">10</span>)
+ZIPCODE YEAR ESTAB EMP
+<span class="dv">35004</span>   <span class="dv">2012</span> <span class="dv">167</span>   <span class="dv">2574</span>
+<span class="dv">35005</span>   <span class="dv">2012</span> <span class="dv">88</span>    <span class="dv">665</span>
+...</code></pre></div>
+<p>You can also access SmvModules defined in the code.<br />
+This is <strong>not</strong> limited to output modules.</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d2 = <span class="fu">s</span>(EmploymentRaw)
+d2: org.<span class="fu">apache</span>.<span class="fu">spark</span>.<span class="fu">sql</span>.<span class="fu">DataFrame</span> = [<span class="fu">FIRST</span>(&#39;ST): string, EMP: bigint]
+
+scala&gt; d2.<span class="fu">printSchema</span>
+root
+ |-- <span class="fu">FIRST</span>(&#39;ST): <span class="fu">string</span> (nullable = <span class="kw">true</span>)
+ |-- EMP: <span class="dt">long</span> (nullable = <span class="kw">true</span>)
+
+
+scala&gt; d2.<span class="fu">count</span>
+res2: Long = <span class="dv">52</span></code></pre></div>
+<p><code>EmploymentRaw</code> is defined in the <code>etl</code> package <code>Employment.scala</code> file.<br />
+As you can see above, when you try to refer to a SmvModule, it will do the calculation and<br />
+then persist it for future use. Now you can use <code>d2</code>, a DataFrame, to refer to the<br />
+SmvModule output, although in this example, there are nothing intersecting in that<br />
+data other than the <code>EMP</code> field.</p>
+<h4 id="run-edd-on-data">Run EDD on data</h4>
+<p>To quickly get an overall idea of the input data, we can use the SMV EDD (Extended Data Dictionary) tool.</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; d1.<span class="fu">select</span>(<span class="st">&quot;ZIPCODE&quot;</span>, <span class="st">&quot;YEAR&quot;</span>, <span class="st">&quot;ESTAB&quot;</span>, <span class="st">&quot;EMP&quot;</span>).<span class="fu">edd</span>.<span class="fu">addBaseTasks</span>().<span class="fu">addHistogramTasks</span>(<span class="st">&quot;ESTAB&quot;</span>, <span class="st">&quot;EMP&quot;</span>)().<span class="fu">dump</span>
+Total Record Count:                         <span class="dv">38818</span>
+ZIPCODE              Non-Null Count:        <span class="dv">38818</span>
+ZIPCODE              Average:               <span class="fl">49750.09928383732</span>
+ZIPCODE              Standard Deviation:    <span class="fl">27804.662445936523</span>
+ZIPCODE              Min:                   <span class="dv">501</span>
+ZIPCODE              Max:                   <span class="dv">99999</span>
+...
+Histogram of ESTAB: <span class="kw">with</span> BIN size <span class="fl">100.0</span>
+key                      count      Pct    cumCount   cumPct
+<span class="fl">0.0</span>                      <span class="dv">26060</span>   <span class="fl">67.13</span>%       <span class="dv">26060</span>   <span class="fl">67.13</span>%
+<span class="fl">100.0</span>                     <span class="dv">3129</span>    <span class="fl">8.06</span>%       <span class="dv">29189</span>   <span class="fl">75.19</span>%
+<span class="fl">200.0</span>                     <span class="dv">1960</span>    <span class="fl">5.05</span>%       <span class="dv">31149</span>   <span class="fl">80.24</span>%
+<span class="fl">300.0</span>                     <span class="dv">1445</span>    <span class="fl">3.72</span>%       <span class="dv">32594</span>   <span class="fl">83.97</span>%
+<span class="fl">400.0</span>                     <span class="dv">1136</span>    <span class="fl">2.93</span>%       <span class="dv">33730</span>   <span class="fl">86.89</span>%
+<span class="fl">500.0</span>                      <span class="dv">937</span>    <span class="fl">2.41</span>%       <span class="dv">34667</span>   <span class="fl">89.31</span>%
+...
+-------------------------------------------------
+Histogram of EMP: <span class="kw">with</span> BIN size <span class="fl">100.0</span>
+key                      count      Pct    cumCount   cumPct
+<span class="fl">0.0</span>                      <span class="dv">15792</span>   <span class="fl">40.68</span>%       <span class="dv">15792</span>   <span class="fl">40.68</span>%
+<span class="fl">100.0</span>                     <span class="dv">3132</span>    <span class="fl">8.07</span>%       <span class="dv">18924</span>   <span class="fl">48.75</span>%
+<span class="fl">200.0</span>                     <span class="dv">1844</span>    <span class="fl">4.75</span>%       <span class="dv">20768</span>   <span class="fl">53.50</span>%
+<span class="fl">300.0</span>                     <span class="dv">1235</span>    <span class="fl">3.18</span>%       <span class="dv">22003</span>   <span class="fl">56.68</span>%
+<span class="fl">400.0</span>                      <span class="dv">988</span>    <span class="fl">2.55</span>%       <span class="dv">22991</span>   <span class="fl">59.23</span>%
+<span class="fl">500.0</span>                      <span class="dv">738</span>    <span class="fl">1.90</span>%       <span class="dv">23729</span>   <span class="fl">61.13</span>%
+...</code></pre></div>
+<p>TODO: add link to EDD ref guide here</p>
+</article>
+</body>
+</html>

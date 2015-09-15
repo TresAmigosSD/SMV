@@ -275,7 +275,7 @@ Note: the module should *not* persist any RDD itself.
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvModule#computeRDD" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.SmvDataSet#computeRDD" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="computeRDD:org.apache.spark.sql.DataFrame"></a>
       <a id="computeRDD:DataFrame"></a>
       <h4 class="signature">
@@ -287,7 +287,7 @@ Note: the module should *not* persist any RDD itself.
         <span class="name">computeRDD</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">concrete classes must implement this to supply the uncached RDD for data set</p><div class="fullcomment"><div class="comment cmt"><p>concrete classes must implement this to supply the uncached RDD for data set</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvModule#description" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="description:String"></a>
       <a id="description:String"></a>
@@ -403,7 +403,7 @@ Note: only the first setting is honored (as an optimization)
 This is quite handy for &quot;filter&quot; or &quot;map&quot; type modules so that we don't force an extra I/O step when it
 is not needed.  By default all modules are persisted unless the flag is overriden to true.
 Note: the module will still be persisted if it was specifically selected to run by the user.
-</p></div></div>
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -540,6 +540,19 @@ This is useful for debugging a long SmvModule by creating snapshots along the wa
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#validations" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="validations():org.tresamigos.smv.ValidationSet"></a>
+      <a id="validations():ValidationSet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">validations</span><span class="params">()</span><span class="result">: <a href="ValidationSet.html" class="extype" name="org.tresamigos.smv.ValidationSet">ValidationSet</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#version" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="version():Int"></a>
       <a id="version():Int"></a>

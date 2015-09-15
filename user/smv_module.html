@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" type="text/css" href="github.css">
+</head>
+<body>
+<table class="nav-table">
+    <tr>
+        <td class="nav-left">&lArr;&nbsp;<a href="run_shell.html">Run Spark Shell</a></td>
+        <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
+        <td class="nav-right"><a href="smv_stages.html">SMV Stages</a>&nbsp;&rArr;</td>
+    </tr>
+</table>
+<hr>
+
+<article class="markdown-body">
+<h1 id="smvmodule">SmvModule</h1>
+<h1 id="output-modules">Output Modules</h1>
+<p>As the number of modules in a given SMV stage grows, it becomes more difficult to track which<br />
+modules are the &quot;leaf&quot;/output modules within the stage.<br />
+Any module within the stage can be marked as an output module by mixing-in the <code>SmvOutput</code> trait.<br />
+For example:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;this is my module&quot;</span>) <span class="kw">with</span> SmvOutput {
+...
+}</code></pre></div>
+<p>The set of <code>SmvOutput</code> output modules in a stage define the <em>interface/api</em> of the stage.<br />
+Since modules outside this stage can only access modules marked as output,<br />
+none output modules can be changed at will without any fear of affecting external modules.</p>
+<p>In addition to the above, the ability to mark certain modules as output has the following benifits:</p>
+<ul>
+<li>Allows user to easily &quot;run&quot; all output modules within a stage (using the <code>-s</code> option to <code>run_app.sh</code>)</li>
+<li>A future option might be added to allow for listing of &quot;dead&quot; modules. That is, any module in a stage that does not contribute to any output module either directly or indirectly.</li>
+<li>We may add a future option to <code>SmvApp</code> that allows the user to display a &quot;catalog&quot; of output modules and their description.</li>
+</ul>
+<p>See <a href="smv_stages.html">Smv Stages</a> for details on how to configure multiple stages.</p>
+<p>TODO: renmae this to smv_modules.md and add info about modules in general (not just output) with examples!<br />
+TODO: add explanation about requireDS, run, etc for a normal module. dependency on SmvFile vs SmvModule, ...</p>
+</article>
+</body>
+</html>

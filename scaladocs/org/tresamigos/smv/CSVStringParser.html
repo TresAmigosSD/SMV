@@ -82,7 +82,7 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="org.tresamigos.smv.CSVStringParser#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="&lt;init&gt;(f:(String,Seq[String])=&gt;U)(implicitut:scala.reflect.ClassTag[U]):org.tresamigos.smv.CSVStringParser[U]"></a>
+      <a id="&lt;init&gt;(f:(String,Seq[String])=&gt;U,parserV:org.tresamigos.smv.ParserValidation)(implicitut:scala.reflect.ClassTag[U]):org.tresamigos.smv.CSVStringParser[U]"></a>
       <a id="&lt;init&gt;:CSVStringParser[U]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -90,7 +90,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">CSVStringParser</span><span class="params">(<span name="f">f: (<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]) ⇒ <span class="extype" name="org.tresamigos.smv.CSVStringParser.U">U</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ut">ut: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.CSVStringParser.U">U</span>]</span>)</span>
+        <span class="name">CSVStringParser</span><span class="params">(<span name="f">f: (<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]) ⇒ <span class="extype" name="org.tresamigos.smv.CSVStringParser.U">U</span></span>, <span name="parserV">parserV: <a href="ParserValidation.html" class="extype" name="org.tresamigos.smv.ParserValidation">ParserValidation</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ut">ut: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.CSVStringParser.U">U</span>]</span>)</span>
       </span>
       </h4>
       <p class="shortcomment cmt"></p><div class="fullcomment"><div class="comment cmt"></div><dl class="paramcmts block"><dt class="param">f</dt><dd class="cmt"><p>the function applied to the parsed record
@@ -325,28 +325,28 @@
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="org.tresamigos.smv.CSVStringParser#parseCSV" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="parseCSV(iterator:Iterator[String])(implicitca:org.tresamigos.smv.CsvAttributes,implicitrejects:org.tresamigos.smv.RejectLogger):Iterator[U]"></a>
-      <a id="parseCSV(Iterator[String])(CsvAttributes,RejectLogger):Iterator[U]"></a>
+      <a id="parseCSV(iterator:Iterator[String])(implicitca:org.tresamigos.smv.CsvAttributes):Iterator[U]"></a>
+      <a id="parseCSV(Iterator[String])(CsvAttributes):Iterator[U]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">parseCSV</span><span class="params">(<span name="iterator">iterator: <span class="extype" name="scala.Iterator">Iterator</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ca">ca: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="rejects">rejects: <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></span>)</span><span class="result">: <span class="extype" name="scala.Iterator">Iterator</span>[<span class="extype" name="org.tresamigos.smv.CSVStringParser.U">U</span>]</span>
+        <span class="name">parseCSV</span><span class="params">(<span name="iterator">iterator: <span class="extype" name="scala.Iterator">Iterator</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ca">ca: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>)</span><span class="result">: <span class="extype" name="scala.Iterator">Iterator</span>[<span class="extype" name="org.tresamigos.smv.CSVStringParser.U">U</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Parse an Iterator[String], apply function &quot;f&quot;, and return another Iterator</p>
     </li><li name="org.tresamigos.smv.CSVStringParser#parseFrl" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="parseFrl(iterator:Iterator[String],startLenPairs:Seq[(Int,Int)])(implicitrejects:org.tresamigos.smv.RejectLogger):Iterator[U]"></a>
-      <a id="parseFrl(Iterator[String],Seq[(Int,Int)])(RejectLogger):Iterator[U]"></a>
+      <a id="parseFrl(iterator:Iterator[String],startLenPairs:Seq[(Int,Int)]):Iterator[U]"></a>
+      <a id="parseFrl(Iterator[String],Seq[(Int,Int)]):Iterator[U]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">parseFrl</span><span class="params">(<span name="iterator">iterator: <span class="extype" name="scala.Iterator">Iterator</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="startLenPairs">startLenPairs: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="scala.Int">Int</span>, <span class="extype" name="scala.Int">Int</span>)]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="rejects">rejects: <a href="RejectLogger.html" class="extype" name="org.tresamigos.smv.RejectLogger">RejectLogger</a></span>)</span><span class="result">: <span class="extype" name="scala.Iterator">Iterator</span>[<span class="extype" name="org.tresamigos.smv.CSVStringParser.U">U</span>]</span>
+        <span class="name">parseFrl</span><span class="params">(<span name="iterator">iterator: <span class="extype" name="scala.Iterator">Iterator</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="startLenPairs">startLenPairs: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="scala.Int">Int</span>, <span class="extype" name="scala.Int">Int</span>)]</span>)</span><span class="result">: <span class="extype" name="scala.Iterator">Iterator</span>[<span class="extype" name="org.tresamigos.smv.CSVStringParser.U">U</span>]</span>
       </span>
       </h4>
       

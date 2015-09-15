@@ -24,14 +24,14 @@
         </head>
         <body class="type">
       <div id="definition">
-        <a href="RejectLogger$.html" title="Go to companion"><img src="../../../lib/class_to_object_big.png" /></a>
+        <img src="../../../lib/class_big.png" />
         <p id="owner"><a href="../../package.html" class="extype" name="org">org</a>.<a href="../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
-        <h1><a href="RejectLogger$.html" title="Go to companion">RejectLogger</a></h1>
+        <h1>RejectLogger</h1>
       </div>
 
       <h4 id="signature" class="signature">
       <span class="modifier_kind">
-        <span class="modifier">abstract </span>
+        <span class="modifier"></span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
@@ -42,9 +42,6 @@
           <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
-        </div><div class="toggleContainer block">
-          <span class="toggle">Known Subclasses</span>
-          <div class="subClasses hiddenContent"><a href="NoOpRejectLogger$.html" class="extype" name="org.tresamigos.smv.NoOpRejectLogger">NoOpRejectLogger</a>, <a href="SCRejectLogger.html" class="extype" name="org.tresamigos.smv.SCRejectLogger">SCRejectLogger</a>, <a href="TerminateRejectLogger$.html" class="extype" name="org.tresamigos.smv.TerminateRejectLogger">TerminateRejectLogger</a></div>
         </div></div>
         
 
@@ -83,7 +80,7 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="org.tresamigos.smv.RejectLogger#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;():org.tresamigos.smv.RejectLogger"></a>
+      <a id="&lt;init&gt;(sparkContext:org.apache.spark.SparkContext,localMax:Int):org.tresamigos.smv.RejectLogger"></a>
       <a id="&lt;init&gt;:RejectLogger"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -91,7 +88,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">RejectLogger</span><span class="params">()</span>
+        <span class="name">RejectLogger</span><span class="params">(<span name="sparkContext">sparkContext: <span class="extype" name="org.apache.spark.SparkContext">SparkContext</span></span>, <span name="localMax">localMax: <span class="extype" name="scala.Int">Int</span> = <span class="symbol">10</span></span>)</span>
       </span>
       </h4>
       
@@ -179,19 +176,6 @@
       </span>
       <span class="symbol">
         <span class="name">addRejectedLineWithReason</span><span class="result">: (<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Exception">Exception</span>) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.RejectLogger#addRejectedSeqWithReason" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="addRejectedSeqWithReason:(Seq[Any],Exception)=&gt;Unit"></a>
-      <a id="addRejectedSeqWithReason:(Seq[Any],Exception)⇒Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">addRejectedSeqWithReason</span><span class="result">: (<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Any">Any</span>], <span class="extype" name="scala.Exception">Exception</span>) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
       
@@ -311,6 +295,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.RejectLogger#localMax" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="localMax:Int"></a>
+      <a id="localMax:Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">localMax</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -350,16 +347,16 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.RejectLogger#rejectedReport" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="rejectedReport:List[(String,String)]"></a>
-      <a id="rejectedReport:List[(String,String)]"></a>
+    </li><li name="org.tresamigos.smv.RejectLogger#report" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="report:(Int,List[String])"></a>
+      <a id="report:(Int,List[String])"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">rejectedReport</span><span class="result">: <span class="extype" name="scala.List">List</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>)]</span>
+        <span class="name">report</span><span class="result">: (<span class="extype" name="scala.Int">Int</span>, <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>])</span>
       </span>
       </h4>
       

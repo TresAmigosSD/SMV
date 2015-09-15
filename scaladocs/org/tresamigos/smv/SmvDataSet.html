@@ -106,20 +106,7 @@ be a single result DataFrame.
 
         <div id="values" class="values members">
               <h3>Abstract Value Members</h3>
-              <ol><li name="org.tresamigos.smv.SmvDataSet#computeRDD" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="computeRDD:org.apache.spark.sql.DataFrame"></a>
-      <a id="computeRDD:DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">computeRDD</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">concrete classes must implement this to supply the uncached RDD for data set</p>
-    </li><li name="org.tresamigos.smv.SmvDataSet#description" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+              <ol><li name="org.tresamigos.smv.SmvDataSet#description" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="description():String"></a>
       <a id="description():String"></a>
       <h4 class="signature">
@@ -132,6 +119,23 @@ be a single result DataFrame.
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.SmvDataSet#isEphemeral" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="isEphemeral:Boolean"></a>
+      <a id="isEphemeral:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isEphemeral</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.</p><div class="fullcomment"><div class="comment cmt"><p>flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
+This is quite handy for &quot;filter&quot; or &quot;map&quot; type modules so that we don't force an extra I/O step when it
+is not needed.  By default all modules are persisted unless the flag is overriden to true.
+Note: the module will still be persisted if it was specifically selected to run by the user.
+</p></div></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#name" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="name():String"></a>
       <a id="name():String"></a>
@@ -286,6 +290,19 @@ be a single result DataFrame.
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#computeRDD" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="computeRDD:org.apache.spark.sql.DataFrame"></a>
+      <a id="computeRDD:DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">computeRDD</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -466,6 +483,19 @@ Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called her
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#validations" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="validations():org.tresamigos.smv.ValidationSet"></a>
+      <a id="validations():ValidationSet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">validations</span><span class="params">()</span><span class="result">: <a href="ValidationSet.html" class="extype" name="org.tresamigos.smv.ValidationSet">ValidationSet</a></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.SmvDataSet#version" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="version():Int"></a>
       <a id="version():Int"></a>
