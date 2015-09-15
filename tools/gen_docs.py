@@ -17,14 +17,19 @@ class Link:
     def md_file_abs_path(self, input_dir):
         return os.path.join(input_dir, self.md_file)
 
+    def html_file(self):
+        return re.sub(r"\.md$", ".html", self.md_file)
+
     def html_file_abs_path(self, output_dir):
-        html_base = re.sub(r"\.md$", ".html", self.md_file)
-        return os.path.join(output_dir, html_base)
+        return os.path.join(output_dir, self.html_file())
 
     def __str__(self):
         return "Link<%s,%s>" % (self.label, self.md_file)
 
     __repr__ = __str__
+
+def dummyLink():
+    return Link("", "_dummy_.md")
 
 class CmdRunner:
     """Helper class to aid with running shell commands for generating the report"""
@@ -55,7 +60,7 @@ class CmdRunner:
         cmd = cmd.replace("@SMV_HOME", self.smv_home)
         cmd = cmd.replace("@SMV_TOOLS", self.smv_tools)
         # print "Run:", cmd
-        subprocess.check_call(cmd, shell=True)
+        return subprocess.check_output(cmd, shell=True)
 
     def mkdir(self, dirname):
         """make a directory and all parent paths (similar to mkdir -p in shell)"""
@@ -102,39 +107,76 @@ class DocGenerator:
         return [l for l in links if
                 os.path.exists(l.md_file_abs_path(self.md_input_dir))]
 
-    def _markdownToHtml(self, link):
+    def _writeFile(self, path, content):
+        fp = open(path, "w")
+        fp.write(content)
+        fp.close()
+
+    def _fillNavigationLinks(self, html, prev_link, next_link):
+        """fill in the navigation links at the top of the generated html content"""
+        d = {
+            "@PREV_LINK": prev_link.html_file(),
+            "@PREV_LABEL": prev_link.label,
+            "@NEXT_LINK": next_link.html_file(),
+            "@NEXT_LABEL": next_link.label,
+            "@TOC_LINK": self._dummyTocLink().html_file()
+        }
+        for (key, value) in d.items():
+            html = html.replace(key, value)
+        return html
+
+    def _markdownToHtml(self, link, prev_link, next_link, useHeaderWithLinks=True):
         """convert given markdown file to html (in the specified output directory)"""
         print "convert file to html:", link.md_file
         md_abs_path = link.md_file_abs_path(self.md_input_dir)
         html_abs_path = link.html_file_abs_path(self.output_dir)
 
+        if useHeaderWithLinks:
+            prefix_file = "body_before.html"
+        else:
+            prefix_file = "body_before_no_nav.html"
+
         cmd = r"""
             pandoc -s -f markdown_github -t html \
                 "--include-in-header=@SMV_HOME/tools/conf/docs/header.html" \
-                "--include-before-body=@SMV_HOME/tools/conf/docs/body_before.html" \
+                "--include-before-body=@SMV_HOME/tools/conf/docs/%s" \
                 "--include-after-body=@SMV_HOME/tools/conf/docs/body_after.html" \
                 --normalize \
                 -o - "%s" |\
-            sed -e 's/\(href="[^"]*\)\.md"/\1.html"/g' > "%s"
-            """ % (md_abs_path, html_abs_path)
+            sed -e 's/\(href="[^"]*\)\.md"/\1.html"/g'
+            """ % (prefix_file, md_abs_path)
 
-        self.runner.run_cmd(cmd)
+        output = self.runner.run_cmd(cmd)
+        output = self._fillNavigationLinks(output, prev_link, next_link)
+        self._writeFile(html_abs_path, output)
+
+    def _dummyTocLink(self):
+        """create a dummy link to the toc file."""
+        md_basename = os.path.basename(self.md_toc_file)
+        return Link("toc", md_basename)
 
     def _tocToHtml(self):
         """convert the input toc markdown file to html"""
-        md_basename = os.path.basename(self.md_toc_file)
-        self._markdownToHtml(Link("toc", md_basename))
+        self._markdownToHtml(self._dummyTocLink(), dummyLink(), dummyLink(), False)
 
     def _copyGithubCss(self):
         # This used https://github.com/sindresorhus/generate-github-markdown-css to get the github.css file
         self.runner.copy("@SMV_TOOLS/conf/docs/github.css", self.output_dir)
 
+    def _getNthLink(self, links, idx):
+        """return the nth link in the list of links or a dummy link if idx is out of range."""
+        if idx < 0 or idx >= len(links):
+            return dummyLink()
+        return links[idx]
+
     def generate(self):
         self.runner.mkdir(self.output_dir)
         links = self._getTocLinks()
         valid_links = self._filterValidLinks(links)
-        for link in valid_links:
-            self._markdownToHtml(link)
+        for idx, link in enumerate(valid_links):
+            prev_link = self._getNthLink(valid_links, idx-1)
+            next_link = self._getNthLink(valid_links, idx+1)
+            self._markdownToHtml(link, prev_link, next_link)
         self._tocToHtml()
         self._copyGithubCss()
 
