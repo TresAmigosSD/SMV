@@ -179,7 +179,11 @@
                         <goal>exec</goal>
                     </goals>
                     <configuration>
-                        <executable>./tools/gen_docs.sh</executable>
+                        <executable>./tools/gen_docs.py</executable>
+                        <arguments>
+                            <argument>./docs/user/0_user_toc.md</argument>
+                            <argument>./target/site/user</argument>
+                        </arguments>
                     </configuration>
                 </execution>
             </executions>
