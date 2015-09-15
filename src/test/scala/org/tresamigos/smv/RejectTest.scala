@@ -80,14 +80,11 @@ class RejectTest extends SparkTestUtil {
     val data = """231,67.21  ,20121009101621,"02122011"""
     val schemaStr = "a:String;b:Double;c:String;d:String"
 
-    val schema = SmvSchema.fromString(schemaStr)
-    val dataArray = data.split(";").map(_.trim)
-
-    val smvCF = SmvCsvFile(null, CsvAttributes.defaultCsv)
+    object smvCF extends SmvCsvData(schemaStr, data) {
+      override val failAtParsingError = false
+    }
     smvCF.injectApp(app)
-    val prdd = smvCF.csvStringRDDToDF(sqlContext, sc.makeRDD(dataArray), schema, smvCF.parserValidator)
-
-    prdd.collect
+    val prdd = smvCF.rdd
     val (n, res) = smvCF.parserValidator.parserLogger.report
     //res.foreach(println)
     val exp = List(

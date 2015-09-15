@@ -178,7 +178,7 @@ abstract class SmvDataSet {
       (resultDf, true)
     }
 
-    validations.validate(df, hasActionYet)
+    validations.validate(df, hasActionYet, versionedBasePath(""))
     df
   }
 }
@@ -217,13 +217,16 @@ abstract class SmvFile extends SmvDataSet {
     }
   }
 
-  protected def seqStringRDDToDF(
-    sqlContext: SQLContext,
+  def run(df: DataFrame) = df
+}
+
+class CsvStringHandler(sqlContext: SQLContext, parserValidator: ParserValidation) {
+
+  private[smv] def seqStringRDDToDF(
     rdd: RDD[Seq[String]],
-    schema: SmvSchema,
-    parserV: ParserValidation
-    //rejects: RejectLogger
+    schema: SmvSchema
   ) = {
+    val parserV = parserValidator
     val add: (Exception, String) => Unit = {(e,r) => parserV.addWithReason(e,r)}
     val rowRdd = rdd.mapPartitions{ iterator =>
       val mutableRow = new GenericMutableRow(schema.getSize)
@@ -244,7 +247,30 @@ abstract class SmvFile extends SmvDataSet {
     sqlContext.createDataFrame(rowRdd, schema.toStructType)
   }
 
-  def run(df: DataFrame) = df
+  private[smv] def csvStringRDDToDF(
+    rdd: RDD[String],
+    schema: SmvSchema,
+    csvAttributes: CsvAttributes
+  ) = {
+    val parserV = parserValidator
+    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed, parserV)
+    val _ca = csvAttributes
+    val seqStringRdd = rdd.mapPartitions{ parser.parseCSV(_)(_ca) }
+    seqStringRDDToDF(seqStringRdd, schema)
+  }
+
+  private[smv] def frlStringRDDToDF(
+    rdd: RDD[String],
+    schema: SmvSchema,
+    slices: Seq[Int]
+  ) = {
+    val parserV = parserValidator
+    val startLen = slices.scanLeft(0){_ + _}.dropRight(1).zip(slices)
+    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed, parserV)
+    val seqStringRdd = rdd.mapPartitions{ parser.parseFrl(_, startLen) }
+    seqStringRDDToDF(seqStringRdd, schema)
+  }
+
 }
 
 /**
@@ -256,18 +282,6 @@ case class SmvCsvFile(
   schemaPath: Option[String] = None
 ) extends SmvFile {
 
-  private[smv] def csvStringRDDToDF(
-    sqlContext: SQLContext,
-    rdd: RDD[String],
-    schema: SmvSchema,
-    parserV: ParserValidation
-  ) = {
-    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed, parserV)
-    val _ca = csvAttributes
-    val seqStringRdd = rdd.mapPartitions{ parser.parseCSV(_)(_ca) }
-    seqStringRDDToDF(sqlContext, seqStringRdd, schema, parserV)
-  }
-
   private def csvFileWithSchema(
     dataPath: String,
     schemaPath: String
@@ -278,7 +292,8 @@ case class SmvCsvFile(
     val strRDD = sc.textFile(dataPath)
     val noHeadRDD = if (csvAttributes.hasHeader) CsvAttributes.dropHeader(strRDD) else strRDD
 
-    csvStringRDDToDF(app.sqlContext, noHeadRDD, schema, parserValidator)
+    val handler = new CsvStringHandler(app.sqlContext, parserValidator)
+    handler.csvStringRDDToDF(noHeadRDD, schema, csvAttributes)
   }
 
   private[smv] def doRun(): DataFrame = {
@@ -294,19 +309,6 @@ case class SmvFrlFile(
     schemaPath: Option[String] = None
   ) extends SmvFile {
 
-  def frlStringRDDToDF(
-    sqlContext: SQLContext,
-    rdd: RDD[String],
-    schema: SmvSchema,
-    slices: Seq[Int],
-    parserV: ParserValidation
-  ) = {
-    val startLen = slices.scanLeft(0){_ + _}.dropRight(1).zip(slices)
-    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed, parserV)
-    val seqStringRdd = rdd.mapPartitions{ parser.parseFrl(_, startLen) }
-    seqStringRDDToDF(sqlContext, seqStringRdd, schema, parserV)
-  }
-
   private def frlFileWithSchema(dataPath: String, schemaPath: String): DataFrame = {
     val sc = app.sqlContext.sparkContext
     val slices = SmvSchema.slicesFromFile(sc, schemaPath)
@@ -315,7 +317,8 @@ case class SmvFrlFile(
 
     // TODO: show we allow header in Frl files?
     val strRDD = sc.textFile(dataPath)
-    frlStringRDDToDF(app.sqlContext, strRDD, schema, slices, parserValidator)
+    val handler = new CsvStringHandler(app.sqlContext, parserValidator)
+    handler.frlStringRDDToDF(strRDD, schema, slices)
   }
 
   private[smv] def doRun(): DataFrame = {
@@ -381,6 +384,22 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   }
 }
 
+case class SmvCsvData(schemaStr: String, data: String) extends SmvModule("Dummy module to create DF from strings") {
+  override def requiresDS() = Seq.empty
+  override val isEphemeral = true
+  val failAtParsingError = true
+  lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
+  override def validations() = new ValidationSet(Seq(parserValidator))
+
+  def run(i: runParams) = null
+  override def doRun(): DataFrame = {
+    val schema = SmvSchema.fromString(schemaStr)
+    val dataArray = data.split(";").map(_.trim)
+
+    val handler = new CsvStringHandler(app.sqlContext, parserValidator)
+    handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, CsvAttributes.defaultCsv)
+  }
+}
 /**
  * A marker trait that indicates that a module decorated with this trait is an output module.
  */

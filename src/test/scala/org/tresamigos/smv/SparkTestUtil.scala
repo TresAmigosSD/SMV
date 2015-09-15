@@ -55,7 +55,8 @@ trait SparkTestUtil extends FunSuite {
         SparkTestUtil.setLoggingLevel(Level.ERROR)
       sc = new SparkContext("local[2]", name)
       sqlContext = new SQLContext(sc)
-      app = new SmvApp(Seq("-m", "None"), Option(sc))
+      resetTestcaseTempDir()
+      app = new SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))
       try {
         body
       }
@@ -110,7 +111,7 @@ trait SparkTestUtil extends FunSuite {
   }
 
   def open(path: String) ={
-    val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv)
+    val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv) 
     file.injectApp(app)
     file.rdd
   }

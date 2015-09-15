@@ -14,9 +14,24 @@
 
 package org.tresamigos.smv
 
-object SmvErrorPolicy{
-  sealed trait ReadPolicy
-  case object Ignore extends ReadPolicy
-  case object Terminate extends ReadPolicy
-  case object Log extends ReadPolicy
+object SmvReportIO{
+  /** save a local copy of report
+   *  TODO: Should call HDFS api for this
+   */
+  def saveReport(report: String, path: String): Unit = {
+    import java.io.{File, PrintWriter}
+    val file = new File(path)
+    // ensure parent directories exist
+    Option(file.getParentFile).foreach(_.mkdirs)
+    val pw = new PrintWriter(file)
+    pw.println(report)
+    pw.close()
+  }
+
+  /** print report to console
+   *  TODO: use java log
+   **/
+  def printReport(report: String): Unit = {
+    println(report)
+  }
 }
