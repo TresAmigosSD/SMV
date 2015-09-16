@@ -48,7 +48,7 @@ be a single result DataFrame.
           <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div><div class="toggleContainer block">
           <span class="toggle">Known Subclasses</span>
-          <div class="subClasses hiddenContent"><a href="SmvCsvFile.html" class="extype" name="org.tresamigos.smv.SmvCsvFile">SmvCsvFile</a>, <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a>, <a href="SmvFrlFile.html" class="extype" name="org.tresamigos.smv.SmvFrlFile">SmvFrlFile</a>, <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a></div>
+          <div class="subClasses hiddenContent"><a href="SmvCsvData.html" class="extype" name="org.tresamigos.smv.SmvCsvData">SmvCsvData</a>, <a href="SmvCsvFile.html" class="extype" name="org.tresamigos.smv.SmvCsvFile">SmvCsvFile</a>, <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a>, <a href="SmvFrlFile.html" class="extype" name="org.tresamigos.smv.SmvFrlFile">SmvFrlFile</a>, <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a></div>
         </div></div>
         
 
@@ -136,19 +136,6 @@ This is quite handy for &quot;filter&quot; or &quot;map&quot; type modules so th
 is not needed.  By default all modules are persisted unless the flag is overriden to true.
 Note: the module will still be persisted if it was specifically selected to run by the user.
 </p></div></div>
-    </li><li name="org.tresamigos.smv.SmvDataSet#name" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="name():String"></a>
-      <a id="name():String"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">name</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.SmvDataSet#requiresDS" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="requiresDS():Seq[org.tresamigos.smv.SmvDataSet]"></a>
       <a id="requiresDS():Seq[SmvDataSet]"></a>
@@ -402,6 +389,33 @@ Note: only the first setting is honored (as an optimization)
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#moduleCRC" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="moduleCRC:org.tresamigos.smv.ClassCRC"></a>
+      <a id="moduleCRC:ClassCRC"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">moduleCRC</span><span class="result">: <a href="ClassCRC.html" class="extype" name="org.tresamigos.smv.ClassCRC">ClassCRC</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">module code CRC.</p><div class="fullcomment"><div class="comment cmt"><p>module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
+</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#name" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="name():String"></a>
+      <a id="name():String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">name</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>

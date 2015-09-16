@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" type="text/css" href="github.css">
+</head>
+<body>
+<table class="nav-table">
+    <tr>
+        <td class="nav-left">&lArr;&nbsp;<a href="run_shell.html">Run Spark Shell</a></td>
+        <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
+        <td class="nav-right"><a href="smv_module.html">SMV Modules</a>&nbsp;&rArr;</td>
+    </tr>
+</table>
+<hr>
+
+<article class="markdown-body">
+<h1 id="smv-application">SMV Application</h1>
+<h2 id="introduction">Introduction</h2>
+<p>SMV is a very simple data application framework that enables the following:</p>
+<ul>
+<li>Ability to group DataFrame operations into modules and organize the modules and their dependency in a hierarchical manner.</li>
+<li>No overhead of developers to use RDD and DataFrame to manipulate data and create new data set and variables</li>
+<li>Ability to use the same framework to quickly create ad-hoc analysis and the ad-hoc queries should be able to easily transform to production package</li>
+<li>Easy testing of module levels. Developer shouldn't have to create many repetitive and cumbersome scaffolding to test a module</li>
+<li>Intermediate data persistence and versioning. Data versioning is critical for applying test driven development on data application development</li>
+<li>Ability to test/run at the module level and at the application level. Developer should be able to test run modules they currently working on</li>
+<li>Same framework should also allow the creation of execution graphs at the application level.</li>
+<li>Provides utility to managing the end to end dependency graph, persisted data meta info and execution logging</li>
+</ul>
+<h2 id="application-hierarchy">Application Hierarchy</h2>
+<p>A single SMV application may contain one or more stages. Each stage may contain one or more packages which in-turn can contain one ore more modules.<br />
+While SMV does not enforce any file/source level hierarchy, it is recommended that the source file hierarchy matches the stage/package/module hierarchy.<br />
+For example, given an app with 2 stages (stage1, stage2) and each stage with 2 packages (pkg1,2,3,4), we should have the following file layout</p>
+<pre><code>+-- src/main/scala/com/mycom/myproj
+    +-- stage1
+        +-- input
+        +-- pkg1
+        +-- pkg2
+    +-- stage2
+        +-- input
+        +-- pkg3
+        +-- pkg4  (package FQN = com.mycom.myproj.stage2.pkg4)</code></pre>
+<p>A couple of things to note about the above file hierarchy</p>
+<ul>
+<li>Following standard java/scala package name convention, the packages above will have their parent stage name in their name.</li>
+<li>Each stage has an <code>input</code> package for defining the inputs into the stage.</li>
+</ul>
+<p>TODO: add class diagram to show class relationship below!!!<br />
+Design Diagram<br />
+<img src="https://rawgit.com/TresAmigosSD/SMV/master/docs/appFramework.files/appFramework.svg" alt="Alt text" /></p>
+</article>
+</body>
+</html>

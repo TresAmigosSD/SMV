@@ -411,6 +411,20 @@ Note: the module will still be persisted if it was specifically selected to run 
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#moduleCRC" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="moduleCRC:org.tresamigos.smv.ClassCRC"></a>
+      <a id="moduleCRC:ClassCRC"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">moduleCRC</span><span class="result">: <a href="ClassCRC.html" class="extype" name="org.tresamigos.smv.ClassCRC">ClassCRC</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">module code CRC.</p><div class="fullcomment"><div class="comment cmt"><p>module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvFile#name" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="name():String"></a>
       <a id="name():String"></a>
@@ -420,7 +434,7 @@ Note: the module will still be persisted if it was specifically selected to run 
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">name</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+        <span class="name">name</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
@@ -518,19 +532,6 @@ Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called her
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.SmvFile#seqStringRDDToDF" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="seqStringRDDToDF(sqlContext:org.apache.spark.sql.SQLContext,rdd:org.apache.spark.rdd.RDD[Seq[String]],schema:org.tresamigos.smv.SmvSchema,parserV:org.tresamigos.smv.ParserValidation):org.apache.spark.sql.DataFrame"></a>
-      <a id="seqStringRDDToDF(SQLContext,RDD[Seq[String]],SmvSchema,ParserValidation):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">seqStringRDDToDF</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="rdd">rdd: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]]</span>, <span name="schema">schema: <a href="SmvSchema.html" class="extype" name="org.tresamigos.smv.SmvSchema">SmvSchema</a></span>, <span name="parserV">parserV: <a href="ParserValidation.html" class="extype" name="org.tresamigos.smv.ParserValidation">ParserValidation</a></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>

@@ -213,19 +213,6 @@ scala.</p>
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.CSVStringParser" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="CSVStringParser[U]extendsSerializable"></a>
-      <a id="CSVStringParser[U]:CSVStringParser[U]"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="CSVStringParser.html"><span class="name">CSVStringParser</span></a><span class="tparams">[<span name="U">U</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      <p class="comment cmt">A wrapper class of the opencsv.</p>
     </li><li name="org.tresamigos.smv.ClassCRC" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ClassCRCextendsProductwithSerializable"></a>
       <a id="ClassCRC:ClassCRC"></a>
@@ -946,6 +933,19 @@ scala.</p>
       </h4>
       <p class="comment cmt">SmvCounter is a general logger which wrapped around an accumulable of a mutable Map
 </p>
+    </li><li name="org.tresamigos.smv.SmvCsvData" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvCsvDataextendsSmvModulewithProductwithSerializable"></a>
+      <a id="SmvCsvData:SmvCsvData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvCsvData.html"><span class="name">SmvCsvData</span></a><span class="params">(<span name="schemaStr">schemaStr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">a build-in SmvModule from schema string and data string</p>
     </li><li name="org.tresamigos.smv.SmvCsvFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvCsvFileextendsSmvFilewithProductwithSerializable"></a>
       <a id="SmvCsvFile:SmvCsvFile"></a>
@@ -1600,19 +1600,6 @@ if(left) right else null
       </span>
       </h4>
       <p class="comment cmt">Common entry point for all SMV applications.</p>
-    </li><li name="org.tresamigos.smv.SmvErrorPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvErrorPolicy"></a>
-      <a id="SmvErrorPolicy:SmvErrorPolicy"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="SmvErrorPolicy$.html"><span class="name">SmvErrorPolicy</span></a>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.SmvFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvFile"></a>
       <a id="SmvFile:SmvFile"></a>
@@ -1679,6 +1666,19 @@ if(left) right else null
       </h4>
       <p class="comment cmt">helper methods for module reflection/discovery
 </p>
+    </li><li name="org.tresamigos.smv.SmvReportIO" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvReportIO"></a>
+      <a id="SmvReportIO:SmvReportIO"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvReportIO$.html"><span class="name">SmvReportIO</span></a>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.SmvSchema" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvSchema"></a>
       <a id="SmvSchema:SmvSchema"></a>
