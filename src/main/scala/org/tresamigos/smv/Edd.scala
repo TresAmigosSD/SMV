@@ -23,15 +23,15 @@ import org.apache.spark.sql.Column
 import org.apache.spark.storage.StorageLevel
 
 abstract class EddTaskBuilder[T] {
-  
+
   val df: DataFrame
-  
+
   protected var tasks: Seq[EddTask] = Nil
 
   protected def self(): T
-  
-  /** Add BASE tasks 
-   * 
+
+  /** Add BASE tasks
+   *
    * All simple tasks: no histograms except the timestamps
    * @param list the Set of Symbols BASE tasks will be created on
    *        if empty will use all fields in this DataFrame
@@ -65,16 +65,16 @@ abstract class EddTaskBuilder[T] {
       }.flatMap{a=>a}
     self()
   }
-  
-  def addBaseTasks(s1: Symbol, s: Symbol*): T = 
+
+  def addBaseTasks(s1: Symbol, s: Symbol*): T =
     addBaseTasks((s1 +: s).map{_.name}: _*)
 
-  /** Add DataQA tasks 
-   * 
+  /** Add DataQA tasks
+   *
    * All base tasks for compare different version of data
-   * 
+   *
    * Should be only used by SmvApp. User should use addBasesTasks for analysis
-   * and reporting 
+   * and reporting
    *
    * @param list the Set of Symbols BASE tasks will be created on
    *        if empty will use all fields in this DataFrame
@@ -101,8 +101,8 @@ abstract class EddTaskBuilder[T] {
   }
 
 
-  /** Add Histogram tasks 
-   * 
+  /** Add Histogram tasks
+   *
    * All simple histogram tasks
    * @param list the Set of Symbols HISTogram tasks will be created on
    *        if empty will use all fields in this DataFrame
@@ -123,7 +123,7 @@ abstract class EddTaskBuilder[T] {
       listSeq.map{ l =>
         val s =df(l)
         df.schema(l).dataType match {
-          case StringType => 
+          case StringType =>
             if (byFreq) Seq(StringByFreqHistogram(s))
             else Seq(StringByKeyHistogram(s))
           case _: NumericType => Seq(BinNumericHistogram(s, binSize))
@@ -133,14 +133,14 @@ abstract class EddTaskBuilder[T] {
       }.flatMap{a=>a}
     self()
   }
-  
+
   /** scala does not allow alternative method to set parameter default values */
-  def addHistogramTasks(s1: Symbol, s: Symbol*)(byFreq: Boolean, binSize: Double): T = 
+  def addHistogramTasks(s1: Symbol, s: Symbol*)(byFreq: Boolean, binSize: Double): T =
     addHistogramTasks((s1 +: s).map{_.name}: _*)(byFreq, binSize)
 
-  /** Add Amount Histogram tasks 
-   * 
-   * Use predefined Bin boundary for NumericType only. The Bin boundary 
+  /** Add Amount Histogram tasks
+   *
+   * Use predefined Bin boundary for NumericType only. The Bin boundary
    * was defined for natural transaction dollar amount type of distribution
    * @param list the Set of Symbols tasks will be created on
    * @return this Edd
@@ -157,12 +157,12 @@ abstract class EddTaskBuilder[T] {
       }.flatMap{a=>a}
     self()
   }
-  
-  def addAmountHistogramTasks(s1: Symbol, s: Symbol*): T = 
+
+  def addAmountHistogramTasks(s1: Symbol, s: Symbol*): T =
     addAmountHistogramTasks((s1 +: s).map{_.name}: _*)
 
-  /** Add all other tasks 
-   * 
+  /** Add all other tasks
+   *
    * @param more a Seq of EddTask's. Available Tasks:
    *          NumericBase(expr: NamedExpression)
    *          AmountHistogram(expr: NamedExpression)
@@ -183,7 +183,7 @@ abstract class EddTaskBuilder[T] {
   }
 }
 
-/** Edd class as a Builder class 
+/** Edd class as a Builder class
  *
  * Call the following task-builder methods to create the task list
  *     addBaseTasks(list: Symbol* )
@@ -201,12 +201,12 @@ abstract class EddTaskBuilder[T] {
  * @param gCol the group expressions this Edd cacluate over
  */
 class Edd(val df: DataFrame,
-          gCol: Seq[Column]) extends EddTaskBuilder[Edd] { 
+          gCol: Seq[Column]) extends EddTaskBuilder[Edd] {
 
   private var eddRDD: DataFrame = null
-  
+
   def self() = this
-  
+
   def clean: Edd = {
     tasks = Nil
     eddRDD = null
@@ -215,13 +215,13 @@ class Edd(val df: DataFrame,
 
   // TODO: CLEANUP: this mapping should be done by the concrete Task class and not here.
   private def createAggList(_tasks: Seq[EddTask]) = {
-    val colLists = 
+    val colLists =
       _tasks.map{ t => t match {
         case NumericBase(col) => Seq(count(col), onlineAverage(col), onlineStdDev(col), min(col), max(col))
         case TimeBase(col) => Seq(min(col), max(col))
         case StringBase(col) => Seq(count(col), min(col.smvLength), max(col.smvLength))
-        case StringDistinctCount(col) => 
-          val relativeSD = 0.01 
+        case StringDistinctCount(col) =>
+          val relativeSD = 0.01
           Seq(approxCountDistinct(col, relativeSD))
         case AmountHistogram(col) => Seq(histogram(col.cast(DoubleType).smvAmtBin))
         case NumericHistogram(col, min, max, n) => Seq(histogram(col.cast(DoubleType).smvNumericBin(min, max, n)))
@@ -237,22 +237,22 @@ class Edd(val df: DataFrame,
         case GroupPopulationKey(col) => Seq(first(col))
         case GroupPopulationCount => Seq(count(lit(1)))
       }}
-    colLists.zip(_tasks).map{ case (colList, t) => 
-      colList.zip(t.nameList).map{ case (e, n) => 
+    colLists.zip(_tasks).map{ case (colList, t) =>
+      colList.zip(t.nameList).map{ case (e, n) =>
         e.as(s"${t.col}_${n}")
       }
     }.flatten
   }
 
   private def groupTasks = gCol.map{ col => GroupPopulationKey(col) } ++ Seq(GroupPopulationCount)
-  
+
   /** Return the DataFrame of all Edd tasks' results */
   def toDataFrame: DataFrame = {
     if (eddRDD == null){
       val aggregateList = createAggList(groupTasks) ++ createAggList(tasks)
       eddRDD = df.groupBy(gCol: _*).agg(aggregateList(0), aggregateList.tail: _*)
       //eddRDD.persist(StorageLevel.MEMORY_AND_DISK)
-    } 
+    }
     eddRDD
   }
 
@@ -261,24 +261,18 @@ class Edd(val df: DataFrame,
   def createReport(): Array[String] = {
     val rdd = toDataFrame
 
-    rdd.collect.map{ r => 
+    rdd.collect.map{ r =>
       val tasks_ = tasks        // For Serialization
-      val gtasks_ = groupTasks  // For Serialization 
+      val gtasks_ = groupTasks  // For Serialization
       val it = r.toSeq.toIterator
       (gtasks_ ++ tasks_).map{ t => t.report(it) }.flatten.mkString("\n")
     }
   }
-  
+
   /** save a local copy of report */
   def saveReport(path: String): Unit = {
-    import java.io.{File, PrintWriter}
     val res = createReport().mkString("\n")
-    val file = new File(path)
-    // ensure parent directories exist
-    Option(file.getParentFile).foreach(_.mkdirs)
-    val pw = new PrintWriter(file)
-    pw.println(res)
-    pw.close()
+    SmvReportIO.saveReport(res, path)
   }
 
   /** Dump Edd report on screen */

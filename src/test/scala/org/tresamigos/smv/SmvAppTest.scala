@@ -33,10 +33,10 @@ class SmvHashOfHashTest extends SparkTestUtil {
   }
 }
 
-class SmvTestFile(override val name: String) extends SmvFile {
-  val basePath = null
-  def doRun(): DataFrame = null
-  override def validations() = new ValidationSet(Nil)
+class SmvTestFile(override val name: String) extends SmvModule("") {
+  override def requiresDS() = Seq.empty
+  override val isEphemeral = true
+  override def run(i: runParams) = null
 }
 
 class SmvAppTest extends SparkTestUtil {
@@ -49,7 +49,7 @@ class SmvAppTest extends SparkTestUtil {
     override def run(inputs: runParams) = {
       moduleRunCount = moduleRunCount + 1
       require(inputs.size === 1)
-      createSchemaRdd("a:Integer", "1;2;3")
+      app.createDF("a:Integer", "1;2;3")
     }
     override val isEphemeral = true
   }
@@ -75,7 +75,8 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test normal dependency execution") {
-    object testApp extends SmvApp(Seq("-m", "C"), Option(sc))
+    resetTestcaseTempDir()
+    object testApp extends SmvApp(Seq("-m", "C", "--data-dir", testcaseTempDir), Option(sc))
 
     C.injectApp(testApp)
     val res = testApp.resolveRDD(C)
@@ -162,7 +163,6 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test SmvFile crc") {
-    resetTestcaseTempDir
     createTempFile("F1.csv")
     createTempFile("F2.csv")
 
