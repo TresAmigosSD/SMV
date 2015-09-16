@@ -1,14 +1,11 @@
-# Helper functions/methods on Column
+# SMV Column level functions
 
-Since 1.3, Catalyst Expression is hidden from final user. A new class ```Column``` is created as a user interface.
-Internally, it is a wrapper around Expression.
+Functions in this section can be implicitly applied to spark `Column` objects.
 
-This change allows us to use implicit conversion to add helper methods on Column.
-
-## Methods on Column
+TODO: should the column level functions doc just be a pointer to the API doc? Just provide a couple of examples here perhaps. [funcs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.ColumnHelper)
 
 ### toExpr
-Convert Column to Expression
+Convert `Column` to catalyst `Expression`.  This is needed here as the internal `Expression` in `Column` is marked spark private but we sometimes need access to the expression.
 
 Eg.
 ```scala
@@ -16,16 +13,19 @@ Eg.
 ```
 
 ### smvNullSub
-Should consider to use coalesce(c1, c2) function going forward.
+The the provided substitution value if the `Column` value is null, otherwise use the `Column` value.
+The type of the substitution value should be the same as the column type.
+
+**Note:** Should consider using coalesce(c1, c2) function going forward.
 
 Eg.
 ```scala
 df.select($"v".smvNullSub(0)) as "newv")
-df.select($"v".smvNullSub($"defaultv" as "newv2")
+df.select($"v".smvNullSub($"defaultv") as "newv2")
 ```
 
 ### smvLength
-Length
+Computes the string length (in characters, not bytes) of the given column.  Must only be applied to String columns.
 
 Eg.
 ```scala
@@ -33,7 +33,7 @@ df.select($"name".smvLength as "namelen")
 ```
 
 ### smvStrToTimestamp
-Build a timestampe from a string
+Build a timestamp from a string.  The format is the same as the Java `Date` format.
 
 Eg.
 ```scala
@@ -41,7 +41,7 @@ lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd")
 ```
 
 ### smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek
-All return IntegerType
+Compute the integer year, month, quarter, day of month and day of week for a given Timestamp Column.
 
 Eg.
 ```scala
@@ -49,7 +49,7 @@ lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvYear
 ```
 
 ### smvAmtBin
-Pre-defined binning for dollar ammount type of column. It has more granular on lower values.
+Pre-defined binning for dollar amount type of column. It provides more granularity on small values.
 Pre-defined boundaries: 10, 200, 1000, 10000 ...
 
 Eg.
