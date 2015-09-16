@@ -60,7 +60,6 @@ class RejectTest extends SparkTestUtil {
   sparkTest("test csvFile loader rejection with exception", disableLogging = true) {
     val e = intercept[ValidationError] {
       val df = open(testDataDir + "RejectTest/test2")
-      println(df.collect.mkString("\n"))
     }
     val m = e.getMessage
     assert(m  === "Totally 5 records get rejected CAUSED BY ParserError")
@@ -92,5 +91,16 @@ class RejectTest extends SparkTestUtil {
     )
     assertUnorderedSeqEqual(res, exp)
     assert(n === 1)
+
+    val exp2 = ValidationResult("""{
+        "passed":true,
+        "errorMessages": [
+          {"ParserError":"Totally 1 records get rejected"}
+        ],
+        "checkLog": [
+          "java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011"
+        ]
+      }""")
+    assert (smvCF.validations.validate(null, true, smvCF.moduleValidPath()) === exp2)
   }
 }

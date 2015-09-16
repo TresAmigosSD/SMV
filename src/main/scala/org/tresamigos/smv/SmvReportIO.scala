@@ -28,6 +28,10 @@ object SmvReportIO{
     pw.close()
   }
 
+  def readReport(path: String): String = {
+    scala.io.Source.fromFile(path).getLines.mkString("\n")
+  }
+
   /** print report to console
    *  TODO: use java log
    **/
