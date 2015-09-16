@@ -46,10 +46,8 @@ case class ValidationResult (
     "}"
   }
 
-  def toConsole() = {
-    if (passed && errorMessages.isEmpty && checkLog.isEmpty) Unit
-    else SmvReportIO.printReport(toJSON())
-  }
+  def isEmpty() = (this == ValidationResult(true))
+
 }
 
 object ValidationResult {
@@ -111,20 +109,25 @@ class ValidationSet(val tasks: Seq[ValidationTask]) {
     }
   }
 
-  private def persiste(res: ValidationResult, versionedBasePath: String) = {
-    val path = versionedBasePath + ".valid"
+  private def toConsole(res: ValidationResult) = {
+    SmvReportIO.printReport(res.toJSON())
+  }
+
+  private def persiste(res: ValidationResult, path: String) = {
     SmvReportIO.saveReport(res.toJSON, path)
   }
 
-  def validate(df: DataFrame, hadAction: Boolean, versionedBasePath: String = "") = {
+  def validate(df: DataFrame, hadAction: Boolean, path: String = "") = {
     if (!tasks.isEmpty) {
       val needAction = tasks.map{t => t.needAction}.reduce(_ || _)
   //    val result = readPersistsedCheckFile() recover with {case e =>
       val result = {
         if((!hadAction) && needAction) forceAction(df)
         val res = tasks.map{t => t.validate(df)}.reduce(_ ++ _)
-        if (versionedBasePath.isEmpty) res.toConsole
-        else persiste(res, versionedBasePath)
+        if (!res.isEmpty){
+          if (path.isEmpty) toConsole(res)
+          else persiste(res, path)
+        }
         res
       }
       terminateAtError(result)

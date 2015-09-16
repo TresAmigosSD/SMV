@@ -14,9 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.apache.spark.sql.catalyst.expressions.{GenericMutableRow, Row}
+import org.apache.spark.sql.DataFrame
 
 import scala.util.Try
 import org.joda.time._
@@ -33,7 +31,7 @@ abstract class SmvDataSet {
   var app: SmvApp = _
   private var rddCache: DataFrame = null
 
-  def name(): String
+  def name() = this.getClass().getName().filterNot(_=='$')
   def description(): String
 
   /** modules must override to provide set of datasets they depend on. */
@@ -42,8 +40,13 @@ abstract class SmvDataSet {
   /** user tagged code "version".  Derived classes should update the value when code or data */
   def version() : Int = 0
 
+  /**
+   * module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
+   */
+  val moduleCRC = ClassCRC(this.getClass.getName)
+
   /** CRC computed from the dataset "code" (not data) */
-  def classCodeCRC() : Int = 0
+  def classCodeCRC(): Int = moduleCRC.crc.toInt
 
   def validations(): ValidationSet = new ValidationSet(Nil)
   /**
@@ -106,8 +109,8 @@ abstract class SmvDataSet {
     versionedBasePath(prefix) + ".edd"
 
   /** Returns the path for the module's reject report output */
-  private[smv] def moduleRejectPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".reject"
+  private[smv] def moduleValidPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".valid"
 
   /** perform the actual run of this module to get the generated SRDD result. */
   private[smv] def doRun(): DataFrame
@@ -120,7 +123,7 @@ abstract class SmvDataSet {
     val csvPath = moduleCsvPath()
     val eddPath = moduleEddPath()
     val schemaPath = moduleSchemaPath()
-    val rejectPath = moduleRejectPath()
+    val rejectPath = moduleValidPath()
     SmvHDFS.deleteFile(csvPath)
     SmvHDFS.deleteFile(schemaPath)
     SmvHDFS.deleteFile(eddPath)
@@ -131,7 +134,7 @@ abstract class SmvDataSet {
    * Returns current valid outputs produced by this module.
    */
   private[smv] def currentModuleOutputFiles() : Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleRejectPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath())
   }
 
   private[smv] def persist(rdd: DataFrame, prefix: String = "") = {
@@ -178,7 +181,7 @@ abstract class SmvDataSet {
       (resultDf, true)
     }
 
-    validations.validate(df, hasActionYet, versionedBasePath(""))
+    validations.validate(df, hasActionYet, moduleValidPath())
     df
   }
 }
@@ -188,11 +191,9 @@ abstract class SmvFile extends SmvDataSet {
   override def description() = s"Input file: @${basePath}"
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
+
   val failAtParsingError = true
-
-  //TODO: split this to 2
   lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
-
   override def validations() = new ValidationSet(Seq(parserValidator))
 
   def fullPath = {
@@ -206,72 +207,21 @@ abstract class SmvFile extends SmvDataSet {
     val mTime = SmvHDFS.modificationTime(fileName)
     val crc = new java.util.zip.CRC32
     crc.update(fileName.toCharArray.map(_.toByte))
-    (crc.getValue + mTime).toInt
+    (crc.getValue + mTime + moduleCRC.crc).toInt
   }
 
   override def name() = {
-    val nameRex = """(.+)(.csv)*(.gz)*""".r
-    basePath match {
+    val nameRex = """.*?/?([^/]+?)(.csv)?(.gz)?""".r
+    val fileName = basePath match {
       case nameRex(v, _, _) => v
       case _ => throw new IllegalArgumentException(s"Illegal base path format: $basePath")
     }
+    super.name() + "_" + fileName
   }
 
   def run(df: DataFrame) = df
 }
 
-class CsvStringHandler(sqlContext: SQLContext, parserValidator: ParserValidation) {
-
-  private[smv] def seqStringRDDToDF(
-    rdd: RDD[Seq[String]],
-    schema: SmvSchema
-  ) = {
-    val parserV = parserValidator
-    val add: (Exception, String) => Unit = {(e,r) => parserV.addWithReason(e,r)}
-    val rowRdd = rdd.mapPartitions{ iterator =>
-      val mutableRow = new GenericMutableRow(schema.getSize)
-      iterator.map { r =>
-        try {
-          require(r.size == schema.getSize)
-          for (i <- 0 until schema.getSize) {
-            mutableRow.update(i, schema.toValue(i, r(i)))
-          }
-          Some(mutableRow)
-        } catch {
-          case e:IllegalArgumentException  => add(e, r.mkString(",")); None
-          case e:NumberFormatException  => add(e, r.mkString(",")); None
-          case e:java.text.ParseException  =>  add(e, r.mkString(",")); None
-        }
-      }.collect{case Some(l) => l.asInstanceOf[Row]}
-    }
-    sqlContext.createDataFrame(rowRdd, schema.toStructType)
-  }
-
-  private[smv] def csvStringRDDToDF(
-    rdd: RDD[String],
-    schema: SmvSchema,
-    csvAttributes: CsvAttributes
-  ) = {
-    val parserV = parserValidator
-    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed, parserV)
-    val _ca = csvAttributes
-    val seqStringRdd = rdd.mapPartitions{ parser.parseCSV(_)(_ca) }
-    seqStringRDDToDF(seqStringRdd, schema)
-  }
-
-  private[smv] def frlStringRDDToDF(
-    rdd: RDD[String],
-    schema: SmvSchema,
-    slices: Seq[Int]
-  ) = {
-    val parserV = parserValidator
-    val startLen = slices.scanLeft(0){_ + _}.dropRight(1).zip(slices)
-    val parser = new CSVStringParser[Seq[String]]((r:String, parsed:Seq[String]) => parsed, parserV)
-    val seqStringRdd = rdd.mapPartitions{ parser.parseFrl(_, startLen) }
-    seqStringRDDToDF(seqStringRdd, schema)
-  }
-
-}
 
 /**
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
@@ -349,7 +299,7 @@ object SmvFile {
  */
 abstract class SmvModule(val description: String) extends SmvDataSet {
 
-  override val name = this.getClass().getName().filterNot(_=='$')
+  //override val name = this.getClass().getName().filterNot(_=='$')
 
   /**
    * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
@@ -358,13 +308,6 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    * Note: the module will still be persisted if it was specifically selected to run by the user.
    */
   override val isEphemeral = false
-
-  /**
-   * module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
-   */
-  val moduleCRC = ClassCRC(this.getClass.getName)
-
-  override def classCodeCRC() : Int = moduleCRC.crc.toInt
 
   type runParams = Map[SmvDataSet, DataFrame]
   def run(inputs: runParams) : DataFrame
@@ -384,6 +327,11 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   }
 }
 
+/**
+ * a build-in SmvModule from schema string and data string
+ *
+ * E.g. SmvCsvData("a:String;b:Double;c:String", "aa,1.0,cc;aa2,3.5,CC")
+ **/
 case class SmvCsvData(schemaStr: String, data: String) extends SmvModule("Dummy module to create DF from strings") {
   override def requiresDS() = Seq.empty
   override val isEphemeral = true

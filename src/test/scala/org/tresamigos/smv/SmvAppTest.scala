@@ -163,7 +163,6 @@ class SmvAppTest extends SparkTestUtil {
   }
 
   sparkTest("Test SmvFile crc") {
-    resetTestcaseTempDir
     createTempFile("F1.csv")
     createTempFile("F2.csv")
 
