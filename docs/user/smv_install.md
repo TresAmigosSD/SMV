@@ -37,3 +37,8 @@ $ git clone https://github.com/TresAmigosSD/SMV.git
 ```shell
 $ mvn clean install
 ```
+
+You may need to set MAVEN_OPTS to avoid out of memory issue. 
+```shell
+export MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m"
+```
