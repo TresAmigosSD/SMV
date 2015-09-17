@@ -212,6 +212,10 @@ abstract class SmvFile extends SmvDataSet {
     (crc.getValue + mTime + moduleCRC.crc).toInt
   }
 
+  /**
+   * Override file name to allow `SmvDataSet` to persist meta data into unique file in
+   * output directory based on class name and file path basename.
+   */
   override def name() = {
     val nameRex = """.*?/?([^/]+?)(.csv)?(.gz)?""".r
     val fileName = basePath match {
