@@ -1,8 +1,11 @@
 package org.tresamigos.smv
 
 import java.io.File
+import java.io.{BufferedWriter, StringWriter, OutputStreamWriter}
 
 import org.apache.hadoop.fs.FileSystem
+import org.apache.commons.io.IOUtils
+
 
 import scala.util.Try
 
@@ -32,6 +35,28 @@ object SmvHDFS {
     val hdfs = getFileSystem(fileName)
 
     hdfs.delete(path, true)
+  }
+
+  def readFromFile(fileName: String): String = {
+    val path = new org.apache.hadoop.fs.Path(fileName)
+    val hdfs = getFileSystem(fileName)
+
+    val stream = hdfs.open(path)
+    val writer = new StringWriter()
+    IOUtils.copy(stream, writer, "UTF-8");
+    writer.toString()
+  }
+
+  def writeToFile(contents: String, fileName: String) = {
+    val path = new org.apache.hadoop.fs.Path(fileName)
+    val hdfs = getFileSystem(fileName)
+
+    if ( hdfs.exists(path)) hdfs.delete(path, true)
+    val stream = hdfs.create(path)
+    val writer = new BufferedWriter( new OutputStreamWriter(stream, "UTF-8") )
+    writer.write(contents);
+    writer.close()
+    stream.close()
   }
 
   /**
