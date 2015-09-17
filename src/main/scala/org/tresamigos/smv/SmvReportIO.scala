@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-object SmvReportIO{
+private[smv] object SmvReportIO{
   def saveReport(report: String, path: String): Unit =
     SmvHDFS.writeToFile(report, path)
 

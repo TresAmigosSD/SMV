@@ -20,7 +20,7 @@ import org.apache.spark.sql.catalyst.dsl.plans._
 
 import org.apache.spark.sql.catalyst.expressions._
 
-case class SmvLocalRelation(schema: SmvSchema) {
+private[smv] case class SmvLocalRelation(schema: SmvSchema) {
   private val locRel = {
     val schemaAttr = schema.entries.map{e =>
       val s = e.structField
@@ -28,11 +28,11 @@ case class SmvLocalRelation(schema: SmvSchema) {
     }
     LocalRelation(schemaAttr)
   }
-  
+
   def resolveAggExprs(exprs: Seq[Expression]) = {
     locRel.groupBy()(exprs: _*).analyze.expressions
   }
-  
+
   def bindAggExprs(exprs: Seq[Expression]) = {
     val aggExprs = resolveAggExprs(exprs).map{
       case Alias(e: AggregateExpression, n) => e
@@ -40,7 +40,7 @@ case class SmvLocalRelation(schema: SmvSchema) {
     }
     aggExprs.map{e => BindReferences.bindReference(e, locRel.output)}
   }
-  
+
   def resolveExprs(exprs: Seq[Expression]) = {
     val withName = exprs map {
       case e: NamedExpression => e
@@ -48,7 +48,7 @@ case class SmvLocalRelation(schema: SmvSchema) {
     }
     locRel.select(withName: _*).analyze.expressions
   }
-  
+
   def bindExprs(exprs: Seq[Expression]) = {
     resolveExprs(exprs).map{e => BindReferences.bindReference(e, locRel.output)}
   }

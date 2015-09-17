@@ -20,7 +20,7 @@ import org.json4s.jackson.JsonMethods._
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 
-case class ValidationResult (
+private[smv] case class ValidationResult (
   passed: Boolean,
   errorMessages: Seq[(String, String)] = Nil,
   checkLog: Seq[String] = Nil
@@ -51,7 +51,7 @@ case class ValidationResult (
 
 }
 
-object ValidationResult {
+private[smv] object ValidationResult {
   def apply(jsonStr: String) = {
     val json = parse(jsonStr)
     val (passed, errorList, checkList) = json match {
@@ -75,12 +75,12 @@ object ValidationResult {
   }
 }
 
-abstract class ValidationTask {
+private[smv] abstract class ValidationTask {
   def needAction(): Boolean
   def validate(df: DataFrame): ValidationResult
 }
 
-class ParserValidation(sc: SparkContext, failAtError: Boolean = true) extends ValidationTask with Serializable {
+private[smv] class ParserValidation(sc: SparkContext, failAtError: Boolean = true) extends ValidationTask with Serializable {
 
   def needAction = true
   val parserLogger = new RejectLogger(sc, 10)
@@ -93,7 +93,7 @@ class ParserValidation(sc: SparkContext, failAtError: Boolean = true) extends Va
   }
 }
 
-class ValidationSet(val tasks: Seq[ValidationTask]) {
+private[smv] class ValidationSet(val tasks: Seq[ValidationTask]) {
   def add(task: ValidationTask) = {
     new ValidationSet(tasks :+ task)
   }

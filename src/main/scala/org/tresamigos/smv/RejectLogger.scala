@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.SparkContext
 import scala.collection.mutable.MutableList
 
-class RejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends Serializable {
+private[smv] class RejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends Serializable {
   private val rejectedRecords = sparkContext.accumulableCollection(MutableList[String]())
   private val rejectedRecordCount = sparkContext.accumulator(0)
 

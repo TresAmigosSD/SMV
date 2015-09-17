@@ -12,7 +12,7 @@ import scala.util.Try
 /**
  * Some helper HDFS functions.
  */
-object SmvHDFS {
+private[smv] object SmvHDFS {
 
   /** default hadoop configuration. */
   private val hadoopConf = new org.apache.hadoop.conf.Configuration()

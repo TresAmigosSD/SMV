@@ -84,6 +84,11 @@ class SmvAppTest extends SparkTestUtil {
 
     // even though both B and C depended on A, A should have only run once!
     assert(A.moduleRunCount === 1)
+
+    //Resolve the same module, it should read the persisted file and not run the module again
+    val res2 = testApp.resolveRDD(C)
+    assertSrddDataEqual(res2, "1,2,3;2,3,4;3,4,5")
+    assert(A.moduleRunCount === 1)
   }
 
   object A_cycle extends SmvModule("A Cycle") {

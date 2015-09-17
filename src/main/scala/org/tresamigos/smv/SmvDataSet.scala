@@ -43,12 +43,12 @@ abstract class SmvDataSet {
   /**
    * module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
    */
-  val moduleCRC = ClassCRC(this.getClass.getName)
+  protected val moduleCRC = ClassCRC(this.getClass.getName)
 
   /** CRC computed from the dataset "code" (not data) */
   def classCodeCRC(): Int = moduleCRC.crc.toInt
 
-  def validations(): ValidationSet = new ValidationSet(Nil)
+  private[smv] def validations(): ValidationSet = new ValidationSet(Nil)
   /**
    * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
    * This way, if this module or any of the modules it depends on changes, the HOH should change.
@@ -97,7 +97,7 @@ abstract class SmvDataSet {
   }
 
   /** Returns the path for the module's csv output */
-  private[smv] def moduleCsvPath(prefix: String = ""): String =
+  def moduleCsvPath(prefix: String = ""): String =
     versionedBasePath(prefix) + ".csv"
 
   /** Returns the path for the module's schema file */
@@ -164,13 +164,13 @@ abstract class SmvDataSet {
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] = {
     implicit val ca = CsvAttributes.defaultCsv
     Try({
-      val smvFile = SmvCsvFile(moduleCsvPath(prefix), ca)
+      val smvFile = SmvCsvFile(moduleCsvPath(prefix), ca, isAbsolutePath = true)
       smvFile.injectApp(this.app)
       smvFile.rdd
     })
   }
 
-  def computeRDD: DataFrame = {
+  private[smv] def computeRDD: DataFrame = {
     val (df, hasActionYet) = if(isEphemeral) {
       (doRun(), false)
     } else {
@@ -192,12 +192,14 @@ abstract class SmvFile extends SmvDataSet {
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
 
+  private[smv] def isAbsolutePath: Boolean = false
+
   val failAtParsingError = true
-  lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
+  private[smv] lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
   override def validations() = new ValidationSet(Seq(parserValidator))
 
-  def fullPath = {
-    if (("""^[\.\/]"""r).findFirstIn(basePath) != None) basePath
+  private[smv] def fullPath = {
+    if (isAbsolutePath || ("""^[\.\/]"""r).findFirstIn(basePath) != None) basePath
     else if (app == null) throw new IllegalArgumentException(s"app == null and $basePath is not an absolute path")
     else s"${app.smvConfig.dataDir}/${basePath}"
   }
@@ -229,7 +231,8 @@ abstract class SmvFile extends SmvDataSet {
 case class SmvCsvFile(
   basePath: String,
   csvAttributes: CsvAttributes,
-  schemaPath: Option[String] = None
+  schemaPath: Option[String] = None,
+  override val isAbsolutePath: Boolean = false
 ) extends SmvFile {
 
   private def csvFileWithSchema(
@@ -256,7 +259,8 @@ case class SmvCsvFile(
 
 case class SmvFrlFile(
     basePath: String,
-    schemaPath: Option[String] = None
+    schemaPath: Option[String] = None,
+    override val isAbsolutePath: Boolean = false
   ) extends SmvFile {
 
   private def frlFileWithSchema(dataPath: String, schemaPath: String): DataFrame = {
