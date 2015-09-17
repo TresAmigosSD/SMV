@@ -15,7 +15,6 @@
 package org.tresamigos.smv
 
 import java.io.{File, PrintWriter}
-import java.security.InvalidKeyException
 
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
