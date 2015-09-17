@@ -5,31 +5,54 @@ hide empty fields
 hide circle
 
 package SMV {
-  class SmvDataSet {
+  class SmvDataSet <<Abstract>>{
+    -app: SmvApp
     +{abstract} requiresDS() : Seq[SmvDataSet]
-    +{abstract} computeRDD(app: SmvApp): SRDD
+    +{abstract} computeRDD(): DataFrame
     +rdd(): SRDD
     +name: String
     +version: Int
     +description: String
+    +classCodeCRC: Int
+    +validations: ValidationSet
+    +hashOfHash: Int
+    +isEphemeral: Boolean
+    +injectApp(app: SmvApp): Unit
   }
-  
-  class SmvFile extends SmvDataSet {
+
+  class SmvFile <<Abstract>> extends SmvDataSet {
     +basePath : String
+    +failAtParsingError: Boolean
+    +parserValidator: ParserValidation
+    +run(df: DataFrame): DataFrame
+  }
+
+  class SmvCsvFile extends SmvFile {
     +csvAttributes : CsvAttributes
+    +schemaPath: String
+  }
+
+  class SmvFrlFile extends SmvFile {
+    +schemaPath: String
   }
 
   class SmvModule <<Abstract>> extends SmvDataSet {
-    +{abstract} run(in: runParams) : SRDD
+    +{abstract} run(in: runParams) : DataFrame
   }
 
-  class SmvApp <<Abstract>> {
-    -sparkContext
-    -sqlContext
-    +appName: String
-    +resolveRDD(ds: SmvDataSet): SchemaRDD
-    +{abstract} getModulePackages() : Seq[String]
-    +run(inputs: Map[SmvDataSet, SchemaRDD])
+  class SmvCsvData extends SmvModule {
+    +schemaStr: String
+    +data: String
+    +cnstr(schemaStr, data)
+  }
+
+  class SmvApp {
+    -sc: SparkContext
+    -sqlContext: SQLContext
+    -smvConfig: SmvConfig
+    +resolveRDD(ds: SmvDataSet): DataFrame
+    +createDF(schemaStr:String, data: String): DataFrame
+    +run()
   }
 
   SmvApp *-R- "*" SmvDataSet
@@ -46,12 +69,10 @@ package ExampleApp {
     +override requiresDS()
     +override run(inputs)
   }
-
-  class ExampleApp extends SmvApp {
-    +getModulePackages(): Seq[String]
+  class File1 extends SmvCsvFile {
+    +basePath
+    +csvAttributes
+    +override run(df)
   }
-
-  ExampleApp .l.> Module1
-  ExampleApp ..> Module2
 }
 @enduml
