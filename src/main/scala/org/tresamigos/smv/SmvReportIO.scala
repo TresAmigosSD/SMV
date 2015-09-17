@@ -15,10 +15,20 @@
 package org.tresamigos.smv
 
 object SmvReportIO{
-  /** save a local copy of report
-   *  TODO: Should call HDFS api for this
-   */
-  def saveReport(report: String, path: String): Unit = {
+  def saveReport(report: String, path: String): Unit =
+    SmvHDFS.writeToFile(report, path)
+
+  def readReport(path: String): String =
+    SmvHDFS.readFromFile(path)
+
+  /** print report to console
+   *  TODO: use java log
+   **/
+  def printReport(report: String): Unit = {
+    println(report)
+  }
+
+  private def localSaveReport(report: String, path: String): Unit = {
     import java.io.{File, PrintWriter}
     val file = new File(path)
     // ensure parent directories exist
@@ -28,14 +38,8 @@ object SmvReportIO{
     pw.close()
   }
 
-  def readReport(path: String): String = {
+  private def localReadReport(path: String): String = {
     scala.io.Source.fromFile(path).getLines.mkString("\n")
   }
 
-  /** print report to console
-   *  TODO: use java log
-   **/
-  def printReport(report: String): Unit = {
-    println(report)
-  }
 }

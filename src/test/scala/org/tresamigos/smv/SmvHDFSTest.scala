@@ -68,4 +68,21 @@ class SmvHDFSTest extends SparkTestUtil {
     val mt1 = SmvHDFS.modificationTime(s"${testcaseTempDir}/F1.csv")
     assert (mt0 < mt1)
   }
+
+  test("Test HDFS file read") {
+    resetTestcaseTempDir()
+
+    createTempFile("F1", "hahahaha")
+    val res = SmvHDFS.readFromFile(testcaseTempDir + "/F1")
+    assert(res === "hahahaha")
+  }
+
+  test("Test HDFS file write") {
+    resetTestcaseTempDir()
+
+    SmvHDFS.writeToFile("test contents", testcaseTempDir + "/F2")
+    val res = SmvHDFS.readFromFile(testcaseTempDir + "/F2")
+    assert(res === "test contents")
+  }
+
 }
