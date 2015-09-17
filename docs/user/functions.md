@@ -7,7 +7,22 @@ The provided functions come in one of three flavors.
 * `DataFrame` helper functions
 * Grouped `DataFrame` helper functions
 
-The [Column helper functions](funcs_column.md) can be use to augment the computation of columns inside a projection.
-[DataFrame helper functions](funcs_dataframe.md) can be used on a `DataFrame` directly.  Whereas, [Grouped helper functions](funcs_grouped.md) can only be applied to `SmvGroup`ed data.
+## Column Helper Functions
+This set of functions can be applied to a column inside a projection.
+For example,
+```scala
+df.selectPlus(
+  $"a".smvSoundex as 'a_soundex,
+  $"ts".smvYear as 'year,
+  ...)
+```
 
-TODO: add link to SmvGroup function above.
+See [SMV ColumnHelper API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.ColumnHelper) for more details.
+
+## DataFrame Helper Functions
+[DataFrame helper functions](funcs_dataframe.md) can be used on a `DataFrame` directly.
+
+## Grouped Helper Functions
+[Grouped helper functions](funcs_grouped.md) can only be applied to `SmvGroup`ed data.
+
+TODO: also need link to functions that are not column helpers such as 'SmvStrCat'

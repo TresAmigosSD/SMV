@@ -10,7 +10,6 @@
 * [SMV Modules](smv_module.md)
 * [SMV Stages](smv_stages.md) TODO: rename to smv_stage.md to be consistent (singular)
 * [SMV Functions](functions.md)
-    - [SMV Column Functions](funcs_column.md)
     - [SMV DataFrame Functions](funcs_dataframe.md)
     - [SMV Group Functions](funcs_grouped.md)
     - [Pivot / Unpivot Operations](pivot.md)  TODO: create pivot.md from funcs_grouped.md
