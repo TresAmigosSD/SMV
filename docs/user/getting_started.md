@@ -12,7 +12,7 @@ smv_init.sh only requires two parameters.
 For example:
 
 ```bash
-$ _SMV_HOME_/tools/bin/smv_init.sh MyApp com.mycompany.myapp
+$ _SMV_HOME_/tools/smv_init.sh MyApp com.mycompany.myapp
 ```
 
 The above command will create the ```MyApp``` directory and
