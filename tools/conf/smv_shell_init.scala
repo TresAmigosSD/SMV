@@ -1,12 +1,13 @@
+import org.apache.spark.sql.functions._
+import org.tresamigos.smv._
 
 // create the init object "i" rather than create initialization at top level
 // because shell would launch a separate command for each evalutaion which
 // slows down startup considerably.
 // keeping object name short to make the contents easy to access.
 object i {
-  import org.apache.spark.sql._, functions._
+  import org.apache.spark.sql.DataFrame
   import org.apache.spark.rdd.RDD
-  import org.tresamigos.smv._
   import java.io.{File, PrintWriter}
 
   val app = new SmvApp(Seq("-m", "None"), Option(sc))
