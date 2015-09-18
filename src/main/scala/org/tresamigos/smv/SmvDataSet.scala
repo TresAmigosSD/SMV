@@ -139,14 +139,15 @@ abstract class SmvDataSet {
 
   private[smv] def persist(rdd: DataFrame, prefix: String = "") = {
     val filePath = moduleCsvPath(prefix)
-    implicit val ca = CsvAttributes.defaultCsvWithHeader
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
     val counter = new ScCounter(app.sc)
     val before = DateTime.now()
     println(s"${fmt.print(before)} PERSISTING: ${filePath}")
 
-    rdd.smvPipeCount(counter).saveAsCsvWithSchema(filePath)
+    val df = rdd.smvPipeCount(counter)
+    val handler = new FileIOHandler(app.sqlContext)
+    handler.saveAsCsvWithSchema(df, filePath)
 
     val after = DateTime.now()
     val runTime = PeriodFormat.getDefault().print(new Period(before, after))
@@ -162,11 +163,9 @@ abstract class SmvDataSet {
   }
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] = {
-    implicit val ca = CsvAttributes.defaultCsv
     Try({
-      val smvFile = SmvCsvFile(moduleCsvPath(prefix), ca, isAbsolutePath = true)
-      smvFile.injectApp(this.app)
-      smvFile.rdd
+      val handler = new FileIOHandler(app.sqlContext)
+      handler.csvFileWithSchema(moduleCsvPath(prefix), moduleSchemaPath(prefix), CsvAttributes.defaultCsv)
     })
   }
 
@@ -239,24 +238,11 @@ case class SmvCsvFile(
   override val isAbsolutePath: Boolean = false
 ) extends SmvFile {
 
-  private def csvFileWithSchema(
-    dataPath: String,
-    schemaPath: String
-  ): DataFrame = {
-    val sc = app.sqlContext.sparkContext
-    val schema = SmvSchema.fromFile(sc, schemaPath)
-
-    val strRDD = sc.textFile(dataPath)
-    val noHeadRDD = if (csvAttributes.hasHeader) CsvAttributes.dropHeader(strRDD) else strRDD
-
-    val handler = new CsvStringHandler(app.sqlContext, parserValidator)
-    handler.csvStringRDDToDF(noHeadRDD, schema, csvAttributes)
-  }
-
   private[smv] def doRun(): DataFrame = {
     // TODO: this should use inputDir instead of dataDir
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
-    val df = csvFileWithSchema(fullPath, sp)
+    val handler = new FileIOHandler(app.sqlContext, parserValidator)
+    val df = handler.csvFileWithSchema(fullPath, sp, csvAttributes)
     run(df)
   }
 }
@@ -267,22 +253,11 @@ case class SmvFrlFile(
     override val isAbsolutePath: Boolean = false
   ) extends SmvFile {
 
-  private def frlFileWithSchema(dataPath: String, schemaPath: String): DataFrame = {
-    val sc = app.sqlContext.sparkContext
-    val slices = SmvSchema.slicesFromFile(sc, schemaPath)
-    val schema = SmvSchema.fromFile(sc, schemaPath)
-    require(slices.size == schema.getSize)
-
-    // TODO: show we allow header in Frl files?
-    val strRDD = sc.textFile(dataPath)
-    val handler = new CsvStringHandler(app.sqlContext, parserValidator)
-    handler.frlStringRDDToDF(strRDD, schema, slices)
-  }
-
   private[smv] def doRun(): DataFrame = {
     // TODO: this should use inputDir instead of dataDir
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
-    val df = frlFileWithSchema(fullPath, sp)
+    val handler = new FileIOHandler(app.sqlContext, parserValidator)
+    val df = handler.frlFileWithSchema(fullPath, sp)
     run(df)
   }
 }
@@ -352,7 +327,7 @@ case class SmvCsvData(schemaStr: String, data: String) extends SmvModule("Dummy 
     val schema = SmvSchema.fromString(schemaStr)
     val dataArray = data.split(";").map(_.trim)
 
-    val handler = new CsvStringHandler(app.sqlContext, parserValidator)
+    val handler = new FileIOHandler(app.sqlContext, parserValidator)
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, CsvAttributes.defaultCsv)
   }
 }

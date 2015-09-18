@@ -80,7 +80,13 @@ private[smv] abstract class ValidationTask {
   def validate(df: DataFrame): ValidationResult
 }
 
-private[smv] class ParserValidation(sc: SparkContext, failAtError: Boolean = true) extends ValidationTask with Serializable {
+private[smv] abstract class ParserValidationTask extends ValidationTask with Serializable {
+  def needAction: Boolean
+  def addWithReason(e: Exception, rec: String): Unit
+  def validate(df: DataFrame): ValidationResult
+}
+
+private[smv] class ParserValidation(sc: SparkContext, failAtError: Boolean = true) extends ParserValidationTask{
 
   def needAction = true
   val parserLogger = new RejectLogger(sc, 10)
@@ -91,6 +97,12 @@ private[smv] class ParserValidation(sc: SparkContext, failAtError: Boolean = tru
     val errorMessages = if (nOfRejects == 0) Nil else Seq(("ParserError", s"Totally ${nOfRejects} records get rejected"))
     ValidationResult(passed, errorMessages, log)
   }
+}
+
+private[smv] object TerminateParserValidator extends ParserValidationTask {
+  override def needAction = false
+  override def addWithReason(e: Exception, rec: String) = throw e
+  override def validate(df: DataFrame) = ValidationResult(true)
 }
 
 private[smv] class ValidationSet(val tasks: Seq[ValidationTask]) {

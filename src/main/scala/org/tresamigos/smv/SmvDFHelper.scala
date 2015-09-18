@@ -27,28 +27,8 @@ class SmvDFHelper(df: DataFrame) {
 
   // TODO: add schema file path as well.
   def saveAsCsvWithSchema(dataPath: String, schemaWithMeta: SmvSchema = null)(implicit ca: CsvAttributes) {
-
-    val schema = if (schemaWithMeta == null) {SmvSchema.fromDataFrame(df)} else {schemaWithMeta}
-
-    //Adding the header to the saved file all the time even when ca.hasHeader is
-    //False.
-    val fieldNames = df.schema.fieldNames
-    val headerStr = fieldNames.map(_.trim).map(fn => "\"" + fn + "\"").
-      mkString(ca.delimiter.toString)
-
-    val csvHeaderRDD = df.sqlContext.sparkContext.parallelize(Array(headerStr),1)
-    val csvBodyRDD = df.map(schema.rowToCsvString(_))
-
-    //As far as I know the union maintain the order. So the header will end up being the
-    //first line in the saved file.
-
-    // Since on Linux, when file stored on local file system, the partitions are not
-    // guaranteed in order when read back in, we need to only store the body w/o the header
-    // val csvRDD = csvHeaderRDD.union(csvBodyRDD)
-    val csvRDD = csvBodyRDD
-
-    schema.saveToFile(df.sqlContext.sparkContext, SmvSchema.dataPathToSchemaPath(dataPath))
-    csvRDD.saveAsTextFile(dataPath)
+    val handler = new FileIOHandler(df.sqlContext)
+    handler.saveAsCsvWithSchema(df, dataPath, schemaWithMeta, ca)
   }
 
   /**
