@@ -95,7 +95,7 @@ class SmvDFHelper(df: DataFrame) {
       // refer to the columns being updated
       df.selectPlus(uniquelyNamed:_*).
         selectMinus(origColNames.head, origColNames.tail:_*).
-        renameField(renameArgs:_*)
+        renameField(renameArgs:_*).select(currColNames.head, currColNames.tail: _*)
     }
 
     edited.selectPlus(add: _*)
