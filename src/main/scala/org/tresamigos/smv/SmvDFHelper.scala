@@ -93,9 +93,11 @@ class SmvDFHelper(df: DataFrame) {
 
       // add the new columns first, because they could (and usually)
       // refer to the columns being updated
+      // the last select is to make sure the ordering of columns don't change
       df.selectPlus(uniquelyNamed:_*).
         selectMinus(origColNames.head, origColNames.tail:_*).
-        renameField(renameArgs:_*).select(currColNames.head, currColNames.tail: _*)
+        renameField(renameArgs:_*).
+        select(currColNames.head, currColNames.tail: _*)
     }
 
     edited.selectPlus(add: _*)
