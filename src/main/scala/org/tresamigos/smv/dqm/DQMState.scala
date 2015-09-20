@@ -93,12 +93,12 @@ class DQMState(
     rLog ++ fLog
   }
 
-  def totalFixCount(): Int = {
+  def getTotalFixCount(): Int = {
     require(concluded)
     fixCountersCopy.values.reduce(_ + _)
   }
 
-  def totalRuleCount(): Int = {
+  def getTotalRuleCount(): Int = {
     require(concluded)
     ruleLoggersCopy.values.map{_._1}.reduce(_ + _)
   }

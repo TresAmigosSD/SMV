@@ -38,3 +38,31 @@ private[smv] case class ImplementFailPercentPolicy(name: String, threshold: Doub
     state.getTaskCount(name) < threshold * state.getRecCount()
   }
 }
+
+case class FailTotalRuleCountPolicy(threshold: Int) extends DQMPolicy {
+  def name = s"FailTotalRuleCountPolicy(${threshold})"
+  def policy(df: DataFrame, state: DQMState): Boolean = {
+    state.getTotalRuleCount() < threshold
+  }
+}
+
+case class FailTotalFixCountPolicy(threshold: Int) extends DQMPolicy {
+  def name = s"FailTotalFixCountPolicy(${threshold})"
+  def policy(df: DataFrame, state: DQMState): Boolean = {
+    state.getTotalFixCount() < threshold
+  }
+}
+
+case class FailTotalRulePercentPolicy(threshold: Double) extends DQMPolicy {
+  def name = s"FailTotalRulePercentPolicy(${threshold})"
+  def policy(df: DataFrame, state: DQMState): Boolean = {
+    state.getTotalRuleCount() < threshold * state.getRecCount()
+  }
+}
+
+case class FailTotalFixPercentPolicy(threshold: Double) extends DQMPolicy {
+  def name = s"FailTotalFixPercentPolicy(${threshold})"
+  def policy(df: DataFrame, state: DQMState): Boolean = {
+    state.getTotalFixCount() < threshold * state.getRecCount()
+  }
+}

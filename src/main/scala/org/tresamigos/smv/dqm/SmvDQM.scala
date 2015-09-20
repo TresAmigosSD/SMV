@@ -73,15 +73,14 @@ class SmvDQM (
       true
     })
 
-    val afterRules = df.
-      where(totalCountCol()).
-      selectPlus(plusCols: _*).
-      where(filterCol).
-      selectMinus(minusCols: _*)
-
     val fixCols = fixes.map{_.createFixCol(dqmState)}
 
-    afterRules.selectWithReplace(fixCols: _*)
+    df.
+      where(totalCountCol()).
+      selectPlus(plusCols: _*).
+      selectWithReplace(fixCols: _*).
+      where(filterCol).
+      selectMinus(minusCols: _*)
   }
 
   def validate(df: DataFrame) = {

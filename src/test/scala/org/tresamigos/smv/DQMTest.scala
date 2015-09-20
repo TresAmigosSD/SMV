@@ -43,8 +43,8 @@ class DQMTest extends SparkTestUtil {
     state.snapshot()
     assert(state.getRecCount() === 11)
     assert(state.getRuleCount("rule1") === 6)
-    assert(state.totalRuleCount() === 7)
-    assert(state.totalFixCount() === 3)
+    assert(state.getTotalRuleCount() === 7)
+    assert(state.getTotalFixCount() === 3)
     assertUnorderedSeqEqual(state.getRuleLog("rule2"), Seq(
       "org.tresamigos.smv.dqm.DQMRuleError: rule2 @RECORD: rule2 record"))
   }
@@ -121,5 +121,33 @@ class DQMTest extends SparkTestUtil {
     "Fix: a_lt_1_fix, total count: 1"
   ]
 }""")
+  }
+
+  sparkTest("test Total Policies") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
+
+    val dqm = SmvDQM().
+      add(DQMRule($"b" < 0.4 , "b_lt_03")).
+      add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix")).
+      add(FailTotalRuleCountPolicy(2)).
+      add(FailTotalFixCountPolicy(1)).
+      add(FailTotalRulePercentPolicy(0.3)).
+      add(FailTotalFixPercentPolicy(0.3))
+
+    val res = dqm.attachTasks(df)
+
+    /** Action count will be executed with optimization which will not trigger the fixes */
+    res.foreach(r => Unit)
+
+    val dqmRes = dqm.validate(res)
+    assertUnorderedSeqEqual(dqmRes.errorMessages, Seq(
+      ("NoOpDQMPolicy","true"),
+      ("NoOpDQMPolicy","true"),
+      ("FailTotalRuleCountPolicy(2)","true"),
+      ("FailTotalFixCountPolicy(1)","false"),
+      ("FailTotalRulePercentPolicy(0.3)","false"),
+      ("FailTotalFixPercentPolicy(0.3)","false")
+    ))
   }
 }
