@@ -14,6 +14,7 @@
 
 package org.tresamigos.smv.dqm
 
+import scala.util.Try
 import org.tresamigos.smv.RejectLogger
 import org.apache.spark.{SparkContext, Accumulator}
 
@@ -22,7 +23,7 @@ class DQMState(
     ruleNames: Seq[String],
     fixNames: Seq[String]
   ) extends Serializable {
-    
+
   private val recordCounter: Accumulator[Long] = sc.accumulator(0l)
   private val fixCounters: Map[String, Accumulator[Int]] = fixNames.map{n => (n, sc.accumulator(0))}.toMap
   private val ruleLoggers: Map[String, RejectLogger] = ruleNames.map{n => (n, new RejectLogger(sc, 10))}.toMap
@@ -69,9 +70,27 @@ class DQMState(
     ruleLoggersCopy(name)._1
   }
 
+  def getTaskCount(name: String): Int = {
+    require(concluded)
+    Try(getRuleCount(name)).recoverWith{case e =>
+      Try(getFixCount(name))
+    }.get
+  }
+
   def getRuleLog(name: String): Seq[String] = {
     require(concluded)
     ruleLoggersCopy(name)._2.toSeq
+  }
+
+  def getAllLog(): Seq[String] = {
+    require(concluded)
+    val rLog = ruleLoggersCopy.flatMap{case (name, (n, log)) =>
+      Seq(s"Rule: ${name}, total count: ${n}") ++ log.toSeq
+    }.toSeq
+    val fLog = fixCountersCopy.map{case (name, n) =>
+      s"Fix: ${name}, total count: ${n}"
+    }.toSeq
+    rLog ++ fLog
   }
 
   def totalFixCount(): Int = {

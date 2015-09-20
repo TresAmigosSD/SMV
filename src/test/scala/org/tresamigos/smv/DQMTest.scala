@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 import org.tresamigos.smv.dqm._
 import org.apache.spark.sql.Column
+import org.apache.spark.sql.functions._
 
 class DQMTest extends SparkTestUtil {
   sparkTest("test DQMState functions") {
@@ -65,12 +66,60 @@ class DQMTest extends SparkTestUtil {
 
   sparkTest("test DQMFix") {
     val ssc = sqlContext; import ssc.implicits._
-    import org.apache.spark.sql.functions._
     val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2")
     val state = new DQMState(sc, Nil, Seq("fix1"))
     val dqmFix = DQMFix($"a" > 0, lit(0) as "a", "fix1")
     val c = dqmFix.createFixCol(state)
     val res = df.selectWithReplace(c)
-    res.dumpSRDD
+
+    assertSrddDataEqual(res, "0,0.3;0,0.2")
+  }
+
+  sparkTest("test SmvDQM with FailAny (so FailCount)") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2")
+
+    val dqm = SmvDQM().add(DQMRule($"a" <= 0, "a_le_0", FailAny))
+
+    val res = dqm.attachTasks(df)
+    assert(res.count === 1)
+
+    val dqmRes = dqm.validate(res)
+    assert(dqmRes.toJSON() === """{
+  "passed":false,
+  "errorMessages": [
+    {"a_le_0":"false"}
+  ],
+  "checkLog": [
+    "Rule: a_le_0, total count: 1",
+    "org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @RECORD: a=1"
+  ]
+}""")
+  }
+
+  sparkTest("test FailPercent") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
+
+    val dqm = SmvDQM().
+      add(DQMRule($"b" < 0.4 , "b_lt_03", FailPercent(0.5))).
+      add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix", FailPercent(0.3)))
+
+    val res = dqm.attachTasks(df)
+    assertSrddDataEqual(res, "1,0.3;1,0.2")
+
+    val dqmRes = dqm.validate(res)
+    assert(dqmRes.toJSON() === """{
+  "passed":false,
+  "errorMessages": [
+    {"b_lt_03":"true"},
+    {"a_lt_1_fix":"false"}
+  ],
+  "checkLog": [
+    "Rule: b_lt_03, total count: 1",
+    "org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @RECORD: b=0.5",
+    "Fix: a_lt_1_fix, total count: 1"
+  ]
+}""")
   }
 }

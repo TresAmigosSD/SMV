@@ -28,9 +28,22 @@ case object FailNone extends DQMTaskPolicy {
   def createPolicy(name: String) = NoOpDQMPolicy
 }
 
+case object FailAny extends DQMTaskPolicy {
+  def createPolicy(name: String) = ImplementFailCountPolicy(name, 1)
+}
+
+case class FailCount(threshold: Int) extends DQMTaskPolicy {
+  def createPolicy(name: String) = ImplementFailCountPolicy(name, threshold)
+}
+
+case class FailPercent(threshold: Double) extends DQMTaskPolicy {
+  def createPolicy(name: String) = ImplementFailPercentPolicy(name, threshold)
+}
+
 abstract class DQMTask {
   def name: String
   def taskPolicy: DQMTaskPolicy
+  def createPolicy(): DQMPolicy = taskPolicy.createPolicy(name)
 }
 
 case class DQMRule(

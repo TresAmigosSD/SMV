@@ -25,45 +25,16 @@ object NoOpDQMPolicy extends DQMPolicy {
   val name = "NoOpDQMPolicy"
   def policy(df: DataFrame, state: DQMState): Boolean = true
 }
-/*
-abstract class DQMSimplePolicy extends DQMPolicy {
-  def checkPolicy(logger: DQMLogger): Boolean
-  def checkPolicy(df: DataFrame, dqmLogger: DQMLogger) = checkPolicy(dqmLogger)
+
+/** Fail if count >= threshold */
+private[smv] case class ImplementFailCountPolicy(name: String, threshold: Int) extends DQMPolicy {
+  def policy(df: DataFrame, state: DQMState): Boolean = {
+    state.getTaskCount(name) < threshold
+  }
 }
 
-case object NoOpPolicy extends DQMSimplePolicy {
-  def name = "NoOpPolicy"
-  def checkPolicy(logger: DQMLogger): Boolean = true
+private[smv] case class ImplementFailPercentPolicy(name: String, threshold: Double) extends DQMPolicy {
+  def policy(df: DataFrame, state: DQMState): Boolean = {
+    state.getTaskCount(name) < threshold * state.getRecCount()
+  }
 }
-
-case class FailCountPolicy(taskName: String threshold: Int) extends DQMSimplePolicy {
-  def name = s"FailCountPolicy(${taskName},${threshold})"
-  def checkPolicy(l: DQMLogger) = {l.countOfTask(taskName) < threshold}
-}
-
-case class FailPercentPolicy(taskName: String threshold: Double) extends DQMSimplePolicy {
-  def name = s"FailPercentPolicy(${taskName},${threshold})"
-  def checkPolicy(l: DQMLogger) = {l.countOfTask(taskName) < l.totalRecs * threshold}
-}
-
-case class FailTotalRuleCountPolicy(threshold: Int) extends DQMSimplePolicy {
-  def name = s"FailTotalRuleCountPolicy(${threshold})"
-  def checkPolicy(l: DQMLogger) = {l.totalRejects < threshold}
-}
-
-case class FailTotalRulePercentPolicy(threshold: Double) extends DQMSimplePolicy{
-  def name = s"FailTotalRulePercentPolicy(${threshold})"
-  def checkPolicy(l: DQMLogger) = {l.totalRejects < l.totalRecs * threshold}
-}
-
-case class FailTotalFixCountPolicy(threshold: Int) extends DQMSimplePolicy{
-  def name = s"FailTotalFixCountPolicy(${threshold})"
-  def checkPolicy(l: DQMLogger) = {l.totalFixes < threshold}
-}
-
-case class FailTotalFixPercentPolicy(threshold: Double) extends DQMSimplePolicy{
-  def name = s"FailTotalFixPercentPolicy(${threshold})"
-  def checkPolicy(l: DQMLogger) = {l.totalFixes < l.totalRecs * threshold}
-}
-
-*/
