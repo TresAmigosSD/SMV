@@ -110,14 +110,17 @@ private[smv] class ValidationSet(val tasks: Seq[ValidationTask]) {
     new ValidationSet(tasks :+ task)
   }
 
+  /** Since optimization can be done on actions like count, we have to do a foreach
+   *  here to force an action so that all the accumulators can be triggered
+   **/
   private def forceAction(df: DataFrame) = {
-    df.count
+    df.foreach(r =>Unit)
     Unit
   }
 
   private def terminateAtError(result: ValidationResult) = {
     if (!result.passed) {
-      val r = result.errorMessages.map{case (e,m) => s"$m CAUSED BY $e"}.mkString("\n")
+      val r = result.errorMessages.map{case (e,m) => s"$e: $m"}.mkString("\n")
       throw new ValidationError(r)
     }
   }

@@ -150,4 +150,19 @@ class DQMTest extends SparkTestUtil {
       ("FailTotalFixPercentPolicy(0.3)","false")
     ))
   }
+
+  sparkTest("test dqm method in SmvDataSet") {
+    val ssc = sqlContext; import ssc.implicits._
+    object file extends SmvCsvData("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5") {
+      override def dqm() = SmvDQM().
+        add(DQMRule($"b" < 0.4 , "b_lt_03")).
+        add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix")).
+        add(FailTotalRuleCountPolicy(2)).
+        add(FailTotalFixCountPolicy(1))
+    }
+    file.injectApp(app)
+    intercept[ValidationError] {
+      file.rdd.show
+    }
+  }
 }

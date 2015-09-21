@@ -62,7 +62,7 @@ class RejectTest extends SparkTestUtil {
       val df = open(testDataDir + "RejectTest/test2")
     }
     val m = e.getMessage
-    assert(m  === "Totally 5 records get rejected CAUSED BY ParserError")
+    assert(m  === "ParserError: Totally 5 records get rejected")
   }
 
   sparkTest("test csvParser rejection with exception", disableLogging = true) {
@@ -72,7 +72,7 @@ class RejectTest extends SparkTestUtil {
       println(prdd.collect.mkString("\n"))
     }
     val m = e.getMessage
-    assert(m === "Totally 1 records get rejected CAUSED BY ParserError")
+    assert(m === "ParserError: Totally 1 records get rejected")
   }
 
   sparkTest("test csvParser rejection") {

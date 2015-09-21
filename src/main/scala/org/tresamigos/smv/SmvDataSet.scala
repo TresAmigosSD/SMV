@@ -19,6 +19,7 @@ import org.apache.spark.sql.DataFrame
 import scala.util.Try
 import org.joda.time._
 import org.joda.time.format._
+import dqm._
 
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
@@ -48,7 +49,6 @@ abstract class SmvDataSet {
   /** CRC computed from the dataset "code" (not data) */
   def classCodeCRC(): Int = moduleCRC.crc.toInt
 
-  private[smv] def validations(): ValidationSet = new ValidationSet(Nil)
   /**
    * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
    * This way, if this module or any of the modules it depends on changes, the HOH should change.
@@ -67,6 +67,10 @@ abstract class SmvDataSet {
    */
   def isEphemeral: Boolean
 
+  private lazy val dsDqm = dqm()
+  private[smv] def validations(): ValidationSet = new ValidationSet(Seq(dsDqm))
+
+  def dqm(): SmvDQM = SmvDQM()
   /**
    * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly.
@@ -170,11 +174,12 @@ abstract class SmvDataSet {
   }
 
   private[smv] def computeRDD: DataFrame = {
+    val dfWithTasks = dsDqm.attachTasks(doRun())
     val (df, hasActionYet) = if(isEphemeral) {
-      (doRun(), false)
+      (dfWithTasks, false)
     } else {
       val resultDf = readPersistedFile().recoverWith {case e =>
-        persist(doRun())
+        persist(dfWithTasks)
         readPersistedFile()
       }.get
       (resultDf, true)
@@ -195,7 +200,7 @@ abstract class SmvFile extends SmvDataSet {
 
   val failAtParsingError = true
   private[smv] lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
-  override def validations() = new ValidationSet(Seq(parserValidator))
+  override def validations() = super.validations.add(parserValidator)
 
   private[smv] def fullPath = {
     if (isAbsolutePath || ("""^[\.\/]"""r).findFirstIn(basePath) != None) basePath
@@ -320,7 +325,7 @@ case class SmvCsvData(schemaStr: String, data: String) extends SmvModule("Dummy 
   override val isEphemeral = true
   val failAtParsingError = true
   lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
-  override def validations() = new ValidationSet(Seq(parserValidator))
+  override def validations() = super.validations.add(parserValidator)
 
   def run(i: runParams) = null
   override def doRun(): DataFrame = {

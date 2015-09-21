@@ -36,7 +36,7 @@ class SmvHashOfHashTest extends SparkTestUtil {
 class SmvTestFile(override val name: String) extends SmvModule("") {
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
-  override def run(i: runParams) = null
+  override def run(i: runParams) = app.createDF("a:Integer", "1;2;3")
 }
 
 class SmvAppTest extends SparkTestUtil {

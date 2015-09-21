@@ -59,13 +59,31 @@ class SmvDQM (
     (rules ++ fixes).map{_.createPolicy()}
   }
 
+  private def  attachRules(df: DataFrame): DataFrame = {
+    if (rules.isEmpty) df
+    else {
+      val ruleColTriplets = rules.map{_.createCheckCol(dqmState)}
+      val plusCols = ruleColTriplets.map{_._1}
+      val filterCol = ruleColTriplets.map{_._2}.reduce(_ && _)
+      val minusCols = ruleColTriplets.map{_._3}
+
+      df.
+        selectPlus(plusCols: _*).
+        where(filterCol).
+        selectMinus(minusCols: _*)
+    }
+  }
+
+  private def attachFixes(df: DataFrame): DataFrame ={
+    if(fixes.isEmpty) df
+    else {
+      val fixCols = fixes.map{_.createFixCol(dqmState)}
+      df.selectWithReplace(fixCols: _*)
+    }
+  }
+
   def attachTasks(df: DataFrame): DataFrame = {
     initState(df.sqlContext.sparkContext)
-
-    val ruleColTriplets = rules.map{_.createCheckCol(dqmState)}
-    val plusCols = ruleColTriplets.map{_._1}
-    val filterCol = ruleColTriplets.map{_._2}.reduce(_ && _)
-    val minusCols = ruleColTriplets.map{_._3}
 
     val _dqmState = dqmState
     val totalCountCol = udf({() =>
@@ -73,14 +91,8 @@ class SmvDQM (
       true
     })
 
-    val fixCols = fixes.map{_.createFixCol(dqmState)}
-
-    df.
-      where(totalCountCol()).
-      selectPlus(plusCols: _*).
-      selectWithReplace(fixCols: _*).
-      where(filterCol).
-      selectMinus(minusCols: _*)
+    val dfWithRules = attachRules(df.where(totalCountCol()))
+    attachFixes(dfWithRules)
   }
 
   def validate(df: DataFrame) = {
@@ -88,7 +100,7 @@ class SmvDQM (
     val allPolicies = policiesFromTasks() ++ policies
     val results = allPolicies.map{p => (p.name, p.policy(df, dqmState))}
 
-    val passed = results.map{_._2}.reduce(_ && _)
+    val passed = results.isEmpty || results.map{_._2}.reduce(_ && _)
     val errorMessages = results.map{r => (r._1, r._2.toString)}
     val checkLog = dqmState.getAllLog()
 
