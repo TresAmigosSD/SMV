@@ -229,6 +229,11 @@ abstract class SmvFile extends SmvDataSet {
     super.name() + "_" + fileName
   }
 
+  /**
+   * Method to run/pre-process the input file.
+   * Users can override this method to perform file level
+   * ETL operations.
+   */
   def run(df: DataFrame) = df
 }
 
@@ -243,7 +248,7 @@ case class SmvCsvFile(
   override val isAbsolutePath: Boolean = false
 ) extends SmvFile {
 
-  private[smv] def doRun(): DataFrame = {
+  override private[smv] def doRun(): DataFrame = {
     // TODO: this should use inputDir instead of dataDir
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
     val handler = new FileIOHandler(app.sqlContext, parserValidator)
@@ -258,7 +263,7 @@ case class SmvFrlFile(
     override val isAbsolutePath: Boolean = false
   ) extends SmvFile {
 
-  private[smv] def doRun(): DataFrame = {
+  override private[smv] def doRun(): DataFrame = {
     // TODO: this should use inputDir instead of dataDir
     val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
     val handler = new FileIOHandler(app.sqlContext, parserValidator)
@@ -276,7 +281,6 @@ object SmvFile {
 }
 
 
-
 /**
  * base module class.  All SMV modules need to extend this class and provide their
  * description and dependency requirements (what does it depend on).
@@ -286,8 +290,6 @@ object SmvFile {
  * Note: the module should *not* persist any RDD itself.
  */
 abstract class SmvModule(val description: String) extends SmvDataSet {
-
-  //override val name = this.getClass().getName().filterNot(_=='$')
 
   /**
    * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
@@ -301,7 +303,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   def run(inputs: runParams) : DataFrame
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  private[smv] def doRun(): DataFrame = {
+  override private[smv] def doRun(): DataFrame = {
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 
@@ -312,6 +314,43 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   def snapshot(df: DataFrame, prefix: String) : DataFrame = {
     persist(df, prefix)
     readPersistedFile(prefix).get
+  }
+}
+
+/**
+ * Link to an output module in another stage.
+ * Because modules in a given stage can not access modules in another stage, this class
+ * enables the user to link an output module from one stage as an input into current stage.
+ * {{{
+ *   package stage2.input
+ *
+ *   object Account1Link extends SmvModuleLink(stage1.Accounts)
+ * }}}
+ * Similar to File/Module, a `dqm()` method can also be overriden in the link
+ */
+abstract class SmvModuleLink(outputModule: SmvOutput) extends
+  SmvModule(s"Link to ${outputModule.asInstanceOf[SmvModule].name}") {
+
+  private val smvModule = outputModule.asInstanceOf[SmvModule]
+
+  // the linked output module can not be ephemeral.
+  require(! smvModule.isEphemeral)
+  // TODO: add check that the link is to an object in a different stage!!!
+
+  override val isEphemeral = true
+
+  /**
+   * override the module run/requireDS methods to be a no-op as it will never be called (we overwrite doRun as well.)
+   */
+  override def requiresDS() = Seq.empty
+  override def run(inputs: runParams) = null
+
+  /**
+   * "Running" a link requires that we read the persisted output from the upstream
+   * `DataSet`.
+   */
+  override private[smv] def doRun(): DataFrame = {
+    smvModule.readPersistedFile().get
   }
 }
 
@@ -328,6 +367,7 @@ case class SmvCsvData(schemaStr: String, data: String) extends SmvModule("Dummy 
   override def validations() = super.validations.add(parserValidator)
 
   def run(i: runParams) = null
+
   override def doRun(): DataFrame = {
     val schema = SmvSchema.fromString(schemaStr)
     val dataArray = data.split(";").map(_.trim)
@@ -336,6 +376,7 @@ case class SmvCsvData(schemaStr: String, data: String) extends SmvModule("Dummy 
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, CsvAttributes.defaultCsv)
   }
 }
+
 /**
  * A marker trait that indicates that a module decorated with this trait is an output module.
  */
