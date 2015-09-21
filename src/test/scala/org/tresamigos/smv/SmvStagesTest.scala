@@ -47,6 +47,7 @@ class SmvStagesTest extends SparkTestUtil {
       "org.tresamigos.smv.smvAppTestPkg1.Y",
       "org.tresamigos.smv.smvAppTestPkg2.Z"))
     assertUnorderedSeqEqual(s2mods, Seq(
+      "org.tresamigos.smv.smvAppTestPkg3.L",
       "org.tresamigos.smv.smvAppTestPkg3.T",
       "org.tresamigos.smv.smvAppTestPkg3.U"))
   }
@@ -87,9 +88,9 @@ class SmvWhatModulesToRunTest extends SparkTestUtil {
 /**
  * packages below are used for testing the modules in package, modules in stage, etc.
  * There are three packages:
- * 1. smvAppTestPkg1: Modules X,Y (X is output)
+ * 1. smvAppTestPkg1: Modules X,Y (Y is output)
  * 2. smvAppTestPkg2: Module Z (output)
- * 3. smvAppTestPkg3: Module T, U (U is output)
+ * 3. smvAppTestPkg3: Module L (link to X above), T, U (U is output)
  */
 package org.tresamigos.smv.smvAppTestPkg1 {
 
@@ -133,7 +134,9 @@ object Z extends SmvModule("Z Module") with SmvOutput {
 
 package org.tresamigos.smv.smvAppTestPkg3 {
 
-import org.tresamigos.smv.{SmvOutput, SmvModule}
+import org.tresamigos.smv.{SmvOutput, SmvModule, SmvModuleLink}
+
+object L extends SmvModuleLink(org.tresamigos.smv.smvAppTestPkg1.Y)
 
 object T extends SmvModule("T Module") {
   override def requiresDS() = Seq.empty
