@@ -16,12 +16,16 @@ package org.tresamigos.smv.dqm
 
 import org.apache.spark.sql.DataFrame
 
+/**
+ * DQMPolicy defines a requirement on an entire DF
+ **/
 abstract class DQMPolicy {
   def name: String
   def policy(df: DataFrame, state: DQMState): Boolean
 }
 
-object NoOpDQMPolicy extends DQMPolicy {
+/** No requirement, always pass */
+private[smv] object NoOpDQMPolicy extends DQMPolicy {
   val name = "NoOpDQMPolicy"
   def policy(df: DataFrame, state: DQMState): Boolean = true
 }
@@ -39,6 +43,9 @@ private[smv] case class ImplementFailPercentPolicy(name: String, threshold: Doub
   }
 }
 
+/**
+ * For all the rules in a DQM, if the total time of them be triggered is >= threshold, the DF will Fail
+ **/
 case class FailTotalRuleCountPolicy(threshold: Int) extends DQMPolicy {
   def name = s"FailTotalRuleCountPolicy(${threshold})"
   def policy(df: DataFrame, state: DQMState): Boolean = {
@@ -46,6 +53,9 @@ case class FailTotalRuleCountPolicy(threshold: Int) extends DQMPolicy {
   }
 }
 
+/**
+ * For all the fixes in a DQM, if the total time of them be triggered is >= threshold, the DF will Fail
+ **/
 case class FailTotalFixCountPolicy(threshold: Int) extends DQMPolicy {
   def name = s"FailTotalFixCountPolicy(${threshold})"
   def policy(df: DataFrame, state: DQMState): Boolean = {
@@ -53,6 +63,10 @@ case class FailTotalFixCountPolicy(threshold: Int) extends DQMPolicy {
   }
 }
 
+/**
+ * For all the rules in a DQM, if the total time of them be triggered is >= threshold * total Records,
+ * the DF will Fail. The threshold is between 0.0 and 1.0.
+ **/
 case class FailTotalRulePercentPolicy(threshold: Double) extends DQMPolicy {
   def name = s"FailTotalRulePercentPolicy(${threshold})"
   def policy(df: DataFrame, state: DQMState): Boolean = {
@@ -60,6 +74,10 @@ case class FailTotalRulePercentPolicy(threshold: Double) extends DQMPolicy {
   }
 }
 
+/**
+ * For all the fixes in a DQM, if the total time of them be triggered is >= threshold * total Records,
+ * the DF will Fail. The threshold is between 0.0 and 1.0.
+ **/
 case class FailTotalFixPercentPolicy(threshold: Double) extends DQMPolicy {
   def name = s"FailTotalFixPercentPolicy(${threshold})"
   def policy(df: DataFrame, state: DQMState): Boolean = {

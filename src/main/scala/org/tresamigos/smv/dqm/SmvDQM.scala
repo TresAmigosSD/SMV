@@ -22,6 +22,46 @@ import org.apache.spark.sql.functions.udf
 
 /**
  * DQM class for data quality check and fix
+ *
+ * Support 2 types of recode level tasks: Rule and Fix. A "rule" is a requirement on a record, if
+ * a record can't satisfy a rule, the record will be filtered. A "fix" is a requirement on a field
+ * with a default value, so that it can fix a record.
+ * DQM also support different "Policies". Policies are requirements on the entire DF level. A policy
+ * is a function on (DF, [[org.tresamigos.smv.dqm.DQMState]]). By given a df and the DQMState, which
+ * are results from the rules and fixes, a policy determine whether the df is passed the DQM or failed.
+ *
+ * Create a DQM:
+ * {{{
+ * val dqm = SmvDQM().
+ *   add(DQMRule($"amt" < 1000000.0, "rule1", FailAny)).
+ *   add(DQMFix($"age" > 100, lit(100) as "age", "fix1")).
+ *   add(DQMFix($"weight" < 5, lit(5) as "weight", "fix2")).
+ *   add(FailTotalFixCountPolicy(20))
+ * }}}
+ * In this example, "amt" field is required to be lower than one million, if any record does not
+ * satisfy it, the DF will fail this DQM. The "age" field will be capped to 100, and the "weight"
+ * field will be capped on the lower bound to 5.
+ * None of the 2 fixes will trigger a DF fail. However, we added a policy which require no more
+ * than 20 fixes in the entire DF, otherwise the DF will fail this DQM.
+ *
+ * Attach DQM to a DF:
+ * {{{
+ * val dfWithDqm = dqm.attachTasks(df)
+ * }}}
+ *
+ * Check the DQM policies:
+ * Since all the rules and fixes are performed when the DF has an action, user need to make sure
+ * that there is one and only one action operation happened on the DF. Please note that actions
+ * like "count" might be optimized so that transformations which have no impact on "count" might be
+ * totally ignored. If there no natural action to be apply, you may need to do convert DF to RDD first
+ * {{{
+ * dfWithDqm.rdd.count
+ * }}}
+ * After the action, we can check the policies
+ * {{{
+ * val result = dqm.validate(dfWithDqm)
+ * }}}
+ * The result is a [[org.tresamigos.smv.ValidationResult]]
  **/
 class SmvDQM (
     val rules: Seq[DQMRule] = Nil,
@@ -47,19 +87,24 @@ class SmvDQM (
     new SmvDQM(rules, fixes, newPolicies, needAction)
   }
 
+  /** init the DqmState. It should be done once only */
   private def initState(sc: SparkContext): Unit = {
     require(dqmState == null)
     val ruleNames = rules.map{_.name}
     val fixNames = fixes.map{_.name}
+
+    /** Check for duplicated task names */
     require((ruleNames ++ fixNames).size == (ruleNames ++ fixNames).toSet.size)
     dqmState = new DQMState(sc, rules.map{_.name}, fixes.map{_.name})
   }
 
+  /** create policies from tasks. Filter out NoOpDQMPolicy */
   private def policiesFromTasks(): Seq[DQMPolicy] = {
-    (rules ++ fixes).map{_.createPolicy()}
+    (rules ++ fixes).map{_.createPolicy()}.filter(_ != NoOpDQMPolicy)
   }
 
-  private def  attachRules(df: DataFrame): DataFrame = {
+  /** since rule need to log the reference columns, need to plus them before check and remove after*/
+  private def attachRules(df: DataFrame): DataFrame = {
     if (rules.isEmpty) df
     else {
       val ruleColTriplets = rules.map{_.createCheckCol(dqmState)}
@@ -82,6 +127,7 @@ class SmvDQM (
     }
   }
 
+  /** add overall record counter and rules and fixes */
   def attachTasks(df: DataFrame): DataFrame = {
     initState(df.sqlContext.sparkContext)
 
@@ -96,7 +142,10 @@ class SmvDQM (
   }
 
   def validate(df: DataFrame) = {
+    /** need to take a snapshot on the DQMState before validation, since validation step could
+     * have actions on the DF, which will change the accumulators of the DQMState*/
     dqmState.snapshot()
+
     val allPolicies = policiesFromTasks() ++ policies
     val results = allPolicies.map{p => (p.name, p.policy(df, dqmState))}
 

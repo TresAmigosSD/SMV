@@ -138,12 +138,11 @@ class DQMTest extends SparkTestUtil {
     val res = dqm.attachTasks(df)
 
     /** Action count will be executed with optimization which will not trigger the fixes */
-    res.foreach(r => Unit)
+    //res.foreach(r => Unit)
+    res.rdd.count
 
     val dqmRes = dqm.validate(res)
     assertUnorderedSeqEqual(dqmRes.errorMessages, Seq(
-      ("NoOpDQMPolicy","true"),
-      ("NoOpDQMPolicy","true"),
       ("FailTotalRuleCountPolicy(2)","true"),
       ("FailTotalFixCountPolicy(1)","false"),
       ("FailTotalRulePercentPolicy(0.3)","false"),

@@ -20,22 +20,28 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.functions._
 import scala.util.matching.Regex
 
+/** Each DQMTask (DQMRule/DQMFix) need to have a DQMTaskPolicy */
 sealed abstract class DQMTaskPolicy {
   def createPolicy(name: String): DQMPolicy
 }
 
+/** Task with FailNone will not trigger any DF level policy */
 case object FailNone extends DQMTaskPolicy {
   def createPolicy(name: String) = NoOpDQMPolicy
 }
 
+/** Any rule fail or fix with FailAny will cause the entire DF fail */
 case object FailAny extends DQMTaskPolicy {
   def createPolicy(name: String) = ImplementFailCountPolicy(name, 1)
 }
 
+/** Tasks with FailCount(n) will fail the DF if the task is triggered >= n times */
 case class FailCount(threshold: Int) extends DQMTaskPolicy {
   def createPolicy(name: String) = ImplementFailCountPolicy(name, threshold)
 }
 
+/** Tasks with FailPercent(r) will fail the DF if the task is triggered >= r percent of the
+ *  total number of records in the DF. "r" is between 0.0 and 1.0 */
 case class FailPercent(threshold: Double) extends DQMTaskPolicy {
   def createPolicy(name: String) = ImplementFailPercentPolicy(name, threshold)
 }
@@ -46,6 +52,15 @@ abstract class DQMTask {
   def createPolicy(): DQMPolicy = taskPolicy.createPolicy(name)
 }
 
+/**
+ * DQMRule defines a requirement on the records of a DF
+ * {{{
+ * val r = DQMRule($"a" + $"b" < 100.0, "a_b_sum_lt100", FailPercent(0.01))
+ * }}}
+ * Require the sum of "a" and "b" columns less than 100.
+ * Rule name "a_b_sum_lt100", which can be referred in the [[org.tresamigos.smv.dqm.DQMState]]
+ * If there are equal or more than 1% of records failed this rule, the entire DF failed
+ **/
 case class DQMRule(
     rule: Column,
     ruleName: String = null,
@@ -74,6 +89,15 @@ case class DQMRule(
   }
 }
 
+/**
+ * DQMFix will fix a column with a default value
+ * {{{
+ * val f = DQMFix($"age" > 100, lit(100) as "age", "age_cap100", FailNone)
+ * }}}
+ * If "age" greater than 100, make it 100.
+ * Task name "age_cap100", which can be referred in the [[org.tresamigos.smv.dqm.DQMState]]
+ * This task will not trigger a DF fail
+ **/
 case class DQMFix(
     condition: Column,
     fix: Column,
@@ -98,55 +122,3 @@ case class DQMFix(
     columnIf(checkUdf(condition),  new Column(fixExpr), new Column(toBeFixed)) as toBeFixed
   }
 }
-
-   /*
-case class BoundRule[T:Ordering](dataCol: Column, lower: T, upper: T) extends DqmCheckRule {
-
-  private val ord = implicitly[Ordering[T]]
-
-  override def check(c: Any): Boolean = {
-    ord.lteq(lower, c.asInstanceOf[T]) && ord.lteq(c.asInstanceOf[T], upper)
-  }
-
-  override def fix(c: Any)(fixCounter: SmvCounter) = {
-    if (ord.lteq(c.asInstanceOf[T], lower)) {
-      fixCounter.add(symbol.name + ": toLowerBound")
-      lower
-    } else if (ord.lteq(upper, c.asInstanceOf[T])) {
-      fixCounter.add(symbol.name + ": toUpperBound")
-      upper
-    } else c
-  }
-
-}
-
-case class SetRule(symbol: Symbol, s: Set[Any], default: Any = null) extends DQMRule {
-  override def check(c: Any): Boolean = {
-    s.contains(c)
-  }
-
-  override def fix(c: Any)(fixCounter: SmvCounter) = {
-    if (! s.contains(c)){
-      fixCounter.add(symbol.name)
-      default
-    } else {
-      c
-    }
-  }
-}
-
-case class StringFormatRule(symbol: Symbol, r: Regex, default: String => String = {c => ""}) extends DQMRule {
-  override def check(c: Any): Boolean = {
-    r.findFirstIn(c.asInstanceOf[String]).nonEmpty
-  }
-
-  override def fix(c: Any)(fixCounter: SmvCounter) = {
-    if (r.findFirstIn(c.asInstanceOf[String]).isEmpty){
-      fixCounter.add(symbol.name)
-      default(c.asInstanceOf[String])
-    } else {
-      c
-    }
-  }
-}
-*/

@@ -20,7 +20,13 @@ import org.json4s.jackson.JsonMethods._
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 
-private[smv] case class ValidationResult (
+/**
+ * ValidationTask's will generate ValidationResult, which has
+ * @param passed whether the validation passed or not
+ * @param errorMessages detailed messages for sub results which the passed flag depends on
+ * @param checkLog useful logs for reporting
+ **/
+case class ValidationResult (
   passed: Boolean,
   errorMessages: Seq[(String, String)] = Nil,
   checkLog: Seq[String] = Nil
@@ -51,6 +57,7 @@ private[smv] case class ValidationResult (
 
 }
 
+/** construct ValidationResult from JSON string */
 private[smv] object ValidationResult {
   def apply(jsonStr: String) = {
     val json = parse(jsonStr)
@@ -86,6 +93,7 @@ private[smv] abstract class ParserValidationTask extends ValidationTask with Ser
   def validate(df: DataFrame): ValidationResult
 }
 
+/** For data files, log the parser errors and fail the DF if `failAtError == true` and error happens */
 private[smv] class ParserValidation(sc: SparkContext, failAtError: Boolean = true) extends ParserValidationTask{
 
   def needAction = true
@@ -99,22 +107,26 @@ private[smv] class ParserValidation(sc: SparkContext, failAtError: Boolean = tru
   }
 }
 
+/** For persisted data, we are not expecting any parser error, so terminate if we have any */
 private[smv] object TerminateParserValidator extends ParserValidationTask {
   override def needAction = false
   override def addWithReason(e: Exception, rec: String) = throw e
   override def validate(df: DataFrame) = ValidationResult(true)
 }
 
+/** ValidationSet is a collection of ValidationTask's
+ *  it provide a single entire to the list of tasks from SmvDataSet
+ **/
 private[smv] class ValidationSet(val tasks: Seq[ValidationTask]) {
   def add(task: ValidationTask) = {
     new ValidationSet(tasks :+ task)
   }
 
-  /** Since optimization can be done on actions like count, we have to do a foreach
-   *  here to force an action so that all the accumulators can be triggered
+  /** Since optimization can be done on a DF actions like count, we have to convert DF
+   *  to RDD and than apply an action
    **/
   private def forceAction(df: DataFrame) = {
-    df.foreach(r =>Unit)
+    df.rdd.count
     Unit
   }
 
