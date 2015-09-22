@@ -2,17 +2,17 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>ValidationSet - Spark Model Variables 1.3-SNAPSHOT API - org.tresamigos.smv.ValidationSet</title>
-          <meta name="description" content="ValidationSet - Spark Model Variables 1.3 - SNAPSHOT API - org.tresamigos.smv.ValidationSet" />
-          <meta name="keywords" content="ValidationSet Spark Model Variables 1.3 SNAPSHOT API org.tresamigos.smv.ValidationSet" />
+          <title>DQMState - Spark Model Variables 1.3-SNAPSHOT API - org.tresamigos.smv.dqm.DQMState</title>
+          <meta name="description" content="DQMState - Spark Model Variables 1.3 - SNAPSHOT API - org.tresamigos.smv.dqm.DQMState" />
+          <meta name="keywords" content="DQMState Spark Model Variables 1.3 SNAPSHOT API org.tresamigos.smv.dqm.DQMState" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
-      <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
-      <link href="../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
       <script type="text/javascript">
          if(top === self) {
-            var url = '../../../index.html';
-            var hash = 'org.tresamigos.smv.ValidationSet';
+            var url = '../../../../index.html';
+            var hash = 'org.tresamigos.smv.dqm.DQMState';
             var anchor = window.location.hash;
             var anchor_opt = '';
             if (anchor.length >= 1)
@@ -24,9 +24,9 @@
         </head>
         <body class="type">
       <div id="definition">
-        <img src="../../../lib/class_big.png" />
-        <p id="owner"><a href="../../package.html" class="extype" name="org">org</a>.<a href="../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
-        <h1>ValidationSet</h1>
+        <img src="../../../../lib/class_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="org">org</a>.<a href="../../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="../package.html" class="extype" name="org.tresamigos.smv">smv</a>.<a href="package.html" class="extype" name="org.tresamigos.smv.dqm">dqm</a></p>
+        <h1>DQMState</h1>
       </div>
 
       <h4 id="signature" class="signature">
@@ -35,13 +35,15 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">ValidationSet</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <span class="name">DQMState</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>DQMState keeps tracking of <a href="DQMTask.html" class="extype" name="org.tresamigos.smv.dqm.DQMTask">org.tresamigos.smv.dqm.DQMTask</a> behavior on a DF</p><p>Since the logs are implemented with Aggregators, it need a SparkContext to construct.
+A list of DQMRule names and a list of DQMFix names are needed also.
+</p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -59,7 +61,7 @@
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.ValidationSet"><span>ValidationSet</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.dqm.DQMState"><span>DQMState</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -79,16 +81,16 @@
         <div id="allMembers">
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
-              <ol><li name="org.tresamigos.smv.ValidationSet#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(tasks:Seq[org.tresamigos.smv.ValidationTask]):org.tresamigos.smv.ValidationSet"></a>
-      <a id="&lt;init&gt;:ValidationSet"></a>
+              <ol><li name="org.tresamigos.smv.dqm.DQMState#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(sc:org.apache.spark.SparkContext,ruleNames:Seq[String],fixNames:Seq[String]):org.tresamigos.smv.dqm.DQMState"></a>
+      <a id="&lt;init&gt;:DQMState"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">ValidationSet</span><span class="params">(<span name="tasks">tasks: <span class="extype" name="scala.Seq">Seq</span>[<a href="ValidationTask.html" class="extype" name="org.tresamigos.smv.ValidationTask">ValidationTask</a>]</span>)</span>
+        <span class="name">DQMState</span><span class="params">(<span name="sc">sc: <span class="extype" name="org.apache.spark.SparkContext">SparkContext</span></span>, <span name="ruleNames">ruleNames: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="fixNames">fixNames: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span>
       </span>
       </h4>
       
@@ -166,19 +168,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.ValidationSet#add" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="add(task:org.tresamigos.smv.ValidationTask):org.tresamigos.smv.ValidationSet"></a>
-      <a id="add(ValidationTask):ValidationSet"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">add</span><span class="params">(<span name="task">task: <a href="ValidationTask.html" class="extype" name="org.tresamigos.smv.ValidationTask">ValidationTask</a></span>)</span><span class="result">: <a href="" class="extype" name="org.tresamigos.smv.ValidationSet">ValidationSet</a></span>
-      </span>
-      </h4>
-      
     </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <a id="asInstanceOf[T0]:T0"></a>
@@ -204,7 +193,7 @@
         <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@throws</span><span class="args">(<span>
       
       <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
@@ -249,13 +238,26 @@
         <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@throws</span><span class="args">(<span>
       
       <span class="symbol">classOf[java.lang.Throwable]</span>
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="org.tresamigos.smv.dqm.DQMState#getAllLog" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="getAllLog():Seq[String]"></a>
+      <a id="getAllLog():Seq[String]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getAllLog</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">return all the example failed records from all the rules</p>
     </li><li name="scala.AnyRef#getClass" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <a id="getClass():Class[_]"></a>
@@ -269,6 +271,97 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.dqm.DQMState#getFixCount" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="getFixCount(name:String):Int"></a>
+      <a id="getFixCount(String):Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getFixCount</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">for the fix with the given name, return the time it is triggered</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMState#getRecCount" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="getRecCount():Long"></a>
+      <a id="getRecCount():Long"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getRecCount</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Long">Long</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">get the overall record count</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMState#getRuleCount" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="getRuleCount(name:String):Int"></a>
+      <a id="getRuleCount(String):Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getRuleCount</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">for the rule with the given name, return the time it is triggered</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMState#getRuleLog" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="getRuleLog(name:String):Seq[String]"></a>
+      <a id="getRuleLog(String):Seq[String]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getRuleLog</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">for the rule with the given name, return the example failed records</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMState#getTaskCount" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="getTaskCount(name:String):Int"></a>
+      <a id="getTaskCount(String):Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getTaskCount</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">for the rule or fix with the given name, return the time it is triggered</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMState#getTotalFixCount" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="getTotalFixCount():Int"></a>
+      <a id="getTotalFixCount():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getTotalFixCount</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">return the total number of times fixes get triggered</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMState#getTotalRuleCount" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="getTotalRuleCount():Int"></a>
+      <a id="getTotalRuleCount():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getTotalRuleCount</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">return the total number of times rules get triggered</p>
     </li><li name="scala.AnyRef#hashCode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <a id="hashCode():Int"></a>
@@ -347,19 +440,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.ValidationSet#tasks" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="tasks:Seq[org.tresamigos.smv.ValidationTask]"></a>
-      <a id="tasks:Seq[ValidationTask]"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">tasks</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="ValidationTask.html" class="extype" name="org.tresamigos.smv.ValidationTask">ValidationTask</a>]</span>
-      </span>
-      </h4>
-      
     </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <a id="toString():String"></a>
@@ -373,19 +453,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.ValidationSet#validate" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="validate(df:org.apache.spark.sql.DataFrame,hadAction:Boolean,path:String):org.tresamigos.smv.ValidationResult"></a>
-      <a id="validate(DataFrame,Boolean,String):ValidationResult"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">validate</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="hadAction">hadAction: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;&quot;</span></span>)</span><span class="result">: <a href="ValidationResult.html" class="extype" name="org.tresamigos.smv.ValidationResult">ValidationResult</a></span>
-      </span>
-      </h4>
-      
     </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <a id="wait():Unit"></a>
@@ -452,7 +519,11 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
+        <div class="parent" name="scala.Serializable">
+              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="java.io.Serializable">
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
@@ -472,6 +543,6 @@
       <div id="tooltip"></div>
 
       <div id="footer">  </div>
-      <script defer="defer" type="text/javascript" id="jquery-js" src="../../../lib/jquery.js"></script><script defer="defer" type="text/javascript" id="jquery-ui-js" src="../../../lib/jquery-ui.js"></script><script defer="defer" type="text/javascript" id="tools-tooltip-js" src="../../../lib/tools.tooltip.js"></script><script defer="defer" type="text/javascript" id="template-js" src="../../../lib/template.js"></script>
+      <script defer="defer" type="text/javascript" id="jquery-js" src="../../../../lib/jquery.js"></script><script defer="defer" type="text/javascript" id="jquery-ui-js" src="../../../../lib/jquery-ui.js"></script><script defer="defer" type="text/javascript" id="tools-tooltip-js" src="../../../../lib/tools.tooltip.js"></script><script defer="defer" type="text/javascript" id="template-js" src="../../../../lib/template.js"></script>
     </body>
       </html>

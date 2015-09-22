@@ -6,6 +6,25 @@
   <meta name="generator" content="pandoc" />
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
   <link rel="stylesheet" type="text/css" href="github.css">
 </head>
 <body>
@@ -13,23 +32,31 @@
     <tr>
         <td class="nav-left">&lArr;&nbsp;<a href="smv_stages.html">SMV Stages</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
-        <td class="nav-right"><a href="funcs_column.html">SMV Column Functions</a>&nbsp;&rArr;</td>
+        <td class="nav-right"><a href="funcs_dataframe.html">SMV DataFrame Functions</a>&nbsp;&rArr;</td>
     </tr>
 </table>
 <hr>
 
 <article class="markdown-body">
 <h1 id="smv-helper-functions">SMV Helper Functions</h1>
-<p>SMV provides a variety of functions to aid in the development of applications.<br />
-The provided functions come in one of three flavors.</p>
+<p>SMV provides a variety of functions to aid in the development of applications.<br />The provided functions come in one of three flavors.</p>
 <ul>
-<li><code>Column</code> helper functions</li>
-<li><code>DataFrame</code> helper functions</li>
+<li><code>Column</code> helper functions<br /></li>
+<li><code>DataFrame</code> helper functions<br /></li>
 <li>Grouped <code>DataFrame</code> helper functions</li>
 </ul>
-<p>The <a href="funcs_column.html">Column helper functions</a> can be use to augment the computation of columns inside a projection.<br />
-<a href="funcs_dataframe.html">DataFrame helper functions</a> can be used on a <code>DataFrame</code> directly. Whereas, <a href="funcs_grouped.html">Grouped helper functions</a> can only be applied to <code>SmvGroup</code>ed data.</p>
-<p>TODO: add link to SmvGroup function above.</p>
+<h2 id="column-helper-functions">Column Helper Functions</h2>
+<p>This set of functions can be applied to a column inside a projection.<br />For example,</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">df.<span class="fu">selectPlus</span>(
+  $<span class="st">&quot;a&quot;</span>.<span class="fu">smvSoundex</span> as &#39;a_soundex,
+  $<span class="st">&quot;ts&quot;</span>.<span class="fu">smvYear</span> as &#39;year,
+  ...)</code></pre>
+<p>See <a href="http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.ColumnHelper">SMV ColumnHelper API docs</a> for more details.</p>
+<h2 id="dataframe-helper-functions">DataFrame Helper Functions</h2>
+<p><a href="funcs_dataframe.html">DataFrame helper functions</a> can be used on a <code>DataFrame</code> directly.</p>
+<h2 id="grouped-helper-functions">Grouped Helper Functions</h2>
+<p><a href="funcs_grouped.html">Grouped helper functions</a> can only be applied to <code>SmvGroup</code>ed data.</p>
+<p>TODO: also need link to functions that are not column helpers such as 'SmvStrCat'</p>
 </article>
 </body>
 </html>

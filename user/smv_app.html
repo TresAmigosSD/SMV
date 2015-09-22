@@ -23,19 +23,17 @@
 <h2 id="introduction">Introduction</h2>
 <p>SMV is a very simple data application framework that enables the following:</p>
 <ul>
-<li>Ability to group DataFrame operations into modules and organize the modules and their dependency in a hierarchical manner.</li>
-<li>No overhead of developers to use RDD and DataFrame to manipulate data and create new data set and variables</li>
-<li>Ability to use the same framework to quickly create ad-hoc analysis and the ad-hoc queries should be able to easily transform to production package</li>
-<li>Easy testing of module levels. Developer shouldn't have to create many repetitive and cumbersome scaffolding to test a module</li>
-<li>Intermediate data persistence and versioning. Data versioning is critical for applying test driven development on data application development</li>
-<li>Ability to test/run at the module level and at the application level. Developer should be able to test run modules they currently working on</li>
-<li>Same framework should also allow the creation of execution graphs at the application level.</li>
+<li>Ability to group DataFrame operations into modules and organize the modules and their dependency in a hierarchical manner.<br /></li>
+<li>No overhead of developers to use RDD and DataFrame to manipulate data and create new data set and variables<br /></li>
+<li>Ability to use the same framework to quickly create ad-hoc analysis and the ad-hoc queries should be able to easily transform to production package<br /></li>
+<li>Easy testing of module levels. Developer shouldn't have to create many repetitive and cumbersome scaffolding to test a module<br /></li>
+<li>Intermediate data persistence and versioning. Data versioning is critical for applying test driven development on data application development<br /></li>
+<li>Ability to test/run at the module level and at the application level. Developer should be able to test run modules they currently working on<br /></li>
+<li>Same framework should also allow the creation of execution graphs at the application level.<br /></li>
 <li>Provides utility to managing the end to end dependency graph, persisted data meta info and execution logging</li>
 </ul>
 <h2 id="application-hierarchy">Application Hierarchy</h2>
-<p>A single SMV application may contain one or more stages. Each stage may contain one or more packages which in-turn can contain one ore more modules.<br />
-While SMV does not enforce any file/source level hierarchy, it is recommended that the source file hierarchy matches the stage/package/module hierarchy.<br />
-For example, given an app with 2 stages (stage1, stage2) and each stage with 2 packages (pkg1,2,3,4), we should have the following file layout</p>
+<p>A single SMV application may contain one or more stages. Each stage may contain one or more packages which in-turn can contain one ore more modules.<br />While SMV does not enforce any file/source level hierarchy, it is recommended that the source file hierarchy matches the stage/package/module hierarchy.<br />For example, given an app with 2 stages (stage1, stage2) and each stage with 2 packages (pkg1,2,3,4), we should have the following file layout</p>
 <pre><code>+-- src/main/scala/com/mycom/myproj
     +-- stage1
         +-- input
@@ -47,12 +45,10 @@ For example, given an app with 2 stages (stage1, stage2) and each stage with 2 p
         +-- pkg4  (package FQN = com.mycom.myproj.stage2.pkg4)</code></pre>
 <p>A couple of things to note about the above file hierarchy</p>
 <ul>
-<li>Following standard java/scala package name convention, the packages above will have their parent stage name in their name.</li>
+<li>Following standard java/scala package name convention, the packages above will have their parent stage name in their name.<br /></li>
 <li>Each stage has an <code>input</code> package for defining the inputs into the stage.</li>
 </ul>
-<p>TODO: add class diagram to show class relationship below!!!<br />
-Design Diagram<br />
-<img src="https://rawgit.com/TresAmigosSD/SMV/master/docs/appFramework.files/appFramework.svg" alt="Alt text" /></p>
+<p>TODO: add class diagram to show class relationship below!!!<br />Design Diagram<br /><img src="https://rawgit.com/TresAmigosSD/SMV/master/docs/appFramework.files/appFramework.svg" alt="Alt text" /></p>
 </article>
 </body>
 </html>

@@ -734,32 +734,6 @@ scala.</p>
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.ParserValidation" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ParserValidationextendsValidationTaskwithSerializable"></a>
-      <a id="ParserValidation:ParserValidation"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="ParserValidation.html"><span class="name">ParserValidation</span></a><span class="result"> extends <a href="ValidationTask.html" class="extype" name="org.tresamigos.smv.ValidationTask">ValidationTask</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.RejectLogger" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="RejectLoggerextendsSerializable"></a>
-      <a id="RejectLogger:RejectLogger"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="RejectLogger.html"><span class="name">RejectLogger</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.RollupCubeOp" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="RollupCubeOpextendsAnyRef"></a>
       <a id="RollupCubeOp:RollupCubeOp"></a>
@@ -783,19 +757,6 @@ scala.</p>
       </span>
       <span class="symbol">
         <a href="RunAggOptimizable.html"><span class="name">RunAggOptimizable</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.ScCounter" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ScCounterextendsSmvCounter"></a>
-      <a id="ScCounter:ScCounter"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="ScCounter.html"><span class="name">ScCounter</span></a><span class="result"> extends <a href="SmvCounter.html" class="extype" name="org.tresamigos.smv.SmvCounter">SmvCounter</a></span>
       </span>
       </h4>
       
@@ -919,20 +880,6 @@ scala.</p>
       </span>
       </h4>
       <p class="comment cmt">Container of all SMV config driven elements (cmd line, app props, user props, etc).</p>
-    </li><li name="org.tresamigos.smv.SmvCounter" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="SmvCounterextendsSerializable"></a>
-      <a id="SmvCounter:SmvCounter"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="SmvCounter.html"><span class="name">SmvCounter</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      <p class="comment cmt">SmvCounter is a general logger which wrapped around an accumulable of a mutable Map
-</p>
     </li><li name="org.tresamigos.smv.SmvCsvData" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvCsvDataextendsSmvModulewithProductwithSerializable"></a>
       <a id="SmvCsvData:SmvCsvData"></a>
@@ -955,7 +902,7 @@ scala.</p>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="SmvCsvFile.html"><span class="name">SmvCsvFile</span></a><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttributes">csvAttributes: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="SmvCsvFile.html"><span class="name">SmvCsvFile</span></a><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttributes">csvAttributes: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>, <span name="isAbsolutePath">isAbsolutePath: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       <p class="comment cmt">Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.</p>
@@ -972,19 +919,6 @@ scala.</p>
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.SmvDataSet" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="SmvDataSetextendsAnyRef"></a>
-      <a id="SmvDataSet:SmvDataSet"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="SmvDataSet.html"><span class="name">SmvDataSet</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
-      </span>
-      </h4>
-      <p class="comment cmt">Dependency management unit within the SMV application framework.</p>
     </li><li name="org.tresamigos.smv.SmvFile" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvFileextendsSmvDataSet"></a>
       <a id="SmvFile:SmvFile"></a>
@@ -994,7 +928,7 @@ scala.</p>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="SmvFile.html"><span class="name">SmvFile</span></a><span class="result"> extends <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>
+        <a href="SmvFile.html"><span class="name">SmvFile</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</span></span>
       </span>
       </h4>
       
@@ -1033,7 +967,7 @@ scala.</p>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="SmvFrlFile.html"><span class="name">SmvFrlFile</span></a><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="SmvFrlFile.html"><span class="name">SmvFrlFile</span></a><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>, <span name="isAbsolutePath">isAbsolutePath: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
@@ -1091,19 +1025,6 @@ scala.</p>
       <p class="comment cmt">Do Null-filling
 if(left) right else null
 </p>
-    </li><li name="org.tresamigos.smv.SmvLocalRelation" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvLocalRelationextendsProductwithSerializable"></a>
-      <a id="SmvLocalRelation:SmvLocalRelation"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a href="SmvLocalRelation.html"><span class="name">SmvLocalRelation</span></a><span class="params">(<span name="schema">schema: <a href="SmvSchema.html" class="extype" name="org.tresamigos.smv.SmvSchema">SmvSchema</a></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.SmvModule" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvModuleextendsSmvDataSet"></a>
       <a id="SmvModule:SmvModule"></a>
@@ -1113,10 +1034,23 @@ if(left) right else null
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="SmvModule.html"><span class="name">SmvModule</span></a><span class="result"> extends <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>
+        <a href="SmvModule.html"><span class="name">SmvModule</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</span></span>
       </span>
       </h4>
       <p class="comment cmt">base module class.</p>
+    </li><li name="org.tresamigos.smv.SmvModuleLink" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SmvModuleLinkextendsSmvModule"></a>
+      <a id="SmvModuleLink:SmvModuleLink"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvModuleLink.html"><span class="name">SmvModuleLink</span></a><span class="result"> extends <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Link to an output module in another stage.</p>
     </li><li name="org.tresamigos.smv.SmvOutput" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvOutputextendsAnyRef"></a>
       <a id="SmvOutput:SmvOutput"></a>
@@ -1449,33 +1383,7 @@ if(left) right else null
         <a href="ValidationResult.html"><span class="name">ValidationResult</span></a><span class="params">(<span name="passed">passed: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="errorMessages">errorMessages: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>)] = <span class="symbol">immutable.this.Nil</span></span>, <span name="checkLog">checkLog: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">immutable.this.Nil</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.ValidationSet" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ValidationSetextendsAnyRef"></a>
-      <a id="ValidationSet:ValidationSet"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="ValidationSet.html"><span class="name">ValidationSet</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.ValidationTask" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="ValidationTaskextendsAnyRef"></a>
-      <a id="ValidationTask:ValidationTask"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="ValidationTask.html"><span class="name">ValidationTask</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
-      </span>
-      </h4>
-      
+      <p class="comment cmt">ValidationTask's will generate ValidationResult, which has</p>
     </li><li name="org.tresamigos.smv.YearHistogram" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="YearHistogramextendsHistogramTaskwithProductwithSerializable"></a>
       <a id="YearHistogram:YearHistogram"></a>
@@ -1548,19 +1456,6 @@ if(left) right else null
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.NoOpCounter" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="NoOpCounter"></a>
-      <a id="NoOpCounter:NoOpCounter"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="NoOpCounter$.html"><span class="name">NoOpCounter</span></a><span class="result"> extends <a href="SmvCounter.html" class="extype" name="org.tresamigos.smv.SmvCounter">SmvCounter</a></span>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.NumericSchemaEntry" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="NumericSchemaEntry"></a>
       <a id="NumericSchemaEntry:NumericSchemaEntry"></a>
@@ -1613,19 +1508,6 @@ if(left) right else null
       </span>
       </h4>
       <p class="comment cmt">Keep this interface for existing application code, will be removed when application code cleaned up</p>
-    </li><li name="org.tresamigos.smv.SmvHDFS" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvHDFS"></a>
-      <a id="SmvHDFS:SmvHDFS"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="SmvHDFS$.html"><span class="name">SmvHDFS</span></a>
-      </span>
-      </h4>
-      <p class="comment cmt">Some helper HDFS functions.</p>
     </li><li name="org.tresamigos.smv.SmvJoinType" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvJoinType"></a>
       <a id="SmvJoinType:SmvJoinType"></a>
@@ -1666,19 +1548,6 @@ if(left) right else null
       </h4>
       <p class="comment cmt">helper methods for module reflection/discovery
 </p>
-    </li><li name="org.tresamigos.smv.SmvReportIO" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvReportIO"></a>
-      <a id="SmvReportIO:SmvReportIO"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="SmvReportIO$.html"><span class="name">SmvReportIO</span></a>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.SmvSchema" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvSchema"></a>
       <a id="SmvSchema:SmvSchema"></a>
@@ -1705,19 +1574,6 @@ if(left) right else null
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.StringConversionUtil" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="StringConversionUtil"></a>
-      <a id="StringConversionUtil:StringConversionUtil"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="StringConversionUtil$.html"><span class="name">StringConversionUtil</span></a>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.TopNRecs" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="TopNRecs"></a>
       <a id="TopNRecs:TopNRecs"></a>
@@ -1731,19 +1587,6 @@ if(left) right else null
       </span>
       </h4>
       <p class="comment cmt">TopNRecs: Return top N records on a given order</p>
-    </li><li name="org.tresamigos.smv.ValidationResult" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ValidationResult"></a>
-      <a id="ValidationResult:ValidationResult"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="ValidationResult$.html"><span class="name">ValidationResult</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.package#columnIf" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="columnIf[T](cond:org.apache.spark.sql.Column,l:org.apache.spark.sql.Column,r:T):org.apache.spark.sql.Column"></a>
       <a id="columnIf[T](Column,Column,T):Column"></a>
@@ -1798,6 +1641,19 @@ the scope of change.
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.dqm" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="dqm"></a>
+      <a id="dqm:dqm"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="dqm/package.html"><span class="name">dqm</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">DQM (Data Quality Module) providing classes for DF data quality assurance</p>
     </li><li name="org.tresamigos.smv.package#histogram" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="histogram(c:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
       <a id="histogram(Column):Column"></a>
