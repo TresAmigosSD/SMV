@@ -14,6 +14,9 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.functions._
+import scala.util.matching.Regex
 
 /**
  * DQM (Data Quality Module) providing classes for DF data quality assurance
@@ -27,4 +30,21 @@ package org.tresamigos.smv
  *
  * For working on a stand-alone DF, please refer the SmvDQM class's documentation.
  **/
-package object dqm {}
+package object dqm {
+
+  /** BoundRule requires `lower <= col < upper` */
+  def BoundRule[T:Ordering](col: Column, lower: T, upper: T) = {
+    DQMRule(col >= lower && col < upper, s"BoundRule(${col})", FailNone)
+  }
+
+  /** SetRule requires `col in set` */
+  def SetRule(col: Column, set: Set[Any]) = {
+    DQMRule(col.in(set.toSeq.map{lit(_)}: _*), s"SetRule(${col})", FailNone)
+  }
+
+  /** FormatRule requires `col matches fmt` */
+  def FormatRule(col: Column, fmt: String) = {
+    val check = udf({s: String => s.matches(fmt)})
+    DQMRule(check(col), s"FormatRule(${col})", FailNone)
+  }
+}

@@ -164,4 +164,35 @@ class DQMTest extends SparkTestUtil {
       file.rdd.show
     }
   }
+
+  sparkTest("test additional DQMRules") {
+    val ssc = sqlContext; import ssc.implicits._
+    object file extends SmvCsvData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,o,x;1,m,zz") {
+      override def dqm() = SmvDQM().
+        add(BoundRule($"a", 0, 2)).
+        add(SetRule($"b", Set("m", "f"))).
+        add(FormatRule($"c", ".")).
+        add(FailTotalRuleCountPolicy(3))
+    }
+    file.injectApp(app)
+    intercept[ValidationError] {
+      file.rdd.show
+    }
+/*
+{
+  "passed":false,
+  "errorMessages": [
+    {"FailTotalRuleCountPolicy(3)":"false"}
+  ],
+  "checkLog": [
+    "Rule: BoundRule(a), total count: 1",
+    "org.tresamigos.smv.dqm.DQMRuleError: BoundRule(a) @RECORD: a=2",
+    "Rule: SetRule(b), total count: 1",
+    "org.tresamigos.smv.dqm.DQMRuleError: SetRule(b) @RECORD: b=o",
+    "Rule: FormatRule(c), total count: 1",
+    "org.tresamigos.smv.dqm.DQMRuleError: FormatRule(c) @RECORD: c=zz"
+  ]
+}
+*/
+  }
 }

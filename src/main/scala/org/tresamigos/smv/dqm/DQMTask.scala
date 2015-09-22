@@ -22,34 +22,34 @@ import scala.util.matching.Regex
 
 /** Each DQMTask (DQMRule/DQMFix) need to have a DQMTaskPolicy */
 sealed abstract class DQMTaskPolicy {
-  def createPolicy(name: String): DQMPolicy
+  private[smv] def createPolicy(name: String): DQMPolicy
 }
 
 /** Task with FailNone will not trigger any DF level policy */
 case object FailNone extends DQMTaskPolicy {
-  def createPolicy(name: String) = NoOpDQMPolicy
+  private[smv] def createPolicy(name: String) = NoOpDQMPolicy
 }
 
 /** Any rule fail or fix with FailAny will cause the entire DF fail */
 case object FailAny extends DQMTaskPolicy {
-  def createPolicy(name: String) = ImplementFailCountPolicy(name, 1)
+  private[smv] def createPolicy(name: String) = ImplementFailCountPolicy(name, 1)
 }
 
 /** Tasks with FailCount(n) will fail the DF if the task is triggered >= n times */
 case class FailCount(threshold: Int) extends DQMTaskPolicy {
-  def createPolicy(name: String) = ImplementFailCountPolicy(name, threshold)
+  private[smv] def createPolicy(name: String) = ImplementFailCountPolicy(name, threshold)
 }
 
 /** Tasks with FailPercent(r) will fail the DF if the task is triggered >= r percent of the
  *  total number of records in the DF. "r" is between 0.0 and 1.0 */
 case class FailPercent(threshold: Double) extends DQMTaskPolicy {
-  def createPolicy(name: String) = ImplementFailPercentPolicy(name, threshold)
+  private[smv] def createPolicy(name: String) = ImplementFailPercentPolicy(name, threshold)
 }
 
 abstract class DQMTask {
   def name: String
   def taskPolicy: DQMTaskPolicy
-  def createPolicy(): DQMPolicy = taskPolicy.createPolicy(name)
+  private[smv] def createPolicy(): DQMPolicy = taskPolicy.createPolicy(name)
 }
 
 /**

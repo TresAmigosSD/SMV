@@ -132,7 +132,7 @@ private[smv] class ValidationSet(val tasks: Seq[ValidationTask]) {
 
   private def terminateAtError(result: ValidationResult) = {
     if (!result.passed) {
-      val r = result.errorMessages.map{case (e,m) => s"$e: $m"}.mkString("\n")
+      val r = result.toJSON()
       throw new ValidationError(r)
     }
   }
