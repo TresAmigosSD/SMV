@@ -64,9 +64,9 @@ import org.apache.spark.sql.functions.udf
  * The result is a [[org.tresamigos.smv.ValidationResult]]
  **/
 class SmvDQM (
-    val rules: Seq[DQMRule] = Nil,
-    val fixes: Seq[DQMFix] = Nil,
-    val policies: Seq[DQMPolicy] = Nil,
+    private val rules: Seq[DQMRule] = Nil,
+    private val fixes: Seq[DQMFix] = Nil,
+    private val policies: Seq[DQMPolicy] = Nil,
     val needAction: Boolean = false
   ) extends ValidationTask {
 

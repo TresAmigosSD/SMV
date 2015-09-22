@@ -69,7 +69,7 @@ case class DQMRule(
 
   val name = if (ruleName == null) rule.toString else ruleName
 
-  def createCheckCol(dqmState: DQMState): (Column, Column, Column) = {
+  private[smv] def createCheckCol(dqmState: DQMState): (Column, Column, Column) = {
     val refCols = rule.toExpr.references.toSeq.map{r => r.name}
     val catCols = refCols.flatMap{r => Seq(lit(s"$r="), new Column(r), lit(","))}.dropRight(1)
 
@@ -113,7 +113,7 @@ case class DQMFix(
     }
   }
 
-  def createFixCol(dqmState: DQMState) = {
+  private[smv] def createFixCol(dqmState: DQMState) = {
     val _name = name
     val checkUdf = udf({c: Boolean =>
       if(c) dqmState.addFixRec(_name)
