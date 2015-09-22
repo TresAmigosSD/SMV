@@ -19,18 +19,22 @@ import java.io.{PrintWriter, File}
 import org.apache.log4j.{LogManager, Logger, Level}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, BeforeAndAfterAll}
 
-trait SparkTestUtil extends FunSuite {
+trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
   var sc: SparkContext = _
   var sqlContext: SQLContext = _
   var app: SmvApp = _
+
+  def disableLogging = false
+
+  def name() = this.getClass().getName().filterNot(_=='$')
 
   /** top of data dir to be used by tests.  For per testcase temp directory, use testcaseTempDir instead */
   final val testDataDir = "target/test-classes/data/"
 
   /**
-   * convenience method for tests that use spark.  Creates a local spark context, and cleans
+   * Creates a local spark context, and cleans
    * it up even if your test fails.  Also marks the test with the tag SparkTest, so you can
    * turn it off
    *
@@ -44,33 +48,36 @@ trait SparkTestUtil extends FunSuite {
    * for ALL current registered loggers.  If the user wants to enable logging at a lower level,
    * they can call "SparkTestUtil.setLoggingLevel" with the lower level.  This can even be
    * used by non-sparkTest test cases.
-   *
-   * @param name the name of the test
    */
+  override def beforeAll() = {
+    if (disableLogging)
+      SparkTestUtil.setLoggingLevel(Level.OFF)
+    else
+      SparkTestUtil.setLoggingLevel(Level.ERROR)
+
+    sc = new SparkContext("local[2]", name())
+    sqlContext = new SQLContext(sc)
+    //resetTestcaseTempDir()
+    app = new SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))
+  }
+
+  override def afterAll() = {
+    app = null
+    sqlContext = null
+    sc.stop()
+    sc = null
+    System.clearProperty("spark.master.port")
+    // re-enable normal logging for next test if we disabled logging here.
+    if (disableLogging)
+      SparkTestUtil.setLoggingLevel(Level.ERROR)
+  }
+
+  /** With BeforeAndAfterAll, sparkTest method is simply a wrapper of test method
+   *  TODO: drop this method, and use test method in the suites
+   **/
   def sparkTest(name: String, disableLogging: Boolean = false)(body: => Unit) {
     test(name) {
-      if (disableLogging)
-        SparkTestUtil.setLoggingLevel(Level.OFF)
-      else
-        SparkTestUtil.setLoggingLevel(Level.ERROR)
-      sc = new SparkContext("local[2]", name)
-      sqlContext = new SQLContext(sc)
-      //resetTestcaseTempDir()
-      app = new SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))
-      try {
-        body
-      }
-      finally {
-        sc.stop
-        sc = null
-        sqlContext = null
-        // To avoid Akka rebinding to the same port, since it doesn't unbind immediately on shutdown
-        System.clearProperty("spark.master.port")
-
-        // re-enable normal logging for next test if we disabled logging here.
-        if (disableLogging)
-          SparkTestUtil.setLoggingLevel(Level.ERROR)
-      }
+      body
     }
   }
 

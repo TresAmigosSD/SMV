@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 
-object StringConversionUtil {
+private[smv] object StringConversionUtil {
 
   def canConvertToInt(str: String) : Boolean =  {
     try {
