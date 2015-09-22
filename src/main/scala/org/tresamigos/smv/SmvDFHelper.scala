@@ -316,16 +316,22 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * For a set of DFs, which share the same key column, check the overlap across them.
    *
+   * {{{
    *   df1.smvOverlapCheck("key")(df2, df3, df4)
+   * }}}
    *
    * The output is another DF with 2 columns:
+   * {{{
    *    key, flag
+   * }}}
    * where flag is a bit string, e.g. 0110. Each bit represent whether the original DF has
    * this key.
    *
    * It can be used with EDD to summarize on the flag:
    *
+   * {{{
    *   df1.smvOverlapCheck("key")(df2, df3).edd.addHistogramTasks("flag")().Dump
+   * }}}
    **/
   def smvOverlapCheck(key: String, partition: Int = 4)(dfother: DataFrame*) = {
     import df.sqlContext.implicits._
@@ -354,13 +360,15 @@ class SmvDFHelper(df: DataFrame) {
 
   /**
    * Sample the df according to the hash of a column.
+   * MurmurHash3 algorithm is used for generating the hash
    *
+   * {{{
    *  df.smvHashSample($"key", rate=0.1, seed=123)
+   * }}}
    *
-   * where rate is ranged (0, 1], seed is an Int. Both has default values, rate defaults to
-   * 0.01 (1%), seed defaults to 23
-   *
-   * MurmurHash3 is used for generating the hash
+   * @param key column to sample on.
+   * @param rate sample rate in range (0, 1] with a default of 0.01 (1%)
+   * @param seed random generator integer seed with a default of 23.
    **/
 
   def smvHashSample(key: Column, rate: Double = 0.01, seed: Int = 23) = {
@@ -379,17 +387,20 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
-   * smvPipeCount
-   * Generate record count whenever the SRDD get processed
+   * Increment accumulated count for each processed record in a data frame "in-flight".
+   * This method will inject a udf to increment the given counter by one for each processed records.
+   * The count is computed "in-flight" so that we do not need to force an action on the DataFrame.
    *
    * Example:
+   * {{{
    *   val c = sc.accumulator(0l)
    *   val s1 = srdd.smvPipeCount(c)
    *   ....
    *   s1.saveAsCsvWithSchema("file")
    *   println(c.value)
+   * }}}
    *
-   * Since using accumulator in process can't guarantee results when recover from
+   * '''Warning''': Since using accumulator in process can't guarantee results when recover from
    * failures, we will only use this method to report processed records when persist SmvModule
    * and potentially other SMV functions.
    */

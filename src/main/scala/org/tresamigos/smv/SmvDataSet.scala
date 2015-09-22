@@ -62,7 +62,7 @@ private[smv] abstract class SmvDataSet {
   /**
    * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
    * This is quite handy for "filter" or "map" type modules so that we don't force an extra I/O step when it
-   * is not needed.  By default all modules are persisted unless the flag is overriden to true.
+   * is not needed.  By default all modules are persisted unless the flag is overridden to true.
    * Note: the module will still be persisted if it was specifically selected to run by the user.
    */
   def isEphemeral: Boolean
@@ -70,7 +70,16 @@ private[smv] abstract class SmvDataSet {
   private lazy val dsDqm = dqm()
   private[smv] def validations(): ValidationSet = new ValidationSet(Seq(dsDqm))
 
+  /**
+   * Define the DQM rules, fixes and policies to be applied to this `DataSet`.
+   * See [[org.tresamigos.smv.dqm]], [[org.tresamigos.smv.dqm.DQMRule]], and [[org.tresamigos.smv.dqm.DQMFix]]
+   * for details on creating rules and fixes.
+   *
+   * Concrete modules and files should override this method to define rules/fixes to apply.
+   * The default is to provide an empty set of DQM rules/fixes.
+   */
   def dqm(): SmvDQM = SmvDQM()
+
   /**
    * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly.
@@ -355,9 +364,14 @@ abstract class SmvModuleLink(outputModule: SmvOutput) extends
 }
 
 /**
- * a build-in SmvModule from schema string and data string
+ * a built-in SmvModule from schema string and data string
  *
- * E.g. SmvCsvData("a:String;b:Double;c:String", "aa,1.0,cc;aa2,3.5,CC")
+ * E.g.
+ * {{{
+ * SmvCsvData("a:String;b:Double;c:String", "aa,1.0,cc;aa2,3.5,CC")
+ * }}}
+ *
+ * TODO: need to rename this!! perhaps something like SmvCsvStringData or some such.
  **/
 case class SmvCsvData(schemaStr: String, data: String) extends SmvModule("Dummy module to create DF from strings") {
   override def requiresDS() = Seq.empty

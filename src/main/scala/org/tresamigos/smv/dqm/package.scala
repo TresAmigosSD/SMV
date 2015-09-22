@@ -24,37 +24,37 @@ import scala.util.matching.Regex
  * Main class [[org.tresamigos.smv.dqm.SmvDQM]] can be used with the SmvApp/Module
  * Framework or on stand-alone DF.
  * With the SmvApp/Module framework, a `dqm` method is defined on the
- * [[org.tresamigos.smv.SmvDataSet]] level, an can be override to define DQM rules,
+ * [[org.tresamigos.smv.SmvDataSet]] level, and can be overridden to define DQM rules,
  * fixes and policies, which then will be automatically checked when the SmvDataSet
- * get resolved.
+ * gets resolved.
  *
  * For working on a stand-alone DF, please refer the SmvDQM class's documentation.
  **/
 package object dqm {
 
   /** BoundRule requires `lower <= col < upper` */
-  def BoundRule[T:Ordering](col: Column, lower: T, upper: T) = {
+  def BoundRule[T:Ordering](col: Column, lower: T, upper: T) : DQMRule = {
     DQMRule(col >= lower && col < upper, s"BoundRule(${col})", FailNone)
   }
 
   /** SetRule requires `col in set` */
-  def SetRule(col: Column, set: Set[Any]) = {
+  def SetRule(col: Column, set: Set[Any]) : DQMRule = {
     DQMRule(col.in(set.toSeq.map{lit(_)}: _*), s"SetRule(${col})", FailNone)
   }
 
   /** SetFix to assign `default` if `col not in set` */
-  def SetFix(col: Column, set: Set[Any], default: Any) = {
+  def SetFix(col: Column, set: Set[Any], default: Any) : DQMFix = {
     DQMFix(!col.in(set.toSeq.map{lit(_)}: _*), lit(default) as col.getName, s"SetFix(${col})", FailNone)
   }
 
   /** FormatRule requires `col matches fmt` */
-  def FormatRule(col: Column, fmt: String) = {
+  def FormatRule(col: Column, fmt: String) : DQMRule = {
     val check = udf({s: String => s.matches(fmt)})
     DQMRule(check(col), s"FormatRule(${col})", FailNone)
   }
 
   /** FormatFix to assign `default` if `col does not match fmt` */
-  def FormatFix(col: Column, fmt: String, default: Any) = {
+  def FormatFix(col: Column, fmt: String, default: Any) : DQMFix = {
     val check = udf({s: String => s.matches(fmt)})
     DQMFix(!check(col), lit(default) as col.getName, s"FormatFix(${col})", FailNone)
   }

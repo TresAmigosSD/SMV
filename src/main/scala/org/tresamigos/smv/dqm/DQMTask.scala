@@ -59,7 +59,7 @@ abstract class DQMTask {
  * }}}
  * Require the sum of "a" and "b" columns less than 100.
  * Rule name "a_b_sum_lt100", which can be referred in the [[org.tresamigos.smv.dqm.DQMState]]
- * If there are equal or more than 1% of records failed this rule, the entire DF failed
+ * If 1% or more of the records fail this rule, the entire DF will fail
  **/
 case class DQMRule(
     rule: Column,
