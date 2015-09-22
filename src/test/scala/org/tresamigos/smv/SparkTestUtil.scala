@@ -24,7 +24,6 @@ import org.scalatest.{FunSuite, BeforeAndAfterAll}
 trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
   var sc: SparkContext = _
   var sqlContext: SQLContext = _
-  var app: SmvApp = _
 
   def disableLogging = false
 
@@ -58,11 +57,9 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
     sc = new SparkContext("local[2]", name())
     sqlContext = new SQLContext(sc)
     //resetTestcaseTempDir()
-    app = new SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))
   }
 
   override def afterAll() = {
-    app = null
     sqlContext = null
     sc.stop()
     sc = null
@@ -73,13 +70,14 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
   }
 
   /** With BeforeAndAfterAll, sparkTest method is simply a wrapper of test method
-   *  TODO: drop this method, and use test method in the suites
-   **/
-  def sparkTest(name: String, disableLogging: Boolean = false)(body: => Unit) {
+   *  Drop this method, and use test method in the suites
+
+  def sparkTest(name: String)(body: => Unit) {
     test(name) {
       body
     }
   }
+   **/
 
   /** name of a scratch test directory specific to this test case. */
   def testcaseTempDir = testDataDir + this.getClass.getName
@@ -115,12 +113,6 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
     }.zip(expectSeq).foreach {
       case (a, b) => assert(abs(a - b) < epsilon, s"because array element $a not equal $b")
     }
-  }
-
-  def open(path: String) ={
-    val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv)
-    file.injectApp(app)
-    file.rdd
   }
 
   /**
@@ -160,18 +152,6 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
   }
 
   /**
-   * schemaRdd creater is in SqlContextHelper now. This is just a wraper
-   */
-  def createSchemaRdd(schemaStr: String, data: String) = {
-    app.createDF(schemaStr, data)
-  }
-
-  /**
-   * dumpSRDD(df) now changes to df.dumpSRDD, which implemented in
-   * DataFrameHelper
-   */
-
-  /**
    * Check whether a string matches a Regex
    **/
   def assertStrMatches(haystack: String, needle: scala.util.matching.Regex) = {
@@ -188,5 +168,35 @@ object SparkTestUtil {
     loggers.foreach { logger =>
       logger.setLevel(level)
     }
+  }
+}
+
+/** Use SmvTestUtil when you need to access a default SmvApp */
+trait SmvTestUtil extends SparkTestUtil {
+
+  def param: Seq[String] = Seq("-m", "None", "--data-dir", testcaseTempDir)
+  var app: SmvApp = _
+
+  override def beforeAll() = {
+    super.beforeAll()
+    SmvApp.init(param.toArray, Option(sc))
+    app = SmvApp.app
+  }
+
+  override def afterAll() = {
+    app = null
+    super.afterAll()
+  }
+
+  def open(path: String) ={
+    val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv)
+    file.rdd
+  }
+
+  /**
+   * df creater is in SmvApp now. This is just a wrapper
+   */
+  def createSchemaRdd(schemaStr: String, data: String) = {
+    app.createDF(schemaStr, data)
   }
 }

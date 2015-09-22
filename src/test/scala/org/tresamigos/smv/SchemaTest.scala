@@ -19,7 +19,7 @@ import scala.collection.SortedMap
 // TODO: test writing of schema to file
 // TODO: test reading/writing of data with different schema format (string quote, timestamp, etc).
 
-class SmvSchemaTest extends SparkTestUtil {
+class SmvSchemaTest extends SmvTestUtil {
   test("Test schema string parsing") {
     val s = SmvSchema.fromString("a:string; b:double")
     val entries = s.entries
@@ -28,7 +28,7 @@ class SmvSchemaTest extends SparkTestUtil {
     assert(entries(1) === DoubleSchemaEntry("b"))
   }
 
-  sparkTest("Test schema file parsing") {
+  test("Test schema file parsing") {
     val s = SmvSchema.fromFile(sc, testDataDir +  "SchemaTest/test1.schema")
     val entries = s.entries
     assert(entries.size === 10)
@@ -114,18 +114,18 @@ class SmvSchemaTest extends SparkTestUtil {
     assert(b.valToStr(null) === "")
   }
 
-  sparkTest("Test Timestamp in file") {
+  test("Test Timestamp in file") {
     val df = open(testDataDir +  "SchemaTest/test2")
     assert(df.count === 3)
   }
 
-  sparkTest("Test Timestamp default format") {
+  test("Test Timestamp default format") {
     val df = createSchemaRdd("a:Timestamp", "2011-09-03 10:13:58.0")
     assert(df.collect()(0)(0).toString === "2011-09-03 10:13:58.0")
     assert(SmvSchema.fromDataFrame(df).toString === "Schema: a: Timestamp[yyyy-MM-dd hh:mm:ss.S]")
   }
 
-  sparkTest("Test Date default format") {
+  test("Test Date default format") {
     val df = createSchemaRdd("a:Date", "2011-09-03")
     assertSrddSchemaEqual(df, "a: Date[yyyy-MM-dd]")
     assertSrddDataEqual(df, "2011-09-03")
@@ -148,7 +148,7 @@ class SmvSchemaTest extends SparkTestUtil {
     assert(SchemaEntry.valueToColumnName(List(1.0, 2, 3).mkString(",")) === "1_0_2_0_3_0")
   }
 
-  sparkTest("Test ArraySchema read and write") {
+  test("Test ArraySchema read and write") {
     val df = createSchemaRdd("a:Integer; b:Array[Double]",
       "1,0.3|0.11|0.1")
 

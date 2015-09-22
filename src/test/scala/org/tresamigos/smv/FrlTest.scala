@@ -14,12 +14,11 @@
 
 package org.tresamigos.smv
 
-class FrlTest extends SparkTestUtil {
-  sparkTest("test frlFile loader with NoOp rejectlogger") {
+class FrlTest extends SmvTestUtil {
+  test("test frlFile loader with NoOp rejectlogger") {
     object file extends SmvFrlFile("./" + testDataDir + "FrlTest/test") {
       override val failAtParsingError = false
     }
-    file.injectApp(app)
 
     val res = file.rdd
 

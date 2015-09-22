@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql._, types._
 
-class SelectWithReplaceTest extends SparkTestUtil {
+class SelectWithReplaceTest extends SmvTestUtil {
   val fields = Seq("name:String", "friends:Integer")
   val schema = fields.mkString(";")
   val data = Seq("Adam,1", "Beth,2", "Caleb,3", "David,4")
@@ -24,7 +24,7 @@ class SelectWithReplaceTest extends SparkTestUtil {
   def testDf(sqlContext: SQLContext): DataFrame =
     createSchemaRdd(schema, data.mkString(";"))
 
-  sparkTest("should add new columns without modification") {
+  test("should add new columns without modification") {
     val input = testDf(sqlContext)
     val res = input.selectWithReplace(input("friends") + 1 as "newfriends")
     assertSrddSchemaEqual(res, schema + ";newfriends:Integer")
@@ -32,7 +32,7 @@ class SelectWithReplaceTest extends SparkTestUtil {
       "Adam,1,2;Beth,2,3;Caleb,3,4;David,4,5")
   }
 
-  sparkTest("should overwrite existing column with the same name") {
+  test("should overwrite existing column with the same name") {
     val input = testDf(sqlContext)
     val res = input.selectWithReplace(input("friends") + 1 as "friends")
     assertSrddSchemaEqual(res, "name:String;friends:Integer")
@@ -40,7 +40,7 @@ class SelectWithReplaceTest extends SparkTestUtil {
       "Adam,2;Beth,3;Caleb,4;David,5")
   }
 
-  sparkTest("should accept a column aliased multiple times") {
+  test("should accept a column aliased multiple times") {
     val input = testDf(sqlContext)
     val res = input.selectWithReplace(input("friends") as "friends" as "friends")
     assertSrddSchemaEqual(res, schema)
@@ -48,8 +48,8 @@ class SelectWithReplaceTest extends SparkTestUtil {
   }
 }
 
-class SelectPlusMinusTest extends SparkTestUtil {
-  sparkTest("test SelectPlus") {
+class SelectPlusMinusTest extends SmvTestUtil {
+  test("test SelectPlus") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "EddTest/test1.csv")
     val res = df.selectPlus('b + 2.0 as 'bplus2)
@@ -59,7 +59,7 @@ class SelectPlusMinusTest extends SparkTestUtil {
       "3.0,30.0,32.0")
   }
 
-  sparkTest("test SelectPlusPrefix") {
+  test("test SelectPlusPrefix") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "EddTest/test1.csv")
     val res = df.selectPlusPrefix('b + 2.0 as 'bplus2)
@@ -69,7 +69,7 @@ class SelectPlusMinusTest extends SparkTestUtil {
       "32.0,3.0,30.0")
   }
 
-  sparkTest("test SelectMinus") {
+  test("test SelectMinus") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "EddTest/test1.csv")
     val res = df.selectMinus('b)
@@ -80,8 +80,8 @@ class SelectPlusMinusTest extends SparkTestUtil {
   }
 }
 
-class renameFieldTest extends SparkTestUtil {
-  sparkTest("test rename fields") {
+class renameFieldTest extends SmvTestUtil {
+  test("test rename fields") {
     val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
@@ -94,7 +94,7 @@ class renameFieldTest extends SparkTestUtil {
 
   // TODO: what are these tests commented out?  Are they still valid?
   /*
-  sparkTest("test prefixing field names") {
+  test("test prefixing field names") {
     val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
@@ -105,7 +105,7 @@ class renameFieldTest extends SparkTestUtil {
     assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
   }
 
-  sparkTest("test postfixing field names") {
+  test("test postfixing field names") {
     val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
@@ -118,8 +118,8 @@ class renameFieldTest extends SparkTestUtil {
   */
 }
 
-class JoinHelperTest extends SparkTestUtil {
-  sparkTest("test joinUniqFieldNames") {
+class JoinHelperTest extends SmvTestUtil {
+  test("test joinUniqFieldNames") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd1 = createSchemaRdd("a:Integer; b:Double; c:String",
       """1,2.0,hello;
@@ -143,7 +143,7 @@ class JoinHelperTest extends SparkTestUtil {
     "[2,11.0,hello3,2,asdfg]"))
   }
 
-  sparkTest("test joinByKey") {
+  test("test joinByKey") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd1 = createSchemaRdd("a:Integer; b:Double; c:String",
       """1,2.0,hello;
@@ -168,8 +168,8 @@ class JoinHelperTest extends SparkTestUtil {
   }
 }
 
-class dedupByKeyTest extends SparkTestUtil {
-  sparkTest("test dedupByKey") {
+class dedupByKeyTest extends SmvTestUtil {
+  test("test dedupByKey") {
     val df = createSchemaRdd("a:Integer; b:Double; c:String",
       """1,2.0,hello;
          1,3.0,hello;
@@ -197,8 +197,8 @@ class dedupByKeyTest extends SparkTestUtil {
   }
 }
 
-class smvOverlapCheckTest extends SparkTestUtil {
-  sparkTest("test smvOverlapCheck") {
+class smvOverlapCheckTest extends SmvTestUtil {
+  test("test smvOverlapCheck") {
     val s1 = createSchemaRdd("k: String", "a;b;c")
     val s2 = createSchemaRdd("k: String", "a;b;c;d")
     val s3 = createSchemaRdd("k: String", "c;d")
@@ -213,8 +213,8 @@ class smvOverlapCheckTest extends SparkTestUtil {
   }
 }
 
-class smvHashSampleTest extends SparkTestUtil {
-  sparkTest("test smvHashSample") {
+class smvHashSampleTest extends SmvTestUtil {
+  test("test smvHashSample") {
     val ssc = sqlContext; import ssc.implicits._
     val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
     val res = a.unionAll(a).smvHashSample($"key", 0.3)
@@ -228,8 +228,8 @@ class smvHashSampleTest extends SparkTestUtil {
   }
 }
 
-class smvCoalesceTest extends SparkTestUtil {
-  sparkTest("Test smvCoalesce") {
+class smvCoalesceTest extends SmvTestUtil {
+  test("Test smvCoalesce") {
     val ssc = sqlContext; import ssc.implicits._
     val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
     val res = a.smvCoalesce(1)
@@ -250,8 +250,8 @@ class smvCoalesceTest extends SparkTestUtil {
 }
 
 
-class smvPipeCount extends SparkTestUtil {
-  sparkTest("Test smvPipeCount") {
+class smvPipeCount extends SmvTestUtil {
+  test("Test smvPipeCount") {
     val ssc = sqlContext; import ssc.implicits._
     val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
     val counter = sc.accumulator(0l)

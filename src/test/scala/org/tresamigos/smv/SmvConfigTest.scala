@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-class CmdLineArgsTest extends SparkTestUtil {
+class CmdLineArgsTest extends SmvTestUtil {
   test("test command line parser") {
     val cmd_args = new CmdLineArgsConf(Seq("--graph", "--run-app", "-m", "mod1", "mod2"))
     assert(cmd_args.graph())
@@ -29,7 +29,7 @@ class CmdLineArgsTest extends SparkTestUtil {
   }
 }
 
-class SmvConfigTest extends SparkTestUtil {
+class SmvConfigTest extends SmvTestUtil {
   val confFileArgs = Seq(
     "--smv-app-conf", testDataDir + "SmvConfigTest/app.conf",
     "--smv-user-conf", testDataDir + "SmvConfigTest/user.conf"

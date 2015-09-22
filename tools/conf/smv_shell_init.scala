@@ -10,14 +10,15 @@ object i {
   import org.apache.spark.rdd.RDD
   import java.io.{File, PrintWriter}
 
-  val app = new SmvApp(Seq("-m", "None"), Option(sc))
+  SmvApp.init(Seq("-m", "None").toArray, Option(sc))
+
+  val app = SmvApp.app
   val sqlContext = app.sqlContext
 
   //-------- some helpful functions
   def smvSchema(df: DataFrame) = SmvSchema.fromDataFrame(df)
 
   def df(ds: SmvDataSet) = {
-    ds.injectApp(app)
     app.resolveRDD(ds)
   }
 
@@ -26,7 +27,6 @@ object i {
 
   def open(path: String) ={
     val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsvWithHeader)
-    file.injectApp(app)
     file.rdd
   }
 

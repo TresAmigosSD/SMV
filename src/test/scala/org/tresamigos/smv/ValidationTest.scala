@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.json4s.jackson.JsonMethods._
 
-class ValidationTest extends SparkTestUtil {
+class ValidationTest extends SmvTestUtil {
 
   test("Test ValidationResult json convertion test") {
     val v = ValidationResult(
@@ -62,7 +62,7 @@ class ValidationTest extends SparkTestUtil {
     assert( (v1 ++ v2) === v3 )
   }
 
-  sparkTest("Test ParserValidation") {
+  test("Test ParserValidation") {
     val pv = new ParserValidation(sc)
     pv.addWithReason(new IllegalArgumentException("test logger"), "Test")
     val res = pv.validate(null)

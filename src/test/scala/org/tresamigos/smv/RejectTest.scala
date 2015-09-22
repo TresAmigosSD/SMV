@@ -16,12 +16,11 @@ package org.tresamigos.smv
 
 import org.apache.spark.SparkException
 
-class RejectTest extends SparkTestUtil {
-  sparkTest("test csvFile loader rejection with NoOp") {
+class RejectTest extends SmvTestUtil {
+  test("test csvFile loader rejection with NoOp") {
     object file extends SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
     }
-    file.injectApp(app)
     val df = file.rdd
 
     val res = df.collect.map(_.mkString(","))
@@ -36,11 +35,10 @@ class RejectTest extends SparkTestUtil {
     assert(res === exp)
   }
 
-  sparkTest("test csvFile loader rejection") {
+  test("test csvFile loader rejection") {
     object file extends SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
     }
-    file.injectApp(app)
     val df = file.rdd
 
     val (n, res) = file.parserValidator.parserLogger.report
@@ -57,13 +55,13 @@ class RejectTest extends SparkTestUtil {
     assert(n === 5)
   }
 
-  sparkTest("test csvFile loader rejection with exception", disableLogging = true) {
+  test("test csvFile loader rejection with exception") {
     intercept[ValidationError] {
       val df = open(testDataDir + "RejectTest/test2")
     }
   }
 
-  sparkTest("test csvParser rejection with exception", disableLogging = true) {
+  test("test csvParser rejection with exception") {
     val e = intercept[ValidationError] {
       val dataStr = """231,67.21  ,20121009101621,"02122011"""
       val prdd = createSchemaRdd("a:String;b:Double;c:String;d:String", dataStr)
@@ -81,14 +79,13 @@ class RejectTest extends SparkTestUtil {
 }""")
   }
 
-  sparkTest("test csvParser rejection") {
+  test("test csvParser rejection") {
     val data = """231,67.21  ,20121009101621,"02122011"""
     val schemaStr = "a:String;b:Double;c:String;d:String"
 
     object smvCF extends SmvCsvData(schemaStr, data) {
       override val failAtParsingError = false
     }
-    smvCF.injectApp(app)
     val prdd = smvCF.rdd
     val (n, res) = smvCF.parserValidator.parserLogger.report
     //res.foreach(println)

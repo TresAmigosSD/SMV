@@ -20,7 +20,7 @@ object testAppArgs {
 
 
 class SmvStagesTest extends SparkTestUtil {
-  sparkTest("Test getAllPackageNames method.") {
+  test("Test getAllPackageNames method.") {
     object testApp extends SmvApp(Seq(
       "--smv-props",
       "smv.stages=s1:s2",
@@ -32,7 +32,7 @@ class SmvStagesTest extends SparkTestUtil {
     assert(testApp.stages.getAllPackageNames() === expPkgs)
   }
 
-  sparkTest("Test modules in stage.") {
+  test("Test modules in stage.") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "None"), Some(sc)) {}
 
     val s1mods = testApp.stages.findStage("s1").allModules.map(m => m.name)
@@ -58,13 +58,13 @@ class SmvStagesTest extends SparkTestUtil {
  * While this only calls SmvConfig methods, it is affected by SmvStages so the test belongs in this file.
  */
 class SmvWhatModulesToRunTest extends SparkTestUtil {
-  sparkTest("Test modules to run (none output module)") {
+  test("Test modules to run (none output module)") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "org.tresamigos.smv.smvAppTestPkg3.T"), Some(sc)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
     assertUnorderedSeqEqual(mods, Seq("org.tresamigos.smv.smvAppTestPkg3.T"))
   }
 
-  sparkTest("Test modules to run (mods in stage)") {
+  test("Test modules to run (mods in stage)") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-s", "s1"), Some(sc)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
     assertUnorderedSeqEqual(mods, Seq(
@@ -72,7 +72,7 @@ class SmvWhatModulesToRunTest extends SparkTestUtil {
       "org.tresamigos.smv.smvAppTestPkg2.Z"))
   }
 
-  sparkTest("Test modules to run (mods in app)") {
+  test("Test modules to run (mods in app)") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("--run-app"), Some(sc)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
     assertUnorderedSeqEqual(mods, Seq(

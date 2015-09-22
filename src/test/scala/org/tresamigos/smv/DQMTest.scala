@@ -17,8 +17,8 @@ import org.tresamigos.smv.dqm._
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
 
-class DQMTest extends SparkTestUtil {
-  sparkTest("test DQMState functions") {
+class DQMTest extends SmvTestUtil {
+  test("test DQMState functions") {
     val state = new DQMState(sc, Seq("rule1", "rule2"), Seq("fix1"))
 
     (0 to 5).foreach{i =>
@@ -49,7 +49,7 @@ class DQMTest extends SparkTestUtil {
       "org.tresamigos.smv.dqm.DQMRuleError: rule2 @RECORD: rule2 record"))
   }
 
-  sparkTest("test DQMRule") {
+  test("test DQMRule") {
     val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2")
     val state = new DQMState(sc, Seq("rule1"), Nil)
     val dqmRule1 = DQMRule((new Column("a")) + (new Column("b")) > 0.3, "rule1")
@@ -64,7 +64,7 @@ class DQMTest extends SparkTestUtil {
     ))
   }
 
-  sparkTest("test DQMFix") {
+  test("test DQMFix") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2")
     val state = new DQMState(sc, Nil, Seq("fix1"))
@@ -75,7 +75,7 @@ class DQMTest extends SparkTestUtil {
     assertSrddDataEqual(res, "0,0.3;0,0.2")
   }
 
-  sparkTest("test SmvDQM with FailAny (so FailCount)") {
+  test("test SmvDQM with FailAny (so FailCount)") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2")
 
@@ -97,7 +97,7 @@ class DQMTest extends SparkTestUtil {
 }""")
   }
 
-  sparkTest("test FailPercent") {
+  test("test FailPercent") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
 
@@ -123,7 +123,7 @@ class DQMTest extends SparkTestUtil {
 }""")
   }
 
-  sparkTest("test Total Policies") {
+  test("test Total Policies") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
 
@@ -150,7 +150,7 @@ class DQMTest extends SparkTestUtil {
     ))
   }
 
-  sparkTest("test dqm method in SmvDataSet") {
+  test("test dqm method in SmvDataSet") {
     val ssc = sqlContext; import ssc.implicits._
     object file extends SmvCsvData("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5") {
       override def dqm() = SmvDQM().
@@ -159,13 +159,12 @@ class DQMTest extends SparkTestUtil {
         add(FailTotalRuleCountPolicy(2)).
         add(FailTotalFixCountPolicy(1))
     }
-    file.injectApp(app)
     intercept[ValidationError] {
       file.rdd.show
     }
   }
 
-  sparkTest("test additional DQMRules") {
+  test("test additional DQMRules") {
     val ssc = sqlContext; import ssc.implicits._
     object file extends SmvCsvData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,o,x;1,m,zz") {
       override def dqm() = SmvDQM().
@@ -174,7 +173,6 @@ class DQMTest extends SparkTestUtil {
         add(FormatRule($"c", ".")).
         add(FailTotalRuleCountPolicy(3))
     }
-    file.injectApp(app)
     intercept[ValidationError] {
       file.rdd.show
     }
@@ -196,7 +194,7 @@ class DQMTest extends SparkTestUtil {
 */
   }
 
-  sparkTest("test additional DQMFixes") {
+  test("test additional DQMFixes") {
     val ssc = sqlContext; import ssc.implicits._
     object file extends SmvCsvData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,x,x;1,m,zz") {
       override def dqm() = SmvDQM().
@@ -204,7 +202,6 @@ class DQMTest extends SparkTestUtil {
         add(FormatFix($"c", ".", "_")).
         add(FailTotalFixCountPolicy(5))
     }
-    file.injectApp(app)
     assertSrddDataEqual(file.rdd, "1,m,a;0,f,c;2,m,z;1,o,x;1,m,_")
   }
 }

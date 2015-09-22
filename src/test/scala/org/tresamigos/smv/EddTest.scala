@@ -14,8 +14,8 @@
 
 package org.tresamigos.smv
 
-class EddTest extends SparkTestUtil {
-  sparkTest("test Edd on entire population") {
+class EddTest extends SmvTestUtil {
+  test("test Edd on entire population") {
     val df = open(testDataDir +  "EddTest/test1.csv")
     val edd = df.edd.addBaseTasks('a, 'b)
     val res = edd.toDataFrame
@@ -23,7 +23,7 @@ class EddTest extends SparkTestUtil {
     assertSrddDataEqual(res, "3,3,2.0,1.0,1.0,3.0,3,20.0,10.0,10.0,30.0")
   }
 
-  sparkTest("test Edd Base on Non-double Numerics") {
+  test("test Edd Base on Non-double Numerics") {
     import org.apache.spark.sql.catalyst.dsl._
     val ssc = sqlContext; import ssc._
     val df = open(testDataDir +  "EddTest/test3.csv")
@@ -32,7 +32,7 @@ class EddTest extends SparkTestUtil {
     assertSrddDataEqual(res, "2,2,17.5,7.7781745930520225,12,23,2,4011.5,785.5956338982543,3456,4567")
   }
 
-  sparkTest("test Edd report on entire population") {
+  test("test Edd report on entire population") {
     val df = open(testDataDir +  "EddTest/test2")
     val res = df.edd.addBaseTasks().createReport()(0)
     val expect = """Total Record Count:                        3
@@ -78,7 +78,7 @@ val3                 Approx Distinct Count: 3"""
     assert(res === expect)
   }
 
-  sparkTest("test EddHist on entire population") {
+  test("test EddHist on entire population") {
     import org.apache.spark.sql.catalyst.dsl._
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "EddTest/test2")
@@ -138,7 +138,7 @@ key                      count      Pct    cumCount   cumPct
     assert(res4 === expect4)
   }
 
-  sparkTest("test EddHist with Bin on Non-double Numerics") {
+  test("test EddHist with Bin on Non-double Numerics") {
     import org.apache.spark.sql.catalyst.dsl._
     val ssc = sqlContext; import ssc._
     val df = open(testDataDir +  "EddTest/test3.csv")
@@ -159,7 +159,7 @@ key                      count      Pct    cumCount   cumPct
     assert(res === expect)
   }
 
-  sparkTest("test EddHist with AmountHistogram on Non-double Numerics") {
+  test("test EddHist with AmountHistogram on Non-double Numerics") {
     import org.apache.spark.sql.catalyst.dsl._
     val ssc = sqlContext; import ssc._
     val df = createSchemaRdd("k:String;v:Long", "k1,1;k1,10023;k2,3312;k2,11231")
@@ -174,7 +174,7 @@ key                      count      Pct    cumCount   cumPct
     assert(res === expect)
   }
 
-  sparkTest("test Edd Histogram on Boolean") {
+  test("test Edd Histogram on Boolean") {
     val ssc = sqlContext; import ssc._
     val df = createSchemaRdd("k:String;v:Boolean", "k1,True;k1,True;k2,False;k2,False")
     val res = df.edd.addHistogramTasks("v")().createReport
@@ -187,7 +187,7 @@ true                         2   50.00%           4  100.00%
     assert(res === expect)
   }
 
-  sparkTest("test Edd createJSON") {
+  test("test Edd createJSON") {
     val df = createSchemaRdd("k:String; t:Integer; p: String; v:Double",
       """z,1,a,0.2;
          z,2,a,1.4;

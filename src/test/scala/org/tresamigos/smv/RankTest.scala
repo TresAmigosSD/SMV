@@ -14,9 +14,9 @@
 
 package org.tresamigos.smv
 
-class RankTest extends SparkTestUtil {
+class RankTest extends SmvTestUtil {
 
-  sparkTest("Test the SmvRank function") {
+  test("Test the SmvRank function") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:Integer; v:String;",
       """1,B; 2,C; 3,E; 4,D; 5,A""")
