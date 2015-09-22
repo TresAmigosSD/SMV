@@ -179,7 +179,8 @@ trait SmvTestUtil extends SparkTestUtil {
 
   override def beforeAll() = {
     super.beforeAll()
-    app = new SmvApp(param, Option(sc))
+    SmvApp.init(param.toArray, Option(sc))
+    app = SmvApp.app
   }
 
   override def afterAll() = {
@@ -189,7 +190,6 @@ trait SmvTestUtil extends SparkTestUtil {
 
   def open(path: String) ={
     val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv)
-    file.injectApp(app)
     file.rdd
   }
 

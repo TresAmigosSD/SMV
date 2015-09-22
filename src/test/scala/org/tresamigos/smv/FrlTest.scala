@@ -19,7 +19,6 @@ class FrlTest extends SmvTestUtil {
     object file extends SmvFrlFile("./" + testDataDir + "FrlTest/test") {
       override val failAtParsingError = false
     }
-    file.injectApp(app)
 
     val res = file.rdd
 

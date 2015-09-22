@@ -78,7 +78,6 @@ class SmvAppTest extends SmvTestUtil {
   test("Test normal dependency execution") {
     resetTestcaseTempDir()
 
-    C.injectApp(app)
     val res = app.resolveRDD(C)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
 
@@ -102,8 +101,6 @@ class SmvAppTest extends SmvTestUtil {
   }
 
   test("Test cycle dependency execution") {
-    A_cycle.injectApp(app)
-    B_cycle.injectApp(app)
     intercept[IllegalStateException] {
       app.resolveRDD(B_cycle)
     }
@@ -134,8 +131,6 @@ class SmvAppTest extends SmvTestUtil {
       def doRun(): DataFrame = null
     }
 
-    f1.injectApp(app)
-    f2.injectApp(app)
     assert(f1.classCodeCRC() !== f2.classCodeCRC)
   }
 }
@@ -176,7 +171,6 @@ class SmvAppPurgeTest extends SparkTestUtil {
     }
 
     /** create a dummy app that only has the module above as its only module. */
-    m.injectApp(testApp)
 
     // create multiple versions of the module file in the output dir (one with a later time stamp too!)
     createTempFile("com.foo.mymodule_444.csv")

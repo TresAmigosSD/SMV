@@ -28,13 +28,6 @@ trait SmvPackageManager {
 
   lazy val allOutputModules : Seq[SmvModule] =
     allModules.filter(m => m.isInstanceOf[SmvOutput])
-
-  /**
-   * inject the given app in all modules managed by this package manager.
-   */
-  def injectApp(app: SmvApp) = {
-    allModules.foreach(_.injectApp(app))
-  }
 }
 
 /**
@@ -78,4 +71,3 @@ object SmvStage {
     new SmvStage(name, pkgs.toList, version)
   }
 }
-

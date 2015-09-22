@@ -159,7 +159,6 @@ class DQMTest extends SmvTestUtil {
         add(FailTotalRuleCountPolicy(2)).
         add(FailTotalFixCountPolicy(1))
     }
-    file.injectApp(app)
     intercept[ValidationError] {
       file.rdd.show
     }
@@ -174,7 +173,6 @@ class DQMTest extends SmvTestUtil {
         add(FormatRule($"c", ".")).
         add(FailTotalRuleCountPolicy(3))
     }
-    file.injectApp(app)
     intercept[ValidationError] {
       file.rdd.show
     }
@@ -204,7 +202,6 @@ class DQMTest extends SmvTestUtil {
         add(FormatFix($"c", ".", "_")).
         add(FailTotalFixCountPolicy(5))
     }
-    file.injectApp(app)
     assertSrddDataEqual(file.rdd, "1,m,a;0,f,c;2,m,z;1,o,x;1,m,_")
   }
 }

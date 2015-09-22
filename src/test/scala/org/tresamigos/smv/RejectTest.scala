@@ -21,7 +21,6 @@ class RejectTest extends SmvTestUtil {
     object file extends SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
     }
-    file.injectApp(app)
     val df = file.rdd
 
     val res = df.collect.map(_.mkString(","))
@@ -40,7 +39,6 @@ class RejectTest extends SmvTestUtil {
     object file extends SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
     }
-    file.injectApp(app)
     val df = file.rdd
 
     val (n, res) = file.parserValidator.parserLogger.report
@@ -88,7 +86,6 @@ class RejectTest extends SmvTestUtil {
     object smvCF extends SmvCsvData(schemaStr, data) {
       override val failAtParsingError = false
     }
-    smvCF.injectApp(app)
     val prdd = smvCF.rdd
     val (n, res) = smvCF.parserValidator.parserLogger.report
     //res.foreach(println)

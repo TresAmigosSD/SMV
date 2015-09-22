@@ -46,8 +46,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
 
-  injectAppIntoAllDatasets()
-
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
@@ -56,7 +54,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    **/
   def createDF(schemaStr: String, data: String) = {
     val smvCF = SmvCsvData(schemaStr, data)
-    smvCF.injectApp(this)
     smvCF.rdd
   }
 
@@ -132,13 +129,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /**
-   * inject the current app into all known data sets.
-   */
-  private def injectAppIntoAllDatasets() = {
-    smvConfig.stages.injectApp(this)
-  }
-
-  /**
    * delete the current output files of the modules to run (and not all the intermediate modules).
    */
   private def deleteOutputModules() = {
@@ -187,8 +177,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
  * Common entry point for all SMV applications.  This is the object that should be provided to spark-submit.
  */
 object SmvApp {
+  var app: SmvApp = _
+
+  def init(args: Array[String], _sc: Option[SparkContext] = None) = {
+    app = new SmvApp(args, _sc)
+  }
+
   def main(args: Array[String]) {
-    new SmvApp(args).run()
+    init(args)
+    app.run()
   }
 }
 

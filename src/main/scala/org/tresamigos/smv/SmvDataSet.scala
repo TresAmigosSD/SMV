@@ -27,9 +27,9 @@ import dqm._
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result DataFrame.
  */
-private[smv] abstract class SmvDataSet {
+abstract class SmvDataSet {
 
-  var app: SmvApp = _
+  lazy val app: SmvApp = SmvApp.app
   private var rddCache: DataFrame = null
 
   def name() = this.getClass().getName().filterNot(_=='$')
@@ -80,18 +80,6 @@ private[smv] abstract class SmvDataSet {
     if (rddCache == null)
       rddCache = computeRDD
     rddCache
-  }
-
-  /**
-   * Inject the given app into this dataset and all datasets that this depends on.
-   * Note: only the first setting is honored (as an optimization)
-   */
-  def injectApp(_app: SmvApp) : Unit = {
-    // short circuit the setting if this was already done.
-    if (app == null) {
-      app = _app
-      requiresDS().foreach( ds => ds.injectApp(app))
-    }
   }
 
   /** The "versioned" module file base name. */

@@ -6,7 +6,6 @@ class CsvTest extends SmvTestUtil {
 
   test("Test loading of csv file with header") {
     val file = SmvCsvFile("./" + testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader)
-    file.injectApp(app)
     val df = file.rdd
     val res = df.map(r => (r(0), r(1))).collect.mkString(",")
     // TODO: should probably add a assertSRDDEqual() with expected rows instead of convert to string
@@ -30,7 +29,6 @@ class CsvTest extends SmvTestUtil {
         df.selectPlus(smvStrCat($"name", $"id") as "name_id")
       }
     }
-    TestFile.injectApp(app)
     val df = TestFile.rdd
     assertSrddDataEqual(df,
       "Bob,1,Bob1;" +
