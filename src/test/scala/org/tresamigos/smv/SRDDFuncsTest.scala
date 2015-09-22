@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql._, types._
 
-class SelectWithReplaceTest extends SparkTestUtil {
+class SelectWithReplaceTest extends SmvTestUtil {
   val fields = Seq("name:String", "friends:Integer")
   val schema = fields.mkString(";")
   val data = Seq("Adam,1", "Beth,2", "Caleb,3", "David,4")
@@ -48,7 +48,7 @@ class SelectWithReplaceTest extends SparkTestUtil {
   }
 }
 
-class SelectPlusMinusTest extends SparkTestUtil {
+class SelectPlusMinusTest extends SmvTestUtil {
   sparkTest("test SelectPlus") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "EddTest/test1.csv")
@@ -80,7 +80,7 @@ class SelectPlusMinusTest extends SparkTestUtil {
   }
 }
 
-class renameFieldTest extends SparkTestUtil {
+class renameFieldTest extends SmvTestUtil {
   sparkTest("test rename fields") {
     val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
@@ -118,7 +118,7 @@ class renameFieldTest extends SparkTestUtil {
   */
 }
 
-class JoinHelperTest extends SparkTestUtil {
+class JoinHelperTest extends SmvTestUtil {
   sparkTest("test joinUniqFieldNames") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd1 = createSchemaRdd("a:Integer; b:Double; c:String",
@@ -168,7 +168,7 @@ class JoinHelperTest extends SparkTestUtil {
   }
 }
 
-class dedupByKeyTest extends SparkTestUtil {
+class dedupByKeyTest extends SmvTestUtil {
   sparkTest("test dedupByKey") {
     val df = createSchemaRdd("a:Integer; b:Double; c:String",
       """1,2.0,hello;
@@ -197,7 +197,7 @@ class dedupByKeyTest extends SparkTestUtil {
   }
 }
 
-class smvOverlapCheckTest extends SparkTestUtil {
+class smvOverlapCheckTest extends SmvTestUtil {
   sparkTest("test smvOverlapCheck") {
     val s1 = createSchemaRdd("k: String", "a;b;c")
     val s2 = createSchemaRdd("k: String", "a;b;c;d")
@@ -213,7 +213,7 @@ class smvOverlapCheckTest extends SparkTestUtil {
   }
 }
 
-class smvHashSampleTest extends SparkTestUtil {
+class smvHashSampleTest extends SmvTestUtil {
   sparkTest("test smvHashSample") {
     val ssc = sqlContext; import ssc.implicits._
     val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
@@ -228,7 +228,7 @@ class smvHashSampleTest extends SparkTestUtil {
   }
 }
 
-class smvCoalesceTest extends SparkTestUtil {
+class smvCoalesceTest extends SmvTestUtil {
   sparkTest("Test smvCoalesce") {
     val ssc = sqlContext; import ssc.implicits._
     val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
@@ -250,7 +250,7 @@ class smvCoalesceTest extends SparkTestUtil {
 }
 
 
-class smvPipeCount extends SparkTestUtil {
+class smvPipeCount extends SmvTestUtil {
   sparkTest("Test smvPipeCount") {
     val ssc = sqlContext; import ssc.implicits._
     val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")

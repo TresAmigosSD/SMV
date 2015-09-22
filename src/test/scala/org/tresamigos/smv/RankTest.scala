@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-class RankTest extends SparkTestUtil {
+class RankTest extends SmvTestUtil {
 
   sparkTest("Test the SmvRank function") {
     val ssc = sqlContext; import ssc.implicits._

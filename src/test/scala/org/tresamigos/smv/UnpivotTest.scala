@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-class UnpivotTest extends SparkTestUtil {
+class UnpivotTest extends SmvTestUtil {
 
   sparkTest("Test simple unpivot op") {
     val df = createSchemaRdd("id:String; X:String; Y:String; Z:String",

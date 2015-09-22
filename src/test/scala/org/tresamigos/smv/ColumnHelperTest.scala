@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-class ColumnHelperTest extends SparkTestUtil {
+class ColumnHelperTest extends SmvTestUtil {
   sparkTest("test smvNullSub") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
@@ -105,7 +105,7 @@ class ColumnHelperTest extends SparkTestUtil {
   }
 }
 
-class SmvPrintToStrTest extends SparkTestUtil {
+class SmvPrintToStrTest extends SmvTestUtil {
   sparkTest("test smvPrintToStr") {
     val ssc =sqlContext;
     import ssc.implicits._
@@ -120,7 +120,7 @@ class SmvPrintToStrTest extends SparkTestUtil {
   }
 }
 
-class SmvStrTrim extends SparkTestUtil {
+class SmvStrTrim extends SmvTestUtil {
   sparkTest("test smvStrTrim") {
     val ssc =sqlContext;
     import ssc.implicits._
@@ -134,7 +134,7 @@ class SmvStrTrim extends SparkTestUtil {
   }
 }
 
-class testSmvSafeDiv extends SparkTestUtil {
+class testSmvSafeDiv extends SmvTestUtil {
 
   sparkTest("test SmvSafeDiv function") {
     import org.apache.spark.sql.functions._

@@ -17,7 +17,7 @@ package org.tresamigos.smv
 // Note: it is very hard to test the validity of the CRC code as it would require
 // two compilation steps and a code injection in the middle.
 // These tests are really just a sanity test to make sure the plumbing is connected.
-class ClassCRCTest extends SparkTestUtil {
+class ClassCRCTest extends SmvTestUtil {
   test("test two classes have different CRC") {
     val crc1 = ClassCRC("org.tresamigos.smv.ClassCRCTest")
     val crc2 = ClassCRC("java.lang.String")

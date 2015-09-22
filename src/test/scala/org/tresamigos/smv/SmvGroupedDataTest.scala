@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-class SmvGroupedDataTest extends SparkTestUtil {
+class SmvGroupedDataTest extends SmvTestUtil {
   sparkTest("Test the Scale function") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:Integer;",

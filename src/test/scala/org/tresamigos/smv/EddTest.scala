@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-class EddTest extends SparkTestUtil {
+class EddTest extends SmvTestUtil {
   sparkTest("test Edd on entire population") {
     val df = open(testDataDir +  "EddTest/test1.csv")
     val edd = df.edd.addBaseTasks('a, 'b)

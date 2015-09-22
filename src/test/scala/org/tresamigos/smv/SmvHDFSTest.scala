@@ -3,7 +3,7 @@ package org.tresamigos.smv
 import java.io.{PrintWriter, File}
 
 
-class SmvHDFSTest extends SparkTestUtil {
+class SmvHDFSTest extends SmvTestUtil {
 
   test("Test HDFS delete file operation") {
     resetTestcaseTempDir()

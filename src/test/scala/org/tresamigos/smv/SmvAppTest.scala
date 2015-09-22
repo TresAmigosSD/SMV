@@ -17,7 +17,7 @@ package org.tresamigos.smv {
 
 import org.apache.spark.sql.DataFrame
 
-class SmvHashOfHashTest extends SparkTestUtil {
+class SmvHashOfHashTest extends SmvTestUtil {
   test("Test module hashOfHash") {
     // two modules with same code should hash to different values.
     object X1 extends SmvModule("X Module") {
@@ -39,7 +39,7 @@ class SmvTestFile(override val name: String) extends SmvModule("") {
   override def run(i: runParams) = app.createDF("a:Integer", "1;2;3")
 }
 
-class SmvAppTest extends SparkTestUtil {
+class SmvAppTest extends SmvTestUtil {
 
   val fx = new SmvTestFile("FX")
 

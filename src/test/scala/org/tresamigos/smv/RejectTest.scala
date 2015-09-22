@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.SparkException
 
-class RejectTest extends SparkTestUtil {
+class RejectTest extends SmvTestUtil {
   sparkTest("test csvFile loader rejection with NoOp") {
     object file extends SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false

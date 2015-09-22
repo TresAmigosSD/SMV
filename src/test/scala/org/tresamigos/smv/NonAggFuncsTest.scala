@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.sql.functions._
 
 
-class NonAggFuncsTest extends SparkTestUtil {
+class NonAggFuncsTest extends SmvTestUtil {
   sparkTest("test smvStrCat") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "1,a;2,")

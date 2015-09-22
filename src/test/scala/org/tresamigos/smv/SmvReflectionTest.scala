@@ -1,6 +1,6 @@
 package org.tresamigos.smv
 
-class SmvReflectionTest extends SparkTestUtil {
+class SmvReflectionTest extends SmvTestUtil {
   sparkTest("Test SmvReflection.objectsInPackage method.") {
     object testApp extends SmvApp(testAppArgs.singleStage ++ Seq("-m", "None"), Some(sc)) {}
 

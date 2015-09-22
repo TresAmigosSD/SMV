@@ -19,7 +19,7 @@ object testAppArgs {
 }
 
 
-class SmvStagesTest extends SparkTestUtil {
+class SmvStagesTest extends SmvTestUtil {
   sparkTest("Test getAllPackageNames method.") {
     object testApp extends SmvApp(Seq(
       "--smv-props",
@@ -57,7 +57,7 @@ class SmvStagesTest extends SparkTestUtil {
  * test the "what modules to run" method in SmvConfig.
  * While this only calls SmvConfig methods, it is affected by SmvStages so the test belongs in this file.
  */
-class SmvWhatModulesToRunTest extends SparkTestUtil {
+class SmvWhatModulesToRunTest extends SmvTestUtil {
   sparkTest("Test modules to run (none output module)") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "org.tresamigos.smv.smvAppTestPkg3.T"), Some(sc)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)

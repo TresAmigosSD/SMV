@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.functions._
 
-class SmvPivotTest extends SparkTestUtil {
+class SmvPivotTest extends SmvTestUtil {
   sparkTest("Test creation of unique column names") {
     val df = createSchemaRdd("k:String; p1:String; p2:String; p3:String; v:String; v2:Float",
       """x,p1_1,p2A,p3X,5,8;

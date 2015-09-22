@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.functions._
 
-class RollupCubeOpTest extends SparkTestUtil {
+class RollupCubeOpTest extends SmvTestUtil {
 
   test("Test cube bitmask creation") {
     assert(new RollupCubeOp(null, Nil, Seq("a","b")).cubeBitmasks() === Seq(0,1,2))

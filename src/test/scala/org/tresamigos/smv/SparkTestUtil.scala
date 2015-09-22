@@ -24,7 +24,6 @@ import org.scalatest.{FunSuite, BeforeAndAfterAll}
 trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
   var sc: SparkContext = _
   var sqlContext: SQLContext = _
-  var app: SmvApp = _
 
   def disableLogging = false
 
@@ -58,11 +57,9 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
     sc = new SparkContext("local[2]", name())
     sqlContext = new SQLContext(sc)
     //resetTestcaseTempDir()
-    app = new SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))
   }
 
   override def afterAll() = {
-    app = null
     sqlContext = null
     sc.stop()
     sc = null
@@ -117,12 +114,6 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
     }
   }
 
-  def open(path: String) ={
-    val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv)
-    file.injectApp(app)
-    file.rdd
-  }
-
   /**
    * Ensure that two arbitrary sequences are equal regardless of the order of items in the sequence
    */
@@ -160,13 +151,6 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
   }
 
   /**
-   * schemaRdd creater is in SqlContextHelper now. This is just a wraper
-   */
-  def createSchemaRdd(schemaStr: String, data: String) = {
-    app.createDF(schemaStr, data)
-  }
-
-  /**
    * dumpSRDD(df) now changes to df.dumpSRDD, which implemented in
    * DataFrameHelper
    */
@@ -189,4 +173,32 @@ object SparkTestUtil {
       logger.setLevel(level)
     }
   }
+}
+
+trait SmvTestUtil extends SparkTestUtil {
+  var app: SmvApp = _
+
+  override def beforeAll() = {
+    super.beforeAll()
+    app = new SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))
+  }
+
+  override def afterAll() = {
+    app = null
+    super.afterAll()
+  }
+
+  def open(path: String) ={
+    val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv)
+    file.injectApp(app)
+    file.rdd
+  }
+
+  /**
+   * schemaRdd creater is in SqlContextHelper now. This is just a wraper
+   */
+  def createSchemaRdd(schemaStr: String, data: String) = {
+    app.createDF(schemaStr, data)
+  }
+
 }

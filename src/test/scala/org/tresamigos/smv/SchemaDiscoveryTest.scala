@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 // TODO: Still need to add more test cases mainly type promotion.
-class SchemaDiscoveryTest extends SparkTestUtil {
+class SchemaDiscoveryTest extends SmvTestUtil {
   sparkTest("Test schema discovery 1 line header") {
     val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test1.csv")
     val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes.defaultCsvWithHeader)

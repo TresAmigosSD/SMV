@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 import org.apache.spark.sql.functions._
 
-class AggFuncsTest extends SparkTestUtil {
+class AggFuncsTest extends SmvTestUtil {
   sparkTest("test OnlineAverage") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "AggTest/test1.csv")

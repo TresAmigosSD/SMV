@@ -18,7 +18,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 
-class SmvCDSTest extends SparkTestUtil {
+class SmvCDSTest extends SmvTestUtil {
 
   sparkTest("Test runAgg") {
     val ssc = sqlContext;

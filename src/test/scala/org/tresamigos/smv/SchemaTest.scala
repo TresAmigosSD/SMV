@@ -19,7 +19,7 @@ import scala.collection.SortedMap
 // TODO: test writing of schema to file
 // TODO: test reading/writing of data with different schema format (string quote, timestamp, etc).
 
-class SmvSchemaTest extends SparkTestUtil {
+class SmvSchemaTest extends SmvTestUtil {
   test("Test schema string parsing") {
     val s = SmvSchema.fromString("a:string; b:double")
     val entries = s.entries

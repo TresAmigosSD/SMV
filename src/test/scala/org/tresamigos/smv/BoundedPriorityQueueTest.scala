@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-class BoundedPriorityQueueTest extends SparkTestUtil {
+class BoundedPriorityQueueTest extends SmvTestUtil {
   test("Test bounded queue order") {
     val bpq = BoundedPriorityQueue[Int](3)
     List(5,2,4,1,3).foreach(i => bpq += i)

@@ -2,7 +2,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
 
-class CsvTest extends SparkTestUtil {
+class CsvTest extends SmvTestUtil {
 
   sparkTest("Test loading of csv file with header") {
     val file = SmvCsvFile("./" + testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader)

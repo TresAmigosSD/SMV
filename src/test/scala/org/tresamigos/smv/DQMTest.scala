@@ -17,7 +17,7 @@ import org.tresamigos.smv.dqm._
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
 
-class DQMTest extends SparkTestUtil {
+class DQMTest extends SmvTestUtil {
   sparkTest("test DQMState functions") {
     val state = new DQMState(sc, Seq("rule1", "rule2"), Seq("fix1"))
 
