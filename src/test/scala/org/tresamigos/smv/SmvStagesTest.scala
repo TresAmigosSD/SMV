@@ -19,8 +19,8 @@ object testAppArgs {
 }
 
 
-class SmvStagesTest extends SmvTestUtil {
-  sparkTest("Test getAllPackageNames method.") {
+class SmvStagesTest extends SparkTestUtil {
+  test("Test getAllPackageNames method.") {
     object testApp extends SmvApp(Seq(
       "--smv-props",
       "smv.stages=s1:s2",
@@ -32,7 +32,7 @@ class SmvStagesTest extends SmvTestUtil {
     assert(testApp.stages.getAllPackageNames() === expPkgs)
   }
 
-  sparkTest("Test modules in stage.") {
+  test("Test modules in stage.") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "None"), Some(sc)) {}
 
     val s1mods = testApp.stages.findStage("s1").allModules.map(m => m.name)
@@ -57,14 +57,14 @@ class SmvStagesTest extends SmvTestUtil {
  * test the "what modules to run" method in SmvConfig.
  * While this only calls SmvConfig methods, it is affected by SmvStages so the test belongs in this file.
  */
-class SmvWhatModulesToRunTest extends SmvTestUtil {
-  sparkTest("Test modules to run (none output module)") {
+class SmvWhatModulesToRunTest extends SparkTestUtil {
+  test("Test modules to run (none output module)") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "org.tresamigos.smv.smvAppTestPkg3.T"), Some(sc)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
     assertUnorderedSeqEqual(mods, Seq("org.tresamigos.smv.smvAppTestPkg3.T"))
   }
 
-  sparkTest("Test modules to run (mods in stage)") {
+  test("Test modules to run (mods in stage)") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-s", "s1"), Some(sc)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
     assertUnorderedSeqEqual(mods, Seq(
@@ -72,7 +72,7 @@ class SmvWhatModulesToRunTest extends SmvTestUtil {
       "org.tresamigos.smv.smvAppTestPkg2.Z"))
   }
 
-  sparkTest("Test modules to run (mods in app)") {
+  test("Test modules to run (mods in app)") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("--run-app"), Some(sc)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
     assertUnorderedSeqEqual(mods, Seq(

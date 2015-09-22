@@ -1,7 +1,7 @@
 package org.tresamigos.smv
 
-class SmvReflectionTest extends SmvTestUtil {
-  sparkTest("Test SmvReflection.objectsInPackage method.") {
+class SmvReflectionTest extends SparkTestUtil {
+  test("Test SmvReflection.objectsInPackage method.") {
     object testApp extends SmvApp(testAppArgs.singleStage ++ Seq("-m", "None"), Some(sc)) {}
 
     val mods: Seq[SmvModule] = SmvReflection.objectsInPackage[SmvModule]("org.tresamigos.smv.smvAppTestPkg1")

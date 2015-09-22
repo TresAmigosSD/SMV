@@ -16,13 +16,13 @@ package org.tresamigos.smv
 import org.apache.spark.sql.functions._
 
 class AggFuncsTest extends SmvTestUtil {
-  sparkTest("test OnlineAverage") {
+  test("test OnlineAverage") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "AggTest/test1.csv")
     val avg = df.agg(onlineAverage('a), onlineAverage('b))
     assertDoubleSeqEqual(avg.collect()(0).toSeq, List(2.0, 20.0))
   }
-  sparkTest("test OnlineStdDev") {
+  test("test OnlineStdDev") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "AggTest/test1.csv")
     val stddev = df.agg(onlineStdDev('a), onlineStdDev('b))
@@ -30,14 +30,14 @@ class AggFuncsTest extends SmvTestUtil {
   }
   /*d
   */
-  sparkTest("test Histogram") {
+  test("test Histogram") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "AggTest/test2.csv")
     val hist = df.agg(histogram('id)).collect()(0)(0).asInstanceOf[Map[String,Long]] //Array[Row(Map[String,Long])]=> Any=Map[..]
     assert(hist === Map("231"->1l,"123"->2l))
   }
 
-  sparkTest("test SmvFirst") {
+  test("test SmvFirst") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,;z,2,1.4;z,5,2.2;a,1,0.3;")
 

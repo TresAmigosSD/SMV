@@ -4,7 +4,7 @@ import org.apache.spark.sql.DataFrame
 
 class CsvTest extends SmvTestUtil {
 
-  sparkTest("Test loading of csv file with header") {
+  test("Test loading of csv file with header") {
     val file = SmvCsvFile("./" + testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader)
     file.injectApp(app)
     val df = file.rdd
@@ -13,7 +13,7 @@ class CsvTest extends SmvTestUtil {
     assert(res === "(Bob,1),(Fred,2)")
   }
 
-  sparkTest("Test column with pure blanks converts to null as Integer or Double") {
+  test("Test column with pure blanks converts to null as Integer or Double") {
     val df = createSchemaRdd("a:Integer;b:Double", "1 , 0.2 ; 2, 1 ;3, ; , ;5, 3.")
     assertSrddDataEqual(df,
       "1,0.2;" +
@@ -23,7 +23,7 @@ class CsvTest extends SmvTestUtil {
       "5,3.0")
   }
 
-  sparkTest("Test run method in SmvFile") {
+  test("Test run method in SmvFile") {
     object TestFile extends SmvCsvFile("./" + testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader) {
       override def run(df: DataFrame) = {
         import df.sqlContext.implicits._

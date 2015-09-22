@@ -40,6 +40,7 @@ class SmvTestFile(override val name: String) extends SmvModule("") {
 }
 
 class SmvAppTest extends SmvTestUtil {
+  override def param = Seq("-m", "C", "--data-dir", testcaseTempDir)
 
   val fx = new SmvTestFile("FX")
 
@@ -74,19 +75,18 @@ class SmvAppTest extends SmvTestUtil {
     override val isEphemeral = true
   }
 
-  sparkTest("Test normal dependency execution") {
+  test("Test normal dependency execution") {
     resetTestcaseTempDir()
-    object testApp extends SmvApp(Seq("-m", "C", "--data-dir", testcaseTempDir), Option(sc))
 
-    C.injectApp(testApp)
-    val res = testApp.resolveRDD(C)
+    C.injectApp(app)
+    val res = app.resolveRDD(C)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
 
     // even though both B and C depended on A, A should have only run once!
     assert(A.moduleRunCount === 1)
 
     //Resolve the same module, it should read the persisted file and not run the module again
-    val res2 = testApp.resolveRDD(C)
+    val res2 = app.resolveRDD(C)
     assertSrddDataEqual(res2, "1,2,3;2,3,4;3,4,5")
     assert(A.moduleRunCount === 1)
   }
@@ -101,7 +101,7 @@ class SmvAppTest extends SmvTestUtil {
     override def run(inputs: runParams) = null
   }
 
-  sparkTest("Test cycle dependency execution") {
+  test("Test cycle dependency execution") {
     A_cycle.injectApp(app)
     B_cycle.injectApp(app)
     intercept[IllegalStateException] {
@@ -109,26 +109,8 @@ class SmvAppTest extends SmvTestUtil {
     }
   }
 
-  sparkTest("Test SmvModuleJSON") {
-    object testApp extends SmvApp(testAppArgs.singleStage ++ Seq("-m", "None"), Some(sc)) {}
-
-    val app2JSON = new SmvModuleJSON(testApp, Seq())
-    val expect = """{
-  "X": {
-    "version": 0,
-    "dependents": [],
-    "description": "X Module"},
-  "Y": {
-    "version": 0,
-    "dependents": ["X"],
-    "description": "Y Module"}}"""
-    assert(app2JSON.generateJSON === expect)
-  }
-
-  sparkTest("Test dependency graph creation.") {
-    object testApp extends SmvApp(Seq("-m", "C"), Option(sc))
-
-    val depGraph = new SmvModuleDependencyGraph(C, testApp.packagesPrefix)
+  test("Test dependency graph creation.") {
+    val depGraph = new SmvModuleDependencyGraph(C, app.packagesPrefix)
     //depGraph.saveToFile("foo.dot")
 
     val edges = depGraph.graph
@@ -139,35 +121,7 @@ class SmvAppTest extends SmvTestUtil {
     assert(edges(C) === Seq(A,B))
   }
 
-  sparkTest("Test purgeOldOutputFiles") {
-    resetTestcaseTempDir()
-
-    /** create a test module with a fixed csv file name */
-    object m extends SmvModule("my module") {
-      override def requiresDS() = Seq()
-      override def run(i: runParams) = null
-      override def moduleCsvPath(prefix: String) = "com.foo.mymodule_555.csv"
-    }
-    /** create a dummy app that only has the module above as its only module. */
-    object testApp extends SmvApp(
-      Seq("--purge-old-output", "--output-dir", testcaseTempDir), Option(sc)) {
-      override def allAppModules = Seq(m)
-    }
-    m.injectApp(testApp)
-
-    // create multiple versions of the module file in the output dir (one with a later time stamp too!)
-    createTempFile("com.foo.mymodule_444.csv")
-    createTempFile("com.foo.mymodule_555.csv")
-    createTempFile("com.foo.mymodule_666.csv")
-
-    testApp.purgeOldOutputFiles()
-
-    // Only the current file should remain after purge.
-    val files = SmvHDFS.dirList(testcaseTempDir)
-    assertUnorderedSeqEqual(files, Seq("com.foo.mymodule_555.csv"))
-  }
-
-  sparkTest("Test SmvFile crc") {
+  test("Test SmvFile crc") {
     createTempFile("F1.csv")
     createTempFile("F2.csv")
 
@@ -180,11 +134,60 @@ class SmvAppTest extends SmvTestUtil {
       def doRun(): DataFrame = null
     }
 
-    object testApp extends SmvApp(Seq("-m", "None", "--data-dir", testcaseTempDir), Option(sc))
-
-    f1.injectApp(testApp)
-    f2.injectApp(testApp)
+    f1.injectApp(app)
+    f2.injectApp(app)
     assert(f1.classCodeCRC() !== f2.classCodeCRC)
+  }
+}
+
+class SmvModuleJSONTest extends SmvTestUtil {
+  override def param = testAppArgs.singleStage ++ Seq("-m", "None")
+
+  test("Test SmvModuleJSON") {
+
+    val app2JSON = new SmvModuleJSON(app, Seq())
+    val expect = """{
+  "X": {
+    "version": 0,
+    "dependents": [],
+    "description": "X Module"},
+  "Y": {
+    "version": 0,
+    "dependents": ["X"],
+    "description": "Y Module"}}"""
+    assert(app2JSON.generateJSON === expect)
+  }
+}
+
+class SmvAppPurgeTest extends SparkTestUtil {
+  test("Test purgeOldOutputFiles") {
+    resetTestcaseTempDir()
+
+    /** create a test module with a fixed csv file name */
+    object m extends SmvModule("my module") {
+      override def requiresDS() = Seq()
+      override def run(i: runParams) = null
+      override def moduleCsvPath(prefix: String) = "com.foo.mymodule_555.csv"
+    }
+
+    object testApp extends SmvApp(
+      Seq("--purge-old-output", "--output-dir", testcaseTempDir), Option(sc)) {
+      override def allAppModules = Seq(m)
+    }
+
+    /** create a dummy app that only has the module above as its only module. */
+    m.injectApp(testApp)
+
+    // create multiple versions of the module file in the output dir (one with a later time stamp too!)
+    createTempFile("com.foo.mymodule_444.csv")
+    createTempFile("com.foo.mymodule_555.csv")
+    createTempFile("com.foo.mymodule_666.csv")
+
+    testApp.purgeOldOutputFiles()
+
+    // Only the current file should remain after purge.
+    val files = SmvHDFS.dirList(testcaseTempDir)
+    assertUnorderedSeqEqual(files, Seq("com.foo.mymodule_555.csv"))
   }
 }
 

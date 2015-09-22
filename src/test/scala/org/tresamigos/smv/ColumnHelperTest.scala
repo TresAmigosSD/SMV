@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 class ColumnHelperTest extends SmvTestUtil {
-  sparkTest("test smvNullSub") {
+  test("test smvNullSub") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
     val res = df.select($"v".smvNullSub("test"))
@@ -28,7 +28,7 @@ class ColumnHelperTest extends SmvTestUtil {
       "2")
   }
 
-  sparkTest("test smvLength"){
+  test("test smvLength"){
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
     val res = df.select($"v".smvLength)
@@ -37,7 +37,7 @@ class ColumnHelperTest extends SmvTestUtil {
       "null")
   }
 
-  sparkTest("test smvStrToTimestamp"){
+  test("test smvStrToTimestamp"){
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "20190101,a;,b")
     val res = df.select($"k".smvStrToTimestamp("yyyyMMdd"))
@@ -46,7 +46,7 @@ class ColumnHelperTest extends SmvTestUtil {
       "null")
   }
 
-  sparkTest("test smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek"){
+  test("test smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek"){
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:Timestamp[yyyyMMdd]; v:String;", "20190101,a;,b")
     val res = df.select($"k".smvYear, $"k".smvMonth, $"k".smvQuarter, $"k".smvDayOfMonth, $"k".smvDayOfWeek, $"k".smvHour)
@@ -54,7 +54,7 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
   }
 
-  sparkTest("test smvAmtBin, smvNumericBin, smvCoarseGrain"){
+  test("test smvAmtBin, smvNumericBin, smvCoarseGrain"){
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:Timestamp[yyyyMMdd]; v:Double;", "20190101,1213.3;,31312.9")
     val res = df.select($"v".smvAmtBin, $"v".smvNumericBin(40000,0,4), $"v".smvCoarseGrain(1000))
@@ -62,21 +62,21 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddDataEqual(res, "1000.0,10000.0,1000.0;" + "30000.0,40000.0,31000.0")
   }
 
-  sparkTest("test SmvSoundex function") {
+  test("test SmvSoundex function") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:String", "Smith;Liu;Brown;  Funny ;Obama;0Obama")
     val res = df.select($"a".smvSoundex)
     assertSrddDataEqual(res, "s530;l000;b650;f500;o150;o150")
   }
 
-  sparkTest("test SmvMetaphone function") {
+  test("test SmvMetaphone function") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:String", "Smith;Liu;Brown;  Funny ;Obama;0Obama")
     val res = df.select($"a".smvMetaphone)
     assertSrddDataEqual(res, "sm0;l;brn;fn;obm;obm")
   }
 
-  sparkTest("test smvPlusDays/smvPlusMonths/smvPlusWeeks/smvPlusYears") {
+  test("test smvPlusDays/smvPlusMonths/smvPlusWeeks/smvPlusYears") {
     import org.apache.spark.sql.functions._
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120229")
@@ -106,7 +106,7 @@ class ColumnHelperTest extends SmvTestUtil {
 }
 
 class SmvPrintToStrTest extends SmvTestUtil {
-  sparkTest("test smvPrintToStr") {
+  test("test smvPrintToStr") {
     val ssc =sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
@@ -121,7 +121,7 @@ class SmvPrintToStrTest extends SmvTestUtil {
 }
 
 class SmvStrTrim extends SmvTestUtil {
-  sparkTest("test smvStrTrim") {
+  test("test smvStrTrim") {
     val ssc =sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String", "z ; 1; 3 ;")
@@ -136,7 +136,7 @@ class SmvStrTrim extends SmvTestUtil {
 
 class testSmvSafeDiv extends SmvTestUtil {
 
-  sparkTest("test SmvSafeDiv function") {
+  test("test SmvSafeDiv function") {
     import org.apache.spark.sql.functions._
     val ssc = sqlContext;
     import ssc.implicits._

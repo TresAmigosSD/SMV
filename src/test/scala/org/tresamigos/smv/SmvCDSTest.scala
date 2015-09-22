@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions._
 
 class SmvCDSTest extends SmvTestUtil {
 
-  sparkTest("Test runAgg") {
+  test("Test runAgg") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
@@ -40,7 +40,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[z,5,2.2,1]"))
   }
 
-  sparkTest("Test agg with no-from-aggregation") {
+  test("Test agg with no-from-aggregation") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
@@ -59,7 +59,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[z,5,2.2,1,3.8]"))
   }
 
-  sparkTest("Test SmvTopNRecsCDS") {
+  test("Test SmvTopNRecsCDS") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
@@ -84,7 +84,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[z,5,2.2]"))
   }
 
-  sparkTest("Test Lag inplemented with InLastN") {
+  test("Test Lag inplemented with InLastN") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
@@ -102,7 +102,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[z,5,2.2,1.4]"))
   }
 
-  sparkTest("Test CDS Chaining compare") {
+  test("Test CDS Chaining compare") {
     val ssc = sqlContext;
     import ssc.implicits._
 
@@ -115,7 +115,7 @@ class SmvCDSTest extends SmvTestUtil {
     assert(aggCol1.cds === aggCol2.cds)
   }
 
-  sparkTest("Test CDS Chaining") {
+  test("Test CDS Chaining") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
@@ -135,7 +135,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[z,6,2.4000000000000004,3.6,4.1]"))
   }
 
-  sparkTest("Test CDS Chaining with smvMapGroup") {
+  test("Test CDS Chaining with smvMapGroup") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
@@ -151,7 +151,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[z,5,2.2]"))
   }
 
-  sparkTest("Test TimeInLastNDays") {
+  test("Test TimeInLastNDays") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
@@ -163,7 +163,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[2012-02-29 00:00:00.0,2]"))
   }
 
-  sparkTest("Test TimeInLastNMonths") {
+  test("Test TimeInLastNMonths") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
@@ -175,7 +175,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[2012-02-29 00:00:00.0,1]"))
   }
 
-  sparkTest("Test TimeInLastNWeeks") {
+  test("Test TimeInLastNWeeks") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
@@ -187,7 +187,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[2012-02-29 00:00:00.0,2]"))
   }
 
-  sparkTest("Test TimeInLastNYears") {
+  test("Test TimeInLastNYears") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120125;20120229")
@@ -199,7 +199,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[2012-02-29 00:00:00.0,3]"))
   }
 
-  sparkTest("Test Before") {
+  test("Test Before") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,0.3;")
@@ -236,7 +236,7 @@ class SmvCDSTest extends SmvTestUtil {
       "[z,6,4.0,4.1]"))
   }
 
-  sparkTest("Test keep none-travial expression") {
+  test("Test keep none-travial expression") {
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,4,0.2;z,5,2.2;z,6,0.1;a,1,;")

@@ -19,7 +19,7 @@ import org.apache.spark.sql.catalyst.expressions.Row
 
 
 class SmvQuantileTest extends SmvTestUtil {
-  sparkTest("Test smvDecile") {
+  test("Test smvDecile") {
 
     // Creates a test data string of the format "G1,0,k1,j1,1;G2,k2,j1,2;..." but that is randomly
     // shuffled to make sure the sort within quantile is working.

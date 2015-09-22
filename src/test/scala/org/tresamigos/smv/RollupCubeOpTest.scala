@@ -29,12 +29,12 @@ class RollupCubeOpTest extends SmvTestUtil {
     assert(new RollupCubeOp(null, Nil, Seq("a","b","c", "d")).rollupBitmasks() === Seq(0,1,3,7))
   }
 
-  sparkTest("Test getNonRollupCols") {
+  test("Test getNonRollupCols") {
     val df = createSchemaRdd("a:String; b:String; c:String; d:String", "a,b,c,d")
     assert(new RollupCubeOp(df, Nil, Seq("b","c")).getNonRollupCols() === Seq("a", "d"))
   }
 
-  sparkTest("Test createSRDDWithSentinel") {
+  test("Test createSRDDWithSentinel") {
     val df = createSchemaRdd("a:String; b:String; c:String; d:Integer",
       "a,b,c,1;x,y,z,2")
     val op = new RollupCubeOp(df, Nil, Seq("b","c"))
@@ -50,7 +50,7 @@ class RollupCubeOpTest extends SmvTestUtil {
     assertSrddSchemaEqual(res_bc, "b:String; c:String; a:String; d:Integer")
   }
 
-  sparkTest("Test duplicateSRDDByBitmasks") {
+  test("Test duplicateSRDDByBitmasks") {
     val df = createSchemaRdd("a:String; b:String; c:String; d:Integer", "a,b,c,1")
     val op = new RollupCubeOp(df, Nil, Seq("a","b"))
 
@@ -59,7 +59,7 @@ class RollupCubeOpTest extends SmvTestUtil {
     assertSrddSchemaEqual(res, "a:String; b:String; c:String; d:Integer")
   }
 
-  sparkTest("Test cube") {
+  test("Test cube") {
     val df = createSchemaRdd("a:String; b:String; f:String; d:Integer",
       """a1,b1,F,10;
          a1,b1,F,20;
@@ -82,7 +82,7 @@ class RollupCubeOpTest extends SmvTestUtil {
     assertSrddSchemaEqual(res, "a:String; b:String; f:String; sum_d:Long")
   }
 
-  sparkTest("Test rollup") {
+  test("Test rollup") {
     val df = createSchemaRdd("a:String; b:String; c:String; d:Integer",
       """a1,b1,c1,10;
          a1,b1,c1,20;

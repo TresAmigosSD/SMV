@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import org.apache.spark.SparkException
 
 class RejectTest extends SmvTestUtil {
-  sparkTest("test csvFile loader rejection with NoOp") {
+  test("test csvFile loader rejection with NoOp") {
     object file extends SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
     }
@@ -36,7 +36,7 @@ class RejectTest extends SmvTestUtil {
     assert(res === exp)
   }
 
-  sparkTest("test csvFile loader rejection") {
+  test("test csvFile loader rejection") {
     object file extends SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
     }
@@ -57,13 +57,13 @@ class RejectTest extends SmvTestUtil {
     assert(n === 5)
   }
 
-  sparkTest("test csvFile loader rejection with exception", disableLogging = true) {
+  test("test csvFile loader rejection with exception") {
     intercept[ValidationError] {
       val df = open(testDataDir + "RejectTest/test2")
     }
   }
 
-  sparkTest("test csvParser rejection with exception", disableLogging = true) {
+  test("test csvParser rejection with exception") {
     val e = intercept[ValidationError] {
       val dataStr = """231,67.21  ,20121009101621,"02122011"""
       val prdd = createSchemaRdd("a:String;b:Double;c:String;d:String", dataStr)
@@ -81,7 +81,7 @@ class RejectTest extends SmvTestUtil {
 }""")
   }
 
-  sparkTest("test csvParser rejection") {
+  test("test csvParser rejection") {
     val data = """231,67.21  ,20121009101621,"02122011"""
     val schemaStr = "a:String;b:Double;c:String;d:String"
 

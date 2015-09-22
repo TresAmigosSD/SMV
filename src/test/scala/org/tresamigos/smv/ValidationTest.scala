@@ -62,7 +62,7 @@ class ValidationTest extends SmvTestUtil {
     assert( (v1 ++ v2) === v3 )
   }
 
-  sparkTest("Test ParserValidation") {
+  test("Test ParserValidation") {
     val pv = new ParserValidation(sc)
     pv.addWithReason(new IllegalArgumentException("test logger"), "Test")
     val res = pv.validate(null)

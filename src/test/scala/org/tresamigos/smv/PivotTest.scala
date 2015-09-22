@@ -18,7 +18,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.functions._
 
 class SmvPivotTest extends SmvTestUtil {
-  sparkTest("Test creation of unique column names") {
+  test("Test creation of unique column names") {
     val df = createSchemaRdd("k:String; p1:String; p2:String; p3:String; v:String; v2:Float",
       """x,p1_1,p2A,p3X,5,8;
          x,p1_2,p2A,p3X,6,9;
@@ -32,7 +32,7 @@ class SmvPivotTest extends SmvTestUtil {
       "p1_2_p2B_p3X"))
   }
 
-  sparkTest("Test creation of unique column names with missing/non-id data") {
+  test("Test creation of unique column names with missing/non-id data") {
     val df = createSchemaRdd("p1:String; p2:String; p3:String; v:String",
       """p1_1,p2/A,,5;
          p1_1,p2/A,p3X,6;
@@ -50,7 +50,7 @@ class SmvPivotTest extends SmvTestUtil {
       "p2_A"))
   }
 
-  sparkTest("Test creation of unique column names with 1 pivot column") {
+  test("Test creation of unique column names with 1 pivot column") {
     val df = createSchemaRdd("p1:String; v:String","p1_1,5; p1_2, 6")
 
     val res = SmvPivot.getBaseOutputColumnNames(df, Seq(Seq("p1")))
@@ -59,7 +59,7 @@ class SmvPivotTest extends SmvTestUtil {
       "p1_2"))
   }
   
-  sparkTest("test smvPivot on DF") {
+  test("test smvPivot on DF") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("id:Integer;month:String;product:String;count:Integer", 
       "1,5_14,A,100;1,6_14,B,200;1,5_14,B,300")
@@ -70,7 +70,7 @@ class SmvPivotTest extends SmvTestUtil {
       "1,5_14,B,300,null,300,null,null")
   }
   
-  sparkTest("test smvPivotSum on GD") {
+  test("test smvPivotSum on GD") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("id:Integer;month:String;product:String;count:Integer", 
       "1,5_14,A,100;1,6_14,B,200;1,5_14,B,300")
@@ -80,7 +80,7 @@ class SmvPivotTest extends SmvTestUtil {
       "1,100,300,0,200")
   }
 
-  sparkTest("Test smvPivot with pivotColSets") {
+  test("Test smvPivot with pivotColSets") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k1:String; k2:String; p:String; v1:Integer; v2:Float",
       "1,x,A,10,100.5;" +
@@ -109,7 +109,7 @@ class SmvPivotTest extends SmvTestUtil {
       "dist_cnt_v2_y_B"))
   }
 
-  sparkTest("Test pivot_sum function") {
+  test("Test pivot_sum function") {
     val df = createSchemaRdd("k:String; p1:String; p2:String; v:Integer",
       "1,p1/a,p2a,100;" +
       "1,p1!b,p2b,200;" +
@@ -129,7 +129,7 @@ class SmvPivotTest extends SmvTestUtil {
     assert(fieldNames === Seq("k", "v_p1_a_p2a", "v_p1_a_p2b", "v_p1_b_p2a", "v_p1_b_p2b"))
   }
 
-  sparkTest("Test pivot_sum function with float value") {
+  test("Test pivot_sum function with float value") {
     val df = createSchemaRdd("k:String; p:String; v1:Integer; v2:Float",
       "1,A,10,100.5;" +
       "1,A,20,200.5;" +

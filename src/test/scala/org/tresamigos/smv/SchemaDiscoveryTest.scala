@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 // TODO: Still need to add more test cases mainly type promotion.
 class SchemaDiscoveryTest extends SmvTestUtil {
-  sparkTest("Test schema discovery 1 line header") {
+  test("Test schema discovery 1 line header") {
     val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test1.csv")
     val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes.defaultCsvWithHeader)
     val entries = schema.entries
@@ -41,7 +41,7 @@ class SchemaDiscoveryTest extends SmvTestUtil {
     assert(entries(7).typeName === "Timestamp")
   }
 
-  sparkTest("Test schema discovery no header") {
+  test("Test schema discovery no header") {
     val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test2.csv")
     val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes())
     val entries = schema.entries
@@ -60,7 +60,7 @@ class SchemaDiscoveryTest extends SmvTestUtil {
     assert(entries(4).typeName === "Boolean")
   }
 
-  sparkTest("Test schema discovery type promotion") {
+  test("Test schema discovery type promotion") {
     val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test3.csv")
     val schema = sqlContext.discoverSchema(strRDD,10, CsvAttributes.defaultCsvWithHeader)
     val entries = schema.entries

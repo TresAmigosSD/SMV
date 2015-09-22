@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 class SmvChunkTest extends SmvTestUtil {
-  sparkTest("Test chunkBy") {
+  test("Test chunkBy") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String;v:String", "k1,a;k1,b;k2,d;k2,c")
     val runCat = (l: List[Seq[Any]]) => l.map{_(0)}.scanLeft(Seq("")){(a,b) => Seq(a(0) + b)}.tail
