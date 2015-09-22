@@ -27,7 +27,7 @@ import dqm._
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result DataFrame.
  */
-abstract class SmvDataSet {
+private[smv] abstract class SmvDataSet {
 
   var app: SmvApp = _
   private var rddCache: DataFrame = null
@@ -145,7 +145,7 @@ abstract class SmvDataSet {
     val filePath = moduleCsvPath(prefix)
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
-    val counter = new ScCounter(app.sc)
+    val counter = app.sc.accumulator(0l)
     val before = DateTime.now()
     println(s"${fmt.print(before)} PERSISTING: ${filePath}")
 
@@ -155,7 +155,7 @@ abstract class SmvDataSet {
 
     val after = DateTime.now()
     val runTime = PeriodFormat.getDefault().print(new Period(before, after))
-    val n = counter("N")
+    val n = counter.value
 
     println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
 

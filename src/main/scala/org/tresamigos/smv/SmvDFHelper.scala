@@ -15,9 +15,8 @@
 package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.{Column, ColumnName}
-import org.apache.spark.sql.GroupedData
+import org.apache.spark.Accumulator
+import org.apache.spark.sql.{DataFrame, GroupedData, Column, ColumnName}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.analysis._
@@ -384,20 +383,20 @@ class SmvDFHelper(df: DataFrame) {
    * Generate record count whenever the SRDD get processed
    *
    * Example:
-   *   val c = new ScCounter(sc)
-   *   val s1 = srdd.pipeCount(c)
+   *   val c = sc.accumulator(0l)
+   *   val s1 = srdd.smvPipeCount(c)
    *   ....
    *   s1.saveAsCsvWithSchema("file")
-   *   println(c.report())
+   *   println(c.value)
    *
-   * Since using accumulator (ScCounter) in process can't guarantee results when recover from
+   * Since using accumulator in process can't guarantee results when recover from
    * failures, we will only use this method to report processed records when persist SmvModule
    * and potentially other SMV functions.
    */
-  private[smv] def smvPipeCount(counter: SmvCounter): DataFrame = {
-    counter.reset()
+  private[smv] def smvPipeCount(counter: Accumulator[Long]): DataFrame = {
+    counter.setValue(0l)
     val dummyFunc = udf({() =>
-      counter.add("N")
+      counter += 1l
       true
     })
 

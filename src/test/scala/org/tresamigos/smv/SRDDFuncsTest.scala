@@ -254,10 +254,10 @@ class smvPipeCount extends SparkTestUtil {
   sparkTest("Test smvPipeCount") {
     val ssc = sqlContext; import ssc.implicits._
     val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
-    val counter = new ScCounter(sc)
+    val counter = sc.accumulator(0l)
 
     val n1 = a.smvPipeCount(counter).count
-    val n2 = counter.report.getOrElse("N", 0l)
+    val n2 = counter.value
 
     assert(n1 === n2)
   }
