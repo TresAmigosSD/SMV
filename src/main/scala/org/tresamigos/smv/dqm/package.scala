@@ -42,9 +42,20 @@ package object dqm {
     DQMRule(col.in(set.toSeq.map{lit(_)}: _*), s"SetRule(${col})", FailNone)
   }
 
+  /** SetFix to assign `default` if `col not in set` */
+  def SetFix(col: Column, set: Set[Any], default: Any) = {
+    DQMFix(!col.in(set.toSeq.map{lit(_)}: _*), lit(default) as col.getName, s"SetFix(${col})", FailNone)
+  }
+
   /** FormatRule requires `col matches fmt` */
   def FormatRule(col: Column, fmt: String) = {
     val check = udf({s: String => s.matches(fmt)})
     DQMRule(check(col), s"FormatRule(${col})", FailNone)
+  }
+
+  /** FormatFix to assign `default` if `col does not match fmt` */
+  def FormatFix(col: Column, fmt: String, default: Any) = {
+    val check = udf({s: String => s.matches(fmt)})
+    DQMFix(!check(col), lit(default) as col.getName, s"FormatFix(${col})", FailNone)
   }
 }

@@ -195,4 +195,16 @@ class DQMTest extends SparkTestUtil {
 }
 */
   }
+
+  sparkTest("test additional DQMFixes") {
+    val ssc = sqlContext; import ssc.implicits._
+    object file extends SmvCsvData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,x,x;1,m,zz") {
+      override def dqm() = SmvDQM().
+        add(SetFix($"b", Set("m", "f", "o"), "o")).
+        add(FormatFix($"c", ".", "_")).
+        add(FailTotalFixCountPolicy(5))
+    }
+    file.injectApp(app)
+    assertSrddDataEqual(file.rdd, "1,m,a;0,f,c;2,m,z;1,o,x;1,m,_")
+  }
 }
