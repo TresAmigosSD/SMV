@@ -18,6 +18,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.Accumulator
 import org.apache.spark.sql.{DataFrame, GroupedData, Column, ColumnName}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{StructField, StructType, LongType}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
@@ -198,15 +199,15 @@ class SmvDFHelper(df: DataFrame) {
 
   /** adds a rank column to an df. */
   def smvRank(rankColumnName: String, startValue: Long = 0) = {
-    val oldSchema = SmvSchema.fromDataFrame(df)
-    val newSchema = oldSchema ++ new SmvSchema(Seq(LongSchemaEntry(rankColumnName)))
+    val oldSchema = df.schema
+    val newSchema = StructType(oldSchema.fields :+ StructField(rankColumnName, LongType, true))
 
     val res: RDD[Row] = df.rdd.
       zipWithIndex().
       map{ case (row, idx) =>
         new GenericRow(Array[Any](row.toSeq ++ Seq(idx + startValue): _*)) }
 
-    df.sqlContext.createDataFrame(res, newSchema.toStructType)
+    df.sqlContext.createDataFrame(res, newSchema)
   }
 
   /**
