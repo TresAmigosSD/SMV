@@ -1,5 +1,5 @@
-# Spark Model Variables (SMV)
-Spark Model Variables enables users to quickly build model variables on Apache Spark platform.
+# Spark Modularized View (SMV)
+Spark Modularized View enables users to build enterprise scale applications on Apache Spark platform.
 Please refer [FAQ](docs/FAQ.md) for details.
 
 

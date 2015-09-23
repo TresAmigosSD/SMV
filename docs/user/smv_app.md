@@ -34,7 +34,10 @@ A couple of things to note about the above file hierarchy
 * Following standard java/scala package name convention, the packages above will have their parent stage name in their name.
 * Each stage has an `input` package for defining the inputs into the stage.
 
-TODO: add class diagram to show class relationship below!!!
-Design Diagram
-![Alt text](https://rawgit.com/TresAmigosSD/SMV/master/docs/appFramework.files/appFramework.svg)
+TODO: the package/stage hierarchy may become a requirement. See [SMV issue #182](https://github.com/TresAmigosSD/SMV/issues/182)
+
+## Class Diagram
+The class diagram of the SMV App below is provided as an FYI and is not critical to productively using SMV.
+![SMV App Class Diagram](https://rawgit.com/TresAmigosSD/SMV/master/docs/design/app_class.svg)
+
 
