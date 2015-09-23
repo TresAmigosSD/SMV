@@ -15,7 +15,6 @@
 package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.rdd.DropRDDFunctions
 import scala.reflect.ClassTag
 
 case class CsvAttributes(

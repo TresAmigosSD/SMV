@@ -29,7 +29,7 @@ import java.util.List;
 * @author Glen Smith
 * @author Rainer Pruy
 */
-public class CSVParser {
+class CSVParser {
 
    private final char separator;
 

@@ -22,7 +22,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.Column
 import org.apache.spark.storage.StorageLevel
 
-abstract class EddTaskBuilder[T] {
+private[smv] abstract class EddTaskBuilder[T] {
 
   val df: DataFrame
 
