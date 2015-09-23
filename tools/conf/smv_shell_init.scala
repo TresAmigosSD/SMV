@@ -5,12 +5,12 @@ import org.tresamigos.smv._
 // because shell would launch a separate command for each evalutaion which
 // slows down startup considerably.
 // keeping object name short to make the contents easy to access.
+SmvApp.init(Seq("-m", "None").toArray, Option(sc))
+
 object i {
   import org.apache.spark.sql.DataFrame
   import org.apache.spark.rdd.RDD
   import java.io.{File, PrintWriter}
-
-  SmvApp.init(Seq("-m", "None").toArray, Option(sc))
 
   val app = SmvApp.app
   val sqlContext = app.sqlContext
