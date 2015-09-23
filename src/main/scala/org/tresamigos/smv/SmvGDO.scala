@@ -68,7 +68,8 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
    */
   def createInGroupMapping(inSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
     val ordinal = inSchema.getIndices(valueCol)(0)
-    val valueField = inSchema.findEntry(valueCol).get.structField
+    val inSchemaStruct = inSchema.toStructType
+    val valueField = inSchemaStruct(valueCol)
     val getValueAsDouble: Row => Double = {r =>
       valueField.numeric.toDouble(r(ordinal))
     }

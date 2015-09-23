@@ -27,97 +27,68 @@ import java.text.{DateFormat, SimpleDateFormat}
 import scala.annotation.switch
 
 abstract class SchemaEntry extends java.io.Serializable {
-  val structField: StructField
+  val name: String
+  val dataType: DataType
   def strToVal(s: String) : Any
   def valToStr(v: Any) : String = if (v==null) "" else v.toString
   val typeName: String
   private[smv] var meta: String = ""
-  override def toString = structField.name + ": " + typeName
+  override def toString = name + ": " + typeName
 }
 
-abstract class NativeSchemaEntry extends SchemaEntry {
-  private[smv] type JvmType
-  private[smv] val ordering: Ordering[JvmType]
-}
-
-abstract class NumericSchemaEntry extends NativeSchemaEntry {
-  private[smv] val numeric: Numeric[JvmType]
+abstract class NumericSchemaEntry extends SchemaEntry {
   private[smv] def trim(s: String) = s.replaceAll("""(^ +| +$)""", "")
 }
 
 case class DoubleSchemaEntry(name: String) extends NumericSchemaEntry {
-  private[smv] type JvmType = Double
-  private[smv] val ordering = implicitly[Ordering[JvmType]]
-  private[smv] val numeric = implicitly[Numeric[Double]]
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toDouble
   }
   override val typeName = "Double"
-  val structField = StructField(name, DoubleType, true)
+  val dataType = DoubleType
 }
 
 case class FloatSchemaEntry(name: String) extends NumericSchemaEntry {
-  private[smv] type JvmType = Float
-  private[smv] val ordering = implicitly[Ordering[JvmType]]
-  private[smv] val numeric = implicitly[Numeric[Float]]
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toFloat
   }
   override val typeName = "Float"
-  val structField = StructField(name, FloatType, true)
+  val dataType = FloatType
 }
 
 case class IntegerSchemaEntry(name: String) extends NumericSchemaEntry {
-  private[smv] type JvmType = Int
-  private[smv] val ordering = implicitly[Ordering[JvmType]]
-  private[smv] val numeric = implicitly[Numeric[Int]]
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toInt
   }
   override val typeName = "Integer"
-  val structField = StructField(name, IntegerType, true)
+  val dataType = IntegerType
 }
 
 case class LongSchemaEntry(name: String) extends NumericSchemaEntry {
-  private[smv] type JvmType = Long
-  private[smv] val ordering = implicitly[Ordering[JvmType]]
-  private[smv] val numeric = implicitly[Numeric[Long]]
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toLong
   }
   override val typeName = "Long"
-  val structField = StructField(name, LongType, true)
+  val dataType = LongType
 }
 
-case class BooleanSchemaEntry(name: String) extends NativeSchemaEntry {
-  private[smv] type JvmType = Boolean
-  private[smv] val ordering = implicitly[Ordering[JvmType]]
+case class BooleanSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toBoolean
   override val typeName = "Boolean"
-  val structField = StructField(name, BooleanType, true)
+  val dataType = BooleanType
 }
 
-case class StringSchemaEntry(name: String) extends NativeSchemaEntry {
-  private[smv] type JvmType = String
-  private[smv] val ordering = implicitly[Ordering[JvmType]]
+case class StringSchemaEntry(name: String) extends SchemaEntry {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s
   override val typeName = "String"
-  val structField = StructField(name, StringType, true)
+  val dataType = StringType
 }
 
-case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss.S") extends NativeSchemaEntry {
-  /**
-   * The Default format should match the default "toString" format of
-   * java.sql.Timestamp
-   */
-  private[smv] type JvmType = java.sql.Timestamp
-  private[smv] val ordering = new Ordering[JvmType] {
-    def compare(x: java.sql.Timestamp, y: java.sql.Timestamp) = x.compareTo(y)
-  }
+case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss.S") extends SchemaEntry {
   // `SimpleDateFormat` is not thread-safe.
   val fmtObj = SmvSchema.threadLocalDateFormat(fmt).get()
   //val fmtObj = new java.text.SimpleDateFormat(fmt)
@@ -126,15 +97,12 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss
     else new java.sql.Timestamp(fmtObj.parse(s).getTime())
   }
   override val typeName = "Timestamp"
-  val structField = StructField(name, TimestampType, true)
+  val dataType = TimestampType
   override def toString = s"$name: $typeName[$fmt]"
 }
 
-case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd") extends NativeSchemaEntry {
-  private[smv] type JvmType = Int
-  private[smv] val ordering = implicitly[Ordering[JvmType]]
+case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd") extends SchemaEntry {
 
-  // `SimpleDateFormat` is not thread-safe.
   val fmtObj = SmvSchema.threadLocalDateFormat(fmt).get()
 
   override def strToVal(s:String) : Any = {
@@ -148,7 +116,7 @@ case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd") extends Nat
   }
 
   override val typeName = "Date"
-  val structField = StructField(name, DateType, true)
+  val dataType = DateType
   override def toString = s"$name: $typeName[$fmt]"
 }
 // TODO: map entries delimiter hardcoded to "|" for now.
@@ -160,7 +128,7 @@ case class MapSchemaEntry(name: String,
 
   override def toString = s"$name: Map[${keySchemaEntry.typeName},${valSchemaEntry.typeName}]"
 
-  val structField = StructField(name, MapType(keySchemaEntry.structField.dataType, valSchemaEntry.structField.dataType), true)
+  val dataType = MapType(keySchemaEntry.dataType, valSchemaEntry.dataType)
   override def strToVal(s: String) : Any = {
     if (s.isEmpty)
       null
@@ -172,8 +140,8 @@ case class MapSchemaEntry(name: String,
   }
   override def valToStr(v: Any) : String = {
     if (v==null) return ""
-    val keyNativeType = keySchemaEntry.structField.dataType.asInstanceOf[NativeType]
-    val valNativeType = valSchemaEntry.structField.dataType.asInstanceOf[NativeType]
+    val keyNativeType = keySchemaEntry.dataType.asInstanceOf[NativeType]
+    val valNativeType = valSchemaEntry.dataType.asInstanceOf[NativeType]
     val m = v.asInstanceOf[Map[Any,Any]]
     m.map{ case (k,v) =>
       val keyAsStr = keySchemaEntry.valToStr(k)
@@ -188,7 +156,7 @@ case class ArraySchemaEntry(name: String, valSchemaEntry: SchemaEntry) extends S
 
   override def toString = s"$name: Array[${valSchemaEntry.typeName}]"
 
-  val structField = StructField(name, ArrayType(valSchemaEntry.structField.dataType), true)
+  val dataType = ArrayType(valSchemaEntry.dataType)
   override def strToVal(s: String) : Any = {
     if (s.isEmpty)
       null
@@ -318,13 +286,13 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   def toValue(ordinal: Int, sVal: String) = {
     val entry = entries(ordinal)
     val elem = entry.strToVal(sVal)
-    val dataType = entry.structField.dataType
+    val dataType = entry.dataType
     ScalaReflection.convertToCatalyst(elem, dataType)
   }
 
   override def toString = "Schema: " + entries.mkString("; ")
 
-  def toStructType : StructType = StructType(entries.map(se => se.structField))
+  def toStructType : StructType = StructType(entries.map(se => StructField(se.name, se.dataType, true)))
 
   def ++(that: SmvSchema): SmvSchema = {
     val thisNames = names.toSet
@@ -335,12 +303,12 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   }
 
   def selfJoined(): SmvSchema = {
-    val renamed = entries.map{e => SchemaEntry("_" + e.structField.name, e.structField.dataType)}
+    val renamed = entries.map{e => SchemaEntry("_" + e.name, e.dataType)}
     new SmvSchema(entries ++ renamed)
   }
 
   def names: Seq[String] = {
-    entries.map(e => e.structField.name)
+    entries.map(e => e.name)
   }
 
   def getIndices(keys: String*): Seq[Int] = {
@@ -348,7 +316,7 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
   }
 
   def findEntry(s: String): Option[SchemaEntry] = {
-    entries.find(e => e.structField.name == s)
+    entries.find(e => e.name == s)
   }
   def findEntry(sym: Symbol): Option[SchemaEntry] = findEntry(sym.name)
 
@@ -392,7 +360,7 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
         sb.append(ca.delimiter)
 
       val se = entries(idx)
-      (se.structField.dataType: @switch) match {
+      (se.dataType: @switch) match {
         // TODO: handle timestamp here to convert to desired format
         case StringType =>
           // TODO: need to handle this better!

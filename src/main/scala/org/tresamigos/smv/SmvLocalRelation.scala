@@ -22,8 +22,7 @@ import org.apache.spark.sql.catalyst.expressions._
 
 private[smv] case class SmvLocalRelation(schema: SmvSchema) {
   private val locRel = {
-    val schemaAttr = schema.entries.map{e =>
-      val s = e.structField
+    val schemaAttr = schema.toStructType.fields.map{s =>
       AttributeReference(s.name, s.dataType, s.nullable)()
     }
     LocalRelation(schemaAttr)

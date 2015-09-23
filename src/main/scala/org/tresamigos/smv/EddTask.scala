@@ -49,11 +49,11 @@ abstract class BaseTask extends EddTask {
 }
 
 abstract class HistogramTask extends EddTask {
-  val keyType: SchemaEntry
+  val keyType: StructField
   def isSortByValue: Boolean = false
 
   def report(it: Iterator[Any]): Seq[String] = {
-    val ordering = keyType.structField.ordering
+    val ordering = keyType.ordering
     val rec = it.next.asInstanceOf[Map[Any,Long]].toSeq
     val hist = if(isSortByValue)
         rec.sortWith((l, r) => l._2 > r._2)
@@ -131,70 +131,70 @@ case class AmountHistogram(col: Column) extends HistogramTask {
   val taskName = "AmountHistogram"
   val nameList = Seq("amt")
   val dscrList = Seq("as Amount")
-  val keyType = SchemaEntry("dummy", DoubleType)
+  val keyType = StructField("dummy", DoubleType)
 }
 
 case class NumericHistogram(col: Column, min: Double, max: Double, n: Int) extends HistogramTask {
   val taskName = "NumericHistogram"
   val nameList = Seq("nhi")
   val dscrList = Seq(s"with $n fixed BINs")
-  val keyType = SchemaEntry("dummy", DoubleType)
+  val keyType = StructField("dummy", DoubleType)
 }
 
 case class BinNumericHistogram(col: Column, bin: Double) extends HistogramTask {
   val taskName = "BinNumericHistogram"
   val nameList = Seq("bnh")
   val dscrList = Seq(s"with BIN size $bin")
-  val keyType = SchemaEntry("dummy", DoubleType)
+  val keyType = StructField("dummy", DoubleType)
 }
 
 case class YearHistogram(col: Column) extends HistogramTask {
   val taskName = "YearHistogram"
   val nameList = Seq("yea")
   val dscrList = Seq("Year")
-  val keyType = SchemaEntry("dummy", IntegerType)
+  val keyType = StructField("dummy", IntegerType)
 }
 
 case class MonthHistogram(col: Column) extends HistogramTask {
   val taskName = "MonthHistogram"
   val nameList = Seq("mon")
   val dscrList = Seq("Month")
-  val keyType = SchemaEntry("dummy", IntegerType)
+  val keyType = StructField("dummy", IntegerType)
 }
 
 case class DoWHistogram(col: Column) extends HistogramTask {
   val taskName = "DowHistogram"
   val nameList = Seq("dow")
   val dscrList = Seq("Day of Week")
-  val keyType = SchemaEntry("dummy", IntegerType)
+  val keyType = StructField("dummy", IntegerType)
 }
 
 case class HourHistogram(col: Column) extends HistogramTask {
   val taskName = "HourHistogram"
   val nameList = Seq("hou")
   val dscrList = Seq("Hour")
-  val keyType = SchemaEntry("dummy", IntegerType)
+  val keyType = StructField("dummy", IntegerType)
 }
 
 case class BooleanHistogram(col: Column) extends HistogramTask {
   val taskName = "BooleanHistogram"
   val nameList = Seq("boo")
   val dscrList = Seq("")
-  val keyType = SchemaEntry("dummy", BooleanType)
+  val keyType = StructField("dummy", BooleanType)
 }
 
 case class StringLengthHistogram(col: Column) extends HistogramTask {
   val taskName = "StringLengthHistogram"
   val nameList = Seq("len")
   val dscrList = Seq("Length")
-  val keyType = SchemaEntry("dummy", IntegerType)
+  val keyType = StructField("dummy", IntegerType)
 }
 
 case class StringByKeyHistogram(col: Column) extends HistogramTask {
   val taskName = "StringByKeyHistogram"
   val nameList = Seq("key")
   val dscrList = Seq("sorted by Key")
-  val keyType = SchemaEntry("dummy", StringType)
+  val keyType = StructField("dummy", StringType)
 }
 
 case class StringByFreqHistogram(col: Column) extends HistogramTask {
@@ -202,7 +202,7 @@ case class StringByFreqHistogram(col: Column) extends HistogramTask {
   override val isSortByValue: Boolean = true
   val nameList = Seq("frq")
   val dscrList = Seq("sorted by Frequency")
-  val keyType = SchemaEntry("dummy", StringType)
+  val keyType = StructField("dummy", StringType)
 }
 
 case class GroupPopulationKey(col: Column) extends BaseTask {
