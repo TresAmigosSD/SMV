@@ -39,13 +39,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
    **/
   def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
-    val smvSchema = SmvSchema.fromDataFrame(df)
-    val ordinals = smvSchema.getIndices(keys: _*)
+    val schema = df.schema
+    val ordinals = schema.getIndices(keys: _*)
     val rowToKeys: Row => Seq[Any] = {row =>
       ordinals.map{i => row(i)}
     }
 
-    val inGroupMapping =  gdo.createInGroupMapping(smvSchema)
+    val inGroupMapping =  gdo.createInGroupMapping(schema)
     val rdd = df.rdd.
       groupBy(rowToKeys).
       flatMapValues(rowsInGroup => inGroupMapping(rowsInGroup)).
@@ -57,14 +57,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
        java.sql.Date, and in Catalyst RDD, it is an Int. Please note, since df.rdd always convert Catalyst RDD
        to Scala RDD, user should have no chance work on Catalyst RDD outside of DF.
      */
-    val outSchema = gdo.createOutSchema(smvSchema)
-    val structType = outSchema.toStructType
+    val outSchema = gdo.createOutSchema(schema)
     val converted = rdd.map{row =>
-      Row(row.toSeq.zip(structType.fields).
+      Row(row.toSeq.zip(outSchema.fields).
         map { case (elem, field) =>
           ScalaReflection.convertToCatalyst(elem, field.dataType)
         }: _*)}
-    val newdf = df.sqlContext.createDataFrame(converted, gdo.createOutSchema(smvSchema).toStructType)
+    val newdf = df.sqlContext.createDataFrame(converted, gdo.createOutSchema(schema))
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
 

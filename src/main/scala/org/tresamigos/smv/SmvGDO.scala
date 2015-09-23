@@ -18,6 +18,7 @@ import org.apache.spark.sql.types.DateUtils
 
 import scala.math.floor
 
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions._
 
 /**
@@ -31,8 +32,8 @@ import org.apache.spark.sql.catalyst.expressions._
  **/
 abstract class SmvGDO extends Serializable{
   def inGroupKeys: Seq[String]
-  def createInGroupMapping(smvSchema:SmvSchema): Iterable[Row] => Iterable[Row]
-  def createOutSchema(inSchema: SmvSchema): SmvSchema
+  def createInGroupMapping(smvSchema:StructType): Iterable[Row] => Iterable[Row]
+  def createOutSchema(inSchema: StructType): StructType
 }
 
 /**
@@ -47,13 +48,13 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
 
   val inGroupKeys = Nil
 
-  def createOutSchema(inSchema: SmvSchema) = {
-    val oldFields = inSchema.entries
+  def createOutSchema(inSchema: StructType) = {
+    val oldFields = inSchema.fields
     val newFields = List(
-      DoubleSchemaEntry(valueCol + "_total"),
-      DoubleSchemaEntry(valueCol + "_rsum"),
-      IntegerSchemaEntry(valueCol + "_quantile"))
-    new SmvSchema(oldFields ++ newFields)
+      StructField(valueCol + "_total", DoubleType, true),
+      StructField(valueCol + "_rsum", DoubleType, true),
+      StructField(valueCol + "_quantile", IntegerType, true))
+    StructType(oldFields ++ newFields)
   }
 
   /** bound bin number value to range [1,numBins] */
@@ -66,10 +67,9 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
    * Input: Array[Row(groupids*, keyid, value, value_double)]
    * Output: Array[Row(groupids*, keyid, value, value_total, value_rsum, value_quantile)]
    */
-  def createInGroupMapping(inSchema:SmvSchema): Iterable[Row] => Iterable[Row] = {
+  def createInGroupMapping(inSchema:StructType): Iterable[Row] => Iterable[Row] = {
     val ordinal = inSchema.getIndices(valueCol)(0)
-    val inSchemaStruct = inSchema.toStructType
-    val valueField = inSchemaStruct(valueCol)
+    val valueField = inSchema(valueCol)
     val getValueAsDouble: Row => Double = {r =>
       valueField.numeric.toDouble(r(ordinal))
     }
@@ -93,21 +93,21 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
 /* Add back chunkByPlus for project migration */
 case class SmvChunkUDF(
   para: Seq[Symbol],
-  outSchema: SmvSchema,
+  outSchema: StructType,
   eval: List[Seq[Any]] => List[Seq[Any]]
 )
 
 class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends SmvGDO {
   val inGroupKeys = Nil
 
-  def createOutSchema(inSchema: SmvSchema) = {
+  def createOutSchema(inSchema: StructType) = {
     if (isPlus)
-      inSchema ++ cudf.outSchema
+      inSchema.mergeSchema(cudf.outSchema)
     else
       cudf.outSchema
   }
 
-  def createInGroupMapping(inSchema: SmvSchema) = {
+  def createInGroupMapping(inSchema: StructType) = {
     val ordinals = inSchema.getIndices(cudf.para.map{s => s.name}: _*)
 
     { it: Iterable[Row] =>
@@ -128,14 +128,14 @@ class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends SmvGDO {
 class FillPanelWithNull(t: String, p: panel.Panel, keys: Seq[String]) extends  SmvGDO {
   val inGroupKeys = Nil
 
-  def createOutSchema(inSchema: SmvSchema) = inSchema
+  def createOutSchema(inSchema: StructType) = inSchema
 
-  def createInGroupMapping(inSchema: SmvSchema): Iterable[Row] => Iterable[Row] = {
+  def createInGroupMapping(inSchema: StructType): Iterable[Row] => Iterable[Row] = {
     val keyOrdinals = inSchema.getIndices(keys: _*).toList
     val timeOrdinal = inSchema.getIndices(t)(0)
     println(timeOrdinal)
-    println(inSchema.entries.size)
-    val tmplt = new GenericMutableRow(inSchema.entries.size)
+    println(inSchema.fields.size)
+    val tmplt = new GenericMutableRow(inSchema.fields.size)
     var rows: Map[Int, Row] = Map()
 
     { it =>

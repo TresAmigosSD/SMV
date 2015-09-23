@@ -36,4 +36,9 @@ package object smv {
       case v => throw new IllegalArgumentException(s"DataType: $v has no numeric")
     }
   }
+
+  /** give access to StructType merge method */
+  def mergeStructType(left: StructType, right: StructType): StructType = {
+    left.merge(right)
+  }
 }

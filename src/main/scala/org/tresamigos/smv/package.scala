@@ -21,7 +21,7 @@ import org.apache.spark.sql.GroupedData
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.{StructField, StructType}
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
@@ -35,6 +35,7 @@ package object smv {
   implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.toGroupedData
   implicit def makeSmvCDSAggColumn(col: Column) = SmvCDSAggColumn(col.toExpr)
   implicit def makeFieldHelper(field: StructField) = new StructFieldHelper(field)
+  implicit def makeStructTypeHelper(schema: StructType) = new StructTypeHelper(schema)
 
   /**
    * Spark(as of 1.4)'s join type is a String.  Could use enum or case objects here,

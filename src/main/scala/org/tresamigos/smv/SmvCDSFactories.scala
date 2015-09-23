@@ -54,7 +54,7 @@ case class InLastNWithNull(n: Int) extends SmvCDS {
       val rows = input.crossRows.toSeq.takeRight(n)
       val resSize = rows.size
       if (resSize < n) {
-        val nullArr:Array[Any] = new Array(input.crossSchema.getSize)
+        val nullArr:Array[Any] = new Array(input.crossSchema.fields.size)
         Range(0, n - resSize).map{i => Row(nullArr: _*)} ++ rows
       } else rows
     }
