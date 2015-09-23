@@ -28,7 +28,6 @@ import scala.annotation.switch
 
 abstract class SchemaEntry extends java.io.Serializable {
   val structField: StructField
-  val zeroVal: Literal
   def strToVal(s: String) : Any
   def valToStr(v: Any) : String = if (v==null) "" else v.toString
   val typeName: String
@@ -50,7 +49,6 @@ case class DoubleSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] type JvmType = Double
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Double]]
-  override val zeroVal = Literal(0.0)
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toDouble
@@ -63,7 +61,6 @@ case class FloatSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] type JvmType = Float
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Float]]
-  override val zeroVal = Literal(0.0f)
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toFloat
@@ -76,7 +73,6 @@ case class IntegerSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] type JvmType = Int
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Int]]
-  override val zeroVal = Literal(0)
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toInt
@@ -89,7 +85,6 @@ case class LongSchemaEntry(name: String) extends NumericSchemaEntry {
   private[smv] type JvmType = Long
   private[smv] val ordering = implicitly[Ordering[JvmType]]
   private[smv] val numeric = implicitly[Numeric[Long]]
-  override val zeroVal = Literal(0l)
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toLong
@@ -101,7 +96,6 @@ case class LongSchemaEntry(name: String) extends NumericSchemaEntry {
 case class BooleanSchemaEntry(name: String) extends NativeSchemaEntry {
   private[smv] type JvmType = Boolean
   private[smv] val ordering = implicitly[Ordering[JvmType]]
-  override val zeroVal = Literal(false)
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toBoolean
   override val typeName = "Boolean"
   val structField = StructField(name, BooleanType, true)
@@ -110,7 +104,6 @@ case class BooleanSchemaEntry(name: String) extends NativeSchemaEntry {
 case class StringSchemaEntry(name: String) extends NativeSchemaEntry {
   private[smv] type JvmType = String
   private[smv] val ordering = implicitly[Ordering[JvmType]]
-  override val zeroVal = Literal("")
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s
   override val typeName = "String"
   val structField = StructField(name, StringType, true)
@@ -125,7 +118,6 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss
   private[smv] val ordering = new Ordering[JvmType] {
     def compare(x: java.sql.Timestamp, y: java.sql.Timestamp) = x.compareTo(y)
   }
-  override val zeroVal = Literal("") // TODO: should pick an epoch date instead.
   // `SimpleDateFormat` is not thread-safe.
   val fmtObj = SmvSchema.threadLocalDateFormat(fmt).get()
   //val fmtObj = new java.text.SimpleDateFormat(fmt)
@@ -141,7 +133,6 @@ case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss
 case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd") extends NativeSchemaEntry {
   private[smv] type JvmType = Int
   private[smv] val ordering = implicitly[Ordering[JvmType]]
-  override val zeroVal = Literal(0)
 
   // `SimpleDateFormat` is not thread-safe.
   val fmtObj = SmvSchema.threadLocalDateFormat(fmt).get()
@@ -165,7 +156,6 @@ case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd") extends Nat
 // TODO: only allow basic types to avoid creating a full parser for the sub-types.
 case class MapSchemaEntry(name: String,
       keySchemaEntry: SchemaEntry, valSchemaEntry: SchemaEntry) extends SchemaEntry {
-  override val zeroVal = Literal(null)
   override val typeName = "Map"
 
   override def toString = s"$name: Map[${keySchemaEntry.typeName},${valSchemaEntry.typeName}]"
@@ -194,7 +184,6 @@ case class MapSchemaEntry(name: String,
 }
 
 case class ArraySchemaEntry(name: String, valSchemaEntry: SchemaEntry) extends SchemaEntry {
-  override val zeroVal = Literal(null)
   override val typeName = "Array"
 
   override def toString = s"$name: Array[${valSchemaEntry.typeName}]"
@@ -461,7 +450,7 @@ object SmvSchema {
       }
     )
   }
-  
+
   /**
    * read a schema file and extract field length from schema file entries for
    * Fixed Record Length data

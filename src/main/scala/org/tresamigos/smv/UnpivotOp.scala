@@ -41,13 +41,11 @@ import org.apache.spark.sql.functions._
 class UnpivotOp(val df: DataFrame, val valueCols: Seq[String]) {
   // TODO: should not hardcode the column/value column names in the result.
   // TODO: perhaps accept multiple valueCols sets.
-  
+
   val types = valueCols.map{c => df(c).toExpr.dataType}.toSet.toSeq
   require(types.size == 1)
   val dataType = types(0)
-  
-  val dummyEntry = SchemaEntry("dummy", dataType).asInstanceOf[NativeSchemaEntry]
-  
+
   /**
    * Creates the projection array expression required to unpivot the pivoted data:
    * Given value columns (X,Y,Z), this produces:

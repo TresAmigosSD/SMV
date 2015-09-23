@@ -20,13 +20,13 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.Column
 
 /**
- * EddTask only define "what" need to be done. The "how" part will leave to a concrete class 
+ * EddTask only define "what" need to be done. The "how" part will leave to a concrete class
  * of the EddTaskBuilder
  * */
 abstract class EddTask {
   val col: Column
   val taskName: String
-  
+
   val nameList: Seq[String]
   val dscrList: Seq[String]
 
@@ -43,7 +43,7 @@ abstract class BaseTask extends EddTask {
     f"${col}%-20s ${d}%-22s ${valueStr}%s"
   }
 
-  def reportJSON(i: Iterator[Any]): String = 
+  def reportJSON(i: Iterator[Any]): String =
     s"""{"var":"${col}", "task": "${taskName}", "data":{""" +
     nameList.map{ n => s""""${n}": ${i.next}""" }.mkString(",") + "}}"
 }
@@ -53,9 +53,9 @@ abstract class HistogramTask extends EddTask {
   def isSortByValue: Boolean = false
 
   def report(it: Iterator[Any]): Seq[String] = {
-    val ordering = keyType.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
+    val ordering = keyType.structField.ordering
     val rec = it.next.asInstanceOf[Map[Any,Long]].toSeq
-    val hist = if(isSortByValue) 
+    val hist = if(isSortByValue)
         rec.sortWith((l, r) => l._2 > r._2)
       else
         rec.sortWith((l, r) => ordering.compare( l._1,  r._1) < 0)
@@ -69,13 +69,13 @@ abstract class HistogramTask extends EddTask {
         f"$k%-20s$c%10d$pct%8.2f%%$sum%12d$cpct%8.2f%%"
     }.mkString("\n")
 
-    Seq(s"Histogram of ${col}: ${dscrList(0)}\n" + 
+    Seq(s"Histogram of ${col}: ${dscrList(0)}\n" +
       "key                      count      Pct    cumCount   cumPct\n" +
       out +
       "\n-------------------------------------------------")
   }
- 
-  def reportJSON(it: Iterator[Any]): String = 
+
+  def reportJSON(it: Iterator[Any]): String =
     s"""{"var":"${col}", "task": "${taskName}", "data":{""" +
     it.next.asInstanceOf[Map[Any,Long]].map{
       case (k, c) => s""""$k":$c"""
@@ -89,6 +89,7 @@ case class NumericBase(col: Column) extends BaseTask {
 
   /**
    * format the numeric decimal values (Float/Double) to limit them to 3 decimal places.
+   * TODO: need to handle null
    */
   override def formatValue(value: Any) : String = {
     def doubleAsStr(d: Double) = {
@@ -221,4 +222,3 @@ case object GroupPopulationCount extends EddTask {
   )
   def reportJSON(i: Iterator[Any]): String = s""""totalcnt":${i.next}"""
 }
-

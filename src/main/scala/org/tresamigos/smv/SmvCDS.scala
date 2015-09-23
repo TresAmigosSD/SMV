@@ -153,7 +153,7 @@ private[smv] object SmvCDS {
 
     val ordinals = inSchema.getIndices(keyOrderPair.map{case (e, d) => e.name}: _*)
     val ordering = keyOrderPair.map{case (e, d) =>
-      val normColOrdering = inSchema.findEntry(e.name).get.asInstanceOf[NativeSchemaEntry].ordering.asInstanceOf[Ordering[Any]]
+      val normColOrdering = inSchema.findEntry(e.name).get.structField.ordering
       if (d == Descending) normColOrdering.reverse else normColOrdering
     }
 
