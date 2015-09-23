@@ -26,7 +26,7 @@ import scala.collection.mutable
  *
  * Original Source: https://gist.github.com/ryanlecompte/5746241
  */
-trait BoundedPriorityQueue[A] extends mutable.PriorityQueue[A] {
+private[smv] trait BoundedPriorityQueue[A] extends mutable.PriorityQueue[A] {
   def maxSize: Int
 
   override def +=(a: A): this.type = {
@@ -58,7 +58,7 @@ trait BoundedPriorityQueue[A] extends mutable.PriorityQueue[A] {
   }
 }
 
-object BoundedPriorityQueue {
+private[smv] object BoundedPriorityQueue {
   /**
    * Creates a new BoundedPriorityQueue instance.
    * @param maxElems the max number of elements

@@ -40,7 +40,7 @@ class SmvTestFile(override val name: String) extends SmvModule("") {
 }
 
 class SmvAppTest extends SmvTestUtil {
-  override def param = Seq("-m", "C", "--data-dir", testcaseTempDir)
+  override def appArgs = Seq("-m", "C", "--data-dir", testcaseTempDir)
 
   val fx = new SmvTestFile("FX")
 
@@ -136,7 +136,7 @@ class SmvAppTest extends SmvTestUtil {
 }
 
 class SmvModuleJSONTest extends SmvTestUtil {
-  override def param = testAppArgs.singleStage ++ Seq("-m", "None")
+  override def appArgs = testAppArgs.singleStage ++ Seq("-m", "None")
 
   test("Test SmvModuleJSON") {
 

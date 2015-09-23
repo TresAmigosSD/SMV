@@ -31,27 +31,27 @@ import org.apache.spark.sql.functions._
  * | 1   | 5/14  |   A     |   100 |
  * | 1   | 6/14  |   B     |   200 |
  * | 1   | 5/14  |   B     |   300 |
- * 
+ *
  * We would like to generate a data set to be ready for aggregations.
  * The desired output is:
- * 
+ *
  * | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
  * | --- | ------------ | ------------ | ------------ | ------------ |
  * | 1   | 100          | NULL         | NULL         | NULL         |
  * | 1   | NULL         | NULL         | NULL         | 200          |
  * | 1   | NULL         | 300          | NULL         | NULL         |
- * 
+ *
  * The raw input is divided into three parts.
  * 1. key column: part of the primary key that is preserved in the output.
  *    That would be the `id` column in the above example.
  * 2. pivot columns: the columns whose row values will become the new column names.
  *    The cross product of all unique values for *each* column is used to generate the output column names.
  * 3. value column: the value that will be copied/aggregated to corresponding output column. `count` in our example.
- * 
+ *
  * @param pivotColSets specify the pivot columns, on above example, it is
- *        Seq(Seq('month, 'product)). If Seq(Seq('month), Seq('month,'product)) is 
+ *        Seq(Seq('month, 'product)). If Seq(Seq('month), Seq('month,'product)) is
  *        used, the output columns will have "count_5_14" and "count_6_14" as
- *        addition to the example. 
+ *        addition to the example.
  * @param valueColPrefixMap specify the value column and how it will be used
  *        to create the output columns. In above example, it is Seq(('count, "count")).
  *        If we use Seq(('count, "num")) instead, the output column names will
@@ -61,10 +61,10 @@ import org.apache.spark.sql.functions._
  *        We assume that the output columns are predefined here. In case that
  *        we truly want to have a data driven pivoting, we can call a helper
  *        function, PivotOp.getBaseOutputColumnNames(df, Seq(pivotCols))
- *        to generate baseOutputColumnNames. 
+ *        to generate baseOutputColumnNames.
  */
 
-case class SmvPivot(
+private[smv] case class SmvPivot(
         pivotColSets: Seq[Seq[String]],
         valueColPrefixMap: Seq[(String, String)],
         baseOutputColumnNames: Seq[String]) {
@@ -79,7 +79,7 @@ case class SmvPivot(
   private val contains: (Seq[Any], Any) => Boolean = { (a, v) => a.contains(v) }
 
   private val outputColExprs = valueColPrefixMap.map {case (valueCol, prefix) =>
-    //  Zero filling is replaced by Null filling to handle CountDistinct right 
+    //  Zero filling is replaced by Null filling to handle CountDistinct right
     baseOutputColumnNames.map { outCol =>
       new Column(SmvIfElseNull(
         ScalaUdf(contains, BooleanType, Seq((new ColumnName(tempPivotValCol)).toExpr, Literal(outCol))),
@@ -91,7 +91,7 @@ case class SmvPivot(
   def outCols(): Seq[String] = {
     outputColExprs.map{l => l.toExpr.asInstanceOf[NamedExpression].name}
   }
-  
+
   /**
    * Create a derived column that contains the concatenation of all the values in
    * the pivot columns.  From the above columns, create a new column with following values:
@@ -129,7 +129,7 @@ case class SmvPivot(
 
 }
 
-object SmvPivot {
+private[smv] object SmvPivot {
   /**
    * Extract the column names from the data.
    * This is done by getting the distinct string values of each column and taking the cartesian product.
@@ -141,7 +141,7 @@ object SmvPivot {
    * most production system, the result of this operation should be static, in
    * that case the result should be coded in modules instead of calling this
    * operation every time.
-   * 
+   *
    * TODO: Add a java log warning message
    */
   private[smv] def getBaseOutputColumnNames(df: DataFrame, pivotColsSets: Seq[Seq[String]]): Seq[String] = {

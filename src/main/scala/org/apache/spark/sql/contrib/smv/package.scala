@@ -16,7 +16,33 @@ package org.apache.spark.sql.contrib
 
 import org.apache.spark.sql.Column
 
+import org.apache.spark.sql.types._
+
+/**
+ * Since we need to access some of the private[sql] classes and methods,
+ * we created this trojan horse package to give org.tresamigos.smv access
+ **/
 package object smv {
   def extractExpr(c: Column) = c.expr
-}
 
+  /** return Ordering[Any] to compare values of Any */
+  def getOrdering[T<: DataType](t: T): Ordering[Any] = {
+    t match {
+      case v: NativeType => v.ordering.asInstanceOf[Ordering[Any]]
+      case v => throw new IllegalArgumentException(s"DataType: $v has no ordering")
+    }
+  }
+
+  /** return Numeric[Any] for the NumericType*/
+  def getNumeric[T<: DataType](t: T): Numeric[Any] = {
+    t match {
+      case v: NumericType => v.numeric.asInstanceOf[Numeric[Any]]
+      case v => throw new IllegalArgumentException(s"DataType: $v has no numeric")
+    }
+  }
+
+  /** give access to StructType merge method */
+  def mergeStructType(left: StructType, right: StructType): StructType = {
+    left.merge(right)
+  }
+}

@@ -49,6 +49,7 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
    * used by non-sparkTest test cases.
    */
   override def beforeAll() = {
+    super.beforeAll()
     if (disableLogging)
       SparkTestUtil.setLoggingLevel(Level.OFF)
     else
@@ -65,8 +66,8 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
     sc = null
     System.clearProperty("spark.master.port")
     // re-enable normal logging for next test if we disabled logging here.
-    if (disableLogging)
-      SparkTestUtil.setLoggingLevel(Level.ERROR)
+    if (disableLogging) SparkTestUtil.setLoggingLevel(Level.ERROR)
+    super.afterAll()
   }
 
   /** With BeforeAndAfterAll, sparkTest method is simply a wrapper of test method
@@ -171,15 +172,27 @@ object SparkTestUtil {
   }
 }
 
-/** Use SmvTestUtil when you need to access a default SmvApp */
+/**
+ * Use SmvTestUtil when you need to access a default SmvApp.app
+ * User can override the `appArgs` method to specify the `app` in the SmvApp object
+ * {{{
+ * class MySmvTest extends SmvTestUtil {
+ *   override def appArgs = Seq("-m", "MyModule", "--data-dir", testcaseTempDir)
+ *   test("test MyModule ...."){
+ *      ...
+ *   }
+ * }
+ * }}}
+ */
 trait SmvTestUtil extends SparkTestUtil {
 
-  def param: Seq[String] = Seq("-m", "None", "--data-dir", testcaseTempDir)
+  /** appArgs could be overridden by concrete class to initiate SmvApp.app as required */
+  def appArgs: Seq[String] = Seq("-m", "None", "--data-dir", testcaseTempDir)
   var app: SmvApp = _
 
   override def beforeAll() = {
     super.beforeAll()
-    SmvApp.init(param.toArray, Option(sc))
+    SmvApp.init(appArgs.toArray, Option(sc))
     app = SmvApp.app
   }
 

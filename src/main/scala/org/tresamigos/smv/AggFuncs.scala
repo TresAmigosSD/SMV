@@ -19,7 +19,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.trees
 import org.apache.spark.sql.catalyst.errors.TreeNodeException
 
-case class OnlineAveragePartition(child: Expression)
+private[smv] case class OnlineAveragePartition(child: Expression)
   extends AggregateExpression with trees.UnaryNode[Expression] {
   override def references = child.references
   override def nullable = false
@@ -28,7 +28,7 @@ case class OnlineAveragePartition(child: Expression)
   override def newInstance() = new OnlineAveragePartitionFunction(Cast(child,dataType), this)
 }
 
-case class OnlineAverageMerge(child: Expression)
+private[smv] case class OnlineAverageMerge(child: Expression)
   extends AggregateExpression with trees.UnaryNode[Expression] {
   override def references = child.references
   override def nullable = false
@@ -38,7 +38,7 @@ case class OnlineAverageMerge(child: Expression)
 }
 
 
-case class OnlineStdDevMerge(child: Expression)
+private[smv] case class OnlineStdDevMerge(child: Expression)
   extends AggregateExpression with trees.UnaryNode[Expression] {
   override def references = child.references
   override def nullable = false
@@ -47,7 +47,7 @@ case class OnlineStdDevMerge(child: Expression)
   override def newInstance() = new OnlineStdDevMergeFunction(child, this)
 }
 
-case class OnlineAverage(child: Expression)
+private[smv] case class OnlineAverage(child: Expression)
   extends PartialAggregate with trees.UnaryNode[Expression] {
   override def references = child.references
   override def nullable = false
@@ -69,7 +69,7 @@ case class OnlineAverage(child: Expression)
   override def newInstance() = new AverageFunction(child, this)
 }
 
-case class OnlineStdDev(child: Expression)
+private[smv] case class OnlineStdDev(child: Expression)
   extends PartialAggregate with trees.UnaryNode[Expression] {
   override def references = child.references
   override def nullable = false
@@ -87,7 +87,7 @@ case class OnlineStdDev(child: Expression)
   override def newInstance() = new OnlineStdDevFunction(child, this)
 }
 
-case class HistogramMerge(child: Expression)
+private[smv] case class HistogramMerge(child: Expression)
   extends AggregateExpression with trees.UnaryNode[Expression] {
   override def references = child.references
   override def nullable = false
@@ -97,7 +97,7 @@ case class HistogramMerge(child: Expression)
 }
 
 
-case class Histogram(child: Expression)
+private[smv] case class Histogram(child: Expression)
   extends PartialAggregate with trees.UnaryNode[Expression] {
   override def references = child.references
   override def nullable = false
@@ -115,7 +115,7 @@ case class Histogram(child: Expression)
   override def newInstance() = new HistogramFunction(child, this)
 }
 
-trait OnlineAvgStdDevFunctions {
+private[smv] trait OnlineAvgStdDevFunctions {
   protected var count: Long = 0L
   protected var avg: Double = 0.0
   protected var m2: Double = 0.0
@@ -132,7 +132,7 @@ trait OnlineAvgStdDevFunctions {
   }
 }
 
-case class OnlineAveragePartitionFunction(
+private[smv] case class OnlineAveragePartitionFunction(
     expr: Expression,
     base: AggregateExpression
   ) extends AggregateFunction with OnlineAvgStdDevFunctions {
@@ -142,7 +142,7 @@ case class OnlineAveragePartitionFunction(
   override def update(input: Row): Unit = sharedUpdate(input, expr)
 }
 
-case class OnlineStdDevFunction(
+private[smv] case class OnlineStdDevFunction(
     expr: Expression,
     base: AggregateExpression
   ) extends AggregateFunction with OnlineAvgStdDevFunctions {
@@ -153,7 +153,7 @@ case class OnlineStdDevFunction(
 }
 
 
-trait OnlineAvgStdDevMergeFunctions {
+private[smv] trait OnlineAvgStdDevMergeFunctions {
   protected var count: Long = 0L
   protected var avg: Double = 0.0
   protected var m2: Double = 0.0
@@ -170,7 +170,7 @@ trait OnlineAvgStdDevMergeFunctions {
   }
 }
 
-case class OnlineAverageMergeFunction(
+private[smv] case class OnlineAverageMergeFunction(
     expr: Expression,
     base: AggregateExpression
   ) extends AggregateFunction with OnlineAvgStdDevMergeFunctions {
@@ -180,7 +180,7 @@ case class OnlineAverageMergeFunction(
   override def update(input: Row): Unit = sharedUpdate(input, expr)
 }
 
-case class OnlineStdDevMergeFunction(
+private[smv] case class OnlineStdDevMergeFunction(
     expr: Expression,
     base: AggregateExpression
   ) extends AggregateFunction with OnlineAvgStdDevMergeFunctions {
@@ -190,7 +190,7 @@ case class OnlineStdDevMergeFunction(
   override def update(input: Row): Unit = sharedUpdate(input, expr)
 }
 
-case class HistogramFunction(
+private[smv] case class HistogramFunction(
     expr: Expression,
     base: AggregateExpression
   ) extends AggregateFunction {
@@ -227,7 +227,7 @@ case class HistogramFunction(
 
 }
 
-case class SmvFirst(child: Expression) extends AggregateExpression with trees.UnaryNode[Expression] {
+private[smv] case class SmvFirst(child: Expression) extends AggregateExpression with trees.UnaryNode[Expression] {
   def this() = this(null)
 
   override def nullable: Boolean = true
@@ -237,7 +237,7 @@ case class SmvFirst(child: Expression) extends AggregateExpression with trees.Un
     new SmvFirstFunction(child, this)
 }
 
-case class SmvFirstFunction(expr: Expression, base: AggregateExpression) extends AggregateFunction {
+private[smv] case class SmvFirstFunction(expr: Expression, base: AggregateExpression) extends AggregateFunction {
   def this() = this(null, null)
 
   var calculated = false

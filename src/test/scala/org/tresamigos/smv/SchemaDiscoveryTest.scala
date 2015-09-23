@@ -23,21 +23,21 @@ class SchemaDiscoveryTest extends SmvTestUtil {
 
     assert(entries.length === 8)
 
-    assert(entries(0).structField.name === "id")
+    assert(entries(0).name === "id")
     assert(entries(0).typeName === "Integer")
-    assert(entries(1).structField.name === "name")
+    assert(entries(1).name === "name")
     assert(entries(1).typeName === "String")
-    assert(entries(2).structField.name === "age")
+    assert(entries(2).name === "age")
     assert(entries(2).typeName === "Integer")
-    assert(entries(3).structField.name === "weight")
+    assert(entries(3).name === "weight")
     assert(entries(3).typeName === "Float")
-    assert(entries(4).structField.name === "active")
+    assert(entries(4).name === "active")
     assert(entries(4).typeName === "Boolean")
-    assert(entries(5).structField.name === "address")
+    assert(entries(5).name === "address")
     assert(entries(5).typeName === "String")
-    assert(entries(6).structField.name === "registration_date")
+    assert(entries(6).name === "registration_date")
     assert(entries(6).typeName === "Timestamp")
-    assert(entries(7).structField.name === "last_active_date")
+    assert(entries(7).name === "last_active_date")
     assert(entries(7).typeName === "Timestamp")
   }
 
@@ -48,15 +48,15 @@ class SchemaDiscoveryTest extends SmvTestUtil {
 
     assert(entries.length === 5)
 
-    assert(entries(0).structField.name === "f1")
+    assert(entries(0).name === "f1")
     assert(entries(0).typeName === "Integer")
-    assert(entries(1).structField.name === "f2")
+    assert(entries(1).name === "f2")
     assert(entries(1).typeName === "String")
-    assert(entries(2).structField.name === "f3")
+    assert(entries(2).name === "f3")
     assert(entries(2).typeName === "Integer")
-    assert(entries(3).structField.name === "f4")
+    assert(entries(3).name === "f4")
     assert(entries(3).typeName === "Float")
-    assert(entries(4).structField.name === "f5")
+    assert(entries(4).name === "f5")
     assert(entries(4).typeName === "Boolean")
   }
 
@@ -67,18 +67,17 @@ class SchemaDiscoveryTest extends SmvTestUtil {
 
     assert(entries.length === 6)
 
-    assert(entries(0).structField.name === "id")
+    assert(entries(0).name === "id")
     assert(entries(0).typeName === "Long")
-    assert(entries(1).structField.name === "name")
+    assert(entries(1).name === "name")
     assert(entries(1).typeName === "String")
-    assert(entries(2).structField.name === "age")
+    assert(entries(2).name === "age")
     assert(entries(2).typeName === "Integer")
-    assert(entries(3).structField.name === "salary")
+    assert(entries(3).name === "salary")
     assert(entries(3).typeName === "Float")
-    assert(entries(4).structField.name === "active")
+    assert(entries(4).name === "active")
     assert(entries(4).typeName === "String")
-    assert(entries(5).structField.name === "last_active_date")
+    assert(entries(5).name === "last_active_date")
     assert(entries(5).typeName === "String")
   }
 }
-
