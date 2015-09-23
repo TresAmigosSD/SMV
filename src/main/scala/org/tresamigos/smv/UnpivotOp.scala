@@ -38,7 +38,7 @@ import org.apache.spark.sql.functions._
  *
  * This only works for String columns for now (due to limitation of Explode method)
  */
-class UnpivotOp(val df: DataFrame, val valueCols: Seq[String]) {
+private[smv] class UnpivotOp(val df: DataFrame, val valueCols: Seq[String]) {
   // TODO: should not hardcode the column/value column names in the result.
   // TODO: perhaps accept multiple valueCols sets.
 

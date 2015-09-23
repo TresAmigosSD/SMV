@@ -7,7 +7,7 @@ import scala.util.Try
 /**
  * helper methods for module reflection/discovery
  */
-object SmvReflection {
+private[smv] object SmvReflection {
   private val mirror = ru.runtimeMirror(this.getClass.getClassLoader)
 
   /** maps the FQN of a scala object to the actual object instance. */

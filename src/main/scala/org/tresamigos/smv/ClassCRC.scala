@@ -23,7 +23,7 @@ import scala.util.control.NonFatal
  * computes the CRC32 checksum for the code of the given class name.
  * The class must be reachable through the configured java class path.
  */
-case class ClassCRC(className: String) {
+private[smv] case class ClassCRC(className: String) {
   // convert com.foo.bar to "/com/foo/bar.class"
   private val classResourcePath = "/" + className.replace('.', '/') + ".class"
 

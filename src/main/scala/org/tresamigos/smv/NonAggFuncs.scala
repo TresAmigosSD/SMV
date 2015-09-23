@@ -20,7 +20,7 @@ import org.apache.spark.sql.catalyst.analysis.UnresolvedException
 
 /** Everything else moved to ColumnHelper.scala */
 
-case class SmvStrCat(children: Expression*)
+private[smv] case class SmvStrCat(children: Expression*)
   extends Expression {
 
   type EvaluatedType = String
@@ -30,19 +30,19 @@ case class SmvStrCat(children: Expression*)
 
   override def eval(input: Row): String = {
     // TODO: should use string builder so we only create 1 object instead of N immutable strings
-    children.map{ c => 
+    children.map{ c =>
       val v = c.eval(input)
       if (v == null) "" else v.toString
     }.reduce( _ + _ )
   }
-  
+
   override def toString = s"SmvStrCat(${children.mkString(",")})"
 }
 
 /**
  * Allows caller to create an array of expressions (usefull for using Explode later)
  */
-case class SmvAsArray(elems: Expression*) extends Expression {
+private[smv] case class SmvAsArray(elems: Expression*) extends Expression {
 
   def children = elems.toList
   override def nullable = elems.exists(_.nullable)
@@ -66,10 +66,10 @@ case class SmvAsArray(elems: Expression*) extends Expression {
 }
 
 /**
- * Do Null-filling 
+ * Do Null-filling
  * if(left) right else null
- **/ 
-case class SmvIfElseNull(left: Expression, right: Expression) extends BinaryExpression {
+ **/
+private[smv] case class SmvIfElseNull(left: Expression, right: Expression) extends BinaryExpression {
   self: Product =>
 
   def symbol = "?:null"
@@ -87,4 +87,3 @@ case class SmvIfElseNull(left: Expression, right: Expression) extends BinaryExpr
     }
   }
 }
-
