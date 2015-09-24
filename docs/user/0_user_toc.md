@@ -14,6 +14,6 @@
     - [SMV Group Functions](funcs_grouped.md)
     - [Pivot / Unpivot Operations](pivot.md)  TODO: create pivot.md from funcs_grouped.md
     - [CDS](smv_cds.md) TODO: create smv_cds.md
-* [Data Quality Management (DQM)](smv_dqm.md) TODO: create smv_dqm.md
+* [Validation & Data Quality Management (DQM)](dqm.md) 
 * [Publishing Stage Output](publishing.md) TODO: create
 * Adding a new CSV input file (with schema discovery)
