@@ -57,7 +57,7 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
 
     sc = new SparkContext("local[2]", name())
     sqlContext = new SQLContext(sc)
-    //resetTestcaseTempDir()
+    resetTestcaseTempDir()
   }
 
   override def afterAll() = {

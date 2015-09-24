@@ -53,7 +53,7 @@ class DQMState(
    *  columns of example records which failed the rule **/
   private[smv] def addRuleRec(name: String, log: String): Unit = {
     val err = new DQMRuleError(name)
-    ruleLoggers(name).addRejectedLineWithReason(log, err)
+    ruleLoggers(name).add(s"${err} @FIELDS: ${log}")
   }
 
   /**

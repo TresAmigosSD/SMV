@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 import org.tresamigos.smv.dqm._
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 
 class DQMTest extends SmvTestUtil {
@@ -46,7 +46,7 @@ class DQMTest extends SmvTestUtil {
     assert(state.getTotalRuleCount() === 7)
     assert(state.getTotalFixCount() === 3)
     assertUnorderedSeqEqual(state.getRuleLog("rule2"), Seq(
-      "org.tresamigos.smv.dqm.DQMRuleError: rule2 @RECORD: rule2 record"))
+      "org.tresamigos.smv.dqm.DQMRuleError: rule2 @FIELDS: rule2 record"))
   }
 
   test("test DQMRule") {
@@ -60,7 +60,7 @@ class DQMTest extends SmvTestUtil {
     state.snapshot()
 
     assertUnorderedSeqEqual(state.getRuleLog("rule1"), Seq(
-      "org.tresamigos.smv.dqm.DQMRuleError: rule1 @RECORD: a=0,b=0.2"
+      "org.tresamigos.smv.dqm.DQMRuleError: rule1 @FIELDS: a=0,b=0.2"
     ))
   }
 
@@ -92,7 +92,7 @@ class DQMTest extends SmvTestUtil {
   ],
   "checkLog": [
     "Rule: a_le_0, total count: 1",
-    "org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @RECORD: a=1"
+    "org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @FIELDS: a=1"
   ]
 }""")
   }
@@ -117,7 +117,7 @@ class DQMTest extends SmvTestUtil {
   ],
   "checkLog": [
     "Rule: b_lt_03, total count: 1",
-    "org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @RECORD: b=0.5",
+    "org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5",
     "Fix: a_lt_1_fix, total count: 1"
   ]
 }""")
@@ -176,22 +176,6 @@ class DQMTest extends SmvTestUtil {
     intercept[ValidationError] {
       file.rdd.show
     }
-/*
-{
-  "passed":false,
-  "errorMessages": [
-    {"FailTotalRuleCountPolicy(3)":"false"}
-  ],
-  "checkLog": [
-    "Rule: BoundRule(a), total count: 1",
-    "org.tresamigos.smv.dqm.DQMRuleError: BoundRule(a) @RECORD: a=2",
-    "Rule: SetRule(b), total count: 1",
-    "org.tresamigos.smv.dqm.DQMRuleError: SetRule(b) @RECORD: b=o",
-    "Rule: FormatRule(c), total count: 1",
-    "org.tresamigos.smv.dqm.DQMRuleError: FormatRule(c) @RECORD: c=zz"
-  ]
-}
-*/
   }
 
   test("test additional DQMFixes") {
@@ -203,5 +187,22 @@ class DQMTest extends SmvTestUtil {
         add(FailTotalFixCountPolicy(5))
     }
     assertSrddDataEqual(file.rdd, "1,m,a;0,f,c;2,m,z;1,o,x;1,m,_")
+  }
+
+  test("test user defined policy") {
+    val ssc = sqlContext; import ssc.implicits._
+    object file extends SmvCsvData("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5") {
+      val policy: (DataFrame, DQMState) => Boolean = {(df, state) =>
+        state.getRuleCount("rule1") + state.getFixCount("fix2") == 3
+      }
+      override def dqm() = SmvDQM().
+        add(DQMRule($"b" < 0.4 , "rule1")).
+        add(DQMFix($"a" < 1, lit(1) as "a", "fix2")).
+        add(DQMPolicy(policy, "udp"))
+    }
+
+    intercept[ValidationError] {
+      file.rdd
+    }
   }
 }
