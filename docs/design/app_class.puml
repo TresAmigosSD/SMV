@@ -59,6 +59,7 @@ package SMV {
 
   SmvApp *-- "1" SmvStages
   SmvStages *-- "*" SmvStage
+  SmvStage *-- "*" SmvModule
 }
 
 package ExampleApp {
