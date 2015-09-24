@@ -1,10 +1,9 @@
-package _PROJ_CLASS_.stage1.etl
+package _PROJ_CLASS_.stage1
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql._
 
-import _PROJ_CLASS_.stage1.input._
 import org.tresamigos.smv._
 
 /**

@@ -81,11 +81,11 @@ function copy_src_files()
     STAGE1_PKG_PATH="${PROJ_DIR}/src/main/scala/${PROJ_CLASS_PATH}/stage1"
 
     SRC_INPUT_SET="${TEMPLATE_DIR}/src/InputFiles.scala"
-    DST_INPUT_SET="${STAGE1_PKG_PATH}/input/InputFiles.scala"
+    DST_INPUT_SET="${STAGE1_PKG_PATH}/InputFiles.scala"
     copy_with_inject "$SRC_INPUT_SET" "$DST_INPUT_SET"
 
     SRC_EMPLOYMENT="${TEMPLATE_DIR}/src/Employment.scala"
-    DST_EMPLOYMENT="${STAGE1_PKG_PATH}/etl/Employment.scala"
+    DST_EMPLOYMENT="${STAGE1_PKG_PATH}/Employment.scala"
     copy_with_inject "$SRC_EMPLOYMENT" "$DST_EMPLOYMENT"
 }
 
