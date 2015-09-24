@@ -120,7 +120,7 @@ One of the options below must be specified.
 
 <tr>
 <td colspan="2">--run-stage stage1 [stage2 ...] / &#8209;s</td>
-<td>Run all output modules in given stages.
+<td>Run all output modules in given stages.  The stage name can either be the base name of the stage or the FQN.
 </td>
 </tr>
 

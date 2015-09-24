@@ -50,12 +50,12 @@ The last part of the provided package name is used as the Maven "artifactID" and
 In the example above, the artifactId will be set to `myapp` and the groupID will be `com.mycompany`
 
 ### Example App sources
-The example app generates an app with a single stage `stage1` and two packages.
-While a single package would have sufficed, it is best to separate out all the input files
-of a stage into a separate package.
-The input files and their DQM rules/policies are put in the `input` sub-package
+The example app generates an app with a single stage `stage1`.
+The stage has two files:
+* `InputFiles.scala` : contains definitions of all input files and their DQM rules/policies.
+* `Employment.scala` : contains sample module for processing the provided employment data.
 
-The generated `etl` package contains a single sample module for processing the provided employment data.
+**Note:** In practice, a single stage will have multiple module files and possibly additional input files (depending on the number and complexity of inputs)
 
 ## Build Example App
 The generated application must be built before it is run.  This is simply done by running the following maven command:
@@ -79,6 +79,9 @@ $ _SMV_HOME_/tools/run_app.sh --run-app
 
 # run stage1 (all output modules in stage1)
 $ _SMV_HOME_/tools/run_app.sh -s stage1
+# or
+$ _SMV_HOME_/tools/run_app.sh -s com.mycompany.myapp.stage1
+
 
 # run specific module (any module can be run this way, does not have to be an output module)
 $ _SMV_HOME_/tools/run_app.sh -m com.mycompany.myapp.stage1.etl.EmploymentRaw
