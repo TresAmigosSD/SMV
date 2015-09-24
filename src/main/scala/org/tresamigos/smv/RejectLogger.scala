@@ -21,11 +21,12 @@ private[smv] class RejectLogger(sparkContext: SparkContext, val localMax: Int = 
   private val rejectedRecords = sparkContext.accumulableCollection(MutableList[String]())
   private val rejectedRecordCount = sparkContext.accumulator(0)
 
-  val addRejectedLineWithReason: (String, Exception) => Unit = {
+  val add: (String) => Unit = {
     var localCounter = 0
-    (r:String, e:Exception) => {
+    (r:String) => {
       if (localCounter < localMax) {
-        rejectedRecords += s"${e.toString} @RECORD: ${r}"
+//        rejectedRecords += s"${e.toString} @RECORD: ${r}"
+        rejectedRecords += r
       }
       localCounter = localCounter + 1
       rejectedRecordCount += 1

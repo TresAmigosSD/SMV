@@ -17,6 +17,7 @@ package org.tresamigos.smv
 import scala.util.Try
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.apache.commons.lang.StringEscapeUtils.escapeJava
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 
@@ -40,17 +41,17 @@ case class ValidationResult (
   }
 
   def toJSON() = {
-    val rmNl: String => String = {s => ("""\n"""r).replaceAllIn(s, """\\n""")}
+    def e(s:String) = escapeJava(s)
 
     "{\n" ++
-    """  "passed":%s,""".format(passed) ++ "\n" ++
-    """  "errorMessages": [""" ++ "\n" ++
-    errorMessages.map{case(k,m) => """    {"%s":"%s"}""".format(rmNl(k),rmNl(m))}.mkString(",\n") ++ "\n" ++
-    "  ],\n" ++
-    """  "checkLog": [""" ++ "\n" ++
-    checkLog.map{l => """    "%s"""".format(rmNl(l))}.mkString(",\n") ++ "\n" ++
-    "  ]\n" ++
-    "}"
+      """  "passed":%s,""".format(passed) ++ "\n" ++
+      """  "errorMessages": [""" ++ "\n" ++
+      errorMessages.map{case(k,m) => """    {"%s":"%s"}""".format(e(k),e(m))}.mkString(",\n") ++ "\n" ++
+      "  ],\n" ++
+      """  "checkLog": [""" ++ "\n" ++
+      checkLog.map{l => """    "%s"""".format(e(l))}.mkString(",\n") ++ "\n" ++
+      "  ]\n" ++
+      "}"
   }
 
   def isEmpty() = (this == ValidationResult(true))
@@ -98,7 +99,7 @@ private[smv] class ParserValidation(sc: SparkContext, failAtError: Boolean = tru
 
   def needAction = true
   val parserLogger = new RejectLogger(sc, 10)
-  def addWithReason(e: Exception, rec: String) = parserLogger.addRejectedLineWithReason(rec,e)
+  def addWithReason(e: Exception, rec: String) = parserLogger.add(s"${e.toString} @RECORD: ${rec}")
   def validate(df: DataFrame) = {
     val (nOfRejects, log) = parserLogger.report
     val passed = (!failAtError) || (nOfRejects == 0)
@@ -141,7 +142,7 @@ private[smv] class ValidationSet(val tasks: Seq[ValidationTask]) {
     SmvReportIO.printReport(res.toJSON())
   }
 
-  private def persiste(res: ValidationResult, path: String) = {
+  private def persist(res: ValidationResult, path: String) = {
     SmvReportIO.saveReport(res.toJSON, path)
   }
 
@@ -155,12 +156,14 @@ private[smv] class ValidationSet(val tasks: Seq[ValidationTask]) {
   def validate(df: DataFrame, hadAction: Boolean, path: String = ""): ValidationResult = {
     if (!tasks.isEmpty) {
       val needAction = tasks.map{t => t.needAction}.reduce(_ || _)
+      // try to read from persisted validation file
       val result = readPersistsedValidationFile(path).recoverWith {case e =>
         if((!hadAction) && needAction) forceAction(df)
         val res = tasks.map{t => t.validate(df)}.reduce(_ ++ _)
-        if (!res.isEmpty){
-          if (path.isEmpty) toConsole(res)
-          else persiste(res, path)
+        // persist if result is not empty or forced an action
+        if ((!res.isEmpty) || ((!hadAction) && needAction)){
+          if(!res.isEmpty) toConsole(res)
+          persist(res, path)
         }
         Try(res)
       }.get

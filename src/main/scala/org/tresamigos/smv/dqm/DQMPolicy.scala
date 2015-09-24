@@ -24,6 +24,15 @@ abstract class DQMPolicy {
   def policy(df: DataFrame, state: DQMState): Boolean
 }
 
+case class UDPolicy(_policy: (DataFrame, DQMState) => Boolean, name: String) extends DQMPolicy {
+  def policy(df: DataFrame, state: DQMState) = _policy(df, state)
+}
+
+object DQMPolicy {
+  def apply(policy: (DataFrame, DQMState) => Boolean, name: String) =
+    UDPolicy(policy, name)
+}
+
 /** No requirement, always pass */
 private[smv] object NoOpDQMPolicy extends DQMPolicy {
   val name = "NoOpDQMPolicy"

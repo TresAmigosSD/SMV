@@ -74,7 +74,7 @@ class RejectTest extends SmvTestUtil {
     {"ParserError":"Totally 1 records get rejected"}
   ],
   "checkLog": [
-    "java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,"02122011"
+    "java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011"
   ]
 }""")
   }
