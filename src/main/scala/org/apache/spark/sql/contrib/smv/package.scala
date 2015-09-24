@@ -20,7 +20,7 @@ import org.apache.spark.sql.types._
 
 /**
  * Since we need to access some of the private[sql] classes and methods,
- * we created this trojan horse package to give org.tresamigos.smv access
+ * we use this hack (not a trojan horse :-)) to give org.tresamigos.smv access
  **/
 package object smv {
   def extractExpr(c: Column) = c.expr

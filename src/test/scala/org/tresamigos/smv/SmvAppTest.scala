@@ -123,11 +123,11 @@ class SmvAppTest extends SmvTestUtil {
     createTempFile("F2.csv")
 
     object f1 extends SmvFile {
-      val basePath = "F1.csv"
+      val path = "F1.csv"
       def doRun(): DataFrame = null
     }
     object f2 extends SmvFile {
-      val basePath = "F2.csv"
+      val path = "F2.csv"
       def doRun(): DataFrame = null
     }
 

@@ -25,8 +25,10 @@ object i {
   // deprecated, should use df instead!!!
   def s(ds: SmvDataSet) = df(ds)
 
+  /** open file using full path */
   def open(path: String) ={
-    val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsvWithHeader)
+    /** isFullPath = true to avoid prepending data_dir */ 
+    val file = SmvCsvFile(path, CsvAttributes.defaultCsvWithHeader, None, true)
     file.rdd
   }
 

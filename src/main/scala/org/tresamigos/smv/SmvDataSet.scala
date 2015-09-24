@@ -187,21 +187,21 @@ abstract class SmvDataSet {
 }
 
 abstract class SmvFile extends SmvDataSet {
-  val basePath: String
-  override def description() = s"Input file: @${basePath}"
+  val path: String
+  override def description() = s"Input file: @${path}"
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
 
-  private[smv] def isAbsolutePath: Boolean = false
+  private[smv] def isFullPath: Boolean = false
 
   val failAtParsingError = true
   private[smv] lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
   override def validations() = super.validations.add(parserValidator)
 
   private[smv] def fullPath = {
-    if (isAbsolutePath || ("""^[\.\/]"""r).findFirstIn(basePath) != None) basePath
-    else if (app == null) throw new IllegalArgumentException(s"app == null and $basePath is not an absolute path")
-    else s"${app.smvConfig.dataDir}/${basePath}"
+    if (isFullPath || ("""^[\.\/]"""r).findFirstIn(path) != None) path
+    else if (app == null) throw new IllegalArgumentException(s"app == null and $path is not a full path")
+    else s"${app.smvConfig.dataDir}/${path}"
   }
 
   override def classCodeCRC() = {
@@ -218,9 +218,9 @@ abstract class SmvFile extends SmvDataSet {
    */
   override def name() = {
     val nameRex = """.*?/?([^/]+?)(.csv)?(.gz)?""".r
-    val fileName = basePath match {
+    val fileName = path match {
       case nameRex(v, _, _) => v
-      case _ => throw new IllegalArgumentException(s"Illegal base path format: $basePath")
+      case _ => throw new IllegalArgumentException(s"Illegal base path format: $path")
     }
     super.name() + "_" + fileName
   }
@@ -238,10 +238,10 @@ abstract class SmvFile extends SmvDataSet {
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
 case class SmvCsvFile(
-  basePath: String,
+  path: String,
   csvAttributes: CsvAttributes,
   schemaPath: Option[String] = None,
-  override val isAbsolutePath: Boolean = false
+  override val isFullPath: Boolean = false
 ) extends SmvFile {
 
   override private[smv] def doRun(): DataFrame = {
@@ -254,9 +254,9 @@ case class SmvCsvFile(
 }
 
 case class SmvFrlFile(
-    basePath: String,
+    path: String,
     schemaPath: Option[String] = None,
-    override val isAbsolutePath: Boolean = false
+    override val isFullPath: Boolean = false
   ) extends SmvFile {
 
   override private[smv] def doRun(): DataFrame = {
@@ -270,10 +270,10 @@ case class SmvFrlFile(
 
 /** Keep this interface for existing application code, will be removed when application code cleaned up */
 object SmvFile {
-  def apply(basePath: String, csvAttributes: CsvAttributes) =
-    new SmvCsvFile(basePath, csvAttributes)
-  def apply(name: String, basePath: String, csvAttributes: CsvAttributes) =
-    new SmvCsvFile(basePath, csvAttributes)
+  def apply(path: String, csvAttributes: CsvAttributes) =
+    new SmvCsvFile(path, csvAttributes)
+  def apply(name: String, path: String, csvAttributes: CsvAttributes) =
+    new SmvCsvFile(path, csvAttributes)
 }
 
 
