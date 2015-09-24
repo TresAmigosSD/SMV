@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv
+package org.tresamigos.smv.cds
 
 import org.apache.spark.sql.types.DateUtils
 
@@ -20,6 +20,8 @@ import scala.math.floor
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions._
+
+import org.tresamigos.smv._
 
 /**
  * SmvGDO - SMV GroupedData Operator

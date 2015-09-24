@@ -23,6 +23,8 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
+import cds._
+
 class SmvDFHelper(df: DataFrame) {
 
   // TODO: add schema file path as well.

@@ -22,6 +22,8 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.Partitioner
 
+import cds._
+
 case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
   def toDF: DataFrame = df
   def toGroupedData: GroupedData = df.groupBy(keys(0), keys.tail: _*)

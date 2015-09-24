@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import cds._
+
 class SmvChunkTest extends SmvTestUtil {
   test("Test chunkBy") {
     val ssc = sqlContext; import ssc.implicits._

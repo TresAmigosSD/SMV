@@ -12,15 +12,17 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv
+package org.tresamigos.smv.cds
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.types.{StructType, StructField}
 import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.dsl.plans._
-
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.annotation._
+
+import org.tresamigos.smv._
 
 //TODO: make it private whe fixed the to1.3 migration
 case class CDSSubGroup(
@@ -32,7 +34,7 @@ case class CDSSubGroup(
 /**
  * SmvCDS - SMV Custom Data Selector
  **/
-
+@Experimental
 abstract class SmvCDS extends Serializable {
   def from(that: SmvCDS): SmvCDS = this match{
     case NoOpCDS => that

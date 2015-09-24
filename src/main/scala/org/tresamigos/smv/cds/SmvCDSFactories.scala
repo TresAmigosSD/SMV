@@ -12,12 +12,12 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv
+package org.tresamigos.smv.cds
 
 import org.apache.spark.sql.{Column, ColumnName}
 import org.apache.spark.sql.catalyst.dsl.expressions._
-
 import org.apache.spark.sql.catalyst.expressions._
+import org.tresamigos.smv._
 
 /**
  * TopNRecs: Return top N records on a given order

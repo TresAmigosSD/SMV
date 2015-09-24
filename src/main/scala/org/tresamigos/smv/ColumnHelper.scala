@@ -21,6 +21,8 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types._
 
+import cds._
+
 import java.util.Calendar
 import java.sql.Timestamp
 import com.rockymadden.stringmetric.phonetic.{MetaphoneAlgorithm, SoundexAlgorithm}

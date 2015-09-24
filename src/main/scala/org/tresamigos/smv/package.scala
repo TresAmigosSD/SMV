@@ -33,7 +33,7 @@ package object smv {
   implicit def makeDFHelper(df: DataFrame) = new SmvDFHelper(df)
   implicit def makeSmvGDFunc(sgd: SmvGroupedData) = new SmvGroupedDataFunc(sgd)
   implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.toGroupedData
-  implicit def makeSmvCDSAggColumn(col: Column) = SmvCDSAggColumn(col.toExpr)
+  implicit def makeSmvCDSAggColumn(col: Column) = cds.SmvCDSAggColumn(col.toExpr)
   implicit def makeFieldHelper(field: StructField) = new StructFieldHelper(field)
   implicit def makeStructTypeHelper(schema: StructType) = new StructTypeHelper(schema)
 
