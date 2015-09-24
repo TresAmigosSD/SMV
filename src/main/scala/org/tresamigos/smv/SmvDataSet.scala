@@ -171,19 +171,18 @@ abstract class SmvDataSet {
   }
 
   private[smv] def computeRDD: DataFrame = {
-    val dfWithTasks = dsDqm.attachTasks(doRun())
-    val (df, hasActionYet) = if(isEphemeral) {
-      (dfWithTasks, false)
+    if(isEphemeral) {
+      val df = dsDqm.attachTasks(doRun())
+      validations.validate(df, false, moduleValidPath()) // no action before this point
+      df
     } else {
-      val resultDf = readPersistedFile().recoverWith {case e =>
-        persist(dfWithTasks)
+      readPersistedFile().recoverWith {case e =>
+        val df = dsDqm.attachTasks(doRun())
+        persist(df)
+        validations.validate(df, true, moduleValidPath()) // has already had action (from persist)
         readPersistedFile()
       }.get
-      (resultDf, true)
     }
-
-    validations.validate(df, hasActionYet, moduleValidPath())
-    df
   }
 }
 

@@ -6,7 +6,7 @@
 * [Run Application](run_app.md)
 * [Run Spark Shell](run_shell.md)
 * [SMV Application](smv_app.md)
-* [SMV Files](smv_file.md) TODO: need to add smv_file.md
+* [SMV Files](smv_file.md)
 * [SMV Modules](smv_module.md)
 * [SMV Stages](smv_stages.md) TODO: rename to smv_stage.md to be consistent (singular)
 * [SMV Functions](functions.md)

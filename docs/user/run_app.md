@@ -161,4 +161,22 @@ One of the options below must be specified.
 </table>
 
 ### Examples
-TODO: add run_app examples below
+Run modules `M1` and `M2` and all its dependencies.  Note the use of the module FQN.
+```shell
+$ _SMV_HOME_/tools/run_app.sh -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
+```
+
+Run all modules in application and generate edd report for all modules that needed to run (including dependencies)
+```shell
+$ _SMV_HOME_/tools/run_app.sh --edd --run-app
+```
+
+Generate a dependency graph for module M1.
+```shell
+$ _SMV_HOME_/tools/run_app.sh -g -m com.mycom.myproj.stage1.M1
+```
+
+Clean up the output directory
+```shell
+$ _SMV_HOME_/tools/run_app.sh --purge-old-output
+```
