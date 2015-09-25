@@ -58,11 +58,7 @@ private[smv] object FQN {
    * extract the basename of a given FQN.
    * For example: "a.b.c" --> "c"
    */
-  def extractBaseName(fqn: String) : String = {
-    val r = """.*\.([^\.]*)""".r
-    val r(baseName) = fqn // extract the last part of name into baseName using matching!
-    baseName
-  }
+  def extractBaseName(fqn: String) : String = fqn.substring(fqn.lastIndexOf('.') + 1)
 }
 
 private[smv] object SmvStage {
