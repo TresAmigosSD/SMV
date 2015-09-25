@@ -50,10 +50,12 @@ The last part of the provided package name is used as the Maven "artifactID" and
 In the example above, the artifactId will be set to `myapp` and the groupID will be `com.mycompany`
 
 ### Example App sources
-The example app generates an app with a single stage `stage1`.
-The stage has two files:
-* `InputFiles.scala` : contains definitions of all input files and their DQM rules/policies.
-* `Employment.scala` : contains sample module for processing the provided employment data.
+The example app generates an app with a two stages `stage1` and `stage2`.  Having two stages for such a tiny example is overkill, but they are there for demonstration purposes.
+The generated source files are:
+* `stage1/InputSetS1.scala` : contains definitions of all input files into stage1 and their DQM rules/policies.
+* `stage1/EmploymentByState.scala` : contains sample ETL module for processing the provided employment data.
+* `stage2/InputFilesS2.scala` : defines the input links to the output modules in `stage1`
+* `stage2/StageEmpCategory.scala` : sample "modeling" module for creating categorical variables.
 
 **Note:** In practice, a single stage will have multiple module files and possibly additional input files (depending on the number and complexity of inputs)
 
@@ -84,7 +86,7 @@ $ _SMV_HOME_/tools/run_app.sh -s com.mycompany.myapp.stage1
 
 
 # run specific module (any module can be run this way, does not have to be an output module)
-$ _SMV_HOME_/tools/run_app.sh -m com.mycompany.myapp.stage1.etl.EmploymentRaw
+$ _SMV_HOME_/tools/run_app.sh -m com.mycompany.myapp.stage1.EmploymentByState
 ```
 
 See [SMV Output Modules](smv_module.md#output-modules) for more details on how to mark a module as an output module.
@@ -92,14 +94,14 @@ See [SMV Output Modules](smv_module.md#output-modules) for more details on how t
 The output csv file and schema can be found in the `data/output` directory (as configured in the `conf/smv-user-conf.props` files).
 
 ```shell
-$ cat data/output/com.mycompany.myapp.stage1.etl.EmploymentRaw_XXXXXXXX.csv/part-* | head -5
+$ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
 "32",981295
 "33",508120
 "34",3324188
 "35",579916
 "36",7279345
 
-$ cat data/output/com.mycompany.myapp.stage1.etl.EmploymentRaw_XXXXXXXX.schema/part-*
+$ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.schema/part-*
 FIRST('ST): String
 EMP: Long
 ```
@@ -149,7 +151,7 @@ You can also access SmvModules defined in the code.
 This is **not** limited to output modules.
 
 ```scala
-scala> val d2 = s(EmploymentRaw)
+scala> val d2 = s(EmploymentByState)
 d2: org.apache.spark.sql.DataFrame = [FIRST('ST): string, EMP: bigint]
 
 scala> d2.printSchema
@@ -162,7 +164,7 @@ scala> d2.count
 res2: Long = 52
 ```
 
-`EmploymentRaw` is defined in the `etl` package `Employment.scala` file.
+`EmploymentByState` is defined in stage1 `EmploymentByState.scala` file.
 As you can see above, when you try to refer to a SmvModule, it will do the calculation and
 then persist it for future use. Now you can use `d2`, a DataFrame, to refer to the
 SmvModule output, although in this example, there are nothing intersecting in that
