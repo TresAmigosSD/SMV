@@ -177,7 +177,7 @@ private[smv] abstract class EddTaskBuilder[T] {
    *          StringByFreqHistogram(expr: NamedExpression)
    * @return this Edd
    */
-  def addMoreTasks(more: EddTask*) = {
+  private[smv] def addMoreTasks(more: EddTask*) = {
     tasks ++= more
     self()
   }

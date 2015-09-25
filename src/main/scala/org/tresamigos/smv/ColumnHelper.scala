@@ -47,7 +47,7 @@ class ColumnHelper(column: Column) {
    * ($"v" * 5).toExpr
    * }}}
    */
-  def toExpr = extractExpr(column)
+  private[smv] def toExpr = extractExpr(column)
 
   /**
    * Get the name of the column.
@@ -271,7 +271,7 @@ class ColumnHelper(column: Column) {
    * $"amt".smvAmtBin
    * }}}
    */
-  def smvAmtBin = {
+  private[smv] def smvAmtBin = {
     val name = s"SmvAmtBin($column)"
     val f = (rawv:Any) =>
       if(rawv == null) null
@@ -306,7 +306,7 @@ class ColumnHelper(column: Column) {
    * }}}
    * '''Note:''' This only applies to columns of type `Double`.
    */
-  def smvNumericBin(min: Double, max: Double, n: Int) = {
+  private[smv] def smvNumericBin(min: Double, max: Double, n: Int) = {
     val name = s"SmvNumericBin($column,$min,$max,$n)"
     val delta = (max - min) / n
     // TODO: smvNumericBin should handle case where value < min or > max.
@@ -505,6 +505,7 @@ class ColumnHelper(column: Column) {
    * df.select($"zipAsNumber".smvPrintToStr("%05d") as "zip")
    * }}}
    **/
+  @deprecated("should use Spark printf() function", "1.5")
   def smvPrintToStr(fmt: String) = {
     val name = s"SmvPrintToStr($column, $fmt)"
     val f = udf({(v: Any) => fmt.format(v)})

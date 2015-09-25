@@ -22,7 +22,8 @@ import org.apache.spark.sql.types.{StructField, StructType, LongType}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
-
+ 
+import org.apache.spark.annotation.Experimental
 import cds._
 
 class SmvDFHelper(df: DataFrame) {
@@ -163,6 +164,7 @@ class SmvDFHelper(df: DataFrame) {
     df.select(renamedFields: _*)
   }
 
+  // TODO: remove project dependency on this, and make it private[smv]
   def joinUniqFieldNames(otherPlan: DataFrame, on: Column, joinType: String = "inner") : DataFrame = {
     val namesL = df.columns.toSet
     val namesR = otherPlan.columns.toSet
@@ -184,6 +186,7 @@ class SmvDFHelper(df: DataFrame) {
     df.joinUniqFieldNames(newOther, joinOpt, joinType).selectMinus(rightKeys(0), rightKeys.tail: _*)
   }
 
+  // TODO: use smvFirst instead of first, since `first` return the first non-null of each field
   def dedupByKey(k1:String, kleft: String*) : DataFrame = {
     import df.sqlContext.implicits._
     val keys = k1 +: kleft
@@ -257,10 +260,12 @@ class SmvDFHelper(df: DataFrame) {
    *
    * Also have a version on SmvGroupedData.
    **/
+  @deprecated("should use spark cube method", "1.5")
   def smvCube(col: String, others: String*): SmvGroupedData = {
     new RollupCubeOp(df, Nil, (col +: others)).cube()
   }
 
+  @deprecated("should use spark cube method", "1.5")
   def smvCube(cols: Column*): SmvGroupedData = {
     val names = cols.map(_.getName)
     new RollupCubeOp(df, Nil, names).cube()
@@ -273,10 +278,12 @@ class SmvDFHelper(df: DataFrame) {
    *
    * Also have a version on SmvGroupedData
    **/
+  @deprecated("should use spark rollup method", "1.5")
   def smvRollup(col: String, others: String*): SmvGroupedData = {
     new RollupCubeOp(df, Nil, (col +: others)).rollup()
   }
 
+  @deprecated("should use spark rollup method", "1.5")
   def smvRollup(cols: Column*): SmvGroupedData = {
     val names = cols.map(_.getName)
     new RollupCubeOp(df, Nil, names).rollup()
@@ -287,6 +294,7 @@ class SmvDFHelper(df: DataFrame) {
    * @param groupingExprs specify grouping expression(s) to compute Edd over
    * @return an Edd object
    */
+  @Experimental
   def groupEdd(groupingExprs : Column*): Edd = {
     Edd(df, groupingExprs)
   }
@@ -294,17 +302,20 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Create an Edd builder on DataFrame population
    */
+  @Experimental
   def edd: Edd = groupEdd()
 
   /**
    *  Similar to groupBy, instead of creating GroupedData,
    *  create an SmvGroupedData object
    */
+  @Experimental
   def smvGroupBy(cols: Column*) = {
     val names = cols.map{c => c.getName}
     SmvGroupedData(df, names)
   }
 
+  @Experimental
   def smvGroupBy(col: String, others: String*) = {
     SmvGroupedData(df, (col +: others))
   }
@@ -324,7 +335,7 @@ class SmvDFHelper(df: DataFrame) {
    * df.chunkBy('account, 'cycleId)(addFirstFunc)
    * }}}
    **/
-  @deprecated("will rename and refine interface after 1.3")
+  @deprecated("will rename and refine interface", "1.5")
   def chunkBy(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
     val kStr = keys.map{_.name}
     df.smvGroupBy(kStr(0), kStr.tail: _*).
@@ -334,7 +345,7 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Same as `chunkBy`, but add the new columns to existing columns
    **/
-  @deprecated("will rename and refine interface after 1.3")
+  @deprecated("will rename and refine interface", "1.5")
   def chunkByPlus(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
     val kStr = keys.map{_.name}
     df.smvGroupBy(kStr(0), kStr.tail: _*).
@@ -358,7 +369,7 @@ class SmvDFHelper(df: DataFrame) {
    * It can be used with EDD to summarize on the flag:
    *
    * {{{
-   *   df1.smvOverlapCheck("key")(df2, df3).edd.addHistogramTasks("flag")().Dump
+   *   df1.smvOverlapCheck("key")(df2, df3).edd.addHistogramTasks("flag")().dump
    * }}}
    **/
   def smvOverlapCheck(key: String, partition: Int = 4)(dfother: DataFrame*) = {
@@ -410,6 +421,7 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * DF level coalesce, for Spark 1.3 only. Should be removed and use DF method coalesce in 1.4
    **/
+  @deprecated("should use spark df coalesce after 1.3", "1.5")
   def smvCoalesce(n: Int) = {
     df.sqlContext.createDataFrame(df.rdd.coalesce(n).map{r => Row.fromSeq(r.toSeq)}, df.schema)
   }

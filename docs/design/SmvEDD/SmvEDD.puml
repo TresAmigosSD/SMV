@@ -1,0 +1,66 @@
+@startuml
+hide empty methods
+hide empty fields
+hide circle
+
+namespace smv.edd {
+  class EddTask <<Abstract>>{
+    col: Column
+    taskName: String
+    description: String
+    ~ aggCol: Column
+    ~ report(): String
+    ~ reportJSON(): String
+  }
+
+  class EddStatTask <<Abstract>> extends EddTask {
+    ~ report(): String
+    ~ reportJSON(): String
+  }
+
+  class EddAvgTask extends EddStatTask {
+    constr(col: Column)
+  }
+
+  class EddCntTask extends EddStatTask {
+    constr(col: Column)
+  }
+
+  class EddStdDevTask extends EddStatTask {
+    constr(col: Column)
+  }
+
+  class EddHistTask extends EddTask {
+    ~ report(): String
+    ~ reportJSON(): String
+    constr(histCol: HistColumn)
+  }
+
+  class EddTaskGroup <<Abstract>>{
+    - taskList: Seq[EddTask]
+    ~ run(): DataFrame
+  }
+
+  class EddSummary extends EddTaskGroup
+  class EddHistogram extends EddTaskGroup
+
+  class HistColumn <<Abstract>>
+  class Hist extends HistColumn
+  class AmtHist extends HistColumn
+
+  class EddFunctions {
+    summary(): DataFrame
+    histogram(): DataFrame
+  }
+
+  class EddReport {
+    show()
+    createReport()
+    saveReport()
+  }
+
+  EddTaskGroup *-- "*" EddTask
+  EddHistTask *-- "1" HistColumn
+}
+
+@enduml
