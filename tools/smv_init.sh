@@ -77,16 +77,15 @@ function copy_src_files()
 {
     echo "-- copying source files"
 
+    PROJ_DIR_FULL_PATH=$(cd $PROJ_DIR; /bin/pwd)
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
-    STAGE1_PKG_PATH="${PROJ_DIR}/src/main/scala/${PROJ_CLASS_PATH}/stage1"
+    DST_DIR="${PROJ_DIR_FULL_PATH}/src/main/scala/${PROJ_CLASS_PATH}"
 
-    SRC_INPUT_SET="${TEMPLATE_DIR}/src/InputFiles.scala"
-    DST_INPUT_SET="${STAGE1_PKG_PATH}/InputFiles.scala"
-    copy_with_inject "$SRC_INPUT_SET" "$DST_INPUT_SET"
-
-    SRC_EMPLOYMENT="${TEMPLATE_DIR}/src/Employment.scala"
-    DST_EMPLOYMENT="${STAGE1_PKG_PATH}/Employment.scala"
-    copy_with_inject "$SRC_EMPLOYMENT" "$DST_EMPLOYMENT"
+    (cd ${TEMPLATE_DIR}/src; find . -type f | while read f; do
+      SRC_FILE="${TEMPLATE_DIR}/src/$f"
+      DST_FILE="${DST_DIR}/$f"
+      copy_with_inject "$SRC_FILE" "$DST_FILE"
+    done)
 }
 
 # --- MAIN ---

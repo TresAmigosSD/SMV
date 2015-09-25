@@ -10,3 +10,4 @@ smv.iml
 **/.c9*
 derby.log
 metastore_db/
+.DS_Store
