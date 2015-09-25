@@ -15,17 +15,23 @@
 package org.tresamigos.smv.panel
 
 import org.joda.time._
+import org.apache.spark.annotation._
 
-trait PartialTime extends Ordered[PartialTime] with Serializable {
+/**
+ *
+ **/
+private[smv] abstract class PartialTime extends Ordered[PartialTime] with Serializable {
   def getValue(): Int
   def compare(that: PartialTime) = (this.getValue() - that.getValue()).signum
 }
 
+@Experimental
 case class Month(year: Int, month: Int) extends PartialTime {
   val month70: Int = (year - 1970) * 12 + month
   def getValue() = month70
 }
 
+@Experimental
 case class Day(year: Int, month: Int, day: Int) extends PartialTime {
   private val MILLIS_PER_DAY = 86400000
   val day70: Int = (new LocalDate(year, month, day).
@@ -34,7 +40,7 @@ case class Day(year: Int, month: Int, day: Int) extends PartialTime {
   def getValue() = day70
 }
 
-abstract class Panel extends Serializable {
+private[smv] abstract class Panel extends Serializable {
   val start: PartialTime
   val end: PartialTime
   val startValue = start.getValue()
@@ -45,11 +51,17 @@ abstract class Panel extends Serializable {
   def createValues(): Iterable[Int]
 }
 
+@DeveloperApi
 abstract class ContinuousPanel extends Panel {
   def createValues(): Iterable[Int] = {
     startValue + 1 until endValue
   }
 }
 
+/**
+ *
+ **/
+@Experimental
 case class MonthlyPanel(start: Month, end: Month) extends ContinuousPanel
+@Experimental
 case class DailyPanel(start: Day, end: Day) extends ContinuousPanel

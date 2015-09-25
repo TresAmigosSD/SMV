@@ -309,7 +309,32 @@ class SmvDFHelper(df: DataFrame) {
     SmvGroupedData(df, (col +: others))
   }
 
-  /* Add back chunkByPlus for code migration */
+  /**
+   * Apply user defined `chunk` mapping on data grouped by a set of keys
+   *
+   * {{{
+   * val addFirst = (l: List[Seq[Any]]) => {
+   *   val firstv = l.head.head
+   *   l.map{r => r :+ firstv}
+   * }
+   * val addFirstFunc = SmvChunkUDF(
+   *      Seq('time, 'call_length),
+   *      SmvSchema.fromString("time: TimeStamp; call_length: Double; first_call_time: TimeStamp").toStructType,
+   *      addFirst)
+   * df.chunkBy('account, 'cycleId)(addFirstFunc)
+   * }}}
+   **/
+  @deprecated("will rename and refine interface after 1.3")
+  def chunkBy(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
+    val kStr = keys.map{_.name}
+    df.smvGroupBy(kStr(0), kStr.tail: _*).
+      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, false)).toDF
+  }
+
+  /**
+   * Same as `chunkBy`, but add the new columns to existing columns
+   **/
+  @deprecated("will rename and refine interface after 1.3")
   def chunkByPlus(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
     val kStr = keys.map{_.name}
     df.smvGroupBy(kStr(0), kStr.tail: _*).

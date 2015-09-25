@@ -24,7 +24,17 @@ import org.apache.spark.annotation._
 
 import org.tresamigos.smv._
 
-//TODO: make it private whe fixed the to1.3 migration
+/**
+ * CDSSubGroup is the data type which `SmvCDS` defined on
+ *
+ * Basically a CDS is simply a `CDSSubGroup => CDSSubGroup` mapping.
+ * All CDS have to deal with a single '''currentRow''' and a group of '''crossRows'''.
+ * For example, ```last3Days``` means that
+ *  - for a given `time` field,
+ *  - according to the`time` field value of '''currentRow''',
+ *  - give me all the rows from the '''crossRows''', which are "in the last 3 days" from the '''currentRow'''
+ **/
+@DeveloperApi
 case class CDSSubGroup(
   currentSchema: StructType,
   crossSchema: StructType,
@@ -32,9 +42,17 @@ case class CDSSubGroup(
   crossRows: Iterable[Row]) extends Serializable
 
 /**
- * SmvCDS - SMV Custom Data Selector
+ * SMV Custom Data Selector
+ *
+ * Concrete CDS need to provide the `filter` method which is a `CDSSubGroup => CDSSubGroup` mapping.
+ *
+ * Since `SmvCDS` support a `from` method, multiple `SmvCDS` can be chained together,
+ * {{{
+ * val cds1 = TimeInLastNDays("time", 7) from TopNRecs(10, $"amt".desc)
+ * val cds2 = TopNRecs(10, $"amt".desc) from TimeInLastNDays("time", 7)
+ * }}}
  **/
-@Experimental
+@DeveloperApi
 abstract class SmvCDS extends Serializable {
   def from(that: SmvCDS): SmvCDS = this match{
     case NoOpCDS => that
@@ -43,13 +61,18 @@ abstract class SmvCDS extends Serializable {
 
   def filter(input: CDSSubGroup): CDSSubGroup
 
-  def createIteratorMap(currentSchema: StructType,  crossSchema: StructType) = {
+  private[smv] def createIteratorMap(currentSchema: StructType,  crossSchema: StructType) = {
     (curr: Row, it: Iterable[Row]) =>
       filter(CDSSubGroup(currentSchema, crossSchema, curr, it)).crossRows
   }
 }
 
-trait RunAggOptimizable {
+/**
+ * TODO: remove this. This is for optimize "TillNow" CDS before we decided that all
+ * runAgg should have that filter applied by default. Now the pre-sort optimization is
+ * implemented in SmvRunAggGDO already
+ **/
+private[smv] trait RunAggOptimizable {
   def createRunAggIterator(
     crossSchema: StructType,
     cum: Seq[AggregateFunction],
@@ -70,7 +93,7 @@ private[smv] case object NoOpCDS extends SmvCDS {
 }
 
 /**
- *
+ * TODO: need to reconsider the use case of this one. may need to change the interface
  **/
 private[smv] class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
   def inGroupKeys = Nil
@@ -83,9 +106,9 @@ private[smv] class SmvCDSAsGDO(cds: SmvCDS) extends SmvGDO {
 }
 
 /**
- * SmvCDSAggColumn wraps around a Column to suppot keyword "from"
+ * SmvCDSAggColumn wraps around a Column to support keyword "from"
  **/
-case class SmvCDSAggColumn(aggExpr: Expression, cds: SmvCDS = NoOpCDS) {
+private[smv] case class SmvCDSAggColumn(aggExpr: Expression, cds: SmvCDS = NoOpCDS) {
 
   def from(otherCds: SmvCDS): SmvCDSAggColumn =
     new SmvCDSAggColumn(aggExpr, cds.from(otherCds))
@@ -177,6 +200,7 @@ private[smv] object SmvCDS {
 
 /**
  * SmvAggGDO
+ *   shared code between SmvOneAggGDO and SmvRunAggGDO
  **/
 private[smv] abstract class SmvAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
   protected val keptCols = SmvCDS.findKeptCols(aggCols)
@@ -288,13 +312,15 @@ private[smv] class SmvRunAggGDO(orders: Seq[Expression], aggCols: Seq[SmvCDSAggC
  *    the "running" Rows with "_"-prefixed names
  *  - Apply the "condition", on the "running" Rows for each "toBeCompared" Row
  *
- * Example:
+ * {{{
  * SmvSelfCompareCDS($"t" >= $"_t" && $"t" < ($"_t" + 3))
+ * }}}
  *
  * For each "toBeCompared" record with column "t", above SmvCDS defines a group of
  * records which has "_t" in the range of (t-3, t].
  **/
 
+@DeveloperApi
 abstract class SmvSelfCompareCDS extends SmvCDS {
   val condition: Expression
 
@@ -322,7 +348,7 @@ abstract class SmvSelfCompareCDS extends SmvCDS {
  *  (which means it can also return botton N records)
  **/
 
-case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends SmvCDS {
+private[smv] case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends SmvCDS {
   private val orderKeys = orderCols.map{o => o.asInstanceOf[SortOrder]}
   private val keys = orderKeys.map{k => k.child.asInstanceOf[NamedExpression].name}
 

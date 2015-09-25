@@ -20,11 +20,11 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.tresamigos.smv._
 
 /**
- * TopNRecs: Return top N records on a given order
+ * Return top N records in a given order
  *
- * Eg.
+ * {{{
  * TopNRecs(3, $"amount".desc)
- *
+ * }}}
  * Return the 3 records with largest "amount" field
  **/
 object TopNRecs {
@@ -33,22 +33,7 @@ object TopNRecs {
   }
 }
 
-case class InFirstN(n: Int) extends SmvCDS {
-  def filter(input: CDSSubGroup) = {
-    val outIt = input.crossRows.toSeq.take(n)
-    CDSSubGroup(input.currentSchema, input.crossSchema, input.currentRow, outIt)
-  }
-}
-
-case class InLastN(n: Int) extends SmvCDS {
-  def filter(input: CDSSubGroup) = {
-    val outIt = input.crossRows.toSeq.takeRight(n)
-    CDSSubGroup(input.currentSchema, input.crossSchema, input.currentRow, outIt)
-  }
-}
-
-
-case class InLastNWithNull(n: Int) extends SmvCDS {
+private[smv] case class InLastNWithNull(n: Int) extends SmvCDS {
   def filter(input: CDSSubGroup) = {
     val outIt = {
       val rows = input.crossRows.toSeq.takeRight(n)
@@ -63,45 +48,46 @@ case class InLastNWithNull(n: Int) extends SmvCDS {
 }
 
 /**
- * Before(t): Return records "before" current record based on column $"$t"
+ * Return records "before" current record based on column timeColName
  **/
-case class Before(t: String) extends SmvSelfCompareCDS {
-  val condition = ($"$t" > $"_$t")
+case class Before(timeColName: String) extends SmvSelfCompareCDS {
+  val condition = ($"$timeColName" > $"_$timeColName")
 }
 
 /**
- * IntInLastN: Return records within current value of an Int column and (current value - N)
+ * For a given integer type column, `intColName`, return records
+ * within `current value` and `(current value - n)``
  **/
-case class IntInLastN(t: String, n: Int) extends SmvSelfCompareCDS {
-  val condition = ($"$t" >= $"_$t" && $"$t" < ($"_$t" + n))
+case class IntInLastN(intColName: String, n: Int) extends SmvSelfCompareCDS {
+  val condition = ($"$intColName" >= $"_$intColName" && $"$intColName" < ($"_$intColName" + n))
 }
 
 /**
- * TimeInLastNDays: Return records in last N days according to a timestamp field
+ * For a given timeStamp type column, `timeColName`, return records in last n days
  **/
-case class TimeInLastNDays(t: String, n: Int) extends SmvSelfCompareCDS {
-  val condition = ($"$t" >= $"_$t" && $"$t" < (new ColumnName("_" + t)).smvPlusDays(n).toExpr)
+case class TimeInLastNDays(timeColName: String, n: Int) extends SmvSelfCompareCDS {
+  val condition = ($"$timeColName" >= $"_$timeColName" && $"$timeColName" < (new ColumnName("_" + timeColName)).smvPlusDays(n).toExpr)
 }
 
 /**
- * TimeInLastNMonths: Return records in last N months according to a timestamp field
+ * For a given timeStamp type column, `timeColName`, return records in last n months
  **/
-case class TimeInLastNMonths(t: String, n: Int) extends SmvSelfCompareCDS {
-  val condition = ($"$t" >= $"_$t" && $"$t" < (new ColumnName("_" + t)).smvPlusMonths(n).toExpr)
+case class TimeInLastNMonths(timeColName: String, n: Int) extends SmvSelfCompareCDS {
+  val condition = ($"$timeColName" >= $"_$timeColName" && $"$timeColName" < (new ColumnName("_" + timeColName)).smvPlusMonths(n).toExpr)
 }
 
 /**
- * TimeInLastNWeeks: Return records in last N weeks according to a timestamp field
+ * For a given timeStamp type column, `timeColName`, return records in last n weeks
  **/
-case class TimeInLastNWeeks(t: String, n: Int) extends SmvSelfCompareCDS {
-  val condition = ($"$t" >= $"_$t" && $"$t" < (new ColumnName("_" + t)).smvPlusWeeks(n).toExpr)
+case class TimeInLastNWeeks(timeColName: String, n: Int) extends SmvSelfCompareCDS {
+  val condition = ($"$timeColName" >= $"_$timeColName" && $"$timeColName" < (new ColumnName("_" + timeColName)).smvPlusWeeks(n).toExpr)
 }
 
 /**
- * TimeInLastNYears: Return records in last N years according to a timestamp field
+ * For a given timeStamp type column, `timeColName`, return records in last n years
  **/
-case class TimeInLastNYears(t: String, n: Int) extends SmvSelfCompareCDS {
-  val condition = ($"$t" >= $"_$t" && $"$t" < (new ColumnName("_" + t)).smvPlusYears(n).toExpr)
+case class TimeInLastNYears(timeColName: String, n: Int) extends SmvSelfCompareCDS {
+  val condition = ($"$timeColName" >= $"_$timeColName" && $"$timeColName" < (new ColumnName("_" + timeColName)).smvPlusYears(n).toExpr)
 }
 
 /**

@@ -32,7 +32,7 @@ import org.tresamigos.smv._
  *   val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
  *   val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
  **/
-abstract class SmvGDO extends Serializable{
+private[smv] abstract class SmvGDO extends Serializable{
   def inGroupKeys: Seq[String]
   def createInGroupMapping(smvSchema:StructType): Iterable[Row] => Iterable[Row]
   def createOutSchema(inSchema: StructType): StructType
@@ -46,7 +46,7 @@ abstract class SmvGDO extends Serializable{
  * The output will contain all the input columns plus value_total, value_rsum, and
  * value_quantile column with a value in the range 1 to num_bins.
  */
-class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
+private[smv] class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
 
   val inGroupKeys = Nil
 
@@ -92,14 +92,19 @@ class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
   }
 }
 
-/* Add back chunkByPlus for project migration */
+/**
+ * User defined "chuck" mapping function
+ * see the `chunkBy` and `chunkByPlus` method of [[org.tresamigos.smv.SmvDFHelper]] for details
+ **/
+@deprecated("will remove after 1.3")
 case class SmvChunkUDF(
   para: Seq[Symbol],
   outSchema: StructType,
   eval: List[Seq[Any]] => List[Seq[Any]]
 )
 
-class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends SmvGDO {
+/* Add back chunkByPlus for project migration */
+private[smv] class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends SmvGDO {
   val inGroupKeys = Nil
 
   def createOutSchema(inSchema: StructType) = {
@@ -127,7 +132,7 @@ class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends SmvGDO {
   }
 }
 
-class FillPanelWithNull(t: String, p: panel.Panel, keys: Seq[String]) extends  SmvGDO {
+private[smv] class FillPanelWithNull(t: String, p: panel.Panel, keys: Seq[String]) extends  SmvGDO {
   val inGroupKeys = Nil
 
   def createOutSchema(inSchema: StructType) = inSchema

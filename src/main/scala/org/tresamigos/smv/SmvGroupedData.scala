@@ -21,9 +21,11 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.Partitioner
+import org.apache.spark.annotation._
 
 import cds._
 
+@Experimental
 case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
   def toDF: DataFrame = df
   def toGroupedData: GroupedData = df.groupBy(keys(0), keys.tail: _*)
@@ -40,7 +42,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
    * val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
    **/
-  def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
+  private[smv] def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
     val schema = df.schema
     val ordinals = schema.getIndices(keys: _*)
     val rowToKeys: Row => Seq[Any] = {row =>
@@ -69,7 +71,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
 
-  def smvMapGroup(cds: SmvCDS): SmvGroupedData = {
+  private[smv] def smvMapGroup(cds: SmvCDS): SmvGroupedData = {
     val gdo = new SmvCDSAsGDO(cds)
     smvMapGroup(gdo)
   }
@@ -337,6 +339,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * Keep "k" and "t" column from the reference record. Sum "v" from last 3, depend on how we defined
    * the SmvCDS "last3", which should refere to the reference record.
    **/
+  @Experimental
   def oneAgg(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
     val gdo = new SmvOneAggGDO(orders.map{o => o.toExpr}, aggCols)
 
@@ -346,6 +349,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
     smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
   }
+  @Experimental
   def oneAgg(order: String, others: String*)(aggCols: SmvCDSAggColumn*): DataFrame =
     oneAgg((order +: others).map{o => new ColumnName(o)}: _*)(aggCols: _*)
 
@@ -368,14 +372,17 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *                    sum('v) from last3 from top2 as "nv2",
    *                    sum('v) as "nv3")
    **/
+  @Experimental
   def runAgg(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
     val gdo = new SmvRunAggGDO(orders.map{o => o.toExpr}.toList, aggCols.toList)
     val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
     smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
   }
+  @Experimental
   def runAgg(order: String, others: String*)(aggCols: SmvCDSAggColumn*): DataFrame =
     runAgg((order +: others).map{s => new ColumnName(s)}: _*)(aggCols: _*)
 
+  @Experimental
   def fillPanelWithNull(timeCol: String, pan: panel.Panel): DataFrame = {
     val gdo = new FillPanelWithNull(timeCol, pan, keys)
     smvMapGroup(gdo).toDF
