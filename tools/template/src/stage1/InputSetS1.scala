@@ -1,4 +1,4 @@
-package _PROJ_CLASS_.stage1.input
+package _PROJ_CLASS_.stage1
 
 import org.tresamigos.smv._
 

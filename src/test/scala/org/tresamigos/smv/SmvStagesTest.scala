@@ -4,48 +4,40 @@ package org.tresamigos.smv {
  * common test application configuration args.
  */
 object testAppArgs {
-  // single stage config with 1 package in stage s1.
+  // single stage config with single stage s1
   val singleStage = Seq(
     "--smv-props",
-    "smv.stages=s1",
-    "smv.stages.s1.packages=org.tresamigos.smv.smvAppTestPkg1")
+    "smv.stages=org.tresamigos.smv.smvAppTestPkg1")
 
-  // multiple stages.  s1 has pkg1 and pkg2, s2 only has pkg3.
+  // multiple stages.  Three stages (three packages)
   val multiStage = Seq(
     "--smv-props",
-    "smv.stages=s1:s2",
-    "smv.stages.s1.packages=org.tresamigos.smv.smvAppTestPkg1:org.tresamigos.smv.smvAppTestPkg2",
-    "smv.stages.s2.packages=org.tresamigos.smv.smvAppTestPkg3")
+    "smv.stages=org.tresamigos.smv.smvAppTestPkg1:org.tresamigos.smv.smvAppTestPkg2:org.tresamigos.smv.smvAppTestPkg3")
 }
-
 
 class SmvStagesTest extends SparkTestUtil {
   test("Test getAllPackageNames method.") {
     object testApp extends SmvApp(Seq(
       "--smv-props",
-      "smv.stages=s1:s2",
-      "smv.stages.s1.packages=pkg1:pkg2",
-      "smv.stages.s2.packages=pkg3:pkg4",
+      "smv.stages=com.myproj.s1:com.myproj.s2",
       "-m", "None"), Some(sc)) {}
 
-    val expPkgs = Seq("pkg1", "pkg2", "pkg3", "pkg4")
+    val expPkgs = Seq("com.myproj.s1", "com.myproj.s2")
     assert(testApp.stages.getAllPackageNames() === expPkgs)
   }
 
   test("Test modules in stage.") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "None"), Some(sc)) {}
 
-    val s1mods = testApp.stages.findStage("s1").allModules.map(m => m.name)
-    val s1out =  testApp.stages.findStage("s1").allOutputModules.map(m => m.name)
-    val s2mods = testApp.stages.findStage("s2").allModules.map(m => m.name)
+    val s1mods = testApp.stages.findStage("smvAppTestPkg1").allModules.map(m => m.name)
+    val s1out =  testApp.stages.findStage("smvAppTestPkg1").allOutputModules.map(m => m.name)
+    val s2mods = testApp.stages.findStage("org.tresamigos.smv.smvAppTestPkg3").allModules.map(m => m.name)
 
     assertUnorderedSeqEqual(s1mods, Seq(
       "org.tresamigos.smv.smvAppTestPkg1.X",
-      "org.tresamigos.smv.smvAppTestPkg1.Y",
-      "org.tresamigos.smv.smvAppTestPkg2.Z"))
+      "org.tresamigos.smv.smvAppTestPkg1.Y"))
     assertUnorderedSeqEqual(s1out, Seq(
-      "org.tresamigos.smv.smvAppTestPkg1.Y",
-      "org.tresamigos.smv.smvAppTestPkg2.Z"))
+      "org.tresamigos.smv.smvAppTestPkg1.Y"))
     assertUnorderedSeqEqual(s2mods, Seq(
       "org.tresamigos.smv.smvAppTestPkg3.L",
       "org.tresamigos.smv.smvAppTestPkg3.T",
@@ -58,18 +50,16 @@ class SmvStagesTest extends SparkTestUtil {
  * While this only calls SmvConfig methods, it is affected by SmvStages so the test belongs in this file.
  */
 class SmvWhatModulesToRunTest extends SparkTestUtil {
-  test("Test modules to run (none output module)") {
+  test("Test modules to run (non-output module)") {
     object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "org.tresamigos.smv.smvAppTestPkg3.T"), Some(sc)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
     assertUnorderedSeqEqual(mods, Seq("org.tresamigos.smv.smvAppTestPkg3.T"))
   }
 
   test("Test modules to run (mods in stage)") {
-    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-s", "s1"), Some(sc)) {}
+    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-s", "smvAppTestPkg1"), Some(sc)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
-    assertUnorderedSeqEqual(mods, Seq(
-      "org.tresamigos.smv.smvAppTestPkg1.Y",
-      "org.tresamigos.smv.smvAppTestPkg2.Z"))
+    assertUnorderedSeqEqual(mods, Seq("org.tresamigos.smv.smvAppTestPkg1.Y"))
   }
 
   test("Test modules to run (mods in app)") {

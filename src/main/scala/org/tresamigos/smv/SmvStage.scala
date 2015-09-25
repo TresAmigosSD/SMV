@@ -14,12 +14,10 @@
 
 package org.tresamigos.smv
 
-import java.util.InvalidPropertiesFormatException
-
 /**
  * trait to be added to any object that manages packages (app, stages, etc)
  */
-trait SmvPackageManager {
+private[smv] trait SmvPackageManager {
   /** any class extending SmvPackageManager must at a minimum implement getAllPackageNames. */
   def getAllPackageNames() : Seq[String]
 
@@ -34,40 +32,49 @@ trait SmvPackageManager {
  * A collection of all stages configured in an app.
  * Extracted out of SmvApp to separate out stage related methods/data.
  */
-class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManager {
+private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManager {
   def numStages = stages.size
   def stageNames = stages map {s => s.name}
-  def findStage(stageName: String) : SmvStage = stages.find(s => s.name == stageName).get
+  def findStage(stageName: String) : SmvStage = {
+    stages.find { s =>
+      stageName == s.name || stageName == FQN.extractBaseName(s.name)
+    }.get
+  }
 
   override def getAllPackageNames() = stages.flatMap(s => s.getAllPackageNames())
 }
 
 /**
- * A single configured stage with multiple packages.
+ * A single configured stage consisting of a single package.
  */
-class SmvStage(val name: String, val pkgs: Seq[String], val version: Int) extends SmvPackageManager {
+private[smv] class SmvStage(val name: String, val version: Int) extends SmvPackageManager {
   override def toString = s"SmvStage<${name}>"
 
-  override def getAllPackageNames() = pkgs
+  override def getAllPackageNames() = Seq(name)
 }
 
-object SmvStage {
+private[smv] object FQN {
+  /**
+   * extract the basename of a given FQN.
+   * For example: "a.b.c" --> "c"
+   */
+  def extractBaseName(fqn: String) : String = fqn.substring(fqn.lastIndexOf('.') + 1)
+}
+
+private[smv] object SmvStage {
   /**
    * construct an SmvStage instance from the stage name and the config object.
-   * The packages in stage X are assumed to be provided by property "smv.stages.X.packages"
+   * for a given stage com.myproj.X, the stage properties are defined as "smv.stages.X.*".
+   *
+   * Currently, only the "version" property is supported.
    */
   def apply(name: String, conf: SmvConfig) = {
-    val stagePropPrefix = s"smv.stages.${name}"
-
-    // get stage packages.
-    val pkgPropName = stagePropPrefix + ".packages"
-    val pkgs = conf.splitProp(pkgPropName)
-    if (pkgs.isEmpty)
-      throw new InvalidPropertiesFormatException(s"property ${pkgPropName} is empty")
+    val baseName = FQN.extractBaseName(name)
+    val stagePropPrefix = s"smv.stages.${baseName}"
 
     // get stage version (if any)
     val version = conf.getPropAsInt(stagePropPrefix + ".version").getOrElse(0)
 
-    new SmvStage(name, pkgs.toList, version)
+    new SmvStage(name, version)
   }
 }

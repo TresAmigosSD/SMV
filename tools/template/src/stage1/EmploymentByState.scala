@@ -1,26 +1,25 @@
-package _PROJ_CLASS_.stage1.etl
+package _PROJ_CLASS_.stage1
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql._
 
-import _PROJ_CLASS_.stage1.input._
 import org.tresamigos.smv._
 
 /**
  * ETL Module Example
  */
-
-object EmploymentRaw extends SmvModule("ETL Example: Employment") with SmvOutput {
+object EmploymentByState extends SmvModule("ETL Example: Employment") with SmvOutput {
 
   override def requiresDS() = Seq(employment);
- 
+
   override def run(i: runParams) = {
     val df = i(employment)
 
     df.groupBy("ST").agg(
-      first("ST"),
+      first("ST") as "ST",
       sum("EMP") as "EMP"
     )
   }
 }
+

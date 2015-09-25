@@ -62,14 +62,13 @@ class SmvConfigTest extends SmvTestUtil {
 
     val ss = conf.stages
     assert(ss.numStages === 2)
-    assertUnorderedSeqEqual(ss.stageNames, Seq("stage1", "stage2"))
+    assertUnorderedSeqEqual(ss.stageNames, Seq("com.myproj.s1pkg", "com.myproj.s2pkg"))
 
-    val s1 = ss.findStage("stage1")
-    assert(s1.pkgs === Seq("pkg1a", "pkg1b"))
+    val s1 = ss.findStage("com.myproj.s1pkg")
     assert(s1.version === 5)
 
-    val s2 = ss.findStage("stage2")
-    assert(s2.pkgs === Seq("pkg2a", "pkg2b"))
+    // find stage using basename instead of FQN
+    val s2 = ss.findStage("s2pkg")
     assert(s2.version === 0)
   }
 
