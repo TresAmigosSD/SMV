@@ -78,7 +78,7 @@ class ColumnHelper(column: Column) {
 
   /**
    * Substitute another column value if the current column is null.
-   * Same as [[org.tresamigos.smv.ColumnHelper.smvNullSub()]] but uses another column value as the substitution value.
+   * Same as `smvNullSub` but uses another column value as the substitution value.
    */
   def smvNullSub(that: Column) = {
     coalesce(column, that)
@@ -489,7 +489,7 @@ class ColumnHelper(column: Column) {
    * you need to and another step
    *
    * {{{
-   * val resWithDiff = res.selectPlus($"v" - $v_lag" as "v_increase")
+   * val resWithDiff = res.selectPlus($"v" - $"v_lag" as "v_increase")
    * }}}
    *
    * @return The previous value of the column in the group.

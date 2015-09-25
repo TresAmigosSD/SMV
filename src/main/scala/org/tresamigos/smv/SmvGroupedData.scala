@@ -382,6 +382,18 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   def runAgg(order: String, others: String*)(aggCols: SmvCDSAggColumn*): DataFrame =
     runAgg((order +: others).map{s => new ColumnName(s)}: _*)(aggCols: _*)
 
+  /**
+   * Same as `runAgg` but with all input column kept
+   **/
+  @Experimental
+  def runAggPlus(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
+    val inputCols = df.columns.map{c => new ColumnName(c)}.map{c => SmvCDSAggColumn(c.toExpr)}
+    runAgg(orders: _*)((inputCols ++ aggCols): _*)
+  }
+  @Experimental
+  def runAggPlus(order: String, others: String*)(aggCols: SmvCDSAggColumn*): DataFrame =
+    runAggPlus((order +: others).map{s => new ColumnName(s)}: _*)(aggCols: _*)
+
   @Experimental
   def fillPanelWithNull(timeCol: String, pan: panel.Panel): DataFrame = {
     val gdo = new FillPanelWithNull(timeCol, pan, keys)

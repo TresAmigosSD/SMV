@@ -42,6 +42,24 @@ class SmvCDSTest extends SmvTestUtil {
       "[z,5,2.2,1]"))
   }
 
+  test("test runAggPlus") {
+    val ssc = sqlContext;
+    import ssc.implicits._
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+
+    val last3 = IntInLastN("t", 3)
+    val res = df.smvGroupBy('k).runAggPlus("t")(
+      sum('v) from last3 as "nv1",
+      count('v) from last3 as "nv2")
+
+    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double; nv1: Double; nv2: Long")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3,0.3,1]",
+      "[z,1,0.2,0.2,1]",
+      "[z,2,1.4,1.5999999999999999,2]",
+      "[z,5,2.2,2.2,1]"))
+  }
+
   test("Test agg with no-from-aggregation") {
     val ssc = sqlContext;
     import ssc.implicits._
