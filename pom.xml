@@ -214,6 +214,7 @@
         <plugin>
             <groupId>com.github.github</groupId>
             <artifactId>site-maven-plugin</artifactId>
+            <version>0.12</version>
             <configuration>
                 <message>Creating site for ${project.version}</message>
                 <repositoryName>SMV</repositoryName>
@@ -271,5 +272,37 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <!-- This whole profile setup below is just to execute the run-sample-app.sh conditionally in test phase but not when skipTests is defined -->
+    <profiles>
+        <profile>
+            <id>my-test-plugins</id>
+
+            <activation>
+                <!--<property><name>!maven.test.skip</name></property>-->
+                <property><name>!skipTests</name></property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <executions>
+                            <execution>
+                                <id>run-sample-app</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>./src/test/scripts/run-sample-app.sh</executable>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
