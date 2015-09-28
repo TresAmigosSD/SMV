@@ -24,6 +24,7 @@ import org.apache.spark.sql.DataFrame
 import java.text.{DateFormat, SimpleDateFormat}
 
 import scala.annotation.switch
+import scala.util.Try
 
 private[smv] abstract class SchemaEntry extends java.io.Serializable {
   val name: String
@@ -343,6 +344,31 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
 
     sb.toString
   }
+
+  /**
+   * Extract the CSV attributes from the schema file.
+   * The attributes can be defined as follows:
+   * {{{
+   * @has-header = true
+   * @delimiter = |
+   * @quote-char = "
+   * }}}
+   * "has-header", "delimiter", and "quotechar" are all optional and will default to (true, ",", '"') respectively.
+   */
+  private[smv] def extractCsvAttributes() = {
+    def strToChar(s: String) : Char = {
+      s match {
+        case "\\t" => '\t'  // map \t to tab
+        case x => x(0)
+      }
+    }
+
+    val delimiter = strToChar(attributes.getOrElse("delimiter", ","))
+    val quotechar = strToChar(attributes.getOrElse("quote-char", "\""))
+    val hasHeader = Try(attributes("has-header").toBoolean).getOrElse(true)
+
+    CsvAttributes(delimiter, quotechar, hasHeader)
+  }
 }
 
 object SmvSchema {
@@ -358,6 +384,7 @@ object SmvSchema {
       map(_.replaceFirst("(//|#).*", "")).
       filterNot(_.matches("^[ \t]*$")).
       map(_.replaceFirst(";[ \t]*$", "")).
+      map(_.trim).
       partition( _.startsWith("@"))
 
     // convert seq of "@k1 = v1; ..." into a Map(k1->v1, ...)

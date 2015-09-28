@@ -290,7 +290,7 @@
                         <executions>
                             <execution>
                                 <id>run-sample-app</id>
-                                <phase>integration-test</phase>
+                                <phase>install</phase>
                                 <goals>
                                     <goal>exec</goal>
                                 </goals>

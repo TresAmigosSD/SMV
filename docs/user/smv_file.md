@@ -8,12 +8,7 @@ For example:
 ```scala
 package com.mycom.myproj.stage1.input
 
-// define project specific CSV attributes.
-private object CA {
-  val caBar = new CsvAttributes(delimiter = '|', hasHeader = true)
-}
-
-object acct_demo extends SmvCsvFile("accounts/acct_demo.csv", CA.caBar)
+object acct_demo extends SmvCsvFile("accounts/acct_demo.csv")
 ```
 
 Given the above definition, any module in `stage1` will be able to add a dependency to `acct_demo` by using it in `requireDS`:
@@ -55,14 +50,42 @@ And the `dqm` method is used to provide a set of DQM rules to apply to the outpu
 TODO: add FRL info
 
 ## Schema Definition
-Because CSV files do not describe the data, the user must supply a schema definition that describes the set of columns and their type.  The schema file consists of field definitions with one field definition per line.  The field definition consists of the field name and the field type.  The file may also contain blank lines and comments that start with "//" or "#".
+Because CSV files do not describe the data, the user must supply a schema definition that describes the set of columns and their type.  The schema file consists of CSV attributes and field definitions with one field definition per line.  The field definition consists of the field name and the field type.  The file may also contain blank lines and comments that start with "//" or "#".
 For example:
 ```
+# CSV attributes
+@has-header = true
+@delimiter = |
 # schema for input
 acct_id: String;  # this is the id
 user_id: String;
 amt: Double;  // transaction amount!
 ```
+
+## CSV attributes
+The schema file can specify the CSV attributes (delimiter, quote char, and header).  All three attributes are optional and will default to (',', '"', true) respectively.
+<table>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>has-header</td>
+<td>true</td>
+<td>Determine if CSV file has header.  Can only contain true/false</td>
+</tr>
+<tr>
+<td>delimiter</td>
+<td>,</td>
+<td>CSV field delimiter/separator. For tab separated files, specify \t as the separator</td>
+</tr>
+<tr>
+<td>quote-char</td>
+<td>"</td>
+<td>character used to quote fields (only used if field contains characters that would confuse the parser)</td>
+</tr>
+</table>
 
 ## Supported schema types
 ### Native types
@@ -86,36 +109,6 @@ Only native types are supported as the key/value types.
 str_to_int: map[String, Integer];
 int_to_double: map[Integer, Double];
 ```
-
-## Csv Attributes
-TODO: CSVAttributes will be going away and replaced with info in schema file.
-
-There are 3 attributes for each CSV file. The CsvAttributes class captured those attributes.
-```scala
-case class CsvAttributes(
-                          val delimiter: Char = ',',
-                          val quotechar: Char = '\"',
-                          val hasHeader: Boolean = false)
-```
-CsvAttributes typically used as `implicit parameter` for CSV related operations, such as `sqlContext.csvFileWithSchema`. 
-
-Without specification, the implicit default settings is defined as in the case class. 
-
-Here are a group of typically used `CsvAttributes`:
-```scala
-  val defaultTsv = new CsvAttributes(delimiter = '\t')
-  val defaultCsvWithHeader = new CsvAttributes(hasHeader = true)
-  val defaultTsvWithHeader = new CsvAttributes(delimiter = '\t', hasHeader = true)
-```
-
-They are defined in the ```CsvAttributes``` object, so can be referred as ```CsvAttributes.defaultTsv``` etc.
-
-For some CSV files with different settings, you may need to define your own, for example:
-```scala
-implicit val caBar = new CsvAttributes(delimiter = '|', hasHeader = true)
-```
-With the same scope, you can use `csvFileWithSchema`, which will assume data as bar separated 
-fields with header record.
 
 ## Accessing Raw Files from shell
 TODO: add info about shell access here (both, raw files and existing files)

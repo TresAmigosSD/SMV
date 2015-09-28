@@ -239,7 +239,7 @@ abstract class SmvFile extends SmvDataSet {
  */
 case class SmvCsvFile(
   path: String,
-  csvAttributes: CsvAttributes,
+  csvAttributes: CsvAttributes = null,
   schemaPath: Option[String] = None,
   override val isFullPath: Boolean = false
 ) extends SmvFile {

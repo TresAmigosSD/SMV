@@ -161,4 +161,21 @@ class SmvSchemaTest extends SmvTestUtil {
 
     assertDoubleSeqEqual(res.collect()(0).toSeq, Seq(0.3,0.11,0.1))
   }
+
+  test("Test schema extractCsvAttributes") {
+    val s = SmvSchema.fromString("""
+          @has-header = false;
+          @delimiter = \t;
+          @quote-char = |;
+          a:string""")
+    val ca = s.extractCsvAttributes()
+    assert(ca === CsvAttributes('\t', '|', false))
+  }
+
+  // test default values of extracted csv attributes.
+  test("Test schema extractCsvAttributes defaults") {
+    val s = SmvSchema.fromString("a:string; b:double")
+    val ca = s.extractCsvAttributes()
+    assert(ca === CsvAttributes(',', '\"', true))
+  }
 }
