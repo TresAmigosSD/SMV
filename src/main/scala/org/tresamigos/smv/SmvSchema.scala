@@ -17,10 +17,9 @@ package org.tresamigos.smv
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.catalyst.expressions.{Literal, Row, AttributeReference}
+import org.apache.spark.sql.catalyst.expressions.Row
 import org.apache.spark.sql.DataFrame
 
-import org.apache.spark.sql.catalyst.plans.logical._
 
 import java.text.{DateFormat, SimpleDateFormat}
 
@@ -272,7 +271,14 @@ private[smv] object SchemaEntry {
   }
 }
 
-class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
+/**
+ * CSV file schema definition.
+ * This class should only be used for parsing/persisting the schema file associated with a CSV file.
+ * It is no longer needed as a general purpose schema definition as spark now has that covered.
+ * @param entries sequence of SchemaEntry.  One for each field in the csv file.
+ * @param attributes sequence of arbitrary key/value mappings (usually contains CSV file attributes such as headers, separator, etc.)
+ */
+class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,String]) extends java.io.Serializable {
   private[smv] def getSize = entries.size
 
   /* Since Spark-1.3.0, Catalyst started to maintain its own type, we always need to call
@@ -342,17 +348,26 @@ class SmvSchema (val entries: Seq[SchemaEntry]) extends java.io.Serializable {
 object SmvSchema {
 
   /**
-   * creates a schema object from an array of raw schema entry strings.
+   * creates a schema object from an array of raw schema entry/attribute strings.
    * Remove comments, empty lines and create the schema entry object
    * from each line.
    */
-  private def schemaFromEntryStrings(strEntries : Array[String]) = {
-    new SmvSchema(
-      strEntries.map(_.replaceFirst("(//|#).*", "")).
+  private def schemaFromEntryStrings(schemaFileLines : Array[String]) = {
+    // split the schema file lines into attributes (start with @) and general entries (after filtering out comments, ";", empty lines)
+    val (strAtts, strEntries) = schemaFileLines.toList.
+      map(_.replaceFirst("(//|#).*", "")).
       filterNot(_.matches("^[ \t]*$")).
       map(_.replaceFirst(";[ \t]*$", "")).
-      map(SchemaEntry(_)).
-      toList
+      partition( _.startsWith("@"))
+
+    // convert seq of "@k1 = v1; ..." into a Map(k1->v1, ...)
+    val attMap = strAtts.
+      map(_.stripPrefix("@").split("=")).
+      map(x => x(0).trim -> x(1).trim).toMap
+
+    new SmvSchema(
+      strEntries.map(SchemaEntry(_)),
+      attMap
     )
   }
 
@@ -379,7 +394,8 @@ object SmvSchema {
     new SmvSchema(
       df.schema.fields.map{a =>
         SchemaEntry(a.name, a.dataType)
-      }
+      },
+      Map.empty
     )
   }
 

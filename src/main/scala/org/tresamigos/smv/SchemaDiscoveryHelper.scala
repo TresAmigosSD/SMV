@@ -185,7 +185,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       }
     }
 
-    new SmvSchema(schemaEntries.toSeq)
+    new SmvSchema(schemaEntries.toSeq, Map.empty)
   }
 
   /**

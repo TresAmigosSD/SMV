@@ -42,6 +42,9 @@ class SmvSchemaTest extends SmvTestUtil {
     assert(entries(7) === FloatSchemaEntry("val7"))
     assert(entries(8) === MapSchemaEntry("val8", StringSchemaEntry("keyType"), IntegerSchemaEntry("valType")))
     assert(entries(9) === ArraySchemaEntry("val9", IntegerSchemaEntry("valType")))
+
+    val atts = s.attributes
+    assert(atts === Map("key1" -> "val1", "key2" -> "val2b"))
   }
 
   test("Schema entry equality") {

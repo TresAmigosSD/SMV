@@ -8,8 +8,11 @@ id:    String // blah
 # hash comment line!
    // leave above empty line!
 
+@key1= val1
 val5: integer
 val6: boolean
 val7: float
 val8: Map[String, Integer]
 val9: Array[Integer]
+@ key2 = val2
+@ key2 = val2b // override!
