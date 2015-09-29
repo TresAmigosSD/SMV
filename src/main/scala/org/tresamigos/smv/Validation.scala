@@ -118,9 +118,9 @@ private[smv] object TerminateParserValidator extends ParserValidationTask {
 /** ValidationSet is a collection of ValidationTask's
  *  it provide a single entire to the list of tasks from SmvDataSet
  **/
-private[smv] class ValidationSet(val tasks: Seq[ValidationTask]) {
+private[smv] class ValidationSet(val tasks: Seq[ValidationTask], val isPersist: Boolean = true) {
   def add(task: ValidationTask) = {
-    new ValidationSet(tasks :+ task)
+    new ValidationSet(tasks :+ task, isPersist)
   }
 
   /** Since optimization can be done on a DF actions like count, we have to convert DF
@@ -153,20 +153,34 @@ private[smv] class ValidationSet(val tasks: Seq[ValidationTask]) {
     })
   }
 
+  private def doValidate(df: DataFrame, forceAnAction: Boolean, path: String): ValidationResult = {
+    if(forceAnAction) forceAction(df)
+
+    val res = tasks.map{t => t.validate(df)}.reduce(_ ++ _)
+
+    // as long as result non-empty, print it to the console
+    if(!res.isEmpty) toConsole(res)
+
+    // persist if result is not empty or forced an action
+    if (isPersist && ((!res.isEmpty) || forceAnAction)) persist(res, path)
+
+    res
+  }
+
   def validate(df: DataFrame, hadAction: Boolean, path: String = ""): ValidationResult = {
     if (!tasks.isEmpty) {
       val needAction = tasks.map{t => t.needAction}.reduce(_ || _)
-      // try to read from persisted validation file
-      val result = readPersistsedValidationFile(path).recoverWith {case e =>
-        if((!hadAction) && needAction) forceAction(df)
-        val res = tasks.map{t => t.validate(df)}.reduce(_ ++ _)
-        // persist if result is not empty or forced an action
-        if ((!res.isEmpty) || ((!hadAction) && needAction)){
-          if(!res.isEmpty) toConsole(res)
-          persist(res, path)
-        }
-        Try(res)
-      }.get
+      val forceAnAction = (!hadAction) && needAction
+
+      val result = if(isPersist) {
+        // try to read from persisted validation file
+        readPersistsedValidationFile(path).recoverWith {case e =>
+          Try(doValidate(df, forceAnAction, path))
+        }.get
+      } else {
+        doValidate(df, forceAnAction, path)
+      }
+
       terminateAtError(result)
       result
     } else {

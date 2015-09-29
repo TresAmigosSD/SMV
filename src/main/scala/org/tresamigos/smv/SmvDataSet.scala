@@ -41,13 +41,18 @@ abstract class SmvDataSet {
   /** user tagged code "version".  Derived classes should update the value when code or data */
   def version() : Int = 0
 
+
+  /** Objects defined in Spark Shell has class name start with $ **/
+  val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
+
   /**
    * module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
+   * Always return 0 for objects created in spark shell
    */
-  protected val moduleCRC = ClassCRC(this.getClass.getName)
+  protected val moduleCRC = if(isObjectInShell) 0l else ClassCRC(this.getClass.getName).crc
 
   /** CRC computed from the dataset "code" (not data) */
-  def classCodeCRC(): Int = moduleCRC.crc.toInt
+  def classCodeCRC(): Int = moduleCRC.toInt
 
   /**
    * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
@@ -68,7 +73,11 @@ abstract class SmvDataSet {
   def isEphemeral: Boolean
 
   private lazy val dsDqm = dqm()
-  private[smv] def validations(): ValidationSet = new ValidationSet(Seq(dsDqm))
+
+  private[smv] def isPersistValidateResult = !isObjectInShell
+
+  /** do not persist validation result if isObjectInShell **/
+  private[smv] def validations(): ValidationSet = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
 
   /**
    * Define the DQM rules, fixes and policies to be applied to this `DataSet`.
@@ -209,7 +218,7 @@ abstract class SmvFile extends SmvDataSet {
     val mTime = SmvHDFS.modificationTime(fileName)
     val crc = new java.util.zip.CRC32
     crc.update(fileName.toCharArray.map(_.toByte))
-    (crc.getValue + mTime + moduleCRC.crc).toInt
+    (crc.getValue + mTime + moduleCRC).toInt
   }
 
   /**
@@ -360,7 +369,12 @@ abstract class SmvModuleLink(outputModule: SmvOutput) extends
  *
  * TODO: need to rename this!! perhaps something like SmvCsvStringData or some such.
  **/
-case class SmvCsvData(schemaStr: String, data: String) extends SmvModule("Dummy module to create DF from strings") {
+case class SmvCsvData(
+    schemaStr: String,
+    data: String,
+    override val isPersistValidateResult: Boolean = false
+  ) extends SmvModule("Dummy module to create DF from strings") {
+
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
   val failAtParsingError = true
@@ -370,7 +384,7 @@ case class SmvCsvData(schemaStr: String, data: String) extends SmvModule("Dummy 
   override def classCodeCRC() = {
     val crc = new java.util.zip.CRC32
     crc.update((schemaStr + data).toCharArray.map(_.toByte))
-    (crc.getValue + moduleCRC.crc).toInt
+    (crc.getValue + moduleCRC).toInt
   }
 
   def run(i: runParams) = null
