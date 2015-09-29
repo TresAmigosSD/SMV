@@ -42,9 +42,9 @@
           <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>DQM (Data Quality Module) providing classes for DF data quality assurance</p><p>Main class <a href="SmvDQM.html" class="extype" name="org.tresamigos.smv.dqm.SmvDQM">org.tresamigos.smv.dqm.SmvDQM</a> can be used with the SmvApp/Module
 Framework or on stand-alone DF.
 With the SmvApp/Module framework, a <code>dqm</code> method is defined on the
-<span class="extype" name="org.tresamigos.smv.SmvDataSet">org.tresamigos.smv.SmvDataSet</span> level, an can be override to define DQM rules,
+<a href="../SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">org.tresamigos.smv.SmvDataSet</a> level, and can be overridden to define DQM rules,
 fixes and policies, which then will be automatically checked when the SmvDataSet
-get resolved.</p><p>For working on a stand-alone DF, please refer the SmvDQM class's documentation.
+gets resolved.</p><p>For working on a stand-alone DF, please refer the SmvDQM class's documentation.
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
@@ -275,6 +275,19 @@ the DF will Fail.</p>
       </span>
       </h4>
       <p class="comment cmt">DQM class for data quality check and fix</p>
+    </li><li name="org.tresamigos.smv.dqm.UDPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="UDPolicyextendsDQMPolicywithProductwithSerializable"></a>
+      <a id="UDPolicy:UDPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="UDPolicy.html"><span class="name">UDPolicy</span></a><span class="params">(<span name="_policy">_policy: (<span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span>, <a href="DQMState.html" class="extype" name="org.tresamigos.smv.dqm.DQMState">DQMState</a>) ⇒ <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="DQMPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMPolicy">DQMPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
     </li></ol>
             </div>
 
@@ -295,6 +308,19 @@ the DF will Fail.</p>
       </span>
       </h4>
       <p class="shortcomment cmt">BoundRule requires <code>lower &lt;= col &lt; upper</code></p>
+    </li><li name="org.tresamigos.smv.dqm.DQMPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DQMPolicy"></a>
+      <a id="DQMPolicy:DQMPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMPolicy$.html"><span class="name">DQMPolicy</span></a>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.dqm.FailAny" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="FailAny"></a>
       <a id="FailAny:FailAny"></a>

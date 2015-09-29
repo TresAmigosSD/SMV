@@ -238,7 +238,7 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#fillPanelWithNull" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#fillPanelWithNull" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="fillPanelWithNull(timeCol:String,pan:org.tresamigos.smv.panel.Panel):org.apache.spark.sql.DataFrame"></a>
       <a id="fillPanelWithNull(String,Panel):DataFrame"></a>
       <h4 class="signature">
@@ -247,10 +247,13 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">fillPanelWithNull</span><span class="params">(<span name="timeCol">timeCol: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="pan">pan: <a href="panel/Panel.html" class="extype" name="org.tresamigos.smv.panel.Panel">Panel</a></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">fillPanelWithNull</span><span class="params">(<span name="timeCol">timeCol: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="pan">pan: <span class="extype" name="org.tresamigos.smv.panel.Panel">Panel</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <a id="finalize():Unit"></a>
@@ -348,8 +351,8 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#oneAgg" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="oneAgg(order:String,others:String*)(aggCols:org.tresamigos.smv.SmvCDSAggColumn*):org.apache.spark.sql.DataFrame"></a>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#oneAgg" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="oneAgg(order:String,others:String*)(aggCols:org.tresamigos.smv.cds.SmvCDSAggColumn*):org.apache.spark.sql.DataFrame"></a>
       <a id="oneAgg(String,String*)(SmvCDSAggColumn*):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -357,12 +360,15 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">oneAgg</span><span class="params">(<span name="order">order: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <a href="SmvCDSAggColumn.html" class="extype" name="org.tresamigos.smv.SmvCDSAggColumn">SmvCDSAggColumn</a>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">oneAgg</span><span class="params">(<span name="order">order: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#oneAgg" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="oneAgg(orders:org.apache.spark.sql.Column*)(aggCols:org.tresamigos.smv.SmvCDSAggColumn*):org.apache.spark.sql.DataFrame"></a>
+      <a id="oneAgg(orders:org.apache.spark.sql.Column*)(aggCols:org.tresamigos.smv.cds.SmvCDSAggColumn*):org.apache.spark.sql.DataFrame"></a>
       <a id="oneAgg(Column*)(SmvCDSAggColumn*):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -370,7 +376,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">oneAgg</span><span class="params">(<span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <a href="SmvCDSAggColumn.html" class="extype" name="org.tresamigos.smv.SmvCDSAggColumn">SmvCDSAggColumn</a>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">oneAgg</span><span class="params">(<span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">oneAgg</p><div class="fullcomment"><div class="comment cmt"><p>oneAgg</p><p>Please see the SmvCDS documnet for details.
@@ -385,9 +391,12 @@ single output record.</p><p>Example:
                            sum('v) as &quot;nv3&quot;)</p><p>Use &quot;t&quot; cloumn for ordering, so the biggest &quot;t&quot; record in a group is the reference record.
 Keep &quot;k&quot; and &quot;t&quot; column from the reference record. Sum &quot;v&quot; from last 3, depend on how we defined
 the SmvCDS &quot;last3&quot;, which should refere to the reference record.
-</p></div></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#runAgg" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="runAgg(order:String,others:String*)(aggCols:org.tresamigos.smv.SmvCDSAggColumn*):org.apache.spark.sql.DataFrame"></a>
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#runAgg" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="runAgg(order:String,others:String*)(aggCols:org.tresamigos.smv.cds.SmvCDSAggColumn*):org.apache.spark.sql.DataFrame"></a>
       <a id="runAgg(String,String*)(SmvCDSAggColumn*):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -395,12 +404,15 @@ the SmvCDS &quot;last3&quot;, which should refere to the reference record.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">runAgg</span><span class="params">(<span name="order">order: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <a href="SmvCDSAggColumn.html" class="extype" name="org.tresamigos.smv.SmvCDSAggColumn">SmvCDSAggColumn</a>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">runAgg</span><span class="params">(<span name="order">order: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#runAgg" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="runAgg(orders:org.apache.spark.sql.Column*)(aggCols:org.tresamigos.smv.SmvCDSAggColumn*):org.apache.spark.sql.DataFrame"></a>
+      <a id="runAgg(orders:org.apache.spark.sql.Column*)(aggCols:org.tresamigos.smv.cds.SmvCDSAggColumn*):org.apache.spark.sql.DataFrame"></a>
       <a id="runAgg(Column*)(SmvCDSAggColumn*):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -408,7 +420,7 @@ the SmvCDS &quot;last3&quot;, which should refere to the reference record.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">runAgg</span><span class="params">(<span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <a href="SmvCDSAggColumn.html" class="extype" name="org.tresamigos.smv.SmvCDSAggColumn">SmvCDSAggColumn</a>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">runAgg</span><span class="params">(<span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">runAgg</p><div class="fullcomment"><div class="comment cmt"><p>runAgg</p><p>See SmvCDS document for details.
@@ -424,7 +436,44 @@ For N records as input, runAgg will generate N records as output.</p><p>Example:
                    sum('v) from top2 from last3 as &quot;nv1&quot;,
                    sum('v) from last3 from top2 as &quot;nv2&quot;,
                    sum('v) as &quot;nv3&quot;)
-</p></div></div>
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#runAggPlus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="runAggPlus(order:String,others:String*)(aggCols:org.tresamigos.smv.cds.SmvCDSAggColumn*):org.apache.spark.sql.DataFrame"></a>
+      <a id="runAggPlus(String,String*)(SmvCDSAggColumn*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">runAggPlus</span><span class="params">(<span name="order">order: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#runAggPlus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="runAggPlus(orders:org.apache.spark.sql.Column*)(aggCols:org.tresamigos.smv.cds.SmvCDSAggColumn*):org.apache.spark.sql.DataFrame"></a>
+      <a id="runAggPlus(Column*)(SmvCDSAggColumn*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">runAggPlus</span><span class="params">(<span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Same as <code>runAgg</code> but with all input column kept
+</p><div class="fullcomment"><div class="comment cmt"><p>Same as <code>runAgg</code> but with all input column kept
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvCube(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
       <a id="smvCube(Column*):SmvGroupedData"></a>
@@ -487,35 +536,6 @@ For N records as input, runAgg will generate N records as output.</p><p>Example:
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvMapGroup" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvMapGroup(cds:org.tresamigos.smv.SmvCDS):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvMapGroup(SmvCDS):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvMapGroup</span><span class="params">(<span name="cds">cds: <a href="SmvCDS.html" class="extype" name="org.tresamigos.smv.SmvCDS">SmvCDS</a></span>)</span><span class="result">: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvMapGroup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvMapGroup(gdo:org.tresamigos.smv.SmvGDO):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvMapGroup(SmvGDO):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvMapGroup</span><span class="params">(<span name="gdo">gdo: <a href="SmvGDO.html" class="extype" name="org.tresamigos.smv.SmvGDO">SmvGDO</a></span>)</span><span class="result">: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData</p><div class="fullcomment"><div class="comment cmt"><p>smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData</p><p>Example:
-val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
-val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
-</p></div></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvPivot" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvPivot(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.tresamigos.smv.SmvGroupedData"></a>
       <a id="smvPivot(Seq[String]*)(String*)(String*):SmvGroupedData"></a>

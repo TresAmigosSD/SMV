@@ -147,7 +147,7 @@ One of the options below must be specified.
 
 <tr>
 <td colspan="2">--run-stage stage1 [stage2 ...] / &#8209;s</td>
-<td>Run all output modules in given stages.
+<td>Run all output modules in given stages.  The stage name can either be the base name of the stage or the FQN.
 </td>
 </tr>
 
@@ -196,7 +196,14 @@ One of the options below must be specified.
 
 
 <h3 id="examples">Examples</h3>
-<p>TODO: add run_app examples below</p>
+<p>Run modules <code>M1</code> and <code>M2</code> and all its dependencies. Note the use of the module FQN.</p>
+<pre class="shell"><code>$ _SMV_HOME_/tools/run_app.sh -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2</code></pre>
+<p>Run all modules in application and generate edd report for all modules that needed to run (including dependencies)</p>
+<pre class="shell"><code>$ _SMV_HOME_/tools/run_app.sh --edd --run-app</code></pre>
+<p>Generate a dependency graph for module M1.</p>
+<pre class="shell"><code>$ _SMV_HOME_/tools/run_app.sh -g -m com.mycom.myproj.stage1.M1</code></pre>
+<p>Clean up the output directory</p>
+<pre class="shell"><code>$ _SMV_HOME_/tools/run_app.sh --purge-old-output</code></pre>
 </article>
 </body>
 </html>

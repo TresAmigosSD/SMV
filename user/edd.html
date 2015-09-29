@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
+  <link rel="stylesheet" type="text/css" href="github.css">
+</head>
+<body>
+<table class="nav-table">
+    <tr>
+        <td class="nav-left">&lArr;&nbsp;<a href="run_shell.html">Run Spark Shell</a></td>
+        <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
+        <td class="nav-right"><a href="smv_app.html">SMV Application</a>&nbsp;&rArr;</td>
+    </tr>
+</table>
+<hr>
+
+<article class="markdown-body">
+<h1 id="edd">EDD</h1>
+<p>EDD stands for <strong>Extended Data Dictionary</strong>, which run against a <code>DataFrame</code> and typically provides</p>
+<ul>
+<li>Basic statistics on numerical fields<br /></li>
+<li>Distinct count on string fields<br /></li>
+<li>Some distributions captured by histogram</li>
+</ul>
+<h2 id="edd-summary">EDD Summary</h2>
+<p>One can quickly investigate all the columns of a <code>DataFrame</code> in Spark shell</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; df.<span class="fu">edd</span>.<span class="fu">summary</span>().<span class="fu">eddShow</span></code></pre>
+<p>For some data like the following</p>
+<pre><code>k t p v   d                    b
+z 1 a 0.2 1901-07-01 00:00:... null
+z 2 a 1.4 2015-04-02 00:00:... true
+z 5 b 2.2 2013-09-30 00:00:... true
+a 1 a 0.3 2015-12-04 00:00:... false</code></pre>
+<p>The edd summary report is like this</p>
+<pre><code>k                    Non-Null Count         4
+k                    Min Length             1
+k                    Max Length             1
+k                    Approx Distinct Count  2
+t                    Non-Null Count         4
+t                    Average                2.25
+t                    Standard Deviation     1.8929694486000912
+t                    Min                    1.0
+t                    Max                    5.0
+p                    Non-Null Count         4
+p                    Min Length             1
+p                    Max Length             1
+p                    Approx Distinct Count  2
+v                    Non-Null Count         4
+v                    Average                1.025
+v                    Standard Deviation     0.9535023160258536
+v                    Min                    0.2
+v                    Max                    2.2
+d                    Time Start             &quot;1901-07-01 00:00:00&quot;
+d                    Time Edd               &quot;2015-12-04 00:00:00&quot;
+Histogram of d: Year
+key                      count      Pct    cumCount   cumPct
+1901                         1   25.00%           1   25.00%
+2013                         1   25.00%           2   50.00%
+2015                         2   50.00%           4  100.00%
+-------------------------------------------------
+Histogram of d: Month
+key                      count      Pct    cumCount   cumPct
+04                           1   25.00%           1   25.00%
+07                           1   25.00%           2   50.00%
+09                           1   25.00%           3   75.00%
+12                           1   25.00%           4  100.00%
+-------------------------------------------------
+Histogram of d: Day of Week
+key                      count      Pct    cumCount   cumPct
+2                            2   50.00%           2   50.00%
+5                            1   25.00%           3   75.00%
+6                            1   25.00%           4  100.00%
+-------------------------------------------------
+Histogram of d: Hour
+key                      count      Pct    cumCount   cumPct
+00                           4  100.00%           4  100.00%
+-------------------------------------------------
+Histogram of b: Boolean
+key                      count      Pct    cumCount   cumPct
+false                        1   33.33%           1   33.33%
+true                         2   66.67%           3  100.00%
+-------------------------------------------------</code></pre>
+<p>One can also specify a group of column names to just calculate summary on them</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">df.<span class="fu">edd</span>.<span class="fu">summary</span>(<span class="st">&quot;k&quot;</span>, <span class="st">&quot;v&quot;</span>, <span class="st">&quot;d&quot;</span>).<span class="fu">eddShow</span></code></pre>
+<p>Please note that we are using <code>String</code> to specify the columns. Current version of<br />Edd does not support statistics on general <code>Column</code>s. It only support statistics on<br />existing data fields. One can create new column with <code>select</code> first than apply <code>edd</code>.</p>
+<p>In addition to print the report on the console, one can also save it to files</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">df.<span class="fu">edd</span>.<span class="fu">summary</span>().<span class="fu">saveReport</span>(<span class="st">&quot;/path/to/file&quot;</span>)</code></pre>
+<p>The file is saved as <code>RDD[String]</code>, where the string is a JSON string.</p>
+<h2 id="edd-histogram">EDD Histogram</h2>
+<p>Another EDD investigation tool is <code>histogram</code>.</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; df.<span class="fu">edd</span>.<span class="fu">histogram</span>(<span class="st">&quot;population&quot;</span>, <span class="st">&quot;age_grp&quot;</span>).<span class="fu">eddShow</span></code></pre>
+<p>By default numeric columns will be binned by <code>binSize</code> 100.0, and each bin labeled by<br />the lower bound of the bin.</p>
+<p>All histogram by default sorted by the value of the key, or label.</p>
+<p>To change the default behavior, one need to define <code>Hist</code> for each column:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">scala &gt; <span class="kw">import</span> org.<span class="fu">tresamigos</span>.<span class="fu">smv</span>.<span class="fu">edd</span>.<span class="fu">_</span>
+scala &gt; df.<span class="fu">edd</span>.<span class="fu">histogram</span>(<span class="fu">Hist</span>(<span class="st">&quot;population&quot;</span>, binSize = <span class="dv">100000</span>), <span class="fu">Hist</span>(<span class="st">&quot;age_grp&quot;</span>, sortByFreq = <span class="kw">true</span>))</code></pre>
+<p>In above example, <code>population</code> will be binned by <code>100000</code>, and <code>age_grp</code> histogram will<br />be sorted by frequency, so the most frequently shown <code>age_grp</code> will be on the top of the<br />histogram report.</p>
+<p>For some dollar amount fields, since the distributions is un-even, we pre-defined a binning logic<br />to show the distributions</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">scala &gt; <span class="kw">import</span> org.<span class="fu">tresamigos</span>.<span class="fu">smv</span>.<span class="fu">edd</span>.<span class="fu">_</span>
+scala &gt; df.<span class="fu">edd</span>.<span class="fu">histogram</span>(<span class="fu">AmtHist</span>(<span class="st">&quot;price&quot;</span>)).<span class="fu">eddShow</span></code></pre>
+<p>Please check <code>AmtHist</code> API document for details of the binning logic.</p>
+</article>
+</body>
+</html>

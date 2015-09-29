@@ -67,8 +67,14 @@ $ mv CB1200CZ11.dat CB1200CZ11.csv</code></pre>
 <h3 id="example-app-pom.xml">Example App pom.xml</h3>
 <p>A valid pom.xml file is generated using the package name provided on the command line.<br />The last part of the provided package name is used as the Maven &quot;artifactID&quot; and the first section is used as the &quot;groupID&quot;<br />In the example above, the artifactId will be set to <code>myapp</code> and the groupID will be <code>com.mycompany</code></p>
 <h3 id="example-app-sources">Example App sources</h3>
-<p>The example app generates an app with a single stage <code>stage1</code> and two packages.<br />While a single package would have sufficed, it is best to separate out all the input files<br />of a stage into a separate package.<br />The input files and their DQM rules/policies are put in the <code>input</code> sub-package</p>
-<p>The generated <code>etl</code> package contains a single sample module for processing the provided employment data.</p>
+<p>The example app generates an app with a two stages <code>stage1</code> and <code>stage2</code>. Having two stages for such a tiny example is overkill, but they are there for demonstration purposes.<br />The generated source files are:</p>
+<ul>
+<li><code>stage1/InputSetS1.scala</code> : contains definitions of all input files into stage1 and their DQM rules/policies.<br /></li>
+<li><code>stage1/EmploymentByState.scala</code> : contains sample ETL module for processing the provided employment data.<br /></li>
+<li><code>stage2/InputFilesS2.scala</code> : defines the input links to the output modules in <code>stage1</code><br /></li>
+<li><code>stage2/StageEmpCategory.scala</code> : sample &quot;modeling&quot; module for creating categorical variables.</li>
+</ul>
+<p><strong>Note:</strong> In practice, a single stage will have multiple module files and possibly additional input files (depending on the number and complexity of inputs)</p>
 <h2 id="build-example-app">Build Example App</h2>
 <p>The generated application must be built before it is run. This is simply done by running the following maven command:</p>
 <pre class="shell"><code>$ mvn clean install</code></pre>
@@ -85,19 +91,22 @@ $ _SMV_HOME_/tools/run_app.sh --run-app
 
 # run stage1 (all output modules in stage1)
 $ _SMV_HOME_/tools/run_app.sh -s stage1
+# or
+$ _SMV_HOME_/tools/run_app.sh -s com.mycompany.myapp.stage1
+
 
 # run specific module (any module can be run this way, does not have to be an output module)
-$ _SMV_HOME_/tools/run_app.sh -m com.mycompany.myapp.stage1.etl.EmploymentRaw</code></pre>
+$ _SMV_HOME_/tools/run_app.sh -m com.mycompany.myapp.stage1.EmploymentByState</code></pre>
 <p>See <a href="smv_module.md#output-modules">SMV Output Modules</a> for more details on how to mark a module as an output module.</p>
 <p>The output csv file and schema can be found in the <code>data/output</code> directory (as configured in the <code>conf/smv-user-conf.props</code> files).</p>
-<pre class="shell"><code>$ cat data/output/com.mycompany.myapp.stage1.etl.EmploymentRaw_XXXXXXXX.csv/part-* | head -5
+<pre class="shell"><code>$ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
 &quot;32&quot;,981295
 &quot;33&quot;,508120
 &quot;34&quot;,3324188
 &quot;35&quot;,579916
 &quot;36&quot;,7279345
 
-$ cat data/output/com.mycompany.myapp.stage1.etl.EmploymentRaw_XXXXXXXX.schema/part-*
+$ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.schema/part-*
 FIRST(&#39;ST): String
 EMP: Long</code></pre>
 <p><strong>Note</strong>: the output above may be different as it depends on order of execution of partitions.</p>
@@ -127,7 +136,7 @@ ZIPCODE YEAR ESTAB EMP
 <span class="dv">35005</span>   <span class="dv">2012</span> <span class="dv">88</span>    <span class="dv">665</span>
 ...</code></pre>
 <p>You can also access SmvModules defined in the code.<br />This is <strong>not</strong> limited to output modules.</p>
-<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d2 = <span class="fu">s</span>(EmploymentRaw)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d2 = <span class="fu">s</span>(EmploymentByState)
 d2: org.<span class="fu">apache</span>.<span class="fu">spark</span>.<span class="fu">sql</span>.<span class="fu">DataFrame</span> = [<span class="fu">FIRST</span>(&#39;ST): string, EMP: bigint]
 
 scala&gt; d2.<span class="fu">printSchema</span>
@@ -138,7 +147,7 @@ root
 
 scala&gt; d2.<span class="fu">count</span>
 res2: Long = <span class="dv">52</span></code></pre>
-<p><code>EmploymentRaw</code> is defined in the <code>etl</code> package <code>Employment.scala</code> file.<br />As you can see above, when you try to refer to a SmvModule, it will do the calculation and<br />then persist it for future use. Now you can use <code>d2</code>, a DataFrame, to refer to the<br />SmvModule output, although in this example, there are nothing intersecting in that<br />data other than the <code>EMP</code> field.</p>
+<p><code>EmploymentByState</code> is defined in stage1 <code>EmploymentByState.scala</code> file.<br />As you can see above, when you try to refer to a SmvModule, it will do the calculation and<br />then persist it for future use. Now you can use <code>d2</code>, a DataFrame, to refer to the<br />SmvModule output, although in this example, there are nothing intersecting in that<br />data other than the <code>EMP</code> field.</p>
 <h4 id="run-edd-on-data">Run EDD on data</h4>
 <p>To quickly get an overall idea of the input data, we can use the SMV EDD (Extended Data Dictionary) tool.</p>
 <pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; d1.<span class="fu">select</span>(<span class="st">&quot;ZIPCODE&quot;</span>, <span class="st">&quot;YEAR&quot;</span>, <span class="st">&quot;ESTAB&quot;</span>, <span class="st">&quot;EMP&quot;</span>).<span class="fu">edd</span>.<span class="fu">addBaseTasks</span>().<span class="fu">addHistogramTasks</span>(<span class="st">&quot;ESTAB&quot;</span>, <span class="st">&quot;EMP&quot;</span>)().<span class="fu">dump</span>

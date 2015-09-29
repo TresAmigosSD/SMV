@@ -133,7 +133,7 @@ be a single result DataFrame.
       </h4>
       <p class="shortcomment cmt">flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.</p><div class="fullcomment"><div class="comment cmt"><p>flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
 This is quite handy for &quot;filter&quot; or &quot;map&quot; type modules so that we don't force an extra I/O step when it
-is not needed.  By default all modules are persisted unless the flag is overriden to true.
+is not needed.  By default all modules are persisted unless the flag is overridden to true.
 Note: the module will still be persisted if it was specifically selected to run by the user.
 </p></div></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#requiresDS" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
@@ -225,7 +225,7 @@ Note: the module will still be persisted if it was specifically selected to run 
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">var</span>
+        <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
         <span class="name">app</span><span class="result">: <a href="SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>
@@ -277,7 +277,7 @@ Note: the module will still be persisted if it was specifically selected to run 
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDataSet#dqm" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.SmvDataSet#dqm" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="dqm():org.tresamigos.smv.dqm.SmvDQM"></a>
       <a id="dqm():SmvDQM"></a>
       <h4 class="signature">
@@ -289,7 +289,11 @@ Note: the module will still be persisted if it was specifically selected to run 
         <span class="name">dqm</span><span class="params">()</span><span class="result">: <a href="dqm/SmvDQM.html" class="extype" name="org.tresamigos.smv.dqm.SmvDQM">SmvDQM</a></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">Define the DQM rules, fixes and policies to be applied to this <code>DataSet</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Define the DQM rules, fixes and policies to be applied to this <code>DataSet</code>.
+See <a href="dqm/package.html" class="extype" name="org.tresamigos.smv.dqm">org.tresamigos.smv.dqm</a>, <a href="dqm/DQMRule.html" class="extype" name="org.tresamigos.smv.dqm.DQMRule">org.tresamigos.smv.dqm.DQMRule</a>, and <a href="dqm/DQMFix.html" class="extype" name="org.tresamigos.smv.dqm.DQMFix">org.tresamigos.smv.dqm.DQMFix</a>
+for details on creating rules and fixes.</p><p>Concrete modules and files should override this method to define rules/fixes to apply.
+The default is to provide an empty set of DQM rules/fixes.
+</p></div></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -361,21 +365,6 @@ Note: the module will still be persisted if it was specifically selected to run 
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDataSet#injectApp" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="injectApp(_app:org.tresamigos.smv.SmvApp):Unit"></a>
-      <a id="injectApp(SmvApp):Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">injectApp</span><span class="params">(<span name="_app">_app: <a href="SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Inject the given app into this dataset and all datasets that this depends on.</p><div class="fullcomment"><div class="comment cmt"><p>Inject the given app into this dataset and all datasets that this depends on.
-Note: only the first setting is honored (as an optimization)
-</p></div></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -398,7 +387,7 @@ Note: only the first setting is honored (as an optimization)
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">moduleCRC</span><span class="result">: <a href="ClassCRC.html" class="extype" name="org.tresamigos.smv.ClassCRC">ClassCRC</a></span>
+        <span class="name">moduleCRC</span><span class="result">: <span class="extype" name="org.tresamigos.smv.ClassCRC">ClassCRC</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">module code CRC.</p><div class="fullcomment"><div class="comment cmt"><p>module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)

@@ -1,0 +1,288 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>cds - Spark Model Variables 1.3-SNAPSHOT API - org.tresamigos.smv.cds</title>
+          <meta name="description" content="cds - Spark Model Variables 1.3 - SNAPSHOT API - org.tresamigos.smv.cds" />
+          <meta name="keywords" content="cds Spark Model Variables 1.3 SNAPSHOT API org.tresamigos.smv.cds" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'org.tresamigos.smv.cds.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="org">org</a>.<a href="../../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="../package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
+        <h1>cds</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">cds</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>A Custom Data Selector (CDS) defines a sub-set of a group of records within a GroupedData,
+and user can define aggregations on this sub-set of data.</p><p>As in the following data, for each transaction record, we want to calculate the sum of
+the dollar spend on the passed 7 days.</p><pre>Id, time, amt
+<span class="num">1</span>, <span class="num">20140102</span>, <span class="num">100.0</span>
+<span class="num">1</span>, <span class="num">20140201</span>, <span class="num">30.0</span>
+<span class="num">1</span>, <span class="num">20140202</span>, <span class="num">10.0</span></pre><p>The expected output should be</p><pre>Id, time, amt, runamt
+<span class="num">1</span>, <span class="num">20140102</span>, <span class="num">100.0</span>, <span class="num">100.0</span>
+<span class="num">1</span>, <span class="num">20140201</span>, <span class="num">30.0</span>, <span class="num">30.0</span>
+<span class="num">1</span>, <span class="num">20140202</span>, <span class="num">10.0</span>, <span class="num">40.0</span></pre><p>Here is how to calculate above running aggregate with CDS:</p><pre><span class="kw">val</span> inLast7d = TimeInLastNDays(<span class="lit">"time"</span>, <span class="num">7</span>)
+df.smvGroupBy(<span class="lit">"Id"</span>).runAgg($<span class="lit">"time"</span>)(
+   $<span class="lit">"Id"</span>, $<span class="lit">"time"</span>, $<span class="lit">"amt"</span>,
+   sum($<span class="lit">"amt"</span>) from inLast7d as <span class="lit">"runamt"</span>
+)</pre><p>In this exmple, <code>inLast7d</code> is a <code>CDS</code>. Please note that we extends the column syntax with
+a <code>from</code> keyword, which is followed by a <code>CDS</code>.</p><p>The <code>runAgg</code> and <code>oneAgg</code> methods in the <a href="../SmvGroupedDataFunc.html" class="extype" name="org.tresamigos.smv.SmvGroupedDataFunc">org.tresamigos.smv.SmvGroupedDataFunc</a> class is
+the main entry to the CDS.</p></div><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol>
+                
+                <li class="alpha in"><span>Alphabetic</span></li>
+                <li class="inherit out"><span>By inheritance</span></li>
+              </ol>
+            </div>
+        <div id="ancestors">
+                <span class="filtertype">Inherited<br />
+                </span>
+                <ol id="linearization">
+                  <li class="in" name="org.tresamigos.smv.cds"><span>cds</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                </ol>
+              </div><div id="ancestors">
+            <span class="filtertype"></span>
+            <ol>
+              <li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show all</span></li>
+            </ol>
+            <a href="http://docs.scala-lang.org/overviews/scaladoc/usage.html#members" target="_blank">Learn more about member selection</a>
+          </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="org.tresamigos.smv.cds.Before" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BeforeextendsSmvSelfCompareCDSwithProductwithSerializable"></a>
+      <a id="Before:Before"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Before.html"><span class="name">Before</span></a><span class="params">(<span name="timeColName">timeColName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="SmvSelfCompareCDS.html" class="extype" name="org.tresamigos.smv.cds.SmvSelfCompareCDS">SmvSelfCompareCDS</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Return records &quot;before&quot; current record based on column timeColName
+</p>
+    </li><li name="org.tresamigos.smv.cds.CDSSubGroup" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CDSSubGroupextendsSerializablewithProduct"></a>
+      <a id="CDSSubGroup:CDSSubGroup"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="CDSSubGroup.html"><span class="name">CDSSubGroup</span></a><span class="params">(<span name="currentSchema">currentSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="crossSchema">crossSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="currentRow">currentRow: <span class="extype" name="org.apache.spark.sql.catalyst.expressions.Row">Row</span></span>, <span name="crossRows">crossRows: <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="org.apache.spark.sql.catalyst.expressions.Row">Row</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span> with <span class="extype" name="scala.Product">Product</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">CDSSubGroup is the data type which <code>SmvCDS</code> defined on</p>
+    </li><li name="org.tresamigos.smv.cds.IntInLastN" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="IntInLastNextendsSmvSelfCompareCDSwithProductwithSerializable"></a>
+      <a id="IntInLastN:IntInLastN"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="IntInLastN.html"><span class="name">IntInLastN</span></a><span class="params">(<span name="intColName">intColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="SmvSelfCompareCDS.html" class="extype" name="org.tresamigos.smv.cds.SmvSelfCompareCDS">SmvSelfCompareCDS</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">For a given integer type column, <code>intColName</code>, return records
+within <code>current value</code> and <code>(current value - n)</code><code>
+</code></p>
+    </li><li name="org.tresamigos.smv.cds.SmvCDS" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SmvCDSextendsSerializable"></a>
+      <a id="SmvCDS:SmvCDS"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvCDS.html"><span class="name">SmvCDS</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">SMV Custom Data Selector</p>
+    </li><li name="org.tresamigos.smv.cds.SmvSelfCompareCDS" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SmvSelfCompareCDSextendsSmvCDS"></a>
+      <a id="SmvSelfCompareCDS:SmvSelfCompareCDS"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvSelfCompareCDS.html"><span class="name">SmvSelfCompareCDS</span></a><span class="result"> extends <a href="SmvCDS.html" class="extype" name="org.tresamigos.smv.cds.SmvCDS">SmvCDS</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">SmvSelfCompareCDS</p>
+    </li><li name="org.tresamigos.smv.cds.TimeInLastNDays" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TimeInLastNDaysextendsSmvSelfCompareCDSwithProductwithSerializable"></a>
+      <a id="TimeInLastNDays:TimeInLastNDays"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeInLastNDays.html"><span class="name">TimeInLastNDays</span></a><span class="params">(<span name="timeColName">timeColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="SmvSelfCompareCDS.html" class="extype" name="org.tresamigos.smv.cds.SmvSelfCompareCDS">SmvSelfCompareCDS</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">For a given timeStamp type column, <code>timeColName</code>, return records in last n days
+</p>
+    </li><li name="org.tresamigos.smv.cds.TimeInLastNMonths" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TimeInLastNMonthsextendsSmvSelfCompareCDSwithProductwithSerializable"></a>
+      <a id="TimeInLastNMonths:TimeInLastNMonths"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeInLastNMonths.html"><span class="name">TimeInLastNMonths</span></a><span class="params">(<span name="timeColName">timeColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="SmvSelfCompareCDS.html" class="extype" name="org.tresamigos.smv.cds.SmvSelfCompareCDS">SmvSelfCompareCDS</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">For a given timeStamp type column, <code>timeColName</code>, return records in last n months
+</p>
+    </li><li name="org.tresamigos.smv.cds.TimeInLastNWeeks" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TimeInLastNWeeksextendsSmvSelfCompareCDSwithProductwithSerializable"></a>
+      <a id="TimeInLastNWeeks:TimeInLastNWeeks"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeInLastNWeeks.html"><span class="name">TimeInLastNWeeks</span></a><span class="params">(<span name="timeColName">timeColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="SmvSelfCompareCDS.html" class="extype" name="org.tresamigos.smv.cds.SmvSelfCompareCDS">SmvSelfCompareCDS</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">For a given timeStamp type column, <code>timeColName</code>, return records in last n weeks
+</p>
+    </li><li name="org.tresamigos.smv.cds.TimeInLastNYears" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TimeInLastNYearsextendsSmvSelfCompareCDSwithProductwithSerializable"></a>
+      <a id="TimeInLastNYears:TimeInLastNYears"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeInLastNYears.html"><span class="name">TimeInLastNYears</span></a><span class="params">(<span name="timeColName">timeColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="SmvSelfCompareCDS.html" class="extype" name="org.tresamigos.smv.cds.SmvSelfCompareCDS">SmvSelfCompareCDS</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">For a given timeStamp type column, <code>timeColName</code>, return records in last n years
+</p>
+    </li><li name="org.tresamigos.smv.cds.SmvChunkUDF" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvChunkUDFextendsProductwithSerializable"></a>
+      <a id="SmvChunkUDF:SmvChunkUDF"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvChunkUDF.html"><span class="name deprecated" title="Deprecated: will remove after 1.3">SmvChunkUDF</span></a><span class="params">(<span name="para">para: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Symbol">Symbol</span>]</span>, <span name="outSchema">outSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="eval">eval: (<span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Any">Any</span>]]) ⇒ <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Any">Any</span>]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">User defined &quot;chuck&quot; mapping function
+see the <code>chunkBy</code> and <code>chunkByPlus</code> method of <a href="../SmvDFHelper.html" class="extype" name="org.tresamigos.smv.SmvDFHelper">org.tresamigos.smv.SmvDFHelper</a> for details
+</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="org.tresamigos.smv.cds.TopNRecs" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TopNRecs"></a>
+      <a id="TopNRecs:TopNRecs"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="TopNRecs$.html"><span class="name">TopNRecs</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">Return top N records in a given order</p>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+      <script defer="defer" type="text/javascript" id="jquery-js" src="../../../../lib/jquery.js"></script><script defer="defer" type="text/javascript" id="jquery-ui-js" src="../../../../lib/jquery-ui.js"></script><script defer="defer" type="text/javascript" id="tools-tooltip-js" src="../../../../lib/tools.tooltip.js"></script><script defer="defer" type="text/javascript" id="template-js" src="../../../../lib/template.js"></script>
+    </body>
+      </html>

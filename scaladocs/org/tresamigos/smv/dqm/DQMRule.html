@@ -41,7 +41,7 @@
       
           <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>DQMRule defines a requirement on the records of a DF</p><pre><span class="kw">val</span> r = DQMRule($<span class="lit">"a"</span> + $<span class="lit">"b"</span> &lt; <span class="num">100.0</span>, <span class="lit">"a_b_sum_lt100"</span>, FailPercent(<span class="num">0.01</span>))</pre><p>Require the sum of &quot;a&quot; and &quot;b&quot; columns less than 100.
 Rule name &quot;a_b_sum_lt100&quot;, which can be referred in the <a href="DQMState.html" class="extype" name="org.tresamigos.smv.dqm.DQMState">org.tresamigos.smv.dqm.DQMState</a>
-If there are equal or more than 1% of records failed this rule, the entire DF failed
+If 1% or more of the records fail this rule, the entire DF will fail
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.Product">Product</span>, <span class="extype" name="scala.Equals">Equals</span>, <a href="DQMTask.html" class="extype" name="org.tresamigos.smv.dqm.DQMTask">DQMTask</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>

@@ -58,7 +58,7 @@
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="org.tresamigos.smv.panel.ContinuousPanel" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+              <ol><li name="org.tresamigos.smv.panel.ContinuousPanel" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="ContinuousPanelextendsPanel"></a>
       <a id="ContinuousPanel:ContinuousPanel"></a>
       <h4 class="signature">
@@ -67,11 +67,14 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="ContinuousPanel.html"><span class="name">ContinuousPanel</span></a><span class="result"> extends <a href="Panel.html" class="extype" name="org.tresamigos.smv.panel.Panel">Panel</a></span>
+        <a href="ContinuousPanel.html"><span class="name">ContinuousPanel</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.panel.Panel">Panel</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.panel.DailyPanel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@DeveloperApi</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.panel.DailyPanel" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="DailyPanelextendsContinuousPanelwithProductwithSerializable"></a>
       <a id="DailyPanel:DailyPanel"></a>
       <h4 class="signature">
@@ -83,8 +86,11 @@
         <a href="DailyPanel.html"><span class="name">DailyPanel</span></a><span class="params">(<span name="start">start: <a href="Day.html" class="extype" name="org.tresamigos.smv.panel.Day">Day</a></span>, <span name="end">end: <a href="Day.html" class="extype" name="org.tresamigos.smv.panel.Day">Day</a></span>)</span><span class="result"> extends <a href="ContinuousPanel.html" class="extype" name="org.tresamigos.smv.panel.ContinuousPanel">ContinuousPanel</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.panel.Day" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.panel.Day" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="DayextendsPartialTimewithProductwithSerializable"></a>
       <a id="Day:Day"></a>
       <h4 class="signature">
@@ -93,11 +99,14 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="Day.html"><span class="name">Day</span></a><span class="params">(<span name="year">year: <span class="extype" name="scala.Int">Int</span></span>, <span name="month">month: <span class="extype" name="scala.Int">Int</span></span>, <span name="day">day: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="PartialTime.html" class="extype" name="org.tresamigos.smv.panel.PartialTime">PartialTime</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="Day.html"><span class="name">Day</span></a><span class="params">(<span name="year">year: <span class="extype" name="scala.Int">Int</span></span>, <span name="month">month: <span class="extype" name="scala.Int">Int</span></span>, <span name="day">day: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.panel.PartialTime">PartialTime</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.panel.Month" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.panel.Month" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="MonthextendsPartialTimewithProductwithSerializable"></a>
       <a id="Month:Month"></a>
       <h4 class="signature">
@@ -106,10 +115,13 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="Month.html"><span class="name">Month</span></a><span class="params">(<span name="year">year: <span class="extype" name="scala.Int">Int</span></span>, <span name="month">month: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="PartialTime.html" class="extype" name="org.tresamigos.smv.panel.PartialTime">PartialTime</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="Month.html"><span class="name">Month</span></a><span class="params">(<span name="year">year: <span class="extype" name="scala.Int">Int</span></span>, <span name="month">month: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.panel.PartialTime">PartialTime</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
-      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="org.tresamigos.smv.panel.MonthlyPanel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="MonthlyPanelextendsContinuousPanelwithProductwithSerializable"></a>
       <a id="MonthlyPanel:MonthlyPanel"></a>
@@ -122,33 +134,7 @@
         <a href="MonthlyPanel.html"><span class="name">MonthlyPanel</span></a><span class="params">(<span name="start">start: <a href="Month.html" class="extype" name="org.tresamigos.smv.panel.Month">Month</a></span>, <span name="end">end: <a href="Month.html" class="extype" name="org.tresamigos.smv.panel.Month">Month</a></span>)</span><span class="result"> extends <a href="ContinuousPanel.html" class="extype" name="org.tresamigos.smv.panel.ContinuousPanel">ContinuousPanel</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.panel.Panel" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="PanelextendsSerializable"></a>
-      <a id="Panel:Panel"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="Panel.html"><span class="name">Panel</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.panel.PartialTime" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="PartialTimeextendsOrdered[org.tresamigos.smv.panel.PartialTime]withSerializable"></a>
-      <a id="PartialTime:PartialTime"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">trait</span>
-      </span>
-      <span class="symbol">
-        <a href="PartialTime.html"><span class="name">PartialTime</span></a><span class="result"> extends <span class="extype" name="scala.Ordered">Ordered</span>[<a href="PartialTime.html" class="extype" name="org.tresamigos.smv.panel.PartialTime">PartialTime</a>] with <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      
+      <p class="comment cmt"></p>
     </li></ol>
             </div>
 

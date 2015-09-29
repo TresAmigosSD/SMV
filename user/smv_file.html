@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
+  <link rel="stylesheet" type="text/css" href="github.css">
+</head>
+<body>
+<table class="nav-table">
+    <tr>
+        <td class="nav-left">&lArr;&nbsp;<a href="smv_app.html">SMV Application</a></td>
+        <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
+        <td class="nav-right"><a href="smv_module.html">SMV Modules</a>&nbsp;&rArr;</td>
+    </tr>
+</table>
+<hr>
+
+<article class="markdown-body">
+<h1 id="smv-file-handling">SMV File Handling</h1>
+<p>SMV added support for handling Comma Separated Values (CSV) and Fixed Record Length (FRL) files with schemas. Recent versions of Spark have added direct support for CSV files but they lack the support for external schema definitions.</p>
+<h2 id="basic-usage">Basic Usage</h2>
+<p>The most common way to utilize SMV files is to define objects in the input package of a given stage.<br />For example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">package</span> com.<span class="fu">mycom</span>.<span class="fu">myproj</span>.<span class="fu">stage1</span>.<span class="fu">input</span>
+
+<span class="kw">object</span> acct_demo <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;accounts/acct_demo.csv&quot;</span>)</code></pre>
+<p>Given the above definition, any module in <code>stage1</code> will be able to add a dependency to <code>acct_demo</code> by using it in <code>requireDS</code>:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">package</span> com.<span class="fu">mycom</span>.<span class="fu">myproj</span>.<span class="fu">stage1</span>.<span class="fu">etl</span>
+
+<span class="kw">object</span> AcctsByZip <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;...&quot;</span>) {
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">requireDS</span>() = Seq(acct_demo)
+  ...</code></pre>
+<h2 id="advanced-usage">Advanced Usage</h2>
+<p>The previous example used a simple definition of an <code>SmvFile</code>. However, SMV files are proper <code>SmvDataSet</code> and can therefore implement their own transformations and provide DQM rules.<br />For example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">package</span> com.<span class="fu">mycom</span>.<span class="fu">myproj</span>.<span class="fu">stage1</span>.<span class="fu">input</span>
+
+<span class="co">// define project specific CSV attributes.</span>
+<span class="kw">private</span> <span class="kw">object</span> CA {
+  <span class="kw">val</span> caBar = <span class="kw">new</span> <span class="fu">CsvAttributes</span>(delimiter = &#39;|&#39;, hasHeader = <span class="kw">true</span>)
+}
+
+<span class="kw">object</span> acct_demo <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;accounts/acct_demo.csv&quot;</span>, CA.<span class="fu">caBar</span>) {
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">run</span>(i: DataFrame) : DataFrame = {
+    i.<span class="fu">select</span>($<span class="st">&quot;acct_id&quot;</span>, $<span class="st">&quot;amt&quot;</span>, ...)
+  }
+
+  <span class="kw">override</span> <span class="kw">def</span> dqm = <span class="fu">SmvDQM</span>().
+    <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;amt&quot;</span> &lt; <span class="fl">1000000.0</span>, <span class="st">&quot;rule1&quot;</span>, FailAny)).
+    ...</code></pre>
+<p>We extended the previous example to override the <code>run()</code> and <code>dqm</code> methods. The <code>run()</code> method will be used to transform the raw input (a simple projection in this case).<br />And the <code>dqm</code> method is used to provide a set of DQM rules to apply to the output of the <code>run()</code> method. See <a href="dqm.html">DQM doc</a> for further details.</p>
+<p><strong>Note:</strong> unlike the <code>run</code> method in modules, the <code>run</code> method in file only takes a single <code>DataFrame</code> argument.</p>
+<h2 id="fixed-record-length-files">Fixed Record Length Files</h2>
+<p>TODO: add FRL info</p>
+<h2 id="schema-definition">Schema Definition</h2>
+<p>Because CSV files do not describe the data, the user must supply a schema definition that describes the set of columns and their type. The schema file consists of CSV attributes and field definitions with one field definition per line. The field definition consists of the field name and the field type. The file may also contain blank lines and comments that start with &quot;//&quot; or &quot;#&quot;.<br />For example:</p>
+<pre><code># CSV attributes
+@has-header = true
+@delimiter = |
+# schema for input
+acct_id: String;  # this is the id
+user_id: String;
+amt: Double;  // transaction amount!</code></pre>
+<h2 id="csv-attributes">CSV attributes</h2>
+<p>The schema file can specify the CSV attributes (delimiter, quote char, and header). All three attributes are optional and will default to (',', '&quot;', true) respectively.<br /><table><br /><tr><br /><th>Key</th><br /><th>Default</th><br /><th>Description</th><br /></tr><br /><tr><br /><td>has-header</td><br /><td>true</td><br /><td>Determine if CSV file has header. Can only contain true/false</td><br /></tr><br /><tr><br /><td>delimiter</td><br /><td>,</td><br /><td>CSV field delimiter/separator. For tab separated files, specify \t as the separator</td><br /></tr><br /><tr><br /><td>quote-char</td><br /><td>&quot;</td><br /><td>character used to quote fields (only used if field contains characters that would confuse the parser)</td><br /></tr><br /></table></p>
+<h2 id="supported-schema-types">Supported schema types</h2>
+<h3 id="native-types">Native types</h3>
+<p><code>Integer</code>, <code>Long</code>, <code>Float</code>, <code>Double</code>, <code>Boolean</code>, and <code>String</code> types correspond to their corresponding JVM type.</p>
+<h3 id="timestamp-type">Timestamp type</h3>
+<p>The <code>Timestamp</code> type can be used to hold a date/timestamp field value.<br />An optional format string can be used when defining a field of type <code>timestamp</code>.<br />The field format is the standard java <code>java.sql.Timestamp</code> format string.<br />If a format string is not specified, it defaults to <code>&quot;yyyyMMdd&quot;</code>.</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">std_date: Timestamp;
+evt_time: Timestamp[yyyy-MM-dd HH:mm:ss];</code></pre>
+<h3 id="map-type">Map type</h3>
+<p>The <code>map</code> type can be used to specify a field that contains a map of key/value pairs.<br />The field definition must specify the key and value types.<br />Only native types are supported as the key/value types.</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">str_to_int: map[String, Integer];
+int_to_double: map[Integer, Double];</code></pre>
+<h2 id="accessing-raw-files-from-shell">Accessing Raw Files from shell</h2>
+<p>TODO: add info about shell access here (both, raw files and existing files)</p>
+<h3 id="reading-files-in-shell">Reading Files in shell</h3>
+<h3 id="saving-files-in-shell">Saving Files in shell</h3>
+<p>TODO: cleanup saving files in shell</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">srdd.<span class="fu">saveAsCsvWithSchema</span>(<span class="st">&quot;/outdata/result&quot;</span>)</code></pre>
+<p>It will create csv files (in <code>result</code> directory) and a schema file with name <code>result.schema</code></p>
+<p>User can also supply the implicit CsvAttributes argument to override the default CSV attributes. For examples:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">srdd.<span class="fu">saveAsCsvWithSchema</span>(<span class="st">&quot;/outdata/result&quot;</span>)(<span class="fu">CsvAttributes</span>(delimiter=<span class="st">&quot;|&quot;</span>)</code></pre>
+<p>or</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">implicit</span> myCsvAttribs = <span class="fu">CsvAttributes</span>(delimiter=<span class="st">&quot;|&quot;</span>)
+srdd.<span class="fu">saveAsCsvWithSchema</span>(<span class="st">&quot;/outdata/result&quot;</span>)</code></pre>
+<h3 id="schema-discovery">Schema Discovery</h3>
+<p>SMV can discover data schema from CSV file and create a schema file. Manual adjustment might be needed on the discovered schema file. Example of using the Schema Discovery in the interactive shell</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">implicit</span> <span class="kw">val</span> ca=CsvAttributes.<span class="fu">defaultCsvWithHeader</span>
+scala&gt; <span class="kw">val</span> schema=sqlContext.<span class="fu">discoverSchemaFromFile</span>(<span class="st">&quot;/path/to/file.csv&quot;</span>, <span class="dv">100000</span>)
+scala&gt; schema.<span class="fu">saveToLocalFile</span>(<span class="st">&quot;/path/to/file.schema&quot;</span>)</code></pre>
+<p>Here we assume that you have sqlContext defined in the spark-shell environment.</p>
+</article>
+</body>
+</html>

@@ -11,9 +11,9 @@
 <body>
 <table class="nav-table">
     <tr>
-        <td class="nav-left">&lArr;&nbsp;<a href="run_shell.html">Run Spark Shell</a></td>
+        <td class="nav-left">&lArr;&nbsp;<a href="edd.html">EDD - Extended Data Dictionary</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
-        <td class="nav-right"><a href="smv_module.html">SMV Modules</a>&nbsp;&rArr;</td>
+        <td class="nav-right"><a href="smv_file.html">SMV Files</a>&nbsp;&rArr;</td>
     </tr>
 </table>
 <hr>
@@ -33,22 +33,18 @@
 <li>Provides utility to managing the end to end dependency graph, persisted data meta info and execution logging</li>
 </ul>
 <h2 id="application-hierarchy">Application Hierarchy</h2>
-<p>A single SMV application may contain one or more stages. Each stage may contain one or more packages which in-turn can contain one ore more modules.<br />While SMV does not enforce any file/source level hierarchy, it is recommended that the source file hierarchy matches the stage/package/module hierarchy.<br />For example, given an app with 2 stages (stage1, stage2) and each stage with 2 packages (pkg1,2,3,4), we should have the following file layout</p>
+<p>A single SMV application may contain one or more stages. Each stage may contain one or more modules. A stage corresponds to a single scala package that contains the modules.<br />By convention, each stage should define an <code>InputSet.scala</code> (or similarly named file) to enumerate all the inputs used in the given stage.<br />For example, given an app with 2 stages (stage1, stage2) we should have the following file layout</p>
 <pre><code>+-- src/main/scala/com/mycom/myproj
     +-- stage1
-        +-- input
-        +-- pkg1
-        +-- pkg2
+        +-- InputSetS1.scala
+        +-- mod1.scala
+        +-- mod2.scala
     +-- stage2
-        +-- input
-        +-- pkg3
-        +-- pkg4  (package FQN = com.mycom.myproj.stage2.pkg4)</code></pre>
-<p>A couple of things to note about the above file hierarchy</p>
-<ul>
-<li>Following standard java/scala package name convention, the packages above will have their parent stage name in their name.<br /></li>
-<li>Each stage has an <code>input</code> package for defining the inputs into the stage.</li>
-</ul>
-<p>TODO: add class diagram to show class relationship below!!!<br />Design Diagram<br /><img src="https://rawgit.com/TresAmigosSD/SMV/master/docs/appFramework.files/appFramework.svg" alt="Alt text" /></p>
+        +-- InputSetS2.scala
+        +-- mod3.scala
+        +-- ...</code></pre>
+<h2 id="class-diagram">Class Diagram</h2>
+<p>The class diagram of the SMV App below is provided as an FYI and is not critical to productively using SMV.<br /><img src="https://rawgit.com/TresAmigosSD/SMV/master/docs/design/app_class.svg" alt="SMV App Class Diagram" /></p>
 </article>
 </body>
 </html>

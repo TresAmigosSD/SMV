@@ -336,20 +336,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.ColumnHelper#smvAmtBin" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvAmtBin:org.apache.spark.sql.Column"></a>
-      <a id="smvAmtBin:Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvAmtBin</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Pre-defined binning for dollar amount type of column.</p><div class="fullcomment"><div class="comment cmt"><p>Pre-defined binning for dollar amount type of column.
-It provides more granularity on small values. Pre-defined boundaries: 10, 200, 1000, 10000 ...</p><p>TODO: need to document smvAmtBin further</p><pre>$<span class="lit">"amt"</span>.smvAmtBin</pre></div></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvCoarseGrain" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvCoarseGrain(bin:Double):org.apache.spark.sql.Column"></a>
       <a id="smvCoarseGrain(Double):Column"></a>
@@ -407,7 +393,7 @@ It provides more granularity on small values. Pre-defined boundaries: 10, 200, 1
       <p class="shortcomment cmt">Extract hour component from a timestamp.</p><div class="fullcomment"><div class="comment cmt"><p>Extract hour component from a timestamp.</p><pre>lit(<span class="lit">"2014-04-25 13:45"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd HH:mm"</span>).smvHour <span class="cmt">// 13</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The hour component as an integer or null if input column is null
 </p></dd></dl></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvLag" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvLag(n:Int):org.tresamigos.smv.SmvCDSAggColumn"></a>
+      <a id="smvLag(n:Int):org.tresamigos.smv.cds.SmvCDSAggColumn"></a>
       <a id="smvLag(Int):SmvCDSAggColumn"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -415,7 +401,7 @@ It provides more granularity on small values. Pre-defined boundaries: 10, 200, 1
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smvLag</span><span class="params">(<span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <a href="SmvCDSAggColumn.html" class="extype" name="org.tresamigos.smv.SmvCDSAggColumn">SmvCDSAggColumn</a></span>
+        <span class="name">smvLag</span><span class="params">(<span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">Running Aggregate Lag function.</p><div class="fullcomment"><div class="comment cmt"><p>Running Aggregate Lag function.
@@ -427,7 +413,7 @@ $<span class="lit">"v"</span>.smvLag(<span class="num">1</span>) as <span class=
 )</pre><p>Since runAgg can't perform expressions on columns with SmvCDS, you need to do additional
 calculation in a separate <code>selectPlus</code>.
 For example, to calculate the difference between &quot;v&quot; and &quot;v_lag&quot;,
-you need to and another step</p><pre><span class="kw">val</span> resWithDiff = res.selectPlus($<span class="lit">"v"</span> - $v_lag<span class="lit">" as "</span>v_increase<span class="lit">")</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The previous value of the column in the group.
+you need to and another step</p><pre><span class="kw">val</span> resWithDiff = res.selectPlus($<span class="lit">"v"</span> - $<span class="lit">"v_lag"</span> as <span class="lit">"v_increase"</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The previous value of the column in the group.
 </p></dd></dl></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvMetaphone" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvMetaphone:org.apache.spark.sql.Column"></a>
@@ -470,7 +456,7 @@ you need to and another step</p><pre><span class="kw">val</span> resWithDiff = r
       </span>
       </h4>
       <p class="shortcomment cmt">Substitute another column value if the current column is null.</p><div class="fullcomment"><div class="comment cmt"><p>Substitute another column value if the current column is null.
-Same as <span class="extype" name="org.tresamigos.smv.ColumnHelper.smvNullSub()">org.tresamigos.smv.ColumnHelper.smvNullSub()</span> but uses another column value as the substitution value.
+Same as <code>smvNullSub</code> but uses another column value as the substitution value.
 </p></div></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvNullSub" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvNullSub[T](newv:T):org.apache.spark.sql.Column"></a>
@@ -489,22 +475,6 @@ Use the provided substitution value if the <code>Column</code> value is null,
 otherwise use the actual <code>Column</code> value.</p><p><b>Note:</b> Should consider using coalesce(c1, c2) function going forward.</p><pre>df.select($<span class="lit">"v"</span>.smvNullSub(<span class="num">0</span>)) as <span class="lit">"newv"</span>)
 df.select($<span class="lit">"v"</span>.smvNullSub($<span class="lit">"defaultv"</span>) as <span class="lit">"newv2"</span>)</pre></div><dl class="paramcmts block"><dt class="param">newv</dt><dd class="cmt"><p>The constant to substitue if column is null. Must be same type is column.
 </p></dd></dl></div>
-    </li><li name="org.tresamigos.smv.ColumnHelper#smvNumericBin" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvNumericBin(min:Double,max:Double,n:Int):org.apache.spark.sql.Column"></a>
-      <a id="smvNumericBin(Double,Double,Int):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvNumericBin</span><span class="params">(<span name="min">min: <span class="extype" name="scala.Double">Double</span></span>, <span name="max">max: <span class="extype" name="scala.Double">Double</span></span>, <span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">smvNumericBin: Binning by min, max and number of bins
-<b>Warning:</b> values outside specified range may produce unexpected results.</p><div class="fullcomment"><div class="comment cmt"><p>smvNumericBin: Binning by min, max and number of bins
-<b>Warning:</b> values outside specified range may produce unexpected results.</p><pre>$<span class="lit">"amt"</span>.smvNumericBin(<span class="num">0.0</span>, <span class="num">1000000.0</span>, <span class="num">100</span>)</pre><p><b>Note:</b> This only applies to columns of type <code>Double</code>.
-</p></div></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusDays" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvPlusDays(n:Int):org.apache.spark.sql.Column"></a>
       <a id="smvPlusDays(Int):Column"></a>
@@ -564,19 +534,6 @@ result in 2007-04-31, so the day of month is adjusted to 2007-04-30.</p><pre>lit
       </h4>
       <p class="shortcomment cmt">Add N years to <code>Timestamp</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Add N years to <code>Timestamp</code> column.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvPlusYears(<span class="num">2</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The incremented <code>Timestamp</code> or <code>null</code> if input was <code>null</code>
 </p></dd></dl></div>
-    </li><li name="org.tresamigos.smv.ColumnHelper#smvPrintToStr" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvPrintToStr(fmt:String):org.apache.spark.sql.Column"></a>
-      <a id="smvPrintToStr(String):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvPrintToStr</span><span class="params">(<span name="fmt">fmt: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Convert values to String by applying &quot;printf&quot; type format</p><div class="fullcomment"><div class="comment cmt"><p>Convert values to String by applying &quot;printf&quot; type format</p><pre>df.select($<span class="lit">"zipAsNumber"</span>.smvPrintToStr(<span class="lit">"%05d"</span>) as <span class="lit">"zip"</span>)</pre></div></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvQuarter" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvQuarter:org.apache.spark.sql.Column"></a>
       <a id="smvQuarter:Column"></a>
@@ -665,21 +622,6 @@ lit(<span class="num">1.0</span>).smvSafeDiv(lit(<span class="kw">null</span>), 
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.ColumnHelper#toExpr" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="toExpr:org.apache.spark.sql.catalyst.expressions.Expression"></a>
-      <a id="toExpr:Expression"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">toExpr</span><span class="result">: <span class="extype" name="org.apache.spark.sql.catalyst.expressions.Expression">Expression</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Convert <code>Column</code> to catalyst <code>Expression</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Convert <code>Column</code> to catalyst <code>Expression</code>.
-This is needed here as the internal <code>Expression</code> in <code>Column</code> is marked spark private
-but we sometimes need access to the expression.</p><pre>($<span class="lit">"v"</span> * <span class="num">5</span>).toExpr</pre></div></div>
     </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <a id="toString():String"></a>
@@ -791,6 +733,22 @@ Must only be applied to <code>String</code> columns.</p><pre>df.select($<span cl
                 <span class="name">@deprecated</span>
               
         </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use Spark strlen() function</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvPrintToStr" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPrintToStr(fmt:String):org.apache.spark.sql.Column"></a>
+      <a id="smvPrintToStr(String):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use Spark printf() function">smvPrintToStr</span><span class="params">(<span name="fmt">fmt: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Convert values to String by applying &quot;printf&quot; type format</p><div class="fullcomment"><div class="comment cmt"><p>Convert values to String by applying &quot;printf&quot; type format</p><pre>df.select($<span class="lit">"zipAsNumber"</span>.smvPrintToStr(<span class="lit">"%05d"</span>) as <span class="lit">"zip"</span>)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use Spark printf() function</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvSoundex" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvSoundex:org.apache.spark.sql.Column"></a>
       <a id="smvSoundex:Column"></a>
