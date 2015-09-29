@@ -14,196 +14,240 @@
 
 package org.tresamigos.smv
 
-class EddTest extends SmvTestUtil {
-  test("test Edd on entire population") {
-    val df = open(testDataDir +  "EddTest/test1.csv")
-    val edd = df.edd.addBaseTasks('a, 'b)
-    val res = edd.toDataFrame
-    assertSrddSchemaEqual(res, "pop_tot: Long; a_cnt: Long; a_avg: Double; a_std: Double; a_min: Double; a_max: Double; b_cnt: Long; b_avg: Double; b_std: Double; b_min: Double; b_max: Double")
-    assertSrddDataEqual(res, "3,3,2.0,1.0,1.0,3.0,3,20.0,10.0,10.0,30.0")
+import org.tresamigos.smv.edd._
+import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.functions._
+
+class EddResultTest extends SmvTestUtil {
+  test("test EddResult Report") {
+    val df1 = createSchemaRdd("a:String;b:String;c:String;d:String;f:String",
+      "col_a,stat,avg,Average,13.75")
+    val row1 = df1.rdd.first
+    assert(EddResult(row1).toReport === "col_a                Average                13.75")
+
+    val df2 = createSchemaRdd("a:String;b:String;c:String;d:String",
+      """col_a,hist,key,by Key""").selectPlus(lit("""{"histSortByFreq":false,"hist":{"\"2\"":1,"\"5\"":1,"\"1\"":2}}""") as "f")
+
+    assert(EddResult(df2.rdd.first).toReport === """Histogram of col_a: by Key
+key                      count      Pct    cumCount   cumPct
+1                            2   50.00%           2   50.00%
+2                            1   25.00%           3   75.00%
+5                            1   25.00%           4  100.00%
+-------------------------------------------------""")
+
+    assert(EddResult(df2.rdd.first).toJSON === """{"colName":"col_a","taskType":"hist","taskName":"key","taskDesc":"by Key","valueJSON":{"histSortByFreq":false,"hist":{"\"2\"":1,"\"5\"":1,"\"1\"":2}}}""")
+  }
+}
+
+class EddTaskTest extends SmvTestUtil {
+  var df: DataFrame = _
+
+  override def beforeAll() = {
+    super.beforeAll()
+    df = createSchemaRdd("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
+      """z,1,a,0.2,19010701,;
+         z,2,a,1.4,20150402,true;
+         z,5,b,2.2,20130930,true;
+         a,1,a,0.3,20151204,false""")
   }
 
-  test("test Edd Base on Non-double Numerics") {
-    import org.apache.spark.sql.catalyst.dsl._
-    val ssc = sqlContext; import ssc._
-    val df = open(testDataDir +  "EddTest/test3.csv")
-    val edd = df.edd.addBaseTasks()
-    val res = edd.toDataFrame
-    assertSrddDataEqual(res, "2,2,17.5,7.7781745930520225,12,23,2,4011.5,785.5956338982543,3456,4567")
-  }
 
-  test("test Edd report on entire population") {
-    val df = open(testDataDir +  "EddTest/test2")
-    val res = df.edd.addBaseTasks().createReport()(0)
-    val expect = """Total Record Count:                        3
-id                   Non-Null Count:        3
-id                   Min Length:            3
-id                   Max Length:            3
-id                   Approx Distinct Count: 2
-val                  Non-Null Count:        2
-val                  Average:               39.855
-val                  Standard Deviation:    38.686
-val                  Min:                   12.500
-val                  Max:                   67.210
-val2                 Min:                   2012-10-09 10:16:21.0
-val2                 Max:                   2014-08-17 01:01:56.0
-Histogram of val2: Year
-key                      count      Pct    cumCount   cumPct
-2012                         1   33.33%           1   33.33%
-2013                         1   33.33%           2   66.67%
-2014                         1   33.33%           3  100.00%
--------------------------------------------------
-Histogram of val2: Month
-key                      count      Pct    cumCount   cumPct
-1                            1   33.33%           1   33.33%
-8                            1   33.33%           2   66.67%
-10                           1   33.33%           3  100.00%
--------------------------------------------------
-Histogram of val2: Day of Week
-key                      count      Pct    cumCount   cumPct
-1                            1   33.33%           1   33.33%
-3                            1   33.33%           2   66.67%
-4                            1   33.33%           3  100.00%
--------------------------------------------------
-Histogram of val2: Hour
-key                      count      Pct    cumCount   cumPct
-1                            1   33.33%           1   33.33%
-10                           1   33.33%           2   66.67%
-13                           1   33.33%           3  100.00%
--------------------------------------------------
-val3                 Non-Null Count:        3
-val3                 Min Length:            8
-val3                 Max Length:            8
-val3                 Approx Distinct Count: 3"""
-    assert(res === expect)
-  }
-
-  test("test EddHist on entire population") {
-    import org.apache.spark.sql.catalyst.dsl._
+  test("test EddTask AvgTask") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = open(testDataDir +  "EddTest/test2")
-    val edd = df.edd.addMoreTasks(
-      StringByKeyHistogram(df("id")),MonthHistogram(df("val2"))
+    val std = edd.AvgTask($"v")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, "v,stat,avg,Average,1.025")
+  }
+
+  test("test EddTask StdDevTask") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.StdDevTask($"v")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, "v,stat,std,Standard Deviation,0.9535023160258536")
+  }
+
+  test("test EddTask CntTask") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.CntTask($"v")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, "v,stat,cnt,Non-Null Count,4")
+  }
+
+  test("test EddTask MinTask") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.MinTask($"v")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, "v,stat,min,Min,0.2")
+  }
+
+  test("test EddTask MaxTask") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.MaxTask($"v")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, "v,stat,max,Max,2.2")
+  }
+
+  test("test EddTask StringMinLenTask") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.StringMinLenTask($"p")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, "p,stat,mil,Min Length,1")
+  }
+
+  test("test EddTask StringMaxLenTask") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.StringMaxLenTask($"p")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, "p,stat,mal,Max Length,1")
+  }
+
+  test("test EddTask StringDistinctCountTask") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.StringDistinctCountTask($"p")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, "p,stat,dct,Approx Distinct Count,2")
+  }
+
+  test("test EddTask AmountHistogram") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.AmountHistogram($"v")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, """v,hist,amt,as Amount,{"histSortByFreq":false,"hist":{"0.01":4}}""")
+  }
+
+  test("test EddTask BinNumericHistogram") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.BinNumericHistogram($"v", 0.5)
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, """v,hist,bnh,with BIN size 0.5,{"histSortByFreq":false,"hist":{"2.0":1,"1.0":1,"0.0":2}}""")
+  }
+
+  test("test EddTask YearHistogram") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.YearHistogram($"d")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, """d,hist,yea,Year,{"histSortByFreq":false,"hist":{"\"2013\"":1,"\"2015\"":2,"\"1901\"":1}}""")
+  }
+
+  test("test EddTask MonthHistogram") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.MonthHistogram($"d")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, """d,hist,mon,Month,{"histSortByFreq":false,"hist":{"\"12\"":1,"\"09\"":1,"\"04\"":1,"\"07\"":1}}""")
+  }
+
+  test("test EddTask DoWHistogram") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.DoWHistogram($"d")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, """d,hist,dow,Day of Week,{"histSortByFreq":false,"hist":{"\"2\"":2,"\"5\"":1,"\"6\"":1}}""")
+  }
+
+  test("test EddTask HourHistogram") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.HourHistogram($"d")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, """d,hist,hou,Hour,{"histSortByFreq":false,"hist":{"\"00\"":4}}""")
+  }
+
+  test("test EddTask BooleanHistogram") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.BooleanHistogram($"b")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, """b,hist,boo,Boolean,{"histSortByFreq":false,"hist":{"false":1,"true":2}}""")
+  }
+
+  test("test EddTask StringByKeyHistogram") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.StringByKeyHistogram($"k")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, """k,hist,key,String sort by Key,{"histSortByFreq":false,"hist":{"\"z\"":3,"\"a\"":1}}""")
+  }
+
+  test("test EddTask StringByFreqHistogram") {
+    val ssc = sqlContext; import ssc.implicits._
+    val std = edd.StringByFreqHistogram($"k")
+    val res = df.agg(std.aggCol).select(std.resultCols: _*)
+    assertSrddDataEqual(res, """k,hist,frq,String sorted by Frequency,{"histSortByFreq":true,"hist":{"\"z\"":3,"\"a\"":1}}""")
+  }
+
+  test("test EddSummary") {
+    val res = df.edd.summary()
+    assertUnorderedSeqEqual(res.toDF.collect.map(_.toString), Seq(
+      """[k,stat,cnt,Non-Null Count,4]""",
+      """[k,stat,mil,Min Length,1]""",
+      """[k,stat,mal,Max Length,1]""",
+      """[k,stat,dct,Approx Distinct Count,2]""",
+      """[t,stat,cnt,Non-Null Count,4]""",
+      """[t,stat,avg,Average,2.25]""",
+      """[t,stat,std,Standard Deviation,1.8929694486000912]""",
+      """[t,stat,min,Min,1.0]""",
+      """[t,stat,max,Max,5.0]""",
+      """[p,stat,cnt,Non-Null Count,4]""",
+      """[p,stat,mil,Min Length,1]""",
+      """[p,stat,mal,Max Length,1]""",
+      """[p,stat,dct,Approx Distinct Count,2]""",
+      """[v,stat,cnt,Non-Null Count,4]""",
+      """[v,stat,avg,Average,1.025]""",
+      """[v,stat,std,Standard Deviation,0.9535023160258536]""",
+      """[v,stat,min,Min,0.2]""",
+      """[v,stat,max,Max,2.2]""",
+      """[d,stat,tmi,Time Start,"1901-07-01 00:00:00"]""",
+      """[d,stat,tma,Time Edd,"2015-12-04 00:00:00"]""",
+      """[d,hist,yea,Year,{"histSortByFreq":false,"hist":{"\"2013\"":1,"\"2015\"":2,"\"1901\"":1}}]""",
+      """[d,hist,mon,Month,{"histSortByFreq":false,"hist":{"\"12\"":1,"\"09\"":1,"\"04\"":1,"\"07\"":1}}]""",
+      """[d,hist,dow,Day of Week,{"histSortByFreq":false,"hist":{"\"2\"":2,"\"5\"":1,"\"6\"":1}}]""",
+      """[d,hist,hou,Hour,{"histSortByFreq":false,"hist":{"\"00\"":4}}]""",
+      """[b,hist,boo,Boolean,{"histSortByFreq":false,"hist":{"false":1,"true":2}}]""")
     )
 
-    val res2 = edd.createReport()
-    val expect2 = Array("""Total Record Count:                        3
-Histogram of id: sorted by Key
+    assert(res.createReport().mkString("\n") === """k                    Non-Null Count         4
+k                    Min Length             1
+k                    Max Length             1
+k                    Approx Distinct Count  2
+t                    Non-Null Count         4
+t                    Average                2.25
+t                    Standard Deviation     1.8929694486000912
+t                    Min                    1.0
+t                    Max                    5.0
+p                    Non-Null Count         4
+p                    Min Length             1
+p                    Max Length             1
+p                    Approx Distinct Count  2
+v                    Non-Null Count         4
+v                    Average                1.025
+v                    Standard Deviation     0.9535023160258536
+v                    Min                    0.2
+v                    Max                    2.2
+d                    Time Start             "1901-07-01 00:00:00"
+d                    Time Edd               "2015-12-04 00:00:00"
+Histogram of d: Year
 key                      count      Pct    cumCount   cumPct
-123                          2   66.67%           2   66.67%
-231                          1   33.33%           3  100.00%
+1901                         1   25.00%           1   25.00%
+2013                         1   25.00%           2   50.00%
+2015                         2   50.00%           4  100.00%
 -------------------------------------------------
-Histogram of val2: Month
+Histogram of d: Month
 key                      count      Pct    cumCount   cumPct
-1                            1   33.33%           1   33.33%
-8                            1   33.33%           2   66.67%
-10                           1   33.33%           3  100.00%
--------------------------------------------------""")
-    assert(res2 === expect2)
-
-    val edd3 = df.edd.addAmountHistogramTasks('val).addHistogramTasks("id")(byFreq = true)
-    val res3 = edd3.createReport()
-    val expect3 = Array("""Total Record Count:                        3
-Histogram of val: as Amount
-key                      count      Pct    cumCount   cumPct
-10.0                         1   50.00%           1   50.00%
-60.0                         1   50.00%           2  100.00%
+04                           1   25.00%           1   25.00%
+07                           1   25.00%           2   50.00%
+09                           1   25.00%           3   75.00%
+12                           1   25.00%           4  100.00%
 -------------------------------------------------
-Histogram of id: sorted by Frequency
+Histogram of d: Day of Week
 key                      count      Pct    cumCount   cumPct
-123                          2   66.67%           2   66.67%
-231                          1   33.33%           3  100.00%
--------------------------------------------------""")
-    assert(res3 === expect3)
-
-    edd3.clean.addHistogramTasks("val")(binSize = 5.0).addMoreTasks(
-      NumericHistogram(df("val"), 12.5, 67.21, 2),
-      StringLengthHistogram(df("val3")))
-    val res4 = edd3.createReport()
-    val expect4 = Array("""Total Record Count:                        3
-Histogram of val: with BIN size 5.0
-key                      count      Pct    cumCount   cumPct
-10.0                         1   50.00%           1   50.00%
-65.0                         1   50.00%           2  100.00%
+2                            2   50.00%           2   50.00%
+5                            1   25.00%           3   75.00%
+6                            1   25.00%           4  100.00%
 -------------------------------------------------
-Histogram of val: with 2 fixed BINs
+Histogram of d: Hour
 key                      count      Pct    cumCount   cumPct
-12.5                         1   50.00%           1   50.00%
-39.855                       1   50.00%           2  100.00%
+00                           4  100.00%           4  100.00%
 -------------------------------------------------
-Histogram of val3: Length
+Histogram of b: Boolean
 key                      count      Pct    cumCount   cumPct
-8                            3  100.00%           3  100.00%
+false                        1   33.33%           1   33.33%
+true                         2   66.67%           3  100.00%
 -------------------------------------------------""")
-    assert(res4 === expect4)
-  }
-
-  test("test EddHist with Bin on Non-double Numerics") {
-    import org.apache.spark.sql.catalyst.dsl._
-    val ssc = sqlContext; import ssc._
-    val df = open(testDataDir +  "EddTest/test3.csv")
-    val edd = df.edd.addHistogramTasks("a")(binSize = 5.0).addMoreTasks(
-      NumericHistogram(df("b"), 1, 8000, 3)
-    )
-    val res = edd.createReport()
-    val expect = Array("""Total Record Count:                        2
-Histogram of a: with BIN size 5.0
-key                      count      Pct    cumCount   cumPct
-10.0                         1   50.00%           1   50.00%
-20.0                         1   50.00%           2  100.00%
--------------------------------------------------
-Histogram of b: with 3 fixed BINs
-key                      count      Pct    cumCount   cumPct
-2667.3333333333335           2  100.00%           2  100.00%
--------------------------------------------------""")
-    assert(res === expect)
-  }
-
-  test("test EddHist with AmountHistogram on Non-double Numerics") {
-    import org.apache.spark.sql.catalyst.dsl._
-    val ssc = sqlContext; import ssc._
-    val df = createSchemaRdd("k:String;v:Long", "k1,1;k1,10023;k2,3312;k2,11231")
-    val res = df.edd.addAmountHistogramTasks('v).createReport
-    val expect = Array("""Total Record Count:                        4
-Histogram of v: as Amount
-key                      count      Pct    cumCount   cumPct
-0.01                         1   25.00%           1   25.00%
-3000.0                       1   25.00%           2   50.00%
-10000.0                      2   50.00%           4  100.00%
--------------------------------------------------""")
-    assert(res === expect)
-  }
-
-  test("test Edd Histogram on Boolean") {
-    val ssc = sqlContext; import ssc._
-    val df = createSchemaRdd("k:String;v:Boolean", "k1,True;k1,True;k2,False;k2,False")
-    val res = df.edd.addHistogramTasks("v")().createReport
-    val expect = Array("Total Record Count:                        4\n" +
-"Histogram of v: \n" +
-"""key                      count      Pct    cumCount   cumPct
-false                        2   50.00%           2   50.00%
-true                         2   50.00%           4  100.00%
--------------------------------------------------""")
-    assert(res === expect)
-  }
-
-  test("test Edd createJSON") {
-    val df = createSchemaRdd("k:String; t:Integer; p: String; v:Double",
-      """z,1,a,0.2;
-         z,2,a,1.4;
-         z,5,b,2.2;
-         a,1,a,0.3""")
-    val res = df.edd.addBaseTasks().addHistogramTasks("k")().addAmountHistogramTasks('v).createJSON
-    val expect = """{"totalcnt":4,
- "edd":[
-      {"var":"k", "task": "StringBase", "data":{"cnt": 4,"mil": 1,"mal": 1}},
-      {"var":"k", "task": "StringDistinctCount", "data":{"dct": 2}},
-      {"var":"t", "task": "NumericBase", "data":{"cnt": 4,"avg": 2.25,"std": 1.8929694486000912,"min": 1,"max": 5}},
-      {"var":"p", "task": "StringBase", "data":{"cnt": 4,"mil": 1,"mal": 1}},
-      {"var":"p", "task": "StringDistinctCount", "data":{"dct": 2}},
-      {"var":"v", "task": "NumericBase", "data":{"cnt": 4,"avg": 1.025,"std": 0.9535023160258536,"min": 0.2,"max": 2.2}},
-      {"var":"k", "task": "StringByKeyHistogram", "data":{"z":3,"a":1}},
-      {"var":"v", "task": "AmountHistogram", "data":{"0.01":4}}]}"""
-    assert(res === expect)
   }
 }

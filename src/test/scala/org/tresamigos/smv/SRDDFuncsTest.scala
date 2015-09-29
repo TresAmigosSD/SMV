@@ -51,7 +51,7 @@ class SelectWithReplaceTest extends SmvTestUtil {
 class SelectPlusMinusTest extends SmvTestUtil {
   test("test SelectPlus") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = open(testDataDir +  "EddTest/test1.csv")
+    val df = createSchemaRdd("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
     val res = df.selectPlus('b + 2.0 as 'bplus2)
     assertSrddDataEqual(res,
       "1.0,10.0,12.0;" +
@@ -61,7 +61,7 @@ class SelectPlusMinusTest extends SmvTestUtil {
 
   test("test SelectPlusPrefix") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = open(testDataDir +  "EddTest/test1.csv")
+    val df = createSchemaRdd("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
     val res = df.selectPlusPrefix('b + 2.0 as 'bplus2)
     assertSrddDataEqual(res,
       "12.0,1.0,10.0;" +
@@ -71,7 +71,7 @@ class SelectPlusMinusTest extends SmvTestUtil {
 
   test("test SelectMinus") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = open(testDataDir +  "EddTest/test1.csv")
+    val df = createSchemaRdd("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
     val res = df.selectMinus('b)
     assertSrddDataEqual(res,
       "1.0;" +
