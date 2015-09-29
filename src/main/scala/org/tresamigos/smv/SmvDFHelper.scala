@@ -20,9 +20,12 @@ import org.apache.spark.sql.{DataFrame, Column}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StructField, StructType, LongType}
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.analysis._
+import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
 import org.apache.spark.annotation.Experimental
 import cds._
+import edd._
 
 class SmvDFHelper(df: DataFrame) {
 
@@ -288,22 +291,12 @@ class SmvDFHelper(df: DataFrame) {
     val names = cols.map(_.getName)
     new RollupCubeOp(df, Nil, names).rollup()
   }
-  /**
-   * Create an Edd builder on DataFrame
-   *
-   * @param groupingExprs specify grouping expression(s) to compute Edd over
-   * @return an Edd object
-   */
-  @Experimental
-  def groupEdd(groupingExprs : Column*): Edd = {
-    Edd(df, groupingExprs)
-  }
 
   /**
-   * Create an Edd builder on DataFrame population
+   * Create an Edd on DataFrame
    */
   @Experimental
-  def edd: Edd = groupEdd()
+  def edd: Edd = new Edd(df)
 
   /**
    *  Similar to groupBy, instead of creating GroupedData,
