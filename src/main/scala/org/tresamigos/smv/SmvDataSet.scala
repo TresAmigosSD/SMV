@@ -367,6 +367,12 @@ case class SmvCsvData(schemaStr: String, data: String) extends SmvModule("Dummy 
   lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
   override def validations() = super.validations.add(parserValidator)
 
+  override def classCodeCRC() = {
+    val crc = new java.util.zip.CRC32
+    crc.update((schemaStr + data).toCharArray.map(_.toByte))
+    (crc.getValue + moduleCRC.crc).toInt
+  }
+
   def run(i: runParams) = null
 
   override def doRun(): DataFrame = {
