@@ -120,14 +120,16 @@ private[smv] class FileIOHandler(
     ) {
 
     val schema = if (schemaWithMeta == null) {SmvSchema.fromDataFrame(df)} else {schemaWithMeta}
+    val schemaWithAttributes = schema.addCsvAttributes(csvAttributes)
+    val qc = csvAttributes.quotechar
 
     //Adding the header to the saved file if ca.hasHeader is true.
     val fieldNames = df.schema.fieldNames
-    val headerStr = fieldNames.map(_.trim).map(fn => "\"" + fn + "\"").
+    val headerStr = fieldNames.map(_.trim).map(fn => qc + fn + qc).
       mkString(csvAttributes.delimiter.toString)
 
     val csvHeaderRDD = df.sqlContext.sparkContext.parallelize(Array(headerStr),1)
-    val csvBodyRDD = df.map(schema.rowToCsvString(_))
+    val csvBodyRDD = df.map(schema.rowToCsvString(_, csvAttributes))
 
     //As far as I know the union maintain the order. So the header will end up being the
     //first line in the saved file.
@@ -136,7 +138,7 @@ private[smv] class FileIOHandler(
       if (csvAttributes.hasHeader) csvHeaderRDD.union(csvBodyRDD)
       else csvBodyRDD
 
-    schema.saveToFile(df.sqlContext.sparkContext, SmvSchema.dataPathToSchemaPath(dataPath))
+    schemaWithAttributes.saveToFile(df.sqlContext.sparkContext, SmvSchema.dataPathToSchemaPath(dataPath))
     csvRDD.saveAsTextFile(dataPath)
   }
 

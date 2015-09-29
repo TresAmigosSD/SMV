@@ -1,6 +1,8 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions._
+
 
 class CsvTest extends SmvTestUtil {
 
@@ -34,4 +36,40 @@ class CsvTest extends SmvTestUtil {
       "Bob,1,Bob1;" +
       "Fred,2,Fred2")
   }
+
+  test("Test reading CSV file with attributes in schema file.") {
+    val file = SmvCsvFile("./" + testDataDir +  "CsvTest/test2.csv")
+    val df = file.rdd
+
+    // take the sum of second column (age) to make sure csv was interpreted correctly.
+    val res = df.agg(sum(df("age")))
+
+    assertSrddDataEqual(res, "46")
+  }
+
+  test("Test writing CSV file with attributes in schema file.") {
+    val df = createSchemaRdd("f1:String;f2:String", "x,y;a,b").repartition(1)
+    val ca = CsvAttributes('|', '^', true)
+    val csvPath = testcaseTempDir + "/test_attr.csv"
+    val schemaPath = testcaseTempDir + "/test_attr.schema"
+    df.saveAsCsvWithSchema(csvPath, ca)
+
+    df.dumpSRDD
+
+    // verify header partition in csv file
+    assertFileEqual(csvPath + "/part-00000", "^f1^|^f2^\n")
+
+    // verify data partition in csv file
+    assertFileEqual(csvPath + "/part-00001", "^x^|^y^\n^a^|^b^\n")
+
+    // verify schema file output
+    assertFileEqual(schemaPath + "/part-00000",
+      """@delimiter = |
+        |@has-header = true
+        |@quote-char = ^
+        |f1: String
+        |f2: String
+        |""".stripMargin)
+  }
+
 }

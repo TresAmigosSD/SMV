@@ -178,4 +178,11 @@ class SmvSchemaTest extends SmvTestUtil {
     val ca = s.extractCsvAttributes()
     assert(ca === CsvAttributes(',', '\"', true))
   }
+
+  test("Test schema addCsvAttributes") {
+    val s1 = SmvSchema.fromString("@delimiter = +; @foo=bar; a:string")
+    val s2 = s1.addCsvAttributes( CsvAttributes('\t', '^', false) )
+    val exp_att = Map("foo" -> "bar", "delimiter" -> "\\t", "has-header" -> "false", "quote-char" -> "^")
+    assert(s2.attributes === exp_att)
+  }
 }

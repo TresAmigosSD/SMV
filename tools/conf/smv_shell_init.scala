@@ -36,7 +36,7 @@ object i {
     def save(path: String) = {
       // TODO: why are we creating SmvDFHelper explicitly here?
       var helper = new org.tresamigos.smv.SmvDFHelper(df)
-      helper.saveAsCsvWithSchema(path)(CsvAttributes.defaultCsvWithHeader)
+      helper.saveAsCsvWithSchema(path, CsvAttributes.defaultCsvWithHeader)
     }
 
     def savel(path: String) = {
