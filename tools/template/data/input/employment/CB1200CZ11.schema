@@ -1,3 +1,6 @@
+@has-header = true
+@delimiter = |
+
 ST: String
 ZIPCODE: String
 GEO_ID: String

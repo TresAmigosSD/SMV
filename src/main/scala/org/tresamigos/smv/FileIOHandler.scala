@@ -29,6 +29,10 @@ private[smv] class FileIOHandler(
     parserValidator: ParserValidationTask = TerminateParserValidator
   ) {
 
+  /**
+   * Create a DataFrame from the given data/schema path and CSV attributes.
+   * If CSV attributes are null, then they are extracted from the schema file directly.
+   */
   private[smv] def csvFileWithSchema(
     dataPath: String,
     schemaPath: String,
@@ -37,10 +41,12 @@ private[smv] class FileIOHandler(
     val sc = sqlContext.sparkContext
     val schema = SmvSchema.fromFile(sc, schemaPath)
 
-    val strRDD = sc.textFile(dataPath)
-    val noHeadRDD = if (csvAttributes.hasHeader) CsvAttributes.dropHeader(strRDD) else strRDD
+    val ca = if (csvAttributes == null) schema.extractCsvAttributes() else csvAttributes
 
-    csvStringRDDToDF(noHeadRDD, schema, csvAttributes)
+    val strRDD = sc.textFile(dataPath)
+    val noHeadRDD = if (ca.hasHeader) CsvAttributes.dropHeader(strRDD) else strRDD
+
+    csvStringRDDToDF(noHeadRDD, schema, ca)
   }
 
   private[smv] def frlFileWithSchema(dataPath: String, schemaPath: String): DataFrame = {

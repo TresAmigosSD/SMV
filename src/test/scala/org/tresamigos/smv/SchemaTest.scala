@@ -42,6 +42,9 @@ class SmvSchemaTest extends SmvTestUtil {
     assert(entries(7) === FloatSchemaEntry("val7"))
     assert(entries(8) === MapSchemaEntry("val8", StringSchemaEntry("keyType"), IntegerSchemaEntry("valType")))
     assert(entries(9) === ArraySchemaEntry("val9", IntegerSchemaEntry("valType")))
+
+    val atts = s.attributes
+    assert(atts === Map("key1" -> "val1", "key2" -> "val2b"))
   }
 
   test("Schema entry equality") {
@@ -157,5 +160,22 @@ class SmvSchemaTest extends SmvTestUtil {
     val res = df.select($"b".getItem(0), $"b".getItem(1), $"b".getItem(2))
 
     assertDoubleSeqEqual(res.collect()(0).toSeq, Seq(0.3,0.11,0.1))
+  }
+
+  test("Test schema extractCsvAttributes") {
+    val s = SmvSchema.fromString("""
+          @has-header = false;
+          @delimiter = \t;
+          @quote-char = |;
+          a:string""")
+    val ca = s.extractCsvAttributes()
+    assert(ca === CsvAttributes('\t', '|', false))
+  }
+
+  // test default values of extracted csv attributes.
+  test("Test schema extractCsvAttributes defaults") {
+    val s = SmvSchema.fromString("a:string; b:double")
+    val ca = s.extractCsvAttributes()
+    assert(ca === CsvAttributes(',', '\"', true))
   }
 }
