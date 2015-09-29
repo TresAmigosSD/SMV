@@ -301,18 +301,25 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
 
   private[smv] def toStructType : StructType = StructType(entries.map(se => StructField(se.name, se.dataType, true)))
 
-  def toStringWithMeta = entries.map{e =>
-    e.toString + (if (e.meta.isEmpty) "" else ("\t\t# " + e.meta))
+  /** get representation of this scheam as a sequence of strings that encode attributes and entries */
+  private def toStringsWithMeta : Seq[String] = {
+    val attStrings = attributes.toSeq.sortBy(_._1).map{ case (k,v) => s"@${k} = ${v}"}
+
+    val entStrings = entries.map{ e =>
+      e.toString + (if (e.meta.isEmpty) "" else ("\t\t# " + e.meta))
+    }
+
+    attStrings ++ entStrings
   }
 
   def saveToFile(sc: SparkContext, path: String) {
-    sc.makeRDD(toStringWithMeta, 1).saveAsTextFile(path)
+    sc.makeRDD(toStringsWithMeta, 1).saveAsTextFile(path)
   }
 
   def saveToLocalFile(path: String) {
     import java.io.{File, PrintWriter}
     val pw = new PrintWriter(new File(path))
-    pw.println(toStringWithMeta.mkString("\n"))
+    pw.println(toStringsWithMeta.mkString("\n"))
     pw.close()
   }
 
@@ -320,7 +327,7 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
    * convert a data row to a delimited csv string.
    * Handles delimiter and quote character appearing anywhere in string value.
    */
-  private[smv] def rowToCsvString(row: Row)(implicit ca: CsvAttributes) = {
+  private[smv] def rowToCsvString(row: Row, ca: CsvAttributes) = {
     require(row.size == entries.size)
     val sb = new StringBuilder
 
@@ -335,9 +342,9 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
         // TODO: handle timestamp here to convert to desired format
         case StringType =>
           // TODO: need to handle this better!
-          sb.append("\"")
+          sb.append(ca.quotechar)
           sb.append(se.valToStr(row(idx)))
-          sb.append("\"")
+          sb.append(ca.quotechar)
         case _ => sb.append(se.valToStr(row(idx)))
       }
     }
@@ -368,6 +375,28 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
     val hasHeader = Try(attributes("has-header").toBoolean).getOrElse(true)
 
     CsvAttributes(delimiter, quotechar, hasHeader)
+  }
+
+  /**
+   * Create a new `SmvSchema` object with the given CSV attributes.
+   * @param csvAttributes
+   * @return
+   */
+  private[smv] def addCsvAttributes(csvAttributes: CsvAttributes) : SmvSchema = {
+    def charToStr(c: Char) : String = {
+      c match {
+        case '\t' => "\\t"
+        case x => x.toString
+      }
+    }
+
+    val aMap = Map(
+      "has-header" -> csvAttributes.hasHeader.toString,
+      "delimiter" -> charToStr(csvAttributes.delimiter),
+      "quote-char" -> charToStr(csvAttributes.quotechar)
+    )
+
+    new SmvSchema(entries, attributes ++ aMap)
   }
 }
 

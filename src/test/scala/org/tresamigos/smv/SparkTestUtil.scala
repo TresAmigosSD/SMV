@@ -158,6 +158,14 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
   def assertStrMatches(haystack: String, needle: scala.util.matching.Regex) = {
     assert(needle.findFirstIn(haystack) != None, s"because $haystack does not match $needle")
   }
+
+  /**
+   * Verify that the contents of the file at the given path equal the expected contents.
+   */
+  def assertFileEqual(filePath: String, expContent: String) = {
+    val res = SmvHDFS.readFromFile(filePath)
+    assert(res === expContent)
+  }
 }
 
 object SparkTestUtil {

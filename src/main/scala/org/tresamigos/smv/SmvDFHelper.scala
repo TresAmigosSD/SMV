@@ -16,20 +16,20 @@ package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.Accumulator
-import org.apache.spark.sql.{DataFrame, GroupedData, Column, ColumnName}
+import org.apache.spark.sql.{DataFrame, Column}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StructField, StructType, LongType}
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.analysis._
-import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
- 
+
 import org.apache.spark.annotation.Experimental
 import cds._
 
 class SmvDFHelper(df: DataFrame) {
 
-  // TODO: add schema file path as well.
-  def saveAsCsvWithSchema(dataPath: String, schemaWithMeta: SmvSchema = null)(implicit ca: CsvAttributes) {
+  /**
+   * persist the `DataFrame` as a CSV file (along with a schema file).
+   */
+  def saveAsCsvWithSchema(dataPath: String, ca: CsvAttributes = CsvAttributes.defaultCsv, schemaWithMeta: SmvSchema = null) {
     val handler = new FileIOHandler(df.sqlContext)
     handler.saveAsCsvWithSchema(df, dataPath, schemaWithMeta, ca)
   }

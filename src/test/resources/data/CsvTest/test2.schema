@@ -1,0 +1,5 @@
+@has-header = false
+@delimiter = |
+
+name: String
+age: Integer
