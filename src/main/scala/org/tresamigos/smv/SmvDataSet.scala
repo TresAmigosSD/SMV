@@ -208,7 +208,7 @@ abstract class SmvFile extends SmvDataSet {
   override def validations() = super.validations.add(parserValidator)
 
   private[smv] def fullPath = {
-    if (isFullPath || ("""^[\.\/]"""r).findFirstIn(path) != None) path
+    if (isFullPath || ("""^[\.\/]""".r).findFirstIn(path) != None) path
     else if (app == null) throw new IllegalArgumentException(s"app == null and $path is not a full path")
     else s"${app.smvConfig.dataDir}/${path}"
   }

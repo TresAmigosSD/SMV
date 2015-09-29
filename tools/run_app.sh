@@ -26,9 +26,8 @@ source $SMV_TOOLS/_env.sh
 echo "START RUN =============================="
 
 date
-# TODO: use executer-mem config instead!
-export SPARK_MEM=6G
+
 export SPARK_PRINT_LAUNCH_COMMAND=1
-spark-submit --master ${MASTER} --class ${SMV_APP_CLASS} "$APP_JAR" ${ARGS[@]}
+spark-submit --executor-memory 6G --master ${MASTER} --class ${SMV_APP_CLASS} "$APP_JAR" ${ARGS[@]}
 date
 

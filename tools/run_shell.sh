@@ -11,6 +11,4 @@ else
     echo
 fi
 
-# TODO: use --executor-memory or whatever it is called instead.
-export SPARK_MEM=6G
-spark-shell --jars "$APP_JAR" -i "${SMV_TOOLS}/conf/smv_shell_init.scala" $APP_SHELL_INIT
+spark-shell --executor-memory 6G --jars "$APP_JAR" -i "${SMV_TOOLS}/conf/smv_shell_init.scala" $APP_SHELL_INIT

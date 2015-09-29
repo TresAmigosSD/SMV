@@ -125,6 +125,13 @@ class DocGenerator:
             html = html.replace(key, value)
         return html
 
+    def _removeTableLineBreaks(self, html):
+        """remove line breaks <br /> inserted after every table element by geneator"""
+        tags = ["<table>", "</table>", "<tr>", "</tr>", "<th>", "</th>", "<td>", "</td>"]
+        for t in tags:
+            html = html.replace(t + "<br />", t)
+        return html
+
     def _markdownToHtml(self, link, prev_link, next_link, useHeaderWithLinks=True):
         """convert given markdown file to html (in the specified output directory)"""
         print "convert file to html:", link.md_file
@@ -148,6 +155,7 @@ class DocGenerator:
 
         output = self.runner.run_cmd(cmd)
         output = self._fillNavigationLinks(output, prev_link, next_link)
+        output = self._removeTableLineBreaks(output)
         self._writeFile(html_abs_path, output)
 
     def _dummyTocLink(self):
