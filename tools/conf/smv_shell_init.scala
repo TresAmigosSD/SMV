@@ -27,7 +27,7 @@ object i {
 
   /** open file using full path */
   def open(path: String) ={
-    /** isFullPath = true to avoid prepending data_dir */ 
+    /** isFullPath = true to avoid prepending data_dir */
     val file = SmvCsvFile(path, CsvAttributes.defaultCsvWithHeader, None, true)
     file.rdd
   }
@@ -56,8 +56,8 @@ object i {
     }
   }
 
-  def discoverSchema(path: String, n: Int = 100000) = {
-    implicit val ca=CsvAttributes.defaultCsvWithHeader
+  def discoverSchema(path: String, n: Int = 100000, ca: CsvAttributes = CsvAttributes.defaultCsvWithHeader) = {
+    implicit val csvAttributes=ca
     val schema=sqlContext.discoverSchemaFromFile(path, n)
     val outpath = path + ".schema"
     schema.saveToFile(sc, outpath)
