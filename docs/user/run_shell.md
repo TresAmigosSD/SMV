@@ -23,16 +23,17 @@ helper functions and create a default SMV dummy application (`app`)
 * `dumpEdd(data_set)` : Generate base EDD results for given `SmvDataSet` and dump the results to the screen.
 
 ## Project Shell Init
-In addition to the standard `smv_shell_init.scala` file, the `run_shell.sh` script will look for an optional `conf/shell_init.sh` file and source it if found.
-Project specific initialization code, such as common imports, and functions, can be put in the `conf/shell_init.sh` file.  For example:
+In addition to the standard `smv_shell_init.scala` file, the `run_shell.sh` script will look for an optional `conf/shell_init.scala` file and source it if found.
+Project specific initialization code, such as common imports, and functions, can be put in the `conf/shell_init.scala` file.  For example:
 
 ```scala
 // create the app init object "a" rather than create initialization at top level because shell
 // would launch a separate command for each evaluation which slows down startup considerably.
+import com.mycompany.myproject.stage1.input._
+import com.mycompany.myproject.stage1.etl._
+
 object a {
   //---- common project imports
-  import com.mycompany.myproject.stage1.input._
-  import com.mycompany.myproject.stage1.etl._
   ...
 
   //---- common inputs/functions
@@ -47,4 +48,3 @@ import a._
 
 ## Examples
 TODO: add shell usage examples below.
-
