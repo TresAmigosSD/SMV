@@ -101,7 +101,13 @@ graphvis must be used to convert the ".dot" file to an image or doc.  For exampl
 </tr>
 
 <tr>
-<th colspan="3">What To Run
+<td>--publish version</td>
+<td>off</td>
+<td>publish the specified modules to the given version</td>
+</tr>
+
+<tr>
+<th colspan="3">What To Run/Publish
 <br>
 One of the options below must be specified.
 </th>
@@ -158,6 +164,12 @@ One of the options below must be specified.
 <td>option to override default location of output data directory</td>
 </tr>
 
+<tr>
+<td>&#8209;&#8209;publish&#8209;dir</td>
+<td>smv.publishDir</td>
+<td>option to override default location of publish directory</td>
+</tr>
+
 </table>
 
 ### Examples
@@ -179,4 +191,9 @@ $ _SMV_HOME_/tools/run_app.sh -g -m com.mycom.myproj.stage1.M1
 Clean up the output directory
 ```shell
 $ _SMV_HOME_/tools/run_app.sh --purge-old-output
+```
+
+Publish the output modules in stage "s1" as version "xyz".  The modules will be output to `/tmp/publish/xyz` dir.
+```shell
+$ _SMV_HOME_/tools/run_app.sh --publish xyz --publish-dir /tmp/publish -s s1
 ```

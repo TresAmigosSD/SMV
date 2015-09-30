@@ -51,9 +51,10 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrNo="do not generate a json")
 
   // --- data directories override
-  val dataDir   = opt[String]("data-dir",   noshort = true, descr = "specify the top level data directory")
-  val inputDir  = opt[String]("input-dir",  noshort = true, descr = "specify the input directory (default: datadir/input")
-  val outputDir = opt[String]("output-dir", noshort = true, descr = "specify the output directory (default: datadir/output")
+  val dataDir    = opt[String]("data-dir",    noshort = true, descr = "specify the top level data directory")
+  val inputDir   = opt[String]("input-dir",   noshort = true, descr = "specify the input directory (default: datadir/input")
+  val outputDir  = opt[String]("output-dir",  noshort = true, descr = "specify the output directory (default: datadir/output")
+  val publishDir = opt[String]("publish-dir", noshort = true, descr = "specify the publish directory (default: datadir/publish")
 
   val purgeOldOutput = toggle("purge-old-output", noshort = true, default = Some(false),
     descrYes = "remove all old output files in output dir ")
@@ -144,6 +145,12 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     cmdLine.outputDir.get.
       orElse(mergedProps.get("smv.outputDir")).
       getOrElse(dataDir + "/output")
+  }
+
+  def publishDir : String = {
+    cmdLine.publishDir.get.
+      orElse(mergedProps.get("smv.publishDir")).
+      getOrElse(dataDir + "/publish")
   }
 
   /**
