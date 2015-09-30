@@ -1,5 +1,5 @@
 #!/bin/bash
-# setup common environment used by run_app.sh and run_shell.sh
+# setup common environment used by smv-run and smv-shell scripts
 #
 # The following vars will be set once this script is sourced:
 # ARGS : command line args (other than the spark args which are extracted separately)

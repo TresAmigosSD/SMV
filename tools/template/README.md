@@ -8,11 +8,11 @@ $ mvn clean install
 
 # Run App in batch
 ```shell
-$ _SMV_HOME_/tools/run_app.sh --run-app
+$ _SMV_HOME_/tools/smv-run --run-app
 ```
 
 # Run App in Spark Shell
 ```shell
-$ _SMV_HOME_/tools/run_shell.sh
+$ _SMV_HOME_/tools/smv-shell
 ```
 

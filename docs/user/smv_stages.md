@@ -58,7 +58,7 @@ To avoid having to "re-run" `rawAccounts` continuously, the user may choose to "
 **1. Publish ETL stage**
 
 ```shell
-$ _SMV_HOME_/tools/run_app.sh --publish V1 -s etl
+$ _SMV_HOME_/tools/smv-run --publish V1 -s etl
 ```
 
 **2. Pin model to use published ETL output **
@@ -81,7 +81,7 @@ As the project grows, it may become necessary to add additional stages.
 We will utilize the example app described in [Getting Started](getting_started.md) as the starting point.
 
 ```bash
-$ _SMV_HOME_/tools/bin/smv_init.sh MyApp com.mycompany.myapp
+$ _SMV_HOME_/tools/bin/smv-init MyApp com.mycompany.myapp
 ```
 
 To review, the above will create a sample app `MyApp` with two stages `stage1` and `stage3`. We will add an additional `modeling` stage in this example.
@@ -125,6 +125,6 @@ object AccountVars extends SmvModule("add model variables to accounts") {
 }
 ```
 
-We can now run the `AccountVars` module by providing the module FQN `com.mycompany.myapp.modeling.AccountVars` to the `run_app.sh` command
+We can now run the `AccountVars` module by providing the module FQN `com.mycompany.myapp.modeling.AccountVars` to the `smv-run` command
 or by marking the module using the `SmvOutput` trait and running the entire stage ("-s modeling").
 See [Smv Modules](smv_module.md) for details.

@@ -5,14 +5,13 @@
 SMV provides a shell script to easily create an example application.
 The example app can be used for exploring SVM and it can also be used as an initialization script for a new project.
 
-The `smv_init.sh` script can be used to create the initial SMV app.
-smv_init.sh only requires two parameters.
+The `smv-init` script can be used to create the initial SMV app. `smv-init` only requires two parameters.
 * The name of the directory to create for the application
 * The FQN of the package to use for Maven and source files.
 For example:
 
 ```bash
-$ _SMV_HOME_/tools/smv_init.sh MyApp com.mycompany.myapp
+$ _SMV_HOME_/tools/smv-init MyApp com.mycompany.myapp
 ```
 
 The above command will create the ```MyApp``` directory and
@@ -20,7 +19,7 @@ install the source, configuration, and build files required for a minimal exampl
 
 The rest of this document assumes the above command was run to show what is generated and how to use it.
 
-**Note:**  User can skip to the "Run Example App" section if they are not interested in exploring the output from `smv_init.sh`
+**Note:**  User can skip to the "Run Example App" section if they are not interested in exploring the output from `smv-init`
 
 ### Example App Configuration Files
 
@@ -71,22 +70,22 @@ This jar file will contain the compiled application class files, all the SMV cla
 
 ## Run Example App
 The built app can be run by two methods.
-* `run_app.sh` : used to run specific modules, stages, or entire app from the command line.
-* `run_shell.sh` : uses the Spark Shell to interactively run and explore the output of individual modules and files.
+* `smv-run` : used to run specific modules, stages, or entire app from the command line.
+* `smv-shell` : uses the Spark Shell to interactively run and explore the output of individual modules and files.
 
-### Run Example App using `run_app.sh`
+### Run Example App using `smv-run`
 ```shell
 # run entire app (run all output modules in all stages)
-$ _SMV_HOME_/tools/run_app.sh --run-app
+$ _SMV_HOME_/tools/smv-run --run-app
 
 # run stage1 (all output modules in stage1)
-$ _SMV_HOME_/tools/run_app.sh -s stage1
+$ _SMV_HOME_/tools/smv-run -s stage1
 # or
-$ _SMV_HOME_/tools/run_app.sh -s com.mycompany.myapp.stage1
+$ _SMV_HOME_/tools/smv-run -s com.mycompany.myapp.stage1
 
 
 # run specific module (any module can be run this way, does not have to be an output module)
-$ _SMV_HOME_/tools/run_app.sh -m com.mycompany.myapp.stage1.EmploymentByState
+$ _SMV_HOME_/tools/smv-run -m com.mycompany.myapp.stage1.EmploymentByState
 ```
 
 See [SMV Output Modules](smv_module.md#output-modules) for more details on how to mark a module as an output module.
@@ -112,17 +111,17 @@ See [Run SMV Application](run_app.md) for further details.
 
 TODO: add example of running with -g (graph) command.
 
-### Run Example App using `run_shell.sh`
+### Run Example App using `smv-shell`
 
 #### Launch shell
 Spark shell can be used to allow the user to run individual modules interactively.
-The `run_shell.sh` script is provided by SMV to make it easy to launch the Spark shell with the "fat" jar attached.
+The `smv-shell` script is provided by SMV to make it easy to launch the Spark shell with the "fat" jar attached.
 
 ```shell
-$ _SMV_HOME_/tools/run_shell.sh
+$ _SMV_HOME_/tools/smv-shell
 ```
 
-TODO: add link to run_shell.sh reference doc!
+TODO: add link to smv-shell reference doc!
 
 #### Exploring SmvDataSets (SmvFiles and SmvModules)
 Once we are inside the spark shell, we can "source" (using the `s()` smv shell helper function) any `SmvFile` or `SmvModule` instance

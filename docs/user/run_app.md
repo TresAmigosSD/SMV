@@ -1,11 +1,11 @@
 # Running SMV Application
 
 While an SMV application can be run using the standard "spark-submit" command,
-a convenient script `run_app.sh` is provided to make it easy to run an application built using maven.
+a convenient script `smv-run` is provided to make it easy to run an application built using maven.
 
 ### Synopsis
 ```shell
-$ _SMV_HOME_/tools/run_app.sh [standard spark-submit-options] [smv-options] [what-to-run]
+$ _SMV_HOME_/tools/smv-run [standard spark-submit-options] [smv-options] [what-to-run]
 ```
 
 **Note:**  The above command should be run from the project top level directory.
@@ -175,25 +175,25 @@ One of the options below must be specified.
 ### Examples
 Run modules `M1` and `M2` and all its dependencies.  Note the use of the module FQN.
 ```shell
-$ _SMV_HOME_/tools/run_app.sh -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
+$ _SMV_HOME_/tools/smv-run -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
 ```
 
 Run all modules in application and generate edd report for all modules that needed to run (including dependencies)
 ```shell
-$ _SMV_HOME_/tools/run_app.sh --edd --run-app
+$ _SMV_HOME_/tools/smv-run --edd --run-app
 ```
 
 Generate a dependency graph for module M1.
 ```shell
-$ _SMV_HOME_/tools/run_app.sh -g -m com.mycom.myproj.stage1.M1
+$ _SMV_HOME_/tools/smv-run -g -m com.mycom.myproj.stage1.M1
 ```
 
 Clean up the output directory
 ```shell
-$ _SMV_HOME_/tools/run_app.sh --purge-old-output
+$ _SMV_HOME_/tools/smv-run --purge-old-output
 ```
 
 Publish the output modules in stage "s1" as version "xyz".  The modules will be output to `/tmp/publish/xyz` dir.
 ```shell
-$ _SMV_HOME_/tools/run_app.sh --publish xyz --publish-dir /tmp/publish -s s1
+$ _SMV_HOME_/tools/smv-run --publish xyz --publish-dir /tmp/publish -s s1
 ```

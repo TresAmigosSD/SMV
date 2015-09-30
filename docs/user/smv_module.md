@@ -18,7 +18,7 @@ none output modules can be changed at will without any fear of affecting externa
 
 In addition to the above, the ability to mark certain modules as output has the following benifits:
 
-* Allows user to easily "run" all output modules within a stage (using the `-s` option to `run_app.sh`)
+* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-run`)
 * A future option might be added to allow for listing of "dead" modules.  That is, any module in a stage that does not contribute to any output module either directly or indirectly.
 * We may add a future option to `SmvApp` that allows the user to display a "catalog" of output modules and their description.
 
