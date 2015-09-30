@@ -193,6 +193,12 @@ abstract class SmvDataSet {
       }.get
     }
   }
+
+  /**
+   * the stage associated with this dataset.  Only valid for modules/files defined in a stage package.
+   * Adhoc files/modules will have a null for the stage.
+   */
+  private[smv] lazy val parentStage : SmvStage = app.stages.findStageForDataSet(this)
 }
 
 abstract class SmvFile extends SmvDataSet {
