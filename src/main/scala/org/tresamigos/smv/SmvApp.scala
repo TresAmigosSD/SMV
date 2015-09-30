@@ -70,7 +70,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /** remove all non-current files in the output directory */
   private[smv] def purgeOldOutputFiles() = {
-    SmvHDFS.purgeDirectory(smvConfig.outputDir, validFilesInOutputDir())
+    if (smvConfig.cmdLine.purgeOldOutput())
+      SmvHDFS.purgeDirectory(smvConfig.outputDir, validFilesInOutputDir())
   }
 
   /**
@@ -138,6 +139,50 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /**
+   * generate dependency graphs if "-g" flag was specified on command line.
+   * @return true of graphs were generated otherwise return false.
+   */
+  private def generateDependencyGraphs() : Boolean = {
+    if (smvConfig.cmdLine.graph()) {
+      smvConfig.modulesToRun().foreach { module =>
+        // TODO: need to combine the modules for graphs into a single graph.
+        genDotGraph(module)
+      }
+      true
+    } else {
+      false
+    }
+  }
+
+  /**
+   * Publish the specified modules if the "--publish" flag was specified on command line.
+   * @return true if modules were published, otherwise return false.
+   */
+  private def publishOutputModules() : Boolean = {
+    // TODO: insert code here to publish modules.
+    false
+  }
+
+  /**
+   * run the specified output modules.
+   * @return true if modules were generated, otherwise false.
+   */
+  private def generateOutputModules() : Boolean = {
+    deleteOutputModules()
+
+    smvConfig.modulesToRun().foreach { module =>
+      val modResult = resolveRDD(module)
+
+      // if module was ephemeral, then it was not saved during graph execution and we need
+      // to persist it here explicitly.
+      if (module.isEphemeral)
+        module.persist(modResult)
+    }
+
+    smvConfig.modulesToRun().nonEmpty
+  }
+
+  /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
    */
@@ -146,31 +191,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       genJSON()
     }
 
-    println("Modules to run")
-    println("--------------")
+    println("Modules to run/publish")
+    println("----------------------")
     smvConfig.modulesToRun().foreach(m => println(m.name))
-    println("--------------")
+    println("----------------------")
 
-    deleteOutputModules()
+    purgeOldOutputFiles()
 
-    if (smvConfig.cmdLine.purgeOldOutput()) {
-      purgeOldOutputFiles()
-    }
-
-    smvConfig.modulesToRun().foreach { module =>
-
-      if (smvConfig.cmdLine.graph()) {
-        // TODO: need to combine the modules for graphs into a single graph.
-        genDotGraph(module)
-      } else {
-        val modResult = resolveRDD(module)
-
-        // if module was ephemeral, then it was not saved during graph execution and we need
-        // to persist it here explicitly.
-        if (module.isEphemeral)
-          module.persist(modResult)
-      }
-    }
+    // either generate graphs, publish modules, or run output modules (only one will occur)
+    generateDependencyGraphs() || publishOutputModules() || generateOutputModules()
   }
 }
 
