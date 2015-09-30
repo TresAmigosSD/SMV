@@ -26,20 +26,22 @@ import org.apache.spark.sql.catalyst.expressions.{GenericMutableRow, Row}
  **/
 private[smv] class FileIOHandler(
     sqlContext: SQLContext,
+    dataPath: String,
+    schemaPath: Option[String] = None,
     parserValidator: ParserValidationTask = TerminateParserValidator
   ) {
+
+  private def fullSchemaPath = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
 
   /**
    * Create a DataFrame from the given data/schema path and CSV attributes.
    * If CSV attributes are null, then they are extracted from the schema file directly.
    */
   private[smv] def csvFileWithSchema(
-    dataPath: String,
-    schemaPath: String,
     csvAttributes: CsvAttributes
   ): DataFrame = {
     val sc = sqlContext.sparkContext
-    val schema = SmvSchema.fromFile(sc, schemaPath)
+    val schema = SmvSchema.fromFile(sc, fullSchemaPath)
 
     val ca = if (csvAttributes == null) schema.extractCsvAttributes() else csvAttributes
 
@@ -49,10 +51,10 @@ private[smv] class FileIOHandler(
     csvStringRDDToDF(noHeadRDD, schema, ca)
   }
 
-  private[smv] def frlFileWithSchema(dataPath: String, schemaPath: String): DataFrame = {
+  private[smv] def frlFileWithSchema(): DataFrame = {
     val sc = sqlContext.sparkContext
-    val slices = SmvSchema.slicesFromFile(sc, schemaPath)
-    val schema = SmvSchema.fromFile(sc, schemaPath)
+    val slices = SmvSchema.slicesFromFile(sc, fullSchemaPath)
+    val schema = SmvSchema.fromFile(sc, fullSchemaPath)
     require(slices.size == schema.getSize)
 
     // TODO: show we allow header in Frl files?
@@ -60,7 +62,7 @@ private[smv] class FileIOHandler(
     frlStringRDDToDF(strRDD, schema, slices)
   }
 
-  private[smv] def seqStringRDDToDF(
+  private def seqStringRDDToDF(
     rdd: RDD[Seq[String]],
     schema: SmvSchema
   ) = {
@@ -114,7 +116,6 @@ private[smv] class FileIOHandler(
   // guaranteed in order when read back in, we need to only store the body w/o the header
   private[smv] def saveAsCsvWithSchema(
       df: DataFrame,
-      dataPath: String,
       schemaWithMeta: SmvSchema = null,
       csvAttributes: CsvAttributes = CsvAttributes.defaultCsv
     ) {
@@ -138,7 +139,7 @@ private[smv] class FileIOHandler(
       if (csvAttributes.hasHeader) csvHeaderRDD.union(csvBodyRDD)
       else csvBodyRDD
 
-    schemaWithAttributes.saveToFile(df.sqlContext.sparkContext, SmvSchema.dataPathToSchemaPath(dataPath))
+    schemaWithAttributes.saveToFile(df.sqlContext.sparkContext, fullSchemaPath)
     csvRDD.saveAsTextFile(dataPath)
   }
 

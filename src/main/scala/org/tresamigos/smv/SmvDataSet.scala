@@ -156,8 +156,8 @@ abstract class SmvDataSet {
     println(s"${fmt.print(before)} PERSISTING: ${filePath}")
 
     val df = rdd.smvPipeCount(counter)
-    val handler = new FileIOHandler(app.sqlContext)
-    handler.saveAsCsvWithSchema(df, filePath)
+    val handler = new FileIOHandler(app.sqlContext, filePath)
+    handler.saveAsCsvWithSchema(df)
 
     val after = DateTime.now()
     val runTime = PeriodFormat.getDefault().print(new Period(before, after))
@@ -174,8 +174,8 @@ abstract class SmvDataSet {
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] = {
     Try({
-      val handler = new FileIOHandler(app.sqlContext)
-      handler.csvFileWithSchema(moduleCsvPath(prefix), moduleSchemaPath(prefix), CsvAttributes.defaultCsv)
+      val handler = new FileIOHandler(app.sqlContext, moduleCsvPath(prefix))
+      handler.csvFileWithSchema(CsvAttributes.defaultCsv)
     })
   }
 
@@ -261,9 +261,8 @@ case class SmvCsvFile(
 
   override private[smv] def doRun(): DataFrame = {
     // TODO: this should use inputDir instead of dataDir
-    val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
-    val handler = new FileIOHandler(app.sqlContext, parserValidator)
-    val df = handler.csvFileWithSchema(fullPath, sp, csvAttributes)
+    val handler = new FileIOHandler(app.sqlContext, fullPath, None, parserValidator)
+    val df = handler.csvFileWithSchema(csvAttributes)
     run(df)
   }
 }
@@ -276,9 +275,8 @@ case class SmvFrlFile(
 
   override private[smv] def doRun(): DataFrame = {
     // TODO: this should use inputDir instead of dataDir
-    val sp = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
-    val handler = new FileIOHandler(app.sqlContext, parserValidator)
-    val df = handler.frlFileWithSchema(fullPath, sp)
+    val handler = new FileIOHandler(app.sqlContext, fullPath, None, parserValidator)
+    val df = handler.frlFileWithSchema()
     run(df)
   }
 }
@@ -348,8 +346,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   private[smv] def publish() = {
     val df = rdd()
     val version = app.smvConfig.cmdLine.publish()
-    val handler = new FileIOHandler(app.sqlContext)
-    handler.saveAsCsvWithSchema(df, publishPath(version))
+    val handler = new FileIOHandler(app.sqlContext, publishPath(version))
+    handler.saveAsCsvWithSchema(df)
   }
 
   /**
@@ -358,7 +356,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    */
   private[smv] def readPublishedData() : Option[DataFrame] = {
     parentStage.version.map { v =>
-      SmvCsvFile(publishPath(v), csvAttributes = null, schemaPath = None, isFullPath = true).rdd
+      val handler = new FileIOHandler(app.sqlContext, publishPath(v))
+      handler.csvFileWithSchema(null)
     }
   }
 }
@@ -436,7 +435,7 @@ case class SmvCsvData(
     val schema = SmvSchema.fromString(schemaStr)
     val dataArray = data.split(";").map(_.trim)
 
-    val handler = new FileIOHandler(app.sqlContext, parserValidator)
+    val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, CsvAttributes.defaultCsv)
   }
 }
