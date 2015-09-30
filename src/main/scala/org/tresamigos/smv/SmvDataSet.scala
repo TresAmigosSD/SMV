@@ -322,9 +322,21 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    * Create a snapshot in the current module at some result DataFrame.
    * This is useful for debugging a long SmvModule by creating snapshots along the way.
    */
-  def snapshot(df: DataFrame, prefix: String) : DataFrame = {
+  private[smv] def snapshot(df: DataFrame, prefix: String) : DataFrame = {
     persist(df, prefix)
     readPersistedFile(prefix).get
+  }
+
+  /**
+   * Publish the current module data to the publish directory.
+   * PRECONDITION: user must have specified the --publish command line option (that is where we get the version)
+   */
+  private[smv] def publish() = {
+    val df = rdd()
+    val version = app.smvConfig.cmdLine.publish.orElse(Some("0"))()
+    val path = s"${app.smvConfig.publishDir}/${version}/${name}.csv"
+    val handler = new FileIOHandler(app.sqlContext)
+    handler.saveAsCsvWithSchema(df, path)
   }
 }
 

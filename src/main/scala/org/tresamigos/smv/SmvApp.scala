@@ -159,8 +159,12 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * @return true if modules were published, otherwise return false.
    */
   private def publishOutputModules() : Boolean = {
-    // TODO: insert code here to publish modules.
-    false
+    if (smvConfig.cmdLine.publish.isDefined) {
+      smvConfig.modulesToRun().foreach { module => module.publish() }
+      true
+    } else {
+      false
+    }
   }
 
   /**
