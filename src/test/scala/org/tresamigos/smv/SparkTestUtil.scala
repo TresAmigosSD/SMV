@@ -169,14 +169,9 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
 }
 
 object SparkTestUtil {
-  import scala.collection.JavaConversions.enumerationAsScalaIterator
-
-  def setLoggingLevel(level: Level) {
-    val rootLogger = LogManager.getRootLogger
-    val loggers = rootLogger :: LogManager.getCurrentLoggers.map(_.asInstanceOf[Logger]).toList
-    loggers.foreach { logger =>
-      logger.setLevel(level)
-    }
+  def setLoggingLevel(level: Level) = {
+    Logger.getLogger("org").setLevel(level)
+    Logger.getLogger("akka").setLevel(level)
   }
 }
 
