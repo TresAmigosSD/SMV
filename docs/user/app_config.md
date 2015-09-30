@@ -103,6 +103,14 @@ Can be overridden using <code>--input-dir</code> command line option</td>
 Can be overridden using <code>--output-dir</code> command line option</td>
 </tr>
 
+<tr>
+<td>smv.publishDir</td>
+<td>dataDir<code>/publish</code></td>
+<td>Optional</td>
+<td>Data publish directory
+Can be overridden using <code>--publish-dir</code> command line option</td>
+</tr>
+
 </table>
 
 ## Spark SQL configuration parameters.

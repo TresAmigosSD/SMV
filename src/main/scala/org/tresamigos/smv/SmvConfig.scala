@@ -37,10 +37,9 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val smvUserConfFile = opt("smv-user-conf", noshort = true,
     default = Some(DEFAULT_SMV_USER_CONF_FILE),
     descr = "user level (dynamic) SMV configuration file path")
-  // TODO: DEPRECATED: flag is now ignored.  Remove once we modify all script to remove "-d"
-  val devMode = toggle("dev", default=Some(false),
-    descrYes="enable dev mode (persist all intermediate module results",
-    descrNo="enable production mode (all modules are evaluated from scratch")
+  val publish = opt[String]("publish", noshort = true,
+    default = None,
+    descr = "publish the given modules/stage/app as given version")
   val genEdd = toggle("edd", default = Some(false), noshort = true,
     descrYes = "summarize data and generate an edd file in the same directory as csv and schema",
     descrNo  = "do not summarize data")
@@ -52,9 +51,10 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrNo="do not generate a json")
 
   // --- data directories override
-  val dataDir   = opt[String]("data-dir",   noshort = true, descr = "specify the top level data directory")
-  val inputDir  = opt[String]("input-dir",  noshort = true, descr = "specify the input directory (default: datadir/input")
-  val outputDir = opt[String]("output-dir", noshort = true, descr = "specify the output directory (default: datadir/output")
+  val dataDir    = opt[String]("data-dir",    noshort = true, descr = "specify the top level data directory")
+  val inputDir   = opt[String]("input-dir",   noshort = true, descr = "specify the input directory (default: datadir/input")
+  val outputDir  = opt[String]("output-dir",  noshort = true, descr = "specify the output directory (default: datadir/output")
+  val publishDir = opt[String]("publish-dir", noshort = true, descr = "specify the publish directory (default: datadir/publish")
 
   val purgeOldOutput = toggle("purge-old-output", noshort = true, default = Some(false),
     descrYes = "remove all old output files in output dir ")
@@ -145,6 +145,12 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     cmdLine.outputDir.get.
       orElse(mergedProps.get("smv.outputDir")).
       getOrElse(dataDir + "/output")
+  }
+
+  def publishDir : String = {
+    cmdLine.publishDir.get.
+      orElse(mergedProps.get("smv.publishDir")).
+      getOrElse(dataDir + "/publish")
   }
 
   /**
