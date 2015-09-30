@@ -321,8 +321,19 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   /**
    * Create a snapshot in the current module at some result DataFrame.
    * This is useful for debugging a long SmvModule by creating snapshots along the way.
+   * {{{
+   * object MyMod extends SmvModule("...") {
+   *   override def requireDS = Seq(...)
+   *   override def run(...) = {
+   *      val s1 = ...
+   *      snapshot(s1, "s1")
+   *      val s2 = f(s1)
+   *      snapshot(s2, "s2")
+   *      ...
+   *   }
+   * }}}
    */
-  private[smv] def snapshot(df: DataFrame, prefix: String) : DataFrame = {
+  def snapshot(df: DataFrame, prefix: String) : DataFrame = {
     persist(df, prefix)
     readPersistedFile(prefix).get
   }
