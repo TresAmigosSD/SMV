@@ -2,6 +2,30 @@
 
 SMV added support for handling Comma Separated Values (CSV) and Fixed Record Length (FRL) files with schemas.  Recent versions of Spark have added direct support for CSV files but they lack the support for external schema definitions.
 
+For each CSV file, SMV require a Schema file to explicitly define the schema of it.
+The schema should store with the data file with postfix `schema` instead of `csv`.
+
+For example
+```
+/path/to/data/acct_demo.csv
+/path/to/data/acct_demo.schema
+```
+
+The following variations are also supported
+```
+/path/to/data/acct_demo.csv.gz
+/path/to/data/acct_demo.schema
+```
+
+```
+/path/to/data/acct_demo
+/path/to/data/acct_demo.schema  
+```
+
+where the data is actually a directory.
+
+SMV also provides a tool to [discover schema](schema_discovery.md) from raw CSV file.
+
 ## Basic Usage
 The most common way to utilize SMV files is to define objects in the input package of a given stage.
 For example:
@@ -10,6 +34,12 @@ package com.mycom.myproj.stage1.input
 
 object acct_demo extends SmvCsvFile("accounts/acct_demo.csv")
 ```
+
+Please note that we only specified the file name of the data file, the assumption is
+that the schema file is in the same place with postfix `schema`.
+
+The file path `accounts/acct_demo.csv` is relative to `smv.dataDir` in the configuration, please
+check [Application Configuration](app_config.md) for details.
 
 Given the above definition, any module in `stage1` will be able to add a dependency to `acct_demo` by using it in `requireDS`:
 ```scala
@@ -45,9 +75,6 @@ We extended the previous example to override the `run()` and `dqm` methods.  The
 And the `dqm` method is used to provide a set of DQM rules to apply to the output of the `run()` method.  See [DQM doc](dqm.md) for further details.
 
 **Note:** unlike the `run` method in modules, the `run` method in file only takes a single `DataFrame` argument.
-
-## Fixed Record Length Files
-TODO: add FRL info
 
 ## Schema Definition
 Because CSV files do not describe the data, the user must supply a schema definition that describes the set of columns and their type.  The schema file consists of CSV attributes and field definitions with one field definition per line.  The field definition consists of the field name and the field type.  The file may also contain blank lines and comments that start with "//" or "#".
@@ -110,35 +137,74 @@ str_to_int: map[String, Integer];
 int_to_double: map[Integer, Double];
 ```
 
+## Fixed Record Length Files
+Current support for Fixed Record Length file is pretty minimal.
+* No header is allowed in FRL files
+* Record length info are carried in the comment part of the Schema file
+* No gap between fields are allowed
+
+For Example:
+```
+acct_id: String;  # $8
+user_id: String;  # $10
+amt: Double; # $13
+```
+
+The length of each field defined in the format of `$n` in the comment part of each
+line in the schema file. There are no `offset` parameter for each field. If you have
+gap in 2 fields, please create a dummy filler field in the schema file with the
+record length as the gap size.
+
+Access FRL file is similar to Csv File
+```scala
+object user_demo extends SmvFrlFile("user_demo.frl")
+```
+
 ## Accessing Raw Files from shell
-TODO: add info about shell access here (both, raw files and existing files)
+With pre-loaded functions, one can access file from Spark shell, see [Run Spark Shell](run_shell.md)
+document for all the pre-defined functions.
+
 ### Reading Files in shell
+A `open` function is provided to load CSV file and return a `DataFrame` in the shell for ad hoc
+analysis
+```scala
+scala> val tmpdata = open("/path/to/file.csv")
+```
+Please note that the path here is either relative to the shell running dir or the absolute path.
+
+One can also use `SmvCsvFile` or `SmvFrlFile` to access files in the shell the same way as from code.
+```scala
+scala> object tmp_acct_demo extends SmvCsvFile("accounts/acct_demo.csv")
+scala> val ad = tmp_acct_demo.rdd
+```
+The path is relative to the `smv.dataDir` for the current project.
+
+For `SmvFile` already defined in the current project, one can simply resolve them and get a `DataFrame`.
+For example, one have `AccountDemo` defined in the project package `com.mycompany.myapp.stage1`, one
+can access it from the shell as below,
+```scala
+scala> val ad = s(AccountDemo)
+```
+
+Here we assume
+```scala
+import com.mycompany.myapp.stage1._
+```
+is specified in `conf/conf/shell_init.scala` or manually added as earlier shell command.
 
 ### Saving Files in shell
-TODO: cleanup saving files in shell
 ```scala
-srdd.saveAsCsvWithSchema("/outdata/result")
+scala> df.save("/outdata/result.csv")
 ```
-It will create csv files (in `result` directory) and a schema file with name `result.schema`
-
-User can also supply the implicit CsvAttributes argument to override the default CSV attributes.  For examples:
-```scala
-srdd.saveAsCsvWithSchema("/outdata/result")(CsvAttributes(delimiter="|")
-```
-or
-```scala
-implicit myCsvAttribs = CsvAttributes(delimiter="|")
-srdd.saveAsCsvWithSchema("/outdata/result")
-```
+It will create a csv file and a schema file with name `result.schema`. Similar to the `open` method,
+the path here is relative to the shell running dir or is the absolute path.
 
 ### Schema Discovery
 
 SMV can discover data schema from CSV file and create a schema file.  Manual adjustment might be needed on the discovered schema file.  Example of using the Schema Discovery in the interactive shell
 
 ```scala
-scala> implicit val ca=CsvAttributes.defaultCsvWithHeader
-scala> val schema=sqlContext.discoverSchemaFromFile("/path/to/file.csv", 100000)
-scala> schema.saveToLocalFile("/path/to/file.schema")
+scala> discoverSchema("/path/to/file.csv")
 ```
 
-Here we assume that you have sqlContext defined in the spark-shell environment. 
+The schema file will be created as a sibling file with the data file.

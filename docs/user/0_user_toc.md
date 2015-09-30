@@ -2,11 +2,11 @@
 
 * [Installation](smv_install.md)
 * [Getting Started](getting_started.md)
+* [SMV Introduction](smv_intro.md)
 * [Application Configuration](app_config.md)
 * [Run Application](run_app.md)
 * [Run Spark Shell](run_shell.md)
 * [EDD - Extended Data Dictionary](edd.md)
-* [SMV Application](smv_app.md)
 * [SMV Files](smv_file.md)
 * [SMV Modules](smv_module.md)
 * [SMV Stages](smv_stages.md) TODO: rename to smv_stage.md to be consistent (singular)
