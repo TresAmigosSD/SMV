@@ -152,13 +152,12 @@ This is **not** limited to output modules.
 
 ```scala
 scala> val d2 = s(EmploymentByState)
-d2: org.apache.spark.sql.DataFrame = [FIRST('ST): string, EMP: bigint]
+d2: org.apache.spark.sql.DataFrame = [ST: string, EMP: bigint]
 
 scala> d2.printSchema
 root
- |-- FIRST('ST): string (nullable = true)
+ |-- ST: string (nullable = true)
  |-- EMP: long (nullable = true)
-
 
 scala> d2.count
 res2: Long = 52
@@ -174,22 +173,32 @@ data other than the `EMP` field.
 To quickly get an overall idea of the input data, we can use the SMV EDD (Extended Data Dictionary) tool.
 
 ```scala
-scala> d1.select("ZIPCODE", "YEAR", "ESTAB", "EMP").edd.addBaseTasks().addHistogramTasks("ESTAB", "EMP")().dump
-Total Record Count:                         38818
-ZIPCODE              Non-Null Count:        38818
-ZIPCODE              Average:               49750.09928383732
-ZIPCODE              Standard Deviation:    27804.662445936523
-ZIPCODE              Min:                   501
-ZIPCODE              Max:                   99999
-...
+scala> d1.select("ZIPCODE", "YEAR", "ESTAB", "EMP").edd.summary().eddShow
+ZIPCODE              Non-Null Count         38818
+ZIPCODE              Min Length             5
+ZIPCODE              Max Length             5
+ZIPCODE              Approx Distinct Count  38989
+YEAR                 Non-Null Count         38818
+YEAR                 Min Length             4
+YEAR                 Max Length             4
+YEAR                 Approx Distinct Count  1
+ESTAB                Non-Null Count         38818
+ESTAB                Average                191.45262507084342
+ESTAB                Standard Deviation     371.37743343837866
+ESTAB                Min                    1.0
+ESTAB                Max                    16465.0
+EMP                  Non-Null Count         38818
+EMP                  Average                2907.469241073729
+EMP                  Standard Deviation     15393.485966796263
+EMP                  Min                    0.0
+EMP                  Max                    2733406.0
+
+scala> d1.edd.histogram("ESTAB", "EMP").eddShow
 Histogram of ESTAB: with BIN size 100.0
 key                      count      Pct    cumCount   cumPct
 0.0                      26060   67.13%       26060   67.13%
 100.0                     3129    8.06%       29189   75.19%
 200.0                     1960    5.05%       31149   80.24%
-300.0                     1445    3.72%       32594   83.97%
-400.0                     1136    2.93%       33730   86.89%
-500.0                      937    2.41%       34667   89.31%
 ...
 -------------------------------------------------
 Histogram of EMP: with BIN size 100.0
@@ -203,5 +212,4 @@ key                      count      Pct    cumCount   cumPct
 ...
 ```
 
-TODO: add link to EDD ref guide here
-
+Please see [EDD doc](edd.md) for more details.
