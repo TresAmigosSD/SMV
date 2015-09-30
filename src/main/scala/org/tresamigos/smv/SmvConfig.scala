@@ -196,6 +196,12 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       propVal.split(Array(',', ':')).map(_.trim)
   }
 
+  /** Return the value of given configuration parameter as an optional string. */
+  private[smv] def getProp(propName: String) : Option[String] = {
+    mergedProps.get(propName)
+  }
+
+  /** Get the given configuration property value as an integer option. */
   private[smv] def getPropAsInt(propName: String) : Option[Int] = {
     mergedProps.get(propName).flatMap { s: String => Try(s.toInt).toOption }
   }

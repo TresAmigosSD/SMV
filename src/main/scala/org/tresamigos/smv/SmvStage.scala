@@ -59,7 +59,7 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
 /**
  * A single configured stage consisting of a single package.
  */
-private[smv] class SmvStage(val name: String, val version: Int) extends SmvPackageManager {
+private[smv] class SmvStage(val name: String, val version: Option[String]) extends SmvPackageManager {
   override def toString = s"SmvStage<${name}>"
 
   override def getAllPackageNames() = Seq(name)
@@ -85,7 +85,7 @@ private[smv] object SmvStage {
     val stagePropPrefix = s"smv.stages.${baseName}"
 
     // get stage version (if any)
-    val version = conf.getPropAsInt(stagePropPrefix + ".version").getOrElse(0)
+    val version = conf.getProp(stagePropPrefix + ".version")
 
     new SmvStage(name, version)
   }

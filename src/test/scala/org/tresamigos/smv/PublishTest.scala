@@ -18,7 +18,8 @@ class PublishTest extends SmvTestUtil {
   override def appArgs = Seq(
     "--smv-props",
     "smv.stages=org.tresamigos.smv.publish.stage1",
-    "--publish", "v1",
+    "smv.stages.stage1.version=v1",   // version when reading.
+    "--publish", "v1",                // version when publishing.
     "--data-dir", testcaseTempDir,
     "-s", "stage1")
 
@@ -30,9 +31,13 @@ class PublishTest extends SmvTestUtil {
     val df = SmvCsvFile("publish/v1/org.tresamigos.smv.publish.stage1.M1.csv").rdd
     assertSrddSchemaEqual(df, "x:Integer")
     assertSrddDataEqual(df, "1;2;3")
+
+    // Read published data using standard interface.
+    val dfpub = org.tresamigos.smv.publish.stage1.M1.readPublishedData().get
+    assertSrddSchemaEqual(dfpub, "x:Integer")
+    assertSrddDataEqual(dfpub, "1;2;3")
   }
 }
-
 }
 
 /** package for testing publish functionality */

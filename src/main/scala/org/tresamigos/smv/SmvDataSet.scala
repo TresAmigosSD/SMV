@@ -338,16 +338,28 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     readPersistedFile(prefix).get
   }
 
+  /** path of published data for a given version. */
+  private def publishPath(version: String) = s"${app.smvConfig.publishDir}/${version}/${name}.csv"
+
   /**
    * Publish the current module data to the publish directory.
    * PRECONDITION: user must have specified the --publish command line option (that is where we get the version)
    */
   private[smv] def publish() = {
     val df = rdd()
-    val version = app.smvConfig.cmdLine.publish.orElse(Some("0"))()
-    val path = s"${app.smvConfig.publishDir}/${version}/${name}.csv"
+    val version = app.smvConfig.cmdLine.publish()
     val handler = new FileIOHandler(app.sqlContext)
-    handler.saveAsCsvWithSchema(df, path)
+    handler.saveAsCsvWithSchema(df, publishPath(version))
+  }
+
+  /**
+   * Read the published data of this module if the parent stage has specified a version.
+   * @return Some(DataFrame) if the stage has a version specified, None otherwise.
+   */
+  private[smv] def readPublishedData() : Option[DataFrame] = {
+    parentStage.version.map { v =>
+      SmvCsvFile(publishPath(v), csvAttributes = null, schemaPath = None, isFullPath = true).rdd
+    }
   }
 }
 
@@ -380,11 +392,13 @@ abstract class SmvModuleLink(outputModule: SmvOutput) extends
   override def run(inputs: runParams) = null
 
   /**
-   * "Running" a link requires that we read the persisted output from the upstream
-   * `DataSet`.
+   * "Running" a link requires that we read the persisted output from the upstream `DataSet`.
+   * The persisted data can either be in the output directory or in a published directory depending if the enclosing stage has a version defined.
    */
   override private[smv] def doRun(): DataFrame = {
-    smvModule.readPersistedFile().get
+    smvModule.readPublishedData().
+      orElse { smvModule.readPersistedFile().toOption }.
+      getOrElse(throw new IllegalStateException(s"can not find published or persisted ${description}"))
   }
 }
 

@@ -66,11 +66,11 @@ class SmvConfigTest extends SmvTestUtil {
     assertUnorderedSeqEqual(ss.stageNames, Seq("com.myproj.s1pkg", "com.myproj.s2pkg"))
 
     val s1 = ss.findStage("com.myproj.s1pkg")
-    assert(s1.version === 5)
+    assert(s1.version === Some("5"))
 
     // find stage using basename instead of FQN
     val s2 = ss.findStage("s2pkg")
-    assert(s2.version === 0)
+    assert(s2.version === None)
   }
 
   test("test input/output/data dir command line override") {
