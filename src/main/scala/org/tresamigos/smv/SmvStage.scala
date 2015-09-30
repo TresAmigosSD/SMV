@@ -21,6 +21,9 @@ private[smv] trait SmvPackageManager {
   /** any class extending SmvPackageManager must at a minimum implement getAllPackageNames. */
   def getAllPackageNames() : Seq[String]
 
+  lazy val allDatasets : Seq[SmvDataSet] =
+    getAllPackageNames.flatMap{ p => SmvReflection.objectsInPackage[SmvDataSet](p) }
+
   lazy val allModules : Seq[SmvModule] =
     getAllPackageNames.flatMap{ p => SmvReflection.objectsInPackage[SmvModule](p) }
 
@@ -42,6 +45,15 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
   }
 
   override def getAllPackageNames() = stages.flatMap(s => s.getAllPackageNames())
+
+  /**
+   * Find the stage that a given dataset belongs to.
+   */
+  private[smv] def findStageForDataSet(ds: SmvDataSet) : SmvStage = {
+    stages.find { s =>
+      s.allDatasets.exists( sds => sds == ds )
+    }.getOrElse(null)
+  }
 }
 
 /**

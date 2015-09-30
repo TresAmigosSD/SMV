@@ -46,6 +46,23 @@ class SmvStagesTest extends SparkTestUtil {
 }
 
 /**
+ * Test the searching for the stage for a given module.
+ */
+class SmvStagesSearchTest extends SmvTestUtil {
+  override def appArgs = testAppArgs.multiStage ++ Seq("-m", "None")
+
+  test("Test findStageForDataSet") {
+//    val tStage = app.stages.findStageForDataSet(org.tresamigos.smv.smvAppTestPkg3.T)
+    val tStage = org.tresamigos.smv.smvAppTestPkg3.T.parentStage
+    assert(tStage.name === "org.tresamigos.smv.smvAppTestPkg3")
+
+    val noStage = org.tresamigos.smv.smvAppTestPkgX.NoStageModule.parentStage
+    assert(noStage === null)
+  }
+}
+
+
+/**
  * test the "what modules to run" method in SmvConfig.
  * While this only calls SmvConfig methods, it is affected by SmvStages so the test belongs in this file.
  */
@@ -140,4 +157,17 @@ object U extends UBase {
   override def requiresDS() = Seq.empty
   override def run(inputs: runParams) = null
 }
+}
+
+package org.tresamigos.smv.smvAppTestPkgX {
+
+import org.tresamigos.smv.SmvModule
+
+/** a module that doesn't belong to any configured stage! */
+object NoStageModule extends SmvModule("No Stage Module") {
+  override def requiresDS() = Seq.empty
+
+  override def run(inputs: runParams) = null
+}
+
 }
