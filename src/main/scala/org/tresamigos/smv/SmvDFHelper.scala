@@ -33,8 +33,8 @@ class SmvDFHelper(df: DataFrame) {
    * persist the `DataFrame` as a CSV file (along with a schema file).
    */
   def saveAsCsvWithSchema(dataPath: String, ca: CsvAttributes = CsvAttributes.defaultCsv, schemaWithMeta: SmvSchema = null) {
-    val handler = new FileIOHandler(df.sqlContext)
-    handler.saveAsCsvWithSchema(df, dataPath, schemaWithMeta, ca)
+    val handler = new FileIOHandler(df.sqlContext, dataPath)
+    handler.saveAsCsvWithSchema(df, schemaWithMeta, ca)
   }
 
   /**
