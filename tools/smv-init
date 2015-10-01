@@ -60,7 +60,7 @@ function copy_with_inject()
 
 function copy_conf_files()
 {
-    FILES="pom.xml README.md log4j.properties conf/shell_init.scala conf/smv-app-conf.props conf/smv-user-conf.props"
+    FILES="pom.xml README.md .gitignore log4j.properties conf/shell_init.scala conf/smv-app-conf.props conf/smv-user-conf.props"
     for f in $FILES; do
         copy_with_inject "$TEMPLATE_DIR/$f" "$PROJ_DIR/$f"
     done

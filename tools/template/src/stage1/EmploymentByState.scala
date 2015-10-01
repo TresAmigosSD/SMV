@@ -11,10 +11,10 @@ import org.tresamigos.smv._
  */
 object EmploymentByState extends SmvModule("ETL Example: Employment") with SmvOutput {
 
-  override def requiresDS() = Seq(employment);
+  override def requiresDS() = Seq(input.employment);
 
   override def run(i: runParams) = {
-    val df = i(employment)
+    val df = i(input.employment)
 
     df.groupBy("ST").agg(
       first("ST") as "ST",
@@ -22,4 +22,3 @@ object EmploymentByState extends SmvModule("ETL Example: Employment") with SmvOu
     )
   }
 }
-

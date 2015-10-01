@@ -11,10 +11,10 @@ import org.tresamigos.smv._
  */
 object StageEmpCategory extends SmvModule("Employment By Stage with Category") with SmvOutput {
 
-  override def requiresDS() = Seq(EmploymentStateLink);
- 
+  override def requiresDS() = Seq(input.EmploymentStateLink);
+
   override def run(i: runParams) = {
-    val df = i(EmploymentStateLink)
+    val df = i(input.EmploymentStateLink)
     import df.sqlContext.implicits._
 
     df.selectPlus(
