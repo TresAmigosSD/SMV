@@ -6,7 +6,7 @@ but by also controlling the dependency between modules in different stages.
 
 # Stage input
 Each stage should have an `input` sub-package where all the input `SmvFile` instances are defined.
-By convention, all inputs used by any module in a given stage should reference an `SmvFile` instance in the input stage.
+By convention, all inputs used by any module in a given stage should reference an `SmvFile` instance in the input sub-package.
 
 ## Raw input files
 Raw input files (e.g. CSV files) should be defined as `SmvFile` instances in the input package.
@@ -14,8 +14,8 @@ Raw input files (e.g. CSV files) should be defined as `SmvFile` instances in the
 ```scala
 package com/mycom/myproj.stage1.input
 
-object file1 extends SmvFile("file1_v2.csv")
-object file2 extends SmvFile("file2.csv.gz")
+object file1 extends SmvCsvFile("file1_v2.csv")
+object file2 extends SmvCsvFile("file2.csv.gz")
 ...
 ```
 
@@ -34,7 +34,7 @@ package com.mycompany.myproj.stageY.input
 object accountsY extends SmvModuleLink(com.mycompany.myproj.stageX.accountsX)
 ```
 
-In the above example, `accountsY` is defined as an input in stage Y. Modules in stage Y can depend on `accountsY` directly. `accountsY` is linked to the **output file** of `accountX` module and **not** to the module code. Therefore, stage X needs to be run first before Stage Y can run (so that `accountX` output is there when stage Y is run)
+In the above example, `accountsY` is defined as an input in stage Y. Modules in stage Y can depend on `accountsY` directly. `accountsY` is linked to the **output file** of `accountsX` module and **not** to the module code. Therefore, stage X needs to be run first before Stage Y can run (so that `accountsX` output is there when stage Y is run)
 
 See "Publishing Stage Output" section below for details on how to pin dependency to a specific published version
 
@@ -61,7 +61,7 @@ To avoid having to "re-run" `rawAccounts` continuously, the user may choose to "
 $ _SMV_HOME_/tools/smv-run --publish V1 -s etl
 ```
 
-**2. Pin model to use published ETL output **
+**2. Pin model to use published ETL output**
 
 Modify the user configuration file (`conf/smv-user-conf.props`) to specify the etl stage version to use.  For example, to use the above published version:
 ```
@@ -70,7 +70,9 @@ smv.stages.etl.version = V1
 ```
 
 When `modelAccts` is re-run it will use the published output of `rawAccounts` rather than rerun `rawAccounts`.
-This provides isolation for the model authors from changes in the ETL code.  Once ETL stage is stabilized, it can either be republished with a new version or the config version can be removed to get the latest and greatest ETL output as before.
+
+Since we already setup the version control to ignore `conf/smv-user-conf.props`,
+this provides isolation for the model authors from changes in the ETL code.  Once ETL stage is stabilized, it can either be republished with a new version or the config version can be removed to get the latest and greatest ETL output as before.
 
 ## Publish entire app
 
@@ -103,7 +105,7 @@ in the file as described in [Stage Input](#stage-input) section above.
 ```scala
 package com.mycompany.myapp.modeling.input
 
-object weights extends SmvFile("weights.csv")
+object weights extends SmvCsvFile("weights.csv")
 object Stage1EmploymentRaw extends SmvModuleLink(com.mycompany.myapp.stage1.EmploymentRaw)
 ```
 

@@ -77,7 +77,7 @@ object MyModule extends SmvModule("this is my module") with SmvOutput {
 }
 ```
 
-The set of `SmvOutput` output modules in a stage define the *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
+The set of `SmvOutput` output modules in a stage define the data *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
 
 In addition to the above, the ability to mark certain modules as output has the following benefits:
 

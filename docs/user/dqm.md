@@ -10,7 +10,7 @@ If the validation result failed, the process will be terminated.
 
 Currently, there are 2 types of validations implemented,
 * Parsing validations
-* Date Quality Management validations
+* Data Quality Management validations
 
 ## Parsing Validation
 When we load a Csv or Frl (Fix Record Length) file, there are always potential parsing
@@ -21,7 +21,8 @@ Typically 2 types of issues,
 * Some fields of some records do not match schema
 
 For either of the two cases, the record which caused the problem will be rejected. The question
-is that whether we fail the entire `SmvFile` and terminate. Either scenario could be valid.
+is that whether we fail the entire `SmvFile` and terminate. Different problems might need to handle
+this differently.
 Also even if we want to fail the entire `SmvFile`, we should rather log more than one "bad" records
 for easy debugging.
 
