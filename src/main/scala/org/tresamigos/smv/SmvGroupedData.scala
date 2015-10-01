@@ -39,8 +39,10 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData
    *
    * Example:
+   * {{{
    * val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
    * val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
+   * }}}
    **/
   private[smv] def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
     val schema = df.schema

@@ -20,8 +20,6 @@ import org.apache.spark.sql.{DataFrame, Column}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StructField, StructType, LongType}
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.analysis._
-import org.apache.spark.sql.catalyst.plans.{JoinType, Inner}
 
 import org.apache.spark.annotation.Experimental
 import cds._
@@ -31,6 +29,13 @@ class SmvDFHelper(df: DataFrame) {
 
   /**
    * persist the `DataFrame` as a CSV file (along with a schema file).
+   * {{{
+   *   df.saveAsCsvWithSchema("/tmp/output/test.csv")
+   * }}}
+   *
+   * @param dataPath direct path where file is persisted.  Can also be a relative path.  The configured app data/output dir are not considered.
+   * @param ca CSV attributes used to format output file.  Defaults to `CsvAttributes.defaultCsv`
+   * @param schemaWithMeta Provide the companion schema (usually used when we need to persist some schema meta data along with the standard schema)
    */
   def saveAsCsvWithSchema(dataPath: String, ca: CsvAttributes = CsvAttributes.defaultCsv, schemaWithMeta: SmvSchema = null) {
     val handler = new FileIOHandler(df.sqlContext, dataPath)
@@ -39,9 +44,10 @@ class SmvDFHelper(df: DataFrame) {
 
   /**
    * Dump the schema and data of given df to screen for debugging purposes.
+   * Similar to `show()` method of DF from Spark 1.3, although the format is slightly different.
+   * This function's format is more convenient for us and hence has remained un-deprecated.
    */
   def dumpSRDD = {
-    // TODO: use printSchema on df.
     println(SmvSchema.fromDataFrame(df))
     df.collect.foreach(println)
   }
@@ -61,18 +67,18 @@ class SmvDFHelper(df: DataFrame) {
    * column by the same name as the alias will be replaced by the new
    * column data.
    *
-   * Example:
-   *
-   * 1.  <code>
+   * Example 1:
+   * {{{
    *   df.selectWithReplace($"age" + 1 as "age")
-   * </code>
+   * }}}
    *
    * will create a new data frame with the same schema and with all
    * values in the "age" column incremented by 1
    *
-   * 2. <code>
-   *   df.selectWithReplace($"age" + 1)
-   * </code>
+   * Example 2:
+   * {{{
+   * df.selectWithReplace($"age" + 1)
+   * }}}
    *
    * will create a new data frame with an additional column (named
    * automatically by spark sql) containing the incremented values in
@@ -110,7 +116,11 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
-   * selects all the current columns in current SRDD plus the supplied expressions.
+   * selects all the current columns in current `DataFrame` plus the supplied expressions.
+   * The new columns are added to the end of the current column list.
+   * {{{
+   *   df.selectPlus($"price" * $"count" as "amt")
+   * }}}
    */
   def selectPlus(exprs: Column*): DataFrame = {
     val all = df.columns.map{l=>df(l)}
@@ -119,6 +129,10 @@ class SmvDFHelper(df: DataFrame) {
 
   /**
    * Same as selectPlus but the new columns are prepended to result.
+   * {{{
+   *   df.selectPlusPrefix($"price" * $"count" as "amt")
+   * }}}
+   * `amt` will be the first column in the output.
    */
   def selectPlusPrefix(exprs: Column*): DataFrame = {
     val all = df.columns.map{l=>df(l)}
@@ -126,7 +140,11 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
-   * Remove columns from current DF
+   * Remove one or more columns from current DataFrame.
+   * Column names are specified as string.
+   * {{{
+   *   df.selectMinus("col1", "col2")
+   * }}}
    */
   def selectMinus(s: String, others: String*): DataFrame = {
     val names = s +: others
@@ -135,14 +153,36 @@ class SmvDFHelper(df: DataFrame) {
     df.select(all.map{l=>df(l)} : _* )
   }
 
+  /**
+   * Remove one or more columns from current DataFrame.
+   * Column names are specified as `Column`
+   * {{{
+   *   df.selectMinus($"col1", df("col2"))
+   * }}}
+   */
   def selectMinus(cols: Column*): DataFrame = {
     val names = cols.map(_.getName)
     selectMinus(names(0), names.tail: _*)
   }
 
+  /**
+   * Remove one or more columns from current DataFrame.
+   * Column names are specified as `Column`
+   * {{{
+   *   df.selectMinus('col1, 'col2)
+   * }}}
+   */
+  @deprecated
   def selectMinus(s1: Symbol, sleft: Symbol*): DataFrame =
     selectMinus(s1.name, sleft.map{l=>l.name}: _*)
 
+  /**
+   * Rename one or more fields of a `DataFrame`.
+   * The old/new names are given as string pairs.
+   * {{{
+   *   df.renameField( "a" -> "aa", "b" -> "bb" )
+   * }}}
+   */
   def renameField(namePairs: (String, String)*): DataFrame = {
     val namePairsMap = namePairs.toMap
     val renamedFields = df.columns.map {
@@ -150,9 +190,26 @@ class SmvDFHelper(df: DataFrame) {
     }
     df.select(renamedFields: _*)
   }
+
+  /**
+   * Rename one or more fields of a `DataFrame`.
+   * The old/new names are given as symbol pairs.
+   * {{{
+   *   df.renameField( 'a -> 'aa, 'b -> 'bb )
+   * }}}
+   */
+  @deprecated
   def renameField(n1: (Symbol, Symbol), nleft: (Symbol, Symbol)*): DataFrame =
     renameField((n1 +: nleft).map{case(l, r) => (l.name, r.name)}: _*)
 
+  /**
+   * Apply a prefix to all column names in the given `DataFrame`.
+   * For Example:
+   * {{{
+   *   df.prefixFieldNames("x_")
+   * }}}
+   * The above will add "x_" to the beginning of every column name in the `DataFrame`
+   */
   def prefixFieldNames(prefix: String) : DataFrame = {
     val renamedFields = df.columns.map {
       fn => df(fn) as (prefix + fn)
@@ -160,6 +217,14 @@ class SmvDFHelper(df: DataFrame) {
     df.select(renamedFields: _*)
   }
 
+  /**
+   * Apply a posfix to all column names in the given `DataFrame`.
+   * For Example:
+   * {{{
+   *   df.posfixFieldNames("_x")
+   * }}}
+   * The above will add "_x" to the end of every column name in the `DataFrame`
+   */
   def postfixFieldNames(postfix: String) : DataFrame = {
     val renamedFields = df.columns.map {
       fn => df(fn) as (fn + postfix)
@@ -167,7 +232,15 @@ class SmvDFHelper(df: DataFrame) {
     df.select(renamedFields: _*)
   }
 
-  // TODO: remove project dependency on this, and make it private[smv]
+  /**
+   * Perform a join of the left/right `DataFrames` and rename duplicated column names by
+   * prefixing them with "_" on the right hand side.
+   *
+   * '''Note:''' This will become private or removed in future SMV versions.
+   * 
+   * TODO: remove project dependency on this, and make it private[smv]
+   */
+  @Experimental
   def joinUniqFieldNames(otherPlan: DataFrame, on: Column, joinType: String = "inner") : DataFrame = {
     val namesL = df.columns.toSet
     val namesR = otherPlan.columns.toSet
@@ -178,6 +251,19 @@ class SmvDFHelper(df: DataFrame) {
     df.join(otherPlan.renameField(renamedFields: _*), on: Column, joinType)
   }
 
+  /**
+   * The Spark `DataFrame` join operation does not handle duplicate key neames.
+   * If both left and right side of the join operation contain the same key, the result `DataFrame` is unusable.
+   * The `joinByKey` method will allow the user to join two `DataFrames` using the same join key.
+   * Post join, only the left side keys will remain.
+   * {{{
+   *   df1.joinByKey(df2, Seq("k"), SmvJoinType.Inner)
+   * }}}
+   * Note the use of the `SmvJoinType.Inner` const instead of the naked "inner" string.
+   *
+   * If, in addition to the duplicate keys, both df1 and df2 have column with name "v", both will be kept in the result,
+   * but the df2 version will be prefix with "_".
+   */
   def joinByKey(otherPlan: DataFrame, keys: Seq[String], joinType: String): DataFrame = {
     import df.sqlContext.implicits._
 
@@ -189,23 +275,78 @@ class SmvDFHelper(df: DataFrame) {
     df.joinUniqFieldNames(newOther, joinOpt, joinType).selectMinus(rightKeys(0), rightKeys.tail: _*)
   }
 
-  // TODO: use smvFirst instead of first, since `first` return the first non-null of each field
-  def dedupByKey(k1:String, kleft: String*) : DataFrame = {
+  /**
+   * Remove duplicate records from the `DataFrame` by arbitrarly selecting the first record
+   * from a set of records with same primary key or key combo.
+   * For example, given the following input DataFrame:
+   * {{{
+   * | id  | product | Company |
+   * | --- | ------- | ------- |
+   * | 1   | A       | C1      |
+   * | 1   | C       | C2      |
+   * | 2   | B       | C3      |
+   * | 2   | B       | C4      |
+   * }}}
+   *
+   * and the following call:
+   * {{{
+   *   df.debupByKey("id")
+   * }}}
+   * will yield the following `DataFrame`:
+   * {{{
+   * | id  | product | Company |
+   * | --- | ------- | ------- |
+   * | 1   | A       | C1      |
+   * | 2   | B       | C3      |
+   * }}}
+   *
+   * while the following call:
+   * {{{
+   *   df.debupByKey("id", "product")
+   * }}}
+   *
+   * will yield the following:
+   * {{{
+   * | id  | product | Company |
+   * | --- | ------- | ------- |
+   * | 1   | A       | C1      |
+   * | 1   | C       | C2      |
+   * | 2   | B       | C3      |
+   * }}}
+   */
+  def dedupByKey(k1: String, krest: String*) : DataFrame = {
     import df.sqlContext.implicits._
-    val keys = k1 +: kleft
+    val keys = k1 +: krest
     val selectExpressions = df.columns.map {
+      // TODO: use smvFirst instead of first, since `first` return the first non-null of each field
       fn => first(fn) as fn
     }
     df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*)
   }
+
+  /** Same as `dedupByKey(String*)` but uses `Column` to specify the key columns */
   def dedupByKey(cols: Column*): DataFrame = {
     val names = cols.map(_.getName)
     dedupByKey(names(0), names.tail: _*)
   }
+
+  /** Same as `dedupByKey(String*)` but uses `Symbol` to specify the key columns */
+  @deprecated
   def dedupByKey(k1: Symbol, kleft: Symbol*): DataFrame =
     dedupByKey(k1.name, kleft.map{l=>l.name}: _*)
 
-  /** adds a rank column to an df. */
+  /**
+   * Add a rank/sequence column to a DataFrame.
+   * It uses `zipWithIndex` method of `RDD` to add a sequence number to records in a DF.
+   * It ranks records sequentially by partition.
+   * Please refer to Spark's document for the detail behavior of `zipWithIndex`.
+   * '''Note:''' May force an action on the DataFrame if the DataFrame has more than one partition.
+   *
+   * {{{
+   *   df.smvRank("seqId", 100L)
+   * }}}
+   * Create a new column named "seqId" and start from 100.
+   */
   def smvRank(rankColumnName: String, startValue: Long = 0) = {
     val oldSchema = df.schema
     val newSchema = StructType(oldSchema.fields :+ StructField(rankColumnName, LongType, true))
@@ -225,9 +366,12 @@ class SmvDFHelper(df: DataFrame) {
    * Please note that no keyCols need to be provided, since all original
    * columns will be kept
    *
-   * Eg.
+   * Example:
+   * {{{
    *   df.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+   * }}}
    *
+   * {{{
    * Input
    * | id  | month | product | count |
    * | --- | ----- | ------- | ----- |
@@ -241,17 +385,55 @@ class SmvDFHelper(df: DataFrame) {
    * | 1   | 5/14  |   A     |   100 | 100          | NULL         | NULL         | NULL         |
    * | 1   | 6/14  |   B     |   200 | NULL         | NULL         | NULL         | 200          |
    * | 1   | 5/14  |   B     |   300 | NULL         | 300          | NULL         | NULL         |
+   * }}}
    *
-   **/
+   * @param pivotCols The sequence of column names whose values will be used as the output pivot column names.
+   * @param valueCols The columns whose value will be copied to the pivoted output columns.
+   * @param baseOutput The expected base output column names (without the value column prefix).
+   *                   The user is required to supply the list of expected pivot column output names to avoid
+   *                   and extra action on the input DataFrame just to extract the possible pivot columns.
+   */
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
     // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
     val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
     pivot.createSrdd(df, df.columns)
   }
 
+  /**
+   * Almost the opposite of the pivot operation.
+   * Given a set of records with value columns, turns the value columns into value rows.
+   * For example, Given the following input:
+   * {{{
+   * | id | X | Y | Z |
+   * | -- | - | - | - |
+   * | 1  | A | B | C |
+   * | 2  | D | E | F |
+   * | 3  | G | H | I |
+   * }}}
+   * and the following command:
+   * {{{
+   *   df.smvUnpivot("X", "Y", "Z")
+   * }}}
+   * will result in the following output:
+   * {{{
+   * | id | column | value |
+   * | -- | ------ | ----- |
+   * |  1 |   X    |   A   |
+   * |  1 |   Y    |   B   |
+   * |  1 |   Z    |   C   |
+   * | ...   ...      ...  |
+   * |  3 |   Y    |   H   |
+   * |  3 |   Z    |   I   |
+   * }}}
+   *
+   * '''Warning:''' This only works for String columns for now (due to limitation of Explode method)
+   */
   def smvUnpivot(valueCols: String*): DataFrame = {
     new UnpivotOp(df, valueCols).unpivot()
   }
+
+  /** same as `smvUnpivot(String*)` but uses `Symbol` to specify the value columns. */
+  @deprecated
   def smvUnpivot(valueCol: Symbol, others: Symbol*): DataFrame =
     smvUnpivot((valueCol +: others).map{s => s.name}: _*)
 
@@ -259,7 +441,9 @@ class SmvDFHelper(df: DataFrame) {
    * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
    *
    * Example:
+   * {{{
    *   df.smvCube("zip", "month").agg("zip", "month", sum("v") as "v")
+   * }}}
    *
    * Also have a version on SmvGroupedData.
    **/
@@ -273,11 +457,14 @@ class SmvDFHelper(df: DataFrame) {
     val names = cols.map(_.getName)
     new RollupCubeOp(df, Nil, names).cube()
   }
+
   /**
    * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
    *
    * Example:
+   * {{{
    *   df.smvRollup("county", "zip").agg("county", "zip", sum("v") as "v")
+   * }}}
    *
    * Also have a version on SmvGroupedData
    **/
@@ -293,14 +480,20 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
-   * Create an Edd on DataFrame
+   * Create an Edd on DataFrame.
+   * See [[org.tresamigos.smv.edd.Edd]] for details.
+   *
+   * Example:
+   * {{{
+   * scala> df.summary().eddShow
+   * }}}
    */
   @Experimental
   def edd: Edd = new Edd(df)
 
   /**
-   *  Similar to groupBy, instead of creating GroupedData,
-   *  create an SmvGroupedData object
+   * Similar to groupBy, instead of creating GroupedData, create an SmvGroupedData object.
+   * See [[org.tresamigos.smv.SmvGroupedData]] for details.
    */
   @Experimental
   def smvGroupBy(cols: Column*) = {
@@ -308,6 +501,7 @@ class SmvDFHelper(df: DataFrame) {
     SmvGroupedData(df, names)
   }
 
+  /** Same as `smvGroupBy(Column*)` but uses `String` to specify the columns. */
   @Experimental
   def smvGroupBy(col: String, others: String*) = {
     SmvGroupedData(df, (col +: others))
@@ -433,9 +627,8 @@ class SmvDFHelper(df: DataFrame) {
    *   println(c.value)
    * }}}
    *
-   * '''Warning''': Since using accumulator in process can't guarantee results when recover from
-   * failures, we will only use this method to report processed records when persist SmvModule
-   * and potentially other SMV functions.
+   * '''Warning''': Since using accumulator in process can't guarantee results when error recovery occcurs,
+   * we will only use this method to report processed records when persisting SmvModule and potentially other SMV functions.
    */
   private[smv] def smvPipeCount(counter: Accumulator[Long]): DataFrame = {
     counter.setValue(0l)

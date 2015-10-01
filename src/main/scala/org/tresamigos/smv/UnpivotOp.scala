@@ -19,8 +19,9 @@ import org.apache.spark.sql.functions._
 
 
 /**
- * Almost the oppisite of the pivot operation.  Given a set of records with value columns,
+ * Almost the opposite of the pivot operation.  Given a set of records with value columns,
  * turns the value columns into value rows.  For example:
+ * {{{
  * | id | X | Y | Z |
  * | -- | - | - | - |
  * | 1  | A | B | C |
@@ -35,6 +36,7 @@ import org.apache.spark.sql.functions._
  * |  1 |   Z    |   C   |
  * | ...   ...      ...  |
  * |  3 |   Z    |   I   |
+ * }}}
  *
  * This only works for String columns for now (due to limitation of Explode method)
  */
