@@ -8,18 +8,18 @@ $ _SMV_HOME_/tools/smv-shell [standard spark-shell-options] [smv-options]
 **Note:**  The above command should be run from the project top level directory.
 
 ### Options
-By default, the `smv-shell` command will use the latest "fat" jar in the tools directory to use with Spark Shell.
+By default, the `smv-shell` command will use the latest "fat" jar in the target directory to use with Spark Shell.
 The user can provide `--jar` option to override the default.  See [Run Application](run_app.md) for details about this flag.
 
 ## Shell init
-When `run.shell.sh` is launched, it will source the file `_SMV_HOME_/tools/conf/smv_shell_init.scala` to provide some
+When `smv-shell` is launched, it will source the file `_SMV_HOME_/tools/conf/smv_shell_init.scala` to provide some
 helper functions and create a default SMV dummy application (`app`)
 
 * `df(data_set)` :  Source/Run the given dataset and return the resulting `DataFrame`
 * `open(path)` : open the csv/schema file at the given path and return the corresponding `DataFrame`
 * `df.save(path)` : save the given df to a csv/schema file pair at the given path.
 * `df.savel(path)` : save the contents of the `DataFrame` to a local (none HDFS) filesystem.  WARNING: The contents must be able to fit in memory!!!
-* `discoverSchema(path, n)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the path + ".schema" file
+* `discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the path + ".schema.toBeReviewed" file
 * `dumpEdd(data_set)` : Generate base EDD results for given `SmvDataSet` and dump the results to the screen.
 
 ## Project Shell Init
@@ -29,8 +29,8 @@ Project specific initialization code, such as common imports, and functions, can
 ```scala
 // create the app init object "a" rather than create initialization at top level because shell
 // would launch a separate command for each evaluation which slows down startup considerably.
-import com.mycompany.myproject.stage1.input._
-import com.mycompany.myproject.stage1.etl._
+import com.mycompany.myproject.stage1._
+import com.mycompany.myproject.stage1._
 
 object a {
   //---- common project imports
