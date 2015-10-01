@@ -1,19 +1,40 @@
 # Validation & Data Quality Management (DQM)
 
-Both `SmvFile` and `SmvModule` has a "Validation" mechanism. SmvApp will automatically validate
-the result `DataFrame`.
+Both `SmvFile` and `SmvModule` has a "Validation" mechanism. SmvApp will
+automatically validate the result `DataFrame`.
 
 If the validation result is nontrivial, it will be persisted in a file with postfix `.valid` in the
 same location of the persisted data and schema files.
 
 If the validation result failed, the process will be terminated.
 
-## Parsing Validation
+Currently, there are 2 types of validations implemented,
+* Parsing validations
+* Data Quality Management validations
 
-SMV will automatically perform parsing check and validation on `SmvFile`s. The total number of rejected
-records will be logged, and also some example rejected records will also be logged. Please be aware that
-we only log a limited number of rejected records. An example parsing validation log file is like the
-following
+## Parsing Validation
+When we load a Csv or Frl (Fix Record Length) file, there are always potential parsing
+issues.
+
+Typically 2 types of issues,
+* Number of fields in records doesn't match the number of fields specified in schema file
+* Some fields of some records do not match schema
+
+For either of the two cases, the record which caused the problem will be rejected. The question
+is that whether we fail the entire `SmvFile` and terminate. Different problems might need to handle
+this differently.
+Also even if we want to fail the entire `SmvFile`, we should rather log more than one "bad" records
+for easy debugging.
+
+Without any specific setup, the default behavior of `SmvFile` is to log:
+* The total number of rejected records, and
+* Some example rejected records
+
+And then fail the `SmvFile` by terminating the process when any rejection happens.
+
+**Note** that we only log a limited number of rejected records to prevent run-away rejections.
+
+An example parsing validation log is like the following
 
 ```json
 {
@@ -31,7 +52,7 @@ following
 }
 ```
 
-By default, any parser error will cause validation fail (`passed: false`). That behavior is controlled
+By default, any parser error will cause validation fail (`passed: false`). This behavior is controlled
 by the `failAtParsingError` attribute of `SmvFile`. The default value is `true`. To change that we
 can override it
 
@@ -43,14 +64,17 @@ object myfile extends SmvCsvFile("accounts/acct_demo.csv") {
 
 With above setting, the `SmvFile` will simply persist the validation result and keep moving.
 
+Either terminating the process or not, as long as the log is nontrivial, it will be printed to
+console and persisted in the `SmvModule` persisted data path with postfix `.valid`.
+
 ## DQM
 
 Although the parser enforced data schema, there are typically more things need to be checked on
-real world data. Here are some examples,
+real-world data. Here are some examples,
 
-* `Age` should between 0 and 120
+* `Age` should be between 0 and 120
 * `Gender` should only have 3 values `m`, `f`, and `o`
-* `Price` should between 0.01 and 1,000,000.00
+* `Price` should be between 0.01 and 1,000,000.00
 
 Record by record, above rules could be checked, and depend on the need, they can be fixed.
 The `SmvDQM` framework provides `Rule`s and `Fix`es to address them.
@@ -113,7 +137,7 @@ Here `FailTotalRuleCountPolicy(...)` is a predefined `DQMPolicy`, which check th
 all the rules in this `DQM`, if the total count is within the threshold, the validation will
 pass, otherwise will fail.
 
-There are 4 building `DQMPolicy`s
+There are 4 build-in `DQMPolicy`s
 * `FailTotalRuleCountPolicy(n)` - fail when total rule count >= n
 * `FailTotalFixCountPolicy(n)` - fail when total fix count >= n
 * `FailTotalRulePercentPolicy(r)` - fail when total rule count >= total records * r, r in (0,1)
@@ -144,12 +168,12 @@ val policy: (DataFrame, DQMState) => Boolean = {(df, state) =>
 It checks the average price on the entire DF, and require it to be less than `100.0`.
 
 Using `DataFrame` directly could introduce additional `actions` on the data, which could be
-costly. For any policy which can be full determined by using the `DQMState`, we should do so and
+costly. For any policy which can be fully determined by using the `DQMState`, we should do so and
 avoid using `DataFrame` actions.
 
 ### DQMState
 
-`DQMState` provides the following methods to access its contents,
+`DQMState` provides the following methods to access its contents, one can use them to build policies.
 * `getRecCount(): Long` - total number of records in this DF
 * `getFixCount(name: String): Int`  -  for the fix with the given name, return the time it is triggered
 * `getRuleCount(name: String): Int` - for the rule with the given name, return the time it is triggered

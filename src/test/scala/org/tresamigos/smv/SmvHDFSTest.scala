@@ -1,7 +1,5 @@
 package org.tresamigos.smv
 
-import java.io.{PrintWriter, File}
-
 
 class SmvHDFSTest extends SmvTestUtil {
 

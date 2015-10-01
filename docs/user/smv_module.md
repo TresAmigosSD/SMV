@@ -1,6 +1,6 @@
 # SmvModule
 
-An SMV Module is a collection of transformation operations and validation rules.  Each module depends on one or more `SmvDataSet`s (files/modules) and defines a set of transformation on its inputs that define the module output.
+An SMV Module is a collection of transformation operations and validation rules.  Each module depends on one or more `SmvDataSet`s (`SmvFile` or `SmvModule`) and defines a set of transformation on its inputs that define the module output.
 
 ## Module Dependency Definition
 Each module **must** define its input dependency by overriding the `requireDS` method. The `requireDS` method should return a sequence of required datasets for the running of this module.
@@ -40,6 +40,12 @@ object MyModule extends SmvModule("mod description") {
 
 The `run` method should return the result of the transformations on the input as a `DataFrame`.
 
+The parameter of the `run` method has type `runParams`, which is just an alias to type
+`Map[SmvDataSet, DataFrame]`. The driver program (Smv framework itself) will provide
+the lookup map, "inputs: runParams", to map all the required modules to their
+output `DataFrame`. As in above example, `val M1df = inputs(Mod1)` provides the `run`
+method the access to the result `DataFrame` of module `Mod1`.
+
 ## Module Validation Rules
 Each module may also define its own set of [DQM validation rules](dqm.md).  By default, if the user does not override the `dqm` method, the module will have an empty set of rules.
 
@@ -71,7 +77,7 @@ object MyModule extends SmvModule("this is my module") with SmvOutput {
 }
 ```
 
-The set of `SmvOutput` output modules in a stage define the *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
+The set of `SmvOutput` output modules in a stage define the data *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
 
 In addition to the above, the ability to mark certain modules as output has the following benefits:
 

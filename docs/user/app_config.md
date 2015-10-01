@@ -33,6 +33,12 @@ The sources are ordered from high to low priority as follows:
 * app level config file (default: conf/smv-app-conf.props)
 * smv default options
 
+Since SMV support both `smv-user-conf.props` and `smv-app-conf.props`, a typical practice is to
+put project level shared (accross team members) config into `smv-app-conf.props` and user
+specific config into `smv-user-conf`. Also config the version control system to ignore
+`conf/smv-user-conf.props`.
+
+
 ## SMV Config Parameters
 
 The table below describes all available SMV configuration parameters.
