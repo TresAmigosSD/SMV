@@ -195,6 +195,20 @@ class dedupByKeyTest extends SmvTestUtil {
     assert(fieldNames2 === Seq("a", "b", "c"))
 
   }
+
+  test("test dedupByKey with nulls") {
+    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+      """1,,hello;
+         1,3.0,hello1;
+         2,10.0,;
+         2,11.0,hello3"""
+    )
+
+    val res = df.dedupByKey("a")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1,null,hello]",
+      "[2,10.0,null]" ))
+  }
 }
 
 class smvOverlapCheckTest extends SmvTestUtil {

@@ -237,7 +237,7 @@ class SmvDFHelper(df: DataFrame) {
    * prefixing them with "_" on the right hand side.
    *
    * '''Note:''' This will become private or removed in future SMV versions.
-   * 
+   *
    * TODO: remove project dependency on this, and make it private[smv]
    */
   @Experimental
@@ -318,8 +318,8 @@ class SmvDFHelper(df: DataFrame) {
     import df.sqlContext.implicits._
     val keys = k1 +: krest
     val selectExpressions = df.columns.map {
-      // TODO: use smvFirst instead of first, since `first` return the first non-null of each field
-      fn => first(fn) as fn
+      //using smvFirst instead of first, since `first` return the first non-null of each field
+      fn => smvFirst($"$fn") as fn
     }
     df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*)
   }
