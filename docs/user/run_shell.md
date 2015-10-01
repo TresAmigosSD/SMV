@@ -2,13 +2,13 @@
 
 ### Synopsis
 ```shell
-$ _SMV_HOME_/tools/run_shell.sh [standard spark-shell-options] [smv-options]
+$ _SMV_HOME_/tools/smv-shell [standard spark-shell-options] [smv-options]
 ```
 
 **Note:**  The above command should be run from the project top level directory.
 
 ### Options
-By default, the `run_shell.sh` command will use the latest "fat" jar in the tools directory to use with Spark Shell.
+By default, the `smv-shell` command will use the latest "fat" jar in the tools directory to use with Spark Shell.
 The user can provide `--jar` option to override the default.  See [Run Application](run_app.md) for details about this flag.
 
 ## Shell init
@@ -23,7 +23,7 @@ helper functions and create a default SMV dummy application (`app`)
 * `dumpEdd(data_set)` : Generate base EDD results for given `SmvDataSet` and dump the results to the screen.
 
 ## Project Shell Init
-In addition to the standard `smv_shell_init.scala` file, the `run_shell.sh` script will look for an optional `conf/shell_init.scala` file and source it if found.
+In addition to the standard `smv_shell_init.scala` file, the `smv-shell` script will look for an optional `conf/shell_init.scala` file and source it if found.
 Project specific initialization code, such as common imports, and functions, can be put in the `conf/shell_init.scala` file.  For example:
 
 ```scala

@@ -5,7 +5,7 @@ SMV Stages accomplishes this by not only organizing the modules into separate ma
 but by also controlling the dependency between modules in different stages.
 
 # Stage input
-Each stage should have an `input` package where all the input `SmvFile` instances are defined.
+Each stage should have an `input` sub-package where all the input `SmvFile` instances are defined.
 By convention, all inputs used by any module in a given stage should reference an `SmvFile` instance in the input stage.
 
 ## Raw input files
@@ -31,44 +31,71 @@ Instead, a special input dataset (`SmvModuleLink`) needs to be defined in stage 
 // this is the input in stage Y
 package com.mycompany.myproj.stageY.input
 
-object accountsY extends SmvModuleLink(com.mycompany.myproj.stageX.etl.accountsX)
+object accountsY extends SmvModuleLink(com.mycompany.myproj.stageX.accountsX)
 ```
 
-In the above example, `accountsY` is defined as an input in stage Y.
-Modules in stage Y can depend on `accountsY` directly.
-`accountsY` is linked to the **output file** of `accountX` module and **not** to the module code.
-Therefore, stage X needs to be run first before Stage Y can run (so that `accountX` output is there when stage Y is run)
+In the above example, `accountsY` is defined as an input in stage Y. Modules in stage Y can depend on `accountsY` directly. `accountsY` is linked to the **output file** of `accountX` module and **not** to the module code. Therefore, stage X needs to be run first before Stage Y can run (so that `accountX` output is there when stage Y is run)
 
+See "Publishing Stage Output" section below for details on how to pin dependency to a specific published version
 
-See [Publishing Stage Output](publishing.md) for details on how to pin dependency to a specific published version
+# Publishing Stage Output
+
+As project code/team size grows, it becomes necessary to be able to depend on a stable code/data snapshots in development.
+For example, on a large project we may have different teams working on etl stage and modeling stage.
+Those working on modeling would prefer a stable etl stage output while they are developing the models.
+One way to accomplish that is to "publish" the etl stage output and have the modeling team specify the published version in their configuration.
+
+In the above example, the `model` stage may depend on the output of `etl` stage as follows:
+
+```scala
+package com.mycompany.myproj.model.input
+object modelAccts extends SmvModuleLink(com.mycompany.myproj.etl.rawAccounts)
+```
+
+As described above, `modelAccts` will depend on the **output** of `rawAccounts`.  Normally, this would read the versioned output that is persisted in the output directory.
+To avoid having to "re-run" `rawAccounts` continuously, the user may choose to "publish" the current `etl` stage output and pin the links to the published version as follows:
+
+**1. Publish ETL stage**
+
+```shell
+$ _SMV_HOME_/tools/smv-run --publish V1 -s etl
+```
+
+**2. Pin model to use published ETL output **
+
+Modify the user configuration file (`conf/smv-user-conf.props`) to specify the etl stage version to use.  For example, to use the above published version:
+```
+# specify version of etl package to use.  Note use of stage basename
+smv.stages.etl.version = V1
+```
+
+When `modelAccts` is re-run it will use the published output of `rawAccounts` rather than rerun `rawAccounts`.
+This provides isolation for the model authors from changes in the ETL code.  Once ETL stage is stabilized, it can either be republished with a new version or the config version can be removed to get the latest and greatest ETL output as before.
+
+## Publish entire app
+
+TODO: show how to publish all stages in app.
 
 # Adding a stage
 As the project grows, it may become necessary to add additional stages.
 We will utilize the example app described in [Getting Started](getting_started.md) as the starting point.
 
 ```bash
-$ _SMV_HOME_/tools/bin/smv_init.sh MyApp com.mycompany.myapp
+$ _SMV_HOME_/tools/bin/smv-init MyApp com.mycompany.myapp
 ```
 
-To review, the above will create a sample app `MyApp` with a single stage `stage1` which has two packages `input` and `etl`.
-To add an additional `modeling` stage which has `vars` package (plus the usual `input` package), we need to do the following:
+To review, the above will create a sample app `MyApp` with two stages `stage1` and `stage3`. We will add an additional `modeling` stage in this example.
 
 **1. add the stage to the app configuration file (`conf/smv-app-conf.props`).**
 
 ```
 ...
 # add modeling below
-smv.stages = stage1, modeling
-
-# add packages in modeling stage
-smv.stages.modeling.packages = com.mycompany.myapp.modeling.input, com.mycompany.myapp.modeling.vars
+smv.stages = com.mycompany.MyApp.stage1, com.mycompany.MyApp.stage2, com.mycompany.MyApp.modeling
 ...
-
 ```
 
-TODO: we will get rid of "smv.stages.stage_name.packages" config in the future.
-
-**2. add the `input` package to the source tree.**
+**2. add the `input` sub-package to the source tree.**
 
 Create the file `src/main/scala/com/mycompany/myapp/modeling/input/InputFiles.scala` and add `SmvFile` and `SmvModuleLink` objects
 in the file as described in [Stage Input](#stage-input) section above.
@@ -77,15 +104,15 @@ in the file as described in [Stage Input](#stage-input) section above.
 package com.mycompany.myapp.modeling.input
 
 object weights extends SmvFile("weights.csv")
-object Stage1EmploymentRaw extends SmvModuleLink(com.mycompany.myapp.stage1.etl.EmploymentRaw)
+object Stage1EmploymentRaw extends SmvModuleLink(com.mycompany.myapp.stage1.EmploymentRaw)
 ```
 
-**3. add the modules to the `vars` package.**
+**3. add the modules to the `modeling` stage package.**
 
-Create the file `src/main/scala/com/mycompany/myapp/modeling/vars/AccountVars.scala` which defines the `AccountVars` module.
+Create the file `src/main/scala/com/mycompany/myapp/modeling/AccountVars.scala` which defines the `AccountVars` module.
 
 ```scala
-package com.mycompany.myapp.modeling.vars
+package com.mycompany.myapp.modeling
 import com.mycompany.myapp.modeling.input._
 
 object AccountVars extends SmvModule("add model variables to accounts") {
@@ -98,6 +125,6 @@ object AccountVars extends SmvModule("add model variables to accounts") {
 }
 ```
 
-We can now run the `AccountVars` module by providing the module FQN `com.mycompany.myapp.modeling.vars.AccountVars` to the `run_app.sh` command
+We can now run the `AccountVars` module by providing the module FQN `com.mycompany.myapp.modeling.AccountVars` to the `smv-run` command
 or by marking the module using the `SmvOutput` trait and running the entire stage ("-s modeling").
 See [Smv Modules](smv_module.md) for details.

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Run one or more SMV modules / stages / app.
-# USAGE: run_app.sh [-h] spark_args smv_app_args
+# USAGE: smv-run [-h] spark_args smv_app_args
 #
 # user can specify spark args (such as --master, --class or --jar to override the fat jar selection)
 # the rest of the arguments are the standard SmvApp arguments.

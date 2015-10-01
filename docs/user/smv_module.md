@@ -1,5 +1,64 @@
 # SmvModule
 
+An SMV Module is a collection of transformation operations and validation rules.  Each module depends on one or more `SmvDataSet`s (files/modules) and defines a set of transformation on its inputs that define the module output.
+
+## Module Dependency Definition
+Each module **must** define its input dependency by overriding the `requireDS` method. The `requireDS` method should return a sequence of required datasets for the running of this module.
+The dependent datasets **must** be defined in the same stage as this module.  External dependencies should use the `SmvModuleLink` class as described in [SmvStage](smv_stages.md).
+
+```scala
+object MyModule extends SmvModule("mod description") {
+ override def requireDS() = Seq(Mod1, Mod2)
+ ...
+```
+
+Note that `requireDS` returns a sequence of the actual `SmvDataSet` objects that the module depends on, **not** the name.  This makes typos visible at compile time rather than run time.
+The dependency can be on any combination of files/modules.  It is not limited to other `SmvModules`.
+```scala
+object MyModule extends SmvModule("mod description") {
+ override def requireDS() = Seq(File1, File2, Mod1)
+ ...
+```
+`File1`, `File2` are instances of `SmvFile` and `Mod1` is an instance of `SmvModule`.  From the perspective of `MyModule`, the type of the dependent dataset is irrelevant.
+
+## Module Transformation Definition (run)
+The module **must** also provide a `run()` method that performs the transformations on the inputs to produce the module output.  The `run` method will be provided with the results (DataFrame) of running the dependent input modules as a map keyed by the dependent module.
+
+```scala
+object MyModule extends SmvModule("mod description") {
+ override def requireDS() = Seq(Mod1, Mod2)
+
+ override def run(inputs: runParams) = {
+   val M1df = inputs(Mod1) // DataFrame result of running Mod1 (done by framework automatically)
+   val M2df = inputs(Mod2)
+
+   M1df.join(M2df, ...)
+       .select("col1", "col2", ...)
+ }
+
+```
+
+The `run` method should return the result of the transformations on the input as a `DataFrame`.
+
+## Module Validation Rules
+Each module may also define its own set of [DQM validation rules](dqm.md).  By default, if the user does not override the `dqm` method, the module will have an empty set of rules.
+
+## Module Persistence
+To aid in development and debugging, the output of each module is persisted by default.  Subsequent requests for the module output will result in reading the persisted state rather than in re-running the module.
+The persisted file is versioned.  The version is computed from the CRC of this module and all dependent modules.  Therefore, if this module code or any of the dependent module code changes, then the module will be re-run.
+On a large development team, this makes it very easy to "pull" the latest code changes and regenerate the output by only running the modules that changed.
+
+However, for trivial modules (e.g. filter), it might be too expensive to persist/read the module output.  In these cases, the module may override the default persist behaviour by setting the `isEphemeral` flag to true.  In that case, the module output will not be persisted (unless the module was run explicitly).
+
+```scala
+object MyModule extends SmvModule("mod description") {
+  override val isEphemeral = true
+  override def run(inputs: runParams) = {
+     inputs(Mod1).where($"a" > 100)
+  }
+}
+```
+
 # Output Modules
 As the number of modules in a given SMV stage grows, it becomes more difficult to track which
 modules are the "leaf"/output modules within the stage.
@@ -12,17 +71,12 @@ object MyModule extends SmvModule("this is my module") with SmvOutput {
 }
 ```
 
-The set of `SmvOutput` output modules in a stage define the *interface/api* of the stage.
-Since modules outside this stage can only access modules marked as output,
-none output modules can be changed at will without any fear of affecting external modules.
+The set of `SmvOutput` output modules in a stage define the *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
 
-In addition to the above, the ability to mark certain modules as output has the following benifits:
+In addition to the above, the ability to mark certain modules as output has the following benefits:
 
-* Allows user to easily "run" all output modules within a stage (using the `-s` option to `run_app.sh`)
+* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-run`)
 * A future option might be added to allow for listing of "dead" modules.  That is, any module in a stage that does not contribute to any output module either directly or indirectly.
 * We may add a future option to `SmvApp` that allows the user to display a "catalog" of output modules and their description.
 
 See [Smv Stages](smv_stages.md) for details on how to configure multiple stages.
-
-TODO: renmae this to smv_modules.md and add info about modules in general (not just output) with examples!
-TODO: add explanation about requireDS, run, etc for a normal module.  dependency on SmvFile vs SmvModule, ...
