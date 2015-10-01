@@ -26,9 +26,9 @@ object i {
   def s(ds: SmvDataSet) = df(ds)
 
   /** open file using full path */
-  def open(path: String) ={
+  def open(path: String, ca: CsvAttributes = null) ={
     /** isFullPath = true to avoid prepending data_dir */
-    val file = SmvCsvFile(path, CsvAttributes.defaultCsvWithHeader, None, true)
+    val file = SmvCsvFile(path, ca, None, true)
     file.rdd
   }
 
@@ -59,8 +59,8 @@ object i {
   def discoverSchema(path: String, n: Int = 100000, ca: CsvAttributes = CsvAttributes.defaultCsvWithHeader) = {
     implicit val csvAttributes=ca
     val schema=sqlContext.discoverSchemaFromFile(path, n)
-    val outpath = path + ".schema"
-    schema.saveToFile(sc, outpath)
+    val outpath = SmvSchema.dataPathToSchemaPath(path) + ".toBeReviewed"
+    schema.saveToHDFSFile(outpath)
   }
 
   // TODO: this should just be a direct helper on ds as it is probably common.

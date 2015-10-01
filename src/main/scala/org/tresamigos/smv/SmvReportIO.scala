@@ -27,19 +27,4 @@ private[smv] object SmvReportIO{
   def printReport(report: String): Unit = {
     println(report)
   }
-
-  private def localSaveReport(report: String, path: String): Unit = {
-    import java.io.{File, PrintWriter}
-    val file = new File(path)
-    // ensure parent directories exist
-    Option(file.getParentFile).foreach(_.mkdirs)
-    val pw = new PrintWriter(file)
-    pw.println(report)
-    pw.close()
-  }
-
-  private def localReadReport(path: String): String = {
-    scala.io.Source.fromFile(path).getLines.mkString("\n")
-  }
-
 }

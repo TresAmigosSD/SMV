@@ -26,7 +26,7 @@ import java.text.{DateFormat, SimpleDateFormat}
 import scala.annotation.switch
 import scala.util.Try
 
-private[smv] abstract class SchemaEntry extends java.io.Serializable {
+private[smv] abstract class SchemaEntry extends Serializable {
   val name: String
   val dataType: DataType
   def strToVal(s: String) : Any
@@ -279,7 +279,7 @@ private[smv] object SchemaEntry {
  * @param entries sequence of SchemaEntry.  One for each field in the csv file.
  * @param attributes sequence of arbitrary key/value mappings (usually contains CSV file attributes such as headers, separator, etc.)
  */
-class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,String]) extends java.io.Serializable {
+class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,String]) extends Serializable {
   private[smv] def getSize = entries.size
 
   /* Since Spark-1.3.0, Catalyst started to maintain its own type, we always need to call
@@ -316,11 +316,8 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
     sc.makeRDD(toStringsWithMeta, 1).saveAsTextFile(path)
   }
 
-  def saveToLocalFile(path: String) {
-    import java.io.{File, PrintWriter}
-    val pw = new PrintWriter(new File(path))
-    pw.println(toStringsWithMeta.mkString("\n"))
-    pw.close()
+  def saveToHDFSFile(path: String) {
+    SmvHDFS.writeToFile(toStringsWithMeta.mkString("\n"), path)
   }
 
   /**
@@ -482,7 +479,7 @@ object SmvSchema {
    * Ignores ".gz", ".csv", ".tsv" extensions when constructions schema file path.
    * For example: "/a/b/foo.csv" --> "/a/b/foo.schema".  Makes for cleaner mapping.
    */
-  private[smv] def dataPathToSchemaPath(dataPath: String): String = {
+  def dataPathToSchemaPath(dataPath: String): String = {
     // remove all known data file extensions from path.
     val exts = List("gz", "csv", "tsv").map("\\."+_+"$")
     val dataPathNoExt = exts.foldLeft(dataPath)((s,e) => s.replaceFirst(e,""))
