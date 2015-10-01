@@ -16,4 +16,4 @@
     - [Pivot / Unpivot Operations](pivot.md)  TODO: create pivot.md from funcs_grouped.md
     - [Custom Data Source (CDS) Functions](smv_cds.md) TODO: create smv_cds.md
 * [Validation & Data Quality Management (DQM)](dqm.md)
-* Adding a new CSV input file (with schema discovery)
+* [Adding a new CSV input file (with schema discovery)](schema_discovery.md)
