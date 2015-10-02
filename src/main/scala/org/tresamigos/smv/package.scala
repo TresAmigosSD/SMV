@@ -43,20 +43,35 @@ import scala.reflect.runtime.universe.TypeTag
  *  - [[org.tresamigos.smv.edd]]: extended data dictionary. E.g. `df.edd.summary().eddShow`
  *  - [[org.tresamigos.smv.dqm]]: data quality management. E.g. `SmvDQM().add(DQMRule(...))`
  *
- * 
+ *
  * @groupname agg Aggregate Functions
  * @groupname other All others
  */
 package object smv {
+  /** implicitly convert `Column` to `ColumnHelper` */
   implicit def makeColHelper(col: Column) = new ColumnHelper(col)
+
+  /** implicitly convert `Symbol` to `ColumnHelper` */
   implicit def makeSymColHelper(sym: Symbol) = new ColumnHelper(new ColumnName(sym.name))
-  implicit def makeSDHelper(sc: SQLContext) = new SchemaDiscoveryHelper(sc)
+  
+  /** implicitly convert `DataFrame` to `SmvDFHelper` */
   implicit def makeDFHelper(df: DataFrame) = new SmvDFHelper(df)
+
+  /** implicitly convert `SmvGroupedData` (created by `smvGropyBy` method)
+   *  to `SmvDFHelper` */
   implicit def makeSmvGDFunc(sgd: SmvGroupedData) = new SmvGroupedDataFunc(sgd)
+
+  /** implicitly convert `SmvGroupedData` to `GroupedData` */
   implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.toGroupedData
+
+  /** implicitly convert `Column` to `SmvCDSAggColumn` */
   implicit def makeSmvCDSAggColumn(col: Column) = cds.SmvCDSAggColumn(col.toExpr)
-  implicit def makeFieldHelper(field: StructField) = new StructFieldHelper(field)
-  implicit def makeStructTypeHelper(schema: StructType) = new StructTypeHelper(schema)
+
+  /** implicitly convert `StructField` to `StructFieldHelper` */
+  private[smv] implicit def makeFieldHelper(field: StructField) = new StructFieldHelper(field)
+
+  /** implicitly convert `StructType` to `StructTypeHelper` */
+  private[smv] implicit def makeStructTypeHelper(schema: StructType) = new StructTypeHelper(schema)
 
   /**
    * Instead of using String for join type, always use the link here.

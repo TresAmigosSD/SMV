@@ -58,7 +58,8 @@ object i {
 
   def discoverSchema(path: String, n: Int = 100000, ca: CsvAttributes = CsvAttributes.defaultCsvWithHeader) = {
     implicit val csvAttributes=ca
-    val schema=sqlContext.discoverSchemaFromFile(path, n)
+    val helper = new SchemaDiscoveryHelper(sqlContext)
+    val schema = helper.discoverSchemaFromFile(path, n)
     val outpath = SmvSchema.dataPathToSchemaPath(path) + ".toBeReviewed"
     schema.saveToHDFSFile(outpath)
   }

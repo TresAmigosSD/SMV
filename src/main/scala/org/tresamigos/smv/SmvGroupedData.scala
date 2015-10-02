@@ -316,7 +316,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
   /**
-   * See [[RollupCubeOp]] for details.
+   * implement the cube operations on a given DF and a set of columns.
+   * See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
+   * Rather than using nulls as the pig version, a sentinel value of "*" will be used
    *
    * Example:
    * {{{
@@ -356,7 +358,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
   /**
-   * See [[RollupCubeOp]] for details.
+   * implement the rollup operations on a given DF and a set of columns.
+   * See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
+   * Rather than using nulls as the pig version, a sentinel value of "*" will be used
    *
    * Example:
    *   df.smvGroupBy("year").smvRollup("county", "zip").agg("year", "county", "zip", sum("v") as "v")

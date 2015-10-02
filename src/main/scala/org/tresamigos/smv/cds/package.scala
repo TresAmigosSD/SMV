@@ -18,6 +18,9 @@ package org.tresamigos.smv
  * A Custom Data Selector (CDS) defines a sub-set of a group of records within a GroupedData,
  * and user can define aggregations on this sub-set of data.
  *
+ * NOTE: since Spark 1.4 introduced the `window` concept, which has functional overlap with
+ * cds, when migrating to Spark 1.5, SMV cds interface might be totally re-designed.
+ *
  * As in the following data, for each transaction record, we want to calculate the sum of
  * the dollar spend on the passed 7 days.
  *

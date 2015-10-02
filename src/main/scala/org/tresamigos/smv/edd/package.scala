@@ -29,13 +29,16 @@ import org.apache.spark.sql.functions._
  * }}}
  *
  * Depends on the data types of the columns, Edd summary method will perform different
- * statistics. See [[org.tresamigos.smv.edd.EddSummary]] for details.
+ * statistics.
  *
- * The `histogram` method takes a group of [[org.tresamigos.smv.edd.HistColumn]] as parameters.
+ * The `histogram` method takes a group of `HistColumn` as parameters.
  * Or when a group of `String` as the column names are given, it will use the default `HistColumn`
  * parameters.
+ * Two types of `HistColumn`s are supported
+ *  - [[org.tresamigos.smv.edd.Hist]]
+ *  - [[org.tresamigos.smv.edd.AmtHist]]
  *
- * `eddShow` method will print report to the console, `saveReport` will save report as `RDD[String]`,
+ * The `eddShow` method will print report to the console, `saveReport` will save report as `RDD[String]`,
  * The strings are JSON strings.
  **/
 package object edd {

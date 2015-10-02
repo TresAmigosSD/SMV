@@ -19,6 +19,17 @@ df.select(
 
 See [SMV ColumnHelper API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.ColumnHelper) for more details.
 
+## Package level Column Functions
+A group of functions can be applied to multiple Columns are defined in the smv package level.
+For example,
+```scala
+df.select(
+  smvStrCat($"a", lit("_"), $"b") as "aNb"
+)
+```
+
+See [SMV package API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.package) for details.
+
 ## DataFrame Helper Functions
 This set of functions can be applied to an existing `DataFrame`.
 For example:
@@ -38,3 +49,13 @@ df.smvGroupBy("id").
 ```
 
 See [SmvGroupedDataFunc API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.SmvGroupedDataFunc) for more details.
+
+## Custom Data Selector (CDS) Functions
+A Custom Data Selector (CDS) defines a sub-set of a group of records within a GroupedData,
+and user can define aggregations on this sub-set of data.
+
+See [CDS API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.cds.package) for details.
+
+**Note** since Spark 1.4 introduced the `window` concept, there are significant function
+overlap between SMV cds and Spark `window`. When migrate to Spark 1.5, the entire CDS interface
+might be redesigned.

@@ -49,7 +49,6 @@ class Edd(val df: DataFrame) {
 
   /**
    * Perform histogram calculation on a given set of `HistColumn`s
-   * [[org.tresamigos.smv.edd.HistColumn]]
    *
    * {{{
    * scala> import org.tresamigos.smv.edd._
