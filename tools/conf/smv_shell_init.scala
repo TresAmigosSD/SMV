@@ -66,6 +66,24 @@ object i {
 
   // TODO: this should just be a direct helper on ds as it is probably common.
   def dumpEdd(ds: SmvDataSet) = i.s(ds).edd.addBaseTasks().dump
+
+  def lsStage = app.stages.stageNames.foreach(println)
+
+  def ls(stageName: String = null): Unit = {
+    def dsInPackage(name: String, prefix: String = "") =
+      app.stages.findStage(name).allDatasets.map{d => d.name}.foreach(n => println(prefix + n))
+
+    if(stageName != null) {
+      dsInPackage(stageName)
+    }else{
+      app.stages.stageNames.foreach{n =>
+        println("\n" + n + ":")
+        dsInPackage(n, "  ")
+      }
+    }
+  }
+
+  def ls: Unit = ls()
 }
 
 import i._

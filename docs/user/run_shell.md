@@ -21,6 +21,9 @@ helper functions and create a default SMV dummy application (`app`)
 * `df.savel(path)` : save the contents of the `DataFrame` to a local (none HDFS) filesystem.  WARNING: The contents must be able to fit in memory!!!
 * `discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the path + ".schema.toBeReviewed" file
 * `dumpEdd(data_set)` : Generate base EDD results for given `SmvDataSet` and dump the results to the screen.
+* `lsStage` : list all the stages of the project
+* `ls(stageName)`: list SmvDataSet in the given stage
+* `ls`: list all the SmvDataSet in the project, organized by stages
 
 ## Project Shell Init
 In addition to the standard `smv_shell_init.scala` file, the `smv-shell` script will look for an optional `conf/shell_init.scala` file and source it if found.
@@ -61,6 +64,17 @@ root
 scala> tmpDF.show
 a b  c
 a 10 2015-09-30 00:00:...
+```
+
+### List all DataSets
+```scala
+scala> ls
+
+com.mycompany.MyApp.stage1:
+  com.mycompany.MyApp.stage1.EmploymentByState
+
+com.mycompany.MyApp.stage2:
+  com.mycompany.MyApp.stage2.StageEmpCategory
 ```
 
 ### Resolve existing SmvModule
