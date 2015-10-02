@@ -18,6 +18,17 @@ If the Spark source was downloaded, then it needs to build as follows:
 $ cd SPARK_HOME; mvn install
 ```
 
+Add the spark `bin` directory to the `PATH` environment variable. For example:
+```shell
+$ export PATH="${PATH}:SPARK_HOME/bin"
+```
+where `SPARK_HOME` is the actual directory where Spark was installed.
+
+To verify that Spark was installed correctly, run the following command:
+```shell
+$ spark-submit -h
+```
+
 # Install Git and Maven
 
 * For git, follow the [Git installation instructions](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)

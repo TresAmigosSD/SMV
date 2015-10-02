@@ -30,6 +30,11 @@ Can be used to add an additional column to a `DataFrame`.
 See [SmvDFHelper API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.SmvDFHelper) for more details.
 
 ## Grouped Helper Functions
-[Grouped helper functions](funcs_grouped.md) can only be applied to `SmvGroup`ed data.
+This set of functions are used to augment the standard Spark `groupBy` method to provide functions that operate on grouped data.
+For example:
+```scala
+df.smvGroupBy("id").
+   smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+```
 
-TODO: also need link to functions that are not column helpers such as 'SmvStrCat'
+See [SmvGroupedDataFunc API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.SmvGroupedDataFunc) for more details.

@@ -25,6 +25,7 @@ import org.apache.spark.sql.catalyst.expressions.{Alias, First, Literal, Express
  * See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
  * Rather than using nulls as the pig version, a sentinel value of "*" will be used
  */
+@deprecated("Use Spark rollup/cube", "1.4")
 private[smv] class RollupCubeOp(df: DataFrame,
                    keyCols: Seq[String],
                    cols: Seq[String]) {
