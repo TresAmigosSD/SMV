@@ -78,7 +78,7 @@ Example: "com.company.proj.etl, com.company.proj.model"</td>
 <td>smv.stages.X.version</td>
 <td>0</td>
 <td>Optional</td>
-<td>Current version of stage X. See [TODO: add link here] for details on stage versions</td>
+<td>Current version of stage X. See <a href="smv_stages.md"> for details on stage versions</td>
 </tr>
 
 <tr>

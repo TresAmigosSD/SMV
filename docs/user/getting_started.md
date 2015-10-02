@@ -107,9 +107,20 @@ EMP: Long
 
 **Note**: the output above may be different as it depends on order of execution of partitions.
 
-See [Run SMV Application](run_app.md) for further details.
+```scala
+$ _SMV_HOME_/tools/smv-run -m com.mycompany.myapp.stage1.EmploymentByState -g
+```
 
-TODO: add example of running with -g (graph) command.
+With the `-g` flag, instead of produce and persist the module, the module dependency
+graph will be created as a `dot` file. It can be converted to `png` using the
+`dot` command.
+
+```shell
+$ dot -Tpng com.mycompany.MyApp.stage1.EmploymentByState.dot -o graph.png
+```
+You main need to install `graphviz` on your system to use the `dot` command.
+
+See [Run SMV Application](run_app.md) for further details.
 
 ### Run Example App using `smv-shell`
 
@@ -121,7 +132,7 @@ The `smv-shell` script is provided by SMV to make it easy to launch the Spark sh
 $ _SMV_HOME_/tools/smv-shell
 ```
 
-TODO: add link to smv-shell reference doc!
+See [Run Spark Shell](run_shell.md) for details.
 
 #### Exploring SmvDataSets (SmvFiles and SmvModules)
 Once we are inside the spark shell, we can "source" (using the `s()` smv shell helper function) any `SmvFile` or `SmvModule` instance

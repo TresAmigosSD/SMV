@@ -152,7 +152,7 @@ class DQMTest extends SmvTestUtil {
 
   test("test dqm method in SmvDataSet") {
     val ssc = sqlContext; import ssc.implicits._
-    object file extends SmvCsvData("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5") {
+    object file extends SmvCsvStringData("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5") {
       override def dqm() = SmvDQM().
         add(DQMRule($"b" < 0.4 , "b_lt_03")).
         add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix")).
@@ -166,7 +166,7 @@ class DQMTest extends SmvTestUtil {
 
   test("test additional DQMRules") {
     val ssc = sqlContext; import ssc.implicits._
-    object file extends SmvCsvData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,o,x;1,m,zz") {
+    object file extends SmvCsvStringData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,o,x;1,m,zz") {
       override def dqm() = SmvDQM().
         add(BoundRule($"a", 0, 2)).
         add(SetRule($"b", Set("m", "f"))).
@@ -180,7 +180,7 @@ class DQMTest extends SmvTestUtil {
 
   test("test additional DQMFixes") {
     val ssc = sqlContext; import ssc.implicits._
-    object file extends SmvCsvData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,x,x;1,m,zz") {
+    object file extends SmvCsvStringData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,x,x;1,m,zz") {
       override def dqm() = SmvDQM().
         add(SetFix($"b", Set("m", "f", "o"), "o")).
         add(FormatFix($"c", ".", "_")).
@@ -191,7 +191,7 @@ class DQMTest extends SmvTestUtil {
 
   test("test user defined policy") {
     val ssc = sqlContext; import ssc.implicits._
-    object file extends SmvCsvData("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5") {
+    object file extends SmvCsvStringData("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5") {
       val policy: (DataFrame, DQMState) => Boolean = {(df, state) =>
         state.getRuleCount("rule1") + state.getFixCount("fix2") == 3
       }

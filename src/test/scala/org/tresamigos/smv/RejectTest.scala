@@ -83,7 +83,7 @@ class RejectTest extends SmvTestUtil {
     val data = """231,67.21  ,20121009101621,"02122011"""
     val schemaStr = "a:String;b:Double;c:String;d:String"
 
-    object smvCF extends SmvCsvData(schemaStr, data) {
+    object smvCF extends SmvCsvStringData(schemaStr, data) {
       override val failAtParsingError = false
     }
     val prdd = smvCF.rdd

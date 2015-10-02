@@ -47,4 +47,51 @@ import a._
 ```
 
 ## Examples
-TODO: add shell usage examples below.
+
+### Create temporary DataFrame for testing
+```scala
+scala> val tmpDF = app.createDF("a:String;b:Integer;c:Timestamp[yyyy-MM-dd]", "a,10,2015-09-30")
+scala> tmpDF.printSchema
+root
+ |-- a: string (nullable = true)
+ |-- b: integer (nullable = true)
+ |-- c: timestamp (nullable = true)
+
+
+scala> tmpDF.show
+a b  c
+a 10 2015-09-30 00:00:...
+```
+
+### Resolve existing SmvModule
+```scala
+scala> val s2res=s(StageEmpCategory)
+scala> s2res.printSchema
+root
+ |-- ST: string (nullable = true)
+ |-- EMP: long (nullable = true)
+ |-- cat_high_emp: boolean (nullable = true)
+
+
+scala> s2res.count
+res5: Long = 52
+
+
+scala> s2res.show
+ST EMP     cat_high_emp
+32 981295  false
+33 508120  false
+34 3324188 true
+....
+
+
+scala> s2res.edd.histogram("cat_high_emp").eddShow
+Histogram of cat_high_emp: Boolean
+key                      count      Pct    cumCount   cumPct
+false                       20   38.46%          20   38.46%
+true                        32   61.54%          52  100.00%
+-------------------------------------------------
+```
+
+### Discover schema
+Please see [Schema Discovery](schema_discovery.md)

@@ -52,8 +52,7 @@ The default is to use the latest (by time, not version) that is found in the tar
 <br>
 <code>$ ... --smv-props "smv.stages=s1"</code>
 <br>
-See <a href="appConfig.md">Application Configuration</a> for details.
-TODO: fix appConfig.md reference above.
+See <a href="app_config.md">Application Configuration</a> for details.
 </td>
 </tr>
 

@@ -40,7 +40,7 @@ package SMV {
     +{abstract} run(in: runParams) : DataFrame
   }
 
-  class SmvCsvData extends SmvModule {
+  class SmvCsvStringData extends SmvModule {
     +schemaStr: String
     +data: String
     +cnstr(schemaStr, data)

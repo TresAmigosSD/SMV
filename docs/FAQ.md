@@ -1,4 +1,4 @@
-# FAQ (TODO: need to update)
+# FAQ 
 
 ## What is SMV?
 SMV stands for "Spark Modularized View".
