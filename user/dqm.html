@@ -30,20 +30,39 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <body>
 <table class="nav-table">
     <tr>
-        <td class="nav-left">&lArr;&nbsp;<a href="funcs_grouped.html">SMV Group Functions</a></td>
+        <td class="nav-left">&lArr;&nbsp;<a href="functions.html">SMV Functions</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
-        <td class="nav-right"><a href="_dummy_.html"></a>&nbsp;&rArr;</td>
+        <td class="nav-right"><a href="schema_discovery.html">Adding a new CSV input file (with schema discovery)</a>&nbsp;&rArr;</td>
     </tr>
 </table>
 <hr>
 
 <article class="markdown-body">
 <h1 id="validation-data-quality-management-dqm">Validation &amp; Data Quality Management (DQM)</h1>
-<p>Both <code>SmvFile</code> and <code>SmvModule</code> has a &quot;Validation&quot; mechanism. SmvApp will automatically validate<br />the result <code>DataFrame</code>.</p>
+<p>Both <code>SmvFile</code> and <code>SmvModule</code> has a &quot;Validation&quot; mechanism. SmvApp will<br />automatically validate the result <code>DataFrame</code>.</p>
 <p>If the validation result is nontrivial, it will be persisted in a file with postfix <code>.valid</code> in the<br />same location of the persisted data and schema files.</p>
 <p>If the validation result failed, the process will be terminated.</p>
+<p>Currently, there are 2 types of validations implemented,</p>
+<ul>
+<li>Parsing validations<br /></li>
+<li>Data Quality Management validations</li>
+</ul>
 <h2 id="parsing-validation">Parsing Validation</h2>
-<p>SMV will automatically perform parsing check and validation on <code>SmvFile</code>s. The total number of rejected<br />records will be logged, and also some example rejected records will also be logged. Please be aware that<br />we only log a limited number of rejected records. An example parsing validation log file is like the<br />following</p>
+<p>When we load a Csv or Frl (Fix Record Length) file, there are always potential parsing<br />issues.</p>
+<p>Typically 2 types of issues,</p>
+<ul>
+<li>Number of fields in records doesn't match the number of fields specified in schema file<br /></li>
+<li>Some fields of some records do not match schema</li>
+</ul>
+<p>For either of the two cases, the record which caused the problem will be rejected. The question<br />is that whether we fail the entire <code>SmvFile</code> and terminate. Different problems might need to handle<br />this differently.<br />Also even if we want to fail the entire <code>SmvFile</code>, we should rather log more than one &quot;bad&quot; records<br />for easy debugging.</p>
+<p>Without any specific setup, the default behavior of <code>SmvFile</code> is to log:</p>
+<ul>
+<li>The total number of rejected records, and<br /></li>
+<li>Some example rejected records</li>
+</ul>
+<p>And then fail the <code>SmvFile</code> by terminating the process when any rejection happens.</p>
+<p><strong>Note</strong> that we only log a limited number of rejected records to prevent run-away rejections.</p>
+<p>An example parsing validation log is like the following</p>
 <pre class="sourceCode json"><code class="sourceCode json"><span class="fu">{</span>
   <span class="dt">&quot;passed&quot;</span><span class="fu">:</span><span class="kw">false</span><span class="fu">,</span>
   <span class="dt">&quot;errorMessages&quot;</span><span class="fu">:</span> <span class="ot">[</span>
@@ -57,17 +76,18 @@ code > span.er { color: #ff0000; font-weight: bold; }
     <span class="st">&quot;java.lang.NumberFormatException: For input string: </span><span class="ch">\&quot;</span><span class="st">001x</span><span class="ch">\&quot;</span><span class="st"> @RECORD: 123,001x  ,20130109130619,12102012&quot;</span>
   <span class="ot">]</span>
 <span class="fu">}</span></code></pre>
-<p>By default, any parser error will cause validation fail (<code>passed: false</code>). That behavior is controlled<br />by the <code>failAtParsingError</code> attribute of <code>SmvFile</code>. The default value is <code>true</code>. To change that we<br />can override it</p>
+<p>By default, any parser error will cause validation fail (<code>passed: false</code>). This behavior is controlled<br />by the <code>failAtParsingError</code> attribute of <code>SmvFile</code>. The default value is <code>true</code>. To change that we<br />can override it</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> myfile <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;accounts/acct_demo.csv&quot;</span>) {
   <span class="kw">override</span> <span class="kw">val</span> failAtParsingError = <span class="kw">false</span>
 }</code></pre>
 <p>With above setting, the <code>SmvFile</code> will simply persist the validation result and keep moving.</p>
+<p>Either terminating the process or not, as long as the log is nontrivial, it will be printed to<br />console and persisted in the <code>SmvModule</code> persisted data path with postfix <code>.valid</code>.</p>
 <h2 id="dqm">DQM</h2>
-<p>Although the parser enforced data schema, there are typically more things need to be checked on<br />real world data. Here are some examples,</p>
+<p>Although the parser enforced data schema, there are typically more things need to be checked on<br />real-world data. Here are some examples,</p>
 <ul>
-<li><code>Age</code> should between 0 and 120<br /></li>
+<li><code>Age</code> should be between 0 and 120<br /></li>
 <li><code>Gender</code> should only have 3 values <code>m</code>, <code>f</code>, and <code>o</code><br /></li>
-<li><code>Price</code> should between 0.01 and 1,000,000.00</li>
+<li><code>Price</code> should be between 0.01 and 1,000,000.00</li>
 </ul>
 <p>Record by record, above rules could be checked, and depend on the need, they can be fixed.<br />The <code>SmvDQM</code> framework provides <code>Rule</code>s and <code>Fix</code>es to address them.</p>
 <h3 id="dqmrule-dqmfix">DQMRule &amp; DQMFix</h3>
@@ -76,8 +96,8 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p>Since both <code>SmvFile</code> and <code>SmvModule</code> provide a <code>dqm</code> method to define the rules, one can override<br />it to add rules.</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;example module with dqm&quot;</span>) {
   ...
-  <span class="kw">override</span> <span class="fu">run</span>(i:runParams) { ... }
-  <span class="kw">override</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">run</span>(i:runParams) { ... }
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().
       <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;Price&quot;</span> &lt; <span class="fl">1000000.0</span>, <span class="st">&quot;rule1&quot;</span>, FailAny)).
       <span class="fu">add</span>(<span class="fu">DQMFix</span>($<span class="st">&quot;age&quot;</span> &gt; <span class="dv">120</span>, <span class="fu">lit</span>(<span class="dv">120</span>) as <span class="st">&quot;age&quot;</span>, <span class="st">&quot;fix1&quot;</span>))
 }</code></pre>
@@ -101,13 +121,13 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p>The rules and fixes defined in the <code>dqm</code> method will be applied to the result <code>DataFrame</code> of the <code>run</code> method.</p>
 <h3 id="dqmpolicy">DQMPolicy</h3>
 <p>A <code>DQMPolicy</code> defines a requirement on the entire <code>DataFrame</code>. As in above example we can add<br />a policy</p>
-<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">override</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">override</span> <span class="kw">def</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().
     <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;Price&quot;</span> &lt; <span class="fl">1000000.0</span>, <span class="st">&quot;rule1&quot;</span>)).
     <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;Price&quot;</span> &gt; <span class="fl">0.0</span>, <span class="st">&quot;rule2&quot;</span>)).
     <span class="fu">add</span>(<span class="fu">DQMFix</span>($<span class="st">&quot;age&quot;</span> &gt; <span class="dv">120</span>, <span class="fu">lit</span>(<span class="dv">120</span>) as <span class="st">&quot;age&quot;</span>, <span class="st">&quot;fix1&quot;</span>)).
     <span class="fu">add</span>(<span class="fu">FailTotalRuleCountPolicy</span>(<span class="dv">100</span>))</code></pre>
 <p>Here <code>FailTotalRuleCountPolicy(...)</code> is a predefined <code>DQMPolicy</code>, which check the total count of<br />all the rules in this <code>DQM</code>, if the total count is within the threshold, the validation will<br />pass, otherwise will fail.</p>
-<p>There are 4 building <code>DQMPolicy</code>s</p>
+<p>There are 4 build-in <code>DQMPolicy</code>s</p>
 <ul>
 <li><code>FailTotalRuleCountPolicy(n)</code> - fail when total rule count &gt;= n<br /></li>
 <li><code>FailTotalFixCountPolicy(n)</code> - fail when total fix count &gt;= n<br /></li>
@@ -118,7 +138,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> policy: (DataFrame, DQMState) =&gt; Boolean = {(df, state) =&gt;
   state.<span class="fu">getRuleCount</span>(<span class="st">&quot;rule1&quot;</span>) + state.<span class="fu">getFixCount</span>(<span class="st">&quot;fix1&quot;</span>) &lt; <span class="dv">1000</span>
 }
-<span class="kw">override</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().
+<span class="kw">override</span> <span class="kw">def</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().
     <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;Price&quot;</span> &lt; <span class="fl">1000000.0</span>, <span class="st">&quot;rule1&quot;</span>)).
     <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;Price&quot;</span> &gt; <span class="fl">0.0</span>, <span class="st">&quot;rule2&quot;</span>)).
     <span class="fu">add</span>(<span class="fu">DQMFix</span>($<span class="st">&quot;age&quot;</span> &gt; <span class="dv">120</span>, <span class="fu">lit</span>(<span class="dv">120</span>) as <span class="st">&quot;age&quot;</span>, <span class="st">&quot;fix1&quot;</span>)).
@@ -129,9 +149,9 @@ code > span.er { color: #ff0000; font-weight: bold; }
   avgPrice &lt; <span class="fl">100.0</span>
 }</code></pre>
 <p>It checks the average price on the entire DF, and require it to be less than <code>100.0</code>.</p>
-<p>Using <code>DataFrame</code> directly could introduce additional <code>actions</code> on the data, which could be<br />costly. For any policy which can be full determined by using the <code>DQMState</code>, we should do so and<br />avoid using <code>DataFrame</code> actions.</p>
+<p>Using <code>DataFrame</code> directly could introduce additional <code>actions</code> on the data, which could be<br />costly. For any policy which can be fully determined by using the <code>DQMState</code>, we should do so and<br />avoid using <code>DataFrame</code> actions.</p>
 <h3 id="dqmstate">DQMState</h3>
-<p><code>DQMState</code> provides the following methods to access its contents,</p>
+<p><code>DQMState</code> provides the following methods to access its contents, one can use them to build policies.</p>
 <ul>
 <li><code>getRecCount(): Long</code> - total number of records in this DF<br /></li>
 <li><code>getFixCount(name: String): Int</code> - for the fix with the given name, return the time it is triggered<br /></li>

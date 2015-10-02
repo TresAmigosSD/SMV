@@ -41,13 +41,13 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <h1 id="smv-stages">SMV Stages</h1>
 <p>As a project grows in size, the ability to divide up the project into manageable chunks becomes paramount.<br />SMV Stages accomplishes this by not only organizing the modules into separate managed groups,<br />but by also controlling the dependency between modules in different stages.</p>
 <h1 id="stage-input">Stage input</h1>
-<p>Each stage should have an <code>input</code> package where all the input <code>SmvFile</code> instances are defined.<br />By convention, all inputs used by any module in a given stage should reference an <code>SmvFile</code> instance in the input stage.</p>
+<p>Each stage should have an <code>input</code> sub-package where all the input <code>SmvFile</code> instances are defined.<br />By convention, all inputs used by any module in a given stage should reference an <code>SmvFile</code> instance in the input sub-package.</p>
 <h2 id="raw-input-files">Raw input files</h2>
 <p>Raw input files (e.g. CSV files) should be defined as <code>SmvFile</code> instances in the input package.</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">package</span> com/mycom/myproj.<span class="fu">stage1</span>.<span class="fu">input</span>
 
-<span class="kw">object</span> file1 <span class="kw">extends</span> <span class="fu">SmvFile</span>(<span class="st">&quot;file1_v2.csv&quot;</span>)
-<span class="kw">object</span> file2 <span class="kw">extends</span> <span class="fu">SmvFile</span>(<span class="st">&quot;file2.csv.gz&quot;</span>)
+<span class="kw">object</span> file1 <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;file1_v2.csv&quot;</span>)
+<span class="kw">object</span> file2 <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;file2.csv.gz&quot;</span>)
 ...</code></pre>
 <p>Modules within this stage can refer to the files using their object names (e.g. <code>file1</code>) which would produce a compile time error on a typo.<br />See <a href="smv_module.html">SmvModule</a> for details on how to specify dependent files.</p>
 <h2 id="linking-to-external-modules.">Linking to external modules.</h2>
@@ -55,32 +55,43 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// this is the input in stage Y</span>
 <span class="kw">package</span> com.<span class="fu">mycompany</span>.<span class="fu">myproj</span>.<span class="fu">stageY</span>.<span class="fu">input</span>
 
-<span class="kw">object</span> accountsY <span class="kw">extends</span> <span class="fu">SmvModuleLink</span>(com.<span class="fu">mycompany</span>.<span class="fu">myproj</span>.<span class="fu">stageX</span>.<span class="fu">etl</span>.<span class="fu">accountsX</span>)</code></pre>
-<p>In the above example, <code>accountsY</code> is defined as an input in stage Y.<br />Modules in stage Y can depend on <code>accountsY</code> directly.<br /><code>accountsY</code> is linked to the <strong>output file</strong> of <code>accountX</code> module and <strong>not</strong> to the module code.<br />Therefore, stage X needs to be run first before Stage Y can run (so that <code>accountX</code> output is there when stage Y is run)</p>
-<p>See <a href="publishing.html">Publishing Stage Output</a> for details on how to pin dependency to a specific published version</p>
+<span class="kw">object</span> accountsY <span class="kw">extends</span> <span class="fu">SmvModuleLink</span>(com.<span class="fu">mycompany</span>.<span class="fu">myproj</span>.<span class="fu">stageX</span>.<span class="fu">accountsX</span>)</code></pre>
+<p>In the above example, <code>accountsY</code> is defined as an input in stage Y. Modules in stage Y can depend on <code>accountsY</code> directly. <code>accountsY</code> is linked to the <strong>output file</strong> of <code>accountsX</code> module and <strong>not</strong> to the module code. Therefore, stage X needs to be run first before Stage Y can run (so that <code>accountsX</code> output is there when stage Y is run)</p>
+<p>See &quot;Publishing Stage Output&quot; section below for details on how to pin dependency to a specific published version</p>
+<h1 id="publishing-stage-output">Publishing Stage Output</h1>
+<p>As project code/team size grows, it becomes necessary to be able to depend on a stable code/data snapshots in development.<br />For example, on a large project we may have different teams working on etl stage and modeling stage.<br />Those working on modeling would prefer a stable etl stage output while they are developing the models.<br />One way to accomplish that is to &quot;publish&quot; the etl stage output and have the modeling team specify the published version in their configuration.</p>
+<p>In the above example, the <code>model</code> stage may depend on the output of <code>etl</code> stage as follows:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">package</span> com.<span class="fu">mycompany</span>.<span class="fu">myproj</span>.<span class="fu">model</span>.<span class="fu">input</span>
+<span class="kw">object</span> modelAccts <span class="kw">extends</span> <span class="fu">SmvModuleLink</span>(com.<span class="fu">mycompany</span>.<span class="fu">myproj</span>.<span class="fu">etl</span>.<span class="fu">rawAccounts</span>)</code></pre>
+<p>As described above, <code>modelAccts</code> will depend on the <strong>output</strong> of <code>rawAccounts</code>. Normally, this would read the versioned output that is persisted in the output directory.<br />To avoid having to &quot;re-run&quot; <code>rawAccounts</code> continuously, the user may choose to &quot;publish&quot; the current <code>etl</code> stage output and pin the links to the published version as follows:</p>
+<p><strong>1. Publish ETL stage</strong></p>
+<pre class="shell"><code>$ _SMV_HOME_/tools/smv-run --publish V1 -s etl</code></pre>
+<p><strong>2. Pin model to use published ETL output</strong></p>
+<p>Modify the user configuration file (<code>conf/smv-user-conf.props</code>) to specify the etl stage version to use. For example, to use the above published version:</p>
+<pre><code># specify version of etl package to use.  Note use of stage basename
+smv.stages.etl.version = V1</code></pre>
+<p>When <code>modelAccts</code> is re-run it will use the published output of <code>rawAccounts</code> rather than rerun <code>rawAccounts</code>.</p>
+<p>Since we already setup the version control to ignore <code>conf/smv-user-conf.props</code>,<br />this provides isolation for the model authors from changes in the ETL code. Once ETL stage is stabilized, it can either be republished with a new version or the config version can be removed to get the latest and greatest ETL output as before.</p>
+<h2 id="publish-entire-app">Publish entire app</h2>
+<p>TODO: show how to publish all stages in app.</p>
 <h1 id="adding-a-stage">Adding a stage</h1>
 <p>As the project grows, it may become necessary to add additional stages.<br />We will utilize the example app described in <a href="getting_started.html">Getting Started</a> as the starting point.</p>
-<pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">_SMV_HOME_/tools/bin/smv_init.sh</span> MyApp com.mycompany.myapp</code></pre>
-<p>To review, the above will create a sample app <code>MyApp</code> with a single stage <code>stage1</code> which has two packages <code>input</code> and <code>etl</code>.<br />To add an additional <code>modeling</code> stage which has <code>vars</code> package (plus the usual <code>input</code> package), we need to do the following:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">_SMV_HOME_/tools/bin/smv-init</span> MyApp com.mycompany.myapp</code></pre>
+<p>To review, the above will create a sample app <code>MyApp</code> with two stages <code>stage1</code> and <code>stage3</code>. We will add an additional <code>modeling</code> stage in this example.</p>
 <p><strong>1. add the stage to the app configuration file (<code>conf/smv-app-conf.props</code>).</strong></p>
 <pre><code>...
 # add modeling below
-smv.stages = stage1, modeling
-
-# add packages in modeling stage
-smv.stages.modeling.packages = com.mycompany.myapp.modeling.input, com.mycompany.myapp.modeling.vars
-...
-</code></pre>
-<p>TODO: we will get rid of &quot;smv.stages.stage_name.packages&quot; config in the future.</p>
-<p><strong>2. add the <code>input</code> package to the source tree.</strong></p>
+smv.stages = com.mycompany.MyApp.stage1, com.mycompany.MyApp.stage2, com.mycompany.MyApp.modeling
+...</code></pre>
+<p><strong>2. add the <code>input</code> sub-package to the source tree.</strong></p>
 <p>Create the file <code>src/main/scala/com/mycompany/myapp/modeling/input/InputFiles.scala</code> and add <code>SmvFile</code> and <code>SmvModuleLink</code> objects<br />in the file as described in <a href="#stage-input">Stage Input</a> section above.</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">package</span> com.<span class="fu">mycompany</span>.<span class="fu">myapp</span>.<span class="fu">modeling</span>.<span class="fu">input</span>
 
-<span class="kw">object</span> weights <span class="kw">extends</span> <span class="fu">SmvFile</span>(<span class="st">&quot;weights.csv&quot;</span>)
-<span class="kw">object</span> Stage1EmploymentRaw <span class="kw">extends</span> <span class="fu">SmvModuleLink</span>(com.<span class="fu">mycompany</span>.<span class="fu">myapp</span>.<span class="fu">stage1</span>.<span class="fu">etl</span>.<span class="fu">EmploymentRaw</span>)</code></pre>
-<p><strong>3. add the modules to the <code>vars</code> package.</strong></p>
-<p>Create the file <code>src/main/scala/com/mycompany/myapp/modeling/vars/AccountVars.scala</code> which defines the <code>AccountVars</code> module.</p>
-<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">package</span> com.<span class="fu">mycompany</span>.<span class="fu">myapp</span>.<span class="fu">modeling</span>.<span class="fu">vars</span>
+<span class="kw">object</span> weights <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;weights.csv&quot;</span>)
+<span class="kw">object</span> Stage1EmploymentRaw <span class="kw">extends</span> <span class="fu">SmvModuleLink</span>(com.<span class="fu">mycompany</span>.<span class="fu">myapp</span>.<span class="fu">stage1</span>.<span class="fu">EmploymentRaw</span>)</code></pre>
+<p><strong>3. add the modules to the <code>modeling</code> stage package.</strong></p>
+<p>Create the file <code>src/main/scala/com/mycompany/myapp/modeling/AccountVars.scala</code> which defines the <code>AccountVars</code> module.</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">package</span> com.<span class="fu">mycompany</span>.<span class="fu">myapp</span>.<span class="fu">modeling</span>
 <span class="kw">import</span> com.<span class="fu">mycompany</span>.<span class="fu">myapp</span>.<span class="fu">modeling</span>.<span class="fu">input</span>.<span class="fu">_</span>
 
 <span class="kw">object</span> AccountVars <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;add model variables to accounts&quot;</span>) {
@@ -91,7 +102,7 @@ smv.stages.modeling.packages = com.mycompany.myapp.modeling.input, com.mycompany
     ...
   }
 }</code></pre>
-<p>We can now run the <code>AccountVars</code> module by providing the module FQN <code>com.mycompany.myapp.modeling.vars.AccountVars</code> to the <code>run_app.sh</code> command<br />or by marking the module using the <code>SmvOutput</code> trait and running the entire stage (&quot;-s modeling&quot;).<br />See <a href="smv_module.html">Smv Modules</a> for details.</p>
+<p>We can now run the <code>AccountVars</code> module by providing the module FQN <code>com.mycompany.myapp.modeling.AccountVars</code> to the <code>smv-run</code> command<br />or by marking the module using the <code>SmvOutput</code> trait and running the entire stage (&quot;-s modeling&quot;).<br />See <a href="smv_module.html">Smv Modules</a> for details.</p>
 </article>
 </body>
 </html>

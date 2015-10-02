@@ -409,19 +409,33 @@ Note: the module will still be persisted if it was specifically selected to run 
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDataSet#moduleCRC" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="moduleCRC:org.tresamigos.smv.ClassCRC"></a>
-      <a id="moduleCRC:ClassCRC"></a>
+    </li><li name="org.tresamigos.smv.SmvDataSet#isObjectInShell" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isObjectInShell:Boolean"></a>
+      <a id="isObjectInShell:Boolean"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">moduleCRC</span><span class="result">: <span class="extype" name="org.tresamigos.smv.ClassCRC">ClassCRC</span></span>
+        <span class="name">isObjectInShell</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Objects defined in Spark Shell has class name start with $ *</p><div class="fullcomment"><div class="comment cmt"><p>Objects defined in Spark Shell has class name start with $ *</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#moduleCRC" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="moduleCRC:Long"></a>
+      <a id="moduleCRC:Long"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">moduleCRC</span><span class="result">: <span class="extype" name="scala.Long">Long</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">module code CRC.</p><div class="fullcomment"><div class="comment cmt"><p>module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
+Always return 0 for objects created in spark shell
 </p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#moduleCsvPath" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="moduleCsvPath(prefix:String):String"></a>
@@ -517,8 +531,15 @@ Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called her
       </span>
       </h4>
       <p class="shortcomment cmt">Create a snapshot in the current module at some result DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Create a snapshot in the current module at some result DataFrame.
-This is useful for debugging a long SmvModule by creating snapshots along the way.
-</p></div></div>
+This is useful for debugging a long SmvModule by creating snapshots along the way.</p><pre><span class="kw">object</span> MyMod <span class="kw">extends</span> SmvModule(<span class="lit">"..."</span>) {
+<span class="kw">override</span> <span class="kw">def</span> requireDS = <span class="std">Seq</span>(...)
+<span class="kw">override</span> <span class="kw">def</span> run(...) = {
+   <span class="kw">val</span> s1 = ...
+   snapshot(s1, <span class="lit">"s1"</span>)
+   <span class="kw">val</span> s2 = f(s1)
+   snapshot(s2, <span class="lit">"s2"</span>)
+   ...
+}</pre></div></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>

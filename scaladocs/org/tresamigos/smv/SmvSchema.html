@@ -35,7 +35,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">SmvSchema</span><span class="result"> extends <span class="extype" name="java.io.Serializable">Serializable</span></span>
+        <span class="name">SmvSchema</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
@@ -43,7 +43,7 @@
 This class should only be used for parsing/persisting the schema file associated with a CSV file.
 It is no longer needed as a general purpose schema definition as spark now has that covered.</p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -61,7 +61,7 @@ It is no longer needed as a general purpose schema definition as spark now has t
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.SmvSchema"><span>SmvSchema</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.SmvSchema"><span>SmvSchema</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -364,16 +364,16 @@ It is no longer needed as a general purpose schema definition as spark now has t
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.SmvSchema#saveToLocalFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="saveToLocalFile(path:String):Unit"></a>
-      <a id="saveToLocalFile(String):Unit"></a>
+    </li><li name="org.tresamigos.smv.SmvSchema#saveToHDFSFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="saveToHDFSFile(path:String):Unit"></a>
+      <a id="saveToHDFSFile(String):Unit"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveToLocalFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">saveToHDFSFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
       
@@ -469,7 +469,9 @@ It is no longer needed as a general purpose schema definition as spark now has t
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="java.io.Serializable">
+        <div class="parent" name="scala.Serializable">
+              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="java.io.Serializable">
               <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>

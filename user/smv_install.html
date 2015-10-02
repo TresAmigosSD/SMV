@@ -28,6 +28,11 @@
 <p>Download the 1.3.0 version of Spark from <a href="http://spark.apache.org/downloads.html">Spark</a>.<br />It is recommended that the source version of spark is used rather than a binary download.<br />The source is quite usefull for debugging.</p>
 <p>If the Spark source was downloaded, then it needs to build as follows:</p>
 <pre><code>$ cd SPARK_HOME; mvn install</code></pre>
+<p>Add the spark <code>bin</code> directory to the <code>PATH</code> environment variable. For example:</p>
+<pre class="shell"><code>$ export PATH=&quot;${PATH}:SPARK_HOME/bin&quot;</code></pre>
+<p>where <code>SPARK_HOME</code> is the actual directory where Spark was installed.</p>
+<p>To verify that Spark was installed correctly, run the following command:</p>
+<pre class="shell"><code>$ spark-submit -h</code></pre>
 <h1 id="install-git-and-maven">Install Git and Maven</h1>
 <ul>
 <li>For git, follow the <a href="https://git-scm.com/book/en/v2/Getting-Started-Installing-Git">Git installation instructions</a><br /></li>

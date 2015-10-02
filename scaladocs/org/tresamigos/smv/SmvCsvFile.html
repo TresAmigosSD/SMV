@@ -369,19 +369,33 @@ Note: the module will still be persisted if it was specifically selected to run 
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDataSet#moduleCRC" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="moduleCRC:org.tresamigos.smv.ClassCRC"></a>
-      <a id="moduleCRC:ClassCRC"></a>
+    </li><li name="org.tresamigos.smv.SmvDataSet#isObjectInShell" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isObjectInShell:Boolean"></a>
+      <a id="isObjectInShell:Boolean"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">moduleCRC</span><span class="result">: <span class="extype" name="org.tresamigos.smv.ClassCRC">ClassCRC</span></span>
+        <span class="name">isObjectInShell</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Objects defined in Spark Shell has class name start with $ *</p><div class="fullcomment"><div class="comment cmt"><p>Objects defined in Spark Shell has class name start with $ *</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#moduleCRC" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="moduleCRC:Long"></a>
+      <a id="moduleCRC:Long"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">moduleCRC</span><span class="result">: <span class="extype" name="scala.Long">Long</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">module code CRC.</p><div class="fullcomment"><div class="comment cmt"><p>module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
+Always return 0 for objects created in spark shell
 </p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#moduleCsvPath" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="moduleCsvPath(prefix:String):String"></a>
@@ -547,7 +561,7 @@ ETL operations.
         <span class="name">validations</span><span class="params">()</span><span class="result">: <span class="extype" name="org.tresamigos.smv.ValidationSet">ValidationSet</span></span>
       </span>
       </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+      <p class="shortcomment cmt">do not persist validation result if isObjectInShell *</p><div class="fullcomment"><div class="comment cmt"><p>do not persist validation result if isObjectInShell *</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#version" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="version():Int"></a>
       <a id="version():Int"></a>

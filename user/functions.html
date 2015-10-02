@@ -32,7 +32,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
     <tr>
         <td class="nav-left">&lArr;&nbsp;<a href="smv_stages.html">SMV Stages</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
-        <td class="nav-right"><a href="funcs_dataframe.html">SMV DataFrame Functions</a>&nbsp;&rArr;</td>
+        <td class="nav-right"><a href="dqm.html">Validation & Data Quality Management (DQM)</a>&nbsp;&rArr;</td>
     </tr>
 </table>
 <hr>
@@ -47,16 +47,31 @@ code > span.er { color: #ff0000; font-weight: bold; }
 </ul>
 <h2 id="column-helper-functions">Column Helper Functions</h2>
 <p>This set of functions can be applied to a column inside a projection.<br />For example,</p>
-<pre class="sourceCode scala"><code class="sourceCode scala">df.<span class="fu">selectPlus</span>(
+<pre class="sourceCode scala"><code class="sourceCode scala">df.<span class="fu">select</span>(
   $<span class="st">&quot;a&quot;</span>.<span class="fu">smvSoundex</span> as &#39;a_soundex,
   $<span class="st">&quot;ts&quot;</span>.<span class="fu">smvYear</span> as &#39;year,
   ...)</code></pre>
 <p>See <a href="http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.ColumnHelper">SMV ColumnHelper API docs</a> for more details.</p>
+<h2 id="package-level-column-functions">Package level Column Functions</h2>
+<p>A group of functions can be applied to multiple Columns are defined in the smv package level.<br />For example,</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">df.<span class="fu">select</span>(
+  <span class="fu">smvStrCat</span>($<span class="st">&quot;a&quot;</span>, <span class="fu">lit</span>(<span class="st">&quot;_&quot;</span>), $<span class="st">&quot;b&quot;</span>) as <span class="st">&quot;aNb&quot;</span>
+)</code></pre>
+<p>See <a href="http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.package">SMV package API docs</a> for details.</p>
 <h2 id="dataframe-helper-functions">DataFrame Helper Functions</h2>
-<p><a href="funcs_dataframe.html">DataFrame helper functions</a> can be used on a <code>DataFrame</code> directly.</p>
+<p>This set of functions can be applied to an existing <code>DataFrame</code>.<br />For example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">df.<span class="fu">selectPlus</span>( $<span class="st">&quot;amt&quot;</span> * <span class="dv">2</span> as <span class="st">&quot;double_amt&quot;</span>)</code></pre>
+<p>Can be used to add an additional column to a <code>DataFrame</code>.</p>
+<p>See <a href="http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.SmvDFHelper">SmvDFHelper API docs</a> for more details.</p>
 <h2 id="grouped-helper-functions">Grouped Helper Functions</h2>
-<p><a href="funcs_grouped.html">Grouped helper functions</a> can only be applied to <code>SmvGroup</code>ed data.</p>
-<p>TODO: also need link to functions that are not column helpers such as 'SmvStrCat'</p>
+<p>This set of functions are used to augment the standard Spark <code>groupBy</code> method to provide functions that operate on grouped data.<br />For example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">df.<span class="fu">smvGroupBy</span>(<span class="st">&quot;id&quot;</span>).
+   <span class="fu">smvPivotSum</span>(Seq(<span class="st">&quot;month&quot;</span>, <span class="st">&quot;product&quot;</span>))(<span class="st">&quot;count&quot;</span>)(<span class="st">&quot;5_14_A&quot;</span>, <span class="st">&quot;5_14_B&quot;</span>, <span class="st">&quot;6_14_A&quot;</span>, <span class="st">&quot;6_14_B&quot;</span>)</code></pre>
+<p>See <a href="http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.SmvGroupedDataFunc">SmvGroupedDataFunc API docs</a> for more details.</p>
+<h2 id="custom-data-selector-cds-functions">Custom Data Selector (CDS) Functions</h2>
+<p>A Custom Data Selector (CDS) defines a sub-set of a group of records within a GroupedData,<br />and user can define aggregations on this sub-set of data.</p>
+<p>See <a href="http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.cds.package">CDS API docs</a> for details.</p>
+<p><strong>Note</strong> since Spark 1.4 introduced the <code>window</code> concept, there are significant function<br />overlap between SMV cds and Spark <code>window</code>. When migrate to Spark 1.5, the entire CDS interface<br />might be redesigned.</p>
 </article>
 </body>
 </html>

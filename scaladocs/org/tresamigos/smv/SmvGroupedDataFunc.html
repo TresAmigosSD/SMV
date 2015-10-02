@@ -39,7 +39,9 @@
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>SMV operations that can be applied to grouped data.
+For example:</p><pre>df.smvGroupBy(<span class="lit">"k"</span>).smvDecile(<span class="lit">"amt"</span>)</pre><p>We can not use the standard Spark <code>GroupedData</code> because the internal DataFrame and keys are not exposed.
+</p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
@@ -88,7 +90,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">SmvGroupedDataFunc</span><span class="params">(<span name="smvGD">smvGD: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>)</span>
+        <span class="name">SmvGroupedDataFunc</span><span class="params">(<span name="smvGD">smvGD: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>)</span>
       </span>
       </h4>
       
@@ -166,20 +168,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#aggWithKeys" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="aggWithKeys(cols:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
-      <a id="aggWithKeys(Column*):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">aggWithKeys</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">aggWithKeys: same as agg, but by default, keep all keys
-</p>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <a id="asInstanceOf[T0]:T0"></a>
@@ -250,7 +238,9 @@
         <span class="name">fillPanelWithNull</span><span class="params">(<span name="timeCol">timeCol: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="pan">pan: <span class="extype" name="org.tresamigos.smv.panel.Panel">Panel</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+      <p class="shortcomment cmt">Fill missing panel values with null.</p><div class="fullcomment"><div class="comment cmt"><p>Fill missing panel values with null.
+<b>This might change/go-away in version 1.5.</b>
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@Experimental</span><span class="args">()</span>
               
         </dd></dl></div>
@@ -379,18 +369,17 @@
         <span class="name">oneAgg</span><span class="params">(<span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">oneAgg</p><div class="fullcomment"><div class="comment cmt"><p>oneAgg</p><p>Please see the SmvCDS documnet for details.
+      <p class="shortcomment cmt">Please see the SmvCDS document for details.</p><div class="fullcomment"><div class="comment cmt"><p>Please see the SmvCDS document for details.
 OneAgg uses the last record according to an ordering (Syntax is the same as orderBy) as the reference
 record, and apply CDSs to all the records in the group. For each group of input records, there is a
-single output record.</p><p>Example:
-      val res = df.smvGroupBy('k).oneAgg($&quot;t&quot;)(
-                           $&quot;k&quot;,
-                           $&quot;t&quot;,
-                           sum('v) from last3 as &quot;nv1&quot;,
-                           count('v) from last3 as &quot;nv2&quot;,
-                           sum('v) as &quot;nv3&quot;)</p><p>Use &quot;t&quot; cloumn for ordering, so the biggest &quot;t&quot; record in a group is the reference record.
+single output record.</p><p>Example:</p><pre><span class="kw">val</span> res = df.smvGroupBy('k).oneAgg($<span class="lit">"t"</span>)(
+$<span class="lit">"k"</span>,
+$<span class="lit">"t"</span>,
+sum('v) from last3 as <span class="lit">"nv1"</span>,
+count('v) from last3 as <span class="lit">"nv2"</span>,
+sum('v) as <span class="lit">"nv3"</span>)</pre><p>Use &quot;t&quot; column for ordering, so the biggest &quot;t&quot; record in a group is the reference record.
 Keep &quot;k&quot; and &quot;t&quot; column from the reference record. Sum &quot;v&quot; from last 3, depend on how we defined
-the SmvCDS &quot;last3&quot;, which should refere to the reference record.
+the SmvCDS &quot;last3&quot;, which should refer to the reference record.</p><p><b>This will significantly change in 1.5</b>
 </p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@Experimental</span><span class="args">()</span>
               
@@ -423,20 +412,18 @@ the SmvCDS &quot;last3&quot;, which should refere to the reference record.
         <span class="name">runAgg</span><span class="params">(<span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">runAgg</p><div class="fullcomment"><div class="comment cmt"><p>runAgg</p><p>See SmvCDS document for details.
-RunAgg will sort the records in the each group according to the specified ordering (syntax is the same
+      <p class="shortcomment cmt">RunAgg will sort the records in the each group according to the specified ordering (syntax is the same
+as orderBy).</p><div class="fullcomment"><div class="comment cmt"><p>RunAgg will sort the records in the each group according to the specified ordering (syntax is the same
 as orderBy). For each record, it uses the current record as the reference record, and apply the CDS
 and aggregation on all the records &quot;till this point&quot;. Here &quot;till this point&quot; means that ever record less
 than or equal current record according to the given ordering.
-For N records as input, runAgg will generate N records as output.</p><p>Example:
-  val res = df.smvGroupBy('k).runAgg($&quot;t&quot;)(
-                   $&quot;k&quot;,
-                   $&quot;t&quot;,
-                   $&quot;v&quot;,
-                   sum('v) from top2 from last3 as &quot;nv1&quot;,
-                   sum('v) from last3 from top2 as &quot;nv2&quot;,
-                   sum('v) as &quot;nv3&quot;)
-</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+For N records as input, runAgg will generate N records as output.</p><p> See SmvCDS document for details.</p><p>Example:</p><pre><span class="kw">val</span> res = df.smvGroupBy('k).runAgg($<span class="lit">"t"</span>)(
+$<span class="lit">"k"</span>,
+$<span class="lit">"t"</span>,
+$<span class="lit">"v"</span>,
+sum('v) from top2 from last3 as <span class="lit">"nv1"</span>,
+sum('v) from last3 from top2 as <span class="lit">"nv2"</span>,
+sum('v) as <span class="lit">"nv3"</span>)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@Experimental</span><span class="args">()</span>
               
         </dd></dl></div>
@@ -468,48 +455,11 @@ For N records as input, runAgg will generate N records as output.</p><p>Example:
         <span class="name">runAggPlus</span><span class="params">(<span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="params">(<span name="aggCols">aggCols: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Same as <code>runAgg</code> but with all input column kept
-</p><div class="fullcomment"><div class="comment cmt"><p>Same as <code>runAgg</code> but with all input column kept
+      <p class="shortcomment cmt">Same as <code>runAgg</code> but with all input column propagated to output.</p><div class="fullcomment"><div class="comment cmt"><p>Same as <code>runAgg</code> but with all input column propagated to output.
 </p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@Experimental</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvCube(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvCube(Column*):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvCube</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvCube(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvCube(String,String*):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvCube</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">See RollupCubeOp for details.</p><div class="fullcomment"><div class="comment cmt"><p>See RollupCubeOp for details.</p><p>Example:
-  df.smvGroupBy(&quot;year&quot;).smvCube(&quot;zip&quot;, &quot;month&quot;).agg(&quot;year&quot;, &quot;zip&quot;, &quot;month&quot;, sum(&quot;v&quot;) as &quot;v&quot;)</p><p>For zip &amp; month columns with input values:
-  90001, 201401
-  10001, 201501</p><p>The &quot;cubed&quot; values on those 2 columns are:
-  90001, *
-  10001, *
-  *, 201401
-  *, 201501
-  90001, 201401
-  10001, 201501</p><p>where * stand for &quot;any&quot;</p><p>Also have a version on DF.
-</p></div></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvDecile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvDecile(valueCol:org.apache.spark.sql.Column):org.apache.spark.sql.DataFrame"></a>
       <a id="smvDecile(Column):DataFrame"></a>
@@ -522,8 +472,8 @@ For N records as input, runAgg will generate N records as output.</p><p>Example:
         <span class="name">smvDecile</span><span class="params">(<span name="valueCol">valueCol: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvDecile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <p class="shortcomment cmt">same as <code>smvDecile(String)</code> but uses a <code>Column</code> type to specify the column name</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvDecile" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvDecile(valueCol:String):org.apache.spark.sql.DataFrame"></a>
       <a id="smvDecile(String):DataFrame"></a>
       <h4 class="signature">
@@ -535,7 +485,9 @@ For N records as input, runAgg will generate N records as output.</p><p>Example:
         <span class="name">smvDecile</span><span class="params">(<span name="valueCol">valueCol: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">Compute the decile for a given column value with a DataFrame group.</p><div class="fullcomment"><div class="comment cmt"><p>Compute the decile for a given column value with a DataFrame group.
+Equivelant to <code>smvQuantile</code> with <code>numBins</code> set to 10.
+</p></div></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvPivot" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvPivot(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.tresamigos.smv.SmvGroupedData"></a>
       <a id="smvPivot(Seq[String]*)(String*)(String*):SmvGroupedData"></a>
@@ -545,22 +497,27 @@ For N records as input, runAgg will generate N records as output.</p><p>Example:
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smvPivot</span><span class="params">(<span name="pivotCols">pivotCols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="params">(<span name="valueCols">valueCols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="baseOutput">baseOutput: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>
+        <span class="name">smvPivot</span><span class="params">(<span name="pivotCols">pivotCols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="params">(<span name="valueCols">valueCols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="baseOutput">baseOutput: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">smvPivot on SmvGroupedData is similar to smvPivot on DF</p><div class="fullcomment"><div class="comment cmt"><p>smvPivot on SmvGroupedData is similar to smvPivot on DF</p><p>Input
- | id  | month | product | count |
- | --- | ----- | ------- | ----- |
- | 1   | 5/14  |   A     |   100 |
- | 1   | 6/14  |   B     |   200 |
- | 1   | 5/14  |   B     |   300 |</p><p>Output
- | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
- | --- | ------------ | ------------ | ------------ | ------------ |
- | 1   | 100          | NULL         | NULL         | NULL         |
- | 1   | NULL         | NULL         | NULL         | 200          |
- | 1   | NULL         | 300          | NULL         | NULL         |</p><p>df.groupBy(&quot;id&quot;).smvPivot(Seq(&quot;month&quot;, &quot;product&quot;))(&quot;count&quot;)(
-   &quot;5_14_A&quot;, &quot;5_14_B&quot;, &quot;6_14_A&quot;, &quot;6_14_B&quot;)
-</p></div></div>
+      <p class="shortcomment cmt">smvPivot on SmvGroupedData is similar to smvPivot on DF with the keys being provided in the <code>smvGroupBy</code> method instead of to the method directly.</p><div class="fullcomment"><div class="comment cmt"><p>smvPivot on SmvGroupedData is similar to smvPivot on DF with the keys being provided in the <code>smvGroupBy</code> method instead of to the method directly.
+See <a href="SmvDFHelper.html#smvPivot(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.apache.spark.sql.DataFrame" class="extmbr" name="org.tresamigos.smv.SmvDFHelper#smvPivot">org.tresamigos.smv.SmvDFHelper#smvPivot</a> for details</p><p>For example:</p><pre>df.smvGroupBy(<span class="lit">"id"</span>).smvPivot(<span class="std">Seq</span>(<span class="lit">"month"</span>, <span class="lit">"product"</span>))(<span class="lit">"count"</span>)(
+<span class="lit">"5_14_A"</span>, <span class="lit">"5_14_B"</span>, <span class="lit">"6_14_A"</span>, <span class="lit">"6_14_B"</span>)</pre><p>and the following input:</p><pre>Input
+| id  | month | product | count |
+| --- | ----- | ------- | ----- |
+| <span class="num">1</span>   | <span class="num">5</span>/<span class="num">14</span>  |   A     |   <span class="num">100</span> |
+| <span class="num">1</span>   | <span class="num">6</span>/<span class="num">14</span>  |   B     |   <span class="num">200</span> |
+| <span class="num">1</span>   | <span class="num">5</span>/<span class="num">14</span>  |   B     |   <span class="num">300</span> |</pre><p>will produce the following output:</p><pre>Output:
+| id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+| --- | ------------ | ------------ | ------------ | ------------ |
+| <span class="num">1</span>   | <span class="num">100</span>          | NULL         | NULL         | NULL         |
+| <span class="num">1</span>   | NULL         | NULL         | NULL         | <span class="num">200</span>          |
+| <span class="num">1</span>   | NULL         | <span class="num">300</span>          | NULL         | NULL         |</pre></div><dl class="paramcmts block"><dt class="param">pivotCols</dt><dd class="cmt"><p>The sequence of column names whose values will be used as the output pivot column names.</p></dd><dt class="param">valueCols</dt><dd class="cmt"><p>The columns whose value will be copied to the pivoted output columns.</p></dd><dt class="param">baseOutput</dt><dd class="cmt"><p>The expected base output column names (without the value column prefix).
+                  The user is required to supply the list of expected pivot column output names to avoid
+                  and extra action on the input DataFrame just to extract the possible pivot columns.
+                  if an empty sequence is provided, then the base output columns will be extracted from
+                  values in the pivot columns (will cause an action on the entire DataFrame!)
+</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvPivotSum" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvPivotSum(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.apache.spark.sql.DataFrame"></a>
       <a id="smvPivotSum(Seq[String]*)(String*)(String*):DataFrame"></a>
@@ -573,11 +530,19 @@ For N records as input, runAgg will generate N records as output.</p><p>Example:
         <span class="name">smvPivotSum</span><span class="params">(<span name="pivotCols">pivotCols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="params">(<span name="valueCols">valueCols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="baseOutput">baseOutput: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">smvPivotSum is a helper function on smvPivot</p><div class="fullcomment"><div class="comment cmt"><p>smvPivotSum is a helper function on smvPivot</p><p>df.groupBy(&quot;id&quot;).smvPivotSum(Seq(&quot;month&quot;, &quot;product&quot;))(&quot;count&quot;)(&quot;5_14_A&quot;, &quot;5_14_B&quot;, &quot;6_14_A&quot;, &quot;6_14_B&quot;)</p><p>Output
- | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
- | --- | ------------ | ------------ | ------------ | ------------ |
- | 1   | 100          | 300          | NULL         | 200          |
-</p></div></div>
+      <p class="shortcomment cmt">Perform a normal <code>SmvPivot</code> operation followed by a sum on all the output pivot columns.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a normal <code>SmvPivot</code> operation followed by a sum on all the output pivot columns.</p><p>For example:</p><pre>df.smvGroupBy(<span class="lit">"id"</span>).smvPivotSum(<span class="std">Seq</span>(<span class="lit">"month"</span>, <span class="lit">"product"</span>))(<span class="lit">"count"</span>)(<span class="lit">"5_14_A"</span>, <span class="lit">"5_14_B"</span>, <span class="lit">"6_14_A"</span>, <span class="lit">"6_14_B"</span>)</pre><p>and the following input:</p><pre>Input
+| id  | month | product | count |
+| --- | ----- | ------- | ----- |
+| <span class="num">1</span>   | <span class="num">5</span>/<span class="num">14</span>  |   A     |   <span class="num">100</span> |
+| <span class="num">1</span>   | <span class="num">6</span>/<span class="num">14</span>  |   B     |   <span class="num">200</span> |
+| <span class="num">1</span>   | <span class="num">5</span>/<span class="num">14</span>  |   B     |   <span class="num">300</span> |</pre><p>will produce the following output:</p><pre>| id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+| --- | ------------ | ------------ | ------------ | ------------ |
+| <span class="num">1</span>   | <span class="num">100</span>          | <span class="num">300</span>          | NULL         | <span class="num">200</span>          |</pre></div><dl class="paramcmts block"><dt class="param">pivotCols</dt><dd class="cmt"><p>The sequence of column names whose values will be used as the output pivot column names.</p></dd><dt class="param">valueCols</dt><dd class="cmt"><p>The columns whose value will be copied to the pivoted output columns.</p></dd><dt class="param">baseOutput</dt><dd class="cmt"><p>The expected base output column names (without the value column prefix).
+                  The user is required to supply the list of expected pivot column output names to avoid
+                  and extra action on the input DataFrame just to extract the possible pivot columns.
+                  if an empty sequence is provided, then the base output columns will be extracted from
+                  values in the pivot columns (will cause an action on the entire DataFrame!)
+</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvQuantile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvQuantile(valueCol:org.apache.spark.sql.Column,numBins:Integer):org.apache.spark.sql.DataFrame"></a>
       <a id="smvQuantile(Column,Integer):DataFrame"></a>
@@ -590,7 +555,7 @@ For N records as input, runAgg will generate N records as output.</p><p>Example:
         <span class="name">smvQuantile</span><span class="params">(<span name="valueCol">valueCol: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="numBins">numBins: <span class="extype" name="java.lang.Integer">Integer</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">same as <code>smvQuantile(String, Integer)</code> but uses a <code>Column</code> type to specify the column name</p>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvQuantile" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvQuantile(valueCol:String,numBins:Integer):org.apache.spark.sql.DataFrame"></a>
       <a id="smvQuantile(String,Integer):DataFrame"></a>
@@ -603,72 +568,11 @@ For N records as input, runAgg will generate N records as output.</p><p>Example:
         <span class="name">smvQuantile</span><span class="params">(<span name="valueCol">valueCol: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numBins">numBins: <span class="extype" name="java.lang.Integer">Integer</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">smvQuantile: Compute the quantile bin number within a group in a given DF</p><div class="fullcomment"><div class="comment cmt"><p>smvQuantile: Compute the quantile bin number within a group in a given DF</p><p>Example:
-df.smvGroupBy('g, 'g2).smvQuantile(&quot;v&quot;, 100)</p><p>For the colume it calculate quatile for (say named &quot;v&quot;), 3 more columns are added in the output
-v_total, v_rsum, v_quantile</p><p>All other columns are kept
-</p></div></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRePartition" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvRePartition(numParts:Int):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvRePartition(Int):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvRePartition</span><span class="params">(<span name="numParts">numParts: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRePartition" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvRePartition(partitioner:org.apache.spark.Partitioner):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvRePartition(Partitioner):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvRePartition</span><span class="params">(<span name="partitioner">partitioner: <span class="extype" name="org.apache.spark.Partitioner">Partitioner</span></span>)</span><span class="result">: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">smvRePartition</p><div class="fullcomment"><div class="comment cmt"><p>smvRePartition</p><p>Repartition SmvGroupedData using specified partitioner on the keys. Could take
-a user defined partitioner or an integer. It the parameter is an integer, a
-HashPartitioner with the specified number of partitions will be used.</p><p>Example:
-     df.smvGroupBy(&quot;k1&quot;, &quot;k2&quot;).smvRePartition(32).aggWithKeys(sum($&quot;v&quot;) as &quot;v&quot;)
-</p></div></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRollup" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvRollup(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvRollup(Column*):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvRollup</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRollup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvRollup(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvRollup(String,String*):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvRollup</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">See RollupCubeOp for details.</p><div class="fullcomment"><div class="comment cmt"><p>See RollupCubeOp for details.</p><p>Example:
-  df.smvGroupBy(&quot;year&quot;).smvRollup(&quot;county&quot;, &quot;zip&quot;).agg(&quot;year&quot;, &quot;county&quot;, &quot;zip&quot;, sum(&quot;v&quot;) as &quot;v&quot;)</p><p>For county &amp; zip with input values:
-  10234, 92101
-  10234, 10019</p><p>The &quot;rolluped&quot; values are:
-  10234, *
-  10234, 92101
-  10234, 10019</p><p>Also have a version on DF
+      <p class="shortcomment cmt">Compute the quantile bin number within a group in a given DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Compute the quantile bin number within a group in a given DataFrame.</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">'g, '</span>g2).smvQuantile(<span class="lit">"v"</span>, <span class="num">100</span>)</pre><p>For each column for which the quantile is computed (e.g. &quot;v&quot;), 3 additional columns are added to the output
+(&quot;v_total&quot;, &quot;v_rsum&quot;, &quot;v_quantile&quot;).
+<br/><code>v_total</code> : the sum of &quot;v&quot; column within this group.
+<br/><code>v_rsum</code> : the running sum of &quot;v&quot; column within this group (sorted from smallest to largest v value)
+<br/><code>v_quantile</code> : the bin number in range [1,numBins]</p><p>All other columns in the input are untouched and propagated to the output.
 </p></div></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvScale" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvScale(ranges:(org.apache.spark.sql.Column,(Double,Double))*)(withZeroPivot:Boolean,doDropRange:Boolean):org.apache.spark.sql.DataFrame"></a>
@@ -682,15 +586,14 @@ HashPartitioner with the specified number of partitions will be used.</p><p>Exam
         <span class="name">smvScale</span><span class="params">(<span name="ranges">ranges: (<span class="extype" name="org.apache.spark.sql.Column">Column</span>, (<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>))*</span>)</span><span class="params">(<span name="withZeroPivot">withZeroPivot: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>, <span name="doDropRange">doDropRange: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Scale a group of columns to given ranges</p><div class="fullcomment"><div class="comment cmt"><p>Scale a group of columns to given ranges</p><p>Example:
-  df.smvGroupBy(&quot;k&quot;).smvScale($&quot;v1&quot; -&gt; (0.0, 100.0), $&quot;v2&quot; -&gt; (100.0, 200.0))()</p><p>In this example, &quot;v1&quot; column within each k-group, the lowest value is scaled to 0.0 and
-highest value is scaled to 100.0. The scaled column is called &quot;v1_scaled&quot;.</p><p>Two optional parameters:
-  withZeroPivot: Boolean = false
-  doDropRange: Boolean = true</p><p>When &quot;withZeroPivot&quot; is set, the scaling ensures that the zero point pivot is maintained.
+      <p class="shortcomment cmt">Scale a group of columns to given ranges</p><div class="fullcomment"><div class="comment cmt"><p>Scale a group of columns to given ranges</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"k"</span>).smvScale($<span class="lit">"v1"</span> -&gt; (<span class="num">0.0</span>, <span class="num">100.0</span>), $<span class="lit">"v2"</span> -&gt; (<span class="num">100.0</span>, <span class="num">200.0</span>))()</pre><p>In this example, &quot;v1&quot; column within each k-group, the lowest value is scaled to 0.0 and
+highest value is scaled to 100.0. The scaled column is called &quot;v1_scaled&quot;.</p><p>Two optional parameters can be provided by the user:
+<br/><code>withZeroPivot</code>: Boolean = false
+<br/><code>doDropRange</code>: Boolean = true</p><p>When &quot;withZeroPivot&quot; is set, the scaling ensures that the zero point pivot is maintained.
 For example, if the input range is [-5,15] and the desired output ranges are [-100,100],
 then instead of mapping -5 -&gt; -100 and 15 -&gt; 100, we would maintain the zero pivot by mapping
 [-15,15] to [-100,100] so a zero input will map to a zero output. Basically we extend the input
-range to the abs max of the low/high values.</p><p>When &quot;doDropRange&quot; is set, the upper and lower bound of the unscaled value will be droped
+range to the abs max of the low/high values.</p><p>When &quot;doDropRange&quot; is set, the upper and lower bound of the unscaled value will be dropped
 from the output. Otherwise, the lower and upper bound of the unscaled value will be names as
 &quot;v1_min&quot; and &quot;v1_max&quot; as for the example. Please note that is &quot;withZeroPivot&quot; also set, the
 lower and upper bounds will be the abs max.
@@ -707,8 +610,7 @@ lower and upper bounds will be the abs max.
         <span class="name">smvTopNRecs</span><span class="params">(<span name="maxElems">maxElems: <span class="extype" name="scala.Int">Int</span></span>, <span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">smvTopNRecs: for each group, return the top N records according to an ordering</p><div class="fullcomment"><div class="comment cmt"><p>smvTopNRecs: for each group, return the top N records according to an ordering</p><p>Example:
-  df.smvGroupBy(&quot;id&quot;).smvTopNRecs(3, $&quot;amt&quot;.desc)</p><p>Will keep the 3 largest amt records for each id
+      <p class="shortcomment cmt">For each group, return the top N records according to an ordering</p><div class="fullcomment"><div class="comment cmt"><p>For each group, return the top N records according to an ordering</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"id"</span>).smvTopNRecs(<span class="num">3</span>, $<span class="lit">"amt"</span>.desc)</pre><p>Will keep the 3 largest amt records for each id
 </p></div></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
@@ -798,7 +700,109 @@ lower and upper bounds will be the abs max.
 
         
 
-        
+        <div id="values" class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="org.tresamigos.smv.SmvGroupedDataFunc#aggWithKeys" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="aggWithKeys(cols:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
+      <a id="aggWithKeys(Column*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.4) Normal Spark agg now preserves the keys">aggWithKeys</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Same as agg, but automatically propagate the keys to the output.</p><div class="fullcomment"><div class="comment cmt"><p>Same as agg, but automatically propagate the keys to the output.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.4)</i> Normal Spark agg now preserves the keys</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvCube(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvCube(Column*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark cube method">smvCube</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Same as <code>smvCube(String*)</code> but using <code>Column</code> to define the input columns</p><div class="fullcomment"><div class="comment cmt"><p>Same as <code>smvCube(String*)</code> but using <code>Column</code> to define the input columns</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark cube method</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvCube(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvCube(String,String*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark cube method">smvCube</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">implement the cube operations on a given DF and a set of columns.</p><div class="fullcomment"><div class="comment cmt"><p>implement the cube operations on a given DF and a set of columns.
+See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
+Rather than using nulls as the pig version, a sentinel value of &quot;*&quot; will be used</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"year"</span>).smvCube(<span class="lit">"zip"</span>, <span class="lit">"month"</span>).agg(<span class="lit">"year"</span>, <span class="lit">"zip"</span>, <span class="lit">"month"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre><p>For zip &amp; month columns with input values:</p><pre><span class="num">90001</span>, <span class="num">201401</span>
+<span class="num">10001</span>, <span class="num">201501</span></pre><p>The &quot;cubed&quot; values on those 2 columns are:</p><pre><span class="num">90001</span>, *
+<span class="num">10001</span>, *
+*, <span class="num">201401</span>
+*, <span class="num">201501</span>
+<span class="num">90001</span>, <span class="num">201401</span>
+<span class="num">10001</span>, <span class="num">201501</span></pre><p>where * stand for &quot;any&quot;</p><p>Also have a version on <code>DataFrame</code>.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark cube method</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRollup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvRollup(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvRollup(Column*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark rollup method">smvRollup</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark rollup method</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRollup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvRollup(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvRollup(String,String*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark rollup method">smvRollup</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">implement the rollup operations on a given DF and a set of columns.</p><div class="fullcomment"><div class="comment cmt"><p>implement the rollup operations on a given DF and a set of columns.
+See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
+Rather than using nulls as the pig version, a sentinel value of &quot;*&quot; will be used</p><p>Example:
+  df.smvGroupBy(&quot;year&quot;).smvRollup(&quot;county&quot;, &quot;zip&quot;).agg(&quot;year&quot;, &quot;county&quot;, &quot;zip&quot;, sum(&quot;v&quot;) as &quot;v&quot;)</p><p>For county &amp; zip with input values:
+  10234, 92101
+  10234, 10019</p><p>The &quot;rolluped&quot; values are:
+  10234, *
+  10234, 92101
+  10234, 10019</p><p>Also have a version on DF
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark rollup method</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">

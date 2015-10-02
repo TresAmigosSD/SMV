@@ -11,7 +11,7 @@
 <body>
 <table class="nav-table">
     <tr>
-        <td class="nav-left">&lArr;&nbsp;<a href="getting_started.html">Getting Started</a></td>
+        <td class="nav-left">&lArr;&nbsp;<a href="smv_intro.html">SMV Introduction</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
         <td class="nav-right"><a href="run_app.html">Run Application</a>&nbsp;&rArr;</td>
     </tr>
@@ -23,9 +23,9 @@
 <p>SMV provides multiple ways to set the runtime configuration. Multiple config files are utilized to<br />facilitate the ability to define static application level configuration and easily allow the user to<br />provide their own configuration. This also allows the static application level configuration to be<br />&quot;checked-in&quot; with the individual apps. In addition to the configuration files, the user is able<br />to override any of the options using the command line interface.</p>
 <h2 id="command-line-override">Command line override</h2>
 <p>For any given option X, the user may override the value specified in any of the configuration files as follows:</p>
-<pre><code>_SMV_HOME_/tools/run_app.sh --smv-props X=55 ... -m module_to_run</code></pre>
+<pre><code>_SMV_HOME_/tools/smv-run --smv-props X=55 ... -m module_to_run</code></pre>
 <p>multiple properties may be specified at the same time:</p>
-<pre><code>_SMV_HOME_/tools/run_app.sh --smv-props smv.appName=&quot;myApp&quot; smv.stages=&quot;s1,s2&quot; ... -m module_to_run</code></pre>
+<pre><code>_SMV_HOME_/tools/smv-run --smv-props smv.appName=&quot;myApp&quot; smv.stages=&quot;s1,s2&quot; ... -m module_to_run</code></pre>
 <p>Some configuration parameters have a shorthand direct command line override (e.g. --data-dir)</p>
 <h2 id="name-conflict-resolution">Name conflict resolution</h2>
 <p>If a configuration parameter appears in multiple places, then the conflict is resolved by picking the value from the higher priority source.<br />The sources are ordered from high to low priority as follows:</p>
@@ -36,8 +36,9 @@
 <li>app level config file (default: conf/smv-app-conf.props)<br /></li>
 <li>smv default options</li>
 </ul>
+<p>Since SMV support both <code>smv-user-conf.props</code> and <code>smv-app-conf.props</code>, a typical practice is to<br />put project level shared (accross team members) config into <code>smv-app-conf.props</code> and user<br />specific config into <code>smv-user-conf</code>. Also config the version control system to ignore<br /><code>conf/smv-user-conf.props</code>.</p>
 <h2 id="smv-config-parameters">SMV Config Parameters</h2>
-<p>The table below describes all available SMV configuration parameters.<br />Note that for sequence/list type parameters (e.g. smv.stages), a &quot;,&quot; or &quot;:&quot; can be used to separate out the items in the list.<br /><strong>For command line arguments, only the &quot;:&quot; can be used as a separator.</strong><br /><table><br /><tr><br /><th>Property Name</th><br /><th>Default</th><br /><th>Required/<br>Optional</th><br /><th>Description</th><br /></tr></p>
+<p>The table below describes all available SMV configuration parameters.<br />Note that for sequence/list type parameters (e.g. smv.stages), a &quot;,&quot; or &quot;:&quot; can be used to separate out the items in the list.<br /><strong>For command line arguments, only the &quot;:&quot; can be used as a separator.</strong><br /><table><tr><th>Property Name</th><th>Default</th><th>Required/<br>Optional</th><th>Description</th></tr></p>
 <tr>
 <td>smv.appName</td>
 <td>"SMV Application"</td>
@@ -100,6 +101,15 @@ Can be overridden using <code>--input-dir</code> command line option</td>
 <td>Optional</td>
 <td>Data output directory
 Can be overridden using <code>--output-dir</code> command line option</td>
+</tr>
+
+
+<tr>
+<td>smv.publishDir</td>
+<td>dataDir<code>/publish</code></td>
+<td>Optional</td>
+<td>Data publish directory
+Can be overridden using <code>--publish-dir</code> command line option</td>
 </tr>
 
 

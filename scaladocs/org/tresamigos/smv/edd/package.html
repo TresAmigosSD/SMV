@@ -45,9 +45,10 @@ scala&gt; res1.eddShow
 scala&gt; <span class="kw">val</span> res2 = df.edd.histogram(AmtHist($<span class="lit">"amt"</span>), $<span class="lit">"county"</span>, Hist($<span class="lit">"pop"</span>, binSize=<span class="num">1000</span>))
 scala&gt; res2.eddShow
 scala&gt; res2.saveReport(<span class="lit">"file/path"</span>)</pre><p>Depends on the data types of the columns, Edd summary method will perform different
-statistics. See <span class="extype" name="org.tresamigos.smv.edd.EddSummary">org.tresamigos.smv.edd.EddSummary</span> for details.</p><p>The <code>histogram</code> method takes a group of <span class="extype" name="org.tresamigos.smv.edd.HistColumn">org.tresamigos.smv.edd.HistColumn</span> as parameters.
+statistics.</p><p>The <code>histogram</code> method takes a group of <code>HistColumn</code> as parameters.
 Or when a group of <code>String</code> as the column names are given, it will use the default <code>HistColumn</code>
-parameters.</p><p><code>eddShow</code> method will print report to the console, <code>saveReport</code> will save report as <code>RDD[String]</code>,
+parameters.
+Two types of <code>HistColumn</code>s are supported</p><ul><li><a href="Hist.html" class="extype" name="org.tresamigos.smv.edd.Hist">org.tresamigos.smv.edd.Hist</a></li><li><a href="AmtHist.html" class="extype" name="org.tresamigos.smv.edd.AmtHist">org.tresamigos.smv.edd.AmtHist</a></li></ul><p>The <code>eddShow</code> method will print report to the console, <code>saveReport</code> will save report as <code>RDD[String]</code>,
 The strings are JSON strings.
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>

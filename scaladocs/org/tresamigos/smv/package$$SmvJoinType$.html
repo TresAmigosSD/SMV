@@ -39,7 +39,8 @@
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Spark(as of 1.4)'s join type is a String.  Could use enum or case objects here,
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Instead of using String for join type, always use the link here.</p><p>If there are typos on the join type, using the link in client code will cause
+compile time failure, which using string itself will cause run-time failure.</p><p>Spark(as of 1.4)'s join type is a String.  Could use enum or case objects here,
 but there are clients using the String api, so will push that change till later.
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>

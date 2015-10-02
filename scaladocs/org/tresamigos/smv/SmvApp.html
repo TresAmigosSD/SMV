@@ -201,18 +201,19 @@ launched using the SmvApp object (defined below)
               
         </dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvApp#createDF" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="createDF(schemaStr:String,data:String):org.apache.spark.sql.DataFrame"></a>
-      <a id="createDF(String,String):DataFrame"></a>
+      <a id="createDF(schemaStr:String,data:String,isPersistValidateResult:Boolean):org.apache.spark.sql.DataFrame"></a>
+      <a id="createDF(String,String,Boolean):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createDF</span><span class="params">(<span name="schemaStr">schemaStr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">createDF</span><span class="params">(<span name="schemaStr">schemaStr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="isPersistValidateResult">isPersistValidateResult: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">Create a DataFrame from string for temporary use (in test or shell)
+By default, don't persist validation result
 </p>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
@@ -408,15 +409,15 @@ This method also checks for cycles in the module dependency graph.
       </h4>
       <p class="shortcomment cmt">stack of items currently being resolved.</p><div class="fullcomment"><div class="comment cmt"><p>stack of items currently being resolved.  Used for cyclic checks.</p></div></div>
     </li><li name="org.tresamigos.smv.SmvApp#run" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="run():Unit"></a>
-      <a id="run():Unit"></a>
+      <a id="run():Boolean"></a>
+      <a id="run():Boolean"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">run</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">run</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">The main entry point into the app.</p><div class="fullcomment"><div class="comment cmt"><p>The main entry point into the app.  This will parse the command line arguments

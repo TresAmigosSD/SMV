@@ -40,7 +40,8 @@
       </h4>
       
           <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>A Custom Data Selector (CDS) defines a sub-set of a group of records within a GroupedData,
-and user can define aggregations on this sub-set of data.</p><p>As in the following data, for each transaction record, we want to calculate the sum of
+and user can define aggregations on this sub-set of data.</p><p>NOTE: since Spark 1.4 introduced the <code>window</code> concept, which has functional overlap with
+cds, when migrating to Spark 1.5, SMV cds interface might be totally re-designed.</p><p>As in the following data, for each transaction record, we want to calculate the sum of
 the dollar spend on the passed 7 days.</p><pre>Id, time, amt
 <span class="num">1</span>, <span class="num">20140102</span>, <span class="num">100.0</span>
 <span class="num">1</span>, <span class="num">20140201</span>, <span class="num">30.0</span>
@@ -228,7 +229,7 @@ within <code>current value</code> and <code>(current value - n)</code><code>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="SmvChunkUDF.html"><span class="name deprecated" title="Deprecated: will remove after 1.3">SmvChunkUDF</span></a><span class="params">(<span name="para">para: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Symbol">Symbol</span>]</span>, <span name="outSchema">outSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="eval">eval: (<span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Any">Any</span>]]) ⇒ <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Any">Any</span>]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="SmvChunkUDF.html"><span class="name deprecated" title="Deprecated: (Since version 1.3) will remove after 1.3">SmvChunkUDF</span></a><span class="params">(<span name="para">para: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Symbol">Symbol</span>]</span>, <span name="outSchema">outSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="eval">eval: (<span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Any">Any</span>]]) ⇒ <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Any">Any</span>]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       <p class="comment cmt">User defined &quot;chuck&quot; mapping function

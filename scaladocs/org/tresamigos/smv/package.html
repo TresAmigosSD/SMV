@@ -39,7 +39,7 @@
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><h4> Spark Modularized View (SMV) </h4><ul><li>Provide a framework to use Spark to develop large scale data applications</li><li>Synchronize between code management and data management</li><li>Data API for large projects/large teams</li><li>Programmatically data quality management</li></ul><p>Main classes</p><ul><li><a href="SmvDFHelper.html" class="extype" name="org.tresamigos.smv.SmvDFHelper">org.tresamigos.smv.SmvDFHelper</a>: extends DataFrame methods. E.g. <code>selectPlus</code></li><li><a href="ColumnHelper.html" class="extype" name="org.tresamigos.smv.ColumnHelper">org.tresamigos.smv.ColumnHelper</a>: extends Column methods. E.g. <code>smvStrToTimestamp</code></li><li><a href="SmvGroupedDataFunc.html" class="extype" name="org.tresamigos.smv.SmvGroupedDataFunc">org.tresamigos.smv.SmvGroupedDataFunc</a>: extends GroupedData methods. E.g. <code>smvPivot</code></li></ul><p>Main packages</p><ul><li><a href="edd/package.html" class="extype" name="org.tresamigos.smv.edd">org.tresamigos.smv.edd</a>: extended data dictionary. E.g. <code>df.edd.summary().eddShow</code></li><li><a href="dqm/package.html" class="extype" name="org.tresamigos.smv.dqm">org.tresamigos.smv.dqm</a>: data quality management. E.g. <code>SmvDQM().add(DQMRule(...))</code></li></ul></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
@@ -155,7 +155,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="SmvCsvData.html"><span class="name">SmvCsvData</span></a><span class="params">(<span name="schemaStr">schemaStr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="SmvCsvData.html"><span class="name">SmvCsvData</span></a><span class="params">(<span name="schemaStr">schemaStr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="isPersistValidateResult">isPersistValidateResult: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       <p class="comment cmt">a built-in SmvModule from schema string and data string</p>
@@ -224,22 +224,6 @@
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.SmvGroupedData" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="SmvGroupedDataextendsProductwithSerializable"></a>
-      <a id="SmvGroupedData:SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a href="SmvGroupedData.html"><span class="name">SmvGroupedData</span></a><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="keys">keys: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@Experimental</span><span class="args">()</span>
-              
-        </dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvGroupedDataFuncextendsAnyRef"></a>
       <a id="SmvGroupedDataFunc:SmvGroupedDataFunc"></a>
@@ -252,7 +236,7 @@
         <a href="SmvGroupedDataFunc.html"><span class="name">SmvGroupedDataFunc</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       </h4>
-      
+      <p class="comment cmt">SMV operations that can be applied to grouped data.</p>
     </li><li name="org.tresamigos.smv.SmvModule" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvModuleextendsSmvDataSet"></a>
       <a id="SmvModule:SmvModule"></a>
@@ -301,7 +285,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="SmvSchema.html"><span class="name">SmvSchema</span></a><span class="result"> extends <span class="extype" name="java.io.Serializable">Serializable</span></span>
+        <a href="SmvSchema.html"><span class="name">SmvSchema</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       <p class="comment cmt">CSV file schema definition.</p>
@@ -364,20 +348,7 @@
       </span>
       </h4>
       <p class="comment cmt">Common entry point for all SMV applications.</p>
-    </li><li name="org.tresamigos.smv.SmvFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvFile"></a>
-      <a id="SmvFile:SmvFile"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="SmvFile$.html"><span class="name">SmvFile</span></a>
-      </span>
-      </h4>
-      <p class="comment cmt">Keep this interface for existing application code, will be removed when application code cleaned up</p>
-    </li><li name="org.tresamigos.smv.SmvJoinType" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.SmvJoinType" visbl="pub" data-isabs="false" fullComment="no" group="other">
       <a id="SmvJoinType"></a>
       <a id="SmvJoinType:SmvJoinType"></a>
       <h4 class="signature">
@@ -389,7 +360,7 @@
         <a href="package$$SmvJoinType$.html"><span class="name">SmvJoinType</span></a>
       </span>
       </h4>
-      <p class="comment cmt">Spark(as of 1.</p>
+      <p class="comment cmt">Instead of using String for join type, always use the link here.</p>
     </li><li name="org.tresamigos.smv.SmvSchema" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvSchema"></a>
       <a id="SmvSchema:SmvSchema"></a>
@@ -429,7 +400,8 @@ and user can define aggregations on this sub-set of data.</p>
         <span class="name">columnIf</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="cond">cond: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="l">l: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="r">r: <span class="extype" name="org.tresamigos.smv.columnIf.T">T</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">A variation of columnIf: right value is Scala value
+</p>
     </li><li name="org.tresamigos.smv.package#columnIf" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="columnIf[T](cond:org.apache.spark.sql.Column,l:T,r:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
       <a id="columnIf[T](Column,T,Column):Column"></a>
@@ -442,8 +414,9 @@ and user can define aggregations on this sub-set of data.</p>
         <span class="name">columnIf</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="cond">cond: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="l">l: <span class="extype" name="org.tresamigos.smv.columnIf.T">T</span></span>, <span name="r">r: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.package#columnIf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <p class="shortcomment cmt">A variation of columnIf: left value is Scala value
+</p>
+    </li><li name="org.tresamigos.smv.package#columnIf" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="columnIf[T](cond:org.apache.spark.sql.Column,l:T,r:T):org.apache.spark.sql.Column"></a>
       <a id="columnIf[T](Column,T,T):Column"></a>
       <h4 class="signature">
@@ -455,10 +428,9 @@ and user can define aggregations on this sub-set of data.</p>
         <span class="name">columnIf</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="cond">cond: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="l">l: <span class="extype" name="org.tresamigos.smv.columnIf.T">T</span></span>, <span name="r">r: <span class="extype" name="org.tresamigos.smv.columnIf.T">T</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">A typed form of if where one or both branches are literals.</p><div class="fullcomment"><div class="comment cmt"><p>A typed form of if where one or both branches are literals.</p><p>We use overloading instead of implicit conversion here to minimize
-the scope of change.
-</p></div></div>
-    </li><li name="org.tresamigos.smv.package#columnIf" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <p class="shortcomment cmt">A variation of columnIf: both values Scala values
+</p>
+    </li><li name="org.tresamigos.smv.package#columnIf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="columnIf(cond:org.apache.spark.sql.Column,l:org.apache.spark.sql.Column,r:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
       <a id="columnIf(Column,Column,Column):Column"></a>
       <h4 class="signature">
@@ -470,7 +442,8 @@ the scope of change.
         <span class="name">columnIf</span><span class="params">(<span name="cond">cond: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="l">l: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="r">r: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">Simple column functions to apply If-Else</p><div class="fullcomment"><div class="comment cmt"><p>Simple column functions to apply If-Else</p><p>If (cond) l else r</p><p>Will be deprecated when migrate to 1.5 and use <code>when</code>
+</p></div></div>
     </li><li name="org.tresamigos.smv.dqm" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="dqm"></a>
       <a id="dqm:dqm"></a>
@@ -497,7 +470,7 @@ the scope of change.
       </span>
       </h4>
       <p class="comment cmt">Provides Extended Data Dictionary functions for ad hoc data analysis</p>
-    </li><li name="org.tresamigos.smv.package#histogram" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.package#histogram" visbl="pub" data-isabs="false" fullComment="yes" group="agg">
       <a id="histogram(c:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
       <a id="histogram(Column):Column"></a>
       <h4 class="signature">
@@ -509,7 +482,8 @@ the scope of change.
         <span class="name">histogram</span><span class="params">(<span name="c">c: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">Histogram Aggregate function</p><div class="fullcomment"><div class="comment cmt"><p>Histogram Aggregate function</p><p>Return column has type <code>Map[child.dataType, Long]</code>
+</p></div></div>
     </li><li name="org.tresamigos.smv.package#makeColHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="makeColHelper(col:org.apache.spark.sql.Column):org.tresamigos.smv.ColumnHelper"></a>
       <a id="makeColHelper(Column):ColumnHelper"></a>
@@ -522,7 +496,7 @@ the scope of change.
         <span class="name">makeColHelper</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <a href="ColumnHelper.html" class="extype" name="org.tresamigos.smv.ColumnHelper">ColumnHelper</a></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">implicitly convert <code>Column</code> to <code>ColumnHelper</code></p>
     </li><li name="org.tresamigos.smv.package#makeDFHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="makeDFHelper(df:org.apache.spark.sql.DataFrame):org.tresamigos.smv.SmvDFHelper"></a>
       <a id="makeDFHelper(DataFrame):SmvDFHelper"></a>
@@ -535,33 +509,7 @@ the scope of change.
         <span class="name">makeDFHelper</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span><span class="result">: <a href="SmvDFHelper.html" class="extype" name="org.tresamigos.smv.SmvDFHelper">SmvDFHelper</a></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.package#makeFieldHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="makeFieldHelper(field:org.apache.spark.sql.types.StructField):org.tresamigos.smv.StructFieldHelper"></a>
-      <a id="makeFieldHelper(StructField):StructFieldHelper"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">makeFieldHelper</span><span class="params">(<span name="field">field: <span class="extype" name="org.apache.spark.sql.types.StructField">StructField</span></span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.StructFieldHelper">StructFieldHelper</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.package#makeSDHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="makeSDHelper(sc:org.apache.spark.sql.SQLContext):org.tresamigos.smv.SchemaDiscoveryHelper"></a>
-      <a id="makeSDHelper(SQLContext):SchemaDiscoveryHelper"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">makeSDHelper</span><span class="params">(<span name="sc">sc: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>)</span><span class="result">: <a href="SchemaDiscoveryHelper.html" class="extype" name="org.tresamigos.smv.SchemaDiscoveryHelper">SchemaDiscoveryHelper</a></span>
-      </span>
-      </h4>
-      
+      <p class="shortcomment cmt">implicitly convert <code>DataFrame</code> to <code>SmvDFHelper</code></p>
     </li><li name="org.tresamigos.smv.package#makeSmvCDSAggColumn" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="makeSmvCDSAggColumn(col:org.apache.spark.sql.Column):org.tresamigos.smv.cds.SmvCDSAggColumn"></a>
       <a id="makeSmvCDSAggColumn(Column):SmvCDSAggColumn"></a>
@@ -574,7 +522,7 @@ the scope of change.
         <span class="name">makeSmvCDSAggColumn</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.cds.SmvCDSAggColumn">SmvCDSAggColumn</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">implicitly convert <code>Column</code> to <code>SmvCDSAggColumn</code></p>
     </li><li name="org.tresamigos.smv.package#makeSmvGDCvrt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="makeSmvGDCvrt(sgd:org.tresamigos.smv.SmvGroupedData):org.apache.spark.sql.GroupedData"></a>
       <a id="makeSmvGDCvrt(SmvGroupedData):GroupedData"></a>
@@ -584,10 +532,10 @@ the scope of change.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">makeSmvGDCvrt</span><span class="params">(<span name="sgd">sgd: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.GroupedData">GroupedData</span></span>
+        <span class="name">makeSmvGDCvrt</span><span class="params">(<span name="sgd">sgd: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.GroupedData">GroupedData</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">implicitly convert <code>SmvGroupedData</code> to <code>GroupedData</code></p>
     </li><li name="org.tresamigos.smv.package#makeSmvGDFunc" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="makeSmvGDFunc(sgd:org.tresamigos.smv.SmvGroupedData):org.tresamigos.smv.SmvGroupedDataFunc"></a>
       <a id="makeSmvGDFunc(SmvGroupedData):SmvGroupedDataFunc"></a>
@@ -597,23 +545,11 @@ the scope of change.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">makeSmvGDFunc</span><span class="params">(<span name="sgd">sgd: <a href="SmvGroupedData.html" class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</a></span>)</span><span class="result">: <a href="SmvGroupedDataFunc.html" class="extype" name="org.tresamigos.smv.SmvGroupedDataFunc">SmvGroupedDataFunc</a></span>
+        <span class="name">makeSmvGDFunc</span><span class="params">(<span name="sgd">sgd: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>)</span><span class="result">: <a href="SmvGroupedDataFunc.html" class="extype" name="org.tresamigos.smv.SmvGroupedDataFunc">SmvGroupedDataFunc</a></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.package#makeStructTypeHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="makeStructTypeHelper(schema:org.apache.spark.sql.types.StructType):org.tresamigos.smv.StructTypeHelper"></a>
-      <a id="makeStructTypeHelper(StructType):StructTypeHelper"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">makeStructTypeHelper</span><span class="params">(<span name="schema">schema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.StructTypeHelper">StructTypeHelper</span></span>
-      </span>
-      </h4>
-      
+      <p class="shortcomment cmt">implicitly convert <code>SmvGroupedData</code> (created by <code>smvGropyBy</code> method)
+ to <code>SmvDFHelper</code></p>
     </li><li name="org.tresamigos.smv.package#makeSymColHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="makeSymColHelper(sym:Symbol):org.tresamigos.smv.ColumnHelper"></a>
       <a id="makeSymColHelper(Symbol):ColumnHelper"></a>
@@ -626,33 +562,7 @@ the scope of change.
         <span class="name">makeSymColHelper</span><span class="params">(<span name="sym">sym: <span class="extype" name="scala.Symbol">Symbol</span></span>)</span><span class="result">: <a href="ColumnHelper.html" class="extype" name="org.tresamigos.smv.ColumnHelper">ColumnHelper</a></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.package#onlineAverage" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="onlineAverage(c:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
-      <a id="onlineAverage(Column):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">onlineAverage</span><span class="params">(<span name="c">c: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.package#onlineStdDev" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="onlineStdDev(c:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
-      <a id="onlineStdDev(Column):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">onlineStdDev</span><span class="params">(<span name="c">c: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      
+      <p class="shortcomment cmt">implicitly convert <code>Symbol</code> to <code>ColumnHelper</code></p>
     </li><li name="org.tresamigos.smv.panel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="panel"></a>
       <a id="panel:panel"></a>
@@ -666,7 +576,7 @@ the scope of change.
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.package#smvAsArray" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.package#smvAsArray" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvAsArray(columns:org.apache.spark.sql.Column*):org.apache.spark.sql.Column"></a>
       <a id="smvAsArray(Column*):Column"></a>
       <h4 class="signature">
@@ -678,8 +588,11 @@ the scope of change.
         <span class="name">smvAsArray</span><span class="params">(<span name="columns">columns: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.package#smvCreateLookUp" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <p class="shortcomment cmt">Put a group of columns in an Array field
+will be deprecated when move to 1.</p><div class="fullcomment"><div class="comment cmt"><p>Put a group of columns in an Array field
+will be deprecated when move to 1.5 and use <code>array</code>
+</p></div></div>
+    </li><li name="org.tresamigos.smv.package#smvCreateLookUp" visbl="pub" data-isabs="false" fullComment="yes" group="other">
       <a id="smvCreateLookUp[S,D](map:Map[S,D])(implicitst:reflect.runtime.universe.TypeTag[S],implicitdt:reflect.runtime.universe.TypeTag[D]):org.apache.spark.sql.UserDefinedFunction"></a>
       <a id="smvCreateLookUp[S,D](Map[S,D])(scala.reflect.api.JavaUniverse.TypeTag[S],scala.reflect.api.JavaUniverse.TypeTag[D]):UserDefinedFunction"></a>
       <h4 class="signature">
@@ -691,8 +604,11 @@ the scope of change.
         <span class="name">smvCreateLookUp</span><span class="tparams">[<span name="S">S</span>, <span name="D">D</span>]</span><span class="params">(<span name="map">map: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="org.tresamigos.smv.smvCreateLookUp.S">S</span>, <span class="extype" name="org.tresamigos.smv.smvCreateLookUp.D">D</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="st">st: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="org.tresamigos.smv.smvCreateLookUp.S">S</span>]</span>, <span name="dt">dt: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="org.tresamigos.smv.smvCreateLookUp.D">D</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.UserDefinedFunction">UserDefinedFunction</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.package#smvFirst" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <p class="shortcomment cmt">create a UDF from a map
+e.</p><div class="fullcomment"><div class="comment cmt"><p>create a UDF from a map
+e.g.</p><pre><span class="kw">val</span> lookUpGender = smvCreateLookUp(<span class="std">Map</span>(<span class="num">0</span>-&gt;<span class="lit">"m"</span>, <span class="num">1</span>-&gt;<span class="lit">"f"</span>))
+<span class="kw">val</span> res = df.select(lookUpGender($<span class="lit">"sex"</span>) as <span class="lit">"gender"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.package#smvFirst" visbl="pub" data-isabs="false" fullComment="yes" group="agg">
       <a id="smvFirst(c:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
       <a id="smvFirst(Column):Column"></a>
       <h4 class="signature">
@@ -705,9 +621,8 @@ the scope of change.
       </span>
       </h4>
       <p class="shortcomment cmt">smvFirst: Return null if the first record is null</p><div class="fullcomment"><div class="comment cmt"><p>smvFirst: Return null if the first record is null</p><p>Since Spark &quot;first&quot; will return the first non-null value, we have to create
-our version smvFirst which to retune the real first value, even if it's null
-</p></div></div>
-    </li><li name="org.tresamigos.smv.package#smvStrCat" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+our version smvFirst which to retune the real first value, even if it's null</p></div></div>
+    </li><li name="org.tresamigos.smv.package#smvStrCat" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvStrCat(columns:org.apache.spark.sql.Column*):org.apache.spark.sql.Column"></a>
       <a id="smvStrCat(Column*):Column"></a>
       <h4 class="signature">
@@ -719,8 +634,11 @@ our version smvFirst which to retune the real first value, even if it's null
         <span class="name">smvStrCat</span><span class="params">(<span name="columns">columns: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.package#smvSum0" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <p class="shortcomment cmt">Concatenate columns as strings
+will be deprecated when move to 1.</p><div class="fullcomment"><div class="comment cmt"><p>Concatenate columns as strings
+will be deprecated when move to 1.5 and use <code>concat</code>
+</p></div></div>
+    </li><li name="org.tresamigos.smv.package#smvSum0" visbl="pub" data-isabs="false" fullComment="yes" group="agg">
       <a id="smvSum0(col:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
       <a id="smvSum0(Column):Column"></a>
       <h4 class="signature">
@@ -740,7 +658,24 @@ Note: passed in column must be resolved (can not be just the name)
 
         
 
-        
+        <div id="values" class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="org.tresamigos.smv.SmvFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvFile"></a>
+      <a id="SmvFile:SmvFile"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvFile$.html"><span class="name deprecated" title="Deprecated: (Since version 1.5) for existing application code">SmvFile</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">Keep this interface for existing application code, will be removed when application code cleaned up
+</p>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">
@@ -753,7 +688,13 @@ Note: passed in column must be resolved (can not be just the name)
         </div>
 
         <div id="groupedMembers">
-        <div class="group" name="Ungrouped">
+        <div class="group" name="agg">
+              <h3>Aggregate Functions</h3>
+              
+            </div><div class="group" name="other">
+              <h3>All others</h3>
+              
+            </div><div class="group" name="Ungrouped">
               <h3>Ungrouped</h3>
               
             </div>

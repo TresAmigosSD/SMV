@@ -32,7 +32,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
     <tr>
         <td class="nav-left">&lArr;&nbsp;<a href="run_app.html">Run Application</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
-        <td class="nav-right"><a href="edd.html">EDD - Extended Data Dictionary</a>&nbsp;&rArr;</td>
+        <td class="nav-right"><a href="edd.html">Extended Data Dictionary (EDD)</a>&nbsp;&rArr;</td>
     </tr>
 </table>
 <hr>
@@ -40,28 +40,29 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <article class="markdown-body">
 <h1 id="run-smv-app-using-spark-shell">Run SMV App using Spark Shell</h1>
 <h3 id="synopsis">Synopsis</h3>
-<pre class="shell"><code>$ _SMV_HOME_/tools/run_shell.sh [standard spark-shell-options] [smv-options]</code></pre>
+<pre class="shell"><code>$ _SMV_HOME_/tools/smv-shell [standard spark-shell-options] [smv-options]</code></pre>
 <p><strong>Note:</strong> The above command should be run from the project top level directory.</p>
 <h3 id="options">Options</h3>
-<p>By default, the <code>run_shell.sh</code> command will use the latest &quot;fat&quot; jar in the tools directory to use with Spark Shell.<br />The user can provide <code>--jar</code> option to override the default. See <a href="run_app.html">Run Application</a> for details about this flag.</p>
+<p>By default, the <code>smv-shell</code> command will use the latest &quot;fat&quot; jar in the target directory to use with Spark Shell.<br />The user can provide <code>--jar</code> option to override the default. See <a href="run_app.html">Run Application</a> for details about this flag.</p>
 <h2 id="shell-init">Shell init</h2>
-<p>When <code>run.shell.sh</code> is launched, it will source the file <code>_SMV_HOME_/tools/conf/smv_shell_init.scala</code> to provide some<br />helper functions and create a default SMV dummy application (<code>app</code>)</p>
+<p>When <code>smv-shell</code> is launched, it will source the file <code>_SMV_HOME_/tools/conf/smv_shell_init.scala</code> to provide some<br />helper functions and create a default SMV dummy application (<code>app</code>)</p>
 <ul>
 <li><code>df(data_set)</code> : Source/Run the given dataset and return the resulting <code>DataFrame</code><br /></li>
 <li><code>open(path)</code> : open the csv/schema file at the given path and return the corresponding <code>DataFrame</code><br /></li>
 <li><code>df.save(path)</code> : save the given df to a csv/schema file pair at the given path.<br /></li>
 <li><code>df.savel(path)</code> : save the contents of the <code>DataFrame</code> to a local (none HDFS) filesystem. WARNING: The contents must be able to fit in memory!!!<br /></li>
-<li><code>discoverSchema(path, n)</code> : use the first <code>n</code> (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules. The discovered schema is saved to the path + &quot;.schema&quot; file<br /></li>
+<li><code>discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)</code> : use the first <code>n</code> (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules. The discovered schema is saved to the path + &quot;.schema.toBeReviewed&quot; file<br /></li>
 <li><code>dumpEdd(data_set)</code> : Generate base EDD results for given <code>SmvDataSet</code> and dump the results to the screen.</li>
 </ul>
 <h2 id="project-shell-init">Project Shell Init</h2>
-<p>In addition to the standard <code>smv_shell_init.scala</code> file, the <code>run_shell.sh</code> script will look for an optional <code>conf/shell_init.sh</code> file and source it if found.<br />Project specific initialization code, such as common imports, and functions, can be put in the <code>conf/shell_init.sh</code> file. For example:</p>
+<p>In addition to the standard <code>smv_shell_init.scala</code> file, the <code>smv-shell</code> script will look for an optional <code>conf/shell_init.scala</code> file and source it if found.<br />Project specific initialization code, such as common imports, and functions, can be put in the <code>conf/shell_init.scala</code> file. For example:</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// create the app init object &quot;a&quot; rather than create initialization at top level because shell</span>
 <span class="co">// would launch a separate command for each evaluation which slows down startup considerably.</span>
+<span class="kw">import</span> com.<span class="fu">mycompany</span>.<span class="fu">myproject</span>.<span class="fu">stage1</span>.<span class="fu">_</span>
+<span class="kw">import</span> com.<span class="fu">mycompany</span>.<span class="fu">myproject</span>.<span class="fu">stage1</span>.<span class="fu">_</span>
+
 <span class="kw">object</span> a {
   <span class="co">//---- common project imports</span>
-  <span class="kw">import</span> com.<span class="fu">mycompany</span>.<span class="fu">myproject</span>.<span class="fu">stage1</span>.<span class="fu">input</span>.<span class="fu">_</span>
-  <span class="kw">import</span> com.<span class="fu">mycompany</span>.<span class="fu">myproject</span>.<span class="fu">stage1</span>.<span class="fu">etl</span>.<span class="fu">_</span>
   ...
 
   <span class="co">//---- common inputs/functions</span>
