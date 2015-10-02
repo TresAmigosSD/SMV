@@ -32,7 +32,7 @@ import scala.reflect.runtime.universe.TypeTag
  *  - Provide a framework to use Spark to develop large scale data applications
  *  - Synchronize between code management and data management
  *  - Data API for large projects/large teams
- *  - Programmatically data quality management
+ *  - Programmatic data quality management
  *
  * Main classes
  *  - [[org.tresamigos.smv.SmvDFHelper]]: extends DataFrame methods. E.g. `selectPlus`

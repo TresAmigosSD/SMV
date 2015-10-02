@@ -2,9 +2,9 @@
 
 ## Provide a framework to use Spark to develop large scale data applications
 
-Most use cases Spark supports out of the box are quick ad hoc data analysis. In those use cases,
+Most use cases that Spark supports out of the box are quick ad hoc data analysis. In those use cases,
 Spark is more like a powerful scripting tool for data discovery. SMV is an effort to use Spark
-to develop high quality large scale or compacted data applications.
+to develop high quality large scale data applications.
 
 The basic working unit within the SMV framework is SmvModule. Here is an example,
 
@@ -23,17 +23,16 @@ The basic working unit within the SMV framework is SmvModule. Here is an example
 ```
 
 Data App developers will work module by module. They basically only need to answer
-* Who am I depend on?
+* Who do I depend on?
 * What should I generate from the data I depend on
-
 
 
 ## Synchronize between code management and data management
 
-One key issue of data app development is how to do version control with data. To address that
-SMV binds data version with the code which generated it.
+One key issue of data app development is how to perform version control with data. To address that
+SMV binds the data version to the code which generated it.
 
-Here is and persisted output file of a SmvModule:
+For example, here is a persisted output file of a SmvModule:
 ```
 com.mycompany.MyApp.stage2.StageEmpCategory_b36cb1b0.csv
                                             ________
@@ -47,10 +46,8 @@ For each SmvModule, the `HashOfHash` is created based on
 * HashOfHash of the SmvModules, which current module depends on
 * For input data files, the HashOfHash depends on file full path and modification time
 
-Automatically, when run an SMV app, it will recognized the changes of the code and re-generated any
-impacted data file, and leave all other untouched.
-
-
+When an SMV app is run, it will automatically recognize changes in the code and re-generate any
+impacted data file, and leave all others untouched.
 
 
 ## Data API for large projects/large teams
@@ -70,9 +67,7 @@ version of Module2, and Stage2 can depend on the published version. In the mean 
 can still work on Stage1.
 
 
-
-
-## Programmatically data quality management
+## Programmatic data quality management
 
 Each SmvModule can define a dqm (data quality management) method, which will be checked automatically
 whenever the module runs. Here is an example,
@@ -85,6 +80,5 @@ whenever the module runs. Here is an example,
       add(FailTotalRuleCountPolicy(100))
 ```
 
-As project progressing, the domain knowledge of some given data also get accumulated, the dqm function
-simplifies the effort of including data knowledge into code and enforcing check against the
-cumulated knowledge.
+As a project progresses, the domain knowledge of some given data also gets accumulated, the dqm function
+simplifies the effort of including data knowledge into code and enforcing checks against the accumulated knowledge.
