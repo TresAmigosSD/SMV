@@ -20,6 +20,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 /**
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
@@ -89,7 +90,18 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
     resolveStack.push(dsName)
 
-    val resRdd = ds.rdd()
+    /* ds.rdd will trigger resolveRDD on all the DataSets current one depends on, which
+       will push them all to the stack.
+       In Spark shell, when ds.rdd fails, dsName is still in the stack, need to pop it
+       so that redefining the same ds will not cause a "cycle" error */
+    val resRdd = try {
+      ds.rdd()
+    } catch {
+      case NonFatal(t) => {
+        resolveStack.pop()
+        throw t
+      }
+    }
 
     val popRdd = resolveStack.pop()
     if (popRdd != dsName)
