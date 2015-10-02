@@ -1,7 +1,8 @@
 # FAQ (TODO: need to update)
 
 ## What is SMV?
-SMV is a Spark library to enable quickly variable creations for real world data application
+SMV stands for "Spark Modularized View".
+It is a simple data application framework for real world data application
 development. The relation to Spark Stack is the following
 ![Alt text](https://rawgit.com/TresAmigosSD/SMV/master/docs/images/tech_stack.png)
 
@@ -31,11 +32,10 @@ SMV could help Data Scientists on:
 Although SMV is a Scala library on top of Spark stack, to use it for basic data discovery
 and data development, the user does not need to know too much on either Spark or Scala.
 
-SMV document, especially the application framework doc and interactive shell doc, could be
+[SMV User Guide](https://github.com/TresAmigosSD/SMV/blob/master/docs/user/0_user_toc.md),
+could be
 a good starting point. Most relevant knowledge on Spark is the DataFrame operation session
-of the [Spark SQL and DataFrame](http://spark.apache.org/docs/latest/sql-programming-guide.html).  
-
-We also have an [example project](examples/01GetStart/README.md) to help users to jump start.
+of the [Spark SQL and DataFrame](http://spark.apache.org/docs/latest/sql-programming-guide.html).
 
 ## Do I need to setup a cluster to start using SMV?
 No. Spark and SMV both works well on local machines.
@@ -46,8 +46,8 @@ Simply install JDK and Maven, and download a Spark pre-build package, your syste
 using SMV.
 
 ## I setup my SMV, what's next?
-Please follow the [example project](examples/01GetStart/README.md). It will help you to
-quickly start using SMV and setup your own project.
+Please follow [Getting Start Docs](https://github.com/TresAmigosSD/SMV/blob/master/docs/user/getting_started.md).
+It will help you to quickly start using SMV and setup your own project.
 
 Also you can read all the SMV document and try out functions with the example project.
 
@@ -56,7 +56,7 @@ To create new variables (columns), you need to utilize Column operations. There 
 Spark you can find them: methods of Column class and functions object under sql package. You can find
 all the useful methods and functions on the Scala API doc from Spark.
 SMV extends both the methods and functions. The new methods and functions can be find in
-[SMV Column Functions](ColumnFunctions.md).
+[SMV API Docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.package).
 
 For anything which is not covered above, you can create your own "udf", User Defined Function, through
 Scala functions. Here is a simple example
