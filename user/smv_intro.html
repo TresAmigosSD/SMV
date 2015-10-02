@@ -23,17 +23,19 @@
 <h2 id="introduction">Introduction</h2>
 <p>SMV is a very simple data application framework that enables the following:</p>
 <ul>
-<li>Ability to group DataFrame operations into modules and organize the modules and their dependency in a hierarchical manner.<br /></li>
-<li>No overhead of developers to use RDD and DataFrame to manipulate data and create new data set and variables<br /></li>
-<li>Ability to use the same framework to quickly create ad-hoc analysis and the ad-hoc queries should be able to easily transform to production package<br /></li>
-<li>Easy testing of module levels. Developer shouldn't have to create many repetitive and cumbersome scaffolding to test a module<br /></li>
-<li>Intermediate data persistence and versioning. Data versioning is critical for applying test driven development on data application development<br /></li>
-<li>Ability to test/run at the module level and at the application level. Developer should be able to test run modules they currently working on<br /></li>
-<li>Same framework should also allow the creation of execution graphs at the application level.<br /></li>
+<li>Ability to group DataFrame operations into modules and organize the modules and their dependency in a hierarchical manner.</li>
+<li>No overhead of developers to use RDD and DataFrame to manipulate data and create new data set and variables</li>
+<li>Ability to use the same framework to quickly create ad-hoc analysis and the ad-hoc queries should be able to easily transform to production package</li>
+<li>Easy testing of module levels. Developer shouldn't have to create many repetitive and cumbersome scaffolding to test a module</li>
+<li>Intermediate data persistence and versioning. Data versioning is critical for applying test driven development on data application development</li>
+<li>Ability to test/run at the module level and at the application level. Developer should be able to test run modules they currently working on</li>
+<li>Same framework should also allow the creation of execution graphs at the application level.</li>
 <li>Provides utility to managing the end to end dependency graph, persisted data meta info and execution logging</li>
 </ul>
 <h2 id="application-hierarchy">Application Hierarchy</h2>
-<p>A single SMV application may contain one or more stages. Each stage may contain one or more modules. A stage corresponds to a single scala package that contains the modules.<br />By convention, each stage should define an <code>InputSet.scala</code> (or similarly named file) to enumerate all the inputs used in the given stage.<br />For example, given an app with 2 stages (stage1, stage2) we should have the following file layout</p>
+<p>A single SMV application may contain one or more stages. Each stage may contain one or more modules. A stage corresponds to a single scala package that contains the modules.<br />
+By convention, each stage should define an <code>InputSet.scala</code> (or similarly named file) to enumerate all the inputs used in the given stage.<br />
+For example, given an app with 2 stages (stage1, stage2) we should have the following file layout</p>
 <pre><code>+-- src/main/scala/com/mycom/myproj
     +-- stage1
         +-- InputSetS1.scala
@@ -44,7 +46,8 @@
         +-- mod3.scala
         +-- ...</code></pre>
 <h2 id="class-diagram">Class Diagram</h2>
-<p>The class diagram of the SMV App below is provided as an FYI and is not critical to productively using SMV.<br /><img src="https://rawgit.com/TresAmigosSD/SMV/master/docs/design/app_class.svg" alt="SMV App Class Diagram" /></p>
+<p>The class diagram of the SMV App below is provided as an FYI and is not critical to productively using SMV.<br />
+<img src="https://rawgit.com/TresAmigosSD/SMV/master/docs/design/app_class.svg" alt="SMV App Class Diagram" /></p>
 </article>
 </body>
 </html>

@@ -39,7 +39,7 @@
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><h4> Spark Modularized View (SMV) </h4><ul><li>Provide a framework to use Spark to develop large scale data applications</li><li>Synchronize between code management and data management</li><li>Data API for large projects/large teams</li><li>Programmatically data quality management</li></ul><p>Main classes</p><ul><li><a href="SmvDFHelper.html" class="extype" name="org.tresamigos.smv.SmvDFHelper">org.tresamigos.smv.SmvDFHelper</a>: extends DataFrame methods. E.g. <code>selectPlus</code></li><li><a href="ColumnHelper.html" class="extype" name="org.tresamigos.smv.ColumnHelper">org.tresamigos.smv.ColumnHelper</a>: extends Column methods. E.g. <code>smvStrToTimestamp</code></li><li><a href="SmvGroupedDataFunc.html" class="extype" name="org.tresamigos.smv.SmvGroupedDataFunc">org.tresamigos.smv.SmvGroupedDataFunc</a>: extends GroupedData methods. E.g. <code>smvPivot</code></li></ul><p>Main packages</p><ul><li><a href="edd/package.html" class="extype" name="org.tresamigos.smv.edd">org.tresamigos.smv.edd</a>: extended data dictionary. E.g. <code>df.edd.summary().eddShow</code></li><li><a href="dqm/package.html" class="extype" name="org.tresamigos.smv.dqm">org.tresamigos.smv.dqm</a>: data quality management. E.g. <code>SmvDQM().add(DQMRule(...))</code></li></ul></div><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><h4> Spark Modularized View (SMV) </h4><ul><li>Provide a framework to use Spark to develop large scale data applications</li><li>Synchronize between code management and data management</li><li>Data API for large projects/large teams</li><li>Programmatic data quality management</li></ul><p>Main classes</p><ul><li><a href="SmvDFHelper.html" class="extype" name="org.tresamigos.smv.SmvDFHelper">org.tresamigos.smv.SmvDFHelper</a>: extends DataFrame methods. E.g. <code>selectPlus</code></li><li><a href="ColumnHelper.html" class="extype" name="org.tresamigos.smv.ColumnHelper">org.tresamigos.smv.ColumnHelper</a>: extends Column methods. E.g. <code>smvStrToTimestamp</code></li><li><a href="SmvGroupedDataFunc.html" class="extype" name="org.tresamigos.smv.SmvGroupedDataFunc">org.tresamigos.smv.SmvGroupedDataFunc</a>: extends GroupedData methods. E.g. <code>smvPivot</code></li></ul><p>Main packages</p><ul><li><a href="edd/package.html" class="extype" name="org.tresamigos.smv.edd">org.tresamigos.smv.edd</a>: extended data dictionary. E.g. <code>df.edd.summary().eddShow</code></li><li><a href="dqm/package.html" class="extype" name="org.tresamigos.smv.dqm">org.tresamigos.smv.dqm</a>: data quality management. E.g. <code>SmvDQM().add(DQMRule(...))</code></li></ul></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
@@ -146,19 +146,6 @@
       </span>
       </h4>
       <p class="comment cmt">Container of all SMV config driven elements (cmd line, app props, user props, etc).</p>
-    </li><li name="org.tresamigos.smv.SmvCsvData" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvCsvDataextendsSmvModulewithProductwithSerializable"></a>
-      <a id="SmvCsvData:SmvCsvData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a href="SmvCsvData.html"><span class="name">SmvCsvData</span></a><span class="params">(<span name="schemaStr">schemaStr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="isPersistValidateResult">isPersistValidateResult: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      </h4>
-      <p class="comment cmt">a built-in SmvModule from schema string and data string</p>
     </li><li name="org.tresamigos.smv.SmvCsvFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvCsvFileextendsSmvFilewithProductwithSerializable"></a>
       <a id="SmvCsvFile:SmvCsvFile"></a>
@@ -172,6 +159,19 @@
       </span>
       </h4>
       <p class="comment cmt">Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.</p>
+    </li><li name="org.tresamigos.smv.SmvCsvStringData" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvCsvStringDataextendsSmvModulewithProductwithSerializable"></a>
+      <a id="SmvCsvStringData:SmvCsvStringData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvCsvStringData.html"><span class="name">SmvCsvStringData</span></a><span class="params">(<span name="schemaStr">schemaStr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="isPersistValidateResult">isPersistValidateResult: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">a built-in SmvModule from schema string and data string</p>
     </li><li name="org.tresamigos.smv.SmvDFHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvDFHelperextendsAnyRef"></a>
       <a id="SmvDFHelper:SmvDFHelper"></a>
