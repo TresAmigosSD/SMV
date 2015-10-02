@@ -492,8 +492,15 @@ class SmvDFHelper(df: DataFrame) {
   def edd: Edd = new Edd(df)
 
   /**
-   * Similar to groupBy, instead of creating GroupedData, create an SmvGroupedData object.
-   * See [[org.tresamigos.smv.SmvGroupedData]] for details.
+   * Similar to groupBy, instead of creating GroupedData, create an `SmvGroupedData` object.
+   * See [[org.tresamigos.smv.SmvGroupedDataFunc]] for list of functions that can be applied to the grouped data.
+   *
+   * Note: This is going away shortly and user will be able to use standard Spark `groupBy` method directly.
+   *
+   * Example:
+   * {{{
+   *   df.smvGroup($"k").
+   * }}}
    */
   @Experimental
   def smvGroupBy(cols: Column*) = {
@@ -501,7 +508,10 @@ class SmvDFHelper(df: DataFrame) {
     SmvGroupedData(df, names)
   }
 
-  /** Same as `smvGroupBy(Column*)` but uses `String` to specify the columns. */
+  /**
+   * Same as `smvGroupBy(Column*)` but uses `String` to specify the columns.
+   * Note: This is going away shortly and user will be able to use standard Spark `groupBy` method directly.
+   */
   @Experimental
   def smvGroupBy(col: String, others: String*) = {
     SmvGroupedData(df, (col +: others))

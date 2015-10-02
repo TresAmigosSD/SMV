@@ -12,8 +12,6 @@
 * [SMV Stages](smv_stages.md)
 * [SMV Functions](functions.md)
     - TODO: package level function / const (SmvJoinType, columnIf, etc)
-    - [SMV Group Functions](funcs_grouped.md)
-    - [Pivot / Unpivot Operations](pivot.md)  TODO: create pivot.md from funcs_grouped.md
     - [Custom Data Source (CDS) Functions](smv_cds.md) TODO: create smv_cds.md
 * [Validation & Data Quality Management (DQM)](dqm.md)
 * [Adding a new CSV input file (with schema discovery)](schema_discovery.md)

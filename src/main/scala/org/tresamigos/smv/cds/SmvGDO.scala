@@ -29,10 +29,12 @@ import org.tresamigos.smv._
  * Used with smvMapGroup method of SmvGroupedData.
  *
  * Examples:
+ * {{{
  *   val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
  *   val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
+ * }}}
  **/
-private[smv] abstract class SmvGDO extends Serializable{
+private[smv] abstract class SmvGDO extends Serializable {
   def inGroupKeys: Seq[String]
   def createInGroupMapping(smvSchema:StructType): Iterable[Row] => Iterable[Row]
   def createOutSchema(inSchema: StructType): StructType
@@ -96,7 +98,7 @@ private[smv] class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
  * User defined "chuck" mapping function
  * see the `chunkBy` and `chunkByPlus` method of [[org.tresamigos.smv.SmvDFHelper]] for details
  **/
-@deprecated("will remove after 1.3")
+@deprecated("will remove after 1.3", "1.3")
 case class SmvChunkUDF(
   para: Seq[Symbol],
   outSchema: StructType,
