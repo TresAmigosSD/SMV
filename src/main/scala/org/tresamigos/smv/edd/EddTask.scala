@@ -58,6 +58,7 @@ private object EddTask extends Serializable {
       case v: Double => compact(render(v))
       case v: Long => compact(render(v))
       case v: Boolean => compact(render(v))
+      case null => compact(render(null))
       case _ => throw new IllegalArgumentException("unsupported type")
     }
   }

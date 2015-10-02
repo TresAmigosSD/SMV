@@ -281,7 +281,10 @@ case class SmvFrlFile(
   }
 }
 
-/** Keep this interface for existing application code, will be removed when application code cleaned up */
+/**
+ * Keep this interface for existing application code, will be removed when application code cleaned up
+ */
+@deprecated("for existing application code", "1.5")
 object SmvFile {
   def apply(path: String, csvAttributes: CsvAttributes) =
     new SmvCsvFile(path, csvAttributes)

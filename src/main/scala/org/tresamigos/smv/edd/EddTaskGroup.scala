@@ -17,6 +17,7 @@ package org.tresamigos.smv.edd
 import org.tresamigos.smv._
 import org.apache.spark.sql.{DataFrame, Column}
 import org.apache.spark.sql.types._
+import org.apache.spark.rdd.UnionRDD
 
 
 private[smv] abstract class EddTaskGroup {
@@ -26,9 +27,25 @@ private[smv] abstract class EddTaskGroup {
     val aggCols = taskList.map{t => t.aggCol}
     val resultCols = taskList.map{t => t.resultCols}
 
+    // this DF only has 1 row
     val res = df.agg(aggCols.head, aggCols.tail: _*).smvCoalesce(1)
 
-    resultCols.map{rcols => res.select(rcols: _*)}.reduce(_ unionAll _).smvCoalesce(1)
+    val schema = SmvSchema.fromString(
+      "colName: String;" +
+      "taskType: String;" +
+      "taskName: String;" +
+      "taskDesc: String;" +
+      "toJSONCol: String"
+    )
+
+    /* since DF unionAll operation on a lot small DFs may build a large tree.
+       The schema comparison on a large tree could introduce significant overhead.
+       Here we convert each small DF to RDD first, then create UnionRDD, which
+       is a very cheap operation */
+    val resRdds = resultCols.map{rcols => res.select(rcols: _*).rdd}
+    val resRdd = new UnionRDD(df.sqlContext.sparkContext, resRdds).coalesce(1)
+
+    df.sqlContext.createDataFrame(resRdd, schema.toStructType)
   }
 
 }

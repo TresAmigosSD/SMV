@@ -26,6 +26,27 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
+/**
+ * == Spark Modularized View (SMV) ==
+ *
+ *  - Provide a framework to use Spark to develop large scale data applications
+ *  - Synchronize between code management and data management
+ *  - Data API for large projects/large teams
+ *  - Programmatically data quality management
+ *
+ * Main classes
+ *  - [[org.tresamigos.smv.SmvDFHelper]]: extends DataFrame methods. E.g. `selectPlus`
+ *  - [[org.tresamigos.smv.ColumnHelper]]: extends Column methods. E.g. `smvStrToTimestamp`
+ *  - [[org.tresamigos.smv.SmvGroupedDataFunc]]: extends GroupedData methods. E.g. `smvPivot`
+ *
+ * Main packages
+ *  - [[org.tresamigos.smv.edd]]: extended data dictionary. E.g. `df.edd.summary().eddShow`
+ *  - [[org.tresamigos.smv.dqm]]: data quality management. E.g. `SmvDQM().add(DQMRule(...))`
+ *
+ * 
+ * @groupname agg Aggregate Functions
+ * @groupname other All others
+ */
 package object smv {
   implicit def makeColHelper(col: Column) = new ColumnHelper(col)
   implicit def makeSymColHelper(sym: Symbol) = new ColumnHelper(new ColumnName(sym.name))
@@ -38,8 +59,15 @@ package object smv {
   implicit def makeStructTypeHelper(schema: StructType) = new StructTypeHelper(schema)
 
   /**
+   * Instead of using String for join type, always use the link here.
+   *
+   * If there are typos on the join type, using the link in client code will cause
+   * compile time failure, which using string itself will cause run-time failure.
+   *
    * Spark(as of 1.4)'s join type is a String.  Could use enum or case objects here,
    * but there are clients using the String api, so will push that change till later.
+   *
+   * @group other
    */
   object SmvJoinType {
     val Inner = "inner"
@@ -53,16 +81,22 @@ package object smv {
    * Functions
    ***************************************************************************/
 
-  /* Aggregate Function wrappers */
+  /**
+   * Histogram Aggregate function
+   *
+   * Return column has type `Map[child.dataType, Long]`
+   *
+   * @group agg
+   **/
   def histogram(c: Column) = {
     new Column(Histogram(c.toExpr))
   }
 
-  def onlineAverage(c: Column) = {
+  private[smv] def onlineAverage(c: Column) = {
     new Column(OnlineAverage(c.toExpr))
   }
 
-  def onlineStdDev(c: Column) = {
+  private[smv] def onlineStdDev(c: Column) = {
     new Column(OnlineStdDev(c.toExpr))
   }
 
@@ -71,34 +105,63 @@ package object smv {
    *
    * Since Spark "first" will return the first non-null value, we have to create
    * our version smvFirst which to retune the real first value, even if it's null
+   * @group agg
    **/
   def smvFirst(c: Column) = {
     new Column(SmvFirst(c.toExpr))
   }
 
-  /* NonAggregate Function warppers */
+  /**
+   * Simple column functions to apply If-Else
+   *
+   * If (cond) l else r
+   *
+   * Will be deprecated when migrate to 1.5 and use `when`
+   **/
   def columnIf(cond: Column, l: Column, r: Column): Column = {
     new Column(If(cond.toExpr, l.toExpr, r.toExpr))
   }
 
   /**
-   * A typed form of if where one or both branches are literals.
-   *
-   * We use overloading instead of implicit conversion here to minimize
-   * the scope of change.
+   * A variation of columnIf: both values Scala values
    */
   def columnIf[T](cond: Column, l: T, r: T): Column = columnIf(cond, lit(l), lit(r))
+
+  /**
+   * A variation of columnIf: left value is Scala value
+   */
   def columnIf[T](cond: Column, l: T, r: Column): Column = columnIf(cond, lit(l), r)
+
+  /**
+   * A variation of columnIf: right value is Scala value
+   */
   def columnIf[T](cond: Column, l: Column, r: T): Column = columnIf(cond, l, lit(r))
 
+  /**
+   * Concatenate columns as strings
+   * will be deprecated when move to 1.5 and use `concat`
+   **/
   def smvStrCat(columns: Column*) = {
     new Column(SmvStrCat(columns.map{c => c.toExpr}: _*))
   }
 
+  /**
+   * Put a group of columns in an Array field
+   * will be deprecated when move to 1.5 and use `array`
+   **/
   def smvAsArray(columns: Column*) = {
     new Column(SmvAsArray(columns.map{c => c.toExpr}: _*))
   }
 
+  /**
+   * create a UDF from a map
+   * e.g.
+   * {{{
+   * val lookUpGender = smvCreateLookUp(Map(0->"m", 1->"f"))
+   * val res = df.select(lookUpGender($"sex") as "gender")
+   * }}}
+   * @group other
+   **/
   def smvCreateLookUp[S,D](map: Map[S,D])(implicit st: TypeTag[S], dt: TypeTag[D]) = {
     val func: S => Option[D] = {s => map.get(s)}
     udf(func)
@@ -107,6 +170,8 @@ package object smv {
   /**
    * restore 1.1 sum behaviour (and what is coming back in 1.4) where if all values are null, sum is 0
    * Note: passed in column must be resolved (can not be just the name)
+   *
+   * @group agg
    */
   def smvSum0(col: Column) : Column = {
     val cZero = lit(0).cast(col.toExpr.dataType)
