@@ -211,6 +211,16 @@
         </plugin>
 
         <!-- github site publishing plugin. -->
+        <!-- In order to use github plugin to publish to github pages.  Must do the following:
+             1. ensure that you have a description in your github profile (yes, that is required else you get a null error)
+             2. setup the "github" server entry in your ~/.m2/settings.xml file:
+                <servers>
+                    <server>
+                        <id>github</id>
+                        <password>OA_AUTH_PASSWORD_FROM_GITHUB</password>
+                    </server>
+                </servers>
+        -->
         <plugin>
             <groupId>com.github.github</groupId>
             <artifactId>site-maven-plugin</artifactId>
