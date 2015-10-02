@@ -92,8 +92,8 @@ it to add rules.
 ```scala
 object MyModule extends SmvModule("example module with dqm") {
   ...
-  override run(i:runParams) { ... }
-  override dqm() = SmvDQM().
+  override def run(i:runParams) { ... }
+  override def dqm() = SmvDQM().
       add(DQMRule($"Price" < 1000000.0, "rule1", FailAny)).
       add(DQMFix($"age" > 120, lit(120) as "age", "fix1"))
 }
@@ -126,7 +126,7 @@ A `DQMPolicy` defines a requirement on the entire `DataFrame`. As in above examp
 a policy
 
 ```scala
-override dqm() = SmvDQM().
+override def dqm() = SmvDQM().
     add(DQMRule($"Price" < 1000000.0, "rule1")).
     add(DQMRule($"Price" > 0.0, "rule2")).
     add(DQMFix($"age" > 120, lit(120) as "age", "fix1")).
@@ -148,7 +148,7 @@ One can also create user defined policies.
 val policy: (DataFrame, DQMState) => Boolean = {(df, state) =>
   state.getRuleCount("rule1") + state.getFixCount("fix1") < 1000
 }
-override dqm() = SmvDQM().
+override def dqm() = SmvDQM().
     add(DQMRule($"Price" < 1000000.0, "rule1")).
     add(DQMRule($"Price" > 0.0, "rule2")).
     add(DQMFix($"age" > 120, lit(120) as "age", "fix1")).
