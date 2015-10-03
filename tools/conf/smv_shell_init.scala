@@ -70,8 +70,16 @@ object i {
   def lsStage = app.stages.stageNames.foreach(println)
 
   def ls(stageName: String = null): Unit = {
-    def dsInPackage(name: String, prefix: String = "") =
-      app.stages.findStage(name).allDatasets.map{d => d.name}.foreach(n => println(prefix + n))
+    def dsInPackage(name: String, prefix: String = "") = {
+      val dss = app.stages.findStage(name).allDatasets.sortBy(_.name)
+      val printStrs = dss.map{
+        case ds: SmvOutput => prefix + "(O)" + ds.name
+        case ds: SmvModuleLink => prefix + "(L)" + ds.name
+        case ds: SmvFile => prefix + "(F)" + ds.name
+        case ds => prefix + "   " + ds.name
+      }
+      printStrs.foreach(println)
+    }
 
     if(stageName != null) {
       dsInPackage(stageName)
@@ -84,6 +92,18 @@ object i {
   }
 
   def ls: Unit = ls()
+
+  def ancestors(ds: SmvDataSet) = {
+    val stage = app.stages.findStageForDataSet(ds)
+    println(stage.name + ":")
+    stage.ancestors(ds).map{d => stage.datasetBaseName(d)}.foreach(l => println("  " + l))
+  }
+
+  def descendants(ds: SmvDataSet) = {
+    val stage = app.stages.findStageForDataSet(ds)
+    println(stage.name + ":")
+    stage.descendants(ds).map{d => stage.datasetBaseName(d)}.foreach(l => println("  " + l))
+  }
 }
 
 import i._

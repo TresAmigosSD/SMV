@@ -36,7 +36,7 @@ class SmvStagesTest extends SparkTestUtil {
       "smv.stages=com.myproj.s1:com.myproj.s2",
       "-m", "None"), Some(sc)) {}
 
-    val expPkgs = Seq("com.myproj.s1", "com.myproj.s2")
+    val expPkgs = Seq("com.myproj.s1", "com.myproj.s1.input", "com.myproj.s2", "com.myproj.s2.input")
     assert(testApp.stages.getAllPackageNames() === expPkgs)
   }
 
@@ -56,6 +56,33 @@ class SmvStagesTest extends SparkTestUtil {
       "org.tresamigos.smv.smvAppTestPkg3.L",
       "org.tresamigos.smv.smvAppTestPkg3.T",
       "org.tresamigos.smv.smvAppTestPkg3.U"))
+  }
+
+  test("test ancestors/descendants method of stage") {
+    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "None"), Some(sc)) {}
+
+    val s1 = testApp.stages.findStage("smvAppTestPkg1")
+
+    val res1 = s1.ancestors(org.tresamigos.smv.smvAppTestPkg1.X).map{d => s1.datasetBaseName(d)}
+    val res2 = s1.ancestors(org.tresamigos.smv.smvAppTestPkg1.Y).map{d => s1.datasetBaseName(d)}
+    val res3 = s1.descendants(org.tresamigos.smv.smvAppTestPkg1.X).map{d => s1.datasetBaseName(d)}
+    val res4 = s1.descendants(org.tresamigos.smv.smvAppTestPkg1.Y).map{d => s1.datasetBaseName(d)}
+
+    assertUnorderedSeqEqual(res1, Nil)
+    assertUnorderedSeqEqual(res2, Seq("X"))
+    assertUnorderedSeqEqual(res3, Seq("Y"))
+    assertUnorderedSeqEqual(res4, Nil)
+  }
+
+  test("test deadDataSets/leafDataSets") {
+    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "None"), Some(sc)) {}
+
+    val s3 = testApp.stages.findStage("smvAppTestPkg3")
+    val res1 = s3.deadDataSets.map{d => s3.datasetBaseName(d)}
+    val res2 = s3.leafDataSets.map{d => s3.datasetBaseName(d)}
+
+    assertUnorderedSeqEqual(res1, Seq("T"))
+    assertUnorderedSeqEqual(res2, Seq("T", "U"))
   }
 }
 
@@ -160,7 +187,7 @@ import org.tresamigos.smv.{SmvOutput, SmvModule, SmvModuleLink}
 object L extends SmvModuleLink(org.tresamigos.smv.smvAppTestPkg1.Y)
 
 object T extends SmvModule("T Module") {
-  override def requiresDS() = Seq.empty
+  override def requiresDS() = Seq(L)
   override def run(inputs: runParams) = null
 }
 
@@ -168,7 +195,7 @@ object T extends SmvModule("T Module") {
 abstract class UBase extends SmvModule("U Base") with SmvOutput
 
 object U extends UBase {
-  override def requiresDS() = Seq.empty
+  override def requiresDS() = Seq(L)
   override def run(inputs: runParams) = null
 }
 }

@@ -25,10 +25,42 @@ private[smv] trait SmvPackageManager {
     getAllPackageNames.flatMap{ p => SmvReflection.objectsInPackage[SmvDataSet](p) }
 
   lazy val allModules : Seq[SmvModule] =
-    getAllPackageNames.flatMap{ p => SmvReflection.objectsInPackage[SmvModule](p) }
+    allDatasets.collect{case m: SmvModule => m}
+
+  lazy val allLinks : Seq[SmvModuleLink] =
+    allModules.collect{case m: SmvModuleLink => m}
 
   lazy val allOutputModules : Seq[SmvModule] =
     allModules.filter(m => m.isInstanceOf[SmvOutput])
+
+  val predecessors: Map[SmvDataSet, Seq[SmvDataSet]]
+
+  lazy val successors: Map[SmvDataSet, Seq[SmvDataSet]] =
+    allDatasets.map{d => (d, allDatasets.filter{m => predecessors(m).contains(d)})}.toMap
+
+  /** ancestors(module) - all modules current module depends on*/
+  def ancestors(ds: SmvDataSet): Seq[SmvDataSet] = {
+    val up = predecessors.getOrElse(ds, Nil)
+    up ++ up.flatMap{d => ancestors(d)}
+  }
+
+  /**descendants(module) - all modules which depend on current module */
+  def descendants(ds: SmvDataSet): Seq[SmvDataSet] = {
+    val down = successors.getOrElse(ds, Nil)
+    down ++ down.flatMap{d => descendants(d)}
+  }
+
+  /**is there any output module depends on the current module, if not, isDead = true*/
+  def deadDataSets(): Seq[SmvDataSet] = {
+    val liveDS = allOutputModules.flatMap{m => (m +: ancestors(m))}.toSet
+    allDatasets.filterNot(liveDS)
+  }
+
+  /**is there any module depends on current module, if not, isLeaf = true*/
+  def leafDataSets(): Seq[SmvDataSet] = {
+    successors.filter{case (k, v) => v.isEmpty}.keys.toSeq
+  }
+
 }
 
 /**
@@ -49,11 +81,17 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
   /**
    * Find the stage that a given dataset belongs to.
    */
-  private[smv] def findStageForDataSet(ds: SmvDataSet) : SmvStage = {
+  def findStageForDataSet(ds: SmvDataSet) : SmvStage = {
     stages.find { s =>
-      s.allDatasets.exists( sds => sds == ds )
+      s.allDatasets.contains(ds)
     }.getOrElse(null)
   }
+
+  override lazy val predecessors: Map[SmvDataSet, Seq[SmvDataSet]] =
+    allDatasets.map{
+      case d: SmvModuleLink => (d, Seq(d.smvModule))
+      case d: SmvDataSet => (d, d.requiresDS)
+    }.toMap
 }
 
 /**
@@ -62,7 +100,15 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
 private[smv] class SmvStage(val name: String, val version: Option[String]) extends SmvPackageManager {
   override def toString = s"SmvStage<${name}>"
 
-  override def getAllPackageNames() = Seq(name)
+  override def getAllPackageNames() = Seq(name, name + ".input")
+
+  /** remove package name from class FQN
+   *  e.g. a.b.input.c -> input.c
+   **/
+  def datasetBaseName(ds: SmvDataSet) = FQN.removePackageName(ds.name, name)
+
+  override lazy val predecessors: Map[SmvDataSet, Seq[SmvDataSet]] =
+    allDatasets.map{d => (d, d.requiresDS)}.toMap
 }
 
 private[smv] object FQN {
@@ -71,6 +117,18 @@ private[smv] object FQN {
    * For example: "a.b.c" --> "c"
    */
   def extractBaseName(fqn: String) : String = fqn.substring(fqn.lastIndexOf('.') + 1)
+
+  /**
+   * Remove package name from a given FQN.
+   * e.g. "a.b.input.c" with package "a.b" --> "input.c"
+   **/
+  def removePackageName(fqn: String, pkg: String): String = {
+    val prefix = pkg + "."
+    fqn.startsWith(prefix) match {
+      case true => fqn.substring(prefix.length, fqn.length)
+      case false => throw new IllegalArgumentException(s"${prefix} is not a prefix of ${fqn}")
+    }
+  }
 }
 
 private[smv] object SmvStage {

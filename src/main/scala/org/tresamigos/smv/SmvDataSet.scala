@@ -379,7 +379,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 abstract class SmvModuleLink(outputModule: SmvOutput) extends
   SmvModule(s"Link to ${outputModule.asInstanceOf[SmvModule].name}") {
 
-  private val smvModule = outputModule.asInstanceOf[SmvModule]
+  private[smv] val smvModule = outputModule.asInstanceOf[SmvModule]
 
   // the linked output module can not be ephemeral.
   require(! smvModule.isEphemeral)
