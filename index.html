@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Spark Model Variables - </title>
+    <title>Spark Modularized View - </title>
     <style type="text/css" media="all">
       @import url("./css/maven-base.css");
       @import url("./css/maven-theme.css");
@@ -17,7 +17,7 @@
   <body class="composite">
     <div id="banner">
                     <div id="bannerLeft">
-                Spark Model Variables
+                Spark Modularized View
                 </div>
                     <div class="clear">
         <hr/>
@@ -68,7 +68,63 @@
     </div>
     <div id="bodyColumn">
       <div id="contentBox">
-        <p>TODO: Add Introduction to SMV here!!!</p>
+        <h1>Spark Modularized View (SMV)</h1>
+<div class="section">
+<h2>Provide a framework to use Spark to develop large scale data applications<a name="Provide_a_framework_to_use_Spark_to_develop_large_scale_data_applications"></a></h2>
+<p>Most use cases that Spark supports out of the box are quick ad hoc data analysis. In those use cases, Spark is more like a powerful scripting tool for data discovery. SMV is an effort to use Spark to develop high quality large scale data applications.</p>
+<p>The basic working unit within the SMV framework is SmvModule. Here is an example,</p>
+
+<div class="source">
+<pre>  object StageEmpCategory extends SmvModule(&quot;Employment By Stage with Category&quot;) {
+    override def requiresDS() = Seq(input.EmploymentStateLink);
+    override def run(i: runParams) = {
+      val df = i(input.EmploymentStateLink)
+      import df.sqlContext.implicits._
+
+      df.selectPlus(
+        $&quot;EMP&quot; &gt;  lit(1000000) as &quot;cat_high_emp&quot;
+      )
+    }
+  }
+</pre></div>
+<p>Data App developers will work module by module. They basically only need to answer * Who do I depend on? * What should I generate from the data I depend on</p></div>
+<div class="section">
+<h2>Synchronize between code management and data management<a name="Synchronize_between_code_management_and_data_management"></a></h2>
+<p>One key issue of data app development is how to perform version control with data. To address that SMV binds the data version to the code which generated it.</p>
+<p>For example, here is a persisted output file of a SmvModule:</p>
+
+<div class="source">
+<pre>com.mycompany.MyApp.stage2.StageEmpCategory_b36cb1b0.csv
+                                            ________
+                                               |
+                                               |
+                                      the HashOfHash of the SmvModule
+</pre></div>
+<p>For each SmvModule, the <tt>HashOfHash</tt> is created based on * CRC of current SmvModule&#x2019;s code * HashOfHash of the SmvModules, which current module depends on * For input data files, the HashOfHash depends on file full path and modification time</p>
+<p>When an SMV app is run, it will automatically recognize changes in the code and re-generate any impacted data file, and leave all others untouched.</p></div>
+<div class="section">
+<h2>Data API for large projects/large teams<a name="Data_API_for_large_projectslarge_teams"></a></h2>
+<p>SMV organizes project as stages. Each stage independently define input modules and output modules.</p>
+
+<div class="source">
+<pre>  Stage1
+    |- Module1                      Stage2
+    |- Module2 as SmvOutput   ----&gt;   |- InputFromS1M2
+                                      |- Module2 as SmvOutput
+</pre></div>
+<p>In above example, between Stage1 and Stage2, a data interface is defined (InputFromS1M2 is a link to Module2). When Stage2 require stability of the interface data, Stage1 team can <b>Publish</b> a version of Module2, and Stage2 can depend on the published version. In the mean time, Stage1 team can still work on Stage1.</p></div>
+<div class="section">
+<h2>Programmatic data quality management<a name="Programmatic_data_quality_management"></a></h2>
+<p>Each SmvModule can define a dqm (data quality management) method, which will be checked automatically whenever the module runs. Here is an example,</p>
+
+<div class="source">
+<pre>  override def dqm() = SmvDQM().
+      add(DQMRule($&quot;Price&quot; &lt; 1000000.0, &quot;rule1&quot;)).
+      add(DQMRule($&quot;Price&quot; &gt; 0.0, &quot;rule2&quot;)).
+      add(DQMFix($&quot;age&quot; &gt; 120, lit(120) as &quot;age&quot;, &quot;fix1&quot;)).
+      add(FailTotalRuleCountPolicy(100))
+</pre></div>
+<p>As a project progresses, the domain knowledge of some given data also gets accumulated, the dqm function simplifies the effort of including data knowledge into code and enforcing checks against the accumulated knowledge.</p></div>
       </div>
     </div>
     <div class="clear">
