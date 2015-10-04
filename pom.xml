@@ -3,7 +3,7 @@
   <groupId>org.tresamigos</groupId>
   <artifactId>smv</artifactId>
   <version>1.3-SNAPSHOT</version>
-  <name>Spark Model Variables</name>
+  <name>Spark Modularized View</name>
   <packaging>jar</packaging>
   <inceptionYear>2014</inceptionYear>
   <properties>
