@@ -159,6 +159,10 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
     assert(needle.findFirstIn(haystack) != None, s"because $haystack does not match $needle")
   }
 
+  def assertStrIgnoreSpace(s1: String, s2: String) = {
+    def rmsp(s: String) = """[ \t]+""".r.replaceAllIn(s, "")
+    assert(rmsp(s1) === rmsp(s2))
+  }
   /**
    * Verify that the contents of the file at the given path equal the expected contents.
    */

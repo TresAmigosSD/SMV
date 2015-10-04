@@ -21,6 +21,9 @@ private[smv] trait SmvPackageManager {
   /** any class extending SmvPackageManager must at a minimum implement getAllPackageNames. */
   def getAllPackageNames() : Seq[String]
 
+  /** common prefix of all the packages */
+  lazy val fqnPrefix: String = FQN.sharedPrefix(getAllPackageNames())
+
   lazy val allDatasets : Seq[SmvDataSet] =
     getAllPackageNames.flatMap{ p => SmvReflection.objectsInPackage[SmvDataSet](p) }
 
@@ -58,8 +61,13 @@ private[smv] trait SmvPackageManager {
 
   /**is there any module depends on current module, if not, isLeaf = true*/
   def leafDataSets(): Seq[SmvDataSet] = {
-    successors.filter{case (k, v) => v.isEmpty}.keys.toSeq
+    successors.filter{case (k, v) => v.isEmpty}.keys.filterNot(d => d.isInstanceOf[SmvOutput]).toSeq
   }
+
+  /** remove package name from class FQN
+   *  e.g. a.b.input.c -> input.c
+   **/
+  def datasetBaseName(ds: SmvDataSet) = FQN.removePrefix(ds.name, fqnPrefix)
 
 }
 
@@ -78,6 +86,7 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
 
   override def getAllPackageNames() = stages.flatMap(s => s.getAllPackageNames())
 
+  def stageBaseName(s: String) = FQN.removePrefix(s, fqnPrefix)
   /**
    * Find the stage that a given dataset belongs to.
    */
@@ -102,11 +111,6 @@ private[smv] class SmvStage(val name: String, val version: Option[String]) exten
 
   override def getAllPackageNames() = Seq(name, name + ".input")
 
-  /** remove package name from class FQN
-   *  e.g. a.b.input.c -> input.c
-   **/
-  def datasetBaseName(ds: SmvDataSet) = FQN.removePackageName(ds.name, name)
-
   override lazy val predecessors: Map[SmvDataSet, Seq[SmvDataSet]] =
     allDatasets.map{d => (d, d.requiresDS)}.toMap
 }
@@ -122,12 +126,23 @@ private[smv] object FQN {
    * Remove package name from a given FQN.
    * e.g. "a.b.input.c" with package "a.b" --> "input.c"
    **/
-  def removePackageName(fqn: String, pkg: String): String = {
+  def removePrefix(fqn: String, pkg: String): String = {
     val prefix = pkg + "."
     fqn.startsWith(prefix) match {
       case true => fqn.substring(prefix.length, fqn.length)
-      case false => throw new IllegalArgumentException(s"${prefix} is not a prefix of ${fqn}")
+      /** if the given prefix is not really a prefix, return the full string back */
+      case false => fqn
+      //case false => throw new IllegalArgumentException(s"${prefix} is not a prefix of ${fqn}")
     }
+  }
+
+  /** Find common prefix FQN from a Seq of FQNs */
+  def sharedPrefix(fqns: Seq[String]): String = {
+    if (fqns.isEmpty) ""
+    else fqns.reduce{(l,r) =>
+        (l.split('.') zip r.split('.')).
+          collect{ case (a, b) if (a==b) => a}.mkString(".")
+      }
   }
 }
 

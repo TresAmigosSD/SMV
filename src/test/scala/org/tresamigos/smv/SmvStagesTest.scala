@@ -39,9 +39,13 @@ class SmvStagesTest extends SparkTestUtil {
     val expPkgs = Seq("com.myproj.s1", "com.myproj.s1.input", "com.myproj.s2", "com.myproj.s2.input")
     assert(testApp.stages.getAllPackageNames() === expPkgs)
   }
+}
+
+class SmvMultiStageTest extends SmvTestUtil {
+  override def appArgs = testAppArgs.multiStage ++ Seq("-m", "None")
 
   test("Test modules in stage.") {
-    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "None"), Some(sc)) {}
+    val testApp = app
 
     val s1mods = testApp.stages.findStage("smvAppTestPkg1").allModules.map(m => m.name)
     val s1out =  testApp.stages.findStage("smvAppTestPkg1").allOutputModules.map(m => m.name)
@@ -59,7 +63,7 @@ class SmvStagesTest extends SparkTestUtil {
   }
 
   test("test ancestors/descendants method of stage") {
-    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "None"), Some(sc)) {}
+    val testApp = app
 
     val s1 = testApp.stages.findStage("smvAppTestPkg1")
 
@@ -75,30 +79,105 @@ class SmvStagesTest extends SparkTestUtil {
   }
 
   test("test deadDataSets/leafDataSets") {
-    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "None"), Some(sc)) {}
+    val testApp = app
 
     val s3 = testApp.stages.findStage("smvAppTestPkg3")
     val res1 = s3.deadDataSets.map{d => s3.datasetBaseName(d)}
     val res2 = s3.leafDataSets.map{d => s3.datasetBaseName(d)}
 
     assertUnorderedSeqEqual(res1, Seq("T"))
-    assertUnorderedSeqEqual(res2, Seq("T", "U"))
+    assertUnorderedSeqEqual(res2, Seq("T"))
   }
-}
 
 /**
  * Test the searching for the stage for a given module.
  */
-class SmvStagesSearchTest extends SmvTestUtil {
-  override def appArgs = testAppArgs.multiStage ++ Seq("-m", "None")
 
   test("Test findStageForDataSet") {
-//    val tStage = app.stages.findStageForDataSet(org.tresamigos.smv.smvAppTestPkg3.T)
     val tStage = org.tresamigos.smv.smvAppTestPkg3.T.parentStage
     assert(tStage.name === "org.tresamigos.smv.smvAppTestPkg3")
 
     val noStage = org.tresamigos.smv.smvAppTestPkgX.NoStageModule.parentStage
     assert(noStage === null)
+  }
+
+  test("test graph functions") {
+    val graph = new shell.DataSetAsciiGraph(app.stages)
+    assertStrIgnoreSpace(graph.graphStr, """               ┌────────────┐
+               │(M) smvAppTe│
+               │  stPkg1.X  │
+               └──────┬─────┘
+                      │
+                      v
+               ┌────────────┐
+               │(O) smvAppTe│
+               │  stPkg1.Y  │
+               └──────┬─────┘
+                      │
+                      v
+               ┌────────────┐
+               │(L) smvAppTe│
+               │  stPkg3.L  │
+               └────┬──┬────┘
+                    │  │
+        ┌───────────┘  │
+        │              │
+        v              v
+ ┌────────────┐ ┌────────────┐ ┌────────────┐
+ │(M) smvAppTe│ │(O) smvAppTe│ │(O) smvAppTe│
+ │  stPkg3.T  │ │  stPkg3.U  │ │  stPkg2.Z  │
+ └────────────┘ └────────────┘ └────────────┘""")
+
+    val g2 = new shell.StageAsciiGraph(app.stages)
+    assertStrIgnoreSpace(g2.graphStr, """              ┌────────────┐
+              │smvAppTestPk│
+              │     g1     │
+              └──────┬─────┘
+                     │
+                     v
+ ┌───────────────────────────────────────┐
+ │(O) org.tresamigos.smv.smvAppTestPkg1.Y│
+ │                 (L) L                 │
+ └─────────┬─────────────────────────────┘
+           │
+           v
+    ┌────────────┐    ┌────────────┐
+    │smvAppTestPk│    │smvAppTestPk│
+    │     g3     │    │     g2     │
+    └────────────┘    └────────────┘""")
+  }
+
+  test("test list functions") {
+    val l = new shell.ListDataSets(SmvApp.app.stages.findStage("smvAppTestPkg3"))
+    assert(l.list === """(L) L
+(M) T
+(O) U""")
+
+    val l2 = new shell.ListDataSets(SmvApp.app.stages)
+    assert(l2.list === """
+org.tresamigos.smv.smvAppTestPkg1:
+  (M) X
+  (O) Y
+
+org.tresamigos.smv.smvAppTestPkg2:
+  (O) Z
+
+org.tresamigos.smv.smvAppTestPkg3:
+  (L) L
+  (M) T
+  (O) U""")
+  }
+
+  test("test ancestors/descendants") {
+    val a = new shell.ListDataSets(SmvApp.app.stages).ancestors(smvAppTestPkg3.T)
+    assert(a === """(L) smvAppTestPkg3.L
+(O) smvAppTestPkg1.Y
+(M) smvAppTestPkg1.X""")
+
+    val d = new shell.ListDataSets(SmvApp.app.stages).descendants(smvAppTestPkg1.Y)
+    assert(d === """(L) smvAppTestPkg3.L
+(O) smvAppTestPkg3.U
+(M) smvAppTestPkg3.T""")
   }
 }
 

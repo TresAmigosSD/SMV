@@ -66,17 +66,6 @@ a b  c
 a 10 2015-09-30 00:00:...
 ```
 
-### List all DataSets
-```scala
-scala> ls
-
-com.mycompany.MyApp.stage1:
-  com.mycompany.MyApp.stage1.EmploymentByState
-
-com.mycompany.MyApp.stage2:
-  com.mycompany.MyApp.stage2.StageEmpCategory
-```
-
 ### Resolve existing SmvModule
 ```scala
 scala> val s2res=s(StageEmpCategory)
@@ -109,3 +98,89 @@ true                        32   61.54%          52  100.00%
 
 ### Discover schema
 Please see [Schema Discovery](schema_discovery.md)
+
+### List all DataSets
+```scala
+scala> ls
+
+com.mycompany.MyApp.stage1:
+  (O) EmploymentByState
+  (F) input.employment_CB1200CZ11
+
+com.mycompany.MyApp.stage2:
+  (O) StageEmpCategory
+  (L) input.EmploymentStateLink
+```
+
+### List DataSets in a Stage
+```scala
+scala> ls("stage1")
+(O) EmploymentByState
+(F) input.employment_CB1200CZ11
+```
+
+### List ancestors of a given DataSet
+```scala
+scala> ancestors(StageEmpCategory)
+(L) stage2.input.EmploymentStateLink
+(O) stage1.EmploymentByState
+(F) stage1.input.employment_CB1200CZ11
+```
+
+### List descendants of a given DataSet
+```scala
+scala> descendants(EmploymentByState)
+(L) stage2.input.EmploymentStateLink
+(O) stage2.StageEmpCategory
+```
+
+### Plot stage level dependency graph
+```scala
+scala> graph
+                     ┌──────┐
+                     │stage1│
+                     └────┬─┘
+                          │
+                          v
+ ┌────────────────────────────────────────────────┐
+ │(O) com.mycompany.MyApp.stage1.EmploymentByState│
+ │         (L) input.EmploymentStateLink          │
+ └───────────────────────┬────────────────────────┘
+                         │
+                         v
+                     ┌──────┐
+                     │stage2│
+                     └──────┘
+```
+
+### Plot DataSets dependency graph in a stage
+```scala
+scala> graph("stage2")
+ ┌────────────┐
+ │(L) input.Em│
+ │ploymentStat│
+ │   eLink    │
+ └──────┬─────┘
+        │
+        v
+ ┌────────────┐
+ │(O) StageEmp│
+ │  Category  │
+ └────────────┘
+```
+
+### Plot dependency graph of a single DataSet
+```scala
+scala> graph(EmploymentByState)
+ ┌────────────┐
+ │(F) input.em│
+ │ployment_CB1│
+ │  200CZ11   │
+ └──────┬─────┘
+        │
+        v
+ ┌────────────┐
+ │(O) Employme│
+ │ ntByState  │
+ └────────────┘
+```

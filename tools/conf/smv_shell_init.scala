@@ -1,5 +1,5 @@
 import org.apache.spark.sql.functions._
-import org.tresamigos.smv._
+import org.tresamigos.smv._, shell._
 
 // create the init object "i" rather than create initialization at top level
 // because shell would launch a separate command for each evalutaion which
@@ -67,43 +67,6 @@ object i {
   // TODO: this should just be a direct helper on ds as it is probably common.
   def dumpEdd(ds: SmvDataSet) = i.s(ds).edd.addBaseTasks().dump
 
-  def lsStage = app.stages.stageNames.foreach(println)
-
-  def ls(stageName: String = null): Unit = {
-    def dsInPackage(name: String, prefix: String = "") = {
-      val dss = app.stages.findStage(name).allDatasets.sortBy(_.name)
-      val printStrs = dss.map{
-        case ds: SmvOutput => prefix + "(O)" + ds.name
-        case ds: SmvModuleLink => prefix + "(L)" + ds.name
-        case ds: SmvFile => prefix + "(F)" + ds.name
-        case ds => prefix + "   " + ds.name
-      }
-      printStrs.foreach(println)
-    }
-
-    if(stageName != null) {
-      dsInPackage(stageName)
-    }else{
-      app.stages.stageNames.foreach{n =>
-        println("\n" + n + ":")
-        dsInPackage(n, "  ")
-      }
-    }
-  }
-
-  def ls: Unit = ls()
-
-  def ancestors(ds: SmvDataSet) = {
-    val stage = app.stages.findStageForDataSet(ds)
-    println(stage.name + ":")
-    stage.ancestors(ds).map{d => stage.datasetBaseName(d)}.foreach(l => println("  " + l))
-  }
-
-  def descendants(ds: SmvDataSet) = {
-    val stage = app.stages.findStageForDataSet(ds)
-    println(stage.name + ":")
-    stage.descendants(ds).map{d => stage.datasetBaseName(d)}.foreach(l => println("  " + l))
-  }
 }
 
 import i._
