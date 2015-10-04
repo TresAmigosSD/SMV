@@ -22,13 +22,13 @@ import org.apache.spark.annotation._
 /** Create datasets' dependency graph */
 @Experimental
 class DataSetAsciiGraph(pck: SmvPackageManager, datasets: Seq[SmvDataSet] = Nil) {
-  val seeds = if(datasets.isEmpty) pck.allModules else datasets
-  val notes = (seeds.flatMap{ds => pck.ancestors(ds)} ++ seeds).distinct
+  private val seeds = if(datasets.isEmpty) pck.allModules else datasets
+  private val nodes = (seeds.flatMap{ds => pck.ancestors(ds)} ++ seeds).distinct
 
   private def toPrint(ds: SmvDataSet) = NameStrUtil.dsStrWrap(pck, ds)
 
-  private val vertices = notes.map{d => toPrint(d)}.toSet
-  private val edges = pck.predecessors.filterKeys(notes.toSet).map{
+  private val vertices = nodes.map{d => toPrint(d)}.toSet
+  private val edges = pck.predecessors.filterKeys(nodes.toSet).map{
     case (d, dpns) =>
       dpns.map{dp => toPrint(dp) -> toPrint(d)}
   }.flatten.toList

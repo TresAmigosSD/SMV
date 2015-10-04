@@ -63,8 +63,8 @@ package object shell {
    **/
   def lsLeaf = println(new ListDataSets(SmvApp.app.stages).listLeaf)
 
-  /** take a package name and print all DS in this package, without un-used input DS */
-  def graph(pkgName: String) = new DataSetAsciiGraph(SmvApp.app.stages.findStage(pkgName)).show
+  /** take a stage name and print all DS in this stage, without unused input DS */
+  def graph(stageName: String) = new DataSetAsciiGraph(SmvApp.app.stages.findStage(stageName)).show
 
   /** take no parameter, print stages and inter-stage links */
   def graph() = new StageAsciiGraph(SmvApp.app.stages).show
