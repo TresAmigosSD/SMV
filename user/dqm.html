@@ -7,41 +7,23 @@
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
-div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
 table.sourceCode { width: 100%; line-height: 100%; }
 td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
 td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
   </style>
   <link rel="stylesheet" type="text/css" href="github.css">
 </head>
@@ -57,38 +39,31 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <article class="markdown-body">
 <h1 id="validation-data-quality-management-dqm">Validation &amp; Data Quality Management (DQM)</h1>
-<p>Both <code>SmvFile</code> and <code>SmvModule</code> has a &quot;Validation&quot; mechanism. SmvApp will<br />
-automatically validate the result <code>DataFrame</code>.</p>
-<p>If the validation result is nontrivial, it will be persisted in a file with postfix <code>.valid</code> in the<br />
-same location of the persisted data and schema files.</p>
+<p>Both <code>SmvFile</code> and <code>SmvModule</code> has a &quot;Validation&quot; mechanism. SmvApp will<br />automatically validate the result <code>DataFrame</code>.</p>
+<p>If the validation result is nontrivial, it will be persisted in a file with postfix <code>.valid</code> in the<br />same location of the persisted data and schema files.</p>
 <p>If the validation result failed, the process will be terminated.</p>
 <p>Currently, there are 2 types of validations implemented,</p>
 <ul>
-<li>Parsing validations</li>
+<li>Parsing validations<br /></li>
 <li>Data Quality Management validations</li>
 </ul>
 <h2 id="parsing-validation">Parsing Validation</h2>
-<p>When we load a Csv or Frl (Fix Record Length) file, there are always potential parsing<br />
-issues.</p>
+<p>When we load a Csv or Frl (Fix Record Length) file, there are always potential parsing<br />issues.</p>
 <p>Typically 2 types of issues,</p>
 <ul>
-<li>Number of fields in records doesn't match the number of fields specified in schema file</li>
+<li>Number of fields in records doesn't match the number of fields specified in schema file<br /></li>
 <li>Some fields of some records do not match schema</li>
 </ul>
-<p>For either of the two cases, the record which caused the problem will be rejected. The question<br />
-is that whether we fail the entire <code>SmvFile</code> and terminate. Different problems might need to handle<br />
-this differently.<br />
-Also even if we want to fail the entire <code>SmvFile</code>, we should rather log more than one &quot;bad&quot; records<br />
-for easy debugging.</p>
+<p>For either of the two cases, the record which caused the problem will be rejected. The question<br />is that whether we fail the entire <code>SmvFile</code> and terminate. Different problems might need to handle<br />this differently.<br />Also even if we want to fail the entire <code>SmvFile</code>, we should rather log more than one &quot;bad&quot; records<br />for easy debugging.</p>
 <p>Without any specific setup, the default behavior of <code>SmvFile</code> is to log:</p>
 <ul>
-<li>The total number of rejected records, and</li>
+<li>The total number of rejected records, and<br /></li>
 <li>Some example rejected records</li>
 </ul>
 <p>And then fail the <code>SmvFile</code> by terminating the process when any rejection happens.</p>
 <p><strong>Note</strong> that we only log a limited number of rejected records to prevent run-away rejections.</p>
 <p>An example parsing validation log is like the following</p>
-<div class="sourceCode"><pre class="sourceCode json"><code class="sourceCode json"><span class="fu">{</span>
+<pre class="sourceCode json"><code class="sourceCode json"><span class="fu">{</span>
   <span class="dt">&quot;passed&quot;</span><span class="fu">:</span><span class="kw">false</span><span class="fu">,</span>
   <span class="dt">&quot;errorMessages&quot;</span><span class="fu">:</span> <span class="ot">[</span>
     <span class="fu">{</span><span class="dt">&quot;ParserError&quot;</span><span class="fu">:</span><span class="st">&quot;Totally 5 records get rejected&quot;</span><span class="fu">}</span>
@@ -100,106 +75,91 @@ for easy debugging.</p>
     <span class="st">&quot;java.lang.IllegalArgumentException: requirement failed @RECORD: 123,12.50  ,12102012&quot;</span><span class="ot">,</span>
     <span class="st">&quot;java.lang.NumberFormatException: For input string: </span><span class="ch">\&quot;</span><span class="st">001x</span><span class="ch">\&quot;</span><span class="st"> @RECORD: 123,001x  ,20130109130619,12102012&quot;</span>
   <span class="ot">]</span>
-<span class="fu">}</span></code></pre></div>
-<p>By default, any parser error will cause validation fail (<code>passed: false</code>). This behavior is controlled<br />
-by the <code>failAtParsingError</code> attribute of <code>SmvFile</code>. The default value is <code>true</code>. To change that we<br />
-can override it</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> myfile <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;accounts/acct_demo.csv&quot;</span>) {
+<span class="fu">}</span></code></pre>
+<p>By default, any parser error will cause validation fail (<code>passed: false</code>). This behavior is controlled<br />by the <code>failAtParsingError</code> attribute of <code>SmvFile</code>. The default value is <code>true</code>. To change that we<br />can override it</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> myfile <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;accounts/acct_demo.csv&quot;</span>) {
   <span class="kw">override</span> <span class="kw">val</span> failAtParsingError = <span class="kw">false</span>
-}</code></pre></div>
+}</code></pre>
 <p>With above setting, the <code>SmvFile</code> will simply persist the validation result and keep moving.</p>
-<p>Either terminating the process or not, as long as the log is nontrivial, it will be printed to<br />
-console and persisted in the <code>SmvModule</code> persisted data path with postfix <code>.valid</code>.</p>
+<p>Either terminating the process or not, as long as the log is nontrivial, it will be printed to<br />console and persisted in the <code>SmvModule</code> persisted data path with postfix <code>.valid</code>.</p>
 <h2 id="dqm">DQM</h2>
-<p>Although the parser enforced data schema, there are typically more things need to be checked on<br />
-real-world data. Here are some examples,</p>
+<p>Although the parser enforced data schema, there are typically more things need to be checked on<br />real-world data. Here are some examples,</p>
 <ul>
-<li><code>Age</code> should be between 0 and 120</li>
-<li><code>Gender</code> should only have 3 values <code>m</code>, <code>f</code>, and <code>o</code></li>
+<li><code>Age</code> should be between 0 and 120<br /></li>
+<li><code>Gender</code> should only have 3 values <code>m</code>, <code>f</code>, and <code>o</code><br /></li>
 <li><code>Price</code> should be between 0.01 and 1,000,000.00</li>
 </ul>
-<p>Record by record, above rules could be checked, and depend on the need, they can be fixed.<br />
-The <code>SmvDQM</code> framework provides <code>Rule</code>s and <code>Fix</code>es to address them.</p>
+<p>Record by record, above rules could be checked, and depend on the need, they can be fixed.<br />The <code>SmvDQM</code> framework provides <code>Rule</code>s and <code>Fix</code>es to address them.</p>
 <h3 id="dqmrule-dqmfix">DQMRule &amp; DQMFix</h3>
 <p>Since <code>dqm</code> is a sub-package, to use it one need to</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> org.<span class="fu">tresamigos</span>.<span class="fu">smv</span>.<span class="fu">dqm</span>.<span class="fu">_</span></code></pre></div>
-<p>Since both <code>SmvFile</code> and <code>SmvModule</code> provide a <code>dqm</code> method to define the rules, one can override<br />
-it to add rules.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;example module with dqm&quot;</span>) {
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> org.<span class="fu">tresamigos</span>.<span class="fu">smv</span>.<span class="fu">dqm</span>.<span class="fu">_</span></code></pre>
+<p>Since both <code>SmvFile</code> and <code>SmvModule</code> provide a <code>dqm</code> method to define the rules, one can override<br />it to add rules.</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;example module with dqm&quot;</span>) {
   ...
   <span class="kw">override</span> <span class="kw">def</span> <span class="fu">run</span>(i:runParams) { ... }
   <span class="kw">override</span> <span class="kw">def</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().
       <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;Price&quot;</span> &lt; <span class="fl">1000000.0</span>, <span class="st">&quot;rule1&quot;</span>, FailAny)).
       <span class="fu">add</span>(<span class="fu">DQMFix</span>($<span class="st">&quot;age&quot;</span> &gt; <span class="dv">120</span>, <span class="fu">lit</span>(<span class="dv">120</span>) as <span class="st">&quot;age&quot;</span>, <span class="st">&quot;fix1&quot;</span>))
-}</code></pre></div>
-<p>Each <code>DQMRule</code> or <code>DQMFix</code> takes a <code>name</code> and <code>DQMTaskPolicy</code> parameter in addition to the logic. The following<br />
-<code>DQMTaskPolicy</code>s can be chosen from</p>
+}</code></pre>
+<p>Each <code>DQMRule</code> or <code>DQMFix</code> takes a <code>name</code> and <code>DQMTaskPolicy</code> parameter in addition to the logic. The following<br /><code>DQMTaskPolicy</code>s can be chosen from</p>
 <ul>
-<li><code>FailNone</code> - this rule or fix will not trigger Validation fails by itself</li>
-<li><code>FailAny</code> - whenever this rule or fix be triggered, fail the validation</li>
-<li><code>FailCount(n)</code> - will fail the validation if the rule or fix was triggered &gt;= n times</li>
+<li><code>FailNone</code> - this rule or fix will not trigger Validation fails by itself<br /></li>
+<li><code>FailAny</code> - whenever this rule or fix be triggered, fail the validation<br /></li>
+<li><code>FailCount(n)</code> - will fail the validation if the rule or fix was triggered &gt;= n times<br /></li>
 <li><code>FailPercent(r)</code> - will fail the validation if the rule or fix was triggered &gt;= r * total record. (r is in between of 0, 1)</li>
 </ul>
 <p>If not specified, the default <code>DQMTaskPolicy</code> is <code>FailNone</code>.</p>
 <p>Other than the generic <code>DQMRule</code> and <code>DQMFix</code> interface, SMV provides some build-in rules and fixes.</p>
 <ul>
-<li><code>BoundRule(col: Column, lower: T, upper: T)</code> - lower &lt;= col &lt; upper</li>
-<li><code>SetRule(col: Column, set: Set[Any])</code> - col in set</li>
-<li><code>FormatRule(col: Column, fmt: String)</code> - col matches fmt</li>
-<li><code>SetFix(col: Column, set: Set[Any], default: Any)</code> - &quot;default&quot; if &quot;col not in set&quot;</li>
+<li><code>BoundRule(col: Column, lower: T, upper: T)</code> - lower &lt;= col &lt; upper<br /></li>
+<li><code>SetRule(col: Column, set: Set[Any])</code> - col in set<br /></li>
+<li><code>FormatRule(col: Column, fmt: String)</code> - col matches fmt<br /></li>
+<li><code>SetFix(col: Column, set: Set[Any], default: Any)</code> - &quot;default&quot; if &quot;col not in set&quot;<br /></li>
 <li><code>FormatFix(col: Column, fmt: String, default: Any)</code> - &quot;default&quot; if &quot;col not match fmt&quot;</li>
 </ul>
-<p>Please note that there is no <code>BoundFix</code>, since the upper bound and lower bound should have<br />
-separated <code>Fix</code>es.</p>
+<p>Please note that there is no <code>BoundFix</code>, since the upper bound and lower bound should have<br />separated <code>Fix</code>es.</p>
 <p>The rules and fixes defined in the <code>dqm</code> method will be applied to the result <code>DataFrame</code> of the <code>run</code> method.</p>
 <h3 id="dqmpolicy">DQMPolicy</h3>
-<p>A <code>DQMPolicy</code> defines a requirement on the entire <code>DataFrame</code>. As in above example we can add<br />
-a policy</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">override</span> <span class="kw">def</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().
+<p>A <code>DQMPolicy</code> defines a requirement on the entire <code>DataFrame</code>. As in above example we can add<br />a policy</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">override</span> <span class="kw">def</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().
     <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;Price&quot;</span> &lt; <span class="fl">1000000.0</span>, <span class="st">&quot;rule1&quot;</span>)).
     <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;Price&quot;</span> &gt; <span class="fl">0.0</span>, <span class="st">&quot;rule2&quot;</span>)).
     <span class="fu">add</span>(<span class="fu">DQMFix</span>($<span class="st">&quot;age&quot;</span> &gt; <span class="dv">120</span>, <span class="fu">lit</span>(<span class="dv">120</span>) as <span class="st">&quot;age&quot;</span>, <span class="st">&quot;fix1&quot;</span>)).
-    <span class="fu">add</span>(<span class="fu">FailTotalRuleCountPolicy</span>(<span class="dv">100</span>))</code></pre></div>
-<p>Here <code>FailTotalRuleCountPolicy(...)</code> is a predefined <code>DQMPolicy</code>, which check the total count of<br />
-all the rules in this <code>DQM</code>, if the total count is within the threshold, the validation will<br />
-pass, otherwise will fail.</p>
+    <span class="fu">add</span>(<span class="fu">FailTotalRuleCountPolicy</span>(<span class="dv">100</span>))</code></pre>
+<p>Here <code>FailTotalRuleCountPolicy(...)</code> is a predefined <code>DQMPolicy</code>, which check the total count of<br />all the rules in this <code>DQM</code>, if the total count is within the threshold, the validation will<br />pass, otherwise will fail.</p>
 <p>There are 4 build-in <code>DQMPolicy</code>s</p>
 <ul>
-<li><code>FailTotalRuleCountPolicy(n)</code> - fail when total rule count &gt;= n</li>
-<li><code>FailTotalFixCountPolicy(n)</code> - fail when total fix count &gt;= n</li>
-<li><code>FailTotalRulePercentPolicy(r)</code> - fail when total rule count &gt;= total records * r, r in (0,1)</li>
+<li><code>FailTotalRuleCountPolicy(n)</code> - fail when total rule count &gt;= n<br /></li>
+<li><code>FailTotalFixCountPolicy(n)</code> - fail when total fix count &gt;= n<br /></li>
+<li><code>FailTotalRulePercentPolicy(r)</code> - fail when total rule count &gt;= total records * r, r in (0,1)<br /></li>
 <li><code>FailTotalFixPercentPolicy(r)</code> - fail when total fix count &gt;= total records * r, r in (0, 1)</li>
 </ul>
 <p>One can also create user defined policies.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> policy: (DataFrame, DQMState) =&gt; Boolean = {(df, state) =&gt;
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> policy: (DataFrame, DQMState) =&gt; Boolean = {(df, state) =&gt;
   state.<span class="fu">getRuleCount</span>(<span class="st">&quot;rule1&quot;</span>) + state.<span class="fu">getFixCount</span>(<span class="st">&quot;fix1&quot;</span>) &lt; <span class="dv">1000</span>
 }
 <span class="kw">override</span> <span class="kw">def</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().
     <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;Price&quot;</span> &lt; <span class="fl">1000000.0</span>, <span class="st">&quot;rule1&quot;</span>)).
     <span class="fu">add</span>(<span class="fu">DQMRule</span>($<span class="st">&quot;Price&quot;</span> &gt; <span class="fl">0.0</span>, <span class="st">&quot;rule2&quot;</span>)).
     <span class="fu">add</span>(<span class="fu">DQMFix</span>($<span class="st">&quot;age&quot;</span> &gt; <span class="dv">120</span>, <span class="fu">lit</span>(<span class="dv">120</span>) as <span class="st">&quot;age&quot;</span>, <span class="st">&quot;fix1&quot;</span>)).
-    <span class="fu">add</span>(policy, <span class="st">&quot;my_udp1&quot;</span>)</code></pre></div>
-<p>Please note that the user defined policy function has access to both <code>DataFrame</code> and <code>DQMState</code>.<br />
-In above example, we only used the <code>DQMState</code>. One can actually do complicated <code>DataFrame</code><br />
-calculation to make the policy decision. For example,</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> policy: (DataFrame, DQMState) =&gt; Boolean = {(df, state) =&gt;
+    <span class="fu">add</span>(policy, <span class="st">&quot;my_udp1&quot;</span>)</code></pre>
+<p>Please note that the user defined policy function has access to both <code>DataFrame</code> and <code>DQMState</code>.<br />In above example, we only used the <code>DQMState</code>. One can actually do complicated <code>DataFrame</code><br />calculation to make the policy decision. For example,</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> policy: (DataFrame, DQMState) =&gt; Boolean = {(df, state) =&gt;
   <span class="kw">val</span> avgPrice = df.<span class="fu">agg</span>(<span class="fu">avg</span>($<span class="st">&quot;Price&quot;</span>)).<span class="fu">first</span>.<span class="fu">toSeq</span>.<span class="fu">head</span>.<span class="fu">asInstanceOf</span>[Double]
   avgPrice &lt; <span class="fl">100.0</span>
-}</code></pre></div>
+}</code></pre>
 <p>It checks the average price on the entire DF, and require it to be less than <code>100.0</code>.</p>
-<p>Using <code>DataFrame</code> directly could introduce additional <code>actions</code> on the data, which could be<br />
-costly. For any policy which can be fully determined by using the <code>DQMState</code>, we should do so and<br />
-avoid using <code>DataFrame</code> actions.</p>
+<p>Using <code>DataFrame</code> directly could introduce additional <code>actions</code> on the data, which could be<br />costly. For any policy which can be fully determined by using the <code>DQMState</code>, we should do so and<br />avoid using <code>DataFrame</code> actions.</p>
 <h3 id="dqmstate">DQMState</h3>
 <p><code>DQMState</code> provides the following methods to access its contents, one can use them to build policies.</p>
 <ul>
-<li><code>getRecCount(): Long</code> - total number of records in this DF</li>
-<li><code>getFixCount(name: String): Int</code> - for the fix with the given name, return the time it is triggered</li>
-<li><code>getRuleCount(name: String): Int</code> - for the rule with the given name, return the time it is triggered</li>
-<li><code>getTaskCount(name: String): Int</code> - for the rule or fix with the given name, return the time it is triggered</li>
-<li><code>getRuleLog(name: String): Seq[String]</code> - for the rule with the given name, return the example failed records</li>
-<li><code>getAllLog(): Seq[String]</code> - return all the example failed records from all the rules</li>
-<li><code>getTotalFixCount(): Int</code> - return the total number of times fixes get triggered</li>
+<li><code>getRecCount(): Long</code> - total number of records in this DF<br /></li>
+<li><code>getFixCount(name: String): Int</code> - for the fix with the given name, return the time it is triggered<br /></li>
+<li><code>getRuleCount(name: String): Int</code> - for the rule with the given name, return the time it is triggered<br /></li>
+<li><code>getTaskCount(name: String): Int</code> - for the rule or fix with the given name, return the time it is triggered<br /></li>
+<li><code>getRuleLog(name: String): Seq[String]</code> - for the rule with the given name, return the example failed records<br /></li>
+<li><code>getAllLog(): Seq[String]</code> - return all the example failed records from all the rules<br /></li>
+<li><code>getTotalFixCount(): Int</code> - return the total number of times fixes get triggered<br /></li>
 <li><code>getTotalRuleCount(): Int</code> - return the total number of times rules get triggered</li>
 </ul>
 </article>

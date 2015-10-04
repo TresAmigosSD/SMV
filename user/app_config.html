@@ -20,11 +20,7 @@
 
 <article class="markdown-body">
 <h1 id="smv-application-configuration">SMV Application Configuration</h1>
-<p>SMV provides multiple ways to set the runtime configuration. Multiple config files are utilized to<br />
-facilitate the ability to define static application level configuration and easily allow the user to<br />
-provide their own configuration. This also allows the static application level configuration to be<br />
-&quot;checked-in&quot; with the individual apps. In addition to the configuration files, the user is able<br />
-to override any of the options using the command line interface.</p>
+<p>SMV provides multiple ways to set the runtime configuration. Multiple config files are utilized to<br />facilitate the ability to define static application level configuration and easily allow the user to<br />provide their own configuration. This also allows the static application level configuration to be<br />&quot;checked-in&quot; with the individual apps. In addition to the configuration files, the user is able<br />to override any of the options using the command line interface.</p>
 <h2 id="command-line-override">Command line override</h2>
 <p>For any given option X, the user may override the value specified in any of the configuration files as follows:</p>
 <pre><code>_SMV_HOME_/tools/smv-run --smv-props X=55 ... -m module_to_run</code></pre>
@@ -32,42 +28,33 @@ to override any of the options using the command line interface.</p>
 <pre><code>_SMV_HOME_/tools/smv-run --smv-props smv.appName=&quot;myApp&quot; smv.stages=&quot;s1,s2&quot; ... -m module_to_run</code></pre>
 <p>Some configuration parameters have a shorthand direct command line override (e.g. --data-dir)</p>
 <h2 id="name-conflict-resolution">Name conflict resolution</h2>
-<p>If a configuration parameter appears in multiple places, then the conflict is resolved by picking the value from the higher priority source.<br />
-The sources are ordered from high to low priority as follows:</p>
+<p>If a configuration parameter appears in multiple places, then the conflict is resolved by picking the value from the higher priority source.<br />The sources are ordered from high to low priority as follows:</p>
 <ul>
-<li>command line options</li>
-<li>project user level config file (default: conf/smv-user-conf.props)</li>
-<li>global user level config file (~/.smv/smv-user-conf.props)</li>
-<li>app level config file (default: conf/smv-app-conf.props)</li>
+<li>command line options<br /></li>
+<li>project user level config file (default: conf/smv-user-conf.props)<br /></li>
+<li>global user level config file (~/.smv/smv-user-conf.props)<br /></li>
+<li>app level config file (default: conf/smv-app-conf.props)<br /></li>
 <li>smv default options</li>
 </ul>
-<p>Since SMV support both <code>smv-user-conf.props</code> and <code>smv-app-conf.props</code>, a typical practice is to<br />
-put project level shared (accross team members) config into <code>smv-app-conf.props</code> and user<br />
-specific config into <code>smv-user-conf</code>. Also config the version control system to ignore<br />
-<code>conf/smv-user-conf.props</code>.</p>
+<p>Since SMV support both <code>smv-user-conf.props</code> and <code>smv-app-conf.props</code>, a typical practice is to<br />put project level shared (accross team members) config into <code>smv-app-conf.props</code> and user<br />specific config into <code>smv-user-conf</code>. Also config the version control system to ignore<br /><code>conf/smv-user-conf.props</code>.</p>
 <h2 id="smv-config-parameters">SMV Config Parameters</h2>
-<p>The table below describes all available SMV configuration parameters.<br />
-Note that for sequence/list type parameters (e.g. smv.stages), a &quot;,&quot; or &quot;:&quot; can be used to separate out the items in the list.<br />
-<strong>For command line arguments, only the &quot;:&quot; can be used as a separator.</strong><br />
-<table>
-<tr>
-<th>Property Name</th>
-<th>Default</th>
-<th>Required/<br>Optional</th>
-<th>Description</th>
-</tr></p>
+<p>The table below describes all available SMV configuration parameters.<br />Note that for sequence/list type parameters (e.g. smv.stages), a &quot;,&quot; or &quot;:&quot; can be used to separate out the items in the list.<br /><strong>For command line arguments, only the &quot;:&quot; can be used as a separator.</strong><br /><table><tr><th>Property Name</th><th>Default</th><th>Required/<br>Optional</th><th>Description</th></tr></p>
 <tr>
 <td>smv.appName</td>
 <td>"SMV Application"</td>
 <td>Optional</td>
 <td>The application name</td>
 </tr>
+
+
 <tr>
 <td>smv.stages</td>
 <td>empty</td>
 <td>Required</td>
 <td>List of stage names in application.<br>Example: "etl, model, ui"</td>
 </tr>
+
+
 <tr>
 <td>smv.stages.X.packages</td>
 <td>empty</td>
@@ -75,15 +62,21 @@ Note that for sequence/list type parameters (e.g. smv.stages), a &quot;,&quot; o
 <td>List of package names in stage X.  The package names must be the fully qualified name.<br>
 Example: "com.company.proj.etl, com.company.proj.model"</td>
 </tr>
+
+
 <tr>
 <td>smv.stages.X.version</td>
 <td>0</td>
 <td>Optional</td>
 <td>Current version of stage X. See <a href="smv_stages.html"> for details on stage versions</td>
 </tr>
+
+
 <tr>
 <th colspan="4">Data Directories Parameters</th>
 </tr>
+
+
 <tr>
 <td>smv.dataDir</td>
 <td>N/A</td>
@@ -91,6 +84,8 @@ Example: "com.company.proj.etl, com.company.proj.model"</td>
 <td>The top level data directory.
 Can be overridden using <code>--data-dir</code> command line option</td>
 </tr>
+
+
 <tr>
 <td>smv.inputDir</td>
 <td>dataDir<code>/input</code></td>
@@ -98,6 +93,8 @@ Can be overridden using <code>--data-dir</code> command line option</td>
 <td>Data input directory (not currently used)
 Can be overridden using <code>--input-dir</code> command line option</td>
 </tr>
+
+
 <tr>
 <td>smv.outputDir</td>
 <td>dataDir<code>/output</code></td>
@@ -105,6 +102,8 @@ Can be overridden using <code>--input-dir</code> command line option</td>
 <td>Data output directory
 Can be overridden using <code>--output-dir</code> command line option</td>
 </tr>
+
+
 <tr>
 <td>smv.publishDir</td>
 <td>dataDir<code>/publish</code></td>
@@ -112,12 +111,13 @@ Can be overridden using <code>--output-dir</code> command line option</td>
 <td>Data publish directory
 Can be overridden using <code>--publish-dir</code> command line option</td>
 </tr>
+
+
 </table>
+
+
 <h2 id="spark-sql-configuration-parameters.">Spark SQL configuration parameters.</h2>
-<p>For small projects, user may also provide spark SQL configuration properties along with the SMV properties.<br />
-This reduces the number of configuration files to maintain and also allows the application to specify a better default<br />
-spark configuration parameter depending on its needs. All properties starting with &quot;spark.sql&quot; will be added to the<br />
-runtime SqlContext configuration.</p>
+<p>For small projects, user may also provide spark SQL configuration properties along with the SMV properties.<br />This reduces the number of configuration files to maintain and also allows the application to specify a better default<br />spark configuration parameter depending on its needs. All properties starting with &quot;spark.sql&quot; will be added to the<br />runtime SqlContext configuration.</p>
 </article>
 </body>
 </html>
