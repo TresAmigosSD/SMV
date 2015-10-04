@@ -21,9 +21,21 @@ helper functions and create a default SMV dummy application (`app`)
 * `df.savel(path)` : save the contents of the `DataFrame` to a local (none HDFS) filesystem.  WARNING: The contents must be able to fit in memory!!!
 * `discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the path + ".schema.toBeReviewed" file
 * `dumpEdd(data_set)` : Generate base EDD results for given `SmvDataSet` and dump the results to the screen.
+
+## Shell package provided functions
+With `import org.tresamigos.smv.shell._` in the `smv_shell_init.scala`, the following
+functions are provided to the shell,
+
 * `lsStage` : list all the stages of the project
 * `ls(stageName)`: list SmvDataSet in the given stage
 * `ls`: list all the SmvDataSet in the project, organized by stages
+* `lsDead(stageName)`/`lsDead`: list `dead` datasets. A `dead` dataset is defined as "no contribution to the Output modules of the stage"
+* `lsLeaf(stageName)`/`lsLeaf`: list `leaf` datasets. A `leaf` dataset is defined as "no modules in the stage depend on it, excluding Output modules"
+* `graph(stageName)`: print dependency graph of all DS in this stage, without unused input DS
+* `graph`: print dependency graph of stages and inter-stage links
+* `graph(dataset)`: print in-stage dependency of that DS
+* `ancestors(dataset)`: list all `ancestors` of a dataset
+* `descendants(dataset)`: list all `descendants` of a dataset
 
 ## Project Shell Init
 In addition to the standard `smv_shell_init.scala` file, the `smv-shell` script will look for an optional `conf/shell_init.scala` file and source it if found.
@@ -111,6 +123,13 @@ com.mycompany.MyApp.stage2:
   (O) StageEmpCategory
   (L) input.EmploymentStateLink
 ```
+There are 4 values of the leading label
+* "O" - SmvOutput
+* "L" - SmvModuleLink
+* "F" - SmvFile
+* "M" - SmvModule (but neither SmvOutput nor SmvModuleLink)
+
+Please see [SMV Introduction](smv_intro.md) for details of the 4 types.
 
 ### List DataSets in a Stage
 ```scala

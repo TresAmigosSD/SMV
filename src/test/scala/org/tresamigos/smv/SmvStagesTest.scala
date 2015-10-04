@@ -170,14 +170,16 @@ org.tresamigos.smv.smvAppTestPkg3:
 
   test("test ancestors/descendants") {
     val a = new shell.ListDataSets(SmvApp.app.stages).ancestors(smvAppTestPkg3.T)
-    assert(a === """(L) smvAppTestPkg3.L
-(O) smvAppTestPkg1.Y
-(M) smvAppTestPkg1.X""")
+    assertUnorderedSeqEqual(a.split("\n"), Seq(
+      "(L) smvAppTestPkg3.L",
+      "(O) smvAppTestPkg1.Y",
+      "(M) smvAppTestPkg1.X"))
 
     val d = new shell.ListDataSets(SmvApp.app.stages).descendants(smvAppTestPkg1.Y)
-    assert(d === """(L) smvAppTestPkg3.L
-(O) smvAppTestPkg3.U
-(M) smvAppTestPkg3.T""")
+    assertUnorderedSeqEqual(d.split("\n"), Seq(
+      "(L) smvAppTestPkg3.L",
+      "(O) smvAppTestPkg3.U",
+      "(M) smvAppTestPkg3.T"))
   }
 }
 

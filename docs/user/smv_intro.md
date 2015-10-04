@@ -14,23 +14,43 @@ SMV is a very simple data application framework that enables the following:
 
 ## Application Hierarchy
 A single SMV application may contain one or more stages.  Each stage may contain one or more modules.  A stage corresponds to a single scala package that contains the modules.
-By convention, each stage should define an `InputSet.scala` (or similarly named file) to enumerate all the inputs used in the given stage.
+By convention, each stage should have a sub-package `input` to defined all the input `SmvDataSet`s
+used in the given stage.
 For example, given an app with 2 stages (stage1, stage2) we should have the following file layout
 
 ```
 +-- src/main/scala/com/mycom/myproj
     +-- stage1
-        +-- InputSetS1.scala
+        +-- input
+            +-- package.scala
         +-- mod1.scala
         +-- mod2.scala
     +-- stage2
-        +-- InputSetS2.scala
+        +-- input
+            +-- package.scala
         +-- mod3.scala
         +-- ...
 ```
 
+Within a stage, there are multiple `SmvDataSet`s.
+
+At the top level there are 2 types of `SmvDataSet`
+* `SmvFile`, and
+* `SmvModule`
+
+`SmvFile`s link to physical files stored in HDFS. Pleas see [SMV Files](smv_file.md) for details.
+`SmvModule`s are datasets created in by the code. They could depends on other `SmvDataSet`s.
+
+`SmvModule` could be mixed with `SmvOutput`, which labeled it to be an output dataset of a stage.
+Without the `SmvOutput` label, a `SmvModule` will be considered intermediate dataset.
+Please see [SMV Modules](smv_module.md) for more details.
+
+A special type of `SmvModule` is `SmvModuleLink`. It is a link to other `SmvModule`. For example,
+`stage1` has `mod2` as a `SmvOutput`, and `stage2` uses it as input. Instead of refer `stage1.mod2`
+directly in `stage2`, a `SmvModuleLink` will be created in the `input` sub-package and link to
+`stage1.mod2`. The pairs of `SmvOutput` and `SmvModuleLink` defines the interface between stages.
+Please see [SMV Stages](smv_stages.md) for more details.
+
 ## Class Diagram
 The class diagram of the SMV App below is provided as an FYI and is not critical to productively using SMV.
 ![SMV App Class Diagram](https://rawgit.com/TresAmigosSD/SMV/master/docs/design/app_class.svg)
-
-

@@ -46,6 +46,12 @@ package SMV {
     +cnstr(schemaStr, data)
   }
 
+  class SmvModuleLink extends SmvModule
+
+  class SmvOutput extends SmvModule{
+  //trait mixed in with SmvModule
+  }
+
   class SmvApp {
     -sc: SparkContext
     -sqlContext: SQLContext
@@ -60,11 +66,13 @@ package SMV {
   SmvApp *-- "1" SmvStages
   SmvStages *-- "*" SmvStage
   SmvStage *-- "*" SmvModule
+
+  SmvModuleLink *-- "1" SmvOutput
 }
 
 package ExampleApp {
   package AppPkg1 {
-      class Module1 extends SmvModule {
+      class Module1 extends SmvOutput {
         +override version()
         +override requiresDS()
         +override run(inputs)
@@ -76,6 +84,10 @@ package ExampleApp {
       }
   }
   package AppPkg2 {
+      class MLink1 extends SmvModuleLink {
+        smvModule: SmvOutput
+      }
+
       class Module2 extends SmvModule {
         +override version()
         +override requiresDS()
