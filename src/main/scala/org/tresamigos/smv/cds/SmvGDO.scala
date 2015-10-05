@@ -22,6 +22,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions._
 
 import org.tresamigos.smv._
+import org.apache.spark.annotation._
 
 /**
  * SmvGDO - SMV GroupedData Operator
@@ -34,7 +35,8 @@ import org.tresamigos.smv._
  *   val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
  * }}}
  **/
-private[smv] abstract class SmvGDO extends Serializable {
+@Experimental
+abstract class SmvGDO extends Serializable {
   def inGroupKeys: Seq[String]
   def createInGroupMapping(smvSchema:StructType): Iterable[Row] => Iterable[Row]
   def createOutSchema(inSchema: StructType): StructType

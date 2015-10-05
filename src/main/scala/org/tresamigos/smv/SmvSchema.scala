@@ -25,6 +25,7 @@ import java.text.{DateFormat, SimpleDateFormat}
 
 import scala.annotation.switch
 import scala.util.Try
+import org.apache.spark.annotation._
 
 private[smv] abstract class SchemaEntry extends Serializable {
   val name: String
@@ -299,7 +300,11 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
 
   override def toString = "Schema: " + entries.mkString("; ")
 
-  private[smv] def toStructType : StructType = StructType(entries.map(se => StructField(se.name, se.dataType, true)))
+  /**
+   * convert SmvSchema to StructType
+   **/
+  @DeveloperApi
+  def toStructType : StructType = StructType(entries.map(se => StructField(se.name, se.dataType, true)))
 
   /** get representation of this scheam as a sequence of strings that encode attributes and entries */
   private def toStringsWithMeta : Seq[String] = {

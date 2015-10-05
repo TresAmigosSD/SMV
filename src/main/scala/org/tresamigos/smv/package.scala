@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.{StructField, StructType}
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
+import org.apache.spark.annotation._
 
 /**
  * == Spark Modularized View (SMV) ==
@@ -53,7 +54,7 @@ package object smv {
 
   /** implicitly convert `Symbol` to `ColumnHelper` */
   implicit def makeSymColHelper(sym: Symbol) = new ColumnHelper(new ColumnName(sym.name))
-  
+
   /** implicitly convert `DataFrame` to `SmvDFHelper` */
   implicit def makeDFHelper(df: DataFrame) = new SmvDFHelper(df)
 
@@ -71,7 +72,8 @@ package object smv {
   private[smv] implicit def makeFieldHelper(field: StructField) = new StructFieldHelper(field)
 
   /** implicitly convert `StructType` to `StructTypeHelper` */
-  private[smv] implicit def makeStructTypeHelper(schema: StructType) = new StructTypeHelper(schema)
+  @DeveloperApi
+  implicit def makeStructTypeHelper(schema: StructType) = new StructTypeHelper(schema)
 
   /**
    * Instead of using String for join type, always use the link here.

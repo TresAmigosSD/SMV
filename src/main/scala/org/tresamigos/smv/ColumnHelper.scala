@@ -27,6 +27,7 @@ import java.util.Calendar
 import java.sql.Timestamp
 import com.rockymadden.stringmetric.phonetic.{MetaphoneAlgorithm, SoundexAlgorithm}
 import org.joda.time._
+import org.apache.spark.annotation._
 
 /**
  * ColumnHelper class provides additional methods/operators on Column
@@ -47,7 +48,8 @@ class ColumnHelper(column: Column) {
    * ($"v" * 5).toExpr
    * }}}
    */
-  private[smv] def toExpr = extractExpr(column)
+  @DeveloperApi
+  def toExpr = extractExpr(column)
 
   /**
    * Get the name of the column.

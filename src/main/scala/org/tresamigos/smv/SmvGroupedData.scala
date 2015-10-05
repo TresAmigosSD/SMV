@@ -56,7 +56,8 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
    * }}}
    **/
-  private[smv] def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
+  @Experimental
+  def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
     val schema = df.schema
     val ordinals = schema.getIndices(keys: _*)
     val rowToKeys: Row => Seq[Any] = {row =>
