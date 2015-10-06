@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.expressions.GenericRow
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
@@ -66,22 +68,20 @@ private[smv] class FileIOHandler(
     schema: SmvSchema
   ) = {
     val parserV = parserValidator
-    val add: (Exception, String) => Unit = {(e,r) => parserV.addWithReason(e,r)}
+    val add: (Exception, Seq[_]) => Option[Row] = { (e,r) => parserV.addWithReason(e,r.mkString); None }
     val rowRdd = rdd.mapPartitions{ iterator =>
-      val mutableRow = new GenericMutableRow(schema.getSize)
-      iterator.map { r =>
+      iterator.map[Option[Row]] { r =>
         try {
           require(r.size == schema.getSize)
-          for (i <- 0 until schema.getSize) {
-            mutableRow.update(i, r(i))
-          }
-          Some(mutableRow)
+          // use the schema to parse string into expected type
+          val parsed = r.zipWithIndex map { case (elem, i) => schema.toValue(i, elem) }
+          Some(Row.fromSeq(parsed))
         } catch {
-          case e:IllegalArgumentException  => add(e, r.mkString(",")); None
-          case e:NumberFormatException  => add(e, r.mkString(",")); None
-          case e:java.text.ParseException  =>  add(e, r.mkString(",")); None
+          case e:IllegalArgumentException  => add(e, r);
+          case e:NumberFormatException     => add(e, r);
+          case e:java.text.ParseException  => add(e, r);
         }
-      }.collect{case Some(l) => l.asInstanceOf[Row]}
+      }.collect{case Some(l) => l}
     }
     sqlContext.createDataFrame(rowRdd, schema.toStructType)
   }

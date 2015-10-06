@@ -283,6 +283,8 @@ private[smv] object SchemaEntry {
 class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,String]) extends Serializable {
   private[smv] def getSize = entries.size
 
+  private[smv] def toValue(ordinal: Int, sVal: String) = entries(ordinal).strToVal(sVal)
+
   override def toString = "Schema: " + entries.mkString("; ")
 
   /**
