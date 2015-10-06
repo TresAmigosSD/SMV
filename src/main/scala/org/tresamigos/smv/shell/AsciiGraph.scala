@@ -58,7 +58,7 @@ class StageAsciiGraph(stages: SmvStages) {
         toPrint(upStage.name),
         toPrint(s.name),
         links.flatMap{l =>
-          Seq(NameStrUtil.dsStr(s, l.smvModule), NameStrUtil.dsStr(s, l))
+          Seq(NameStrUtil.dsStr(stages, l.smvModule), NameStrUtil.dsStr(stages, l))
         }.mkString("\n")
       )
     }

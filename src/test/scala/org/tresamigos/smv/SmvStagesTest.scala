@@ -129,22 +129,22 @@ class SmvMultiStageTest extends SmvTestUtil {
  └────────────┘ └────────────┘ └────────────┘""")
 
     val g2 = new shell.StageAsciiGraph(app.stages)
-    assertStrIgnoreSpace(g2.graphStr, """              ┌────────────┐
-              │smvAppTestPk│
-              │     g1     │
-              └──────┬─────┘
-                     │
-                     v
- ┌───────────────────────────────────────┐
- │(O) org.tresamigos.smv.smvAppTestPkg1.Y│
- │                 (L) L                 │
- └─────────┬─────────────────────────────┘
-           │
-           v
-    ┌────────────┐    ┌────────────┐
-    │smvAppTestPk│    │smvAppTestPk│
-    │     g3     │    │     g2     │
-    └────────────┘    └────────────┘""")
+    assertStrIgnoreSpace(g2.graphStr, """       ┌────────────┐
+        │smvAppTestPk│
+        │     g1     │
+        └──────┬─────┘
+               │
+               v
+    ┌────────────────────┐
+    │(O) smvAppTestPkg1.Y│
+    │(L) smvAppTestPkg3.L│
+    └───┬────────────────┘
+        │
+        v
+ ┌────────────┐ ┌────────────┐
+ │smvAppTestPk│ │smvAppTestPk│
+ │     g3     │ │     g2     │
+ └────────────┘ └────────────┘""")
   }
 
   test("test list functions") {
