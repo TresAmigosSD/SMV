@@ -95,7 +95,7 @@ class ColumnHelper(column: Column) {
    */
   @deprecated("should use Column.isNan instead", "1.5")
   def smvIsNaN: Column =
-    new Column(Alias(ScalaUdf(IsNaNFunc, BooleanType, Seq(expr)), s"SmvIsNaN($column)")())
+    new Column(Alias(ScalaUDF(IsNaNFunc, BooleanType, Seq(expr)), s"SmvIsNaN($column)")())
 
   private val IsNaNFunc: Double => Boolean = x => x.isNaN()
 
@@ -113,7 +113,7 @@ class ColumnHelper(column: Column) {
   def smvLength = {
     val name = s"SmvLength($column)"
     val f: String => Integer = (s:String) => if(s == null) null else s.size
-    new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)())
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)())
   }
 
   /**
@@ -131,7 +131,7 @@ class ColumnHelper(column: Column) {
     val f = (s:String) =>
       if(s == null) null
       else new Timestamp(fmtObj.parse(s).getTime())
-    new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)())
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
   }
 
   /**
@@ -153,7 +153,7 @@ class ColumnHelper(column: Column) {
         cal.get(Calendar.YEAR)
       }
 
-    new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
   }
 
   /**
@@ -175,7 +175,7 @@ class ColumnHelper(column: Column) {
         cal.get(Calendar.MONTH) + 1
       }
 
-    new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
   }
 
   /**
@@ -197,7 +197,7 @@ class ColumnHelper(column: Column) {
         cal.get(Calendar.MONTH)/3 + 1
       }
 
-    new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
   }
 
   /**
@@ -219,7 +219,7 @@ class ColumnHelper(column: Column) {
         cal.get(Calendar.DAY_OF_MONTH)
       }
 
-    new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
   }
 
   /**
@@ -241,7 +241,7 @@ class ColumnHelper(column: Column) {
         cal.get(Calendar.DAY_OF_WEEK)
       }
 
-    new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
   }
 
   /**
@@ -260,7 +260,7 @@ class ColumnHelper(column: Column) {
       if(ts == null) null
       else fmtObj.format(ts).toInt
 
-    new Column(Alias(ScalaUdf(f, IntegerType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
   }
 
   /**
@@ -297,7 +297,7 @@ class ColumnHelper(column: Column) {
           math.floor(v/1000000)*1000000
       }
 
-    new Column(Alias(ScalaUdf(f, DoubleType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
   }
 
   /**
@@ -320,7 +320,7 @@ class ColumnHelper(column: Column) {
         else min + math.floor((v - min) / delta) * delta
       }
 
-    new Column(Alias(ScalaUdf(f, DoubleType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
   }
 
   /**
@@ -337,7 +337,7 @@ class ColumnHelper(column: Column) {
     val f = (v:Any) =>
       if(v == null) null
       else math.floor(v.asInstanceOf[Double] / bin) * bin
-    new Column(Alias(ScalaUdf(f, DoubleType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
   }
 
   /**
@@ -351,7 +351,7 @@ class ColumnHelper(column: Column) {
     val f = (s:String) =>
       if(s == null) null
       else SoundexAlgorithm.compute(s.replaceAll("""[^a-zA-Z]""", "")).getOrElse(null)
-    new Column(Alias(ScalaUdf(f, StringType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, StringType, Seq(expr)), name)() )
   }
 
   /**
@@ -362,7 +362,7 @@ class ColumnHelper(column: Column) {
     val f = (s:String) =>
       if(s == null) null
       else MetaphoneAlgorithm.compute(s.replaceAll("""[^a-zA-Z]""", "")).getOrElse(null)
-    new Column(Alias(ScalaUdf(f, StringType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, StringType, Seq(expr)), name)() )
   }
 
   /**
@@ -413,7 +413,7 @@ class ColumnHelper(column: Column) {
     val f = (t:Timestamp) =>
       if(t == null) null
       else new Timestamp((new DateTime(t)).plusDays(n).getMillis())
-    new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
   }
 
   /**
@@ -430,7 +430,7 @@ class ColumnHelper(column: Column) {
     val f = (t:Timestamp) =>
       if(t == null) null
       else new Timestamp((new DateTime(t)).plusWeeks(n).getMillis())
-    new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
   }
 
   /**
@@ -452,7 +452,7 @@ class ColumnHelper(column: Column) {
     val f = (t:Timestamp) =>
       if(t == null) null
       else new Timestamp((new DateTime(t)).plusMonths(n).getMillis())
-    new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
   }
 
   /**
@@ -469,7 +469,7 @@ class ColumnHelper(column: Column) {
     val f = (t:Timestamp) =>
       if(t == null) null
       else new Timestamp((new DateTime(t)).plusYears(n).getMillis())
-    new Column(Alias(ScalaUdf(f, TimestampType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
   }
 
   /**

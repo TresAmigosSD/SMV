@@ -14,10 +14,10 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql._
+import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.expressions._, codegen.{CodeGenContext,GeneratedExpressionCode}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Column, ColumnName}
 import org.apache.spark.sql.functions._
 
 /**
@@ -82,7 +82,7 @@ private[smv] case class SmvPivot(
     //  Zero filling is replaced by Null filling to handle CountDistinct right
     baseOutputColumnNames.map { outCol =>
       new Column(SmvIfElseNull(
-        ScalaUdf(contains, BooleanType, Seq((new ColumnName(tempPivotValCol)).toExpr, Literal(outCol))),
+        ScalaUDF(contains, BooleanType, Seq((new ColumnName(tempPivotValCol)).toExpr, Literal(outCol))),
         (new ColumnName(valueCol)).toExpr
       )) as createColName(prefix, outCol)
     }
@@ -170,17 +170,19 @@ private[smv] object SmvPivot {
  */
 private [smv] case class SmvPivotVal(children: Seq[Expression])
   extends Expression {
-  override type EvaluatedType = Any
   override def dataType = StringType
   override def nullable = true
   override def toString = s"smvPivotVal(${children.mkString(",")})"
 
   // concat all the children (pivot columns) values to form a single value
-  override def eval(input: Row): Any = {
+  override def eval(input: InternalRow): Any = {
     SchemaEntry.valueToColumnName(
       children.map { c =>
         val v = c.eval(input)
         if (v == null) "" else v.toString
       }.mkString("_"))
   }
+
+  override protected def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String =
+    throw new UnsupportedOperationException("Not yest implemented")
 }

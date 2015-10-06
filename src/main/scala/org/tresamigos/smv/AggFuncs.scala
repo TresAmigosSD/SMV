@@ -14,13 +14,14 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql._, types._
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.trees
 import org.apache.spark.sql.catalyst.errors.TreeNodeException
 
 private[smv] case class OnlineAveragePartition(child: Expression)
-  extends AggregateExpression with trees.UnaryNode[Expression] {
+  extends UnaryExpression with AggregateExpression1 {
   override def references = child.references
   override def nullable = false
   override def dataType = DoubleType
@@ -29,7 +30,7 @@ private[smv] case class OnlineAveragePartition(child: Expression)
 }
 
 private[smv] case class OnlineAverageMerge(child: Expression)
-  extends AggregateExpression with trees.UnaryNode[Expression] {
+  extends UnaryExpression with AggregateExpression1 {
   override def references = child.references
   override def nullable = false
   override def dataType = DoubleType
@@ -39,7 +40,7 @@ private[smv] case class OnlineAverageMerge(child: Expression)
 
 
 private[smv] case class OnlineStdDevMerge(child: Expression)
-  extends AggregateExpression with trees.UnaryNode[Expression] {
+  extends UnaryExpression with AggregateExpression1 {
   override def references = child.references
   override def nullable = false
   override def dataType = DoubleType
@@ -48,7 +49,7 @@ private[smv] case class OnlineStdDevMerge(child: Expression)
 }
 
 private[smv] case class OnlineAverage(child: Expression)
-  extends PartialAggregate with trees.UnaryNode[Expression] {
+  extends UnaryExpression with PartialAggregate1 {
   override def references = child.references
   override def nullable = false
   override def dataType = DoubleType
@@ -70,7 +71,7 @@ private[smv] case class OnlineAverage(child: Expression)
 }
 
 private[smv] case class OnlineStdDev(child: Expression)
-  extends PartialAggregate with trees.UnaryNode[Expression] {
+  extends  UnaryExpression with PartialAggregate1 {
   override def references = child.references
   override def nullable = false
   override def dataType = DoubleType
@@ -88,7 +89,7 @@ private[smv] case class OnlineStdDev(child: Expression)
 }
 
 private[smv] case class HistogramMerge(child: Expression)
-  extends AggregateExpression with trees.UnaryNode[Expression] {
+  extends UnaryExpression with AggregateExpression1 {
   override def references = child.references
   override def nullable = false
   override def dataType = child.dataType
@@ -98,7 +99,7 @@ private[smv] case class HistogramMerge(child: Expression)
 
 
 private[smv] case class Histogram(child: Expression)
-  extends PartialAggregate with trees.UnaryNode[Expression] {
+  extends UnaryExpression with PartialAggregate1 {
   override def references = child.references
   override def nullable = false
   override def dataType = MapType(child.dataType, LongType)
@@ -120,7 +121,7 @@ private[smv] trait OnlineAvgStdDevFunctions {
   protected var avg: Double = 0.0
   protected var m2: Double = 0.0
 
-  def sharedUpdate(input: Row, expr: Expression): Unit = {
+  def sharedUpdate(input: InternalRow, expr: Expression): Unit = {
     val evaluatedExpr = expr.eval(input)
     if (evaluatedExpr != null) {
       val x = evaluatedExpr.asInstanceOf[Double]
@@ -134,22 +135,22 @@ private[smv] trait OnlineAvgStdDevFunctions {
 
 private[smv] case class OnlineAveragePartitionFunction(
     expr: Expression,
-    base: AggregateExpression
-  ) extends AggregateFunction with OnlineAvgStdDevFunctions {
+    base: AggregateExpression1
+  ) extends AggregateFunction1 with OnlineAvgStdDevFunctions {
 
   def this() = this(null, null) // Required for serialization.
-  override def eval(input: Row): Any = (count,avg,m2)
-  override def update(input: Row): Unit = sharedUpdate(input, expr)
+  override def eval(input: InternalRow): Any = (count,avg,m2)
+  override def update(input: InternalRow): Unit = sharedUpdate(input, expr)
 }
 
 private[smv] case class OnlineStdDevFunction(
     expr: Expression,
-    base: AggregateExpression
-  ) extends AggregateFunction with OnlineAvgStdDevFunctions {
+    base: AggregateExpression1
+  ) extends AggregateFunction1 with OnlineAvgStdDevFunctions {
 
   def this() = this(null, null) // Required for serialization.
-  override def eval(input: Row): Any = if (count<2) 0.0 else scala.math.sqrt(m2/(count-1))
-  override def update(input: Row): Unit = sharedUpdate(input, expr)
+  override def eval(input: InternalRow): Any = if (count<2) 0.0 else scala.math.sqrt(m2/(count-1))
+  override def update(input: InternalRow): Unit = sharedUpdate(input, expr)
 }
 
 
@@ -158,7 +159,7 @@ private[smv] trait OnlineAvgStdDevMergeFunctions {
   protected var avg: Double = 0.0
   protected var m2: Double = 0.0
 
-  def sharedUpdate(input: Row, expr: Expression): Unit = {
+  def sharedUpdate(input: InternalRow, expr: Expression): Unit = {
     val evaluatedExpr = expr.eval(input)
     val (count_that, avg_that, m2_that) = evaluatedExpr.asInstanceOf[(Long, Double, Double)]
     if (count_that > 0){
@@ -172,40 +173,40 @@ private[smv] trait OnlineAvgStdDevMergeFunctions {
 
 private[smv] case class OnlineAverageMergeFunction(
     expr: Expression,
-    base: AggregateExpression
-  ) extends AggregateFunction with OnlineAvgStdDevMergeFunctions {
+    base: AggregateExpression1
+  ) extends AggregateFunction1 with OnlineAvgStdDevMergeFunctions {
 
   def this() = this(null, null) // Required for serialization.
-  override def eval(input: Row): Any = avg
-  override def update(input: Row): Unit = sharedUpdate(input, expr)
+  override def eval(input: InternalRow): Any = avg
+  override def update(input: InternalRow): Unit = sharedUpdate(input, expr)
 }
 
 private[smv] case class OnlineStdDevMergeFunction(
     expr: Expression,
-    base: AggregateExpression
-  ) extends AggregateFunction with OnlineAvgStdDevMergeFunctions {
+    base: AggregateExpression1
+  ) extends AggregateFunction1 with OnlineAvgStdDevMergeFunctions {
 
   def this() = this(null, null) // Required for serialization.
-  override def eval(input: Row): Any = if (count<2) 0.0 else scala.math.sqrt(m2/(count-1))
-  override def update(input: Row): Unit = sharedUpdate(input, expr)
+  override def eval(input: InternalRow): Any = if (count<2) 0.0 else scala.math.sqrt(m2/(count-1))
+  override def update(input: InternalRow): Unit = sharedUpdate(input, expr)
 }
 
 private[smv] case class HistogramFunction(
     expr: Expression,
-    base: AggregateExpression
-  ) extends AggregateFunction {
+    base: AggregateExpression1
+  ) extends AggregateFunction1 {
 
   def this() = this(null, null) // Required for serialization.
 
   import scala.collection.mutable.{Map => MutableMap}
   private var histMap: MutableMap[Any, Long] = MutableMap()
 
-  override def eval(input: Row): Map[Any, Long] = histMap.toMap
+  override def eval(input: InternalRow): Map[Any, Long] = histMap.toMap
 
-  var updateFunction: Row => Unit = null
+  var updateFunction: InternalRow => Unit = null
   expr.dataType match {
-    case i: NativeType =>
-      updateFunction = { input: Row =>
+    case i: AtomicType =>
+      updateFunction = { input: InternalRow =>
         val evaluatedExpr = expr.eval(input)
         if (evaluatedExpr != null) {
           val x = evaluatedExpr
@@ -213,7 +214,7 @@ private[smv] case class HistogramFunction(
         }
       }
     case MapType(kType, LongType, _) =>
-      updateFunction = { input: Row =>
+      updateFunction = { input: InternalRow =>
         val evaluatedExpr = expr.eval(input)
         if (evaluatedExpr != null) {
           val x = evaluatedExpr.asInstanceOf[Map[Any, Long]]
@@ -223,11 +224,11 @@ private[smv] case class HistogramFunction(
     case other => sys.error(s"Type $other does not support Histogram")
   }
 
-  override def update(input: Row): Unit = updateFunction(input)
+  override def update(input: InternalRow): Unit = updateFunction(input)
 
 }
 
-private[smv] case class SmvFirst(child: Expression) extends AggregateExpression with trees.UnaryNode[Expression] {
+private[smv] case class SmvFirst(child: Expression) extends UnaryExpression with AggregateExpression1 {
   def this() = this(null)
 
   override def nullable: Boolean = true
@@ -237,20 +238,20 @@ private[smv] case class SmvFirst(child: Expression) extends AggregateExpression 
     new SmvFirstFunction(child, this)
 }
 
-private[smv] case class SmvFirstFunction(expr: Expression, base: AggregateExpression) extends AggregateFunction {
+private[smv] case class SmvFirstFunction(expr: Expression, base: AggregateExpression1) extends AggregateFunction1 {
   def this() = this(null, null)
 
   var calculated = false
   var result: Any = null
 
-  override def update(input: Row): Unit = {
+  override def update(input: InternalRow): Unit = {
     if(! calculated){
       result = expr.eval(input)
       calculated = true
     }
   }
 
-  override def eval(input: Row): Any = result
+  override def eval(input: InternalRow): Any = result
 }
 
   /*

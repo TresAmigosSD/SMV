@@ -16,9 +16,8 @@ package org.tresamigos.smv
 
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.expressions.{GenericMutableRow, Row}
+import org.apache.spark.sql._
+import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
 
 
 /**
@@ -74,7 +73,7 @@ private[smv] class FileIOHandler(
         try {
           require(r.size == schema.getSize)
           for (i <- 0 until schema.getSize) {
-            mutableRow.update(i, schema.toValue(i, r(i)))
+            mutableRow.update(i, r(i))
           }
           Some(mutableRow)
         } catch {

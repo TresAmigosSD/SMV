@@ -14,12 +14,13 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql._, types._
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedException
+import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenContext,GeneratedExpressionCode}
 
 /** Everything else moved to ColumnHelper.scala */
-
 private[smv] case class SmvStrCat(children: Expression*)
   extends Expression {
 
@@ -28,7 +29,7 @@ private[smv] case class SmvStrCat(children: Expression*)
 
   def nullable = true
 
-  override def eval(input: Row): String = {
+  override def eval(input: InternalRow): String = {
     // TODO: should use string builder so we only create 1 object instead of N immutable strings
     children.map{ c =>
       val v = c.eval(input)
@@ -37,6 +38,9 @@ private[smv] case class SmvStrCat(children: Expression*)
   }
 
   override def toString = s"SmvStrCat(${children.mkString(",")})"
+
+  override protected def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String =
+    throw new UnsupportedOperationException("Not yest implemented")
 }
 
 /**
@@ -58,9 +62,12 @@ private[smv] case class SmvAsArray(elems: Expression*) extends Expression {
 
   type EvaluatedType = Any
 
-  override def eval(input: Row): Any = {
+  override def eval(input: InternalRow): Any = {
     elems.toList.map(_.eval(input))
   }
+
+  override protected def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String =
+    throw new UnsupportedOperationException("Not yest implemented")
 
   override def toString = s"SmvAsArray(${elems.mkString(",")})"
 }
@@ -73,12 +80,11 @@ private[smv] case class SmvIfElseNull(left: Expression, right: Expression) exten
   self: Product =>
 
   def symbol = "?:null"
-  override type EvaluatedType = Any
   override def dataType = right.dataType
   override def nullable = true
   override def toString = s"SmvIfElseNull($left,$right)"
 
-  override def eval(input: Row): Any = {
+  override def eval(input: InternalRow): Any = {
     val leftVal = left.eval(input)
     if (leftVal.asInstanceOf[Boolean]) {
       right.eval(input)
@@ -86,4 +92,7 @@ private[smv] case class SmvIfElseNull(left: Expression, right: Expression) exten
       null
     }
   }
+
+  override protected def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String =
+    throw new UnsupportedOperationException("Not yest implemented")
 }

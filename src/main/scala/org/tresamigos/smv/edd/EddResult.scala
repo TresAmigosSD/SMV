@@ -109,11 +109,11 @@ private[smv] case class EddResult(
 
   def toJSON() = {
     val json =
-      ("colName", colName) ~
-      ("taskType", taskType) ~
-      ("taskName", taskName) ~
-      ("taskDesc", taskDesc) ~
-      ("valueJSON", parse(valueJSON))
+      ("colName" -> colName) ~
+      ("taskType" -> taskType) ~
+      ("taskName" -> taskName) ~
+      ("taskDesc" -> taskDesc) ~
+      ("valueJSON" -> parse(valueJSON))
     compact(json)
   }
 }

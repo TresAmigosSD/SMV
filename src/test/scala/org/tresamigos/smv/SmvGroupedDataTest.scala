@@ -20,7 +20,7 @@ class SmvGroupedDataTest extends SmvTestUtil {
     val df = createSchemaRdd("k:String; v:Integer;",
       """a,0; a,3; a,10; a,20; b,-2; b,30; b,10""")
 
-    val res = df.smvGroupBy("k").smvScale($"v" -> (0.0, 100.0))()
+    val res = df.smvGroupBy("k").smvScale($"v" -> ((0.0, 100.0)))()
     assertSrddSchemaEqual(res, "k:String; v:Integer; v_scaled:Double")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,0,0.0]",
@@ -37,7 +37,7 @@ class SmvGroupedDataTest extends SmvTestUtil {
     val df = createSchemaRdd("k:String; v:Integer;",
       """a,0; a,3; a,10; a,20; b,-2; b,30; b,10""")
 
-    val res = df.smvGroupBy("k").smvScale($"v" -> (0.0, 100.0))(withZeroPivot = true, doDropRange = false)
+    val res = df.smvGroupBy("k").smvScale($"v" -> ((0.0, 100.0)))(withZeroPivot = true, doDropRange = false)
     assertSrddSchemaEqual(res, "k: String; v: Integer; v_min: Double; v_max: Double; v_scaled: Double")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,0,-20.0,20.0,50.0]",

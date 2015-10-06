@@ -28,7 +28,7 @@ package object smv {
   /** return Ordering[Any] to compare values of Any */
   def getOrdering[T<: DataType](t: T): Ordering[Any] = {
     t match {
-      case v: NativeType => v.ordering.asInstanceOf[Ordering[Any]]
+      case v: AtomicType => v.ordering.asInstanceOf[Ordering[Any]]
       case v => throw new IllegalArgumentException(s"DataType: $v has no ordering")
     }
   }

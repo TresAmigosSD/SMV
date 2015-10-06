@@ -14,12 +14,10 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.{Column, ColumnName}
-import org.apache.spark.sql.GroupedData
+import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.Partitioner
 import org.apache.spark.annotation._
 
@@ -67,8 +65,12 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val inGroupMapping =  gdo.createInGroupMapping(schema)
     val rdd = df.rdd.
       groupBy(rowToKeys).
-      flatMapValues(rowsInGroup => inGroupMapping(rowsInGroup)).
-      values
+      flatMapValues(rowsInGroup =>
+        // convert Iterable[Row] to Iterable[InternalRow] first
+        // so we can apply the function inGroupMapping
+        inGroupMapping(rowsInGroup map (r => InternalRow.fromSeq(r.toSeq)))).
+      // now we have to convert an RDD[InternalRow] back to RDD[Row]
+      values map (r => Row.fromSeq(r.toSeq(schema)))
 
     /* since df.rdd method called ScalaReflection.convertToScala at the end on each row, here
        after process, we need to convert them all back by calling convertToCatalyst. One key difference
@@ -77,12 +79,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
        to Scala RDD, user should have no chance work on Catalyst RDD outside of DF.
      */
     val outSchema = gdo.createOutSchema(schema)
-    val converted = rdd.map{row =>
-      Row(row.toSeq.zip(outSchema.fields).
-        map { case (elem, field) =>
-          ScalaReflection.convertToCatalyst(elem, field.dataType)
-        }: _*)}
-    val newdf = df.sqlContext.createDataFrame(converted, gdo.createOutSchema(schema))
+    // TODO remove conversion to catalyst type after all else compiles
+    // val converted = rdd.map{row =>
+    //   Row(row.toSeq.zip(outSchema.fields).
+    //     map { case (elem, field) =>
+    //       ScalaReflection.convertToCatalyst(elem, field.dataType)
+    //     }: _*)}
+    val newdf = df.sqlContext.createDataFrame(rdd, gdo.createOutSchema(schema))
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
 
@@ -242,8 +245,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *
    * Example:
    * {{{
-   *   df.smvGroupBy("k").smvScale($"v1" -> (0.0, 100.0), $"v2" -> (100.0, 200.0))()
+   *   df.smvGroupBy("k").smvScale($"v1" -> ((0.0, 100.0)), $"v2" -> ((100.0, 200.0)))()
    * }}}
+   *
+   * Note that the range tuple needs to be wrapped inside another pair
+   * of parenthesis for the compiler to constructed the nested tuple.
    *
    * In this example, "v1" column within each k-group, the lowest value is scaled to 0.0 and
    * highest value is scaled to 100.0. The scaled column is called "v1_scaled".

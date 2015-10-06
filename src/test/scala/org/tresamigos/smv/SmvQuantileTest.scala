@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import scala.util.Random
-import org.apache.spark.sql.catalyst.expressions.Row
+import org.apache.spark.sql.Row
 
 
 class SmvQuantileTest extends SmvTestUtil {

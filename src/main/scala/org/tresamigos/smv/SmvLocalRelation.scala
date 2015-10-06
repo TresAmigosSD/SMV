@@ -35,8 +35,8 @@ private[smv] case class SmvLocalRelation(schema: StructType) {
 
   def bindAggExprs(exprs: Seq[Expression]) = {
     val aggExprs = resolveAggExprs(exprs).map{
-      case Alias(e: AggregateExpression, n) => e
-      case e: AggregateExpression => e
+      case Alias(e: AggregateExpression1, n) => e
+      case e: AggregateExpression1 => e
     }
     aggExprs.map{e => BindReferences.bindReference(e, locRel.output)}
   }
