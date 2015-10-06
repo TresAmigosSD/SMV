@@ -156,11 +156,8 @@ package object smv {
 
   /**
    * Concatenate columns as strings
-   * will be deprecated when move to 1.5 and use `concat`
    **/
-  def smvStrCat(columns: Column*) = {
-    new Column(SmvStrCat(columns.map{c => c.toExpr}: _*))
-  }
+  def smvStrCat(columns: Column*) = concat(columns:_*)
 
   /**
    * Put a group of columns in an Array field

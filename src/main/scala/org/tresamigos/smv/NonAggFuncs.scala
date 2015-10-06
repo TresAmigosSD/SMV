@@ -20,29 +20,6 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedException
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenContext,GeneratedExpressionCode}
 
-/** Everything else moved to ColumnHelper.scala */
-private[smv] case class SmvStrCat(children: Expression*)
-  extends Expression {
-
-  type EvaluatedType = String
-  val dataType = StringType
-
-  def nullable = true
-
-  override def eval(input: InternalRow): String = {
-    // TODO: should use string builder so we only create 1 object instead of N immutable strings
-    children.map{ c =>
-      val v = c.eval(input)
-      if (v == null) "" else v.toString
-    }.reduce( _ + _ )
-  }
-
-  override def toString = s"SmvStrCat(${children.mkString(",")})"
-
-  override protected def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String =
-    throw new UnsupportedOperationException("Not yest implemented")
-}
-
 /**
  * Allows caller to create an array of expressions (usefull for using Explode later)
  */
