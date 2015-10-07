@@ -194,7 +194,11 @@ object SparkTestUtil {
 trait SmvTestUtil extends SparkTestUtil {
 
   /** appArgs could be overridden by concrete class to initiate SmvApp.app as required */
-  def appArgs: Seq[String] = Seq("-m", "None", "--data-dir", testcaseTempDir)
+  def appArgs: Seq[String] = Seq(
+    "--smv-props", "spark.sql.shuffle.partitions = 64",
+    "-m", "None",
+    "--data-dir", testcaseTempDir
+  )
   var app: SmvApp = _
 
   override def beforeAll() = {

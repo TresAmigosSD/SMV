@@ -50,7 +50,7 @@ class SmvDFHelper(df: DataFrame) {
   def dumpSRDD = {
     val schema = SmvSchema.fromDataFrame(df)
     println(SmvSchema.fromDataFrame(df))
-    df.map(schema.rowToCsvString(_, CsvAttributes.defaultCsv)).collect.foreach(println)
+    df.collect.foreach(r => println(r.mkString(",")))
   }
 
   /**
@@ -439,46 +439,40 @@ class SmvDFHelper(df: DataFrame) {
     smvUnpivot((valueCol +: others).map{s => s.name}: _*)
 
   /**
-   * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
+   * Alias to `cube` DF method
    *
    * Example:
    * {{{
    *   df.smvCube("zip", "month").agg("zip", "month", sum("v") as "v")
    * }}}
    *
-   * Also have a version on SmvGroupedData.
+   * 2 differences from original smvCube:
+   *   - instead of fill in `*` as wildcard key, filling in `null`
+   *   - all so have the all-null key records as the overall aggregation
    **/
   @deprecated("should use spark cube method", "1.5")
-  def smvCube(col: String, others: String*): SmvGroupedData = {
-    new RollupCubeOp(df, Nil, (col +: others)).cube()
-  }
+  def smvCube(col: String, others: String*) = df.cube(col, others: _*)
 
   @deprecated("should use spark cube method", "1.5")
-  def smvCube(cols: Column*): SmvGroupedData = {
-    val names = cols.map(_.getName)
-    new RollupCubeOp(df, Nil, names).cube()
-  }
+  def smvCube(cols: Column*) = df.cube(cols: _*)
 
   /**
-   * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
+   * Alias to `rollup` DF method
    *
    * Example:
    * {{{
    *   df.smvRollup("county", "zip").agg("county", "zip", sum("v") as "v")
    * }}}
    *
-   * Also have a version on SmvGroupedData
+   * 2 differences from original smvRollup:
+   *   - instead of fill in `*` as wildcard key, filling in `null`
+   *   - all so have the all-null key records as the overall aggregation
    **/
   @deprecated("should use spark rollup method", "1.5")
-  def smvRollup(col: String, others: String*): SmvGroupedData = {
-    new RollupCubeOp(df, Nil, (col +: others)).rollup()
-  }
+  def smvRollup(col: String, others: String*) = df.rollup(col, others: _*)
 
   @deprecated("should use spark rollup method", "1.5")
-  def smvRollup(cols: Column*): SmvGroupedData = {
-    val names = cols.map(_.getName)
-    new RollupCubeOp(df, Nil, names).rollup()
-  }
+  def smvRollup(cols: Column*) = df.rollup(cols: _*)
 
   /**
    * Create an Edd on DataFrame.
