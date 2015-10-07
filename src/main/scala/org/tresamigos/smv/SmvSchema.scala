@@ -20,7 +20,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.DataFrame
 
-
+import java.sql.Date
 import java.text.{DateFormat, SimpleDateFormat}
 
 import scala.annotation.switch
@@ -108,7 +108,7 @@ private[smv] case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd"
 
   override def strToVal(s:String) : Any = {
     if (s.isEmpty) null
-    else DateTimeUtils.millisToDays(fmtObj.parse(s).getTime())
+    else new Date(fmtObj.parse(s).getTime())
   }
 
   override def valToStr(v: Any) : String = {
