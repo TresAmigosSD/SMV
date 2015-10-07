@@ -68,7 +68,7 @@ private[smv] class FileIOHandler(
     schema: SmvSchema
   ) = {
     val parserV = parserValidator
-    val add: (Exception, Seq[_]) => Option[Row] = { (e,r) => parserV.addWithReason(e,r.mkString); None }
+    val add: (Exception, Seq[_]) => Option[Row] = { (e,r) => parserV.addWithReason(e,r.mkString(",")); None }
     val rowRdd = rdd.mapPartitions{ iterator =>
       iterator.map[Option[Row]] { r =>
         try {
