@@ -196,8 +196,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val aggOutCols = pivot.outCols().map { c =>
       val cZero = lit(0).cast(pivotRes.df(c).toExpr.dataType)
       (coalesce(sum(c), cZero) as c)}
+    /*
     val keysAndAggCols = keys.map{k => pivotRes.df(k)} ++ aggOutCols
     pivotRes.agg(keysAndAggCols(0), keysAndAggCols.tail: _*)
+    */
+    pivotRes.agg(aggOutCols(0), aggOutCols.tail: _*)
   }
 
   /**

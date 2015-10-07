@@ -48,8 +48,9 @@ class SmvDFHelper(df: DataFrame) {
    * This function's format is more convenient for us and hence has remained un-deprecated.
    */
   def dumpSRDD = {
+    val schema = SmvSchema.fromDataFrame(df)
     println(SmvSchema.fromDataFrame(df))
-    df.collect.foreach(println)
+    df.map(schema.rowToCsvString(_, CsvAttributes.defaultCsv)).collect.foreach(println)
   }
 
   /**

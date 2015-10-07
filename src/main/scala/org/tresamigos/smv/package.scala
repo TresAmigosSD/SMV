@@ -164,7 +164,7 @@ package object smv {
    * will be deprecated when move to 1.5 and use `array`
    **/
   def smvAsArray(columns: Column*) = {
-    new Column(SmvAsArray(columns.map{c => c.toExpr}: _*))
+    array(columns: _*)
   }
 
   /**

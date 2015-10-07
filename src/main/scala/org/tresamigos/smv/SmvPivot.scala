@@ -81,15 +81,17 @@ private[smv] case class SmvPivot(
   private val outputColExprs = valueColPrefixMap.map {case (valueCol, prefix) =>
     //  Zero filling is replaced by Null filling to handle CountDistinct right
     baseOutputColumnNames.map { outCol =>
-      new Column(SmvIfElseNull(
-        ScalaUDF(contains, BooleanType, Seq((new ColumnName(tempPivotValCol)).toExpr, Literal(outCol))),
-        (new ColumnName(valueCol)).toExpr
-      )) as createColName(prefix, outCol)
+      when(array_contains(new ColumnName(tempPivotValCol), outCol), new ColumnName(valueCol)).
+        otherwise(null) as createColName(prefix, outCol)
     }
   }.flatten
 
   def outCols(): Seq[String] = {
-    outputColExprs.map{l => l.toExpr.asInstanceOf[NamedExpression].name}
+    valueColPrefixMap.map {case (valueCol, prefix) =>
+      baseOutputColumnNames.map { outCol =>
+        createColName(prefix, outCol)
+      }
+    }.flatten
   }
 
   /**
@@ -103,14 +105,14 @@ private[smv] case class SmvPivot(
    */
   private[smv] def addSmvPivotValColumn(origDF: DataFrame) : DataFrame = {
     import origDF.sqlContext.implicits._
-    val pivotColsExprSets = pivotColSets.map(a => a.map(s => $"$s".toExpr))
+    val normStr = udf({s:String => SchemaEntry.valueToColumnName(s)})
+    val pivotColsExprSets = pivotColSets.map(a => a.map(s => normStr($"$s".cast(StringType))))
 
     val arrayExp = pivotColsExprSets.map{ pivotColsExpr =>
-      SmvPivotVal(pivotColsExpr)
+      concat_ws("_", pivotColsExpr: _*)
     }
 
-    origDF.selectPlus(new Column(SmvAsArray(arrayExp: _*)) as tempPivotValCol)
-    //origDF.generate(Explode(Seq(tempPivotValCol.name), SmvAsArray(arrayExp: _*)), true)
+    origDF.selectPlus(array(arrayExp: _*) as tempPivotValCol)
   }
 
   /**
@@ -161,28 +163,4 @@ private[smv] object SmvPivot {
       colNames.map(c => SchemaEntry.valueToColumnName(c)).sorted
     }.flatten
   }
-}
-
-/**
- * Expression that evaluates to a string concat of all pivot column (children) values.
- * WARNING: this must be at the module top level and not embedded inside a function def
- * as it would cause an exception during tree node copy.
- */
-private [smv] case class SmvPivotVal(children: Seq[Expression])
-  extends Expression {
-  override def dataType = StringType
-  override def nullable = true
-  override def toString = s"smvPivotVal(${children.mkString(",")})"
-
-  // concat all the children (pivot columns) values to form a single value
-  override def eval(input: InternalRow): Any = {
-    SchemaEntry.valueToColumnName(
-      children.map { c =>
-        val v = c.eval(input)
-        if (v == null) "" else v.toString
-      }.mkString("_"))
-  }
-
-  override protected def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String =
-    throw new UnsupportedOperationException("Not yest implemented")
 }

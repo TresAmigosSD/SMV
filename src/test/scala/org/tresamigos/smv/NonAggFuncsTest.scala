@@ -30,10 +30,13 @@ class NonAggFuncsTest extends SmvTestUtil {
   test("test smvAsArray") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
-    val res = df.select(smvAsArray($"v".smvNullSub("test"), $"k"))
-    assertSrddDataEqual(res,
-      "List(a, 1);" +
-      "List(test, 2)")
+    val res = df.select(smvAsArray($"v".smvNullSub("test"), $"k") as "myArray")
+
+    /** `getItem` method has bugs in 1.5.1, use the following workaround */
+    val schema = SmvSchema.fromDataFrame(res)
+    val res2 = res.map(schema.rowToCsvString(_, CsvAttributes.defaultCsv)).collect
+
+    assertUnorderedSeqEqual(res2, Seq("a|1", "test|2"))
   }
 
   test("test smvCreateLookUp") {
@@ -56,6 +59,6 @@ class NonAggFuncsTest extends SmvTestUtil {
       smvSum0(df("v2")) as "v2_zero"
     )
 
-    assertSrddDataEqual(res, "null,null,0,0.0")
+    assertSrddDataEqual(res, "X,null,null,0,0.0")
   }
 }
