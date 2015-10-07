@@ -13,8 +13,11 @@
  */
 
 package org.tresamigos.smv
+
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
+
+import scala.language.implicitConversions
 
 /**
  * Provides Extended Data Dictionary functions for ad hoc data analysis

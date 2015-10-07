@@ -147,11 +147,8 @@ package object smv {
 
   /**
    * Put a group of columns in an Array field
-   * will be deprecated when move to 1.5 and use `array`
    **/
-  def smvAsArray(columns: Column*) = {
-    array(columns: _*)
-  }
+  def smvAsArray(columns: Column*) = array(columns: _*)
 
   /**
    * create a UDF from a map
