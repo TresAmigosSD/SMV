@@ -49,16 +49,5 @@ class NonAggFuncsTest extends SmvTestUtil {
     assertSrddDataEqual(res, "J;null")
   }
 
-  test("test smvSum0") {
-    val ssc = sqlContext;
-    val df = createSchemaRdd("k:String; v1:Integer; v2:Double", "X,,;X,,")
-    val res = df.groupBy("k").agg(
-      sum("v1") as "v1_null",
-      sum("v2") as "v2_null",
-      smvSum0(df("v1")) as "v1_zero",
-      smvSum0(df("v2")) as "v2_zero"
-    )
 
-    assertSrddDataEqual(res, "X,null,null,0,0.0")
-  }
 }

@@ -24,11 +24,22 @@ private[smv] abstract class EddTaskGroup {
   val df: DataFrame
   val taskList: Seq[edd.EddTask]
   def run(): DataFrame = {
-    val aggCols = taskList.map{t => t.aggCol}
+    /* Have to separate tasks to "old" aggregations and "new" aggregations, since
+      till 1.5.1 there are 2 types of aggregations, and they can't be mixed */
+    val aggCols: Seq[Either[EddTask, EddTask]] = taskList.map{t => t match {
+      case CntTask(_)|AvgTask(_)|MinTask(_)|MaxTask(_)|TimeMinTask(_)|TimeMaxTask(_)|StringMinLenTask(_)|StringMaxLenTask(_)|StringDistinctCountTask(_) => Left(t)
+      case _ => Right(t)
+    }}
+
+    val aggOlds = aggCols.flatMap{e => e.left.toOption}.map{t => t.aggCol}
+    val aggNews = aggCols.flatMap{e => e.right.toOption}.map{t => t.aggCol}
+
     val resultCols = taskList.map{t => t.resultCols}
 
     // this DF only has 1 row
-    val res = df.agg(aggCols.head, aggCols.tail: _*).smvCoalesce(1)
+    val resNew = df.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
+    val res = if (aggOlds.isEmpty) resNew
+      else (df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1).join(resNew))
 
     val schema = SmvSchema.fromString(
       "colName: String;" +

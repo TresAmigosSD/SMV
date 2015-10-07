@@ -100,22 +100,8 @@ package object smv {
 
   /**
    * Histogram Aggregate function
-   *
-   * Return column has type `Map[child.dataType, Long]`
-   *
-   * @group agg
+   * replaced by histInt, histStr, histDouble, hitsBoolean
    **/
-  def histogram(c: Column) = {
-    new Column(Histogram(c.toExpr))
-  }
-
-  private[smv] def onlineAverage(c: Column) = {
-    new Column(OnlineAverage(c.toExpr))
-  }
-
-  private[smv] def onlineStdDev(c: Column) = {
-    new Column(OnlineStdDev(c.toExpr))
-  }
 
   /**
    * smvFirst: Return null if the first record is null

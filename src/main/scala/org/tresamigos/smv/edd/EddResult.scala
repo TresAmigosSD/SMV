@@ -45,50 +45,13 @@ private[smv] case class EddResult(
   valueJSON: String
 ){
 
-  private def parseHistJson(s: String): Seq[(Any, Long)] = {
-
-    val json = parse(s)
-    val res = for {
-      JObject(child) <- json
-      JField("histSortByFreq", JBool(histSortByFreq)) <- child
-      JField("hist", JObject(m)) <- child
-    } yield {
-      val h = m.map{case (k,v) => (parse(k),v)}.map{ l =>
-        l match {
-          case (JString(k), JInt(v)) => (k, v.toLong)
-          case (JBool(k), JInt(v)) => (k, v.toLong)
-          case (JInt(k), JInt(v)) => (k.toLong, v.toLong)
-          case (JDouble(k),JInt(v)) => (k, v.toLong)
-          case _ => throw new IllegalArgumentException("unsupported type")
-        }
-      }.toMap
-      histSort(h, histSortByFreq)
-    }
-    res.head.toSeq
-  }
-
-  private def histSort(hist: Map[Any, Long], histSortByFreq: Boolean) = {
-    val ordering = hist.keySet.head match {
-      case k: Long => implicitly[Ordering[Long]].asInstanceOf[Ordering[Any]]
-      case k: Double => implicitly[Ordering[Double]].asInstanceOf[Ordering[Any]]
-      case k: String => implicitly[Ordering[String]].asInstanceOf[Ordering[Any]]
-      case k: Boolean => implicitly[Ordering[Boolean]].asInstanceOf[Ordering[Any]]
-      case _ => throw new IllegalArgumentException("unsupported type")
-    }
-
-    if(histSortByFreq)
-      hist.toSeq.sortBy(_._2)
-    else
-      hist.toSeq.sortWith((a,b) => ordering.compare(a._1, b._1) < 0)
-  }
-
   def toReport() = {
     taskType match {
       case "stat" => {
         f"${colName}%-20s ${taskDesc}%-22s ${valueJSON}%s"
       }
       case "hist" => {
-        val hist = parseHistJson(valueJSON)
+        val hist = EddResult.parseHistJson(valueJSON)
 
         val csum = hist.scanLeft(0l){(c,m) => c + m._2}.tail
         val total = csum(csum.size - 1)
@@ -135,5 +98,41 @@ private[smv] object EddResult {
         valueJSON
       )
     }
+  }
+
+  private def histSort(hist: Map[Any, Long], histSortByFreq: Boolean) = {
+    val ordering = hist.keySet.head match {
+      case k: Long => implicitly[Ordering[Long]].asInstanceOf[Ordering[Any]]
+      case k: Double => implicitly[Ordering[Double]].asInstanceOf[Ordering[Any]]
+      case k: String => implicitly[Ordering[String]].asInstanceOf[Ordering[Any]]
+      case k: Boolean => implicitly[Ordering[Boolean]].asInstanceOf[Ordering[Any]]
+      case _ => throw new IllegalArgumentException("unsupported type")
+    }
+
+    if(histSortByFreq)
+      hist.toSeq.sortBy(_._2)
+    else
+      hist.toSeq.sortWith((a,b) => ordering.compare(a._1, b._1) < 0)
+  }
+
+  private[smv] def parseHistJson(s: String): Seq[(Any, Long)] = {
+    val json = parse(s)
+    val res = for {
+      JObject(child) <- json
+      JField("histSortByFreq", JBool(histSortByFreq)) <- child
+      JField("hist", JObject(m)) <- child
+    } yield {
+      val h = m.map{case (k,v) => (parse(k),v)}.map{ l =>
+        l match {
+          case (JString(k), JInt(v)) => (k, v.toLong)
+          case (JBool(k), JInt(v)) => (k, v.toLong)
+          case (JInt(k), JInt(v)) => (k.toLong, v.toLong)
+          case (JDouble(k),JInt(v)) => (k, v.toLong)
+          case _ => throw new IllegalArgumentException("unsupported type")
+        }
+      }.toMap
+      histSort(h, histSortByFreq)
+    }
+    res.head.toSeq
   }
 }

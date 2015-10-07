@@ -20,73 +20,13 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.trees
 import org.apache.spark.sql.catalyst.errors.TreeNodeException
 
-private[smv] case class OnlineAveragePartition(child: Expression)
-  extends UnaryExpression with AggregateExpression1 {
-  override def references = child.references
-  override def nullable = false
-  override def dataType = DoubleType
-  override def toString = s"OnlineAVG($child)"
-  override def newInstance() = new OnlineAveragePartitionFunction(Cast(child,dataType), this)
-}
+import org.apache.spark.sql.expressions._
 
-private[smv] case class OnlineAverageMerge(child: Expression)
-  extends UnaryExpression with AggregateExpression1 {
-  override def references = child.references
-  override def nullable = false
-  override def dataType = DoubleType
-  override def toString = s"OnlineAVG($child)"
-  override def newInstance() = new OnlineAverageMergeFunction(child, this)
-}
-
-
-private[smv] case class OnlineStdDevMerge(child: Expression)
-  extends UnaryExpression with AggregateExpression1 {
-  override def references = child.references
-  override def nullable = false
-  override def dataType = DoubleType
-  override def toString = s"OnlineStdDev($child)"
-  override def newInstance() = new OnlineStdDevMergeFunction(child, this)
-}
-
-private[smv] case class OnlineAverage(child: Expression)
-  extends UnaryExpression with PartialAggregate1 {
-  override def references = child.references
-  override def nullable = false
-  override def dataType = DoubleType
-  override def toString = s"OnlineAVG($child)"
-
-  override def asPartial: SplitEvaluation = {
-    val partialNAM = Alias(OnlineAveragePartition(child), "PartialOnlineAvg")()
-
-    SplitEvaluation(
-      OnlineAverageMerge(partialNAM.toAttribute),
-      partialNAM :: Nil)
-  }
-
-  /* Not sure whether we need to implement this at all.
-   * Replaced AverageFunction with DummyFuncation, OnlineAverage still worked
-   * Can we just use Dummy in the OnlineStdDev function?
-   */
-  override def newInstance() = new AverageFunction(child, this)
-}
-
-private[smv] case class OnlineStdDev(child: Expression)
-  extends  UnaryExpression with PartialAggregate1 {
-  override def references = child.references
-  override def nullable = false
-  override def dataType = DoubleType
-  override def toString = s"OnlineStdDev($child)"
-
-  override def asPartial: SplitEvaluation = {
-    val partialNAM = Alias(OnlineAveragePartition(child), "PartialOnlineAvg")()
-
-    SplitEvaluation(
-      OnlineStdDevMerge(partialNAM.toAttribute),
-      partialNAM :: Nil)
-  }
-
-  override def newInstance() = new OnlineStdDevFunction(child, this)
-}
+/** Since UserDefinedAggregateFunction is not very flexible on input/output schema(or type),
+ we have to separate histogram function for different data types. At some stage we may come back
+ to this implementation, if UserDefinedAggregateFunction doesn't provide the flexiblity in the
+ future. For now, we will convert to use UserDefinedAggregateFunction and separate the histogram
+ function
 
 private[smv] case class HistogramMerge(child: Expression)
   extends UnaryExpression with AggregateExpression1 {
@@ -97,12 +37,11 @@ private[smv] case class HistogramMerge(child: Expression)
   override def newInstance() = new HistogramFunction(child, this)
 }
 
-
 private[smv] case class Histogram(child: Expression)
   extends UnaryExpression with PartialAggregate1 {
   override def references = child.references
   override def nullable = false
-  override def dataType = MapType(child.dataType, LongType)
+  override def dataType = DataTypes.createMapType(child.dataType, LongType)
   override def toString = s"Histogram($child)"
 
   override def asPartial: SplitEvaluation = {
@@ -116,81 +55,6 @@ private[smv] case class Histogram(child: Expression)
   override def newInstance() = new HistogramFunction(child, this)
 }
 
-private[smv] trait OnlineAvgStdDevFunctions {
-  protected var count: Long = 0L
-  protected var avg: Double = 0.0
-  protected var m2: Double = 0.0
-
-  def sharedUpdate(input: InternalRow, expr: Expression): Unit = {
-    val evaluatedExpr = expr.eval(input)
-    if (evaluatedExpr != null) {
-      val x = evaluatedExpr.asInstanceOf[Double]
-      val delta = x - avg
-      count += 1
-      avg = avg + delta / count
-      m2 = m2 + delta * ( x - avg )
-    }
-  }
-}
-
-private[smv] case class OnlineAveragePartitionFunction(
-    expr: Expression,
-    base: AggregateExpression1
-  ) extends AggregateFunction1 with OnlineAvgStdDevFunctions {
-
-  def this() = this(null, null) // Required for serialization.
-  override def eval(input: InternalRow): Any = (count,avg,m2)
-  override def update(input: InternalRow): Unit = sharedUpdate(input, expr)
-}
-
-private[smv] case class OnlineStdDevFunction(
-    expr: Expression,
-    base: AggregateExpression1
-  ) extends AggregateFunction1 with OnlineAvgStdDevFunctions {
-
-  def this() = this(null, null) // Required for serialization.
-  override def eval(input: InternalRow): Any = if (count<2) 0.0 else scala.math.sqrt(m2/(count-1))
-  override def update(input: InternalRow): Unit = sharedUpdate(input, expr)
-}
-
-
-private[smv] trait OnlineAvgStdDevMergeFunctions {
-  protected var count: Long = 0L
-  protected var avg: Double = 0.0
-  protected var m2: Double = 0.0
-
-  def sharedUpdate(input: InternalRow, expr: Expression): Unit = {
-    val evaluatedExpr = expr.eval(input)
-    val (count_that, avg_that, m2_that) = evaluatedExpr.asInstanceOf[(Long, Double, Double)]
-    if (count_that > 0){
-      val delta = avg - avg_that
-      avg = ( avg * count + avg_that * count_that ) / (count + count_that)
-      m2 = m2 + m2_that + delta * delta * count * count_that / (count + count_that)
-      count += count_that
-    }
-  }
-}
-
-private[smv] case class OnlineAverageMergeFunction(
-    expr: Expression,
-    base: AggregateExpression1
-  ) extends AggregateFunction1 with OnlineAvgStdDevMergeFunctions {
-
-  def this() = this(null, null) // Required for serialization.
-  override def eval(input: InternalRow): Any = avg
-  override def update(input: InternalRow): Unit = sharedUpdate(input, expr)
-}
-
-private[smv] case class OnlineStdDevMergeFunction(
-    expr: Expression,
-    base: AggregateExpression1
-  ) extends AggregateFunction1 with OnlineAvgStdDevMergeFunctions {
-
-  def this() = this(null, null) // Required for serialization.
-  override def eval(input: InternalRow): Any = if (count<2) 0.0 else scala.math.sqrt(m2/(count-1))
-  override def update(input: InternalRow): Unit = sharedUpdate(input, expr)
-}
-
 private[smv] case class HistogramFunction(
     expr: Expression,
     base: AggregateExpression1
@@ -201,7 +65,7 @@ private[smv] case class HistogramFunction(
   import scala.collection.mutable.{Map => MutableMap}
   private var histMap: MutableMap[Any, Long] = MutableMap()
 
-  override def eval(input: InternalRow): Map[Any, Long] = histMap.toMap
+  override def eval(input: InternalRow): Map[Any, Long] = histMap.toMap.asInstanceOf[Map[Any, Long]]
 
   var updateFunction: InternalRow => Unit = null
   expr.dataType match {
@@ -227,6 +91,115 @@ private[smv] case class HistogramFunction(
   override def update(input: InternalRow): Unit = updateFunction(input)
 
 }
+*/
+
+private[smv] class Histogram(inputDT: DataType) extends UserDefinedAggregateFunction {
+  def inputSchema = new StructType().add("v", inputDT)
+
+  def bufferSchema = new StructType().add("map", DataTypes.createMapType(inputDT, LongType))
+
+  def dataType = DataTypes.createMapType(inputDT, LongType)
+
+  def deterministic = true
+
+  def initialize(buffer: MutableAggregationBuffer) = {
+    buffer.update(0, Map():Map[Any, Long])
+  }
+
+  def update(buffer: MutableAggregationBuffer, input: Row) = {
+    if (!input.isNullAt(0)){
+      val m = buffer.getMap(0).asInstanceOf[Map[Any,Long]]
+      val k = input.get(0)
+      val cnt = m.getOrElse(k, 0L) + 1L
+      buffer.update(0, m + (k -> cnt))
+    }
+  }
+
+  def merge(buffer1: MutableAggregationBuffer, buffer2: Row) = {
+    val m1 = buffer1.getMap(0).asInstanceOf[Map[Any,Long]]
+    val m2 = buffer2.getMap(0).asInstanceOf[Map[Any,Long]]
+    val m = (m1 /: m2){case (map,(k,v)) => map + (k -> ((map.getOrElse(k,0L) + v)))}
+    buffer1.update(0, m)
+  }
+
+  def evaluate(buffer: Row) = buffer.getMap(0)
+}
+
+private[smv] object histStr extends Histogram(StringType)
+private[smv] object histInt extends Histogram(IntegerType)
+private[smv] object histBoolean extends Histogram(BooleanType)
+private[smv] object histDouble extends Histogram(DoubleType)
+
+private[smv] object stddev extends UserDefinedAggregateFunction {
+  // Schema you get as an input
+  def inputSchema = new StructType().add("v", DoubleType)
+
+  // Schema of the row which is used for aggregation
+  def bufferSchema = new StructType().
+  add("count", LongType).
+  add("avg", DoubleType).
+  add("m2", DoubleType)
+
+  // Returned type
+  def dataType = DoubleType
+
+  // Self-explaining
+  def deterministic = true
+
+  // zero value
+  def initialize(buffer: MutableAggregationBuffer) = {
+    buffer.update(0, 0L)
+    buffer.update(1, 0.0)
+    buffer.update(2, 0.0)
+  }
+
+  // Similar to seqOp in aggregate
+  def update(buffer: MutableAggregationBuffer, input: Row) = {
+    if (!input.isNullAt(0)){
+      val x = input.getDouble(0)
+      val count = buffer.getLong(0)
+      val avg = buffer.getDouble(1)
+      val m2 = buffer.getDouble(2)
+
+      val delta = x - avg
+      val newCount = count + 1l
+      val newAvg = avg + delta / newCount
+      val newM2 = m2 + delta * (x - newAvg)
+
+      buffer.update(0, newCount)
+      buffer.update(1, newAvg)
+      buffer.update(2, newM2)
+    }
+  }
+
+  // Similar to combOp in aggregate
+  def merge(buffer1: MutableAggregationBuffer, buffer2: Row) = {
+    val count1 = buffer1.getLong(0)
+    val avg1 = buffer1.getDouble(1)
+    val m21 = buffer1.getDouble(2)
+    val count2 = buffer2.getLong(0)
+    val avg2 = buffer2.getDouble(1)
+    val m22 = buffer2.getDouble(2)
+
+    val delta = avg1 - avg2
+    val avg = (avg1 * count1 + avg2 * count2 ) / (count1 + count2)
+    val m2 = m21 + m22 + delta * delta * count1 * count2 / (count1 + count2)
+    val count = count1 + count2
+
+    buffer1.update(0, count)
+    buffer1.update(1, avg)
+    buffer1.update(2, m2)
+  }
+
+  // Called on exit to get return value
+  def evaluate(buffer: Row) = {
+    val count = buffer.getLong(0)
+    val avg = buffer.getDouble(1)
+    val m2 = buffer.getDouble(2)
+    if (count<2) 0.0 else scala.math.sqrt(m2/(count-1))
+  }
+}
+
 
 private[smv] case class SmvFirst(child: Expression) extends UnaryExpression with AggregateExpression1 {
   def this() = this(null)
@@ -253,14 +226,3 @@ private[smv] case class SmvFirstFunction(expr: Expression, base: AggregateExpres
 
   override def eval(input: InternalRow): Any = result
 }
-
-  /*
-case class DummyFunction(expr: Expression, base: AggregateExpression)
-  extends AggregateFunction {
-
-  def this() = this(null, null) // Required for serialization.
-
-  override def eval(input: Row): Any = 0.0
-  override def update(input: Row): Unit = {}
-}
-  */
