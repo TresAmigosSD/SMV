@@ -169,7 +169,7 @@ abstract class SmvDataSet {
     // Use the "cached" file that was just saved rather than cause an action
     // on the input RDD which may cause some expensive computation to re-occur.
     if (app.genEdd)
-      readPersistedFile(prefix).get.edd.addBaseTasks().saveReport(moduleEddPath(prefix))
+      readPersistedFile(prefix).get.edd.persistBesideData(filePath)
   }
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] = {
@@ -351,6 +351,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     val version = app.smvConfig.cmdLine.publish()
     val handler = new FileIOHandler(app.sqlContext, publishPath(version))
     handler.saveAsCsvWithSchema(df)
+
+    df.edd.persistBesideData(publishPath(version))
   }
 
   /**

@@ -35,7 +35,7 @@ private[smv] abstract class EddTaskGroup {
       "taskType: String;" +
       "taskName: String;" +
       "taskDesc: String;" +
-      "toJSONCol: String"
+      "valueJSON: String"
     )
 
     /* since DF unionAll operation on a lot small DFs may build a large tree.

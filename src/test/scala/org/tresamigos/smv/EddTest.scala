@@ -18,7 +18,7 @@ import org.tresamigos.smv.edd._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions._
 
-class EddResultTest extends SmvTestUtil {
+class EddTest extends SmvTestUtil {
   test("test EddResult Report") {
     val df1 = createSchemaRdd("a:String;b:String;c:String;d:String;f:String",
       "col_a,stat,avg,Average,13.75")
@@ -66,6 +66,20 @@ key                      count      Pct    cumCount   cumPct
     assert(r1 === r3)
     assert(r1 === r4)
     assert(r1 === r5)
+  }
+
+  test("test Edd dataPathToEddPath") {
+    val dp1 = "/my/project/dir/data/dir/data1.csv"
+    val dp2 = "my/project/dir/data/dir/data1.csv.gz"
+    val dp3 = "my/project/dir/data/dir/data1.tsv"
+
+    val res1 = Edd.dataPathToEddPath(dp1)
+    val res2 = Edd.dataPathToEddPath(dp2)
+    val res3 = Edd.dataPathToEddPath(dp3)
+
+    assert(res1 === "/my/project/dir/data/dir/data1.edd")
+    assert(res2 === "my/project/dir/data/dir/data1.edd")
+    assert(res3 === "my/project/dir/data/dir/data1.edd")
   }
 }
 
@@ -308,5 +322,20 @@ key                      count      Pct    cumCount   cumPct
 false                        1   33.33%           1   33.33%
 true                         2   66.67%           3  100.00%
 -------------------------------------------------""")
+  }
+
+  test("test EddResult DF compare") {
+    val df2 = createSchemaRdd("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
+      """z,1,a,0.2000001,19010701,;
+      z,2,a,1.4,20150402,true;
+      z,5,b,2.2,20130930,true;
+      a,1,a,0.3,20151204,false""")
+
+    val df1edd = df.edd.summary()
+    val df2eddDF = df2.edd.summary()
+
+    val (isEqual, reason) = df1edd.compareWith(df2eddDF)
+
+    assert(isEqual)
   }
 }

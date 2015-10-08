@@ -67,6 +67,8 @@ private[smv] class EddResult(
       case "stat" => EddResult.parseSimpleJson(valueJSON) match {
         case v: Double => BigDecimal(v, mc).hashCode
         case v: Long => v.hashCode
+        case v: String => v.hashCode
+        case _ => throw new IllegalArgumentException("unsupported type")
       }
       case "hist" => EddResult.parseHistJson(valueJSON).map{ case (k, c) =>
         k match {
@@ -113,7 +115,7 @@ private[smv] class EddResult(
       ("taskType" -> taskType) ~
       ("taskName" -> taskName) ~
       ("taskDesc" -> taskDesc) ~
-      ("valueJSON" -> parse(valueJSON))
+      ("valueJSON" -> valueJSON)
     compact(json)
   }
 }
@@ -158,6 +160,7 @@ private[smv] object EddResult {
     val res = json match {
       case JInt(k) => k.toLong
       case JDouble(k) => k
+      case JString(k) => k
       case _ => throw new IllegalArgumentException("unsupported type")
     }
     res
