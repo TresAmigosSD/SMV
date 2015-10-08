@@ -531,6 +531,10 @@ class SmvDFHelper(df: DataFrame) {
    *      addFirst)
    * df.chunkBy('account, 'cycleId)(addFirstFunc)
    * }}}
+   *
+   * TODO: Current version will not keep teh key columns. It's SmvChunkUDF's responsibility to 
+   * make sure key column is carried. This behavior should be changed to automatically
+   * carry keys, as chanegs made on Spark's groupBy.agg
    **/
   @deprecated("will rename and refine interface", "1.5")
   def chunkBy(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {

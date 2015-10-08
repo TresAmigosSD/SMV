@@ -23,13 +23,11 @@ class SmvChunkTest extends SmvTestUtil {
     val runCat = (l: List[Seq[Any]]) => l.map{_(0)}.scanLeft(Seq("")){(a,b) => Seq(a(0) + b)}.tail
     val runCatFunc = SmvChunkUDF(Seq('v), SmvSchema.fromString("vcat:String").toStructType, runCat)
 
-/*
     val res = df.orderBy('k.asc, 'v.asc).chunkBy('k)(runCatFunc)
-    assertSrddSchemaEqual(res, "k:String; vcat:String")
+    assertSrddSchemaEqual(res, "vcat:String")
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[k1,a]", "[k1,ab]", "[k2,c]", "[k2,cd]"))
+      "[a]", "[ab]", "[c]", "[cd]"))
 
-      */
     val res2 = df.orderBy('k.asc, 'v.asc).chunkByPlus('k)(runCatFunc)
     assertSrddSchemaEqual(res2, "k:String; v: String; vcat:String")
     assertUnorderedSeqEqual(res2.collect.map(_.toString), Seq(

@@ -41,6 +41,8 @@ import org.apache.spark.sql.functions._
  * This only works for String columns for now (due to limitation of Explode method)
  */
 private[smv] class UnpivotOp(val df: DataFrame, val valueCols: Seq[String]) {
+  import df.sqlContext.implicits._
+
   // TODO: should not hardcode the column/value column names in the result.
   // TODO: perhaps accept multiple valueCols sets.
 
@@ -51,21 +53,16 @@ private[smv] class UnpivotOp(val df: DataFrame, val valueCols: Seq[String]) {
   /**
    * Creates the projection array expression required to unpivot the pivoted data:
    * Given value columns (X,Y,Z), this produces:
-   * Array( Array("X", 'X), Array("Y", 'Y), Array("Z", 'Z) )
+   * Array( Struct("X", 'X), Struct("Y", 'Y), Struct("Z", 'Z) )
    */
-  private def unpivotExplodeArray() = {
-    smvAsArray(valueCols.
-      map(vn => smvAsArray(lit(vn), df(vn))): _*
-    )
-  }
+
+  val arrayCol = array(valueCols.map{c => struct(lit(c) as "column", $"${c}" as "value")}: _*)
 
   def unpivot() = {
-    import df.sqlContext.implicits._
-
-    df.selectPlus(unpivotExplodeArray() as "_unpivot_vals").
-      explode("_unpivot_vals", "_kvpair")((a: Seq[Seq[String]]) => a).
-      selectPlus($"_kvpair".getItem(0) as 'column, $"_kvpair".getItem(1) as 'value).
-      selectMinus("_unpivot_vals", "_kvpair").
-      selectMinus(valueCols(0), valueCols.tail: _*)
+    df.selectPlus(arrayCol as "_unpivot_vals").
+      selectPlus(explode($"_unpivot_vals") as "_kvpair").
+      selectPlus($"_kvpair".getField("column") as "column", $"_kvpair".getField("value") as "value").
+      selectMinus($"_unpivot_vals", $"_kvpair").
+      selectMinus(valueCols.head, valueCols.tail: _*)
   }
 }
