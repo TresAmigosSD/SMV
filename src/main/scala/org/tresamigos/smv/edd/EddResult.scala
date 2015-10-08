@@ -69,16 +69,13 @@ private[smv] class EddResult(
         case v: Long => v.hashCode
       }
       case "hist" => EddResult.parseHistJson(valueJSON).map{ case (k, c) =>
-
-        val keyHash = k match {
-          case v: String => v.hashCode
-          case v: Long => v.hashCode
-          case v: Boolean => v.hashCode
-          case v: Double => BigDecimal(v, mc).hashCode
+        k match {
+          case v: String => v.hashCode + c.hashCode
+          case v: Long => v.hashCode + c.hashCode
+          case v: Boolean => v.hashCode + c.hashCode
+          case v: Double => BigDecimal(v, mc).hashCode + BigDecimal(c, mc).hashCode
           case _ => throw new IllegalArgumentException("unsupported type")
         }
-
-        keyHash + c.hashCode
       }.reduce(_ + _)
     }
 
