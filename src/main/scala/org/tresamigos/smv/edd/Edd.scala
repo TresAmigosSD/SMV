@@ -133,10 +133,6 @@ case class EddResultFunctions(eddRes: DataFrame) {
 }
 
 object Edd{
-  def apply(df: DataFrame) = {
-    new Edd(df)
-  }
-
   /**
    * map the data file path to edd path.
    * Ignores ".gz", ".csv", ".tsv" extensions when constructions schema file path.

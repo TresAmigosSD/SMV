@@ -29,6 +29,8 @@ import org.json4s.jackson.JsonMethods._
  * @param taskDesc description of the task
  * @param valueJSON a JSON string of the statistics of the task
  *
+ * @param precision edd result comparison precision
+ *
  * So far only 4 types are supported as simple statistic value or the key of the histogram
  *  - String
  *  - Boolean
@@ -37,49 +39,50 @@ import org.json4s.jackson.JsonMethods._
  *
  * A histogram result represent as Map[Any, Long], where the key could be above 4 types.
  **/
-private[smv] case class EddResult(
-  colName: String,
-  taskType: String,
-  taskName: String,
-  taskDesc: String,
-  valueJSON: String
-){
+private[smv] class EddResult(
+  val colName: String,
+  val taskType: String,
+  val taskName: String,
+  val taskDesc: String,
+  val valueJSON: String
+)(val precision: Int) {
 
-  private def parseHistJson(s: String): Seq[(Any, Long)] = {
+  private val mc = new java.math.MathContext(precision)
 
-    val json = parse(s)
-    val res = for {
-      JObject(child) <- json
-      JField("histSortByFreq", JBool(histSortByFreq)) <- child
-      JField("hist", JObject(m)) <- child
-    } yield {
-      val h = m.map{case (k,v) => (parse(k),v)}.map{ l =>
-        l match {
-          case (JString(k), JInt(v)) => (k, v.toLong)
-          case (JBool(k), JInt(v)) => (k, v.toLong)
-          case (JInt(k), JInt(v)) => (k.toLong, v.toLong)
-          case (JDouble(k),JInt(v)) => (k, v.toLong)
-          case _ => throw new IllegalArgumentException("unsupported type")
-        }
-      }.toMap
-      histSort(h, histSortByFreq)
+  def canEqual(a: Any) = {
+    a match {
+      case r: EddResult => r.precision == precision
+      case _ => false
     }
-    res.head.toSeq
   }
 
-  private def histSort(hist: Map[Any, Long], histSortByFreq: Boolean) = {
-    val ordering = hist.keySet.head match {
-      case k: Long => implicitly[Ordering[Long]].asInstanceOf[Ordering[Any]]
-      case k: Double => implicitly[Ordering[Double]].asInstanceOf[Ordering[Any]]
-      case k: String => implicitly[Ordering[String]].asInstanceOf[Ordering[Any]]
-      case k: Boolean => implicitly[Ordering[Boolean]].asInstanceOf[Ordering[Any]]
-      case _ => throw new IllegalArgumentException("unsupported type")
+  override def equals(that: Any): Boolean = that match {
+    case that: EddResult => that.canEqual(this) && this.hashCode == that.hashCode
+    case _ => false
+  }
+
+  override def hashCode: Int = {
+    val headerHash = colName.hashCode + taskType.hashCode + taskName.hashCode
+    val valueHash = taskType match {
+      case "stat" => EddResult.parseSimpleJson(valueJSON) match {
+        case v: Double => BigDecimal(v, mc).hashCode
+        case v: Long => v.hashCode
+      }
+      case "hist" => EddResult.parseHistJson(valueJSON).map{ case (k, c) =>
+
+        val keyHash = k match {
+          case v: String => v.hashCode
+          case v: Long => v.hashCode
+          case v: Boolean => v.hashCode
+          case v: Double => BigDecimal(v, mc).hashCode
+          case _ => throw new IllegalArgumentException("unsupported type")
+        }
+
+        keyHash + c.hashCode
+      }.reduce(_ + _)
     }
 
-    if(histSortByFreq)
-      hist.toSeq.sortBy(_._2)
-    else
-      hist.toSeq.sortWith((a,b) => ordering.compare(a._1, b._1) < 0)
+    headerHash + valueHash
   }
 
   def toReport() = {
@@ -88,7 +91,7 @@ private[smv] case class EddResult(
         f"${colName}%-20s ${taskDesc}%-22s ${valueJSON}%s"
       }
       case "hist" => {
-        val hist = parseHistJson(valueJSON)
+        val hist = EddResult.parseHistJson(valueJSON)
 
         val csum = hist.scanLeft(0l){(c,m) => c + m._2}.tail
         val total = csum(csum.size - 1)
@@ -109,17 +112,17 @@ private[smv] case class EddResult(
 
   def toJSON() = {
     val json =
-      ("colName", colName) ~
-      ("taskType", taskType) ~
-      ("taskName", taskName) ~
-      ("taskDesc", taskDesc) ~
-      ("valueJSON", parse(valueJSON))
+      ("colName" -> colName) ~
+      ("taskType" -> taskType) ~
+      ("taskName" -> taskName) ~
+      ("taskDesc" -> taskDesc) ~
+      ("valueJSON" -> parse(valueJSON))
     compact(json)
   }
 }
 
 private[smv] object EddResult {
-  def apply(r: Row) = {
+  def apply(r: Row, precision: Int = 5) = {
     r match {
       case Row(
         colName: String,
@@ -133,7 +136,60 @@ private[smv] object EddResult {
         taskName,
         taskDesc,
         valueJSON
-      )
+      )(precision)
     }
+  }
+
+  private def histSort(hist: Map[Any, Long], histSortByFreq: Boolean) = {
+    val ordering = hist.keySet.head match {
+      case k: Long => implicitly[Ordering[Long]].asInstanceOf[Ordering[Any]]
+      case k: Double => implicitly[Ordering[Double]].asInstanceOf[Ordering[Any]]
+      case k: String => implicitly[Ordering[String]].asInstanceOf[Ordering[Any]]
+      case k: Boolean => implicitly[Ordering[Boolean]].asInstanceOf[Ordering[Any]]
+      case _ => throw new IllegalArgumentException("unsupported type")
+    }
+
+    if(histSortByFreq)
+      hist.toSeq.sortBy(_._2)
+    else
+      hist.toSeq.sortWith((a,b) => ordering.compare(a._1, b._1) < 0)
+  }
+
+  /** Only long and double are supported as the simple valueJson */
+  private[smv] def parseSimpleJson(s: String): Any = {
+    val json = parse(s)
+    val res = json match {
+      case JInt(k) => k.toLong
+      case JDouble(k) => k
+      case _ => throw new IllegalArgumentException("unsupported type")
+    }
+    res
+  }
+
+  /** 4 types of hist keys valueJson are supported
+   *  - Long/Int
+   *  - String
+   *  - Boolean
+   *  - Bouble
+   **/
+  private[smv] def parseHistJson(s: String): Seq[(Any, Long)] = {
+    val json = parse(s)
+    val res = for {
+      JObject(child) <- json
+      JField("histSortByFreq", JBool(histSortByFreq)) <- child
+      JField("hist", JObject(m)) <- child
+    } yield {
+      val h = m.map{case (k,v) => (parse(k),v)}.map{ l =>
+        l match {
+          case (JString(k), JInt(v)) => (k, v.toLong)
+          case (JBool(k), JInt(v)) => (k, v.toLong)
+          case (JInt(k), JInt(v)) => (k.toLong, v.toLong)
+          case (JDouble(k),JInt(v)) => (k, v.toLong)
+          case _ => throw new IllegalArgumentException("unsupported type")
+        }
+      }.toMap
+      histSort(h, histSortByFreq)
+    }
+    res.head.toSeq
   }
 }
