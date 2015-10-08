@@ -57,7 +57,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   @Experimental
-  def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
+  def smvMapGroup(gdo: SmvGDO, needConvert: Boolean = true): SmvGroupedData = {
     val schema = df.schema
     val ordinals = schema.getIndices(keys: _*)
     val rowToKeys: Row => Seq[Any] = {row =>
@@ -69,11 +69,18 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val rdd = df.rdd.
       groupBy(rowToKeys).
       flatMapValues(rowsInGroup => {
+          val inRow =
+            if(needConvert) convertToCatalyst(rowsInGroup, schema)
+            else rowsInGroup.map{r => InternalRow(r.toSeq: _*)}
+
           // convert Iterable[Row] to Iterable[InternalRow] first
           // so we can apply the function inGroupMapping
-          val res = inGroupMapping(convertToCatalyst(rowsInGroup, schema))
+          val res = inGroupMapping(inRow)
           // now we have to convert an RDD[InternalRow] back to RDD[Row]
-          convertToScala(res, outSchema)
+          if(needConvert)
+            convertToScala(res, outSchema)
+          else
+            res.map{r => Row(r.toSeq(outSchema): _*)}
         }
       ).values
 

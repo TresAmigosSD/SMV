@@ -536,7 +536,7 @@ class SmvDFHelper(df: DataFrame) {
   def chunkBy(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
     val kStr = keys.map{_.name}
     df.smvGroupBy(kStr(0), kStr.tail: _*).
-      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, false)).toDF
+      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, false), false).toDF
   }
 
   /**
@@ -546,7 +546,7 @@ class SmvDFHelper(df: DataFrame) {
   def chunkByPlus(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
     val kStr = keys.map{_.name}
     df.smvGroupBy(kStr(0), kStr.tail: _*).
-      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, true)).toDF
+      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, true), false).toDF
   }
 
   /**

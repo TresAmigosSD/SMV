@@ -29,11 +29,11 @@ class SmvChunkTest extends SmvTestUtil {
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[k1,a]", "[k1,ab]", "[k2,c]", "[k2,cd]"))
 
+      */
     val res2 = df.orderBy('k.asc, 'v.asc).chunkByPlus('k)(runCatFunc)
     assertSrddSchemaEqual(res2, "k:String; v: String; vcat:String")
     assertUnorderedSeqEqual(res2.collect.map(_.toString), Seq(
       "[k1,a,a]", "[k1,b,ab]", "[k2,c,c]", "[k2,d,cd]"))
-      */
   }
 
 }
