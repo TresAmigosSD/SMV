@@ -14,8 +14,9 @@
 
 package org.tresamigos.smv.edd
 
+import org.apache.spark.{SparkContext}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{Row, DataFrame}
 import org.apache.spark.sql.functions._
 
 import org.tresamigos.smv._
@@ -90,6 +91,10 @@ class Edd(val df: DataFrame) {
     val histCols = colNames.map{n => edd.AmtHist(n)}
     histogram(histCols: _*)
   }
+
+  def persistBesideData(dataPath: String): Unit = {
+    summary().saveReport(Edd.dataPathToEddPath(dataPath))
+  }
 }
 
 /**
@@ -130,6 +135,49 @@ case class EddResultFunctions(eddRes: DataFrame) {
 
   /** edd result df **/
   def toDF = eddRes
+
+  def compareWith(that: DataFrame): (Boolean, String) = {
+    require(that.columns.toSeq == Seq("colName", "taskType", "taskName", "taskDesc", "valueJSON"))
+
+    import eddRes.sqlContext.implicits._
+
+    val cacheThis = eddRes.cache()
+    val cacheThat = that.prefixFieldNames("_").cache()
+
+    val thisCnt = cacheThis.count
+    val thatCnt = cacheThat.count
+
+    val (isEqual, reason) =
+      if (thisCnt != thatCnt) {
+        (false, s"Edd DFs have different counts: ${thisCnt} vs. ${thatCnt}")
+      } else {
+        val joined = cacheThis.join(cacheThat,
+          (($"colName" === $"_colName") && ($"taskType" === $"_taskType") && ($"taskName" === $"_taskName")),
+          SmvJoinType.Inner
+        ).cache
+        val joinedCnt = joined.count
+        val res = if (joinedCnt != thisCnt) {
+          (false, s"Edd DFs are not matched. Joined count: ${joinedCnt}, Original count: ${thisCnt}")
+        } else {
+          val eddResSeq = joined.
+            select("colName", "taskType", "taskName", "taskDesc", "valueJSON",
+            "_colName", "_taskType", "_taskName", "_taskDesc", "_valueJSON").
+            rdd.collect.map{r =>
+              (EddResult(Row(r.toSeq.slice(0,5): _*)), EddResult(Row(r.toSeq.slice(5,10): _*)))
+            }
+          val resSeq = eddResSeq.map{case (e1, e2) =>
+            (e1 == e2, if(e1 == e2) "" else s"not equal: ${e1.colName}, ${e1.taskType}, ${e1.taskName}, ${e1.taskDesc}")
+          }
+          (resSeq.map{_._1}.reduce(_ && _), resSeq.map(_._2).mkString("\n"))
+        }
+        joined.unpersist()
+        res
+      }
+    cacheThis.unpersist()
+    cacheThat.unpersist()
+
+    (isEqual, reason)
+  }
 }
 
 object Edd{
@@ -145,5 +193,4 @@ object Edd{
 
     dataPathNoExt + ".edd"
   }
-
 }
