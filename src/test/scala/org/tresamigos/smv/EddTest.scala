@@ -37,6 +37,36 @@ key                      count      Pct    cumCount   cumPct
 
     assert(EddResult(df2.rdd.first).toJSON === """{"colName":"col_a","taskType":"hist","taskName":"key","taskDesc":"by Key","valueJSON":{"histSortByFreq":false,"hist":{"\"2\"":1,"\"5\"":1,"\"1\"":2}}}""")
   }
+
+  test("test EddResult equals") {
+    val df1 = createSchemaRdd("a:String;b:String;c:String;d:String;f:String",
+      "col_a,stat,avg,Average,13.75;col_a,stat,avg,Average,13.7501")
+    val rows = df1.rdd.collect
+    assert(EddResult(rows(0)) === EddResult(rows(1)))
+  }
+
+  test("test EddResult Hist equals") {
+    val colName = "v"
+    val taskType = "hist"
+    val taskName = "bin"
+    val taskDesc = "with Bin = 10"
+    val valueJSON1 = """{"histSortByFreq":false,"hist":{"0.01":4,"10.0":300000}}"""
+    val valueJSON2 = """{"histSortByFreq":false,"hist":{"0.010001":4,"10.0":300000}}"""
+    val valueJSON3 = """{"histSortByFreq":false,"hist":{"0.0100003":4,"10.0":300000}}"""
+    val valueJSON4 = """{"histSortByFreq":false,"hist":{"10.0":300000,"0.01":4}}"""
+    val valueJSON5 = """{"histSortByFreq":false,"hist":{"10.0":300002,"0.01":4}}"""
+
+    val r1 = new EddResult(colName, taskType, taskName, taskDesc, valueJSON1)(5)
+    val r2 = new EddResult(colName, taskType, taskName, taskDesc, valueJSON2)(5)
+    val r3 = new EddResult(colName, taskType, taskName, taskDesc, valueJSON3)(5)
+    val r4 = new EddResult(colName, taskType, taskName, taskDesc, valueJSON4)(5)
+    val r5 = new EddResult(colName, taskType, taskName, taskDesc, valueJSON5)(5)
+
+    assert(r1 !== r2)
+    assert(r1 === r3)
+    assert(r1 === r4)
+    assert(r1 === r5)
+  }
 }
 
 class EddTaskTest extends SmvTestUtil {
