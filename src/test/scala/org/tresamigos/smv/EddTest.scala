@@ -35,7 +35,7 @@ key                      count      Pct    cumCount   cumPct
 5                            1   25.00%           4  100.00%
 -------------------------------------------------""")
 
-    assert(EddResult(df2.rdd.first).toJSON === """{"colName":"col_a","taskType":"hist","taskName":"key","taskDesc":"by Key","valueJSON":{"histSortByFreq":false,"hist":{"\"2\"":1,"\"5\"":1,"\"1\"":2}}}""")
+    assert(EddResult(df2.rdd.first).toJSON === """{"colName":"col_a","taskType":"hist","taskName":"key","taskDesc":"by Key","valueJSON":"{\"histSortByFreq\":false,\"hist\":{\"\\\"2\\\"\":1,\"\\\"5\\\"\":1,\"\\\"1\\\"\":2}}"}""")
   }
 
   test("test EddResult equals") {
