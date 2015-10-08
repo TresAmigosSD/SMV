@@ -51,6 +51,11 @@ class EddTaskTest extends SmvTestUtil {
          a,1,a,0.3,20151204,false""")
   }
 
+  private def histJson(s: String) = {
+    val extract = """.*(\{"hist.*\})""".r
+    val histStr = s match {case extract(hist) => hist}
+
+  }
 
   test("test EddTask AvgTask") {
     val ssc = sqlContext; import ssc.implicits._
@@ -119,87 +124,111 @@ class EddTaskTest extends SmvTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val std = edd.BinNumericHistogram($"v", 0.5)
     val res = df.agg(std.aggCol).select(std.resultCols: _*)
-    assertSrddDataEqual(res, """v,hist,bnh,with BIN size 0.5,{"histSortByFreq":false,"hist":{"2.0":1,"1.0":1,"0.0":2}}""")
+
+    val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
+    assert(rep === """Histogram of v: with BIN size 0.5
+key                      count      Pct    cumCount   cumPct
+0.0                          2   50.00%           2   50.00%
+1.0                          1   25.00%           3   75.00%
+2.0                          1   25.00%           4  100.00%
+-------------------------------------------------"""
+    )
   }
 
   test("test EddTask YearHistogram") {
     val ssc = sqlContext; import ssc.implicits._
     val std = edd.YearHistogram($"d")
     val res = df.agg(std.aggCol).select(std.resultCols: _*)
-    assertSrddDataEqual(res, """d,hist,yea,Year,{"histSortByFreq":false,"hist":{"\"2013\"":1,"\"2015\"":2,"\"1901\"":1}}""")
+
+    val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
+    assert(rep === """Histogram of d: Year
+key                      count      Pct    cumCount   cumPct
+1901                         1   25.00%           1   25.00%
+2013                         1   25.00%           2   50.00%
+2015                         2   50.00%           4  100.00%
+-------------------------------------------------"""
+    )
   }
 
   test("test EddTask MonthHistogram") {
     val ssc = sqlContext; import ssc.implicits._
     val std = edd.MonthHistogram($"d")
     val res = df.agg(std.aggCol).select(std.resultCols: _*)
-    assertSrddDataEqual(res, """d,hist,mon,Month,{"histSortByFreq":false,"hist":{"\"12\"":1,"\"09\"":1,"\"04\"":1,"\"07\"":1}}""")
+
+    val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
+    assert(rep === """Histogram of d: Month
+key                      count      Pct    cumCount   cumPct
+04                           1   25.00%           1   25.00%
+07                           1   25.00%           2   50.00%
+09                           1   25.00%           3   75.00%
+12                           1   25.00%           4  100.00%
+-------------------------------------------------"""
+    )
   }
 
   test("test EddTask DoWHistogram") {
     val ssc = sqlContext; import ssc.implicits._
     val std = edd.DoWHistogram($"d")
     val res = df.agg(std.aggCol).select(std.resultCols: _*)
-    assertSrddDataEqual(res, """d,hist,dow,Day of Week,{"histSortByFreq":false,"hist":{"\"2\"":2,"\"5\"":1,"\"6\"":1}}""")
+    val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
+    assert(rep === """Histogram of d: Day of Week
+key                      count      Pct    cumCount   cumPct
+2                            2   50.00%           2   50.00%
+5                            1   25.00%           3   75.00%
+6                            1   25.00%           4  100.00%
+-------------------------------------------------"""
+    )
   }
 
   test("test EddTask HourHistogram") {
     val ssc = sqlContext; import ssc.implicits._
     val std = edd.HourHistogram($"d")
     val res = df.agg(std.aggCol).select(std.resultCols: _*)
-    assertSrddDataEqual(res, """d,hist,hou,Hour,{"histSortByFreq":false,"hist":{"\"00\"":4}}""")
+    val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
+    assert(rep === """Histogram of d: Hour
+key                      count      Pct    cumCount   cumPct
+00                           4  100.00%           4  100.00%
+-------------------------------------------------""")
   }
 
   test("test EddTask BooleanHistogram") {
     val ssc = sqlContext; import ssc.implicits._
     val std = edd.BooleanHistogram($"b")
     val res = df.agg(std.aggCol).select(std.resultCols: _*)
-    assertSrddDataEqual(res, """b,hist,boo,Boolean,{"histSortByFreq":false,"hist":{"false":1,"true":2}}""")
+    val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
+    assert(rep === """Histogram of b: Boolean
+key                      count      Pct    cumCount   cumPct
+false                        1   33.33%           1   33.33%
+true                         2   66.67%           3  100.00%
+-------------------------------------------------""")
   }
 
   test("test EddTask StringByKeyHistogram") {
     val ssc = sqlContext; import ssc.implicits._
     val std = edd.StringByKeyHistogram($"k")
     val res = df.agg(std.aggCol).select(std.resultCols: _*)
-    assertSrddDataEqual(res, """k,hist,key,String sort by Key,{"histSortByFreq":false,"hist":{"\"z\"":3,"\"a\"":1}}""")
+    val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
+    assert(rep === """Histogram of k: String sort by Key
+key                      count      Pct    cumCount   cumPct
+a                            1   25.00%           1   25.00%
+z                            3   75.00%           4  100.00%
+-------------------------------------------------""")
   }
 
   test("test EddTask StringByFreqHistogram") {
     val ssc = sqlContext; import ssc.implicits._
     val std = edd.StringByFreqHistogram($"k")
     val res = df.agg(std.aggCol).select(std.resultCols: _*)
-    assertSrddDataEqual(res, """k,hist,frq,String sorted by Frequency,{"histSortByFreq":true,"hist":{"\"z\"":3,"\"a\"":1}}""")
+    val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
+    assert(rep === """Histogram of k: String sorted by Frequency
+key                      count      Pct    cumCount   cumPct
+a                            1   25.00%           1   25.00%
+z                            3   75.00%           4  100.00%
+-------------------------------------------------""")
   }
 
   test("test EddSummary") {
     val res = df.edd.summary()
-    assertUnorderedSeqEqual(res.toDF.collect.map(_.toString), Seq(
-      """[k,stat,cnt,Non-Null Count,4]""",
-      """[k,stat,mil,Min Length,1]""",
-      """[k,stat,mal,Max Length,1]""",
-      """[k,stat,dct,Approx Distinct Count,2]""",
-      """[t,stat,cnt,Non-Null Count,4]""",
-      """[t,stat,avg,Average,2.25]""",
-      """[t,stat,std,Standard Deviation,1.8929694486000912]""",
-      """[t,stat,min,Min,1.0]""",
-      """[t,stat,max,Max,5.0]""",
-      """[p,stat,cnt,Non-Null Count,4]""",
-      """[p,stat,mil,Min Length,1]""",
-      """[p,stat,mal,Max Length,1]""",
-      """[p,stat,dct,Approx Distinct Count,2]""",
-      """[v,stat,cnt,Non-Null Count,4]""",
-      """[v,stat,avg,Average,1.025]""",
-      """[v,stat,std,Standard Deviation,0.9535023160258536]""",
-      """[v,stat,min,Min,0.2]""",
-      """[v,stat,max,Max,2.2]""",
-      """[d,stat,tmi,Time Start,"1901-07-01 00:00:00"]""",
-      """[d,stat,tma,Time Edd,"2015-12-04 00:00:00"]""",
-      """[d,hist,yea,Year,{"histSortByFreq":false,"hist":{"\"2013\"":1,"\"2015\"":2,"\"1901\"":1}}]""",
-      """[d,hist,mon,Month,{"histSortByFreq":false,"hist":{"\"12\"":1,"\"09\"":1,"\"04\"":1,"\"07\"":1}}]""",
-      """[d,hist,dow,Day of Week,{"histSortByFreq":false,"hist":{"\"2\"":2,"\"5\"":1,"\"6\"":1}}]""",
-      """[d,hist,hou,Hour,{"histSortByFreq":false,"hist":{"\"00\"":4}}]""",
-      """[b,hist,boo,Boolean,{"histSortByFreq":false,"hist":{"false":1,"true":2}}]""")
-    )
 
     assert(res.createReport().mkString("\n") === """k                    Non-Null Count         4
 k                    Min Length             1
