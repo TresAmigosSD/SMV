@@ -159,6 +159,8 @@
           <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
           <junitxml>.</junitxml>
           <filereports>WDF TestSuite.txt</filereports>
+          <!-- since akka remoting keep staring for each suite, need a larger memory here -->
+          <argLine>-XX:MaxPermSize=256m</argLine>
         </configuration>
         <executions>
           <execution>
