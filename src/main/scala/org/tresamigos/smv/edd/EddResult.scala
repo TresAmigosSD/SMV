@@ -29,6 +29,8 @@ import org.json4s.jackson.JsonMethods._
  * @param taskDesc description of the task
  * @param valueJSON a JSON string of the statistics of the task
  *
+ * @param precision edd result comparison precision
+ *
  * So far only 4 types are supported as simple statistic value or the key of the histogram
  *  - String
  *  - Boolean
@@ -37,13 +39,51 @@ import org.json4s.jackson.JsonMethods._
  *
  * A histogram result represent as Map[Any, Long], where the key could be above 4 types.
  **/
-private[smv] case class EddResult(
-  colName: String,
-  taskType: String,
-  taskName: String,
-  taskDesc: String,
-  valueJSON: String
-){
+private[smv] class EddResult(
+  val colName: String,
+  val taskType: String,
+  val taskName: String,
+  val taskDesc: String,
+  val valueJSON: String
+)(val precision: Int) {
+
+  private val mc = new java.math.MathContext(precision)
+
+  def canEqual(a: Any) = {
+    a match {
+      case r: EddResult => r.precision == precision
+      case _ => false
+    }
+  }
+
+  override def equals(that: Any): Boolean = that match {
+    case that: EddResult => that.canEqual(this) && this.hashCode == that.hashCode
+    case _ => false
+  }
+
+  override def hashCode: Int = {
+    val headerHash = colName.hashCode + taskType.hashCode + taskName.hashCode
+    val valueHash = taskType match {
+      case "stat" => EddResult.parseSimpleJson(valueJSON) match {
+        case v: Double => BigDecimal(v, mc).hashCode
+        case v: Long => v.hashCode
+      }
+      case "hist" => EddResult.parseHistJson(valueJSON).map{ case (k, c) =>
+
+        val keyHash = k match {
+          case v: String => v.hashCode
+          case v: Long => v.hashCode
+          case v: Boolean => v.hashCode
+          case v: Double => BigDecimal(v, mc).hashCode
+          case _ => throw new IllegalArgumentException("unsupported type")
+        }
+
+        keyHash + c.hashCode
+      }.reduce(_ + _)
+    }
+
+    headerHash + valueHash
+  }
 
   def toReport() = {
     taskType match {
@@ -82,7 +122,7 @@ private[smv] case class EddResult(
 }
 
 private[smv] object EddResult {
-  def apply(r: Row) = {
+  def apply(r: Row, precision: Int = 5) = {
     r match {
       case Row(
         colName: String,
@@ -96,7 +136,7 @@ private[smv] object EddResult {
         taskName,
         taskDesc,
         valueJSON
-      )
+      )(precision)
     }
   }
 
@@ -115,6 +155,23 @@ private[smv] object EddResult {
       hist.toSeq.sortWith((a,b) => ordering.compare(a._1, b._1) < 0)
   }
 
+  /** Only long and double are supported as the simple valueJson */
+  private[smv] def parseSimpleJson(s: String): Any = {
+    val json = parse(s)
+    val res = json match {
+      case JInt(k) => k.toLong
+      case JDouble(k) => k
+      case _ => throw new IllegalArgumentException("unsupported type")
+    }
+    res
+  }
+
+  /** 4 types of hist keys valueJson are supported
+   *  - Long/Int
+   *  - String
+   *  - Boolean
+   *  - Bouble
+   **/
   private[smv] def parseHistJson(s: String): Seq[(Any, Long)] = {
     val json = parse(s)
     val res = for {
