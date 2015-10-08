@@ -166,12 +166,12 @@ package object smv {
 
   /**
    * restore 1.1 sum behaviour (and what is coming back in 1.4) where if all values are null, sum is 0
-   * Note: passed in column must be resolved (can not be just the name)
    *
    * @group agg
    */
   def smvSum0(col: Column) : Column = {
-    val cZero = lit(0).cast(col.toExpr.dataType)
-    coalesce(sum(col), cZero)
+    //no need for casting, coalesce is smart enough
+    //val cZero = lit(0).cast(col.toExpr.dataType)
+    coalesce(sum(col), lit(0))
   }
 }

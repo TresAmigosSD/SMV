@@ -44,15 +44,15 @@ class AggFuncsTest extends SmvTestUtil {
       "[a,1,0.3,0.3]",
       "[z,1,1.4,null]"))
   }
-  
+
   test("test smvSum0") {
-    val ssc = sqlContext;
+    val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v1:Integer; v2:Double", "X,,;X,,")
     val res = df.groupBy("k").agg(
       sum("v1") as "v1_null",
       sum("v2") as "v2_null",
-      smvSum0(df("v1")) as "v1_zero",
-      smvSum0(df("v2")) as "v2_zero"
+      smvSum0($"v1") as "v1_zero",
+      smvSum0($"v2") as "v2_zero"
     )
 
     assertSrddDataEqual(res, "X,null,null,0,0.0")
