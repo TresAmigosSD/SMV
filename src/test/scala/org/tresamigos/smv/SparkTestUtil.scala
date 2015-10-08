@@ -57,6 +57,7 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
 
     sc = new SparkContext("local[2]", name())
     sqlContext = new SQLContext(sc)
+    sqlContext.setConf("spark.sql.shuffle.partitions", "8")
     resetTestcaseTempDir()
   }
 
@@ -195,7 +196,6 @@ trait SmvTestUtil extends SparkTestUtil {
 
   /** appArgs could be overridden by concrete class to initiate SmvApp.app as required */
   def appArgs: Seq[String] = Seq(
-    "--smv-props", "spark.sql.shuffle.partitions = 64",
     "-m", "None",
     "--data-dir", testcaseTempDir
   )

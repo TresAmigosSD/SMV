@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.contrib.smv._
+
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
@@ -62,15 +64,18 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       ordinals.map{i => row(i)}
     }
 
+    val outSchema = gdo.createOutSchema(schema)
     val inGroupMapping =  gdo.createInGroupMapping(schema)
     val rdd = df.rdd.
       groupBy(rowToKeys).
-      flatMapValues(rowsInGroup =>
-        // convert Iterable[Row] to Iterable[InternalRow] first
-        // so we can apply the function inGroupMapping
-        inGroupMapping(rowsInGroup map (r => InternalRow.fromSeq(r.toSeq)))).
-      // now we have to convert an RDD[InternalRow] back to RDD[Row]
-      values map (r => Row.fromSeq(r.toSeq(schema)))
+      flatMapValues(rowsInGroup => {
+          // convert Iterable[Row] to Iterable[InternalRow] first
+          // so we can apply the function inGroupMapping
+          val res = inGroupMapping(convertToCatalyst(rowsInGroup, schema))
+          // now we have to convert an RDD[InternalRow] back to RDD[Row]
+          convertToScala(res, outSchema)
+        }
+      ).values
 
     /* since df.rdd method called ScalaReflection.convertToScala at the end on each row, here
        after process, we need to convert them all back by calling convertToCatalyst. One key difference
@@ -78,7 +83,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
        java.sql.Date, and in Catalyst RDD, it is an Int. Please note, since df.rdd always convert Catalyst RDD
        to Scala RDD, user should have no chance work on Catalyst RDD outside of DF.
      */
-    val outSchema = gdo.createOutSchema(schema)
+
     // TODO remove conversion to catalyst type after all else compiles
     // val converted = rdd.map{row =>
     //   Row(row.toSeq.zip(outSchema.fields).
@@ -280,7 +285,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val cols = ranges.map{case (c, (_,_)) => c}
     val keyCols = keys.map{k => $"$k"}
 
-    val aggExprs = keyCols ++ cols.flatMap{v =>
+    val aggExprs = cols.flatMap{v =>
       val name = v.getName
       Seq(min(v).cast("double") as s"${name}_min", max(v).cast("double") as s"${name}_max")
     }

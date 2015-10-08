@@ -117,10 +117,11 @@ private[smv] case class SmvCDSAggColumn(aggExpr: Expression, cds: SmvCDS = NoOpC
   def as(n: String): SmvCDSAggColumn =
     new SmvCDSAggColumn(Alias(aggExpr, n)(), cds)
 
-  def isAgg(): Boolean = aggExpr match {
-    case Alias(e: AggregateExpression, n) => true
-    case _: NamedExpression => false
-    case _ => throw new IllegalArgumentException(s"${aggExpr.toString} need  to be a NamedExpression")
+  def isAgg(): Boolean = {aggExpr match {
+      case Alias(e: AggregateExpression, n) => true
+      case _: NamedExpression => false
+      case _ => throw new IllegalArgumentException(s"${aggExpr.toString} need  to be a NamedExpression")
+    }
   }
 }
 
@@ -267,17 +268,6 @@ private[smv] class SmvRunAggGDO(orders: Seq[Expression], aggCols: Seq[SmvCDSAggC
       }
   }
 
-  private def runNoOpCDS(
-                         cum: Seq[AggregateFunction1],
-                         getKept: InternalRow => Seq[Any]
-                           ): Seq[InternalRow] => Iterable[InternalRow] = {rSeq =>
-    rSeq.map{r =>
-      cum.map{_.update(r)}
-      val sum = cum.map{_.eval(null)}
-      new GenericInternalRow(Array[Any](getKept(r) ++ sum: _*))
-    }
-  }
-
   override def createInGroupMapping(smvSchema:StructType) = {
     val executers = cdsAggsList.map{aggs => {(r: InternalRow, it: Iterable[InternalRow]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}.toList
     val keptExprs = SmvLocalRelation(smvSchema).bindExprs(keptCols).toList
@@ -287,8 +277,6 @@ private[smv] class SmvRunAggGDO(orders: Seq[Expression], aggCols: Seq[SmvCDSAggC
     if (cdsAggsList.size == 1){
       val cum = cdsAggsList(0).aggFunctions(smvSchema).toList; //toList: for serialization
       cdsAggsList(0).cds match {
-        case NoOpCDS =>
-          {rows => runNoOpCDS(cum, getKept)(rows.toSeq.sorted(rowOrdering))}
         case c: RunAggOptimizable =>
           {rows => c.createRunAggIterator(smvSchema, cum, getKept)(rows.toSeq.sorted(rowOrdering))}
         case _ =>

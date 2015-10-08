@@ -318,11 +318,16 @@ class SmvDFHelper(df: DataFrame) {
   def dedupByKey(k1: String, krest: String*) : DataFrame = {
     import df.sqlContext.implicits._
     val keys = k1 +: krest
-    val selectExpressions = df.columns.map {
+    /* Should call dropDuplicates, but that method has bug as if the first record has null
+    df.dropDuplicates(keys)*/
+
+    val selectExpressions = df.columns.diff(keys).map {
       //using smvFirst instead of first, since `first` return the first non-null of each field
       fn => smvFirst($"$fn") as fn
     }
-    df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*)
+
+    df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*).
+      select(df.columns.head, df.columns.tail: _*)
   }
 
   /** Same as `dedupByKey(String*)` but uses `Column` to specify the key columns */
