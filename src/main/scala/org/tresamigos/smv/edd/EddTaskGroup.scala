@@ -37,9 +37,12 @@ private[smv] abstract class EddTaskGroup {
     val resultCols = taskList.map{t => t.resultCols}
 
     // this DF only has 1 row
-    val resNew = df.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
-    val res = if (aggOlds.isEmpty) resNew
-      else (df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1).join(resNew))
+    val res =
+      if (aggOlds.isEmpty) df.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
+      else if (aggNews.isEmpty) df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1)
+      else df.agg(aggNews.head, aggNews.tail: _*).coalesce(1).join(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
+
+    val resCached = res.cache
 
     val schema = SmvSchema.fromString(
       "colName: String;" +
@@ -53,7 +56,10 @@ private[smv] abstract class EddTaskGroup {
        The schema comparison on a large tree could introduce significant overhead.
        Here we convert each small DF to RDD first, then create UnionRDD, which
        is a very cheap operation */
-    val resRdds = resultCols.map{rcols => res.select(rcols: _*).rdd}
+    val resRdds = resultCols.map{rcols => resCached.select(rcols: _*).rdd}
+
+    resCached.unpersist()
+
     val resRdd = new UnionRDD(df.sqlContext.sparkContext, resRdds).coalesce(1)
 
     df.sqlContext.createDataFrame(resRdd, schema.toStructType)

@@ -1,6 +1,8 @@
 import org.apache.spark.sql.functions._
 import org.tresamigos.smv._, shell._
 
+sc.setLogLevel("ERROR")
+
 // create the init object "i" rather than create initialization at top level
 // because shell would launch a separate command for each evalutaion which
 // slows down startup considerably.
@@ -13,7 +15,6 @@ object i {
   import java.io.{File, PrintWriter}
 
   val app = SmvApp.app
-  val sqlContext = app.sqlContext
 
   //-------- some helpful functions
   def smvSchema(df: DataFrame) = SmvSchema.fromDataFrame(df)
