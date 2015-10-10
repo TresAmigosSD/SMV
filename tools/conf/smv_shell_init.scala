@@ -66,7 +66,10 @@ object i {
   }
 
   // TODO: this should just be a direct helper on ds as it is probably common.
-  def dumpEdd(ds: SmvDataSet) = i.s(ds).edd.addBaseTasks().dump
+  def dumpEdd(ds: SmvDataSet) = i.s(ds).edd.summary().eddShow
+
+  def compEdds(f1: String, f2: String) = println(EddCompare.compareFiles(f1, f2))
+  def compEddDirs(d1: String, d2: String) = EddCompare.compareDirsReport(d1, d2)
 
 }
 
