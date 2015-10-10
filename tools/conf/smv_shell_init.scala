@@ -34,13 +34,13 @@ object i {
   }
 
   implicit class ShellSrddHelper(df: DataFrame) {
-    def save(path: String) = {
+    def sv(path: String) = {
       // TODO: why are we creating SmvDFHelper explicitly here?
       var helper = new org.tresamigos.smv.SmvDFHelper(df)
       helper.saveAsCsvWithSchema(path, CsvAttributes.defaultCsvWithHeader)
     }
 
-    def savel(path: String) = {
+    def svl(path: String) = {
       var res = df.collect.map{r => r.mkString(",")}.mkString("\n")
       val pw = new PrintWriter(new File(path))
       pw.println(res)
