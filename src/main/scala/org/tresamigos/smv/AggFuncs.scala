@@ -181,14 +181,16 @@ private[smv] object stddev extends UserDefinedAggregateFunction {
     val avg2 = buffer2.getDouble(1)
     val m22 = buffer2.getDouble(2)
 
-    val delta = avg1 - avg2
-    val avg = (avg1 * count1 + avg2 * count2 ) / (count1 + count2)
-    val m2 = m21 + m22 + delta * delta * count1 * count2 / (count1 + count2)
-    val count = count1 + count2
+    if (count2 > 0) {
+      val delta = avg1 - avg2
+      val avg = (avg1 * count1 + avg2 * count2 ) / (count1 + count2)
+      val m2 = m21 + m22 + delta * delta * count1 * count2 / (count1 + count2)
+      val count = count1 + count2
 
-    buffer1.update(0, count)
-    buffer1.update(1, avg)
-    buffer1.update(2, m2)
+      buffer1.update(0, count)
+      buffer1.update(1, avg)
+      buffer1.update(2, m2)
+    }
   }
 
   // Called on exit to get return value
