@@ -143,7 +143,7 @@ package object smv {
   /**
    * Concatenate columns as strings
    **/
-  def smvStrCat(columns: Column*) = concat(columns:_*)
+  def smvStrCat(columns: Column*) = concat(columns.map{c => coalesce(c, lit(""))}:_*)
 
   /**
    * Put a group of columns in an Array field

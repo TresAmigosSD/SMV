@@ -21,10 +21,10 @@ class NonAggFuncsTest extends SmvTestUtil {
   test("test smvStrCat") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
-    val res = df.select(smvStrCat($"v".smvNullSub("test"), $"k"))
+    val res = df.select(smvStrCat($"v", $"k"))
     assertSrddDataEqual(res,
       "a1;" +
-      "test2")
+      "2")
   }
 
   test("test smvAsArray") {
