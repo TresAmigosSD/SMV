@@ -192,7 +192,7 @@ private[smv] object SmvCDS {
 
         (ordinals zip ordering).map{case (i, order) =>
           order.compare(aElems(i),bElems(i)).signum
-        }.reduceLeft((s, i) => s << 1 + i)
+        }.reduceLeft((s, i) => s * 2 + i)
       }
     }
   }
