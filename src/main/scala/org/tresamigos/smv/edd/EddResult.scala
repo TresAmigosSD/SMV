@@ -65,6 +65,7 @@ private[smv] class EddResult(
     val headerHash = colName.hashCode + taskType.hashCode + taskName.hashCode
     val valueHash = taskType match {
       case "stat" => EddResult.parseSimpleJson(valueJSON) match {
+        case JNull => 0
         case v: Double => BigDecimal(v, mc).hashCode
         case v: Long => v.hashCode
         case v: String => v.hashCode
@@ -161,7 +162,8 @@ private[smv] object EddResult {
       case JInt(k) => k.toLong
       case JDouble(k) => k
       case JString(k) => k
-      case _ => throw new IllegalArgumentException("unsupported type")
+      case JNull => JNull
+      case x => throw new IllegalArgumentException("unsupported type " + x.getClass())
     }
     res
   }
