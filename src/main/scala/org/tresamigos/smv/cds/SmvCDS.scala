@@ -186,7 +186,7 @@ private[smv] object SmvCDS {
     new Ordering[Row] {
       override def compare(a:Row, b:Row) = (ordinals zip ordering).map{case (i, order) =>
         order.compare(a(i),b(i)).signum
-      }.reduceLeft((s, i) => s << 1 + i)
+      }.reduceLeft((s, i) => s * 2 + i)
     }
   }
 

@@ -82,7 +82,7 @@ class SmvCDSTest extends SmvTestUtil {
   test("Test SmvTopNRecsCDS") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,1.2;z,5,2.2;a,1,0.3;")
 
     val last2 = TopNRecs(2, $"v".desc)
     val res = df.smvGroupBy('k).oneAgg("t")(
@@ -96,11 +96,10 @@ class SmvCDSTest extends SmvTestUtil {
       "[a,1,0.3,1]",
       "[z,5,3.6,2]"))
 
-    val res2 = df.smvGroupBy("k").smvTopNRecs(2, $"v".desc)
+    val res2 = df.smvGroupBy("k").smvTopNRecs(1, $"t".desc, $"v".desc)
     assertSrddSchemaEqual(res2, "k: String; t: Integer; v: Double")
     assertUnorderedSeqEqual(res2.collect.map(_.toString), Seq(
       "[a,1,0.3]",
-      "[z,2,1.4]",
       "[z,5,2.2]"))
   }
 
