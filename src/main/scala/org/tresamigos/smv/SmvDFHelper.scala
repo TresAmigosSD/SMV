@@ -326,8 +326,12 @@ class SmvDFHelper(df: DataFrame) {
       fn => smvFirst($"$fn") as fn
     }
 
-    df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*).
-      select(df.columns.head, df.columns.tail: _*)
+    if (selectExpressions.isEmpty) {
+      df.select(k1, krest: _*).distinct()
+    } else {
+      df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*).
+        select(df.columns.head, df.columns.tail: _*)
+    }
   }
 
   /** Same as `dedupByKey(String*)` but uses `Column` to specify the key columns */
