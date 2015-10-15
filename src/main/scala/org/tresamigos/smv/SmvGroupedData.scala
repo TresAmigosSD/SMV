@@ -424,6 +424,75 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
   /**
+   * Rollup according to a hierarchy and unpivot with hardcoded column names
+   *  - hier_type
+   *  - hier_value
+   *
+   * Example:
+   * {{{
+   * df.smvGroupBy("k1").smvHierarchyAgg("h1", "h2")(sum($"v1") as "v1", ...)
+   * }}}
+   *
+   * The ordering of `h1` and `h2` is important. It assumes `h1` is higher level than `h2`,
+   * in other words, 1 `h1` could have multiple `h2`s.
+   *
+   * For data within a `k1` group
+   * {{{
+   *  h1, h2, v1
+   *  1,  02, 1.0
+   *  1,  02, 2.0
+   *  1,  05, 3.0
+   *  2,  12, 1.0
+   *  2,  13, 2.0
+   * }}}
+   *
+   * The result will be
+   * {{{
+   * hier_type, hier_value, v1
+   * h1,        1,          6.0
+   * h1,        2,          3.0
+   * h2,        02,         3.0
+   * h2,        05          3.0
+   * h2,        12,         1.0
+   * h2,        13,         2.0
+   * }}}
+   **/
+  def smvHierarchyAgg(levels: String*)(aggregaters: Column*): DataFrame = {
+    import df.sqlContext.implicits._
+
+    val kNl = (keys ++ levels).map{s => $"${s}"}
+    val nonNullFilter = (keys :+ levels.head).map{s => $"${s}".isNotNull}.reduce(_ && _)
+
+    require(levels.size >= 2)
+    require(aggregaters.size >= 1)
+
+    val rollups = df.rollup(kNl: _*).agg(aggregaters.head, aggregaters.tail: _*).where(nonNullFilter)
+
+    val lCs = levels.map{s => $"${s}"}
+
+    /* levels: a, b, c, d => Seq((b, c), (c, d))
+     *
+     * when(a.isNotNull && b.isNull, struct(a.name, a)).
+     *  when(b.isNotNull && c.isNull, struct(b.name, b)).
+     *  when(c.isNotNull && d.isNull, struct(c.name, c)).
+     *  otherwise(struct(d.name, d))
+     */
+    val tvPair = (lCs.tail.dropRight(1) zip lCs.drop(2)).
+      map{case (l,r) => (l.isNotNull && r.isNull, struct(lit(l.getName) as "type", l as "value"))}.
+      foldLeft(
+        when(lCs.head.isNotNull && lCs(1).isNull, struct(lit(lCs.head.getName) as "type", lCs.head as "value"))
+      ){(res, x) => res.when(x._1, x._2)}.
+      otherwise(struct(lit(lCs.last.getName) as "type", lCs.last as "value"))
+
+    val allFields =
+      (keys.map{s => $"${s}"}) ++
+      Seq(tvPair.getField("type") as "hier_type", tvPair.getField("value") as "hier_value") ++
+      aggregaters.map{a => $"${a.getName}"}
+
+    rollups.select(allFields:_*)
+  }
+
+  /**
    * For each group, return the top N records according to an ordering
    *
    * Example:

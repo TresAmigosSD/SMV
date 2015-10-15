@@ -134,4 +134,43 @@ class RollupCubeOpTest extends SmvTestUtil {
          a2,null,null,50""")
     assertSrddSchemaEqual(res2, "a:String; b:String; c:String; sum_d:Long")
   }
+
+  test("test smvHierarchyAgg"){
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("id:String;zip3:String;terr:String;div:String;v:Double",
+    """a,100,001,01,10.3;
+       a,102,001,01,1.0;
+       a,102,001,01,2.0;
+       a,102,001,01,3.0;
+       b,102,001,01,4.0;
+       b,103,001,01,10.1;
+       b,103,001,01,10.2;
+       a,103,001,01,10.3;
+       a,201,002,01,11.0;
+       b,301,003,02,15;
+       b,401,004,02,15;
+       b,405,004,02,20""")
+
+    val res = df.smvGroupBy("id").smvHierarchyAgg("div", "terr", "zip3")(smvSum0($"v") as "v")
+    assertSrddSchemaEqual(res, "id: String; hier_type: String; hier_value: String; v: Double")
+    assertSrddDataEqual(res,
+       """b,zip3,401,15.0;
+          b,zip3,102,4.0;
+          b,zip3,103,20.299999999999997;
+          a,zip3,102,6.0;
+          b,div,01,24.299999999999997;
+          b,zip3,301,15.0;
+          a,zip3,103,10.3;
+          b,terr,004,35.0;
+          a,div,01,37.6;
+          b,div,02,50.0;
+          b,terr,003,15.0;
+          b,terr,001,24.299999999999997;
+          a,zip3,201,11.0;
+          a,terr,002,11.0;
+          b,zip3,405,20.0;
+          a,terr,001,26.6;
+          a,zip3,100,10.3""")
+
+  }
 }
