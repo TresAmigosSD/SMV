@@ -76,8 +76,8 @@ private[smv] abstract class EddHistTask extends EddTask {
   override val toJUdf = udf({
     val s = sortByFreq;
     v: Map[Any, Long] => compact(
-      ("histSortByFreq", s) ~
-      ("hist", render( v.map{case (k:Any, n:Long) =>(EddTask.toJFunc(k),n)} ))
+      ("histSortByFreq" -> s) ~
+      ("hist" -> render( v.map{case (k:Any, n:Long) =>(EddTask.toJFunc(k),n)} ))
     )
   })
 }
@@ -91,7 +91,7 @@ private[smv] case class AvgTask(override val col: Column) extends EddStatTask {
 private[smv] case class StdDevTask(override val col: Column) extends EddStatTask {
   override val taskName = "std"
   override val taskDesc = "Standard Deviation"
-  override val statOp = onlineStdDev(col)
+  override val statOp = stddev(col)
 }
 
 private[smv] case class CntTask(override val col: Column) extends EddStatTask {
@@ -146,54 +146,54 @@ private[smv] case class StringDistinctCountTask(col: Column) extends EddStatTask
 private[smv] case class AmountHistogram(col: Column) extends EddHistTask {
   override val taskName = "amt"
   override val taskDesc = "as Amount"
-  override val statOp = histogram(col.cast(DoubleType).smvAmtBin)
+  override val statOp = histDouble(col.cast(DoubleType).smvAmtBin)
 }
 
 private[smv] case class BinNumericHistogram(col: Column, bin: Double) extends EddHistTask {
   override val taskName = "bnh"
   override val taskDesc = s"with BIN size $bin"
-  override val statOp = histogram(col.cast(DoubleType).smvCoarseGrain(bin))
+  override val statOp = histDouble(col.cast(DoubleType).smvCoarseGrain(bin))
 }
 
 private[smv] case class YearHistogram(col: Column) extends EddHistTask {
   override val taskName = "yea"
   override val taskDesc = "Year"
-  override val statOp = histogram(col.smvYear.smvPrintToStr("%04d"))
+  override val statOp = histStr(col.smvYear.smvPrintToStr("%04d"))
 }
 
 private[smv] case class MonthHistogram(col: Column) extends EddHistTask {
   override val taskName = "mon"
   override val taskDesc = "Month"
-  override val statOp = histogram(col.smvMonth.smvPrintToStr("%02d"))
+  override val statOp = histStr(col.smvMonth.smvPrintToStr("%02d"))
 }
 
 private[smv] case class DoWHistogram(col: Column) extends EddHistTask {
   override val taskName = "dow"
   override val taskDesc = "Day of Week"
-  override val statOp = histogram(col.smvDayOfWeek.smvPrintToStr("%1d"))
+  override val statOp = histStr(col.smvDayOfWeek.smvPrintToStr("%1d"))
 }
 
 private[smv] case class HourHistogram(col: Column) extends EddHistTask {
   override val taskName = "hou"
   override val taskDesc = "Hour"
-  override val statOp = histogram(col.smvHour.smvPrintToStr("%02d"))
+  override val statOp = histStr(col.smvHour.smvPrintToStr("%02d"))
 }
 
 private[smv] case class BooleanHistogram(col: Column) extends EddHistTask {
   override val taskName = "boo"
   override val taskDesc = "Boolean"
-  override val statOp = histogram(col)
+  override val statOp = histBoolean(col)
 }
 
 private[smv] case class StringByKeyHistogram(col: Column) extends EddHistTask {
   override val taskName = "key"
   override val taskDesc = "String sort by Key"
-  override val statOp = histogram(col)
+  override val statOp = histStr(col)
 }
 
 private[smv] case class StringByFreqHistogram(col: Column) extends EddHistTask {
   override val taskName = "frq"
   override val taskDesc = "String sorted by Frequency"
   override def sortByFreq = true
-  override val statOp = histogram(col)
+  override val statOp = histStr(col)
 }

@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.Accumulator
-import org.apache.spark.sql.{DataFrame, Column}
+import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StructField, StructType, LongType}
 import org.apache.spark.sql.catalyst.expressions._
@@ -48,8 +48,9 @@ class SmvDFHelper(df: DataFrame) {
    * This function's format is more convenient for us and hence has remained un-deprecated.
    */
   def dumpSRDD = {
+    val schema = SmvSchema.fromDataFrame(df)
     println(SmvSchema.fromDataFrame(df))
-    df.collect.foreach(println)
+    df.collect.foreach(r => println(r.mkString(",")))
   }
 
   /**
@@ -317,11 +318,20 @@ class SmvDFHelper(df: DataFrame) {
   def dedupByKey(k1: String, krest: String*) : DataFrame = {
     import df.sqlContext.implicits._
     val keys = k1 +: krest
-    val selectExpressions = df.columns.map {
+    /* Should call dropDuplicates, but that method has bug as if the first record has null
+    df.dropDuplicates(keys)*/
+
+    val selectExpressions = df.columns.diff(keys).map {
       //using smvFirst instead of first, since `first` return the first non-null of each field
       fn => smvFirst($"$fn") as fn
     }
-    df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*)
+
+    if (selectExpressions.isEmpty) {
+      df.select(k1, krest: _*).distinct()
+    } else {
+      df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*).
+        select(df.columns.head, df.columns.tail: _*)
+    }
   }
 
   /** Same as `dedupByKey(String*)` but uses `Column` to specify the key columns */
@@ -438,46 +448,40 @@ class SmvDFHelper(df: DataFrame) {
     smvUnpivot((valueCol +: others).map{s => s.name}: _*)
 
   /**
-   * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
+   * Alias to `cube` DF method
    *
    * Example:
    * {{{
    *   df.smvCube("zip", "month").agg("zip", "month", sum("v") as "v")
    * }}}
    *
-   * Also have a version on SmvGroupedData.
+   * 2 differences from original smvCube:
+   *   - instead of fill in `*` as wildcard key, filling in `null`
+   *   - also have the all-null key records as the overall aggregation
    **/
   @deprecated("should use spark cube method", "1.5")
-  def smvCube(col: String, others: String*): SmvGroupedData = {
-    new RollupCubeOp(df, Nil, (col +: others)).cube()
-  }
+  def smvCube(col: String, others: String*) = df.cube(col, others: _*)
 
   @deprecated("should use spark cube method", "1.5")
-  def smvCube(cols: Column*): SmvGroupedData = {
-    val names = cols.map(_.getName)
-    new RollupCubeOp(df, Nil, names).cube()
-  }
+  def smvCube(cols: Column*) = df.cube(cols: _*)
 
   /**
-   * See RollupCubeOp and smvCube in SmvGroupedData.scala for details.
+   * Alias to `rollup` DF method
    *
    * Example:
    * {{{
    *   df.smvRollup("county", "zip").agg("county", "zip", sum("v") as "v")
    * }}}
    *
-   * Also have a version on SmvGroupedData
+   * 2 differences from original smvRollup:
+   *   - instead of fill in `*` as wildcard key, filling in `null`
+   *   - also have the all-null key records as the overall aggregation
    **/
   @deprecated("should use spark rollup method", "1.5")
-  def smvRollup(col: String, others: String*): SmvGroupedData = {
-    new RollupCubeOp(df, Nil, (col +: others)).rollup()
-  }
+  def smvRollup(col: String, others: String*) = df.rollup(col, others: _*)
 
   @deprecated("should use spark rollup method", "1.5")
-  def smvRollup(cols: Column*): SmvGroupedData = {
-    val names = cols.map(_.getName)
-    new RollupCubeOp(df, Nil, names).rollup()
-  }
+  def smvRollup(cols: Column*) = df.rollup(cols: _*)
 
   /**
    * Create an Edd on DataFrame.
@@ -531,12 +535,16 @@ class SmvDFHelper(df: DataFrame) {
    *      addFirst)
    * df.chunkBy('account, 'cycleId)(addFirstFunc)
    * }}}
+   *
+   * TODO: Current version will not keep teh key columns. It's SmvChunkUDF's responsibility to
+   * make sure key column is carried. This behavior should be changed to automatically
+   * carry keys, as chanegs made on Spark's groupBy.agg
    **/
   @deprecated("will rename and refine interface", "1.5")
   def chunkBy(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
     val kStr = keys.map{_.name}
     df.smvGroupBy(kStr(0), kStr.tail: _*).
-      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, false)).toDF
+      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, false), false).toDF
   }
 
   /**
@@ -546,7 +554,7 @@ class SmvDFHelper(df: DataFrame) {
   def chunkByPlus(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
     val kStr = keys.map{_.name}
     df.smvGroupBy(kStr(0), kStr.tail: _*).
-      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, true)).toDF
+      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, true), false).toDF
   }
 
   /**

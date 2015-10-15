@@ -1,11 +1,13 @@
 import org.apache.spark.sql.functions._
 import org.tresamigos.smv._, shell._
 
+sc.setLogLevel("ERROR")
+
 // create the init object "i" rather than create initialization at top level
 // because shell would launch a separate command for each evalutaion which
 // slows down startup considerably.
 // keeping object name short to make the contents easy to access.
-SmvApp.init(Seq("-m", "None").toArray, Option(sc))
+SmvApp.init(Seq("-m", "None").toArray, Option(sc), Option(sqlContext))
 
 object i {
   import org.apache.spark.sql.DataFrame
@@ -13,7 +15,6 @@ object i {
   import java.io.{File, PrintWriter}
 
   val app = SmvApp.app
-  val sqlContext = app.sqlContext
 
   //-------- some helpful functions
   def smvSchema(df: DataFrame) = SmvSchema.fromDataFrame(df)
@@ -33,13 +34,13 @@ object i {
   }
 
   implicit class ShellSrddHelper(df: DataFrame) {
-    def save(path: String) = {
+    def sv(path: String) = {
       // TODO: why are we creating SmvDFHelper explicitly here?
       var helper = new org.tresamigos.smv.SmvDFHelper(df)
       helper.saveAsCsvWithSchema(path, CsvAttributes.defaultCsvWithHeader)
     }
 
-    def savel(path: String) = {
+    def svl(path: String) = {
       var res = df.collect.map{r => r.mkString(",")}.mkString("\n")
       val pw = new PrintWriter(new File(path))
       pw.println(res)
@@ -65,7 +66,10 @@ object i {
   }
 
   // TODO: this should just be a direct helper on ds as it is probably common.
-  def dumpEdd(ds: SmvDataSet) = i.s(ds).edd.addBaseTasks().dump
+  def dumpEdd(ds: SmvDataSet) = i.s(ds).edd.summary().eddShow
+
+  def compEdds(f1: String, f2: String) = println(EddCompare.compareFiles(f1, f2))
+  def compEddDirs(d1: String, d2: String) = EddCompare.compareDirsReport(d1, d2)
 
 }
 

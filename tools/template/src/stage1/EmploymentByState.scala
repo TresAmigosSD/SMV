@@ -17,7 +17,6 @@ object EmploymentByState extends SmvModule("ETL Example: Employment") with SmvOu
     val df = i(input.employment)
 
     df.groupBy("ST").agg(
-      first("ST") as "ST",
       sum("EMP") as "EMP"
     )
   }

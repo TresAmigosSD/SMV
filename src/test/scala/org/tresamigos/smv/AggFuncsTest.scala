@@ -16,24 +16,17 @@ package org.tresamigos.smv
 import org.apache.spark.sql.functions._
 
 class AggFuncsTest extends SmvTestUtil {
-  test("test OnlineAverage") {
-    val ssc = sqlContext; import ssc.implicits._
-    val df = open(testDataDir +  "AggTest/test1.csv")
-    val avg = df.agg(onlineAverage('a), onlineAverage('b))
-    assertDoubleSeqEqual(avg.collect()(0).toSeq, List(2.0, 20.0))
-  }
   test("test OnlineStdDev") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "AggTest/test1.csv")
-    val stddev = df.agg(onlineStdDev('a), onlineStdDev('b))
-    assertDoubleSeqEqual(stddev.collect()(0).toSeq, List(1.0, 10.0))
+    val std = df.agg(stddev('a), stddev('b))
+    assertDoubleSeqEqual(std.collect()(0).toSeq, List(1.0, 10.0))
   }
-  /*d
-  */
+
   test("test Histogram") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "AggTest/test2.csv")
-    val hist = df.agg(histogram('id)).collect()(0)(0).asInstanceOf[Map[String,Long]] //Array[Row(Map[String,Long])]=> Any=Map[..]
+    val hist = df.agg(histStr('id)).collect()(0)(0).asInstanceOf[Map[String,Long]] //Array[Row(Map[String,Long])]=> Any=Map[..]
     assert(hist === Map("231"->1l,"123"->2l))
   }
 
@@ -42,7 +35,6 @@ class AggFuncsTest extends SmvTestUtil {
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,;z,2,1.4;z,5,2.2;a,1,0.3;")
 
     val res = df.groupBy("k").agg(
-      $"k",
       first($"t"),
       first($"v") as "first_v",
       smvFirst($"v") as "smvFirst_v"
@@ -51,5 +43,18 @@ class AggFuncsTest extends SmvTestUtil {
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,1,0.3,0.3]",
       "[z,1,1.4,null]"))
+  }
+
+  test("test smvSum0") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("k:String; v1:Integer; v2:Double", "X,,;X,,")
+    val res = df.groupBy("k").agg(
+      sum("v1") as "v1_null",
+      sum("v2") as "v2_null",
+      smvSum0($"v1") as "v1_zero",
+      smvSum0($"v2") as "v2_zero"
+    )
+
+    assertSrddDataEqual(res, "X,null,null,0,0.0")
   }
 }

@@ -32,12 +32,12 @@ private[smv] class RollupCubeOp(df: DataFrame,
 
   /** for N cube cols, we want to produce 2**N columns (minus all "*") */
   def cubeBitmasks() = {
-    Seq.tabulate((1 << cols.length)-1)(i => i)
+    Seq.tabulate((1 << cols.length))(i => i)
   }
 
   /** for N rollup cols, we want to produce N-1 sentinel columns */
   def rollupBitmasks() = {
-    Seq.tabulate(cols.length)(i => (1 << i) - 1)
+    Seq.tabulate(cols.length + 1)(i => (1 << i) - 1)
   }
 
   /** return list of non-rollup/cube columns in the given df. */
@@ -54,7 +54,7 @@ private[smv] class RollupCubeOp(df: DataFrame,
 
     val cubeColsSelect = cols.zipWithIndex.map { case (s, i) =>
       val idx = cols.length - i - 1
-      if (((1 << idx) & bitmask) != 0) lit("*") as s else $"$s"
+      if (((1 << idx) & bitmask) != 0) lit(null) as s else $"$s"
     }
     val otherColsSelect = getNonRollupCols().map(n => $"$n")
 

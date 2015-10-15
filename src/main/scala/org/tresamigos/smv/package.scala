@@ -100,22 +100,8 @@ package object smv {
 
   /**
    * Histogram Aggregate function
-   *
-   * Return column has type `Map[child.dataType, Long]`
-   *
-   * @group agg
+   * replaced by histInt, histStr, histDouble, hitsBoolean
    **/
-  def histogram(c: Column) = {
-    new Column(Histogram(c.toExpr))
-  }
-
-  private[smv] def onlineAverage(c: Column) = {
-    new Column(OnlineAverage(c.toExpr))
-  }
-
-  private[smv] def onlineStdDev(c: Column) = {
-    new Column(OnlineStdDev(c.toExpr))
-  }
 
   /**
    * smvFirst: Return null if the first record is null
@@ -156,19 +142,13 @@ package object smv {
 
   /**
    * Concatenate columns as strings
-   * will be deprecated when move to 1.5 and use `concat`
    **/
-  def smvStrCat(columns: Column*) = {
-    new Column(SmvStrCat(columns.map{c => c.toExpr}: _*))
-  }
+  def smvStrCat(columns: Column*) = concat(columns.map{c => coalesce(c, lit(""))}:_*)
 
   /**
    * Put a group of columns in an Array field
-   * will be deprecated when move to 1.5 and use `array`
    **/
-  def smvAsArray(columns: Column*) = {
-    new Column(SmvAsArray(columns.map{c => c.toExpr}: _*))
-  }
+  def smvAsArray(columns: Column*) = array(columns: _*)
 
   /**
    * create a UDF from a map
@@ -186,12 +166,12 @@ package object smv {
 
   /**
    * restore 1.1 sum behaviour (and what is coming back in 1.4) where if all values are null, sum is 0
-   * Note: passed in column must be resolved (can not be just the name)
    *
    * @group agg
    */
   def smvSum0(col: Column) : Column = {
-    val cZero = lit(0).cast(col.toExpr.dataType)
-    coalesce(sum(col), cZero)
+    //no need for casting, coalesce is smart enough
+    //val cZero = lit(0).cast(col.toExpr.dataType)
+    coalesce(sum(col), lit(0))
   }
 }

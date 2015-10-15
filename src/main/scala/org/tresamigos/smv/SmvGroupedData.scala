@@ -14,12 +14,12 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.{Column, ColumnName}
-import org.apache.spark.sql.GroupedData
+import org.apache.spark.sql.contrib.smv._
+
+import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.Partitioner
 import org.apache.spark.annotation._
 
@@ -57,18 +57,32 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   @Experimental
-  def smvMapGroup(gdo: SmvGDO): SmvGroupedData = {
+  def smvMapGroup(gdo: SmvGDO, needConvert: Boolean = true): SmvGroupedData = {
     val schema = df.schema
     val ordinals = schema.getIndices(keys: _*)
     val rowToKeys: Row => Seq[Any] = {row =>
       ordinals.map{i => row(i)}
     }
 
+    val outSchema = gdo.createOutSchema(schema)
     val inGroupMapping =  gdo.createInGroupMapping(schema)
     val rdd = df.rdd.
       groupBy(rowToKeys).
-      flatMapValues(rowsInGroup => inGroupMapping(rowsInGroup)).
-      values
+      flatMapValues(rowsInGroup => {
+          val inRow =
+            if(needConvert) convertToCatalyst(rowsInGroup, schema)
+            else rowsInGroup.map{r => InternalRow(r.toSeq: _*)}
+
+          // convert Iterable[Row] to Iterable[InternalRow] first
+          // so we can apply the function inGroupMapping
+          val res = inGroupMapping(inRow)
+          // now we have to convert an RDD[InternalRow] back to RDD[Row]
+          if(needConvert)
+            convertToScala(res, outSchema)
+          else
+            res.map{r => Row(r.toSeq(outSchema): _*)}
+        }
+      ).values
 
     /* since df.rdd method called ScalaReflection.convertToScala at the end on each row, here
        after process, we need to convert them all back by calling convertToCatalyst. One key difference
@@ -76,13 +90,14 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
        java.sql.Date, and in Catalyst RDD, it is an Int. Please note, since df.rdd always convert Catalyst RDD
        to Scala RDD, user should have no chance work on Catalyst RDD outside of DF.
      */
-    val outSchema = gdo.createOutSchema(schema)
-    val converted = rdd.map{row =>
-      Row(row.toSeq.zip(outSchema.fields).
-        map { case (elem, field) =>
-          ScalaReflection.convertToCatalyst(elem, field.dataType)
-        }: _*)}
-    val newdf = df.sqlContext.createDataFrame(converted, gdo.createOutSchema(schema))
+
+    // TODO remove conversion to catalyst type after all else compiles
+    // val converted = rdd.map{row =>
+    //   Row(row.toSeq.zip(outSchema.fields).
+    //     map { case (elem, field) =>
+    //       ScalaReflection.convertToCatalyst(elem, field.dataType)
+    //     }: _*)}
+    val newdf = df.sqlContext.createDataFrame(rdd, gdo.createOutSchema(schema))
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
 
@@ -193,8 +208,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val aggOutCols = pivot.outCols().map { c =>
       val cZero = lit(0).cast(pivotRes.df(c).toExpr.dataType)
       (coalesce(sum(c), cZero) as c)}
+    /*
     val keysAndAggCols = keys.map{k => pivotRes.df(k)} ++ aggOutCols
     pivotRes.agg(keysAndAggCols(0), keysAndAggCols.tail: _*)
+    */
+    pivotRes.agg(aggOutCols(0), aggOutCols.tail: _*)
   }
 
   /**
@@ -242,8 +260,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *
    * Example:
    * {{{
-   *   df.smvGroupBy("k").smvScale($"v1" -> (0.0, 100.0), $"v2" -> (100.0, 200.0))()
+   *   df.smvGroupBy("k").smvScale($"v1" -> ((0.0, 100.0)), $"v2" -> ((100.0, 200.0)))()
    * }}}
+   *
+   * Note that the range tuple needs to be wrapped inside another pair
+   * of parenthesis for the compiler to constructed the nested tuple.
    *
    * In this example, "v1" column within each k-group, the lowest value is scaled to 0.0 and
    * highest value is scaled to 100.0. The scaled column is called "v1_scaled".
@@ -271,7 +292,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val cols = ranges.map{case (c, (_,_)) => c}
     val keyCols = keys.map{k => $"$k"}
 
-    val aggExprs = keyCols ++ cols.flatMap{v =>
+    val aggExprs = cols.flatMap{v =>
       val name = v.getName
       Seq(min(v).cast("double") as s"${name}_min", max(v).cast("double") as s"${name}_max")
     }
@@ -334,17 +355,22 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *
    * The "cubed" values on those 2 columns are:
    * {{{
-   *   90001, *
-   *   10001, *
-   *   *, 201401
-   *   *, 201501
+   *   90001, null
+   *   10001, null
+   *   null, 201401
+   *   null, 201501
    *   90001, 201401
    *   10001, 201501
+   *   null, null
    * }}}
    *
-   * where * stand for "any"
+   * where `null` stand for "any"
    *
-   * Also have a version on `DataFrame`.
+   * Also have a version on `DataFrame`, which is equivalent to `cube` DF method
+   *
+   * 2 differences from original smvCube:
+   *   - instead of fill in `*` as wildcard key, filling in `null`
+   *   - also have the all-null key records as the overall aggregation
    **/
   @deprecated("should use spark cube method", "1.5")
   def smvCube(col: String, others: String*): SmvGroupedData = {
@@ -361,21 +387,31 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   /**
    * implement the rollup operations on a given DF and a set of columns.
    * See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
-   * Rather than using nulls as the pig version, a sentinel value of "*" will be used
    *
    * Example:
+   * {{{
    *   df.smvGroupBy("year").smvRollup("county", "zip").agg("year", "county", "zip", sum("v") as "v")
+   * }}}
    *
    * For county & zip with input values:
+   * {{{
    *   10234, 92101
    *   10234, 10019
+   * }}}
    *
    * The "rolluped" values are:
-   *   10234, *
+   * {{{
+   *   null, null
+   *   10234, null
    *   10234, 92101
    *   10234, 10019
+   * }}}
    *
-   * Also have a version on DF
+   * Also have a version on DF, which is equivalent to `rollup` DF method
+   *
+   * 2 differences from original smvRollup:
+   *   - instead of fill in `*` as wildcard key, filling in `null`
+   *   - also have the all-null key records as the overall aggregation
    **/
   @deprecated("should use spark rollup method", "1.5")
   def smvRollup(col: String, others: String*): SmvGroupedData = {

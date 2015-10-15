@@ -14,9 +14,11 @@
 
 package org.apache.spark.sql.contrib
 
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.{Row, Column}
+import org.apache.spark.rdd.RDD
 
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.catalyst.{InternalRow, CatalystTypeConverters}
 
 /**
  * Since we need to access some of the private[sql] classes and methods,
@@ -28,7 +30,7 @@ package object smv {
   /** return Ordering[Any] to compare values of Any */
   def getOrdering[T<: DataType](t: T): Ordering[Any] = {
     t match {
-      case v: NativeType => v.ordering.asInstanceOf[Ordering[Any]]
+      case v: AtomicType => v.ordering.asInstanceOf[Ordering[Any]]
       case v => throw new IllegalArgumentException(s"DataType: $v has no ordering")
     }
   }
@@ -44,5 +46,15 @@ package object smv {
   /** give access to StructType merge method */
   def mergeStructType(left: StructType, right: StructType): StructType = {
     left.merge(right)
+  }
+
+  def convertToCatalyst(rowRDD: Iterable[Row], schema: StructType) = {
+    val converter = CatalystTypeConverters.createToCatalystConverter(schema)
+    rowRDD.map(converter(_).asInstanceOf[InternalRow])
+  }
+
+  def convertToScala(rowRDD: Iterable[InternalRow], schema: StructType) = {
+    val converter = CatalystTypeConverters.createToScalaConverter(schema)
+    rowRDD.map(converter(_).asInstanceOf[Row])
   }
 }

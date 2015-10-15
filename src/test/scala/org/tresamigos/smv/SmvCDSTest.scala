@@ -232,6 +232,7 @@ class SmvCDSTest extends SmvTestUtil {
     assertSrddSchemaEqual(res1, "k: String; t: Integer; vsum_tillnow: Double")
     assertSrddSchemaEqual(res2, "k: String; t: Integer; vsum_beforenow: Double")
     assertSrddSchemaEqual(res3, "k: String; t: Integer; vsum_beforenow: Double; vsum_tillnow: Double")
+
     assertUnorderedSeqEqual(res1.collect.map(_.toString), Seq(
       "[a,1,0.3]",
       "[z,1,0.2]",

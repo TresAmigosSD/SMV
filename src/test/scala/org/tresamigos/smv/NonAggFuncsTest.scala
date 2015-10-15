@@ -21,19 +21,22 @@ class NonAggFuncsTest extends SmvTestUtil {
   test("test smvStrCat") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
-    val res = df.select(smvStrCat($"v".smvNullSub("test"), $"k"))
+    val res = df.select(smvStrCat($"v", $"k"))
     assertSrddDataEqual(res,
       "a1;" +
-      "test2")
+      "2")
   }
 
   test("test smvAsArray") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
-    val res = df.select(smvAsArray($"v".smvNullSub("test"), $"k"))
-    assertSrddDataEqual(res,
-      "List(a, 1);" +
-      "List(test, 2)")
+    val res = df.select(smvAsArray($"v".smvNullSub("test"), $"k") as "myArray")
+
+    /** `getItem` method has bugs in 1.5.1, use the following workaround */
+    val schema = SmvSchema.fromDataFrame(res)
+    val res2 = res.map(schema.rowToCsvString(_, CsvAttributes.defaultCsv)).collect
+
+    assertUnorderedSeqEqual(res2, Seq("a|1", "test|2"))
   }
 
   test("test smvCreateLookUp") {
@@ -46,16 +49,5 @@ class NonAggFuncsTest extends SmvTestUtil {
     assertSrddDataEqual(res, "J;null")
   }
 
-  test("test smvSum0") {
-    val ssc = sqlContext;
-    val df = createSchemaRdd("k:String; v1:Integer; v2:Double", "X,,;X,,")
-    val res = df.groupBy("k").agg(
-      sum("v1") as "v1_null",
-      sum("v2") as "v2_null",
-      smvSum0(df("v1")) as "v1_zero",
-      smvSum0(df("v2")) as "v2_zero"
-    )
 
-    assertSrddDataEqual(res, "null,null,0,0.0")
-  }
 }

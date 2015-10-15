@@ -26,7 +26,7 @@ import scala.util.control.NonFatal
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None) {
+class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) {
 
   val smvConfig = new SmvConfig(cmdLineArgs)
   val genEdd = smvConfig.cmdLine.genEdd()
@@ -42,7 +42,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    **/
 
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
-  val sqlContext = new SQLContext(sc)
+  val sqlContext = _sql.getOrElse(new SQLContext(sc))
 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
@@ -225,8 +225,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 object SmvApp {
   var app: SmvApp = _
 
-  def init(args: Array[String], _sc: Option[SparkContext] = None) = {
-    app = new SmvApp(args, _sc)
+  def init(args: Array[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) = {
+    app = new SmvApp(args, _sc, _sql)
   }
 
   def main(args: Array[String]) {

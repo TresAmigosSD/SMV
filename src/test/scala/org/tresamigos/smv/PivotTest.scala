@@ -58,25 +58,25 @@ class SmvPivotTest extends SmvTestUtil {
       "p1_1",
       "p1_2"))
   }
-  
+
   test("test smvPivot on DF") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("id:Integer;month:String;product:String;count:Integer", 
+    val df = createSchemaRdd("id:Integer;month:String;product:String;count:Integer",
       "1,5_14,A,100;1,6_14,B,200;1,5_14,B,300")
     val res = df.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
-    assertSrddDataEqual(res, 
+    assertSrddDataEqual(res,
       "1,5_14,A,100,100,null,null,null;" +
       "1,6_14,B,200,null,null,null,200;" +
       "1,5_14,B,300,null,300,null,null")
   }
-  
+
   test("test smvPivotSum on GD") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("id:Integer;month:String;product:String;count:Integer", 
+    val df = createSchemaRdd("id:Integer;month:String;product:String;count:Integer",
       "1,5_14,A,100;1,6_14,B,200;1,5_14,B,300")
     val res = df.smvGroupBy('id).smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
     assertSrddSchemaEqual(res, "id: Integer; count_5_14_A: Long; count_5_14_B: Long; count_6_14_A: Long; count_6_14_B: Long")
-    assertSrddDataEqual(res, 
+    assertSrddDataEqual(res,
       "1,100,300,0,200")
   }
 
@@ -91,21 +91,20 @@ class SmvPivotTest extends SmvTestUtil {
       "2,x,A,60,500")
 
     val res = df.smvGroupBy('k1).smvPivot(Seq("k2"), Seq("k2", "p"))("v2")("x", "x_A", "y_B").agg(
-      $"k1",
-      countDistinct("v2_x") as 'dist_cnt_v2_x, 
-      countDistinct("v2_x_A") as 'dist_cnt_v2_x_A, 
-      countDistinct("v2_y_B") as 'dist_cnt_v2_y_B 
+      countDistinct("v2_x") as 'dist_cnt_v2_x,
+      countDistinct("v2_x_A") as 'dist_cnt_v2_x_A,
+      countDistinct("v2_y_B") as 'dist_cnt_v2_y_B
     )
-    
+
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1,2,2,0]",
       "[2,1,1,0]"))
 
     val fieldNames = res.schema.fieldNames.toList
     assert(fieldNames === Seq(
-      "k1", 
-      "dist_cnt_v2_x", 
-      "dist_cnt_v2_x_A", 
+      "k1",
+      "dist_cnt_v2_x",
+      "dist_cnt_v2_x_A",
       "dist_cnt_v2_y_B"))
   }
 

@@ -24,11 +24,25 @@ private[smv] abstract class EddTaskGroup {
   val df: DataFrame
   val taskList: Seq[edd.EddTask]
   def run(): DataFrame = {
-    val aggCols = taskList.map{t => t.aggCol}
+    /* Have to separate tasks to "old" aggregations and "new" aggregations, since
+      till 1.5.1 there are 2 types of aggregations, and they can't be mixed */
+    val aggCols: Seq[Either[EddTask, EddTask]] = taskList.map{t => t match {
+      case CntTask(_)|AvgTask(_)|MinTask(_)|MaxTask(_)|TimeMinTask(_)|TimeMaxTask(_)|StringMinLenTask(_)|StringMaxLenTask(_)|StringDistinctCountTask(_) => Left(t)
+      case _ => Right(t)
+    }}
+
+    val aggOlds = aggCols.flatMap{e => e.left.toOption}.map{t => t.aggCol}
+    val aggNews = aggCols.flatMap{e => e.right.toOption}.map{t => t.aggCol}
+
     val resultCols = taskList.map{t => t.resultCols}
 
     // this DF only has 1 row
-    val res = df.agg(aggCols.head, aggCols.tail: _*).smvCoalesce(1)
+    val res =
+      if (aggOlds.isEmpty) df.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
+      else if (aggNews.isEmpty) df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1)
+      else df.agg(aggNews.head, aggNews.tail: _*).coalesce(1).join(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
+
+    val resCached = res.cache
 
     val schema = SmvSchema.fromString(
       "colName: String;" +
@@ -42,7 +56,10 @@ private[smv] abstract class EddTaskGroup {
        The schema comparison on a large tree could introduce significant overhead.
        Here we convert each small DF to RDD first, then create UnionRDD, which
        is a very cheap operation */
-    val resRdds = resultCols.map{rcols => res.select(rcols: _*).rdd}
+    val resRdds = resultCols.map{rcols => resCached.select(rcols: _*).rdd}
+
+    resCached.unpersist()
+
     val resRdd = new UnionRDD(df.sqlContext.sparkContext, resRdds).coalesce(1)
 
     df.sqlContext.createDataFrame(resRdd, schema.toStructType)

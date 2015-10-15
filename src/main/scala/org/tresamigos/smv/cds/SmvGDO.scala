@@ -14,11 +14,12 @@
 
 package org.tresamigos.smv.cds
 
-import org.apache.spark.sql.types.DateUtils
+import org.apache.spark.sql.catalyst.util.DateTimeUtils
 
 import scala.math.floor
 
-import org.apache.spark.sql.types._
+import org.apache.spark.sql._, types._
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions._
 
 import org.tresamigos.smv._
@@ -38,7 +39,7 @@ import org.apache.spark.annotation._
 @Experimental
 abstract class SmvGDO extends Serializable {
   def inGroupKeys: Seq[String]
-  def createInGroupMapping(smvSchema:StructType): Iterable[Row] => Iterable[Row]
+  def createInGroupMapping(smvSchema:StructType): Iterable[InternalRow] => Iterable[InternalRow]
   def createOutSchema(inSchema: StructType): StructType
 }
 
@@ -52,9 +53,9 @@ abstract class SmvGDO extends Serializable {
  */
 private[smv] class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
 
-  val inGroupKeys = Nil
+  override val inGroupKeys = Nil
 
-  def createOutSchema(inSchema: StructType) = {
+  override def createOutSchema(inSchema: StructType) = {
     val oldFields = inSchema.fields
     val newFields = List(
       StructField(valueCol + "_total", DoubleType, true),
@@ -73,16 +74,17 @@ private[smv] class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
    * Input: Array[Row(groupids*, keyid, value, value_double)]
    * Output: Array[Row(groupids*, keyid, value, value_total, value_rsum, value_quantile)]
    */
-  def createInGroupMapping(inSchema:StructType): Iterable[Row] => Iterable[Row] = {
+  override def createInGroupMapping(inSchema:StructType) = {
     val ordinal = inSchema.getIndices(valueCol)(0)
     val valueField = inSchema(valueCol)
-    val getValueAsDouble: Row => Double = {r =>
-      valueField.numeric.toDouble(r(ordinal))
+    val getValueAsDouble: InternalRow => Double = {r =>
+      val elems = r.toSeq(inSchema)
+      valueField.numeric.toDouble(elems(ordinal))
     }
 
-    {it: Iterable[Row] =>
+    {it: Iterable[InternalRow] =>
       val inGroup = it.toSeq
-      val valueTotal = inGroup.map(r => getValueAsDouble(r)).sum
+      val valueTotal = inGroup.map(getValueAsDouble).sum
       val binSize = valueTotal / numBins
       var runSum: Double = 0.0
       inGroup.sortBy(r => getValueAsDouble(r)).map{r =>
@@ -90,7 +92,7 @@ private[smv] class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
         val bin = binBound(floor(runSum / binSize).toInt + 1)
         val newValsDouble = Seq(valueTotal, runSum)
         val newValsInt = Seq(bin)
-        new GenericRow(Array[Any](r.toSeq ++ newValsDouble ++ newValsInt: _*))
+        new GenericInternalRow(Array[Any](r.toSeq(inSchema) ++ newValsDouble ++ newValsInt: _*))
       }
     }
   }
@@ -109,57 +111,61 @@ case class SmvChunkUDF(
 
 /* Add back chunkByPlus for project migration */
 private[smv] class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends SmvGDO {
-  val inGroupKeys = Nil
+  override val inGroupKeys = Nil
 
-  def createOutSchema(inSchema: StructType) = {
+  override def createOutSchema(inSchema: StructType) = {
     if (isPlus)
       inSchema.mergeSchema(cudf.outSchema)
     else
       cudf.outSchema
   }
 
-  def createInGroupMapping(inSchema: StructType) = {
+  override def createInGroupMapping(inSchema: StructType) = {
     val ordinals = inSchema.getIndices(cudf.para.map{s => s.name}: _*)
 
-    { it: Iterable[Row] =>
+    { it: Iterable[InternalRow] =>
       val inGroup = it.toList
-      val input = inGroup.map{r => ordinals.map{i => r(i)}.toSeq}
+      val input = inGroup.map{r =>
+        ordinals collect r.toSeq(inSchema)
+      }
       val output = cudf.eval(input)
       if (isPlus) {
         inGroup.zip(output).map{case (orig, added) =>
-          Row((orig.toSeq ++ added): _*)
+          InternalRow.fromSeq(orig.toSeq(inSchema) ++ added)
         }
       } else {
-        output.map{r => Row(r: _*)}
+        output.map(InternalRow.fromSeq)
       }
     }
   }
 }
 
 private[smv] class FillPanelWithNull(t: String, p: panel.Panel, keys: Seq[String]) extends  SmvGDO {
-  val inGroupKeys = Nil
+  override val inGroupKeys = Nil
 
-  def createOutSchema(inSchema: StructType) = inSchema
+  override def createOutSchema(inSchema: StructType) = inSchema
 
-  def createInGroupMapping(inSchema: StructType): Iterable[Row] => Iterable[Row] = {
+  override def createInGroupMapping(inSchema: StructType) = {
     val keyOrdinals = inSchema.getIndices(keys: _*).toList
     val timeOrdinal = inSchema.getIndices(t)(0)
     println(timeOrdinal)
     println(inSchema.fields.size)
-    val tmplt = new GenericMutableRow(inSchema.fields.size)
-    var rows: Map[Int, Row] = Map()
+
+    val tmplt = new Array[Any](inSchema.fields.size)
+    var rows: Map[Int, InternalRow] = Map()
 
     { it =>
       it.zipWithIndex.foreach { case (r, i) =>
+        val elems = r.toSeq(inSchema)
         if (i == 0) {
-          keyOrdinals.foreach(ki => tmplt.update(ki, r(ki)))
+          keyOrdinals.foreach(ki => tmplt(ki) = elems(ki))
           rows = rows ++ p.createValues().map { rt =>
-            tmplt.update(timeOrdinal, DateUtils.toJavaDate(rt))
-            (rt, tmplt.copy())
+            tmplt(timeOrdinal) = DateTimeUtils.toJavaDate(rt)
+            (rt, new GenericInternalRow(tmplt))
           }
         }
-        val rt = r(timeOrdinal) match {
-          case d: java.sql.Date => DateUtils.fromJavaDate(d)
+        val rt = elems(timeOrdinal) match {
+          case d: java.sql.Date => DateTimeUtils.fromJavaDate(d)
           case d: Int => d
           case _ => throw new IllegalArgumentException(s"types other than Date or Int are not supported")
         }

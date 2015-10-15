@@ -15,12 +15,12 @@
 package org.tresamigos.smv
 
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.catalyst.expressions.Row
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.DataFrame
 
-
+import java.sql.Date
 import java.text.{DateFormat, SimpleDateFormat}
 
 import scala.annotation.switch
@@ -108,12 +108,12 @@ private[smv] case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd"
 
   override def strToVal(s:String) : Any = {
     if (s.isEmpty) null
-    else DateUtils.millisToDays(fmtObj.parse(s).getTime())
+    else new Date(fmtObj.parse(s).getTime())
   }
 
   override def valToStr(v: Any) : String = {
     if (v==null) ""
-    else fmtObj.format(DateUtils.toJavaDate(v.asInstanceOf[Int]))
+    else fmtObj.format(DateTimeUtils.toJavaDate(v.asInstanceOf[Int]))
   }
 
   override val typeName = "Date"
@@ -141,8 +141,8 @@ private[smv] case class MapSchemaEntry(name: String,
   }
   override def valToStr(v: Any) : String = {
     if (v==null) return ""
-    val keyNativeType = keySchemaEntry.dataType.asInstanceOf[NativeType]
-    val valNativeType = valSchemaEntry.dataType.asInstanceOf[NativeType]
+    val keyNativeType = keySchemaEntry.dataType.asInstanceOf[AtomicType]
+    val valNativeType = valSchemaEntry.dataType.asInstanceOf[AtomicType]
     val m = v.asInstanceOf[Map[Any,Any]]
     m.map{ case (k,v) =>
       val keyAsStr = keySchemaEntry.valToStr(k)
@@ -283,20 +283,7 @@ private[smv] object SchemaEntry {
 class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,String]) extends Serializable {
   private[smv] def getSize = entries.size
 
-  /* Since Spark-1.3.0, Catalyst started to maintain its own type, we always need to call
-     ScalaReflection.convertToCatalyst when we construct a Row from Scala.
-     However in Spark-1.3.1, the createDataFrame method of SQLContext always call
-     a private version with "needsConversion = true", so it always do the conversion on
-     Row constructed on Scala. Therefore, the following code with the conversion is only
-     need for Spark-1.3.0 but not in Spark-1.3.1 (althogh other than repeate the work
-     no real harm either).
-   */
-  private[smv] def toValue(ordinal: Int, sVal: String) = {
-    val entry = entries(ordinal)
-    val elem = entry.strToVal(sVal)
-    val dataType = entry.dataType
-    ScalaReflection.convertToCatalyst(elem, dataType)
-  }
+  private[smv] def toValue(ordinal: Int, sVal: String) = entries(ordinal).strToVal(sVal)
 
   override def toString = "Schema: " + entries.mkString("; ")
 

@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv.cds
 
-import org.apache.spark.sql.{Column, ColumnName}
+import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.expressions._
 import org.tresamigos.smv._
@@ -40,7 +40,7 @@ private[smv] case class InLastNWithNull(n: Int) extends SmvCDS {
       val resSize = rows.size
       if (resSize < n) {
         val nullArr:Array[Any] = new Array(input.crossSchema.fields.size)
-        Range(0, n - resSize).map{i => Row(nullArr: _*)} ++ rows
+        Range(0, n - resSize).map{i => new GenericInternalRow(nullArr)} ++ rows
       } else rows
     }
     CDSSubGroup(input.currentSchema, input.crossSchema, input.currentRow, outIt)
