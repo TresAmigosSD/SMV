@@ -453,7 +453,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * 2 differences from original smvCube:
    *   - instead of fill in `*` as wildcard key, filling in `null`
-   *   - all so have the all-null key records as the overall aggregation
+   *   - also have the all-null key records as the overall aggregation
    **/
   @deprecated("should use spark cube method", "1.5")
   def smvCube(col: String, others: String*) = df.cube(col, others: _*)
@@ -471,7 +471,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * 2 differences from original smvRollup:
    *   - instead of fill in `*` as wildcard key, filling in `null`
-   *   - all so have the all-null key records as the overall aggregation
+   *   - also have the all-null key records as the overall aggregation
    **/
   @deprecated("should use spark rollup method", "1.5")
   def smvRollup(col: String, others: String*) = df.rollup(col, others: _*)
@@ -532,7 +532,7 @@ class SmvDFHelper(df: DataFrame) {
    * df.chunkBy('account, 'cycleId)(addFirstFunc)
    * }}}
    *
-   * TODO: Current version will not keep teh key columns. It's SmvChunkUDF's responsibility to 
+   * TODO: Current version will not keep teh key columns. It's SmvChunkUDF's responsibility to
    * make sure key column is carried. This behavior should be changed to automatically
    * carry keys, as chanegs made on Spark's groupBy.agg
    **/

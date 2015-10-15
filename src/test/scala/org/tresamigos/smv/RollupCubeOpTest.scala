@@ -18,6 +18,45 @@ import org.apache.spark.sql.functions._
 
 class RollupCubeOpTest extends SmvTestUtil {
 
+  test("Test cube bitmask creation") {
+    assert(new RollupCubeOp(null, Nil, Seq("a","b")).cubeBitmasks() === Seq(0,1,2,3))
+    assert(new RollupCubeOp(null, Nil, Seq("a","b","c")).cubeBitmasks() === Seq(0,1,2,3,4,5,6,7))
+  }
+
+  test("Test rollup bitmask creation") {
+    assert(new RollupCubeOp(null, Nil, Seq("a","b")).rollupBitmasks() === Seq(0,1,3))
+    assert(new RollupCubeOp(null, Nil, Seq("a","b","c")).rollupBitmasks() === Seq(0,1,3,7))
+    assert(new RollupCubeOp(null, Nil, Seq("a","b","c", "d")).rollupBitmasks() === Seq(0,1,3,7,15))
+  }
+
+  test("Test getNonRollupCols") {
+    val df = createSchemaRdd("a:String; b:String; c:String; d:String", "a,b,c,d")
+    assert(new RollupCubeOp(df, Nil, Seq("b","c")).getNonRollupCols() === Seq("a", "d"))
+  }
+
+  test("Test createSRDDWithSentinel") {
+    val df = createSchemaRdd("a:String; b:String; c:String; d:Integer",
+      "a,b,c,1;x,y,z,2")
+    val op = new RollupCubeOp(df, Nil, Seq("b","c"))
+
+    // test result with col c replaced with "*"
+    val res_c = op.createSRDDWithSentinel(1)
+    assertSrddDataEqual(res_c, "b,null,a,1;y,null,x,2")
+
+    // test result with col b,c replaced with "*"
+    val res_bc = op.createSRDDWithSentinel(3)
+    assertSrddDataEqual(res_bc, "null,null,a,1;null,null,x,2")
+  }
+
+  test("Test duplicateSRDDByBitmasks") {
+    val df = createSchemaRdd("a:String; b:String; c:String; d:Integer", "a,b,c,1")
+    val op = new RollupCubeOp(df, Nil, Seq("a","b"))
+
+    val res = op.duplicateSRDDByBitmasks(Seq(0,1,2))
+    assertSrddDataEqual(res, "a,b,c,1; null,b,c,1; a,null,c,1")
+    assertSrddSchemaEqual(res, "a:String; b:String; c:String; d:Integer")
+  }
+
   test("Test cube") {
     val df = createSchemaRdd("a:String; b:String; f:String; d:Integer",
       """a1,b1,F,10;
@@ -40,6 +79,23 @@ class RollupCubeOpTest extends SmvTestUtil {
         G,null,b2,80;
         F,a1,null,70""")
     assertSrddSchemaEqual(res, "f: String; a: String; b: String; sum_d: Long")
+
+    val res2 = df.smvGroupBy("f").smvCube("a", "b").agg(sum("d") as "sum_d").select(
+      "a", "b", "f", "sum_d"
+    )
+
+    assertSrddDataEqual(res2,
+      """a1,b1,F,30;
+         a1,b2,F,40;
+         a1,null,F,70;
+         null,b1,F,30;
+         null,b2,F,40;
+         a2,b2,G,80;
+         a2,null,G,80;
+         null,b2,G,80;
+         null,null,F,70;
+         null,null,G,80""")
+    assertSrddSchemaEqual(res2, "a:String; b:String; f:String; sum_d:Long")
   }
 
   test("Test rollup") {
@@ -64,5 +120,18 @@ class RollupCubeOpTest extends SmvTestUtil {
        a2,null,null,50;
        null,null,null,150""")
     assertSrddSchemaEqual(res, "a:String; b:String; c:String; sum_d:Long")
+
+    val res2 = df.smvGroupBy("a").smvRollup("b", "c").agg(sum("d") as "sum_d")
+    assertSrddDataEqual(res2,
+      """a1,b1,null,30;
+         a1,b2,null,70;
+         a2,b3,null,50;
+         a1,b1,c1,30;
+         a1,b2,c2,30;
+         a1,b2,c3,40;
+         a2,b3,c4,50;
+         a1,null,null,100;
+         a2,null,null,50""")
+    assertSrddSchemaEqual(res2, "a:String; b:String; c:String; sum_d:Long")
   }
 }

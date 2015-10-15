@@ -338,6 +338,92 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
   /**
+   * implement the cube operations on a given DF and a set of columns.
+   * See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
+   * Rather than using nulls as the pig version, a sentinel value of "*" will be used
+   *
+   * Example:
+   * {{{
+   *   df.smvGroupBy("year").smvCube("zip", "month").agg("year", "zip", "month", sum("v") as "v")
+   * }}}
+   *
+   * For zip & month columns with input values:
+   * {{{
+   *   90001, 201401
+   *   10001, 201501
+   * }}}
+   *
+   * The "cubed" values on those 2 columns are:
+   * {{{
+   *   90001, null
+   *   10001, null
+   *   null, 201401
+   *   null, 201501
+   *   90001, 201401
+   *   10001, 201501
+   *   null, null
+   * }}}
+   *
+   * where `null` stand for "any"
+   *
+   * Also have a version on `DataFrame`, which is equivalent to `cube` DF method
+   *
+   * 2 differences from original smvCube:
+   *   - instead of fill in `*` as wildcard key, filling in `null`
+   *   - also have the all-null key records as the overall aggregation
+   **/
+  @deprecated("should use spark cube method", "1.5")
+  def smvCube(col: String, others: String*): SmvGroupedData = {
+    new RollupCubeOp(df, keys, (col +: others)).cube()
+  }
+
+  /** Same as `smvCube(String*)` but using `Column` to define the input columns */
+  @deprecated("should use spark cube method", "1.5")
+  def smvCube(cols: Column*): SmvGroupedData = {
+    val names = cols.map(_.getName)
+    new RollupCubeOp(df, keys, names).cube()
+  }
+
+  /**
+   * implement the rollup operations on a given DF and a set of columns.
+   * See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
+   *
+   * Example:
+   * {{{
+   *   df.smvGroupBy("year").smvRollup("county", "zip").agg("year", "county", "zip", sum("v") as "v")
+   * }}}
+   *
+   * For county & zip with input values:
+   * {{{
+   *   10234, 92101
+   *   10234, 10019
+   * }}}
+   *
+   * The "rolluped" values are:
+   * {{{
+   *   null, null
+   *   10234, null
+   *   10234, 92101
+   *   10234, 10019
+   * }}}
+   *
+   * Also have a version on DF, which is equivalent to `rollup` DF method
+   *
+   * 2 differences from original smvRollup:
+   *   - instead of fill in `*` as wildcard key, filling in `null`
+   *   - also have the all-null key records as the overall aggregation
+   **/
+  @deprecated("should use spark rollup method", "1.5")
+  def smvRollup(col: String, others: String*): SmvGroupedData = {
+    new RollupCubeOp(df, keys, (col +: others)).rollup()
+  }
+
+  @deprecated("should use spark rollup method", "1.5")
+  def smvRollup(cols: Column*): SmvGroupedData = {
+    new RollupCubeOp(df, keys, cols.map(_.getName)).rollup()
+  }
+
+  /**
    * For each group, return the top N records according to an ordering
    *
    * Example:
