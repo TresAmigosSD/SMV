@@ -463,7 +463,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val kNl = (keys ++ levels).map{s => $"${s}"}
     val nonNullFilter = (keys :+ levels.head).map{s => $"${s}".isNotNull}.reduce(_ && _)
 
-    require(levels.size >= 2)
+    require(levels.size >= 1)
     require(aggregaters.size >= 1)
 
     val rollups = df.rollup(kNl: _*).agg(aggregaters.head, aggregaters.tail: _*).where(nonNullFilter)
@@ -477,12 +477,16 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
      *  when(c.isNotNull && d.isNull, struct(c.name, c)).
      *  otherwise(struct(d.name, d))
      */
-    val tvPair = (lCs.tail.dropRight(1) zip lCs.drop(2)).
-      map{case (l,r) => (l.isNotNull && r.isNull, struct(lit(l.getName) as "type", l as "value"))}.
-      foldLeft(
-        when(lCs.head.isNotNull && lCs(1).isNull, struct(lit(lCs.head.getName) as "type", lCs.head as "value"))
-      ){(res, x) => res.when(x._1, x._2)}.
-      otherwise(struct(lit(lCs.last.getName) as "type", lCs.last as "value"))
+    val tvPair = if(levels.size == 1){
+      struct(lit(lCs.last.getName) as "type", lCs.last as "value")
+    } else {
+      (lCs.tail.dropRight(1) zip lCs.drop(2)).
+        map{case (l,r) => (l.isNotNull && r.isNull, struct(lit(l.getName) as "type", l as "value"))}.
+        foldLeft(
+          when(lCs.head.isNotNull && lCs(1).isNull, struct(lit(lCs.head.getName) as "type", lCs.head as "value"))
+        ){(res, x) => res.when(x._1, x._2)}.
+        otherwise(struct(lit(lCs.last.getName) as "type", lCs.last as "value"))
+    }
 
     val allFields =
       (keys.map{s => $"${s}"}) ++
