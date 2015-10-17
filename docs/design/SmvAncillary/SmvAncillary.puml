@@ -1,0 +1,38 @@
+@startuml
+hide empty methods
+hide empty fields
+hide circle
+
+namespace smv {
+  class SmvAncillary <<Abstract>> {
+    requiresDS(): Seq[SmvModuleLink]
+  }
+
+  class SmvHierarchy <<Abstract>> extends SmvAncillary {
+    keys: Seq[String]
+    hierarchies: Seq[Seq[String]]
+  }
+
+  class SmvHierarchyFuncs {
+    dfWithHier: DataFrame
+    cnstr(hierarchy: SmvHierarchy)
+    addHierToDf(df: DataFrame)
+    levelRollup(levels: String*)(aggregations: Column*)
+    levelSum(levels: String*)(valueCols: String*)
+    allRollup(aggregations: Column*)
+    allSum(valueCols: String*)
+  }
+
+  class SmvHierarchyUser {
+    ancToHier(hierarchy: SmvHierarchy): SmvHierarchyFuncs
+  }
+
+  SmvHierarchyFuncs *-L- "1" SmvHierarchy
+}
+
+namespace myapp {
+  class ZipHierarchy extends smv.SmvHierarchy
+  class MyModule extends smv.SmvHierarchyUser
+}
+
+@enduml
