@@ -11,10 +11,12 @@ namespace smv {
   class SmvHierarchy <<Abstract>> extends SmvAncillary {
     keys: Seq[String]
     hierarchies: Seq[Seq[String]]
+    hierarchyMap: SmvModuleLink
+    -requiresDS() = Seq(hierarchyMap)
   }
 
-  class SmvHierarchyFuncs {
-    dfWithHier: DataFrame
+  class SmvHierarchyFuncs <<private>> {
+    -dfWithHier: DataFrame
     cnstr(hierarchy: SmvHierarchy)
     addHierToDf(df: DataFrame)
     levelRollup(levels: String*)(aggregations: Column*)
@@ -27,12 +29,20 @@ namespace smv {
     ancToHier(hierarchy: SmvHierarchy): SmvHierarchyFuncs
   }
 
+  class SmvModule {
+    requiresAncillaries() : Seq[SmvAncillary] = Seq.empty
+    getAncillary(SmvAncillary) : SmvAncillary
+  }
+
   SmvHierarchyFuncs *-L- "1" SmvHierarchy
 }
 
 namespace myapp {
   class ZipHierarchy extends smv.SmvHierarchy
   class MyModule extends smv.SmvHierarchyUser
+  class MyModule extends smv.SmvModule
+
+  MyModule -L-> "requires" ZipHierarchy
 }
 
 @enduml
