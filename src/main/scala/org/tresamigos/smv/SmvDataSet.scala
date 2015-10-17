@@ -319,6 +319,13 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 
+  def requiresAncillaries() : Seq[SmvAncillary] = Seq.empty
+
+  def getAncillary(anc: SmvAncillary) : SmvAncillary = {
+    if (requiresAncillaries.contains(anc)) anc
+    else throw new IllegalArgumentException(s"SmvAncillary: ${anc} is not in requiresAncillaries")
+  }
+
   /**
    * Create a snapshot in the current module at some result DataFrame.
    * This is useful for debugging a long SmvModule by creating snapshots along the way.
@@ -448,5 +455,5 @@ case class SmvCsvStringData(
  * A marker trait that indicates that a module decorated with this trait is an output module.
  */
 trait SmvOutput {
-  this : SmvModule =>
+  this : SmvDataSet =>
 }
