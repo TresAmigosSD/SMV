@@ -19,6 +19,78 @@ import org.apache.spark.sql.functions._
 
 import SmvJoinType._
 
+/**
+ * `SmvHierarchy` combines a hierarchy Map (a SmvModuleLink to a dataset) with
+ * the hierarchy structure. Through the `SmvHierarchyFuncs` it provides rollup
+ * methods on through the hierarchy structure.
+ *
+ * === Define an SmvHierarchy ===
+ * {{{
+ * object GeoHier extends SmvHierarchy {
+ *   override val prefix = "geo"
+ *   override val keys = Seq("zip")
+ *   override val hierarchies = Seq(
+ *     Seq("zip3"),
+ *     Seq("County", "State")
+ *   )
+ *   override def hierarchyMap() = GeoMapLink
+ * }
+ * }}}
+ *
+ * Where `GeoMapLink` is a `SmvModuleLink` which points to a dataset with
+ * columns to map `keys` to the `hierarchies`. In other words, the dataset
+ * should have at least `zip`, `zip3`, `County`, `State` columns and each
+ * record has an unique `zip`.
+ *
+ * === Use the SmvHierarchy ===
+ * {{{
+ * object MyModule extends SmvModule("...") with SmvHierarchyUser {
+ *    override def requiresDS() = Seq(...)
+ *    override def requiresAncillaries() = Seq(GeoHier)
+ *    override def run(...) = {
+ *      ...
+ *      addHierToDf(GeoHier, df).levelRollup("zip3", "State")(
+ *        sum($"v") as "v",
+ *        avg($"v2") as "v2")
+ *    }
+ * }
+ * }}}
+ *
+ * Where `addHierToDf` is provided by the `SmvHierarchyUser` trait, `levelRollup` is
+ * provided by `SmvHierarchyFuncs`, which is only accessible through `addHierToDf`
+ * method.
+ *
+ * `SmvHierarchyFuncs` also provides other methods
+ * {{{
+ *  //Add additional keys to the rollup
+ *  def hierGroupBy(keys: String*): SmvHierarchyFuncs
+ *
+ *  //on the specified levels, sum over the specified value columns
+ *  def levelSum(levels: String*)(valueCols: String*): DataFrame
+ *
+ *  //on all the levels defined in the `SmvHierarchy`'s `hierarchies`, aggregate
+ *  def allRollup(aggregations: Column*): DataFrame
+ *
+ *  //sum up specified value columns on all the levels
+ *  def allSum(valueCols: String*): DataFrame
+ * }}}
+ *
+ * === Advanced Usage ===
+ * The `addHierToDf` method actually call `applyToDf` method of the `SmvHierarchy`
+ * object. The `applyToDf` method basically defines the DF-with-hierarchy-columns.
+ *
+ * In some cases `hierarchyMap` may not needed. For example, we can uniquely identify
+ * the hierarchy values from a well designed code. In that case we can defined
+ * `hierarchyMap` as `null` and override the `applyToDf` method.
+ * {{{
+ *   object GeoHier extends SmvHierarchy {
+ *    ...
+ *    override def hierarchyMap() = null
+ *    override applyToDf(df: DataFrame) = {
+ *      df.selectPlus($"fips" as "County", $"fips".substr(0,2) as "State")
+ *    }
+ * }}}
+ **/
 abstract class SmvHierarchy extends SmvAncillary {
   val prefix: String
   val keys: Seq[String]
@@ -34,6 +106,9 @@ abstract class SmvHierarchy extends SmvAncillary {
   def allLevels() = hierarchies.flatten.distinct
 }
 
+/**
+ * Provides `addHierToDf` function to a `SmvModule`
+ **/
 trait SmvHierarchyUser { this: SmvModule =>
   def addHierToDf(hier: SmvHierarchy, df: DataFrame) = {
     val checkedHier = getAncillary(hier).asInstanceOf[SmvHierarchy]
@@ -194,15 +269,25 @@ private[smv] class SmvHierarchyFuncs(
     res
   }
 
+  /**
+   * Same as `levelRollup` with summations on all `valueCols`
+   **/
   def levelSum(levels: String*)(valueCols: String*) = {
     val valSums = valueCols.map{s => sum(new Column(s)) as s}
     levelRollup(levels: _*)(valSums: _*)
   }
 
+  /**
+   * Same as `levelRollup` on all the levels defined in the `SmvHierarchy`
+   * hierarchies
+   **/
   def allRollup(aggregations: Column*) = {
     levelRollup(hierarchy.allLevels: _*)(aggregations: _*)
   }
 
+  /**
+   * Same as `allRollup` with summations on all `valueCols`
+   **/
   def allSum(valueCols: String*) = {
     val valSums = valueCols.map{s => sum(new Column(s)) as s}
     allRollup(valSums: _*)
