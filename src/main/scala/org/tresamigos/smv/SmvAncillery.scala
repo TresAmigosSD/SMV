@@ -13,7 +13,13 @@
  */
 
 package org.tresamigos.smv
+import org.apache.spark.sql.DataFrame
 
 abstract class SmvAncillary {
   def requiresDS(): Seq[SmvModuleLink]
+
+  protected def getDF(ds: SmvModuleLink) : DataFrame= {
+    if (requiresDS.contains(ds)) SmvApp.app.resolveRDD(ds)
+    else throw new IllegalArgumentException(s"${ds} does not defined in requiresDS")
+  }
 }

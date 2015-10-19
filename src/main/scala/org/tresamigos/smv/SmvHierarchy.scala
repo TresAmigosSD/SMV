@@ -33,7 +33,7 @@ import SmvJoinType._
  *     Seq("zip3"),
  *     Seq("County", "State")
  *   )
- *   override def hierarchyMap() = GeoMapLink
+ *   override val hierarchyMap = new SmvModuleLink(GeoMapFile)
  * }
  * }}}
  *
@@ -96,13 +96,11 @@ abstract class SmvHierarchy extends SmvAncillary {
   val keys: Seq[String]
   val hierarchies: Seq[Seq[String]]
 
-  def hierarchyMap(): SmvModuleLink
+  val hierarchyMap: SmvModuleLink
 
   override def requiresDS() = Seq(hierarchyMap)
 
-  private def mapDf() = SmvApp.app.resolveRDD(hierarchyMap)
-
-  def applyToDf(df: DataFrame): DataFrame = df.joinByKey(mapDf, keys, Inner)
+  def applyToDf(df: DataFrame): DataFrame = df.joinByKey(getDF(hierarchyMap), keys, Inner)
   def allLevels() = hierarchies.flatten.distinct
 }
 

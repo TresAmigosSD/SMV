@@ -95,15 +95,13 @@ class SmvHierarchyTest extends SmvTestUtil {
   }
 
   test("module with SmvHierarchyUser test"){
-    object GeoMapLink extends SmvModuleLink(hierTestPkg1.GeoMapFile)
-
     object GeoHier extends SmvHierarchy {
       override val prefix = "geo"
       override val keys = Seq("zip")
       override val hierarchies = Seq(
         Seq("Division", "Territory", "zip")
       )
-      override def hierarchyMap() = GeoMapLink
+      override val hierarchyMap = new SmvModuleLink(hierTestPkg1.GeoMapFile)
     }
 
     object TestModule extends SmvModule("") with SmvHierarchyUser {

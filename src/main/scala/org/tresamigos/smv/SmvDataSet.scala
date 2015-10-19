@@ -385,7 +385,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
  * }}}
  * Similar to File/Module, a `dqm()` method can also be overriden in the link
  */
-abstract class SmvModuleLink(outputModule: SmvOutput) extends
+class SmvModuleLink(outputModule: SmvOutput) extends
   SmvModule(s"Link to ${outputModule.asInstanceOf[SmvModule].name}") {
 
   private[smv] val smvModule = outputModule.asInstanceOf[SmvModule]
