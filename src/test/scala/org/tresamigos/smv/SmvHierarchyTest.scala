@@ -41,7 +41,7 @@ class SmvHierarchyTest extends SmvTestUtil {
     "--smv-props",
     "smv.stages=org.tresamigos.smv.hierTestPkg1")
 
-  override def appArgs = singleStage ++ Seq("-m", "None")
+  override def appArgs = singleStage ++ Seq("-m", "None", "--data-dir", testcaseTempDir)
 
   test("Test SmvHierarchyFuncs") {
     val ssc = sqlContext; import ssc.implicits._
