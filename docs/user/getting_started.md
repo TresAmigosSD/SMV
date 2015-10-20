@@ -139,7 +139,7 @@ Once we are inside the spark shell, we can "source" (using the `s()` smv shell h
 and inspect the contents (because the `s` function returns a standard Spark `DataFrame` object)
 
 ```scala
-scala> val d1=s(employment)
+scala> val d1=s(stage1.input.employment)
 
 scala> d1.count
 res1: Long = 38818
@@ -161,7 +161,7 @@ You can also access SmvModules defined in the code.
 This is **not** limited to output modules.
 
 ```scala
-scala> val d2 = s(EmploymentByState)
+scala> val d2 = s(stage1.EmploymentByState)
 d2: org.apache.spark.sql.DataFrame = [ST: string, EMP: bigint]
 
 scala> d2.printSchema
