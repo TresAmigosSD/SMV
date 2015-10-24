@@ -9,13 +9,18 @@ import scala.util.Try
  */
 private[smv] object SmvReflection {
   private val mirror = ru.runtimeMirror(this.getClass.getClassLoader)
-
   /** maps the FQN of a scala object to the actual object instance. */
-  private[smv] def objectNameToInstance[T: ClassTag](objName: String) : T = {
+  private[smv] def objectNameToInstance[T: ClassTag](objName: String) : T =
+    findObjectByName(objName).get
+
+  /** Does a companion object exist with the given FQN and of the given type? */
+  def findObjectByName[T: ClassTag](fqn: String): Try[T] = {
     val ct = implicitly[ClassTag[T]]
-    mirror.reflectModule(mirror.staticModule(objName)).instance match {
-      case ct(t) => t
-      case _ => throw new ClassCastException("can not cast: " + objName)
+    Try {
+      mirror.reflectModule(mirror.staticModule(fqn)).instance match {
+        case ct(t) => t
+        case _ =>  throw new ClassCastException("can not cast: " + fqn)
+      }
     }
   }
 

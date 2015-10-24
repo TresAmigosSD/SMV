@@ -19,9 +19,9 @@ import java.io.{PrintWriter, File}
 import org.apache.log4j.{LogManager, Logger, Level}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.scalatest.{FunSuite, BeforeAndAfterAll}
+import org.scalatest._
 
-trait SparkTestUtil extends FunSuite with BeforeAndAfterAll {
+trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
   var sc: SparkContext = _
   var sqlContext: SQLContext = _
 

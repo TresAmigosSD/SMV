@@ -12,9 +12,11 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv
+import org.apache.spark.sql.DataFrame
 
-class CmdLineArgsTest extends SmvTestUtil {
+package org.tresamigos.smv {
+
+  class CmdLineArgsTest extends SparkTestUtil {
   test("test command line parser") {
     val cmd_args = new CmdLineArgsConf(Seq("--graph", "--run-app", "--publish", "pub_ver", "-m", "mod1", "mod2"))
     assert(cmd_args.graph())
@@ -28,18 +30,19 @@ class CmdLineArgsTest extends SmvTestUtil {
     assert(!cmd_args.graph())
     assert(cmd_args.modsToRun() === Seq("mod1"))
   }
-}
+  }
 
-class SmvConfigTest extends SmvTestUtil {
+  class SmvConfigTest extends SparkTestUtil {
   val confFileArgs = Seq(
     "--smv-app-conf", testDataDir + "SmvConfigTest/app.conf",
     "--smv-user-conf", testDataDir + "SmvConfigTest/user.conf"
   )
 
+  private def mkconfig(args: String*): SmvConfig = new SmvConfig(confFileArgs ++ args)
+
   test("test basic props override/priority") {
-    val conf = new SmvConfig(confFileArgs ++ Seq(
-      "--smv-props", "smv.inAppAndCmd=cmd", "smv.inUserAndCmd=cmd", "smv.cmdLineOnly=cmd",
-      "-m", "mod1"))
+    val conf = mkconfig("--smv-props", "smv.inAppAndCmd=cmd", "smv.inUserAndCmd=cmd", "smv.cmdLineOnly=cmd",
+      "-m", "mod1")
 
     val props = conf.mergedProps
     val expectedProps = Map(
@@ -59,7 +62,7 @@ class SmvConfigTest extends SmvTestUtil {
   }
 
   test("test stage configuration") {
-    val conf = new SmvConfig(confFileArgs ++ Seq("-m", "mod1"))
+    val conf = mkconfig("-m", "mod1")
 
     val ss = conf.stages
     assert(ss.numStages === 2)
@@ -74,12 +77,75 @@ class SmvConfigTest extends SmvTestUtil {
   }
 
   test("test input/output/data dir command line override") {
-    val conf = new SmvConfig(confFileArgs ++ Seq(
-      "--smv-props", "smv.dataDir=D1", "smv.inputDir=I1", "--input-dir", "I2",
-      "-m", "mod1"))
+    val conf = mkconfig("--smv-props", "smv.dataDir=D1", "smv.inputDir=I1", "--input-dir", "I2",
+      "-m", "mod1")
 
     assert(conf.dataDir === "D1")
     assert(conf.inputDir === "I2") // should use command line override rather than prop.
     assert(conf.outputDir === "D1/output") // should use default derived from data dir
   }
+
+    val stageNames = Seq("org.tresamigos.smv.test1", "org.tresamigos.smv.test2")
+    private def config(modname: String): SmvConfig = new SmvConfig(Seq(
+      "--smv-props", "smv.stages=" + stageNames.mkString(":"), "-m", modname))
+
+    test("should report non-existing modules") {
+      val modname = "tooth-fary"
+      val conf = config(modname)
+      val thrown = the [java.lang.RuntimeException] thrownBy conf.modulesToRun()
+      thrown.getMessage shouldBe s"""Cannot find module named [${modname}] in any of the stages [${stageNames.mkString(", ")}]"""
+    }
+
+    // #155
+    test("should find a module by its basename") {
+      config("obj1").modulesToRun shouldBe Seq(org.tresamigos.smv.test1.obj1)
+    }
+
+    test("should resolve name ambiguity if only 1 is an SmvModule") {
+      config("obj2").modulesToRun shouldBe Seq(org.tresamigos.smv.test2.obj2)
+    }
+
+    test("should report ambiguous module names") {
+      val modname = "obj3"
+      val conf = config(modname)
+      val thrown = the [java.lang.RuntimeException] thrownBy conf.modulesToRun()
+      thrown.getMessage shouldBe s"""Module name [${modname}] is not specific enough, as it is found in multiple stages [${stageNames.mkString(", ")}]"""
+    }
+
+    test("should recursively search package namespace") {
+      config("obj4").modulesToRun shouldBe Seq(org.tresamigos.smv.obj4)
+    }
+
+    test("should resolve name ambiguity by prepending a containing package name") {
+      config("test1.obj3").modulesToRun shouldBe Seq(org.tresamigos.smv.test1.obj3)
+    }
+
+  }
+
+  /**
+   * For testing module resolution.
+   *
+   * The packages correspond to the stages defined in the test config file
+   */
+  class TestSmvModule extends SmvModule("Test module resolution by basename") {
+    override def requiresDS() = Seq.empty
+    override def run(i: runParams) = null
+  }
+}
+
+package org.tresamigos.smv.test1 {
+  import org.tresamigos.smv.TestSmvModule
+  object obj1 extends TestSmvModule
+  object obj2
+  object obj3 extends TestSmvModule
+}
+
+package org.tresamigos.smv.test2 {
+  import org.tresamigos.smv.TestSmvModule
+  object obj2 extends TestSmvModule
+  object obj3 extends TestSmvModule
+}
+
+package org.tresamigos.smv {
+  object obj4 extends TestSmvModule
 }
