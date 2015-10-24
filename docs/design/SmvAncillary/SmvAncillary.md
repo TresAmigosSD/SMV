@@ -64,13 +64,15 @@ Create a concrete `SmvHierarchy` using `ZipRefTable`
 
 ```scala
 object ZipHierarchy extends SmvHierarchy {
-  override def requiresDS = Seq(ZipRefTable)
+  override val prefix = "geo"
   override def keys = Seq("Zip")
-  override def hierarchies = Seq(
-    Seq("Zip3"),
-    Seq("County", "State", "Country"),
-    Seq("Territory", "Devision", "Region", "Country")
+  override def hierarchies = Map(
+    "zip3" -> Seq("Zip3"),
+    "county" -> Seq("County", "State"),
+    "internal" -> Seq("Territory", "Devision", "Region")
   )
+
+  override val hierarchyMap = ZipRefTable
 }
 ```
 
@@ -82,10 +84,10 @@ object MyModule extends SmvModule(...) with SmvHierarchyUser {
   override def requiresAnc = Seq(ZipHierarchy)
   override def run(...) {
     ...
-    ancToHier(ZipHierarchy).addHierToDf(df).levelRollup("County", "State")(
+    addHierToDf(ZipHierarchy, df).levelRollup("County", "State")(
       avg($"v1"),
       avg($"v2")
-    )
+    ).addNameCol.addParentCols("county")("Country", "US", "US")
   }
 }
 ```
@@ -94,8 +96,9 @@ object MyModule extends SmvModule(...) with SmvHierarchyUser {
 
 Classes:
 * `SmvAncillary` <- `SmvHierarchy` <- project class `ZipHierarchy`
-* `SmvHierarchyFuncs`: define `addHierToDf`, `levelRollup`, etc.
-* `SmvHierarchyUser`: trait to be mixed in with `SmvModule`. Define `ancToHier`
+* `SmvHierarchyFuncs`: `levelRollup`, etc.
+* `SmvHierarchyExtra`: `addNameCol`, `addParentCols`, etc.
+* `SmvHierarchyUser`: trait to be mixed in with `SmvModule`. Define `addHierToDf`, and implicit conversion from `SmvHierarchyExtra` to `DF`
 
 ## Extend with other Ancillary
 
