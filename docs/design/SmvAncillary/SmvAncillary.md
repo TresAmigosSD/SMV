@@ -38,13 +38,16 @@ framework.
 `SmvAncillary` is the abstract base class of this need.
 
 There could be different kinds of `SmvAncillary`s, as in above example, a specific
-kind could be `SmvHierarchy`, which is an abstract class extends `SmvAncillary`.
+kind could be `SmvHierarchies`, which is an abstract class extends `SmvAncillary`.
 
 ## Client code
 
 Let's use the `Zip` reference table as an example.
 
-In etl stage of the project, one need to define a `SmvFile` which read in the
+For projects need to use `SmvAncillary`, we should better have an `anc` stage, which
+has both the `SmvFile` and `SmvAncillary` defined.
+
+In the `anc` stage of the project, one need to define a `SmvFile` which read in the
 physical reference table and apply basic clean up and DQM.
 
 ```scala
@@ -53,41 +56,34 @@ object ZipRefTable extends SmvCsvFile("path/to/file") with SmvOutput {
 }
 ```
 
-In the stage where we want to use the hierarchy, link the data with `SmvModuleLink`
-in the `input` package
+Create a concrete `SmvHierarchies` using `ZipRefTable`
 
 ```scala
-object ZipRefTable extends SmvModuleLink(etl.ZipRefTable)
+object ZipHierarchies extends SmvHierarchies("geo",
+  SmvHierarchy("zip3", ZipRefTable, Seq("zip", "zip3")),
+  SmvHierarchy("county", ZipRefTable, Seq("zip", "County", "State", "Country")),
+  SmvHierarchy("terr", ZipRefTable, Seq("zip", "Territory", "Devision", "Region", "Country"))
+)
 ```
 
-Create a concrete `SmvHierarchy` using `ZipRefTable`
-
-```scala
-object ZipHierarchy extends SmvHierarchy {
-  override val prefix = "geo"
-  override def keys = Seq("Zip")
-  override def hierarchies = Map(
-    "zip3" -> Seq("Zip3"),
-    "county" -> Seq("County", "State"),
-    "internal" -> Seq("Territory", "Devision", "Region")
-  )
-
-  override val hierarchyMap = ZipRefTable
-}
-```
+Each `SmvHierarchy` within a `SmvHierarchies` could have different `SmvFile`s as the
+hierarchy map data.
 
 Within the user module
 
 ```scala
 object MyModule extends SmvModule(...) with SmvHierarchyUser {
   override def requiresDS = ...
-  override def requiresAnc = Seq(ZipHierarchy)
+  override def requiresAnc = Seq(ZipHierarchies)
   override def run(...) {
     ...
-    addHierToDf(ZipHierarchy, df).levelRollup("County", "State")(
-      avg($"v1"),
-      avg($"v2")
-    ).addNameCol.addParentCols("county")("Country", "US", "US")
+    addHierToDf(ZipHierarchies, df).
+      withNameCol.
+      withParentCols("county").
+      levelRollup("County", "State")(
+        avg($"v1"),
+        avg($"v2")
+      )
   }
 }
 ```
@@ -97,7 +93,6 @@ object MyModule extends SmvModule(...) with SmvHierarchyUser {
 Classes:
 * `SmvAncillary` <- `SmvHierarchy` <- project class `ZipHierarchy`
 * `SmvHierarchyFuncs`: `levelRollup`, etc.
-* `SmvHierarchyExtra`: `addNameCol`, `addParentCols`, etc.
 * `SmvHierarchyUser`: trait to be mixed in with `SmvModule`. Define `addHierToDf`, and implicit conversion from `SmvHierarchyExtra` to `DF`
 
 ## Extend with other Ancillary

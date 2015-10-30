@@ -319,11 +319,11 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 
-  def requiresAncillaries() : Seq[SmvAncillary] = Seq.empty
+  def requiresAnc() : Seq[SmvAncillary] = Seq.empty
 
   def getAncillary(anc: SmvAncillary) : SmvAncillary = {
-    if (requiresAncillaries.contains(anc)) anc
-    else throw new IllegalArgumentException(s"SmvAncillary: ${anc} is not in requiresAncillaries")
+    if (requiresAnc.contains(anc)) anc
+    else throw new IllegalArgumentException(s"SmvAncillary: ${anc} is not in requiresAnc")
   }
 
   /**

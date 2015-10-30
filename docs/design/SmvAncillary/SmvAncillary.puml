@@ -6,19 +6,34 @@ hide circle
 namespace smv {
   class SmvAncillary <<Abstract>> {
     requiresDS(): Seq[SmvModuleLink]
+    ~getDF(ds: SmvModuleLink): DataFrame
   }
 
-  class SmvHierarchy <<Abstract>> extends SmvAncillary {
-    keys: Seq[String]
-    hierarchies: Seq[Seq[String]]
-    hierarchyMap: SmvModuleLink
-    -requiresDS() = Seq(hierarchyMap)
+  class SmvHierarchy {
+    name: String
+    hierarchyMap: SmvOutput
+    hierarchy: Seq[String]
+  }
+
+  class SmvHierarchies extends SmvAncillary {
+    prefix: String
+    hierarchies: Seq[SmvHierarchy]
+    -requiresDS(): Seq[SmvModuleLink]
+    applyToDf(df: DataFrame): DataFrame
   }
 
   class SmvHierarchyFuncs <<private>> {
-    -dfWithHier: DataFrame
-    cnstr(hierarchy: SmvHierarchy)
-    addHierToDf(df: DataFrame)
+    hierarchy: SmvHierarchies
+    df: DataFrame
+    - additionalKeys: Seq[String]
+    - hasNameCol: Boolean
+    - parentColHierName: Option[String]
+
+    cnstr(hierarchy, df, additionalKeys, hasNameCol, parentColHierName)
+    hierGroupBy(keys: String*): SmvHierarchyFuncs
+    withNameCol(): SmvHierarchyFuncs
+    withParentCols(hierName: String): SmvHierarchyFuncs
+
     levelRollup(levels: String*)(aggregations: Column*)
     levelSum(levels: String*)(valueCols: String*)
     allRollup(aggregations: Column*)
@@ -26,23 +41,24 @@ namespace smv {
   }
 
   class SmvHierarchyUser {
-    ancToHier(hierarchy: SmvHierarchy): SmvHierarchyFuncs
+    addHierToDf(hierarchy: SmvHierarchies, df: DataFrame): SmvHierarchyFuncs
   }
 
   class SmvModule {
-    requiresAncillaries() : Seq[SmvAncillary] = Seq.empty
-    getAncillary(SmvAncillary) : SmvAncillary
+    requiresAnc() : Seq[SmvAncillary] = Seq.empty
+    ~getAncillary(SmvAncillary) : SmvAncillary
   }
 
-  SmvHierarchyFuncs *-L- "1" SmvHierarchy
+  SmvHierarchyFuncs *-L- "1" SmvHierarchies
+  SmvHierarchies *-- "n" SmvHierarchy
 }
 
 namespace myapp {
-  class ZipHierarchy extends smv.SmvHierarchy
+  class ZipHier extends smv.SmvHierarchies
   class MyModule extends smv.SmvHierarchyUser
   class MyModule extends smv.SmvModule
 
-  MyModule -L-> "requires" ZipHierarchy
+  MyModule -L-> "requires" ZipHier
 }
 
 @enduml

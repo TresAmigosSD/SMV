@@ -20,33 +20,38 @@ import org.apache.spark.sql.functions._
 import SmvJoinType._
 
 /**
- * `SmvHierarchy` combines a hierarchy Map (a SmvModuleLink to a dataset) with
- * the hierarchy structure. Through the `SmvHierarchyFuncs` it provides rollup
- * methods on through the hierarchy structure.
- *
- * === Define an SmvHierarchy ===
+ * `SmvHierarchy` combines a hierarchy Map (a SmvOutput) with
+ * the hierarchy structure. The `hierarchy` sequence ordered from "small" to "large".
+ * For example:
  * {{{
- * object GeoHier extends SmvHierarchy {
- *   override val prefix = "geo"
- *   override val keys = Seq("zip")
- *   override val hierarchies = Seq(
- *     Seq("zip3"),
- *     Seq("County", "State")
- *   )
- *   override val hierarchyMap = new SmvModuleLink(GeoMapFile)
- * }
+ * SmvHierarchy("zipmap", ZipTable, Seq("zip", "county", "state"))
+ * }}}
+ * where `ZipTable` is a `SmvOutput` which has `zip`, `county`, `state` as its
+ * columns and `zip` is the primary key (unique) of that table.
+ */
+case class SmvHierarchy(
+  name: String,
+  hierarchyMap: SmvOutput,
+  hierarchy: Seq[String]
+)
+
+/**
+ * `SmvHierarchies` is a `SmvAncillary` which combines a sequence of `SmvHierarchy.
+ * Through the `SmvHierarchyFuncs` it provides rollup methods on the hierarchy structure.
+ *
+ * === Define an SmvHierarchies ===
+ * {{{
+ * object GeoHier extends SmvHierarchies("geo",
+ *   SmvHierarchy("county", ZipRefTable, Seq("zip", "County", "State", "Country")),
+ *   SmvHierarchy("terr", ZipRefTable, Seq("zip", "Territory", "Devision", "Region", "Country"))
+ * )
  * }}}
  *
- * Where `GeoMapLink` is a `SmvModuleLink` which points to a dataset with
- * columns to map `keys` to the `hierarchies`. In other words, the dataset
- * should have at least `zip`, `zip3`, `County`, `State` columns and each
- * record has an unique `zip`.
- *
- * === Use the SmvHierarchy ===
+ * === Use the SmvHierarchies ===
  * {{{
  * object MyModule extends SmvModule("...") with SmvHierarchyUser {
  *    override def requiresDS() = Seq(...)
- *    override def requiresAncillaries() = Seq(GeoHier)
+ *    override def requiresAnc() = Seq(GeoHier)
  *    override def run(...) = {
  *      ...
  *      addHierToDf(GeoHier, df).levelRollup("zip3", "State")(
@@ -74,48 +79,39 @@ import SmvJoinType._
  *  //sum up specified value columns on all the levels
  *  def allSum(valueCols: String*): DataFrame
  * }}}
- *
- * === Advanced Usage ===
- * The `addHierToDf` method actually call `applyToDf` method of the `SmvHierarchy`
- * object. The `applyToDf` method basically defines the DF-with-hierarchy-columns.
- *
- * In some cases `hierarchyMap` may not needed. For example, we can uniquely identify
- * the hierarchy values from a well designed code. In that case we can defined
- * `hierarchyMap` as `null` and override the `applyToDf` method.
- * {{{
- *   object GeoHier extends SmvHierarchy {
- *    ...
- *    override def hierarchyMap() = null
- *    override applyToDf(df: DataFrame) = {
- *      df.selectPlus($"fips" as "County", $"fips".substr(0,2) as "State")
- *    }
- * }}}
  **/
-abstract class SmvHierarchy extends SmvAncillary {
-  val prefix: String
-  val keys: Seq[String]
-  val hierarchies: Seq[Seq[String]]
 
-  val hierarchyMap: SmvModuleLink
+class SmvHierarchies(val prefix: String, val hierarchies: SmvHierarchy*) extends SmvAncillary {
 
-  override def requiresDS() = Seq(hierarchyMap)
+  private lazy val mapLinks = hierarchies.
+    filterNot(_.hierarchyMap == null).
+    map{h => (h.hierarchy.head, new SmvModuleLink(h.hierarchyMap))}.
+    toMap
 
-  def applyToDf(df: DataFrame): DataFrame = df.joinByKey(getDF(hierarchyMap), keys, Inner)
-  def allLevels() = hierarchies.flatten.distinct
+  override def requiresDS() = mapLinks.values.toSeq
+
+  def applyToDf(df: DataFrame): DataFrame = {
+    mapLinks.foldLeft(df)((res, pair) =>
+      pair match {case (k, v) => res.joinByKey(getDF(v), Seq(k), Inner)}
+    )
+  }
+
+  val hierarchyLevels = hierarchies.map{_.hierarchy.reverse}
+  def allLevels() = hierarchyLevels.flatten.distinct
 }
 
 /**
  * Provides `addHierToDf` function to a `SmvModule`
  **/
 trait SmvHierarchyUser { this: SmvModule =>
-  def addHierToDf(hier: SmvHierarchy, df: DataFrame) = {
-    val checkedHier = getAncillary(hier).asInstanceOf[SmvHierarchy]
+  def addHierToDf(hier: SmvHierarchies, df: DataFrame) = {
+    val checkedHier = getAncillary(hier).asInstanceOf[SmvHierarchies]
     new SmvHierarchyFuncs(checkedHier, df)
   }
 }
 
 private[smv] class SmvHierarchyFuncs(
-    val hierarchy: SmvHierarchy,
+    val hierarchy: SmvHierarchies,
     val df: DataFrame,
     private val additionalKeys: Seq[String] = Nil
   ) {
@@ -203,7 +199,7 @@ private[smv] class SmvHierarchyFuncs(
    * }}}
    **/
   private def hierList(levels: Seq[String]) = {
-    val intersectList = hierarchy.hierarchies.map{hier =>
+    val intersectList = hierarchy.hierarchyLevels.map{hier =>
       hier.intersect(levels)
     }.filter{!_.isEmpty}
 

@@ -60,13 +60,10 @@ class SmvHierarchyTest extends SmvTestUtil {
        b,401,004,02,15;
        b,405,004,02,20""")
 
-    object TestHeir extends SmvHierarchy {
-      override val prefix = "hier"
-      override val keys = Seq("zip3")
-      override val hierarchies = Seq(
-        Seq("div", "terr", "zip3")
-      )
-      override val hierarchyMap = null
+    object TestHeir extends SmvHierarchies(
+      "hier",
+      SmvHierarchy("div", null, Seq("zip3", "terr", "div"))
+    ) {
       override def applyToDf(df: DataFrame) = df
     }
 
@@ -95,18 +92,14 @@ class SmvHierarchyTest extends SmvTestUtil {
   }
 
   test("module with SmvHierarchyUser test"){
-    object GeoHier extends SmvHierarchy {
-      override val prefix = "geo"
-      override val keys = Seq("zip")
-      override val hierarchies = Seq(
-        Seq("Division", "Territory", "zip")
-      )
-      override val hierarchyMap = new SmvModuleLink(hierTestPkg1.GeoMapFile)
-    }
+    object GeoHier extends SmvHierarchies(
+      "geo",
+      SmvHierarchy("terr", hierTestPkg1.GeoMapFile, Seq("zip", "Territory", "Division"))
+    )
 
     object TestModule extends SmvModule("") with SmvHierarchyUser {
       override def requiresDS() = Seq.empty
-      override def requiresAncillaries() = Seq(GeoHier)
+      override def requiresAnc() = Seq(GeoHier)
 
       override def run(i: runParams) = {
         val srdd = app.createDF("zip:String; V1:double; V2:Double; V3:Double; time:Integer",
