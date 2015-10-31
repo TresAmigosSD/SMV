@@ -57,7 +57,7 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
 
     sc = new SparkContext("local[2]", name())
     sqlContext = new SQLContext(sc)
-    sqlContext.setConf("spark.sql.shuffle.partitions", "8")
+    sqlContext.setConf("spark.sql.shuffle.partitions", "4")
     resetTestcaseTempDir()
   }
 
@@ -203,7 +203,7 @@ trait SmvTestUtil extends SparkTestUtil {
 
   override def beforeAll() = {
     super.beforeAll()
-    SmvApp.init(appArgs.toArray, Option(sc))
+    SmvApp.init(appArgs.toArray, Option(sc), Option(sqlContext))
     app = SmvApp.app
   }
 

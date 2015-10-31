@@ -20,14 +20,14 @@ package org.tresamigos.smv.hierTestPkg1 {
     override def requiresDS = Seq.empty
 
     override def run(i: runParams) = {
-      app.createDF("zip:String;Territory:String;Division:String",
-        """100,001,01;
-        102,001,01;
-        103,001,01;
-        201,002,01;
-        301,003,02;
-        401,004,02;
-        405,004,02""")
+      app.createDF("zip:String;Territory:String;Division:String;Division_name:String",
+        """100,001,01,D01;
+        102,001,01,D01;
+        103,001,01,D01;
+        201,002,01,D01;
+        301,003,02,D02;
+        401,004,02,D02;
+        405,004,02,D02""")
     }
   }
 }
@@ -127,6 +127,34 @@ class SmvHierarchyTest extends SmvTestUtil {
                             2013,Division,02,-100.0,10.0,1000.0;
                             2013,Territory,004,-100.0,10.0,1000.0;
                             2014,Division,01,-10.0,8.0,300.0""")
+  }
+
+  test("SmvHierarchies with name"){
+    object GeoHier extends SmvHierarchies(
+      "geo",
+      SmvHierarchy("terr", hierTestPkg1.GeoMapFile, Seq("zip", "Territory", "Division"))
+    )
+
+    val df = app.createDF("zip:String; V1:double; V2:Double; V3:Double; time:Integer",
+      """100,  -5.0, 2.0, -150.0, 2013;
+      102, -10.0, 8.0,  300.0, 2014;
+      201, -50.0, 5.0,  500.0, 2013;
+      301, -50.0, 5.0,  500.0, 2014;
+      401, -50.0, 5.0,  500.0, 2013;
+      405, -50.0, 5.0,  500.0, 2013""")
+
+    val funcs = new SmvHierarchyFuncs(GeoHier.withNameCol, df)
+    val res = funcs.hierGroupBy("time").levelSum("Territory", "Division")("V1", "V2", "V3")
+
+    assertSrddDataEqual(res, """2013,Territory,002,null,-50.0,5.0,500.0;
+                                2013,Division,02,D02,-100.0,10.0,1000.0;
+                                2014,Division,01,D01,-10.0,8.0,300.0;
+                                2014,Territory,001,null,-10.0,8.0,300.0;
+                                2014,Division,02,D02,-50.0,5.0,500.0;
+                                2013,Division,01,D01,-55.0,7.0,350.0;
+                                2013,Territory,001,null,-5.0,2.0,-150.0;
+                                2013,Territory,004,null,-100.0,10.0,1000.0;
+                                2014,Territory,003,null,-50.0,5.0,500.0""")
   }
 }
 

@@ -16,6 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.{DataFrame, Column}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
 import SmvJoinType._
 
@@ -32,7 +33,8 @@ import SmvJoinType._
 case class SmvHierarchy(
   name: String,
   hierarchyMap: SmvOutput,
-  hierarchy: Seq[String]
+  hierarchy: Seq[String],
+  nameColPostfix: String = "_name"
 )
 
 /**
@@ -81,7 +83,17 @@ case class SmvHierarchy(
  * }}}
  **/
 
-class SmvHierarchies(val prefix: String, val hierarchies: SmvHierarchy*) extends SmvAncillary {
+class SmvHierarchies(
+  val prefix: String,
+  val hierarchies: Seq[SmvHierarchy],
+  val hasName: Boolean = false,
+  val parentHier: Option[String] = None
+) extends SmvAncillary {
+
+  def this(_prefix: String, _hier: SmvHierarchy*) = this(_prefix, _hier)
+
+  def withNameCol() = new SmvHierarchies(prefix, hierarchies, true, parentHier)
+  def withParentCols(hierName: String) = new SmvHierarchies(prefix, hierarchies, hasName, Option(hierName))
 
   private lazy val mapLinks = hierarchies.
     filterNot(_.hierarchyMap == null).
@@ -90,13 +102,21 @@ class SmvHierarchies(val prefix: String, val hierarchies: SmvHierarchy*) extends
 
   override def requiresDS() = mapLinks.values.toSeq
 
+  val hierarchyLevels = hierarchies.map{_.hierarchy.reverse}
+
   def applyToDf(df: DataFrame): DataFrame = {
     mapLinks.foldLeft(df)((res, pair) =>
       pair match {case (k, v) => res.joinByKey(getDF(v), Seq(k), Inner)}
     )
   }
 
-  val hierarchyLevels = hierarchies.map{_.hierarchy.reverse}
+  def nameColName(col: String) = {
+    val h = hierarchies.find(_.hierarchy.contains(col)).getOrElse(
+      throw new IllegalArgumentException(s"${col} is not in any hierarchys")
+    )
+    col + h.nameColPostfix
+  }
+
   def allLevels() = hierarchyLevels.flatten.distinct
 }
 
@@ -136,15 +156,32 @@ private[smv] class SmvHierarchyFuncs(
 
     val kNl = (additionalKeys ++ hier).map{s => $"${s}"}
     val nonNullFilter = (additionalKeys :+ hier.head).map{s => $"${s}".isNotNull}.reduce(_ && _)
+    val nameAggs = hier.map{c =>
+      val cName = hierarchy.nameColName(c)
+      if (dfWithHier.columns.contains(cName)) Option(first($"${cName}") as cName)
+      else None
+    }.flatten
+
+    val aggsWithName = aggs ++ nameAggs
 
     require(hier.size >= 1)
     require(aggs.size >= 1)
 
     val rollups = dfWithHier.rollup(kNl: _*).
-      agg(aggs.head, aggs.tail: _*).
+      agg(aggsWithName.head, aggsWithName.tail: _*).
       where(nonNullFilter)
 
     val lCs = hier.map{s => $"${s}"}
+
+    def buildStruct(c: String) = {
+      val cName = hierarchy.nameColName(c)
+      val nameCol = if(dfWithHier.columns.contains(cName)) $"${cName}" else lit(null).cast(StringType)
+      struct(lit(c) as "type", $"${c}" as "value", nameCol as "name")
+    }
+
+    def buildCond(l: String, r: String) = {
+      $"${l}".isNotNull && $"${r}".isNull
+    }
 
     /* levels: a, b, c, d => Seq((b, c), (c, d))
     *
@@ -153,23 +190,25 @@ private[smv] class SmvHierarchyFuncs(
     *  when(c.isNotNull && d.isNull, struct(c.name, c)).
     *  otherwise(struct(d.name, d))
     */
-    val tvPair = if(lCs.size == 1){
-      struct(lit(lCs.last.getName) as "type", lCs.last as "value")
+    val tvPair = if(hier.size == 1){
+      buildStruct(hier.head)
     } else {
-      (lCs.tail.dropRight(1) zip lCs.drop(2)).
-      map{case (l,r) => (l.isNotNull && r.isNull, struct(lit(l.getName) as "type", l as "value"))}.
+      (hier.tail.dropRight(1) zip hier.drop(2)).
+      map{case (l,r) => (buildCond(l, r), buildStruct(l))}.
       foldLeft(
-        when(lCs.head.isNotNull && lCs(1).isNull, struct(lit(lCs.head.getName) as "type", lCs.head as "value"))
+        when(buildCond(hier(0), hier(1)), buildStruct(hier(0)))
       ){(res, x) => res.when(x._1, x._2)}.
-      otherwise(struct(lit(lCs.last.getName) as "type", lCs.last as "value"))
+      otherwise(buildStruct(hier.last))
     }
 
     val typeName = hierarchy.prefix + "_type"
     val valueName = hierarchy.prefix + "_value"
+    val nameName = hierarchy.prefix + "_name"
 
     val allFields =
       (additionalKeys.map{s => $"${s}"}) ++
       Seq(tvPair.getField("type") as typeName, tvPair.getField("value") as valueName) ++
+      (if (hierarchy.hasName) Seq(tvPair.getField("name") as nameName) else Nil) ++
       aggs.map{a => $"${a.getName}"}
 
     rollups.select(allFields:_*)
