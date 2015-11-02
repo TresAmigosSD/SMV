@@ -87,13 +87,14 @@ class SmvHierarchies(
   val prefix: String,
   val hierarchies: Seq[SmvHierarchy],
   val hasName: Boolean = false,
-  val parentHier: Option[String] = None
+  val parentHier: Option[String] = None,
+  override val rootAnc: Option[SmvAncillary] = None
 ) extends SmvAncillary {
 
   def this(_prefix: String, _hier: SmvHierarchy*) = this(_prefix, _hier)
 
-  def withNameCol() = new SmvHierarchies(prefix, hierarchies, true, parentHier)
-  def withParentCols(hierName: String) = new SmvHierarchies(prefix, hierarchies, hasName, Option(hierName))
+  def withNameCol() = new SmvHierarchies(prefix, hierarchies, true, parentHier, Option(this.rootAnc.getOrElse(this)))
+  def withParentCols(hierName: String) = new SmvHierarchies(prefix, hierarchies, hasName, Option(hierName), Option(this.rootAnc.getOrElse(this)))
 
   private lazy val mapLinks = hierarchies.
     filterNot(_.hierarchyMap == null).

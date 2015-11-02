@@ -322,7 +322,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   def requiresAnc() : Seq[SmvAncillary] = Seq.empty
 
   def getAncillary(anc: SmvAncillary) : SmvAncillary = {
-    if (requiresAnc.contains(anc)) anc
+    if (requiresAnc.find{r => anc.rootMatch(r)} != None) anc
     else throw new IllegalArgumentException(s"SmvAncillary: ${anc} is not in requiresAnc")
   }
 

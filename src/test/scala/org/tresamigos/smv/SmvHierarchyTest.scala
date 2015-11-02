@@ -110,7 +110,7 @@ class SmvHierarchyTest extends SmvTestUtil {
           401, -50.0, 5.0,  500.0, 2013;
           405, -50.0, 5.0,  500.0, 2013""")
 
-        addHierToDf(GeoHier, srdd).
+        addHierToDf(GeoHier.withNameCol, srdd).
           hierGroupBy("time").
           levelSum("Territory", "Division")("V1", "V2", "V3")
       }
@@ -118,18 +118,19 @@ class SmvHierarchyTest extends SmvTestUtil {
 
     app.resolveRDD(hierTestPkg1.GeoMapFile)
     val res = app.resolveRDD(TestModule)
-    assertSrddDataEqual(res, """2014,Territory,001,-10.0,8.0,300.0;
-                            2014,Division,02,-50.0,5.0,500.0;
-                            2013,Territory,002,-50.0,5.0,500.0;
-                            2013,Division,01,-55.0,7.0,350.0;
-                            2013,Territory,001,-5.0,2.0,-150.0;
-                            2014,Territory,003,-50.0,5.0,500.0;
-                            2013,Division,02,-100.0,10.0,1000.0;
-                            2013,Territory,004,-100.0,10.0,1000.0;
-                            2014,Division,01,-10.0,8.0,300.0""")
+
+    assertSrddDataEqual(res, """2013,Territory,002,null,-50.0,5.0,500.0;
+                                2013,Division,02,D02,-100.0,10.0,1000.0;
+                                2014,Division,01,D01,-10.0,8.0,300.0;
+                                2014,Territory,001,null,-10.0,8.0,300.0;
+                                2014,Division,02,D02,-50.0,5.0,500.0;
+                                2013,Division,01,D01,-55.0,7.0,350.0;
+                                2013,Territory,001,null,-5.0,2.0,-150.0;
+                                2013,Territory,004,null,-100.0,10.0,1000.0;
+                                2014,Territory,003,null,-50.0,5.0,500.0""")
   }
 
-  test("SmvHierarchies with name"){
+  test("SmvHierarchies with parent"){
     object GeoHier extends SmvHierarchies(
       "geo",
       SmvHierarchy("terr", hierTestPkg1.GeoMapFile, Seq("zip", "Territory", "Division"))
@@ -142,19 +143,6 @@ class SmvHierarchyTest extends SmvTestUtil {
       301, -50.0, 5.0,  500.0, 2014;
       401, -50.0, 5.0,  500.0, 2013;
       405, -50.0, 5.0,  500.0, 2013""")
-
-    val funcs = new SmvHierarchyFuncs(GeoHier.withNameCol, df)
-    val res = funcs.hierGroupBy("time").levelSum("Territory", "Division")("V1", "V2", "V3")
-
-    assertSrddDataEqual(res, """2013,Territory,002,null,-50.0,5.0,500.0;
-                                2013,Division,02,D02,-100.0,10.0,1000.0;
-                                2014,Division,01,D01,-10.0,8.0,300.0;
-                                2014,Territory,001,null,-10.0,8.0,300.0;
-                                2014,Division,02,D02,-50.0,5.0,500.0;
-                                2013,Division,01,D01,-55.0,7.0,350.0;
-                                2013,Territory,001,null,-5.0,2.0,-150.0;
-                                2013,Territory,004,null,-100.0,10.0,1000.0;
-                                2014,Territory,003,null,-50.0,5.0,500.0""")
 
     val funcs2 = new SmvHierarchyFuncs(GeoHier.withNameCol.withParentCols("terr"), df)
     val res2 = funcs2.hierGroupBy("time").levelSum("Territory", "Division")("V1", "V2", "V3")
