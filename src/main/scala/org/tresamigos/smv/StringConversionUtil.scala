@@ -16,13 +16,14 @@ package org.tresamigos.smv
 
 
 private[smv] object StringConversionUtil {
+  val IntThreshold: Int = Math.ceil(Int.MaxValue / 1.5).toInt
+  val FloatThreshold: Float = Float.MaxValue / 1.5f
 
   def canConvertToInt(str: String) : Boolean =  {
     try {
-      str.toInt
-      true
+      str.toInt < IntThreshold
     } catch {
-      case _ : Throwable => false
+      case _ : Exception => false
     }
   }
 
@@ -31,16 +32,15 @@ private[smv] object StringConversionUtil {
       str.toLong
       true
     } catch {
-      case _ : Throwable => false
+      case _ : Exception => false
     }
   }
 
   def canConvertToFloat(str: String) : Boolean =  {
     try {
-      str.toFloat
-      true
+      str.toFloat < FloatThreshold
     } catch {
-      case _ : Throwable => false
+      case _ : Exception => false
     }
   }
 
@@ -49,7 +49,7 @@ private[smv] object StringConversionUtil {
       str.toDouble
       true
     } catch {
-      case _ : Throwable => false
+      case _ : Exception => false
     }
   }
 
@@ -58,7 +58,7 @@ private[smv] object StringConversionUtil {
       str.toBoolean
       true
     } catch {
-      case _ : Throwable => false
+      case _ : Exception => false
     }
   }
 
@@ -70,7 +70,7 @@ private[smv] object StringConversionUtil {
       fmtObj.parse(str)
       true
     } catch {
-      case _ : Throwable => false
+      case _ : Exception => false
     }
   }
 }
