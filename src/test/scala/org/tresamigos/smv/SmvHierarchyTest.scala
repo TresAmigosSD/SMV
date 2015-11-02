@@ -155,6 +155,23 @@ class SmvHierarchyTest extends SmvTestUtil {
                                 2013,Territory,001,null,-5.0,2.0,-150.0;
                                 2013,Territory,004,null,-100.0,10.0,1000.0;
                                 2014,Territory,003,null,-50.0,5.0,500.0""")
+
+    val funcs2 = new SmvHierarchyFuncs(GeoHier.withNameCol.withParentCols("terr"), df)
+    val res2 = funcs2.hierGroupBy("time").levelSum("Territory", "Division")("V1", "V2", "V3")
+
+    assertSrddSchemaEqual(res2, """time: Integer; geo_type: String; geo_value: String; geo_name: String;
+                                   parent_geo_type: String; parent_geo_value: String; parent_geo_name: String;
+                                   V1: Double; V2: Double; V3: Double""")
+
+    assertSrddDataEqual(res2,  """2013,Territory,002,null,Division,01,D01,-50.0,5.0,500.0;
+                                  2013,Division,02,D02,null,null,null,-100.0,10.0,1000.0;
+                                  2014,Division,01,D01,null,null,null,-10.0,8.0,300.0;
+                                  2014,Territory,001,null,Division,01,D01,-10.0,8.0,300.0;
+                                  2014,Division,02,D02,null,null,null,-50.0,5.0,500.0;
+                                  2013,Division,01,D01,null,null,null,-55.0,7.0,350.0;
+                                  2013,Territory,001,null,Division,01,D01,-5.0,2.0,-150.0;
+                                  2013,Territory,004,null,Division,02,D02,-100.0,10.0,1000.0;
+                                  2014,Territory,003,null,Division,02,D02,-50.0,5.0,500.0""")
   }
 }
 

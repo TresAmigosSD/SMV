@@ -97,27 +97,147 @@ class SmvHierarchies(
 
   private lazy val mapLinks = hierarchies.
     filterNot(_.hierarchyMap == null).
-    map{h => (h.hierarchy.head, new SmvModuleLink(h.hierarchyMap))}.
-    toMap
+    map{h => new SmvModuleLink(h.hierarchyMap)}
 
-  override def requiresDS() = mapLinks.values.toSeq
+  private lazy val mapDFs = mapLinks.map{l => getDF(l)}
 
-  val hierarchyLevels = hierarchies.map{_.hierarchy.reverse}
+  override def requiresDS() = mapLinks
 
-  def applyToDf(df: DataFrame): DataFrame = {
-    mapLinks.foldLeft(df)((res, pair) =>
-      pair match {case (k, v) => res.joinByKey(getDF(v), Seq(k), Inner)}
+  private[smv] val hierarchyLevels = hierarchies.map{_.hierarchy.reverse}
+  private[smv] def allLevels() = hierarchyLevels.flatten.distinct
+  private[smv] def allHierMapCols() = mapDFs.map{df => df.columns}.flatten.toSeq.distinct
+
+  private[smv] def applyToDf(df: DataFrame): DataFrame = {
+    val mapDFsMap = hierarchies.
+      filterNot(_.hierarchyMap == null).
+      map{h => (h.hierarchy.head)}.zip(mapDFs).
+      toMap
+
+    mapDFsMap.foldLeft(df)((res, pair) =>
+      pair match {case (k, v) => res.joinByKey(v, Seq(k), Inner)}
     )
   }
 
-  def nameColName(col: String) = {
+  /** Create `${prefix}_name` column */
+  private def nameCol(col: String) = {
     val h = hierarchies.find(_.hierarchy.contains(col)).getOrElse(
-      throw new IllegalArgumentException(s"${col} is not in any hierarchys")
+      throw new IllegalArgumentException(s"${col} is not in any hierarchy")
     )
-    col + h.nameColPostfix
+    val cName = col + h.nameColPostfix
+    if(allHierMapCols.contains(cName)) new Column(cName) else lit(null).cast(StringType)
   }
 
-  def allLevels() = hierarchyLevels.flatten.distinct
+  /**
+   * Since `lit(s)` will create a "non-nullable" expression which can't match
+   * with `lit(null).cast(StringType)` within a `struct`, we have to create this
+   * dummy udf to create `litStrNullable(s)()` as a "nullable" column
+   **/
+  private def litStrNullable(s: String) = udf({() => s: String})
+  private val nullCol = litStrNullable(null: String)()
+
+  /** Create `parent_${prefix}_*` columns */
+  private def pCols(col: String, h: SmvHierarchy, withName: Boolean) = {
+    val index = h.hierarchy.indexOf(col)
+
+    if(index + 1 == h.hierarchy.size) {
+      Seq(nullCol as "ptype", nullCol as "pvalue") ++
+      (if (withName) Seq(nullCol as "pname") else Nil)
+    } else {
+      val p = h.hierarchy(index + 1)
+      Seq(litStrNullable(p)() as "ptype", new Column(p) as "pvalue") ++
+      (if (withName) Seq(nameCol(p) as "pname") else Nil)
+    }
+  }
+
+  /** build the `struct` column with `_type, _value, _name` and optionally all
+   * the "parent" columns. To make it a StructType column so that `when().unless()`
+   * can be applied on all those columns together
+   **/
+  private def buildStruct(col: String) = {
+    def getHier(name: String) = hierarchies.find(_.name == name).getOrElse(
+        throw new IllegalArgumentException(s"${name} is not in hierarchy list")
+      )
+
+    val optionalCols = (hasName, parentHier) match {
+      case (false, None) => Nil
+      case (false, Some(hierName)) => {
+        val h = getHier(hierName)
+        pCols(col, h, false)
+      }
+      case (true, None) => Seq(nameCol(col) as "name")
+      case (true, Some(hierName)) => {
+        val h = getHier(hierName)
+        Seq(nameCol(col) as "name") ++ pCols(col, h, true)
+      }
+    }
+
+    val allCols = Seq(litStrNullable(col)() as "type", new Column(col) as "value") ++ optionalCols
+    struct(allCols: _*)
+  }
+
+
+  /**
+   * Un-pivot all the hierarchy columns to "_type, _value, _name" and optionally all
+   * the "parent" columns.
+   **/
+  private[smv] def hierCols(hier: Seq[String]) = {
+    require(hier.size >= 1)
+
+    def buildCond(l: String, r: String) = {
+      new Column(l).isNotNull && new Column(r).isNull
+    }
+
+    /* levels: a, b, c, d => Seq((b, c), (c, d))
+    *
+    * when(a.isNotNull && b.isNull, struct(a.name, a)).
+    *  when(b.isNotNull && c.isNull, struct(b.name, b)).
+    *  when(c.isNotNull && d.isNull, struct(c.name, c)).
+    *  otherwise(struct(d.name, d))
+    */
+    val tvnCol = if(hier.size == 1){
+      buildStruct(hier.head)
+    } else {
+      (hier.tail.dropRight(1) zip hier.drop(2)).
+      map{case (l,r) => (buildCond(l, r), buildStruct(l))}.
+      foldLeft(
+        when(buildCond(hier(0), hier(1)), buildStruct(hier(0)))
+      ){(res, x) => res.when(x._1, x._2)}.
+      otherwise(buildStruct(hier.last))
+    }
+
+    val typeName = prefix + "_type"
+    val valueName = prefix + "_value"
+    val nameName = prefix + "_name"
+
+    val pTypeName = "parent_" + typeName
+    val pValueName = "parent_" + valueName
+    val pNameName = "parent_" + nameName
+
+    val optionalCols = (hasName, parentHier) match {
+      case (false, None) => Nil
+      case (false, Some(hierName)) => {
+        Seq(
+          tvnCol.getField("ptype") as pTypeName,
+          tvnCol.getField("pvalue") as pValueName
+        )
+      }
+      case (true, None) => Seq(tvnCol.getField("name") as nameName)
+      case (true, Some(hierName)) => {
+        Seq(
+          tvnCol.getField("name") as nameName,
+          tvnCol.getField("ptype") as pTypeName,
+          tvnCol.getField("pvalue") as pValueName,
+          tvnCol.getField("pname") as pNameName
+        )
+      }
+    }
+
+    Seq(
+      tvnCol.getField("type") as typeName,
+      tvnCol.getField("value") as valueName
+    ) ++ optionalCols
+  }
+
 }
 
 /**
@@ -156,59 +276,18 @@ private[smv] class SmvHierarchyFuncs(
 
     val kNl = (additionalKeys ++ hier).map{s => $"${s}"}
     val nonNullFilter = (additionalKeys :+ hier.head).map{s => $"${s}".isNotNull}.reduce(_ && _)
-    val nameAggs = hier.map{c =>
-      val cName = hierarchy.nameColName(c)
-      if (dfWithHier.columns.contains(cName)) Option(first($"${cName}") as cName)
-      else None
-    }.flatten
+    val leftoverAggs = hierarchy.allHierMapCols.diff(additionalKeys ++ hier).map{c => first($"$c") as c}
 
-    val aggsWithName = aggs ++ nameAggs
+    val aggsAll = aggs ++ leftoverAggs
 
-    require(hier.size >= 1)
     require(aggs.size >= 1)
 
     val rollups = dfWithHier.rollup(kNl: _*).
-      agg(aggsWithName.head, aggsWithName.tail: _*).
+      agg(aggsAll.head, aggsAll.tail: _*).
       where(nonNullFilter)
 
-    val lCs = hier.map{s => $"${s}"}
-
-    def buildStruct(c: String) = {
-      val cName = hierarchy.nameColName(c)
-      val nameCol = if(dfWithHier.columns.contains(cName)) $"${cName}" else lit(null).cast(StringType)
-      struct(lit(c) as "type", $"${c}" as "value", nameCol as "name")
-    }
-
-    def buildCond(l: String, r: String) = {
-      $"${l}".isNotNull && $"${r}".isNull
-    }
-
-    /* levels: a, b, c, d => Seq((b, c), (c, d))
-    *
-    * when(a.isNotNull && b.isNull, struct(a.name, a)).
-    *  when(b.isNotNull && c.isNull, struct(b.name, b)).
-    *  when(c.isNotNull && d.isNull, struct(c.name, c)).
-    *  otherwise(struct(d.name, d))
-    */
-    val tvPair = if(hier.size == 1){
-      buildStruct(hier.head)
-    } else {
-      (hier.tail.dropRight(1) zip hier.drop(2)).
-      map{case (l,r) => (buildCond(l, r), buildStruct(l))}.
-      foldLeft(
-        when(buildCond(hier(0), hier(1)), buildStruct(hier(0)))
-      ){(res, x) => res.when(x._1, x._2)}.
-      otherwise(buildStruct(hier.last))
-    }
-
-    val typeName = hierarchy.prefix + "_type"
-    val valueName = hierarchy.prefix + "_value"
-    val nameName = hierarchy.prefix + "_name"
-
-    val allFields =
-      (additionalKeys.map{s => $"${s}"}) ++
-      Seq(tvPair.getField("type") as typeName, tvPair.getField("value") as valueName) ++
-      (if (hierarchy.hasName) Seq(tvPair.getField("name") as nameName) else Nil) ++
+    val allFields = (additionalKeys.map{s => $"${s}"}) ++
+      hierarchy.hierCols(hier) ++
       aggs.map{a => $"${a.getName}"}
 
     rollups.select(allFields:_*)
