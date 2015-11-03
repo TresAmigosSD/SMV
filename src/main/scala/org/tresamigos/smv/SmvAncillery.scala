@@ -21,8 +21,9 @@ abstract class SmvAncillary {
   private[smv] val rootAnc: Option[SmvAncillary] = None
 
   private[smv] def rootMatch(that: SmvAncillary) = {
-    val root = rootAnc.getOrElse(this)
-    root == that
+    val rootThis = rootAnc.getOrElse(this)
+    val rootThat = that.rootAnc.getOrElse(that)
+    rootThis == rootThat
   }
 
   protected def getDF(ds: SmvModuleLink) : DataFrame= {

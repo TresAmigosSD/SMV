@@ -70,25 +70,16 @@ class SmvHierarchyTest extends SmvTestUtil {
     val funcs = new SmvHierarchyFuncs(TestHeir, df)
 
     val res = funcs.hierGroupBy("id").allSum("v")
+
     assertSrddSchemaEqual(res, "id: String; hier_type: String; hier_value: String; v: Double")
-    assertSrddDataEqual(res,
-       """b,zip3,401,15.0;
-          b,zip3,102,4.0;
-          b,zip3,103,20.299999999999997;
-          a,zip3,102,6.0;
-          b,div,01,24.299999999999997;
-          b,zip3,301,15.0;
-          a,zip3,103,10.3;
-          b,terr,004,35.0;
-          a,div,01,37.6;
-          b,div,02,50.0;
-          b,terr,003,15.0;
-          b,terr,001,24.299999999999997;
-          a,zip3,201,11.0;
-          a,terr,002,11.0;
-          b,zip3,405,20.0;
-          a,terr,001,26.6;
-          a,zip3,100,10.3""")
+    assertSrddDataEqual(res, """b,div,02,50.0;
+                                a,div,01,37.6;
+                                a,terr,001,26.6;
+                                b,terr,003,15.0;
+                                b,div,01,24.299999999999997;
+                                b,terr,001,24.299999999999997;
+                                a,terr,002,11.0;
+                                b,terr,004,35.0""")
   }
 
   test("module with SmvHierarchyUser test"){

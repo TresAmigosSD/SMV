@@ -101,12 +101,12 @@ class SmvHierarchies(
     map{h => new SmvModuleLink(h.hierarchyMap)}
 
   private lazy val mapDFs = mapLinks.map{l => getDF(l)}
+  private[smv] def allHierMapCols() = mapDFs.map{df => df.columns}.flatten.toSeq.distinct
 
   override def requiresDS() = mapLinks
 
   private[smv] val hierarchyLevels = hierarchies.map{_.hierarchy.reverse}
-  private[smv] def allLevels() = hierarchyLevels.flatten.distinct
-  private[smv] def allHierMapCols() = mapDFs.map{df => df.columns}.flatten.toSeq.distinct
+  private[smv] def allLevels() = hierarchies.flatMap{h => h.hierarchy.tail}.distinct
 
   private[smv] def applyToDf(df: DataFrame): DataFrame = {
     val mapDFsMap = hierarchies.
@@ -391,8 +391,16 @@ private[smv] class SmvHierarchyFuncs(
   }
 
   /**
-   * Same as `levelRollup` on all the levels defined in the `SmvHierarchy`
-   * hierarchies
+   * Same as `levelRollup` on all the levels defined in the `SmvHierarchy`s
+   * with the bottom one removed
+   * For example
+   * {{{
+   * object GeoHier extends SmvHierarchies(
+   *   "geo",
+   *   SmvHierarchy("terr", GeoMapFile, Seq("zip", "Territory", "Division"))
+   * )
+   * }}}
+   * which will roll up on `Territory` and `Division`.
    **/
   def allRollup(aggregations: Column*) = {
     levelRollup(hierarchy.allLevels: _*)(aggregations: _*)
