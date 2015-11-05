@@ -203,6 +203,7 @@ abstract class SmvDataSet {
 
 abstract class SmvFile extends SmvDataSet {
   val path: String
+  val schemaPath: String = null
   override def description() = s"Input file: @${path}"
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
@@ -217,6 +218,12 @@ abstract class SmvFile extends SmvDataSet {
     if (isFullPath || ("""^[\.\/]""".r).findFirstIn(path) != None) path
     else if (app == null) throw new IllegalArgumentException(s"app == null and $path is not a full path")
     else s"${app.smvConfig.dataDir}/${path}"
+  }
+
+  private[smv] def fullSchemaPath = {
+    if(schemaPath == null) None
+    else if (isFullPath) Option(schemaPath)
+    else Option(s"${app.smvConfig.dataDir}/${schemaPath}")
   }
 
   override def classCodeCRC() = {
@@ -253,29 +260,29 @@ abstract class SmvFile extends SmvDataSet {
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
 case class SmvCsvFile(
-  path: String,
+  override val path: String,
   csvAttributes: CsvAttributes = null,
-  schemaPath: Option[String] = None,
+  override val schemaPath: String = null,
   override val isFullPath: Boolean = false
 ) extends SmvFile {
 
   override private[smv] def doRun(): DataFrame = {
     // TODO: this should use inputDir instead of dataDir
-    val handler = new FileIOHandler(app.sqlContext, fullPath, None, parserValidator)
+    val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
     val df = handler.csvFileWithSchema(csvAttributes)
     run(df)
   }
 }
 
 case class SmvFrlFile(
-    path: String,
-    schemaPath: Option[String] = None,
+    override val path: String,
+    override val schemaPath: String = null,
     override val isFullPath: Boolean = false
   ) extends SmvFile {
 
   override private[smv] def doRun(): DataFrame = {
     // TODO: this should use inputDir instead of dataDir
-    val handler = new FileIOHandler(app.sqlContext, fullPath, None, parserValidator)
+    val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
     val df = handler.frlFileWithSchema()
     run(df)
   }

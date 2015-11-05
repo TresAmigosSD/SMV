@@ -29,7 +29,7 @@ object i {
   /** open file using full path */
   def open(path: String, ca: CsvAttributes = null) ={
     /** isFullPath = true to avoid prepending data_dir */
-    val file = SmvCsvFile(path, ca, None, true)
+    val file = SmvCsvFile(path, ca, null, true)
     file.rdd
   }
 
