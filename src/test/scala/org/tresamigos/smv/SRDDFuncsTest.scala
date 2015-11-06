@@ -92,8 +92,16 @@ class renameFieldTest extends SmvTestUtil {
     assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
   }
 
-  // TODO: what are these tests commented out?  Are they still valid?
-  /*
+  test("test rename to existing field") {
+    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+      "1,2.0,hello")
+
+    val e = intercept[IllegalArgumentException] {
+      val result = df.renameField('a -> 'c)
+    }
+    assert(e.getMessage === "Rename to existing fields: c")
+  }
+
   test("test prefixing field names") {
     val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
@@ -115,7 +123,6 @@ class renameFieldTest extends SmvTestUtil {
     assert(fieldNames === Seq("a_xx", "b_xx", "c_xx"))
     assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
   }
-  */
 }
 
 class JoinHelperTest extends SmvTestUtil {
@@ -141,6 +148,22 @@ class JoinHelperTest extends SmvTestUtil {
     "[1,3.0,hello,1,asdf]",
     "[2,10.0,hello2,2,asdfg]",
     "[2,11.0,hello3,2,asdfg]"))
+  }
+
+  test("test joinUniqFieldNames with ignore case") {
+    val ssc = sqlContext; import ssc.implicits._
+    val srdd1 = createSchemaRdd("a:Integer; b:Double; C:String",
+      """1,2.0,hello;
+      2,11.0,hello3"""
+    )
+
+    val srdd2 = createSchemaRdd("a2:Integer; c:String",
+      """1,asdf;
+      2,asdfg"""
+    )
+
+    val result = srdd1.joinUniqFieldNames(srdd2, $"a" === $"a2", "inner")
+    assertSrddSchemaEqual(result, "a: Integer; b: Double; C: String; a2: Integer; _c: String")
   }
 
   test("test joinByKey") {

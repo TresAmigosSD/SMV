@@ -186,6 +186,13 @@ class SmvDFHelper(df: DataFrame) {
    */
   def renameField(namePairs: (String, String)*): DataFrame = {
     val namePairsMap = namePairs.toMap
+
+    // We don't want to rename to some field names which already exist
+    val overlap = df.columns.intersect(namePairsMap.values.toSeq)
+    if (!overlap.isEmpty) throw new IllegalArgumentException(
+      "Rename to existing fields: " + overlap.mkString(", ")
+    )
+
     val renamedFields = df.columns.map {
       fn => df(fn) as namePairsMap.getOrElse(fn, fn)
     }
@@ -243,11 +250,8 @@ class SmvDFHelper(df: DataFrame) {
    */
   @Experimental
   def joinUniqFieldNames(otherPlan: DataFrame, on: Column, joinType: String = "inner") : DataFrame = {
-    val namesL = df.columns.toSet
-    val namesR = otherPlan.columns.toSet
-
-    val dup = (namesL & namesR).toSeq
-    val renamedFields = dup.map{l => l -> ("_" + l)}
+    val namesLower = df.columns.map{c => c.toLowerCase}
+    val renamedFields = otherPlan.columns.filter{c => namesLower.contains(c.toLowerCase)}.map{c => c -> ("_" + c)}
 
     df.join(otherPlan.renameField(renamedFields: _*), on: Column, joinType)
   }
