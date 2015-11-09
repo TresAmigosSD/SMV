@@ -72,4 +72,36 @@ class CsvTest extends SmvTestUtil {
         |""".stripMargin)
   }
 
+  test("Test escaping quotes in strings") {
+    var df = createSchemaRdd("f1:String;f2:String", "\"left\"\"right comma,\",\"another string\";\"a\",\"b\"").repartition(1)
+    var ca = CsvAttributes()
+    val csvPath = testcaseTempDir + "/test_escape_quotes.csv"
+
+    df.saveAsCsvWithSchema(csvPath, ca)
+
+    // verify that output uses Excel's CSV format
+    assertFileEqual(csvPath + "/part-00000",
+      """"left""right comma,","another string"
+        |"a","b"
+        |""".stripMargin)
+
+    var dfOut = open(csvPath)
+
+    // verify that serialize/desrialize results in the same output
+    assertDataFramesEqual(df, dfOut)
+
+    // repeat this for ^ quote char
+
+    df = createSchemaRdd("f1:String;f2:String", "abc^def,another string;a,b").repartition(1)
+    ca = CsvAttributes(',','^',false)
+    val csvPathCaret = testcaseTempDir + "/test_escape_caret.csv"
+
+    df.saveAsCsvWithSchema(csvPathCaret, ca)
+    val file = SmvCsvFile("./" + csvPathCaret, ca)
+    dfOut = file.rdd
+
+    assertDataFramesEqual(df, dfOut)
+
+  }
+
 }

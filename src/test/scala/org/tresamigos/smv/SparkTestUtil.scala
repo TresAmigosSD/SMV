@@ -142,6 +142,11 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
     assertUnorderedSeqEqual(resLines, expectedLines)
   }
 
+  def assertDataFramesEqual(df1: DataFrame, df2: DataFrame) = {
+    var mergedDF = (df1.collect,df2.collect).zipped
+    assert(mergedDF.flatMap((r1,r2) => (r1.toSeq,r2.toSeq).zipped.map( (f1,f2) => (f1 == f2) ) ).reduce(_&&_))
+  }
+
   /**
    * validates that the schema of the given SRDD matches the schema defined by
    * the schemaStr parameter.  The schemaStr parameter is jsut a ";" list of
