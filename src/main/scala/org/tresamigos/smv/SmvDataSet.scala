@@ -403,6 +403,8 @@ class SmvModuleLink(outputModule: SmvOutput) extends
   require(! smvModule.isEphemeral)
   // TODO: add check that the link is to an object in a different stage!!!
 
+  private[smv] val isFollowLink = true
+
   override val isEphemeral = true
 
   /**
@@ -412,13 +414,20 @@ class SmvModuleLink(outputModule: SmvOutput) extends
   override def run(inputs: runParams) = null
 
   /**
-   * "Running" a link requires that we read the persisted output from the upstream `DataSet`.
-   * The persisted data can either be in the output directory or in a published directory depending if the enclosing stage has a version defined.
+   * "Running" a link requires that we read the published output from the upstream `DataSet`.
+   * When publish version is specified, it will try to read from the published dir. Otherwise
+   * it will either "follow-the-link", which means resolve the modules the linked DS depends on
+   * and run the DS, or "not-follow-the-link", which will try to read from the persisted data dir
+   * and fail if not found.
    */
   override private[smv] def doRun(): DataFrame = {
-    smvModule.readPublishedData().
-      orElse { smvModule.readPersistedFile().toOption }.
-      getOrElse(throw new IllegalStateException(s"can not find published or persisted ${description}"))
+    if (isFollowLink) {
+      smvModule.readPublishedData().getOrElse(smvModule.computeRDD)
+    } else {
+      smvModule.readPublishedData().
+        orElse { smvModule.readPersistedFile().toOption }.
+        getOrElse(throw new IllegalStateException(s"can not find published or persisted ${description}"))
+    }
   }
 }
 
