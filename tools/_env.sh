@@ -46,7 +46,14 @@ function extract_arg()
 function find_fat_jar()
 {
   # find latest fat jar in target directory.
-  APP_JAR=`ls -1t target/*jar-with-dependencies.jar 2>/dev/null| head -1`
+  # try sbt-build location first
+  APP_JAR=`ls -1t target/scala-2.10/*jar-with-dependencies.jar 2>/dev/null| head -1`
+
+  # if not found try mvn-build location next
+  if [ -z "$APP_JAR" ]; then
+    APP_JAR=`ls -1t target/*jar-with-dependencies.jar 2>/dev/null| head -1`
+  fi
+
   if [ -z "$APP_JAR" ]; then
     echo "ERROR: could not find an app jar in target directory"
     exit 1
