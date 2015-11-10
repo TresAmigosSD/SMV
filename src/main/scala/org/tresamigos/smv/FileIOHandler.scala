@@ -160,7 +160,7 @@ private[smv] class CSVStringParser[U](
   /** Parse an Iterator[String], apply function "f", and return another Iterator */
   def parseCSV(iterator: Iterator[String])
               (implicit ca: CsvAttributes): Iterator[U] = {
-    val parser = new CSVParser(ca.delimiter)
+    val parser = new CSVParser(ca.delimiter, ca.quotechar)
     val add: (Exception, String) => Unit = {(e,r) => parserV.addWithReason(e,r)}
     iterator.map { r =>
       try {

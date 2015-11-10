@@ -319,6 +319,9 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
   private[smv] def rowToCsvString(row: Row, ca: CsvAttributes) = {
     require(row.size == entries.size)
     val sb = new StringBuilder
+    val quote = ca.quotechar.toString
+    val doubleQuote = quote + quote
+    val escapedQuote = "\\" + quote
 
     // TODO: should be done using zip,map and mkstring rather than index.
     for (idx <- 0 until row.length) {
@@ -327,18 +330,39 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
         sb.append(ca.delimiter)
 
       val se = entries(idx)
-      (se.dataType: @switch) match {
-        // TODO: handle timestamp here to convert to desired format
-        case StringType =>
-          // TODO: need to handle this better!
-          sb.append(ca.quotechar)
-          sb.append(se.valToStr(row(idx)))
-          sb.append(ca.quotechar)
-        case _ => sb.append(se.valToStr(row(idx)))
+
+      if (ca.quotechar == '"') {
+        (se.dataType.typeName: @switch) match {
+          case "string" =>
+            sb.append(csvEscape(se, row(idx), quote, doubleQuote, true))
+          case "map" | "array" =>
+            sb.append(csvEscape(se, row(idx), quote, doubleQuote, false))
+          case _ => sb.append(se.valToStr(row(idx)))
+        }
+      } else {
+        (se.dataType: @switch) match {
+          // TODO: handle timestamp here to convert to desired format
+          case StringType =>
+            // TODO: need to handle this better!
+            sb.append(ca.quotechar)
+            sb.append(se.valToStr(row(idx)).replace(quote, escapedQuote))
+            sb.append(ca.quotechar)
+          case _ => sb.append(se.valToStr(row(idx)))
+        }
       }
     }
 
     sb.toString
+  }
+
+  private[smv] def csvEscape(se: SchemaEntry, value: Any, quote: String, doubleQuote: String, surroundQuotes: Boolean) = {
+    var out = se.valToStr(value).replace(quote, doubleQuote);
+
+    if (surroundQuotes) {
+      out = quote + out + quote
+    }
+
+    out
   }
 
   /**
