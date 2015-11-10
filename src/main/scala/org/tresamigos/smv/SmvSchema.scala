@@ -321,7 +321,7 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
     val sb = new StringBuilder
     val quote = ca.quotechar.toString
     val doubleQuote = quote + quote
-    val escapedQuote = "\\" + quote
+    val regexOfEscapeAndQuote = "([" + "\\\\" + quote + "])"
 
     // TODO: should be done using zip,map and mkstring rather than index.
     for (idx <- 0 until row.length) {
@@ -331,21 +331,25 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
 
       val se = entries(idx)
 
-      if (ca.quotechar == '"') {
+      // If we are encoding for the Excel CSV format, double up all the double quotes for
+      //    strings - that could have double quotes inside them
+      //    maps and arrays which could have strings and hence double quotes as well
+      //    other types, such as numbers will not have quotes, so no need to escape them
+      // If we are not encoding this format, escape all the quote and escape chars
+      // for strings, maps, and arrays with an escape character
+      if (ca.isExcelCSV) {
         (se.dataType.typeName: @switch) match {
-          case "string" =>
-            sb.append(csvEscape(se, row(idx), quote, doubleQuote, true))
-          case "map" | "array" =>
-            sb.append(csvEscape(se, row(idx), quote, doubleQuote, false))
+          case "string" | "map" | "array" =>
+            sb.append(quote + se.valToStr(row(idx)).replace(quote, doubleQuote) + quote)
           case _ => sb.append(se.valToStr(row(idx)))
         }
       } else {
-        (se.dataType: @switch) match {
+        (se.dataType.typeName: @switch) match {
           // TODO: handle timestamp here to convert to desired format
-          case StringType =>
+          case "string" | "map" | "array" =>
             // TODO: need to handle this better!
             sb.append(ca.quotechar)
-            sb.append(se.valToStr(row(idx)).replace(quote, escapedQuote))
+            sb.append(se.valToStr(row(idx)).replaceAll(regexOfEscapeAndQuote, "\\\\$1"))
             sb.append(ca.quotechar)
           case _ => sb.append(se.valToStr(row(idx)))
         }
@@ -353,16 +357,6 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
     }
 
     sb.toString
-  }
-
-  private[smv] def csvEscape(se: SchemaEntry, value: Any, quote: String, doubleQuote: String, surroundQuotes: Boolean) = {
-    var out = se.valToStr(value).replace(quote, doubleQuote);
-
-    if (surroundQuotes) {
-      out = quote + out + quote
-    }
-
-    out
   }
 
   /**

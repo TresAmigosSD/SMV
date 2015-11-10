@@ -31,13 +31,13 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
 
     if (ca.hasHeader) {
       val columnNamesRowStr = strRDD.first()
-      var columnNames = parser.parseLine(columnNamesRowStr)
+      var columnNames = CSVParserWrapper.parseLine(parser,columnNamesRowStr, ca)
       columnNames = columnNames.map(_.trim).map(SchemaEntry.valueToColumnName(_))
 
       columnNames
     } else {
       val firstRowStr = strRDD.first()
-      val firstRowValues = parser.parseLine(firstRowStr)
+      val firstRowValues = CSVParserWrapper.parseLine(parser,firstRowStr, ca)
       val numberOfColumns = firstRowValues.length
 
       val columnNames = for (i <- 1 to numberOfColumns)  yield "f" + i
@@ -166,7 +166,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
     val columnsWithIndex = columns.zipWithIndex
 
     for (rowStr <- rowsToParse) {
-      val rowValues = parser.parseLine(rowStr)
+      val rowValues = CSVParserWrapper.parseLine(parser,rowStr, ca)
       if (rowValues.length == columnsWithIndex.length ) {
         for ((colName, index) <- columnsWithIndex) {
           val colVal = rowValues(index)
