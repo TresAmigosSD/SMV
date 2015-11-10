@@ -27,17 +27,17 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
    * @return the discovered schema
    */
   private def getColumnNames(strRDD: RDD[String], ca: CsvAttributes) : Array[String] = {
-    val parser = new CSVParser(ca.delimiter)
+    val parser = new CSVParserWrapper(ca)
 
     if (ca.hasHeader) {
       val columnNamesRowStr = strRDD.first()
-      var columnNames = CSVParserWrapper.parseLine(parser,columnNamesRowStr, ca)
+      var columnNames = parser.parseLine(columnNamesRowStr)
       columnNames = columnNames.map(_.trim).map(SchemaEntry.valueToColumnName(_))
 
       columnNames
     } else {
       val firstRowStr = strRDD.first()
-      val firstRowValues = CSVParserWrapper.parseLine(parser,firstRowStr, ca)
+      val firstRowValues = parser.parseLine(firstRowStr)
       val numberOfColumns = firstRowValues.length
 
       val columnNames = for (i <- 1 to numberOfColumns)  yield "f" + i
@@ -166,7 +166,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
     val columnsWithIndex = columns.zipWithIndex
 
     for (rowStr <- rowsToParse) {
-      val rowValues = CSVParserWrapper.parseLine(parser,rowStr, ca)
+      val rowValues = parser.parseLine(rowStr)
       if (rowValues.length == columnsWithIndex.length ) {
         for ((colName, index) <- columnsWithIndex) {
           val colVal = rowValues(index)
