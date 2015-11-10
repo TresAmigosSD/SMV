@@ -26,6 +26,21 @@ class SmvLinkFollowTest extends SmvTestUtil {
 
 }
 
+class SmvLinkFollowWithVersionTest extends SmvTestUtil {
+  override val appArgs = Seq(
+    "--smv-props",
+    "smv.stages=org.tresamigos.smv.smvLinkTestPkg1:org.tresamigos.smv.smvLinkTestPkg2," +
+    "smv.stages.smvLinkTestPkg1.version=v1"
+  )++ Seq("-m", "org.tresamigos.smv.smvLinkTestPkg2.T")
+
+  test("Test SmvModuleLink follow link with version config") {
+    intercept[org.apache.hadoop.mapred.InvalidInputException]{
+      val res = app.resolveRDD(smvLinkTestPkg2.T)
+    }
+  }
+
+}
+
 } // end: package org.tresamigos.smv
 
 /**
