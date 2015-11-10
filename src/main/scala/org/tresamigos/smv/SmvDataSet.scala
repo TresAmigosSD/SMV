@@ -366,7 +366,9 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     val handler = new FileIOHandler(app.sqlContext, publishPath(version))
     handler.saveAsCsvWithSchema(df)
 
-    df.edd.persistBesideData(publishPath(version))
+    /* publish should also calculate edd if generarte Edd flag was turned on */
+    if (app.genEdd)
+      df.edd.persistBesideData(publishPath(version))
   }
 
   /**

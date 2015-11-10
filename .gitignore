@@ -11,3 +11,4 @@ smv.iml
 derby.log
 metastore_db/
 .DS_Store
+.ensime*
