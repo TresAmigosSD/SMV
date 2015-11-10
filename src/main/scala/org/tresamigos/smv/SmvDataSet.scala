@@ -465,7 +465,7 @@ case class SmvCsvStringData(
     val dataArray = data.split(";").map(_.trim)
 
     val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
-    handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, CsvAttributes.defaultCsv)
+    handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
   }
 }
 

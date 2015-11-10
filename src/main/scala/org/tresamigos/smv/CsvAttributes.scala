@@ -20,7 +20,9 @@ import scala.reflect.ClassTag
 case class CsvAttributes(
                           val delimiter: Char = ',',
                           val quotechar: Char = '\"',
-                          val hasHeader: Boolean = false)
+                          val hasHeader: Boolean = false) {
+  def isExcelCSV: Boolean = (quotechar == '"')
+}
 
 object CsvAttributes {
   implicit val defaultCsv = new CsvAttributes()

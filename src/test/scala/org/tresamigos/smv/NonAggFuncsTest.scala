@@ -36,7 +36,7 @@ class NonAggFuncsTest extends SmvTestUtil {
     val schema = SmvSchema.fromDataFrame(res)
     val res2 = res.map(schema.rowToCsvString(_, CsvAttributes.defaultCsv)).collect
 
-    assertUnorderedSeqEqual(res2, Seq("a|1", "test|2"))
+    assertUnorderedSeqEqual(res2, Seq("\"a|1\"", "\"test|2\""))
   }
 
   test("test smvCreateLookUp") {

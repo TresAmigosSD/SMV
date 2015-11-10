@@ -145,6 +145,21 @@ private[smv] class FileIOHandler(
 }
 
 /**
+ * A non-generic wrapper class of opencsv.CSVParser.
+ */
+private[smv] object CSVParserWrapper {
+  // For Excel CSV formatted files unescape "" => " and suppress \ as an escape character.
+  // For the other format, backslash is an escape character, so parse normally
+  def parseLine(parser: CSVParser, line: String, ca: CsvAttributes) = {
+    if (ca.isExcelCSV)
+      parser.parseLine(line.replace("\\", "\\\\"))
+    else
+      parser.parseLine(line)
+  }
+}
+
+
+/**
  * A wrapper class of the opencsv.CSVParser
  *
  *  Takes a function as a parameter to apply the function on parsed result on
@@ -164,7 +179,7 @@ private[smv] class CSVStringParser[U](
     val add: (Exception, String) => Unit = {(e,r) => parserV.addWithReason(e,r)}
     iterator.map { r =>
       try {
-        val parsed = parser.parseLine(r)
+        val parsed = CSVParserWrapper.parseLine(parser, r, ca)
         Some(f(r,parsed))
       } catch {
         case e:java.io.IOException  =>  add(e, r); None
