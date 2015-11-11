@@ -150,7 +150,7 @@ private[smv] object EddResult {
     }
 
     if(histSortByFreq)
-      hist.toSeq.sortBy(_._2)
+      hist.toSeq.sortBy(- _._2)
     else
       hist.toSeq.sortWith((a,b) => ordering.compare(a._1, b._1) < 0)
   }

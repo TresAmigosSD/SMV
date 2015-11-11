@@ -266,8 +266,8 @@ z                            3   75.00%           4  100.00%
     val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
     assert(rep === """Histogram of k: String sorted by Frequency
 key                      count      Pct    cumCount   cumPct
-a                            1   25.00%           1   25.00%
-z                            3   75.00%           4  100.00%
+z                            3   75.00%           3   75.00%
+a                            1   25.00%           4  100.00%
 -------------------------------------------------""")
   }
 
