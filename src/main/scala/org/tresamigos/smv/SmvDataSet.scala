@@ -226,12 +226,23 @@ abstract class SmvFile extends SmvDataSet {
     else Option(s"${app.smvConfig.dataDir}/${schemaPath}")
   }
 
+  /* For SmvFile, the classCodeCRC should be based on
+   *  - raw class code crc
+   *  - input csv file path
+   *  - input csv file modified time
+   *  - input schema file path
+   *  - input schema file modified time
+   */
   override def classCodeCRC() = {
     val fileName = fullPath
     val mTime = SmvHDFS.modificationTime(fileName)
+
+    val schemaPath = fullSchemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
+    val schemaMTime = SmvHDFS.modificationTime(schemaPath)
+
     val crc = new java.util.zip.CRC32
-    crc.update(fileName.toCharArray.map(_.toByte))
-    (crc.getValue + mTime + moduleCRC).toInt
+    crc.update((fileName + schemaPath).toCharArray.map(_.toByte))
+    (crc.getValue + mTime + schemaMTime + moduleCRC).toInt
   }
 
   /**

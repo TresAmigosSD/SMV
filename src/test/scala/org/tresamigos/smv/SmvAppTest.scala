@@ -120,7 +120,9 @@ class SmvAppTest extends SmvTestUtil {
 
   test("Test SmvFile crc") {
     createTempFile("F1.csv")
+    createTempFile("F1.schema")
     createTempFile("F2.csv")
+    createTempFile("F2.schema")
 
     object f1 extends SmvFile {
       val path = "F1.csv"
@@ -132,6 +134,16 @@ class SmvAppTest extends SmvTestUtil {
     }
 
     assert(f1.classCodeCRC() !== f2.classCodeCRC)
+
+    SmvHDFS.deleteFile("F1.schema")
+    createTempFile("F1.schema")
+
+    object f3 extends SmvFile {
+      val path = "F1.csv"
+      def doRun(): DataFrame = null
+    }
+
+    assert(f1.classCodeCRC() !== f3.classCodeCRC())
   }
 }
 
