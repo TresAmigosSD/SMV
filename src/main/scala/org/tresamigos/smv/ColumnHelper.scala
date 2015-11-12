@@ -417,6 +417,23 @@ class ColumnHelper(column: Column) {
   }
 
   /**
+   * Add N days to `Timestamp` column.
+   *
+   * {{{
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvPlusDays($"ColumnName")
+   * }}}
+   *
+   * @return The incremented `Timestamp` or `null` if input was `null`
+   */
+  def smvPlusDays(col: Column) = {
+    val name = s"SmvPlusDays($column, $col)"
+    val f = (t:Timestamp, days: Integer) =>
+      if(t == null) null
+      else new Timestamp((new DateTime(t)).plusDays(days).getMillis())
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr, col.toExpr)), name)() )
+  }
+
+  /**
    * Add N weeks to `Timestamp` column.
    *
    * {{{
