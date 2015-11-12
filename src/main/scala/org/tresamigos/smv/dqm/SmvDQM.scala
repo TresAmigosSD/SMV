@@ -89,7 +89,6 @@ class SmvDQM (
 
   /** init the DqmState. It should be done once only */
   private def initState(sc: SparkContext): Unit = {
-    require(dqmState == null)
     val ruleNames = rules.map{_.name}
     val fixNames = fixes.map{_.name}
 
