@@ -37,10 +37,27 @@ framework.
 
 `SmvAncillary` is the abstract base class of this need.
 
-There could be different kinds of `SmvAncillary`s, as in above example, a specific
-kind could be `SmvHierarchies`, which is an abstract class extends `SmvAncillary`.
+## Current design
 
-## Client code
+For a single hierarchy use case, current design involves 4 classes:
+* `SmvHierarchy`
+* `SmvHierarchies`
+* `SmvHierarchyFuncs`
+* `SmvHierarchyUser`
+
+Also it is very hard to extend the design with additional functions since the real functions
+are defined in `SmvHierarchyFuncs` which is actually smv-private.
+
+All the complication is come from the requirement to prevent user use an `SmvAncillary` without
+listed it in the `requiresAnc` method of an `SmvModule`. If we drop that requirement, things will
+become much easier. Since anyhow we will enhance the `moduleCRC` calculation, which need `SmvApp`
+to access the entire code-tree of a `SmvModule`, therefore the dependency can actually be derived
+from the code. We may either keep `requiresDS` and `requiresAnc` or generate the dependency tree
+totally from visiting the code-tree. Anyhow, in the future, even if we just use an `SmvAncillary`,
+the dependency can be controlled by `SmvApp`.
+
+
+### Current Client code
 
 Let's use the `Zip` reference table as an example.
 
@@ -88,18 +105,52 @@ object MyModule extends SmvModule(...) with SmvHierarchyUser {
 }
 ```
 
-## Implementation
+### Current Implementation
 
 Classes:
 * `SmvAncillary` <- `SmvHierarchy` <- project class `ZipHierarchy`
 * `SmvHierarchyFuncs`: `levelRollup`, etc.
 * `SmvHierarchyUser`: trait to be mixed in with `SmvModule`. Define `addHierToDf`, and implicit conversion from `SmvHierarchyExtra` to `DF`
 
-## Extend with other Ancillary
 
-Down the road we may need to define other `SmvAncillary`, let's call it `SmvOtherAnc`.
-The suite of classes need to be defined is
+## New Design
 
-* `SmvAncillary` <- `SmvOtherAnc`
-* `SmvOtherAncFuncs`
-* `SmvOtherAncUser`
+Assume we can derive the dependency from code directly, we can re-design `SmvAncillary` and make
+it much more natural.
+
+### Client code
+
+Definition of `SmvHierarchies` could be similar.
+Within the use module
+```scala
+object MyModule extends SmvModule(...) {
+  override def requiresDS = ...
+  override def requiresAnc = Seq(ZipHierarchies)
+  override def run(...) {
+    ...
+    ZipHierarchy.
+      withNameCol.
+      withParentCols("county").
+      evelRollup(df, Seq("County", "State"))(
+        avg($"v1") as "v1",
+        avg($"v2") as "v2"
+      )
+  }
+}
+
+```
+
+Since one can use the concrete `SmvAncillary` directly in a user module, user can extend existing
+`SmvAncillary` with custom methods. For example
+
+```scala
+object ZipHierarchy extends SmvHierarchies("geo",
+  SmvHierarchy("zip3", ZipRefTable, Seq("zip", "zip3")),
+  SmvHierarchy("county", ZipRefTable, Seq("zip", "County", "State", "Country")),
+  SmvHierarchy("terr", ZipRefTable, Seq("zip", "Territory", "Devision", "Region", "Country"))
+) {
+  def addNames(df: DataFrame): DataFrame = {...}
+}
+```
+
+Those methods can be used in user modules also.
