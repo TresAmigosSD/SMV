@@ -46,7 +46,7 @@ private[smv] class DropRDDFunctions[T : ClassTag](self: RDD[T]) extends Logging 
     var np = 0
     while (rem > 0  &&  p < self.partitions.length) {
       val res = self.sparkContext.runJob(self, (it: Iterator[T]) => it.length,
-        p until 1 + p, allowLocal = true)
+        p until 1 + p)
       np = res(0)
       rem -= np
       p += 1
@@ -85,7 +85,7 @@ private[smv] class DropRDDFunctions[T : ClassTag](self: RDD[T]) extends Logging 
     var np = 0
     while (rem > 0  &&  p >= 0) {
       val res = self.sparkContext.runJob(self, (it: Iterator[T]) => it.length,
-        p until 1 + p, allowLocal = true)
+        p until 1 + p)
       np = res(0)
       rem -= np
       p -= 1
@@ -120,7 +120,7 @@ private[smv] class DropRDDFunctions[T : ClassTag](self: RDD[T]) extends Logging 
     var np = 0
     while (np <= 0  &&  p < self.partitions.length) {
       val res = self.sparkContext.runJob(self, (it: Iterator[T]) => it.dropWhile(f).length,
-        p until 1 + p, allowLocal = true)
+        p until 1 + p)
       np = res(0)
       p += 1
     }
