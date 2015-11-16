@@ -49,7 +49,7 @@ abstract class SmvDataSet {
    * module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
    * Always return 0 for objects created in spark shell
    */
-  protected val moduleCRC = if(isObjectInShell) 0l else ClassCRC(this.getClass.getName).crc
+  private[smv] val moduleCRC = if(isObjectInShell) 0l else ClassCRC(this.getClass.getName).crc
 
   /** CRC computed from the dataset "code" (not data) */
   def classCodeCRC(): Int = moduleCRC.toInt
