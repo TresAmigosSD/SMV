@@ -115,13 +115,13 @@ private[smv] case class MaxTask(override val col: Column) extends EddStatTask {
 private[smv] case class StringMinLenTask(col: Column) extends EddStatTask {
   override val taskName = "mil"
   override val taskDesc = "Min Length"
-  override val statOp = min(col.smvLength).cast(LongType)
+  override val statOp = min(length(col)).cast(LongType)
 }
 
 private[smv] case class StringMaxLenTask(col: Column) extends EddStatTask {
   override val taskName = "mal"
   override val taskDesc = "Max Length"
-  override val statOp = max(col.smvLength).cast(LongType)
+  override val statOp = max(length(col)).cast(LongType)
 }
 
 private[smv] case class TimeMinTask(col: Column) extends EddStatTask {
@@ -158,25 +158,25 @@ private[smv] case class BinNumericHistogram(col: Column, bin: Double) extends Ed
 private[smv] case class YearHistogram(col: Column) extends EddHistTask {
   override val taskName = "yea"
   override val taskDesc = "Year"
-  override val statOp = histStr(col.smvYear.smvPrintToStr("%04d"))
+  override val statOp = histStr(format_string("%04d", col.smvYear))
 }
 
 private[smv] case class MonthHistogram(col: Column) extends EddHistTask {
   override val taskName = "mon"
   override val taskDesc = "Month"
-  override val statOp = histStr(col.smvMonth.smvPrintToStr("%02d"))
+  override val statOp = histStr(format_string("%02d", col.smvMonth))
 }
 
 private[smv] case class DoWHistogram(col: Column) extends EddHistTask {
   override val taskName = "dow"
   override val taskDesc = "Day of Week"
-  override val statOp = histStr(col.smvDayOfWeek.smvPrintToStr("%1d"))
+  override val statOp = histStr(format_string("%1d", col.smvDayOfWeek))
 }
 
 private[smv] case class HourHistogram(col: Column) extends EddHistTask {
   override val taskName = "hou"
   override val taskDesc = "Hour"
-  override val statOp = histStr(col.smvHour.smvPrintToStr("%02d"))
+  override val statOp = histStr(format_string("%02d", col.smvHour))
 }
 
 private[smv] case class BooleanHistogram(col: Column) extends EddHistTask {

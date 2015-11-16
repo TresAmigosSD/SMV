@@ -189,6 +189,33 @@ class JoinHelperTest extends SmvTestUtil {
     "[2,10.0,hello2,asdfg]",
     "[2,11.0,hello3,asdfg]"))
   }
+
+  test("outer joinByKey with single key column") {
+    val df1 = createSchemaRdd("a:Integer;b:String", """1,x1;2,y1;3,z1""")
+    val df2 = createSchemaRdd("a:Integer;b:String", """1,x2;4,w2;""")
+    val res = df1.joinByKey(df2, Seq("a"), SmvJoinType.Outer)
+    assert(res.columns === Seq("a", "b", "_b"))
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+    "[1,x1,x2]",
+    "[2,y1,null]",
+    "[3,z1,null]",
+    "[4,null,w2]"))
+  }
+
+  test("outer joinByKey with multiple key columns") {
+    val df1 = createSchemaRdd("k1:Integer;k2:Integer;a:String", "1,1,x1;1,2,x2;2,1,x3;2,2,x4")
+    val df2 = createSchemaRdd("k1:Integer;k2:Integer;b:String", "1,1,y1;1,3,y2;3,1,y3;3,3,y4")
+    val res = df1.joinByKey(df2, Seq("k1", "k2"), SmvJoinType.Outer)
+    assert(res.columns === Seq("k1", "k2", "a", "b"))
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1,1,x1,y1]",
+      "[1,2,x2,null]",
+      "[1,3,null,y2]",
+      "[2,1,x3,null]",
+      "[2,2,x4,null]",
+      "[3,1,null,y3]",
+      "[3,3,null,y4]"))
+  }
 }
 
 class dedupByKeyTest extends SmvTestUtil {

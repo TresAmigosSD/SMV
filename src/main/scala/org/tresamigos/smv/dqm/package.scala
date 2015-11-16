@@ -39,12 +39,12 @@ package object dqm {
 
   /** SetRule requires `col in set` */
   def SetRule(col: Column, set: Set[Any]) : DQMRule = {
-    DQMRule(col.in(set.toSeq.map{lit(_)}: _*), s"SetRule(${col})", FailNone)
+    DQMRule(col.isin(set.toSeq.map{lit(_)}: _*), s"SetRule(${col})", FailNone)
   }
 
   /** SetFix to assign `default` if `col not in set` */
   def SetFix(col: Column, set: Set[Any], default: Any) : DQMFix = {
-    DQMFix(!col.in(set.toSeq.map{lit(_)}: _*), lit(default) as col.getName, s"SetFix(${col})", FailNone)
+    DQMFix(!col.isin(set.toSeq.map{lit(_)}: _*), lit(default) as col.getName, s"SetFix(${col})", FailNone)
   }
 
   /** FormatRule requires `col matches fmt` */
