@@ -273,11 +273,22 @@ class SmvDFHelper(df: DataFrame) {
     import df.sqlContext.implicits._
 
     val rightKeys = keys.map{k => "_" + k}
-    val renamedFields = keys.zip(rightKeys).map{case (l,r) => (l -> r)}
+    val joinedKeys = keys zip rightKeys
+    val renamedFields = joinedKeys.map{case (l,r) => (l -> r)}
     val newOther = otherPlan.renameField(renamedFields: _*)
-    val joinOpt = keys.zip(rightKeys).map{case (l, r) => ($"$l" === $"$r")}.reduce(_ && _)
+    val joinOpt = joinedKeys.map{case (l, r) => ($"$l" === $"$r")}.reduce(_ && _)
 
-    df.joinUniqFieldNames(newOther, joinOpt, joinType).selectMinus(rightKeys(0), rightKeys.tail: _*)
+    val dfJoined = df.joinUniqFieldNames(newOther, joinOpt, joinType)
+    val dfCoalescedKeys = joinType match {
+      case SmvJoinType.Outer =>
+        // for each key used in the outer-join, coalesce key value from left to right
+        joinedKeys.foldLeft(dfJoined)((acc: DataFrame, keypair) => {
+          val (lk, rk) = keypair
+          acc.withColumn(lk, coalesce(acc(lk), acc(rk)))
+        })
+      case _ => dfJoined
+    }
+    dfCoalescedKeys.selectMinus(rightKeys(0), rightKeys.tail: _*)
   }
 
   /**
