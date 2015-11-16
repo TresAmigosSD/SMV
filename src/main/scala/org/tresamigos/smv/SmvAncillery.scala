@@ -18,14 +18,6 @@ import org.apache.spark.sql.DataFrame
 abstract class SmvAncillary {
   def requiresDS(): Seq[SmvModuleLink]
 
-  private[smv] val rootAnc: Option[SmvAncillary] = None
-
-  private[smv] def rootMatch(that: SmvAncillary) = {
-    val rootThis = rootAnc.getOrElse(this)
-    val rootThat = that.rootAnc.getOrElse(that)
-    rootThis == rootThat
-  }
-
   protected def getDF(ds: SmvModuleLink) : DataFrame= {
     if (requiresDS.contains(ds)) SmvApp.app.resolveRDD(ds)
     else throw new IllegalArgumentException(s"${ds} does not defined in requiresDS")

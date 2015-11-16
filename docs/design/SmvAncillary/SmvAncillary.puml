@@ -18,44 +18,27 @@ namespace smv {
   class SmvHierarchies extends SmvAncillary {
     prefix: String
     hierarchies: Seq[SmvHierarchy]
-    -requiresDS(): Seq[SmvModuleLink]
-    applyToDf(df: DataFrame): DataFrame
-  }
+    - requiresDS(): Seq[SmvModuleLink]
+    - applyToDf(df: DataFrame): DataFrame
 
-  class SmvHierarchyFuncs <<private>> {
-    hierarchy: SmvHierarchies
-    df: DataFrame
-    - additionalKeys: Seq[String]
-    - hasNameCol: Boolean
-    - parentColHierName: Option[String]
+    hierGroupBy(keys: String*): SmvHierarchies
+    withNameCol(): SmvHierarchies
+    withParentCols(hierName: String): SmvHierarchies
 
-    cnstr(hierarchy, df, additionalKeys, hasNameCol, parentColHierName)
-    hierGroupBy(keys: String*): SmvHierarchyFuncs
-    withNameCol(): SmvHierarchyFuncs
-    withParentCols(hierName: String): SmvHierarchyFuncs
-
-    levelRollup(levels: String*)(aggregations: Column*)
-    levelSum(levels: String*)(valueCols: String*)
-    allRollup(aggregations: Column*)
-    allSum(valueCols: String*)
-  }
-
-  class SmvHierarchyUser {
-    addHierToDf(hierarchy: SmvHierarchies, df: DataFrame): SmvHierarchyFuncs
+    levelRollup(df: DataFrame, levels: String*)(aggregations: Column*): DataFrame
+    levelSum(df: DataFrame, levels: String*)(valueCols: String*): DataFrame
   }
 
   class SmvModule {
     requiresAnc() : Seq[SmvAncillary] = Seq.empty
-    ~getAncillary(SmvAncillary) : SmvAncillary
+    getAncillary(SmvAncillary) : SmvAncillary
   }
 
-  SmvHierarchyFuncs *-L- "1" SmvHierarchies
   SmvHierarchies *-- "n" SmvHierarchy
 }
 
 namespace myapp {
   class ZipHier extends smv.SmvHierarchies
-  class MyModule extends smv.SmvHierarchyUser
   class MyModule extends smv.SmvModule
 
   MyModule -L-> "requires" ZipHier

@@ -51,63 +51,126 @@ case class SmvHierarchy(
  *
  * === Use the SmvHierarchies ===
  * {{{
- * object MyModule extends SmvModule("...") with SmvHierarchyUser {
+ * object MyModule extends SmvModule("...") {
  *    override def requiresDS() = Seq(...)
  *    override def requiresAnc() = Seq(GeoHier)
  *    override def run(...) = {
  *      ...
- *      addHierToDf(GeoHier, df).levelRollup("zip3", "State")(
+ *      getAncillary(GeoHier).levelRollup(df, "zip3", "State")(
  *        sum($"v") as "v",
  *        avg($"v2") as "v2")
  *    }
  * }
  * }}}
  *
- * Where `addHierToDf` is provided by the `SmvHierarchyUser` trait, `levelRollup` is
- * provided by `SmvHierarchyFuncs`, which is only accessible through `addHierToDf`
- * method.
- *
- * `SmvHierarchyFuncs` also provides other methods
+ * The methods provided by `SmvHierarchies`, `levelRollup`, etc., will output
+ * `${prefix}_type` and `{prefix}_value` columns. For above example, they are `geo_type` and
+ * `geo_value`. The values of those 2 columns are the name of the original hierarchy level's
+ * and the values respectively. For examples,
  * {{{
- *  //Add additional keys to the rollup
- *  def hierGroupBy(keys: String*): SmvHierarchyFuncs
- *
- *  //on the specified levels, sum over the specified value columns
- *  def levelSum(levels: String*)(valueCols: String*): DataFrame
- *
- *  //on all the levels defined in the `SmvHierarchy`'s `hierarchies`, aggregate
- *  def allRollup(aggregations: Column*): DataFrame
- *
- *  //sum up specified value columns on all the levels
- *  def allSum(valueCols: String*): DataFrame
+ * geo_type, geo_value
+ * zip,      92127
+ * County,   06073
  * }}}
  **/
 
 class SmvHierarchies(
   val prefix: String,
-  val hierarchies: Seq[SmvHierarchy],
-  val hasName: Boolean = false,
-  val parentHier: Option[String] = None,
-  override val rootAnc: Option[SmvAncillary] = None
-) extends SmvAncillary {
+  val hierarchies: SmvHierarchy*
+) extends SmvAncillary { self =>
 
-  def this(_prefix: String, _hier: SmvHierarchy*) = this(_prefix, _hier)
+  case class SmvHierarchiesConf(hasName: Boolean, parentHier: Option[String], additionalKeys: Seq[String])
+  var conf = SmvHierarchiesConf(false, None, Nil)
 
-  def withNameCol() = new SmvHierarchies(prefix, hierarchies, true, parentHier, Option(this.rootAnc.getOrElse(this)))
-  def withParentCols(hierName: String) = new SmvHierarchies(prefix, hierarchies, hasName, Option(hierName), Option(this.rootAnc.getOrElse(this)))
+  /**
+   * Config `SmvHierarchies` to add `${prefix}_name` volumn in addition to `type` and `value` fields
+   * {{{
+   * getAncillary(MyHier).withNameCol().levelRollup(df, "zip3", "State")(...)
+   * }}}
+   */
+  def withNameCol(): self.type = {
+    conf = SmvHierarchiesConf(true, conf.parentHier, conf.additionalKeys)
+    self
+  }
+
+  /**
+   * Config `SmvHierarchies` to add `parent_${prefix}_type`/`value` fields based on the
+   * specified hierarchy
+   * {{{
+   * getAncillary(MyHier).withParentCols("terr").levelRollup(df, "Territory", "Division")(...)
+   * }}}
+   **/
+  def withParentCols(hierName: String): self.type = {
+    conf = SmvHierarchiesConf(conf.hasName, Option(hierName), conf.additionalKeys)
+    self
+  }
+
+  /**
+   * Add additional keys for hierarchy rollups
+   *
+   * {{{
+   * getAncillary(MyHier).hierGroupBy("k1").allSum(...)
+   * }}}
+   **/
+  def hierGroupBy(keys: String*): self.type = {
+    val newKeys = conf.additionalKeys ++ keys
+    conf = SmvHierarchiesConf(conf.hasName, conf.parentHier, newKeys)
+    self
+  }
 
   private lazy val mapLinks = hierarchies.
     filterNot(_.hierarchyMap == null).
     map{h => new SmvModuleLink(h.hierarchyMap)}
 
-  private lazy val mapDFs = mapLinks.map{l => getDF(l)}
-  private[smv] def allHierMapCols() = mapDFs.map{df => df.columns}.flatten.toSeq.distinct
-
   override def requiresDS() = mapLinks
 
-  private[smv] val hierarchyLevels = hierarchies.map{_.hierarchy.reverse}
-  private[smv] def allLevels() = hierarchies.flatMap{h => h.hierarchy.tail}.distinct
+  private lazy val mapDFs = mapLinks.map{l => getDF(l)}
+  private def allHierMapCols() = mapDFs.map{df => df.columns}.flatten.toSeq.distinct
 
+  /**
+   * create sequence or single hierarchy sequences from list of levels
+   *
+   * If the hierarchies are
+   * {{{
+   * Seq(
+   *    Seq("g1", "g2"),
+   *    Seq("h1", "h2", "h3")
+   * )
+   * }}}
+   * and the levels are
+   * {{{
+   * Seq("g1", "h2", "h1")
+   * }}}
+   *
+   * The output will be
+   * {{{
+   * Seq(
+   *    Seq("g1"),
+   *    Seq("h1", "h2")
+   * )
+   * }}}
+   **/
+  private def hierList(levels: Seq[String]) = {
+    val intersectList = hierarchies.map{hier =>
+      hier.hierarchy.reverse.intersect(levels)
+    }.filter{!_.isEmpty}
+
+    val deduped = intersectList.foldLeft(Nil:Seq[Seq[String]])({(res, s) =>
+      val alreadyCovered = res.flatten
+      val newS = s diff alreadyCovered
+      res :+ newS
+    })
+
+    // the output should match input
+    require(deduped.flatten.toSet == levels.toSet)
+
+    deduped
+  }
+
+  /** Join hierarchyMaps with DF
+   * If there are multiple of maps, join them one by one with the ordering of the
+   * definition within `SmvHierarchies`
+   **/
   private[smv] def applyToDf(df: DataFrame): DataFrame = {
     val mapDFsMap = hierarchies.
       filterNot(_.hierarchyMap == null).
@@ -134,11 +197,11 @@ class SmvHierarchies(
    * dummy udf to create `litStrNullable(s)()` as a "nullable" column
    **/
   private def litStrNullable(s: String) = udf({() => s: String})
-  private val nullCol = litStrNullable(null: String)()
 
   /** Create `parent_${prefix}_*` columns */
   private def pCols(col: String, h: SmvHierarchy, withName: Boolean) = {
     val index = h.hierarchy.indexOf(col)
+    val nullCol = litStrNullable(null: String)()
 
     if(index + 1 == h.hierarchy.size) {
       Seq(nullCol as "ptype", nullCol as "pvalue") ++
@@ -159,7 +222,7 @@ class SmvHierarchies(
         throw new IllegalArgumentException(s"${name} is not in hierarchy list")
       )
 
-    val optionalCols = (hasName, parentHier) match {
+    val optionalCols = (conf.hasName, conf.parentHier) match {
       case (false, None) => Nil
       case (false, Some(hierName)) => {
         val h = getHier(hierName)
@@ -181,7 +244,7 @@ class SmvHierarchies(
    * Un-pivot all the hierarchy columns to "_type, _value, _name" and optionally all
    * the "parent" columns.
    **/
-  private[smv] def hierCols(hier: Seq[String]) = {
+  private def hierCols(hier: Seq[String]) = {
     require(hier.size >= 1)
 
     def buildCond(l: String, r: String) = {
@@ -214,7 +277,7 @@ class SmvHierarchies(
     val pValueName = "parent_" + valueName
     val pNameName = "parent_" + nameName
 
-    val optionalCols = (hasName, parentHier) match {
+    val optionalCols = (conf.hasName, conf.parentHier) match {
       case (false, None) => Nil
       case (false, Some(hierName)) => {
         Seq(
@@ -239,100 +302,31 @@ class SmvHierarchies(
     ) ++ optionalCols
   }
 
-}
-
-/**
- * Provides `addHierToDf` function to a `SmvModule`
- **/
-trait SmvHierarchyUser { this: SmvModule =>
-  def addHierToDf(hier: SmvHierarchies, df: DataFrame) = {
-    val checkedHier = getAncillary(hier).asInstanceOf[SmvHierarchies]
-    new SmvHierarchyFuncs(checkedHier, df)
-  }
-}
-
-private[smv] class SmvHierarchyFuncs(
-    val hierarchy: SmvHierarchies,
-    val df: DataFrame,
-    private val additionalKeys: Seq[String] = Nil
-  ) {
-
-  /**
-   * Add additional keys for hierarchy rollups
-   *
-   * {{{
-   * addHierToDf(MyHier, df).hierGroupBy("k1").allSum(...)
-   * }}}
-   **/
-  def hierGroupBy(keys: String*) = {
-    val newKeys = additionalKeys ++ keys
-    new SmvHierarchyFuncs(hierarchy, df, newKeys)
-  }
-
   /**
    * rollup aggregate within a single hierarchy sequence
    **/
-  private def rollupHier(dfWithHier: DataFrame, hier: Seq[String])(aggs: Seq[Column]) = {
-    import dfWithHier.sqlContext.implicits._
+  private def rollupHier(df: DataFrame, hier: Seq[String])(aggs: Seq[Column]) = {
+    import df.sqlContext.implicits._
 
-    val kNl = (additionalKeys ++ hier).map{s => $"${s}"}
-    val nonNullFilter = (additionalKeys :+ hier.head).map{s => $"${s}".isNotNull}.reduce(_ && _)
-    val leftoverAggs = hierarchy.allHierMapCols.diff(additionalKeys ++ hier).map{c => first($"$c") as c}
+    val kNl = (conf.additionalKeys ++ hier).map{s => $"${s}"}
+    val nonNullFilter = (conf.additionalKeys :+ hier.head).map{s => $"${s}".isNotNull}.reduce(_ && _)
+    val leftoverAggs = allHierMapCols.diff(conf.additionalKeys ++ hier).map{c => first($"$c") as c}
 
     val aggsAll = aggs ++ leftoverAggs
 
     require(aggs.size >= 1)
 
-    val rollups = dfWithHier.rollup(kNl: _*).
+    val rollups = df.rollup(kNl: _*).
       agg(aggsAll.head, aggsAll.tail: _*).
       where(nonNullFilter)
 
-    val allFields = (additionalKeys.map{s => $"${s}"}) ++
-      hierarchy.hierCols(hier) ++
+    val allFields = (conf.additionalKeys.map{s => $"${s}"}) ++
+      hierCols(hier) ++
       aggs.map{a => $"${a.getName}"}
 
     rollups.select(allFields:_*)
   }
 
-  /**
-   * create sequence or single hierarchy sequences from list of levels
-   *
-   * If the hierarchies are
-   * {{{
-   * Seq(
-   *    Seq("g1", "g2"),
-   *    Seq("h1", "h2", "h3")
-   * )
-   * }}}
-   * and the levels are
-   * {{{
-   * Seq("g1", "h2", "h1")
-   * }}}
-   *
-   * The output will be
-   * {{{
-   * Seq(
-   *    Seq("g1"),
-   *    Seq("h1", "h2")
-   * )
-   * }}}
-   **/
-  private def hierList(levels: Seq[String]) = {
-    val intersectList = hierarchy.hierarchyLevels.map{hier =>
-      hier.intersect(levels)
-    }.filter{!_.isEmpty}
-
-    val deduped = intersectList.foldLeft(Nil:Seq[Seq[String]])({(res, s) =>
-      val alreadyCovered = res.flatten
-      val newS = s diff alreadyCovered
-      res :+ newS
-    })
-
-    // the output should match input
-    require(deduped.flatten.toSet == levels.toSet)
-
-    deduped
-  }
 
   /**
    * Rollup according to a hierarchy and unpivot with column names
@@ -341,7 +335,7 @@ private[smv] class SmvHierarchyFuncs(
    *
    * Example:
    * {{{
-   * addHierToDf(ProdHier, df).levelRollup("h1", "h2")(sum($"v1") as "v1", ...)
+   * getAncillary(ProdHier).levelRollup(df, "h1", "h2")(sum($"v1") as "v1", ...)
    * }}}
    *
    * Assumes `h1` is higher level than `h2`, in other words, 1 `h1` could have multiple `h2`s.
@@ -368,10 +362,10 @@ private[smv] class SmvHierarchyFuncs(
    * h2,        13,         2.0
    * }}}
    **/
-  def levelRollup(levels: String*)(aggregations: Column*) = {
+  def levelRollup(df: DataFrame, levels: String*)(aggregations: Column*) = {
     import df.sqlContext.implicits._
 
-    val dfWithHier: DataFrame = hierarchy.applyToDf(df).cache
+    val dfWithHier = applyToDf(df).cache
 
     val res = hierList(levels).map{hier =>
       rollupHier(dfWithHier, hier)(aggregations)
@@ -385,32 +379,9 @@ private[smv] class SmvHierarchyFuncs(
   /**
    * Same as `levelRollup` with summations on all `valueCols`
    **/
-  def levelSum(levels: String*)(valueCols: String*) = {
+  def levelSum(df: DataFrame, levels: String*)(valueCols: String*) = {
     val valSums = valueCols.map{s => sum(new Column(s)) as s}
-    levelRollup(levels: _*)(valSums: _*)
+    levelRollup(df, levels: _*)(valSums: _*)
   }
 
-  /**
-   * Same as `levelRollup` on all the levels defined in the `SmvHierarchy`s
-   * with the bottom one removed
-   * For example
-   * {{{
-   * object GeoHier extends SmvHierarchies(
-   *   "geo",
-   *   SmvHierarchy("terr", GeoMapFile, Seq("zip", "Territory", "Division"))
-   * )
-   * }}}
-   * which will roll up on `Territory` and `Division`.
-   **/
-  def allRollup(aggregations: Column*) = {
-    levelRollup(hierarchy.allLevels: _*)(aggregations: _*)
-  }
-
-  /**
-   * Same as `allRollup` with summations on all `valueCols`
-   **/
-  def allSum(valueCols: String*) = {
-    val valSums = valueCols.map{s => sum(new Column(s)) as s}
-    allRollup(valSums: _*)
-  }
 }

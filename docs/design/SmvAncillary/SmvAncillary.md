@@ -128,10 +128,10 @@ object MyModule extends SmvModule(...) {
   override def requiresAnc = Seq(ZipHierarchies)
   override def run(...) {
     ...
-    ZipHierarchy.
+    getAncillary(ZipHierarchy).
       withNameCol.
       withParentCols("county").
-      evelRollup(df, Seq("County", "State"))(
+      levelRollup(df, Seq("County", "State"))(
         avg($"v1") as "v1",
         avg($"v2") as "v2"
       )

@@ -65,11 +65,11 @@ class SmvHierarchyTest extends SmvTestUtil {
       SmvHierarchy("div", null, Seq("zip3", "terr", "div"))
     ) {
       override def applyToDf(df: DataFrame) = df
+
+      def allSum(df: DataFrame, cols: String*) = levelSum(df, "terr", "div")(cols: _*)
     }
 
-    val funcs = new SmvHierarchyFuncs(TestHeir, df)
-
-    val res = funcs.hierGroupBy("id").allSum("v")
+    val res = TestHeir.hierGroupBy("id").allSum(df, "v")
 
     assertSrddSchemaEqual(res, "id: String; hier_type: String; hier_value: String; v: Double")
     assertSrddDataEqual(res, """b,div,02,50.0;
@@ -88,7 +88,7 @@ class SmvHierarchyTest extends SmvTestUtil {
       SmvHierarchy("terr", hierTestPkg1.GeoMapFile, Seq("zip", "Territory", "Division"))
     )
 
-    object TestModule extends SmvModule("") with SmvHierarchyUser {
+    object TestModule extends SmvModule("") {
       override def requiresDS() = Seq.empty
       override def requiresAnc() = Seq(GeoHier)
 
@@ -101,9 +101,8 @@ class SmvHierarchyTest extends SmvTestUtil {
           401, -50.0, 5.0,  500.0, 2013;
           405, -50.0, 5.0,  500.0, 2013""")
 
-        addHierToDf(GeoHier.withNameCol, srdd).
-          hierGroupBy("time").
-          levelSum("Territory", "Division")("V1", "V2", "V3")
+        getAncillary(GeoHier).withNameCol().hierGroupBy("time").
+          levelSum(srdd, "Territory", "Division")("V1", "V2", "V3")
       }
     }
 
@@ -135,8 +134,8 @@ class SmvHierarchyTest extends SmvTestUtil {
       401, -50.0, 5.0,  500.0, 2013;
       405, -50.0, 5.0,  500.0, 2013""")
 
-    val funcs2 = new SmvHierarchyFuncs(GeoHier.withNameCol.withParentCols("terr"), df)
-    val res2 = funcs2.hierGroupBy("time").levelSum("Territory", "Division")("V1", "V2", "V3")
+    val res2 = GeoHier.withNameCol().withParentCols("terr").hierGroupBy("time").
+      levelSum(df, "Territory", "Division")("V1", "V2", "V3")
 
     assertSrddSchemaEqual(res2, """time: Integer; geo_type: String; geo_value: String; geo_name: String;
                                    parent_geo_type: String; parent_geo_value: String; parent_geo_name: String;
