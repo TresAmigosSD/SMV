@@ -23,6 +23,6 @@ class ModuleCrcConsistencyTest extends SmvTestUtil {
       override def run(i: runParams) = null
     }
 
-    assert(Module1.moduleCRC === 1890500585l)
+    assert(Module1.moduleCRC === 2036878497l)
   }
 }

@@ -14,10 +14,11 @@
 
 package org.tresamigos.smv
 
-import java.io.InputStream
+import java.io.{InputStream, StringWriter, PrintWriter}
 import java.util.zip.CRC32
 
 import scala.util.control.NonFatal
+import scala.tools.asm
 
 /**
  * computes the CRC32 checksum for the code of the given class name.
@@ -30,14 +31,17 @@ private[smv] case class ClassCRC(className: String) {
   lazy val crc = {
     val is: InputStream = getClass.getResourceAsStream(classResourcePath)
     val crc = new CRC32()
-    val ba: Array[Byte] = new Array[Byte](10000)
+
+    val stringWriter = new StringWriter()
+    val printWriter = new PrintWriter(stringWriter)
+    val traceClassVisitor = new asm.util.TraceClassVisitor(null, new asm.util.Textifier(), printWriter)
 
     try {
-      var count = is.read(ba)
-      while (count > 0) {
-        crc.update(ba, 0, count)
-        count = is.read(ba)
-      }
+      val reader=new asm.ClassReader(is)
+      /* SKIP_DEBUG: the visitLocalVariable and visitLineNumber methods will not be called. */
+      reader.accept(traceClassVisitor, asm.ClassReader.SKIP_DEBUG)
+      val code = stringWriter.toString().toCharArray().map{c => c.toByte}
+      crc.update(code)
     } catch {
       case NonFatal(t) => throw new IllegalArgumentException("invalid class name for crc: " + className, t)
     } finally {
