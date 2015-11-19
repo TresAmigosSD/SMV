@@ -8,6 +8,10 @@
   <inceptionYear>2015</inceptionYear>
   <properties>
     <scala.version>2.10.4</scala.version>
+    <scala.binary.version>2.10</scala.binary.version>
+    <scala.compat.version>${scala.binary.version}</scala.compat.version>
+    <spark.version>1.5.2</spark.version>
+    <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
   </properties>
 
   <repositories>
@@ -34,26 +38,8 @@
   <dependencies>
     <dependency> <!-- Spark dependency -->
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
-      <version>1.5.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency> <!-- Spark dependency -->
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-sql_2.10</artifactId>
-      <version>1.5.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency> <!-- Spark dependency -->
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-catalyst_2.10</artifactId>
-      <version>1.5.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency> <!-- Spark dependency -->
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-mllib_2.10</artifactId>
-      <version>1.5.1</version>
+      <artifactId>spark-sql_${scala.binary.version}</artifactId>
+      <version>${spark.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency> <!-- smv dependency -->
@@ -64,12 +50,12 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
-      <version>2.10.4</version>
+      <version>${scala.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.scalatest</groupId>
-      <artifactId>scalatest_2.10</artifactId>
+      <artifactId>scalatest_${scala.binary.version}</artifactId>
       <version>2.2.0</version>
       <scope>test</scope>
     </dependency>
@@ -116,7 +102,7 @@
             <id>scala-test-compile</id>
             <phase>process-test-resources</phase>
             <goals>
-                <goal>testCompile</goal>
+              <goal>testCompile</goal>
             </goals>
           </execution>
         </executions>
