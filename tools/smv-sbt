@@ -1,0 +1,14 @@
+#!/bin/bash
+
+SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
+source $SMV_TOOLS/_env.sh
+
+SHELL_INIT="${SMV_TOOLS}/conf/smv_shell_init.scala"
+if [ -r "conf/shell_init.scala" ]; then
+    SHELL_INIT+=",conf/shell_init.scala"
+else
+    echo "WARNING: app level conf/shell_init.scala not found."
+    echo
+fi
+
+sbt -DsmvInit="${SHELL_INIT}" ~console
