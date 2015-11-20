@@ -16,6 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.sql.types._
+import scala.util.Try
 
 private[smv] class StructFieldHelper(field: StructField) {
   def ordering() = getOrdering(field.dataType)
@@ -28,5 +29,12 @@ private[smv] class StructTypeHelper(schema: StructType) {
   def selfJoined(): StructType = {
     val renamed = schema.fields.map{f => StructField("_" + f.name, f.dataType, f.nullable)}
     StructType(schema.fields ++ renamed)
+  }
+
+  def getDescs(): Seq[(String, String)] = {
+    schema.fields.map{f =>
+      val md = Try(f.metadata.getString("smvDesc")).recoverWith{case e => Try("")}.get
+      (f.name, md)
+    }.toSeq
   }
 }

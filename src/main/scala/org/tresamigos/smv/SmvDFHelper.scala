@@ -672,4 +672,14 @@ class SmvDFHelper(df: DataFrame) {
 
     df.where(dummyFunc())
   }
+
+  /**
+   * Print column names with description, where description is added by `withDesc` method
+   * e.g.
+   * {{{
+   * scala> val res = df.select($"a" withDesc "column a is ....")
+   * scala> res.printDesc
+   * }}}
+   **/
+  def printDesc() = df.schema.getDescs().foreach{case (n, d) => println("%s: %s".format(n,d))}
 }

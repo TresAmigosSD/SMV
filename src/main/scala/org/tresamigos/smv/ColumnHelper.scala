@@ -544,4 +544,16 @@ class ColumnHelper(column: Column) {
     val f = udf({v: String => if (null == v) null else v.trim()})
     f(column).as(name)
   }
+
+  /**
+   * Add description as metadata to a column
+   * e.g.
+   * {{{
+   * df.select($"amt" as "amount" withDesc "Dollar amount spend")
+   * }}}
+   **/
+  def withDesc(desc: String) = {
+    val m = Metadata.fromJson(s"""{"smvDesc": "${desc}"}""")
+    column.as(column.getName, m)
+  }
 }

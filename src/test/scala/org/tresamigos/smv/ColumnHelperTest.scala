@@ -103,6 +103,14 @@ class ColumnHelperTest extends SmvTestUtil {
       "1980-01-31 00:00:00.0;" +
       "2016-02-29 00:00:00.0")
   }
+
+  test("test withDesc") {
+    val ssc =sqlContext;
+    import ssc.implicits._
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val res = df.selectWithReplace($"t" withDesc "the time sequence")
+    assertUnorderedSeqEqual(res.schema.getDescs(), Seq(("k",""), ("t","the time sequence"), ("v","")))
+  }
 }
 
 class SmvPrintToStrTest extends SmvTestUtil {
