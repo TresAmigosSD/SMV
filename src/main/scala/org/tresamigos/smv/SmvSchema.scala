@@ -27,21 +27,31 @@ import scala.annotation.switch
 import scala.util.Try
 import org.apache.spark.annotation._
 
-private[smv] abstract class SchemaEntry extends Serializable {
-  val name: String
+private[smv] abstract class TypeFormat extends Serializable {
   val dataType: DataType
+  val typeName: String
+  val format: String = null
   def strToVal(s: String) : Any
   def valToStr(v: Any) : String = if (v==null) "" else v.toString
-  val typeName: String
-  private[smv] var meta: String = ""
-  override def toString = name + ": " + typeName
+  override def toString = if (format == null) typeName else s"${typeName}[${format}]"
 }
 
-private[smv] abstract class NumericSchemaEntry extends SchemaEntry {
+private[smv] case class SchemaEntry(field: StructField, typeFormat: TypeFormat) extends Serializable {
+  override def toString = field.name + ": " + typeFormat.toString
+
+  def toStringWithMeta = {
+    val metaStr = if(field.metadata == Metadata.empty) ""
+      else " @metadata=" + field.metadata.toString
+
+    toString + metaStr
+  }
+}
+
+private[smv] abstract class NumericTypeFormat extends TypeFormat {
   private[smv] def trim(s: String) = s.replaceAll("""(^ +| +$)""", "")
 }
 
-private[smv] case class DoubleSchemaEntry(name: String) extends NumericSchemaEntry {
+private[smv] case class DoubleTypeFormat(override val format: String = null) extends NumericTypeFormat {
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toDouble
@@ -50,7 +60,7 @@ private[smv] case class DoubleSchemaEntry(name: String) extends NumericSchemaEnt
   val dataType = DoubleType
 }
 
-private[smv] case class FloatSchemaEntry(name: String) extends NumericSchemaEntry {
+private[smv] case class FloatTypeFormat(override val format: String = null) extends NumericTypeFormat {
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toFloat
@@ -59,7 +69,7 @@ private[smv] case class FloatSchemaEntry(name: String) extends NumericSchemaEntr
   val dataType = FloatType
 }
 
-private[smv] case class IntegerSchemaEntry(name: String) extends NumericSchemaEntry {
+private[smv] case class IntegerTypeFormat(override val format: String = null) extends NumericTypeFormat {
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toInt
@@ -68,7 +78,7 @@ private[smv] case class IntegerSchemaEntry(name: String) extends NumericSchemaEn
   val dataType = IntegerType
 }
 
-private[smv] case class LongSchemaEntry(name: String) extends NumericSchemaEntry {
+private[smv] case class LongTypeFormat(override val format: String = null) extends NumericTypeFormat {
   override def strToVal(s:String) : Any = {
     val trimedS = trim(s)
     if (trimedS.isEmpty) null else trimedS.toLong
@@ -77,21 +87,21 @@ private[smv] case class LongSchemaEntry(name: String) extends NumericSchemaEntry
   val dataType = LongType
 }
 
-private[smv] case class BooleanSchemaEntry(name: String) extends SchemaEntry {
+private[smv] case class BooleanTypeFormat(override val format: String = null) extends TypeFormat {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s.toBoolean
   override val typeName = "Boolean"
   val dataType = BooleanType
 }
 
-private[smv] case class StringSchemaEntry(name: String) extends SchemaEntry {
+private[smv] case class StringTypeFormat(override val format: String = null) extends TypeFormat {
   override def strToVal(s:String) : Any = if (s.isEmpty) null else s
   override val typeName = "String"
   val dataType = StringType
 }
 
-private[smv] case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-MM-dd hh:mm:ss.S") extends SchemaEntry {
+private[smv] case class TimestampTypeFormat(override val format: String = "yyyy-MM-dd hh:mm:ss.S") extends TypeFormat {
   // `SimpleDateFormat` is not thread-safe.
-  val fmtObj = SmvSchema.threadLocalDateFormat(fmt).get()
+  val fmtObj = SmvSchema.threadLocalDateFormat(format).get()
   //val fmtObj = new java.text.SimpleDateFormat(fmt)
   override def strToVal(s:String) : Any = {
     if(s.isEmpty) null
@@ -99,12 +109,11 @@ private[smv] case class TimestampSchemaEntry(name: String, fmt: String = "yyyy-M
   }
   override val typeName = "Timestamp"
   val dataType = TimestampType
-  override def toString = s"$name: $typeName[$fmt]"
 }
 
-private[smv] case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd") extends SchemaEntry {
+private[smv] case class DateTypeFormat(override val format: String = "yyyy-MM-dd") extends TypeFormat {
 
-  val fmtObj = SmvSchema.threadLocalDateFormat(fmt).get()
+  val fmtObj = SmvSchema.threadLocalDateFormat(format).get()
 
   override def strToVal(s:String) : Any = {
     if (s.isEmpty) null
@@ -118,52 +127,49 @@ private[smv] case class DateSchemaEntry(name: String, fmt: String = "yyyy-MM-dd"
 
   override val typeName = "Date"
   val dataType = DateType
-  override def toString = s"$name: $typeName[$fmt]"
 }
 // TODO: map entries delimiter hardcoded to "|" for now.
 // TODO: not worrying about key/val values containing the delimiter for now.
 // TODO: only allow basic types to avoid creating a full parser for the sub-types.
-private[smv] case class MapSchemaEntry(name: String,
-      keySchemaEntry: SchemaEntry, valSchemaEntry: SchemaEntry) extends SchemaEntry {
+private[smv] case class MapTypeFormat(
+      keyTypeFormat: TypeFormat, valTypeFormat: TypeFormat) extends TypeFormat {
   override val typeName = "Map"
 
-  override def toString = s"$name: Map[${keySchemaEntry.typeName},${valSchemaEntry.typeName}]"
+  override def toString = s"Map[${keyTypeFormat.toString},${valTypeFormat.toString}]"
 
-  val dataType = MapType(keySchemaEntry.dataType, valSchemaEntry.dataType)
+  val dataType = MapType(keyTypeFormat.dataType, valTypeFormat.dataType)
   override def strToVal(s: String) : Any = {
     if (s.isEmpty)
       null
     else
       // TODO: should probably use openCSV to parse the map to array
       s.split("\\|").sliding(2,2).map { a =>
-        (keySchemaEntry.strToVal(a(0)), valSchemaEntry.strToVal(a(1)))
+        (keyTypeFormat.strToVal(a(0)), valTypeFormat.strToVal(a(1)))
       }.toMap
   }
   override def valToStr(v: Any) : String = {
     if (v==null) return ""
-    val keyNativeType = keySchemaEntry.dataType.asInstanceOf[AtomicType]
-    val valNativeType = valSchemaEntry.dataType.asInstanceOf[AtomicType]
     val m = v.asInstanceOf[Map[Any,Any]]
     m.map{ case (k,v) =>
-      val keyAsStr = keySchemaEntry.valToStr(k)
-      val valAsStr = valSchemaEntry.valToStr(v)
+      val keyAsStr = keyTypeFormat.valToStr(k)
+      val valAsStr = valTypeFormat.valToStr(v)
       s"${keyAsStr}|${valAsStr}"
     }.mkString("|")
   }
 }
 
-private[smv] case class ArraySchemaEntry(name: String, valSchemaEntry: SchemaEntry) extends SchemaEntry {
+private[smv] case class ArrayTypeFormat(valTypeFormat: TypeFormat) extends TypeFormat {
   override val typeName = "Array"
 
-  override def toString = s"$name: Array[${valSchemaEntry.typeName}]"
+  override def toString = s"Array[${valTypeFormat.toString}]"
 
-  val dataType = ArrayType(valSchemaEntry.dataType)
+  val dataType = ArrayType(valTypeFormat.dataType)
   override def strToVal(s: String) : Any = {
     if (s.isEmpty)
       null
     else
       // TODO: should probably use openCSV to parse the map to array
-      s.split("\\|").map { a => valSchemaEntry.strToVal(a) }
+      s.split("\\|").map { a => valTypeFormat.strToVal(a) }
   }
   override def valToStr(v: Any) : String = {
     if (v==null) return ""
@@ -171,24 +177,11 @@ private[smv] case class ArraySchemaEntry(name: String, valSchemaEntry: SchemaEnt
       case a: Seq[Any] => a
       case a: Array[_] => a.toSeq
     }
-    m.map{r => valSchemaEntry.valToStr(r)}.mkString("|")
+    m.map{r => valTypeFormat.valToStr(r)}.mkString("|")
   }
 }
 
-private[smv] object NumericSchemaEntry {
-  def apply(name: String, dataType: DataType) : NumericSchemaEntry = {
-    val trimName = name.trim
-    dataType match {
-      case DoubleType => DoubleSchemaEntry(trimName)
-      case FloatType => FloatSchemaEntry(trimName)
-      case LongType => LongSchemaEntry(trimName)
-      case IntegerType => IntegerSchemaEntry(trimName)
-      case _ => throw new IllegalArgumentException(s"Type: ${dataType.toString} is not numeric")
-    }
-  }
-}
-
-private[smv] object SchemaEntry {
+private[smv] object TypeFormat {
   private final val StringPattern = "[sS]tring".r
   private final val DoublePattern = "[dD]ouble".r
   private final val FloatPattern = "[fF]loat".r
@@ -202,60 +195,78 @@ private[smv] object SchemaEntry {
   private final val MapPattern = "[mM]ap\\[(.+),(.+)\\]".r
   private final val ArrayPattern = "[aA]rray\\[(.+)\\]".r
 
-  def apply(name: String, typeStr: String) : SchemaEntry = {
-    val trimName = name.trim
+  def apply(typeStr: String) : TypeFormat = {
     typeStr.trim match {
-      case StringPattern() => StringSchemaEntry(trimName)
-      case DoublePattern() => DoubleSchemaEntry(trimName)
-      case FloatPattern() => FloatSchemaEntry(trimName)
-      case LongPattern() => LongSchemaEntry(trimName)
-      case IntegerPattern() => IntegerSchemaEntry(trimName)
-      case BooleanPattern() => BooleanSchemaEntry(trimName)
-      case TimestampPattern() => TimestampSchemaEntry(trimName)
-      case TimestampPatternFmt(fmt) => TimestampSchemaEntry(trimName, fmt)
-      case DatePattern() => DateSchemaEntry(trimName)
-      case DatePatternFmt(fmt) => DateSchemaEntry(trimName, fmt)
+      case StringPattern() => StringTypeFormat()
+      case DoublePattern() => DoubleTypeFormat()
+      case FloatPattern() => FloatTypeFormat()
+      case LongPattern() => LongTypeFormat()
+      case IntegerPattern() => IntegerTypeFormat()
+      case BooleanPattern() => BooleanTypeFormat()
+      case TimestampPattern() => TimestampTypeFormat()
+      case TimestampPatternFmt(fmt) => TimestampTypeFormat(fmt)
+      case DatePattern() => DateTypeFormat()
+      case DatePatternFmt(fmt) => DateTypeFormat(fmt)
       case MapPattern(keyTypeStr, valTypeStr) =>
-        MapSchemaEntry(trimName,
-          SchemaEntry("keyType", keyTypeStr),
-          SchemaEntry("valType", valTypeStr))
+        MapTypeFormat(
+          TypeFormat(keyTypeStr),
+          TypeFormat(valTypeStr))
       case ArrayPattern(valTypeStr) =>
-        ArraySchemaEntry(trimName,
-          SchemaEntry("valType", valTypeStr))
+        ArrayTypeFormat(TypeFormat(valTypeStr))
       case _ => throw new IllegalArgumentException(s"unknown type: $typeStr")
     }
   }
 
-  def apply(name: String, dataType: DataType) : SchemaEntry = {
-    val trimName = name.trim
+  def apply(dataType: DataType) : TypeFormat = {
     dataType match {
-      case StringType => StringSchemaEntry(trimName)
-      case DoubleType => DoubleSchemaEntry(trimName)
-      case FloatType => FloatSchemaEntry(trimName)
-      case LongType => LongSchemaEntry(trimName)
-      case IntegerType => IntegerSchemaEntry(trimName)
-      case BooleanType => BooleanSchemaEntry(trimName)
-      case TimestampType => TimestampSchemaEntry(trimName)
-      case DateType => DateSchemaEntry(trimName)
+      case StringType => StringTypeFormat()
+      case DoubleType => DoubleTypeFormat()
+      case FloatType => FloatTypeFormat()
+      case LongType => LongTypeFormat()
+      case IntegerType => IntegerTypeFormat()
+      case BooleanType => BooleanTypeFormat()
+      case TimestampType => TimestampTypeFormat()
+      case DateType => DateTypeFormat()
       case MapType(keyType, valType, _) =>
-        MapSchemaEntry(trimName,
-          SchemaEntry("keyType", keyType),
-          SchemaEntry("valType", valType))
+        MapTypeFormat(
+          TypeFormat(keyType),
+          TypeFormat(valType))
       case ArrayType(valType, _) =>
-        ArraySchemaEntry(trimName,
-          SchemaEntry("valType", valType))
+        ArrayTypeFormat(
+          TypeFormat(valType))
       case _ => throw new IllegalArgumentException(s"unknown type: ${dataType.toString}")
     }
   }
 
-  def apply(structField: StructField) : SchemaEntry = {
-    SchemaEntry(structField.name, structField.dataType)
+  def apply(structField: StructField) : TypeFormat = {
+    TypeFormat(structField.dataType)
+  }
+
+}
+
+object SchemaEntry {
+  def apply(structField: StructField): SchemaEntry = {
+    val typeFmt = TypeFormat(structField)
+    SchemaEntry(structField, typeFmt)
+  }
+
+  def apply(name: String, typeFmt: TypeFormat): SchemaEntry = {
+    val field = StructField(name, typeFmt.dataType, true)
+    SchemaEntry(field, typeFmt)
+  }
+
+  def apply(name: String, typeFmtStr: String, meta: String = null): SchemaEntry = {
+    val typeFmt = TypeFormat(typeFmtStr)
+    val metaData = if(meta == null) Metadata.empty else Metadata.fromJson(meta)
+    val field = StructField(name, typeFmt.dataType, true, metaData)
+    SchemaEntry(field, typeFmt)
   }
 
   def apply(nameAndType: String) : SchemaEntry = {
-    val parseNT = """([^:]*):(.*)""".r
+    // *? is for non-greedy match
+    val parseNT = """\s*([^:]*?)\s*:\s*([^@]*?)\s*(@metadata=(.*))?""".r
     nameAndType match {
-      case parseNT(n, t) => SchemaEntry(n, t)
+      case parseNT(n, t, dummy, meta) => SchemaEntry(n, t, meta)
       case _ => throw new IllegalArgumentException(s"Illegal SchemaEmtry string: $nameAndType")
     }
   }
@@ -283,7 +294,7 @@ private[smv] object SchemaEntry {
 class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,String]) extends Serializable {
   private[smv] def getSize = entries.size
 
-  private[smv] def toValue(ordinal: Int, sVal: String) = entries(ordinal).strToVal(sVal)
+  private[smv] def toValue(ordinal: Int, sVal: String) = entries(ordinal).typeFormat.strToVal(sVal)
 
   override def toString = "Schema: " + entries.mkString("; ")
 
@@ -291,14 +302,14 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
    * convert SmvSchema to StructType
    **/
   @DeveloperApi
-  def toStructType : StructType = StructType(entries.map(se => StructField(se.name, se.dataType, true)))
+  def toStructType : StructType = StructType(entries.map(se => se.field))
 
   /** get representation of this scheam as a sequence of strings that encode attributes and entries */
-  private def toStringsWithMeta : Seq[String] = {
+  private[smv] def toStringsWithMeta : Seq[String] = {
     val attStrings = attributes.toSeq.sortBy(_._1).map{ case (k,v) => s"@${k} = ${v}"}
 
     val entStrings = entries.map{ e =>
-      e.toString + (if (e.meta.isEmpty) "" else ("\t\t# " + e.meta))
+      e.toStringWithMeta
     }
 
     attStrings ++ entStrings
@@ -329,7 +340,7 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
       if (idx > 0)
         sb.append(ca.delimiter)
 
-      val se = entries(idx)
+      val se = entries(idx).typeFormat
 
       // If we are encoding for the Excel CSV format, double up all the double quotes for
       //    strings - that could have double quotes inside them
@@ -456,7 +467,7 @@ object SmvSchema {
   def fromDataFrame(df: DataFrame) = {
     new SmvSchema(
       df.schema.fields.map{a =>
-        SchemaEntry(a.name, a.dataType)
+        SchemaEntry(a)
       },
       Map.empty
     )

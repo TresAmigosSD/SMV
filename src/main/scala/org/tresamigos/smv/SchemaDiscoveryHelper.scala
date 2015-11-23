@@ -64,80 +64,80 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
    * Discover the time of a given column based on it value. Also perform type promotion to
    * accommodate all the possible values.
    */
-  private def getSchemaEntry(curSchemaEntry: SchemaEntry, colName: String, valueStr: String) : SchemaEntry =  {
+  private def getTypeFormat(curTypeFormat: TypeFormat, valueStr: String) : TypeFormat =  {
     if (valueStr.isEmpty)
-      return curSchemaEntry
+      return curTypeFormat
 
-    curSchemaEntry match {
+    curTypeFormat match {
 
       //Handling the initial case where the current column schema entry is not set yet
       case null if canConvertToInt(valueStr) && canConvertToyyyyMMddDate(valueStr)
-                                             => TimestampSchemaEntry(colName,"yyyyMMdd")
-      case null if canConvertToInt(valueStr) => IntegerSchemaEntry(colName)
-      case null if canConvertToLong(valueStr) => LongSchemaEntry(colName)
-      case null if canConvertToFloat(valueStr) => FloatSchemaEntry(colName)
-      case null if canConvertToDouble(valueStr) => DoubleSchemaEntry(colName)
-      case null if canConvertToBoolean(valueStr) => BooleanSchemaEntry(colName)
-      case null if canConvertToDate(valueStr,"dd/MM/yyyy") => TimestampSchemaEntry(colName,"dd/MM/yyyy")
-      case null if canConvertToDate(valueStr,"dd-MM-yyyy") => TimestampSchemaEntry(colName,"dd-MM-yyyy")
-      case null if canConvertToDate(valueStr,"dd-MMM-yyyy") => TimestampSchemaEntry(colName,"dd-MMM-yyyy")
-      case null if canConvertToDate(valueStr,"ddMMMyyyy") => TimestampSchemaEntry(colName,"ddMMMyyyy")
-      case null if canConvertToDate(valueStr,"yyyy-MM-dd") => TimestampSchemaEntry(colName,"yyyy-MM-dd")
-      case null => StringSchemaEntry(colName)
+                                             => TimestampTypeFormat("yyyyMMdd")
+      case null if canConvertToInt(valueStr) => IntegerTypeFormat()
+      case null if canConvertToLong(valueStr) => LongTypeFormat()
+      case null if canConvertToFloat(valueStr) => FloatTypeFormat()
+      case null if canConvertToDouble(valueStr) => DoubleTypeFormat()
+      case null if canConvertToBoolean(valueStr) => BooleanTypeFormat()
+      case null if canConvertToDate(valueStr,"dd/MM/yyyy") => TimestampTypeFormat("dd/MM/yyyy")
+      case null if canConvertToDate(valueStr,"dd-MM-yyyy") => TimestampTypeFormat("dd-MM-yyyy")
+      case null if canConvertToDate(valueStr,"dd-MMM-yyyy") => TimestampTypeFormat("dd-MMM-yyyy")
+      case null if canConvertToDate(valueStr,"ddMMMyyyy") => TimestampTypeFormat("ddMMMyyyy")
+      case null if canConvertToDate(valueStr,"yyyy-MM-dd") => TimestampTypeFormat("yyyy-MM-dd")
+      case null => StringTypeFormat()
 
       // Handling Integer type and its possible promotions
-      case IntegerSchemaEntry( _ ) if canConvertToInt(valueStr) => curSchemaEntry
-      case IntegerSchemaEntry( _ ) if canConvertToLong(valueStr) => LongSchemaEntry(colName)
-      case IntegerSchemaEntry( _ ) if canConvertToFloat(valueStr) => FloatSchemaEntry(colName)
-      case IntegerSchemaEntry( _ ) if canConvertToDouble(valueStr) => DoubleSchemaEntry(colName)
-      case IntegerSchemaEntry( _ ) => StringSchemaEntry(colName)
+      case IntegerTypeFormat( _ ) if canConvertToInt(valueStr) => curTypeFormat
+      case IntegerTypeFormat( _ ) if canConvertToLong(valueStr) => LongTypeFormat()
+      case IntegerTypeFormat( _ ) if canConvertToFloat(valueStr) => FloatTypeFormat()
+      case IntegerTypeFormat( _ ) if canConvertToDouble(valueStr) => DoubleTypeFormat()
+      case IntegerTypeFormat( _ ) => StringTypeFormat()
 
       // Handling Long type and its possible promotions
-      case LongSchemaEntry( _ ) if canConvertToLong(valueStr) => curSchemaEntry
-      case LongSchemaEntry( _ ) if canConvertToDouble(valueStr) => DoubleSchemaEntry(colName)
-      case LongSchemaEntry( _ ) => StringSchemaEntry(colName)
+      case LongTypeFormat( _ ) if canConvertToLong(valueStr) => curTypeFormat
+      case LongTypeFormat( _ ) if canConvertToDouble(valueStr) => DoubleTypeFormat()
+      case LongTypeFormat( _ ) => StringTypeFormat()
 
       // Handling Float type and its possible promotions
-      case FloatSchemaEntry( _ ) if canConvertToFloat(valueStr) => curSchemaEntry
-      case FloatSchemaEntry( _ ) if canConvertToDouble(valueStr) => DoubleSchemaEntry(colName)
-      case FloatSchemaEntry( _ ) => StringSchemaEntry(colName)
+      case FloatTypeFormat( _ ) if canConvertToFloat(valueStr) => curTypeFormat
+      case FloatTypeFormat( _ ) if canConvertToDouble(valueStr) => DoubleTypeFormat()
+      case FloatTypeFormat( _ ) => StringTypeFormat()
 
       // Handling Double type and its possible promotions
-      case DoubleSchemaEntry( _ ) if canConvertToDouble(valueStr) => curSchemaEntry
-      case DoubleSchemaEntry( _ ) => StringSchemaEntry(colName)
+      case DoubleTypeFormat( _ ) if canConvertToDouble(valueStr) => curTypeFormat
+      case DoubleTypeFormat( _ ) => StringTypeFormat()
 
       // Handling Boolean type and its possible promotions
-      case BooleanSchemaEntry( _ ) if canConvertToBoolean(valueStr) => curSchemaEntry
-      case BooleanSchemaEntry( _ ) => StringSchemaEntry(colName)
+      case BooleanTypeFormat( _ ) if canConvertToBoolean(valueStr) => curTypeFormat
+      case BooleanTypeFormat( _ ) => StringTypeFormat()
 
       //TODO: Need to find a better way to match dates to avoid repetition.
 
       //The date format should not change, if it did then we will treat the column as String
-      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToyyyyMMddDate(valueStr) =>  curSchemaEntry
-      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToInt(valueStr) => IntegerSchemaEntry(colName)
-      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToLong(valueStr) => LongSchemaEntry(colName)
-      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToFloat(valueStr) => FloatSchemaEntry(colName)
-      case TimestampSchemaEntry(colName,"yyyyMMdd") if canConvertToDouble(valueStr) => DoubleSchemaEntry(colName)
-      case TimestampSchemaEntry(colName,"yyyyMMdd") => StringSchemaEntry(colName)
+      case TimestampTypeFormat("yyyyMMdd") if canConvertToyyyyMMddDate(valueStr) =>  curTypeFormat
+      case TimestampTypeFormat("yyyyMMdd") if canConvertToInt(valueStr) => IntegerTypeFormat()
+      case TimestampTypeFormat("yyyyMMdd") if canConvertToLong(valueStr) => LongTypeFormat()
+      case TimestampTypeFormat("yyyyMMdd") if canConvertToFloat(valueStr) => FloatTypeFormat()
+      case TimestampTypeFormat("yyyyMMdd") if canConvertToDouble(valueStr) => DoubleTypeFormat()
+      case TimestampTypeFormat("yyyyMMdd") => StringTypeFormat()
 
-      case TimestampSchemaEntry(colName,"dd/MM/yyyy") if canConvertToDate(valueStr,"dd/MM/yyyy") => curSchemaEntry
-      case TimestampSchemaEntry(colName,"dd/MM/yyyy") => StringSchemaEntry(colName)
+      case TimestampTypeFormat("dd/MM/yyyy") if canConvertToDate(valueStr,"dd/MM/yyyy") => curTypeFormat
+      case TimestampTypeFormat("dd/MM/yyyy") => StringTypeFormat()
 
-      case TimestampSchemaEntry(colName,"dd-MM-yyyy") if canConvertToDate(valueStr,"dd-MM-yyyy") => curSchemaEntry
-      case TimestampSchemaEntry(colName,"dd-MM-yyyy") => StringSchemaEntry(colName)
+      case TimestampTypeFormat("dd-MM-yyyy") if canConvertToDate(valueStr,"dd-MM-yyyy") => curTypeFormat
+      case TimestampTypeFormat("dd-MM-yyyy") => StringTypeFormat()
 
-      case TimestampSchemaEntry(colName,"dd-MMM-yyyy") if canConvertToDate(valueStr,"dd-MMM-yyyy") => curSchemaEntry
-      case TimestampSchemaEntry(colName,"dd-MMM-yyyy") => StringSchemaEntry(colName)
+      case TimestampTypeFormat("dd-MMM-yyyy") if canConvertToDate(valueStr,"dd-MMM-yyyy") => curTypeFormat
+      case TimestampTypeFormat("dd-MMM-yyyy") => StringTypeFormat()
 
-      case TimestampSchemaEntry(colName,"ddMMMyyyy") if canConvertToDate(valueStr,"ddMMMyyyy") => curSchemaEntry
-      case TimestampSchemaEntry(colName,"ddMMMyyyy") => StringSchemaEntry(colName)
+      case TimestampTypeFormat("ddMMMyyyy") if canConvertToDate(valueStr,"ddMMMyyyy") => curTypeFormat
+      case TimestampTypeFormat("ddMMMyyyy") => StringTypeFormat()
 
-      case TimestampSchemaEntry(colName,"yyyy-MM-dd") if canConvertToDate(valueStr,"yyyy-MM-dd") => curSchemaEntry
-      case TimestampSchemaEntry(colName,"yyyy-MM-dd") => StringSchemaEntry(colName)
+      case TimestampTypeFormat("yyyy-MM-dd") if canConvertToDate(valueStr,"yyyy-MM-dd") => curTypeFormat
+      case TimestampTypeFormat("yyyy-MM-dd") => StringTypeFormat()
 
-      case StringSchemaEntry( _ ) => curSchemaEntry
+      case StringTypeFormat( _ ) => curTypeFormat
 
-      case _ => StringSchemaEntry(colName)
+      case _ => StringTypeFormat()
     }
   }
 
@@ -156,8 +156,8 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
 
     val noHeadRDD = if (ca.hasHeader) CsvAttributes.dropHeader(strRDD) else strRDD
 
-    var schemaEntries = new scala.collection.mutable.ArrayBuffer[SchemaEntry]
-    for (i <- 0 until columns.length) schemaEntries += null
+    var typeFmts = new scala.collection.mutable.ArrayBuffer[TypeFormat]
+    for (i <- 0 until columns.length) typeFmts += null
 
     //TODO: What if the numLines is so big that rowsToParse will not fit in memory
     // An alternative is to use the mapPartitionWithIndex
@@ -168,10 +168,10 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
     for (rowStr <- rowsToParse) {
       val rowValues = parser.parseLine(rowStr)
       if (rowValues.length == columnsWithIndex.length ) {
-        for ((colName, index) <- columnsWithIndex) {
+        for (index <- 0 until columns.length) {
           val colVal = rowValues(index)
           if (colVal.nonEmpty) {
-            schemaEntries(index) = getSchemaEntry(schemaEntries(index), colName, colVal )
+            typeFmts(index) = getTypeFormat(typeFmts(index), colVal )
           }
         }
       }
@@ -179,13 +179,13 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
 
     //Now we should set the null schema entries to the Default StringSchemaEntry. This should be the case when the first
     //numLines values for a given column happen to be missing.
-    for ((colName, index) <- columnsWithIndex) {
-      if (schemaEntries(index) == null) {
-        schemaEntries(index) = StringSchemaEntry(colName)
+    for (index <- 0 until columns.length) {
+      if (typeFmts(index) == null) {
+        typeFmts(index) = StringTypeFormat()
       }
     }
 
-    new SmvSchema(schemaEntries.toSeq, Map.empty)
+    new SmvSchema(columns.zip(typeFmts).map{case (n, t) => SchemaEntry(n, t)}, Map.empty)
   }
 
   /**

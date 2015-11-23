@@ -24,34 +24,34 @@ class SmvSchemaTest extends SmvTestUtil {
     val s = SmvSchema.fromString("a:string; b:double")
     val entries = s.entries
     assert(entries.size === 2)
-    assert(entries(0) === StringSchemaEntry("a"))
-    assert(entries(1) === DoubleSchemaEntry("b"))
+    assert(entries(0) === SchemaEntry("a", StringTypeFormat()))
+    assert(entries(1) === SchemaEntry("b", DoubleTypeFormat()))
   }
 
   test("Test schema file parsing") {
     val s = SmvSchema.fromFile(sc, testDataDir +  "SchemaTest/test1.schema")
     val entries = s.entries
     assert(entries.size === 10)
-    assert(entries(0) === StringSchemaEntry("id"))
-    assert(entries(1) === DoubleSchemaEntry("val"))
-    assert(entries(2) === TimestampSchemaEntry("val2"))
-    assert(entries(3) === TimestampSchemaEntry("val3", "ddMMyyyy"))
-    assert(entries(4) === LongSchemaEntry("val4"))
-    assert(entries(5) === IntegerSchemaEntry("val5"))
-    assert(entries(6) === BooleanSchemaEntry("val6"))
-    assert(entries(7) === FloatSchemaEntry("val7"))
-    assert(entries(8) === MapSchemaEntry("val8", StringSchemaEntry("keyType"), IntegerSchemaEntry("valType")))
-    assert(entries(9) === ArraySchemaEntry("val9", IntegerSchemaEntry("valType")))
+    assert(entries(0) === SchemaEntry("id", StringTypeFormat()))
+    assert(entries(1) === SchemaEntry("val", DoubleTypeFormat()))
+    assert(entries(2) === SchemaEntry("val2", TimestampTypeFormat()))
+    assert(entries(3) === SchemaEntry("val3", TimestampTypeFormat("ddMMyyyy")))
+    assert(entries(4) === SchemaEntry("val4", LongTypeFormat()))
+    assert(entries(5) === SchemaEntry("val5", IntegerTypeFormat()))
+    assert(entries(6) === SchemaEntry("val6", BooleanTypeFormat()))
+    assert(entries(7) === SchemaEntry("val7", FloatTypeFormat()))
+    assert(entries(8) === SchemaEntry("val8", MapTypeFormat(StringTypeFormat(), IntegerTypeFormat())))
+    assert(entries(9) === SchemaEntry("val9", ArrayTypeFormat(IntegerTypeFormat())))
 
     val atts = s.attributes
     assert(atts === Map("key1" -> "val1", "key2" -> "val2b"))
   }
 
   test("Schema entry equality") {
-    val e1: SchemaEntry = StringSchemaEntry("a")
-    val e2: SchemaEntry = StringSchemaEntry("a")
-    val e3: SchemaEntry = StringSchemaEntry("b")
-    val e4: SchemaEntry = DoubleSchemaEntry("a")
+    val e1: SchemaEntry = SchemaEntry("a", StringTypeFormat())
+    val e2: SchemaEntry = SchemaEntry("a", StringTypeFormat())
+    val e3: SchemaEntry = SchemaEntry("b", StringTypeFormat())
+    val e4: SchemaEntry = SchemaEntry("a", DoubleTypeFormat())
 
     assert(e1 == e2)
     assert(e1 != e3) // different name
@@ -64,11 +64,11 @@ class SmvSchemaTest extends SmvTestUtil {
     val b = s.entries(1)
     val c = s.entries(2)
 
-    assert(a === TimestampSchemaEntry("a", "yyyy"))
-    assert(c === TimestampSchemaEntry("c", "yyyyMMdd"))
+    assert(a === SchemaEntry("a", TimestampTypeFormat("yyyy")))
+    assert(c === SchemaEntry("c", TimestampTypeFormat("yyyyMMdd")))
 
-    val date_a = a.valToStr(a.strToVal("2014"))
-    val date_b = b.valToStr(b.strToVal("20140203"))
+    val date_a = a.typeFormat.valToStr(a.typeFormat.strToVal("2014"))
+    val date_b = b.typeFormat.valToStr(b.typeFormat.strToVal("20140203"))
     assert(date_a === "2014-01-01 00:00:00.0") // 2014
     assert(date_b === "2014-02-03 00:00:00.0") // 20140203
   }
@@ -77,14 +77,14 @@ class SmvSchemaTest extends SmvTestUtil {
     val s = SmvSchema.fromString("a:map[integer, string]")
     val a = s.entries(0)
 
-    assert(a === MapSchemaEntry("a", IntegerSchemaEntry("keyType"), StringSchemaEntry("valType")))
+    assert(a === SchemaEntry("a", MapTypeFormat(IntegerTypeFormat(), StringTypeFormat())))
 
-    val map_a = a.strToVal("1|2|3|4")
+    val map_a = a.typeFormat.strToVal("1|2|3|4")
     assert(map_a === Map(1->"2", 3->"4"))
 
     // use a sorted map to ensure traversal order during serialization.
     val map_a_sorted = SortedMap(1->"2", 3->"4")
-    val str_a = a.valToStr(map_a_sorted)
+    val str_a = a.typeFormat.valToStr(map_a_sorted)
     assert(str_a === "1|2|3|4")
   }
 
@@ -92,17 +92,17 @@ class SmvSchemaTest extends SmvTestUtil {
     val s = SmvSchema.fromString("a:array[integer]")
     val a = s.entries(0)
 
-    assert(a === ArraySchemaEntry("a", IntegerSchemaEntry("valType")))
+    assert(a === SchemaEntry("a", ArrayTypeFormat(IntegerTypeFormat())))
 
-    val array_a = a.strToVal("1|2|3|4")
+    val array_a = a.typeFormat.strToVal("1|2|3|4")
     assert(array_a === Seq(1, 2, 3, 4))
 
     val array_a1 = Seq(4, 3, 2, 1)
-    val str_a1 = a.valToStr(array_a1)
+    val str_a1 = a.typeFormat.valToStr(array_a1)
     assert(str_a1 === "4|3|2|1")
 
     val array_a2 = Seq(4, 3, 2, 1).toArray
-    val str_a2 = a.valToStr(array_a2)
+    val str_a2 = a.typeFormat.valToStr(array_a2)
     assert(str_a2 === "4|3|2|1")
   }
 
@@ -111,10 +111,10 @@ class SmvSchemaTest extends SmvTestUtil {
     val a = s.entries(0)
     val b = s.entries(1)
 
-    assert(a.valToStr(5) === "5")
-    assert(a.valToStr(null) === "")
-    assert(b.valToStr("x") === "x")
-    assert(b.valToStr(null) === "")
+    assert(a.typeFormat.valToStr(5) === "5")
+    assert(a.typeFormat.valToStr(null) === "")
+    assert(b.typeFormat.valToStr("x") === "x")
+    assert(b.typeFormat.valToStr(null) === "")
   }
 
   test("Test Timestamp in file") {
@@ -184,5 +184,15 @@ class SmvSchemaTest extends SmvTestUtil {
     val s2 = s1.addCsvAttributes( CsvAttributes('\t', '^', false) )
     val exp_att = Map("foo" -> "bar", "delimiter" -> "\\t", "has-header" -> "false", "quote-char" -> "^")
     assert(s2.attributes === exp_att)
+  }
+
+  test("test metadata read and write") {
+    val df = createSchemaRdd("""k:String; t:Integer @metadata={"smvDesc":"the time sequence"}; v:Double""", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val smvSchema = SmvSchema.fromDataFrame(df)
+    assert(smvSchema.toString === "Schema: k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(smvSchema.toStringsWithMeta, Seq(
+      "k: String",
+      """t: Integer @metadata={"smvDesc":"the time sequence"}""",
+      "v: Double"))
   }
 }
