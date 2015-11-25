@@ -27,7 +27,7 @@ import dqm._
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result DataFrame.
  */
-abstract class SmvDataSet {
+abstract class SmvDataSet { self =>
 
   lazy val app: SmvApp = SmvApp.app
   private var rddCache: DataFrame = null
@@ -37,6 +37,30 @@ abstract class SmvDataSet {
 
   /** modules must override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet]
+
+  def requiresAnc() : Seq[SmvAncillary] = Seq.empty
+
+  /** TODO: remove this method as checkDependency replaced this function */
+  def getAncillary[T <: SmvAncillary](anc: T) = {
+    if (requiresAnc.contains(anc)) anc
+    else throw new IllegalArgumentException(s"SmvAncillary: ${anc} is not in requiresAnc")
+  }
+
+  def checkDependency(): Unit = {
+    val dep = DataSetDependency(self.getClass.getName)
+    dep.dependsAnc.
+      map{s => (s, SmvReflection.objectNameToInstance[SmvAncillary](s))}.
+      filterNot{case (s,a) => requiresAnc().contains(a)}.
+      foreach{case (s, a) =>
+        throw new IllegalArgumentException(s"SmvAncillary ${s} need to be specified in requiresAnc")
+      }
+    dep.dependsDS.
+      map{s => (s, SmvReflection.objectNameToInstance[SmvDataSet](s))}.
+      filterNot{case (s,a) => requiresDS().contains(a)}.
+      foreach{case (s, a) =>
+        throw new IllegalArgumentException(s"SmvDataSet ${s} need to be specified in requiresDS")
+      }
+  }
 
   /** user tagged code "version".  Derived classes should update the value when code or data */
   def version() : Int = 0
@@ -88,11 +112,6 @@ abstract class SmvDataSet {
    * The default is to provide an empty set of DQM rules/fixes.
    */
   def dqm(): SmvDQM = SmvDQM()
-
-  /**
-   * Check dependency
-   **/
-  def checkDependency(): Unit = {}
 
   /**
    * returns the DataFrame from this dataset (file/module).
@@ -326,7 +345,7 @@ object SmvFile {
  * will be provided the DataFrame result from the run method of this module.
  * Note: the module should *not* persist any RDD itself.
  */
-abstract class SmvModule(val description: String) extends SmvDataSet { self =>
+abstract class SmvModule(val description: String) extends SmvDataSet {
 
   /**
    * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
@@ -342,23 +361,6 @@ abstract class SmvModule(val description: String) extends SmvDataSet { self =>
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(): DataFrame = {
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
-  }
-
-  def requiresAnc() : Seq[SmvAncillary] = Seq.empty
-
-  def getAncillary[T <: SmvAncillary](anc: T) = {
-    if (requiresAnc.contains(anc)) anc
-    else throw new IllegalArgumentException(s"SmvAncillary: ${anc} is not in requiresAnc")
-  }
-
-  override def checkDependency(): Unit = {
-    val dep = DataSetDependency(self.getClass.getName)
-    dep.dependsAnc.
-      map{s => (s, SmvReflection.objectNameToInstance[SmvAncillary](s))}.
-      filterNot{case (s,a) => requiresAnc().contains(a)}.
-      foreach{case (s, a) =>
-        throw new IllegalArgumentException(s"SmvAncillary ${s} need to be specified in requiresAnc")
-      }
   }
 
   /**
@@ -441,6 +443,11 @@ class SmvModuleLink(outputModule: SmvOutput) extends
   override def requiresDS() = Seq.empty
   override def run(inputs: runParams) = null
 
+  /**
+   * No need to check dependency here
+   **/
+  override def checkDependency() = {}
+  
   /**
    * "Running" a link requires that we read the published output from the upstream `DataSet`.
    * When publish version is specified, it will try to read from the published dir. Otherwise
