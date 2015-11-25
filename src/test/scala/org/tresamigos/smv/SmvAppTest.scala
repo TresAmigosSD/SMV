@@ -133,7 +133,7 @@ class SmvAppTest extends SmvTestUtil {
       def doRun(): DataFrame = null
     }
 
-    assert(f1.classCodeCRC() !== f2.classCodeCRC)
+    assert(f1.datasetHash() !== f2.datasetHash)
 
     SmvHDFS.deleteFile("F1.schema")
     createTempFile("F1.schema")
@@ -143,7 +143,7 @@ class SmvAppTest extends SmvTestUtil {
       def doRun(): DataFrame = null
     }
 
-    assert(f1.classCodeCRC() !== f3.classCodeCRC())
+    assert(f1.datasetHash() !== f3.datasetHash())
   }
 }
 

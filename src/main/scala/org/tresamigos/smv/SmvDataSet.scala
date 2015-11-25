@@ -27,7 +27,7 @@ import dqm._
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result DataFrame.
  */
-abstract class SmvDataSet { self =>
+abstract class SmvDataSet {
 
   lazy val app: SmvApp = SmvApp.app
   private var rddCache: DataFrame = null
@@ -46,8 +46,12 @@ abstract class SmvDataSet { self =>
     else throw new IllegalArgumentException(s"SmvAncillary: ${anc} is not in requiresAnc")
   }
 
+  /** Use Bytecode analysis to figure out dependency and check against
+   *  requiresDS and requiresAnc. Could consider to totaly drop requiresDS and
+   *  requiresAnc, and always use ASM to derive the dependency
+   **/
   def checkDependency(): Unit = {
-    val dep = DataSetDependency(self.getClass.getName)
+    val dep = DataSetDependency(this.getClass.getName)
     dep.dependsAnc.
       map{s => (s, SmvReflection.objectNameToInstance[SmvAncillary](s))}.
       filterNot{case (s,a) => requiresAnc().contains(a)}.
@@ -70,22 +74,22 @@ abstract class SmvDataSet { self =>
   val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
 
   /**
-   * module code CRC.  No need to cache the value here as ClassCRC caches it for us (lazy eval)
-   * Always return 0 for objects created in spark shell
+   * SmvDataSet code (not data) CRC. Always return 0 for objects created in spark shell
    */
-  private[smv] val moduleCRC = if(isObjectInShell) 0l else ClassCRC(this.getClass.getName).crc
+  private[smv] val datasetCRC = if(isObjectInShell) 0l else ClassCRC(this.getClass.getName).crc
 
-  /** CRC computed from the dataset "code" (not data) */
-  def classCodeCRC(): Int = moduleCRC.toInt
+  /** Hash computed from the dataset, could be overridden to include things other than CRC */
+  def datasetHash(): Int = datasetCRC.toInt
 
   /**
    * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
    * This way, if this module or any of the modules it depends on changes, the HOH should change.
    * The "version" of the current dataset is also used in the computation to allow user to force
    * a change in the hash of hash if some external dependency changed as well.
+   * TODO: need to add requiresAnc dependency here
    */
   private[smv] lazy val hashOfHash : Int = {
-    (requiresDS().map(_.hashOfHash) ++ Seq(version, classCodeCRC)).hashCode()
+    (requiresDS().map(_.hashOfHash) ++ Seq(version, datasetHash)).hashCode()
   }
 
   /**
@@ -252,14 +256,14 @@ abstract class SmvFile extends SmvDataSet {
     else Option(s"${app.smvConfig.dataDir}/${schemaPath}")
   }
 
-  /* For SmvFile, the classCodeCRC should be based on
+  /* For SmvFile, the datasetHash should be based on
    *  - raw class code crc
    *  - input csv file path
    *  - input csv file modified time
    *  - input schema file path
    *  - input schema file modified time
    */
-  override def classCodeCRC() = {
+  override def datasetHash() = {
     val fileName = fullPath
     val mTime = SmvHDFS.modificationTime(fileName)
 
@@ -268,7 +272,7 @@ abstract class SmvFile extends SmvDataSet {
 
     val crc = new java.util.zip.CRC32
     crc.update((fileName + schemaPath).toCharArray.map(_.toByte))
-    (crc.getValue + mTime + schemaMTime + moduleCRC).toInt
+    (crc.getValue + mTime + schemaMTime + datasetCRC).toInt
   }
 
   /**
@@ -447,7 +451,7 @@ class SmvModuleLink(outputModule: SmvOutput) extends
    * No need to check dependency here
    **/
   override def checkDependency() = {}
-  
+
   /**
    * "Running" a link requires that we read the published output from the upstream `DataSet`.
    * When publish version is specified, it will try to read from the published dir. Otherwise
@@ -487,10 +491,10 @@ case class SmvCsvStringData(
   lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
   override def validations() = super.validations.add(parserValidator)
 
-  override def classCodeCRC() = {
+  override def datasetHash() = {
     val crc = new java.util.zip.CRC32
     crc.update((schemaStr + data).toCharArray.map(_.toByte))
-    (crc.getValue + moduleCRC).toInt
+    (crc.getValue + datasetCRC).toInt
   }
 
   def run(i: runParams) = null
