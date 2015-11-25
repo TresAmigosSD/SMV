@@ -19,6 +19,13 @@ class DSDependencyTest extends SmvTestUtil {
     val cDep = DataSetDependency(org.tresamigos.smv.dsdependencyPkg.Y.getClass.getName)
     assertUnorderedSeqEqual(cDep.dependsDS, Seq("org.tresamigos.smv.dsdependencyPkg.X"))
   }
+
+  test("test dependency check on SmvAncillary") {
+    intercept[IllegalArgumentException] {
+      val f = app.resolveRDD(org.tresamigos.smv.dsdependencyPkg.B)
+    }
+    val g = app.resolveRDD(org.tresamigos.smv.dsdependencyPkg.C)
+  }
 }
 
 } //org.tresamigos.smv
@@ -36,6 +43,26 @@ package org.tresamigos.smv.dsdependencyPkg {
     override def requiresDS() = Seq()
     override def run(i: runParams) = {
       i(X)
+    }
+  }
+
+  object A extends SmvHierarchies("test")
+
+  object B extends SmvModule("B") {
+    override def requiresDS() = Seq()
+    override def requiresAnc() = Seq()
+    override def run(i: runParams) = {
+      val a = A
+      app.createDF("a:String", "a")
+    }
+  }
+
+  object C extends SmvModule("C") {
+    override def requiresDS() = Seq()
+    override def requiresAnc() = Seq(A)
+    override def run(i: runParams) = {
+      val a = A
+      app.createDF("a:String", "a")
     }
   }
 }

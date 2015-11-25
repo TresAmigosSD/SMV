@@ -90,13 +90,20 @@ abstract class SmvDataSet {
   def dqm(): SmvDQM = SmvDQM()
 
   /**
+   * Check dependency
+   **/
+  def checkDependency(): Unit = {}
+
+  /**
    * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */
   def rdd() = {
-    if (rddCache == null)
+    if (rddCache == null) {
+      checkDependency()
       rddCache = computeRDD
+    }
     rddCache
   }
 
@@ -319,7 +326,7 @@ object SmvFile {
  * will be provided the DataFrame result from the run method of this module.
  * Note: the module should *not* persist any RDD itself.
  */
-abstract class SmvModule(val description: String) extends SmvDataSet {
+abstract class SmvModule(val description: String) extends SmvDataSet { self =>
 
   /**
    * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
@@ -342,6 +349,16 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   def getAncillary[T <: SmvAncillary](anc: T) = {
     if (requiresAnc.contains(anc)) anc
     else throw new IllegalArgumentException(s"SmvAncillary: ${anc} is not in requiresAnc")
+  }
+
+  override def checkDependency(): Unit = {
+    val dep = DataSetDependency(self.getClass.getName)
+    dep.dependsAnc.
+      map{s => (s, SmvReflection.objectNameToInstance[SmvAncillary](s))}.
+      filterNot{case (s,a) => requiresAnc().contains(a)}.
+      foreach{case (s, a) =>
+        throw new IllegalArgumentException(s"SmvAncillary ${s} need to be specified in requiresAnc")
+      }
   }
 
   /**
