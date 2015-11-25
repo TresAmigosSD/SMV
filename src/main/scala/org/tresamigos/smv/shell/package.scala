@@ -13,7 +13,7 @@
  */
 
 package org.tresamigos.smv
-import org.apache.spark.sql.Column
+import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 
 /**
@@ -85,4 +85,14 @@ package object shell {
    * even include datasets from other stages
    **/
   def descendants(ds: SmvDataSet) = println(new ListDataSets(SmvApp.app.stages).descendants(ds))
+
+  /**
+   * Display a dataframe row in transposed view.
+   */
+  def peek(df: DataFrame, pos: Int = 1) = {
+    val r = df.take(pos).last
+    val width = df.columns.maxBy(_.length).length
+    df.columns.zipWithIndex.foreach { t =>
+      printf(s"%-${width}s = %s\n", t._1, r(t._2))
+  }}
 }
