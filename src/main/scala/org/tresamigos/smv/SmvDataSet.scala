@@ -46,26 +46,6 @@ abstract class SmvDataSet {
     else throw new IllegalArgumentException(s"SmvAncillary: ${anc} is not in requiresAnc")
   }
 
-  /** Use Bytecode analysis to figure out dependency and check against
-   *  requiresDS and requiresAnc. Could consider to totaly drop requiresDS and
-   *  requiresAnc, and always use ASM to derive the dependency
-   **/
-  def checkDependency(): Unit = {
-    val dep = DataSetDependency(this.getClass.getName)
-    dep.dependsAnc.
-      map{s => (s, SmvReflection.objectNameToInstance[SmvAncillary](s))}.
-      filterNot{case (s,a) => requiresAnc().contains(a)}.
-      foreach{case (s, a) =>
-        throw new IllegalArgumentException(s"SmvAncillary ${s} need to be specified in requiresAnc")
-      }
-    dep.dependsDS.
-      map{s => (s, SmvReflection.objectNameToInstance[SmvDataSet](s))}.
-      filterNot{case (s,a) => requiresDS().contains(a)}.
-      foreach{case (s, a) =>
-        throw new IllegalArgumentException(s"SmvDataSet ${s} need to be specified in requiresDS")
-      }
-  }
-
   /** user tagged code "version".  Derived classes should update the value when code or data */
   def version() : Int = 0
 
@@ -124,7 +104,6 @@ abstract class SmvDataSet {
    */
   def rdd() = {
     if (rddCache == null) {
-      checkDependency()
       rddCache = computeRDD
     }
     rddCache
@@ -364,7 +343,29 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(): DataFrame = {
+    // TODO turn on dependency check by uncomment the following line after test against projects
+    // checkDependency()
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
+  }
+
+  /** Use Bytecode analysis to figure out dependency and check against
+   *  requiresDS and requiresAnc. Could consider to totaly drop requiresDS and
+   *  requiresAnc, and always use ASM to derive the dependency
+   **/
+  private def checkDependency(): Unit = {
+    val dep = DataSetDependency(this.getClass.getName)
+    dep.dependsAnc.
+      map{s => (s, SmvReflection.objectNameToInstance[SmvAncillary](s))}.
+      filterNot{case (s,a) => requiresAnc().contains(a)}.
+      foreach{case (s, a) =>
+        throw new IllegalArgumentException(s"SmvAncillary ${s} need to be specified in requiresAnc")
+      }
+    dep.dependsDS.
+      map{s => (s, SmvReflection.objectNameToInstance[SmvDataSet](s))}.
+      filterNot{case (s,a) => requiresDS().contains(a)}.
+      foreach{case (s, a) =>
+        throw new IllegalArgumentException(s"SmvDataSet ${s} need to be specified in requiresDS, ${a}")
+      }
   }
 
   /**
@@ -446,11 +447,6 @@ class SmvModuleLink(outputModule: SmvOutput) extends
    */
   override def requiresDS() = Seq.empty
   override def run(inputs: runParams) = null
-
-  /**
-   * No need to check dependency here
-   **/
-  override def checkDependency() = {}
 
   /**
    * "Running" a link requires that we read the published output from the upstream `DataSet`.
