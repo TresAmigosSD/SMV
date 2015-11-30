@@ -25,29 +25,35 @@ import scala.tools.asm
  * The class must be reachable through the configured java class path.
  */
 private[smv] case class ClassCRC(className: String) {
-  // convert com.foo.bar to "/com/foo/bar.class"
-  private val classResourcePath = "/" + className.replace('.', '/') + ".class"
+  import ClassCRC._
+  lazy val crc: Long = checksum(className).getValue
+}
 
-  lazy val crc = {
-    val is: InputStream = getClass.getResourceAsStream(classResourcePath)
-    val crc = new CRC32()
-
+object ClassCRC {
+  private[smv] def cksum0(reader: asm.ClassReader): CRC32 = {
     val stringWriter = new StringWriter()
     val printWriter = new PrintWriter(stringWriter)
     val traceClassVisitor = new asm.util.TraceClassVisitor(null, new asm.util.Textifier(), printWriter)
 
+    /* SKIP_DEBUG: the visitLocalVariable and visitLineNumber methods will not be called. */
+    reader.accept(traceClassVisitor, asm.ClassReader.SKIP_DEBUG)
+    val code = stringWriter.toString().toCharArray().map{c => c.toByte}
+
+    val ret = new CRC32
+    ret.update(code)
+    ret
+  }
+
+  def checksum(bytecode: Array[Byte]): CRC32 = cksum0(new asm.ClassReader(bytecode))
+  def checksum(className: String): CRC32 = {
+    val classResourcePath = "/" + className.replace('.', '/') + ".class"
+    val is: InputStream = getClass.getResourceAsStream(classResourcePath)
     try {
-      val reader=new asm.ClassReader(is)
-      /* SKIP_DEBUG: the visitLocalVariable and visitLineNumber methods will not be called. */
-      reader.accept(traceClassVisitor, asm.ClassReader.SKIP_DEBUG)
-      val code = stringWriter.toString().toCharArray().map{c => c.toByte}
-      crc.update(code)
+      cksum0(new asm.ClassReader(is))
     } catch {
       case NonFatal(t) => throw new IllegalArgumentException("invalid class name for crc: " + className, t)
     } finally {
-      if (is != null) is.close()
+      if (is != null) is.close
     }
-
-    crc.getValue
   }
 }
