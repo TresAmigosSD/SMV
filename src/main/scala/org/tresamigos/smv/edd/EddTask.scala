@@ -77,7 +77,7 @@ private[smv] abstract class EddHistTask extends EddTask {
     val s = sortByFreq;
     v: Map[Any, Long] => compact(
       ("histSortByFreq" -> s) ~
-      ("hist" -> render( v.map{case (k:Any, n:Long) =>(EddTask.toJFunc(k),n)} ))
+      ("hist" -> render( v.map{case (k, n:Long) =>(EddTask.toJFunc(k),n)} ))
     )
   })
 }

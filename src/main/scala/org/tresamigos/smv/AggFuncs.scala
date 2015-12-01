@@ -107,12 +107,11 @@ private[smv] class Histogram(inputDT: DataType) extends UserDefinedAggregateFunc
   }
 
   def update(buffer: MutableAggregationBuffer, input: Row) = {
-    if (!input.isNullAt(0)){
-      val m = buffer.getMap(0).asInstanceOf[Map[Any,Long]]
-      val k = input.get(0)
-      val cnt = m.getOrElse(k, 0L) + 1L
-      buffer.update(0, m + (k -> cnt))
-    }
+    // Null value should be an entry also
+    val m = buffer.getMap(0).asInstanceOf[Map[Any,Long]]
+    val k = input.get(0)
+    val cnt = m.getOrElse(k, 0L) + 1L
+    buffer.update(0, m + (k -> cnt))
   }
 
   def merge(buffer1: MutableAggregationBuffer, buffer2: Row) = {

@@ -73,6 +73,7 @@ private[smv] class EddResult(
       }
       case "hist" => EddResult.parseHistJson(valueJSON).map{ case (k, c) =>
         k match {
+          case null => c.hashCode
           case v: String => v.hashCode + c.hashCode
           case v: Long => v.hashCode + c.hashCode
           case v: Boolean => v.hashCode + c.hashCode
@@ -141,7 +142,14 @@ private[smv] object EddResult {
   }
 
   private def histSort(hist: Map[Any, Long], histSortByFreq: Boolean) = {
-    val ordering = hist.keySet.head match {
+    // Since the key could be null, we need to find the non-null one and
+    // figure out the ordering based on the type of that non-null value
+    val keyNonNull = {
+      val noNull = hist.keySet.filter(_ != null)
+      if (noNull.size > 0) noNull.head else null
+    }
+
+    val ordering = keyNonNull match {
       case k: Long => implicitly[Ordering[Long]].asInstanceOf[Ordering[Any]]
       case k: Double => implicitly[Ordering[Double]].asInstanceOf[Ordering[Any]]
       case k: String => implicitly[Ordering[String]].asInstanceOf[Ordering[Any]]
@@ -187,6 +195,7 @@ private[smv] object EddResult {
           case (JBool(k), JInt(v)) => (k, v.toLong)
           case (JInt(k), JInt(v)) => (k.toLong, v.toLong)
           case (JDouble(k),JInt(v)) => (k, v.toLong)
+          case (JNull, JInt(v)) => (null, v.toLong)
           case _ => throw new IllegalArgumentException("unsupported type")
         }
       }.toMap
