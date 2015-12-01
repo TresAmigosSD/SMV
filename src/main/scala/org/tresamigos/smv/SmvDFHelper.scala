@@ -183,6 +183,10 @@ class SmvDFHelper(df: DataFrame) {
    * {{{
    *   df.renameField( "a" -> "aa", "b" -> "bb" )
    * }}}
+   *
+   * The method preserves any pre-existing metadata associated with
+   * renamed columns, whereas the method withColumnRenamed in Spark,
+   * as of 1.5.2, would drop them.
    */
   def renameField(namePairs: (String, String)*): DataFrame = {
     val namePairsMap = namePairs.toMap

@@ -72,7 +72,7 @@ class SelectPlusMinusTest extends SmvTestUtil {
   test("test SelectMinus") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
-    val res = df.selectMinus('b)
+    val res = df.selectMinus("b")
     assertSrddDataEqual(res,
       "1.0;" +
       "2.0;" +
@@ -85,7 +85,7 @@ class renameFieldTest extends SmvTestUtil {
     val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
-    val result = df.renameField('a -> 'aa, 'c -> 'cc)
+    val result = df.renameField("a" -> "aa", "c" -> "cc")
 
     val fieldNames = result.schema.fieldNames
     assert(fieldNames === Seq("aa", "b", "cc"))
@@ -97,7 +97,7 @@ class renameFieldTest extends SmvTestUtil {
       "1,2.0,hello")
 
     val e = intercept[IllegalArgumentException] {
-      val result = df.renameField('a -> 'c)
+      val result = df.renameField("a" -> "c")
     }
     assert(e.getMessage === "Rename to existing fields: c")
   }
@@ -122,6 +122,26 @@ class renameFieldTest extends SmvTestUtil {
     val fieldNames = result.schema.fieldNames
     assert(fieldNames === Seq("a_xx", "b_xx", "c_xx"))
     assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]") )
+  }
+
+  test("rename field should preserve metadata in renamed fields") {
+    val df = createSchemaRdd("a:Integer; b:String", "1,abc;1,def;2,ghij")
+    val desc = "c description"
+    val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) withDesc desc as "c")
+    res1.schema.getDescs shouldBe Seq(("a" -> ""), ("c" -> desc))
+
+    val res2 = res1.renameField("c" -> "d")
+    res2.schema.getDescs shouldBe Seq(("a" -> ""), ("d" -> desc))
+  }
+
+  test("rename field should preserve metadata for unrenamed fields") {
+    val df = createSchemaRdd("a:Integer; b:String", "1,abc;1,def;2,ghij")
+    val desc = "c description"
+    val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) withDesc desc as "c")
+    res1.schema.getDescs shouldBe Seq(("a" -> ""), ("c" -> desc))
+
+    val res2 = res1.renameField("a" -> "d")
+    res2.schema.getDescs shouldBe Seq(("d" -> ""), ("c" -> desc))
   }
 }
 
@@ -227,7 +247,7 @@ class dedupByKeyTest extends SmvTestUtil {
          2,11.0,hello3"""
     )
 
-    val result1 = df.dedupByKey('a)
+    val result1 = df.dedupByKey("a")
     assertUnorderedSeqEqual(result1.collect.map(_.toString), Seq(
       "[1,2.0,hello]",
       "[2,10.0,hello2]" ))
@@ -235,7 +255,7 @@ class dedupByKeyTest extends SmvTestUtil {
     val fieldNames1 = result1.schema.fieldNames
     assert(fieldNames1 === Seq("a", "b", "c"))
 
-    val result2 = df.dedupByKey('a, 'c)
+    val result2 = df.dedupByKey("a", "c")
     assertUnorderedSeqEqual(result2.collect.map(_.toString), Seq(
     "[1,2.0,hello]",
     "[2,10.0,hello2]",
@@ -296,7 +316,7 @@ class smvCoalesceTest extends SmvTestUtil {
   test("Test smvCoalesce") {
     val ssc = sqlContext; import ssc.implicits._
     val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
-    val res = a.smvCoalesce(1)
+    val res = a.coalesce(1)
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a]",
       "[b]",
