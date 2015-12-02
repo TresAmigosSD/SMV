@@ -340,4 +340,23 @@ true                         2   50.00%           4  100.00%
 
     assert(isEqual)
   }
+
+  test("null handling in histogram") {
+    val df2 = createSchemaRdd("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
+      """z,,a,0.2000001,19010701,;
+      ,2,a,1.4,20150402,true;
+      z,5,,2.2,,true;
+      a,1,a,,20151204,false""")
+
+    val res1 = df2.edd.histogram("k")
+    val res2 = df2.edd.histogram("t")
+    val res3 = df2.select(df2("d").smvYear as "year").edd.histogram("year")
+    val res4 = df2.edd.histogram("b")
+/* As long as above run without issue the test is success 
+    res1.createReport.foreach(println)
+    res2.createReport.foreach(println)
+    res3.createReport.foreach(println)
+    res4.createReport.foreach(println)
+    */
+  }
 }

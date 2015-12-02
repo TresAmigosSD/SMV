@@ -159,8 +159,13 @@ private[smv] object EddResult {
 
     if(histSortByFreq)
       hist.toSeq.sortBy(- _._2)
-    else
-      hist.toSeq.sortWith((a,b) => ordering.compare(a._1, b._1) < 0)
+    else {
+      /* since some of the Ordering (e.g. Ordering[String]) can'r handle null, we
+       * handle null manually
+       */
+      val (nullOnly, nonNull) = hist.toSeq.partition(_._1 == null)
+      nullOnly ++ nonNull.sortWith((a,b) => ordering.compare(a._1, b._1) < 0)
+    }
   }
 
   /** Only long and double are supported as the simple valueJson */
