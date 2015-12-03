@@ -373,6 +373,9 @@ class SmvHierarchies(
 
     dfWithHier.unpersist
 
+    /* need to reset the config after the rollup action */
+    conf = SmvHierarchiesConf(false, None, Nil)
+
     res
   }
 
