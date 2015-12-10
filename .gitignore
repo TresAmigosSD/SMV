@@ -12,3 +12,8 @@ derby.log
 metastore_db/
 .DS_Store
 .ensime*
+
+/R/lib
+.Rproj.user
+.Rhistory
+.RData

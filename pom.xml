@@ -172,12 +172,25 @@
         </executions>
       </plugin>
 
-        <!-- plugin to execute the gen_docs.sh script to generate the user guide (during site phase) -->
+        <!-- plugin to execute the following:
+                * run install-smvR.sh to install the SMV R package.
+                * gen_docs.sh script to generate the user guide (during site phase)
+        -->
         <plugin>
             <artifactId>exec-maven-plugin</artifactId>
             <groupId>org.codehaus.mojo</groupId>
             <version>1.4.0</version>
             <executions>
+                <execution>
+                    <id>install SMV R package</id>
+                    <phase>compile</phase>
+                    <goals>
+                        <goal>exec</goal>
+                    </goals>
+                    <configuration>
+                        <executable>./R/install-smvR.sh</executable>
+                    </configuration>
+                </execution>
                 <execution>
                     <id>gen-user-guide</id>
                     <phase>site</phase>
