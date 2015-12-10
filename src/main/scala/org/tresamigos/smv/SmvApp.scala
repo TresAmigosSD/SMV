@@ -199,6 +199,14 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /**
+   * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
+   */
+  def runModuleByName(modName: String) : DataFrame = {
+    val module = smvConfig.resolveModuleByName(modName)
+    resolveRDD(module)
+  }
+
+  /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
    */
@@ -227,6 +235,17 @@ object SmvApp {
 
   def init(args: Array[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) = {
     app = new SmvApp(args, _sc, _sql)
+  }
+
+  /**
+   * Creates a new app instances from a sql context.  This is used by SparkR to create a new app.
+   */
+  def newApp(sqlContext: SQLContext) : SmvApp = {
+    SmvApp.init(
+      Seq("-m", "None").toArray,
+      Option(sqlContext.sparkContext),
+      Option(sqlContext))
+    SmvApp.app
   }
 
   def main(args: Array[String]) {

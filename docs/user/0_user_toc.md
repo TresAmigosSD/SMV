@@ -6,6 +6,7 @@
 * [Application Configuration](app_config.md)
 * [Run Application](run_app.md)
 * [Run Spark Shell](run_shell.md)
+* [Run Spark R Shell](smv_r.md)
 * [Extended Data Dictionary (EDD)](edd.md)
 * [SMV Files](smv_file.md)
 * [SMV Modules](smv_module.md)

@@ -71,5 +71,17 @@ function extract_spark_args()
     fi
 }
 
+function set_spark_home() {
+    if [ -z "$SPARK_HOME" ]; then
+        sparkSubmit=$(type -p spark-submit)
+        if [ -z "$sparkSubmit" ]; then
+            echo "Can not find spark-submit script"
+            exit 1
+        fi
+        export SPARK_HOME=$(cd $(dirname $sparkSubmit)/..; pwd)
+    fi
+}
+
+
 # --- MAIN ---
 extract_spark_args

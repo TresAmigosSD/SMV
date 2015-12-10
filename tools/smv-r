@@ -1,0 +1,17 @@
+#!/bin/bash
+
+SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
+source $SMV_TOOLS/_env.sh
+
+
+export R_PROFILE="${SMV_TOOLS}/conf/sparkR_init.r"
+export SMV_APP_JAR="$APP_JAR"
+
+echo app jar = $SMV_APP_JAR
+echo "R_PROFILE = $R_PROFILE"
+
+set_spark_home
+
+#sparkR
+R
+
