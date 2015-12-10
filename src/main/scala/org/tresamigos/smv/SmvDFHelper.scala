@@ -686,4 +686,19 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    **/
   def printDesc() = df.schema.getDescs().foreach{case (n, d) => println("%s: %s".format(n,d))}
+
+  /**
+   * Display a dataframe row in transposed view.
+   */
+  def peek(pos: Int) = {
+    val r = df.take(pos).last
+    val width = df.columns.maxBy(_.length).length
+    df.columns.zipWithIndex.foreach { t =>
+      printf(s"%-${width}s = %s\n", t._1, r(t._2))
+  }}
+
+  /**
+   * Use default peek with or without the parenthesis 
+   **/
+  def peek(): Unit = peek(1)
 }

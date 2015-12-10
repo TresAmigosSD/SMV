@@ -90,9 +90,6 @@ package object shell {
    * Display a dataframe row in transposed view.
    */
   def peek(df: DataFrame, pos: Int = 1) = {
-    val r = df.take(pos).last
-    val width = df.columns.maxBy(_.length).length
-    df.columns.zipWithIndex.foreach { t =>
-      printf(s"%-${width}s = %s\n", t._1, r(t._2))
-  }}
+    df.peek(pos)
+  }
 }
