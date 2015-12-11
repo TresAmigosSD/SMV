@@ -21,9 +21,9 @@ $ _SMV_HOME_/tools/smv-r [smv-options]
 </tr>
 
 <tr>
-<td>-g</td>
+<td>-g|-rs</td>
 <td>false</td>
-<td>Use graphical R shell (Rstudio). Not Supported Yet!!!</td>
+<td>Use graphical R shell (Rconsole or Rstudio). Not Supported Yet!!!</td>
 </tr>
 
 </table>
@@ -31,13 +31,20 @@ $ _SMV_HOME_/tools/smv-r [smv-options]
 
 ### Running SMV modules from R Shell
 
-The `runSmvModule` method can be used to run a specific module.  It accepts a single string argument that specifies the name of the module to run.  The name can be specified in the same manner as the "-m" option to `smv-shell`.
+### runSmvModuleRdd
+
+The `runSmvModuleRdd` method can be used to run a specific module.  It accepts a single string argument that specifies the name of the module to run.  The name can be specified in the same manner as the "-m" option to `smv-shell`.  It will return the Spark DataFrame result of running the module.  This result can be used with any of the standard SparkR commands.
 For example:
 
 ```shell
 $ smv-r
 ...
-> df <- runSmvModule("EmploymentByState")
+> df <- runSmvModuleRdd("EmploymentByState")
 ...
-> head(df) // or other standard R commands.
+> count(df) // or other SparkR command
 ```
+
+### runSmvModule
+
+`runSmvModule` is a convenience function similar to `runSmvModuleRdd` but returns the local R DataFrame as the result.  This is the equivalent of calling `collect()` on the result from `smvRunModuleRdd`.
+

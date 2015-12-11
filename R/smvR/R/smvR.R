@@ -17,18 +17,34 @@
 
 .smvREnv <- new.env()
 
+#' Initialize the SMV R shell
+#' @param sqlContext Spark SQL context
+#' @export
+
 smvR.init <- function(sqlContext) {
     app <- SparkR:::callJStatic("org.tresamigos.smv.SmvApp", "newApp", sqlContext)
     assign(".smvApp", app, envir = .smvREnv)
     app
 }
 
-runSmvModule <- function(moduleName) {
+#' Run the specified smv module and return the Raw RDD (Spark Dataframe) result.
+#' @param moudleName The module name to run (can be FQN of module or just the base name)
+#' @export
+
+runSmvModuleRdd <- function(moduleName) {
     app <- get(".smvApp", envir = .smvREnv)
     rdd <- SparkR:::callJMethod(smvApp, "runModuleByName", moduleName)
-    df = SparkR:::dataFrame(rdd)
-
+    df <- SparkR:::dataFrame(rdd)
     df
 }
 
+#' Run the specified smv module and return an R dataframe of the result.
+#' @param moudleName The module name to run (can be FQN of module or just the base name)
+#' @export
+
+runSmvModule <- function(moduleName) {
+    rdd <- runSmvModuleRdd(moduleName)
+    df = collect(rdd)
+    df
+}
 
