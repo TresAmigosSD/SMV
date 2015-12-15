@@ -18,7 +18,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.Accumulator
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{StructField, StructType, LongType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions._
 
 import org.apache.spark.annotation.Experimental
@@ -429,6 +429,95 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
+   * The reverse of smvPivot.  Specifically, given the following table
+   *
+   * +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+   * |  Id   |  A_1  |  A_2  |  ...  | A_11  |  B_1  |  ...  | B_11  |  ...  |  Z_1  |  ...  | Z_11  |
+   * +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+   * |   1   | 1_a_1 | 1_a_2 |  ...  |1_a_11 | 1_b_1 |  ...  |1_b_11 |  ...  | 1_z_1 |  ...  |1_z_11 |
+   * +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+   * |   2   | 2_a_1 | 2_a_2 |  ...  |2_a_11 | 2_b_1 |  ...  |2_b_11 |  ...  | 2_z_1 |  ...  |2_z_11 |
+   * +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+   *
+   * and a function that would map "A_1" to ("A", "1"), unpivoting all
+   * columns other than 'Id' would transform the table into the following
+   *
+   * +-----+-----+------+------+-----+-------+
+   * | Id  |Index|  A   |  B   | ... |  Z    |
+   * +-----+-----+------+------+-----+-------+
+   * |  1  |  1  |1_a_1 |1_b_1 | ... |1_z_1  |
+   * +-----+-----+------+------+-----+-------+
+   * |  1  |  2  |1_a_2 |1_b_2 | ... |1_z_2  |
+   * +-----+-----+------+------+-----+-------+
+   * | ... | ... | ...  | ...  | ... | ...   |
+   * +-----+-----+------+------+-----+-------+
+   * |  1  | 11  |1_a_11|1_b_11| ... |1_z_11 |
+   * +-----+-----+------+------+-----+-------+
+   * |  2  |  1  |2_a_1 |2_b_1 | ... | 2_z_1 |
+   * +-----+-----+------+------+-----+-------+
+   * |  2  |  2  |2_a_2 |2_b_2 | ... | 2_z_2 |
+   * +-----+-----+------+------+-----+-------+
+   * | ... | ... | ...  | ...  | ... |  ...  |
+   * +-----+-----+------+------+-----+-------+
+   * |  2  | 11  |2_a_11|2_b_11| ... |2_z_11 |
+   * +-----+-----+------+------+-----+-------+
+   *
+   * See [[https://github.com/TresAmigosSD/SMV/issues/243 Issue 243]]
+   *
+   * @param valueCols    names of the columns to transpose
+   * @param colNameFn    the function that takes a column name and returns a tuple2,
+   *                     the first part is the transposed column name, the second part is the
+   *                     value that goes into the Index column.
+   * @param indexColName the name of the index column, if present, if None, no index column would be added
+   */
+  def smvUnpivot(valueCols: Seq[String],
+    colNameFn: String => (String, String),
+    indexColName: Option[String] = Some("Index")): DataFrame = {
+    // see the inline comments in the returned tuple for this computation
+    val (t1, t2, tbl) =
+      valueCols.foldRight((Seq[String](), Seq[String](), Map[(String, String), String]())) {
+        (vcol, acc) =>
+        val (k, v) = colNameFn(vcol)
+        (
+          k +: acc._1, // unpivoted column name
+          v +: acc._2, // unpivoted index value (row number)
+          acc._3 + ((k, v) -> vcol) // the inverse of colNameFn to retrieve value in the dataframe cell
+        )
+      }
+
+    val colNames = t1.distinct // collect the intended column names after unpivot
+    val indexValues = t2.distinct.sorted // TODO sort by length, then in alphabetic order
+
+    // need to make a name distinct from all the column names because
+    // we are going to build a struct for each row, and the name is
+    // used to retrieve the index value later
+    @scala.annotation.tailrec
+    def mkuniqIndexName(colNames: Seq[String], candidate: String): String =
+      if (colNames.exists(_ == candidate)) mkuniqIndexName(colNames, "_" + candidate) else candidate
+    val indexName = mkuniqIndexName(colNames, indexColName getOrElse "Index")
+
+    val embedded = indexValues map { v =>
+      val fields = lit(v).as(indexName) +: (for {
+        k <- colNames
+        col = tbl.get((k, v)).map(df(_)) getOrElse lit(null).cast(StringType)
+      } yield col as k)
+
+      struct(fields:_*)
+    }
+
+    val r1 = df.selectPlus(array(embedded:_*) as "_unpivoted_values")
+    val r2 = r1.selectPlus(explode(r1("_unpivoted_values")) as "_kvpair")
+    val r3 = indexColName match {
+      case None => r2
+      case Some(indexCol) => r2.selectPlus(r2("_kvpair")(indexName) as indexCol)
+    }
+    // now add each field in the embedded struct as a column
+    r3.selectPlus((colNames.map(c => r3("_kvpair")(c) as c)):_*).
+      selectMinus("_unpivoted_values", "_kvpair"). // remove intermediate results
+      selectMinus(valueCols.head, valueCols.tail:_*)
+  }
+
+  /**
    * Almost the opposite of the pivot operation.
    * Given a set of records with value columns, turns the value columns into value rows.
    * For example, Given the following input:
@@ -457,12 +546,11 @@ class SmvDFHelper(df: DataFrame) {
    *
    * '''Warning:''' This only works for String columns for now (due to limitation of Explode method)
    */
-  def smvUnpivot(valueCols: String*): DataFrame = {
-    new UnpivotOp(df, valueCols).unpivot()
-  }
+  def smvUnpivot(valueCols: String*): DataFrame =
+    smvUnpivot(valueCols, s => ("value", s), Some("column"))
 
   /** same as `smvUnpivot(String*)` but uses `Symbol` to specify the value columns. */
-  @deprecated
+  @deprecated("use String instead of Symbol", "1.5")
   def smvUnpivot(valueCol: Symbol, others: Symbol*): DataFrame =
     smvUnpivot((valueCol +: others).map{s => s.name}: _*)
 
