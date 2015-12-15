@@ -82,7 +82,7 @@ class SmvHierarchyTest extends SmvTestUtil {
                                 b,terr,004,35.0""")
   }
 
-  test("module with SmvHierarchyUser test"){
+  test("module with name column test"){
     object GeoHier extends SmvHierarchies(
       "geo",
       SmvHierarchy("terr", hierTestPkg1.GeoMapFile, Seq("zip", "Territory", "Division"))
@@ -151,6 +151,41 @@ class SmvHierarchyTest extends SmvTestUtil {
                                   2013,Territory,004,null,Division,02,D02,-100.0,10.0,1000.0;
                                   2014,Territory,003,null,Division,02,D02,-50.0,5.0,500.0""")
   }
+
+  test("SmvHierarchies appendParentValues test"){
+    object GeoHier extends SmvHierarchies(
+      "geo",
+      SmvHierarchy("terr", hierTestPkg1.GeoMapFile, Seq("zip", "Territory", "Division"))
+    )
+
+    val df = app.createDF("zip:String; V1:double; V2:Double; V3:Double; time:Integer",
+      """100,  -5.0, 2.0, -150.0, 2013;
+      102, -10.0, 8.0,  300.0, 2014;
+      201, -50.0, 5.0,  500.0, 2013;
+      301, -50.0, 5.0,  500.0, 2014;
+      401, -50.0, 5.0,  500.0, 2013;
+      405, -50.0, 5.0,  500.0, 2013""")
+
+    val res1 = GeoHier.hierGroupBy("time").
+      levelSum(df, "Territory", "Division")("V1", "V2", "V3")
+
+    val res2 = GeoHier.hierGroupBy("time").appendParentValues(res1, "terr")
+
+    assertSrddSchemaEqual(res2, """time: Integer; geo_type: String; geo_value: String;
+                                   parent_geo_type: String; parent_geo_value: String;
+                                   V1: Double; V2: Double; V3: Double;
+                                   parent_V1: Double; parent_V2: Double; parent_V3: Double""")
+    assertSrddDataEqual(res2, """2014,Territory,003,Division,02,-50.0,5.0,500.0,-50.0,5.0,500.0;
+                        2013,Division,01,null,null,-55.0,7.0,350.0,null,null,null;
+                        2013,Division,02,null,null,-100.0,10.0,1000.0,null,null,null;
+                        2013,Territory,001,Division,01,-5.0,2.0,-150.0,-55.0,7.0,350.0;
+                        2013,Territory,002,Division,01,-50.0,5.0,500.0,-55.0,7.0,350.0;
+                        2013,Territory,004,Division,02,-100.0,10.0,1000.0,-100.0,10.0,1000.0;
+                        2014,Division,01,null,null,-10.0,8.0,300.0,null,null,null;
+                        2014,Division,02,null,null,-50.0,5.0,500.0,null,null,null;
+                        2014,Territory,001,Division,01,-10.0,8.0,300.0,-10.0,8.0,300.0""")
+  }
+
 }
 
 }
