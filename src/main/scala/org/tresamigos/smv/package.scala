@@ -68,6 +68,9 @@ package object smv {
   /** implicitly convert `Column` to `SmvCDSAggColumn` */
   implicit def makeSmvCDSAggColumn(col: Column) = cds.SmvCDSAggColumn(col.toExpr)
 
+  /** implicitly convert `DataFrame` to `SmvDFWithKeys` */
+  implicit def makeSmvDFWithKeys(df: DataFrame) = SmvDFWithKeys(df, Nil)
+
   /** implicitly convert `StructField` to `StructFieldHelper` */
   private[smv] implicit def makeFieldHelper(field: StructField) = new StructFieldHelper(field)
 

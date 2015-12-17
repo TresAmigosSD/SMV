@@ -629,6 +629,13 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
+   * Just an alias to smvGroupBy to make client code more readable
+   **/
+  def smvWithKeys(cols: String*) = {
+    SmvDFWithKeys(df, cols)
+  }
+
+  /**
    * Apply user defined `chunk` mapping on data grouped by a set of keys
    *
    * {{{
@@ -786,7 +793,7 @@ class SmvDFHelper(df: DataFrame) {
   }}
 
   /**
-   * Use default peek with or without the parenthesis 
+   * Use default peek with or without the parenthesis
    **/
   def peek(): Unit = peek(1)
 }

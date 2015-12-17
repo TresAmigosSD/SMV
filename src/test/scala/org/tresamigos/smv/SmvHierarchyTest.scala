@@ -66,10 +66,10 @@ class SmvHierarchyTest extends SmvTestUtil {
     ) {
       override def applyToDf(df: DataFrame) = df
 
-      def allSum(df: DataFrame, cols: String*) = levelSum(df, "terr", "div")(cols: _*)
+      def allSum(dfWithKey: SmvDFWithKeys, cols: String*) = levelSum(dfWithKey, "terr", "div")(cols: _*)()
     }
 
-    val res = TestHeir.hierGroupBy("id").allSum(df, "v")
+    val res = TestHeir.allSum(df.smvWithKeys("id"), "v")
 
     assertSrddSchemaEqual(res, "id: String; hier_type: String; hier_value: String; v: Double")
     assertSrddDataEqual(res, """b,div,02,50.0;
@@ -101,8 +101,7 @@ class SmvHierarchyTest extends SmvTestUtil {
           401, -50.0, 5.0,  500.0, 2013;
           405, -50.0, 5.0,  500.0, 2013""")
 
-        getAncillary(GeoHier).withNameCol().hierGroupBy("time").
-          levelSum(srdd, "Territory", "Division")("V1", "V2", "V3")
+        GeoHier.levelSum(srdd.smvWithKeys("time"), "Territory", "Division")("V1", "V2", "V3")(SmvHierOpParam(true, None))
       }
     }
 
@@ -134,8 +133,8 @@ class SmvHierarchyTest extends SmvTestUtil {
       401, -50.0, 5.0,  500.0, 2013;
       405, -50.0, 5.0,  500.0, 2013""")
 
-    val res2 = GeoHier.withNameCol().withParentCols("terr").hierGroupBy("time").
-      levelSum(df, "Territory", "Division")("V1", "V2", "V3")
+    val res2 = GeoHier.
+      levelSum(df.smvWithKeys("time"), "Territory", "Division")("V1", "V2", "V3")(SmvHierOpParam(true, Some("terr")))
 
     assertSrddSchemaEqual(res2, """time: Integer; geo_type: String; geo_value: String; geo_name: String;
                                    parent_geo_type: String; parent_geo_value: String; parent_geo_name: String;
@@ -166,10 +165,10 @@ class SmvHierarchyTest extends SmvTestUtil {
       401, -50.0, 5.0,  500.0, 2013;
       405, -50.0, 5.0,  500.0, 2013""")
 
-    val res1 = GeoHier.hierGroupBy("time").
-      levelSum(df, "Territory", "Division")("V1", "V2", "V3")
+    val res1 = GeoHier.
+      levelSum(df.smvWithKeys("time"), "Territory", "Division")("V1", "V2", "V3")()
 
-    val res2 = GeoHier.hierGroupBy("time").appendParentValues(res1, "terr")
+    val res2 = GeoHier.appendParentValues(res1.smvWithKeys("time"), "terr")
 
     assertSrddSchemaEqual(res2, """time: Integer; geo_type: String; geo_value: String;
                                    parent_geo_type: String; parent_geo_value: String;
