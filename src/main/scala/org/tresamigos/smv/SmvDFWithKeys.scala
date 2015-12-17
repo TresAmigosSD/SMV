@@ -16,4 +16,4 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
 
-private[smv] case class SmvDFWithKeys(df: DataFrame, keys: Seq[String])
+case class SmvDFWithKeys(df: DataFrame, keys: Seq[String])
