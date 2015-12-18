@@ -57,4 +57,11 @@ class AggFuncsTest extends SmvTestUtil {
 
     assertSrddDataEqual(res, "X,null,null,0,0.0")
   }
+
+  test("test smvIsAny") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("v1:Boolean; v2:Boolean; v3: Boolean", "true,,;false,false,;,false,")
+    val res = df.agg(smvIsAny($"v1") as "v1", smvIsAny($"v2") as "v2", smvIsAny($"v3") as "v3")
+    assertSrddDataEqual(res, "true,false,false")
+  }
 }

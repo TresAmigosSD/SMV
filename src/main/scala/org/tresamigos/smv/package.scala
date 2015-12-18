@@ -177,4 +177,11 @@ package object smv {
     //val cZero = lit(0).cast(col.toExpr.dataType)
     coalesce(sum(col), lit(0))
   }
+
+  /**
+   * IsAny aggregate function
+   * Return true if any of the values of the aggregated column are true, otherwise false.
+   * NOTE: It returns false, if all the values are nulls
+   **/
+  def smvIsAny(col: Column): Column = (sum(when(col, 1).otherwise(0)) > 0)
 }
