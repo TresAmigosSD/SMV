@@ -416,6 +416,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
       handler.csvFileWithSchema(null)
     }
   }
+
+  private[smv] def stageVersion() = parentStage.version
 }
 
 /**
@@ -447,6 +449,20 @@ class SmvModuleLink(outputModule: SmvOutput) extends
    */
   override def requiresDS() = Seq.empty
   override def run(inputs: runParams) = null
+
+  /**
+   * If the depended smvModule has a published version, SmvModuleLink's datasetHash
+   * depends on the version string. Otherwise, depends on the smvModule's hashOfHash
+   **/
+  override def datasetHash() = {
+    val dependedHash = smvModule.stageVersion.map{v =>
+      val crc = new java.util.zip.CRC32
+      crc.update(v.toCharArray.map(_.toByte))
+      (crc.getValue).toInt
+    }.getOrElse(smvModule.hashOfHash)
+
+    (dependedHash + datasetCRC).toInt
+  }
 
   /**
    * "Running" a link requires that we read the published output from the upstream `DataSet`.
