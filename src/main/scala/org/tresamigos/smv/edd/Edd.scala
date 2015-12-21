@@ -74,6 +74,11 @@ class Edd(val df: DataFrame) {
     histogram(histCols: _*)
   }
 
+  def nullRate(colNames: String*): EddResultFunctions = {
+    val res = (new NullRate(df)(colNames: _*).run())
+    EddResultFunctions(res)
+  }
+
   /** alias to summary **/
   @deprecated("Should use summary method", "1.5")
   def addBaseTasks(colNames: String*) = summary(colNames: _*)
