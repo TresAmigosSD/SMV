@@ -98,6 +98,18 @@ private[smv] class EddSummary(override val df: DataFrame)(colNames: String*) ext
 
 }
 
+private[smv] class NullRate(override val df: DataFrame)(colNames: String*) extends EddTaskGroup {
+  val listSeq =
+    if (colNames.isEmpty)
+      df.columns.toSeq
+    else
+      colNames.toSet.toSeq
+
+  override val taskList = listSeq.map{ l =>
+    NullRateTask(df(l))
+  }
+}
+
 private[smv] class EddHistogram(override val df: DataFrame)(histCols: HistColumn*) extends EddTaskGroup {
   private def createHist(histCol: edd.Hist) = {
     val s = df(histCol.colName)
