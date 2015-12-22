@@ -21,9 +21,8 @@ import java.util.Properties
 
 import org.rogach.scallop.ScallopConf
 
-
 /**
- * command line argumetn parsing using scallop library.
+ * command line argument parsing using scallop library.
  * See (https://github.com/scallop/scallop) for details on using scallop.
  */
 private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) {
@@ -40,6 +39,9 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val publish = opt[String]("publish", noshort = true,
     default = None,
     descr = "publish the given modules/stage/app as given version")
+  val compareEdd = opt[List[String]]("edd-compare", noshort = true,
+    default = None,
+    descr = "compare two edd result files")
   val genEdd = toggle("edd", default = Some(false), noshort = true,
     descrYes = "summarize data and generate an edd file in the same directory as csv and schema",
     descrNo  = "do not summarize data")
@@ -64,8 +66,14 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                   descrYes = "run all output modules in all stages in app.")
 
   // make sure something was specified to run!!!
-  validateOpt (purgeOldOutput, modsToRun, stagesToRun, runAllApp) {
-    case (Some(false), None, None, Some(false)) => Left("Must supply an app, stage, or module to run or cleanup!")
+  validateOpt (purgeOldOutput, compareEdd, modsToRun, stagesToRun, runAllApp) {
+    case (Some(false), None, None, None, Some(false)) => Left("Must supply an app, stage, or module to run, compare edd or cleanup!")
+    case _ => Right(Unit)
+  }
+
+  // if user specified "edd-compare" command line, user should have supplied two file names.
+  validateOpt(compareEdd) {
+    case (Some(edds)) if edds.length != 2 => Left("edd-compare param requires two EDD file names")
     case _ => Right(Unit)
   }
 
