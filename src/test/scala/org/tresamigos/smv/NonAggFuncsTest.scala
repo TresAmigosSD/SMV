@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.functions._
-
+import org.tresamigos.smv.smvfuncs._
 
 class NonAggFuncsTest extends SmvTestUtil {
   test("test smvStrCat") {
@@ -49,5 +49,24 @@ class NonAggFuncsTest extends SmvTestUtil {
     assertSrddDataEqual(res, "J;null")
   }
 
+  test("smvCountTrue should count columns with true values") {
+    val df = createSchemaRdd("k:String; v:Boolean", "1,true;2,;3,false")
+    val res = df.groupBy("k").agg(smvCountTrue(df("v")) as "count")
+    assertSrddSchemaEqual(res, "k:String;count:Long")
+    assertSrddDataEqual(res, "1,1;2,0;3,0")
+  }
 
+  test("smvCountFalse should count columns with false values") {
+    val df = createSchemaRdd("k:String; v:Boolean", "1,true;2,;3,false")
+    val res = df.groupBy("k").agg(smvCountFalse(df("v")) as "count")
+    assertSrddSchemaEqual(res, "k:String;count:Long")
+    assertSrddDataEqual(res, "1,0;2,0;3,1")
+  }
+
+  test("smvCountNull should count columns with null values") {
+    val df = createSchemaRdd("k:String; v:Boolean", "1,true;2,;3,false")
+    val res = df.groupBy("k").agg(smvCountNull(df("v")) as "count")
+    assertSrddSchemaEqual(res, "k:String;count:Long")
+    assertSrddDataEqual(res, "1,0;2,1;3,0")
+  }
 }

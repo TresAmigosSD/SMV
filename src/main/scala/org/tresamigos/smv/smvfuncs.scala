@@ -13,6 +13,9 @@ object smvfuncs {
    */
   def smvCountTrue(cond: Column): Column = count(when(cond, lit(1)).otherwise(lit(null)))
 
-  /** Convenience method */
+  /** Count non-null false values */
   def smvCountFalse(cond: Column): Column = smvCountTrue(!cond)
+
+  /** Count number of null values */
+  def smvCountNull(cond: Column): Column = count(when(cond.isNull, lit(1)).otherwise(lit(null)))
 }
