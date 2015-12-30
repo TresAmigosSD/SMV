@@ -21,6 +21,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
 
+import dqm.{ParserLogger, TerminateParserLogger}
 
 /**
  * A class to convert Csv strings to DF
@@ -29,7 +30,7 @@ private[smv] class FileIOHandler(
     sqlContext: SQLContext,
     dataPath: String,
     schemaPath: Option[String] = None,
-    parserValidator: ParserValidationTask = TerminateParserValidator
+    parserValidator: ParserLogger = TerminateParserLogger
   ) {
 
   private def fullSchemaPath = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
@@ -170,7 +171,7 @@ private[smv] class CSVParserWrapper(ca: CsvAttributes) {
  *  @param f the function applied to the parsed record
  */
 private[smv] class CSVStringParser[U](
-    f: (String, Seq[String]) => U, parserV: ParserValidationTask
+    f: (String, Seq[String]) => U, parserV: ParserLogger
   )(implicit ut: ClassTag[U]) extends Serializable {
   //import au.com.bytecode.opencsv.CSVParser
 

@@ -90,23 +90,6 @@ private[smv] abstract class ValidationTask {
   def validate(df: DataFrame): ValidationResult
 }
 
-private[smv] abstract class ParserValidationTask extends Serializable {
-  def addWithReason(e: Exception, rec: String): Unit
-}
-
-/** For data files, log the parser errors and fail the DF if `failAtError == true` and error happens */
-private[smv] class ParserValidation(dqmState: DQMState) extends ParserValidationTask{
-  def addWithReason(e: Exception, rec: String) = {
-    val mess = s"${e.toString} @RECORD: ${rec}"
-    dqmState.addParserRec(mess)
-  }
-}
-
-/** For persisted data, we are not expecting any parser error, so terminate if we have any */
-private[smv] object TerminateParserValidator extends ParserValidationTask {
-  override def addWithReason(e: Exception, rec: String) = throw e
-}
-
 /** ValidationSet is a collection of ValidationTask's
  *  it provide a single entire to the list of tasks from SmvDataSet
  **/

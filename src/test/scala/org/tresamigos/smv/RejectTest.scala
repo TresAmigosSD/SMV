@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.SparkException
+import dqm.{SmvDQM, FailParserCountPolicy}
 
 class RejectTest extends SmvTestUtil {
   test("test csvFile loader rejection with NoOp") {
@@ -40,19 +41,25 @@ class RejectTest extends SmvTestUtil {
       val df = open(testDataDir + "RejectTest/test2")
     }
     val m = e.getMessage
-    assert(m === """{
-  "passed":false,
-  "errorMessages": [
-    {"FailParserCountPolicy(1)":"false"}
-  ],
-  "checkLog": [
-    "java.text.ParseException: Unparseable date: \"130109130619\" @RECORD: 123,12.50  ,130109130619,12102012",
-    "java.text.ParseException: Unparseable date: \"109130619\" @RECORD: 123,12.50  ,109130619,12102012",
-    "java.text.ParseException: Unparseable date: \"201309130619\" @RECORD: 123,12.50  ,201309130619,12102012",
-    "java.lang.IllegalArgumentException: requirement failed @RECORD: 123,12.50  ,12102012",
-    "java.lang.NumberFormatException: For input string: \"001x\" @RECORD: 123,001x  ,20130109130619,12102012"
-  ]
-}""")
+    val res = ValidationResult(m)
+    assertUnorderedSeqEqual(res.checkLog, Seq(
+      "java.text.ParseException: Unparseable date: \"130109130619\" @RECORD: 123,12.50  ,130109130619,12102012",
+      "java.text.ParseException: Unparseable date: \"109130619\" @RECORD: 123,12.50  ,109130619,12102012",
+      "java.text.ParseException: Unparseable date: \"201309130619\" @RECORD: 123,12.50  ,201309130619,12102012",
+      "java.lang.IllegalArgumentException: requirement failed @RECORD: 123,12.50  ,12102012",
+      "java.lang.NumberFormatException: For input string: \"001x\" @RECORD: 123,001x  ,20130109130619,12102012"
+    ))
+  }
+
+  test("test csvFile loader with FailParserCountPolicy") {
+    object file extends SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv) {
+      override val failAtParsingError = false
+      override def dqm() = SmvDQM().add(FailParserCountPolicy(10))
+    }
+    val df = file.rdd
+    val res = ValidationResult(SmvReportIO.readReport(file.moduleValidPath()))
+    assert(res.passed === true)
+    assertUnorderedSeqEqual(res.errorMessages, Seq(("FailParserCountPolicy(10)", "true")))
   }
 
   test("test csvParser rejection with exception") {
