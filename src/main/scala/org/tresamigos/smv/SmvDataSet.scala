@@ -80,12 +80,10 @@ abstract class SmvDataSet {
    */
   def isEphemeral: Boolean
 
-  private lazy val dsDqm = dqm()
-
   private[smv] def isPersistValidateResult = !isObjectInShell
 
   /** do not persist validation result if isObjectInShell **/
-  private[smv] def validations(): ValidationSet = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
+  private[smv] def validations(): ValidationSet = new ValidationSet(Nil, isPersistValidateResult)
 
   /**
    * Define the DQM rules, fixes and policies to be applied to this `DataSet`.
@@ -189,9 +187,12 @@ abstract class SmvDataSet {
   }
 
   private[smv] def computeRDD: DataFrame = {
+    val dsDqm = dqm()
+    val validator = validations.add(dsDqm)
+
     if(isEphemeral) {
       val df = dsDqm.attachTasks(doRun())
-      validations.validate(df, false, moduleValidPath()) // no action before this point
+      validator.validate(df, false, moduleValidPath()) // no action before this point
       df
     } else {
       readPersistedFile().recoverWith {case e =>

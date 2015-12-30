@@ -70,7 +70,16 @@ class SmvDQM (
     val needAction: Boolean = false
   ) extends ValidationTask {
 
-  private var dqmState: DQMState = null
+  private lazy val app: SmvApp = SmvApp.app
+
+  private lazy val dqmState: DQMState = {
+    val ruleNames = rules.map{_.name}
+    val fixNames = fixes.map{_.name}
+
+    /** Check for duplicated task names */
+    require((ruleNames ++ fixNames).size == (ruleNames ++ fixNames).toSet.size)
+    new DQMState(app.sc, rules.map{_.name}, fixes.map{_.name})
+  }
 
   def add(rule: DQMRule): SmvDQM = {
     val newRules = rules :+ rule
@@ -85,16 +94,6 @@ class SmvDQM (
   def add(policy: DQMPolicy): SmvDQM = {
     val newPolicies = policies :+ policy
     new SmvDQM(rules, fixes, newPolicies, needAction)
-  }
-
-  /** init the DqmState. It should be done once only */
-  private def initState(sc: SparkContext): Unit = {
-    val ruleNames = rules.map{_.name}
-    val fixNames = fixes.map{_.name}
-
-    /** Check for duplicated task names */
-    require((ruleNames ++ fixNames).size == (ruleNames ++ fixNames).toSet.size)
-    dqmState = new DQMState(sc, rules.map{_.name}, fixes.map{_.name})
   }
 
   /** create policies from tasks. Filter out NoOpDQMPolicy */
@@ -128,8 +127,6 @@ class SmvDQM (
 
   /** add overall record counter and rules and fixes */
   def attachTasks(df: DataFrame): DataFrame = {
-    initState(df.sqlContext.sparkContext)
-
     val _dqmState = dqmState
     val totalCountCol = udf({() =>
       _dqmState.addRec()
