@@ -35,30 +35,24 @@ class RejectTest extends SmvTestUtil {
     assert(res === exp)
   }
 
-  test("test csvFile loader rejection") {
-    object file extends SmvCsvFile("./" + testDataDir +  "RejectTest/test2", CsvAttributes.defaultCsv) {
-      override val failAtParsingError = false
-    }
-    val df = file.rdd
-
-    val (n, res) = file.parserValidator.parserLogger.report
-    //res.foreach(println)
-    val exp = List(
-      """java.text.ParseException: Unparseable date: "130109130619" @RECORD: 123,12.50  ,130109130619,12102012""",
-      """java.text.ParseException: Unparseable date: "109130619" @RECORD: 123,12.50  ,109130619,12102012""",
-      """java.text.ParseException: Unparseable date: "201309130619" @RECORD: 123,12.50  ,201309130619,12102012""",
-      """java.lang.IllegalArgumentException: requirement failed @RECORD: 123,12.50  ,12102012""",
-      """java.lang.NumberFormatException: For input string: "001x" @RECORD: 123,001x  ,20130109130619,12102012"""
-    )
-
-    assertUnorderedSeqEqual(res, exp)
-    assert(n === 5)
-  }
-
   test("test csvFile loader rejection with exception") {
-    intercept[ValidationError] {
+    val e = intercept[ValidationError] {
       val df = open(testDataDir + "RejectTest/test2")
     }
+    val m = e.getMessage
+    assert(m === """{
+  "passed":false,
+  "errorMessages": [
+    {"FailParserCountPolicy(1)":"false"}
+  ],
+  "checkLog": [
+    "java.text.ParseException: Unparseable date: \"130109130619\" @RECORD: 123,12.50  ,130109130619,12102012",
+    "java.text.ParseException: Unparseable date: \"109130619\" @RECORD: 123,12.50  ,109130619,12102012",
+    "java.text.ParseException: Unparseable date: \"201309130619\" @RECORD: 123,12.50  ,201309130619,12102012",
+    "java.lang.IllegalArgumentException: requirement failed @RECORD: 123,12.50  ,12102012",
+    "java.lang.NumberFormatException: For input string: \"001x\" @RECORD: 123,001x  ,20130109130619,12102012"
+  ]
+}""")
   }
 
   test("test csvParser rejection with exception") {
@@ -71,7 +65,7 @@ class RejectTest extends SmvTestUtil {
     assert(m === """{
   "passed":false,
   "errorMessages": [
-    {"ParserError":"Totally 1 records get rejected"}
+    {"FailParserCountPolicy(1)":"false"}
   ],
   "checkLog": [
     "java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011"
@@ -83,27 +77,21 @@ class RejectTest extends SmvTestUtil {
     val data = """231,67.21  ,20121009101621,"02122011"""
     val schemaStr = "a:String;b:Double;c:String;d:String"
 
-    object smvCF extends SmvCsvStringData(schemaStr, data) {
+    object smvCF extends SmvCsvStringData(schemaStr, data, true) {
       override val failAtParsingError = false
     }
     val prdd = smvCF.rdd
-    val (n, res) = smvCF.parserValidator.parserLogger.report
-    //res.foreach(println)
-    val exp = List(
-      """java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,"02122011"""
-    )
-    assertUnorderedSeqEqual(res, exp)
-    assert(n === 1)
 
-    val exp2 = ValidationResult("""{
-        "passed":true,
-        "errorMessages": [
-          {"ParserError":"Totally 1 records get rejected"}
-        ],
-        "checkLog": [
-          "java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011"
-        ]
-      }""")
-    assert (smvCF.validations.validate(null, true, smvCF.moduleValidPath()) === exp2)
+    val res = SmvReportIO.readReport(smvCF.moduleValidPath())
+
+    assert(res === """{
+  "passed":true,
+  "errorMessages": [
+
+  ],
+  "checkLog": [
+    "java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011"
+  ]
+}""")
   }
 }

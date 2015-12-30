@@ -16,6 +16,7 @@
 package org.tresamigos.smv {
 
 import org.apache.spark.sql.DataFrame
+import dqm.SmvDQM
 
 class SmvHashOfHashTest extends SmvTestUtil {
   test("Test module hashOfHash") {
@@ -126,11 +127,11 @@ class SmvAppTest extends SmvTestUtil {
 
     object f1 extends SmvFile {
       val path = "F1.csv"
-      def doRun(): DataFrame = null
+      def doRun(dsDqm: SmvDQM): DataFrame = null
     }
     object f2 extends SmvFile {
       val path = "F2.csv"
-      def doRun(): DataFrame = null
+      def doRun(dsDqm: SmvDQM): DataFrame = null
     }
 
     assert(f1.datasetHash() !== f2.datasetHash)
@@ -140,7 +141,7 @@ class SmvAppTest extends SmvTestUtil {
 
     object f3 extends SmvFile {
       val path = "F1.csv"
-      def doRun(): DataFrame = null
+      def doRun(dsDqm: SmvDQM): DataFrame = null
     }
 
     assert(f1.datasetHash() !== f3.datasetHash())

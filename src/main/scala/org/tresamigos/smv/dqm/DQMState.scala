@@ -31,11 +31,13 @@ class DQMState(
   ) extends Serializable {
 
   private val recordCounter: Accumulator[Long] = sc.accumulator(0l)
+  private val parserLogger = new RejectLogger(sc, 10)
   private val fixCounters: Map[String, Accumulator[Int]] = fixNames.map{n => (n, sc.accumulator(0))}.toMap
   private val ruleLoggers: Map[String, RejectLogger] = ruleNames.map{n => (n, new RejectLogger(sc, 10))}.toMap
 
   private var concluded: Boolean = false
   private var recordCounterCopy: Long = _
+  private var parserLoggerCopy: (Int, List[String]) = _
   private var fixCountersCopy: Map[String, Int] = _
   private var ruleLoggersCopy: Map[String, (Int, List[String])] = _
 
@@ -44,6 +46,9 @@ class DQMState(
     recordCounter += 1l
   }
 
+  private[smv] def addParserRec(log: String): Unit = {
+    parserLogger.add(log)
+  }
   /** add one on the "fix" counter for the given fix name */
   private[smv] def addFixRec(name: String): Unit = {
     fixCounters(name) += 1
@@ -68,6 +73,7 @@ class DQMState(
     if(!concluded){
       concluded = true
       recordCounterCopy = recordCounter.value
+      parserLoggerCopy = parserLogger.report
       fixCountersCopy = fixCounters.map{case (k, a) => (k, a.value)}.toMap
       ruleLoggersCopy = ruleLoggers.map{case (k, l) => (k, l.report)}.toMap
     }
@@ -77,6 +83,12 @@ class DQMState(
   def getRecCount(): Long = {
     require(concluded)
     recordCounterCopy
+  }
+
+  /** get the total parser fail count */
+  def getParserCount(): Int = {
+    require(concluded)
+    parserLoggerCopy._1
   }
 
   /** for the fix with the given name, return the time it is triggered */
@@ -100,6 +112,12 @@ class DQMState(
     }.get
   }
 
+  /** get the example parser fails */
+  def getParserLog(): Seq[String] = {
+    require(concluded)
+    parserLoggerCopy._2.toSeq
+  }
+
   /** for the rule with the given name, return the example failed records */
   def getRuleLog(name: String): Seq[String] = {
     require(concluded)
@@ -115,7 +133,8 @@ class DQMState(
     val fLog = fixCountersCopy.map{case (name, n) =>
       s"Fix: ${name}, total count: ${n}"
     }.toSeq
-    rLog ++ fLog
+    val pLog = getParserLog()
+    rLog ++ fLog ++ pLog
   }
 
   /** return the total number of times fixes get triggered */

@@ -91,9 +91,13 @@ class SmvDQM (
     new SmvDQM(rules, newFixes, policies, true)
   }
 
-  def add(policy: DQMPolicy): SmvDQM = {
+  def add(policy: DQMPolicy, _needAction: Option[Boolean] = None): SmvDQM = {
     val newPolicies = policies :+ policy
-    new SmvDQM(rules, fixes, newPolicies, needAction)
+    new SmvDQM(rules, fixes, newPolicies, _needAction.getOrElse(needAction))
+  }
+
+  def addAction(): SmvDQM = {
+    new SmvDQM(rules, fixes, policies, true)
   }
 
   /** create policies from tasks. Filter out NoOpDQMPolicy */
@@ -135,6 +139,10 @@ class SmvDQM (
 
     val dfWithRules = attachRules(df.where(totalCountCol()))
     attachFixes(dfWithRules)
+  }
+
+  private[smv] def createParserValidator() = {
+    new ParserValidation(dqmState)
   }
 
   def validate(df: DataFrame) = {

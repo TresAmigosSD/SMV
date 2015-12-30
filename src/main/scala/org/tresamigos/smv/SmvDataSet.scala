@@ -96,6 +96,11 @@ abstract class SmvDataSet {
   def dqm(): SmvDQM = SmvDQM()
 
   /**
+   * createDsDqm could be overridden by smv internal SmvDataSet's sub-classes
+   */
+  private[smv] def createDsDqm() = dqm()
+
+  /**
    * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
@@ -130,7 +135,7 @@ abstract class SmvDataSet {
     versionedBasePath(prefix) + ".valid"
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  private[smv] def doRun(): DataFrame
+  private[smv] def doRun(dsDqm: SmvDQM): DataFrame
 
   /**
    * delete the output(s) associated with this module (csv file and schema).
@@ -187,16 +192,16 @@ abstract class SmvDataSet {
   }
 
   private[smv] def computeRDD: DataFrame = {
-    val dsDqm = dqm()
+    val dsDqm = createDsDqm()
     val validator = validations.add(dsDqm)
 
     if(isEphemeral) {
-      val df = dsDqm.attachTasks(doRun())
+      val df = dsDqm.attachTasks(doRun(dsDqm))
       validator.validate(df, false, moduleValidPath()) // no action before this point
       df
     } else {
       readPersistedFile().recoverWith {case e =>
-        val df = dsDqm.attachTasks(doRun())
+        val df = dsDqm.attachTasks(doRun(dsDqm))
         persist(df)
         validations.validate(df, true, moduleValidPath()) // has already had action (from persist)
         readPersistedFile()
@@ -220,9 +225,13 @@ abstract class SmvFile extends SmvDataSet {
 
   private[smv] def isFullPath: Boolean = false
 
+  /* TODO: combine SmvFile SmvCsvStringData to a trait for the parserValidator stuff */
+  val forceParserCheck = true
   val failAtParsingError = true
-  private[smv] lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
-  override def validations() = super.validations.add(parserValidator)
+  override def createDsDqm() =
+    if (failAtParsingError) dqm().add(FailParserCountPolicy(1), Option(true))
+    else if (forceParserCheck) dqm().addAction()
+    else dqm()
 
   private[smv] def fullPath = {
     if (isFullPath || ("""^[\.\/]""".r).findFirstIn(path) != None) path
@@ -287,7 +296,8 @@ case class SmvCsvFile(
   override val isFullPath: Boolean = false
 ) extends SmvFile {
 
-  override private[smv] def doRun(): DataFrame = {
+  override private[smv] def doRun(dsDqm: SmvDQM): DataFrame = {
+    val parserValidator = dsDqm.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
     val df = handler.csvFileWithSchema(csvAttributes)
@@ -301,7 +311,8 @@ case class SmvFrlFile(
     override val isFullPath: Boolean = false
   ) extends SmvFile {
 
-  override private[smv] def doRun(): DataFrame = {
+  override private[smv] def doRun(dsDqm: SmvDQM): DataFrame = {
+    val parserValidator = dsDqm.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
     val df = handler.frlFileWithSchema()
@@ -343,7 +354,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   def run(inputs: runParams) : DataFrame
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  override private[smv] def doRun(): DataFrame = {
+  override private[smv] def doRun(dsDqm: SmvDQM): DataFrame = {
     // TODO turn on dependency check by uncomment the following line after test against projects
     // checkDependency()
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
@@ -472,7 +483,7 @@ class SmvModuleLink(outputModule: SmvOutput) extends
    * and run the DS, or "not-follow-the-link", which will try to read from the persisted data dir
    * and fail if not found.
    */
-  override private[smv] def doRun(): DataFrame = {
+  override private[smv] def doRun(dsDqm: SmvDQM): DataFrame = {
     if (isFollowLink) {
       smvModule.readPublishedData().getOrElse(smvModule.computeRDD)
     } else {
@@ -500,9 +511,12 @@ case class SmvCsvStringData(
 
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
+  val forceParserCheck = true
   val failAtParsingError = true
-  lazy val parserValidator = new ParserValidation(app.sc, failAtParsingError)
-  override def validations() = super.validations.add(parserValidator)
+  override def createDsDqm() =
+    if (failAtParsingError) dqm().add(FailParserCountPolicy(1), Option(true))
+    else if (forceParserCheck) dqm().addAction()
+    else dqm()
 
   override def datasetHash() = {
     val crc = new java.util.zip.CRC32
@@ -512,10 +526,11 @@ case class SmvCsvStringData(
 
   def run(i: runParams) = null
 
-  override def doRun(): DataFrame = {
+  override def doRun(dsDqm: SmvDQM): DataFrame = {
     val schema = SmvSchema.fromString(schemaStr)
     val dataArray = data.split(";").map(_.trim)
 
+    val parserValidator = dsDqm.createParserValidator()
     val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
   }
