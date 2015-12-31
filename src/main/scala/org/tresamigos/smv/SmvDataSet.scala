@@ -214,6 +214,19 @@ abstract class SmvDataSet {
   private[smv] lazy val parentStage : SmvStage = app.stages.findStageForDataSet(this)
 }
 
+/** Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
+ * common part to the new ABC: SmvDSWithParser
+ **/
+trait SmvDSWithParser extends SmvDataSet {
+  val forceParserCheck = true
+  val failAtParsingError = true
+
+  override def createDsDqm() =
+    if (failAtParsingError) dqm().add(FailParserCountPolicy(1), Option(true))
+    else if (forceParserCheck) dqm().addAction()
+    else dqm()
+}
+
 abstract class SmvFile extends SmvDataSet {
   val path: String
   val schemaPath: String = null
@@ -222,14 +235,6 @@ abstract class SmvFile extends SmvDataSet {
   override val isEphemeral = true
 
   private[smv] def isFullPath: Boolean = false
-
-  /* TODO: combine SmvFile SmvCsvStringData to a trait for the parserValidator stuff */
-  val forceParserCheck = true
-  val failAtParsingError = true
-  override def createDsDqm() =
-    if (failAtParsingError) dqm().add(FailParserCountPolicy(1), Option(true))
-    else if (forceParserCheck) dqm().addAction()
-    else dqm()
 
   private[smv] def fullPath = {
     if (isFullPath || ("""^[\.\/]""".r).findFirstIn(path) != None) path
@@ -292,7 +297,7 @@ case class SmvCsvFile(
   csvAttributes: CsvAttributes = null,
   override val schemaPath: String = null,
   override val isFullPath: Boolean = false
-) extends SmvFile {
+) extends SmvFile with SmvDSWithParser {
 
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val parserValidator = dsDqm.createParserValidator()
@@ -307,7 +312,7 @@ case class SmvFrlFile(
     override val path: String,
     override val schemaPath: String = null,
     override val isFullPath: Boolean = false
-  ) extends SmvFile {
+  ) extends SmvFile with SmvDSWithParser {
 
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val parserValidator = dsDqm.createParserValidator()
@@ -505,24 +510,17 @@ case class SmvCsvStringData(
     schemaStr: String,
     data: String,
     override val isPersistValidateResult: Boolean = false
-  ) extends SmvModule("Dummy module to create DF from strings") {
+  ) extends SmvDataSet with SmvDSWithParser {
 
+  override def description() = s"Dummy module to create DF from strings"
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
-  val forceParserCheck = true
-  val failAtParsingError = true
-  override def createDsDqm() =
-    if (failAtParsingError) dqm().add(FailParserCountPolicy(1), Option(true))
-    else if (forceParserCheck) dqm().addAction()
-    else dqm()
 
   override def datasetHash() = {
     val crc = new java.util.zip.CRC32
     crc.update((schemaStr + data).toCharArray.map(_.toByte))
     (crc.getValue + datasetCRC).toInt
   }
-
-  def run(i: runParams) = null
 
   override def doRun(dsDqm: DQMValidator): DataFrame = {
     val schema = SmvSchema.fromString(schemaStr)

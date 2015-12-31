@@ -25,4 +25,9 @@ class ModuleCrcConsistencyTest extends SmvTestUtil {
 
     assert(Module1.datasetCRC === 2036878497l)
   }
+
+  test("test moduleCrc on SmvFile"){
+    object file extends SmvCsvFile("./" + testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader)
+    assert(file.datasetCRC === 3726969404l)
+  }
 }

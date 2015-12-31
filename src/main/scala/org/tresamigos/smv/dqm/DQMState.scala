@@ -15,8 +15,8 @@
 package org.tresamigos.smv.dqm
 
 import scala.util.Try
-import org.tresamigos.smv.RejectLogger
 import org.apache.spark.{SparkContext, Accumulator}
+import scala.collection.mutable.MutableList
 
 /**
  * DQMState keeps tracking of [[org.tresamigos.smv.dqm.DQMTask]] behavior on a DF
@@ -151,3 +151,25 @@ class DQMState(
 }
 
 class DQMRuleError(ruleName: String) extends Exception(ruleName) with Serializable
+
+private[smv] class RejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends Serializable {
+  private val rejectedRecords = sparkContext.accumulableCollection(MutableList[String]())
+  private val rejectedRecordCount = sparkContext.accumulator(0)
+
+  val add: (String) => Unit = {
+    var localCounter = 0
+    (r:String) => {
+      if (localCounter < localMax) {
+        rejectedRecords += r
+      }
+      localCounter = localCounter + 1
+      rejectedRecordCount += 1
+      Unit
+    }
+  }
+
+  def report: (Int, List[String]) = {
+    (rejectedRecordCount.value, rejectedRecords.value.toList)
+  }
+
+}
