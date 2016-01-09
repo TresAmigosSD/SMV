@@ -236,16 +236,24 @@ abstract class SmvFile extends SmvDataSet {
 
   private[smv] def isFullPath: Boolean = false
 
+  /* Historically we specify path in SmvFile respect to dataDir
+   * instead of inputDir. However by convention we always put data
+   * files in /data/input/ dir, so all the path strings in the projects
+   * started with "input/". To transfer to use inputDir, we will still
+   * prepend dataDir if the path string start with "input/"
+   */
   private[smv] def fullPath = {
     if (isFullPath || ("""^[\.\/]""".r).findFirstIn(path) != None) path
     else if (app == null) throw new IllegalArgumentException(s"app == null and $path is not a full path")
-    else s"${app.smvConfig.dataDir}/${path}"
+    else if (path.startsWith("input/")) s"${app.smvConfig.dataDir}/${path}"
+    else s"${app.smvConfig.inputDir}/${path}"
   }
 
   private[smv] def fullSchemaPath = {
     if(schemaPath == null) None
     else if (isFullPath) Option(schemaPath)
-    else Option(s"${app.smvConfig.dataDir}/${schemaPath}")
+    else if (schemaPath.startsWith("input/")) Option(s"${app.smvConfig.dataDir}/${schemaPath}")
+    else Option(s"${app.smvConfig.inputDir}/${schemaPath}")
   }
 
   /* For SmvFile, the datasetHash should be based on

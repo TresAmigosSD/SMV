@@ -41,7 +41,10 @@ class SmvTestFile(override val name: String) extends SmvModule("") {
 }
 
 class SmvAppTest extends SmvTestUtil {
-  override def appArgs = Seq("-m", "C", "--data-dir", testcaseTempDir)
+  override def appArgs = Seq("-m", "C",
+    "--data-dir", testcaseTempDir,
+    "--input-dir", testcaseTempDir
+  )
 
   val fx = new SmvTestFile("FX")
 
