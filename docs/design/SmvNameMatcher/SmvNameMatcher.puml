@@ -1,0 +1,73 @@
+@startuml
+hide empty methods
+hide empty fields
+hide circle
+
+package smv.matcher {
+    class StringMetricUDFs {
+        +soundexMatch
+        +levenshtein
+    }
+
+    class SmvNameMatcher{
+        +SmvNameMatcher(ex:AbstractExactMatchFilter, joiner:Joiner, matchers:List[LevelMatch])
+        +doMatch(df1:DataFrame, df2:DataFrame):DataFrame
+    }
+
+    class ExactMatchFilterResult {
+        ~ExactMatchFilterResult(df1:DataFrame, df2:DataFrame, extracted:DataFrame)
+    }
+
+    class AbstractExactMatchFilter <<Abstract>> {
+        ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
+    }
+
+    class ExactMatchFilter{
+        +ExactMatchFilter(joinExpr:Column)
+        ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
+    }
+
+    class IdentityExactMatchFilter
+
+    class Joiner <<Abstract>> {
+        ~join((df1:DataFrame, df2:DataFrame):DataFrame
+    }
+
+    class InnerJoiner{
+        +InnerJoiner(joinExpr: Column)
+    }
+
+    class CrossJoiner <<Object>> {
+    }
+
+    class LevelMatch <<Abstract>> {
+        ~getMatchColName():String
+        ~addCols(df:DataFrame):DataFrame
+    }
+
+    class ExactLevelMatch {
+        +ExactLevelMatch(colName:String, colExpr:Column)
+    }
+
+    class FuzzyLevelMatch {
+        +FuzzyLevelMatch(colName:String, exactMatchGroup:Column, stringDistanceExpression:Column, threshold:Float)
+    }
+}
+
+AbstractExactMatchFilter "0..1" --* SmvNameMatcher
+Joiner "0..1" --* SmvNameMatcher
+LevelMatch "*" --* SmvNameMatcher
+
+LevelMatch <|-- ExactLevelMatch
+LevelMatch <|--- FuzzyLevelMatch
+
+Joiner <|-- InnerJoiner
+Joiner <|-- CrossJoiner
+
+IdentityExactMatchFilter --|> AbstractExactMatchFilter
+ExactMatchFilter --|> AbstractExactMatchFilter
+
+ExactMatchFilter o-- ExactMatchFilterResult
+SmvNameMatcher --> ExactMatchFilterResult
+
+@enduml
