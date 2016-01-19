@@ -16,6 +16,7 @@
 package org.tresamigos.smv {
 
 import org.apache.spark.sql.DataFrame
+import dqm.DQMValidator
 
 class SmvHashOfHashTest extends SmvTestUtil {
   test("Test module hashOfHash") {
@@ -40,7 +41,10 @@ class SmvTestFile(override val name: String) extends SmvModule("") {
 }
 
 class SmvAppTest extends SmvTestUtil {
-  override def appArgs = Seq("-m", "C", "--data-dir", testcaseTempDir)
+  override def appArgs = Seq("-m", "C",
+    "--data-dir", testcaseTempDir,
+    "--input-dir", testcaseTempDir
+  )
 
   val fx = new SmvTestFile("FX")
 
@@ -126,11 +130,11 @@ class SmvAppTest extends SmvTestUtil {
 
     object f1 extends SmvFile {
       val path = "F1.csv"
-      def doRun(): DataFrame = null
+      def doRun(dsDqm: DQMValidator): DataFrame = null
     }
     object f2 extends SmvFile {
       val path = "F2.csv"
-      def doRun(): DataFrame = null
+      def doRun(dsDqm: DQMValidator): DataFrame = null
     }
 
     assert(f1.datasetHash() !== f2.datasetHash)
@@ -140,7 +144,7 @@ class SmvAppTest extends SmvTestUtil {
 
     object f3 extends SmvFile {
       val path = "F1.csv"
-      def doRun(): DataFrame = null
+      def doRun(dsDqm: DQMValidator): DataFrame = null
     }
 
     assert(f1.datasetHash() !== f3.datasetHash())

@@ -64,13 +64,11 @@ import org.apache.spark.sql.functions.udf
  * The result is a [[org.tresamigos.smv.ValidationResult]]
  **/
 class SmvDQM (
-    private val rules: Seq[DQMRule] = Nil,
-    private val fixes: Seq[DQMFix] = Nil,
-    private val policies: Seq[DQMPolicy] = Nil,
+    private[smv] val rules: Seq[DQMRule] = Nil,
+    private[smv] val fixes: Seq[DQMFix] = Nil,
+    private[smv] val policies: Seq[DQMPolicy] = Nil,
     val needAction: Boolean = false
-  ) extends ValidationTask {
-
-  private var dqmState: DQMState = null
+  ) {
 
   def add(rule: DQMRule): SmvDQM = {
     val newRules = rules :+ rule
@@ -82,31 +80,43 @@ class SmvDQM (
     new SmvDQM(rules, newFixes, policies, true)
   }
 
-  def add(policy: DQMPolicy): SmvDQM = {
+  def add(policy: DQMPolicy, _needAction: Option[Boolean] = None): SmvDQM = {
     val newPolicies = policies :+ policy
-    new SmvDQM(rules, fixes, newPolicies, needAction)
+    new SmvDQM(rules, fixes, newPolicies, _needAction.getOrElse(needAction))
   }
 
-  /** init the DqmState. It should be done once only */
-  private def initState(sc: SparkContext): Unit = {
-    val ruleNames = rules.map{_.name}
-    val fixNames = fixes.map{_.name}
-
-    /** Check for duplicated task names */
-    require((ruleNames ++ fixNames).size == (ruleNames ++ fixNames).toSet.size)
-    dqmState = new DQMState(sc, rules.map{_.name}, fixes.map{_.name})
+  def addAction(): SmvDQM = {
+    new SmvDQM(rules, fixes, policies, true)
   }
+
+}
+
+object SmvDQM {
+  def apply() = new SmvDQM()
+}
+
+class DQMValidator (dqm: SmvDQM) extends ValidationTask {
+  private lazy val app: SmvApp = SmvApp.app
+
+  private val ruleNames = dqm.rules.map{_.name}
+  private val fixNames = dqm.fixes.map{_.name}
+
+  /** Check for duplicated task names */
+  require((ruleNames ++ fixNames).size == (ruleNames ++ fixNames).toSet.size)
+
+  private lazy val dqmState: DQMState =
+    new DQMState(app.sc, ruleNames, fixNames)
 
   /** create policies from tasks. Filter out NoOpDQMPolicy */
   private def policiesFromTasks(): Seq[DQMPolicy] = {
-    (rules ++ fixes).map{_.createPolicy()}.filter(_ != NoOpDQMPolicy)
+    (dqm.rules ++ dqm.fixes).map{_.createPolicy()}.filter(_ != NoOpDQMPolicy)
   }
 
   /** since rule need to log the reference columns, need to plus them before check and remove after*/
   private def attachRules(df: DataFrame): DataFrame = {
-    if (rules.isEmpty) df
+    if (dqm.rules.isEmpty) df
     else {
-      val ruleColTriplets = rules.map{_.createCheckCol(dqmState)}
+      val ruleColTriplets = dqm.rules.map{_.createCheckCol(dqmState)}
       val plusCols = ruleColTriplets.map{_._1}
       val filterCol = ruleColTriplets.map{_._2}.reduce(_ && _)
       val minusCols = ruleColTriplets.map{_._3}
@@ -119,17 +129,15 @@ class SmvDQM (
   }
 
   private def attachFixes(df: DataFrame): DataFrame ={
-    if(fixes.isEmpty) df
+    if(dqm.fixes.isEmpty) df
     else {
-      val fixCols = fixes.map{_.createFixCol(dqmState)}
+      val fixCols = dqm.fixes.map{_.createFixCol(dqmState)}
       df.selectWithReplace(fixCols: _*)
     }
   }
 
   /** add overall record counter and rules and fixes */
   def attachTasks(df: DataFrame): DataFrame = {
-    initState(df.sqlContext.sparkContext)
-
     val _dqmState = dqmState
     val totalCountCol = udf({() =>
       _dqmState.addRec()
@@ -140,12 +148,18 @@ class SmvDQM (
     attachFixes(dfWithRules)
   }
 
-  def validate(df: DataFrame) = {
+  private[smv] def createParserValidator() = {
+    new ParserValidation(dqmState)
+  }
+
+  override def needAction = dqm.needAction
+
+  override def validate(df: DataFrame) = {
     /** need to take a snapshot on the DQMState before validation, since validation step could
      * have actions on the DF, which will change the accumulators of the DQMState*/
     dqmState.snapshot()
 
-    val allPolicies = policiesFromTasks() ++ policies
+    val allPolicies = policiesFromTasks() ++ dqm.policies
     val results = allPolicies.map{p => (p.name, p.policy(df, dqmState))}
 
     val passed = results.isEmpty || results.map{_._2}.reduce(_ && _)
@@ -154,8 +168,4 @@ class SmvDQM (
 
     new ValidationResult(passed, errorMessages, checkLog)
   }
-}
-
-object SmvDQM {
-  def apply() = new SmvDQM()
 }

@@ -53,6 +53,16 @@ private[smv] case class ImplementFailPercentPolicy(name: String, threshold: Doub
 }
 
 /**
+ * If the total time of parser fails >= threshold, fail the DF
+ **/
+case class FailParserCountPolicy(threshold: Int) extends DQMPolicy {
+  def name = s"FailParserCountPolicy(${threshold})"
+  def policy(df: DataFrame, state: DQMState): Boolean = {
+    state.getParserCount() < threshold
+  }
+}
+
+/**
  * For all the rules in a DQM, if the total time of them be triggered is >= threshold, the DF will Fail
  **/
 case class FailTotalRuleCountPolicy(threshold: Int) extends DQMPolicy {

@@ -44,7 +44,7 @@ object EddCompare {
     compareDirs(d1, d2).foreach{case (title, pass, log) => 
       println(title)
       if (!pass) {
-        println("EDDs are not match")
+        println("EDDs do not match")
         println(log)
       }
     }

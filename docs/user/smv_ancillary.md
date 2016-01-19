@@ -46,7 +46,7 @@ object ZipHierarchies extends SmvHierarchies("geo",
 
 Here,
 * `geo` is the prefix of this `SmvHierarchies`
-* Different `SmvHierarchy` defines the hierarchy name, hierarchy map data, and hierarchy sequence (small to large)
+* Different `SmvHierarchy` defines the hierarchy name, hierarchy map data, and hierarchy sequence (granular to coarse-grained)
 * The hierarchy maps of different `SmvHierarchy` could be different
 * The first element of the hierarchy structure is the join key with whatever data it will applied on
 * Each hierarchy map will be joined with the data in the order they are listed in the `SmvHierarchies`
@@ -61,11 +61,11 @@ object MyModule extends SmvModule(...) {
   override def requiresAnc = Seq(ZipHierarchies)
   override def run(...) {
     ...
-    ZipHierarchies.withNameCol.withParentCols("county").
+    ZipHierarchies.
       levelRollup(df, Seq("County", "State"))(
         avg($"v1") as "v1",
         avg($"v2") as "v2"
-      )
+      )()
   }
 }
 ```
@@ -96,7 +96,7 @@ Rollup according to a hierarchy and unpivot with column names
 
 Example:
 ```scala
-ProdHier.levelRollup(df, "h1", "h2")(sum($"v1") as "v1", ...)
+ProdHier.levelRollup(df, "h1", "h2")(sum($"v1") as "v1", ...)()
 ```
 where `df` is the DataFrame this hierarchy rollup happens. `h1` and `h2` are
 hierarchy levels will rollup on. The parameter ordering of the levels does
@@ -126,31 +126,45 @@ h2,        12,         1.0
 h2,        13,         2.0
 ```
 
+Please note that first parameter of `levelRollup` is actually a `SmvDFWithKeys`, which
+a regular `DF` can implicitly convert to with empty list of keys. To specify keys on a
+`DF`, one can do
+```scala
+val dfWithKey = df.smvWithKeys("k1")
+```
+When `SmvDFWithKeys` is used in `levelRollup` the rollup will aggregate to each specified
+level within each "k1" group.
+
 #### levelSum
 The same as `levelRollup` but assume all the specified columns are performing
 summations.
 
 Example,
 ```scala
-ProdHier.levelSum(df, "h1", "h2")("v")
+ProdHier.levelSum(df, "h1", "h2")("v")()
 ```
 
-#### hierGroupBy
-Add additional keys for hierarchy rollups
-
-Example,
+### SmvHierOpParam
+The last parameter list of either `levelRollup` or `levelSum` is an optional
+`SmvHierOpParam`. It has the following signature
 ```scala
-MyHier.hierGroupBy("k1").levelSum(...)(...)
+case class SmvHierOpParam(hasName: Boolean, parentHier: Option[String])
 ```
 
-It will keep the specified `k1` column and aggregate to each specified level within
-each `k1` groups.
+The default value of `SmvHierOpParam` of both `levelRollup` and `levelSum` is
+```scala
+SmvHierOpParam(false, None)
+```
 
-#### withNameCol
-Config `SmvHierarchies` to add `prefix_name` column in addition to `type` and `value` fields.
+This operation parameter will specify the additional operations of the rollups.
 
-For each hierarchy level, it can have a name field specified in the hierarchy map data.
-For example, a county can have a `FIPS` code, which will be the `geo_value`, it could also
+#### With Name
+
+If `hasName` is `true`, a `prefix_name` column will be added in additional to
+`prefix_type` and `prefix_value` fields.
+
+With in the hierarchymap  data, for each hierarchy level, it can have a name field specified.
+For an example, a `County` can have a `FIPS` code, which will be the `geo_value`, it could also
 have a name, which will be the `geo_name`.
 
 ```
@@ -158,22 +172,23 @@ have a name, which will be the `geo_name`.
 ... ,06073 ,San Diego
 ```
 
-The name columns in the hierarchy map data should be named the same way as the `value` column
+The `name` columns in the hierarchy map data should be named the same way as the `value` column
 with some postfix. The default postfix is `_name`. In above example, if the level is `County`,
-the column name for `FIPS` in the map data is `County`, and the column name for the name
+the column name for `value` in the map data is `County`, and the column name for the `name`
 will be `County_name`.
 
-User can specify the postfix when define the `SmvHierarchy` as the following example, the
+User can specify the postfix when define the `SmvHierarchy`, as in the following example, the
 postfix is `Name`,
 ```scala
 SmvHierarchy("county", ZipRefTable, Seq("zip", "County", "State", "Country"), "Name")
 ```
 
-The `withNameCol` method will config the SmvHierarchies to add the `prefix_name` column,
+When the `hasName` parameter of `SmvHierOpParam` is `true`, the `prefix_name` column will be added
+to the results.
 
 Example
 ```scala
-MyHier.withNameCol().levelRollup(df, "zip3", "County")(...)
+MyHier.levelRollup(df, "zip3", "County")(...)(SmvHierOpParam(true, None))
 ```
 The result of this example will have rows like the following
 ```
@@ -185,9 +200,10 @@ zip3    ,921      ,null
 For the hierarchy levels without name columns in the map data, let's say above example zip3 level
 has no name columns defined, the `geo_name` column will be `null`.
 
-#### withParentCols
-Config `SmvHierarchies` to add `parent_prefix_type`/`value` fields based on the
-specified hierarchy
+#### With Parent Cols
+
+When the `parentHier` parameter is not `None`, `parent_prefix_type`/`value` fields based on the
+specified hierarchy will be added to the results.
 
 For the following hierarchy
 ```scala
@@ -198,7 +214,7 @@ The parent of `zip` is `County`, the parent of `County` is `State`, etc.
 
 With the following rollup,
 ```scala
-MyHier.withParentCols("county").levelRollup(df, "County", "State")(...)
+MyHier.levelRollup(df, "County", "State")(...)(SmvHierOpParam(false, Some("county")))
 ```
 
 Part of output could be
@@ -208,5 +224,5 @@ County,   06073,     State,           CA
 State,    CA,        Country,         US
 ```
 
-If both `withNameCol` and `withParentCols` are specified, a `parent_prefix_name`
+If both `hasName` and `parentHier` are specified, a `parent_prefix_name`
 column will also be added.

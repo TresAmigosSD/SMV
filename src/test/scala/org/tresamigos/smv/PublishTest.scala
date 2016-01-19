@@ -21,6 +21,7 @@ class PublishTest extends SmvTestUtil {
     "smv.stages.stage1.version=v1",   // version when reading.
     "--publish", "v1",                // version when publishing.
     "--data-dir", testcaseTempDir,
+    "--input-dir", testcaseTempDir,
     "-s", "stage1")
 
   test("Test module publish") {

@@ -21,6 +21,8 @@ import org.apache.commons.lang.StringEscapeUtils.escapeJava
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 
+import dqm._
+
 /**
  * ValidationTask's will generate ValidationResult, which has
  * @param passed whether the validation passed or not
@@ -54,7 +56,7 @@ case class ValidationResult (
       "}"
   }
 
-  def isEmpty() = (this == ValidationResult(true))
+  def isEmpty() = passed && checkLog.isEmpty
 
 }
 
@@ -86,33 +88,6 @@ private[smv] object ValidationResult {
 private[smv] abstract class ValidationTask {
   def needAction(): Boolean
   def validate(df: DataFrame): ValidationResult
-}
-
-private[smv] abstract class ParserValidationTask extends ValidationTask with Serializable {
-  def needAction: Boolean
-  def addWithReason(e: Exception, rec: String): Unit
-  def validate(df: DataFrame): ValidationResult
-}
-
-/** For data files, log the parser errors and fail the DF if `failAtError == true` and error happens */
-private[smv] class ParserValidation(sc: SparkContext, failAtError: Boolean = true) extends ParserValidationTask{
-
-  def needAction = true
-  val parserLogger = new RejectLogger(sc, 10)
-  def addWithReason(e: Exception, rec: String) = parserLogger.add(s"${e.toString} @RECORD: ${rec}")
-  def validate(df: DataFrame) = {
-    val (nOfRejects, log) = parserLogger.report
-    val passed = (!failAtError) || (nOfRejects == 0)
-    val errorMessages = if (nOfRejects == 0) Nil else Seq(("ParserError", s"Totally ${nOfRejects} records get rejected"))
-    ValidationResult(passed, errorMessages, log)
-  }
-}
-
-/** For persisted data, we are not expecting any parser error, so terminate if we have any */
-private[smv] object TerminateParserValidator extends ParserValidationTask {
-  override def needAction = false
-  override def addWithReason(e: Exception, rec: String) = throw e
-  override def validate(df: DataFrame) = ValidationResult(true)
 }
 
 /** ValidationSet is a collection of ValidationTask's

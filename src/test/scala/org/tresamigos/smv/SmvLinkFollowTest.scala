@@ -24,6 +24,9 @@ class SmvLinkFollowTest extends SmvTestUtil {
     val res = app.resolveRDD(smvLinkTestPkg2.T)
   }
 
+  test("Test SmvModuleLink datasetHash follows linked module") {
+    assert(smvLinkTestPkg2.L.datasetHash() === -1638856213) // when Y's version is 2
+  }
 }
 
 class SmvLinkFollowWithVersionTest extends SmvTestUtil {
@@ -34,6 +37,11 @@ class SmvLinkFollowWithVersionTest extends SmvTestUtil {
   )++ Seq("-m", "org.tresamigos.smv.smvLinkTestPkg2.T2") ++ Seq("--data-dir", testcaseTempDir)
 
 /* Since DS will cache the resolved DF we need to use a separate Y for SmvLinkFollowWithVersionTest */
+  test("Test SmvModuleLink datasetHash follow link version") {
+    val res = smvLinkTestPkg2.L2.datasetHash()
+    assert(res === -1307514264) // when version = v1
+  }
+
   test("Test SmvModuleLink follow link with version config") {
     intercept[org.apache.hadoop.mapred.InvalidInputException]{
       val res = app.resolveRDD(smvLinkTestPkg2.T2)
@@ -52,6 +60,7 @@ package org.tresamigos.smv.smvLinkTestPkg1 {
 import org.tresamigos.smv.{SmvOutput, SmvModule}
 
 object Y extends SmvModule("Y Module") with SmvOutput {
+  override def version() = 2
   override def requiresDS() = Nil
   override def run(inputs: runParams) = app.createDF("s:String", "a;b;b")
 }

@@ -14,20 +14,6 @@
 
 package org.tresamigos.smv
 
-class ModuleCrcConsistencyTest extends SmvTestUtil {
+import org.apache.spark.sql.DataFrame
 
-  test("test moduleCrc changed or not") {
-    object Module1 extends SmvModule("test Module1") {
-      override def version() = 1
-      override def requiresDS() = Nil
-      override def run(i: runParams) = null
-    }
-
-    assert(Module1.datasetCRC === 2036878497l)
-  }
-
-  test("test moduleCrc on SmvFile"){
-    object file extends SmvCsvFile("./" + testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader)
-    assert(file.datasetCRC === 3726969404l)
-  }
-}
+case class SmvDFWithKeys(df: DataFrame, keys: Seq[String])

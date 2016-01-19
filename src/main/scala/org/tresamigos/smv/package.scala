@@ -68,6 +68,9 @@ package object smv {
   /** implicitly convert `Column` to `SmvCDSAggColumn` */
   implicit def makeSmvCDSAggColumn(col: Column) = cds.SmvCDSAggColumn(col.toExpr)
 
+  /** implicitly convert `DataFrame` to `SmvDFWithKeys` */
+  implicit def makeSmvDFWithKeys(df: DataFrame) = SmvDFWithKeys(df, Nil)
+
   /** implicitly convert `StructField` to `StructFieldHelper` */
   private[smv] implicit def makeFieldHelper(field: StructField) = new StructFieldHelper(field)
 
@@ -174,4 +177,11 @@ package object smv {
     //val cZero = lit(0).cast(col.toExpr.dataType)
     coalesce(sum(col), lit(0))
   }
+
+  /**
+   * IsAny aggregate function
+   * Return true if any of the values of the aggregated column are true, otherwise false.
+   * NOTE: It returns false, if all the values are nulls
+   **/
+  def smvIsAny(col: Column): Column = (sum(when(col, 1).otherwise(0)) > 0)
 }

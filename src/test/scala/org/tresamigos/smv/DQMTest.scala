@@ -79,7 +79,7 @@ class DQMTest extends SmvTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2")
 
-    val dqm = SmvDQM().add(DQMRule($"a" <= 0, "a_le_0", FailAny))
+    val dqm = new DQMValidator(SmvDQM().add(DQMRule($"a" <= 0, "a_le_0", FailAny)))
 
     val res = dqm.attachTasks(df)
     assert(res.count === 1)
@@ -101,9 +101,9 @@ class DQMTest extends SmvTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
 
-    val dqm = SmvDQM().
+    val dqm = new DQMValidator(SmvDQM().
       add(DQMRule($"b" < 0.4 , "b_lt_03", FailPercent(0.5))).
-      add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix", FailPercent(0.3)))
+      add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix", FailPercent(0.3))))
 
     val res = dqm.attachTasks(df)
     assertSrddDataEqual(res, "1,0.3;1,0.2")
@@ -127,13 +127,13 @@ class DQMTest extends SmvTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
 
-    val dqm = SmvDQM().
+    val dqm = new DQMValidator(SmvDQM().
       add(DQMRule($"b" < 0.4 , "b_lt_03")).
       add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix")).
       add(FailTotalRuleCountPolicy(2)).
       add(FailTotalFixCountPolicy(1)).
       add(FailTotalRulePercentPolicy(0.3)).
-      add(FailTotalFixPercentPolicy(0.3))
+      add(FailTotalFixPercentPolicy(0.3)))
 
     val res = dqm.attachTasks(df)
 

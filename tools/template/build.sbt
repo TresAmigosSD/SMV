@@ -24,6 +24,10 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 
 assemblyJarName in assembly := s"${name.value}-${version.value}-jar-with-dependencies.jar"
 
+// allow Ctrl-C to interrupt long-running tasks without exiting sbt,
+// if the task implementation correctly handles the signal
+cancelable in Global := true
+
 val smvInit = if (sys.props.contains("smvInit")) {
     val files = sys.props.get("smvInit").get.split(",")
     files.map{f=> IO.read(new File(f))}.mkString("\n")
@@ -34,3 +38,6 @@ val sc = new org.apache.spark.SparkContext("local", "shell")
 val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 ${smvInit}
 """
+
+// clean up spark context
+cleanupCommands in console := "sc.stop"

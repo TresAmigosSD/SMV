@@ -100,6 +100,12 @@ private[smv] case class CntTask(override val col: Column) extends EddStatTask {
   override val statOp = count(col)
 }
 
+private[smv] case class NullRateTask(override val col: Column) extends EddStatTask {
+  override val taskName = "nul"
+  override val taskDesc = "Null Rate"
+  override val statOp = (count(lit(1)) - count(col)) / count(lit(1))
+}
+
 private[smv] case class MinTask(override val col: Column) extends EddStatTask {
   override val taskName = "min"
   override val taskDesc = "Min"

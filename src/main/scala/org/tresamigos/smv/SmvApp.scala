@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.tresamigos.smv.shell.EddCompare
+
 import java.io.{File, PrintWriter}
 
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -167,6 +169,25 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /**
+   * compare EDD results if the --edd-compare flag was specified with edd files to compare.
+   * @return true if edd files were compared, otherwise false.
+   */
+  private def compareEddResults() : Boolean = {
+    smvConfig.cmdLine.compareEdd.map { eddsToCompare =>
+      val edd1 = eddsToCompare(0)
+      val edd2 = eddsToCompare(1)
+      val (passed, log) = EddCompare.compareFiles(edd1, edd2)
+      if (passed) {
+        println("EDD Results are the same")
+      } else {
+        println("EDD Results differ:")
+        println(log)
+      }
+      true
+    }.orElse(Some(false))()
+  }
+
+  /**
    * Publish the specified modules if the "--publish" flag was specified on command line.
    * @return true if modules were published, otherwise return false.
    */
@@ -215,15 +236,17 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       genJSON()
     }
 
-    println("Modules to run/publish")
-    println("----------------------")
-    smvConfig.modulesToRun().foreach(m => println(m.name))
-    println("----------------------")
+    if (smvConfig.modulesToRun().nonEmpty) {
+      println("Modules to run/publish")
+      println("----------------------")
+      smvConfig.modulesToRun().foreach(m => println(m.name))
+      println("----------------------")
+    }
 
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    generateDependencyGraphs() || publishOutputModules() || generateOutputModules()
+    compareEddResults() || generateDependencyGraphs() || publishOutputModules() || generateOutputModules()
   }
 }
 
