@@ -17,6 +17,12 @@ package org.tresamigos.smv
 import java.io.File
 
 class SmvFileTest extends SmvTestUtil {
+  override   def appArgs: Seq[String] = Seq(
+    "-m", "None",
+    "--data-dir", testcaseTempDir,
+    "--input-dir", s"${testcaseTempDir}/input"
+  )
+
   test("test SmvFile full path") {
     resetTestcaseTempDir()
 
