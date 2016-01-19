@@ -19,7 +19,7 @@ package smv.matcher {
     }
 
     class AbstractExactMatchFilter <<Abstract>> {
-        ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
+        ~ {abstract} extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
     }
 
     class ExactMatchFilter{
@@ -27,7 +27,9 @@ package smv.matcher {
         ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
     }
 
-    class IdentityExactMatchFilter
+    class IdentityExactMatchFilter {
+        ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
+    }
 
     class Joiner <<Abstract>> {
         ~join((df1:DataFrame, df2:DataFrame):DataFrame
