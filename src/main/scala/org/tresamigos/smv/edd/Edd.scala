@@ -129,6 +129,11 @@ case class EddResultFunctions(eddRes: DataFrame) {
     createReport().foreach(println)
   }
 
+  /** print edd result to file **/
+  def eddSave(path: String): Unit = {
+    SmvReportIO.saveReport(createReport().mkString("\n"), path)
+  }
+
   /** save report as RDD[String] **/
   def saveReport(path: String): Unit = {
     createJsonDF.saveAsTextFile(path)
