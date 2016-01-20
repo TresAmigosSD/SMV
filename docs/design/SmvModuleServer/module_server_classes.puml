@@ -1,0 +1,44 @@
+@startuml
+
+hide empty methods
+hide empty fields
+hide circle
+
+package Server {
+  class ClassCache {
+    +updateCache()
+    +getClassInfo(FQN) : ClassInfo
+  }
+
+  class ClassInfo {
+    -FQN
+    -timestamp/version
+    -bytecode
+    -crc
+  }
+
+  class RequestHandler
+
+  ClassCache *-- ClassInfo
+
+  RequestHandler --> ClassCache
+}
+
+package Client {
+  class SmvApp
+  class SmvModuleClassLoader
+  class ModuleServerConnection
+
+  SmvApp *-- "*" SmvModuleClassLoader
+  SmvApp *-- "1" ModuleServerConnection
+
+
+  SmvModuleClassLoader "*" o-- ModuleServerConnection
+
+  class LocalModuleServerConnection extends ModuleServerConnection
+  class RemoteModuleServerConnection extends ModuleServerConnection
+
+  RemoteModuleServerConnection .L.> RequestHandler : tcp/ip
+  LocalModuleServerConnection -L-> ClassCache
+}
+@enduml
