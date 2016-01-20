@@ -62,7 +62,7 @@ function find_fat_jar()
 
 function extract_spark_args()
 {
-    extract_arg MASTER --master 'local[*]'
+    extract_arg MASTER --master ${SMV_MASTER:-'local[*]'}
     extract_arg SMV_APP_CLASS --class "org.tresamigos.smv.SmvApp"
     extract_arg APP_JAR --jar ""
 
