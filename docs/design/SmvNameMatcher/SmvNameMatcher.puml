@@ -10,12 +10,12 @@ package smv.matcher {
     }
 
     class SmvNameMatcher{
-        +SmvNameMatcher(ex:AbstractExactMatchFilter, joiner:Joiner, matchers:List[LevelMatch])
+        +SmvNameMatcher(ex:AbstractExactMatchFilter, clm:CommonLevelMatcher, matchers:List[LevelMatcher])
         +doMatch(df1:DataFrame, df2:DataFrame):DataFrame
     }
 
     class ExactMatchFilterResult {
-        ~ExactMatchFilterResult(df1:DataFrame, df2:DataFrame, extracted:DataFrame)
+        ~ExactMatchFilterResult(remainingDF1:DataFrame, remainingDF2:DataFrame, extracted:DataFrame)
     }
 
     class AbstractExactMatchFilter <<Abstract>> {
@@ -23,7 +23,7 @@ package smv.matcher {
     }
 
     class ExactMatchFilter{
-        +ExactMatchFilter(joinExpr:Column)
+        +ExactMatchFilter(colName: String, expr:Column)
         ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
     }
 
@@ -31,45 +31,48 @@ package smv.matcher {
         ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
     }
 
-    class Joiner <<Abstract>> {
+    class CommonLevelMatcher <<Abstract>> {
+        ~ {abstract} join((df1:DataFrame, df2:DataFrame):DataFrame
+    }
+
+    class CommonLevelMatcherExpression {
+        +CommonLevelMatcherExpression(expr: Column)
         ~join((df1:DataFrame, df2:DataFrame):DataFrame
     }
 
-    class InnerJoiner{
-        +InnerJoiner(joinExpr: Column)
+    class CommonLevelMatcherNone <<Object>> {
+        ~join((df1:DataFrame, df2:DataFrame):DataFrame
     }
 
-    class CrossJoiner <<Object>> {
-    }
-
-    class LevelMatch <<Abstract>> {
+    class LevelMatcher <<Abstract>> {
         ~getMatchColName():String
         ~addCols(df:DataFrame):DataFrame
     }
 
-    class ExactLevelMatch {
-        +ExactLevelMatch(colName:String, colExpr:Column)
+    class ExactLevelMatcher {
+        +ExactLevelMatcher(colName:String, exactMatchExpression:Column)
     }
 
-    class FuzzyLevelMatch {
-        +FuzzyLevelMatch(colName:String, exactMatchGroup:Column, stringDistanceExpression:Column, threshold:Float)
+    class FuzzyLevelMatcher {
+        +FuzzyLevelMatcher(colName:String, exactMatchExpression:Column, stringDistanceExpression:Column, threshold:Float)
     }
 }
 
 AbstractExactMatchFilter "0..1" --* SmvNameMatcher
-Joiner "0..1" --* SmvNameMatcher
-LevelMatch "*" --* SmvNameMatcher
+CommonLevelMatcher "0..1" --* SmvNameMatcher
+LevelMatcher "*" --* SmvNameMatcher
 
-LevelMatch <|-- ExactLevelMatch
-LevelMatch <|--- FuzzyLevelMatch
+LevelMatcher <|-- ExactLevelMatcher
+LevelMatcher <|--- FuzzyLevelMatcher
 
-Joiner <|-- InnerJoiner
-Joiner <|-- CrossJoiner
+CommonLevelMatcher <|-- CommonLevelMatcherExpression
+CommonLevelMatcher <|-- CommonLevelMatcherNone
 
 IdentityExactMatchFilter --|> AbstractExactMatchFilter
 ExactMatchFilter --|> AbstractExactMatchFilter
 
 ExactMatchFilter o-- ExactMatchFilterResult
+IdentityExactMatchFilter o-- ExactMatchFilterResult
 SmvNameMatcher --> ExactMatchFilterResult
 
 @enduml

@@ -6,7 +6,7 @@ The user can use these float and boolean results to decide the strength of the r
 
  The two input data frames will likely have the same schema and thus the same column names.  To avoid ambiguity, the first data frame's columns are left as is and the second one's are prepended with an underscore.  Thus df1("last_name") stays as is and df2("last_name") will be referenced as $"_last_name" in the API.
 
-The main class is SmvNameMatcher.  It's constructed with three parameters: ExactMatchFilter, Joiner, and a List of LevelMatches.  Of these only the LevelMatches are required.  See API Description below for a full explanation of how to configure and use these classes.  Once you construct an SmvNameMatcher, call the doMatch method on it with the two input data frames.  It will return the MDM.  Only records where at least one of the matches succeeded will be kept in the MDM.
+The main class is SmvNameMatcher.  It's constructed with three parameters: ExactMatchFilter, CommonLevelMatcher, and a List of LevelMatches.  Of these only the LevelMatches are required.  See API Description below for a full explanation of how to configure and use these classes.  Once you construct an SmvNameMatcher, call the doMatch method on it with the two input data frames.  It will return the MDM.  Only records where at least one of the matches succeeded will be kept in the MDM.
 
 
 
@@ -19,13 +19,12 @@ val df1, df2
 /*** Resulting MDM ***/
 val resultDF = SmvNameMatcher(
     ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
-    InnerJoiner(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
+    CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
     List(
-        ExactLevelMatch("First_Name_Match", $"first_name" === $"_first_name"), 
-        FuzzyLevelMatch("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city")), .9)
+        ExactLevelMatcher("First_Name_Match", $"first_name" === $"_first_name"), 
+        FuzzyLevelMatcher("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city"), .9)
     )
 ).doMatch(df1,df2) 
-
 ```
 
 ## Sample Input
@@ -78,33 +77,33 @@ ExactMatchFilter(<column name>, <catalyst expression>)
 ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name")
 ```
 
-###Joiner
+###CommonLevelMatcher
 This is an optional parameter.  If not specified a simple cross join will be applied.  The two input data frames have to be joined into a single combined data frame on which matches will be performed.  We currently support a cross join, which is the default, or an inner join for which you can provide a catalyst expression.  
 
 ```scala
-InnerJoiner(<catalyst expression>) // catalyst expression on which to join the data frames
-CrossJoiner
+CommonLevelMatcherExpression(<catalyst expression>) // catalyst expression on which to join the data frames
+CommonLevelMatcherNone
 
 //Example:
-InnerJoiner(StringMetricUDFs.soundexMatch($"first_name", $"_first_name"))
-CrossJoiner
+CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name"))
+CommonLevelMatcherNone
 ```
 
-###LevelMatch
-There are two kinds of LevelMatches: ExactLevelMatch and FuzzyLevelMatch. The first one should be used if the expression for the level is an exact match expression.  If the expression is a fuzzy match or part of the expression is a fuzzy match, then you should use the FuzzyLevelMatch.
+###LevelMatcher
+There are two kinds of LevelMatches: ExactLevelMatcher and FuzzyLevelMatcher. The first one should be used if the expression for the level is an exact match expression.  If the expression is a fuzzy match or part of the expression is a fuzzy match, then you should use the FuzzyLevelMatcher.
 
-###ExactLevelMatch
-ExactLevelMatch takes a column name and a catalyst expression.  The expression operates on the joined data frame and returns a boolean.  The value is returned in the MDM under the column specified by the input column name.
+###ExactLevelMatcher
+ExactLevelMatcher takes a column name and a catalyst expression.  The expression operates on the joined data frame and returns a boolean.  The value is returned in the MDM under the column specified by the input column name.
 ```scala
-ExactLevelMatch(<column name>, <catalyst expression>)
+ExactLevelMatcher(<column name>, <catalyst expression>)
 // column name - name of the column where the results of the match are stored
 // catalyst expression to find the combination of records that match it
 
 //Example:
-ExactLevelMatch("First_Name_Match", $"first_name" === $"_first_name")
+ExactLevelMatcher("First_Name_Match", $"first_name" === $"_first_name")
 ```
 
-###FuzzyLevelMatch
+###FuzzyLevelMatcher
 This creates two columns in the MDM.  The first one is a boolean, returned in a column named after the column name parameter.  The second one is a float that adds "_Value" to the column name parameter: "\<column name\>_Value".  The float is the evaluation of the fuzzy expression
 
 **Parameters:**
@@ -117,10 +116,10 @@ This creates two columns in the MDM.  The first one is a boolean, returned in a 
 **(** evaluate \<exact catalyst expression\> **)** **&&** **(** **(** evaluate \<normalized fuzzy catalyst expression\> **)** **\>** \<threshold\> **)**
 
 ```scala
-FuzzyLevelMatch(<column name>, <exact catalyst expression>, <normalized fuzzy catalyst expression>, <threshold>)
+FuzzyLevelMatcher(<column name>, <exact catalyst expression>, <normalized fuzzy catalyst expression>, <threshold>)
 
 //Example:
-FuzzyLevelMatch("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city")), .9)
+FuzzyLevelMatcher("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city")), .9)
 ```
 
 
@@ -135,6 +134,7 @@ The resulting data frame will always have an "id" and "_id" columns reperesentin
 ## Constraints
 ### Valid Input
 * Input data frames must have an "id" column that uniquely identifies each record
+* Input data frames must not have any column names that end with "_Value"
 * Column names can't start with an underscore
 * Any parameters not described as optional above are required
 * The catalyst expressions must be valid for the kind of data they operate on
