@@ -131,7 +131,7 @@ case class EddResultFunctions(eddRes: DataFrame) {
 
   /** print edd result to file **/
   def eddSave(path: String): Unit = {
-    SmvReportIO.saveReport(createReport().mkString("\n"), path)
+    SmvReportIO.saveLocalReport(createReport().mkString("\n"), path)
   }
 
   /** save report as RDD[String] **/
