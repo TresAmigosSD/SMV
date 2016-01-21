@@ -58,9 +58,11 @@ private[smv] abstract class EddTaskGroup {
        is a very cheap operation */
     val resRdds = resultCols.map{rcols => resCached.select(rcols: _*).rdd}
 
+    /* collect here before unpersist resCached */
+    val resArray = new UnionRDD(df.sqlContext.sparkContext, resRdds).collect
     resCached.unpersist()
 
-    val resRdd = new UnionRDD(df.sqlContext.sparkContext, resRdds).coalesce(1)
+    val resRdd = df.sqlContext.sparkContext.makeRDD(resArray, 1)
 
     df.sqlContext.createDataFrame(resRdd, schema.toStructType)
   }
