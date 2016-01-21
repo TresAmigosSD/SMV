@@ -29,7 +29,10 @@ object i {
   /** open file using full path */
   def open(path: String, ca: CsvAttributes = null) ={
     /** isFullPath = true to avoid prepending data_dir */
-    val file = SmvCsvFile(path, ca, null, true)
+    object file extends SmvCsvFile(path, ca, null, true) {
+      override val forceParserCheck = false
+      override val failAtParsingError = false
+    }
     file.rdd
   }
 
