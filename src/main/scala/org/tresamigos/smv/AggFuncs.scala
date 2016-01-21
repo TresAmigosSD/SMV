@@ -17,8 +17,6 @@ package org.tresamigos.smv
 import org.apache.spark.sql._, types._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.trees
-import org.apache.spark.sql.catalyst.errors.TreeNodeException
 
 import org.apache.spark.sql.expressions._
 
@@ -226,4 +224,120 @@ private[smv] case class SmvFirstFunction(expr: Expression, base: AggregateExpres
   }
 
   override def eval(input: InternalRow): Any = result
+}
+
+/**
+ * Performs a linear bin based histogram. This UDF takes the following parameters:
+ * the value to bin, the min value, the max value and the number of bins
+ * example: df.agg(DoubleBinHistogram('val, lit(0.0), lit(100.0), lit(2))) where
+ *   'val is the column to bin
+ *   0.0 : the minimum value
+ *   100.0: the max value
+ *   2: the number of bins
+ */
+//TODO: investigate a way to pass the number of bins as a const value instead of a column value.
+private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
+  def inputSchema = new StructType().
+    add("v", DoubleType).
+    add("min_val", DoubleType).
+    add("min_val", DoubleType).
+    add("num_of_bins", IntegerType)
+
+  var min_val: Double = _
+  var max_val: Double = _
+  var num_of_bins: Int = _
+  var interval_length: Double = _
+  var min_max_initialized: Boolean = false
+
+  //Create a map that has bin index to bin count.
+  def bufferSchema = new StructType().add("bin_count", DataTypes.createMapType(IntegerType, IntegerType))
+
+  val return_type_struct_fields = Array(
+    StructField("interval_low_bound", DoubleType),
+    StructField("interval_high_bound", DoubleType),
+    StructField("count", IntegerType) )
+
+  def dataType =  DataTypes.createArrayType(DataTypes.createStructType(return_type_struct_fields))
+
+  def deterministic = true
+
+  def initialize(buffer: MutableAggregationBuffer) = {
+    buffer.update(0, Map():Map[Int, Int])
+  }
+
+  /**
+   * given a value return the bin index it belong to. The index is 0 based.
+   */
+  private def value_to_bin(value: Double): Int = {
+    //Bound the value
+    val v = if (value < min_val) min_val else if (value > max_val) max_val else value
+
+    if (v == max_val) {
+      num_of_bins - 1
+    } else if (v == min_val) {
+      0
+    } else {
+      val bin = ((v - min_val)/interval_length).toInt
+      bin
+    }
+  }
+
+  def update(buffer: MutableAggregationBuffer, input: Row): Unit =  {
+    // Null value should be an entry also
+    val m = buffer.getMap(0).asInstanceOf[Map[Int,Int]]
+
+    if (!min_max_initialized) {
+      if (!input.isNullAt(1) && !input.isNullAt(2) && !input.isNullAt(3)) {
+        min_val = input.getDouble(1)
+        max_val = input.getDouble(2)
+        num_of_bins = input.getInt(3)
+        interval_length = (max_val - min_val) / num_of_bins
+        min_max_initialized = true
+      } else {
+        return
+      }
+    }
+
+    //Ignoring null values
+    if(!input.isNullAt(0)) {
+      val bin = value_to_bin(input.getDouble(0))
+      val cnt = m.getOrElse(bin, 0) + 1
+      buffer.update(0, m + (bin -> cnt))
+    }
+  }
+
+  def merge(buffer1: MutableAggregationBuffer, buffer2: Row) = {
+    val m1 = buffer1.getMap(0).asInstanceOf[Map[Int,Int]]
+    val m2 = buffer2.getMap(0).asInstanceOf[Map[Int,Int]]
+    //This is performing a left fold to merge the keys of two maps.
+    val m = (m1 /: m2){case (map,(k,v)) => map + (k -> ((map.getOrElse(k,0) + v)))}
+    buffer1.update(0, m)
+  }
+
+  /**
+   * helper method that takes a given bin index(0 based) and return the associated interval
+   */
+  private def bin_interval(bin_index: Int) : (Double, Double) = {
+    if(bin_index == 0) {
+      (min_val, min_val + interval_length)
+    } else if (bin_index == (num_of_bins - 1)) {
+      (max_val - interval_length, max_val)
+    } else {
+      val start = bin_index * interval_length
+      (start, start +  interval_length)
+    }
+  }
+
+  def evaluate(buffer: Row) = {
+
+    if (buffer.isNullAt((0))) {
+      null
+    } else {
+      val bin_frequencies = buffer.getMap(0).asInstanceOf[Map[Int, Int]].toSeq.sortBy(_._1)
+      bin_frequencies.map { bin_freq =>
+        val bin_inter = bin_interval(bin_freq._1)
+        Row(bin_inter._1, bin_inter._2, bin_freq._2)
+      }
+    }
+  }
 }
