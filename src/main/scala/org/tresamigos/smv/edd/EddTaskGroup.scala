@@ -56,13 +56,14 @@ private[smv] abstract class EddTaskGroup {
        The schema comparison on a large tree could introduce significant overhead.
        Here we convert each small DF to RDD first, then create UnionRDD, which
        is a very cheap operation */
-    val resRdds = resultCols.map{rcols => resCached.select(rcols: _*).rdd}
-
     /* collect here before unpersist resCached */
-    val resArray = new UnionRDD(df.sqlContext.sparkContext, resRdds).collect
+    val resRdds = resultCols.map{rcols =>
+      val rddArray=resCached.select(rcols: _*).rdd.collect
+      df.sqlContext.sparkContext.makeRDD(rddArray, 1)
+    }
     resCached.unpersist()
 
-    val resRdd = df.sqlContext.sparkContext.makeRDD(resArray, 1)
+    val resRdd = new UnionRDD(df.sqlContext.sparkContext, resRdds)
 
     df.sqlContext.createDataFrame(resRdd, schema.toStructType)
   }
