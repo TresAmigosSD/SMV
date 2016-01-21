@@ -16,6 +16,9 @@ package org.tresamigos.smv
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 
+import org.joda.time._
+import org.joda.time.format._
+
 /**
  * Provide functions for the interactive shell
  *
@@ -91,5 +94,13 @@ package object shell {
    */
   def peek(df: DataFrame, pos: Int = 1) = {
     df.peek(pos)
+  }
+
+  /**
+   * Print current time
+   **/
+  def now() = {
+    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
+    println(fmt.print(DateTime.now()))
   }
 }

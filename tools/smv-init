@@ -43,6 +43,7 @@ function create_proj_dir()
     fi
 
     mkdir "$PROJ_DIR"
+    export PROJ_DIR_FULL_PATH=$(cd $PROJ_DIR; /bin/pwd)
 }
 
 function copy_with_inject()
@@ -51,10 +52,13 @@ function copy_with_inject()
     DST="$2"
     echo "-- copying `basename "$DST"`"
 
+    ESCAPED_FULL_PATH=$(echo ${PROJ_DIR_FULL_PATH}|sed -e 's/[\/&]/\\&/g')
+
     mkdir -p "$(dirname "$DST")"
     sed -e "s/_GROUP_ID_/$PROJ_GROUP_ID/" \
         -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
         -e "s/_PROJ_CLASS_/$PROJ_CLASS/g" \
+        -e "s/_PROJ_DIR_FULL_PATH_/${ESCAPED_FULL_PATH}/g" \
         < "$SRC" > "$DST"
 }
 
@@ -77,7 +81,6 @@ function copy_src_files()
 {
     echo "-- copying source files"
 
-    PROJ_DIR_FULL_PATH=$(cd $PROJ_DIR; /bin/pwd)
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
     DST_DIR="${PROJ_DIR_FULL_PATH}/src/main/scala/${PROJ_CLASS_PATH}"
 
@@ -94,4 +97,3 @@ create_proj_dir
 copy_conf_files
 copy_data_files
 copy_src_files
-
