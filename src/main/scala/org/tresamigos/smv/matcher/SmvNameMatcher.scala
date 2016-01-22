@@ -68,20 +68,28 @@ case class SmvNameMatcher(
 
     // return extracted results data frame + added levels data frame
     extractedResultStageDF.unionAll(addedLevelsStageDF)
+
+    // TODO: remove rows that evalutes to false for all filters
   }
 
 }
 
 object StringMetricUDFs {
-  val soundexMatch = udf( (s1: String, s2: String) => {
-    SoundexMetric.compare(s1, s2).get
-  } )
+  // separate function definition from the udf so we can test the function itself
+  val SoundexFn: (String, String) => Option[Boolean] = (s1, s2) =>
+  if (null  == s1 || null == s2) None else SoundexMetric.compare(s1, s2)
 
-  val levenshtein = udf( (s1: String, s2: String) => {
+  val soundexMatch = udf(SoundexFn)
+
+  val NormalizedLevenshteinFn: (String, String) => Option[Double] = (s1, s2) =>
+  if (null == s1 || null == s2) None
+  else LevenshteinMetric.compare(s1, s2) map { dist =>
     // normalizing to 0..1
     val maxLen = Seq(s1.length, s2.length).max
-    1.0 - (LevenshteinMetric.compare(s1, s2).getOrElse(maxLen) * 1.0 / maxLen)
-  } )
+    1.0 - (dist * 1.0 / maxLen)
+  }
+
+  val levenshtein = udf(NormalizedLevenshteinFn)
 }
 
 
