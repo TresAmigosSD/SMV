@@ -105,7 +105,7 @@ case class ExactMatchFilter(colName: String, private val expr:Column) extends Ab
 
     val extracted = joined.where( joined("id").isNotNull && joined("_id").isNotNull ).select("id", "_id")
 
-    val resultDF1 = joined.where( joined("id").isNull ).select(df1("*"))
+    val resultDF1 = joined.where( joined("_id").isNull ).select(df1("*"))
     val resultDF2 = joined.where( joined("id").isNull ).select(df2("*"))
 
     ExactMatchFilterResult(resultDF1, resultDF2, extracted)

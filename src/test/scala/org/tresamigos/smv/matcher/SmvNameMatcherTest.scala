@@ -76,7 +76,7 @@ class ExactMatchFilterTest extends NameMatcherTestFixture {
       "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington]"
     ) )
 
-    assertSrddSchemaEqual(result.remainingDF2, "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String")
+    assertSrddSchemaEqual(result.remainingDF2, "_id:String; _first_name:String; _last_name:String; _address:String; _city:String; _state:String; _zip:String; _full_name:String")
     assertUnorderedSeqEqual(result.remainingDF2.collect.map(_.toString), Seq(
       "[2,Alice,Kramden,328 Chauncey Street,Brooklyn,NY,11233,Alice Kramden]",
       "[3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson]"
