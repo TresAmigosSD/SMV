@@ -207,11 +207,42 @@ abstract class SmvDataSet {
     }
   }
 
+  /** path of published data for a given version. */
+  private def publishPath(version: String) = s"${app.smvConfig.publishDir}/${version}/${name}.csv"
+
+  /**
+   * Publish the current module data to the publish directory.
+   * PRECONDITION: user must have specified the --publish command line option (that is where we get the version)
+   */
+  private[smv] def publish() = {
+    val df = rdd()
+    val version = app.smvConfig.cmdLine.publish()
+    val handler = new FileIOHandler(app.sqlContext, publishPath(version))
+    handler.saveAsCsvWithSchema(df)
+
+    /* publish should also calculate edd if generarte Edd flag was turned on */
+    if (app.genEdd)
+      df.edd.persistBesideData(publishPath(version))
+  }
+
   /**
    * the stage associated with this dataset.  Only valid for modules/files defined in a stage package.
    * Adhoc files/modules will have a null for the stage.
    */
   private[smv] lazy val parentStage : SmvStage = app.stages.findStageForDataSet(this)
+
+  private[smv] def stageVersion() = parentStage.version
+
+  /**
+   * Read the published data of this module if the parent stage has specified a version.
+   * @return Some(DataFrame) if the stage has a version specified, None otherwise.
+   */
+  private[smv] def readPublishedData() : Option[DataFrame] = {
+    stageVersion.map { v =>
+      val handler = new FileIOHandler(app.sqlContext, publishPath(v))
+      handler.csvFileWithSchema(null)
+    }
+  }
 }
 
 /** Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
@@ -411,36 +442,6 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     readPersistedFile(prefix).get
   }
 
-  /** path of published data for a given version. */
-  private def publishPath(version: String) = s"${app.smvConfig.publishDir}/${version}/${name}.csv"
-
-  /**
-   * Publish the current module data to the publish directory.
-   * PRECONDITION: user must have specified the --publish command line option (that is where we get the version)
-   */
-  private[smv] def publish() = {
-    val df = rdd()
-    val version = app.smvConfig.cmdLine.publish()
-    val handler = new FileIOHandler(app.sqlContext, publishPath(version))
-    handler.saveAsCsvWithSchema(df)
-
-    /* publish should also calculate edd if generarte Edd flag was turned on */
-    if (app.genEdd)
-      df.edd.persistBesideData(publishPath(version))
-  }
-
-  /**
-   * Read the published data of this module if the parent stage has specified a version.
-   * @return Some(DataFrame) if the stage has a version specified, None otherwise.
-   */
-  private[smv] def readPublishedData() : Option[DataFrame] = {
-    parentStage.version.map { v =>
-      val handler = new FileIOHandler(app.sqlContext, publishPath(v))
-      handler.csvFileWithSchema(null)
-    }
-  }
-
-  private[smv] def stageVersion() = parentStage.version
 }
 
 /**
@@ -455,9 +456,9 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
  * Similar to File/Module, a `dqm()` method can also be overriden in the link
  */
 class SmvModuleLink(outputModule: SmvOutput) extends
-  SmvModule(s"Link to ${outputModule.asInstanceOf[SmvModule].name}") {
+  SmvModule(s"Link to ${outputModule.asInstanceOf[SmvDataSet].name}") {
 
-  private[smv] val smvModule = outputModule.asInstanceOf[SmvModule]
+  private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
   // the linked output module can not be ephemeral.
   require(! smvModule.isEphemeral)
@@ -543,6 +544,5 @@ case class SmvCsvStringData(
 /**
  * A marker trait that indicates that a module decorated with this trait is an output module.
  */
-trait SmvOutput {
-  this : SmvDataSet =>
+trait SmvOutput { this : SmvDataSet =>
 }

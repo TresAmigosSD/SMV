@@ -40,4 +40,16 @@ class SmvFileTest extends SmvTestUtil {
     assertSrddDataEqual(res1, "a")
     assertSrddDataEqual(res2, "a")
   }
+
+  test("test SmvModuleLink can link to an SmvFile"){
+    resetTestcaseTempDir()
+
+    new File(testcaseTempDir, "input").mkdir()
+
+    createTempFile("input/a.csv", "f1\na\n")
+    createTempFile("input/a.schema", "f1: String")
+
+    object File3 extends SmvCsvFile("a.csv") with SmvOutput
+    object Link1 extends SmvModuleLink(File3)
+  }
 }
