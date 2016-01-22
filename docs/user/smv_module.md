@@ -68,13 +68,17 @@ object MyModule extends SmvModule("mod description") {
 # Output Modules
 As the number of modules in a given SMV stage grows, it becomes more difficult to track which
 modules are the "leaf"/output modules within the stage.
-Any module within the stage can be marked as an output module by mixing-in the `SmvOutput` trait.
+Any module or SmvDataSet within the stage can be marked as an output module by mixing-in the `SmvOutput` trait.
 For example:
 
 ```scala
 object MyModule extends SmvModule("this is my module") with SmvOutput {
 ...
 }
+```
+
+```scala
+object MyData extends SmvCsvFile("path/to/file/data.csv", CA.ca) with SmvOutput
 ```
 
 The set of `SmvOutput` output modules in a stage define the data *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
