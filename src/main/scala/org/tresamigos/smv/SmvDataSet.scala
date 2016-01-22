@@ -542,7 +542,7 @@ case class SmvCsvStringData(
 }
 
 /**
- * A marker trait that indicates that a module decorated with this trait is an output module.
+ * A marker trait that indicates that a SmvDataSet/SmvModule decorated with this trait is an output DataSet/module.
  */
 trait SmvOutput { this : SmvDataSet =>
 }

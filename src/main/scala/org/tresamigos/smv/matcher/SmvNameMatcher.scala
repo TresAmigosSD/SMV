@@ -54,10 +54,10 @@ case class SmvNameMatcher(
         )
       }
 
-      case matcher@FuzzyLevelMatcher(_, _, _, _) => {
+      case matcher: FuzzyLevelMatcher => {
         extractedResultStageDF = extractedResultStageDF.selectPlus(
           lit(null).cast(BooleanType).as(matcher.getMatchColName),
-          lit(null).cast(FloatType).as(matcher.asInstanceOf[FuzzyLevelMatcher].getFuzzyColName)
+          lit(null).cast(FloatType).as(matcher.valueColName)
         )
       }
     }
@@ -68,20 +68,28 @@ case class SmvNameMatcher(
 
     // return extracted results data frame + added levels data frame
     extractedResultStageDF.unionAll(addedLevelsStageDF)
+
+    // TODO: remove rows that evalutes to false for all filters
   }
 
 }
 
 object StringMetricUDFs {
-  val soundexMatch = udf( (s1: String, s2: String) => {
-    SoundexMetric.compare(s1, s2).get
-  } )
+  // separate function definition from the udf so we can test the function itself
+  val SoundexFn: (String, String) => Option[Boolean] = (s1, s2) =>
+  if (null  == s1 || null == s2) None else SoundexMetric.compare(s1, s2)
 
-  val levenshtein = udf( (s1: String, s2: String) => {
+  val soundexMatch = udf(SoundexFn)
+
+  val NormalizedLevenshteinFn: (String, String) => Option[Double] = (s1, s2) =>
+  if (null == s1 || null == s2) None
+  else LevenshteinMetric.compare(s1, s2) map { dist =>
     // normalizing to 0..1
     val maxLen = Seq(s1.length, s2.length).max
-    1.0 - (LevenshteinMetric.compare(s1, s2).getOrElse(maxLen) * 1.0 / maxLen)
-  } )
+    1.0 - (dist * 1.0 / maxLen)
+  }
+
+  val levenshtein = udf(NormalizedLevenshteinFn)
 }
 
 
@@ -97,7 +105,7 @@ case class ExactMatchFilter(colName: String, private val expr:Column) extends Ab
 
     val extracted = joined.where( joined("id").isNotNull && joined("_id").isNotNull ).select("id", "_id")
 
-    val resultDF1 = joined.where( joined("id").isNull ).select(df1("*"))
+    val resultDF1 = joined.where( joined("_id").isNull ).select(df1("*"))
     val resultDF2 = joined.where( joined("id").isNull ).select(df2("*"))
 
     ExactMatchFilterResult(resultDF1, resultDF2, extracted)
@@ -134,21 +142,21 @@ case class ExactLevelMatcher(private[matcher] val colName:String, private[matche
 
 case class FuzzyLevelMatcher(
                             private[matcher] val colName:String,
-                            private[matcher] val exactMatchExpression:Column,
-                            private[matcher] val stringDistanceExpression:Column,
-                            private[matcher] val threshold:Float
+                            private[matcher] val predicate:Column,
+                            private[matcher] val valueExpr:Column,
+                            private[matcher] val threshold: Float
                           ) extends LevelMatcher {
-  override private[matcher] def getMatchColName: String = colName
+  override private[matcher] val getMatchColName: String = colName
 
-  private[matcher] def getFuzzyColName: String = colName + "_Value"
+  private[matcher] val valueColName: String = colName + "_Value"
 
   override private[matcher] def addCols(df: DataFrame): DataFrame = {
-    df.selectPlus((stringDistanceExpression > threshold).as(getFuzzyColName))
+    val cond: Column =
+      if (null == predicate)
+        valueExpr > threshold
+      else
+        predicate && (valueExpr > threshold)
 
-    if (exactMatchExpression == null) {
-      df.selectPlus(stringDistanceExpression > threshold).as(colName)
-    } else {
-      df.selectPlus((exactMatchExpression && (stringDistanceExpression > threshold)).as(colName))
-    }
+    df.selectPlus(cond as colName).selectPlus(valueExpr as valueColName)
   }
 }
