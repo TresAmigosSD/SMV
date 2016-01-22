@@ -54,10 +54,10 @@ case class SmvNameMatcher(
         )
       }
 
-      case matcher@FuzzyLevelMatcher(_, _, _, _) => {
+      case matcher: FuzzyLevelMatcher => {
         extractedResultStageDF = extractedResultStageDF.selectPlus(
           lit(null).cast(BooleanType).as(matcher.getMatchColName),
-          lit(null).cast(FloatType).as(matcher.asInstanceOf[FuzzyLevelMatcher].getFuzzyColName)
+          lit(null).cast(FloatType).as(matcher.valueColName)
         )
       }
     }
@@ -142,21 +142,21 @@ case class ExactLevelMatcher(private[matcher] val colName:String, private[matche
 
 case class FuzzyLevelMatcher(
                             private[matcher] val colName:String,
-                            private[matcher] val exactMatchExpression:Column,
-                            private[matcher] val stringDistanceExpression:Column,
-                            private[matcher] val threshold:Float
+                            private[matcher] val predicate:Column,
+                            private[matcher] val valueExpr:Column,
+                            private[matcher] val threshold: Float
                           ) extends LevelMatcher {
-  override private[matcher] def getMatchColName: String = colName
+  override private[matcher] val getMatchColName: String = colName
 
-  private[matcher] def getFuzzyColName: String = colName + "_Value"
+  private[matcher] val valueColName: String = colName + "_Value"
 
   override private[matcher] def addCols(df: DataFrame): DataFrame = {
-    df.selectPlus((stringDistanceExpression > threshold).as(getFuzzyColName))
+    val cond: Column =
+      if (null == predicate)
+        valueExpr > threshold
+      else
+        predicate && (valueExpr > threshold)
 
-    if (exactMatchExpression == null) {
-      df.selectPlus(stringDistanceExpression > threshold).as(colName)
-    } else {
-      df.selectPlus((exactMatchExpression && (stringDistanceExpression > threshold)).as(colName))
-    }
+    df.selectPlus(cond as colName).selectPlus(valueExpr as valueColName)
   }
 }

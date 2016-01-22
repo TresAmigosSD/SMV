@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv.matcher
 
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.types._
 import org.tresamigos.smv._
 
 trait NameMatcherTestFixture extends SmvTestUtil {
@@ -31,7 +33,7 @@ trait NameMatcherTestFixture extends SmvTestUtil {
       "3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson"
   )
 
-
+  def dfPair: (DataFrame, DataFrame) = (createDF1, createDF2.prefixFieldNames("_"))
 }
 
 class SmvNameMatcherTest extends NameMatcherTestFixture {
@@ -64,8 +66,7 @@ class ExactMatchFilterTest extends NameMatcherTestFixture {
     val ssc = sqlContext
     import ssc.implicits._
 
-    val df1 = createDF1
-    val df2 = createDF2.prefixFieldNames("_")
+    val (df1, df2) = dfPair
 
     val emf = ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name")
     val result = emf.extract(df1, df2)
@@ -86,7 +87,36 @@ class ExactMatchFilterTest extends NameMatcherTestFixture {
     assertUnorderedSeqEqual(result.extracted.collect.map(_.toString), Seq(
       "[2,1]"
     ) )
+  }
+}
 
+class FuzzyLevelMatcherTest extends NameMatcherTestFixture {
+  test("Fuzzy level matcher should add both the specified column and a corresponding value column") {
+    val (df1, df2) = dfPair
+    val df = df1.join(df2)
+    import df.sqlContext.implicits._
 
+    val colName = "Result"
+    val target = FuzzyLevelMatcher(colName, null, StringMetricUDFs.levenshtein($"city", $"_city"), 0.5f)
+    val res = target.addCols(df)
+
+    target.getMatchColName shouldBe colName
+    res.columns shouldBe df1.columns ++ df2.columns ++ Seq(target.getMatchColName, target.valueColName)
+  }
+
+  test("The added columsn should have the correct types ") {
+    val (df1, df2) = dfPair
+    val df = df1.join(df2)
+    import df.sqlContext.implicits._
+
+    val colName = "Result"
+    val target = FuzzyLevelMatcher(colName, null, StringMetricUDFs.levenshtein($"city", $"_city"), 0.5f)
+    val res = target.addCols(df)
+
+    val resultCol = res.schema.fields.find (_.name == target.getMatchColName).get
+    resultCol.dataType shouldBe BooleanType
+
+    val resultValueCol = res.schema.fields.find(_.name == target.valueColName).get
+    resultValueCol.dataType shouldBe DoubleType
   }
 }
