@@ -460,8 +460,11 @@ class SmvModuleLink(outputModule: SmvOutput) extends
 
   private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
-  // the linked output module can not be ephemeral.
-  require(! smvModule.isEphemeral)
+  /**
+   *  No need to check isEphemeral any more
+   *  SmvOutput will be published anyhow regardless of ephemeral or not 
+   **/
+  // require(! smvModule.isEphemeral)
   // TODO: add check that the link is to an object in a different stage!!!
 
   private[smv] val isFollowLink = true
@@ -497,7 +500,7 @@ class SmvModuleLink(outputModule: SmvOutput) extends
    */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     if (isFollowLink) {
-      smvModule.readPublishedData().getOrElse(smvModule.computeRDD)
+      smvModule.readPublishedData().getOrElse(smvModule.rdd())
     } else {
       smvModule.readPublishedData().
         orElse { smvModule.readPersistedFile().toOption }.
