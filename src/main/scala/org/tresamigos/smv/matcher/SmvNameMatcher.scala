@@ -7,7 +7,9 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 import com.rockymadden.stringmetric.phonetic._
 
-
+/**
+ * TODO document the meaning of each parameter
+ */
 case class SmvNameMatcher(
                            exactMatchFilter:AbstractExactMatchFilter,
                            commonLevelMatcher:CommonLevelMatcher,
@@ -16,60 +18,55 @@ case class SmvNameMatcher(
   private val idColNames = List("id", "_id")
 
   private[matcher] def doMatch(df1:DataFrame, df2:DataFrame):DataFrame = {
-    val ex = Option(exactMatchFilter).getOrElse(NoOpExactMatchFilter)
-    val clm = Option(commonLevelMatcher).getOrElse(CommonLevelMatcherNone)
+    val ex  = if (null == exactMatchFilter) NoOpExactMatchFilter else exactMatchFilter
+    // TODO: is there a way to avoid having to leak out the '_' prefix to the expression in the caller?
+    val ExactMatchFilterResult(r1, r2, s1) = ex.extract(df1, df2.prefixFieldNames("_"))
 
-    val _df2 = df2.prefixFieldNames("_")
-
-    // case class with: extracted ids, reduced df1 & df2
-    val extractRes = ex.extract(df1, _df2)
-
-    // reduced df1 join to reduced df2 produces the joined data frame
-    val joined = clm.join(extractRes.remainingDF1, extractRes.remainingDF2)
-
-//    println(joined.collect())
-
-    // joined data frame + all level columns
-//    var joinedWithAddedLevelsDF = Function.chain(levelMatchers.map(matcher => matcher.addCols _))(joined)
-    var joinedWithAddedLevelsDF = levelMatchers.foldLeft(joined)((acc, matcher) => matcher.addCols(acc))
-
-    // extracted ids
-    var extractedResultStageDF = extractRes.extracted
+    val clm = if (null == commonLevelMatcher) CommonLevelMatcherNone else commonLevelMatcher
+    val j0 = clm.join(r1, r2) // join leftover unmatched data from both data frames
+    // sequentially apply level matchers to the join of unmatched data
+    val j1 = levelMatchers.foldLeft(j0) { (df, matcher) => matcher.addCols(df) }
 
     // add boolean true column to extractect results if we extracted some ids.  if we used an identity extractor, then don't add anything.
     // add boolean false column to the joined data frame if we extracted some ids.  if we used an identity extractor, then don't add anything.
-    ex match {
-      case ExactMatchFilter(_, _) => {
-        extractedResultStageDF = extractedResultStageDF.selectPlus(lit(true).as(ex.asInstanceOf[ExactMatchFilter].colName))
-        joinedWithAddedLevelsDF = joinedWithAddedLevelsDF.selectPlus(lit(false).as(ex.asInstanceOf[ExactMatchFilter].colName))
-      }
-      case _ =>
+    val (s2, j2) = ex match {
+      case x: ExactMatchFilter =>
+        (s1.selectPlus(lit(true) as x.colName), j1.selectPlus(lit(false) as x.colName))
+      case _ => (s1, j1)
     }
 
     // add the rest of the level columns to extracted results.  Set these to null.
-    levelMatchers.foreach {
-      case matcher@ExactLevelMatcher(_, _) => {
-        extractedResultStageDF = extractedResultStageDF.selectPlus(
-          lit(null).cast(BooleanType).as(matcher.getMatchColName)
-        )
-      }
+    val s3 = levelMatchers.foldLeft(s2) { (df, matcher) =>
+      matcher match {
+        case m: ExactLevelMatcher =>
+          df.selectPlus(lit(null).cast(BooleanType) as m.getMatchColName)
 
-      case matcher: FuzzyLevelMatcher => {
-        extractedResultStageDF = extractedResultStageDF.selectPlus(
-          lit(null).cast(BooleanType).as(matcher.getMatchColName),
-          lit(null).cast(FloatType).as(matcher.valueColName)
-        )
+        case m: FuzzyLevelMatcher =>
+          df.selectPlus(
+            lit(null).cast(BooleanType) as m.getMatchColName,
+            lit(null).cast(FloatType) as m.valueColName
+          )
       }
     }
 
     // out of the joined data frame, select only the columns we need: ids, optional extracted column, and level columns
-    val addedLevelsStageCols = extractedResultStageDF.columns map (colName => joinedWithAddedLevelsDF(colName))
-    val addedLevelsStageDF = joinedWithAddedLevelsDF.select(addedLevelsStageCols:_*)
+    val addedLevelsStageDF = j2.select(s3.columns.head, s3.columns.tail:_*)
 
     // return extracted results data frame + added levels data frame
-    extractedResultStageDF.unionAll(addedLevelsStageDF)
+    val s4 = s3.unionAll(addedLevelsStageDF)
 
-    // TODO: remove rows that evalutes to false for all filters
+    // minus the rows that has false for all the matcher columns
+    s4.where(any(s4))
+  }
+
+  // returns a predicate that would evaluate to true if any of the
+  // boolean columns in the data frame evaluates to true
+  // if the data frame has no boolean types then it returns a column that's always true
+  def any(df: DataFrame): Column = {
+    val bools = df.schema.fields filter (_.dataType == BooleanType)
+
+    if (bools.isEmpty) lit(true)
+    else bools.foldRight(lit(false)) { (f, acc) => acc or df(f.name) }
   }
 
 }
@@ -112,13 +109,13 @@ case class ExactMatchFilter(colName: String, private val expr:Column) extends Ab
   }
 }
 
-case object NoOpExactMatchFilter extends AbstractExactMatchFilter {
+object NoOpExactMatchFilter extends AbstractExactMatchFilter {
   override private[matcher] def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult = {
     ExactMatchFilterResult(df1, df2, df1.join(df2).select("id", "_id").limit(0))
   }
 }
 
-abstract class CommonLevelMatcher {
+sealed abstract class CommonLevelMatcher {
   def join(df1:DataFrame, df2:DataFrame):DataFrame
 }
 
@@ -130,7 +127,7 @@ object CommonLevelMatcherNone extends CommonLevelMatcher {
   override def join(df1:DataFrame, df2:DataFrame):DataFrame = df1.join(df2)
 }
 
-abstract class LevelMatcher {
+sealed abstract class LevelMatcher {
   private[matcher] def getMatchColName:String
   private[matcher] def addCols(df:DataFrame):DataFrame
 }

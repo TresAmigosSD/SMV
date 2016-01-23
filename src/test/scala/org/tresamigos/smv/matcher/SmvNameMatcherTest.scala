@@ -42,7 +42,6 @@ class SmvNameMatcherTest extends NameMatcherTestFixture {
     val ssc = sqlContext
     import ssc.implicits._
 
-
     val resultDF = SmvNameMatcher(
       ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
       CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
@@ -52,8 +51,8 @@ class SmvNameMatcherTest extends NameMatcherTestFixture {
       )
     ).doMatch(createDF1, createDF2)
 
+    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Full_Name_Match:Boolean; First_Name_Match:Boolean; Levenshtein_City:Boolean; Levenshtein_City_Value:Double")
 
-    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Full_Name_Match:Boolean; First_Name_Match:Boolean; Levenshtein_City:Boolean; Levenshtein_City_Value:Float")
     assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
       "[2,1,true,null,null,null]",
       "[1,3,false,false,true,1.0]"))
