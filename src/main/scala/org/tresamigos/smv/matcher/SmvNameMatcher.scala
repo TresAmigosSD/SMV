@@ -1,11 +1,11 @@
 package org.tresamigos.smv.matcher
 
 import com.rockymadden.stringmetric.similarity.LevenshteinMetric
-import org.tresamigos.smv._
-import org.apache.spark.sql.{Column, DataFrame}
+import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 import com.rockymadden.stringmetric.phonetic._
+import org.tresamigos.smv._
 
 /**
  * TODO document the meaning of each parameter
@@ -15,7 +15,7 @@ case class SmvNameMatcher(
                            commonLevelMatcher:CommonLevelMatcher,
                            levelMatchers: List[LevelMatcher])
 {
-  private val idColNames = List("id", "_id")
+  require(!levelMatchers.isEmpty)
 
   private[matcher] def doMatch(df1:DataFrame, df2:DataFrame):DataFrame = {
     val ex  = if (null == exactMatchFilter) NoOpExactMatchFilter else exactMatchFilter
@@ -59,14 +59,21 @@ case class SmvNameMatcher(
     s4.where(any(s4))
   }
 
-  // returns a predicate that would evaluate to true if any of the
-  // boolean columns in the data frame evaluates to true
-  // if the data frame has no boolean types then it returns a column that's always true
+  // Returns a predicate that would evaluate to true if any of the
+  // boolean columns in the data frame evaluates to true.
+  //
+  // If the data frame has no boolean types then this function returns
+  // a column that's always true.  Note that this is not the true
+  // zero-value for the 'or' operator (the zero is false), and that is
+  // because the return value of 'any' is usually used to filter a
+  // data frame, and we would like that behavior to be a no-op instead
+  // of dropping all the rows in the data frame.
   def any(df: DataFrame): Column = {
-    val bools = df.schema.fields filter (_.dataType == BooleanType)
+    val bools: Seq[Column] = for {
+      f <- df.schema.fields if f.dataType == BooleanType
+    } yield df(f.name)
 
-    if (bools.isEmpty) lit(true)
-    else bools.foldRight(lit(false)) { (f, acc) => acc or df(f.name) }
+    if (bools.isEmpty) lit(true) else bools reduce (_ or _)
   }
 
 }
@@ -111,7 +118,12 @@ case class ExactMatchFilter(colName: String, private val expr:Column) extends Ab
 
 object NoOpExactMatchFilter extends AbstractExactMatchFilter {
   override private[matcher] def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult = {
-    ExactMatchFilterResult(df1, df2, df1.join(df2).select("id", "_id").limit(0))
+    val sqc = df1.sqlContext
+    val idType = df1.schema.fields.find(_.name == "id").get
+
+    ExactMatchFilterResult(df1, df2, sqc.createDataFrame(
+      sqc.sparkContext.emptyRDD[Row],
+      StructType(Seq(idType, idType.copy(name = "_id")))))
   }
 }
 
