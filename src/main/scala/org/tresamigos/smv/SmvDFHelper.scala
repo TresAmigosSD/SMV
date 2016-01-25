@@ -796,4 +796,118 @@ class SmvDFHelper(df: DataFrame) {
    * Use default peek with or without the parenthesis
    **/
   def peek(): Unit = peek(1)
+
+  /**
+   * Add a set of DoubleBinHistogram columns to a DataFrame.
+   * Perform a DoubleBinHistogram on all the columns_to_bin. The num_of_bins is the corresponding
+   * number of bin for each column in columns_to_bin.
+   * The default number of bin is 1000, if the size of num_of_bins is less then the size of columns_to_bin,
+   * only the extra columns that does not have the corresponding number of bin will be default to 1000
+   * The columns_to_bin are expected to be of type double
+   *
+   * {{{
+   *   df.smvDoubleBinHistogram(Seq("key1", "key2"), Seq(col1, col2), Seq(100, 200))
+   * }}}
+   * Create a new columns named the same as the columns to bin post fixed with "_bin"
+   */
+  def smvDoubleBinHistogram(keys: Seq[String], columns_to_bin: Seq[String], num_of_bins: Seq[Int] = Seq() ): DataFrame = {
+    if (columns_to_bin.isEmpty) {
+      df
+    } else {
+      import df.sqlContext.implicits._
+
+      val min_cols: Seq[Column] = columns_to_bin.map( col => min(col) as "_min_" + col )
+      val max_cols: Seq[Column] = columns_to_bin.map( col => max(col) as "_max_" + col)
+      val key_cols: Seq[Column] = keys.map( key => $"$key")
+
+      val min_max_cols = min_cols ++ max_cols
+
+      val min_max_df = df.groupBy(key_cols: _*).agg(min_max_cols(0), min_max_cols.tail: _*)
+
+
+      val df_with_min_max = df.joinByKey(min_max_df, keys, SmvJoinType.Inner)
+
+      var number_of_bins = num_of_bins
+      //Make sure that size of number_of_bins is equal to size of columns_to_bin.
+      //If not add default bin number which is 1000
+      while(number_of_bins.length < columns_to_bin.length) {
+        number_of_bins = number_of_bins :+ 1000
+      }
+
+      val min_col_names = columns_to_bin.map(col => "_min_" + col)
+      val max_col_names = columns_to_bin.map(col => "_max_" + col)
+
+      val bin_col_names = columns_to_bin.map( col => col + "_bin")
+
+      val num_of_cols = columns_to_bin.length
+
+      //Construct a list of tuples where each tuple holds info about a given col to bin.
+      val cols_info = for (i <- 0 until num_of_cols)
+            yield (columns_to_bin(i),  min_col_names(i),  max_col_names(i), number_of_bins(i), bin_col_names(i))
+
+      //Construct the bining expressions
+      val bin_cols_expr: Seq[Column] = for ((c_name, c_min, c_max, c_num_bin, c_bin_name) <- cols_info)
+            yield DoubleBinHistogram($"$c_name", $"$c_min", $"$c_max", lit(c_num_bin)) as c_bin_name
+
+      df_with_min_max.
+        groupBy(key_cols: _*).
+        agg(bin_cols_expr(0), bin_cols_expr.tail: _*)
+    }
+  }
+
+  /**
+   * Add a DoubleBinHistogram column to a DataFrame using multiple keys.
+   * Perform a DoubleBinHistogram on  the column_to_bin using the passed number of bins num_of_bins
+   * The column_to_bin is expected to be of type double
+   *
+   * {{{
+   *   df.smvDoubleBinHistogram(Seq("key1", "key2"), col, 100)
+   * }}}
+   * Create a new column named the same as passed column name to bin post fixed with "_bin"
+   */
+  def smvDoubleBinHistogram(keys: Seq[String], column_to_bin: String, num_of_bins: Int): DataFrame = {
+    smvDoubleBinHistogram(keys, Seq(column_to_bin), Seq(num_of_bins))
+  }
+
+  /**
+   * Add a DoubleBinHistogram column to a DataFrame using multiple keys.
+   * Perform a DoubleBinHistogram on  the column_to_bin using 1000 bins
+   * The column_to_bin is expected to be of type double
+   *
+   * {{{
+   *   df.smvDoubleBinHistogram(Seq("key1", "key2"), col)
+   * }}}
+   * Create a new column named the same as passed column name to bin post fixed with "_bin"
+   */
+  def smvDoubleBinHistogram(keys: Seq[String], column_to_bin: String): DataFrame = {
+    smvDoubleBinHistogram(keys, Seq(column_to_bin))
+  }
+
+  /**
+   * Add a DoubleBinHistogram column to a DataFrame using single key.
+   * Perform a DoubleBinHistogram on the column_to_bin using the passed number of bins num_of_bins
+   * The column_to_bin is expected to be of type double
+   *
+   * {{{
+   *   df.smvDoubleBinHistogram(key, col, 100)
+   * }}}
+   * Create a new column named the same as passed column name to bin post fixed with "_bin"
+   */
+  def smvDoubleBinHistogram(key: String, column_to_bin: String, num_of_bins: Int): DataFrame = {
+    smvDoubleBinHistogram(Seq(key), Seq(column_to_bin), Seq(num_of_bins))
+  }
+
+  /**
+   * Add a DoubleBinHistogram column to a DataFrame using single key.
+   * Perform a DoubleBinHistogram on the column_to_bin using 1000 bins
+   * The column_to_bin is expected to be of type double
+   *
+   * {{{
+   *   df.smvDoubleBinHistogram(key1, col)
+   * }}}
+   * Create a new column named the same as passed column name to bin post fixed with "_bin"
+   */
+  def smvDoubleBinHistogram(key: String, column_to_bin: String): DataFrame = {
+    smvDoubleBinHistogram(Seq(key), Seq(column_to_bin))
+  }
 }

@@ -247,7 +247,6 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
   var max_val: Double = _
   var num_of_bins: Int = _
   var interval_length: Double = _
-  var min_max_initialized: Boolean = false
 
   //Create a map that has bin index to bin count.
   def bufferSchema = new StructType().add("bin_count", DataTypes.createMapType(IntegerType, IntegerType))
@@ -286,16 +285,13 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
     // Null value should be an entry also
     val m = buffer.getMap(0).asInstanceOf[Map[Int,Int]]
 
-    if (!min_max_initialized) {
-      if (!input.isNullAt(1) && !input.isNullAt(2) && !input.isNullAt(3)) {
-        min_val = input.getDouble(1)
-        max_val = input.getDouble(2)
-        num_of_bins = input.getInt(3)
-        interval_length = (max_val - min_val) / num_of_bins
-        min_max_initialized = true
-      } else {
-        return
-      }
+    if (!input.isNullAt(1) && !input.isNullAt(2) && !input.isNullAt(3)) {
+      min_val = input.getDouble(1)
+      max_val = input.getDouble(2)
+      num_of_bins = input.getInt(3)
+      interval_length = (max_val - min_val) / num_of_bins
+    } else {
+      return
     }
 
     //Ignoring null values
