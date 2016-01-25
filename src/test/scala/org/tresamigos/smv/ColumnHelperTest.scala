@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.functions._
+
 class ColumnHelperTest extends SmvTestUtil {
   test("test smvNullSub") {
     val ssc = sqlContext; import ssc.implicits._
@@ -110,6 +112,26 @@ class ColumnHelperTest extends SmvTestUtil {
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
     val res = df.selectWithReplace($"t" withDesc "the time sequence")
     assertUnorderedSeqEqual(res.schema.getDescs(), Seq(("k",""), ("t","the time sequence"), ("v","")))
+  }
+
+  test("test Percentile of DoubleBinHistogram") {
+    val ssc = sqlContext;
+    import ssc.implicits._
+    val df = open(testDataDir + "AggTest/test2.csv")
+
+    val df_with_double_histogram_bin = df.agg(DoubleBinHistogram('val, lit(0.0), lit(100.0), lit(2)) as 'bin_histogram)
+
+    val res0 = df_with_double_histogram_bin.select('bin_histogram.smvBinPercentile(10.0))
+    assertSrddDataEqual(res0, "25.0")
+
+    val res1 = df_with_double_histogram_bin.select('bin_histogram.smvBinPercentile(50.0))
+    assertSrddDataEqual(res1, "25.0")
+
+    val res2 = df_with_double_histogram_bin.select('bin_histogram.smvBinPercentile(90.0))
+    assertSrddDataEqual(res2, "75.0")
+
+    val res3 = df_with_double_histogram_bin.select('bin_histogram.smvBinPercentile(200.0))
+    assertSrddDataEqual(res3, "75.0")
   }
 }
 

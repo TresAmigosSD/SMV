@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.annotation.Experimental
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.{Row, Column}
 import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
@@ -28,6 +28,8 @@ import java.sql.Timestamp
 import com.rockymadden.stringmetric.phonetic.{MetaphoneAlgorithm, SoundexAlgorithm}
 import org.joda.time._
 import org.apache.spark.annotation._
+
+import scala.collection.mutable
 
 /**
  * ColumnHelper class provides additional methods/operators on Column
@@ -556,4 +558,62 @@ class ColumnHelper(column: Column) {
     val m = Metadata.fromJson(s"""{"smvDesc": "${desc}"}""")
     column.as(column.getName, m)
   }
+
+  /**
+   * Compute a given percentile given a double bin histogram
+   *
+   * {{{
+   * df_with_double_histogram_bin.select('bin_histogram.smvBinPercentile(50.0))
+   * }}}
+   *
+   **/
+  def smvBinPercentile(percentile: Double) = {
+    val name = s"smvBinPercentile($column,$percentile)"
+    val f = (v:Any) =>
+      if(v == null) {
+        null
+      } else {
+        val bin_hist = v.asInstanceOf[mutable.WrappedArray[Row]]
+
+        if(bin_hist.isEmpty) {
+          null
+        } else {
+          import scala.util.control.Breaks._
+
+          val count_sum: Int = bin_hist.map(_.get(2).asInstanceOf[Int]).foldLeft(0)(_ + _)
+          val target_sum = if (percentile >= 100.0 ) count_sum else (count_sum * percentile / 100.0)
+
+          var sum_so_far = 0.0
+          var target_bin = -1
+          breakable {
+            for (l <- bin_hist) {
+              sum_so_far += l.get(2).asInstanceOf[Int]
+
+              if (sum_so_far >= target_sum) {
+                target_bin += 1
+                break
+              }
+
+              target_bin += 1
+            }
+          }
+
+          if (target_bin >= bin_hist.length - 1) {
+            target_bin = bin_hist.length - 1
+          }
+
+          (bin_hist(target_bin).get(0).asInstanceOf[Double] + bin_hist(target_bin).get(1).asInstanceOf[Double]) / 2.0;
+        }
+      }
+    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
+  }
+
+  /*
+    test("test DoubleBinHistogram") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = open(testDataDir +  "AggTest/test2.csv")
+    val binHist = df.agg(DoubleBinHistogram('val, lit(0.0), lit(100.0),lit(2))).collect()(0).asInstanceOf[GenericRowWithSchema]
+    assert(binHist(0) ===  Array(Row(0.0,50.0,1), Row(50.0,100.0,1)))
+  }
+   */
 }
