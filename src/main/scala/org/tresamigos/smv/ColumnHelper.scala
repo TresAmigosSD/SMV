@@ -608,12 +608,4 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
   }
 
-  /*
-    test("test DoubleBinHistogram") {
-    val ssc = sqlContext; import ssc.implicits._
-    val df = open(testDataDir +  "AggTest/test2.csv")
-    val binHist = df.agg(DoubleBinHistogram('val, lit(0.0), lit(100.0),lit(2))).collect()(0).asInstanceOf[GenericRowWithSchema]
-    assert(binHist(0) ===  Array(Row(0.0,50.0,1), Row(50.0,100.0,1)))
-  }
-   */
 }
