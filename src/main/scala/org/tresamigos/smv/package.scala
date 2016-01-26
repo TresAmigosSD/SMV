@@ -79,6 +79,15 @@ package object smv {
   implicit def makeStructTypeHelper(schema: StructType) = new StructTypeHelper(schema)
 
   /**
+   * Repeatedly changes `candidate` so that it is not found in the `collection`.
+   *
+   * Useful when choosing a unique column name to add to a data frame.
+   */
+  @scala.annotation.tailrec
+  def mkUniq(collection: Seq[String], candidate: String): String =
+    if (collection.exists(_ == candidate)) mkUniq(collection, "_" + candidate) else candidate
+
+  /**
    * Instead of using String for join type, always use the link here.
    *
    * If there are typos on the join type, using the link in client code will cause

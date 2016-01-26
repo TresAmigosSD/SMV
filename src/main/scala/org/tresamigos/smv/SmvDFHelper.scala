@@ -491,10 +491,7 @@ class SmvDFHelper(df: DataFrame) {
     // need to make a name distinct from all the column names because
     // we are going to build a struct for each row, and the name is
     // used to retrieve the index value later
-    @scala.annotation.tailrec
-    def mkuniqIndexName(colNames: Seq[String], candidate: String): String =
-      if (colNames.exists(_ == candidate)) mkuniqIndexName(colNames, "_" + candidate) else candidate
-    val indexName = mkuniqIndexName(colNames, indexColName getOrElse "Index")
+    val indexName = mkUniq(colNames, indexColName getOrElse "Index")
 
     val embedded = indexValues map { v =>
       val fields = lit(v).as(indexName) +: (for {
