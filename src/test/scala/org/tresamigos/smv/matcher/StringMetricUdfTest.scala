@@ -20,7 +20,7 @@ class StringMetricUdfTest extends FlatSpec with Matchers {
   "Levenshtein distance function" should "return normalized values" in {
     val (a, b) = ("abc", "abd")
     assume(com.rockymadden.stringmetric.similarity.LevenshteinMetric.compare(a, b) === Some(1))
-    StringMetricUDFs.NormalizedLevenshteinFn("abc", "abd").get shouldEqual 2.0/3 +- 1e-6
+    StringMetricUDFs.NormalizedLevenshteinFn("abc", "abd").get shouldEqual 2.0f/3 +- 1
   }
 
   it should "return None when either string is null or both are empty" in {

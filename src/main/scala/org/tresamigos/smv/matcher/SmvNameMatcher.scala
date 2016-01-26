@@ -15,9 +15,13 @@ case class SmvNameMatcher(
                            commonLevelMatcher:CommonLevelMatcher,
                            levelMatchers: List[LevelMatcher])
 {
-  require(!levelMatchers.isEmpty)
+  require(levelMatchers != null && levelMatchers.nonEmpty)
 
-  private[matcher] def doMatch(df1:DataFrame, df2:DataFrame):DataFrame = {
+  val idColNames = List("id", "_id")
+
+  def doMatch(df1:DataFrame, df2:DataFrame):DataFrame = {
+    require(df1 != null && df2 != null)
+
     val ex  = if (null == exactMatchFilter) NoOpExactMatchFilter else exactMatchFilter
     // TODO: is there a way to avoid having to leak out the '_' prefix to the expression in the caller?
     val ExactMatchFilterResult(r1, r2, s1) = ex.extract(df1, df2.prefixFieldNames("_"))
@@ -85,26 +89,28 @@ object StringMetricUDFs {
 
   val soundexMatch = udf(SoundexFn)
 
-  val NormalizedLevenshteinFn: (String, String) => Option[Double] = (s1, s2) =>
+  val NormalizedLevenshteinFn: (String, String) => Option[Float] = (s1, s2) =>
   if (null == s1 || null == s2) None
   else LevenshteinMetric.compare(s1, s2) map { dist =>
     // normalizing to 0..1
     val maxLen = Seq(s1.length, s2.length).max
-    1.0 - (dist * 1.0 / maxLen)
+    1.0f - (dist * 1.0f / maxLen)
   }
 
   val levenshtein = udf(NormalizedLevenshteinFn)
 }
 
 
-private[matcher] case class ExactMatchFilterResult(remainingDF1:DataFrame, remainingDF2:DataFrame, extracted:DataFrame)
+case class ExactMatchFilterResult(remainingDF1:DataFrame, remainingDF2:DataFrame, extracted:DataFrame)
 
 sealed abstract class AbstractExactMatchFilter {
-  private[matcher] def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
+  def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
 }
 
-case class ExactMatchFilter(colName: String, private val expr:Column) extends AbstractExactMatchFilter {
-  override private[matcher] def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult = {
+case class ExactMatchFilter(colName: String, expr:Column) extends AbstractExactMatchFilter {
+  require(colName != null && expr.toExpr.dataType == BooleanType)
+
+  override def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult = {
     val joined = df1.join(df2, expr, "outer")
 
     val extracted = joined.where( joined("id").isNotNull && joined("_id").isNotNull ).select("id", "_id")
@@ -117,7 +123,7 @@ case class ExactMatchFilter(colName: String, private val expr:Column) extends Ab
 }
 
 object NoOpExactMatchFilter extends AbstractExactMatchFilter {
-  override private[matcher] def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult = {
+  override def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult = {
     val sqc = df1.sqlContext
     val idType = df1.schema.fields.find(_.name == "id").get
 
@@ -131,7 +137,8 @@ sealed abstract class CommonLevelMatcher {
   def join(df1:DataFrame, df2:DataFrame):DataFrame
 }
 
-case class CommonLevelMatcherExpression(private val expr:Column) extends CommonLevelMatcher {
+case class CommonLevelMatcherExpression(expr:Column) extends CommonLevelMatcher {
+  require(expr != null && expr.toExpr.dataType == BooleanType)
   override def join(df1:DataFrame, df2:DataFrame):DataFrame = { df1.join(df2, expr) }
 }
 
@@ -140,32 +147,45 @@ object CommonLevelMatcherNone extends CommonLevelMatcher {
 }
 
 sealed abstract class LevelMatcher {
-  private[matcher] def getMatchColName:String
-  private[matcher] def addCols(df:DataFrame):DataFrame
+  def getMatchColName:String
+  def addCols(df:DataFrame):DataFrame
 }
 
-case class ExactLevelMatcher(private[matcher] val colName:String, private[matcher] val exactMatchExpression:Column) extends LevelMatcher {
-  override private[matcher] def getMatchColName: String = colName
-  override private[matcher] def addCols(df: DataFrame): DataFrame = df.selectPlus(exactMatchExpression.as(colName))
+case class ExactLevelMatcher(colName:String, exactMatchExpression:Column) extends LevelMatcher {
+  require(colName != null && exactMatchExpression != null)
+  override def getMatchColName: String = colName
+  override def addCols(df: DataFrame): DataFrame = df.selectPlus(exactMatchExpression.as(colName))
 }
 
 case class FuzzyLevelMatcher(
-                            private[matcher] val colName:String,
-                            private[matcher] val predicate:Column,
-                            private[matcher] val valueExpr:Column,
-                            private[matcher] val threshold: Float
+                            val colName:String,
+                            val predicate:Column,
+                            val valueExpr:Column,
+                            val threshold: Float
                           ) extends LevelMatcher {
-  override private[matcher] val getMatchColName: String = colName
 
-  private[matcher] val valueColName: String = colName + "_Value"
+  val exactMatch =  if (predicate == null)
+                      lit(true)
+                    else
+                      predicate
 
-  override private[matcher] def addCols(df: DataFrame): DataFrame = {
+  require(exactMatch.toExpr.dataType == BooleanType, "The predicate parameter should be null or a boolean column")
+
+  require(
+    colName != null &&
+    valueExpr != null && valueExpr.toExpr.dataType == FloatType)
+
+  override val getMatchColName: String = colName
+
+  val valueColName: String = colName + "_Value"
+
+  override def addCols(df: DataFrame): DataFrame = {
     val cond: Column =
-      if (null == predicate)
+      if (null == exactMatch)
         valueExpr > threshold
       else
-        predicate && (valueExpr > threshold)
+        exactMatch && (valueExpr > threshold)
 
-    df.selectPlus(cond as colName).selectPlus(valueExpr as valueColName)
+    df.selectPlus(cond as colName).selectPlus(valueExpr cast FloatType as valueColName)
   }
 }
