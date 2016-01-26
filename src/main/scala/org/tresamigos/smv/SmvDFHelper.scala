@@ -440,7 +440,8 @@ class SmvDFHelper(df: DataFrame) {
    * +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
    *
    * and a function that would map "A_1" to ("A", "1"), unpivoting all
-   * columns other than 'Id' would transform the table into the following
+   * columns except 'Id' (in other words, valueCols === columns - `Id`)
+   * would transform the table into the following
    *
    * +-----+-----+------+------+-----+-------+
    * | Id  |Index|  A   |  B   | ... |  Z    |
@@ -486,7 +487,8 @@ class SmvDFHelper(df: DataFrame) {
       }
 
     val colNames = t1.distinct // collect the intended column names after unpivot
-    val indexValues = t2.distinct.sorted // TODO sort by length, then in alphabetic order
+    // sort by length first, then in alphabetic order to simulate numeric ordering
+    val indexValues = t2.distinct.sortWith((a,b) => a.length < b.length && a.compareTo(b) < 0)
 
     // need to make a name distinct from all the column names because
     // we are going to build a struct for each row, and the name is

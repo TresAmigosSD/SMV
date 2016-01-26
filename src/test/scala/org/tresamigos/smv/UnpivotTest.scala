@@ -15,6 +15,10 @@
 package org.tresamigos.smv
 
 class UnpivotTest extends SmvTestUtil {
+  val colNameFn: String => (String, String) = s => {
+    val seq = s.split("_")
+    (seq(0), seq(1))
+  }
 
   test("Test simple unpivot op") {
     val df = createSchemaRdd("id:String; X:String; Y:String; Z:String",
@@ -31,10 +35,7 @@ class UnpivotTest extends SmvTestUtil {
     val df = createSchemaRdd("id:String;A_1:String;A_2:String;B_1:String;B_2:String",
       "1,1a1,1a2,1b1,1b2;2,2a1,2a2,2b1,2b2")
 
-    val res = df.smvUnpivot(
-      Seq("A_1", "A_2", "B_1", "B_2"),
-      n => { val seq = n.split("_"); (seq(0), seq(1))}
-    )
+    val res = df.smvUnpivot(Seq("A_1", "A_2", "B_1", "B_2"), colNameFn)
     assertSrddSchemaEqual(res, "id:String;Index:String;A:String;B:String")
     assertSrddDataEqual(res,
       """1,1,1a1,1b1;
@@ -47,10 +48,7 @@ class UnpivotTest extends SmvTestUtil {
     val df = createSchemaRdd("id:String;A_1:String;A_2:String;B_1:String",
       "1,1a1,1a2,1b1;2,2a1,2a2,2b1")
 
-    val res = df.smvUnpivot(
-      Seq("A_1", "A_2", "B_1"),
-      n => { val seq = n.split("_"); (seq(0), seq(1))}
-    )
+    val res = df.smvUnpivot(Seq("A_1", "A_2", "B_1"), colNameFn)
     assertSrddSchemaEqual(res, "id:String;Index:String;A:String;B:String")
     assertSrddDataEqual(res,
       """1,1,1a1,1b1;
@@ -63,16 +61,27 @@ class UnpivotTest extends SmvTestUtil {
     val df = createSchemaRdd("id:String;A_1:String;A_2:String;B_1:String;B_2:String",
       "1,1a1,1a2,1b1,1b2;2,2a1,2a2,2b1,2b2")
 
-    val res = df.smvUnpivot(
-      Seq("A_1", "A_2", "B_1", "B_2"),
-      n => { val seq = n.split("_"); (seq(0), seq(1))},
-      None
-    )
+    val res = df.smvUnpivot(Seq("A_1", "A_2", "B_1", "B_2"), colNameFn, None)
     assertSrddSchemaEqual(res, "id:String;A:String;B:String")
     assertSrddDataEqual(res,
       """1,1a1,1b1;
         |1,1a2,1b2;
         |2,2a1,2b1;
         |2,2a2,2b2""".stripMargin)
+  }
+
+  test("index ordering should put 2 before 10") {
+    val columns = for (a <- 'A' to 'C'; n <- 1 to 20) yield a + "_" + n
+    val schema = ("Id:String;" +: columns.map(_ + ":String")) mkString ";"
+
+    val data = Stream.from(1).take(61) mkString ","
+    val df = createSchemaRdd(schema, data)
+
+    val res = df.smvUnpivot(columns, colNameFn)
+    assertSrddSchemaEqual(res, "Id:String;Index:String;A:String;B:String;C:String")
+
+    def nextRow(n: Int): Seq[Int] = Seq(n, n+1, 20+n+1, 40+n+1)
+    val rows = for (n <- 1 to 20; r = 1 +: nextRow(n)) yield r.mkString(",")
+    assertSrddDataEqual(res, rows mkString ";")
   }
 }
