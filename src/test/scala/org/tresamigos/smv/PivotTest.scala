@@ -146,3 +146,21 @@ class SmvPivotTest extends SmvTestUtil {
     assert(fieldNames === Seq("k", "v1_A", "v1_B", "v2_A", "v2_B"))
   }
 }
+
+class SmvPivotCoalesceTest extends SmvTestUtil {
+  test("smvPivotCoalesce should work on data frames without a intra-group ranking column") {
+    val df = createSchemaRdd("k1:String;k2:String", "A,X;B,Y;C,Y;D,Z")
+    val res = df.smvPivotCoalesce("k2")("k1")
+
+    assertSrddSchemaEqual(res, "k2:String;k1_1:String;k1_2:String")
+    assertSrddDataEqual(res, "X,A,null;Y,B,C;Z,D,null")
+  }
+
+  test("it should use the given ranking column if provided") {
+    val df = createSchemaRdd("k1:String;k2:String;rank:Integer", "A,X,1;B,Y,2;C,Y,1;D,Z,1")
+    val res = df.smvPivotCoalesce("k2")("k1", Some("rank"))
+
+    assertSrddSchemaEqual(res, "k2:String;k1_1:String;k1_2:String")
+    assertSrddDataEqual(res, "X,A,null;Y,C,B;Z,D,null")
+  }
+}
