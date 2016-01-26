@@ -18,13 +18,13 @@ val df1, df2
 
 /*** Resulting MDM ***/
 val resultDF = SmvNameMatcher(
-    ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
-    CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
-    List(
-        ExactLevelMatcher("First_Name_Match", $"first_name" === $"_first_name"), 
-        FuzzyLevelMatcher("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city"), .9)
-    )
-).doMatch(df1,df2) 
+  ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
+  CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
+  List(
+    ExactLevelMatcher("First_Name_Match", $"first_name" === $"_first_name"),
+    FuzzyLevelMatcher("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f)
+  )
+).doMatch(df1, df2)
 ```
 
 ## Sample Input
@@ -53,8 +53,7 @@ id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value
 2|1|true|null|null|null
 1|3|false|false|true|1.0
 
-The first record matches for the ExactMatchFilter.  This always results in its column being set to true and all the other ones being set to null.  It also removes the matched records from the set that will be further processed. The remaining records are matched by joining them on the soundex of the first names from each data frame.  This results in two matches: a match of id 1 from data frame 1 and id 3 from data frame 2, and a match of id 3 from both data frames.  The second match is excluded from the resulting data frame because all 
-boolean matches evaluate to false.   In the other match, the Full_Name_Match field will always be false for any LevelMatch, since only the records that did not match the ExactMatchFilter are being joined.  First_Name_Match evaluates to false because the first names are not the same and Levenshtein_City evaluates to true because the city is the same, making it's levenstein distance be greater than the .9 threshold.
+The first record matches for the ExactMatchFilter.  This always results in its column being set to true and all the other ones being set to null.  It also removes the matched records from the set that will be further processed. The remaining records are matched by joining them on the soundex of the first names from each data frame.  This results in two matches: a match of id 1 from data frame 1 and id 3 from data frame 2, and a match of id 3 from both data frames.  The second match is excluded from the resulting data frame because all boolean matches evaluate to false.   In the other match, the Full_Name_Match field will always be false for any LevelMatch, since only the records that did not match the ExactMatchFilter are being joined.  First_Name_Match evaluates to false because the first names are not the same and Levenshtein_City evaluates to true because the city is the same, making it's levenstein distance be greater than the .9 threshold.
 
 
 ## Decorating Input
@@ -78,7 +77,13 @@ ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name")
 ```
 
 ###CommonLevelMatcher
-This is an optional parameter.  If not specified a simple cross join will be applied.  The two input data frames have to be joined into a single combined data frame on which matches will be performed.  We currently support a cross join, which is the default, or an inner join for which you can provide a catalyst expression.  
+This is an optional parameter.  If your Level Matchers have a common expression, you can optimize your tests by applying this expression first in this parameter.  If you set this to null, then Level Matchers will be applied to all combinations of records in whatever was not matched by the Exact Match Filter.
+ 
+###CommonLevelMatcherNone
+If you set the Common Level Matcher parameter to null, then internally it will be replaced with CommonLevelMatcherNone.  This will combine all records remaining in the input data frames after the ExactMatchFilter has been applied.  
+ 
+###CommonLevelMatcherExpression
+If you have a common level expression, you can specify it here.  A seperate boolean column with the result will not be created in the MDM but the remaining LevelMatchers will perform faster.
 
 ```scala
 CommonLevelMatcherExpression(<catalyst expression>) // catalyst expression on which to join the data frames
@@ -126,10 +131,10 @@ FuzzyLevelMatcher("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city"
 ###StringMetricUDFs
 Convinience wrappers around various open source similarity and other sound metric algorithms that you can use in your catalyst expressions.  See https://github.com/rockymadden/stringmetric
 * soundexMatch(String,String) - Soundex Metric comparison.  Returns boolean.
-* levenshtein(String,String) - Levenshtein Metric comparison.  Returns integer.
+* levenshtein(String,String) - Levenshtein Metric comparison.  Returns a float between 0 and 1.  The higher the number the stronger the match.
 
 ###MDM
-The resulting data frame will always have an "id" and "_id" columns reperesenting the mapped ids of the input data frames.  It will also have boolean columns with names taken from the ExactMatchFilter and from the LevelMatches.  And it will have float columns for the results of the fuzzy match from FuzzyLevelMatches.  Only records where at least one of the matches succeeded will be kept in the MDM.
+The resulting data frame will always have an "id" and "_id" columns reperesenting the mapped ids of the input data frames.  It will also have boolean columns with names taken from the ExactMatchFilter and from the LevelMatches.  And it will have float columns for the results of the fuzzy match from FuzzyLevelMatches.  Only records where at least one of the matches have a true value will be kept in the MDM.
 
 ## Constraints
 ### Valid Input

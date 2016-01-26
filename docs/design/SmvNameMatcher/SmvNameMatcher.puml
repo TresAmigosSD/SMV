@@ -4,18 +4,20 @@ hide empty fields
 hide circle
 
 package smv.matcher {
-    class StringMetricUDFs {
+    class StringMetricUDFs <<Object>> {
         +soundexMatch
         +levenshtein
     }
 
     class SmvNameMatcher{
-        +SmvNameMatcher(ex:AbstractExactMatchFilter, clm:CommonLevelMatcher, matchers:List[LevelMatcher])
+        +SmvNameMatcher(exactMatchFilter:AbstractExactMatchFilter,
+            commonLevelMatcher:CommonLevelMatcher, levelMatchers:List[LevelMatcher])
         +doMatch(df1:DataFrame, df2:DataFrame):DataFrame
     }
 
     class ExactMatchFilterResult {
-        ~ExactMatchFilterResult(remainingDF1:DataFrame, remainingDF2:DataFrame, extracted:DataFrame)
+        ~ExactMatchFilterResult(remainingDF1:DataFrame,
+        remainingDF2:DataFrame, extracted:DataFrame)
     }
 
     class AbstractExactMatchFilter <<Abstract>> {
@@ -27,7 +29,7 @@ package smv.matcher {
         ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
     }
 
-    class IdentityExactMatchFilter {
+    class NoOpExactMatchFilter <<Object>> {
         ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
     }
 
@@ -54,7 +56,8 @@ package smv.matcher {
     }
 
     class FuzzyLevelMatcher {
-        +FuzzyLevelMatcher(colName:String, exactMatchExpression:Column, stringDistanceExpression:Column, threshold:Float)
+        +FuzzyLevelMatcher(colName:String, predicate:Column,
+        valueExpr:Column, threshold:Float)
     }
 }
 
@@ -68,11 +71,11 @@ LevelMatcher <|--- FuzzyLevelMatcher
 CommonLevelMatcher <|-- CommonLevelMatcherExpression
 CommonLevelMatcher <|-- CommonLevelMatcherNone
 
-IdentityExactMatchFilter --|> AbstractExactMatchFilter
+NoOpExactMatchFilter --|> AbstractExactMatchFilter
 ExactMatchFilter --|> AbstractExactMatchFilter
 
 ExactMatchFilter o-- ExactMatchFilterResult
-IdentityExactMatchFilter o-- ExactMatchFilterResult
+NoOpExactMatchFilter o-- ExactMatchFilterResult
 SmvNameMatcher --> ExactMatchFilterResult
 
 @enduml
