@@ -58,7 +58,7 @@ class SmvNameMatcherTest extends NameMatcherTestFixture {
       "[1,3,false,false,true,1.0]"))
   }
 
-  test("Main name matcher: only exact level") {
+  test("Main name matcher: only fuzzy level") {
     val ssc = sqlContext
     import ssc.implicits._
 
@@ -77,7 +77,7 @@ class SmvNameMatcherTest extends NameMatcherTestFixture {
     ))
   }
 
-  test("Main name matcher: only fuzzy level") {
+  test("Main name matcher: only exact level") {
     val ssc = sqlContext
     import ssc.implicits._
 

@@ -17,8 +17,6 @@ case class SmvNameMatcher(
 {
   require(levelMatchers != null && levelMatchers.nonEmpty)
 
-  val idColNames = List("id", "_id")
-
   def doMatch(df1:DataFrame, df2:DataFrame):DataFrame = {
     require(df1 != null && df2 != null)
 
@@ -164,12 +162,7 @@ case class FuzzyLevelMatcher(
                             val threshold: Float
                           ) extends LevelMatcher {
 
-  val exactMatch =  if (predicate == null)
-                      lit(true)
-                    else
-                      predicate
-
-  require(exactMatch.toExpr.dataType == BooleanType, "The predicate parameter should be null or a boolean column")
+  require(null == predicate || predicate.toExpr.dataType == BooleanType, "The predicate parameter should be null or a boolean column")
 
   require(
     colName != null &&
@@ -181,11 +174,11 @@ case class FuzzyLevelMatcher(
 
   override def addCols(df: DataFrame): DataFrame = {
     val cond: Column =
-      if (null == exactMatch)
+      if (null == predicate)
         valueExpr > threshold
       else
-        exactMatch && (valueExpr > threshold)
+        predicate && (valueExpr > threshold)
 
-    df.selectPlus(cond as colName).selectPlus(valueExpr cast FloatType as valueColName)
+    df.selectPlus(cond as colName).selectPlus(valueExpr as valueColName)
   }
 }
