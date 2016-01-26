@@ -133,6 +133,27 @@ class ColumnHelperTest extends SmvTestUtil {
     val res3 = df_with_double_histogram_bin.select('bin_histogram.smvBinPercentile(200.0))
     assertSrddDataEqual(res3, "75.0")
   }
+
+  test("test Mode of DoubleBinHistogram: equal mode values") {
+    val ssc = sqlContext;
+    import ssc.implicits._
+    val df = createSchemaRdd("k:Integer; v:Double;", "1,0.0;1,100.0;1,34.0;1,65.0")
+
+    val df_with_double_histogram_bin = df.agg(DoubleBinHistogram('v, lit(0.0), lit(100.0), lit(2)) as 'bin_histogram)
+
+    val res0 = df_with_double_histogram_bin.select('bin_histogram.smvBinMode())
+    assertSrddDataEqual(res0, "25.0")
+  }
+
+  test("test Mode of DoubleBinHistogram: different mode values") {
+    val ssc = sqlContext;
+    import ssc.implicits._
+    val df = createSchemaRdd("k:Integer; v:Double;", "1,0.0;1,100.0;1,34.0;1,65.0;1,83.0")
+    val df_with_double_histogram_bin = df.agg(DoubleBinHistogram('v, lit(0.0), lit(100.0), lit(2)) as 'bin_histogram)
+
+    val res0 = df_with_double_histogram_bin.select('bin_histogram.smvBinMode())
+    assertSrddDataEqual(res0, "75.0")
+  }
 }
 
 class SmvPrintToStrTest extends SmvTestUtil {

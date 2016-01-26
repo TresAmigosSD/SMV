@@ -608,4 +608,43 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
   }
 
+  /**
+   * Compute the mode given a double bin histogram
+   *
+   * {{{
+   * df_with_double_histogram_bin.select('bin_histogram.smvBinMode())
+   * }}}
+   *
+   **/
+  def smvBinMode() = {
+    val name = s"smvBinMode($column)"
+    val f = (v:Any) =>
+      if(v == null) {
+        null
+      } else {
+        var bin_hist = v.asInstanceOf[mutable.WrappedArray[Row]]
+
+        if (bin_hist.isEmpty) {
+          null
+        } else {
+          //First sort by frequency descending then by interval ascending. So in case of equal frequency return
+          //the lowest interval middle as the mode.(this is in accordance with R and SAS)
+          def sortByFreq(r1: Row, r2: Row) = {
+            if (r1.get(2).asInstanceOf[Int] > r2.get(2).asInstanceOf[Int]) {
+              true
+            } else if (r1.get(2).asInstanceOf[Int] < r2.get(2).asInstanceOf[Int]) {
+              false
+            } else {
+              r1.get(0).asInstanceOf[Double] < r2.get(0).asInstanceOf[Double]
+            }
+          }
+
+          bin_hist = bin_hist.sortWith(sortByFreq)
+          (bin_hist(0).get(0).asInstanceOf[Double] + bin_hist(0).get(1).asInstanceOf[Double]) / 2.0
+        }
+      }
+
+    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
+  }
+
 }
