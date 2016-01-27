@@ -69,4 +69,11 @@ class NonAggFuncsTest extends SmvTestUtil {
     assertSrddSchemaEqual(res, "k:String;count:Long")
     assertSrddDataEqual(res, "1,0;2,1;3,0")
   }
+
+  test("test smvCountDistinctWithNull") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("k:String; v:Boolean", "1,true;2,;3,false")
+    val res = df.agg(countDistinct($"k", $"v") as "n1", smvCountDistinctWithNull($"k", $"v") as "n2")
+    assertSrddDataEqual(res, "2,3")
+  }
 }

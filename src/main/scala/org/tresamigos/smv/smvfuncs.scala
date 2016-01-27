@@ -1,6 +1,6 @@
 package org.tresamigos.smv
 
-import org.apache.spark.sql._, functions._
+import org.apache.spark.sql._, functions._, types._
 
 /**
  * Commonly used functions
@@ -18,4 +18,15 @@ object smvfuncs {
 
   /** Count number of null values */
   def smvCountNull(cond: Column): Column = count(when(cond.isNull, lit(1)).otherwise(lit(null)))
+
+  /** Count number of distinct values including null */
+  def smvCountDistinctWithNull(cols: Column*): Column = {
+    val hashCol = cols.map{c => coalesce(crc32(c.cast(StringType)), crc32(lit("null")))}.reduce{(l, r) => l + r}
+    countDistinct(hashCol)
+  }
+
+  def smvCountDistinctWithNull(colN: String, colNs: String*): Column = {
+    val cols = (colN +: colNs).map{cn => new Column(cn)}
+    smvCountDistinctWithNull(cols: _*)
+  }
 }
