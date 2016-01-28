@@ -21,8 +21,8 @@ object smvfuncs {
 
   /** Count number of distinct values including null */
   def smvCountDistinctWithNull(cols: Column*): Column = {
-    val hashCol = cols.map{c => coalesce(crc32(c.cast(StringType)), crc32(lit("null")))}.reduce{(l, r) => l + r}
-    countDistinct(hashCol)
+    val catCol = smvStrCat(cols.map{c => c.cast(StringType)}: _*)
+    countDistinct(catCol)
   }
 
   def smvCountDistinctWithNull(colN: String, colNs: String*): Column = {
