@@ -869,6 +869,23 @@ class SmvDFHelper(df: DataFrame) {
    **/
   def peek(): Unit = peek(1)
 
+
+  /**
+   * Find column combinations which uniquely identify a row from the data
+   *
+   * @param n number of rows the PK discovery algorithm will run on.
+   * @param debug if true printout debug info
+   * @return (list_of_keys, unique-count)
+   *
+   * Please note the algorithm only look for a set of keys which uniquely
+   * identify the row, there could be more key combinations which can also
+   * be the primary key.
+   */
+  def smvDiscoverPK(n: Integer = 10000, debug: Boolean = false): (Seq[String], Long) = {
+    val discoverer = new PrimaryKeyDiscovery(debug)
+    discoverer.discoverPK(df, n)
+  }
+
   /**
    * Add a set of DoubleBinHistogram columns to a DataFrame.
    * Perform a DoubleBinHistogram on all the columns_to_bin. The num_of_bins is the corresponding
