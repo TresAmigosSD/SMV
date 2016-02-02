@@ -31,7 +31,7 @@ val resultDF = SmvNameMatcher(
 
 ### Data Frame 1
 id|first_name|last_name|address|city|state|zip|full_name
---|----------|---------|-------|----|-----|---|---------|
+---|----------|---------|-------|----|-----|---|---------|
 1|George|Jetson|100 Skyway Drive|Metropolis|CA|90210|George Jetson
 2|Fred|Flintsone|900 Rockaway Road|Pebbleton|CA|90210|Fred Flintstone
 3|George|Washington|1600 Pennsylvania Avenue|Washington|DC|20006|George Washington
@@ -39,7 +39,7 @@ id|first_name|last_name|address|city|state|zip|full_name
 
 ### Data Frame 2
 id|first_name|last_name|address|city|state|zip|full_name
---|----------|---------|-------|----|-----|---|---------
+---|----------|---------|-------|----|-----|---|---------
 1|Fred|Flintsone|900 Rockaway Road|Pebbleton|CA|90210|Fred Flintstone
 2|Alice|Kramden|328 Chauncey Street|Brooklyn|NY|11233|Alice Kramden
 3|Georje|Jetson|101 Skyway Drive|Metropolis|CA|90120|Georje Jetson
@@ -49,7 +49,7 @@ id|first_name|last_name|address|city|state|zip|full_name
 Based on the sample input and client code above
 
 id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value|
---|---|--|--|--|--
+---|---|---|---|---|---
 2|1|true|null|null|null
 1|3|false|false|true|1.0
 
