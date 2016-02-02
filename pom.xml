@@ -11,6 +11,7 @@
     <scala.binary.version>2.10</scala.binary.version>
     <scala.compat.version>${scala.binary.version}</scala.compat.version>
     <spark.version>1.5.2</spark.version>
+    <jetty.version>8.1.18.v20150929</jetty.version>
     <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
   </properties>
 
@@ -41,6 +42,12 @@
       <artifactId>spark-sql_${scala.binary.version}</artifactId>
       <version>${spark.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency> <!-- Jetty Server dependency -->
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <version>${jetty.version}</version>
+      <!--<scope>provided</scope>-->
     </dependency>
     <dependency>
       <groupId>org.scalatest</groupId>

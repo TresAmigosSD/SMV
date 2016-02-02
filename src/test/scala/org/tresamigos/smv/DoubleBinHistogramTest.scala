@@ -1,3 +1,17 @@
+/*
+ * This file is licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.tresamigos.smv
 
 
@@ -60,5 +74,17 @@ class DoubleBinHistogramTest extends SmvTestUtil {
 
     val res4 = df_with_bins.select('v2_bin.smvBinPercentile(90.0))
     assertSrddDataEqual(res4, "999.5")
+  }
+
+  test("Test the smvDoubleBinHistogram column post fix" ) {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("id:Integer; v:Double;",
+      """1,0.0; 1,100.0;1,25.0;1,60.5""")
+
+    val df_with_bins = df.smvDoubleBinHistogram("id", "v", 2, "_xyz")
+    assert(df_with_bins.schema.fieldNames.mkString(",") == "id,v_xyz")
+
+    val res0 = df_with_bins.select('v_xyz.smvBinPercentile(10.0))
+    assertSrddDataEqual(res0, "25.0")
   }
 }

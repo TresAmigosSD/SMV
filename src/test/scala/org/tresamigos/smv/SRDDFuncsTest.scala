@@ -346,3 +346,17 @@ class smvPipeCount extends SmvTestUtil {
     assert(n1 === n2)
   }
 }
+
+class OtherDFHelperTest extends SmvTestUtil {
+  test("Test smvDiscoverPK") {
+    val a = createSchemaRdd("a:String; b:String; c:String",
+      """1,2,1;
+         1,1,2;
+         2,1,2;
+         2,2,2""")
+    val (res, cnt) = a.smvDiscoverPK()
+
+    assertUnorderedSeqEqual(res, Seq("a", "b"))
+    assert(cnt === 4)
+  }
+}
