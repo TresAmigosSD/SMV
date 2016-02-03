@@ -869,6 +869,23 @@ class SmvDFHelper(df: DataFrame) {
    **/
   def peek(): Unit = peek(1)
 
+
+  /**
+   * Find column combinations which uniquely identify a row from the data
+   *
+   * @param n number of rows the PK discovery algorithm will run on.
+   * @param debug if true printout debug info
+   * @return (list_of_keys, unique-count)
+   *
+   * Please note the algorithm only look for a set of keys which uniquely
+   * identify the row, there could be more key combinations which can also
+   * be the primary key.
+   */
+  def smvDiscoverPK(n: Integer = 10000, debug: Boolean = false): (Seq[String], Long) = {
+    val discoverer = new PrimaryKeyDiscovery(debug)
+    discoverer.discoverPK(df, n)
+  }
+
   /**
    * Add a set of DoubleBinHistogram columns to a DataFrame.
    * Perform a DoubleBinHistogram on all the columns_to_bin. The num_of_bins is the corresponding
@@ -880,9 +897,14 @@ class SmvDFHelper(df: DataFrame) {
    * {{{
    *   df.smvDoubleBinHistogram(Seq("key1", "key2"), Seq(col1, col2), Seq(100, 200))
    * }}}
-   * Create a new columns named the same as the columns to bin post fixed with "_bin"
+   * Create a new columns named the same as the columns to bin post fixed with post_fix.
+   * The post_fix  is defaulted to "_bin"
    */
-  def smvDoubleBinHistogram(keys: Seq[String], columns_to_bin: Seq[String], num_of_bins: Seq[Int] = Seq() ): DataFrame = {
+  def smvDoubleBinHistogram(keys: Seq[String],
+                            columns_to_bin: Seq[String],
+                            num_of_bins: Seq[Int] = Seq[Int](),
+                            post_fix: String = "_bin"): DataFrame = {
+
     if (columns_to_bin.isEmpty) {
       df
     } else {
@@ -909,7 +931,7 @@ class SmvDFHelper(df: DataFrame) {
       val min_col_names = columns_to_bin.map(col => "_min_" + col)
       val max_col_names = columns_to_bin.map(col => "_max_" + col)
 
-      val bin_col_names = columns_to_bin.map( col => col + "_bin")
+      val bin_col_names = columns_to_bin.map( col => col + post_fix)
 
       val num_of_cols = columns_to_bin.length
 
@@ -935,10 +957,38 @@ class SmvDFHelper(df: DataFrame) {
    * {{{
    *   df.smvDoubleBinHistogram(Seq("key1", "key2"), col, 100)
    * }}}
+   * Create a new column named the same as passed column name to bin post fixed with post_fix.
+   */
+  def smvDoubleBinHistogram(keys: Seq[String], column_to_bin: String, num_of_bins: Int, post_fix: String): DataFrame = {
+    smvDoubleBinHistogram(keys, Seq(column_to_bin), Seq(num_of_bins), post_fix)
+  }
+
+  /**
+   * Add a DoubleBinHistogram column to a DataFrame using multiple keys.
+   * Perform a DoubleBinHistogram on  the column_to_bin using the passed number of bins num_of_bins
+   * The column_to_bin is expected to be of type double
+   *
+   * {{{
+   *   df.smvDoubleBinHistogram(Seq("key1", "key2"), col, 100)
+   * }}}
    * Create a new column named the same as passed column name to bin post fixed with "_bin"
    */
   def smvDoubleBinHistogram(keys: Seq[String], column_to_bin: String, num_of_bins: Int): DataFrame = {
     smvDoubleBinHistogram(keys, Seq(column_to_bin), Seq(num_of_bins))
+  }
+
+  /**
+   * Add a DoubleBinHistogram column to a DataFrame using multiple keys.
+   * Perform a DoubleBinHistogram on  the column_to_bin using 1000 bins
+   * The column_to_bin is expected to be of type double
+   *
+   * {{{
+   *   df.smvDoubleBinHistogram(Seq("key1", "key2"), col)
+   * }}}
+   * Create a new column named the same as passed column name to bin post fixed with post_fix.
+   */
+  def smvDoubleBinHistogram(keys: Seq[String], column_to_bin: String, post_fix: String): DataFrame = {
+    smvDoubleBinHistogram(keys, Seq(column_to_bin), Seq[Int](), post_fix)
   }
 
   /**
@@ -961,12 +1011,40 @@ class SmvDFHelper(df: DataFrame) {
    * The column_to_bin is expected to be of type double
    *
    * {{{
+   *   df.smvDoubleBinHistogram(key, col, 100, "_xyz")
+   * }}}
+   * Create a new column named the same as passed column name to bin post fixed with post_fix.
+   */
+  def smvDoubleBinHistogram(key: String, column_to_bin: String, num_of_bins: Int, post_fix: String): DataFrame = {
+    smvDoubleBinHistogram(Seq(key), Seq(column_to_bin), Seq(num_of_bins), post_fix)
+  }
+
+  /**
+   * Add a DoubleBinHistogram column to a DataFrame using single key.
+   * Perform a DoubleBinHistogram on the column_to_bin using the passed number of bins num_of_bins
+   * The column_to_bin is expected to be of type double
+   *
+   * {{{
    *   df.smvDoubleBinHistogram(key, col, 100)
    * }}}
    * Create a new column named the same as passed column name to bin post fixed with "_bin"
    */
   def smvDoubleBinHistogram(key: String, column_to_bin: String, num_of_bins: Int): DataFrame = {
     smvDoubleBinHistogram(Seq(key), Seq(column_to_bin), Seq(num_of_bins))
+  }
+
+  /**
+   * Add a DoubleBinHistogram column to a DataFrame using single key.
+   * Perform a DoubleBinHistogram on the column_to_bin using 1000 bins
+   * The column_to_bin is expected to be of type double
+   *
+   * {{{
+   *   df.smvDoubleBinHistogram(key1, col, "_xyz")
+   * }}}
+   * Create a new column named the same as passed column name to bin post fixed with post_fix.
+   */
+  def smvDoubleBinHistogram(key: String, column_to_bin: String, post_fix: String): DataFrame = {
+    smvDoubleBinHistogram(Seq(key), Seq(column_to_bin), Seq[Int](), post_fix)
   }
 
   /**

@@ -24,7 +24,7 @@ cd ${APP_NAME}
 $MVN clean package
 
 echo "--------- RUN SAMPLE APP -------------"
-../../../tools/smv-run --run-app
+../../../tools/smv-run --master local[*] --run-app
 
 echo "--------- VERIFY SAMPLE APP OUTPUT -------------"
 COUNT=$(cat data/output/com.mycompany.MyApp.stage2.StageEmpCategory_*.csv/part* | wc -l)
@@ -32,4 +32,3 @@ if [ "$COUNT" -ne 52 ]; then
     echo "Expected 52 lines in output but got $COUNT"
     exit 1
 fi
-
