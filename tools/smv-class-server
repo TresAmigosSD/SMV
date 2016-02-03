@@ -18,7 +18,9 @@ source $SMV_TOOLS/_env.sh
 echo "STARTING SERVER =============================="
 
 # TODO: should replace scala with java and add spark jar to class path to pick up Scala.* and all other common libraries.
-scala -cp "$APP_JAR" org.tresamigos.smv.class_server.ClassServer
+
+# TODO: should honor port value passed on command line.
+scala -cp "$APP_JAR" org.tresamigos.smv.class_loader.ClassLoaderServer
 
 
 
