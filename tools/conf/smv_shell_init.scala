@@ -27,11 +27,11 @@ object i {
   def s(ds: SmvDataSet) = df(ds)
 
   /** open file using full path */
-  def open(path: String, ca: CsvAttributes = null) ={
+  def open(path: String, ca: CsvAttributes = null, parserCheck: Boolean = false) ={
     /** isFullPath = true to avoid prepending data_dir */
     object file extends SmvCsvFile(path, ca, null, true) {
       override val forceParserCheck = false
-      override val failAtParsingError = false
+      override val failAtParsingError = parserCheck
     }
     file.rdd
   }
@@ -65,7 +65,8 @@ object i {
     val helper = new SchemaDiscoveryHelper(sqlContext)
     val schema = helper.discoverSchemaFromFile(path, n)
     val outpath = SmvSchema.dataPathToSchemaPath(path) + ".toBeReviewed"
-    schema.saveToHDFSFile(outpath)
+    val outFileName = (new File(outpath)).getName
+    schema.saveToLocalFile(outFileName)
   }
 
   // TODO: this should just be a direct helper on ds as it is probably common.

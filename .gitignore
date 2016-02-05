@@ -19,3 +19,5 @@ metastore_db/
 .Rapp.history
 .Rhistory
 .RData
+
+.sync-config.cson

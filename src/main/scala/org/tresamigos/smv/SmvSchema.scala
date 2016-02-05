@@ -323,6 +323,10 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
     SmvHDFS.writeToFile(toStringsWithMeta.mkString("\n"), path)
   }
 
+  def saveToLocalFile(path: String) {
+    SmvReportIO.saveLocalReport(toStringsWithMeta.mkString("\n"), path)
+  }
+
   /**
    * convert a data row to a delimited csv string.
    * Handles delimiter and quote character appearing anywhere in string value.
