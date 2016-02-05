@@ -65,12 +65,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val runAllApp = toggle("run-app", noshort = true, default = Some(false),
                   descrYes = "run all output modules in all stages in app.")
 
-  // make sure something was specified to run!!!
-  validateOpt (purgeOldOutput, compareEdd, modsToRun, stagesToRun, runAllApp) {
-    case (Some(false), None, None, None, Some(false)) => Left("Must supply an app, stage, or module to run, compare edd or cleanup!")
-    case _ => Right(Unit)
-  }
-
   // if user specified "edd-compare" command line, user should have supplied two file names.
   validateOpt(compareEdd) {
     case (Some(edds)) if edds.length != 2 => Left("edd-compare param requires two EDD file names")
@@ -105,7 +99,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private val cmdLineProps = cmdLine.smvProps
   private val defaultProps = Map(
     "smv.appName" -> "Smv Application",
-    "smv.stages" -> ""
+    "smv.stages" -> "",
+    "smv.class_server.host" -> "",
+    "smv.class_server.port" -> "9900",
+    "smv.class_server.class_dir" -> "./target/classes"
   )
 
   // merge order is important here.  Highest priority comes last as it will override all previous
@@ -114,6 +111,11 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   // --- config params.  App should access configs through vals below rather than from props maps
   val appName = mergedProps("smv.appName")
   val stageNames = splitProp("smv.stages")
+
+  val classServerHost = mergedProps("smv.class_server.host")
+  val classServerPort = getPropAsInt("smv.class_server.port").get
+  val classServerClassDir = mergedProps("smv.class_server.class_dir")
+
   private val stagesList = stageNames map {SmvStage(_, this)}
   val stages = new SmvStages(stagesList.toSeq)
 
