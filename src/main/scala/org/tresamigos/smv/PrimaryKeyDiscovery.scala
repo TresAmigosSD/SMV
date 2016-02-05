@@ -53,7 +53,8 @@ private[smv] class PrimaryKeyDiscovery(val debug: Boolean) {
 
       /* Keep left candidates and send to next round iteration */
       val newPool = filteredKeys.diff(Seq(newKeyNCnt)).map{_._1}
-      oneByOnePK(df, newPool, newKeys, newCnt)
+      if (newPool.isEmpty) (newKeys, newCnt)
+      else oneByOnePK(df, newPool, newKeys, newCnt)
     }
   }
 
