@@ -173,7 +173,7 @@ class SmvDFHelper(df: DataFrame) {
    *   df.selectMinus('col1, 'col2)
    * }}}
    */
-  @deprecated
+  @deprecated("use String instead of Symbol", "1.3")
   def selectMinus(s1: Symbol, sleft: Symbol*): DataFrame =
     selectMinus(s1.name, sleft.map{l=>l.name}: _*)
 
@@ -210,7 +210,7 @@ class SmvDFHelper(df: DataFrame) {
    *   df.renameField( 'a -> 'aa, 'b -> 'bb )
    * }}}
    */
-  @deprecated
+  @deprecated("use String instead of Symbol", "1.3")
   def renameField(n1: (Symbol, Symbol), nleft: (Symbol, Symbol)*): DataFrame =
     renameField((n1 +: nleft).map{case(l, r) => (l.name, r.name)}: _*)
 
@@ -360,7 +360,7 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /** Same as `dedupByKey(String*)` but uses `Symbol` to specify the key columns */
-  @deprecated
+  @deprecated("use String instead of Symbol", "1.3")
   def dedupByKey(k1: Symbol, kleft: Symbol*): DataFrame =
     dedupByKey(k1.name, kleft.map{l=>l.name}: _*)
 
