@@ -76,4 +76,11 @@ class NonAggFuncsTest extends SmvTestUtil {
     val res = df.agg(countDistinct($"k", $"v") as "n1", smvCountDistinctWithNull($"k", $"v") as "n2")
     assertSrddDataEqual(res, "2,3")
   }
+
+  test("test smvBoolsToBitmap") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:String; b:Boolean; c:Boolean", "1,false,true;2,,;3,true,;4,,false;5,true,true;6,false,false")
+    val res = df.select(smvBoolsToBitmap($"b", $"c") as "r1", smvBoolsToBitmap("b", "c") as "r2")
+    assertSrddDataEqual(res, "01,01;00,00;10,10;00,00;11,11;00,00")
+  }
 }

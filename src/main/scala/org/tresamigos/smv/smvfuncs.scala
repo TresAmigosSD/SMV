@@ -29,4 +29,18 @@ object smvfuncs {
     val cols = (colN +: colNs).map{cn => new Column(cn)}
     smvCountDistinctWithNull(cols: _*)
   }
+
+  val boolsToBitmap = (r:Row) => {
+    r.toSeq.map( { case true => '1'; case false | null => '0' } ).mkString
+  }
+
+  /** Coalesce boolean columns into a String bitmap  **/
+  def smvBoolsToBitmap(boolColumns:Column*) = {
+    udf(boolsToBitmap).apply(struct(boolColumns:_*))
+  }
+
+  /** Coalesce boolean columns into a String bitmap  **/
+  def smvBoolsToBitmap(headColumnName:String, tailColumnNames: String*) = {
+    udf(boolsToBitmap).apply(struct(headColumnName, tailColumnNames:_*))
+  }
 }
