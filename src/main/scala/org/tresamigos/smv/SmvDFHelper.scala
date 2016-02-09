@@ -908,6 +908,46 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
+   * Returns all columns in the data frame that contain all the
+   * specified labels.  If the labels argument is an empty sequence,
+   * returns all unlabeled columns in the data frame.
+   *
+   * Will throw if there are no columns that satisfy the condition.
+   *
+   * Example:
+   *   df.select(df.smvWithLabel("A", "B") :+ df("other"):_*)
+   *
+   * will return a data frame containing all columns from `df` that
+   * are labeled with "A" and "B", and the `other` column
+   *
+   * Note: As of spark 1.5, most of the additional operations on the
+   * returned columns, other than aliasing, will result in a new column
+   * without the labels and other meta data on the original column.
+   */
+  def smvWithLabel(labels: String*): Seq[Column] = {
+    import SmvKeys.SmvLabel
+    val filterFn: Metadata => Boolean = { meta =>
+      if (labels.isEmpty)
+        !meta.contains(SmvLabel) || meta.getStringArray(SmvLabel).isEmpty
+      else
+        meta.contains(SmvLabel) && labels.toSet.subsetOf(meta.getStringArray(SmvLabel).toSet)
+    }
+
+    val ret = for {
+      f <- df.schema.fields if (filterFn(f.metadata))
+    } yield df(f.name)
+
+    require(!ret.isEmpty,
+      if (labels.isEmpty)
+        s"""there are no unlabeled columns in the data frame [${df.columns.mkString(",")}]"""
+      else
+        s"""there are no columns labeled with ${labels} in the data frame [${df.columns.mkString(",")}]"""
+    )
+
+    ret
+  }
+
+  /**
    * Print column names with description, where description is added by `withDesc` method
    * e.g.
    * {{{

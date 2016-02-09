@@ -84,4 +84,24 @@ class SmvLabelTest extends SmvTestUtil {
     res.smvGetLabels("name") shouldBe 'Empty
     res.smvGetLabels("sex") shouldBe 'Empty
   }
+
+  test("selecting labeled columns should return only columns that have all the specified labels") {
+    val label1 = fixture.smvLabel("name", "sex")("white")
+    val label2 = label1.smvLabel("name")("red")
+    val res = label2.select(label2.smvWithLabel("white", "red") :_*)
+    res.columns shouldBe Seq("name")
+  }
+
+  test("calling smvWithLabel with an empty argument list should return unlabeled columns") {
+    val label1 = fixture.smvLabel("name", "sex")("white")
+    val res = label1.select(label1.smvWithLabel():_*)
+    res.columns shouldBe Seq("id")
+  }
+
+  test("smvWithLabel should throw instead of returning an empty list of columns") {
+    val label1 = fixture.smvLabel("name", "sex")("white")
+    intercept[IllegalArgumentException] {
+      label1.smvWithLabel("nothing is labeled with this".split(" "):_*)
+    }
+  }
 }
