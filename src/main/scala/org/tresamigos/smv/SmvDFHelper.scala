@@ -845,6 +845,69 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
+   * Adds labels to the specified columns.
+   *
+   * A column may have multiple labels.  Adding the same label twice
+   * to a column has the same effect as adding that label once.
+   *
+   * Both the column names and the labels parameters must be
+   * non-empty.
+   */
+  def smvLabel(colNames: String*)(labels: String*): DataFrame = {
+    require(!colNames.isEmpty && !labels.isEmpty)
+
+    val columns = df.schema.fields map { f =>
+      val c = f.name
+
+      // if new label should be added to this column
+      if (colNames.contains(c)) {
+        // preserve the current meta data
+        val builder = new MetadataBuilder().withMetadata(f.metadata)
+        val meta = builder.putStringArray(SmvKeys.SmvLabel, (f.labels ++ labels).distinct.toArray).build
+        df(c).as(c, meta)
+      } else df(f.name)
+    }
+
+    df.select(columns:_*)
+  }
+
+  /** Returns all the labels on a specified column; throws if the column is missing */
+  def smvGetLabels(col: String): Seq[String] = {
+    val field = df.schema.fields find (_.name == col)
+    require(!field.isEmpty, s"""column [$col] is not found in the dataframe with ${df.columns.mkString(",")}""")
+    field.get.labels
+  }
+
+  /**
+   * Removes the specified labels from the specified columns.
+   *
+   * If no columns are specified, the specified labels are removed
+   * from all applicable columns in the data frame.
+   *
+   * If no labels are specified, all labels are removed from the
+   * specified columns.
+   *
+   * If neither columns nor labels are specified, i.e. both parameter
+   * lists are empty, then all labels are removed from all columns in
+   * the data frame, essentially clearing the label meta data.
+   */
+  def smvRemoveLabel(colNames: String*)(labels: String*): DataFrame = {
+    val allCol = colNames.isEmpty
+    val allLabels = labels.isEmpty
+
+    val columns = df.schema.fields map { f =>
+      val c = f.name
+      if (allCol || colNames.contains(c)) {
+        val newLabels = if (allLabels) Seq.empty else (f.labels diff labels).distinct
+        val builder = new MetadataBuilder().withMetadata(f.metadata)
+        val meta = builder.putStringArray(SmvKeys.SmvLabel, newLabels.toArray).build
+        df(c) as (c, meta)
+      } else df(c)
+    }
+    df.select(columns:_*)
+  }
+
+  /**
    * Print column names with description, where description is added by `withDesc` method
    * e.g.
    * {{{
