@@ -9,7 +9,7 @@ Download Java JDK from [JDK](http://www.oracle.com/technetwork/java/javase/downl
 For Ubuntu, please make sure to set the Sun java jdk as the default (See [Install JDK on Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-install-java-on-ubuntu-with-apt-get) for details)
 
 # Install Spark
-Download the 1.3.0 version of Spark from [Spark](http://spark.apache.org/downloads.html).
+Download the 1.5.2 version of Spark from [Spark](http://spark.apache.org/downloads.html).
 It is recommended that the source version of spark is used rather than a binary download.
 The source is quite usefull for debugging.
 
@@ -49,7 +49,7 @@ $ git clone https://github.com/TresAmigosSD/SMV.git
 $ mvn clean install
 ```
 
-You may need to set MAVEN_OPTS to avoid out of memory issue. 
+You may need to set MAVEN_OPTS to avoid out of memory issue.
 ```shell
 export MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m"
 ```

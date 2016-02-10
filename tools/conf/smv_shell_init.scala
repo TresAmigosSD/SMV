@@ -1,5 +1,5 @@
 import org.apache.spark.sql.functions._
-import org.tresamigos.smv._, shell._
+import org.tresamigos.smv._, shell._, smvfuncs._
 
 sc.setLogLevel("ERROR")
 
