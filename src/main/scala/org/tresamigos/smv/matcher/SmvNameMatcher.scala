@@ -1,9 +1,10 @@
 package org.tresamigos.smv.matcher
 
-import com.rockymadden.stringmetric.similarity.LevenshteinMetric
+import com.rockymadden.stringmetric.similarity._
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.DataFrame
 import com.rockymadden.stringmetric.phonetic._
 import org.tresamigos.smv._
 
@@ -95,7 +96,12 @@ object StringMetricUDFs {
     1.0f - (dist * 1.0f / maxLen)
   }
 
+  val JaroWinklerFn: (String, String) => Option[Float] = (s1, s2) =>
+    if (null == s1 || null == s2) None
+    else JaroWinklerMetric.compare(s1, s2) map (_.toFloat)
+
   val levenshtein = udf(NormalizedLevenshteinFn)
+  val JaroWinkler = udf(JaroWinklerFn)
 }
 
 
