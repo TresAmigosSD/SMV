@@ -79,4 +79,7 @@ want to consider `04532` as `4532`.
 After review and editing, you can rename the file by removing the postfix, and move it to the same dir
 of the `csv` file. Now the data is ready for SMV.
 
+**Note** field names with "." in  them may cause columns unable to be resolved, therefore, avoid field names that has "." in them".
+
+
 For Csv data without header, the field name in the generated schema file will be `f1`, `f2`, etc.
