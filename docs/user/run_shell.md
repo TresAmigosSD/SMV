@@ -19,7 +19,8 @@ helper functions and create a default SMV dummy application (`app`)
 * `open(path)` : open the csv/schema file at the given path and return the corresponding `DataFrame`
 * `df.save(path)` : save the given df to a csv/schema file pair at the given path.
 * `df.savel(path)` : save the contents of the `DataFrame` to a local (none HDFS) filesystem.  WARNING: The contents must be able to fit in memory!!!
-* `discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the path + ".schema.toBeReviewed" file
+* `discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix
+ ".schema.toBeReviewed"
 * `dumpEdd(data_set)` : Generate base EDD results for given `SmvDataSet` and dump the results to the screen.
 
 ## Shell package provided functions

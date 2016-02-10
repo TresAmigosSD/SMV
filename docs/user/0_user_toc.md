@@ -14,3 +14,5 @@
 * [SMV Functions](functions.md)
 * [Validation & Data Quality Management (DQM)](dqm.md)
 * [Adding a new CSV input file (with schema discovery)](schema_discovery.md)
+* [Fuzzy matching between two datasets](smv_name_matcher.md)
+* [Work on data with hierarchies](smv_hier.md)
