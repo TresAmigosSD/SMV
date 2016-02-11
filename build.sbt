@@ -26,3 +26,5 @@ libraryDependencies ++= Seq(
 )
 
 parallelExecution in Test := false
+
+publishArtifact in Test := true
