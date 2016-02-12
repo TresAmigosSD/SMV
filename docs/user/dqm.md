@@ -67,6 +67,18 @@ With above setting, the `SmvFile` will simply persist the validation result and 
 Either terminating the process or not, as long as the log is nontrivial, it will be printed to
 console and persisted in the `SmvModule` persisted data path with postfix `.valid`.
 
+Sometimes we need more flexibility on specifying the terminate criterial. For example, I can tolerate
+less than 10 parser errors, if more than that, terminate. Here is an example of how to specify that,
+
+```scala
+object myfile extends SmvCsvFile("accounts/acct_demo.csv") {
+  override val failAtParsingError = false
+  override def dqm() = SmvDQM().add(FailParserCountPolicy(10))
+}
+```
+
+Please refer the `DQMPolicy` session below.
+
 ## DQM
 
 Although the parser enforced data schema, there are typically more things need to be checked on
@@ -137,7 +149,8 @@ Here `FailTotalRuleCountPolicy(...)` is a predefined `DQMPolicy`, which check th
 all the rules in this `DQM`, if the total count is within the threshold, the validation will
 pass, otherwise will fail.
 
-There are 4 build-in `DQMPolicy`s
+There are 5 build-in `DQMPolicy`s
+* `FailParserCountPolicy(n)` - fail when total parser error count >= n
 * `FailTotalRuleCountPolicy(n)` - fail when total rule count >= n
 * `FailTotalFixCountPolicy(n)` - fail when total fix count >= n
 * `FailTotalRulePercentPolicy(r)` - fail when total rule count >= total records * r, r in (0,1)
