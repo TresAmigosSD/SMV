@@ -11,7 +11,7 @@ import org.tresamigos.smv._
 /**
  * TODO document the meaning of each parameter
  */
-case class SmvNameMatcher(
+case class SmvEntityMatcher(
                            exactMatchFilter:AbstractExactMatchFilter,
                            commonLevelMatcher:CommonLevelMatcher,
                            levelMatchers: List[LevelMatcher])
@@ -148,7 +148,7 @@ object StringMetricUDFs {
 
   /** UDF Return a float. 0 is no match, and 1 is full match */
   val levenshtein = udf(NormalizedLevenshteinFn)
-  
+
   /** UDF Return a float. 0 is no match, and 1 is full match */
   val jaroWinkler = udf(JaroWinklerFn)
 }

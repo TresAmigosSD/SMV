@@ -6,7 +6,7 @@ The user can use these float and boolean results to decide the strength of the r
 
  The two input data frames will likely have the same schema and thus the same column names.  To avoid ambiguity, the first data frame's columns are left as is and the second one's are prepended with an underscore.  Thus df1("last_name") stays as is and df2("last_name") will be referenced as $"_last_name" in the API.
 
-The main class is SmvNameMatcher.  It's constructed with three parameters: ExactMatchFilter, CommonLevelMatcher, and a List of LevelMatches.  Of these only the LevelMatches are required.  See API Description below for a full explanation of how to configure and use these classes.  Once you construct an SmvNameMatcher, call the doMatch method on it with the two input data frames.  It will return the MDM.  Only records where at least one of the matches succeeded will be kept in the MDM.
+The main class is SmvEntityMatcher.  It's constructed with three parameters: ExactMatchFilter, CommonLevelMatcher, and a List of LevelMatches.  Of these only the LevelMatches are required.  See API Description below for a full explanation of how to configure and use these classes.  Once you construct an SmvEntityMatcher, call the doMatch method on it with the two input data frames.  It will return the MDM.  Only records where at least one of the matches succeeded will be kept in the MDM.
 
 
 
@@ -17,7 +17,7 @@ The main class is SmvNameMatcher.  It's constructed with three parameters: Exact
 val df1, df2 
 
 /*** Resulting MDM ***/
-val resultDF = SmvNameMatcher(
+val resultDF = SmvEntityMatcher(
   ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
   CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
   List(

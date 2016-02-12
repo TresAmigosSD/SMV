@@ -1,4 +1,4 @@
-# SMV Name Matcher
+# SMV  Entity Matcher
 
 Part of the process of creating a master file during MDM from different data sources is mapping related records.  This can be accomplished with one or more algorithms, where each algorithm could map one record from one data source to multiple records in another.  A single relationship record is an output record containing an id from each of the two input data sources.  Thus a one to many match will result in multiple relationship records.  Each matching algorithm can also provide one or more metrics describing the likelyhood of a match.  Since multiple matching alogrithms can be applied to each relationship record, in adition to ids, each relationship record will have several results from the matching algorithms.  These can be used to determine which relationship records should go into the master table.
 
@@ -20,9 +20,9 @@ id|first_name|last_name|address|city|state|zip|full_name
 3|Georje|Jetson|101 Skyway Drive|Metropolis|CA|90120|Georje Jetson
 
 
-## Simplest SMV Name Matcher
+## Simplest SMV  Entity Matcher
 
-The SMV Name Matcher takes two data frames as parameters.  The data frames should have all the columns you are planning to use in the matching algorithms.  They must also have one id column that uniquely identifies each record.   The name of this column must be "id"
+The SMV  Entity Matcher takes two data frames as parameters.  The data frames should have all the columns you are planning to use in the matching algorithms.  They must also have one id column that uniquely identifies each record.   The name of this column must be "id"
 
 ```scala
 /*** Input data frames ***/
@@ -30,7 +30,7 @@ val df1 = ...
 val df2 = ...
 
 /*** Resulting MDM data frame ***/
-val resultDF = SmvNameMatcher(
+val resultDF = SmvEntityMatcher(
   null,
   null,
   List(
@@ -39,11 +39,11 @@ val resultDF = SmvNameMatcher(
 ).doMatch(df1, df2)
 ```
 
-This example may be unrealistically simplistic, but it's a good place to start to learn how SmvNameMatcher works.  
+This example may be unrealistically simplistic, but it's a good place to start to learn how SmvEntityMatcher works.  
 
-We first create the sample input data frames described above.  SmvNameMatcher will match the records between these.  The output will be resultDF, which will have relationship records for each match with metrics describing the likelyhood of the match.  See output below. 
+We first create the sample input data frames described above.  SmvEntityMatcher will match the records between these.  The output will be resultDF, which will have relationship records for each match with metrics describing the likelyhood of the match.  See output below.
 
-The first two parameters to SmvNameMatcher are optional.  We'll describe what they are later.  For now we'll just pass nulls for them.  The third parameter is a list of level matchers.  In this example we are using only one - the ExactLevelMatcher.   
+The first two parameters to SmvEntityMatcher are optional.  We'll describe what they are later.  For now we'll just pass nulls for them.  The third parameter is a list of level matchers.  In this example we are using only one - the ExactLevelMatcher.   
 
 Let's break down the name of this class.  It's a matcher because it has an expression to match records from one data frame to another.  The expression in this case compares first name from one to first name in the other.  If they are the same, it's a match.  It's an exact matcher, because the output is a boolean.  As opposed to other matchers, described below, where the output could be a fuzzy number.  The output relationship record will have ids from both data frames and a boolean that will be true if the first names are the same and false if not.  The word "level" is used because you may have different levels of expressions, where level 1 is more important than level 2.  The API takes a List of matchers.  Each of your matchers can describe an expression for its own level.   
 
@@ -57,9 +57,9 @@ id|\_id|First_Name_Match
 2|1|true
 
 
-## Introducing ExactMatchFilter and FuzzyLevelMatcher 
+## Introducing ExactMatchFilter and FuzzyLevelMatcher
 ```scala
-val resultDF = SmvNameMatcher(
+val resultDF = SmvEntityMatcher(
   ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
   null,
   List(
@@ -73,7 +73,7 @@ As you add more level matchers, the number of records that match will increase a
 
 **(** evaluate \<exact catalyst expression\> **)** **&&** **(** **(** evaluate \<normalized fuzzy catalyst expression\> **)** **\>** \<threshold\> **)**
 
-Once you start adding level matchers, you may find an ExactLevelMatcher expression that's more important than the rest.  So much so, that if the records match on it, you don't need to perform any other tests on the resulting record relationship.  In that case you can place this expression in an ExactMatchFilter and provide this as the first parameter to SmvNameMatcher.  In the example above this expression matches full names of the input data frames.   The output can be seen as having two parts.  The first part will be for record relationships that we created be a matched ExactMatchFilter.  The output column for the filter will be true and the rest of the columns will be null, since they were not evaluated.   All remaining records from the input data frames will be matched as before, by all the list of level matchers.   Here the output column for the filter will always be false.
+Once you start adding level matchers, you may find an ExactLevelMatcher expression that's more important than the rest.  So much so, that if the records match on it, you don't need to perform any other tests on the resulting record relationship.  In that case you can place this expression in an ExactMatchFilter and provide this as the first parameter to SmvEntityMatcher.  In the example above this expression matches full names of the input data frames.   The output can be seen as having two parts.  The first part will be for record relationships that we created be a matched ExactMatchFilter.  The output column for the filter will be true and the rest of the columns will be null, since they were not evaluated.   All remaining records from the input data frames will be matched as before, by all the list of level matchers.   Here the output column for the filter will always be false.
 
 ### Output
 id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value|
@@ -83,7 +83,7 @@ id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value
 
 ## Introducing CommonLevelMatcherExpression
 ```scala
-val resultDF = SmvNameMatcher(
+val resultDF = SmvEntityMatcher(
   ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
   CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
   List(

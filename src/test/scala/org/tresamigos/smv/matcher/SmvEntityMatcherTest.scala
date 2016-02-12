@@ -36,13 +36,13 @@ trait NameMatcherTestFixture extends SmvTestUtil {
   def dfPair: (DataFrame, DataFrame) = (createDF1, createDF2.prefixFieldNames("_"))
 }
 
-class SmvNameMatcherTest extends NameMatcherTestFixture {
+class SmvEntityMatcherTest extends NameMatcherTestFixture {
 
   test("Main name matcher: all parameters") {
     val ssc = sqlContext
     import ssc.implicits._
 
-    val resultDF = SmvNameMatcher(
+    val resultDF = SmvEntityMatcher(
       ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
       CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
       List(
@@ -62,7 +62,7 @@ class SmvNameMatcherTest extends NameMatcherTestFixture {
     val ssc = sqlContext
     import ssc.implicits._
 
-    val resultDF = SmvNameMatcher(
+    val resultDF = SmvEntityMatcher(
       null,
       null,
       List(
@@ -81,7 +81,7 @@ class SmvNameMatcherTest extends NameMatcherTestFixture {
     val ssc = sqlContext
     import ssc.implicits._
 
-    val resultDF = SmvNameMatcher(
+    val resultDF = SmvEntityMatcher(
       null,
       null,
       List(
@@ -101,7 +101,7 @@ class SmvNameMatcherTest extends NameMatcherTestFixture {
     val ssc = sqlContext
     import ssc.implicits._
 
-    val resultDF = SmvNameMatcher(
+    val resultDF = SmvEntityMatcher(
       null,
       null,
       List(
@@ -128,7 +128,7 @@ class SmvNameMatcherTest extends NameMatcherTestFixture {
     val ssc = sqlContext
     import ssc.implicits._
 
-    val resultDF = SmvNameMatcher(
+    val resultDF = SmvEntityMatcher(
       null,
       CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
       List(
@@ -150,7 +150,7 @@ class SmvNameMatcherTest extends NameMatcherTestFixture {
     val ssc = sqlContext
     import ssc.implicits._
 
-    val resultDF = SmvNameMatcher(
+    val resultDF = SmvEntityMatcher(
       ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
       null,
       List(
