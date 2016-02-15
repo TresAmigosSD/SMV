@@ -163,4 +163,12 @@ class SmvPivotCoalesceTest extends SmvTestUtil {
     assertSrddSchemaEqual(res, "k2:String;k1_1:String;k1_2:String")
     assertSrddDataEqual(res, "X,A,null;Y,C,B;Z,D,null")
   }
+
+  test("smvPivotCoalesce should work with maxResCols specified") {
+    val df = createSchemaRdd("k1:String;k2:String", "A,X;B,Y;C,Y;D,Y")
+    val res = df.smvPivotCoalesce("k2")("k1", None, 2)
+
+    assertSrddSchemaEqual(res, "k2:String;k1_1:String;k1_2:String")
+    assertSrddDataEqual(res, "X,A,null;Y,B,C")
+  }
 }

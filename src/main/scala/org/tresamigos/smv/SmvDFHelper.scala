@@ -589,15 +589,23 @@ class SmvDFHelper(df: DataFrame) {
    * created within each group of k2 using k1's natural order.  The
    * ranking can be non-consecutive, but cannot contain null.
    *
+   * If no rank column is provided, an optional upper limit, `maxResCols`
+   * will be provided to limit the max number of output columns. The default
+   * value is 100.
    *
    * @param pivotCol  the remaining column after the pivot, e.g. k2 above
    * @param valueCol  the column containing the values to be pivoted, e.g. k1 above
    * @param rankCol   an optional column that has in-group ranking;
    *                  default to sequential ranking using valueCol's
    *                  natural order valueCol within the pivotCol's group
+   * @param maxResCols an optional upper limit of potential output columns;
+   *                   default to 100.
    */
   def smvPivotCoalesce(pivotCol: String)(
-    valueCol: String, rankCol: Option[String] = None): DataFrame = {
+    valueCol: String,
+    rankCol: Option[String] = None,
+    maxResCols: Int = 100
+  ): DataFrame = {
     import df.sqlContext.implicits._
 
     // ensure a ranking column exists
@@ -606,7 +614,9 @@ class SmvDFHelper(df: DataFrame) {
       case None =>
         val rcol = mkUniq(df.columns, "rank") // get unique col name for ranking
         val r1 = df.smvGroupBy(pivotCol).runAgg($"$valueCol".asc)(
-          $"$pivotCol", $"$valueCol", count(lit(1)) as rcol)
+          $"$pivotCol", $"$valueCol", count(lit(1)) as rcol).where(
+            $"$rcol" <= maxResCols
+          )
         (r1, rcol)
     }
 
