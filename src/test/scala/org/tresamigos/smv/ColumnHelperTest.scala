@@ -171,7 +171,7 @@ class SmvPrintToStrTest extends SmvTestUtil {
   }
 }
 
-class SmvStrTrim extends SmvTestUtil {
+class SmvStrTrimTest extends SmvTestUtil {
   test("test smvStrTrim") {
     val ssc =sqlContext;
     import ssc.implicits._
@@ -185,7 +185,7 @@ class SmvStrTrim extends SmvTestUtil {
   }
 }
 
-class testSmvSafeDiv extends SmvTestUtil {
+class SmvSafeDivTest extends SmvTestUtil {
 
   test("test SmvSafeDiv function") {
     import org.apache.spark.sql.functions._

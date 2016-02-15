@@ -1,22 +1,26 @@
 package org.tresamigos.smv.matcher
 
-import com.rockymadden.stringmetric.similarity.LevenshteinMetric
+import com.rockymadden.stringmetric.similarity._
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.DataFrame
 import com.rockymadden.stringmetric.phonetic._
 import org.tresamigos.smv._
 
 /**
  * TODO document the meaning of each parameter
  */
-case class SmvNameMatcher(
+case class SmvEntityMatcher(
                            exactMatchFilter:AbstractExactMatchFilter,
                            commonLevelMatcher:CommonLevelMatcher,
                            levelMatchers: List[LevelMatcher])
 {
   require(levelMatchers != null && levelMatchers.nonEmpty)
 
+  /**
+   * TODO: API doc for this public method
+   **/
   def doMatch(df1:DataFrame, df2:DataFrame):DataFrame = {
     require(df1 != null && df2 != null)
 
@@ -70,7 +74,7 @@ case class SmvNameMatcher(
   // because the return value of 'any' is usually used to filter a
   // data frame, and we would like that behavior to be a no-op instead
   // of dropping all the rows in the data frame.
-  def any(df: DataFrame): Column = {
+  private def any(df: DataFrame): Column = {
     val bools: Seq[Column] = for {
       f <- df.schema.fields if f.dataType == BooleanType
     } yield df(f.name)
@@ -80,22 +84,73 @@ case class SmvNameMatcher(
 
 }
 
+/**
+ * StringMetricUDFs is a collection of string similarity measures
+ * Implemented using [[https://github.com/rockymadden/stringmetric Scala StringMetrics lib]]
+ *
+ * ==UDFs with Boolean returns==
+ * - `soundexMatch`: ture if the Soundex of the strings matched exactly
+ * ==UDFs with Float returns==
+ * ===N-gram based measures===
+ * - nGram2: 2-gram with formula (number of overlaped gramCnt)/max(s1.gramCnt, s2.gramCnt)
+ * - nGram3: 3-gram with the same formula above
+ * - diceSorensen: 2-gram with formula (2 * number of overlaped gramCnt)/(s1.gramCnt + s2.gramCnt)
+ * ===Editing distance measures===
+ * - levenshtein
+ * - jaroWinkler
+ */
 object StringMetricUDFs {
   // separate function definition from the udf so we can test the function itself
-  val SoundexFn: (String, String) => Option[Boolean] = (s1, s2) =>
-  if (null  == s1 || null == s2) None else SoundexMetric.compare(s1, s2)
-
-  val soundexMatch = udf(SoundexFn)
-
-  val NormalizedLevenshteinFn: (String, String) => Option[Float] = (s1, s2) =>
-  if (null == s1 || null == s2) None
-  else LevenshteinMetric.compare(s1, s2) map { dist =>
-    // normalizing to 0..1
-    val maxLen = Seq(s1.length, s2.length).max
-    1.0f - (dist * 1.0f / maxLen)
+  private[smv] val SoundexFn: (String, String) => Option[Boolean] = {(s1, s2) =>
+    if (null  == s1 || null == s2) None else SoundexMetric.compare(s1, s2)
   }
 
+  private[smv] val NGram2Fn: (String, String) => Option[Float] = {(s1, s2) =>
+    if (null == s1 || null == s2) None
+    else NGramMetric(2).compare(s1, s2) map (_.toFloat)
+  }
+
+  private[smv] val NGram3Fn: (String, String) => Option[Float] = {(s1, s2) =>
+    if (null == s1 || null == s2) None
+    else NGramMetric(3).compare(s1, s2) map (_.toFloat)
+  }
+
+  private[smv] val DiceSorensenFn: (String, String) => Option[Float] = {(s1, s2) =>
+    if (null == s1 || null == s2) None
+    else DiceSorensenMetric(2).compare(s1, s2) map (_.toFloat)
+  }
+
+  private[smv] val NormalizedLevenshteinFn: (String, String) => Option[Float] = {(s1, s2) =>
+    if (null == s1 || null == s2) None
+    else LevenshteinMetric.compare(s1, s2) map { dist =>
+      // normalizing to 0..1
+      val maxLen = Seq(s1.length, s2.length).max
+      1.0f - (dist * 1.0f / maxLen)
+    }
+  }
+
+  private[smv] val JaroWinklerFn: (String, String) => Option[Float] = {(s1, s2) =>
+    if (null == s1 || null == s2) None
+    else JaroWinklerMetric.compare(s1, s2) map (_.toFloat)
+  }
+
+  /** UDF Return a boolean. True if Soundex of the two string are exectly matched*/
+  val soundexMatch = udf(SoundexFn)
+
+  /** UDF Return a float. 0 is no match, and 1 is full match */
+  val nGram2 = udf(NGram2Fn)
+
+  /** UDF Return a float. 0 is no match, and 1 is full match */
+  val nGram3 = udf(NGram3Fn)
+
+  /** UDF Return a float. 0 is no match, and 1 is full match */
+  val diceSorensen = udf(DiceSorensenFn)
+
+  /** UDF Return a float. 0 is no match, and 1 is full match */
   val levenshtein = udf(NormalizedLevenshteinFn)
+
+  /** UDF Return a float. 0 is no match, and 1 is full match */
+  val jaroWinkler = udf(JaroWinklerFn)
 }
 
 

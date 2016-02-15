@@ -9,8 +9,8 @@ package smv.matcher {
         +levenshtein
     }
 
-    class SmvNameMatcher{
-        +SmvNameMatcher(exactMatchFilter:AbstractExactMatchFilter,
+    class SmvEntityMatcher{
+        +SmvEntityMatcher(exactMatchFilter:AbstractExactMatchFilter,
             commonLevelMatcher:CommonLevelMatcher, levelMatchers:List[LevelMatcher])
         +doMatch(df1:DataFrame, df2:DataFrame):DataFrame
     }
@@ -61,9 +61,9 @@ package smv.matcher {
     }
 }
 
-AbstractExactMatchFilter "0..1" --* SmvNameMatcher
-CommonLevelMatcher "0..1" --* SmvNameMatcher
-LevelMatcher "*" --* SmvNameMatcher
+AbstractExactMatchFilter "0..1" --* SmvEntityMatcher
+CommonLevelMatcher "0..1" --* SmvEntityMatcher
+LevelMatcher "*" --* SmvEntityMatcher
 
 LevelMatcher <|-- ExactLevelMatcher
 LevelMatcher <|--- FuzzyLevelMatcher
@@ -76,6 +76,6 @@ ExactMatchFilter --|> AbstractExactMatchFilter
 
 ExactMatchFilter o-- ExactMatchFilterResult
 NoOpExactMatchFilter o-- ExactMatchFilterResult
-SmvNameMatcher --> ExactMatchFilterResult
+SmvEntityMatcher --> ExactMatchFilterResult
 
 @enduml

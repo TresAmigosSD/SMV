@@ -555,7 +555,7 @@ class ColumnHelper(column: Column) {
    * }}}
    **/
   def withDesc(desc: String) = {
-    val m = Metadata.fromJson(s"""{"smvDesc": "${desc}"}""")
+    val m = Metadata.fromJson(s"""{"${SmvKeys.SmvDesc}": "${desc}"}""")
     column.as(column.getName, m)
   }
 

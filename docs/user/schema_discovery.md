@@ -54,7 +54,7 @@ Please see [SMV Files](smv_file.md) for more CsvAttributes details.
 **Note** SMV currently can't handle Csv files with multiple lines of header. Other tools might be needed
 to remove extra header lines before try to discover schema.
 
-The shell `discoverSchema` method will create a schema file at `/path/to/file.schema.toBeReviewed`. As
+The shell `discoverSchema` method will create a schema file on the local running dir with name  `file.schema.toBeReviewed`. As
 hinted by the file name, human need to review the schema file.
 
 Using the `CB1200CZ11.csv` file as an example,
@@ -63,7 +63,7 @@ scala> discoverSchema("data/input/employment/CB1200CZ11.csv", ca = new CsvAttrib
 ```
 The path here is relative to the project root dir, where I started the `smv-shell`.
 
-A `data/input/employment/CB1200CZ11.schema.toBeReviewed` file is generated. The first a couple of lines are
+A `CB1200CZ11.schema.toBeReviewed` file is generated. The first a couple of lines are
 ```
 ST: Integer
 ZIPCODE: Integer
@@ -76,7 +76,10 @@ As you can see that `ZIPCODE` is identified as `Integer`. In the review, one sho
 file and change it to `String`, since we don't want to do any arithmetic on `ZIPCODE` and we don't
 want to consider `04532` as `4532`.
 
-After review and editing, you can rename the file by removing the postfix. Now the data is ready for
-SMV.
+After review and editing, you can rename the file by removing the postfix, and move it to the same dir
+of the `csv` file. Now the data is ready for SMV.
+
+**Note** field names with "." in  them may cause columns unable to be resolved, therefore, avoid field names that has "." in them".
+
 
 For Csv data without header, the field name in the generated schema file will be `f1`, `f2`, etc.

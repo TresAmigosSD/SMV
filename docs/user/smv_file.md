@@ -207,4 +207,4 @@ SMV can discover data schema from CSV file and create a schema file.  Manual adj
 scala> discoverSchema("/path/to/file.csv")
 ```
 
-The schema file will be created as a sibling file with the data file.
+The schema file will be created in the current running dir.

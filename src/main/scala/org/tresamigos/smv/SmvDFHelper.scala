@@ -173,7 +173,7 @@ class SmvDFHelper(df: DataFrame) {
    *   df.selectMinus('col1, 'col2)
    * }}}
    */
-  @deprecated
+  @deprecated("use String instead of Symbol", "1.3")
   def selectMinus(s1: Symbol, sleft: Symbol*): DataFrame =
     selectMinus(s1.name, sleft.map{l=>l.name}: _*)
 
@@ -210,7 +210,7 @@ class SmvDFHelper(df: DataFrame) {
    *   df.renameField( 'a -> 'aa, 'b -> 'bb )
    * }}}
    */
-  @deprecated
+  @deprecated("use String instead of Symbol", "1.3")
   def renameField(n1: (Symbol, Symbol), nleft: (Symbol, Symbol)*): DataFrame =
     renameField((n1 +: nleft).map{case(l, r) => (l.name, r.name)}: _*)
 
@@ -360,7 +360,7 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /** Same as `dedupByKey(String*)` but uses `Symbol` to specify the key columns */
-  @deprecated
+  @deprecated("use String instead of Symbol", "1.3")
   def dedupByKey(k1: Symbol, kleft: Symbol*): DataFrame =
     dedupByKey(k1.name, kleft.map{l=>l.name}: _*)
 
@@ -852,6 +852,109 @@ class SmvDFHelper(df: DataFrame) {
     })
 
     df.where(dummyFunc())
+  }
+
+  /**
+   * Adds labels to the specified columns.
+   *
+   * A column may have multiple labels.  Adding the same label twice
+   * to a column has the same effect as adding that label once.
+   *
+   * Both the column names and the labels parameters must be
+   * non-empty.
+   */
+  def smvLabel(colNames: String*)(labels: String*): DataFrame = {
+    require(!colNames.isEmpty && !labels.isEmpty)
+
+    val columns = df.schema.fields map { f =>
+      val c = f.name
+
+      // if new label should be added to this column
+      if (colNames.contains(c)) {
+        // preserve the current meta data
+        val builder = new MetadataBuilder().withMetadata(f.metadata)
+        val meta = builder.putStringArray(SmvKeys.SmvLabel, (f.labels ++ labels).distinct.toArray).build
+        df(c).as(c, meta)
+      } else df(f.name)
+    }
+
+    df.select(columns:_*)
+  }
+
+  /** Returns all the labels on a specified column; throws if the column is missing */
+  def smvGetLabels(col: String): Seq[String] = {
+    val field = df.schema.fields find (_.name == col)
+    require(!field.isEmpty, s"""column [$col] is not found in the dataframe with ${df.columns.mkString(",")}""")
+    field.get.labels
+  }
+
+  /**
+   * Removes the specified labels from the specified columns.
+   *
+   * If no columns are specified, the specified labels are removed
+   * from all applicable columns in the data frame.
+   *
+   * If no labels are specified, all labels are removed from the
+   * specified columns.
+   *
+   * If neither columns nor labels are specified, i.e. both parameter
+   * lists are empty, then all labels are removed from all columns in
+   * the data frame, essentially clearing the label meta data.
+   */
+  def smvRemoveLabel(colNames: String*)(labels: String*): DataFrame = {
+    val allCol = colNames.isEmpty
+    val allLabels = labels.isEmpty
+
+    val columns = df.schema.fields map { f =>
+      val c = f.name
+      if (allCol || colNames.contains(c)) {
+        val newLabels = if (allLabels) Seq.empty else (f.labels diff labels).distinct
+        val builder = new MetadataBuilder().withMetadata(f.metadata)
+        val meta = builder.putStringArray(SmvKeys.SmvLabel, newLabels.toArray).build
+        df(c) as (c, meta)
+      } else df(c)
+    }
+    df.select(columns:_*)
+  }
+
+  /**
+   * Returns all columns in the data frame that contain all the
+   * specified labels.  If the labels argument is an empty sequence,
+   * returns all unlabeled columns in the data frame.
+   *
+   * Will throw if there are no columns that satisfy the condition.
+   *
+   * Example:
+   *   df.select(df.smvWithLabel("A", "B") :+ df("other"):_*)
+   *
+   * will return a data frame containing all columns from `df` that
+   * are labeled with "A" and "B", and the `other` column
+   *
+   * Note: As of spark 1.5, most of the additional operations on the
+   * returned columns, other than aliasing, will result in a new column
+   * without the labels and other meta data on the original column.
+   */
+  def smvWithLabel(labels: String*): Seq[Column] = {
+    import SmvKeys.SmvLabel
+    val filterFn: Metadata => Boolean = { meta =>
+      if (labels.isEmpty)
+        !meta.contains(SmvLabel) || meta.getStringArray(SmvLabel).isEmpty
+      else
+        meta.contains(SmvLabel) && labels.toSet.subsetOf(meta.getStringArray(SmvLabel).toSet)
+    }
+
+    val ret = for {
+      f <- df.schema.fields if (filterFn(f.metadata))
+    } yield df(f.name)
+
+    require(!ret.isEmpty,
+      if (labels.isEmpty)
+        s"""there are no unlabeled columns in the data frame [${df.columns.mkString(",")}]"""
+      else
+        s"""there are no columns labeled with ${labels} in the data frame [${df.columns.mkString(",")}]"""
+    )
+
+    ret
   }
 
   /**

@@ -36,4 +36,32 @@ class StringMetricUdfTest extends FlatSpec with Matchers {
     StringMetricUDFs.SoundexFn("something", null) shouldBe None
     StringMetricUDFs.SoundexFn("", "") shouldBe None
   }
+
+  "nGram2 function" should "return None when either string is null or both are empty" in {
+    StringMetricUDFs.NGram2Fn(null, "words") shouldBe None
+    StringMetricUDFs.NGram2Fn(null, null) shouldBe None
+    StringMetricUDFs.NGram2Fn("something", null) shouldBe None
+    StringMetricUDFs.NGram2Fn("", "") shouldBe None
+  }
+
+  "nGram3 function" should "return None when either string is null or both are empty" in {
+    StringMetricUDFs.NGram3Fn(null, "words") shouldBe None
+    StringMetricUDFs.NGram3Fn(null, null) shouldBe None
+    StringMetricUDFs.NGram3Fn("something", null) shouldBe None
+    StringMetricUDFs.NGram3Fn("", "") shouldBe None
+  }
+
+  "DiceSorensenFn function" should "return None when either string is null or both are empty" in {
+    StringMetricUDFs.DiceSorensenFn(null, "words") shouldBe None
+    StringMetricUDFs.DiceSorensenFn(null, null) shouldBe None
+    StringMetricUDFs.DiceSorensenFn("something", null) shouldBe None
+    StringMetricUDFs.DiceSorensenFn("", "") shouldBe None
+  }
+
+  "JaroWinklerFn function" should "return None when either string is null or both are empty" in {
+    StringMetricUDFs.JaroWinklerFn(null, "words") shouldBe None
+    StringMetricUDFs.JaroWinklerFn(null, null) shouldBe None
+    StringMetricUDFs.JaroWinklerFn("something", null) shouldBe None
+    StringMetricUDFs.JaroWinklerFn("", "") shouldBe None
+  }
 }
