@@ -8,8 +8,9 @@ import sun.misc.URLClassPath
  * TODO: Caching of data could be done here (in companion object class)
  */
 class ClassFinder (val classDir: String) {
-  // TODO: use classDir parameter as root of class search path (watch out for trailing "/")
-  val urlClassPath = new URLClassPath(Array(new URL("file:./target/classes/")))
+  val urlClassPath = new URLClassPath(Array(new URL("file:" + classDir + "/")))
+
+  println("ClassFinder: ClassPaths set to:")
   urlClassPath.getURLs.foreach(println)
 
   /**

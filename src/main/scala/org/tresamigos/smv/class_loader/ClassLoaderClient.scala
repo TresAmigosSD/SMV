@@ -2,25 +2,53 @@ package org.tresamigos.smv.class_loader
 
 import org.eclipse.jetty.client.{Address, HttpExchange, ContentExchange, HttpClient}
 
-class ClassLoaderClient(private val cmdLineArgs: Seq[String])
-  extends ClassLoaderCommon(cmdLineArgs) {
+/**
+ * Base trait to be implemented by both local/remote class loader clients.
+ */
+trait ClassLoaderClientInterface {
+  def getClassBytes(classFQN: String) : Array[Byte]
+}
 
-  def run() = {
-    val hostAndPort = host + ":" + port
-    println("Starting client @" + hostAndPort)
-    val httpClient = new HttpClient()
-    httpClient.start()
+/**
+ * Local class loader client that uses the ClassFinder directly to load class instead of going to
+ * class loader server.
+ */
+class LocalClassLoaderClient(private val cmdLineArgs: Seq[String])
+  extends ClassLoaderClientInterface {
+
+  val config = new ClassLoaderConfig(cmdLineArgs)
+  val classFinder = new ClassFinder(config.classDir)
+
+  override def getClassBytes(classFQN: String) : Array[Byte] = {
+    classFinder.getClassBytes(classFQN)
+  }
+
+}
+
+
+/**
+ * The real class loader client that connects to the remote class loader server to get the class bytes.
+ */
+class ClassLoaderClient(private val cmdLineArgs: Seq[String])
+  extends ClassLoaderClientInterface {
+
+  val config = new ClassLoaderConfig(cmdLineArgs)
+
+  val httpClient = new HttpClient()
+  httpClient.start()
+
+  override def getClassBytes(classFQN: String) : Array[Byte] = {
+    println("Starting client @" + config.port)
 
     val exchange = new ContentExchange(true)
-    exchange.setAddress(new Address(host, port))
-    // TODO: convert class name string to URI encoding/quoting.
-    exchange.setRequestURI("/class/com.omnicis.lucentis.ui.CommonUI")
+    exchange.setAddress(new Address(config.host, config.port))
+    exchange.setRequestURI("/class/" + classFQN)
 
     try {
       httpClient.send(exchange)
     } catch {
       case ce: Exception =>
-        throw new IllegalStateException("Can not connect to Class Server @" + hostAndPort, ce)
+        throw new IllegalStateException("Can not connect to Class Server @" + config.host + ":" + config.port, ce)
     }
 
     // Waits until the exchange is terminated
@@ -35,14 +63,19 @@ class ClassLoaderClient(private val cmdLineArgs: Seq[String])
     }
 
     println("response status = " + exchange.getResponseStatus)
-    //    val s = exchange.getResponseContent
-    //    println("response string = " + s)
     val b = exchange.getResponseContentBytes
-    println("response string = ")
+    b
+  }
+
+  def run() = {
+    val b = getClassBytes("com.omnicis.lucentis.ui.CommonUI")
     b.slice(0,10).foreach { b => println(Integer.toHexString(b & 0xff))}
+    val b2 = getClassBytes("com.omnicis.lucentis.ui.CommonUI$")
+    b2.slice(0,10).foreach { b => println(Integer.toHexString(b & 0xff))}
   }
 }
 
+// For testing purposes only.  Remove eventually!!!
 object ClassLoaderClient {
   def main(args: Array[String]): Unit = {
     val client = new ClassLoaderClient(args)

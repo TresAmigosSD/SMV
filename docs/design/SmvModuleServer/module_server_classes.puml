@@ -5,8 +5,7 @@ hide empty fields
 hide circle
 
 package Server {
-  class ClassCache {
-    +updateCache()
+  class ClassFinder {
     +getClassInfo(FQN) : ClassInfo
   }
 
@@ -17,28 +16,28 @@ package Server {
     -crc
   }
 
-  class RequestHandler
+  class ClassLoaderServer
 
-  ClassCache *-- ClassInfo
+  ClassFinder *-- ClassInfo
 
-  RequestHandler --> ClassCache
+  ClassLoaderServer --> ClassFinder
 }
 
 package Client {
   class SmvApp
-  class SmvModuleClassLoader
-  class ModuleServerConnection
+  class SmvClassLoader
+  class ClassLoaderClientInterface
 
-  SmvApp *-- "*" SmvModuleClassLoader
-  SmvApp *-- "1" ModuleServerConnection
+  SmvApp *-- "*" SmvClassLoader
+  SmvApp *-- "1" ClassLoaderClientInterface
 
 
-  SmvModuleClassLoader "*" o-- ModuleServerConnection
+  SmvClassLoader "*" o-- ClassLoaderClientInterface
 
-  class LocalModuleServerConnection extends ModuleServerConnection
-  class RemoteModuleServerConnection extends ModuleServerConnection
+  class LocalClassLoaderClient extends ClassLoaderClientInterface
+  class ClassLoaderClient extends ClassLoaderClientInterface
 
-  RemoteModuleServerConnection .L.> RequestHandler : tcp/ip
-  LocalModuleServerConnection -L-> ClassCache
+  ClassLoaderClient .L.> ClassLoaderServer : tcp/ip
+  LocalClassLoaderClient -L-> ClassFinder
 }
 @enduml
