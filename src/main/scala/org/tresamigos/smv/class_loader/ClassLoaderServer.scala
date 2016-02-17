@@ -4,19 +4,21 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 
 import org.eclipse.jetty.server.{Request, Server}
 import org.eclipse.jetty.server.handler._
+import org.tresamigos.smv.SmvConfig
 
 /**
  * The module/file class server.  This is the server end of the NetworkClassLoader and is used to serve class code / files.
  */
-class ClassLoaderServer(private val cmdLineArgs: Seq[String]) {
+class ClassLoaderServer(private val smvConfig : SmvConfig) {
 
-  val config = new ClassLoaderConfig(cmdLineArgs) // TODO: this should be passed in for testing!!!!
+  val clConfig = new ClassLoaderConfig(smvConfig)
 
   // "singleton" used to find class byte code on the server.
-  val classFinder = new ClassFinder(config.classDir)
+  val classFinder = new ClassFinder(clConfig.classDir)
 
   def start() : Server = {
 
+    // TODO: investigate how to gzip the files if needed (perhaps a config param?) to reduce network load.
 //    addFilters(handlers, conf)
 //
 //    val collection = new ContextHandlerCollection
@@ -29,10 +31,8 @@ class ClassLoaderServer(private val cmdLineArgs: Seq[String]) {
 
 
     // TODO: add error handling!
-    // TODO: get port from config!
-    println("Starting class server on port: " + config.port)
-    println("  Using class dir: " + config.classDir)
-    val server = new Server(config.port)
+    println("Starting class server on port: " + clConfig.port)
+    val server = new Server(clConfig.port)
 
     val ctxt1 = new ContextHandler("/class")
     ctxt1.setHandler(new ClassCodeRequestHandler(classFinder))
@@ -51,7 +51,8 @@ class ClassLoaderServer(private val cmdLineArgs: Seq[String]) {
 
 object ClassLoaderServer {
   def main(args: Array[String]): Unit = {
-    val cs = new ClassLoaderServer(args)
+    val smvConfig = new SmvConfig(args)
+    val cs = new ClassLoaderServer(smvConfig)
     cs.start().join()
   }
 

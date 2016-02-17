@@ -1,6 +1,7 @@
 package org.tresamigos.smv.class_loader
 
 import org.eclipse.jetty.client.{Address, HttpExchange, ContentExchange, HttpClient}
+import org.tresamigos.smv.SmvConfig
 
 /**
  * Base trait to be implemented by both local/remote class loader clients.
@@ -13,10 +14,9 @@ trait ClassLoaderClientInterface {
  * Local class loader client that uses the ClassFinder directly to load class instead of going to
  * class loader server.
  */
-class LocalClassLoaderClient(private val cmdLineArgs: Seq[String])
+class LocalClassLoaderClient(private val config: ClassLoaderConfig)
   extends ClassLoaderClientInterface {
 
-  val config = new ClassLoaderConfig(cmdLineArgs)
   val classFinder = new ClassFinder(config.classDir)
 
   override def getClassBytes(classFQN: String) : Array[Byte] = {
@@ -29,17 +29,13 @@ class LocalClassLoaderClient(private val cmdLineArgs: Seq[String])
 /**
  * The real class loader client that connects to the remote class loader server to get the class bytes.
  */
-class ClassLoaderClient(private val cmdLineArgs: Seq[String])
+class ClassLoaderClient(private val config: ClassLoaderConfig)
   extends ClassLoaderClientInterface {
-
-  val config = new ClassLoaderConfig(cmdLineArgs)
 
   val httpClient = new HttpClient()
   httpClient.start()
 
   override def getClassBytes(classFQN: String) : Array[Byte] = {
-    println("Starting client @" + config.port)
-
     val exchange = new ContentExchange(true)
     exchange.setAddress(new Address(config.host, config.port))
     exchange.setRequestURI("/class/" + classFQN)
@@ -66,20 +62,17 @@ class ClassLoaderClient(private val cmdLineArgs: Seq[String])
     val b = exchange.getResponseContentBytes
     b
   }
-
-  def run() = {
-    val b = getClassBytes("com.omnicis.lucentis.ui.CommonUI")
-    b.slice(0,10).foreach { b => println(Integer.toHexString(b & 0xff))}
-    val b2 = getClassBytes("com.omnicis.lucentis.ui.CommonUI$")
-    b2.slice(0,10).foreach { b => println(Integer.toHexString(b & 0xff))}
-  }
 }
 
 // For testing purposes only.  Remove eventually!!!
 object ClassLoaderClient {
   def main(args: Array[String]): Unit = {
-    val client = new ClassLoaderClient(args)
-    client.run()
+    val clConfig = new ClassLoaderConfig(args)
+    val client = new ClassLoaderClient(clConfig)
+    val b = client.getClassBytes("com.omnicis.lucentis.ui.CommonUI")
+    b.slice(0,10).foreach { b => println(Integer.toHexString(b & 0xff))}
+    val b2 = client.getClassBytes("com.omnicis.lucentis.ui.CommonUI$")
+    b2.slice(0,10).foreach { b => println(Integer.toHexString(b & 0xff))}
   }
 
 }

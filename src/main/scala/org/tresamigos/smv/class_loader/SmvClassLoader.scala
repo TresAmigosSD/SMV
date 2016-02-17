@@ -1,10 +1,12 @@
 package org.tresamigos.smv.class_loader
 
+import org.tresamigos.smv.SmvConfig
+
 /**
  * Custom "network" class loader that will load classes from remote class loader server (or local).
  * This will enable the loading of modified class files without the need to rebuild the app.
  */
-class SmvClassLoader(client: ClassLoaderClientInterface) extends ClassLoader(getClass.getClassLoader) {
+class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader(getClass.getClassLoader) {
 
   /**
    * Override the default findClass in ClassLoader to load the class using the class loader client.
@@ -29,15 +31,17 @@ object SmvClassLoader {
    * * SmvClassLoader with a remote client connection (if host is specified)
    * * SmvClassLoader with a local client connection (if host is not specified, but class dir is)
    */
-  def apply(config: ClassLoaderConfig) : ClassLoader = {
-    if (! config.host.isEmpty) {
-      println("SmvClassLoader: create remote loader")
-      null // must use remote client
-    } else if (! config.classDir.isEmpty) {
-      println("SmvClassLoader: create local loader")
-      null // must use local client
+  def apply(smvConfig: SmvConfig) : ClassLoader = {
+    val clConfig = new ClassLoaderConfig(smvConfig)
+
+    if (! clConfig.host.isEmpty) {
+      // network class loader with remote client connection
+      new SmvClassLoader(new ClassLoaderClient(clConfig))
+    } else if (! clConfig.classDir.isEmpty) {
+      // network class loader with local client connection
+      new SmvClassLoader(new LocalClassLoaderClient(clConfig))
     } else {
-      println("SmvClassLoader: create default loader")
+      // default jar class loader
       getClass.getClassLoader
     }
   }
