@@ -1,5 +1,6 @@
 package org.tresamigos.smv.class_loader
 
+import java.io.{DataOutputStream, ByteArrayOutputStream}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 
 import org.eclipse.jetty.server.{Request, Server}
@@ -71,15 +72,29 @@ class ClassCodeRequestHandler(val classFinder: ClassFinder) extends AbstractHand
 
     // get class name from request.
     val className = baseRequest.getPathInfo.stripPrefix("/")
-    println("LOAD CLASS:" + className)
+    println("Server load class:" + className)
 
     // load class bytes from disk.
     val classBytes = classFinder.getClassBytes(className)
+
+    // TODO: extract this into a protocol class!!!
+    val baos = new ByteArrayOutputStream(classBytes.length + 100)
+    val dos = new DataOutputStream(baos)
+    dos.writeInt(55)
+    dos.writeInt(classBytes.length)
+    dos.write(classBytes)
+    dos.close()
+//    val raw = baos.toByteArray
+//    print("server data: "); raw.slice(0,10).foreach { b => print(Integer.toHexString(b & 0xff) + ",")}; println("")
+//    println("class bytes size:" + classBytes.size)
+//    println("raw size: " + raw.size)
+
+    // TODO: add compression to the byte stream as well (using GZipOutputStream)
 
     // send class bytes to client in response.
     response.setContentType("application/octet-stream")
     response.setStatus(HttpServletResponse.SC_OK)
     baseRequest.setHandled(true)
-    response.getOutputStream.write(classBytes)
+    baos.writeTo(response.getOutputStream)
   }
 }

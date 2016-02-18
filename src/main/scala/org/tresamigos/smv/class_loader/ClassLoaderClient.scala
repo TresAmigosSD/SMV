@@ -1,5 +1,7 @@
 package org.tresamigos.smv.class_loader
 
+import java.io.{DataInputStream, ByteArrayInputStream}
+
 import org.eclipse.jetty.client.{Address, HttpExchange, ContentExchange, HttpClient}
 import org.tresamigos.smv.SmvConfig
 
@@ -60,7 +62,14 @@ class ClassLoaderClient(private val config: ClassLoaderConfig)
 
     println("response status = " + exchange.getResponseStatus)
     val b = exchange.getResponseContentBytes
-    b
+    val ds = new DataInputStream(new ByteArrayInputStream(b))
+    val v = ds.readInt()
+    val numBytes = ds.readInt()
+    println("version = " + v)
+    println("numBytes = " + numBytes)
+    val rawBytes = new Array[Byte](numBytes)
+    ds.readFully(rawBytes)
+    rawBytes
   }
 }
 

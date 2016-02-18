@@ -1,7 +1,7 @@
-package org.tresamigos.smv
+package org.tresamigos.smv.class_loader
 
 import org.eclipse.jetty.server.Server
-import org.tresamigos.smv.class_loader._
+import org.tresamigos.smv.{SmvConfig, SparkTestUtil}
 
 class ClassLoaderTest extends SparkTestUtil {
   val classLoaderTestDir = testDataDir + "ClassLoaderTest"

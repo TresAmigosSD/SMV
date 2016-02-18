@@ -8,6 +8,9 @@ import org.tresamigos.smv.SmvConfig
  */
 class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader(getClass.getClassLoader) {
 
+  // TODO: need to make this a parallel loader!!!
+  // See URLClassLoader for example usage of "ClassLoader.registerAsParallelCapable()"
+
   /**
    * Override the default findClass in ClassLoader to load the class using the class loader client.
    * Depending on which client we have (remote/local), this may connect to server or just search locally dir.
@@ -22,6 +25,27 @@ class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader
     val klass = defineClass(classFQN, klassBytes, 0, klassBytes.length)
     klass
   }
+
+  override def loadClass(classFQN: String) : Class[_] = {
+    var c : Class[_] = null
+    getClassLoadingLock(classFQN).synchronized {
+      c = findLoadedClass(classFQN)
+      if (c == null) {
+        try {
+            c = getParent.loadClass(classFQN)
+        } catch {
+          case e: ClassNotFoundException => {/* ignore class not found in parent */}
+        }
+
+        if (c == null) {
+          c = findClass(classFQN)
+        }
+      }
+    }
+
+    c
+  }
+
 }
 
 object SmvClassLoader {
