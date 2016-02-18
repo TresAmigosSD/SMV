@@ -154,16 +154,16 @@ object StringMetricUDFs {
 }
 
 
-case class ExactMatchFilterResult(remainingDF1:DataFrame, remainingDF2:DataFrame, extracted:DataFrame)
+private[smv] case class ExactMatchFilterResult(remainingDF1:DataFrame, remainingDF2:DataFrame, extracted:DataFrame)
 
-sealed abstract class AbstractExactMatchFilter {
-  def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
+private[smv] sealed abstract class AbstractExactMatchFilter {
+  private[smv] def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
 }
 
 case class ExactMatchFilter(colName: String, expr:Column) extends AbstractExactMatchFilter {
   require(colName != null && expr.toExpr.dataType == BooleanType)
 
-  override def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult = {
+  private[smv] override def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult = {
     val joined = df1.join(df2, expr, "outer")
 
     val extracted = joined.where( joined("id").isNotNull && joined("_id").isNotNull ).select("id", "_id")
@@ -176,7 +176,7 @@ case class ExactMatchFilter(colName: String, expr:Column) extends AbstractExactM
 }
 
 object NoOpExactMatchFilter extends AbstractExactMatchFilter {
-  override def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult = {
+  private[smv] override def extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult = {
     val sqc = df1.sqlContext
     val idType = df1.schema.fields.find(_.name == "id").get
 
@@ -186,28 +186,28 @@ object NoOpExactMatchFilter extends AbstractExactMatchFilter {
   }
 }
 
-sealed abstract class CommonLevelMatcher {
-  def join(df1:DataFrame, df2:DataFrame):DataFrame
+private[smv] sealed abstract class CommonLevelMatcher {
+  private[smv] def join(df1:DataFrame, df2:DataFrame):DataFrame
 }
 
 case class CommonLevelMatcherExpression(expr:Column) extends CommonLevelMatcher {
   require(expr != null && expr.toExpr.dataType == BooleanType)
-  override def join(df1:DataFrame, df2:DataFrame):DataFrame = { df1.join(df2, expr) }
+  private[smv] override def join(df1:DataFrame, df2:DataFrame):DataFrame = { df1.join(df2, expr) }
 }
 
 object CommonLevelMatcherNone extends CommonLevelMatcher {
-  override def join(df1:DataFrame, df2:DataFrame):DataFrame = df1.join(df2)
+  private[smv] override def join(df1:DataFrame, df2:DataFrame):DataFrame = df1.join(df2)
 }
 
-sealed abstract class LevelMatcher {
-  def getMatchColName:String
-  def addCols(df:DataFrame):DataFrame
+private[smv] sealed abstract class LevelMatcher {
+  private[smv] def getMatchColName:String
+  private[smv] def addCols(df:DataFrame):DataFrame
 }
 
 case class ExactLevelMatcher(colName:String, exactMatchExpression:Column) extends LevelMatcher {
   require(colName != null && exactMatchExpression != null)
-  override def getMatchColName: String = colName
-  override def addCols(df: DataFrame): DataFrame = df.selectPlus(exactMatchExpression.as(colName))
+  private[smv] override def getMatchColName: String = colName
+  private[smv] override def addCols(df: DataFrame): DataFrame = df.selectPlus(exactMatchExpression.as(colName))
 }
 
 case class FuzzyLevelMatcher(
@@ -223,11 +223,11 @@ case class FuzzyLevelMatcher(
     colName != null &&
     valueExpr != null && valueExpr.toExpr.dataType == FloatType)
 
-  override val getMatchColName: String = colName
+  private[smv] override val getMatchColName: String = colName
 
-  val valueColName: String = colName + "_Value"
+  private[smv] val valueColName: String = colName + "_Value"
 
-  override def addCols(df: DataFrame): DataFrame = {
+  private[smv] override def addCols(df: DataFrame): DataFrame = {
     val cond: Column =
       if (null == predicate)
         valueExpr > threshold
