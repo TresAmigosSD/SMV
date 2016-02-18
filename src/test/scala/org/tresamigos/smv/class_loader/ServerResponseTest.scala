@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream
 import org.tresamigos.smv.SparkTestUtil
 
 class ServerResponseTest extends SparkTestUtil {
+  private val apiVersionBytes = Array[Byte](0, 0,0,ServerResponse.apiVersion.toByte)
 
   test("test OK Server Response Marshall") {
     val okResp = new ServerResponse(20, Array[Byte](1,2,3))
@@ -12,8 +13,7 @@ class ServerResponseTest extends SparkTestUtil {
     val baos = new ByteArrayOutputStream()
     okResp.send(baos)
 
-    val expectedRawBytes = Array[Byte](
-      0,0,0,ServerResponse.apiVersion.toByte, // api version
+    val expectedRawBytes = apiVersionBytes ++ Array[Byte](
       0,0,0,ServerResponse.STATUS_OK.toByte,  // status
       0,0,0,0,0,0,0,20,                       // class version
       0,0,0,3,                                // num of bytes
@@ -23,8 +23,7 @@ class ServerResponseTest extends SparkTestUtil {
   }
 
   test("test OK Server Response De-Marshall") {
-    val rawBytes = Array[Byte](
-      0,0,0,ServerResponse.apiVersion.toByte, // api version
+    val rawBytes = apiVersionBytes ++ Array[Byte](
       0,0,0,ServerResponse.STATUS_OK.toByte,  // status
       0,0,0,0,0,0,0,32,                       // class version
       0,0,0,4,                                // num of bytes
@@ -37,6 +36,27 @@ class ServerResponseTest extends SparkTestUtil {
     assert(resp.classBytes === Array[Byte](1,2,3,4))
   }
 
-  // TODO: add test for invalid response marshall, error de-marshall
+  test("test ERROR Server Response Marshall") {
+    val errResp = new ServerResponse(ServerResponse.STATUS_ERR_CLASS_NOT_FOUND)
 
+    val baos = new ByteArrayOutputStream()
+    errResp.send(baos)
+
+    val expectedRawBytes = apiVersionBytes ++ Array[Byte](
+      0,0,0,ServerResponse.STATUS_ERR_CLASS_NOT_FOUND.toByte
+    )
+    assert(baos.toByteArray === expectedRawBytes)
+
+  }
+
+  test("test ERROR server Response De-Marshall") {
+    val rawBytes = apiVersionBytes ++ Array[Byte](
+      0,0,0,ServerResponse.STATUS_ERR_CLASS_NOT_FOUND.toByte)
+    val resp = ServerResponse(rawBytes)
+
+    assert(resp.status === ServerResponse.STATUS_ERR_CLASS_NOT_FOUND)
+    assert(resp.classVersion === 0L)
+    assert(resp.classBytes === null)
+
+  }
 }

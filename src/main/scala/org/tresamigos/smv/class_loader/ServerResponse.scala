@@ -40,13 +40,16 @@ class ServerResponse(
    * Sends the current server response as an encoded message to given output stream.
    */
   def send(output: OutputStream) = {
-    val baos = new ByteArrayOutputStream(classBytes.length + 100)
+    val classBytesLength = if (classBytes == null) 0 else classBytes.length
+    val baos = new ByteArrayOutputStream(classBytesLength + 100)
     val dos = new DataOutputStream(baos)
     dos.writeInt(ServerResponse.apiVersion)
     dos.writeInt(status)
-    dos.writeLong(classVersion)
-    dos.writeInt(classBytes.length)
-    dos.write(classBytes)
+    if (status == ServerResponse.STATUS_OK) {
+      dos.writeLong(classVersion)
+      dos.writeInt(classBytesLength)
+      dos.write(classBytes)
+    }
     dos.close()
 
     // TODO: add compression to the byte stream as well (using GZipOutputStream)
@@ -73,7 +76,8 @@ object ServerResponse {
   val apiVersion: Int = 1
 
   val STATUS_OK = 0
-  val STATUS_ERR = 1
+  val STATUS_ERR_CLASS_NOT_FOUND = 1
+  val STATUS_ERR = 2
 
   /**
    * Create a ServerResponse object from an encoded message as byte array.
