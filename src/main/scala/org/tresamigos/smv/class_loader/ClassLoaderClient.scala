@@ -1,9 +1,6 @@
 package org.tresamigos.smv.class_loader
 
-import java.io.{DataInputStream, ByteArrayInputStream}
-
 import org.eclipse.jetty.client.{Address, HttpExchange, ContentExchange, HttpClient}
-import org.tresamigos.smv.SmvConfig
 
 /**
  * Base trait to be implemented by both local/remote class loader clients.
@@ -11,6 +8,7 @@ import org.tresamigos.smv.SmvConfig
 trait ClassLoaderClientInterface {
   def getClassBytes(classFQN: String) : Array[Byte]
 }
+
 
 /**
  * Local class loader client that uses the ClassFinder directly to load class instead of going to
@@ -61,27 +59,7 @@ class ClassLoaderClient(private val config: ClassLoaderConfig)
     }
 
     println("response status = " + exchange.getResponseStatus)
-    val b = exchange.getResponseContentBytes
-    val ds = new DataInputStream(new ByteArrayInputStream(b))
-    val v = ds.readInt()
-    val numBytes = ds.readInt()
-    println("version = " + v)
-    println("numBytes = " + numBytes)
-    val rawBytes = new Array[Byte](numBytes)
-    ds.readFully(rawBytes)
-    rawBytes
+    val resp = ServerResponse(exchange.getResponseContentBytes)
+    resp.classBytes
   }
-}
-
-// For testing purposes only.  Remove eventually!!!
-object ClassLoaderClient {
-  def main(args: Array[String]): Unit = {
-    val clConfig = new ClassLoaderConfig(args)
-    val client = new ClassLoaderClient(clConfig)
-    val b = client.getClassBytes("com.omnicis.lucentis.ui.CommonUI")
-    b.slice(0,10).foreach { b => println(Integer.toHexString(b & 0xff))}
-    val b2 = client.getClassBytes("com.omnicis.lucentis.ui.CommonUI$")
-    b2.slice(0,10).foreach { b => println(Integer.toHexString(b & 0xff))}
-  }
-
 }

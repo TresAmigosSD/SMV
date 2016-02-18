@@ -18,19 +18,6 @@ class ClassLoaderServer(private val smvConfig : SmvConfig) {
   val classFinder = new ClassFinder(clConfig.classDir)
 
   def start() : Server = {
-
-    // TODO: investigate how to gzip the files if needed (perhaps a config param?) to reduce network load.
-//    addFilters(handlers, conf)
-//
-//    val collection = new ContextHandlerCollection
-//    val gzipHandlers = handlers.map { h =>
-//      val gzipHandler = new GzipHandler
-//      gzipHandler.setHandler(h)
-//      gzipHandler
-//    }
-//    collection.setHandlers(gzipHandlers.toArray)
-
-
     // TODO: add error handling!
     println("Starting class server on port: " + clConfig.port)
     val server = new Server(clConfig.port)
@@ -64,7 +51,7 @@ object ClassLoaderServer {
  */
 class ClassCodeRequestHandler(val classFinder: ClassFinder) extends AbstractHandler
 {
-  override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse) = {
+  override def handle(target: String, baseRequest: Request, request: HttpServletRequest, httpResponse: HttpServletResponse) = {
 //    println("baseRequest: " + baseRequest.toString)
 //    println("  params = " + baseRequest.getParameterMap.toString)
 //    println("  pathinfo = " + baseRequest.getPathInfo)
@@ -76,25 +63,12 @@ class ClassCodeRequestHandler(val classFinder: ClassFinder) extends AbstractHand
 
     // load class bytes from disk.
     val classBytes = classFinder.getClassBytes(className)
-
-    // TODO: extract this into a protocol class!!!
-    val baos = new ByteArrayOutputStream(classBytes.length + 100)
-    val dos = new DataOutputStream(baos)
-    dos.writeInt(55)
-    dos.writeInt(classBytes.length)
-    dos.write(classBytes)
-    dos.close()
-//    val raw = baos.toByteArray
-//    print("server data: "); raw.slice(0,10).foreach { b => print(Integer.toHexString(b & 0xff) + ",")}; println("")
-//    println("class bytes size:" + classBytes.size)
-//    println("raw size: " + raw.size)
-
-    // TODO: add compression to the byte stream as well (using GZipOutputStream)
+    val resp = new ServerResponse(10L, classBytes)
 
     // send class bytes to client in response.
-    response.setContentType("application/octet-stream")
-    response.setStatus(HttpServletResponse.SC_OK)
+    httpResponse.setContentType("application/octet-stream")
+    httpResponse.setStatus(HttpServletResponse.SC_OK)
     baseRequest.setHandled(true)
-    baos.writeTo(response.getOutputStream)
+    resp.send(httpResponse.getOutputStream)
   }
 }

@@ -57,6 +57,5 @@ class ServerResponseTest extends SparkTestUtil {
     assert(resp.status === ServerResponse.STATUS_ERR_CLASS_NOT_FOUND)
     assert(resp.classVersion === 0L)
     assert(resp.classBytes === null)
-
   }
 }
