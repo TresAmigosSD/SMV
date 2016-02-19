@@ -5,6 +5,7 @@ import org.eclipse.jetty.client.{Address, HttpExchange, ContentExchange, HttpCli
 /**
  * Base trait to be implemented by both local/remote class loader clients.
  */
+private[smv]
 trait ClassLoaderClientInterface {
   /**
    * Get class bytes for the given class name.
@@ -18,14 +19,17 @@ trait ClassLoaderClientInterface {
  * Local class loader client that uses the ClassFinder directly to load class instead of going to
  * class loader server.
  */
+private[smv]
 class LocalClassLoaderClient(private val config: ClassLoaderConfig)
   extends ClassLoaderClientInterface {
 
   val classFinder = new ClassFinder(config.classDir)
 
   override def getClassBytes(classFQN: String) : Array[Byte] = {
-    // TODO: throw classnotfound excpetion on error
-    classFinder.getClassBytes(classFQN)
+    val b = classFinder.getClassBytes(classFQN)
+    if (b == null)
+      throw new ClassNotFoundException("LocalClassLoaderClient class not found: " + classFQN)
+    b
   }
 }
 
@@ -33,6 +37,7 @@ class LocalClassLoaderClient(private val config: ClassLoaderConfig)
 /**
  * The real class loader client that connects to the remote class loader server to get the class bytes.
  */
+private[smv]
 class ClassLoaderClient(private val config: ClassLoaderConfig)
   extends ClassLoaderClientInterface {
 

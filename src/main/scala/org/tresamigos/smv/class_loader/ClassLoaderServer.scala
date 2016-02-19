@@ -1,6 +1,5 @@
 package org.tresamigos.smv.class_loader
 
-import java.io.{DataOutputStream, ByteArrayOutputStream}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 
 import org.eclipse.jetty.server.{Request, Server}
@@ -67,6 +66,7 @@ class ClassCodeRequestHandler(val classFinder: ClassFinder) extends AbstractHand
     val resp = if (classBytes == null) {
       new ServerResponse(ServerResponse.STATUS_ERR_CLASS_NOT_FOUND)
     } else {
+      // TODO: use file modification time as the file version
       new ServerResponse(10L, classBytes)
     }
 
