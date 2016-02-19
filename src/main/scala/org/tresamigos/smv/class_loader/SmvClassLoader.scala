@@ -6,6 +6,7 @@ import org.tresamigos.smv.SmvConfig
  * Custom "network" class loader that will load classes from remote class loader server (or local).
  * This will enable the loading of modified class files without the need to rebuild the app.
  */
+private[smv]
 class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader(getClass.getClassLoader) {
 
   // TODO: need to make this a parallel loader!!!
@@ -13,32 +14,41 @@ class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader
 
   /**
    * Override the default findClass in ClassLoader to load the class using the class loader client.
-   * Depending on which client we have (remote/local), this may connect to server or just search locally dir.
-   *
-   * Note: by the time findClass is called, the loadClass method would have checked the parent class loader
-   * first and only defer to findClass if the parent did not have the class!!!
+   * Depending on which client we have (remote/local), this may connect to server or just search local dir.
    */
   override def findClass(classFQN: String) : Class[_] = {
-    println("findClass: " + classFQN)
-    // TODO: handle errors
+    println("CL: findClass: " + classFQN)
     val klassBytes = client.getClassBytes(classFQN)
     val klass = defineClass(classFQN, klassBytes, 0, klassBytes.length)
     klass
   }
 
+  /**
+   * Override the default loadClass behaviour to check against server first rather than parent class loader.
+   * We can't check parent first because spark is usually run with the app fat jar which will have all the
+   * modules defined in it so we will never hit the server.
+   * However, this may cause too many requests to server for non-app classes.  That is why the loadFromParentOnly method
+   * is used to white-list some common classes that we know will not be on the server.
+   */
   override def loadClass(classFQN: String) : Class[_] = {
     var c : Class[_] = null
+
     getClassLoadingLock(classFQN).synchronized {
+      // see if we have a cached copy in the JVM
       c = findLoadedClass(classFQN)
+      // TODO: test that findLoadedClass actually works!!!
       if (c == null) {
         try {
-            c = getParent.loadClass(classFQN)
+            if (! loadFromParentOnly(classFQN))
+              c = findClass(classFQN)
         } catch {
-          case e: ClassNotFoundException => {/* ignore class not found in parent */}
+          case e: ClassNotFoundException => {/* ignore class not found on server */}
         }
 
+        // if not found on server, try parent
         if (c == null) {
-          c = findClass(classFQN)
+          println("CL: parent.loadClass: " + classFQN)
+          c = getParent.loadClass(classFQN)
         }
       }
     }
@@ -46,8 +56,26 @@ class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader
     c
   }
 
+  /**
+   * Determine if the given class should be loaded from parent class loader only.
+   * This is purely an optimization to skip the round trip to class server that will surely fail.
+   * This list doesn't have to be exhaustive as a missed class only incurs a round trip to class loader server.
+   */
+  private def loadFromParentOnly(classFQN: String) : Boolean = {
+    /*
+    org.eclipse.jetty
+    org.joda
+    org.tresamigos.smv
+     */
+    classFQN.startsWith("java.") ||
+      classFQN.startsWith("javax.") ||
+      classFQN.startsWith("scala.") ||
+      classFQN.startsWith("org.apache.commons") ||
+      classFQN.startsWith("org.apache.http")
+  }
 }
 
+private[smv]
 object SmvClassLoader {
   /**
    * Creates the appropriate class loader depending on config.  Can be one of:

@@ -19,7 +19,7 @@ import java.io._
  *   1. status : int
  * </pre>
  */
-//private[smv]
+private[smv]
 class ServerResponse(
   val status: Int,            // one of STATUS_OK, STATUS_ERR_*
   val classVersion: Long,     // the version of the class (timestamp?)
@@ -85,6 +85,7 @@ object ServerResponse {
   def apply(encoded: Array[Byte]) = {
     val dis = new DataInputStream(new ByteArrayInputStream(encoded))
     val _apiVersion = dis.readInt()
+
     assert(_apiVersion == apiVersion)
 
     val _status = dis.readInt()

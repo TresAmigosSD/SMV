@@ -6,6 +6,10 @@ import org.eclipse.jetty.client.{Address, HttpExchange, ContentExchange, HttpCli
  * Base trait to be implemented by both local/remote class loader clients.
  */
 trait ClassLoaderClientInterface {
+  /**
+   * Get class bytes for the given class name.
+   * Throws ClassNotFoundException of the class was not found.
+   */
   def getClassBytes(classFQN: String) : Array[Byte]
 }
 
@@ -20,9 +24,9 @@ class LocalClassLoaderClient(private val config: ClassLoaderConfig)
   val classFinder = new ClassFinder(config.classDir)
 
   override def getClassBytes(classFQN: String) : Array[Byte] = {
+    // TODO: throw classnotfound excpetion on error
     classFinder.getClassBytes(classFQN)
   }
-
 }
 
 
@@ -49,17 +53,14 @@ class ClassLoaderClient(private val config: ClassLoaderConfig)
 
     // Waits until the exchange is terminated
     val exchangeState = exchange.waitForDone()
+    if (exchangeState != HttpExchange.STATUS_COMPLETED)
+      throw new ClassNotFoundException(s"request to server returned ${exchangeState} for class ${classFQN}")
+    if (exchange.getResponseStatus() != 200)
+      throw new ClassNotFoundException(s"request to server completed with status of ${exchange.getResponseStatus()} for class ${classFQN}")
 
-    if (exchangeState == HttpExchange.STATUS_COMPLETED) {
-      println("Success:")
-    } else if (exchangeState == HttpExchange.STATUS_EXCEPTED) {
-      println("Excepted")
-    } else if (exchangeState == HttpExchange.STATUS_EXPIRED) {
-      println("Expired")
-    }
-
-    println("response status = " + exchange.getResponseStatus)
     val resp = ServerResponse(exchange.getResponseContentBytes)
+    if (resp.status != ServerResponse.STATUS_OK)
+      throw new ClassNotFoundException("class server did not find class: " + classFQN)
     resp.classBytes
   }
 }

@@ -10,6 +10,7 @@ import org.tresamigos.smv.SmvConfig
 /**
  * The module/file class server.  This is the server end of the NetworkClassLoader and is used to serve class code / files.
  */
+private[smv]
 class ClassLoaderServer(private val smvConfig : SmvConfig) {
 
   val clConfig = new ClassLoaderConfig(smvConfig)
@@ -18,7 +19,6 @@ class ClassLoaderServer(private val smvConfig : SmvConfig) {
   val classFinder = new ClassFinder(clConfig.classDir)
 
   def start() : Server = {
-    // TODO: add error handling!
     println("Starting class server on port: " + clConfig.port)
     val server = new Server(clConfig.port)
 
@@ -49,6 +49,7 @@ object ClassLoaderServer {
 /**
  * Handler for class code request.
  */
+private[smv]
 class ClassCodeRequestHandler(val classFinder: ClassFinder) extends AbstractHandler
 {
   override def handle(target: String, baseRequest: Request, request: HttpServletRequest, httpResponse: HttpServletResponse) = {
@@ -59,11 +60,15 @@ class ClassCodeRequestHandler(val classFinder: ClassFinder) extends AbstractHand
 
     // get class name from request.
     val className = baseRequest.getPathInfo.stripPrefix("/")
-    println("Server load class:" + className)
+//    println("Server load class:" + className)
 
     // load class bytes from disk.
     val classBytes = classFinder.getClassBytes(className)
-    val resp = new ServerResponse(10L, classBytes)
+    val resp = if (classBytes == null) {
+      new ServerResponse(ServerResponse.STATUS_ERR_CLASS_NOT_FOUND)
+    } else {
+      new ServerResponse(10L, classBytes)
+    }
 
     // send class bytes to client in response.
     httpResponse.setContentType("application/octet-stream")
