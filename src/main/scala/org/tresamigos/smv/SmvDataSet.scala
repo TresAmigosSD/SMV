@@ -267,24 +267,23 @@ abstract class SmvFile extends SmvDataSet {
 
   private[smv] def isFullPath: Boolean = false
 
+  protected def findFullPath(_path: String) = {
+    if (isFullPath || ("""^[\.\/]""".r).findFirstIn(_path) != None) _path
+    else if (_path.startsWith("input/")) s"${app.smvConfig.dataDir}/${_path}"
+    else s"${app.smvConfig.inputDir}/${_path}"
+  }
+
   /* Historically we specify path in SmvFile respect to dataDir
    * instead of inputDir. However by convention we always put data
    * files in /data/input/ dir, so all the path strings in the projects
    * started with "input/". To transfer to use inputDir, we will still
    * prepend dataDir if the path string start with "input/"
    */
-  private[smv] def fullPath = {
-    if (isFullPath || ("""^[\.\/]""".r).findFirstIn(path) != None) path
-    else if (app == null) throw new IllegalArgumentException(s"app == null and $path is not a full path")
-    else if (path.startsWith("input/")) s"${app.smvConfig.dataDir}/${path}"
-    else s"${app.smvConfig.inputDir}/${path}"
-  }
+  private[smv] def fullPath = findFullPath(path)
 
   private[smv] def fullSchemaPath = {
     if(schemaPath == null) None
-    else if (isFullPath) Option(schemaPath)
-    else if (schemaPath.startsWith("input/")) Option(s"${app.smvConfig.dataDir}/${schemaPath}")
-    else Option(s"${app.smvConfig.inputDir}/${schemaPath}")
+    else Option(findFullPath(schemaPath))
   }
 
   /* For SmvFile, the datasetHash should be based on
@@ -343,6 +342,41 @@ case class SmvCsvFile(
     // TODO: this should use inputDir instead of dataDir
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
     val df = handler.csvFileWithSchema(csvAttributes)
+    run(df)
+  }
+}
+
+/**
+ * Instead of a single input file, specify a data dir with files which has
+ * the same schema and CsvAttributes.
+ *
+ * `SmvCsvFile` can also take dir as path parameter, but all files are considered
+ * slices. In that case if none of them has headers, it's equivalent to `SmvMultiCsvFiles`.
+ * However if every file has header, `SmvCsvFile` will not remove header correctly.
+ **/
+class SmvMultiCsvFiles(
+  dir: String,
+  csvAttributes: CsvAttributes = null,
+  override val schemaPath: String = null
+) extends SmvFile with SmvDSWithParser {
+
+  override val path = dir
+
+  override def fullSchemaPath = {
+    if(schemaPath == null) Option(SmvSchema.dataPathToSchemaPath(fullPath))
+    else Option(findFullPath(schemaPath))
+  }
+
+  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
+    val parserValidator = dsDqm.createParserValidator()
+
+    val filesInDir = SmvHDFS.dirList(fullPath).map{n => s"${fullPath}/${n}"}
+
+    val df = filesInDir.map{s =>
+      val handler = new FileIOHandler(app.sqlContext, s, fullSchemaPath, parserValidator)
+      handler.csvFileWithSchema(csvAttributes)
+    }.reduce(_ unionAll _)
+
     run(df)
   }
 }
@@ -462,7 +496,7 @@ class SmvModuleLink(outputModule: SmvOutput) extends
 
   /**
    *  No need to check isEphemeral any more
-   *  SmvOutput will be published anyhow regardless of ephemeral or not 
+   *  SmvOutput will be published anyhow regardless of ephemeral or not
    **/
   // require(! smvModule.isEphemeral)
   // TODO: add check that the link is to an object in a different stage!!!

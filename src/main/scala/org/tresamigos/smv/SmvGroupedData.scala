@@ -216,6 +216,34 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
   /**
+   * Same as smvPivotSum except that, instead of summing, we coalesce the pivot or grouped columns.
+   */
+  def smvPivotCoalesce(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
+    import df.sqlContext.implicits._
+
+    // ensure that pivoting columns exist
+    val (dfp: DataFrame, pcols: Seq[Seq[String]]) =
+      if (!pivotCols.isEmpty) {
+        (df, pivotCols)
+      } else {
+        // get unique col name for in-group ranking
+        val pcol = mkUniq(df.columns, "pivot")
+        val r1 = runAgg(valueCols map (c => $"$c".asc) :_*)(
+          (keys ++ valueCols map (c => $"$c")) :+ (count(lit(1)) as pcol) map makeSmvCDSAggColumn :_*)
+        (r1, Seq(Seq(pcol)))
+      }
+
+    // TODO: remove duplicate code in smvPivot, smvPivotSum, and here
+    val output = ensureBaseOutput(baseOutput, pcols)
+    val pivot= SmvPivot(pcols, valueCols.map{v => (v, v)}, output)
+    val pivotRes = SmvGroupedData(pivot.createSrdd(dfp, keys), keys)
+
+    // collapse each group into 1 row
+    val cols = pivot.outCols map (n => smvFirst($"$n", true) as n)
+    pivotRes.agg(cols(0), cols.tail:_*)
+  }
+
+  /**
    * Compute the quantile bin number within a group in a given DataFrame.
    *
    * Example:
