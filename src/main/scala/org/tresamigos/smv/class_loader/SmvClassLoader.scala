@@ -2,6 +2,7 @@ package org.tresamigos.smv.class_loader
 
 import org.tresamigos.smv.SmvConfig
 
+
 /**
  * Custom "network" class loader that will load classes from remote class loader server (or local).
  * This will enable the loading of modified class files without the need to rebuild the app.
@@ -27,8 +28,9 @@ class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader
    * Override the default loadClass behaviour to check against server first rather than parent class loader.
    * We can't check parent first because spark is usually run with the app fat jar which will have all the
    * modules defined in it so we will never hit the server.
-   * However, this may cause too many requests to server for non-app classes.  That is why the loadFromParentOnly method
-   * is used to white-list some common classes that we know will not be on the server.
+   * However, this may cause too many requests to server for non-app classes.
+   * That is why the loadFromParentOnly method is used to white-list some common classes that
+   * we know will not be on the server.
    */
   override def loadClass(classFQN: String) : Class[_] = {
     var c : Class[_] = null
@@ -70,6 +72,8 @@ class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader
     classFQN.startsWith("java.") ||
       classFQN.startsWith("javax.") ||
       classFQN.startsWith("scala.") ||
+      classFQN.startsWith("<root>") ||
+      classFQN.startsWith("org.tresamigos.smv.") ||
       classFQN.startsWith("org.apache.commons") ||
       classFQN.startsWith("org.apache.http")
   }

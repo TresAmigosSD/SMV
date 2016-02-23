@@ -14,6 +14,7 @@
 
 package org.tresamigos.smv
 
+import org.tresamigos.smv.class_loader.SmvClassLoader
 import org.tresamigos.smv.shell.EddCompare
 
 import java.io.{File, PrintWriter}
@@ -110,6 +111,21 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       throw new IllegalStateException(s"resolveStack corrupted.  Got ${popRdd}, expected ${dsName}")
 
     resRdd
+  }
+
+  /**
+   * dynamically resolve a module.
+   * The module and all its dependents are loaded into their own classloader so that we can have multiple
+   * instances of the same module loaded at different timtes.
+   */
+  def dynamicResolveRDD(fqn: String) = {
+    val cl = SmvClassLoader(smvConfig)
+    val ref = new SmvReflection(cl)
+    println("Before call to objectNameToInstance:")
+    val dsObject = ref.objectNameToInstance[SmvDataSet](fqn)
+//    val dsObject = null
+    println("After call to objectNameToInstance: " + dsObject)
+    resolveRDD(dsObject)
   }
 
   lazy val packagesPrefix = {

@@ -23,6 +23,10 @@ object i {
     app.resolveRDD(ds)
   }
 
+  def ddf(fqn: String) = {
+    app.dynamicResolveRDD(fqn)
+  }
+
   // deprecated, should use df instead!!!
   def s(ds: SmvDataSet) = df(ds)
 
