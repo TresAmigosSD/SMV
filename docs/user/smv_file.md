@@ -50,6 +50,15 @@ object AcctsByZip extends SmvModule("...") {
   ...
 ```
 
+In case that multiple files in a directory share the same `schema` but with headers in all of the files,
+one can extends `SmvMultiCsvFiles` instead of `SmvCsvFile` to create the data set
+```scala
+object acct_demo extends SmvMultiCsvFiles("accounts/acct_demo")
+```
+
+By default use the CSV attributes defined in the schema file. If no CSV attributes in the schema file,
+use comma as the delimiter with header. 
+
 ## Advanced Usage
 The previous example used a simple definition of an `SmvFile`.  However, SMV files are proper `SmvDataSet` and can therefore implement their own transformations and provide DQM rules.
 For example:
