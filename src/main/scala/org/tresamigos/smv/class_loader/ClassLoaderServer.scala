@@ -9,6 +9,7 @@ import org.tresamigos.smv.SmvConfig
 /**
  * The module/file class server.  This is the server end of the NetworkClassLoader and is used to serve class code / files.
  */
+private[smv]
 class ClassLoaderServer(private val smvConfig : SmvConfig) {
 
   val clConfig = new ClassLoaderConfig(smvConfig)
@@ -17,20 +18,6 @@ class ClassLoaderServer(private val smvConfig : SmvConfig) {
   val classFinder = new ClassFinder(clConfig.classDir)
 
   def start() : Server = {
-
-    // TODO: investigate how to gzip the files if needed (perhaps a config param?) to reduce network load.
-//    addFilters(handlers, conf)
-//
-//    val collection = new ContextHandlerCollection
-//    val gzipHandlers = handlers.map { h =>
-//      val gzipHandler = new GzipHandler
-//      gzipHandler.setHandler(h)
-//      gzipHandler
-//    }
-//    collection.setHandlers(gzipHandlers.toArray)
-
-
-    // TODO: add error handling!
     println("Starting class server on port: " + clConfig.port)
     val server = new Server(clConfig.port)
 
@@ -61,9 +48,10 @@ object ClassLoaderServer {
 /**
  * Handler for class code request.
  */
+private[smv]
 class ClassCodeRequestHandler(val classFinder: ClassFinder) extends AbstractHandler
 {
-  override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse) = {
+  override def handle(target: String, baseRequest: Request, request: HttpServletRequest, httpResponse: HttpServletResponse) = {
 //    println("baseRequest: " + baseRequest.toString)
 //    println("  params = " + baseRequest.getParameterMap.toString)
 //    println("  pathinfo = " + baseRequest.getPathInfo)
@@ -71,15 +59,21 @@ class ClassCodeRequestHandler(val classFinder: ClassFinder) extends AbstractHand
 
     // get class name from request.
     val className = baseRequest.getPathInfo.stripPrefix("/")
-    println("LOAD CLASS:" + className)
+//    println("Server load class:" + className)
 
     // load class bytes from disk.
     val classBytes = classFinder.getClassBytes(className)
+    val resp = if (classBytes == null) {
+      new ServerResponse(ServerResponse.STATUS_ERR_CLASS_NOT_FOUND)
+    } else {
+      // TODO: use file modification time as the file version
+      new ServerResponse(10L, classBytes)
+    }
 
     // send class bytes to client in response.
-    response.setContentType("application/octet-stream")
-    response.setStatus(HttpServletResponse.SC_OK)
+    httpResponse.setContentType("application/octet-stream")
+    httpResponse.setStatus(HttpServletResponse.SC_OK)
     baseRequest.setHandled(true)
-    response.getOutputStream.write(classBytes)
+    resp.send(httpResponse.getOutputStream)
   }
 }

@@ -36,6 +36,7 @@ As per design doc review, a couple of discoveries were made.  We want to minimiz
 * Custom class loader can go to server first and then to parent if class not found on server.  This could create quite a bit of traffic to server as every class used by app would be attempted to be loaded by server (server will not find it, but still have to pay the overhead of request per class).  We can reduce the traffic by creating a common "blacklist" of classes such as "java.util.*" that will never be loaded from server.  This is not very sustainable as users add new libraries, they will forget to update the "blacklist" which causes slowdown on startup of app.
 * Custom loader can become generic class server and app is only linked against core SMV and does not have access to any jar/classes from app (so no SmvModule/File instances).  Class loader would then also need to handle resource loading (the other part of standard class loader interface).  The custom class loader would then defer to parent first (as recommended by java) and only go to server for app specific classes/resources.  We can also create an "initial" load of server classes so to avoid having to make a separate request per class on app init.  All classes known by server would be bundled and shipped to app in a single request.  Post init period, all loadClass operations would defer to server as stated above.  This is purely an optimization.
 
+The decision is to have the custom class loader load from server first and only go to parent if not found.  This is needed because there is no way to avoid using the fat jar as third party libraries are only included in the fat jar and there is no way to build a fat jar without the app smv modules.  However, this custom loader will **only** be used to load SmvModules in app/shell.  We can also "whitelist" some common "java.lang.*" and other packages to avoid the trip to the server.
 
 ## Class Serialization
 While it is possible for the server to create the class instance (not object) and then serialize it (because java Class is serializable), the module server will only be concerned with serving the raw bytes of ".class" files.  This is done so that the client can utilize the standard `defineClass` method of the `ClassLoader` to create the class on the client side.
@@ -57,15 +58,11 @@ If the server name was not specified in the config, then the client is assumed t
 There is no need for a cache of class code on the client side.  `SmvApp` already caches the result of the resolveRDD so we normally only instantiate the class instance once anyway.
 
 ## Protocol
-1. GetModuleVersion
-  * input: full_class_name
-  * return: version, crc of class.
+1. GetClassCode
+  * input: full_class_name, class_version
+  * return: byte code of corresponding ".class" file.  If the current class version is same as provided class_version, then a special "has_latest" error is returned to indicate to the client that it already has the latest.  This will allow us to use a single call to check for latest version and get it if we have a stale version.
 
-2. GetModuleCode
-  * input: full_class_name
-  * return: byte code of corresponding ".class" file.
-
-3. UpdateCache
+2. UpdateCache (optional)
   * input: None
   * return: None
   * description: Check for updated classes in `class_dir`.

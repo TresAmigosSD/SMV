@@ -9,15 +9,15 @@ The SMV class loader allows for the serving of class data using a client/server 
 ## Configuration
 The following parameters would be added to standard SmvApp config parameters.
 
-* `smv.class_server.host` : host name of class server.  If this is not specified, then the dynamic module server will not be utilized and SMV will look for modules in the normal CLASSPATH (using `Class.forName()` method).
+* `smv.class_server.host` : host name of class server.  If this is specified, then the dynamic class loader server will not be utilized and SMV will look for module classes on the server
 * `smv.class_server.port` : port number where class server will be listening for connections and where SmvApp will connect to.  Defaults to 9900.
-* `smv.class_server.class_dir` : directory where the class server would look for new class instances.
+* `smv.class_server.class_dir` : directory where the class server would look for new class instances.  If this is specified but host was not specified, then the dynamic class loader is run in standalone mode (that is, a server instance is not required and the new class files are looked up directly from this app)
+
+If neither `host`, nor `class_dir` are specified, then SMV will revert to standard CLASSPATH lookup (using `Class.forName()` method) on default class loader.
 
 ## Running
 In order to utilize the SMV class server, the server instance must be started.  A convenience script is provided in `SMV/tools` directory to launch the server.  The server **MUST** be launched from the top level of an application directory.
 
 ```shell
-$ ${SMV_HOME}/tools/smv-class-server [port]
+$ ${SMV_HOME}/tools/smv-class-server
 ```
-
-The optional `port` argument can be used to specify the listening port of the server (default to 9900)

@@ -148,27 +148,35 @@ class SmvPivotTest extends SmvTestUtil {
 }
 
 class SmvPivotCoalesceTest extends SmvTestUtil {
-  test("smvPivotCoalesce should work on data frames without a intra-group ranking column") {
-    val df = createSchemaRdd("k1:String;k2:String", "A,X;B,Y;C,Y;D,Z")
-    val res = df.smvPivotCoalesce("k2")("k1")
-
-    assertSrddSchemaEqual(res, "k2:String;k1_1:String;k1_2:String")
-    assertSrddDataEqual(res, "X,A,null;Y,B,C;Z,D,null")
+  test("SmvPivotCoalesce should coalesce pivoted columns") {
+    val df = createSchemaRdd("k:String; p:String; v:String",
+      "1,A,X;1,B,Y;2,A,Z")
+    val res = df.smvGroupBy("k").smvPivotCoalesce(Seq("p"))("v")("A", "B")
+    assertSrddSchemaEqual(res, "k:String;v_A:String;v_B:String")
+    assertSrddDataEqual(res, "1,X,Y;2,Z,null")
   }
 
-  test("it should use the given ranking column if provided") {
-    val df = createSchemaRdd("k1:String;k2:String;rank:Integer", "A,X,1;B,Y,2;C,Y,1;D,Z,1")
-    val res = df.smvPivotCoalesce("k2")("k1", Some("rank"))
-
-    assertSrddSchemaEqual(res, "k2:String;k1_1:String;k1_2:String")
-    assertSrddDataEqual(res, "X,A,null;Y,C,B;Z,D,null")
+  test("SmvPivotCoalesce should ignore values not included in specified baseOutput") {
+    val df = createSchemaRdd("k:String; p:String; v:String",
+      "1,A,X;1,B,Y;2,A,Z;2,C,!!!")
+    val res = df.smvGroupBy("k").smvPivotCoalesce(Seq("p"))("v")("A", "B")
+    assertSrddSchemaEqual(res, "k:String;v_A:String;v_B:String")
+    assertSrddDataEqual(res, "1,X,Y;2,Z,null")
   }
 
-  test("smvPivotCoalesce should work with maxResCols specified") {
-    val df = createSchemaRdd("k1:String;k2:String", "A,X;B,Y;C,Y;D,Y")
-    val res = df.smvPivotCoalesce("k2")("k1", None, 2)
+  test("SmvPivotCoalesce should use rank within group to create pivoted column names if pivot columns are unspecified") {
+    val df = createSchemaRdd("k:String; v:String",
+      "1,X;1,Y;2,Z")
+    val res = df.smvGroupBy("k").smvPivotCoalesce()("v")("1", "2")
+    assertSrddSchemaEqual(res, "k:String;v_1:String;v_2:String")
+    assertSrddDataEqual(res, "1,X,Y;2,Z,null")
+  }
 
-    assertSrddSchemaEqual(res, "k2:String;k1_1:String;k1_2:String")
-    assertSrddDataEqual(res, "X,A,null;Y,B,C")
+  test("SmvPivotCoalesce should derive baseOutput from the distinct values in value columns if baseOutput is unspecified") {
+    val df = createSchemaRdd("k:String; p:String; v:String",
+      "1,A,X;1,B,Y;2,A,Z;2,C,!!!")
+    val res = df.smvGroupBy("k").smvPivotCoalesce(Seq("p"))("v")()
+    assertSrddSchemaEqual(res, "k:String;v_A:String;v_B:String;v_C:String")
+    assertSrddDataEqual(res, "1,X,Y,null;2,Z,null,!!!")
   }
 }

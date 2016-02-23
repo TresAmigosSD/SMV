@@ -1,0 +1,13 @@
+@startuml
+Actor App
+
+App -> SmvClassLoader : loadClass()
+SmvClassLoader -> ClassLoaderClient : getClassBytes()
+ClassLoaderClient -> ClassLoaderServer : httpRequest("/class/???")
+ClassLoaderServer -> ClassFinder : getClassBytes()
+
+ClassFinder --> ClassLoaderServer : Byte[] / null
+ClassLoaderServer --> ClassLoaderClient : ServerResponse
+ClassLoaderClient --> SmvClassLoader : Byte[] /\nClassNotFoundException
+SmvClassLoader --> App : SmvClassLoader : Class /\nClassNotFoundException
+@enduml

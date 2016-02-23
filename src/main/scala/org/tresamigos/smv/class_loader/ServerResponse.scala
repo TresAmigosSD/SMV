@@ -1,0 +1,104 @@
+package org.tresamigos.smv.class_loader
+
+import java.io._
+
+/**
+ * Encapsulate the marshall/de-marshall of server response in this class.
+ *
+ * Wire protocol:
+ * <pre>
+ * if status == STATUS_OK:
+ *   0. api version : int (4 bytes)
+ *   1. status : int
+ *   2. classVersion : long (8 bytes)
+ *   3. num_of_bytes : int
+ *   4. class bytes : byte[num_of_bytes]
+ *
+ * if status != STATUS_OK
+ *   0. api version : int
+ *   1. status : int
+ * </pre>
+ */
+private[smv]
+class ServerResponse(
+  val status: Int,            // one of STATUS_OK, STATUS_ERR_*
+  val classVersion: Long,     // the version of the class (timestamp?)
+  val classBytes: Array[Byte] // the actual class code bytes (can be null)
+  ) {
+
+  /** helper for creating a status ok response. */
+  def this(classVersion: Long, classBytes: Array[Byte]) = {
+    this(ServerResponse.STATUS_OK, classVersion, classBytes)
+  }
+
+  /** helper for creating a status error response. */
+  def this(status: Int) = {
+    this(status, 0L, null)
+  }
+
+  /**
+   * Sends the current server response as an encoded message to given output stream.
+   */
+  def send(output: OutputStream) = {
+    val classBytesLength = if (classBytes == null) 0 else classBytes.length
+    val baos = new ByteArrayOutputStream(classBytesLength + 100)
+    val dos = new DataOutputStream(baos)
+    dos.writeInt(ServerResponse.apiVersion)
+    dos.writeInt(status)
+    if (status == ServerResponse.STATUS_OK) {
+      dos.writeLong(classVersion)
+      dos.writeInt(classBytesLength)
+      dos.write(classBytes)
+    }
+    dos.close()
+
+    // TODO: add compression to the byte stream as well (using GZipOutputStream)
+
+    baos.writeTo(output)
+  }
+
+  /**
+   * encode this response as a byte array.
+   * TODO: move to testing.
+   */
+  def asByteArray() : Array[Byte] = {
+    val bos = new ByteArrayOutputStream()
+    send(bos)
+    bos.toByteArray
+  }
+
+
+}
+
+private[smv]
+object ServerResponse {
+  // This should be bumped up if the api changes to make sure client/server are using the same api version.
+  val apiVersion: Int = 1
+
+  val STATUS_OK = 0
+  val STATUS_ERR_CLASS_NOT_FOUND = 1
+  val STATUS_ERR = 2
+
+  /**
+   * Create a ServerResponse object from an encoded message as byte array.
+   */
+  def apply(encoded: Array[Byte]) = {
+    val dis = new DataInputStream(new ByteArrayInputStream(encoded))
+    val _apiVersion = dis.readInt()
+
+    assert(_apiVersion == apiVersion)
+
+    val _status = dis.readInt()
+    val (_classVersion, _classBytes) = if (_status == STATUS_OK) {
+      val v = dis.readLong()
+      val numBytes = dis.readInt()
+      val rawBytes = new Array[Byte](numBytes)
+      dis.readFully(rawBytes)
+      (v, rawBytes)
+    } else {
+      (0L, null)
+    }
+
+    new ServerResponse(_status, _classVersion, _classBytes)
+  }
+}
