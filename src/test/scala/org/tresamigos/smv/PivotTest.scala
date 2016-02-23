@@ -164,11 +164,19 @@ class SmvPivotCoalesceTest extends SmvTestUtil {
     assertSrddDataEqual(res, "1,X,Y;2,Z,null")
   }
 
-  test("SmvPivotCoalesce should use rank within group to create pivoted column names if pivot columns are unspecified") {
+  test("SmvPivotCoalesce should use in-group rank as the pivot column if pivot columns are unspecified") {
     val df = createSchemaRdd("k:String; v:String",
       "1,X;1,Y;2,Z")
-    val res = df.smvGroupBy("k").smvPivotCoalesce()("v")("1", "2")
-    assertSrddSchemaEqual(res, "k:String;v_1:String;v_2:String")
+    val res = df.smvGroupBy("k").smvPivotCoalesce()("v")("0", "1")
+    assertSrddSchemaEqual(res, "k:String;v_0:String;v_1:String")
+    assertSrddDataEqual(res, "1,X,Y;2,Z,null")
+  }
+
+  test("The starting value for in-group ranking should be 0 ") {
+    val df = createSchemaRdd("k:String; v:String",
+      "1,X;1,Y;2,Z")
+    val res = df.smvGroupBy("k").smvPivotCoalesce()("v")()
+    assertSrddSchemaEqual(res, "k:String;v_0:String;v_1:String")
     assertSrddDataEqual(res, "1,X,Y;2,Z,null")
   }
 
