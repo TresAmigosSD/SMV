@@ -1,29 +1,34 @@
 package org.tresamigos.smv.class_loader
 
 import org.eclipse.jetty.server.Server
-import org.tresamigos.smv.{SmvConfig, SparkTestUtil}
+import org.tresamigos.smv.{SmvTestUtil, SmvConfig, SparkTestUtil}
 
 trait ClassLoaderTestHelper {
   this : SparkTestUtil =>
 
+  val PORT = 9999
   val classLoaderTestDir = testDataDir + "ClassLoaderTest"
 
-  def makeSmvConfig(host: String, port: Integer, classDir: String) = {
-    new SmvConfig(Seq("--smv-props",
+  def cmdLineArgs(host: String, port: Integer, classDir: String) = {
+    Seq("--smv-props",
       s"smv.class_server.host=${host}",
       s"smv.class_server.port=${port}",
       s"smv.class_server.class_dir=${classDir}",
-      "-m", "mod1"))
+      "-m", "mod1")
+  }
+
+  def makeSmvConfig(host: String, port: Integer, classDir: String) = {
+    new SmvConfig(cmdLineArgs(host, port, classDir))
   }
 
   def testLoadOfValidClass(classLoader: ClassLoader) = {
     // Foo has a dependency on Bar so loading Foo should also load Bar!!!
-    val foo = classLoader.loadClass("org.tresamigos.smv.Foo")
+    val foo = classLoader.loadClass("com.smv.Foo")
     val bar = foo.getSuperclass
     assert(foo.getClassLoader === classLoader)
-    assert(foo.getName === "org.tresamigos.smv.Foo")
+    assert(foo.getName === "com.smv.Foo")
     assert(bar.getClassLoader === classLoader)
-    assert(bar.getName === "org.tresamigos.smv.Bar")
+    assert(bar.getName === "com.smv.Bar")
 
     // TODO: load a standard class e.g. java.lang.Integer
   }
@@ -35,8 +40,17 @@ trait ClassLoaderTestHelper {
   }
 }
 
+class SmvAppDynamicResolveTest extends SmvTestUtil with ClassLoaderTestHelper {
+  // override smvApp args to create an app with local class loader.
+  override def appArgs: Seq[String] = cmdLineArgs("", 0, classLoaderTestDir)
+
+  test("test SmvApp.dynamicResolveRDD function") {
+//    val df = app.dynamicResolveRDD("com.smv.MyModule")
+//    assertSrddDataEqual(df, "1;2;3")
+  }
+}
+
 class RemoteClassLoaderTest extends SparkTestUtil with ClassLoaderTestHelper {
-  val PORT = 9999
   var server : Server = _
   var classLoader : ClassLoader = _
 
@@ -74,11 +88,11 @@ class LocalClassLoaderTest extends SparkTestUtil with ClassLoaderTestHelper {
     classLoader = SmvClassLoader(smvConfig)
   }
 
-  test("test local class loader server valid class") {
+  test("test local class loader valid class") {
     testLoadOfValidClass(classLoader)
   }
 
-  test("test local class loader server class not found") {
+  test("test local class loader class not found") {
     testLoadOfInvalidClass(classLoader)
   }
 }
@@ -86,7 +100,7 @@ class LocalClassLoaderTest extends SparkTestUtil with ClassLoaderTestHelper {
 class ClassLoaderFactoryTest extends SparkTestUtil with ClassLoaderTestHelper {
   test("test SmvClassLoader client factory for remote server config") {
     // remote server config: (hostname, port, and class dir)
-    val clRemoteConfig = makeSmvConfig("foo.com", 1234, "/tmp")
+    val clRemoteConfig = makeSmvConfig(".com", 1234, "/tmp")
     val clRemote = SmvClassLoader(clRemoteConfig).asInstanceOf[SmvClassLoader]
 
     // we better have created a remote client connection.

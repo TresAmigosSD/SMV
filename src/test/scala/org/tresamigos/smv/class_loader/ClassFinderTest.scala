@@ -7,7 +7,7 @@ class ClassFinderTest extends SparkTestUtil {
   val finder = new ClassFinder(classLoaderTestDir)
 
   test("find valid class object") {
-    val b = finder.getClassBytes("org.tresamigos.smv.Foo")
+    val b = finder.getClassBytes("com.smv.Foo")
 
     // first 4 bytes of class should be "ca fe ba be"
     assert(b(0) === 0xca.toByte)
