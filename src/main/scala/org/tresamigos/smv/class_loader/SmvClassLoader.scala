@@ -1,7 +1,20 @@
+/*
+ * This file is licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.tresamigos.smv.class_loader
 
 import java.io.{ByteArrayInputStream, InputStream}
-import java.net.{URLClassLoader, URL}
 
 import org.tresamigos.smv.SmvConfig
 
@@ -13,9 +26,6 @@ import org.tresamigos.smv.SmvConfig
 private[smv]
 class SmvClassLoader(val client: ClassLoaderClientInterface, val parentClassLoader: ClassLoader)
   extends ClassLoader(parentClassLoader) {
-
-  // TODO: need to make this a parallel loader!!!
-  // See URLClassLoader for example usage of "ClassLoader.registerAsParallelCapable()"
 
   /**
    * Override the default findClass in ClassLoader to load the class using the class loader client.
@@ -42,7 +52,6 @@ class SmvClassLoader(val client: ClassLoaderClientInterface, val parentClassLoad
     getClassLoadingLock(classFQN).synchronized {
       // see if we have a cached copy in the JVM
       c = findLoadedClass(classFQN)
-      // TODO: test that findLoadedClass actually works!!!
       if (c == null) {
         try {
             if (! loadFromParentOnly(classFQN))
