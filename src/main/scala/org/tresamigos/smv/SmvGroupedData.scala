@@ -158,9 +158,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *
    * NOTE: this will have a serious performance impact.
    */
-  private[this] def ensureBaseOutput(baseOutput: Seq[String], pivotCols: Seq[Seq[String]]): Seq[String] = {
+  private[this] def ensureBaseOutput(baseOutput: Seq[String], pivotCols: Seq[Seq[String]], srcDf: DataFrame = df): Seq[String] = {
     if (baseOutput.isEmpty)
-      SmvPivot.getBaseOutputColumnNames(smvGD.df, pivotCols)
+      SmvPivot.getBaseOutputColumnNames(srcDf, pivotCols)
     else
       baseOutput
   }
@@ -230,11 +230,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
         val pcol = mkUniq(df.columns, "pivot")
         val r1 = runAgg(valueCols map (c => $"$c".asc) :_*)(
           (keys ++ valueCols map (c => $"$c")) :+ (count(lit(1)) as pcol) map makeSmvCDSAggColumn :_*)
-        (r1, Seq(Seq(pcol)))
+        // in-group ranking starting value is 0
+        val r2 = r1.selectWithReplace(r1(pcol) - 1 as pcol)
+        (r2, Seq(Seq(pcol)))
       }
 
     // TODO: remove duplicate code in smvPivot, smvPivotSum, and here
-    val output = ensureBaseOutput(baseOutput, pcols)
+    val output = ensureBaseOutput(baseOutput, pcols, dfp)
     val pivot= SmvPivot(pcols, valueCols.map{v => (v, v)}, output)
     val pivotRes = SmvGroupedData(pivot.createSrdd(dfp, keys), keys)
 
