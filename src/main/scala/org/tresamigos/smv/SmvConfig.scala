@@ -102,8 +102,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     "smv.stages" -> "",
     "smv.class_server.host" -> "",
     "smv.class_server.port" -> "9900",
-//    "smv.class_server.class_dir" -> "./target/classes"
-    "smv.class_server.class_dir" -> "" // TODO: default should be "target/classes"
+    "smv.class_server.class_dir" -> "./target/classes"
   )
 
   // merge order is important here.  Highest priority comes last as it will override all previous

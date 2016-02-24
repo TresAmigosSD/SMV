@@ -21,14 +21,11 @@ class ClassLoaderServer(private val smvConfig : SmvConfig) {
     println("Starting class server on port: " + clConfig.port)
     val server = new Server(clConfig.port)
 
-    val ctxt1 = new ContextHandler("/class")
+    val ctxt1 = new ContextHandler("/asset")
     ctxt1.setHandler(new ClassCodeRequestHandler(classFinder))
 
-    val ctxt2 = new ContextHandler("/asset")
-    ctxt2.setHandler(new ClassCodeRequestHandler(classFinder)) // just for testing for now!!!
-
     val contexts = new ContextHandlerCollection()
-    contexts.setHandlers(Array(ctxt1, ctxt2))
+    contexts.setHandlers(Array(ctxt1))
 
     server.setHandler(contexts)
     server.start()
@@ -52,22 +49,24 @@ private[smv]
 class ClassCodeRequestHandler(val classFinder: ClassFinder) extends AbstractHandler
 {
   override def handle(target: String, baseRequest: Request, request: HttpServletRequest, httpResponse: HttpServletResponse) = {
-//    println("baseRequest: " + baseRequest.toString)
 //    println("  params = " + baseRequest.getParameterMap.toString)
 //    println("  pathinfo = " + baseRequest.getPathInfo)
-//    println("  param a = " + baseRequest.getParameter("a"))
 
-    // get class name from request.
-    val className = baseRequest.getPathInfo.stripPrefix("/")
-//    println("Server load class:" + className)
+    // get asset name/type from request.
+    val resName = baseRequest.getParameter("name")
+    val resType = baseRequest.getParameter("type")
 
-    // load class bytes from disk.
-    val classBytes = classFinder.getClassBytes(className)
-    val resp = if (classBytes == null) {
+    val bytes = if (resType == "class") {
+      classFinder.getClassBytes(resName)
+    } else {
+      classFinder.getResourceBytes(resName)
+    }
+
+    val resp = if (bytes == null) {
       new ServerResponse(ServerResponse.STATUS_ERR_CLASS_NOT_FOUND)
     } else {
       // TODO: use file modification time as the file version
-      new ServerResponse(10L, classBytes)
+      new ServerResponse(10L, bytes)
     }
 
     // send class bytes to client in response.

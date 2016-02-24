@@ -24,9 +24,12 @@ import scala.tools.asm
  * computes the CRC32 checksum for the code of the given class name.
  * The class must be reachable through the configured java class path.
  */
-private[smv] case class ClassCRC(className: String) {
+private[smv] case class ClassCRC(
+  className: String,
+  classLoader : ClassLoader = getClass.getClassLoader) {
+
   import ClassCRC._
-  lazy val crc: Long = checksum(className).getValue
+  lazy val crc: Long = checksum(className, classLoader).getValue
 }
 
 object ClassCRC {
@@ -45,9 +48,11 @@ object ClassCRC {
   }
 
   def checksum(bytecode: Array[Byte]): CRC32 = cksum0(new asm.ClassReader(bytecode))
-  def checksum(className: String): CRC32 = {
-    val classResourcePath = "/" + className.replace('.', '/') + ".class"
-    val is: InputStream = getClass.getResourceAsStream(classResourcePath)
+
+  def checksum(className: String, classLoader: ClassLoader): CRC32 = {
+    val classResourcePath = className.replace('.', '/') + ".class"
+    val is: InputStream = classLoader.getResourceAsStream(classResourcePath)
+
     try {
       cksum0(new asm.ClassReader(is))
     } catch {

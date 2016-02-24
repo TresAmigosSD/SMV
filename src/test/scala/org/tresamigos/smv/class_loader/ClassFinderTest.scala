@@ -20,4 +20,15 @@ class ClassFinderTest extends SparkTestUtil {
     val b = finder.getClassBytes("invalid.Foo")
     assert(b === null)
   }
+
+  test("find valid resource object") {
+    val b = finder.getResourceBytes("files/abc.txt")
+    assert(b === "xyz\n".getBytes("UTF8"))
+  }
+
+  test("find invalid resource object") {
+    val b = finder.getResourceBytes("not_there.txt")
+    assert(b === null)
+  }
+
 }

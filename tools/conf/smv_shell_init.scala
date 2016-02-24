@@ -24,7 +24,8 @@ object i {
   }
 
   def ddf(fqn: String) = {
-    app.dynamicResolveRDD(fqn)
+    val cl = getClass.getClassLoader
+    app.dynamicResolveRDD(fqn, cl)
   }
 
   // deprecated, should use df instead!!!

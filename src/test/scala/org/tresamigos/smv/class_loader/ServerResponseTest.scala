@@ -32,8 +32,8 @@ class ServerResponseTest extends SparkTestUtil {
     val resp = ServerResponse(rawBytes)
 
     assert(resp.status === ServerResponse.STATUS_OK)
-    assert(resp.classVersion === 32L)
-    assert(resp.classBytes === Array[Byte](1,2,3,4))
+    assert(resp.version === 32L)
+    assert(resp.bytes === Array[Byte](1,2,3,4))
   }
 
   test("test ERROR Server Response Marshall") {
@@ -55,7 +55,7 @@ class ServerResponseTest extends SparkTestUtil {
     val resp = ServerResponse(rawBytes)
 
     assert(resp.status === ServerResponse.STATUS_ERR_CLASS_NOT_FOUND)
-    assert(resp.classVersion === 0L)
-    assert(resp.classBytes === null)
+    assert(resp.version === 0L)
+    assert(resp.bytes === null)
   }
 }
