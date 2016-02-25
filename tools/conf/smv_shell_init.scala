@@ -23,9 +23,13 @@ object i {
     app.resolveRDD(ds)
   }
 
-  def ddf(fqn: String) = {
+  def ddf(fqn: String): DataFrame = {
     app.dynamicResolveRDD(fqn)
   }
+
+  /*for existing SmvDataSet (loaded through the fat-jar or previously loaded
+    dynamically) a version of `ddf` which takes SmvDataSet as parameter */
+  def ddf(ds: SmvDataSet): DataFrame = ddf(ds.getClass.getName)
 
   // deprecated, should use df instead!!!
   def s(ds: SmvDataSet) = df(ds)
