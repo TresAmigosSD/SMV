@@ -116,15 +116,12 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /**
    * dynamically resolve a module.
    * The module and all its dependents are loaded into their own classloader so that we can have multiple
-   * instances of the same module loaded at different timtes.
+   * instances of the same module loaded at different times.
    */
-  def dynamicResolveRDD(fqn: String) = {
-    val cl = SmvClassLoader(smvConfig)
+  def dynamicResolveRDD(fqn: String, parentClassLoader: ClassLoader) = {
+    val cl = SmvClassLoader(smvConfig, parentClassLoader)
     val ref = new SmvReflection(cl)
-    println("Before call to objectNameToInstance:")
     val dsObject = ref.objectNameToInstance[SmvDataSet](fqn)
-//    val dsObject = null
-    println("After call to objectNameToInstance: " + dsObject)
     resolveRDD(dsObject)
   }
 

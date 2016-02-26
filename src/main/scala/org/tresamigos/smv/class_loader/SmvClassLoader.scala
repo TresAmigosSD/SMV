@@ -1,4 +1,20 @@
+/*
+ * This file is licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.tresamigos.smv.class_loader
+
+import java.io.{ByteArrayInputStream, InputStream}
 
 import org.tresamigos.smv.SmvConfig
 
@@ -8,17 +24,15 @@ import org.tresamigos.smv.SmvConfig
  * This will enable the loading of modified class files without the need to rebuild the app.
  */
 private[smv]
-class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader(getClass.getClassLoader) {
-
-  // TODO: need to make this a parallel loader!!!
-  // See URLClassLoader for example usage of "ClassLoader.registerAsParallelCapable()"
+class SmvClassLoader(val client: ClassLoaderClientInterface, val parentClassLoader: ClassLoader)
+  extends ClassLoader(parentClassLoader) {
 
   /**
    * Override the default findClass in ClassLoader to load the class using the class loader client.
    * Depending on which client we have (remote/local), this may connect to server or just search local dir.
    */
   override def findClass(classFQN: String) : Class[_] = {
-    println("CL: findClass: " + classFQN)
+//    println("CL: findClass: " + classFQN)
     val klassBytes = client.getClassBytes(classFQN)
     val klass = defineClass(classFQN, klassBytes, 0, klassBytes.length)
     klass
@@ -38,7 +52,6 @@ class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader
     getClassLoadingLock(classFQN).synchronized {
       // see if we have a cached copy in the JVM
       c = findLoadedClass(classFQN)
-      // TODO: test that findLoadedClass actually works!!!
       if (c == null) {
         try {
             if (! loadFromParentOnly(classFQN))
@@ -49,7 +62,7 @@ class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader
 
         // if not found on server, try parent
         if (c == null) {
-          println("CL: parent.loadClass: " + classFQN)
+//          println("CL: parent.loadClass: " + classFQN)
           c = getParent.loadClass(classFQN)
         }
       }
@@ -59,23 +72,30 @@ class SmvClassLoader(val client: ClassLoaderClientInterface) extends ClassLoader
   }
 
   /**
+   * Get resource from server as a byte input stream.
+   * This ignores the standard search recommendation by looking at the parent and just gets the resource from the server.
+   * We also don't bother to go to parent AFTER the server as this is only called to load resources we know are on the server.
+   */
+  override def getResourceAsStream (name: String) : InputStream = {
+    val bytes = client.getResourceBytes(name)
+    new ByteArrayInputStream(bytes)
+  }
+
+  /**
    * Determine if the given class should be loaded from parent class loader only.
    * This is purely an optimization to skip the round trip to class server that will surely fail.
    * This list doesn't have to be exhaustive as a missed class only incurs a round trip to class loader server.
    */
   private def loadFromParentOnly(classFQN: String) : Boolean = {
-    /*
-    org.eclipse.jetty
-    org.joda
-    org.tresamigos.smv
-     */
     classFQN.startsWith("java.") ||
       classFQN.startsWith("javax.") ||
       classFQN.startsWith("scala.") ||
       classFQN.startsWith("<root>") ||
       classFQN.startsWith("org.tresamigos.smv.") ||
       classFQN.startsWith("org.apache.commons") ||
-      classFQN.startsWith("org.apache.http")
+      classFQN.startsWith("org.apache.http") ||
+      classFQN.startsWith("org.eclipse.jetty") ||
+      classFQN.startsWith("org.joda")
   }
 }
 
@@ -87,18 +107,18 @@ object SmvClassLoader {
    * * SmvClassLoader with a remote client connection (if host is specified)
    * * SmvClassLoader with a local client connection (if host is not specified, but class dir is)
    */
-  def apply(smvConfig: SmvConfig) : ClassLoader = {
+  def apply(smvConfig: SmvConfig, parentClassLoader: ClassLoader = getClass.getClassLoader) : ClassLoader = {
     val clConfig = new ClassLoaderConfig(smvConfig)
 
     if (! clConfig.host.isEmpty) {
       // network class loader with remote client connection
-      new SmvClassLoader(new ClassLoaderClient(clConfig))
+      new SmvClassLoader(new ClassLoaderClient(clConfig), parentClassLoader)
     } else if (! clConfig.classDir.isEmpty) {
       // network class loader with local client connection
-      new SmvClassLoader(new LocalClassLoaderClient(clConfig))
+      new SmvClassLoader(new LocalClassLoaderClient(clConfig), parentClassLoader)
     } else {
       // default jar class loader
-      getClass.getClassLoader
+      parentClassLoader
     }
   }
 }

@@ -1,4 +1,20 @@
+/*
+ * This file is licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.tresamigos.smv.class_loader
+
+import java.net.URLEncoder
 
 import org.eclipse.jetty.client.{Address, HttpExchange, ContentExchange, HttpClient}
 
@@ -12,6 +28,11 @@ trait ClassLoaderClientInterface {
    * Throws ClassNotFoundException of the class was not found.
    */
   def getClassBytes(classFQN: String) : Array[Byte]
+
+  /**
+   * Get the specified resource using the classpath on the server.
+   */
+  def getResourceBytes(resourcePath: String) : Array[Byte]
 }
 
 
@@ -31,6 +52,13 @@ class LocalClassLoaderClient(private val config: ClassLoaderConfig)
       throw new ClassNotFoundException("LocalClassLoaderClient class not found: " + classFQN)
     b
   }
+
+  override def getResourceBytes(resourcePath: String) : Array[Byte] = {
+    val b = classFinder.getResourceBytes(resourcePath)
+    if (b == null)
+      throw new ClassNotFoundException("LocalClassLoaderClient resource not found: " + resourcePath)
+    b
+  }
 }
 
 
@@ -44,10 +72,15 @@ class ClassLoaderClient(private val config: ClassLoaderConfig)
   val httpClient = new HttpClient()
   httpClient.start()
 
-  override def getClassBytes(classFQN: String) : Array[Byte] = {
+  /**
+   * get the class/resource from the server as byte array.
+   * @param resourceType Can be either "class" or "resource" to indicate if we should look for class file or direct file resource.
+   * @param resourceName the name of the class or resrouce file.
+   */
+  private def getBytesFromServer(resourceType: String, resourceName: String) : Array[Byte] = {
     val exchange = new ContentExchange(true)
     exchange.setAddress(new Address(config.host, config.port))
-    exchange.setRequestURI("/class/" + classFQN)
+    exchange.setRequestURI("/asset/?name=" + URLEncoder.encode(resourceName, "UTF-8") + "&type=" + resourceType)
 
     try {
       httpClient.send(exchange)
@@ -58,14 +91,24 @@ class ClassLoaderClient(private val config: ClassLoaderConfig)
 
     // Waits until the exchange is terminated
     val exchangeState = exchange.waitForDone()
+
     if (exchangeState != HttpExchange.STATUS_COMPLETED)
-      throw new ClassNotFoundException(s"request to server returned ${exchangeState} for class ${classFQN}")
+      throw new ClassNotFoundException(s"request to server returned ${exchangeState} for resource ${resourceName}")
     if (exchange.getResponseStatus() != 200)
-      throw new ClassNotFoundException(s"request to server completed with status of ${exchange.getResponseStatus()} for class ${classFQN}")
+      throw new ClassNotFoundException(s"request to server completed with status of ${exchange.getResponseStatus()} for resource ${resourceName}")
 
     val resp = ServerResponse(exchange.getResponseContentBytes)
     if (resp.status != ServerResponse.STATUS_OK)
-      throw new ClassNotFoundException("class server did not find class: " + classFQN)
-    resp.classBytes
+      throw new ClassNotFoundException("class server did not find resource: " + resourceName)
+
+    resp.bytes
+  }
+
+  override def getClassBytes(classFQN: String) : Array[Byte] = {
+    getBytesFromServer("class", classFQN)
+  }
+
+  override def getResourceBytes(resourcePath: String) : Array[Byte] = {
+    getBytesFromServer("resource", resourcePath)
   }
 }

@@ -23,8 +23,9 @@ object i {
     app.resolveRDD(ds)
   }
 
-  def ddf(fqn: String): DataFrame = {
-    app.dynamicResolveRDD(fqn)
+  def ddf(fqn: String) = {
+    val cl = getClass.getClassLoader
+    app.dynamicResolveRDD(fqn, cl)
   }
 
   /*for existing SmvDataSet (loaded through the fat-jar or previously loaded

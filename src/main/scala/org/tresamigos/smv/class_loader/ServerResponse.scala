@@ -1,3 +1,17 @@
+/*
+ * This file is licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.tresamigos.smv.class_loader
 
 import java.io._
@@ -10,9 +24,9 @@ import java.io._
  * if status == STATUS_OK:
  *   0. api version : int (4 bytes)
  *   1. status : int
- *   2. classVersion : long (8 bytes)
+ *   2. version : long (8 bytes)
  *   3. num_of_bytes : int
- *   4. class bytes : byte[num_of_bytes]
+ *   4. bytes : byte[num_of_bytes]
  *
  * if status != STATUS_OK
  *   0. api version : int
@@ -22,8 +36,8 @@ import java.io._
 private[smv]
 class ServerResponse(
   val status: Int,            // one of STATUS_OK, STATUS_ERR_*
-  val classVersion: Long,     // the version of the class (timestamp?)
-  val classBytes: Array[Byte] // the actual class code bytes (can be null)
+  val version: Long,     // the version of the class (timestamp?)
+  val bytes: Array[Byte] // the actual class code bytes (can be null)
   ) {
 
   /** helper for creating a status ok response. */
@@ -40,15 +54,15 @@ class ServerResponse(
    * Sends the current server response as an encoded message to given output stream.
    */
   def send(output: OutputStream) = {
-    val classBytesLength = if (classBytes == null) 0 else classBytes.length
+    val classBytesLength = if (bytes == null) 0 else bytes.length
     val baos = new ByteArrayOutputStream(classBytesLength + 100)
     val dos = new DataOutputStream(baos)
     dos.writeInt(ServerResponse.apiVersion)
     dos.writeInt(status)
     if (status == ServerResponse.STATUS_OK) {
-      dos.writeLong(classVersion)
+      dos.writeLong(version)
       dos.writeInt(classBytesLength)
-      dos.write(classBytes)
+      dos.write(bytes)
     }
     dos.close()
 
@@ -56,18 +70,6 @@ class ServerResponse(
 
     baos.writeTo(output)
   }
-
-  /**
-   * encode this response as a byte array.
-   * TODO: move to testing.
-   */
-  def asByteArray() : Array[Byte] = {
-    val bos = new ByteArrayOutputStream()
-    send(bos)
-    bos.toByteArray
-  }
-
-
 }
 
 private[smv]

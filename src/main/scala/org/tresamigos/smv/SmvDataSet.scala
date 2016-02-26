@@ -56,7 +56,12 @@ abstract class SmvDataSet {
   /**
    * SmvDataSet code (not data) CRC. Always return 0 for objects created in spark shell
    */
-  private[smv] val datasetCRC = if(isObjectInShell) 0l else ClassCRC(this.getClass.getName).crc
+  private[smv] val datasetCRC = {
+    if (isObjectInShell)
+      0l
+    else
+      ClassCRC(this.getClass.getName, this.getClass.getClassLoader).crc
+  }
 
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
   def datasetHash(): Int = datasetCRC.toInt
@@ -231,7 +236,7 @@ abstract class SmvDataSet {
    */
   private[smv] lazy val parentStage : SmvStage = app.stages.findStageForDataSet(this)
 
-  private[smv] def stageVersion() = parentStage.version
+  private[smv] def stageVersion() = if (parentStage != null) parentStage.version else None
 
   /**
    * Read the published data of this module if the parent stage has specified a version.
