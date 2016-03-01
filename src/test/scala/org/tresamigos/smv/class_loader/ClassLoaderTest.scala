@@ -28,6 +28,7 @@ trait ClassLoaderTestHelper {
       s"smv.class_server.host=${host}",
       s"smv.class_server.port=${port}",
       s"smv.class_server.class_dir=${classDir}",
+      "smv.dataDir=.",
       "-m", "mod1")
   }
 
