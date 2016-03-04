@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql._, types._
+import org.apache.spark.sql._, types._, functions._
 
 class SelectWithReplaceTest extends SmvTestUtil {
   val fields = Seq("name:String", "friends:Integer")
@@ -77,6 +77,14 @@ class SelectPlusMinusTest extends SmvTestUtil {
       "1.0;" +
       "2.0;" +
       "3.0")
+  }
+
+  test("test selectExpandStruct") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("id:String;a:Double;b:Double", "a,1.0,10.0;a,2.0,20.0;b,3.0,30.0")
+    val dfStruct = df.select($"id", struct("a", "b") as "c")
+    val res = dfStruct.selectExpandStruct("c")
+    assertSrddDataEqual(res, "a,1.0,10.0;a,2.0,20.0;b,3.0,30.0")
   }
 }
 

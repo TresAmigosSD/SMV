@@ -245,6 +245,36 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
+   * Expand structure type column to a group of columns
+   * Example input df:
+   * {{{
+   *  [id:string, address: struct<state:string, zip:string, street:string>]
+   * }}}
+   * output df:
+   * {{{
+   *  [id:string, state:string, zip:string, street:string]
+   * }}}
+   *
+   * Example code:
+   * {{{
+   *  df.selectExpandStruct("address")
+   * }}}
+   **/
+  def selectExpandStruct(colNames: String*): DataFrame = {
+    checkNames(colNames)
+
+    val subFields = colNames.map{n =>
+      (n, df.schema.apply(n).dataType.asInstanceOf[StructType].fieldNames.toSeq)
+    }.toMap
+
+    val exprs = subFields.map{ case (col, fields) =>
+      fields.map{f => df(col).getField(f) as f}
+    }.flatten.toSeq
+
+    df.selectPlus(exprs: _*).selectMinus(colNames.head, colNames.tail: _*)
+  }
+
+  /**
    * Perform a join of the left/right `DataFrames` and rename duplicated column names by
    * prefixing them with "_" on the right hand side.
    *
