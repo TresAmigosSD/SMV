@@ -34,7 +34,10 @@ class SmvLinkFollowWithVersionTest extends SmvTestUtil {
     "--smv-props",
     "smv.stages=org.tresamigos.smv.smvLinkTestPkg1:org.tresamigos.smv.smvLinkTestPkg2," +
     "smv.stages.smvLinkTestPkg1.version=v1"
-  )++ Seq("-m", "org.tresamigos.smv.smvLinkTestPkg2.T2") ++ Seq("--data-dir", testcaseTempDir)
+  )++ Seq(
+    "-m", "org.tresamigos.smv.smvLinkTestPkg2.T2",
+    "--data-dir", testcaseTempDir,
+    "--publish-dir", s"${testcaseTempDir}/publish")
 
 /* Since DS will cache the resolved DF we need to use a separate Y for SmvLinkFollowWithVersionTest */
   test("Test SmvModuleLink datasetHash follow link version") {
