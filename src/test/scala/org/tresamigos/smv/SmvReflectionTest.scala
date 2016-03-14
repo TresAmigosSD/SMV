@@ -1,9 +1,9 @@
 package org.tresamigos.smv
 
 class SmvReflectionTest extends SparkTestUtil {
-  test("Test SmvReflection.objectsInPackage method.") {
-    object testApp extends SmvApp(testAppArgs.singleStage ++ Seq("-m", "None"), Some(sc)) {}
+//  override def appArgs = testAppArgs.singleStage ++ Seq("-m", "None")
 
+  test("Test SmvReflection.objectsInPackage method.") {
     val mods: Seq[SmvModule] = SmvReflection.objectsInPackage[SmvModule]("org.tresamigos.smv.smvAppTestPkg1")
 
     assertUnorderedSeqEqual(mods,
@@ -12,7 +12,7 @@ class SmvReflectionTest extends SparkTestUtil {
 
 
     // TODO: CLEANUP: this doesn't belong here
-    assert(testApp.moduleNameForPrint(org.tresamigos.smv.smvAppTestPkg1.X) === "X")
+//    assert(testApp.moduleNameForPrint(org.tresamigos.smv.smvAppTestPkg1.X) === "X")
   }
 
 }

@@ -29,12 +29,14 @@ object testAppArgs {
     "smv.stages=org.tresamigos.smv.smvAppTestPkg1:org.tresamigos.smv.smvAppTestPkg2:org.tresamigos.smv.smvAppTestPkg3")
 }
 
-class SmvStagesTest extends SparkTestUtil {
+class SmvStagesTest extends SmvTestUtil {
+  override def appArgs = Seq(
+    "--smv-props",
+    "smv.stages=com.myproj.s1:com.myproj.s2",
+    "-m", "None")
+
   test("Test getAllPackageNames method.") {
-    object testApp extends SmvApp(Seq(
-      "--smv-props",
-      "smv.stages=com.myproj.s1:com.myproj.s2",
-      "-m", "None"), Some(sc)) {}
+    val testApp = app
 
     val expPkgs = Seq("com.myproj.s1", "com.myproj.s1.input", "com.myproj.s2", "com.myproj.s2.input")
     assert(testApp.stages.getAllPackageNames() === expPkgs)
@@ -190,19 +192,19 @@ org.tresamigos.smv.smvAppTestPkg3:
  */
 class SmvWhatModulesToRunTest extends SparkTestUtil {
   test("Test modules to run (non-output module)") {
-    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "org.tresamigos.smv.smvAppTestPkg3.T"), Some(sc)) {}
+    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-m", "org.tresamigos.smv.smvAppTestPkg3.T"), Some(sc), Some(sqlContext)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
     assertUnorderedSeqEqual(mods, Seq("org.tresamigos.smv.smvAppTestPkg3.T"))
   }
 
   test("Test modules to run (mods in stage)") {
-    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-s", "smvAppTestPkg1"), Some(sc)) {}
+    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("-s", "smvAppTestPkg1"), Some(sc), Some(sqlContext)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
     assertUnorderedSeqEqual(mods, Seq("org.tresamigos.smv.smvAppTestPkg1.Y"))
   }
 
   test("Test modules to run (mods in app)") {
-    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("--run-app"), Some(sc)) {}
+    object testApp extends SmvApp(testAppArgs.multiStage ++ Seq("--run-app"), Some(sc), Some(sqlContext)) {}
     val mods = testApp.smvConfig.modulesToRun().map(_.name)
     assertUnorderedSeqEqual(mods, Seq(
       "org.tresamigos.smv.smvAppTestPkg1.Y",
