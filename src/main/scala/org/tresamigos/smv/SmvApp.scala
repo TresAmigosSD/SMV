@@ -45,7 +45,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    **/
 
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
-  val sqlContext = _sql.getOrElse(new SQLContext(sc))
+  //val sqlContext = _sql.getOrElse(new SQLContext(sc))
+  val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
