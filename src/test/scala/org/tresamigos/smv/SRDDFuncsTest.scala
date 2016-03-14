@@ -287,6 +287,21 @@ class dedupByKeyTest extends SmvTestUtil {
       "[1,null,hello]",
       "[2,10.0,null]" ))
   }
+
+  test("test dedupByKeyWithOrder") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+      """1,,hello;
+         1,3.0,hello1;
+         2,11.0,;
+         2,10.0,hello3"""
+    )
+
+    val res = df.dedupByKeyWithOrder($"a")($"b".desc)
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1,3.0,hello1]",
+      "[2,11.0,null]" ))
+  }
 }
 
 class smvOverlapCheckTest extends SmvTestUtil {
