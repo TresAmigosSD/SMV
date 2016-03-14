@@ -182,9 +182,10 @@ class SmvAppPurgeTest extends SparkTestUtil {
     }
 
     object testApp extends SmvApp(
-      Seq("--purge-old-output", "--output-dir", testcaseTempDir), Option(sc)) {
+      Seq("--purge-old-output", "--output-dir", testcaseTempDir), Option(sc), Option(sqlContext)) {
       override def allAppModules = Seq(m)
     }
+    SmvApp.app = testApp
 
     /** create a dummy app that only has the module above as its only module. */
 
