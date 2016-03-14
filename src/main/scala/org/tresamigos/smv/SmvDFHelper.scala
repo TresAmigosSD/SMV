@@ -395,6 +395,41 @@ class SmvDFHelper(df: DataFrame) {
     dedupByKey(k1.name, kleft.map{l=>l.name}: _*)
 
   /**
+   * Remove duplicated records by selecting the first record regarding a given ordering
+   * For example, given the following input DataFrame:
+   * {{{
+   * | id  | product | Company |
+   * | --- | ------- | ------- |
+   * | 1   | A       | C1      |
+   * | 1   | C       | C2      |
+   * | 2   | B       | C3      |
+   * | 2   | B       | C4      |
+   * }}}
+   *
+   * and the following call:
+   * {{{
+   *   df.debupByKeyWithOrder($"id")($"product".desc)
+   * }}}
+   * will yield the following `DataFrame`:
+   * {{{
+   * | id  | product | Company |
+   * | --- | ------- | ------- |
+   * | 1   | C       | C2      |
+   * | 2   | B       | C3      |
+   * }}}
+   **/
+  def dedupByKeyWithOrder(keyCol: Column*)(orderCol: Column*): DataFrame = {
+    df.smvGroupBy(keyCol: _*).smvTopNRecs(1, orderCol: _*)
+  }
+
+  /** Same as `dedupByKeyWithOrder(Column*)(Column*)` but use `String` as key **/
+  def dedupByKeyWithOrder(k1: String, krest: String)(orderCol: Column*): DataFrame = {
+    import df.sqlContext.implicits._
+    val kCols = (k1 +: krest).map{s => $"$s"}
+    dedupByKeyWithOrder(kCols: _*)(orderCol: _*)
+  }
+
+  /**
    * Add a rank/sequence column to a DataFrame.
    * It uses `zipWithIndex` method of `RDD` to add a sequence number to records in a DF.
    * It ranks records sequentially by partition.
