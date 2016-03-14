@@ -15,5 +15,6 @@
 * [Validation & Data Quality Management (DQM)](dqm.md)
 * [Dynamic Class Loading](class_loader.md)
 * [Adding a new CSV input file (with schema discovery)](schema_discovery.md)
+* [Atom - A Small Editor Works Well with SMV](atom.md)
 * [Fuzzy matching between two datasets](smv_entity_matcher.md)
 * [Work on data with hierarchies](smv_hier.md)

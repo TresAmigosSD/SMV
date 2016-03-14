@@ -18,6 +18,14 @@ If the Spark source was downloaded, then it needs to build as follows:
 $ cd SPARK_HOME; mvn install
 ```
 
+Sometimes SPARK source code test the Hadoop environment so install on standalone machine
+without Hadoop may cause test failure. In that case you can try `mvn install -DskipTests`.
+
+If you still run into issues of install Spark from the source, you can try one of the binary
+version. Any binary version should work on standalone machines. Suggest to use version build
+for Hadoop 2.4 or 2.6 and later. You just need to download, decompress, and follow the next
+steps.
+
 Add the spark `bin` directory to the `PATH` environment variable. For example:
 ```shell
 $ export PATH="${PATH}:SPARK_HOME/bin"
