@@ -28,45 +28,18 @@ class SmvQuantileTest extends SmvTestUtil {
 
     // create the input df with 22 rows.
     val df = createSchemaRdd("g:String; g2:Integer; k:String; junk:String; v:Integer",
-      testData_1to20_str + """;G2,0,x,J,10;G2,0,y,JJ,30""")
+      testData_1to20_str + """;G2,0,x,J,10;G2,0,y,JJ,30""" + ";g3,0,w1,j,1;g3,0,w2,j,1;g3,0,w3,j,3")
 
     val res = df.smvGroupBy("g", "g2").smvDecile("v")
-    //res.dumpSRDD
 
-    //TODO: Fix this
-    /* expected output:
-    [G1,0,k1,1,210.0,1.0,1]
-    [G1,0,k2,2,210.0,3.0,1]
-    [G1,0,k3,3,210.0,6.0,1]
-    [G1,0,k4,4,210.0,10.0,1]
-    [G1,0,k5,5,210.0,15.0,1]
-    [G1,0,k6,6,210.0,21.0,2]
-    [G1,0,k7,7,210.0,28.0,2]
-    [G1,0,k8,8,210.0,36.0,2]
-    [G1,0,k9,9,210.0,45.0,3]
-    [G1,0,k10,10,210.0,55.0,3]
-    [G1,0,k11,11,210.0,66.0,4]
-    [G1,0,k12,12,210.0,78.0,4]
-    [G1,0,k13,13,210.0,91.0,5]
-    [G1,0,k14,14,210.0,105.0,6]
-    [G1,0,k15,15,210.0,120.0,6]
-    [G1,0,k16,16,210.0,136.0,7]
-    [G1,0,k17,17,210.0,153.0,8]
-    [G1,0,k18,18,210.0,171.0,9]
-    [G1,0,k19,19,210.0,190.0,10]
-    [G1,0,k20,20,210.0,210.0,10]
-    [G2,0,x,10,40.0,10.0,3]
-    [G2,0,y,30,40.0,40.0,10]
-    */
-
-    import res.sqlContext._
     val keyAndBin = res.select("k", "v_quantile").collect.map{ case Row(k:String, b:Int) => (k,b)}
     val expKeyAndBin = Seq[(String,Int)](
-      ("k1",1),("k2",1),("k3",1),("k4",1),("k5",1),
-      ("k6",2),("k7",2),("k8",2),("k9",3),("k10",3),
-      ("k11",4),("k12",4),("k13",5),("k14",6),("k15",6),
-      ("k16",7),("k17",8),("k18",9),("k19",10),("k20",10),
-      ("x",3),("y",10)
+      ("k1",1),("k2",1),("k3",2),("k4",2),("k5",3),
+      ("k6",3),("k7",4),("k8",4),("k9",5),("k10",5),
+      ("k11",6),("k12",6),("k13",7),("k14",7),("k15",8),
+      ("k16",8),("k17",9),("k18",9),("k19",10),("k20",10),
+      ("x",1),("y",10), // quantile value should start at 1 and end at numBins
+      ("w1",1),("w2",1),("w3",10) // same column value should receive the same quantile
     )
 
     assertUnorderedSeqEqual(keyAndBin, expKeyAndBin)
