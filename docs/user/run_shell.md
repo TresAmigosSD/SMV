@@ -129,6 +129,7 @@ There are 4 values of the leading label
 * "L" - SmvModuleLink
 * "F" - SmvFile
 * "M" - SmvModule (but neither SmvOutput nor SmvModuleLink)
+* "H" - Hive Table
 
 Please see [SMV Introduction](smv_intro.md) for details of the 4 types.
 

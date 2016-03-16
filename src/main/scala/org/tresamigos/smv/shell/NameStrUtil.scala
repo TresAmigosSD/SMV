@@ -28,6 +28,7 @@ private[smv] object NameStrUtil {
       case d: SmvModuleLink => "(L) "
       case d: SmvFile => "(F) "
       case d: SmvModule => "(M) "
+      case d: SmvHiveTable => "(H) "
       case d => throw new IllegalArgumentException(s"unknown type of ${d}")
     }
 

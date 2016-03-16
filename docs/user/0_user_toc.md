@@ -10,6 +10,7 @@
 * [Extended Data Dictionary (EDD)](edd.md)
 * [SMV Files](smv_file.md)
 * [SMV Modules](smv_module.md)
+* [SMV Hive Tables](smv_hive.md)
 * [SMV Stages](smv_stages.md)
 * [SMV Functions](functions.md)
 * [Validation & Data Quality Management (DQM)](dqm.md)

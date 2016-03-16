@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.contrib.smv._
 
-import org.apache.spark.sql._, expressions.Window
+import org.apache.spark.sql._, expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.InternalRow
@@ -46,6 +46,9 @@ private[smv] case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
 class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   private val df = smvGD.df
   private val keys = smvGD.keys
+
+  // convenience method to get a prototype WindowSpec object
+  @inline private def winspec: WindowSpec = Window.partitionBy(keys.head, keys.tail:_*)
 
   /**
    * smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData
@@ -267,7 +270,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
     require(numBins >= 2)
     val total = df.groupBy(keys.head, keys.tail:_*).agg(sum(valueCol) as s"${valueCol}_total")
-    val w = Window.partitionBy(keys.head, keys.tail:_*).orderBy(valueCol)
+    val w = winspec.orderBy(valueCol)
     df.selectPlus(
       sum(valueCol) over w as s"${valueCol}_rsum",
       udf(percent2nTile).apply((percentRank() over w)) as s"${valueCol}_quantile").
@@ -464,8 +467,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * Will keep the 3 largest amt records for each id
    **/
   def smvTopNRecs(maxElems: Int, orders: Column*) = {
-    val cds = SmvTopNRecsCDS(maxElems, orders.map{o => o.toExpr})
-    smvMapGroup(cds).toDF
+    val w = winspec.orderBy(orders:_*)
+    val rankcol = mkUniq(df.columns, "rank")
+    val rownum = mkUniq(df.columns, "rownum")
+    val r1 = df.selectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).selectMinus(rankcol, rownum)
   }
 
   /**

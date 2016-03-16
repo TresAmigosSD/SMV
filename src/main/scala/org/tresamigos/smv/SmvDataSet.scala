@@ -198,7 +198,7 @@ abstract class SmvDataSet {
     val dsDqm = new DQMValidator(createDsDqm())
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
 
-    if(isEphemeral) {
+    if (isEphemeral) {
       val df = dsDqm.attachTasks(doRun(dsDqm))
       validator.validate(df, false, moduleValidPath()) // no action before this point
       df
@@ -250,9 +250,24 @@ abstract class SmvDataSet {
   }
 }
 
-/** Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
+
+/**
+ * SMV Dataset Wrapper around a hive table.
+ */
+case class SmvHiveTable(val tableName: String) extends SmvDataSet {
+  override def description() = s"Hive Table: @${tableName}"
+  override def requiresDS() = Seq.empty
+  override val isEphemeral = true
+
+  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
+    app.sqlContext.sql("select * from " + tableName)
+  }
+}
+
+/**
+ * Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
  * common part to the new ABC: SmvDSWithParser
- **/
+ */
 trait SmvDSWithParser extends SmvDataSet {
   val forceParserCheck = true
   val failAtParsingError = true
