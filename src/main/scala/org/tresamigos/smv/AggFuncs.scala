@@ -122,10 +122,10 @@ private[smv] class Histogram(inputDT: DataType) extends UserDefinedAggregateFunc
   def evaluate(buffer: Row) = buffer.getMap(0)
 }
 
-private[smv] object histStr extends Histogram(StringType)
-private[smv] object histInt extends Histogram(IntegerType)
-private[smv] object histBoolean extends Histogram(BooleanType)
-private[smv] object histDouble extends Histogram(DoubleType)
+object histStr extends Histogram(StringType)
+object histInt extends Histogram(IntegerType)
+object histBoolean extends Histogram(BooleanType)
+object histDouble extends Histogram(DoubleType)
 
 private[smv] object stddev extends UserDefinedAggregateFunction {
   // Schema you get as an input
