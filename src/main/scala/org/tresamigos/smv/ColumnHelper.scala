@@ -30,6 +30,7 @@ import org.joda.time._
 import org.apache.spark.annotation._
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
 
 /**
  * ColumnHelper class provides additional methods/operators on Column
@@ -647,4 +648,45 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
   }
 
+  /**
+   * A boolean, which is ture if ANY one of the Array column element is in the given parameter
+   * sequence
+   *
+   * {{{
+   * df.selectPlus($"arrayCol".isAnyIn(seqVals: _*) as "isFound")
+   * }}}
+   **/
+   def isAnyIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
+     val name = s"isAnyIn(${column})"
+     val f = (v: Seq[Any]) => v.map{c => candidates.contains(c)}.reduce(_||_)
+     udf(f).apply(column) as name
+   }
+
+  /**
+   * A boolean, which is true if ALL of the Array column's elements are in the given
+   * paraneter sequence
+   *
+   * {{{
+   * df.selectPlus($"arrayCol".isAllIn(seqVals: _*) as "isFound")
+   * }}}
+   **/
+   def isAllIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
+     val name = s"isAllIn(${column})"
+     val f = (v: Seq[Any]) => v.map{c => candidates.contains(c)}.reduce(_&&_)
+     udf(f).apply(column) as name
+   }
+
+  /**
+   * A boolean, which is true if ALL of the given parameters are contained in the
+   * Array column
+   *
+   * {{{
+   * df.selectPlus($"arrayCol".containsAll(seqVals: _*) as "isFound")
+   * }}}
+   **/
+   def containsAll[T](candidates: T*)(implicit tt: ClassTag[T]) = {
+     val name = s"containsAll(${column})"
+     val f = (v: Seq[Any]) => candidates.map{c => v.contains(c)}.reduce(_&&_)
+     udf(f).apply(column) as name
+   }
 }

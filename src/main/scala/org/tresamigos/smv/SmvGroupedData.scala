@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.contrib.smv._
 
-import org.apache.spark.sql._
+import org.apache.spark.sql._, expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.InternalRow
@@ -262,28 +262,29 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * All other columns in the input are untouched and propagated to the output.
    **/
   def smvQuantile(valueCol: String, numBins: Integer): DataFrame = {
-    smvMapGroup(new SmvQuantile(valueCol, numBins)).toDF
+    val percent2nTile: Double => Int = percentage =>
+      Math.min(Math.floor(percentage * numBins + 1).toInt, numBins)
+
+    require(numBins >= 2)
+    val total = df.groupBy(keys.head, keys.tail:_*).agg(sum(valueCol) as s"${valueCol}_total")
+    val w = Window.partitionBy(keys.head, keys.tail:_*).orderBy(valueCol)
+    df.selectPlus(
+      sum(valueCol) over w as s"${valueCol}_rsum",
+      udf(percent2nTile).apply((percentRank() over w)) as s"${valueCol}_quantile").
+      joinByKey(total, keys, SmvJoinType.Inner)
   }
 
   /** same as `smvQuantile(String, Integer)` but uses a `Column` type to specify the column name */
-  def smvQuantile(valueCol: Column, numBins: Integer): DataFrame = {
-    val name = valueCol.getName
-    smvMapGroup(new SmvQuantile(name, numBins)).toDF
-  }
+  def smvQuantile(valueCol: Column, numBins: Integer): DataFrame = smvQuantile(valueCol.getName, numBins)
 
   /**
    * Compute the decile for a given column value with a DataFrame group.
    * Equivelant to `smvQuantile` with `numBins` set to 10.
    */
-  def smvDecile(valueCol: String): DataFrame = {
-    smvMapGroup(new SmvQuantile(valueCol, 10)).toDF
-  }
+  def smvDecile(valueCol: String): DataFrame = smvQuantile(valueCol, 10)
 
   /** same as `smvDecile(String)` but uses a `Column` type to specify the column name */
-  def smvDecile(valueCol: Column): DataFrame = {
-    val name = valueCol.getName
-    smvMapGroup(new SmvQuantile(name, 10)).toDF
-  }
+  def smvDecile(valueCol: Column): DataFrame = smvQuantile(valueCol, 10)
 
   /**
    * Scale a group of columns to given ranges
