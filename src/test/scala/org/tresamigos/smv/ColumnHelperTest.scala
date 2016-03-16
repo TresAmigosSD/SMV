@@ -154,6 +154,33 @@ class ColumnHelperTest extends SmvTestUtil {
     val res0 = df_with_double_histogram_bin.select('bin_histogram.smvBinMode())
     assertSrddDataEqual(res0, "75.0")
   }
+
+  test("test isAnyIn"){
+    val ssc = sqlContext;
+    import ssc.implicits._
+    val df = createSchemaRdd("k:String; v:String;", "a,b;c,d").select(array($"k", $"v") as "arr")
+
+    val res = df.select($"arr".isAnyIn("a", "z") as "isFound")
+    assertSrddDataEqual(res, "true;false")
+  }
+
+  test("test isAllIn"){
+    val ssc = sqlContext;
+    import ssc.implicits._
+    val df = createSchemaRdd("k:String; v:String;", "a,b;c,d").select(array($"k", $"v") as "arr")
+
+    val res = df.select($"arr".isAllIn("a", "b", "c") as "isFound")
+    assertSrddDataEqual(res, "true;false")
+  }
+
+  test("test containsAll"){
+    val ssc = sqlContext;
+    import ssc.implicits._
+    val df = createSchemaRdd("k:String; v:String;", "a,b;c,d").select(array($"k", $"v") as "arr")
+
+    val res = df.select($"arr".containsAll("a", "b") as "isFound")
+    assertSrddDataEqual(res, "true;false")
+  }
 }
 
 class SmvPrintToStrTest extends SmvTestUtil {
