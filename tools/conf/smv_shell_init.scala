@@ -45,6 +45,10 @@ object i {
     file.rdd
   }
 
+  def openTable(tableName: String) = {
+    new SmvHiveTable(tableName).rdd()
+  }
+
   implicit class ShellSrddHelper(df: DataFrame) {
     def sv(path: String) = {
       // TODO: why are we creating SmvDFHelper explicitly here?
