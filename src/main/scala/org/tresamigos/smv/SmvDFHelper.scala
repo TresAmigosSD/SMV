@@ -957,7 +957,7 @@ class SmvDFHelper(df: DataFrame) {
 
     if (!rows.isEmpty) {
       val r = df.take(pos).last
-      val labels = df.schema.map { f => s"${f.name}:${f.dataType.toString.dropRight(4)}" }
+      val labels = df.schema.map { f => s"${f.name}:${f.dataType.toString.replaceAll("Type", "")}" }
       val width = labels.maxBy(_.length).length
       labels.zipWithIndex.foreach { t =>
         printf(s"%-${width}s = %s\n", t._1, r(t._2))
