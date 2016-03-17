@@ -103,6 +103,31 @@ class SmvCDSTest extends SmvTestUtil {
       "[z,5,2.2]"))
   }
 
+  test("SmvGroupedData.smvTopNRecs should return all rows if n >= row_count") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("k:String; t:Integer; v:Double",
+      "z,5,1.2;z,5,2.2;a,1,0.3")
+
+    val res = df.smvGroupBy("k").smvTopNRecs(2, df("t").desc)
+    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3]",
+      "[z,5,1.2]",
+      "[z,5,2.2]"))
+  }
+
+  test("SmvGroupedData.smvTopNRecs should return any in the top n range if there are > n rows with the same value") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("k:String; t:Integer; v:Double",
+      "z,5,1.4;z,5,1.2;z,5,2.2;")
+
+    val res = df.smvGroupBy("k").smvTopNRecs(2, df("t").desc)
+    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[z,5,1.4]",
+      "[z,5,1.2]"))
+  }
+
   test("Test Lag inplemented with InLastN") {
     val ssc = sqlContext;
     import ssc.implicits._

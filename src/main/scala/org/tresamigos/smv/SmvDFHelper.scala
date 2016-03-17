@@ -953,11 +953,19 @@ class SmvDFHelper(df: DataFrame) {
    * Display a dataframe row in transposed view.
    */
   def peek(pos: Int) = {
-    val r = df.take(pos).last
-    val width = df.columns.maxBy(_.length).length
-    df.columns.zipWithIndex.foreach { t =>
-      printf(s"%-${width}s = %s\n", t._1, r(t._2))
-  }}
+    val rows = df.take(pos)
+
+    if (!rows.isEmpty) {
+      val r = df.take(pos).last
+      val labels = df.schema.map { f => s"${f.name}:${f.dataType.toString.replaceAll("Type", "")}" }
+      val width = labels.maxBy(_.length).length
+      labels.zipWithIndex.foreach { t =>
+        printf(s"%-${width}s = %s\n", t._1, r(t._2))
+      }
+    } else {
+      printf("Cannot peek an empty DataFrame")
+    }
+  }
 
   /**
    * Use default peek with or without the parenthesis
