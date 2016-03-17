@@ -326,6 +326,18 @@ true                         2   50.00%           4  100.00%
 -------------------------------------------------""")
   }
 
+  test("test edd summary with decimal"){
+    val df2 = createSchemaRdd("v:decimal[8, 3]", "12.455;123.134;122.5;5")
+    val res = df2.edd.summary()
+
+    assert(res.createReport().mkString("\n") === """v                    Non-Null Count         4
+v                    Average                65.77225
+v                    Standard Deviation     65.94038595769668
+v                    Min                    5.0
+v                    Max                    123.134"""
+    )
+  }
+
   test("test EddResult DF compare") {
     val df2 = createSchemaRdd("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
       """z,1,a,0.2000001,19010701,;

@@ -52,13 +52,18 @@ private[smv] abstract class EddTask {
 
 /** need to be Serializable to make it udf **/
 private object EddTask extends Serializable {
+
+  /** Spark map catalyst Decimal to java.math.BigDecimal, while
+   *  JSON4S can render scala.math.BigDecimal, so here we need to
+   *  convert java version to scala version before call `render` method
+   **/
   val toJFunc: Any => String = {value:Any =>
     value match {
       case v: String => compact(render(v))
       case v: Double => compact(render(v))
       case v: Long => compact(render(v))
       case v: Boolean => compact(render(v))
-      case v: Decimal => compact(render(v.toBigDecimal))
+      case v: java.math.BigDecimal => compact(render(BigDecimal(v)))
       case null => compact(render(null))
       case _ => throw new IllegalArgumentException("unsupported type")
     }
