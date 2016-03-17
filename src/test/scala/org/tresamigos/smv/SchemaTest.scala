@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.types.Decimal
+
 import scala.collection.SortedMap
 
 // TODO: test writing of schema to file
@@ -56,6 +58,34 @@ class SmvSchemaTest extends SmvTestUtil {
     assert(e1 == e2)
     assert(e1 != e3) // different name
     assert(e1 != e4) // different type
+  }
+
+  test("Test Decimal formats") {
+    val s = SmvSchema.fromString("a:Decimal; b:Decimal[ 5 ]; c:decimal[8, 3]")
+    val a = s.entries(0)
+    val b = s.entries(1)
+    val c = s.entries(2)
+
+    assert(a === SchemaEntry("a", DecimalTypeFormat(10, 0)))
+    assert(b === SchemaEntry("b", DecimalTypeFormat( 5, 0)))
+    assert(c === SchemaEntry("c", DecimalTypeFormat( 8, 3)))
+
+    assert(a.typeFormat.toString() === "Decimal[10,0]")
+    assert(b.typeFormat.toString() === "Decimal[5,0]")
+    assert(c.typeFormat.toString() === "Decimal[8,3]")
+  }
+
+  test("Test Decimal value serialize") {
+    val decFormat = DecimalTypeFormat(10,0)
+
+    assert(decFormat.strToVal("1234") === Decimal("1234"))
+    assert(decFormat.valToStr(Decimal("1234")) === "1234")
+  }
+
+  test("Test Decimal default format") {
+    val df = app.createDF("a:Decimal", "1234")
+    assertSrddSchemaEqual(df, "a: Decimal[10,0]")
+    assertSrddDataEqual(df, "1234")
   }
 
   test("Test Timestamp Format") {

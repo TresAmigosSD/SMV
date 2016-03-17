@@ -61,8 +61,9 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
   }
 
   /**
-   * Discover the time of a given column based on it value. Also perform type promotion to
+   * Discover the type of a given column based on it value. Also perform type promotion to
    * accommodate all the possible values.
+   * TODO: should consider using Decimal for large integer/float values (more than what can fit in long/double)
    */
   private def getTypeFormat(curTypeFormat: TypeFormat, valueStr: String) : TypeFormat =  {
     if (valueStr.isEmpty)

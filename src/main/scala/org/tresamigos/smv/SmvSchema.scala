@@ -128,6 +128,18 @@ private[smv] case class DateTypeFormat(override val format: String = "yyyy-MM-dd
   override val typeName = "Date"
   val dataType = DateType
 }
+
+private[smv] case class DecimalTypeFormat(val precision: Integer, val scale: Integer, override val format: String = null) extends NumericTypeFormat {
+  override val typeName = "Decimal"
+  override def toString = s"Decimal[$precision,$scale]"
+  val dataType = DecimalType(precision, scale)
+
+  override def strToVal(s:String) : Any = {
+    val trimedS = trim(s)
+    if (trimedS.isEmpty) null else Decimal(trimedS)
+  }
+}
+
 // TODO: map entries delimiter hardcoded to "|" for now.
 // TODO: not worrying about key/val values containing the delimiter for now.
 // TODO: only allow basic types to avoid creating a full parser for the sub-types.
@@ -192,6 +204,9 @@ private[smv] object TypeFormat {
   private final val TimestampPattern = "[tT]imestamp".r
   private final val DatePatternFmt = "[dD]ate\\[(.+)\\]".r
   private final val DatePattern = "[dD]ate".r
+  private final val DecimalPattern2Arg = "[dD]ecimal\\[ *(\\d+) *, *(\\d+) *\\]".r
+  private final val DecimalPattern1Arg = "[dD]ecimal\\[ *(\\d+) *\\]".r
+  private final val DecimalPattern0Arg = "[dD]ecimal".r
   private final val MapPattern = "[mM]ap\\[(.+),(.+)\\]".r
   private final val ArrayPattern = "[aA]rray\\[(.+)\\]".r
 
@@ -207,6 +222,11 @@ private[smv] object TypeFormat {
       case TimestampPatternFmt(fmt) => TimestampTypeFormat(fmt)
       case DatePattern() => DateTypeFormat()
       case DatePatternFmt(fmt) => DateTypeFormat(fmt)
+
+      case DecimalPattern2Arg(pStr, sStr) => DecimalTypeFormat(pStr.toInt, sStr.toInt)
+      case DecimalPattern1Arg(pStr) => DecimalTypeFormat(pStr.toInt, 0)
+      case DecimalPattern0Arg() => DecimalTypeFormat(10, 0)
+
       case MapPattern(keyTypeStr, valTypeStr) =>
         MapTypeFormat(
           TypeFormat(keyTypeStr),
@@ -227,6 +247,7 @@ private[smv] object TypeFormat {
       case BooleanType => BooleanTypeFormat()
       case TimestampType => TimestampTypeFormat()
       case DateType => DateTypeFormat()
+      case dt : DecimalType => DecimalTypeFormat(dt.precision, dt.scale)
       case MapType(keyType, valType, _) =>
         MapTypeFormat(
           TypeFormat(keyType),

@@ -15,13 +15,14 @@
 package org.tresamigos.smv.edd
 
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.Decimal
 import org.tresamigos.smv._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 /**
- * Edd result has 5 attributes
+ * Edd result has the following attributes
  *
  * @param colName column the statistics are calculated on
  * @param taskType only 2 values "stat" or "hist"
@@ -31,13 +32,14 @@ import org.json4s.jackson.JsonMethods._
  *
  * @param precision edd result comparison precision
  *
- * So far only 4 types are supported as simple statistic value or the key of the histogram
+ * So far only 5 types are supported as simple statistic value or the key of the histogram
  *  - String
  *  - Boolean
  *  - Long
  *  - Double
+ *  - Decimal
  *
- * A histogram result represent as Map[Any, Long], where the key could be above 4 types.
+ * A histogram result represent as Map[Any, Long], where the key could be above 5 types.
  **/
 private[smv] class EddResult(
   val colName: String,
@@ -69,6 +71,7 @@ private[smv] class EddResult(
         case v: Double => BigDecimal(v, mc).hashCode
         case v: Long => v.hashCode
         case v: String => v.hashCode
+        case v: Decimal => v.hashCode
         case _ => throw new IllegalArgumentException("unsupported type")
       }
       case "hist" => EddResult.parseHistJson(valueJSON).map{ case (k, c) =>
@@ -78,6 +81,7 @@ private[smv] class EddResult(
           case v: Long => v.hashCode + c.hashCode
           case v: Boolean => v.hashCode + c.hashCode
           case v: Double => BigDecimal(v, mc).hashCode + BigDecimal(c, mc).hashCode
+          case v: Decimal => v.hashCode + c.hashCode
           case _ => throw new IllegalArgumentException("unsupported type")
         }
       }.reduce(_ + _)
@@ -154,13 +158,14 @@ private[smv] object EddResult {
       case k: Double => implicitly[Ordering[Double]].asInstanceOf[Ordering[Any]]
       case k: String => implicitly[Ordering[String]].asInstanceOf[Ordering[Any]]
       case k: Boolean => implicitly[Ordering[Boolean]].asInstanceOf[Ordering[Any]]
+      case k: Decimal => implicitly[Ordering[Decimal]].asInstanceOf[Ordering[Any]]
       case _ => throw new IllegalArgumentException("unsupported type")
     }
 
     if(histSortByFreq)
       hist.toSeq.sortBy(- _._2)
     else {
-      /* since some of the Ordering (e.g. Ordering[String]) can'r handle null, we
+      /* since some of the Ordering (e.g. Ordering[String]) can't handle null, we
        * handle null manually
        */
       val (nullOnly, nonNull) = hist.toSeq.partition(_._1 == null)
@@ -174,6 +179,7 @@ private[smv] object EddResult {
     val res = json match {
       case JInt(k) => k.toLong
       case JDouble(k) => k
+      case JDecimal(k) => k
       case JString(k) => k
       case JNull => JNull
       case x => throw new IllegalArgumentException("unsupported type " + x.getClass())
@@ -185,7 +191,7 @@ private[smv] object EddResult {
    *  - Long/Int
    *  - String
    *  - Boolean
-   *  - Bouble
+   *  - Double
    **/
   private[smv] def parseHistJson(s: String): Seq[(Any, Long)] = {
     val json = parse(s)
@@ -200,6 +206,7 @@ private[smv] object EddResult {
           case (JBool(k), JInt(v)) => (k, v.toLong)
           case (JInt(k), JInt(v)) => (k.toLong, v.toLong)
           case (JDouble(k),JInt(v)) => (k, v.toLong)
+          case (JDecimal(k), JInt(v)) => (k, v.toLong)
           case (JNull, JInt(v)) => (null, v.toLong)
           case _ => throw new IllegalArgumentException("unsupported type")
         }

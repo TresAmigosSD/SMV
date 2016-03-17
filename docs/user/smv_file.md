@@ -96,6 +96,7 @@ For example:
 acct_id: String;  # this is the id
 user_id: String;
 amt: Double;  // transaction amount!
+income: Decimal[10];
 ```
 
 ## CSV attributes
@@ -126,6 +127,14 @@ The schema file can specify the CSV attributes (delimiter, quote char, and heade
 ## Supported schema types
 ### Native types
 `Integer`, `Long`, `Float`, `Double`, `Boolean`, and `String` types correspond to their corresponding JVM type.
+
+### Decimal type
+The `Decimal` type can be used to hold a `BigDecimal` field value.  An optional precision and scale values can also supplied.  They default to 10 and 0 respectively if not defined (same as `BigDecimal`).
+```scala
+income: Decimal;
+amt: Decimal[7,2];
+other: Decimal[10];
+```
 
 ### Timestamp type
 The `Timestamp` type can be used to hold a date/timestamp field value.
