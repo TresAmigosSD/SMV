@@ -22,6 +22,25 @@ import cds._
 
 class SmvCDSTest extends SmvTestUtil {
 
+  test("test simple runAgg") {
+    val ssc = sqlContext;
+    import ssc.implicits._
+    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+
+    val res = df.smvGroupBy("k").runAgg($"t")(
+      $"k",
+      $"t",
+      sum($"v") as "nv"
+    )
+
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,0.3]",
+      "[z,1,0.2]",
+      "[z,2,1.5999999999999999]",
+      "[z,5,3.8]"
+    ))
+  }
+
   test("Test runAgg") {
     val ssc = sqlContext;
     import ssc.implicits._

@@ -542,9 +542,26 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    **/
   @Experimental
   def runAgg(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
-    val gdo = new SmvRunAggGDO(orders.map{o => o.toExpr}.toList, aggCols.toList)
-    val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
-    smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
+    /* TODO: we can actually check aggCols.map{a => a.cds == NoOpCDS}.reduce(_&&_)
+    * if true the runAgg can actually be implemented with Window fuctions
+    */
+    val isSimpleRunAgg = aggCols.map{a => a.cds == NoOpCDS}.reduce(_&&_)
+
+    if (isSimpleRunAgg) {
+      val w = winspec.orderBy(orders: _*).rowsBetween(Long.MinValue, 0)
+      val cols = aggCols.map{aggCol =>
+        aggCol.aggExpr match {
+          case Alias(e: AggregateExpression, n) => new Column(e) over w as n
+          case e: AggregateExpression => new Column(e) over w
+          case e => new Column(e)
+        }
+      }
+      df.select(cols: _*)
+    } else {
+      val gdo = new SmvRunAggGDO(orders.map{o => o.toExpr}.toList, aggCols.toList)
+      val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
+      smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
+    }
   }
 
   @Experimental
