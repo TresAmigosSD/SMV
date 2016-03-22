@@ -110,10 +110,8 @@ object PartialTime {
   }
 }
 
-private[smv] abstract class TimePanel extends Serializable {
-  val start: PartialTime
-  val end: PartialTime
-
+@Experimental
+case class TimePanel(start: PartialTime, end: PartialTime) extends Serializable {
   require(start.timeType == end.timeType)
   val timeType = start.timeType
 
@@ -139,15 +137,3 @@ private[smv] abstract class TimePanel extends Serializable {
       fillExpectedWithNull(timeColName, expectedValues)
   }
 }
-
-/**
- *
- **/
-@Experimental
-case class QuarterlyPanel(override val start: Quarter, override val end: Quarter) extends TimePanel
-
-@Experimental
-case class MonthlyPanel(override val start: Month, override val end: Month) extends TimePanel
-
-@Experimental
-case class DailyPanel(override val start: Day, override val end: Day) extends TimePanel
