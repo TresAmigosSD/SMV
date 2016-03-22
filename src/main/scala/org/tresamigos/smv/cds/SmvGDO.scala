@@ -140,6 +140,7 @@ private[smv] class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends Sm
   }
 }
 
+/*
 private[smv] class FillPanelWithNull(t: String, p: panel.Panel, keys: Seq[String]) extends  SmvGDO {
   override val inGroupKeys = Nil
 
@@ -175,3 +176,4 @@ private[smv] class FillPanelWithNull(t: String, p: panel.Panel, keys: Seq[String
     }
   }
 }
+*/

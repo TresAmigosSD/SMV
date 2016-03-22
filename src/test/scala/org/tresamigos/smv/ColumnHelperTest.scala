@@ -181,6 +181,20 @@ class ColumnHelperTest extends SmvTestUtil {
     val res = df.select($"arr".containsAll("a", "b") as "isFound")
     assertSrddDataEqual(res, "true;false")
   }
+
+  test("test smvTime helpers") {
+    val ssc = sqlContext;
+    import ssc.implicits._
+
+    val df = createSchemaRdd("st:String", "Q201301;M201512;D20141201")
+    val res = df.select($"st".smvTimeToType, $"st".smvTimeToIndex, $"st".smvTimeToLabel)
+
+    assertSrddDataEqual(res,
+      "quarter,172,2013-Q1;" +
+      "month,551,2015-12;" +
+      "day,16405,2014-12-01"
+    )
+  }
 }
 
 class SmvPrintToStrTest extends SmvTestUtil {

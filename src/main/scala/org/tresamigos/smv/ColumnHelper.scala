@@ -267,6 +267,48 @@ class ColumnHelper(column: Column) {
   }
 
   /**
+   * smvTime helper to convert `smvTime` column to time type string
+   * Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+   * Example output type "quarter", "month", "day"
+   **/
+  def smvTimeToType = {
+    val name = s"TimeType($column)"
+    val f = (s: String) => {
+      panel.PartialTime(s).timeType
+    }
+
+    udf(f).apply(column).as(name)
+  }
+
+  /**
+   * smvTime helper to convert `smvTime` column to time index integer
+   * Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+   * Example output 172, 551, 16405 (# of quarters, months, and days from 19700101)
+   **/
+  def smvTimeToIndex = {
+    val name = s"TimeIndex($column)"
+    val f = (s: String) => {
+      panel.PartialTime(s).timeIndex
+    }
+
+    udf(f).apply(column).as(name)
+  }
+
+  /**
+   * smvTime helper to convert `smvTime` column to time index integer
+   * Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+   * Example output 172, 551, 16405 (# of quarters, months, and days from 19700101)
+   **/
+  def smvTimeToLabel = {
+    val name = s"TimeLabel($column)"
+    val f = (s: String) => {
+      panel.PartialTime(s).timeLabel
+    }
+
+    udf(f).apply(column).as(name)
+  }
+
+  /**
    * Pre-defined binning for dollar amount type of column.
    * It provides more granularity on small values. Pre-defined boundaries: 10, 200, 1000, 10000 ...
    *

@@ -16,45 +16,127 @@ package org.tresamigos.smv.panel
 
 import org.joda.time._
 import org.apache.spark.annotation._
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Column, DataFrame}
+import org.tresamigos.smv._
 
 /**
  *
  **/
 private[smv] abstract class PartialTime extends Ordered[PartialTime] with Serializable {
-  def getValue(): Int
-  def compare(that: PartialTime) = (this.getValue() - that.getValue()).signum
+  def timeType(): String
+  def timeIndex(): Int
+  def timeLabel(): String
+  def smvTime(): String
+  def timeStampToSmvTime(c: Column): Column
+
+  def compare(that: PartialTime) = (this.timeIndex() - that.timeIndex()).signum
+}
+
+@Experimental
+case class Quarter(year: Int, quarter: Int) extends PartialTime {
+  override val timeType = "quarter"
+  override val timeIndex = quarter70()
+  override val timeLabel = f"$year%04d-Q$quarter%1d"
+  override val smvTime = f"Q$year%04d$quarter%02d"
+  override def timeStampToSmvTime(ts: Column) = format_string("Q%04d%02d", ts.smvYear, ts.smvQuarter)
+
+  private def quarter70(): Int = (year - 1970) * 4 + quarter - 1
+}
+
+object Quarter {
+  def apply(timeValue: Int) = {
+    val year = timeValue / 4 + 1970
+    val quarter = timeValue % 4 + 1
+    new Quarter(year, quarter)
+  }
 }
 
 @Experimental
 case class Month(year: Int, month: Int) extends PartialTime {
-  val month70: Int = (year - 1970) * 12 + month
-  def getValue() = month70
+  override val timeType = "month"
+  override val timeIndex = month70()
+  override val timeLabel = f"$year%04d-$month%02d"
+  override val smvTime = f"M$year%04d$month%02d"
+  override def timeStampToSmvTime(ts: Column) = format_string("M%04d%02d", ts.smvYear, ts.smvMonth)
+
+  private def month70(): Int = (year - 1970) * 12 + month - 1
+}
+
+object Month {
+  def apply(timeValue: Int) = {
+    val year = timeValue / 12 + 1970
+    val month = timeValue % 12 + 1
+    new Month(year, month)
+  }
 }
 
 @Experimental
 case class Day(year: Int, month: Int, day: Int) extends PartialTime {
-  private val MILLIS_PER_DAY = 86400000
-  val day70: Int = (new LocalDate(year, month, day).
+  override val timeType = "day"
+  override val timeIndex = day70()
+  override val timeLabel = f"$year%04d-$month%02d-$day%02d"
+  override val smvTime = f"D$year%04d$month%02d$day%02d"
+  override def timeStampToSmvTime(ts: Column) = format_string("D%04d%02d%02d", ts.smvYear, ts.smvMonth, ts.smvDayOfMonth)
+
+  private def day70(): Int = (new LocalDate(year, month, day).
          toDateTimeAtStartOfDay(DateTimeZone.UTC).
-         getMillis / MILLIS_PER_DAY).toInt
-  def getValue() = day70
+         getMillis / Day.MILLIS_PER_DAY).toInt
 }
 
-private[smv] abstract class Panel extends Serializable {
+object Day {
+  val MILLIS_PER_DAY = 86400000
+
+  def apply(timeValue: Int) = {
+    val dt = new DateTime(timeValue.toLong * MILLIS_PER_DAY).withZone(DateTimeZone.UTC)
+    val year = dt.getYear
+    val month = dt.getMonthOfYear
+    val day = dt.getDayOfMonth
+    new Day(year, month, day)
+  }
+}
+
+object PartialTime {
+  def apply(smvTime: String) = {
+    val pQ = "Q([0-9]{4})(0[0-9])".r
+    val pM = "M([0-9]{4})([0-9]{2})".r
+    val pD = "D([0-9]{4})([0-9]{2})([0-9]{2})".r
+    smvTime match {
+      case pQ(year, quarter) => new Quarter(year.toInt, quarter.toInt)
+      case pM(year, month) => new Month(year.toInt, month.toInt)
+      case pD(year, month, day) => new Day(year.toInt, month.toInt, day.toInt)
+      case _ => throw new IllegalArgumentException(s"String parameter to Day has to be in Ddddddddd format")
+    }
+  }
+}
+
+private[smv] abstract class TimePanel extends Serializable {
   val start: PartialTime
   val end: PartialTime
-  val startValue = start.getValue()
-  val endValue = end.getValue()
-  def hasInRange(t: PartialTime) = (start <= t && t <= end)
-  def hasInRange(t: Int) = (startValue <= t && t <= endValue)
 
-  def createValues(): Iterable[Int]
-}
+  require(start.timeType == end.timeType)
+  val timeType = start.timeType
 
-@DeveloperApi
-abstract class ContinuousPanel extends Panel {
-  def createValues(): Iterable[Int] = {
-    startValue + 1 until endValue
+  def smvTimeData(): Seq[String] = {
+    val startIndex = start.timeIndex()
+    val endIndex = end.timeIndex()
+    val range = (startIndex to endIndex).toSeq
+
+    timeType match {
+      case "quarter" => range.map{v => Quarter(v).smvTime}
+      case "month" => range.map{v => Month(v).smvTime}
+      case "day" => range.map{v => Day(v).smvTime}
+    }
+  }
+
+  def addToDF(df: DataFrame, timeStampColName: String, keys: Seq[String]) = {
+    val timeColName = mkUniq(df.columns, "smvTime")
+
+    val expectedValues = smvTimeData.toSet
+
+    df.selectPlus(start.timeStampToSmvTime(df(timeStampColName)) as timeColName).
+      smvGroupBy(keys.map{s => df(s)}: _*).
+      fillExpectedWithNull(timeColName, expectedValues)
   }
 }
 
@@ -62,6 +144,10 @@ abstract class ContinuousPanel extends Panel {
  *
  **/
 @Experimental
-case class MonthlyPanel(start: Month, end: Month) extends ContinuousPanel
+case class QuarterlyPanel(override val start: Quarter, override val end: Quarter) extends TimePanel
+
 @Experimental
-case class DailyPanel(start: Day, end: Day) extends ContinuousPanel
+case class MonthlyPanel(override val start: Month, override val end: Month) extends TimePanel
+
+@Experimental
+case class DailyPanel(override val start: Day, override val end: Day) extends TimePanel
