@@ -62,4 +62,16 @@ class SmvGroupedDataTest extends SmvTestUtil {
     ))
     assert(res.rdd.partitions.size === 2)
   }
+
+  test("test fillExpectedWithNull") {
+    val df = createSchemaRdd("k:String; v:String; t:Integer", "1,a,1;1,b,2;1,a,3")
+    val res = df.smvGroupBy("k").fillExpectedWithNull("v", Set("a", "b", "c"))
+
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1,c,null]",
+      "[1,a,1]",
+      "[1,b,2]",
+      "[1,a,3]"
+    ))
+  }
 }

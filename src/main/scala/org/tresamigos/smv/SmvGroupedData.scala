@@ -581,15 +581,44 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     runAggPlus((order +: others).map{s => new ColumnName(s)}: _*)(aggCols: _*)
 
   /**
-   * Fill missing panel values with null.
-   * '''This might change/go-away in version 1.5.'''
-   */
-  @Experimental
-  def fillPanelWithNull(timeCol: String, pan: panel.Panel): DataFrame = {
-    val gdo = new FillPanelWithNull(timeCol, pan, keys)
-    smvMapGroup(gdo).toDF
-  }
+   * Add records within each group is expected values of a column is missing
+   * For now only works with StringType column.
+   *
+   * Example
+   * Input:
+   * {{{
+   * K, V, other
+   * 1, a, x
+   * 1, b, x
+   * }}}
+   *
+   * {{{
+   * df.smvGroupBy("K").fillExpectedWithNull("V", Set("a", "b", "c"))
+   * }}}
+   *
+   * Output
+   * {{{
+   * K, V, other
+   * 1, c, null
+   * 1, a, x
+   * 1, b, x
+   * }}}
+   **/
+  private[smv] def fillExpectedWithNull(colName: String, expected: Set[String]): DataFrame = {
+    import df.sqlContext.implicits._
 
+    val missings = (exists: Seq[String]) => (expected -- exists.toSet).toSeq
+    val tmpCol = mkUniq(df.columns, "tmpCol")
+    val nullCols = df.columns.diff(keys :+ colName).map{s => lit(null).cast(df.schema(s).dataType) as s}
+
+    df.groupBy(keys.head, keys.tail: _*).
+      agg(udf(missings).apply(smvfuncs.collectStrSet($"$colName")) as tmpCol).
+      selectPlus(explode($"$tmpCol") as colName).
+      selectMinus(tmpCol).
+      selectPlus(nullCols: _*).
+      select(df.columns.map{s => $"$s"}: _*).
+      unionAll(df)
+  }
   /**
    * Repartition SmvGroupedData using specified partitioner on the keys. Could take
    * a user defined partitioner or an integer. It the parameter is an integer, a

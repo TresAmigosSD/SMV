@@ -43,4 +43,10 @@ object smvfuncs {
   def smvBoolsToBitmap(headColumnName:String, tailColumnNames: String*) = {
     udf(boolsToBitmap).apply(struct(headColumnName, tailColumnNames:_*))
   }
+
+  /** Spark 1.6 will have collect_set aggregation function. This is just for smv internal use for 1.5.2*/
+  private[smv] def collectStrSet(c: Column): Column = {
+    val toKeys = udf((m: Map[String, Long]) => m.keys.toSeq)
+    toKeys(histStr(c)) as s"collectStrSet($c)"
+  }
 }
