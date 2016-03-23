@@ -21,9 +21,20 @@ import org.apache.spark.sql.{Column, DataFrame}
 import org.tresamigos.smv._
 
 /**
+ * PartialTime is a "gross" time concept.
+ * It's closer to a "bussiness" concept than scientific or engineering concept.
+ * We currently have Quarter, Month, and Day
  *
+ * A PartialTime represented in DF as a String column, and typically named as
+ * `smvTime` with values such as "Q201301", "M201312", "D20130423".
+ *
+ * A PartialTime can also represented as `timeType` + `timeIndex`, e.g.
+ * "M201512" => (timeType = "month", timeIndex = 551)
+ * Where `timeIndex` is an integere which count from 1970-01-01.
+ *
+ * A PartialTime also has a `timeLabel` which is a human readable string
  **/
-private[smv] abstract class PartialTime extends Ordered[PartialTime] with Serializable {
+abstract class PartialTime extends Ordered[PartialTime] with Serializable {
   def timeType(): String
   def timeIndex(): Int
   def timeLabel(): String
@@ -33,7 +44,13 @@ private[smv] abstract class PartialTime extends Ordered[PartialTime] with Serial
   def compare(that: PartialTime) = (this.timeIndex() - that.timeIndex()).signum
 }
 
-@Experimental
+/**
+ * Quarter PartialTime
+ * - smvTime form: Q201201
+ * - timeType: "quarter"
+ * - timeIndex: Number of quarters from 19700101
+ * - timeLabel form: 2012-Q1
+ **/
 case class Quarter(year: Int, quarter: Int) extends PartialTime {
   override val timeType = "quarter"
   override val timeIndex = quarter70()
@@ -45,14 +62,20 @@ case class Quarter(year: Int, quarter: Int) extends PartialTime {
 }
 
 object Quarter {
-  def apply(timeValue: Int) = {
-    val year = timeValue / 4 + 1970
-    val quarter = timeValue % 4 + 1
+  def apply(timeIndex: Int) = {
+    val year = timeIndex / 4 + 1970
+    val quarter = timeIndex % 4 + 1
     new Quarter(year, quarter)
   }
 }
 
-@Experimental
+/**
+ * Month PartialTime
+ * - smvTime form: M201201
+ * - timeType: "month"
+ * - timeIndex: Number of months from 19700101
+ * - timeLabel form: 2012-01
+ **/
 case class Month(year: Int, month: Int) extends PartialTime {
   override val timeType = "month"
   override val timeIndex = month70()
@@ -64,14 +87,20 @@ case class Month(year: Int, month: Int) extends PartialTime {
 }
 
 object Month {
-  def apply(timeValue: Int) = {
-    val year = timeValue / 12 + 1970
-    val month = timeValue % 12 + 1
+  def apply(timeIndex: Int) = {
+    val year = timeIndex / 12 + 1970
+    val month = timeIndex % 12 + 1
     new Month(year, month)
   }
 }
 
-@Experimental
+/**
+ * Day PartialTime
+ * - smvTime form: D20120123
+ * - timeType: "day"
+ * - timeIndex: Number of days from 19700101
+ * - timeLabel form: 2012-01-23
+ **/
 case class Day(year: Int, month: Int, day: Int) extends PartialTime {
   override val timeType = "day"
   override val timeIndex = day70()
@@ -87,8 +116,8 @@ case class Day(year: Int, month: Int, day: Int) extends PartialTime {
 object Day {
   val MILLIS_PER_DAY = 86400000
 
-  def apply(timeValue: Int) = {
-    val dt = new DateTime(timeValue.toLong * MILLIS_PER_DAY).withZone(DateTimeZone.UTC)
+  def apply(timeIndex: Int) = {
+    val dt = new DateTime(timeIndex.toLong * MILLIS_PER_DAY).withZone(DateTimeZone.UTC)
     val year = dt.getYear
     val month = dt.getMonthOfYear
     val day = dt.getDayOfMonth
@@ -110,12 +139,16 @@ object PartialTime {
   }
 }
 
-@Experimental
+/**
+ * TimePanel is a consecutive range of PartialTimes
+ * It has a "start" PartialTime and "end" PartialTime, both are inclusive.
+ * "start" and "end" have to have the same timeType
+ **/
 case class TimePanel(start: PartialTime, end: PartialTime) extends Serializable {
   require(start.timeType == end.timeType)
   val timeType = start.timeType
 
-  def smvTimeData(): Seq[String] = {
+  private def smvTimeSeq(): Seq[String] = {
     val startIndex = start.timeIndex()
     val endIndex = end.timeIndex()
     val range = (startIndex to endIndex).toSeq
@@ -127,10 +160,10 @@ case class TimePanel(start: PartialTime, end: PartialTime) extends Serializable 
     }
   }
 
-  def addToDF(df: DataFrame, timeStampColName: String, keys: Seq[String]) = {
+  private[smv] def addToDF(df: DataFrame, timeStampColName: String, keys: Seq[String]) = {
     val timeColName = mkUniq(df.columns, "smvTime")
 
-    val expectedValues = smvTimeData.toSet
+    val expectedValues = smvTimeSeq.toSet
 
     df.selectPlus(start.timeStampToSmvTime(df(timeStampColName)) as timeColName).
       smvGroupBy(keys.map{s => df(s)}: _*).
