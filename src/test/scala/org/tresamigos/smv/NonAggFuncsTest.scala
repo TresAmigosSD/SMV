@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{DoubleType, BooleanType, IntegerType, StringType}
 import org.tresamigos.smv.smvfuncs._
 
 class NonAggFuncsTest extends SmvTestUtil {
@@ -82,5 +83,33 @@ class NonAggFuncsTest extends SmvTestUtil {
     val df = createSchemaRdd("a:String; b:Boolean; c:Boolean", "1,false,true;2,,;3,true,;4,,false;5,true,true;6,false,false")
     val res = df.select(smvBoolsToBitmap($"b", $"c") as "r1", smvBoolsToBitmap("b", "c") as "r2")
     assertSrddDataEqual(res, "01,01;00,00;10,10;00,00;11,11;00,00")
+  }
+
+  test("test collectSet for String") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:String; b:Boolean;", "1,false;2,;3,true;4,;5,true;6,false")
+    val res = df.select(collectSet(StringType)($"a") as "r1")
+    assertSrddDataEqual(res, "WrappedArray(4, 5, 6, 1, 2, 3)")
+  }
+
+  test("test collectSet for Integer") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:Integer; b:Boolean;", "1,false;2,;3,true;4,;5,true;6,false")
+    val res = df.select(collectSet(IntegerType)($"a") as "r1")
+    assertSrddDataEqual(res, "WrappedArray(5, 1, 6, 2, 3, 4)")
+  }
+
+  test("test collectSet for Boolean") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:Integer; b:Boolean;", "1,false;2,;3,true;4,;5,true;6,false")
+    val res = df.select(collectSet(BooleanType)($"b") as "r1")
+    assertSrddDataEqual(res, "WrappedArray(false, null, true)")
+  }
+
+  test("test collectSet for Double") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:Double; b:Boolean;", "1.1,false;2.2,;3.3,true;4.4,;5.5,true;6.0,false")
+    val res = df.select(collectSet(DoubleType)($"a") as "r1")
+    assertSrddDataEqual(res, "WrappedArray(2.2, 6.0, 4.4, 5.5, 3.3, 1.1)")
   }
 }

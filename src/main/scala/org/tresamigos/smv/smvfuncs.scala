@@ -44,9 +44,32 @@ object smvfuncs {
     udf(boolsToBitmap).apply(struct(headColumnName, tailColumnNames:_*))
   }
 
-  /** Spark 1.6 will have collect_set aggregation function. This is just for smv internal use for 1.5.2*/
-  private[smv] def collectStrSet(c: Column): Column = {
-    val toKeys = udf((m: Map[String, Long]) => m.keys.toSeq)
-    toKeys(histStr(c)) as s"collectStrSet($c)"
+  /** Spark 1.6 will have collect_set aggregation function.*/
+  def collectSet(dt: DataType)(c: Column): Column = {
+
+    dt match {
+      case StringType => {
+        val toKeys = udf((m: Map[String, Long]) => m.keys.toSeq)
+        toKeys(histStr(c)) as s"collectSet($c)"
+      }
+
+      case IntegerType => {
+        val toKeys = udf((m: Map[Integer, Long]) => m.keys.toSeq)
+        toKeys(histInt(c)) as s"collectSet($c)"
+      }
+
+      case BooleanType => {
+        val toKeys = udf((m: Map[Boolean, Long]) => m.keys.toSeq)
+        toKeys(histBoolean(c)) as s"collectSet($c)"
+      }
+
+      case DoubleType => {
+        val toKeys = udf((m: Map[Double, Long]) => m.keys.toSeq)
+        toKeys(histDouble(c)) as s"collectSet($c)"
+      }
+      case _ => {
+        throw new IllegalArgumentException("collectSet unsupported type: " + dt.typeName)
+      }
+    }
   }
 }

@@ -24,6 +24,7 @@ import org.apache.spark.Partitioner
 import org.apache.spark.annotation._
 
 import cds._
+import org.apache.spark.sql.types.StringType
 
 /**
  * The result of running `smvGroupBy` on a DataFrame.
@@ -661,7 +662,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val nullCols = df.columns.diff(keys :+ colName).map{s => lit(null).cast(df.schema(s).dataType) as s}
 
     df.groupBy(keys.head, keys.tail: _*).
-      agg(udf(missings).apply(smvfuncs.collectStrSet($"$colName")) as tmpCol).
+      agg(udf(missings).apply(smvfuncs.collectSet(StringType)($"$colName")) as tmpCol).
       selectPlus(explode($"$tmpCol") as colName).
       selectMinus(tmpCol).
       selectPlus(nullCols: _*).
