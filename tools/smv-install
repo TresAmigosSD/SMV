@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+
+# Determine the current working directory
+_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Options used during compilation
+_COMPILE_JVM_OPTS="-Xmx2g -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512m"
+# SMV directory name
+_SMV_DIR_NAME="SMV-master"
+
+# Installs any application tarball given a URL, the expected tarball name,
+# and, optionally, a checkable binary path to determine if the binary has
+# already been installed
+## Arg1 - URL
+## Arg2 - Tarball Name
+## Arg3 - Checkable Binary
+install_app() {
+  local remote_tarball="$1/$2"
+  local local_tarball="${_DIR}/$2"
+  local binary="${_DIR}/$3"
+
+  # setup `curl` and `wget` silent options if we're running on Jenkins
+  local curl_opts="-L"
+  local wget_opts=""
+  if [ -n "$AMPLAB_JENKINS" ]; then
+    curl_opts="-s ${curl_opts}"
+    wget_opts="--quiet ${wget_opts}"
+  else
+    curl_opts="--progress-bar ${curl_opts}"
+    wget_opts="--progress=bar:force ${wget_opts}"
+  fi
+
+  if [ -z "$3" -o ! -f "$binary" ]; then
+    # check if we already have the tarball
+    # check if we have curl installed
+    # download application
+    [ ! -f "${local_tarball}" ] && [ $(command -v curl) ] && \
+      echo "exec: curl ${curl_opts} ${remote_tarball}" 1>&2 && \
+      curl ${curl_opts} "${remote_tarball}" > "${local_tarball}"
+    # if the file still doesn't exist, lets try `wget` and cross our fingers
+    [ ! -f "${local_tarball}" ] && [ $(command -v wget) ] && \
+      echo "exec: wget ${wget_opts} ${remote_tarball}" 1>&2 && \
+      wget ${wget_opts} -O "${local_tarball}" "${remote_tarball}"
+    # if both were unsuccessful, exit
+    [ ! -f "${local_tarball}" ] && \
+      echo -n "ERROR: Cannot download $2 with cURL or wget; " && \
+      echo "please install manually and try again." && \
+      exit 2
+    cd "${_DIR}" && tar -xzf "$2"    
+    rm -rf "$local_tarball"
+    echo "$remote_tarball was downloaded and unziped successfully!"
+  else
+    echo "$binary exists. Download skipped."
+  fi
+}
+
+# Download the latest SMV source code from github
+download_smv() {
+  install_app \
+    "https://github.com/TresAmigosSD/SMV/archive" \
+    "master.zip" \
+    "${_SMV_DIR_NAME}/tools/smv-run"
+}
+
+# Install maven
+install_mvn() {
+  local MVN_VERSION="3.3.3"
+
+  install_app \
+    "http://archive.apache.org/dist/maven/maven-3/${MVN_VERSION}/binaries" \
+    "apache-maven-${MVN_VERSION}-bin.tar.gz" \
+    "apache-maven-${MVN_VERSION}/bin/mvn"
+
+  MVN_HOME="${_DIR}/apache-maven-${MVN_VERSION}"
+  MVN_BIN="${MVN_HOME}/bin/mvn"
+  export PATH="${MVN_HOME}/bin:${PATH}"
+}
+ 
+install_scala() {
+  # use the Scala version defined in SMV pom.xml
+  local scala_version=`grep "scala.version" "${_DIR}/${_SMV_DIR_NAME}/pom.xml" | \
+                       head -1 | cut -f2 -d'>' | cut -f1 -d'<'`
+  local scala_bin="${_DIR}/scala-${scala_version}/bin/scala"
+
+  install_app \
+    "http://downloads.typesafe.com/scala/${scala_version}" \
+    "scala-${scala_version}.tgz" \
+    "scala-${scala_version}/bin/scala"
+
+  SCALA_COMPILER="$(cd "$(dirname ${scala_bin})/../lib" && pwd)/scala-compiler.jar"
+  SCALA_LIBRARY="$(cd "$(dirname ${scala_bin})/../lib" && pwd)/scala-library.jar"
+}
+
+install_spark() {
+  # use the Spark version defined in SMV pom.xml
+  local spark_version=`grep "spark.version" "${_DIR}/${_SMV_DIR_NAME}/pom.xml" | \
+                       head -1 | cut -f2 -d'>' | cut -f1 -d'<'`
+  _SPARK_DIR_NAME="spark-${spark_version}-bin-hadoop2.4"  
+  # TODO: use dynamic distribution URL to get suggested mirror
+  install_app \
+    "http://mirror.sdunix.com/apache/spark/spark-${spark_version}" \
+    "${_SPARK_DIR_NAME}.tgz" \
+    "${_SPARK_DIR_NAME}/bin/spark-submit"
+
+  #TODO: add SPARK_HOME/bin to PATH permanently  
+  export PATH="${_DIR}/${_SPARK_DIR_NAME}/bin:${PATH}"
+  export SPARK_LOCAL_IP=127.0.0.1
+}
+
+build_smv() {
+  cd "${_DIR}/${_SMV_DIR_NAME}"
+  #echo "Using \`mvn\` from path: $MVN_BIN" 1>&2
+  # Set any `mvn` options if not already present
+  export MAVEN_OPTS=${MAVEN_OPTS:-"$_COMPILE_JVM_OPTS"}
+  ${MVN_BIN} clean install
+}
+
+###############################################################################
+
+echo "Start SMV installation"
+# Download SMV
+download_smv
+
+# Install MAVEN
+install_mvn
+
+# TODO: install JDK
+
+# Install Scala(not necessarily needed to build SMV)
+#install_scala
+
+# Install Spark
+install_spark
+
+# TODO: install other tools are required to run SMV (e.g. graphvis, etc.)
+
+# Build SMV
+build_smv
+
+echo "SMV was installed successfully!"
