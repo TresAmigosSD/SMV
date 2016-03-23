@@ -33,7 +33,7 @@ case class SmvEntityMatcher(
     // sequentially apply level matchers to the join of unmatched data
     val j1 = levelMatchers.foldLeft(j0) { (df, matcher) => matcher.addCols(df) }
 
-    // add boolean true column to extractect results if we extracted some ids.  if we used an identity extractor, then don't add anything.
+    // add boolean true column to extracted results if we extracted some ids.  if we used an identity extractor, then don't add anything.
     // add boolean false column to the joined data frame if we extracted some ids.  if we used an identity extractor, then don't add anything.
     val (s2, j2) = ex match {
       case x: ExactMatchFilter =>
