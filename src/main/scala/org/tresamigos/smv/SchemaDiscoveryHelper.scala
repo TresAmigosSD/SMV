@@ -18,6 +18,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.tresamigos.smv.StringConversionUtil._
 
+import scala.util.Try
+
 class SchemaDiscoveryHelper(sqlContext: SQLContext) {
   /**
    * Extract the column names from the csv header if it has one. In case of multi-line header the last header line is
@@ -166,9 +168,11 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
 
     val columnsWithIndex = columns.zipWithIndex
 
+    var validCount = 0
     for (rowStr <- rowsToParse) {
-      val rowValues = parser.parseLine(rowStr)
+      val rowValues = Try{parser.parseLine(rowStr)}.getOrElse(Array[String]())
       if (rowValues.length == columnsWithIndex.length ) {
+        validCount += 1
         for (index <- 0 until columns.length) {
           val colVal = rowValues(index)
           if (colVal.nonEmpty) {
@@ -176,6 +180,11 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
           }
         }
       }
+    }
+
+    // handle case where we were not able to parse a single valid data line.
+    if (validCount == 0) {
+      throw new IllegalStateException("Unable to find a single valid data line")
     }
 
     //Now we should set the null schema entries to the Default StringSchemaEntry. This should be the case when the first

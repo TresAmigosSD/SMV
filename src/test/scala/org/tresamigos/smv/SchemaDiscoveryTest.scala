@@ -83,4 +83,27 @@ class SchemaDiscoveryTest extends SmvTestUtil {
     assert(entries(5).field.name === "last_active_date")
     assert(entries(5).typeFormat.typeName === "String")
   }
+
+  test("Test schema discovery with parser errors") {
+    val strRDD = sqlContext.sparkContext.textFile(testDataDir + "SchemaDiscoveryTest/test4.csv")
+    val helper = new SchemaDiscoveryHelper(sqlContext)
+    val schema = helper.discoverSchema(strRDD, 10, CsvAttributes.defaultCsvWithHeader)
+    val entries = schema.entries
+
+    assert(entries.length === 3)
+    assert(entries(0).field.name === "id")
+    assert(entries(0).typeFormat.typeName === "Integer")
+    assert(entries(1).field.name === "name")
+    assert(entries(1).typeFormat.typeName === "String")
+    assert(entries(2).field.name === "age")
+    assert(entries(2).typeFormat.typeName === "Integer")
+  }
+
+  test("Test schema discovery with parser errors on all data lines") {
+    val strRDD = sqlContext.sparkContext.textFile(testDataDir + "SchemaDiscoveryTest/test5.csv")
+    val helper = new SchemaDiscoveryHelper(sqlContext)
+    intercept[IllegalStateException] {
+      helper.discoverSchema(strRDD, 10, CsvAttributes.defaultCsvWithHeader)
+    }
+  }
 }
