@@ -184,7 +184,7 @@ download_smv
 install_mvn
 
 # Install Scala(not necessarily needed to build SMV)
-install_scala
+# install_scala
 
 # Install Spark
 install_spark
