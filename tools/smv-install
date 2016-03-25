@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-
+# 
+# One command to download and install all:
+# curl -O https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install;chmod +x smv-install;./smv-install
+# 
 # Determine the current working directory
 _DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-# Options used during compilation
-_COMPILE_JVM_OPTS="-Xmx2g -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512m"
-# SMV directory name
-_SMV_DIR_NAME="SMV-master"
 
 # Installs any application tarball given a URL, the expected tarball name,
 # and, optionally, a checkable binary path to determine if the binary has
@@ -34,27 +33,29 @@ install_app() {
     # check if we have curl installed
     # download application
     [ ! -f "${local_tarball}" ] && [ $(command -v curl) ] && \
-      echo "exec: curl ${curl_opts} ${remote_tarball}" 1>&2 && \
+      echo "[INFO] exec: curl ${curl_opts} ${remote_tarball}" 1>&2 && \
       curl ${curl_opts} "${remote_tarball}" > "${local_tarball}"
     # if the file still doesn't exist, lets try `wget` and cross our fingers
     [ ! -f "${local_tarball}" ] && [ $(command -v wget) ] && \
-      echo "exec: wget ${wget_opts} ${remote_tarball}" 1>&2 && \
+      echo "[INFO] exec: wget ${wget_opts} ${remote_tarball}" 1>&2 && \
       wget ${wget_opts} -O "${local_tarball}" "${remote_tarball}"
     # if both were unsuccessful, exit
     [ ! -f "${local_tarball}" ] && \
-      echo -n "ERROR: Cannot download $2 with cURL or wget; " && \
+      echo -n "[ERROR] Cannot download $2 with cURL or wget; " && \
       echo "please install manually and try again." && \
       exit 2
     cd "${_DIR}" && tar -xzf "$2"    
     rm -rf "$local_tarball"
-    echo "$remote_tarball was downloaded and unziped successfully!"
+    echo "[INFO] $remote_tarball was downloaded and unziped successfully!"
   else
-    echo "$binary exists. Download skipped."
+    echo "[INFO] $binary exists. Download skipped."
   fi
 }
 
 # Download the latest SMV source code from github
 download_smv() {
+  _SMV_DIR_NAME="SMV-master"
+  _SMV_HOME="${_DIR}/${_SMV_DIR_NAME}"
   install_app \
     "https://github.com/TresAmigosSD/SMV/archive" \
     "master.zip" \
@@ -64,23 +65,27 @@ download_smv() {
 # Install maven
 install_mvn() {
   local MVN_VERSION="3.3.3"
+  _MVN_DIR_NAME="apache-maven-${MVN_VERSION}"
+  _M2_HOME="${_DIR}/${_MVN_DIR_NAME}"
 
   install_app \
     "http://archive.apache.org/dist/maven/maven-3/${MVN_VERSION}/binaries" \
     "apache-maven-${MVN_VERSION}-bin.tar.gz" \
-    "apache-maven-${MVN_VERSION}/bin/mvn"
+    "${_MVN_DIR_NAME}/bin/mvn"
 
-  MVN_HOME="${_DIR}/apache-maven-${MVN_VERSION}"
-  MVN_BIN="${MVN_HOME}/bin/mvn"
-  export PATH="${MVN_HOME}/bin:${PATH}"
+  MVN_BIN="${_M2_HOME}/bin/mvn"
+  export M2_HOME="${_M2_HOME}"
+  export PATH="${_M2_HOME}/bin:${PATH}"
 }
  
 install_scala() {
   # use the Scala version defined in SMV pom.xml
   local scala_version=`grep "scala.version" "${_DIR}/${_SMV_DIR_NAME}/pom.xml" | \
                        head -1 | cut -f2 -d'>' | cut -f1 -d'<'`
-  local scala_bin="${_DIR}/scala-${scala_version}/bin/scala"
-
+  _SCALA_DIR_NAME="scala-${scala_version}"
+  _SCALA_HOME="${_DIR}/${_SCALA_DIR_NAME}"
+  local scala_bin="${_SCALA_HOME}/bin/scala"
+  
   install_app \
     "http://downloads.typesafe.com/scala/${scala_version}" \
     "scala-${scala_version}.tgz" \
@@ -88,13 +93,16 @@ install_scala() {
 
   SCALA_COMPILER="$(cd "$(dirname ${scala_bin})/../lib" && pwd)/scala-compiler.jar"
   SCALA_LIBRARY="$(cd "$(dirname ${scala_bin})/../lib" && pwd)/scala-library.jar"
+  export SCALA_HOME="${_SCALA_HOME}"
+  export PATH="${_SCALA_HOME}/bin:${PATH}"
 }
 
 install_spark() {
   # use the Spark version defined in SMV pom.xml
   local spark_version=`grep "spark.version" "${_DIR}/${_SMV_DIR_NAME}/pom.xml" | \
                        head -1 | cut -f2 -d'>' | cut -f1 -d'<'`
-  _SPARK_DIR_NAME="spark-${spark_version}-bin-hadoop2.4"  
+  _SPARK_DIR_NAME="spark-${spark_version}-bin-hadoop2.4" 
+  _SPARK_HOME="${_DIR}/${_SPARK_DIR_NAME}" 
   # TODO: use dynamic distribution URL to get suggested mirror
   install_app \
     "http://mirror.sdunix.com/apache/spark/spark-${spark_version}" \
@@ -102,31 +110,81 @@ install_spark() {
     "${_SPARK_DIR_NAME}/bin/spark-submit"
 
   #TODO: add SPARK_HOME/bin to PATH permanently  
-  export PATH="${_DIR}/${_SPARK_DIR_NAME}/bin:${PATH}"
+  export SPARK_HOME="${_SPARK_HOME}"
+  export PATH="${_SPARK_HOME}/bin:${PATH}"
   export SPARK_LOCAL_IP=127.0.0.1
 }
 
+#/Library/Java/JavaVirtualMachines/jdk1.8.0_73.jdk/Contents/Home
+jdk_installtion_validation() {
+  if type -p java >/dev/null; then
+    if [[ -z "$JAVA_HOME" ]];  then
+      echo "[ERROR] JAVA_HOME not set"
+      display_jdk_requirement
+    fi  
+  elif [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then
+    echo "[ERROR] JAVA_HOME not in PATH"
+    display_jdk_requirement
+  else
+    echo "[ERROR] JDK not found"
+    display_jdk_requirement
+  fi
+
+  JAVA_VER=$(java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q')
+  if [ "$JAVA_VER" -lt 17 ]; then
+    echo "[ERROR] JDK version less than 1.7"
+    display_jdk_requirement
+  else
+    echo "[INFO] JDK installation is correct"
+  fi
+}
+
+display_jdk_requirement() {
+  Msg="If you do not already have the JDK software(1.7 or newer) installed or 
+   if the JAVA_HOME environment variable is not set, the SMV installation will not be successful."
+  echo $Msg
+  echo "Example code to set JAVA_HOME in Unix System:"
+  echo "  export JAVA_HOME=jdk-install-dir"
+  echo "  export PATH=\$JAVA_HOME/bin:\$PATH"
+  exit 2  
+}
+
 build_smv() {
-  cd "${_DIR}/${_SMV_DIR_NAME}"
-  #echo "Using \`mvn\` from path: $MVN_BIN" 1>&2
-  # Set any `mvn` options if not already present
+  _SMV_HOME="${_DIR}/${_SMV_DIR_NAME}" 
+  cd "${_SMV_HOME}"
+  # Options used during compilation
+  _COMPILE_JVM_OPTS="-Xmx2g -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512m"
   export MAVEN_OPTS=${MAVEN_OPTS:-"$_COMPILE_JVM_OPTS"}
+  # mvn clean install
   ${MVN_BIN} clean install
+  # export SMV_HOME="${_SMV_HOME}"
+  # export PATH="${_SMV_HOME}/tools:${PATH}"
+
+  echo "[INFO] SMV was installed successfully!"
+}
+
+display_environment_setting() {
+  echo "Please add the following settings to your profile(e.g. ~/.bashrc or ~/.bash_profile):"
+  echo export M2_HOME="${_M2_HOME}"
+  echo export SCALA_HOME="${_SCALA_HOME}"
+  echo export SPARK_HOME="${_SPARK_HOME}"
+  echo export SPARK_LOCAL_IP=127.0.0.1
+  echo export PATH="\$M2_HOME/bin:\$SCALA_HOME/bin:\$SPARK_HOME/bin:\$PATH"
 }
 
 ###############################################################################
 
-echo "Start SMV installation"
+# JDK installtion validation
+jdk_installtion_validation
+
 # Download SMV
 download_smv
 
 # Install MAVEN
 install_mvn
 
-# TODO: install JDK
-
 # Install Scala(not necessarily needed to build SMV)
-#install_scala
+install_scala
 
 # Install Spark
 install_spark
@@ -136,4 +194,7 @@ install_spark
 # Build SMV
 build_smv
 
-echo "SMV was installed successfully!"
+# Display environment setting
+display_environment_setting
+
+  
