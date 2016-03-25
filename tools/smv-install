@@ -58,7 +58,7 @@ download_smv() {
   _SMV_HOME="${_DIR}/${_SMV_DIR_NAME}"
   install_app \
     "https://github.com/TresAmigosSD/SMV/archive" \
-    "master.zip" \
+    "master.tar.gz" \
     "${_SMV_DIR_NAME}/tools/smv-run"
 }
 
@@ -105,7 +105,7 @@ install_spark() {
   _SPARK_HOME="${_DIR}/${_SPARK_DIR_NAME}" 
   # TODO: use dynamic distribution URL to get suggested mirror
   install_app \
-    "http://mirror.sdunix.com/apache/spark/spark-${spark_version}" \
+    "http://www-us.apache.org/dist/spark/spark-${spark_version}" \
     "${_SPARK_DIR_NAME}.tgz" \
     "${_SPARK_DIR_NAME}/bin/spark-submit"
 
