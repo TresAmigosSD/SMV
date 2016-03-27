@@ -624,12 +624,12 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * 1, 20140325, 10.3, M201403
    * }}}
    **/
-  def addTimePanels(timeColName: String)(panels: panel.TimePanel*) = {
+  def addTimePanels(timeColName: String, doFiltering: Boolean = true)(panels: panel.TimePanel*) = {
     panels.map{tp =>
-      tp.addToDF(df, timeColName, keys)
+      tp.addToDF(df, timeColName, keys, doFiltering)
     }.reduce(_.unionAll(_))
   }
-  
+
   /**
    * Add records within each group is expected values of a column is missing
    * For now only works with StringType column.
@@ -654,20 +654,30 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * 1, b, x
    * }}}
    **/
-  private[smv] def fillExpectedWithNull(colName: String, expected: Set[String]): DataFrame = {
+  private[smv] def fillExpectedWithNull(
+    colName: String,
+    expected: Set[String],
+    doFiltering: Boolean
+  ): DataFrame = {
     import df.sqlContext.implicits._
 
     val missings = (exists: Seq[String]) => (expected -- exists.toSet).toSeq
     val tmpCol = mkUniq(df.columns, "tmpCol")
     val nullCols = df.columns.diff(keys :+ colName).map{s => lit(null).cast(df.schema(s).dataType) as s}
 
-    df.groupBy(keys.head, keys.tail: _*).
+    val res = df.groupBy(keys.head, keys.tail: _*).
       agg(udf(missings).apply(smvfuncs.collectSet(StringType)($"$colName")) as tmpCol).
       selectPlus(explode($"$tmpCol") as colName).
       selectMinus(tmpCol).
       selectPlus(nullCols: _*).
       select(df.columns.map{s => $"$s"}: _*).
       unionAll(df)
+
+    if(doFiltering) {
+      res.where($"$colName".isin(expected.toSeq.map{lit}: _*))
+    } else {
+      res
+    }
   }
   /**
    * Repartition SmvGroupedData using specified partitioner on the keys. Could take

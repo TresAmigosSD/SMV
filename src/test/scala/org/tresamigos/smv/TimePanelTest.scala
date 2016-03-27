@@ -28,7 +28,7 @@ class TimePanelTest extends SmvTestUtil {
     ).selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
 
     val tp = TimePanel(start = Month(2012, 1), end = Month(2012, 5))
-    val res = tp.addToDF(df, "ts", Seq("k"))
+    val res = tp.addToDF(df, "ts", Seq("k"), false)
 
     assertSrddDataEqual(res, """1,null,null,M201202;
 1,null,null,M201203;
@@ -46,6 +46,7 @@ class TimePanelTest extends SmvTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:Integer; ts:String; v:Double",
       "1,20120101,1.5;" +
+      "1,20120701,7.5;" +
       "1,20120501,2.45"
     ).selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
 

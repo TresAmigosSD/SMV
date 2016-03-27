@@ -160,13 +160,13 @@ case class TimePanel(start: PartialTime, end: PartialTime) extends Serializable 
     }
   }
 
-  private[smv] def addToDF(df: DataFrame, timeStampColName: String, keys: Seq[String]) = {
+  private[smv] def addToDF(df: DataFrame, timeStampColName: String, keys: Seq[String], doFiltering: Boolean) = {
     val timeColName = mkUniq(df.columns, "smvTime")
 
     val expectedValues = smvTimeSeq.toSet
 
     df.selectPlus(start.timeStampToSmvTime(df(timeStampColName)) as timeColName).
       smvGroupBy(keys.map{s => df(s)}: _*).
-      fillExpectedWithNull(timeColName, expectedValues)
+      fillExpectedWithNull(timeColName, expectedValues, doFiltering)
   }
 }
