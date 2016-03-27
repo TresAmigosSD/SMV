@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>ColumnHelper - Spark Modularized View 1.3-SNAPSHOT API - org.tresamigos.smv.ColumnHelper</title>
-          <meta name="description" content="ColumnHelper - Spark Modularized View 1.3 - SNAPSHOT API - org.tresamigos.smv.ColumnHelper" />
-          <meta name="keywords" content="ColumnHelper Spark Modularized View 1.3 SNAPSHOT API org.tresamigos.smv.ColumnHelper" />
+          <title>ColumnHelper - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.ColumnHelper</title>
+          <meta name="description" content="ColumnHelper - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.ColumnHelper" />
+          <meta name="keywords" content="ColumnHelper Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.ColumnHelper" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -199,6 +199,21 @@
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#containsAll" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="containsAll[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
+      <a id="containsAll[T](T*)(ClassTag[T]):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">containsAll</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.containsAll.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.containsAll.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">A boolean, which is true if ALL of the given parameters are contained in the
+Array column</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is true if ALL of the given parameters are contained in the
+Array column</p><pre>df.selectPlus($<span class="lit">"arrayCol"</span>.containsAll(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -284,6 +299,36 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#isAllIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isAllIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
+      <a id="isAllIn[T](T*)(ClassTag[T]):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isAllIn</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.isAllIn.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.isAllIn.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">A boolean, which is true if ALL of the Array column's elements are in the given
+paraneter sequence</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is true if ALL of the Array column's elements are in the given
+paraneter sequence</p><pre>df.selectPlus($<span class="lit">"arrayCol"</span>.isAllIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#isAnyIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isAnyIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
+      <a id="isAnyIn[T](T*)(ClassTag[T]):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isAnyIn</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.isAnyIn.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.isAnyIn.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">A boolean, which is ture if ANY one of the Array column element is in the given parameter
+sequence</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is ture if ANY one of the Array column element is in the given parameter
+sequence</p><pre>df.selectPlus($<span class="lit">"arrayCol"</span>.isAnyIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -336,6 +381,32 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvBinMode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvBinMode():org.apache.spark.sql.Column"></a>
+      <a id="smvBinMode():Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvBinMode</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Compute the mode given a double bin histogram</p><div class="fullcomment"><div class="comment cmt"><p>Compute the mode given a double bin histogram</p><pre>df_with_double_histogram_bin.select('bin_histogram.smvBinMode())</pre></div></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvBinPercentile" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvBinPercentile(percentile:Double):org.apache.spark.sql.Column"></a>
+      <a id="smvBinPercentile(Double):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvBinPercentile</span><span class="params">(<span name="percentile">percentile: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Compute a given percentile given a double bin histogram</p><div class="fullcomment"><div class="comment cmt"><p>Compute a given percentile given a double bin histogram</p><pre>df_with_double_histogram_bin.select('bin_histogram.smvBinPercentile(<span class="num">50.0</span>))</pre></div></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvCoarseGrain" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvCoarseGrain(bin:Double):org.apache.spark.sql.Column"></a>
       <a id="smvCoarseGrain(Double):Column"></a>
@@ -476,6 +547,20 @@ otherwise use the actual <code>Column</code> value.</p><p><b>Note:</b> Should co
 df.select($<span class="lit">"v"</span>.smvNullSub($<span class="lit">"defaultv"</span>) as <span class="lit">"newv2"</span>)</pre></div><dl class="paramcmts block"><dt class="param">newv</dt><dd class="cmt"><p>The constant to substitue if column is null. Must be same type is column.
 </p></dd></dl></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusDays" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPlusDays(col:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="smvPlusDays(Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPlusDays</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Add N days to <code>Timestamp</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Add N days to <code>Timestamp</code> column.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvPlusDays($<span class="lit">"ColumnName"</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The incremented <code>Timestamp</code> or <code>null</code> if input was <code>null</code>
+</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusDays" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvPlusDays(n:Int):org.apache.spark.sql.Column"></a>
       <a id="smvPlusDays(Int):Column"></a>
       <h4 class="signature">
@@ -595,6 +680,54 @@ lit(<span class="num">1.0</span>).smvSafeDiv(lit(<span class="kw">null</span>), 
       </h4>
       <p class="shortcomment cmt">Build a timestamp from a string.</p><div class="fullcomment"><div class="comment cmt"><p>Build a timestamp from a string.  The format is the same as the Java <code>Date</code> format.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The timestamp or null if input string is null
 </p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvTimeToIndex" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvTimeToIndex:org.apache.spark.sql.Column"></a>
+      <a id="smvTimeToIndex:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvTimeToIndex</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">smvTime helper to convert <code>smvTime</code> column to time index integer
+Example <code>smvTime</code> values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;
+Example output 172, 551, 16405 (# of quarters, months, and days from 19700101)
+</p>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvTimeToLabel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvTimeToLabel:org.apache.spark.sql.Column"></a>
+      <a id="smvTimeToLabel:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvTimeToLabel</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">smvTime helper to convert <code>smvTime</code> column to time index integer
+Example <code>smvTime</code> values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;
+Example output 172, 551, 16405 (# of quarters, months, and days from 19700101)
+</p>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvTimeToType" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvTimeToType:org.apache.spark.sql.Column"></a>
+      <a id="smvTimeToType:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvTimeToType</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">smvTime helper to convert <code>smvTime</code> column to time type string
+Example <code>smvTime</code> values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;
+Example output type &quot;quarter&quot;, &quot;month&quot;, &quot;day&quot;
+</p>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvYear" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvYear:org.apache.spark.sql.Column"></a>
       <a id="smvYear:Column"></a>
@@ -622,6 +755,24 @@ lit(<span class="num">1.0</span>).smvSafeDiv(lit(<span class="kw">null</span>), 
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#toExpr" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toExpr:org.apache.spark.sql.catalyst.expressions.Expression"></a>
+      <a id="toExpr:Expression"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toExpr</span><span class="result">: <span class="extype" name="org.apache.spark.sql.catalyst.expressions.Expression">Expression</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Convert <code>Column</code> to catalyst <code>Expression</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Convert <code>Column</code> to catalyst <code>Expression</code>.
+This is needed here as the internal <code>Expression</code> in <code>Column</code> is marked spark private
+but we sometimes need access to the expression.</p><pre>($<span class="lit">"v"</span> * <span class="num">5</span>).toExpr</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@DeveloperApi</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <a id="toString():String"></a>
@@ -692,6 +843,21 @@ lit(<span class="num">1.0</span>).smvSafeDiv(lit(<span class="kw">null</span>), 
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#withDesc" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="withDesc(desc:String):org.apache.spark.sql.Column"></a>
+      <a id="withDesc(String):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">withDesc</span><span class="params">(<span name="desc">desc: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Add description as metadata to a column
+e.</p><div class="fullcomment"><div class="comment cmt"><p>Add description as metadata to a column
+e.g.</p><pre>df.select($<span class="lit">"amt"</span> as <span class="lit">"amount"</span> withDesc <span class="lit">"Dollar amount spend"</span>)</pre></div></div>
     </li></ol>
             </div>
 

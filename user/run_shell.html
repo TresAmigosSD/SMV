@@ -32,7 +32,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
     <tr>
         <td class="nav-left">&lArr;&nbsp;<a href="run_app.html">Run Application</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
-        <td class="nav-right"><a href="edd.html">Extended Data Dictionary (EDD)</a>&nbsp;&rArr;</td>
+        <td class="nav-right"><a href="smv_r.html">Run Spark R Shell</a>&nbsp;&rArr;</td>
     </tr>
 </table>
 <hr>
@@ -51,7 +51,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <li><code>open(path)</code> : open the csv/schema file at the given path and return the corresponding <code>DataFrame</code><br /></li>
 <li><code>df.save(path)</code> : save the given df to a csv/schema file pair at the given path.<br /></li>
 <li><code>df.savel(path)</code> : save the contents of the <code>DataFrame</code> to a local (none HDFS) filesystem. WARNING: The contents must be able to fit in memory!!!<br /></li>
-<li><code>discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)</code> : use the first <code>n</code> (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules. The discovered schema is saved to the path + &quot;.schema.toBeReviewed&quot; file<br /></li>
+<li><code>discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)</code> : use the first <code>n</code> (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules. The discovered schema is saved to the current path with postfix<br /> &quot;.schema.toBeReviewed&quot;<br /></li>
 <li><code>dumpEdd(data_set)</code> : Generate base EDD results for given <code>SmvDataSet</code> and dump the results to the screen.</li>
 </ul>
 <h2 id="shell-package-provided-functions">Shell package provided functions</h2>
@@ -144,7 +144,8 @@ com.<span class="fu">mycompany</span>.<span class="fu">MyApp</span>.<span class=
 <li>&quot;O&quot; - SmvOutput<br /></li>
 <li>&quot;L&quot; - SmvModuleLink<br /></li>
 <li>&quot;F&quot; - SmvFile<br /></li>
-<li>&quot;M&quot; - SmvModule (but neither SmvOutput nor SmvModuleLink)</li>
+<li>&quot;M&quot; - SmvModule (but neither SmvOutput nor SmvModuleLink)<br /></li>
+<li>&quot;H&quot; - Hive Table</li>
 </ul>
 <p>Please see <a href="smv_intro.html">SMV Introduction</a> for details of the 4 types.</p>
 <h3 id="list-datasets-in-a-stage">List DataSets in a Stage</h3>

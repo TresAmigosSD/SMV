@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>EddResultFunctions - Spark Modularized View 1.3-SNAPSHOT API - org.tresamigos.smv.edd.EddResultFunctions</title>
-          <meta name="description" content="EddResultFunctions - Spark Modularized View 1.3 - SNAPSHOT API - org.tresamigos.smv.edd.EddResultFunctions" />
-          <meta name="keywords" content="EddResultFunctions Spark Modularized View 1.3 SNAPSHOT API org.tresamigos.smv.edd.EddResultFunctions" />
+          <title>EddResultFunctions - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.edd.EddResultFunctions</title>
+          <meta name="description" content="EddResultFunctions - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.edd.EddResultFunctions" />
+          <meta name="keywords" content="EddResultFunctions Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.edd.EddResultFunctions" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -202,6 +202,19 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="org.tresamigos.smv.edd.EddResultFunctions#compareWith" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="compareWith(that:org.apache.spark.sql.DataFrame):(Boolean,String)"></a>
+      <a id="compareWith(DataFrame):(Boolean,String)"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">compareWith</span><span class="params">(<span name="that">that: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span><span class="result">: (<span class="extype" name="scala.Boolean">Boolean</span>, <span class="extype" name="scala.Predef.String">String</span>)</span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.edd.EddResultFunctions#eddRes" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="eddRes:org.apache.spark.sql.DataFrame"></a>
       <a id="eddRes:DataFrame"></a>
@@ -215,6 +228,19 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.edd.EddResultFunctions#eddSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="eddSave(path:String):Unit"></a>
+      <a id="eddSave(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">eddSave</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">print edd result to file *</p>
     </li><li name="org.tresamigos.smv.edd.EddResultFunctions#eddShow" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="eddShow():Unit"></a>
       <a id="eddShow():Unit"></a>

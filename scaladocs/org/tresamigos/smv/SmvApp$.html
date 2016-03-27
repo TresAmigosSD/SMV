@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>SmvApp - Spark Modularized View 1.3-SNAPSHOT API - org.tresamigos.smv.SmvApp</title>
-          <meta name="description" content="SmvApp - Spark Modularized View 1.3 - SNAPSHOT API - org.tresamigos.smv.SmvApp" />
-          <meta name="keywords" content="SmvApp Spark Modularized View 1.3 SNAPSHOT API org.tresamigos.smv.SmvApp" />
+          <title>SmvApp - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.SmvApp</title>
+          <meta name="description" content="SmvApp - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.SmvApp" />
+          <meta name="keywords" content="SmvApp Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.SmvApp" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -268,15 +268,15 @@
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvApp#init" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="init(args:Array[String],_sc:Option[org.apache.spark.SparkContext]):Unit"></a>
-      <a id="init(Array[String],Option[SparkContext]):Unit"></a>
+      <a id="init(args:Array[String],_sc:Option[org.apache.spark.SparkContext],_sql:Option[org.apache.spark.sql.SQLContext]):org.tresamigos.smv.SmvApp"></a>
+      <a id="init(Array[String],Option[SparkContext],Option[SQLContext]):SmvApp"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">init</span><span class="params">(<span name="args">args: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="_sc">_sc: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.spark.SparkContext">SparkContext</span>] = <span class="symbol">None</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">init</span><span class="params">(<span name="args">args: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="_sc">_sc: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.spark.SparkContext">SparkContext</span>] = <span class="symbol">None</span></span>, <span name="_sql">_sql: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span>] = <span class="symbol">None</span></span>)</span><span class="result">: <a href="SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>
       </span>
       </h4>
       
@@ -319,6 +319,20 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvApp#newApp" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="newApp(sqlContext:org.apache.spark.sql.SQLContext):org.tresamigos.smv.SmvApp"></a>
+      <a id="newApp(SQLContext):SmvApp"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">newApp</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>)</span><span class="result">: <a href="SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Creates a new app instances from a sql context.</p><div class="fullcomment"><div class="comment cmt"><p>Creates a new app instances from a sql context.  This is used by SparkR to create a new app.
+</p></div></div>
     </li><li name="scala.AnyRef#notify" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notify():Unit"></a>
       <a id="notify():Unit"></a>

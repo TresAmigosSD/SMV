@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>smv - Spark Modularized View 1.3-SNAPSHOT API - org.tresamigos.smv</title>
-          <meta name="description" content="smv - Spark Modularized View 1.3 - SNAPSHOT API - org.tresamigos.smv" />
-          <meta name="keywords" content="smv Spark Modularized View 1.3 SNAPSHOT API org.tresamigos.smv" />
+          <title>smv - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv</title>
+          <meta name="description" content="smv - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv" />
+          <meta name="keywords" content="smv Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -107,6 +107,19 @@
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.DataSetDependency" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DataSetDependencyextendsProductwithSerializable"></a>
+      <a id="DataSetDependency:DataSetDependency"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="DataSetDependency.html"><span class="name">DataSetDependency</span></a><span class="params">(<span name="className">className: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Using asm to figure out SmvDataSet dependency</p>
     </li><li name="org.tresamigos.smv.SchemaDiscoveryHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SchemaDiscoveryHelperextendsAnyRef"></a>
       <a id="SchemaDiscoveryHelper:SchemaDiscoveryHelper"></a>
@@ -117,6 +130,19 @@
       </span>
       <span class="symbol">
         <a href="SchemaDiscoveryHelper.html"><span class="name">SchemaDiscoveryHelper</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvAncillary" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SmvAncillaryextendsAnyRef"></a>
+      <a id="SmvAncillary:SmvAncillary"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvAncillary.html"><span class="name">SmvAncillary</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       </h4>
       
@@ -147,7 +173,7 @@
       </h4>
       <p class="comment cmt">Container of all SMV config driven elements (cmd line, app props, user props, etc).</p>
     </li><li name="org.tresamigos.smv.SmvCsvFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvCsvFileextendsSmvFilewithProductwithSerializable"></a>
+      <a id="SmvCsvFileextendsSmvFilewithSmvDSWithParserwithProductwithSerializable"></a>
       <a id="SmvCsvFile:SmvCsvFile"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -155,12 +181,12 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="SmvCsvFile.html"><span class="name">SmvCsvFile</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttributes">csvAttributes: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a> = <span class="symbol">null</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>, <span name="isFullPath">isFullPath: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="SmvCsvFile.html"><span class="name">SmvCsvFile</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttributes">csvAttributes: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a> = <span class="symbol">null</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="isFullPath">isFullPath: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <a href="SmvDSWithParser.html" class="extype" name="org.tresamigos.smv.SmvDSWithParser">SmvDSWithParser</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       <p class="comment cmt">Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.</p>
     </li><li name="org.tresamigos.smv.SmvCsvStringData" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvCsvStringDataextendsSmvModulewithProductwithSerializable"></a>
+      <a id="SmvCsvStringDataextendsSmvDataSetwithSmvDSWithParserwithProductwithSerializable"></a>
       <a id="SmvCsvStringData:SmvCsvStringData"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -168,7 +194,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="SmvCsvStringData.html"><span class="name">SmvCsvStringData</span></a><span class="params">(<span name="schemaStr">schemaStr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="isPersistValidateResult">isPersistValidateResult: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="SmvCsvStringData.html"><span class="name">SmvCsvStringData</span></a><span class="params">(<span name="schemaStr">schemaStr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="isPersistValidateResult">isPersistValidateResult: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a> with <a href="SmvDSWithParser.html" class="extype" name="org.tresamigos.smv.SmvDSWithParser">SmvDSWithParser</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       <p class="comment cmt">a built-in SmvModule from schema string and data string</p>
@@ -185,6 +211,34 @@
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.SmvDFWithKeys" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvDFWithKeysextendsProductwithSerializable"></a>
+      <a id="SmvDFWithKeys:SmvDFWithKeys"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvDFWithKeys.html"><span class="name">SmvDFWithKeys</span></a><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="keys">keys: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvDSWithParser" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SmvDSWithParserextendsSmvDataSet"></a>
+      <a id="SmvDSWithParser:SmvDSWithParser"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvDSWithParser.html"><span class="name">SmvDSWithParser</span></a><span class="result"> extends <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
+common part to the new ABC: SmvDSWithParser
+</p>
     </li><li name="org.tresamigos.smv.SmvDataSet" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvDataSetextendsAnyRef"></a>
       <a id="SmvDataSet:SmvDataSet"></a>
@@ -212,7 +266,7 @@
       </h4>
       
     </li><li name="org.tresamigos.smv.SmvFrlFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvFrlFileextendsSmvFilewithProductwithSerializable"></a>
+      <a id="SmvFrlFileextendsSmvFilewithSmvDSWithParserwithProductwithSerializable"></a>
       <a id="SmvFrlFile:SmvFrlFile"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -220,7 +274,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="SmvFrlFile.html"><span class="name">SmvFrlFile</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>, <span name="isFullPath">isFullPath: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="SmvFrlFile.html"><span class="name">SmvFrlFile</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="isFullPath">isFullPath: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <a href="SmvDSWithParser.html" class="extype" name="org.tresamigos.smv.SmvDSWithParser">SmvDSWithParser</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
@@ -237,6 +291,61 @@
       </span>
       </h4>
       <p class="comment cmt">SMV operations that can be applied to grouped data.</p>
+    </li><li name="org.tresamigos.smv.SmvHierOpParam" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvHierOpParamextendsProductwithSerializable"></a>
+      <a id="SmvHierOpParam:SmvHierOpParam"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvHierOpParam.html"><span class="name">SmvHierOpParam</span></a><span class="params">(<span name="hasName">hasName: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="parentHier">parentHier: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Define whether to keep name columns and parent columns when perform rollup
+operation</p>
+    </li><li name="org.tresamigos.smv.SmvHierarchies" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvHierarchiesextendsSmvAncillary"></a>
+      <a id="SmvHierarchies:SmvHierarchies"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvHierarchies.html"><span class="name">SmvHierarchies</span></a><span class="result"> extends <a href="SmvAncillary.html" class="extype" name="org.tresamigos.smv.SmvAncillary">SmvAncillary</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt"><code>SmvHierarchies</code> is a <code>SmvAncillary</code> which combines a sequence of <code>SmvHierarchy.
+Through the </code>SmvHierarchyFuncs<code> it provides rollup methods on the hierarchy structure.</code></p>
+    </li><li name="org.tresamigos.smv.SmvHierarchy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvHierarchyextendsProductwithSerializable"></a>
+      <a id="SmvHierarchy:SmvHierarchy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvHierarchy.html"><span class="name">SmvHierarchy</span></a><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="hierarchyMap">hierarchyMap: <a href="SmvOutput.html" class="extype" name="org.tresamigos.smv.SmvOutput">SmvOutput</a></span>, <span name="hierarchy">hierarchy: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="nameColPostfix">nameColPostfix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;_name&quot;</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt"><code>SmvHierarchy</code> combines a hierarchy Map (a SmvOutput) with
+the hierarchy structure.</p>
+    </li><li name="org.tresamigos.smv.SmvHiveTable" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvHiveTableextendsSmvDataSetwithProductwithSerializable"></a>
+      <a id="SmvHiveTable:SmvHiveTable"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvHiveTable.html"><span class="name">SmvHiveTable</span></a><span class="params">(<span name="tableName">tableName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">SMV Dataset Wrapper around a hive table.</p>
     </li><li name="org.tresamigos.smv.SmvModule" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvModuleextendsSmvDataSet"></a>
       <a id="SmvModule:SmvModule"></a>
@@ -250,12 +359,12 @@
       </span>
       </h4>
       <p class="comment cmt">base module class.</p>
-    </li><li name="org.tresamigos.smv.SmvModuleLink" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.SmvModuleLink" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvModuleLinkextendsSmvModule"></a>
       <a id="SmvModuleLink:SmvModuleLink"></a>
       <h4 class="signature">
       <span class="modifier_kind">
-        <span class="modifier">abstract </span>
+        <span class="modifier"></span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
@@ -263,6 +372,20 @@
       </span>
       </h4>
       <p class="comment cmt">Link to an output module in another stage.</p>
+    </li><li name="org.tresamigos.smv.SmvMultiCsvFiles" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvMultiCsvFilesextendsSmvFilewithSmvDSWithParser"></a>
+      <a id="SmvMultiCsvFiles:SmvMultiCsvFiles"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvMultiCsvFiles.html"><span class="name">SmvMultiCsvFiles</span></a><span class="result"> extends <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> with <a href="SmvDSWithParser.html" class="extype" name="org.tresamigos.smv.SmvDSWithParser">SmvDSWithParser</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Instead of a single input file, specify a data dir with files which has
+the same schema and CsvAttributes.</p>
     </li><li name="org.tresamigos.smv.SmvOutput" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvOutputextendsAnyRef"></a>
       <a id="SmvOutput:SmvOutput"></a>
@@ -275,7 +398,7 @@
         <a href="SmvOutput.html"><span class="name">SmvOutput</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       </h4>
-      <p class="comment cmt">A marker trait that indicates that a module decorated with this trait is an output module.</p>
+      <p class="comment cmt">A marker trait that indicates that a SmvDataSet/SmvModule decorated with this trait is an output DataSet/module.</p>
     </li><li name="org.tresamigos.smv.SmvSchema" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvSchemaextendsSerializable"></a>
       <a id="SmvSchema:SmvSchema"></a>
@@ -361,6 +484,19 @@
       </span>
       </h4>
       <p class="comment cmt">Instead of using String for join type, always use the link here.</p>
+    </li><li name="org.tresamigos.smv.SmvKeys" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvKeys"></a>
+      <a id="SmvKeys:SmvKeys"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvKeys$.html"><span class="name">SmvKeys</span></a>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.SmvSchema" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvSchema"></a>
       <a id="SmvSchema:SmvSchema"></a>
@@ -388,6 +524,19 @@
       </h4>
       <p class="comment cmt">A Custom Data Selector (CDS) defines a sub-set of a group of records within a GroupedData,
 and user can define aggregations on this sub-set of data.</p>
+    </li><li name="org.tresamigos.smv.class_loader" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="class_loader"></a>
+      <a id="class_loader:class_loader"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="class_loader/package.html"><span class="name">class_loader</span></a>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.package#columnIf" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="columnIf[T](cond:org.apache.spark.sql.Column,l:org.apache.spark.sql.Column,r:T):org.apache.spark.sql.Column"></a>
       <a id="columnIf[T](Column,Column,T):Column"></a>
@@ -470,20 +619,58 @@ and user can define aggregations on this sub-set of data.</p>
       </span>
       </h4>
       <p class="comment cmt">Provides Extended Data Dictionary functions for ad hoc data analysis</p>
-    </li><li name="org.tresamigos.smv.package#histogram" visbl="pub" data-isabs="false" fullComment="yes" group="agg">
-      <a id="histogram(c:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
-      <a id="histogram(Column):Column"></a>
+    </li><li name="org.tresamigos.smv.histBoolean" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="histBoolean"></a>
+      <a id="histBoolean:histBoolean"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">def</span>
+        <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">histogram</span><span class="params">(<span name="c">c: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+        <a href="histBoolean$.html"><span class="name">histBoolean</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Histogram Aggregate function</p><div class="fullcomment"><div class="comment cmt"><p>Histogram Aggregate function</p><p>Return column has type <code>Map[child.dataType, Long]</code>
-</p></div></div>
+      
+    </li><li name="org.tresamigos.smv.histDouble" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="histDouble"></a>
+      <a id="histDouble:histDouble"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="histDouble$.html"><span class="name">histDouble</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.histInt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="histInt"></a>
+      <a id="histInt:histInt"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="histInt$.html"><span class="name">histInt</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.histStr" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="histStr"></a>
+      <a id="histStr:histStr"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="histStr$.html"><span class="name">histStr</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.package#makeColHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="makeColHelper(col:org.apache.spark.sql.Column):org.tresamigos.smv.ColumnHelper"></a>
       <a id="makeColHelper(Column):ColumnHelper"></a>
@@ -523,6 +710,19 @@ and user can define aggregations on this sub-set of data.</p>
       </span>
       </h4>
       <p class="shortcomment cmt">implicitly convert <code>Column</code> to <code>SmvCDSAggColumn</code></p>
+    </li><li name="org.tresamigos.smv.package#makeSmvDFWithKeys" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="makeSmvDFWithKeys(df:org.apache.spark.sql.DataFrame):org.tresamigos.smv.SmvDFWithKeys"></a>
+      <a id="makeSmvDFWithKeys(DataFrame):SmvDFWithKeys"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">makeSmvDFWithKeys</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span><span class="result">: <a href="SmvDFWithKeys.html" class="extype" name="org.tresamigos.smv.SmvDFWithKeys">SmvDFWithKeys</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">implicitly convert <code>DataFrame</code> to <code>SmvDFWithKeys</code></p>
     </li><li name="org.tresamigos.smv.package#makeSmvGDCvrt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="makeSmvGDCvrt(sgd:org.tresamigos.smv.SmvGroupedData):org.apache.spark.sql.GroupedData"></a>
       <a id="makeSmvGDCvrt(SmvGroupedData):GroupedData"></a>
@@ -550,6 +750,22 @@ and user can define aggregations on this sub-set of data.</p>
       </h4>
       <p class="shortcomment cmt">implicitly convert <code>SmvGroupedData</code> (created by <code>smvGropyBy</code> method)
  to <code>SmvDFHelper</code></p>
+    </li><li name="org.tresamigos.smv.package#makeStructTypeHelper" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="makeStructTypeHelper(schema:org.apache.spark.sql.types.StructType):org.tresamigos.smv.StructTypeHelper"></a>
+      <a id="makeStructTypeHelper(StructType):StructTypeHelper"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">makeStructTypeHelper</span><span class="params">(<span name="schema">schema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.StructTypeHelper">StructTypeHelper</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">implicitly convert <code>StructType</code> to <code>StructTypeHelper</code></p><div class="fullcomment"><div class="comment cmt"><p>implicitly convert <code>StructType</code> to <code>StructTypeHelper</code></p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@DeveloperApi</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="org.tresamigos.smv.package#makeSymColHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="makeSymColHelper(sym:Symbol):org.tresamigos.smv.ColumnHelper"></a>
       <a id="makeSymColHelper(Symbol):ColumnHelper"></a>
@@ -563,6 +779,36 @@ and user can define aggregations on this sub-set of data.</p>
       </span>
       </h4>
       <p class="shortcomment cmt">implicitly convert <code>Symbol</code> to <code>ColumnHelper</code></p>
+    </li><li name="org.tresamigos.smv.matcher" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="matcher"></a>
+      <a id="matcher:matcher"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="matcher/package.html"><span class="name">matcher</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.package#mkUniq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="mkUniq(collection:Seq[String],candidate:String):String"></a>
+      <a id="mkUniq(Seq[String],String):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">mkUniq</span><span class="params">(<span name="collection">collection: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="candidate">candidate: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Repeatedly changes <code>candidate</code> so that it is not found in the <code>collection</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Repeatedly changes <code>candidate</code> so that it is not found in the <code>collection</code>.</p><p>Useful when choosing a unique column name to add to a data frame.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@tailrec</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="org.tresamigos.smv.panel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="panel"></a>
       <a id="panel:panel"></a>
@@ -589,7 +835,7 @@ and user can define aggregations on this sub-set of data.</p>
       </span>
       </h4>
       <p class="comment cmt">Provide functions for the interactive shell</p>
-    </li><li name="org.tresamigos.smv.package#smvAsArray" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.package#smvAsArray" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvAsArray(columns:org.apache.spark.sql.Column*):org.apache.spark.sql.Column"></a>
       <a id="smvAsArray(Column*):Column"></a>
       <h4 class="signature">
@@ -602,9 +848,7 @@ and user can define aggregations on this sub-set of data.</p>
       </span>
       </h4>
       <p class="shortcomment cmt">Put a group of columns in an Array field
-will be deprecated when move to 1.</p><div class="fullcomment"><div class="comment cmt"><p>Put a group of columns in an Array field
-will be deprecated when move to 1.5 and use <code>array</code>
-</p></div></div>
+</p>
     </li><li name="org.tresamigos.smv.package#smvCreateLookUp" visbl="pub" data-isabs="false" fullComment="yes" group="other">
       <a id="smvCreateLookUp[S,D](map:Map[S,D])(implicitst:reflect.runtime.universe.TypeTag[S],implicitdt:reflect.runtime.universe.TypeTag[D]):org.apache.spark.sql.UserDefinedFunction"></a>
       <a id="smvCreateLookUp[S,D](Map[S,D])(scala.reflect.api.JavaUniverse.TypeTag[S],scala.reflect.api.JavaUniverse.TypeTag[D]):UserDefinedFunction"></a>
@@ -622,20 +866,40 @@ e.</p><div class="fullcomment"><div class="comment cmt"><p>create a UDF from a m
 e.g.</p><pre><span class="kw">val</span> lookUpGender = smvCreateLookUp(<span class="std">Map</span>(<span class="num">0</span>-&gt;<span class="lit">"m"</span>, <span class="num">1</span>-&gt;<span class="lit">"f"</span>))
 <span class="kw">val</span> res = df.select(lookUpGender($<span class="lit">"sex"</span>) as <span class="lit">"gender"</span>)</pre></div></div>
     </li><li name="org.tresamigos.smv.package#smvFirst" visbl="pub" data-isabs="false" fullComment="yes" group="agg">
-      <a id="smvFirst(c:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
-      <a id="smvFirst(Column):Column"></a>
+      <a id="smvFirst(c:org.apache.spark.sql.Column,nonNull:Boolean):org.apache.spark.sql.Column"></a>
+      <a id="smvFirst(Column,Boolean):Column"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smvFirst</span><span class="params">(<span name="c">c: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+        <span class="name">smvFirst</span><span class="params">(<span name="c">c: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="nonNull">nonNull: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">smvFirst: Return null if the first record is null</p><div class="fullcomment"><div class="comment cmt"><p>smvFirst: Return null if the first record is null</p><p>Since Spark &quot;first&quot; will return the first non-null value, we have to create
-our version smvFirst which to retune the real first value, even if it's null</p></div></div>
-    </li><li name="org.tresamigos.smv.package#smvStrCat" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <p class="shortcomment cmt">smvFirst: by default return null if the first record is null</p><div class="fullcomment"><div class="comment cmt"><p>smvFirst: by default return null if the first record is null</p><p>Since Spark &quot;first&quot; will return the first non-null value, we have to create
+our version smvFirst which to retune the real first value, even if it's null.
+The alternative form will try to return the first non-null value
+</p></div><dl class="paramcmts block"><dt class="param">c</dt><dd class="cmt"><p>the column</p></dd><dt class="param">nonNull</dt><dd class="cmt"><p>switches whether the function will try to find the first non-null value
+</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.package#smvIsAny" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvIsAny(col:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="smvIsAny(Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvIsAny</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">IsAny aggregate function
+Return true if any of the values of the aggregated column are true, otherwise false.</p><div class="fullcomment"><div class="comment cmt"><p>IsAny aggregate function
+Return true if any of the values of the aggregated column are true, otherwise false.
+NOTE: It returns false, if all the values are nulls
+</p></div></div>
+    </li><li name="org.tresamigos.smv.package#smvStrCat" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvStrCat(columns:org.apache.spark.sql.Column*):org.apache.spark.sql.Column"></a>
       <a id="smvStrCat(Column*):Column"></a>
       <h4 class="signature">
@@ -648,9 +912,7 @@ our version smvFirst which to retune the real first value, even if it's null</p>
       </span>
       </h4>
       <p class="shortcomment cmt">Concatenate columns as strings
-will be deprecated when move to 1.</p><div class="fullcomment"><div class="comment cmt"><p>Concatenate columns as strings
-will be deprecated when move to 1.5 and use <code>concat</code>
-</p></div></div>
+</p>
     </li><li name="org.tresamigos.smv.package#smvSum0" visbl="pub" data-isabs="false" fullComment="yes" group="agg">
       <a id="smvSum0(col:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
       <a id="smvSum0(Column):Column"></a>
@@ -664,8 +926,21 @@ will be deprecated when move to 1.5 and use <code>concat</code>
       </span>
       </h4>
       <p class="shortcomment cmt">restore 1.</p><div class="fullcomment"><div class="comment cmt"><p>restore 1.1 sum behaviour (and what is coming back in 1.4) where if all values are null, sum is 0
-Note: passed in column must be resolved (can not be just the name)
 </p></div></div>
+    </li><li name="org.tresamigos.smv.smvfuncs" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvfuncs"></a>
+      <a id="smvfuncs:smvfuncs"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="smvfuncs$.html"><span class="name">smvfuncs</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">Commonly used functions
+</p>
     </li></ol>
             </div>
 

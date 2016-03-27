@@ -64,6 +64,9 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <span class="kw">object</span> AcctsByZip <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;...&quot;</span>) {
   <span class="kw">override</span> <span class="kw">def</span> <span class="fu">requireDS</span>() = Seq(acct_demo)
   ...</code></pre>
+<p>In case that multiple files in a directory share the same <code>schema</code> but with headers in all of the files,<br />one can extends <code>SmvMultiCsvFiles</code> instead of <code>SmvCsvFile</code> to create the data set</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> acct_demo <span class="kw">extends</span> <span class="fu">SmvMultiCsvFiles</span>(<span class="st">&quot;accounts/acct_demo&quot;</span>)</code></pre>
+<p>By default use the CSV attributes defined in the schema file. If no CSV attributes in the schema file,<br />use comma as the delimiter with header.</p>
 <h2 id="advanced-usage">Advanced Usage</h2>
 <p>The previous example used a simple definition of an <code>SmvFile</code>. However, SMV files are proper <code>SmvDataSet</code> and can therefore implement their own transformations and provide DQM rules.<br />For example:</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">package</span> com.<span class="fu">mycom</span>.<span class="fu">myproj</span>.<span class="fu">stage1</span>.<span class="fu">input</span>
@@ -91,12 +94,18 @@ code > span.er { color: #ff0000; font-weight: bold; }
 # schema for input
 acct_id: String;  # this is the id
 user_id: String;
-amt: Double;  // transaction amount!</code></pre>
+amt: Double;  // transaction amount!
+income: Decimal[10];</code></pre>
 <h2 id="csv-attributes">CSV attributes</h2>
 <p>The schema file can specify the CSV attributes (delimiter, quote char, and header). All three attributes are optional and will default to (',', '&quot;', true) respectively.<br /><table><tr><th>Key</th><th>Default</th><th>Description</th></tr><tr><td>has-header</td><td>true</td><td>Determine if CSV file has header. Can only contain true/false</td></tr><tr><td>delimiter</td><td>,</td><td>CSV field delimiter/separator. For tab separated files, specify \t as the separator</td></tr><tr><td>quote-char</td><td>&quot;</td><td>character used to quote fields (only used if field contains characters that would confuse the parser)</td></tr></table></p>
 <h2 id="supported-schema-types">Supported schema types</h2>
 <h3 id="native-types">Native types</h3>
 <p><code>Integer</code>, <code>Long</code>, <code>Float</code>, <code>Double</code>, <code>Boolean</code>, and <code>String</code> types correspond to their corresponding JVM type.</p>
+<h3 id="decimal-type">Decimal type</h3>
+<p>The <code>Decimal</code> type can be used to hold a <code>BigDecimal</code> field value. An optional precision and scale values can also supplied. They default to 10 and 0 respectively if not defined (same as <code>BigDecimal</code>).</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">income: Decimal;
+amt: Decimal[<span class="dv">7</span>,<span class="dv">2</span>];
+other: Decimal[<span class="dv">10</span>];</code></pre>
 <h3 id="timestamp-type">Timestamp type</h3>
 <p>The <code>Timestamp</code> type can be used to hold a date/timestamp field value.<br />An optional format string can be used when defining a field of type <code>timestamp</code>.<br />The field format is the standard java <code>java.sql.Timestamp</code> format string.<br />If a format string is not specified, it defaults to <code>&quot;yyyyMMdd&quot;</code>.</p>
 <pre class="sourceCode scala"><code class="sourceCode scala">std_date: Timestamp;
@@ -140,7 +149,7 @@ scala&gt; <span class="kw">val</span> ad = tmp_acct_demo.<span class="fu">rdd</s
 <h3 id="schema-discovery">Schema Discovery</h3>
 <p>SMV can discover data schema from CSV file and create a schema file. Manual adjustment might be needed on the discovered schema file. Example of using the Schema Discovery in the interactive shell</p>
 <pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">discoverSchema</span>(<span class="st">&quot;/path/to/file.csv&quot;</span>)</code></pre>
-<p>The schema file will be created as a sibling file with the data file.</p>
+<p>The schema file will be created in the current running dir.</p>
 </article>
 </body>
 </html>

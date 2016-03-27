@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>SmvApp - Spark Modularized View 1.3-SNAPSHOT API - org.tresamigos.smv.SmvApp</title>
-          <meta name="description" content="SmvApp - Spark Modularized View 1.3 - SNAPSHOT API - org.tresamigos.smv.SmvApp" />
-          <meta name="keywords" content="SmvApp Spark Modularized View 1.3 SNAPSHOT API org.tresamigos.smv.SmvApp" />
+          <title>SmvApp - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.SmvApp</title>
+          <meta name="description" content="SmvApp - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.SmvApp" />
+          <meta name="keywords" content="SmvApp Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.SmvApp" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -82,7 +82,7 @@ launched using the SmvApp object (defined below)
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="org.tresamigos.smv.SmvApp#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(cmdLineArgs:Seq[String],_sc:Option[org.apache.spark.SparkContext]):org.tresamigos.smv.SmvApp"></a>
+      <a id="&lt;init&gt;(cmdLineArgs:Seq[String],_sc:Option[org.apache.spark.SparkContext],_sql:Option[org.apache.spark.sql.SQLContext]):org.tresamigos.smv.SmvApp"></a>
       <a id="&lt;init&gt;:SmvApp"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -90,7 +90,7 @@ launched using the SmvApp object (defined below)
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">SmvApp</span><span class="params">(<span name="cmdLineArgs">cmdLineArgs: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="_sc">_sc: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.spark.SparkContext">SparkContext</span>] = <span class="symbol">scala.None</span></span>)</span>
+        <span class="name">SmvApp</span><span class="params">(<span name="cmdLineArgs">cmdLineArgs: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="_sc">_sc: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.spark.SparkContext">SparkContext</span>] = <span class="symbol">scala.None</span></span>, <span name="_sql">_sql: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span>] = <span class="symbol">scala.None</span></span>)</span>
       </span>
       </h4>
       
@@ -215,6 +215,22 @@ launched using the SmvApp object (defined below)
       <p class="shortcomment cmt">Create a DataFrame from string for temporary use (in test or shell)
 By default, don't persist validation result
 </p>
+    </li><li name="org.tresamigos.smv.SmvApp#dynamicResolveRDD" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="dynamicResolveRDD(fqn:String,parentClassLoader:ClassLoader):org.apache.spark.sql.DataFrame"></a>
+      <a id="dynamicResolveRDD(String,ClassLoader):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">dynamicResolveRDD</span><span class="params">(<span name="fqn">fqn: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="parentClassLoader">parentClassLoader: <span class="extype" name="java.lang.ClassLoader">ClassLoader</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">dynamically resolve a module.</p><div class="fullcomment"><div class="comment cmt"><p>dynamically resolve a module.
+The module and all its dependents are loaded into their own classloader so that we can have multiple
+instances of the same module loaded at different times.
+</p></div></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -422,6 +438,20 @@ This method also checks for cycles in the module dependency graph.
       </h4>
       <p class="shortcomment cmt">The main entry point into the app.</p><div class="fullcomment"><div class="comment cmt"><p>The main entry point into the app.  This will parse the command line arguments
 to determine which modules should be run/graphed/etc.
+</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvApp#runModuleByName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="runModuleByName(modName:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="runModuleByName(String):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">runModuleByName</span><span class="params">(<span name="modName">modName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Run a module given it's name.</p><div class="fullcomment"><div class="comment cmt"><p>Run a module given it's name.  This is mostly used by SparkR to resolve modules.
 </p></div></div>
     </li><li name="org.tresamigos.smv.SmvApp#sc" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="sc:org.apache.spark.SparkContext"></a>

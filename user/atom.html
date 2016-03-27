@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
+  <link rel="stylesheet" type="text/css" href="github.css">
+</head>
+<body>
+<table class="nav-table">
+    <tr>
+        <td class="nav-left">&lArr;&nbsp;<a href="schema_discovery.html">Adding a new CSV input file (with schema discovery)</a></td>
+        <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
+        <td class="nav-right"><a href="smv_entity_matcher.html">Fuzzy matching between two datasets</a>&nbsp;&rArr;</td>
+    </tr>
+</table>
+<hr>
+
+<article class="markdown-body">
+<h1 id="use-atom-editor-with-smv-projects">Use Atom Editor with SMV Projects</h1>
+<p>Atom is a light weight editor/IDE which is highly extendable with a lot of packages. Given the ad-hoc<br />nature of data application development which SMV, we need quickly switch between editor/IDE and shell<br />terminals either on local or remote. Atom is an ideal editor for that purposes.</p>
+<p>When you installed Atom, you can install some useful packages through the setting dialog window (which will show up when you type Cmd-, ).</p>
+<h2 id="some-useful-packages">Some Useful Packages</h2>
+<ul>
+<li>vim-mode &amp; ex-mode - In case you are a VIM lover<br /></li>
+<li>language-scala - Scala highlighter (This module is only a highlighter, has no knowledge on semantics)<br /></li>
+<li>language-plantuml - Use plantUML for class diagrams and table ER diagrams? This is the highlighter<br /></li>
+<li>plantuml-viewer - Preview plantUML plots (need Graphviz, <code>dot</code> command, on system)</li>
+</ul>
+<p>In case you really need Atom to behave like an Scala IDE, you need the <code>Ensime</code> package. Will cover that<br />topic later.</p>
+<h2 id="work-on-remote-code">Work on Remote code</h2>
+<p>There are multiple packaged for Atom to work on remote code. After tried several of them, I found that for most of SMV use cases, the <code>atom-sync</code> package is pretty good.<br /><a href="https://atom.io/packages/atom-sync">https://atom.io/packages/atom-sync</a><br />The following is my &quot;.sync-config.cson&quot; file in a typical project</p>
+<pre class="sourceCode json"><code class="sourceCode json"><span class="er">remote:</span>
+  <span class="er">host:</span> <span class="er">&quot;rserver&quot;</span>
+  <span class="er">user:</span> <span class="er">&quot;mynameonremote&quot;</span>
+  <span class="er">path:</span> <span class="er">&quot;/home/users/mynameonremote/myProject&quot;</span>
+<span class="er">behaviour:</span>
+  <span class="er">uploadOnSave:</span> <span class="er">true</span>
+  <span class="er">syncDownOnOpen:</span> <span class="er">true</span>
+  <span class="er">forgetConsole:</span> <span class="er">false</span>
+  <span class="er">autoHideConsole:</span> <span class="er">true</span>
+  <span class="er">alwaysSyncAll:</span> <span class="er">false</span>
+<span class="er">option:</span>
+  <span class="er">deleteFiles:</span> <span class="er">false</span>
+  <span class="er">exclude:</span> <span class="ot">[</span>
+    <span class="st">&quot;.sync-config.cson&quot;</span>
+    <span class="st">&quot;target&quot;</span>
+    <span class="st">&quot;conf/smv-user-conf.props&quot;</span>
+    <span class="st">&quot;metastore_db&quot;</span>
+    <span class="st">&quot;dist&quot;</span>
+  <span class="ot">]</span></code></pre>
+<p>Please note that I configured private-public key pair for &quot;ssh&quot; so that &quot;rsync&quot; can run quietly.<br />Also I utilized <code>.ssh/config</code> to specify server ssh connection details. I aliased my server as<br /><code>rserver</code> in the config file. For details please refer<br /><a href="http://nerderati.com/2011/03/17/simplify-your-life-with-an-ssh-config-file/">http://nerderati.com/2011/03/17/simplify-your-life-with-an-ssh-config-file/</a></p>
+<p>With <code>atom-sync</code>, whenever you save on local version, it will <code>rsync</code> to the remote copy, so that<br />the experience is pretty similar to editing the remote file directly.</p>
+<p>Combining using this, SBT continuous compile, SMV class loader in SMV shell on the remote server,<br />you can simplify the entire edit-compile-try cycle of SMV Module development.</p>
+<h2 id="use-snippets">Use Snippets</h2>
+<p>One can add the following to ~/.atom/snippets.cson</p>
+<pre class="sourceCode json"><code class="sourceCode json"><span class="er">&#39;.source.scala&#39;:</span>
+  <span class="er">&#39;smv.smvModule&#39;:</span>
+    <span class="er">&#39;prefix&#39;:</span> <span class="er">&#39;xsmvm&#39;</span>
+    <span class="er">&#39;body&#39;:</span> <span class="er">&quot;&quot;&quot;</span>
+<span class="er">object</span> <span class="er">$</span><span class="fu">{</span><span class="er">1</span><span class="fu">:</span><span class="er">ExampleSmvModule</span><span class="fu">}</span> <span class="er">extends</span>
+  <span class="er">SmvModule(&quot;$</span><span class="fu">{</span><span class="er">2</span><span class="fu">:</span><span class="er">ExampleSmvModule</span> <span class="er">Description</span><span class="fu">}</span><span class="er">&quot;)</span> <span class="fu">{</span>
+
+  <span class="er">override</span> <span class="er">def</span> <span class="er">version()</span> <span class="er">=</span> <span class="er">0</span>
+  <span class="er">override</span> <span class="er">def</span> <span class="er">requiresDS()</span> <span class="er">=</span> <span class="er">Seq(</span>
+    <span class="er">${3</span><span class="fu">:</span><span class="er">List_of_SmvDataSet_This_module_depends</span><span class="fu">}</span>
+  <span class="er">)</span>
+
+  <span class="er">override</span> <span class="er">def</span> <span class="er">run(i:</span> <span class="er">runParams)</span> <span class="er">=</span> <span class="fu">{</span>
+    <span class="er">val</span> <span class="er">df</span> <span class="er">=</span> <span class="er">i(${4</span><span class="fu">:</span><span class="er">ModuleDependOn</span><span class="fu">}</span><span class="er">)</span>
+    <span class="er">import</span> <span class="er">df.sqlContext.implicits._</span>
+    <span class="er">$</span><span class="fu">{</span><span class="er">5</span><span class="fu">}</span>
+  <span class="er">}</span>
+<span class="er">}</span>
+
+<span class="er">&quot;&quot;&quot;</span></code></pre>
+<p>Now when you edit a Scala file, when you type <code>xsmvm</code> and the tab key, you will have a template<br />SmvModule to start with.</p>
+<h2 id="use-atom-with-ensime-as-a-scala-ide">Use Atom with Ensime as a Scala IDE</h2>
+<p>Ensime run on SBT as a server analyzing Scala code and serves all type of editors/IDEs with Scala<br />specific IDE functions.</p>
+<p>Atom has an Ensime package to connect to the Ensime server.</p>
+<p>Here are the steps to make it work</p>
+<ul>
+<li>Install Ensime plugin: follow the README <a href="https://github.com/ensime/ensime-atom">https://github.com/ensime/ensime-atom</a><br /></li>
+<li>To generate .ensime file in project dir<br /></li>
+<li>Install sbt, if not installed yet<br /></li>
+<li>modify <code>~/.sbt/0.13/plugins/build.sbt</code> with <code>addSbtPlugin(&quot;org.ensime&quot; % &quot;ensime-sbt&quot; % &quot;0.2.1&quot;)</code><br /></li>
+<li>run <code>sbt gen-ensime</code> in your project dir<br /></li>
+<li>You also need to compile the project with sbt, run &quot;sbt package&quot; in your project dir<br /></li>
+<li>Start atom on the project<br /></li>
+<li>Start ensime server with cmd-shift-P Ensime: Start</li>
+</ul>
+<p>The first time it will take quite long to get the server running, since it will download a lot stuff.<br />The 2 addition plugins mentioned in ensime-atom README are very helpful too.</p>
+<p>We typically need full IDE functionality (basically jumping around class/function definition and<br />uses) when we work on core SMV development. In most of app development using SMV, we more likely<br />to work on code and the interactive shell together, in that case basic Atom navigation without<br />Ensime is good enough.</p>
+</article>
+</body>
+</html>

@@ -30,9 +30,9 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <body>
 <table class="nav-table">
     <tr>
-        <td class="nav-left">&lArr;&nbsp;<a href="dqm.html">Validation & Data Quality Management (DQM)</a></td>
+        <td class="nav-left">&lArr;&nbsp;<a href="class_loader.html">Dynamic Class Loading</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
-        <td class="nav-right"><a href="_dummy_.html"></a>&nbsp;&rArr;</td>
+        <td class="nav-right"><a href="atom.html">Atom - A Small Editor Works Well with SMV</a>&nbsp;&rArr;</td>
     </tr>
 </table>
 <hr>
@@ -65,18 +65,19 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">discoverSchema</span>(<span class="st">&quot;/path/to/file.csv&quot;</span>, ca = <span class="kw">new</span> <span class="fu">CsvAttributes</span>(delimiter = &#39;|&#39;, hasHeader = <span class="kw">true</span>))</code></pre>
 <p>Please see <a href="smv_file.html">SMV Files</a> for more CsvAttributes details.</p>
 <p><strong>Note</strong> SMV currently can't handle Csv files with multiple lines of header. Other tools might be needed<br />to remove extra header lines before try to discover schema.</p>
-<p>The shell <code>discoverSchema</code> method will create a schema file at <code>/path/to/file.schema.toBeReviewed</code>. As<br />hinted by the file name, human need to review the schema file.</p>
+<p>The shell <code>discoverSchema</code> method will create a schema file on the local running dir with name <code>file.schema.toBeReviewed</code>. As<br />hinted by the file name, human need to review the schema file.</p>
 <p>Using the <code>CB1200CZ11.csv</code> file as an example,</p>
 <pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">discoverSchema</span>(<span class="st">&quot;data/input/employment/CB1200CZ11.csv&quot;</span>, ca = <span class="kw">new</span> <span class="fu">CsvAttributes</span>(delimiter = &#39;|&#39;, hasHeader = <span class="kw">true</span>))</code></pre>
 <p>The path here is relative to the project root dir, where I started the <code>smv-shell</code>.</p>
-<p>A <code>data/input/employment/CB1200CZ11.schema.toBeReviewed</code> file is generated. The first a couple of lines are</p>
+<p>A <code>CB1200CZ11.schema.toBeReviewed</code> file is generated. The first a couple of lines are</p>
 <pre><code>ST: Integer
 ZIPCODE: Integer
 GEO_ID: String
 GEO_TTL: String
 ...</code></pre>
 <p>As you can see that <code>ZIPCODE</code> is identified as <code>Integer</code>. In the review, one should edit the<br />file and change it to <code>String</code>, since we don't want to do any arithmetic on <code>ZIPCODE</code> and we don't<br />want to consider <code>04532</code> as <code>4532</code>.</p>
-<p>After review and editing, you can rename the file by removing the postfix. Now the data is ready for<br />SMV.</p>
+<p>After review and editing, you can rename the file by removing the postfix, and move it to the same dir<br />of the <code>csv</code> file. Now the data is ready for SMV.</p>
+<p><strong>Note</strong> field names with &quot;.&quot; in them may cause columns unable to be resolved, therefore, avoid field names that has &quot;.&quot; in them&quot;.</p>
 <p>For Csv data without header, the field name in the generated schema file will be <code>f1</code>, <code>f2</code>, etc.</p>
 </article>
 </body>

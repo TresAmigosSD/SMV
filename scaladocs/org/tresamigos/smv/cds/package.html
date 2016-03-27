@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>cds - Spark Modularized View 1.3-SNAPSHOT API - org.tresamigos.smv.cds</title>
-          <meta name="description" content="cds - Spark Modularized View 1.3 - SNAPSHOT API - org.tresamigos.smv.cds" />
-          <meta name="keywords" content="cds Spark Modularized View 1.3 SNAPSHOT API org.tresamigos.smv.cds" />
+          <title>cds - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.cds</title>
+          <meta name="description" content="cds - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.cds" />
+          <meta name="keywords" content="cds Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.cds" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -119,7 +119,7 @@ the main entry to the CDS.</p></div><div class="toggleContainer block">
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="CDSSubGroup.html"><span class="name">CDSSubGroup</span></a><span class="params">(<span name="currentSchema">currentSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="crossSchema">crossSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="currentRow">currentRow: <span class="extype" name="org.apache.spark.sql.catalyst.expressions.Row">Row</span></span>, <span name="crossRows">crossRows: <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="org.apache.spark.sql.catalyst.expressions.Row">Row</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span> with <span class="extype" name="scala.Product">Product</span></span>
+        <a href="CDSSubGroup.html"><span class="name">CDSSubGroup</span></a><span class="params">(<span name="currentSchema">currentSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="crossSchema">crossSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="currentRow">currentRow: <span class="extype" name="org.apache.spark.sql.catalyst.InternalRow">InternalRow</span></span>, <span name="crossRows">crossRows: <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="org.apache.spark.sql.catalyst.InternalRow">InternalRow</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span> with <span class="extype" name="scala.Product">Product</span></span>
       </span>
       </h4>
       <p class="comment cmt">CDSSubGroup is the data type which <code>SmvCDS</code> defined on</p>
@@ -151,6 +151,19 @@ within <code>current value</code> and <code>(current value - n)</code><code>
       </span>
       </h4>
       <p class="comment cmt">SMV Custom Data Selector</p>
+    </li><li name="org.tresamigos.smv.cds.SmvGDO" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SmvGDOextendsSerializable"></a>
+      <a id="SmvGDO:SmvGDO"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvGDO.html"><span class="name">SmvGDO</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">SmvGDO - SMV GroupedData Operator</p>
     </li><li name="org.tresamigos.smv.cds.SmvSelfCompareCDS" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvSelfCompareCDSextendsSmvCDS"></a>
       <a id="SmvSelfCompareCDS:SmvSelfCompareCDS"></a>

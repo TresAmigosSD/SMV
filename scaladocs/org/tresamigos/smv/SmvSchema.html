@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>SmvSchema - Spark Modularized View 1.3-SNAPSHOT API - org.tresamigos.smv.SmvSchema</title>
-          <meta name="description" content="SmvSchema - Spark Modularized View 1.3 - SNAPSHOT API - org.tresamigos.smv.SmvSchema" />
-          <meta name="keywords" content="SmvSchema Spark Modularized View 1.3 SNAPSHOT API org.tresamigos.smv.SmvSchema" />
+          <title>SmvSchema - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.SmvSchema</title>
+          <meta name="description" content="SmvSchema - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.SmvSchema" />
+          <meta name="keywords" content="SmvSchema Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.SmvSchema" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -377,6 +377,19 @@ It is no longer needed as a general purpose schema definition as spark now has t
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.SmvSchema#saveToLocalFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="saveToLocalFile(path:String):Unit"></a>
+      <a id="saveToLocalFile(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">saveToLocalFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>
@@ -403,6 +416,24 @@ It is no longer needed as a general purpose schema definition as spark now has t
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvSchema">SmvSchema</a> → AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvSchema#toStructType" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toStructType:org.apache.spark.sql.types.StructType"></a>
+      <a id="toStructType:StructType"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toStructType</span><span class="result">: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">convert SmvSchema to StructType
+</p><div class="fullcomment"><div class="comment cmt"><p>convert SmvSchema to StructType
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@DeveloperApi</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <a id="wait():Unit"></a>

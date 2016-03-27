@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>CDSSubGroup - Spark Modularized View 1.3-SNAPSHOT API - org.tresamigos.smv.cds.CDSSubGroup</title>
-          <meta name="description" content="CDSSubGroup - Spark Modularized View 1.3 - SNAPSHOT API - org.tresamigos.smv.cds.CDSSubGroup" />
-          <meta name="keywords" content="CDSSubGroup Spark Modularized View 1.3 SNAPSHOT API org.tresamigos.smv.cds.CDSSubGroup" />
+          <title>CDSSubGroup - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.cds.CDSSubGroup</title>
+          <meta name="description" content="CDSSubGroup - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.cds.CDSSubGroup" />
+          <meta name="keywords" content="CDSSubGroup Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.cds.CDSSubGroup" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -35,7 +35,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">CDSSubGroup</span><span class="params">(<span name="currentSchema">currentSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="crossSchema">crossSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="currentRow">currentRow: <span class="extype" name="org.apache.spark.sql.catalyst.expressions.Row">Row</span></span>, <span name="crossRows">crossRows: <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="org.apache.spark.sql.catalyst.expressions.Row">Row</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span> with <span class="extype" name="scala.Product">Product</span></span>
+        <span class="name">CDSSubGroup</span><span class="params">(<span name="currentSchema">currentSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="crossSchema">crossSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="currentRow">currentRow: <span class="extype" name="org.apache.spark.sql.catalyst.InternalRow">InternalRow</span></span>, <span name="crossRows">crossRows: <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="org.apache.spark.sql.catalyst.InternalRow">InternalRow</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span> with <span class="extype" name="scala.Product">Product</span></span>
       </span>
       </h4>
       
@@ -86,7 +86,7 @@ For example, <code><code><code>last3Days</code></code></code> means that</p><ul>
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="org.tresamigos.smv.cds.CDSSubGroup#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(currentSchema:org.apache.spark.sql.types.StructType,crossSchema:org.apache.spark.sql.types.StructType,currentRow:org.apache.spark.sql.catalyst.expressions.Row,crossRows:Iterable[org.apache.spark.sql.catalyst.expressions.Row]):org.tresamigos.smv.cds.CDSSubGroup"></a>
+      <a id="&lt;init&gt;(currentSchema:org.apache.spark.sql.types.StructType,crossSchema:org.apache.spark.sql.types.StructType,currentRow:org.apache.spark.sql.catalyst.InternalRow,crossRows:Iterable[org.apache.spark.sql.catalyst.InternalRow]):org.tresamigos.smv.cds.CDSSubGroup"></a>
       <a id="&lt;init&gt;:CDSSubGroup"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -94,7 +94,7 @@ For example, <code><code><code>last3Days</code></code></code> means that</p><ul>
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">CDSSubGroup</span><span class="params">(<span name="currentSchema">currentSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="crossSchema">crossSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="currentRow">currentRow: <span class="extype" name="org.apache.spark.sql.catalyst.expressions.Row">Row</span></span>, <span name="crossRows">crossRows: <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="org.apache.spark.sql.catalyst.expressions.Row">Row</span>]</span>)</span>
+        <span class="name">CDSSubGroup</span><span class="params">(<span name="currentSchema">currentSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="crossSchema">crossSchema: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>, <span name="currentRow">currentRow: <span class="extype" name="org.apache.spark.sql.catalyst.InternalRow">InternalRow</span></span>, <span name="crossRows">crossRows: <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="org.apache.spark.sql.catalyst.InternalRow">InternalRow</span>]</span>)</span>
       </span>
       </h4>
       
@@ -205,15 +205,15 @@ For example, <code><code><code>last3Days</code></code></code> means that</p><ul>
               
         </dd></dl></div>
     </li><li name="org.tresamigos.smv.cds.CDSSubGroup#crossRows" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="crossRows:Iterable[org.apache.spark.sql.catalyst.expressions.Row]"></a>
-      <a id="crossRows:Iterable[Row]"></a>
+      <a id="crossRows:Iterable[org.apache.spark.sql.catalyst.InternalRow]"></a>
+      <a id="crossRows:Iterable[InternalRow]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">crossRows</span><span class="result">: <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="org.apache.spark.sql.catalyst.expressions.Row">Row</span>]</span>
+        <span class="name">crossRows</span><span class="result">: <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="org.apache.spark.sql.catalyst.InternalRow">InternalRow</span>]</span>
       </span>
       </h4>
       
@@ -231,15 +231,15 @@ For example, <code><code><code>last3Days</code></code></code> means that</p><ul>
       </h4>
       
     </li><li name="org.tresamigos.smv.cds.CDSSubGroup#currentRow" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="currentRow:org.apache.spark.sql.catalyst.expressions.Row"></a>
-      <a id="currentRow:Row"></a>
+      <a id="currentRow:org.apache.spark.sql.catalyst.InternalRow"></a>
+      <a id="currentRow:InternalRow"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">currentRow</span><span class="result">: <span class="extype" name="org.apache.spark.sql.catalyst.expressions.Row">Row</span></span>
+        <span class="name">currentRow</span><span class="result">: <span class="extype" name="org.apache.spark.sql.catalyst.InternalRow">InternalRow</span></span>
       </span>
       </h4>
       

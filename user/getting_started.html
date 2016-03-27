@@ -122,7 +122,7 @@ EMP: Long</code></pre>
 <p>See <a href="run_shell.html">Run Spark Shell</a> for details.</p>
 <h4 id="exploring-smvdatasets-smvfiles-and-smvmodules">Exploring SmvDataSets (SmvFiles and SmvModules)</h4>
 <p>Once we are inside the spark shell, we can &quot;source&quot; (using the <code>s()</code> smv shell helper function) any <code>SmvFile</code> or <code>SmvModule</code> instance<br />and inspect the contents (because the <code>s</code> function returns a standard Spark <code>DataFrame</code> object)</p>
-<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d1=<span class="fu">s</span>(employment)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d1=<span class="fu">s</span>(stage1.<span class="fu">input</span>.<span class="fu">employment</span>)
 
 scala&gt; d1.<span class="fu">count</span>
 res1: Long = <span class="dv">38818</span>
@@ -139,7 +139,7 @@ ZIPCODE YEAR ESTAB EMP
 <span class="dv">35005</span>   <span class="dv">2012</span> <span class="dv">88</span>    <span class="dv">665</span>
 ...</code></pre>
 <p>You can also access SmvModules defined in the code.<br />This is <strong>not</strong> limited to output modules.</p>
-<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d2 = <span class="fu">s</span>(EmploymentByState)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d2 = <span class="fu">s</span>(stage1.<span class="fu">EmploymentByState</span>)
 d2: org.<span class="fu">apache</span>.<span class="fu">spark</span>.<span class="fu">sql</span>.<span class="fu">DataFrame</span> = [ST: string, EMP: bigint]
 
 scala&gt; d2.<span class="fu">printSchema</span>

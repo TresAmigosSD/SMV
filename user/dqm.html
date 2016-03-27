@@ -32,7 +32,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
     <tr>
         <td class="nav-left">&lArr;&nbsp;<a href="functions.html">SMV Functions</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
-        <td class="nav-right"><a href="schema_discovery.html">Adding a new CSV input file (with schema discovery)</a>&nbsp;&rArr;</td>
+        <td class="nav-right"><a href="class_loader.html">Dynamic Class Loading</a>&nbsp;&rArr;</td>
     </tr>
 </table>
 <hr>
@@ -82,6 +82,12 @@ code > span.er { color: #ff0000; font-weight: bold; }
 }</code></pre>
 <p>With above setting, the <code>SmvFile</code> will simply persist the validation result and keep moving.</p>
 <p>Either terminating the process or not, as long as the log is nontrivial, it will be printed to<br />console and persisted in the <code>SmvModule</code> persisted data path with postfix <code>.valid</code>.</p>
+<p>Sometimes we need more flexibility on specifying the terminate criterial. For example, I can tolerate<br />less than 10 parser errors, if more than that, terminate. Here is an example of how to specify that,</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> myfile <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;accounts/acct_demo.csv&quot;</span>) {
+  <span class="kw">override</span> <span class="kw">val</span> failAtParsingError = <span class="kw">false</span>
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">dqm</span>() = <span class="fu">SmvDQM</span>().<span class="fu">add</span>(<span class="fu">FailParserCountPolicy</span>(<span class="dv">10</span>))
+}</code></pre>
+<p>Please refer the <code>DQMPolicy</code> session below.</p>
 <h2 id="dqm">DQM</h2>
 <p>Although the parser enforced data schema, there are typically more things need to be checked on<br />real-world data. Here are some examples,</p>
 <ul>
@@ -127,8 +133,9 @@ code > span.er { color: #ff0000; font-weight: bold; }
     <span class="fu">add</span>(<span class="fu">DQMFix</span>($<span class="st">&quot;age&quot;</span> &gt; <span class="dv">120</span>, <span class="fu">lit</span>(<span class="dv">120</span>) as <span class="st">&quot;age&quot;</span>, <span class="st">&quot;fix1&quot;</span>)).
     <span class="fu">add</span>(<span class="fu">FailTotalRuleCountPolicy</span>(<span class="dv">100</span>))</code></pre>
 <p>Here <code>FailTotalRuleCountPolicy(...)</code> is a predefined <code>DQMPolicy</code>, which check the total count of<br />all the rules in this <code>DQM</code>, if the total count is within the threshold, the validation will<br />pass, otherwise will fail.</p>
-<p>There are 4 build-in <code>DQMPolicy</code>s</p>
+<p>There are 5 build-in <code>DQMPolicy</code>s</p>
 <ul>
+<li><code>FailParserCountPolicy(n)</code> - fail when total parser error count &gt;= n<br /></li>
 <li><code>FailTotalRuleCountPolicy(n)</code> - fail when total rule count &gt;= n<br /></li>
 <li><code>FailTotalFixCountPolicy(n)</code> - fail when total fix count &gt;= n<br /></li>
 <li><code>FailTotalRulePercentPolicy(r)</code> - fail when total rule count &gt;= total records * r, r in (0,1)<br /></li>

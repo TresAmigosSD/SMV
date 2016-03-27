@@ -22,32 +22,56 @@
 <h1 id="smv-installation">SMV Installation</h1>
 <p>SMV is currently supported on Linux (ubuntu, centos, etc) and OSX.</p>
 <h1 id="install-jdk">Install JDK</h1>
-<p>SMV requires Sun Java JDK version 1.7 or 1.8. This has not been tested with OpenJDK.<br />Download Java JDK from <a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html">JDK</a></p>
+<p>SMV requires Sun Java JDK version 1.7 or 1.8. This has not been tested with OpenJDK.<br />Download Oracle JDK from <a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html">JDK</a></p>
 <p>For Ubuntu, please make sure to set the Sun java jdk as the default (See <a href="https://www.digitalocean.com/community/tutorials/how-to-install-java-on-ubuntu-with-apt-get">Install JDK on Ubuntu</a> for details)</p>
-<h1 id="install-spark">Install Spark</h1>
-<p>Download the 1.3.0 version of Spark from <a href="http://spark.apache.org/downloads.html">Spark</a>.<br />It is recommended that the source version of spark is used rather than a binary download.<br />The source is quite usefull for debugging.</p>
-<p>If the Spark source was downloaded, then it needs to build as follows:</p>
-<pre><code>$ cd SPARK_HOME; mvn install</code></pre>
-<p>Add the spark <code>bin</code> directory to the <code>PATH</code> environment variable. For example:</p>
-<pre class="shell"><code>$ export PATH=&quot;${PATH}:SPARK_HOME/bin&quot;</code></pre>
-<p>where <code>SPARK_HOME</code> is the actual directory where Spark was installed.</p>
-<p>To verify that Spark was installed correctly, run the following command:</p>
-<pre class="shell"><code>$ spark-submit -h</code></pre>
-<h1 id="install-git-and-maven">Install Git and Maven</h1>
 <ul>
-<li>For git, follow the <a href="https://git-scm.com/book/en/v2/Getting-Started-Installing-Git">Git installation instructions</a><br /></li>
-<li>For maven, follow the <a href="http://maven.apache.org/install.html">Maven installation instructions</a></li>
+<li><p>Ensure JAVA_HOME environment variable is set in user profile and added to PATH:</p>
+<pre class="shell"><code>$ export JAVA_HOME=jdk-install-dir
+$ export PATH=$PATH:$JAVA_HOME/bin</code></pre></li>
+<li><p>Verify JDK installlation in a new shell:</p>
+<pre class="shell"><code>$ echo $JAVA_HOME
+$ java -version</code></pre></li>
+</ul>
+<h1 id="install-maven">Install Maven</h1>
+<p>Building Spark using Maven requires Maven 3.3.3 or newer. Follow the <a href="http://maven.apache.org/install.html">Maven installation instructions</a></p>
+<ul>
+<li><p>Adding to PATH:</p>
+<pre class="shell"><code>$ export PATH=$PATH:maven-install-dir/bin</code></pre></li>
+<li><p>Verify Maven installlation in a new shell:</p>
+<pre class="shell"><code>$ mvn -v</code></pre>
+<p>Learn more about <a href="https://maven.apache.org/run.html">how to use mvn command</a></p></li>
+</ul>
+<h1 id="install-spark">Install Spark</h1>
+<p>Download the 1.5.2 version of <a href="http://spark.apache.org/downloads.html">Spark</a>.<br />There are two options to install Spark:</p>
+<ul>
+<li>&quot;Happy Option&quot;: Download the Spark prebuild binary</li>
+</ul>
+<p>For normal users who don't need to debug, it is recommended to download the Spark prebuild binary.<br />Please use version build for Hadoop 2.4 or 2.6 and later (Please do NOT use the version without hadoop as hadoop support is required by SMV). You just need to download, decompress, and finish the environment setting and verify steps below.</p>
+<ul>
+<li>&quot;Thorough Option&quot;: Build Spark from source code</li>
+</ul>
+<p>For developers who may need to debug, it is recommended to build Spark from source code.<br /><a href="http://www.scala-lang.org/download/2.10.4.html">Scala 2.10.4</a> is needed to build Spark 1.5.2.</p>
+<p>Please do NOT use scala version 2.11+, because Spark does not yet support its JDBC component for Scala 2.11, while Spark hive is needed by SMV.</p>
+<p>After Scala is downloaded and decompress, add it to PATH and verify Scala installation with</p>
+<pre class="shell"><code>$ scala -version</code></pre>
+<p>After the Spark source was downloaded, run the following command under Spark directory:</p>
+<pre class="shell"><code>$ mvn clean install -Phive -Phive-thriftserver -DskipTests </code></pre>
+<p>Note: Spark hive is needed in SMV and to enable Hive integration for Spark SQL along with its JDBC server and CLI, <code>-Phive and Phive-thriftserver</code> are needed as build options. Sometimes SPARK source code test the Hadoop environment so install on standalone machine without Hadoop may cause test failure. So we suggest to add <code>-DskipTests</code> as build option.</p>
+<p>For more information regarding building Spark, please refer to the <a href="http://spark.apache.org/docs/1.5.2/building-spark.html">official document</a></p>
+<ul>
+<li><p>Spark environment setting in user profile:</p>
+<pre class="shell"><code>$ export SPARK_HOME=Spark-install-dir
+$ export PATH=$PATH:$SPARK_HOME/bin</code></pre></li>
+<li><p>To verify that Spark was installed correctly, run the following command:</p>
+<pre class="shell"><code>$ spark-submit --version</code></pre></li>
 </ul>
 <h1 id="install-smv">Install SMV</h1>
 <ol>
-<li>Clone the SMV source repository.</li>
+<li><p>Download <a href="https://github.com/TresAmigosSD/SMV/archive/master.zip">the latest SMV source code</a></p></li>
+<li><p>Build the package.</p>
+<pre class="shell"><code>$ mvn clean install</code></pre></li>
 </ol>
-<pre class="shell"><code>$ git clone https://github.com/TresAmigosSD/SMV.git</code></pre>
-<ol>
-<li>Build the package.</li>
-</ol>
-<pre class="shell"><code>$ mvn clean install</code></pre>
-<p>You may need to set MAVEN_OPTS to avoid out of memory issue.</p>
+<p>In case of using JDK7, you may need to set MAVEN_OPTS to avoid out of memory issue</p>
 <pre class="shell"><code>export MAVEN_OPTS=&quot;-Xmx512m -XX:MaxPermSize=128m&quot;</code></pre>
 </article>
 </body>

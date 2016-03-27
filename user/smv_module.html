@@ -32,7 +32,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
     <tr>
         <td class="nav-left">&lArr;&nbsp;<a href="smv_file.html">SMV Files</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
-        <td class="nav-right"><a href="smv_stages.html">SMV Stages</a>&nbsp;&rArr;</td>
+        <td class="nav-right"><a href="smv_hive.html">SMV Hive Tables</a>&nbsp;&rArr;</td>
     </tr>
 </table>
 <hr>
@@ -76,10 +76,11 @@ code > span.er { color: #ff0000; font-weight: bold; }
   }
 }</code></pre>
 <h1 id="output-modules">Output Modules</h1>
-<p>As the number of modules in a given SMV stage grows, it becomes more difficult to track which<br />modules are the &quot;leaf&quot;/output modules within the stage.<br />Any module within the stage can be marked as an output module by mixing-in the <code>SmvOutput</code> trait.<br />For example:</p>
+<p>As the number of modules in a given SMV stage grows, it becomes more difficult to track which<br />modules are the &quot;leaf&quot;/output modules within the stage.<br />Any module or SmvDataSet within the stage can be marked as an output module by mixing-in the <code>SmvOutput</code> trait.<br />For example:</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;this is my module&quot;</span>) <span class="kw">with</span> SmvOutput {
 ...
 }</code></pre>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyData <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;path/to/file/data.csv&quot;</span>, CA.<span class="fu">ca</span>) <span class="kw">with</span> SmvOutput</code></pre>
 <p>The set of <code>SmvOutput</code> output modules in a stage define the data <em>interface/api</em> of the stage. Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.</p>
 <p>In addition to the above, the ability to mark certain modules as output has the following benefits:</p>
 <ul>
