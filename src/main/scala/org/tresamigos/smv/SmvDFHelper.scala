@@ -990,6 +990,26 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
+   *
+   **/
+  def exportCsv(path: String, n: Integer = null) {
+    val schema = SmvSchema.fromDataFrame(df)
+    val ca = CsvAttributes.defaultCsv
+
+    val qc = ca.quotechar
+    val headerStr = df.columns.map(_.trim).map(fn => qc + fn + qc).
+      mkString(ca.delimiter.toString)
+
+    val bodyStr = if(n == null) {
+      df.map(schema.rowToCsvString(_, ca)).collect.mkString("\n")
+    } else {
+      df.limit(n).map(schema.rowToCsvString(_, ca)).collect.mkString("\n")
+    }
+
+    SmvReportIO.saveLocalReport(headerStr + "\n" + bodyStr + "\n", path)
+  }
+
+  /**
    * Add a set of DoubleBinHistogram columns to a DataFrame.
    * Perform a DoubleBinHistogram on all the columns_to_bin. The num_of_bins is the corresponding
    * number of bin for each column in columns_to_bin.
