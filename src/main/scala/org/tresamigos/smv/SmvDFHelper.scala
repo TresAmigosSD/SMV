@@ -990,7 +990,14 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
+   * Export DF to local file system. Path is relative to the app runing dir
    *
+   * @param path relative path to the app runing dir on local file system (instead of HDFS)
+   * @param n number of records to be exported. Defualt is to export every records
+   *
+   * **NOTE** since we have to collect the DF and then call JAVA file operations, the job
+   * have to be launched as either local or yar-client mode. Also it is user's responsibility
+   * to make sure that the DF is small enought to fit into memory. 
    **/
   def exportCsv(path: String, n: Integer = null) {
     val schema = SmvSchema.fromDataFrame(df)
