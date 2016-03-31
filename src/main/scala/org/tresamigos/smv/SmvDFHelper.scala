@@ -378,8 +378,17 @@ class SmvDFHelper(df: DataFrame) {
     if (selectExpressions.isEmpty) {
       df.select(k1, krest: _*).distinct()
     } else {
+      val ordinals = df.schema.getIndices(keys: _*)
+      val rowToKeys: Row => Seq[Any] = {row =>
+        ordinals.map{i => row(i)}
+      }
+
+      val rdd = df.rdd.groupBy(rowToKeys).values.map{i => i.head}
+      df.sqlContext.createDataFrame(rdd, df.schema)
+      /* although above code pased all test cases. keep the original code here just in-case
       df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*).
         select(df.columns.head, df.columns.tail: _*)
+        */
     }
   }
 
@@ -987,6 +996,33 @@ class SmvDFHelper(df: DataFrame) {
   def smvDiscoverPK(n: Integer = 10000, debug: Boolean = false): (Seq[String], Long) = {
     val discoverer = new PrimaryKeyDiscovery(debug)
     discoverer.discoverPK(df, n)
+  }
+
+  /**
+   * Export DF to local file system. Path is relative to the app runing dir
+   *
+   * @param path relative path to the app runing dir on local file system (instead of HDFS)
+   * @param n number of records to be exported. Defualt is to export every records
+   *
+   * **NOTE** since we have to collect the DF and then call JAVA file operations, the job
+   * have to be launched as either local or yar-client mode. Also it is user's responsibility
+   * to make sure that the DF is small enought to fit into memory.
+   **/
+  def exportCsv(path: String, n: Integer = null) {
+    val schema = SmvSchema.fromDataFrame(df)
+    val ca = CsvAttributes.defaultCsv
+
+    val qc = ca.quotechar
+    val headerStr = df.columns.map(_.trim).map(fn => qc + fn + qc).
+      mkString(ca.delimiter.toString)
+
+    val bodyStr = if(n == null) {
+      df.map(schema.rowToCsvString(_, ca)).collect.mkString("\n")
+    } else {
+      df.limit(n).map(schema.rowToCsvString(_, ca)).collect.mkString("\n")
+    }
+
+    SmvReportIO.saveLocalReport(headerStr + "\n" + bodyStr + "\n", path)
   }
 
   /**

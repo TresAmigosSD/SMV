@@ -162,7 +162,7 @@ private[smv] case class MapTypeFormat(
       null
     else
       // TODO: should probably use openCSV to parse the map to array
-      s.split("\\|").sliding(2,2).map { a =>
+      s.split("\\|", -1).sliding(2,2).map { a =>
         (keyTypeFormat.strToVal(a(0)), valTypeFormat.strToVal(a(1)))
       }.toMap
   }
@@ -188,7 +188,7 @@ private[smv] case class ArrayTypeFormat(valTypeFormat: TypeFormat) extends TypeF
       null
     else
       // TODO: should probably use openCSV to parse the map to array
-      s.split("\\|").map { a => valTypeFormat.strToVal(a) }
+      s.split("\\|", -1).map { a => valTypeFormat.strToVal(a) }
   }
   override def valToStr(v: Any) : String = {
     if (v==null) return ""

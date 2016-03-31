@@ -700,7 +700,10 @@ class ColumnHelper(column: Column) {
    **/
    def isAnyIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
      val name = s"isAnyIn(${column})"
-     val f = (v: Seq[Any]) => v.map{c => candidates.contains(c)}.reduce(_||_)
+     val f = (v: Seq[Any]) => {
+       if (v.isEmpty) false
+       else v.map{c => candidates.contains(c)}.reduce(_||_)
+     }
      udf(f).apply(column) as name
    }
 
@@ -714,7 +717,10 @@ class ColumnHelper(column: Column) {
    **/
    def isAllIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
      val name = s"isAllIn(${column})"
-     val f = (v: Seq[Any]) => v.map{c => candidates.contains(c)}.reduce(_&&_)
+     val f = (v: Seq[Any]) => {
+       if (v.isEmpty) false
+       else v.map{c => candidates.contains(c)}.reduce(_&&_)
+     }
      udf(f).apply(column) as name
    }
 
@@ -728,7 +734,12 @@ class ColumnHelper(column: Column) {
    **/
    def containsAll[T](candidates: T*)(implicit tt: ClassTag[T]) = {
      val name = s"containsAll(${column})"
-     val f = (v: Seq[Any]) => candidates.map{c => v.contains(c)}.reduce(_&&_)
+     require(!candidates.isEmpty)
+
+     val f = (v: Seq[Any]) => {
+       if (v.isEmpty) false
+       else candidates.map{c => v.contains(c)}.reduce(_&&_)
+     }
      udf(f).apply(column) as name
    }
 }
