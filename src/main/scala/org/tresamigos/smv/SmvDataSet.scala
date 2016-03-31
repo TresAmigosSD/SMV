@@ -172,7 +172,10 @@ abstract class SmvDataSet {
 
     val df = rdd.smvPipeCount(counter)
     val handler = new FileIOHandler(app.sqlContext, filePath)
-    handler.saveAsCsvWithSchema(df)
+
+    //Always persist null string as a special value with assumption that it's not
+    //a valid data value
+    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
 
     val after = DateTime.now()
     val runTime = PeriodFormat.getDefault().print(new Period(before, after))
@@ -223,7 +226,9 @@ abstract class SmvDataSet {
     val df = rdd()
     val version = app.smvConfig.cmdLine.publish()
     val handler = new FileIOHandler(app.sqlContext, publishPath(version))
-    handler.saveAsCsvWithSchema(df)
+    //Same as in persist, publish null string as a special value with assumption that it's not
+    //a valid data value
+    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
 
     /* publish should also calculate edd if generarte Edd flag was turned on */
     if (app.genEdd)
