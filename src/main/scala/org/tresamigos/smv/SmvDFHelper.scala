@@ -378,8 +378,17 @@ class SmvDFHelper(df: DataFrame) {
     if (selectExpressions.isEmpty) {
       df.select(k1, krest: _*).distinct()
     } else {
+      val ordinals = df.schema.getIndices(keys: _*)
+      val rowToKeys: Row => Seq[Any] = {row =>
+        ordinals.map{i => row(i)}
+      }
+
+      val rdd = df.rdd.groupBy(rowToKeys).values.map{i => i.head}
+      df.sqlContext.createDataFrame(rdd, df.schema)
+      /* although above code pased all test cases. keep the original code here just in-case
       df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*).
         select(df.columns.head, df.columns.tail: _*)
+        */
     }
   }
 
@@ -997,7 +1006,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * **NOTE** since we have to collect the DF and then call JAVA file operations, the job
    * have to be launched as either local or yar-client mode. Also it is user's responsibility
-   * to make sure that the DF is small enought to fit into memory. 
+   * to make sure that the DF is small enought to fit into memory.
    **/
   def exportCsv(path: String, n: Integer = null) {
     val schema = SmvSchema.fromDataFrame(df)
