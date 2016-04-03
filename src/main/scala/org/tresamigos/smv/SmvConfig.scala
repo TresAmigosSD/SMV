@@ -48,9 +48,8 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val graph = toggle("graph", default=Some(false),
     descrYes="generate a dependency graph of the given modules (modules are not run)",
     descrNo="do not generate a dependency graph")
-  val json = toggle("json", default=Some(false), noshort=true,
-    descrYes="generate a json object to represent entire app's module dependency (modules are not run)",
-    descrNo="do not generate a json")
+
+  val json = opt[List[String]]("json", noshort = true, descr = "generate a json object to represent app's module dependency for a given set of stages (modules are not run)")
 
   // --- data directories override
   val dataDir    = opt[String]("data-dir",    noshort = true, descr = "specify the top level data directory")
@@ -251,4 +250,3 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     mergedProps.get(propName).flatMap { s: String => Try(s.toInt).toOption }
   }
 }
-

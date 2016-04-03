@@ -245,8 +245,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * to determine which modules should be run/graphed/etc.
    */
   def run() = {
-    if (smvConfig.cmdLine.json()) {
-      genJSON()
+    if (smvConfig.cmdLine.json().nonEmpty) {
+      genJSON(smvConfig.cmdLine.json())
     }
 
     if (smvConfig.modulesToRun().nonEmpty) {
@@ -295,9 +295,11 @@ object SmvApp {
 // TODO: json is a representation.  Need to rename this class to indicate WHAT it is actually generating not just the type.
 // TODO: this should be moved into stages (and accept a list of stages rather than packages)
 private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
+  println(packages)
+  println(app.packagesPrefix)
   private def allModules = {
     if (packages.isEmpty) app.allAppModules
-    else packages.map{app.packagesPrefix + _}.flatMap{ p => SmvReflection.objectsInPackage[SmvModule](p) }
+    else packages.flatMap{ p => SmvReflection.objectsInPackage[SmvModule](p) }
   }.sortWith{(a,b) => a.name < b.name}
 
   private def allFiles = allModules.flatMap(m => m.requiresDS().filter(v => v.isInstanceOf[SmvFile]))
@@ -310,7 +312,8 @@ private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
       s"""  "${printName(m)}": {""" + "\n" +
       s"""    "version": ${m.version},""" + "\n" +
       s"""    "dependents": [""" + m.requiresDS().map{v => s""""${printName(v)}""""}.mkString(",") + "],\n" +
-      s"""    "description": "${m.description}"""" + "}"
+      s"""    "description": "${m.description}",""" + "\n" +
+      s"""    "stage": "${m.parentStage.name}"""" + "}"
     }.mkString(",\n") +
     "}"
   }
