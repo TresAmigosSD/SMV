@@ -28,8 +28,9 @@ private[smv] class SmvDSGraph(stages: SmvStages, targetDSs: Seq[SmvDataSet] = Ni
     val fromDSs = stages.predecessors.getOrElse(ds, Nil)
     fromDSs.map{fds => fds -> ds}
   }
-  val clusters: Seq[(SmvStage, Seq[SmvDataSet])] = nodes.groupBy(_.parentStage).toList
-  val hasMultiClusters = nodes.groupBy(_.parentStage).size > 1
+  val clusters: Seq[(SmvStage, Seq[SmvDataSet])] =
+    nodes.filter(_.parentStage != null).groupBy(_.parentStage).toList
+  val hasMultiClusters = clusters.size > 1
 
   def nodeString(
     dsToNodeStr: SmvDataSet => String,
@@ -177,11 +178,11 @@ private[smv] class SmvGraphUtil(stages: SmvStages) {
     ) else Nil
 
     val linkString = Seq(
-      s""""links": {""" + "\n" +
+      s""""links": [""" + "\n" +
       g.edges.map{case (f, t) =>
-        s"""  ${toName(f)}: ${toName(t)}"""
+        s"""  {${toName(f)}: ${toName(t)}}"""
       }.mkString(",\n") + "\n" +
-      "}"
+      "]"
     )
 
     val jsonStr = {
