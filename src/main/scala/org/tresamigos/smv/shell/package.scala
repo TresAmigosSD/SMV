@@ -19,6 +19,8 @@ import org.apache.spark.sql.functions._
 import org.joda.time._
 import org.joda.time.format._
 
+import graph._
+
 /**
  * Provide functions for the interactive shell
  *
@@ -28,30 +30,32 @@ import org.joda.time.format._
  * }}}
  **/
 package object shell {
+  private val appGU = new SmvGraphUtil(SmvApp.app.stages)
+
   def lsStage = SmvApp.app.stages.stageNames.foreach(println)
 
   /**
    * list all datasets in a stage
    * @param stageName could be the FQN or just the basename
    */
-  def ls(stageName: String) = println(new ListDataSets(SmvApp.app.stages.findStage(stageName)).list)
+  def ls(stageName: String) = println(appGU.createDSList(SmvApp.app.stages.findStage(stageName)))
 
   /**
    * list all the datasets in the entire project
    **/
-  def ls = println(new ListDataSets(SmvApp.app.stages).list)
+  def ls = println(appGU.createDSList())
 
   /**
    * list `dead` datasets in a stage
    * `dead` dataset is defined as "no contribution to the Output modules of the stage"
    * @param stageName could be the FQN or the basename
    **/
-  def lsDead(stageName: String) = println(new ListDataSets(SmvApp.app.stages.findStage(stageName)).listDead)
+  def lsDead(stageName: String) = println(appGU.createDeadDSList(SmvApp.app.stages.findStage(stageName)))
 
   /**
    * list `dead` datasets in the entire project
    **/
-  def lsDead = println(new ListDataSets(SmvApp.app.stages).listDead)
+  def lsDead = println(appGU.createDeadDSList())
 
   /**
    * list `leaf` datasets in a stage
@@ -59,35 +63,38 @@ package object shell {
    * Note: a `leaf` dataset must be `dead`, but some `dead` datasets are Not `leaf`s
    * @param stageName could be the FQN or the basename
    */
-  def lsLeaf(stageName: String) = println(new ListDataSets(SmvApp.app.stages.findStage(stageName)).listLeaf)
+  def lsLeaf(stageName: String) = println(appGU.createLeafDSList(SmvApp.app.stages.findStage(stageName)))
 
   /**
    * list `leaf` datasets in the entire project
    **/
-  def lsLeaf = println(new ListDataSets(SmvApp.app.stages).listLeaf)
+  def lsLeaf = println(appGU.createLeafDSList())
 
   /** take a stage name and print all DS in this stage, without unused input DS */
-  def graph(stageName: String) = new DataSetAsciiGraph(SmvApp.app.stages.findStage(stageName)).show
+  def graph(stageName: String) = {
+    val singleStgGU = new SmvGraphUtil(new SmvStages(Seq(SmvApp.app.stages.findStage(stageName))))
+    println(singleStgGU.createDSAsciiGraph())
+  }
 
   /** take no parameter, print stages and inter-stage links */
-  def graph() = new StageAsciiGraph(SmvApp.app.stages).show
+  def graph() = println(appGU.createStageAsciiGraph())
 
   /** take a DS, print in-stage dependency of that DS */
-  def graph(ds: SmvDataSet) = new DataSetAsciiGraph(SmvApp.app.stages.findStageForDataSet(ds), Seq(ds)).show
+  def graph(ds: SmvDataSet) = println(appGU.createDSAsciiGraph(Seq(ds)))
 
   /**
    * list all `ancestors` of a dataset
    * `ancestors` are datasets current dataset depends on, directly or in-directly,
    * even include datasets from other stages
    **/
-  def ancestors(ds: SmvDataSet) = println(new ListDataSets(SmvApp.app.stages).ancestors(ds))
+  def ancestors(ds: SmvDataSet) = println(appGU.createAncestorDSList(ds))
 
   /**
    * list all `descendants` of a dataset
    * `descendants` are datasets which depend on the current dataset directly or in-directly,
    * even include datasets from other stages
    **/
-  def descendants(ds: SmvDataSet) = println(new ListDataSets(SmvApp.app.stages).descendants(ds))
+  def descendants(ds: SmvDataSet) = println(appGU.createDescendantDSList(ds))
 
   /**
    * Display a dataframe row in transposed view.

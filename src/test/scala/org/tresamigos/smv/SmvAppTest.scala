@@ -110,18 +110,6 @@ class SmvAppTest extends SmvTestUtil {
     }
   }
 
-  test("Test dependency graph creation.") {
-    val depGraph = new SmvModuleDependencyGraph(C, app.packagesPrefix)
-    //depGraph.saveToFile("foo.dot")
-
-    val edges = depGraph.graph
-    assert(edges.size === 4)
-    assert(edges(fx) === Seq())
-    assert(edges(A) === Seq(fx))
-    assert(edges(B) === Seq(A))
-    assert(edges(C) === Seq(A,B))
-  }
-
   test("Test SmvFile crc") {
     createTempFile("F1.csv")
     createTempFile("F1.schema")
@@ -148,25 +136,6 @@ class SmvAppTest extends SmvTestUtil {
     }
 
     assert(f1.datasetHash() !== f3.datasetHash())
-  }
-}
-
-class SmvModuleJSONTest extends SmvTestUtil {
-  override def appArgs = testAppArgs.singleStage ++ Seq("-m", "None")
-
-  test("Test SmvModuleJSON") {
-
-    val app2JSON = new SmvModuleJSON(app, Seq())
-    val expect = """{
-  "X": {
-    "version": 0,
-    "dependents": [],
-    "description": "X Module"},
-  "Y": {
-    "version": 0,
-    "dependents": ["X"],
-    "description": "Y Module"}}"""
-    assert(app2JSON.generateJSON === expect)
   }
 }
 

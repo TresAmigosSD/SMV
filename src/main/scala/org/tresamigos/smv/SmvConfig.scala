@@ -49,7 +49,7 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrYes="generate a dependency graph of the given modules (modules are not run)",
     descrNo="do not generate a dependency graph")
 
-  val json = opt[List[String]]("json", noshort = true, descr = "generate a json object to represent app's module dependency for a given set of stages (modules are not run)")
+  val json = opt[List[String]]("json", noshort = true, default = None, descr = "generate a json object to represent app's module dependency for a given set of stages (modules are not run)")
 
   // --- data directories override
   val dataDir    = opt[String]("data-dir",    noshort = true, descr = "specify the top level data directory")

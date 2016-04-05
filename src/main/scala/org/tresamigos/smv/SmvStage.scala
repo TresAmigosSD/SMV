@@ -53,6 +53,11 @@ private[smv] trait SmvPackageManager {
     down ++ down.flatMap{d => descendants(d)}
   }
 
+  /**All DS without any prarents*/
+  def inputDataSets(): Seq[SmvDataSet] = {
+    predecessors.filter{case (k, v) => v.isEmpty}.keys.toSeq
+  }
+
   /**is there any output module depends on the current module, if not, isDead = true*/
   def deadDataSets(): Seq[SmvDataSet] = {
     val liveDS = allOutputModules.flatMap{m => (m +: ancestors(m))}.toSet
