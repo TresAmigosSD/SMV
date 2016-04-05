@@ -154,9 +154,11 @@ package object smv {
   def columnIf[T](cond: Column, l: Column, r: T): Column = columnIf(cond, l, lit(r))
 
   /**
-   * Concatenate columns as strings
+   * Patch Spark's `concat` and `concat_ws` to treat null as empty string in concatenation.
    **/
   def smvStrCat(columns: Column*) = concat(columns.map{c => coalesce(c, lit(""))}:_*)
+
+  def smvStrCat(sep: String, columns: Column*) = concat_ws(sep, columns.map(c => coalesce(c, lit(""))):_*)
 
   /**
    * Put a group of columns in an Array field
