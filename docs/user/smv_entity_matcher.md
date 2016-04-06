@@ -73,6 +73,8 @@ As you add more level matchers, the number of records that match will increase a
 
 **(** evaluate \<exact catalyst expression\> **)** **&&** **(** **(** evaluate \<normalized fuzzy catalyst expression\> **)** **\>** \<threshold\> **)**
 
+Note: when using stringmetric fucntions, such as the one in previous example "levenshtein", be sure to normalize the case of the two columns first.
+
 Once you start adding level matchers, you may find an ExactLevelMatcher expression that's more important than the rest.  So much so, that if the records match on it, you don't need to perform any other tests on the resulting record relationship.  In that case you can place this expression in an ExactMatchFilter and provide this as the first parameter to SmvEntityMatcher.  In the example above this expression matches full names of the input data frames.   The output can be seen as having two parts.  The first part will be for record relationships that we created be a matched ExactMatchFilter.  The output column for the filter will be true and the rest of the columns will be null, since they were not evaluated.   All remaining records from the input data frames will be matched as before, by all the list of level matchers.   Here the output column for the filter will always be false.
 
 ### Output
