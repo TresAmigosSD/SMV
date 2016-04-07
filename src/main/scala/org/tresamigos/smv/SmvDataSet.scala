@@ -255,17 +255,30 @@ abstract class SmvDataSet {
   }
 }
 
+/**
+ * Abstract out the common part of input SmvDataSet
+ */
+private[smv] abstract class SmvInputDataSet extends SmvDataSet {
+  override def requiresDS() = Seq.empty
+  override val isEphemeral = true
+
+  /**
+   * Method to run/pre-process the input file.
+   * Users can override this method to perform file level
+   * ETL operations.
+   */
+  def run(df: DataFrame) = df
+}
 
 /**
  * SMV Dataset Wrapper around a hive table.
  */
-case class SmvHiveTable(val tableName: String) extends SmvDataSet {
+case class SmvHiveTable(val tableName: String) extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
-  override def requiresDS() = Seq.empty
-  override val isEphemeral = true
 
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
-    app.sqlContext.sql("select * from " + tableName)
+    val df = app.sqlContext.sql("select * from " + tableName)
+    run(df)
   }
 }
 
@@ -283,12 +296,10 @@ trait SmvDSWithParser extends SmvDataSet {
     else dqm()
 }
 
-abstract class SmvFile extends SmvDataSet {
+abstract class SmvFile extends SmvInputDataSet {
   val path: String
   val schemaPath: String = null
   override def description() = s"Input file: @${path}"
-  override def requiresDS() = Seq.empty
-  override val isEphemeral = true
 
   private[smv] def isFullPath: Boolean = false
 
@@ -342,13 +353,6 @@ abstract class SmvFile extends SmvDataSet {
     }
     super.name() + "_" + fileName
   }
-
-  /**
-   * Method to run/pre-process the input file.
-   * Users can override this method to perform file level
-   * ETL operations.
-   */
-  def run(df: DataFrame) = df
 }
 
 
