@@ -1012,6 +1012,9 @@ class SmvDFHelper(df: DataFrame) {
     val schema = SmvSchema.fromDataFrame(df)
     val ca = CsvAttributes.defaultCsv
 
+    val schemaPath = SmvSchema.dataPathToSchemaPath(path)
+    schema.saveToLocalFile(schemaPath)
+
     val qc = ca.quotechar
     val headerStr = df.columns.map(_.trim).map(fn => qc + fn + qc).
       mkString(ca.delimiter.toString)
