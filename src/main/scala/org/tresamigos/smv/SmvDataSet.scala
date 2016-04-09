@@ -340,19 +340,6 @@ abstract class SmvFile extends SmvInputDataSet {
     crc.update((fileName + schemaPath).toCharArray.map(_.toByte))
     (crc.getValue + mTime + schemaMTime + datasetCRC).toInt
   }
-
-  /**
-   * Override file name to allow `SmvDataSet` to persist meta data into unique file in
-   * output directory based on class name and file path basename.
-   */
-  override def name() = {
-    val nameRex = """.*?/?([^/]+?)(.csv)?(.gz)?""".r
-    val fileName = path match {
-      case nameRex(v, _, _) => v
-      case _ => throw new IllegalArgumentException(s"Illegal base path format: $path")
-    }
-    super.name() + "_" + fileName
-  }
 }
 
 
