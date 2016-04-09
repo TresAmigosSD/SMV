@@ -244,6 +244,23 @@ class JoinHelperTest extends SmvTestUtil {
       "[3,1,null,y3]",
       "[3,3,null,y4]"))
   }
+
+  test("joinMultipleByKey") {
+    val df1 = createSchemaRdd("a:Integer;b:String", """1,x1;2,y1;3,z1""")
+    val df2 = createSchemaRdd("a:Integer;b:String", """1,x1;4,w2;""")
+    val df3 = createSchemaRdd("a:Integer;b:String", """1,x3;5,w3;""")
+
+    val res = df1.joinMultipleByKey(Seq("a"), SmvJoinType.Inner).
+      joinWith(df2, "_df2").
+      joinWith(df3, "_df3", SmvJoinType.Outer).
+      doJoin()
+
+    assert(res.columns === Seq("a", "b", "b_df2", "b_df3"))
+    assertSrddDataEqual(res,
+      """1,x1,x1,x3;
+        |5,null,null,w3""".stripMargin
+    )
+  }
 }
 
 class dedupByKeyTest extends SmvTestUtil {
