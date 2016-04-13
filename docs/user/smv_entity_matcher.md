@@ -87,7 +87,7 @@ id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value
 ```scala
 val resultDF = SmvEntityMatcher(
   ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
-  CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
+  CommonLevelMatcherExpression(soundex($"first_name") === soundex($"_first_name"))),
   List(
     ExactLevelMatcher("First_Name_Match", $"first_name" === $"_first_name"),
     FuzzyLevelMatcher("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f)
@@ -95,7 +95,7 @@ val resultDF = SmvEntityMatcher(
 ).doMatch(df1, df2)
 ```
 
-The sample data frames used here are very small.  Real data frames are much larger and matching every record between them may take too long and in many cases not necessary.  You may also be able to factor out a common expression from all the expressions you are evaluating.  If that's the case, you can use the CommonLevelMatcherExpression.   Let's say all your expressions contain a soundex match on first names.  For exapme you have an exact level matcher expression: StringMetricUDFs.soundexMatch($"first_name", $"_first_name") && $"first_name" === $"_first_name". And you have a fuzzy level expression with StringMetricUDFs.soundexMatch($"first_name", $"_first_name") in the second (exact expression) parameter.  If all your matchers require the soundex of first names to be the same, then you only need to look at records where the soundex is the same.  Meaning that you can reduce the input data frames to only have such records.  Using CommonLevelMatcherExpression will not change the output, but it can greatly speed up the processing time.
+The sample data frames used here are very small.  Real data frames are much larger and matching every record between them may take too long and in many cases not necessary. In most of the cases, there is always some "common denominator" as the `CommonLevelMatcher`. For example, the `soundex` of first name could be the common requirement of all the matchers. In that case you are able to factor out a common expression from all the expressions you are evaluating. In above example, after the exact match filter, we assume all other match levels have to have `soundex` of first name match. By specifying the `CommonLevelMatcherExpression`, internally the algorithm only need to look at records where the soundex are the same.  Meaning that you can reduce the input data frames to only have such records.  Using CommonLevelMatcherExpression will not change the output, but it can greatly speed up the processing time.
 
 ### Output
 id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value|

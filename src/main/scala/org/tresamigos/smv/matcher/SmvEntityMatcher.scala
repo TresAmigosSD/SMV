@@ -74,6 +74,7 @@ case class SmvEntityMatcher(
   // because the return value of 'any' is usually used to filter a
   // data frame, and we would like that behavior to be a no-op instead
   // of dropping all the rows in the data frame.
+  // TODO: In case that the original DFs have boolean columns, this method is dangerous!
   private def any(df: DataFrame): Column = {
     val bools: Seq[Column] = for {
       f <- df.schema.fields if f.dataType == BooleanType
@@ -191,6 +192,8 @@ private[smv] sealed abstract class CommonLevelMatcher {
 }
 
 case class CommonLevelMatcherExpression(expr:Column) extends CommonLevelMatcher {
+  //TODO: Also need to require the expression has the form * === *, otherwise there are no optimization at all
+  // or an alternative, make the parameter two strings as the matched column names. 
   require(expr != null && expr.toExpr.dataType == BooleanType)
   private[smv] override def join(df1:DataFrame, df2:DataFrame):DataFrame = { df1.join(df2, expr) }
 }
