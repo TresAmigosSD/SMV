@@ -432,7 +432,7 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /** Same as `dedupByKeyWithOrder(Column*)(Column*)` but use `String` as key **/
-  def dedupByKeyWithOrder(k1: String, krest: String)(orderCol: Column*): DataFrame = {
+  def dedupByKeyWithOrder(k1: String, krest: String*)(orderCol: Column*): DataFrame = {
     import df.sqlContext.implicits._
     val kCols = (k1 +: krest).map{s => $"$s"}
     dedupByKeyWithOrder(kCols: _*)(orderCol: _*)
