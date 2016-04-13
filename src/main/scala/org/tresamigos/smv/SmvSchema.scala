@@ -93,8 +93,15 @@ private[smv] case class BooleanTypeFormat(override val format: String = null) ex
   val dataType = BooleanType
 }
 
-private[smv] case class StringTypeFormat(override val format: String = null) extends TypeFormat {
-  override def strToVal(s:String) : Any = if (s.isEmpty) null else s
+private[smv] case class StringTypeFormat(override val format: String = null, val nullValue: String = "") extends TypeFormat {
+  override def strToVal(s:String) : Any = if (s == nullValue) null else s
+  override def valToStr(v: Any) : String = if (v==null) nullValue else v.toString
+  override def toString =
+    if (format == null && nullValue == "") typeName
+    else if (format == null) s"${typeName}[,${nullValue}]"
+    else if (nullValue == "") s"${typeName}[${format}]"
+    else s"${typeName}[${format}, ${nullValue}]"
+
   override val typeName = "String"
   val dataType = StringType
 }
@@ -194,7 +201,9 @@ private[smv] case class ArrayTypeFormat(valTypeFormat: TypeFormat) extends TypeF
 }
 
 private[smv] object TypeFormat {
-  private final val StringPattern = "[sS]tring".r
+  private final val StringPattern2Arg = "[sS]tring\\[ *(\\d*) *, *(\\w+) *\\]".r
+  private final val StringPattern1Arg = "[sS]tring\\[ *(\\d+) *\\]".r
+  private final val StringPattern0Arg = "[sS]tring".r
   private final val DoublePattern = "[dD]ouble".r
   private final val FloatPattern = "[fF]loat".r
   private final val LongPattern = "[lL]ong".r
@@ -212,7 +221,10 @@ private[smv] object TypeFormat {
 
   def apply(typeStr: String) : TypeFormat = {
     typeStr.trim match {
-      case StringPattern() => StringTypeFormat()
+      case StringPattern2Arg(fStr, nStr) => StringTypeFormat(fStr, nStr)
+      case StringPattern1Arg(fStr) => StringTypeFormat(fStr)
+      case StringPattern0Arg() => StringTypeFormat()
+
       case DoublePattern() => DoubleTypeFormat()
       case FloatPattern() => FloatTypeFormat()
       case LongPattern() => LongTypeFormat()
@@ -237,9 +249,9 @@ private[smv] object TypeFormat {
     }
   }
 
-  def apply(dataType: DataType) : TypeFormat = {
+  def apply(dataType: DataType, strNullValue: String) : TypeFormat = {
     dataType match {
-      case StringType => StringTypeFormat()
+      case StringType => StringTypeFormat(nullValue = strNullValue)
       case DoubleType => DoubleTypeFormat()
       case FloatType => FloatTypeFormat()
       case LongType => LongTypeFormat()
@@ -250,24 +262,24 @@ private[smv] object TypeFormat {
       case dt : DecimalType => DecimalTypeFormat(dt.precision, dt.scale)
       case MapType(keyType, valType, _) =>
         MapTypeFormat(
-          TypeFormat(keyType),
-          TypeFormat(valType))
+          TypeFormat(keyType, strNullValue),
+          TypeFormat(valType, strNullValue))
       case ArrayType(valType, _) =>
         ArrayTypeFormat(
-          TypeFormat(valType))
+          TypeFormat(valType, strNullValue))
       case _ => throw new IllegalArgumentException(s"unknown type: ${dataType.toString}")
     }
   }
 
-  def apply(structField: StructField) : TypeFormat = {
-    TypeFormat(structField.dataType)
+  def apply(structField: StructField, strNullValue: String) : TypeFormat = {
+    TypeFormat(structField.dataType, strNullValue)
   }
 
 }
 
 object SchemaEntry {
-  def apply(structField: StructField): SchemaEntry = {
-    val typeFmt = TypeFormat(structField)
+  def apply(structField: StructField, strNullValue: String): SchemaEntry = {
+    val typeFmt = TypeFormat(structField, strNullValue)
     SchemaEntry(structField, typeFmt)
   }
 
@@ -489,10 +501,10 @@ object SmvSchema {
   }
 
 
-  def fromDataFrame(df: DataFrame) = {
+  def fromDataFrame(df: DataFrame, strNullValue: String = "") = {
     new SmvSchema(
       df.schema.fields.map{a =>
-        SchemaEntry(a)
+        SchemaEntry(a, strNullValue)
       },
       Map.empty
     )

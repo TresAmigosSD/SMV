@@ -117,10 +117,11 @@ private[smv] class FileIOHandler(
   private[smv] def saveAsCsvWithSchema(
       df: DataFrame,
       schemaWithMeta: SmvSchema = null,
-      csvAttributes: CsvAttributes = CsvAttributes.defaultCsv
+      csvAttributes: CsvAttributes = CsvAttributes.defaultCsv,
+      strNullValue: String = ""
     ) {
 
-    val schema = if (schemaWithMeta == null) {SmvSchema.fromDataFrame(df)} else {schemaWithMeta}
+    val schema = if (schemaWithMeta == null) {SmvSchema.fromDataFrame(df, strNullValue)} else {schemaWithMeta}
     val schemaWithAttributes = schema.addCsvAttributes(csvAttributes)
     val qc = csvAttributes.quotechar
 

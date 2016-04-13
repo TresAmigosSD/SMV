@@ -138,7 +138,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       case TimestampTypeFormat("yyyy-MM-dd") if canConvertToDate(valueStr,"yyyy-MM-dd") => curTypeFormat
       case TimestampTypeFormat("yyyy-MM-dd") => StringTypeFormat()
 
-      case StringTypeFormat( _ ) => curTypeFormat
+      case StringTypeFormat( _ , _ ) => curTypeFormat
 
       case _ => StringTypeFormat()
     }

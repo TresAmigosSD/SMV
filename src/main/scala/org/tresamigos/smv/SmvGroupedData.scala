@@ -679,18 +679,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       res
     }
   }
-  /**
-   * Repartition SmvGroupedData using specified partitioner on the keys. Could take
-   * a user defined partitioner or an integer. It the parameter is an integer, a
-   * HashPartitioner with the specified number of partitions will be used.
-   *
-   * Example:
-   * {{{
-   *      df.smvGroupBy("k1", "k2").smvRePartition(32).aggWithKeys(sum($"v") as "v")
-   * }}}
-   *
-   * TODO: made `smvRePartition` private as we dont know where/how this is used.
-   **/
+
   private[smv] def smvRePartition(partitioner: Partitioner): SmvGroupedData = {
     val fields = df.columns
 
@@ -703,7 +692,23 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     resDf.select(fields.head, fields.tail:_*).smvGroupBy(keys.head, keys.tail: _*)
   }
 
-  private[smv] def smvRePartition(numParts: Int): SmvGroupedData = {
+  /**
+   * Repartition SmvGroupedData using specified partitioner on the keys. A
+   * HashPartitioner with the specified number of partitions will be used.
+   *
+   * This method is used in the cases that the key-space is very large. In the
+   * current Spark DF's groupBy method, the entire key-space is actually loaded
+   * into executor's memory, which is very dangerous when the key space is big.
+   * The regular DF's repartition function doesn't solve this issue since a random
+   * repartition will not guaranteed to reduce the key-space on each executor.
+   * In that case we need to use this function to linearly reduce the key-space.
+   *
+   * Example:
+   * {{{
+   *      df.smvGroupBy("k1", "k2").smvRePartition(32).aggWithKeys(sum($"v") as "v")
+   * }}}
+   **/
+  def smvRePartition(numParts: Int): SmvGroupedData = {
     import org.apache.spark.HashPartitioner
     val hashPart = new HashPartitioner(numParts)
     smvRePartition(hashPart)

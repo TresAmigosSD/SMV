@@ -54,8 +54,6 @@ class CsvTest extends SmvTestUtil {
     val schemaPath = testcaseTempDir + "/test_attr.schema"
     df.saveAsCsvWithSchema(csvPath, ca)
 
-    df.dumpSRDD
-
     // verify header partition in csv file
     assertFileEqual(csvPath + "/part-00000", "^f1^|^f2^\n")
 
@@ -70,6 +68,31 @@ class CsvTest extends SmvTestUtil {
         |f1: String
         |f2: String
         |""".stripMargin)
+  }
+
+  test("Test persisting file with null strings") {
+    object A extends SmvModule("A Module") {
+      override def requiresDS() = Seq()
+      override def run(inputs: runParams) = {
+        app.createDF("a:String", "1;;3").selectPlus(lit("") as "b").repartition(1)
+      }
+    }
+
+    val res = A.rdd()
+    assertSrddDataEqual(res, """1,;null,;3,""")
+    assertFileEqual(A.moduleCsvPath() + "/part-00000",
+    """"1",""
+      |"_SmvStrNull_",""
+      |"3",""
+      |""".stripMargin)
+    assertFileEqual(A.moduleSchemaPath() + "/part-00000",
+    """@delimiter = ,
+      |@has-header = false
+      |@quote-char = "
+      |a: String[,_SmvStrNull_]
+      |b: String[,_SmvStrNull_]
+      |""".stripMargin)
+
   }
 
   test("Test escaping quotes in strings") {

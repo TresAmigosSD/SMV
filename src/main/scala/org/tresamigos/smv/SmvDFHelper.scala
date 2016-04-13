@@ -37,9 +37,9 @@ class SmvDFHelper(df: DataFrame) {
    * @param ca CSV attributes used to format output file.  Defaults to `CsvAttributes.defaultCsv`
    * @param schemaWithMeta Provide the companion schema (usually used when we need to persist some schema meta data along with the standard schema)
    */
-  def saveAsCsvWithSchema(dataPath: String, ca: CsvAttributes = CsvAttributes.defaultCsv, schemaWithMeta: SmvSchema = null) {
+  def saveAsCsvWithSchema(dataPath: String, ca: CsvAttributes = CsvAttributes.defaultCsv, schemaWithMeta: SmvSchema = null, strNullValue: String = "") {
     val handler = new FileIOHandler(df.sqlContext, dataPath)
-    handler.saveAsCsvWithSchema(df, schemaWithMeta, ca)
+    handler.saveAsCsvWithSchema(df, schemaWithMeta, ca, strNullValue)
   }
 
   /**
@@ -276,45 +276,68 @@ class SmvDFHelper(df: DataFrame) {
 
   /**
    * Perform a join of the left/right `DataFrames` and rename duplicated column names by
-   * prefixing them with "_" on the right hand side.
-   *
-   * '''Note:''' This will become private or removed in future SMV versions.
-   *
-   * TODO: remove project dependency on this, and make it private[smv]
+   * prefixing them with "_" on the right hand side if no `postfix` parameter specified,
+   * otherwise postfixing the them.
    */
-  @Experimental
-  def joinUniqFieldNames(otherPlan: DataFrame, on: Column, joinType: String = "inner") : DataFrame = {
+  private[smv] def joinUniqFieldNames(
+    otherPlan: DataFrame,
+    on: Column,
+    joinType: String = "inner",
+    postfix: String = null
+  ) : DataFrame = {
     val namesLower = df.columns.map{c => c.toLowerCase}
-    val renamedFields = otherPlan.columns.filter{c => namesLower.contains(c.toLowerCase)}.map{c => c -> ("_" + c)}
+    val renamedFields = otherPlan.columns.filter{c =>
+      namesLower.contains(c.toLowerCase)
+    }.map{c =>
+      if(postfix == null) c -> ("_" + c)
+      else c -> (c + postfix)
+    }
 
     df.join(otherPlan.renameField(renamedFields: _*), on: Column, joinType)
   }
 
   /**
-   * The Spark `DataFrame` join operation does not handle duplicate key neames.
-   * If both left and right side of the join operation contain the same key, the result `DataFrame` is unusable.
+   * The Spark `DataFrame` join operation does not handle duplicate key names.
+   * If both left and right side of the join operation contain the same key,
+   * the result `DataFrame` is unusable.
+   *
    * The `joinByKey` method will allow the user to join two `DataFrames` using the same join key.
-   * Post join, only the left side keys will remain.
+   * Post join, only the left side keys will remain. In case of outer-join, the
+   * `coalesce(leftkey, rightkey)` will replace the left key to be kept.
+   *
    * {{{
    *   df1.joinByKey(df2, Seq("k"), SmvJoinType.Inner)
    * }}}
    * Note the use of the `SmvJoinType.Inner` const instead of the naked "inner" string.
    *
-   * If, in addition to the duplicate keys, both df1 and df2 have column with name "v", both will be kept in the result,
-   * but the df2 version will be prefix with "_".
+   * If, in addition to the duplicate keys, both df1 and df2 have column with name "v",
+   * both will be kept in the result, but the df2 version will be prefix with "_" if no
+   * `postfix` parameter is specified, otherwise df2 version with be postfixed with
+   * the specified `postfix`.
    */
-  def joinByKey(otherPlan: DataFrame, keys: Seq[String], joinType: String): DataFrame = {
+  def joinByKey(
+    otherPlan: DataFrame,
+    keys: Seq[String],
+    joinType: String,
+    postfix: String = null,
+    dropRightKey: Boolean = true
+  ): DataFrame = {
     import df.sqlContext.implicits._
 
-    val rightKeys = keys.map{k => "_" + k}
+    val rightKeys =
+      if(postfix == null)
+        keys.map{k => "_" + k}
+      else
+        keys.map{k => k + postfix}
+
     val joinedKeys = keys zip rightKeys
     val renamedFields = joinedKeys.map{case (l,r) => (l -> r)}
     val newOther = otherPlan.renameField(renamedFields: _*)
     val joinOpt = joinedKeys.map{case (l, r) => ($"$l" === $"$r")}.reduce(_ && _)
 
-    val dfJoined = df.joinUniqFieldNames(newOther, joinOpt, joinType)
+    val dfJoined = df.joinUniqFieldNames(newOther, joinOpt, joinType, postfix)
     val dfCoalescedKeys = joinType match {
-      case SmvJoinType.Outer =>
+      case SmvJoinType.Outer|SmvJoinType.RightOuter =>
         // for each key used in the outer-join, coalesce key value from left to right
         joinedKeys.foldLeft(dfJoined)((acc: DataFrame, keypair) => {
           val (lk, rk) = keypair
@@ -323,6 +346,32 @@ class SmvDFHelper(df: DataFrame) {
       case _ => dfJoined
     }
     dfCoalescedKeys.selectMinus(rightKeys(0), rightKeys.tail: _*)
+  }
+
+  /**
+   * Create multiple DF join builder: `SmvMultiJoin`.
+   *
+   * Example:
+   * {{{
+   * df.joinMultipleByKey(Seq("k1", "k2"), Inner).
+   *    joinWith(df2, "_df2").
+   *    joinWith(df3, "_df3", LeftOuter).
+   *    doJoin()
+   * }}}
+   *
+   * In above example, `df` will inner join with `df2` on `k1` and `k2`, then
+   * left outer join with `df3` with the same keys.
+   * In the cases that there are columns with the same name, df2's column will be
+   * renamed with postfix "_df2", and, df3's column will be renamed with postfix
+   * "_df3".
+   *
+   * @param keys: Join key names
+   * @param defaultJoinType: default join type
+   *
+   * @return an `SmvMultiJoin` object which support `joinWith` and `doJoin` method
+   **/
+  def joinMultipleByKey(keys: Seq[String], defaultJoinType: String) = {
+    new SmvMultiJoin(Nil, SmvMultiJoinConf(df, keys, defaultJoinType))
   }
 
   /**
@@ -1011,6 +1060,9 @@ class SmvDFHelper(df: DataFrame) {
   def exportCsv(path: String, n: Integer = null) {
     val schema = SmvSchema.fromDataFrame(df)
     val ca = CsvAttributes.defaultCsv
+
+    val schemaPath = SmvSchema.dataPathToSchemaPath(path)
+    schema.saveToLocalFile(schemaPath)
 
     val qc = ca.quotechar
     val headerStr = df.columns.map(_.trim).map(fn => qc + fn + qc).

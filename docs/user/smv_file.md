@@ -57,7 +57,7 @@ object acct_demo extends SmvMultiCsvFiles("accounts/acct_demo")
 ```
 
 By default use the CSV attributes defined in the schema file. If no CSV attributes in the schema file,
-use comma as the delimiter with header. 
+use comma as the delimiter with header.
 
 ## Advanced Usage
 The previous example used a simple definition of an `SmvFile`.  However, SMV files are proper `SmvDataSet` and can therefore implement their own transformations and provide DQM rules.
@@ -95,6 +95,7 @@ For example:
 # schema for input
 acct_id: String;  # this is the id
 user_id: String;
+store_id: String[,null];  # "null" is used in the data to represent null-value
 amt: Double;  // transaction amount!
 income: Decimal[10];
 ```
@@ -127,6 +128,19 @@ The schema file can specify the CSV attributes (delimiter, quote char, and heade
 ## Supported schema types
 ### Native types
 `Integer`, `Long`, `Float`, `Double`, `Boolean`, and `String` types correspond to their corresponding JVM type.
+
+We are planning to support "format" for all the native type, but current version does not support
+format parameter yet.
+
+For `String` type, since both empty value and null value are valid, we sometimes want to distinguish
+them. In that case we have to specify a special string to represent null-string.
+```scala
+store_id: String[,null]
+```
+Where "null" is used in the data to represent null-value.  
+
+Since we also use Csv to persist intermediate `SmvDataSet` results, internally we use `_SmvStrNull_` 
+to represent null-value.
 
 ### Decimal type
 The `Decimal` type can be used to hold a `BigDecimal` field value.  An optional precision and scale values can also supplied.  They default to 10 and 0 respectively if not defined (same as `BigDecimal`).

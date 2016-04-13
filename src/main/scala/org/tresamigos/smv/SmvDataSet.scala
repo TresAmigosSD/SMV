@@ -172,7 +172,10 @@ abstract class SmvDataSet {
 
     val df = rdd.smvPipeCount(counter)
     val handler = new FileIOHandler(app.sqlContext, filePath)
-    handler.saveAsCsvWithSchema(df)
+
+    //Always persist null string as a special value with assumption that it's not
+    //a valid data value
+    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
 
     val after = DateTime.now()
     val runTime = PeriodFormat.getDefault().print(new Period(before, after))
@@ -223,7 +226,9 @@ abstract class SmvDataSet {
     val df = rdd()
     val version = app.smvConfig.cmdLine.publish()
     val handler = new FileIOHandler(app.sqlContext, publishPath(version))
-    handler.saveAsCsvWithSchema(df)
+    //Same as in persist, publish null string as a special value with assumption that it's not
+    //a valid data value
+    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
 
     /* publish should also calculate edd if generarte Edd flag was turned on */
     if (app.genEdd)
@@ -250,17 +255,30 @@ abstract class SmvDataSet {
   }
 }
 
+/**
+ * Abstract out the common part of input SmvDataSet
+ */
+private[smv] abstract class SmvInputDataSet extends SmvDataSet {
+  override def requiresDS() = Seq.empty
+  override val isEphemeral = true
+
+  /**
+   * Method to run/pre-process the input file.
+   * Users can override this method to perform file level
+   * ETL operations.
+   */
+  def run(df: DataFrame) = df
+}
 
 /**
  * SMV Dataset Wrapper around a hive table.
  */
-case class SmvHiveTable(val tableName: String) extends SmvDataSet {
+case class SmvHiveTable(val tableName: String) extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
-  override def requiresDS() = Seq.empty
-  override val isEphemeral = true
 
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
-    app.sqlContext.sql("select * from " + tableName)
+    val df = app.sqlContext.sql("select * from " + tableName)
+    run(df)
   }
 }
 
@@ -278,12 +296,10 @@ trait SmvDSWithParser extends SmvDataSet {
     else dqm()
 }
 
-abstract class SmvFile extends SmvDataSet {
+abstract class SmvFile extends SmvInputDataSet {
   val path: String
   val schemaPath: String = null
   override def description() = s"Input file: @${path}"
-  override def requiresDS() = Seq.empty
-  override val isEphemeral = true
 
   private[smv] def isFullPath: Boolean = false
 
@@ -324,26 +340,6 @@ abstract class SmvFile extends SmvDataSet {
     crc.update((fileName + schemaPath).toCharArray.map(_.toByte))
     (crc.getValue + mTime + schemaMTime + datasetCRC).toInt
   }
-
-  /**
-   * Override file name to allow `SmvDataSet` to persist meta data into unique file in
-   * output directory based on class name and file path basename.
-   */
-  override def name() = {
-    val nameRex = """.*?/?([^/]+?)(.csv)?(.gz)?""".r
-    val fileName = path match {
-      case nameRex(v, _, _) => v
-      case _ => throw new IllegalArgumentException(s"Illegal base path format: $path")
-    }
-    super.name() + "_" + fileName
-  }
-
-  /**
-   * Method to run/pre-process the input file.
-   * Users can override this method to perform file level
-   * ETL operations.
-   */
-  def run(df: DataFrame) = df
 }
 
 

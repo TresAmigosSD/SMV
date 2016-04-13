@@ -19,6 +19,10 @@ object i {
   //-------- some helpful functions
   def smvSchema(df: DataFrame) = SmvSchema.fromDataFrame(df)
 
+  // same syntax as one would write in the run() method in SmvModule
+  // makes it easy to transfer code to shell and back
+  def apply(ds: SmvDataSet) = df(ds)
+
   def df(ds: SmvDataSet) = {
     app.resolveRDD(ds)
   }

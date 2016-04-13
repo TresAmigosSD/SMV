@@ -17,8 +17,6 @@ package org.tresamigos.smv
 import org.tresamigos.smv.class_loader.SmvClassLoader
 import org.tresamigos.smv.shell.EddCompare
 
-import java.io.{File, PrintWriter}
-
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
@@ -139,12 +137,17 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   private def genDotGraph(module: SmvModule) = {
     val pathName = s"${module.name}.dot"
-    new SmvModuleDependencyGraph(module, packagesPrefix).saveToFile(pathName)
+    val graphString = new graph.SmvGraphUtil(stages).createGraphvisCode(Seq(module))
+    SmvReportIO.saveLocalReport(graphString, pathName)
   }
 
   def genJSON(packages: Seq[String] = Seq()) = {
     val pathName = s"${smvConfig.appName}.json"
-    new SmvModuleJSON(this, packages).saveToFile(pathName)
+
+    val stagesToGraph = packages.map{stages.findStage(_)}
+    val graphString = new graph.SmvGraphUtil(new SmvStages(stagesToGraph)).createGraphJSON()
+
+    SmvReportIO.saveLocalReport(graphString, pathName)
   }
 
   /**
@@ -200,6 +203,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }.orElse(Some(false))()
   }
 
+  private def generateGraphJSON(): Boolean = {
+    smvConfig.cmdLine.json.map { stageList =>
+      genJSON(stageList)
+      true
+    }.orElse(Some(false))()
+  }
+
   /**
    * Publish the specified modules if the "--publish" flag was specified on command line.
    * @return true if modules were published, otherwise return false.
@@ -245,10 +255,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * to determine which modules should be run/graphed/etc.
    */
   def run() = {
-    if (smvConfig.cmdLine.json()) {
-      genJSON()
-    }
-
     if (smvConfig.modulesToRun().nonEmpty) {
       println("Modules to run/publish")
       println("----------------------")
@@ -259,7 +265,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    compareEddResults() || generateDependencyGraphs() || publishOutputModules() || generateOutputModules()
+    compareEddResults() || generateGraphJSON() || generateDependencyGraphs() || publishOutputModules() || generateOutputModules()
   }
 }
 
@@ -288,98 +294,5 @@ object SmvApp {
   def main(args: Array[String]) {
     init(args)
     app.run()
-  }
-}
-
-
-// TODO: json is a representation.  Need to rename this class to indicate WHAT it is actually generating not just the type.
-// TODO: this should be moved into stages (and accept a list of stages rather than packages)
-private[smv] class SmvModuleJSON(app: SmvApp, packages: Seq[String]) {
-  private def allModules = {
-    if (packages.isEmpty) app.allAppModules
-    else packages.map{app.packagesPrefix + _}.flatMap{ p => SmvReflection.objectsInPackage[SmvModule](p) }
-  }.sortWith{(a,b) => a.name < b.name}
-
-  private def allFiles = allModules.flatMap(m => m.requiresDS().filter(v => v.isInstanceOf[SmvFile]))
-
-  private def printName(m: SmvDataSet) = m.name.stripPrefix(app.packagesPrefix)
-
-  def generateJSON() = {
-    "{\n" +
-    allModules.map{m =>
-      s"""  "${printName(m)}": {""" + "\n" +
-      s"""    "version": ${m.version},""" + "\n" +
-      s"""    "dependents": [""" + m.requiresDS().map{v => s""""${printName(v)}""""}.mkString(",") + "],\n" +
-      s"""    "description": "${m.description}"""" + "}"
-    }.mkString(",\n") +
-    "}"
-  }
-
-  def saveToFile(filePath: String) = {
-    val pw = new PrintWriter(new File(filePath))
-    pw.println(generateJSON())
-    pw.close()
-  }
-}
-
-
-/**
- * contains the module level dependency graph starting at the given startNode.
- * All prefixes given in packagePrefixes are removed from the output module/file name
- * to make the graph cleaner.  For example, project X at com.foo should probably add
- * a package prefix of "com.foo.X" to remove the repeated noise of "com.foo.X" before
- * every module name in the graph.
- */
-private[smv] class SmvModuleDependencyGraph(val startMod: SmvModule, packagesPrefix: String) {
-  type dependencyMap = Map[SmvDataSet, Seq[SmvDataSet]]
-
-  private def addDependencyEdges(node: SmvDataSet, nodeDeps: Seq[SmvDataSet], map: dependencyMap): dependencyMap = {
-    if (map.contains(node)) {
-      map
-    } else {
-      nodeDeps.foldLeft(map.updated(node, nodeDeps))(
-        (curMap,child) => addDependencyEdges(child, child.requiresDS(), curMap))
-    }
-  }
-
-  private[smv] lazy val graph = {
-    addDependencyEdges(startMod, startMod.requiresDS(), Map())
-  }
-
-  private lazy val allFiles = graph.values.flatMap(vs => vs.filter(v => v.isInstanceOf[SmvFile])).toSet.toSeq
-  private lazy val allModules = graph.flatMap(kv => (Seq(kv._1) ++ kv._2).filter(v => v.isInstanceOf[SmvModule])).toSet.toSeq
-
-  private def printName(m: SmvDataSet) = m.name.stripPrefix(packagesPrefix)
-  /** quoted/clean name in graph output */
-  private def q(ds: SmvDataSet) = "\"" + printName(ds) + "\""
-
-  private def moduleStyles() = {
-    allModules.map(m => s"  ${q(m)} " + "[tooltip=\"" + s"${m.description}" + "\"]")
-  }
-
-  private def fileStyles() = {
-    allFiles.map(f => s"  ${q(f)} " + "[shape=box, color=\"pink\"]")
-  }
-
-  private def filesRank() = {
-    Seq("{ rank = same; " + allFiles.map(f => s"${q(f)};").mkString(" ") + " }")
-  }
-
-  private def generateGraphvisCode() = {
-    Seq(
-      "digraph G {",
-      "  rankdir=\"TB\";",
-      "  node [style=filled,color=\"lightblue\"]") ++
-      fileStyles() ++
-      filesRank() ++
-      moduleStyles() ++
-      graph.flatMap{case (k,vs) => vs.map(v => s"""  ${q(v)} -> ${q(k)} """ )} ++
-      Seq("}")
-  }
-
-  def saveToFile(filePath: String) = {
-    val pw = new PrintWriter(new File(filePath))
-    generateGraphvisCode().foreach(pw.println)
-    pw.close()
   }
 }

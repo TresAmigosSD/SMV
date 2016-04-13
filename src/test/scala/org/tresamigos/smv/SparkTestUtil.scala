@@ -176,6 +176,12 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
     val res = SmvHDFS.readFromFile(filePath)
     assert(res === expContent)
   }
+
+  def assertTextContains(text: String, expContent: String) = {
+    expContent.split('\n').foreach{l =>
+      assert(text.split('\n').contains(l), s"${l} is not in the text")
+    }
+  }
 }
 
 object SparkTestUtil {
