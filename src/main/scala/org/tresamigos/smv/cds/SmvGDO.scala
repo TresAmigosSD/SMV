@@ -140,40 +140,16 @@ private[smv] class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends Sm
   }
 }
 
-/*
-private[smv] class FillPanelWithNull(t: String, p: panel.Panel, keys: Seq[String]) extends  SmvGDO {
+/* For dedupByKeyWithOrder method */
+private[smv] class DedupWithOrderGDO(orders: Seq[Expression]) extends SmvGDO {
   override val inGroupKeys = Nil
-
   override def createOutSchema(inSchema: StructType) = inSchema
 
   override def createInGroupMapping(inSchema: StructType) = {
-    val keyOrdinals = inSchema.getIndices(keys: _*).toList
-    val timeOrdinal = inSchema.getIndices(t)(0)
-    println(timeOrdinal)
-    println(inSchema.fields.size)
+    val rowOrdering = SmvCDS.orderColsToOrdering(inSchema, orders);
 
-    val tmplt = new Array[Any](inSchema.fields.size)
-    var rows: Map[Int, InternalRow] = Map()
-
-    { it =>
-      it.zipWithIndex.foreach { case (r, i) =>
-        val elems = r.toSeq(inSchema)
-        if (i == 0) {
-          keyOrdinals.foreach(ki => tmplt(ki) = elems(ki))
-          rows = rows ++ p.createValues().map { rt =>
-            tmplt(timeOrdinal) = DateTimeUtils.toJavaDate(rt)
-            (rt, new GenericInternalRow(tmplt))
-          }
-        }
-        val rt = elems(timeOrdinal) match {
-          case d: java.sql.Date => DateTimeUtils.fromJavaDate(d)
-          case d: Int => d
-          case _ => throw new IllegalArgumentException(s"types other than Date or Int are not supported")
-        }
-        if (p.hasInRange(rt)) rows = rows.updated(rt, r)
-      }
-      rows.values
+    { it: Iterable[InternalRow] =>
+        List(it.toSeq.min(rowOrdering))
     }
   }
 }
-*/

@@ -475,16 +475,20 @@ class SmvDFHelper(df: DataFrame) {
    * | 1   | C       | C2      |
    * | 2   | B       | C3      |
    * }}}
+   *
+   * Same as the `dedupByKey` method, we use RDD groupBy in the implementation of this
+   * method to make sure we can handel large key space. 
    **/
   def dedupByKeyWithOrder(keyCol: Column*)(orderCol: Column*): DataFrame = {
-    df.smvGroupBy(keyCol: _*).smvTopNRecs(1, orderCol: _*)
+    val keys = keyCol.map{c => c.getName}
+    dedupByKeyWithOrder(keys.head, keys.tail: _*)(orderCol: _*)
   }
 
   /** Same as `dedupByKeyWithOrder(Column*)(Column*)` but use `String` as key **/
   def dedupByKeyWithOrder(k1: String, krest: String*)(orderCol: Column*): DataFrame = {
-    import df.sqlContext.implicits._
-    val kCols = (k1 +: krest).map{s => $"$s"}
-    dedupByKeyWithOrder(kCols: _*)(orderCol: _*)
+    val gdo = new cds.DedupWithOrderGDO(orderCol.map{o => o.toExpr}.toList)
+    df.smvGroupBy(k1, krest: _*).
+      smvMapGroup(gdo, false).toDF
   }
 
   /**
