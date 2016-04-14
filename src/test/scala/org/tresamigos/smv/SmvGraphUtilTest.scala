@@ -59,16 +59,16 @@ org.tresamigos.smv.smvAppTestPkg3:
     val expectPart = """  subgraph cluster_0 {
     label="org.tresamigos.smv.smvAppTestPkg3"
     color="#e0e0e0"
-    "smvAppTestPkg3.L"; "smvAppTestPkg3.U"
+    "smvAppTestPkg3.U"
   }"""
 
     assertTextContains(graphString, expectPart)
-    //assert(expectPart.map{l => graphString.split('\n').contains(l)}.reduce(_&&_))
     //println(graphString)
   }
 
   test("Test createDSAsciiGraph") {
     val graphString = new graph.SmvGraphUtil(app.stages).createDSAsciiGraph()
+    //println(graphString)
     assertStrIgnoreSpace(graphString, """               ┌────────────┐
                │(M) smvAppTe│
                │  stPkg1.X  │
@@ -78,12 +78,6 @@ org.tresamigos.smv.smvAppTestPkg3:
                ┌────────────┐
                │(O) smvAppTe│
                │  stPkg1.Y  │
-               └──────┬─────┘
-                      │
-                      v
-               ┌────────────┐
-               │(L) smvAppTe│
-               │  stPkg3.L  │
                └────┬──┬────┘
                     │  │
         ┌───────────┘  │
@@ -116,6 +110,7 @@ org.tresamigos.smv.smvAppTestPkg3:
 
   test("Test createGraphJSON") {
     val graphString = new graph.SmvGraphUtil(app.stages).createGraphJSON()
+    //println(graphString)
     val json =parse(graphString)
 
     val (nodes, clusters, links) = json match {
@@ -129,7 +124,6 @@ org.tresamigos.smv.smvAppTestPkg3:
 
     assertUnorderedSeqEqual(descs, Seq(
       "X Module",
-      "Link to org.tresamigos.smv.smvAppTestPkg1.Y",
       "Y Module",
       "Z Module",
       "U Base",
@@ -153,10 +147,9 @@ org.tresamigos.smv.smvAppTestPkg3:
     } yield (k, v)
 
     assertUnorderedSeqEqual(edges, Seq(
-      ("smvAppTestPkg1.Y", "smvAppTestPkg3.L"),
       ("smvAppTestPkg1.X", "smvAppTestPkg1.Y"),
-      ("smvAppTestPkg3.L", "smvAppTestPkg3.T"),
-      ("smvAppTestPkg3.L", "smvAppTestPkg3.U")
+      ("smvAppTestPkg1.Y", "smvAppTestPkg3.T"),
+      ("smvAppTestPkg1.Y", "smvAppTestPkg3.U")
     ))
   }
 }

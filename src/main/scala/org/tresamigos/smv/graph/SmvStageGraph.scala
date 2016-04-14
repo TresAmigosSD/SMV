@@ -30,11 +30,20 @@ import org.apache.spark.annotation._
 private[smv] class SmvDSGraph(stages: SmvStages, targetDSs: Seq[SmvDataSet] = Nil) {
   private val seeds = if(targetDSs.isEmpty) stages.allModules else targetDSs
 
-  val nodes: Seq[SmvDataSet]= (seeds.flatMap{ds => stages.ancestors(ds)} ++ seeds).distinct
+  val nodes: Seq[SmvDataSet]= (seeds.flatMap{ds => stages.ancestors(ds)} ++ seeds).distinct.filterNot{
+    ds => ds.isInstanceOf[SmvModuleLink]
+  }
+
   val edges: Seq[(SmvDataSet, SmvDataSet)] = nodes.flatMap{ds =>
     val fromDSs = stages.predecessors.getOrElse(ds, Nil)
-    fromDSs.map{fds => fds -> ds}
+    fromDSs.map{fds =>
+      val _fds = if(fds.isInstanceOf[SmvModuleLink])
+        stages.predecessors.getOrElse(fds, throw new IllegalArgumentException(s"SmvModuleLink ${fds} has no predecessors")).head
+        else fds
+      _fds -> ds
+    }
   }
+
   val clusters: Seq[(SmvStage, Seq[SmvDataSet])] =
     nodes.filter(_.parentStage != null).groupBy(_.parentStage).toList
   val hasMultiClusters = clusters.size > 1
