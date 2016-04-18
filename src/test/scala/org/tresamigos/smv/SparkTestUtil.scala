@@ -31,7 +31,10 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
   def name() = this.getClass().getName().filterNot(_=='$')
 
   /** top of data dir to be used by tests.  For per testcase temp directory, use testcaseTempDir instead */
-  final val testDataDir = "target/test-classes/data/"
+  final val testDataDir = {
+    val fullpath = getClass.getResource("/data").getPath()
+    fullpath.substring(fullpath.lastIndexOf("target/")) + "/"
+  }
 
   /**
    * Creates a local spark context, and cleans
