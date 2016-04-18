@@ -182,6 +182,28 @@ class ColumnHelper(column: Column) {
   }
 
   /**
+   * Convert a timestamp to the number of months from 1970-01.
+   *
+   * {{{
+   * lit("2012-02-29").smvStrToTimestamp("yyyy-MM-dd").smvMonth70 // 505
+   * }}}
+   *
+   * @return number of months from 1970-01 (start from 0)
+   */
+  def smvMonth70 = {
+    val name = s"SmvMonth70($column)"
+    val cal : Calendar = Calendar.getInstance()
+    val f = (ts: Timestamp) => {
+      if(ts == null) null
+      else {
+        panel.Month(ts).timeIndex
+      }
+    }
+
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
+  }
+
+  /**
    * Extract quarter component from a timestamp.
    *
    * {{{
@@ -247,6 +269,27 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
   }
 
+  /**
+   * Convert a timestamp to the number of months from 1970-01-01.
+   *
+   * {{{
+   * lit("2012-02-29").smvStrToTimestamp("yyyy-MM-dd").smvDay70 // 15399
+   * }}}
+   *
+   * @return number of days from 1970-01-01 (start from 0)
+   */
+  def smvDay70 = {
+    val name = s"SmvDay70($column)"
+    val cal : Calendar = Calendar.getInstance()
+    val f = (ts: Timestamp) => {
+      if(ts == null) null
+      else {
+        panel.Day(ts).timeIndex
+      }
+    }
+
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
+  }
   /**
    * Extract hour component from a timestamp.
    *
