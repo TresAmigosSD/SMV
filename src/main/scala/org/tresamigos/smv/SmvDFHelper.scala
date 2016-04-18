@@ -477,7 +477,7 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    *
    * Same as the `dedupByKey` method, we use RDD groupBy in the implementation of this
-   * method to make sure we can handel large key space. 
+   * method to make sure we can handel large key space.
    **/
   def dedupByKeyWithOrder(keyCol: Column*)(orderCol: Column*): DataFrame = {
     val keys = keyCol.map{c => c.getName}
@@ -488,7 +488,7 @@ class SmvDFHelper(df: DataFrame) {
   def dedupByKeyWithOrder(k1: String, krest: String*)(orderCol: Column*): DataFrame = {
     val gdo = new cds.DedupWithOrderGDO(orderCol.map{o => o.toExpr}.toList)
     df.smvGroupBy(k1, krest: _*).
-      smvMapGroup(gdo, false).toDF
+      smvMapGroup(gdo).toDF
   }
 
   /**

@@ -319,6 +319,22 @@ class dedupByKeyTest extends SmvTestUtil {
       "[1,3.0,hello1]",
       "[2,11.0,null]" ))
   }
+
+  test("test dedupByKeyWithOrder with timestamp") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:Integer; b:Timestamp[yyyyMMdd]",
+      """1,20150102;
+         1,20140108;
+         2,20130712;
+         2,20150504"""
+    )
+
+    val res = df.dedupByKeyWithOrder("a")($"b".desc)
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[1,2015-01-02 00:00:00.0]",
+      "[2,2015-05-04 00:00:00.0]"
+    ))
+  }
 }
 
 class smvOverlapCheckTest extends SmvTestUtil {
