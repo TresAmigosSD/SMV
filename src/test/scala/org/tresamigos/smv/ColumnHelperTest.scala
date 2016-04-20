@@ -106,6 +106,21 @@ class ColumnHelperTest extends SmvTestUtil {
       "2016-02-29 00:00:00.0")
   }
 
+  test("test smvDay70/smvMonth70") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120229")
+
+    val res = df.select($"t".smvDay70)
+    assertSrddDataEqual(res,
+      "2221;" +
+      "15399")
+
+    val res2 = df.select($"t".smvMonth70)
+    assertSrddDataEqual(res2,
+      "72;" +
+      "505")
+  }
+
   test("test withDesc") {
     val ssc =sqlContext;
     import ssc.implicits._

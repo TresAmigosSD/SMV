@@ -101,9 +101,9 @@ package object smv {
   object SmvJoinType {
     val Inner = "inner"
     val Outer = "outer"
-    val LeftOuter = "left_outer"
-    val RightOuter = "right_outer"
-    val Semi = "semijoin"
+    val LeftOuter = "leftouter"
+    val RightOuter = "rightouter"
+    val Semi = "leftsemi"
   }
 
   /***************************************************************************

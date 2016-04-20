@@ -477,7 +477,7 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    *
    * Same as the `dedupByKey` method, we use RDD groupBy in the implementation of this
-   * method to make sure we can handel large key space. 
+   * method to make sure we can handel large key space.
    **/
   def dedupByKeyWithOrder(keyCol: Column*)(orderCol: Column*): DataFrame = {
     val keys = keyCol.map{c => c.getName}
@@ -488,7 +488,7 @@ class SmvDFHelper(df: DataFrame) {
   def dedupByKeyWithOrder(k1: String, krest: String*)(orderCol: Column*): DataFrame = {
     val gdo = new cds.DedupWithOrderGDO(orderCol.map{o => o.toExpr}.toList)
     df.smvGroupBy(k1, krest: _*).
-      smvMapGroup(gdo, false).toDF
+      smvMapGroup(gdo).toDF
   }
 
   /**
@@ -1014,12 +1014,16 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Display a dataframe row in transposed view.
    */
-  def peek(pos: Int) = {
+  def peek(pos: Int, colRegex: String = ".*") = {
     val rows = df.take(pos)
 
     if (!rows.isEmpty) {
       val r = df.take(pos).last
-      val labels = df.schema.map { f => s"${f.name}:${f.dataType.toString.replaceAll("Type", "")}" }
+      val labels = for {
+        struct <- df.schema
+        if (colRegex.r.findFirstIn(struct.name).isDefined)
+      } yield s"${struct.name}:${struct.dataType.toString.replaceAll("Type", "")}"
+
       val width = labels.maxBy(_.length).length
       labels.zipWithIndex.foreach { t =>
         printf(s"%-${width}s = %s\n", t._1, r(t._2))

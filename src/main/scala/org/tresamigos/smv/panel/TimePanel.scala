@@ -15,6 +15,7 @@
 package org.tresamigos.smv.panel
 
 import org.joda.time._
+import java.sql.Timestamp
 import org.apache.spark.annotation._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame}
@@ -87,7 +88,18 @@ case class Month(year: Int, month: Int) extends PartialTime {
 }
 
 object Month {
-  def apply(timeIndex: Int) = {
+  def apply(dt: DateTime): Month = {
+    val year = dt.getYear
+    val month = dt.getMonthOfYear
+    new Month(year, month)
+  }
+
+  def apply(timestamp: Timestamp): Month = {
+    val dt = new DateTime(timestamp.getTime()).withZone(DateTimeZone.UTC)
+    apply(dt)
+  }
+
+  def apply(timeIndex: Int): Month = {
     val year = timeIndex / 12 + 1970
     val month = timeIndex % 12 + 1
     new Month(year, month)
@@ -116,12 +128,21 @@ case class Day(year: Int, month: Int, day: Int) extends PartialTime {
 object Day {
   val MILLIS_PER_DAY = 86400000
 
-  def apply(timeIndex: Int) = {
-    val dt = new DateTime(timeIndex.toLong * MILLIS_PER_DAY).withZone(DateTimeZone.UTC)
+  def apply(dt: DateTime): Day = {
     val year = dt.getYear
     val month = dt.getMonthOfYear
     val day = dt.getDayOfMonth
     new Day(year, month, day)
+  }
+
+  def apply(timeIndex: Int): Day = {
+    val dt = new DateTime(timeIndex.toLong * MILLIS_PER_DAY).withZone(DateTimeZone.UTC)
+    apply(dt)
+  }
+
+  def apply(timestamp: Timestamp): Day = {
+    val dt = new DateTime(timestamp.getTime()).withZone(DateTimeZone.UTC)
+    apply(dt)
   }
 }
 
