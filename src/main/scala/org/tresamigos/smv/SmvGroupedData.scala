@@ -646,6 +646,96 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
   /**
+   * For a DF with `TimePanel` column already, fill the null values with previous peoriod value
+   *
+   * Example:
+   * Input:
+   * {{{
+   * K, T, V
+   * a, 1, null
+   * a, 2, a
+   * a, 3, b
+   * a, 4, null
+   * }}}
+   *
+   * {{{
+   * df.smvGroupBy("K").timePanelValueFill("T")("V")
+   * }}}
+   *
+   * Output:
+   * {{{
+   * K, T, V
+   * a, 1, a
+   * a, 2, a
+   * a, 3, b
+   * a, 4, b
+   * }}}
+   *
+   * @param smvTimeColName
+   * @param backwardFill - default "true"
+   * @param values - list of column names which need to be null-filled
+   *
+   * By default, the leeding nulls of each group in the time sequece are filled with the
+   * earlist non-null value. In the example, V and T=1 was filed as "a", which is the T=2 value.
+   * One can change that behavior by passing in `backwardFill = false`, which will leave V = null
+   * at T=1.
+   **/
+  def timePanelValueFill(smvTimeColName: String, backwardFill: Boolean = true)(values: String*) = {
+    import df.sqlContext.implicits._
+    val foreward = fillNullWithPrevValue($"$smvTimeColName".asc)(values.map{s => $"${s}"}: _*)
+
+    if(backwardFill)
+      foreward.smvGroupBy(keys.map{k => $"${k}"}: _*).
+        fillNullWithPrevValue($"$smvTimeColName".desc)(values.map{s => $"${s}"}: _*)
+    else
+      foreward
+  }
+
+  /**
+   * Same as `addTimePanels` with specified value columns filled with previous perioud value.
+   *
+   * Example
+   * Input:
+   * {{{
+   * k, ts, v
+   * 1,20120201,1.5
+   * 1,20120701,7.5
+   * 1,20120501,2.45
+   * }}}
+   *
+   * {{{
+   * f.smvGroupBy("k").addTimePanelsWithValueFill("ts")(TimePanel(Month(2012, 1), Month(2012, 6)))("v")
+   * }}}
+   *
+   * Output:
+   * {{{
+   * k, ts, v, smvTime
+   * 1,null,1.5,M201201
+   * 1,2012-02-01 00:00:00.0,1.5,M201202
+   * 1,null,1.5,M201203
+   * 1,null,1.5,M201204
+   * 1,2012-05-01 00:00:00.0,2.45,M201205
+   * 1,null,2.45,M201206
+   * }}}
+   **/
+  def addTimePanelsWithValueFill(
+    timeColName: String,
+    doFiltering: Boolean = true,
+    backwardFill: Boolean = true
+  )(
+    panels: panel.TimePanel*
+  )(
+    values: String*
+  ) = {
+    import df.sqlContext.implicits._
+    val smvTimeName = mkUniq(df.columns, "smvTime")
+    panels.map{tp =>
+      tp.addToDF(df, timeColName, keys, doFiltering).
+        smvGroupBy(keys.map{k => $"${k}"}: _*).
+        timePanelValueFill(smvTimeName, backwardFill)(values: _*)
+    }.reduce(_.unionAll(_))
+  }
+  /**
    * Add records within each group is expected values of a column is missing
    * For now only works with StringType column.
    *
@@ -739,7 +829,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * a, 4, b
    * }}}
    **/
-  def fillNullWithPrevValue(orders: Column*)(values: Column*): DataFrame = {
+  private[smv] def fillNullWithPrevValue(orders: Column*)(values: Column*): DataFrame = {
     val renamed = values.map{c => c.getName}.map{n => mkUniq(df.columns, s"_${n}")}
 
     /* We are using the `last` aggregate function's feature that it's actually
