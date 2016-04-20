@@ -74,4 +74,26 @@ class SmvGroupedDataTest extends SmvTestUtil {
       "[1,a,3]"
     ))
   }
+
+  test("test fillNullWithPrevValue") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("k:String; t:Integer; v:String", "a,1,;a,2,a;a,3,b;a,4,")
+    val res = df.smvGroupBy("k").fillNullWithPrevValue($"t".asc)($"v")
+
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,null]",
+      "[a,2,a]",
+      "[a,3,b]",
+      "[a,4,b]"
+    ))
+
+    val res2 = res.smvGroupBy("k").fillNullWithPrevValue($"t".desc)($"v")
+
+    assertUnorderedSeqEqual(res2.collect.map(_.toString), Seq(
+      "[a,1,a]",
+      "[a,2,a]",
+      "[a,3,b]",
+      "[a,4,b]"
+    ))
+  }
 }

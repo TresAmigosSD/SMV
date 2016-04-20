@@ -543,10 +543,25 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    **/
   @Experimental
   def runAgg(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
-    /* TODO: we can actually check aggCols.map{a => a.cds == NoOpCDS}.reduce(_&&_)
-    * if true the runAgg can actually be implemented with Window fuctions
-    */
-    val isSimpleRunAgg = aggCols.map{a => a.cds == NoOpCDS}.reduce(_&&_)
+    /* In Spark 1.5.2 WindowSpec handles aggregate functions through
+     * similar case matching as below. `first` and `last` are actually
+     * implemented using Hive `first_value` and `last_value`, which have
+     * different logic as `first` (non-null first) and `last` (non-null last)
+     * in regular aggregation function.
+     * We only try to use window to suppory Avg, Sum, Count, Min and Max
+     * for simple runAgg, all others will still use CDS approach
+     */
+    val isSimpleRunAgg = aggCols.map{a =>
+      val supported = a.aggExpr match {
+        case Alias(Average(_), _) => true
+        case Alias(Sum(_), _) => true
+        case Alias(Count(_), _) => true
+        case Alias(Min(_), _) => true
+        case Alias(Max(_), _) => true
+        case _ => false
+      }
+      a.cds == NoOpCDS && supported
+    }.reduce(_&&_)
 
     if (isSimpleRunAgg) {
       val w = winspec.orderBy(orders: _*).rowsBetween(Long.MinValue, 0)
@@ -678,6 +693,62 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     } else {
       res
     }
+  }
+
+  /**
+   * Fill in Null values with "previous" value according to an ordering
+   *
+   * Example:
+   * Input:
+   * {{{
+   * K, T, V
+   * a, 1, null
+   * a, 2, a
+   * a, 3, b
+   * a, 4, null
+   * }}}
+   *
+   * {{{
+   * df.smvGroupBy("K").fillNullWithPrevValue($"T".asc)($"V")
+   * }}}
+   *
+   * Output:
+   * {{{
+   * K, T, V
+   * a, 1, null
+   * a, 2, a
+   * a, 3, b
+   * a, 4, b
+   * }}}
+   *
+   * This methods only fill forward, which means that at T=1, V is still
+   * null as in above example. In case one need all the null filled and
+   * allow fill backward at the beginning of the sequence, you can apply
+   * this method again with reverse ordering:
+   * {{{
+   * df.smvGroupBy("K").fillNullWithPrevValue($"T".asc)($"V").
+   *   smvGroupBy("K").fillNullWithPrevValue($"T".desc)($"V")
+   * }}}
+   *
+   * Output:
+   * {{{
+   * K, T, V
+   * a, 1, a
+   * a, 2, a
+   * a, 3, b
+   * a, 4, b
+   * }}}
+   **/
+  def fillNullWithPrevValue(orders: Column*)(values: Column*): DataFrame = {
+    val renamed = values.map{c => c.getName}.map{n => mkUniq(df.columns, s"_${n}")}
+
+    /* We are using the `last` aggregate function's feature that it's actually
+     * Non-null last */
+    val aggExprs = values.zip(renamed).map{case (v, nv) => last(v) as nv}.map{makeSmvCDSAggColumn}
+    runAggPlus(orders: _*)(aggExprs: _*).
+      selectMinus(values: _*).
+      renameField(renamed.zip(values.map{_.getName}): _*).
+      select(df.columns.head, df.columns.tail: _*)
   }
 
   private[smv] def smvRePartition(partitioner: Partitioner): SmvGroupedData = {
