@@ -1014,18 +1014,19 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Display a dataframe row in transposed view.
    */
-  def peek(pos: Int, colRegex: String = ".*") = {
+  def peek(pos: Int, colRegex: String = ".*"): Unit = {
     val rows = df.take(pos)
 
     if (!rows.isEmpty) {
       val r = df.take(pos).last
-      val labels = for {
-        struct <- df.schema
-        if (colRegex.r.findFirstIn(struct.name).isDefined)
-      } yield s"${struct.name}:${struct.dataType.toString.replaceAll("Type", "")}"
 
-      val width = labels.maxBy(_.length).length
-      labels.zipWithIndex.foreach { t =>
+      val labels = for {
+        (f, i) <- df.schema.zipWithIndex
+        if colRegex.r.findFirstIn(f.name).isDefined
+      } yield (s"${f.name}:${f.dataType.toString.replaceAll("Type", "")}", i)
+
+      val width = labels.maxBy(_._1.length)._1.length
+      labels.foreach { t =>
         printf(s"%-${width}s = %s\n", t._1, r(t._2))
       }
     } else {
@@ -1037,6 +1038,8 @@ class SmvDFHelper(df: DataFrame) {
    * Use default peek with or without the parenthesis
    **/
   def peek(): Unit = peek(1)
+
+  def peek(colRegex: String): Unit = peek(1, colRegex)
 
 
   /**
