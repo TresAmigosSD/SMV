@@ -390,30 +390,24 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *
    * The "cubed" values on those 2 columns are:
    * {{{
-   *   90001, null
-   *   10001, null
-   *   null, 201401
-   *   null, 201501
+   *   90001, *
+   *   10001, *
+   *   *, 201401
+   *   *, 201501
    *   90001, 201401
    *   10001, 201501
-   *   null, null
+   *   *, *
    * }}}
    *
-   * where `null` stand for "any"
+   * where `*` stand for "any"
    *
-   * Also have a version on `DataFrame`, which is equivalent to `cube` DF method
-   *
-   * 2 differences from original smvCube:
-   *   - instead of fill in `*` as wildcard key, filling in `null`
-   *   - also have the all-null key records as the overall aggregation
+   * Also have a version on `DataFrame`.
    **/
-  @deprecated("should use spark cube method", "1.5")
   def smvCube(col: String, others: String*): SmvGroupedData = {
     new RollupCubeOp(df, keys, (col +: others)).cube()
   }
 
   /** Same as `smvCube(String*)` but using `Column` to define the input columns */
-  @deprecated("should use spark cube method", "1.5")
   def smvCube(cols: Column*): SmvGroupedData = {
     val names = cols.map(_.getName)
     new RollupCubeOp(df, keys, names).cube()
@@ -436,24 +430,19 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *
    * The "rolluped" values are:
    * {{{
-   *   null, null
-   *   10234, null
+   *   *, *
+   *   10234, *
    *   10234, 92101
    *   10234, 10019
    * }}}
    *
-   * Also have a version on DF, which is equivalent to `rollup` DF method
-   *
-   * 2 differences from original smvRollup:
-   *   - instead of fill in `*` as wildcard key, filling in `null`
-   *   - also have the all-null key records as the overall aggregation
+   * Also have a version on DF.
    **/
-  @deprecated("should use spark rollup method", "1.5")
   def smvRollup(col: String, others: String*): SmvGroupedData = {
     new RollupCubeOp(df, keys, (col +: others)).rollup()
   }
 
-  @deprecated("should use spark rollup method", "1.5")
+  /** Same as `smvRollup(String*)` but using `Column` to define the input columns */
   def smvRollup(cols: Column*): SmvGroupedData = {
     new RollupCubeOp(df, keys, cols.map(_.getName)).rollup()
   }

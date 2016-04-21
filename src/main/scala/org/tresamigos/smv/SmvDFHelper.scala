@@ -681,40 +681,37 @@ class SmvDFHelper(df: DataFrame) {
     smvUnpivot((valueCol +: others).map{s => s.name}: _*)
 
   /**
-   * Alias to `cube` DF method
+   * Similar to the `cube` Spark DF method, but using "*" instead of null to represent "Any"
    *
    * Example:
    * {{{
    *   df.smvCube("zip", "month").agg("zip", "month", sum("v") as "v")
    * }}}
-   *
-   * 2 differences from original smvCube:
-   *   - instead of fill in `*` as wildcard key, filling in `null`
-   *   - also have the all-null key records as the overall aggregation
    **/
-  @deprecated("should use spark cube method", "1.5")
-  def smvCube(col: String, others: String*) = df.cube(col, others: _*)
+  def smvCube(col: String, others: String*) = {
+    new RollupCubeOp(df, Nil, (col +: others)).cube()
+  }
 
-  @deprecated("should use spark cube method", "1.5")
-  def smvCube(cols: Column*) = df.cube(cols: _*)
+  def smvCube(cols: Column*) = {
+    val names = cols.map(_.getName)
+    new RollupCubeOp(df, Nil, names).cube()
+  }
 
   /**
-   * Alias to `rollup` DF method
+   * Similar to the `rollup` Spark DF method, but using "*" instead of null to represent "Any"
    *
    * Example:
    * {{{
    *   df.smvRollup("county", "zip").agg("county", "zip", sum("v") as "v")
    * }}}
-   *
-   * 2 differences from original smvRollup:
-   *   - instead of fill in `*` as wildcard key, filling in `null`
-   *   - also have the all-null key records as the overall aggregation
    **/
-  @deprecated("should use spark rollup method", "1.5")
-  def smvRollup(col: String, others: String*) = df.rollup(col, others: _*)
+  def smvRollup(col: String, others: String*) = {
+    new RollupCubeOp(df, Nil, (col +: others)).rollup()
+  }
 
-  @deprecated("should use spark rollup method", "1.5")
-  def smvRollup(cols: Column*) = df.rollup(cols: _*)
+  def smvRollup(cols: Column*) = {
+    new RollupCubeOp(df, Nil, cols.map(_.getName)).rollup()
+  }
 
   /**
    * Create an Edd on DataFrame.

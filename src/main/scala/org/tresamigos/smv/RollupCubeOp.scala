@@ -24,11 +24,19 @@ import org.apache.spark.sql.catalyst.expressions.{Alias, First, Literal, Express
  * implement the cube/rollup operations on a given SRDD and a set of columns.
  * See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
  * Rather than using nulls as the pig version, a sentinel value of "*" will be used
+ *
+ * Since Spark 1.4, rollup and cube methods were supported in Spark as method on DF.
+ * However there are two limitations,
+ * - Can't apply on groupbed data, so that can't have other keys
+ * - Can't specify sentinel string other than null. Since null always handeled differently
+ *   in other DF steps, it's way more convenience to use "*" as the sentinel string insteald of null
  */
 @deprecated("Use Spark rollup/cube", "1.4")
 private[smv] class RollupCubeOp(df: DataFrame,
                    keyCols: Seq[String],
-                   cols: Seq[String]) {
+                   cols: Seq[String],
+                   sentinel: String = "*"
+                 ) {
 
   /** for N cube cols, we want to produce 2**N columns (minus all "*") */
   def cubeBitmasks() = {
@@ -54,7 +62,7 @@ private[smv] class RollupCubeOp(df: DataFrame,
 
     val cubeColsSelect = cols.zipWithIndex.map { case (s, i) =>
       val idx = cols.length - i - 1
-      if (((1 << idx) & bitmask) != 0) lit(null) as s else $"$s"
+      if (((1 << idx) & bitmask) != 0) lit(sentinel) as s else $"$s"
     }
     val otherColsSelect = getNonRollupCols().map(n => $"$n")
 
