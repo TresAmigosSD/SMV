@@ -250,15 +250,22 @@ class JoinHelperTest extends SmvTestUtil {
     val df2 = createSchemaRdd("a:Integer;b:String", """1,x1;4,w2;""")
     val df3 = createSchemaRdd("a:Integer;b:String", """1,x3;5,w3;""")
 
-    val res = df1.joinMultipleByKey(Seq("a"), SmvJoinType.Inner).
+    val mtjoin = df1.joinMultipleByKey(Seq("a"), SmvJoinType.Inner).
       joinWith(df2, "_df2").
-      joinWith(df3, "_df3", SmvJoinType.Outer).
-      doJoin()
+      joinWith(df3, "_df3", SmvJoinType.Outer)
+
+    val res = mtjoin.doJoin()
 
     assert(res.columns === Seq("a", "b", "b_df2", "b_df3"))
     assertSrddDataEqual(res,
       """1,x1,x1,x3;
         |5,null,null,w3""".stripMargin
+    )
+
+    val res2 = mtjoin.doJoin(true)
+    assertSrddDataEqual(res2,
+      """1,x1;
+        |5,null""".stripMargin
     )
   }
 }

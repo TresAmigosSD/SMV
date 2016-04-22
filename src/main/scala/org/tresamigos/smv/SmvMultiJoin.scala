@@ -41,9 +41,24 @@ class SmvMultiJoin(val dfChain: Seq[SmvJoinDF], val conf: SmvMultiJoinConf) {
     new SmvMultiJoin(newChain, conf)
   }
 
-  def doJoin(): DataFrame = {
-    dfChain.foldLeft(conf.leftDf){case (acc: DataFrame, SmvJoinDF(df, postfix, jType)) =>
+  /**
+   * Really triger the join operation
+   *
+   * @param dropExtra default false, which will keep all duplicated name columns with the postfix.
+   *                   when it's true, the duplicated columns will be dropped. 
+   **/
+  def doJoin(dropExtra: Boolean = false): DataFrame = {
+    val res = dfChain.foldLeft(conf.leftDf){case (acc: DataFrame, SmvJoinDF(df, postfix, jType)) =>
       acc.joinByKey(df, conf.keys, jType, postfix, false)
     }
+
+    val colsWithPostfix = dfChain.map{_.postfix}.flatMap{p =>
+      res.columns.filter{c => c.endsWith(p)}
+    }.distinct
+
+    if (dropExtra && (! colsWithPostfix.isEmpty))
+      res.selectMinus(colsWithPostfix.head, colsWithPostfix.tail: _*)
+    else
+      res
   }
 }
