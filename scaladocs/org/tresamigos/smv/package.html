@@ -253,7 +253,7 @@ common part to the new ABC: SmvDSWithParser
       </h4>
       <p class="comment cmt">Dependency management unit within the SMV application framework.</p>
     </li><li name="org.tresamigos.smv.SmvFile" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="SmvFileextendsSmvDataSet"></a>
+      <a id="SmvFileextendsSmvInputDataSet"></a>
       <a id="SmvFile:SmvFile"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -261,7 +261,7 @@ common part to the new ABC: SmvDSWithParser
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="SmvFile.html"><span class="name">SmvFile</span></a><span class="result"> extends <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>
+        <a href="SmvFile.html"><span class="name">SmvFile</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.SmvInputDataSet">SmvInputDataSet</span></span>
       </span>
       </h4>
       
@@ -334,7 +334,7 @@ Through the </code>SmvHierarchyFuncs<code> it provides rollup methods on the hie
       <p class="comment cmt"><code>SmvHierarchy</code> combines a hierarchy Map (a SmvOutput) with
 the hierarchy structure.</p>
     </li><li name="org.tresamigos.smv.SmvHiveTable" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvHiveTableextendsSmvDataSetwithProductwithSerializable"></a>
+      <a id="SmvHiveTableextendsSmvInputDataSetwithProductwithSerializable"></a>
       <a id="SmvHiveTable:SmvHiveTable"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -342,7 +342,7 @@ the hierarchy structure.</p>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="SmvHiveTable.html"><span class="name">SmvHiveTable</span></a><span class="params">(<span name="tableName">tableName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="SmvHiveTable.html"><span class="name">SmvHiveTable</span></a><span class="params">(<span name="tableName">tableName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.SmvInputDataSet">SmvInputDataSet</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       <p class="comment cmt">SMV Dataset Wrapper around a hive table.</p>
@@ -386,6 +386,19 @@ the hierarchy structure.</p>
       </h4>
       <p class="comment cmt">Instead of a single input file, specify a data dir with files which has
 the same schema and CsvAttributes.</p>
+    </li><li name="org.tresamigos.smv.SmvMultiJoin" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvMultiJoinextendsAnyRef"></a>
+      <a id="SmvMultiJoin:SmvMultiJoin"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvMultiJoin.html"><span class="name">SmvMultiJoin</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.SmvOutput" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvOutputextendsAnyRef"></a>
       <a id="SmvOutput:SmvOutput"></a>
@@ -900,6 +913,19 @@ Return true if any of the values of the aggregated column are true, otherwise fa
 NOTE: It returns false, if all the values are nulls
 </p></div></div>
     </li><li name="org.tresamigos.smv.package#smvStrCat" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvStrCat(sep:String,columns:org.apache.spark.sql.Column*):org.apache.spark.sql.Column"></a>
+      <a id="smvStrCat(String,Column*):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvStrCat</span><span class="params">(<span name="sep">sep: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="columns">columns: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.package#smvStrCat" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvStrCat(columns:org.apache.spark.sql.Column*):org.apache.spark.sql.Column"></a>
       <a id="smvStrCat(Column*):Column"></a>
       <h4 class="signature">
@@ -911,8 +937,7 @@ NOTE: It returns false, if all the values are nulls
         <span class="name">smvStrCat</span><span class="params">(<span name="columns">columns: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Concatenate columns as strings
-</p>
+      <p class="shortcomment cmt">Patch Spark's <code>concat</code> and <code>concat_ws</code> to treat null as empty string in concatenation.</p>
     </li><li name="org.tresamigos.smv.package#smvSum0" visbl="pub" data-isabs="false" fullComment="yes" group="agg">
       <a id="smvSum0(col:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
       <a id="smvSum0(Column):Column"></a>

@@ -198,6 +198,29 @@ Input</p><pre>k, time, v
 <span class="num">1</span>, <span class="kw">null</span>, <span class="kw">null</span>, M201402
 <span class="num">1</span>, <span class="num">20140301</span>, <span class="num">4.5</span>, M201403
 <span class="num">1</span>, <span class="num">20140325</span>, <span class="num">10.3</span>, M201403</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#addTimePanelsWithValueFill" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="addTimePanelsWithValueFill(timeColName:String,doFiltering:Boolean,backwardFill:Boolean)(panels:org.tresamigos.smv.panel.TimePanel*)(values:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="addTimePanelsWithValueFill(String,Boolean,Boolean)(TimePanel*)(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">addTimePanelsWithValueFill</span><span class="params">(<span name="timeColName">timeColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="doFiltering">doFiltering: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>, <span name="backwardFill">backwardFill: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="params">(<span name="panels">panels: <a href="panel/TimePanel.html" class="extype" name="org.tresamigos.smv.panel.TimePanel">TimePanel</a>*</span>)</span><span class="params">(<span name="values">values: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Same as <code>addTimePanels</code> with specified value columns filled with previous perioud value.</p><div class="fullcomment"><div class="comment cmt"><p>Same as <code>addTimePanels</code> with specified value columns filled with previous perioud value.</p><p>Example
+Input:</p><pre>k, ts, v
+<span class="num">1</span>,<span class="num">20120201</span>,<span class="num">1.5</span>
+<span class="num">1</span>,<span class="num">20120701</span>,<span class="num">7.5</span>
+<span class="num">1</span>,<span class="num">20120501</span>,<span class="num">2.45</span></pre><pre>f.smvGroupBy(<span class="lit">"k"</span>).addTimePanelsWithValueFill(<span class="lit">"ts"</span>)(TimePanel(Month(<span class="num">2012</span>, <span class="num">1</span>), Month(<span class="num">2012</span>, <span class="num">6</span>)))(<span class="lit">"v"</span>)</pre><p>Output:</p><pre>k, ts, v, smvTime
+<span class="num">1</span>,<span class="kw">null</span>,<span class="num">1.5</span>,M201201
+<span class="num">1</span>,<span class="num">2012</span>-<span class="num">02</span>-<span class="num">01</span> <span class="num">00</span>:<span class="num">00</span>:<span class="num">00.0</span>,<span class="num">1.5</span>,M201202
+<span class="num">1</span>,<span class="kw">null</span>,<span class="num">1.5</span>,M201203
+<span class="num">1</span>,<span class="kw">null</span>,<span class="num">1.5</span>,M201204
+<span class="num">1</span>,<span class="num">2012</span>-<span class="num">05</span>-<span class="num">01</span> <span class="num">00</span>:<span class="num">00</span>:<span class="num">00.0</span>,<span class="num">2.45</span>,M201205
+<span class="num">1</span>,<span class="kw">null</span>,<span class="num">2.45</span>,M201206</pre></div></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <a id="asInstanceOf[T0]:T0"></a>
@@ -472,6 +495,42 @@ sum('v) as <span class="lit">"nv3"</span>)</pre></div><dl class="attributes bloc
                 <span class="name">@Experimental</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvCube(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvCube(Column*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCube</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Same as <code>smvCube(String*)</code> but using <code>Column</code> to define the input columns</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvCube(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvCube(String,String*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCube</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">implement the cube operations on a given DF and a set of columns.</p><div class="fullcomment"><div class="comment cmt"><p>implement the cube operations on a given DF and a set of columns.
+See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
+Rather than using nulls as the pig version, a sentinel value of &quot;*&quot; will be used</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"year"</span>).smvCube(<span class="lit">"zip"</span>, <span class="lit">"month"</span>).agg(<span class="lit">"year"</span>, <span class="lit">"zip"</span>, <span class="lit">"month"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre><p>For zip &amp; month columns with input values:</p><pre><span class="num">90001</span>, <span class="num">201401</span>
+<span class="num">10001</span>, <span class="num">201501</span></pre><p>The &quot;cubed&quot; values on those 2 columns are:</p><pre><span class="num">90001</span>, *
+<span class="num">10001</span>, *
+*, <span class="num">201401</span>
+*, <span class="num">201501</span>
+<span class="num">90001</span>, <span class="num">201401</span>
+<span class="num">10001</span>, <span class="num">201501</span>
+*, *</pre><p>where <code>*</code> stand for &quot;any&quot;</p><p>Also have a version on <code>DataFrame</code>.
+</p></div></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvDecile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvDecile(valueCol:org.apache.spark.sql.Column):org.apache.spark.sql.DataFrame"></a>
       <a id="smvDecile(Column):DataFrame"></a>
@@ -616,6 +675,57 @@ See <a href="SmvDFHelper.html#smvPivot(pivotCols:Seq[String]*)(valueCols:String*
 <br/><code>v_rsum</code> : the running sum of &quot;v&quot; column within this group (sorted from smallest to largest v value)
 <br/><code>v_quantile</code> : the bin number in range [1,numBins]</p><p>All other columns in the input are untouched and propagated to the output.
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRePartition" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvRePartition(numParts:Int):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvRePartition(Int):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvRePartition</span><span class="params">(<span name="numParts">numParts: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Repartition SmvGroupedData using specified partitioner on the keys.</p><div class="fullcomment"><div class="comment cmt"><p>Repartition SmvGroupedData using specified partitioner on the keys. A
+HashPartitioner with the specified number of partitions will be used.</p><p>This method is used in the cases that the key-space is very large. In the
+current Spark DF's groupBy method, the entire key-space is actually loaded
+into executor's memory, which is very dangerous when the key space is big.
+The regular DF's repartition function doesn't solve this issue since a random
+repartition will not guaranteed to reduce the key-space on each executor.
+In that case we need to use this function to linearly reduce the key-space.</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"k1"</span>, <span class="lit">"k2"</span>).smvRePartition(<span class="num">32</span>).aggWithKeys(sum($<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRollup" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvRollup(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvRollup(Column*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvRollup</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Same as <code>smvRollup(String*)</code> but using <code>Column</code> to define the input columns</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRollup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvRollup(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvRollup(String,String*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvRollup</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">implement the rollup operations on a given DF and a set of columns.</p><div class="fullcomment"><div class="comment cmt"><p>implement the rollup operations on a given DF and a set of columns.
+See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"year"</span>).smvRollup(<span class="lit">"county"</span>, <span class="lit">"zip"</span>).agg(<span class="lit">"year"</span>, <span class="lit">"county"</span>, <span class="lit">"zip"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre><p>For county &amp; zip with input values:</p><pre><span class="num">10234</span>, <span class="num">92101</span>
+<span class="num">10234</span>, <span class="num">10019</span></pre><p>The &quot;rolluped&quot; values are:</p><pre>*, *
+<span class="num">10234</span>, *
+<span class="num">10234</span>, <span class="num">92101</span>
+<span class="num">10234</span>, <span class="num">10019</span></pre><p>Also have a version on DF.
+</p></div></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvScale" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvScale(ranges:(org.apache.spark.sql.Column,(Double,Double))*)(withZeroPivot:Boolean,doDropRange:Boolean):org.apache.spark.sql.DataFrame"></a>
       <a id="smvScale((Column,(Double,Double))*)(Boolean,Boolean):DataFrame"></a>
@@ -668,6 +778,32 @@ lower and upper bounds will be the abs max.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#timePanelValueFill" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="timePanelValueFill(smvTimeColName:String,backwardFill:Boolean)(values:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="timePanelValueFill(String,Boolean)(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">timePanelValueFill</span><span class="params">(<span name="smvTimeColName">smvTimeColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="backwardFill">backwardFill: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="params">(<span name="values">values: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">For a DF with <code>TimePanel</code> column already, fill the null values with previous peoriod value</p><div class="fullcomment"><div class="comment cmt"><p>For a DF with <code>TimePanel</code> column already, fill the null values with previous peoriod value</p><p>Example:
+Input:</p><pre>K, T, V
+a, <span class="num">1</span>, <span class="kw">null</span>
+a, <span class="num">2</span>, a
+a, <span class="num">3</span>, b
+a, <span class="num">4</span>, <span class="kw">null</span></pre><pre>df.smvGroupBy(<span class="lit">"K"</span>).timePanelValueFill(<span class="lit">"T"</span>)(<span class="lit">"V"</span>)</pre><p>Output:</p><pre>K, T, V
+a, <span class="num">1</span>, a
+a, <span class="num">2</span>, a
+a, <span class="num">3</span>, b
+a, <span class="num">4</span>, b</pre></div><dl class="paramcmts block"><dt class="param">smvTimeColName</dt><dd class="cmt"></dd><dt class="param">backwardFill</dt><dd class="cmt"><p>- default &quot;true&quot;</p></dd><dt class="param">values</dt><dd class="cmt"><p>- list of column names which need to be null-filled</p><p>By default, the leeding nulls of each group in the time sequece are filled with the
+earlist non-null value. In the example, V and T=1 was filed as &quot;a&quot;, which is the T=2 value.
+One can change that behavior by passing in <code>backwardFill = false</code>, which will leave V = null
+at T=1.
+</p></dd></dl></div>
     </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <a id="toString():String"></a>
@@ -762,86 +898,6 @@ lower and upper bounds will be the abs max.
                 <span class="name">@deprecated</span>
               
         </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.4)</i> Normal Spark agg now preserves the keys</p></dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvCube(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvCube(Column*):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark cube method">smvCube</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Same as <code>smvCube(String*)</code> but using <code>Column</code> to define the input columns</p><div class="fullcomment"><div class="comment cmt"><p>Same as <code>smvCube(String*)</code> but using <code>Column</code> to define the input columns</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark cube method</p></dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvCube(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvCube(String,String*):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark cube method">smvCube</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">implement the cube operations on a given DF and a set of columns.</p><div class="fullcomment"><div class="comment cmt"><p>implement the cube operations on a given DF and a set of columns.
-See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
-Rather than using nulls as the pig version, a sentinel value of &quot;*&quot; will be used</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"year"</span>).smvCube(<span class="lit">"zip"</span>, <span class="lit">"month"</span>).agg(<span class="lit">"year"</span>, <span class="lit">"zip"</span>, <span class="lit">"month"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre><p>For zip &amp; month columns with input values:</p><pre><span class="num">90001</span>, <span class="num">201401</span>
-<span class="num">10001</span>, <span class="num">201501</span></pre><p>The &quot;cubed&quot; values on those 2 columns are:</p><pre><span class="num">90001</span>, <span class="kw">null</span>
-<span class="num">10001</span>, <span class="kw">null</span>
-<span class="kw">null</span>, <span class="num">201401</span>
-<span class="kw">null</span>, <span class="num">201501</span>
-<span class="num">90001</span>, <span class="num">201401</span>
-<span class="num">10001</span>, <span class="num">201501</span>
-<span class="kw">null</span>, <span class="kw">null</span></pre><p>where <code>null</code> stand for &quot;any&quot;</p><p>Also have a version on <code>DataFrame</code>, which is equivalent to <code>cube</code> DF method</p><p>2 differences from original smvCube:</p><ul><li>instead of fill in <code>*</code> as wildcard key, filling in <code>null</code></li><li>also have the all-null key records as the overall aggregation
-</li></ul></div><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark cube method</p></dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRollup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvRollup(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvRollup(Column*):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark rollup method">smvRollup</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark rollup method</p></dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRollup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvRollup(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
-      <a id="smvRollup(String,String*):SmvGroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark rollup method">smvRollup</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">implement the rollup operations on a given DF and a set of columns.</p><div class="fullcomment"><div class="comment cmt"><p>implement the rollup operations on a given DF and a set of columns.
-See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"year"</span>).smvRollup(<span class="lit">"county"</span>, <span class="lit">"zip"</span>).agg(<span class="lit">"year"</span>, <span class="lit">"county"</span>, <span class="lit">"zip"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre><p>For county &amp; zip with input values:</p><pre><span class="num">10234</span>, <span class="num">92101</span>
-<span class="num">10234</span>, <span class="num">10019</span></pre><p>The &quot;rolluped&quot; values are:</p><pre><span class="kw">null</span>, <span class="kw">null</span>
-<span class="num">10234</span>, <span class="kw">null</span>
-<span class="num">10234</span>, <span class="num">92101</span>
-<span class="num">10234</span>, <span class="num">10019</span></pre><p>Also have a version on DF, which is equivalent to <code>rollup</code> DF method</p><p>2 differences from original smvRollup:</p><ul><li>instead of fill in <code>*</code> as wildcard key, filling in <code>null</code></li><li>also have the all-null key records as the overall aggregation
-</li></ul></div><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark rollup method</p></dd></dl></div>
     </li></ol>
             </div>
         </div>

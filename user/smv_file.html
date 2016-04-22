@@ -94,6 +94,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 # schema for input
 acct_id: String;  # this is the id
 user_id: String;
+store_id: String[,null];  # &quot;null&quot; is used in the data to represent null-value
 amt: Double;  // transaction amount!
 income: Decimal[10];</code></pre>
 <h2 id="csv-attributes">CSV attributes</h2>
@@ -101,6 +102,11 @@ income: Decimal[10];</code></pre>
 <h2 id="supported-schema-types">Supported schema types</h2>
 <h3 id="native-types">Native types</h3>
 <p><code>Integer</code>, <code>Long</code>, <code>Float</code>, <code>Double</code>, <code>Boolean</code>, and <code>String</code> types correspond to their corresponding JVM type.</p>
+<p>We are planning to support &quot;format&quot; for all the native type, but current version does not support<br />format parameter yet.</p>
+<p>For <code>String</code> type, since both empty value and null value are valid, we sometimes want to distinguish<br />them. In that case we have to specify a special string to represent null-string.</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">store_id: String[,<span class="kw">null</span>]</code></pre>
+<p>Where &quot;null&quot; is used in the data to represent null-value.</p>
+<p>Since we also use Csv to persist intermediate <code>SmvDataSet</code> results, internally we use <code>_SmvStrNull_</code><br />to represent null-value.</p>
 <h3 id="decimal-type">Decimal type</h3>
 <p>The <code>Decimal</code> type can be used to hold a <code>BigDecimal</code> field value. An optional precision and scale values can also supplied. They default to 10 and 0 respectively if not defined (same as <code>BigDecimal</code>).</p>
 <pre class="sourceCode scala"><code class="sourceCode scala">income: Decimal;

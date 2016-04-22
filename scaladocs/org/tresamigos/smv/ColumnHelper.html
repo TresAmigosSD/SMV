@@ -421,6 +421,20 @@ sequence</p><pre>df.selectPlus($<span class="lit">"arrayCol"</span>.isAnyIn(seqV
       </h4>
       <p class="shortcomment cmt">Map double to the lower bound of bins with bin-size specified</p><div class="fullcomment"><div class="comment cmt"><p>Map double to the lower bound of bins with bin-size specified</p><pre>$<span class="lit">"amt"</span>.smvCoarseGrain(<span class="num">100</span>)  <span class="cmt">// 122.34 => 100.0, 2230.21 => 2200.0</span></pre><p>TODO: need to rename this function as this is just a special case of rounding!!!
 </p></div></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvDay70" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvDay70:org.apache.spark.sql.Column"></a>
+      <a id="smvDay70:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvDay70</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Convert a timestamp to the number of months from 1970-01-01.</p><div class="fullcomment"><div class="comment cmt"><p>Convert a timestamp to the number of months from 1970-01-01.</p><pre>lit(<span class="lit">"2012-02-29"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvDay70 <span class="cmt">// 15399</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>number of days from 1970-01-01 (start from 0)
+</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvDayOfMonth" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvDayOfMonth:org.apache.spark.sql.Column"></a>
       <a id="smvDayOfMonth:Column"></a>
@@ -513,6 +527,20 @@ you need to and another step</p><pre><span class="kw">val</span> resWithDiff = r
       </span>
       </h4>
       <p class="shortcomment cmt">Extract month component from a timestamp.</p><div class="fullcomment"><div class="comment cmt"><p>Extract month component from a timestamp.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvMonth <span class="cmt">//4</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The month component as an integer or null if input column is null
+</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvMonth70" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvMonth70:org.apache.spark.sql.Column"></a>
+      <a id="smvMonth70:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvMonth70</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Convert a timestamp to the number of months from 1970-01.</p><div class="fullcomment"><div class="comment cmt"><p>Convert a timestamp to the number of months from 1970-01.</p><pre>lit(<span class="lit">"2012-02-29"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvMonth70 <span class="cmt">// 505</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>number of months from 1970-01 (start from 0)
 </p></dd></dl></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvNullSub" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvNullSub(that:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>

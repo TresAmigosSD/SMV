@@ -240,15 +240,15 @@ For example, given the following input DataFrame:</p><pre>| id  | product | Comp
 | <span class="num">1</span>   | C       | C2      |
 | <span class="num">2</span>   | B       | C3      |</pre></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#dedupByKeyWithOrder" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="dedupByKeyWithOrder(k1:String,krest:String)(orderCol:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
-      <a id="dedupByKeyWithOrder(String,String)(Column*):DataFrame"></a>
+      <a id="dedupByKeyWithOrder(k1:String,krest:String*)(orderCol:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
+      <a id="dedupByKeyWithOrder(String,String*)(Column*):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">dedupByKeyWithOrder</span><span class="params">(<span name="k1">k1: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="krest">krest: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span name="orderCol">orderCol: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">dedupByKeyWithOrder</span><span class="params">(<span name="k1">k1: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="krest">krest: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="orderCol">orderCol: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">Same as <code>dedupByKeyWithOrder(Column*)(Column*)</code> but use <code>String</code> as key *</p>
@@ -274,7 +274,9 @@ For example, given the following input DataFrame:</p><pre>| id  | product | Comp
 | <span class="num">2</span>   | B       | C4      |</pre><p>and the following call:</p><pre>df.debupByKeyWithOrder($<span class="lit">"id"</span>)($<span class="lit">"product"</span>.desc)</pre><p>will yield the following <code>DataFrame</code>:</p><pre>| id  | product | Company |
 | --- | ------- | ------- |
 | <span class="num">1</span>   | C       | C2      |
-| <span class="num">2</span>   | B       | C3      |</pre></div></div>
+| <span class="num">2</span>   | B       | C3      |</pre><p>Same as the <code>dedupByKey</code> method, we use RDD groupBy in the implementation of this
+method to make sure we can handel large key space.
+</p></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#dumpSRDD" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="dumpSRDD:Unit"></a>
       <a id="dumpSRDD:Unit"></a>
@@ -334,6 +336,23 @@ See <a href="edd/Edd.html" class="extype" name="org.tresamigos.smv.edd.Edd">org.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#exportCsv" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="exportCsv(path:String,n:Integer):Unit"></a>
+      <a id="exportCsv(String,Integer):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">exportCsv</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="n">n: <span class="extype" name="java.lang.Integer">Integer</span> = <span class="symbol">null</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Export DF to local file system.</p><div class="fullcomment"><div class="comment cmt"><p>Export DF to local file system. Path is relative to the app runing dir
+</p></div><dl class="paramcmts block"><dt class="param">path</dt><dd class="cmt"><p>relative path to the app runing dir on local file system (instead of HDFS)</p></dd><dt class="param">n</dt><dd class="cmt"><p>number of records to be exported. Defualt is to export every records</p><p>**NOTE** since we have to collect the DF and then call JAVA file operations, the job
+have to be launched as either local or yar-client mode. Also it is user's responsibility
+to make sure that the DF is small enought to fit into memory.
+</p></dd></dl></div>
     </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <a id="finalize():Unit"></a>
@@ -393,42 +412,48 @@ See <a href="edd/Edd.html" class="extype" name="org.tresamigos.smv.edd.Edd">org.
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#joinByKey" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="joinByKey(otherPlan:org.apache.spark.sql.DataFrame,keys:Seq[String],joinType:String):org.apache.spark.sql.DataFrame"></a>
-      <a id="joinByKey(DataFrame,Seq[String],String):DataFrame"></a>
+      <a id="joinByKey(otherPlan:org.apache.spark.sql.DataFrame,keys:Seq[String],joinType:String,postfix:String,dropRightKey:Boolean):org.apache.spark.sql.DataFrame"></a>
+      <a id="joinByKey(DataFrame,Seq[String],String,String,Boolean):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">joinByKey</span><span class="params">(<span name="otherPlan">otherPlan: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="keys">keys: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="joinType">joinType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">joinByKey</span><span class="params">(<span name="otherPlan">otherPlan: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="keys">keys: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="joinType">joinType: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="postfix">postfix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="dropRightKey">dropRightKey: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">The Spark <code>DataFrame</code> join operation does not handle duplicate key neames.</p><div class="fullcomment"><div class="comment cmt"><p>The Spark <code>DataFrame</code> join operation does not handle duplicate key neames.
-If both left and right side of the join operation contain the same key, the result <code>DataFrame</code> is unusable.
-The <code>joinByKey</code> method will allow the user to join two <code>DataFrames</code> using the same join key.
-Post join, only the left side keys will remain.</p><pre>df1.joinByKey(df2, <span class="std">Seq</span>(<span class="lit">"k"</span>), SmvJoinType.Inner)</pre><p>Note the use of the <code>SmvJoinType.Inner</code> const instead of the naked &quot;inner&quot; string.</p><p>If, in addition to the duplicate keys, both df1 and df2 have column with name &quot;v&quot;, both will be kept in the result,
-but the df2 version will be prefix with &quot;_&quot;.
+      <p class="shortcomment cmt">The Spark <code>DataFrame</code> join operation does not handle duplicate key names.</p><div class="fullcomment"><div class="comment cmt"><p>The Spark <code>DataFrame</code> join operation does not handle duplicate key names.
+If both left and right side of the join operation contain the same key,
+the result <code>DataFrame</code> is unusable.</p><p>The <code>joinByKey</code> method will allow the user to join two <code>DataFrames</code> using the same join key.
+Post join, only the left side keys will remain. In case of outer-join, the
+<code>coalesce(leftkey, rightkey)</code> will replace the left key to be kept.</p><pre>df1.joinByKey(df2, <span class="std">Seq</span>(<span class="lit">"k"</span>), SmvJoinType.Inner)</pre><p>Note the use of the <code>SmvJoinType.Inner</code> const instead of the naked &quot;inner&quot; string.</p><p>If, in addition to the duplicate keys, both df1 and df2 have column with name &quot;v&quot;,
+both will be kept in the result, but the df2 version will be prefix with &quot;_&quot; if no
+<code>postfix</code> parameter is specified, otherwise df2 version with be postfixed with
+the specified <code>postfix</code>.
 </p></div></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#joinUniqFieldNames" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="joinUniqFieldNames(otherPlan:org.apache.spark.sql.DataFrame,on:org.apache.spark.sql.Column,joinType:String):org.apache.spark.sql.DataFrame"></a>
-      <a id="joinUniqFieldNames(DataFrame,Column,String):DataFrame"></a>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#joinMultipleByKey" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="joinMultipleByKey(keys:Seq[String],defaultJoinType:String):org.tresamigos.smv.SmvMultiJoin"></a>
+      <a id="joinMultipleByKey(Seq[String],String):SmvMultiJoin"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">joinUniqFieldNames</span><span class="params">(<span name="otherPlan">otherPlan: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="on">on: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="joinType">joinType: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;inner&quot;</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">joinMultipleByKey</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="defaultJoinType">defaultJoinType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="SmvMultiJoin.html" class="extype" name="org.tresamigos.smv.SmvMultiJoin">SmvMultiJoin</a></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Perform a join of the left/right <code>DataFrames</code> and rename duplicated column names by
-prefixing them with &quot;_&quot; on the right hand side.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a join of the left/right <code>DataFrames</code> and rename duplicated column names by
-prefixing them with &quot;_&quot; on the right hand side.</p><p><b>Note:</b> This will become private or removed in future SMV versions.</p><p>TODO: remove project dependency on this, and make it private[smv]
-</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@Experimental</span><span class="args">()</span>
-              
-        </dd></dl></div>
+      <p class="shortcomment cmt">Create multiple DF join builder: <code>SmvMultiJoin</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Create multiple DF join builder: <code>SmvMultiJoin</code>.</p><p>Example:</p><pre>df.joinMultipleByKey(<span class="std">Seq</span>(<span class="lit">"k1"</span>, <span class="lit">"k2"</span>), Inner).
+joinWith(df2, <span class="lit">"_df2"</span>).
+joinWith(df3, <span class="lit">"_df3"</span>, LeftOuter).
+doJoin()</pre><p>In above example, <code>df</code> will inner join with <code>df2</code> on <code>k1</code> and <code>k2</code>, then
+left outer join with <code>df3</code> with the same keys.
+In the cases that there are columns with the same name, df2's column will be
+renamed with postfix &quot;_df2&quot;, and, df3's column will be renamed with postfix
+&quot;_df3&quot;.
+</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>an <code>SmvMultiJoin</code> object which support <code>joinWith</code> and <code>doJoin</code> method
+</p></dd></dl></div>
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -469,6 +494,19 @@ prefixing them with &quot;_&quot; on the right hand side.</p><p><b>Note:</b> Thi
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#peek" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="peek(colRegex:String):Unit"></a>
+      <a id="peek(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">peek</span><span class="params">(<span name="colRegex">colRegex: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvDFHelper#peek" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="peek():Unit"></a>
       <a id="peek():Unit"></a>
       <h4 class="signature">
@@ -483,15 +521,15 @@ prefixing them with &quot;_&quot; on the right hand side.</p><p><b>Note:</b> Thi
       <p class="shortcomment cmt">Use default peek with or without the parenthesis
 </p>
     </li><li name="org.tresamigos.smv.SmvDFHelper#peek" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="peek(pos:Int):Unit"></a>
-      <a id="peek(Int):Unit"></a>
+      <a id="peek(pos:Int,colRegex:String):Unit"></a>
+      <a id="peek(Int,String):Unit"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">peek</span><span class="params">(<span name="pos">pos: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">peek</span><span class="params">(<span name="pos">pos: <span class="extype" name="scala.Int">Int</span></span>, <span name="colRegex">colRegex: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;.*&quot;</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">Display a dataframe row in transposed view.</p>
@@ -559,15 +597,15 @@ renamed columns, whereas the method withColumnRenamed in Spark,
 as of 1.5.2, would drop them.
 </p></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#saveAsCsvWithSchema" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="saveAsCsvWithSchema(dataPath:String,ca:org.tresamigos.smv.CsvAttributes,schemaWithMeta:org.tresamigos.smv.SmvSchema):Unit"></a>
-      <a id="saveAsCsvWithSchema(String,CsvAttributes,SmvSchema):Unit"></a>
+      <a id="saveAsCsvWithSchema(dataPath:String,ca:org.tresamigos.smv.CsvAttributes,schemaWithMeta:org.tresamigos.smv.SmvSchema,strNullValue:String):Unit"></a>
+      <a id="saveAsCsvWithSchema(String,CsvAttributes,SmvSchema,String):Unit"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsCsvWithSchema</span><span class="params">(<span name="dataPath">dataPath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ca">ca: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a> = <span class="symbol"><span class="name"><a href="CsvAttributes$.html">CsvAttributes.defaultCsv</a></span></span></span>, <span name="schemaWithMeta">schemaWithMeta: <a href="SmvSchema.html" class="extype" name="org.tresamigos.smv.SmvSchema">SmvSchema</a> = <span class="symbol">null</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">saveAsCsvWithSchema</span><span class="params">(<span name="dataPath">dataPath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ca">ca: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a> = <span class="symbol"><span class="name"><a href="CsvAttributes$.html">CsvAttributes.defaultCsv</a></span></span></span>, <span name="schemaWithMeta">schemaWithMeta: <a href="SmvSchema.html" class="extype" name="org.tresamigos.smv.SmvSchema">SmvSchema</a> = <span class="symbol">null</span></span>, <span name="strNullValue">strNullValue: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;&quot;</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">persist the <code>DataFrame</code> as a CSV file (along with a schema file).</p><div class="fullcomment"><div class="comment cmt"><p>persist the <code>DataFrame</code> as a CSV file (along with a schema file).</p><pre>df.saveAsCsvWithSchema(<span class="lit">"/tmp/output/test.csv"</span>)</pre></div><dl class="paramcmts block"><dt class="param">dataPath</dt><dd class="cmt"><p>direct path where file is persisted.  Can also be a relative path.  The configured app data/output dir are not considered.</p></dd><dt class="param">ca</dt><dd class="cmt"><p>CSV attributes used to format output file.  Defaults to <code>CsvAttributes.defaultCsv</code></p></dd><dt class="param">schemaWithMeta</dt><dd class="cmt"><p>Provide the companion schema (usually used when we need to persist some schema meta data along with the standard schema)
@@ -665,6 +703,32 @@ the &quot;age&quot; column, unless there is already another column that
 happens to have the same spark-generated name (in which case that
 column will be replaced with the new expression)
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvCube" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvCube(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvCube(Column*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCube</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvCube" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvCube(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvCube(String,String*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCube</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Similar to the <code>cube</code> Spark DF method, but using &quot;*&quot; instead of null to represent &quot;Any&quot;</p><div class="fullcomment"><div class="comment cmt"><p>Similar to the <code>cube</code> Spark DF method, but using &quot;*&quot; instead of null to represent &quot;Any&quot;</p><p>Example:</p><pre>df.smvCube(<span class="lit">"zip"</span>, <span class="lit">"month"</span>).agg(<span class="lit">"zip"</span>, <span class="lit">"month"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvDiscoverPK" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvDiscoverPK(n:Integer,debug:Boolean):(Seq[String],Long)"></a>
       <a id="smvDiscoverPK(Integer,Boolean):(Seq[String],Long)"></a>
@@ -991,6 +1055,32 @@ specified columns.</p><p>If neither columns nor labels are specified, i.e. both 
 lists are empty, then all labels are removed from all columns in
 the data frame, essentially clearing the label meta data.
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvRollup" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvRollup(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvRollup(Column*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvRollup</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvRollup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvRollup(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvRollup(String,String*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvRollup</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Similar to the <code>rollup</code> Spark DF method, but using &quot;*&quot; instead of null to represent &quot;Any&quot;</p><div class="fullcomment"><div class="comment cmt"><p>Similar to the <code>rollup</code> Spark DF method, but using &quot;*&quot; instead of null to represent &quot;Any&quot;</p><p>Example:</p><pre>df.smvRollup(<span class="lit">"county"</span>, <span class="lit">"zip"</span>).agg(<span class="lit">"county"</span>, <span class="lit">"zip"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvUnpivot" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvUnpivot(valueCols:String*):org.apache.spark.sql.DataFrame"></a>
       <a id="smvUnpivot(String*):DataFrame"></a>
@@ -1298,72 +1388,6 @@ Column names are specified as <code>Column</code></p><pre>df.selectMinus(<span c
                 <span class="name">@deprecated</span>
               
         </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark df coalesce after 1.3</p></dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#smvCube" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvCube(cols:org.apache.spark.sql.Column*):org.apache.spark.sql.GroupedData"></a>
-      <a id="smvCube(Column*):GroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark cube method">smvCube</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.GroupedData">GroupedData</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark cube method</p></dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#smvCube" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvCube(col:String,others:String*):org.apache.spark.sql.GroupedData"></a>
-      <a id="smvCube(String,String*):GroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark cube method">smvCube</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.GroupedData">GroupedData</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Alias to <code>cube</code> DF method</p><div class="fullcomment"><div class="comment cmt"><p>Alias to <code>cube</code> DF method</p><p>Example:</p><pre>df.smvCube(<span class="lit">"zip"</span>, <span class="lit">"month"</span>).agg(<span class="lit">"zip"</span>, <span class="lit">"month"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre><p>2 differences from original smvCube:</p><ul><li>instead of fill in <code>*</code> as wildcard key, filling in <code>null</code></li><li>also have the all-null key records as the overall aggregation
-</li></ul></div><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark cube method</p></dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#smvRollup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvRollup(cols:org.apache.spark.sql.Column*):org.apache.spark.sql.GroupedData"></a>
-      <a id="smvRollup(Column*):GroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark rollup method">smvRollup</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.GroupedData">GroupedData</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark rollup method</p></dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#smvRollup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvRollup(col:String,others:String*):org.apache.spark.sql.GroupedData"></a>
-      <a id="smvRollup(String,String*):GroupedData"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use spark rollup method">smvRollup</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.GroupedData">GroupedData</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Alias to <code>rollup</code> DF method</p><div class="fullcomment"><div class="comment cmt"><p>Alias to <code>rollup</code> DF method</p><p>Example:</p><pre>df.smvRollup(<span class="lit">"county"</span>, <span class="lit">"zip"</span>).agg(<span class="lit">"county"</span>, <span class="lit">"zip"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre><p>2 differences from original smvRollup:</p><ul><li>instead of fill in <code>*</code> as wildcard key, filling in <code>null</code></li><li>also have the all-null key records as the overall aggregation
-</li></ul></div><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark rollup method</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvUnpivot" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvUnpivot(valueCol:Symbol,others:Symbol*):org.apache.spark.sql.DataFrame"></a>
       <a id="smvUnpivot(Symbol,Symbol*):DataFrame"></a>
