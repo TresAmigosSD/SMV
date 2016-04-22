@@ -134,10 +134,17 @@ private[smv] case class SmvPivot(
 private[smv] object SmvPivot {
   /**
    * Extract the column names from the data.
-   * This is done by getting the distinct string values of each column and taking the cartesian product.
-   * For N value columns, the output shall have N times as many columns as the returned list as
-   * each item in the list would have the value column name(s) prepended.
-   * Return: Seq["5_14_A", "5_14_B", ...]
+   * This is done by gettting the ditinct values of concated pivot columns.
+   * Example:
+   * | id  | month | product | count |
+   * | --- | ----- | ------- | ----- |
+   * | 1   | 5/14  |   A     |   100 |
+   * | 1   | 6/14  |   B     |   200 |
+   * | 1   | 5/14  |   B     |   300 |
+   *
+   * Return: Seq["5_14_A", "5_14_B", "6_14_B"]
+   * **NOTE**: it's not the cartesian product of distinct values of all the columns.
+   *           Since there is no "b/14, A" combination,  the result has no that column either.
    *
    * WARNING: This operation have to scan the entire RDD 1 or more times. For
    * most production system, the result of this operation should be static, in
@@ -150,14 +157,8 @@ private[smv] object SmvPivot {
     // create set of distinct values.
     // this is a seq of array strings where each array is distinct values for a column.
     pivotColsSets.map{ pivotCols =>
-      val distinctVals = pivotCols.map{s => df.select(s).
-        distinct.collect.map { r =>
-          Option(r(0)).getOrElse("").toString
-        }}
-
-      // get the cartesian product of all column values.
-      val colNames = distinctVals.reduceLeft(
-        (l1,l2) => for(v1 <- l1; v2 <- l2) yield (v1 + "_" + v2))
+      val colNames = df.select(smvStrCat("_", pivotCols.map{s => df(s)}: _*)).
+        distinct.collect.map{r => r(0).toString}
 
       // ensure result column name is made up of valid characters.
       colNames.map(c => SchemaEntry.valueToColumnName(c)).sorted

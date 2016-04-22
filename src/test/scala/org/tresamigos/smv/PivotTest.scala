@@ -28,8 +28,7 @@ class SmvPivotTest extends SmvTestUtil {
     assertUnorderedSeqEqual(res, Seq(
       "p1_1_p2A_p3X",
       "p1_1_p2B_p3X",
-      "p1_2_p2A_p3X",
-      "p1_2_p2B_p3X"))
+      "p1_2_p2A_p3X"))
   }
 
   test("Test creation of unique column names with missing/non-id data") {
@@ -40,14 +39,9 @@ class SmvPivotTest extends SmvTestUtil {
 
     val res = SmvPivot.getBaseOutputColumnNames(df, Seq(Seq("p1", "p2", "p3")))
     assertUnorderedSeqEqual(res, Seq(
-      "p1_1_p2_B_p3X",
-      "p1_1_p2_B",
       "p1_1_p2_A_p3X",
       "p1_1_p2_A",
-      "p2_B_p3X",
-      "p2_B",
-      "p2_A_p3X",
-      "p2_A"))
+      "p2_B_p3X"))
   }
 
   test("Test creation of unique column names with 1 pivot column") {
