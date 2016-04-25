@@ -44,7 +44,23 @@ $ smv-r
 > count(df) // or other SparkR command
 ```
 
+### dynSmvModuleRdd
+
+The `dynSmvModuleRdd` method is similar to `runSmvModuleRdd`, it can run a specified
+module. The difference is that this method load the module dynamically. Please refer
+[Dynamic Class Loading](class_loader.md) for the concept of dynamic module loading.
+Currently this method only accept FQN as module name.
+For example:
+
+```shell
+$ smv-r
+...
+> df <- dymSmvModuleRdd("com.mycompany.MyApp.stage2.StageEmpCategory")
+...
+> count(df) // or other SparkR command
+```
+
+
 ### runSmvModule
 
 `runSmvModule` is a convenience function similar to `runSmvModuleRdd` but returns the local R DataFrame as the result.  This is the equivalent of calling `collect()` on the result from `smvRunModuleRdd`.
-

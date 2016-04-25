@@ -251,6 +251,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /**
+   * Dynamically load a module given FQN. This is mostly used by SparkR to dynamically
+   * resolve modules
+   **/
+  def runDynamicModuleByName(fqn: String): DataFrame = {
+    val cl = getClass.getClassLoader
+    dynamicResolveRDD(fqn: String, cl)
+  }
+
+  /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
    */

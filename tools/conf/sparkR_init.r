@@ -20,7 +20,7 @@
   sqlContext <- SparkR::sparkRSQL.init(sc)
   assign("sqlContext", sqlContext, envir=.GlobalEnv)
 
-  sparkR:::callJMethod(sc, "setLogLevel", "ERROR")
+  SparkR:::callJMethod(sc, "setLogLevel", "ERROR")
   cat("\nSet Log level to ERROR.\n")
 
   sparkVer <- SparkR:::callJMethod(sc, "version")

@@ -15,7 +15,8 @@ The user can provide `--jar` option to override the default.  See [Run Applicati
 When `smv-shell` is launched, it will source the file `_SMV_HOME_/tools/conf/smv_shell_init.scala` to provide some
 helper functions and create a default SMV dummy application (`app`)
 
-* `df(data_set)` :  Source/Run the given dataset and return the resulting `DataFrame`
+* `df(data_set)` :  Load/Run the given dataset and return the resulting `DataFrame`
+* `ddf(data_set)` :  Dynamically Load/Run the given dataset and return the resulting `DataFrame`. Please refer [Dynamic Class Loading](class_loader.md) for the dynamic load concept
 * `open(path)` : open the csv/schema file at the given path and return the corresponding `DataFrame`
 * `df.save(path)` : save the given df to a csv/schema file pair at the given path.
 * `df.savel(path)` : save the contents of the `DataFrame` to a local (none HDFS) filesystem.  WARNING: The contents must be able to fit in memory!!!
