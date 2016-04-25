@@ -42,7 +42,10 @@ abstract class PartialTime extends Ordered[PartialTime] with Serializable {
   def smvTime(): String
   def timeStampToSmvTime(c: Column): Column
 
-  def compare(that: PartialTime) = (this.timeIndex() - that.timeIndex()).signum
+  def compare(that: PartialTime) = {
+    require(this.timeType == that.timeType, s"can't compare different time types: ${this.timeType}, ${that.timeType}")
+    (this.timeIndex() - that.timeIndex()).signum
+  }
 }
 
 /**
