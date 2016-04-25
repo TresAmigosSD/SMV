@@ -34,14 +34,7 @@ private[smv] case class ClassCRC(
 
 object ClassCRC {
   private[smv] def cksum0(reader: asm.ClassReader): CRC32 = {
-    val stringWriter = new StringWriter()
-    val printWriter = new PrintWriter(stringWriter)
-    val traceClassVisitor = new asm.util.TraceClassVisitor(null, new asm.util.Textifier(), printWriter)
-
-    /* SKIP_DEBUG: the visitLocalVariable and visitLineNumber methods will not be called. */
-    reader.accept(traceClassVisitor, asm.ClassReader.SKIP_DEBUG)
-    val code = stringWriter.toString().toCharArray().map{c => c.toByte}
-
+    val code = AsmUtil.asmTrace(reader).toCharArray().map{c => c.toByte}
     val ret = new CRC32
     ret.update(code)
     ret
