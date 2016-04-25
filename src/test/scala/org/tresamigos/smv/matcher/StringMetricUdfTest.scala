@@ -12,11 +12,12 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.matcher
+package org.tresamigos.smv
+package matcher
 
 import org.scalatest._
 
-class StringMetricUdfTest extends FlatSpec with Matchers {
+class StringMetricUdfTest extends SmvUnitSpec {
   "Levenshtein distance function" should "return normalized values" in {
     val (a, b) = ("abc", "abd")
     assume(com.rockymadden.stringmetric.similarity.LevenshteinMetric.compare(a, b) === Some(1))

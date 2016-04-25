@@ -238,3 +238,6 @@ trait SmvTestUtil extends SparkTestUtil {
     app.createDF(schemaStr, data)
   }
 }
+
+/** Base trait for unit tests that do not need a Spark test environment */
+trait SmvUnitSpec extends FlatSpec with BeforeAndAfterEach with BeforeAndAfterAll with Matchers
