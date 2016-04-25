@@ -1076,10 +1076,13 @@ class SmvDFHelper(df: DataFrame) {
     val headerStr = df.columns.map(_.trim).map(fn => qc + fn + qc).
       mkString(ca.delimiter.toString)
 
+    // issue #312: Spark's collect from a large partition is observed
+    // to add duplicate records, hence we use coalesce to reduce the
+    // number of partitions before calling collect
     val bodyStr = if(n == null) {
-      df.map(schema.rowToCsvString(_, ca)).collect.mkString("\n")
+      df.map(schema.rowToCsvString(_, ca)).coalesce(4).collect.mkString("\n")
     } else {
-      df.limit(n).map(schema.rowToCsvString(_, ca)).collect.mkString("\n")
+      df.limit(n).map(schema.rowToCsvString(_, ca)).coalesce(4).collect.mkString("\n")
     }
 
     SmvReportIO.saveLocalReport(headerStr + "\n" + bodyStr + "\n", path)
