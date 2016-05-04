@@ -77,6 +77,12 @@ One big advantage of SBT is that it support continuous compile. When you start t
 SBT will detect code changes and try to re-compile changed classes automatically. With the continuous
 compile feature of SBT, the SMV class loader's dynamic module loading feature becomes more convenience!
 
+The only difference is the you need to specify `smv.class_server.class_dir` in the
+smv-user-conf.props file, since SBT put the compiled class files in a different dir:
+```
+smv.class_server.class_dir = ./target/scala-2.10/classes
+```
+
 Basically as long as you make changes in the code and save the file, the new module can be resolved by
 `ddf` command in the running smv-shell already. (Depend on the compile speed, typically in 1-5 seconds,
 the new module will be ready to use in shell.)

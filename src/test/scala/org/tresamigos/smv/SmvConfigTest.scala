@@ -40,6 +40,24 @@ package org.tresamigos.smv {
 
   private def mkconfig(args: String*): SmvConfig = new SmvConfig(confFileArgs ++ args)
 
+  test("test smv-app-dir") {
+    val conf1 = new SmvConfig(Seq(
+      "--smv-app-dir", testDataDir,
+      "--smv-app-conf", "SmvConfigTest/app.conf",
+      "--smv-user-conf", "SmvConfigTest/user.conf"
+    ))
+    val props1 = conf1.mergedProps
+    assert(props1("smv.appName") === "Smv Application")
+
+    val conf2 = new SmvConfig(Seq(
+      "--smv-app-dir", testDataDir,
+      "--smv-app-conf", testDataDir + "SmvConfigTest/app.conf",
+      "--smv-user-conf", testDataDir + "SmvConfigTest/user.conf"
+    ))
+    val props2 = conf2.mergedProps
+    assert(props2("smv.appName") === "Smv Application")
+  }
+
   test("test basic props override/priority") {
     val conf = mkconfig("--smv-props", "smv.inAppAndCmd=cmd", "smv.inUserAndCmd=cmd", "smv.cmdLineOnly=cmd",
       "-m", "mod1")

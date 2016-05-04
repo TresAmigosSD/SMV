@@ -30,6 +30,10 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
 
   val smvProps = propsLong[String]("smv-props", "key=value command line props override")
+  val smvAppDir = opt("smv-app-dir", noshort = true,
+    default = Some("."),
+    descr = "SMV app directory"
+  )
   val smvAppConfFile = opt("smv-app-conf", noshort = true,
     default = Some(DEFAULT_SMV_APP_CONF_FILE),
     descr = "app level (static) SMV configuration file path")
@@ -83,6 +87,14 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
  * Container of all SMV config driven elements (cmd line, app props, user props, etc).
  */
 class SmvConfig(cmdLineArgs: Seq[String]) {
+  import java.nio.file.Paths
+
+  /*pathJoin has the following behavior:
+   *pathJoin("/a/b", "c/d") -> "/a/b/c/d"
+   *pathJoin("/a/b", "/c/d") -> "/c/d"
+   */
+  private def pathJoin(p1: String, p2: String) = Paths.get(p1).resolve(p2).toString
+
   val DEFAULT_SMV_HOME_CONF_FILE = sys.env.getOrElse("HOME", "") + "/.smv/smv-user-conf.props"
 
   // check for deprecated DATA_DIR environment variable.
@@ -92,8 +104,8 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   val cmdLine = new CmdLineArgsConf(cmdLineArgs)
 
-  private val appConfProps = _loadProps(cmdLine.smvAppConfFile())
-  private val usrConfProps = _loadProps(cmdLine.smvUserConfFile())
+  private val appConfProps = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvAppConfFile()))
+  private val usrConfProps = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvUserConfFile()))
   private val homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
   private val cmdLineProps = cmdLine.smvProps
   private val defaultProps = Map(

@@ -298,9 +298,9 @@ object SmvApp {
   /**
    * Creates a new app instances from a sql context.  This is used by SparkR to create a new app.
    */
-  def newApp(sqlContext: SQLContext) : SmvApp = {
+  def newApp(sqlContext: SQLContext, appPath: String) : SmvApp = {
     SmvApp.init(
-      Seq("-m", "None").toArray,
+      Seq("-m", "None", "--smv-app-dir", appPath).toArray,
       Option(sqlContext.sparkContext),
       Option(sqlContext))
     SmvApp.app

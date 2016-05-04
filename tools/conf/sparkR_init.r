@@ -5,14 +5,20 @@
 .First <- function() {
   spark_home <- Sys.getenv("SPARK_HOME")
   smv_home <- Sys.getenv("SMV_HOME")
+  app_home <- Sys.getenv("SMV_APP_HOME")
 
   .libPaths(c(file.path(spark_home, "R", "lib"),
               file.path(smv_home, "R", "lib"),
               .libPaths()))
   Sys.setenv(NOAWT=1)
 
-  old <- getOption("defaultPackages")
-  options(defaultPackages = c(old, "SparkR", "smvR"))
+  #Instead of load SparkR and smvR as default package, just leave it to the user.
+  #User can load them manualy using "library" or just refer the functions with the package name as
+  # SparkR::select(...)
+  # smvR::runSmvModuleRdd(...)
+  #
+  #old <- getOption("defaultPackages")
+  #options(defaultPackages = c(old, "SparkR", "smvR"))
 
   sc <- SparkR::sparkR.init(sparkJars=Sys.getenv("SMV_APP_JAR"))
   assign("sc", sc, envir=.GlobalEnv)
@@ -25,7 +31,7 @@
 
   sparkVer <- SparkR:::callJMethod(sc, "version")
 
-  smvApp <- smvR:::smvR.init(sqlContext)
+  smvApp <- smvR:::smvR.init(sqlContext, app_home)
   assign("smvApp", smvApp, envir=.GlobalEnv)
 
 

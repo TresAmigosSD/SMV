@@ -3,11 +3,15 @@
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 source $SMV_TOOLS/_env.sh
 
+export SMV_APP_HOME="$(pwd)"
 export SMV_HOME="$(cd "${SMV_TOOLS}/.."; pwd)"
+export SMV_APP_JAR="$SMV_APP_HOME/$APP_JAR"
 export R_PROFILE="${SMV_TOOLS}/conf/sparkR_init.r"
-export SMV_APP_JAR="$APP_JAR"
 
 set_spark_home
 
-R
-
+if [[ "$1" = "-g" || "$1" = "-rs" ]]; then
+  open -a Rstudio
+else
+  R
+fi

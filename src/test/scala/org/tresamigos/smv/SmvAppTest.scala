@@ -40,6 +40,13 @@ class SmvTestFile(override val name: String) extends SmvModule("") {
   override def run(i: runParams) = app.createDF("a:Integer", "1;2;3")
 }
 
+class SmvNewAppTest extends SparkTestUtil {
+  test("test newApp function") {
+    val app = SmvApp.newApp(sqlContext, testDataDir)
+    assert(app.smvConfig.appName === "Smv Application")
+  }
+}
+
 class SmvAppTest extends SmvTestUtil {
   override def appArgs = Seq("-m", "C",
     "--data-dir", testcaseTempDir,

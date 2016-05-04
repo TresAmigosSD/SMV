@@ -21,8 +21,8 @@
 #' @param sqlContext Spark SQL context
 #' @export
 
-smvR.init <- function(sqlContext) {
-    app <- SparkR:::callJStatic("org.tresamigos.smv.SmvApp", "newApp", sqlContext)
+smvR.init <- function(sqlContext, path) {
+    app <- SparkR:::callJStatic("org.tresamigos.smv.SmvApp", "newApp", sqlContext, path)
     assign(".smvApp", app, envir = .smvREnv)
     app
 }

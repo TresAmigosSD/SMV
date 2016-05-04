@@ -23,7 +23,7 @@ $ _SMV_HOME_/tools/smv-r [smv-options]
 <tr>
 <td>-g|-rs</td>
 <td>false</td>
-<td>Use graphical R shell (Rconsole or Rstudio). Not Supported Yet!!!</td>
+<td>Use graphical R shell (Rconsole or Rstudio). Only supported in Mac OS, for Linux need to modify the smv-r script slightly</td>
 </tr>
 
 </table>
