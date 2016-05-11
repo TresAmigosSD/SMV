@@ -98,7 +98,7 @@ object Month {
   }
 
   def apply(timestamp: Timestamp): Month = {
-    val dt = new DateTime(timestamp.getTime()).withZone(DateTimeZone.UTC)
+    val dt = new DateTime(timestamp.getTime())
     apply(dt)
   }
 
@@ -144,7 +144,7 @@ object Day {
   }
 
   def apply(timestamp: Timestamp): Day = {
-    val dt = new DateTime(timestamp.getTime()).withZone(DateTimeZone.UTC)
+    val dt = new DateTime(timestamp.getTime())
     apply(dt)
   }
 }
