@@ -10,8 +10,14 @@ export R_PROFILE="${SMV_TOOLS}/conf/sparkR_init.r"
 
 set_spark_home
 
+if type rstudio &> /dev/null; then
+  R_CMD="rstudio"
+else
+  R_CMD="open -a Rstudio ."
+fi
+
 if [[ "$1" = "-g" || "$1" = "-rs" ]]; then
-  open -a Rstudio
+  eval $R_CMD
 else
   R
 fi

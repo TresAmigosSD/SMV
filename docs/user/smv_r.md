@@ -1,6 +1,6 @@
 # Run SMV App using Spark R Shell
 
-### Synopsis
+## Synopsis
 ```shell
 $ _SMV_HOME_/tools/smv-r [smv-options]
 ```
@@ -28,8 +28,30 @@ $ _SMV_HOME_/tools/smv-r [smv-options]
 
 </table>
 
+## Use SparkR and smvR in R
 
-### Running SMV modules from R Shell
+`smv-r` shell script simply setup some environment variables and start R in shell or Rstudio with
+* library path configured to include `SparkR` and `smvR` packages
+* preload `sc` for SparkContext, `sqlContext` and `smvApp` in the `.GlobalEnv`
+
+As a contrary to the `sparkR` command provided by Spark itself, `smv-r` does NOT load either `SparkR` or `smvR` as `defaultPackages`.
+To use functions in them, user should either attach them:
+```r
+library(SparkR)
+library(smvR)
+```  
+or refer the functions with the package name:
+```r
+SparkR::select(...)
+smvR::runSmvModuleRdd(...)
+```
+
+The reason that we are not loading `SparkR` package as default is that some base functions, such as `table`, are masked ("overload") by `SparkR` package,
+which could be very confusing. We'd rather let user to attach `SparkR` explicitly.
+
+In the rest of the document, we assume `SparkR` and `smvR` are attached.    
+
+## Running SMV modules from R Shell
 
 ### runSmvModuleRdd
 
