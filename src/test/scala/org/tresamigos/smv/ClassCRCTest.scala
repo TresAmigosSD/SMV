@@ -38,7 +38,7 @@ class ClassCRCTest extends FunSuite with Matchers {
   }
 
   test("test for invalid class name CRC") {
-    intercept[IllegalArgumentException] {
+    intercept[ClassNotFoundException] {
       val crc = ClassCRC("org.tresamigos.class_does_not_exist")
       crc.crc
     }

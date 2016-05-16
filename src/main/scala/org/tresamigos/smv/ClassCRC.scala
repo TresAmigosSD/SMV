@@ -27,31 +27,43 @@ import scala.tools.asm
 private[smv] case class ClassCRC(
   className: String,
   classLoader : ClassLoader = getClass.getClassLoader) {
-
   import ClassCRC._
   lazy val crc: Long = checksum(className, classLoader).getValue
 }
 
 object ClassCRC {
-  private[smv] def cksum0(reader: asm.ClassReader): CRC32 = {
+  private[smv] def cksum0(acc: CRC32, reader: asm.ClassReader): CRC32 = {
     val code = AsmUtil.asmTrace(reader).toCharArray().map{c => c.toByte}
-    val ret = new CRC32
-    ret.update(code)
-    ret
+    acc.update(code)
+    acc
   }
 
-  def checksum(bytecode: Array[Byte]): CRC32 = cksum0(new asm.ClassReader(bytecode))
+  def checksum(bytecode: Array[Byte]): CRC32 = cksum0(new CRC32, new asm.ClassReader(bytecode))
 
+  /**
+   * Compute a checksum of the bytecode of the class and all its
+   * supertypes in linearized order, excluding java.lang.Object and
+   * scala.Any
+   */
   def checksum(className: String, classLoader: ClassLoader): CRC32 = {
-    val classResourcePath = className.replace('.', '/') + ".class"
-    val is: InputStream = classLoader.getResourceAsStream(classResourcePath)
+    /** calculate CRC for a single class */
+    def step(fqn: String, crc: CRC32): CRC32 = {
+      val classResourcePath = fqn.replace('.', '/') + ".class"
+      val is: InputStream = classLoader.getResourceAsStream(classResourcePath)
 
-    try {
-      cksum0(new asm.ClassReader(is))
-    } catch {
-      case NonFatal(t) => throw new IllegalArgumentException("invalid class name for crc: " + className, t)
-    } finally {
-      if (is != null) is.close
+      try {
+        cksum0(crc, new asm.ClassReader(is))
+      } catch {
+        case NonFatal(t) => throw new IllegalArgumentException("invalid class name for crc: " + fqn, t)
+      } finally {
+        if (is != null) is.close
+      }
     }
+
+    val bases = new SmvReflection(classLoader).basesOf(className) filter(s =>
+      !s.startsWith("java.") && !s.startsWith("scala.") && !s.startsWith("org.tresamigos.smv."))
+
+    bases.foldRight(new CRC32)((e, acc) => step(e, acc))
   }
+
 }

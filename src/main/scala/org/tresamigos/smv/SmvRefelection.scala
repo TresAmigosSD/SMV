@@ -38,6 +38,13 @@ private[smv] class SmvReflection(private val classLoader: ClassLoader) {
       map(_.get).
       toSeq
   }
+
+  /** returns the base classes of a type, itself first, in linearized order */
+  def basesOf(fqn: String): Seq[String] = {
+    val klass = Class.forName(fqn, false, classLoader)
+    val sym = mirror.classSymbol(klass)
+    sym.baseClasses map (_.fullName)
+  }
 }
 
 /**
@@ -67,5 +74,7 @@ private[smv] object SmvReflection {
       map(_.get).
       toSeq
   }
-}
 
+  /** returns the base classes of a type, itself first, in linearized order */
+  def basesOf(fqn: String): Seq[String] = ref.basesOf(fqn)
+}
