@@ -253,7 +253,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   }
 
   /** Return the value of given configuration parameter as an optional string. */
-  private[smv] def getProp(propName: String) : Option[String] = {
+  def getProp(propName: String) : Option[String] = {
     mergedProps.get(propName)
   }
 
