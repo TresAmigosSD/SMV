@@ -12,24 +12,15 @@
  * limitations under the License.
  */
 
+import org.apache.spark.sql.DataFrame
 
 package org.tresamigos.smv {
 
-import org.apache.spark.sql.DataFrame
 import dqm.DQMValidator
 
 class SmvHashOfHashTest extends SmvTestUtil {
   test("Test module hashOfHash") {
-    // two modules with same code should hash to different values.
-    object X1 extends SmvModule("X Module") {
-      override def requiresDS() = Seq()
-      override def run(i: runParams) = null
-    }
-    object X2 extends SmvModule("X Module") {
-      override def requiresDS() = Seq()
-      override def run(i: runParams) = null
-    }
-
+    import org.tresamigos.fixture.hashofhash._
     assert(X1.hashOfHash != X2.hashOfHash)
   }
 }
@@ -118,29 +109,16 @@ class SmvAppTest extends SmvTestUtil {
   }
 
   test("Test SmvFile crc") {
+    import org.tresamigos.fixture.smvapptest._
     createTempFile("F1.csv")
     createTempFile("F1.schema")
     createTempFile("F2.csv")
     createTempFile("F2.schema")
 
-    object f1 extends SmvFile {
-      val path = "F1.csv"
-      def doRun(dsDqm: DQMValidator): DataFrame = null
-    }
-    object f2 extends SmvFile {
-      val path = "F2.csv"
-      def doRun(dsDqm: DQMValidator): DataFrame = null
-    }
-
     assert(f1.datasetHash() !== f2.datasetHash)
 
     SmvHDFS.deleteFile("F1.schema")
     createTempFile("F1.schema")
-
-    object f3 extends SmvFile {
-      val path = "F1.csv"
-      def doRun(dsDqm: DQMValidator): DataFrame = null
-    }
 
     assert(f1.datasetHash() !== f3.datasetHash())
   }
@@ -179,3 +157,34 @@ class SmvAppPurgeTest extends SparkTestUtil {
 }
 
 } // package: org.tresamigos.smv
+
+package org.tresamigos.fixture.smvapptest {
+  import org.tresamigos.smv._, dqm._
+
+  object f1 extends SmvFile {
+    val path = "F1.csv"
+    def doRun(dsDqm: DQMValidator): DataFrame = null
+  }
+  object f2 extends SmvFile {
+    val path = "F2.csv"
+    def doRun(dsDqm: DQMValidator): DataFrame = null
+  }
+
+  object f3 extends SmvFile {
+    val path = "F1.csv"
+    def doRun(dsDqm: DQMValidator): DataFrame = null
+  }
+}
+
+package org.tresamigos.fixture.hashofhash {
+  import org.tresamigos.smv._
+  // two modules with same code should hash to different values.
+  object X1 extends SmvModule("X Module") {
+    override def requiresDS() = Seq()
+    override def run(i: runParams) = null
+  }
+  object X2 extends SmvModule("X Module") {
+    override def requiresDS() = Seq()
+    override def run(i: runParams) = null
+  }
+}
