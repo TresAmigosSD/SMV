@@ -33,7 +33,7 @@ private[smv] case class ClassCRC(
 
 object ClassCRC {
   private[smv] def cksum0(acc: CRC32, reader: asm.ClassReader): CRC32 = {
-    val code = AsmUtil.asmTrace(reader).toCharArray().map{c => c.toByte}
+    val code = AsmUtil.asmTrace(reader).getBytes("UTF-8")
     acc.update(code)
     acc
   }
@@ -48,6 +48,7 @@ object ClassCRC {
   def checksum(className: String, classLoader: ClassLoader): CRC32 = {
     /** calculate CRC for a single class */
     def step(fqn: String, crc: CRC32): CRC32 = {
+      println(fqn)
       val classResourcePath = fqn.replace('.', '/') + ".class"
       val is: InputStream = classLoader.getResourceAsStream(classResourcePath)
 
@@ -60,8 +61,10 @@ object ClassCRC {
       }
     }
 
-    val bases = new SmvReflection(classLoader).basesOf(className) filter(s =>
-      !s.startsWith("java.") && !s.startsWith("scala.") && !s.startsWith("org.tresamigos.smv."))
+    // basesOf returns the parents but not include the caller class, added to the end
+    val bases = new SmvReflection(classLoader).basesOf(className).filter(s =>
+      !s.startsWith("java.") && !s.startsWith("scala.") && !s.startsWith("org.tresamigos.smv.")
+    ) :+ className
 
     bases.foldRight(new CRC32)((e, acc) => step(e, acc))
   }

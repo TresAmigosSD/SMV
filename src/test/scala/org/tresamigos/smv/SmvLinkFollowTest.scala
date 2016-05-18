@@ -25,7 +25,7 @@ class SmvLinkFollowTest extends SmvTestUtil {
   }
 
   test("Test SmvModuleLink datasetHash follows linked module") {
-    assert(smvLinkTestPkg2.L.datasetHash() === -683140987) // when Y's version is 2
+    assert(smvLinkTestPkg2.L.datasetHash() === -1638856213l) // when Y's version is 2
   }
 }
 
@@ -42,7 +42,7 @@ class SmvLinkFollowWithVersionTest extends SmvTestUtil {
 /* Since DS will cache the resolved DF we need to use a separate Y for SmvLinkFollowWithVersionTest */
   test("Test SmvModuleLink datasetHash follow link version") {
     val res = smvLinkTestPkg2.L2.datasetHash()
-    assert(res === 1768082613) // when version = v1
+    assert(res === -1307514264l) // when version = v1
   }
 
   test("Test SmvModuleLink follow link with version config") {

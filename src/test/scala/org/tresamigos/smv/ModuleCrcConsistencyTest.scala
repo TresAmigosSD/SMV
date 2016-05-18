@@ -35,11 +35,11 @@ package smv {
 
     test("test moduleCrc changed or not") {
 
-      assert(fixture.Module1.datasetCRC === 979203310)
+      assert(fixture.Module1.datasetCRC === 3972922531l)
     }
 
     test("test moduleCrc on SmvFile"){
-      assert(fixture.file.datasetCRC === 7151536)
+      assert(fixture.file.datasetCRC === 471507208l)
     }
   }
 
