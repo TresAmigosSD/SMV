@@ -48,7 +48,6 @@ object ClassCRC {
   def checksum(className: String, classLoader: ClassLoader): CRC32 = {
     /** calculate CRC for a single class */
     def step(fqn: String, crc: CRC32): CRC32 = {
-      println(fqn)
       val classResourcePath = fqn.replace('.', '/') + ".class"
       val is: InputStream = classLoader.getResourceAsStream(classResourcePath)
 
