@@ -72,4 +72,15 @@ object smvfuncs {
       }
     }
   }
+
+  def smvArrayCat(sep: String, col: Column): Column = {
+    val catF = {a:Seq[Any] =>
+      a.map{
+        case null => ""
+        case s => s.toString
+      }.mkString(sep)
+    }
+
+    udf(catF).apply(col).as(s"smvArrayCat(${col})")
+  }
 }

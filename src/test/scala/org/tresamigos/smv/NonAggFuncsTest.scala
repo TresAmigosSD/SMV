@@ -112,4 +112,13 @@ class NonAggFuncsTest extends SmvTestUtil {
     val res = df.select(collectSet(DoubleType)($"a") as "r1")
     assertSrddDataEqual(res, "WrappedArray(2.2, 6.0, 4.4, 5.5, 3.3, 1.1)")
   }
+
+  test("test smvArrayCat") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:Integer", "1;2;3")
+
+    val res = df.select(collectSet(IntegerType)($"a") as "arr").select(smvArrayCat(",", $"arr"))
+
+    assertSrddDataEqual(res, "1,2,3")
+  }
 }
