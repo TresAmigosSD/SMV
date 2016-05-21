@@ -121,4 +121,16 @@ class NonAggFuncsTest extends SmvTestUtil {
 
     assertSrddDataEqual(res, "1,2,3")
   }
+
+  test("test smvHashKey") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("a:Integer; b:String", "1, a;2,;,")
+
+    val res = df.select(smvHashKey("key_", $"a", $"b"))
+    assertSrddDataEqual(res,
+      "key_ef1ef409ae12f8ea7874468226169113;" +
+      "key_24fd6a24d80aabe2116d80b6c3dc89e2;" +
+      "key_b9bdf9682f74a84a1cf9f51cb8c76aa7"
+    )
+  }
 }
