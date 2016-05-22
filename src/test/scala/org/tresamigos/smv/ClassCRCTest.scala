@@ -97,6 +97,20 @@ class ClassCRCTest extends FunSuite with Matchers {
 
   def cksum(bytecode: Array[Byte]): Long = ClassCRC.checksum(bytecode).getValue
 
+  /** If the compiled target is a scala object, make sure add a '$' to the classname */
+  def sameChecksum(src1: String, src2: String, classname: String): Boolean = {
+    val r1 = compile(src1)
+    val r2 = compile(src2)
+
+    val currCl = getClass.getClassLoader
+    val cl1 = new CompiledClassesFirstClassLoader(r1, currCl)
+    val cl2 = new CompiledClassesFirstClassLoader(r2, currCl)
+
+    ClassCRC.checksum(classname, cl1).getValue == (ClassCRC.checksum(classname, cl2)).getValue
+  }
+
+  // TODO: tracing changes through reference (instead of inheritance)
+  // is not yet working
   ignore("Updating referenced constants should change bytecode checksum") {
     val crc1 = """object Constants {
     |  val Name1 = "value1"
@@ -112,11 +126,49 @@ class ClassCRCTest extends FunSuite with Matchers {
     |  def run = Constants.Name1
     |}""".stripMargin
 
-    println(compile(crc1))
-
     val res1 = compile(crc1).filter(_._1 == "crc_1$.class")(0)._2
     val res2 = compile(crc2).filter(_._1 == "crc_1$.class")(0)._2
 
     cksum(res1) shouldNot equal(cksum(res2))
+  }
+
+  ignore("#316: Changing code should result in checksum change") {
+    val src1 = "object A { def f1(a:Int):Int = a }"
+    val src2 = "object A { def f1(a:Int):Int = a + 1 }"
+    sameChecksum(src1, src2, "A$") shouldBe false
+  }
+
+  ignore("Changing base class should result in checksum change") {
+    val src1 = """
+    | trait A
+    | trait B extends A
+    | trait C
+    | abstract class D
+    | object E extends D with B with C
+    |""".stripMargin
+    val src2 = """
+    | trait A
+    | trait B extends A { def f1(a:Int): Int = a }
+    | trait C
+    | abstract class D
+    | object E extends D with B with C
+    |""".stripMargin
+
+    sameChecksum(src1, src2, "E$") shouldBe false
+  }
+}
+
+/** A classloader for classes compiled during test */
+class CompiledClassesFirstClassLoader(compiled: Seq[(String, Array[Byte])],
+  parent: ClassLoader) extends ClassLoader(parent) {
+  override def findClass(fqn: String) =
+    compiled.find(_._1 == fqn + ".class") map (x =>
+      defineClass(fqn, x._2, 0, x._2.length)) getOrElse super.findClass(fqn)
+
+  /** ClassCRC calls this method to load the byte array */
+  override def getResourceAsStream(fqn: String) = {
+    val name = fqn.replace('/', '.')
+    compiled.find(_._1 == name) map (x =>
+      new java.io.ByteArrayInputStream(x._2)) getOrElse super.getResourceAsStream(name)
   }
 }
