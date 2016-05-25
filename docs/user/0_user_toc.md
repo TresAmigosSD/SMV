@@ -19,3 +19,4 @@
 * [Atom - A Small Editor Works Well with SMV](atom.md)
 * [Fuzzy matching between two datasets](smv_entity_matcher.md)
 * [Work on data with hierarchies](smv_hier.md)
+* [Column level Description and Labels](smv_desc_label.md)
