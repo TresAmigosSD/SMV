@@ -17,7 +17,7 @@ package org.tresamigos.smv {
 class SmvDSPersistTest extends SmvTestUtil {
   test("test read back persisted module with meta data") {
     val res = app.resolveRDD(org.tresamigos.smv.dspersistPkg.Y)
-    assertUnorderedSeqEqual(res.schema.getDescs(), Seq(("k",""), ("t","the time sequence"), ("v","")))
+    assertUnorderedSeqEqual(res.smvGetDesc(), Seq(("k",""), ("t","the time sequence"), ("v","")))
   }
 }
 

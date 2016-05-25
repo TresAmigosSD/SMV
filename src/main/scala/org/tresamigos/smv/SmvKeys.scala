@@ -15,14 +15,19 @@
 package org.tresamigos.smv
 import org.apache.spark.sql._, functions._, types._
 
-object SmvKeys {
+trait SmvKeys {
   val SmvLabel = "smvLabel"
   val SmvDesc = "smvDesc"
 }
 
-private[smv] class SchemaMetaOps(df: DataFrame) {
-  val SmvLabel = "smvLabel"
-  val SmvDesc = "smvDesc"
+private[smv] class ColumnMetaOps(col: Column) extends SmvKeys {
+  def addDesc(desc: String) = {
+    val m = Metadata.fromJson(s"""{"${SmvDesc}": "${desc}"}""")
+    col.as(col.getName, m)
+  }
+}
+
+private[smv] class SchemaMetaOps(df: DataFrame) extends SmvKeys {
 
   private def fieldLabel(f: StructField) = {
     val meta = f.metadata
@@ -34,6 +39,16 @@ private[smv] class SchemaMetaOps(df: DataFrame) {
     if (meta.contains(SmvDesc)) meta.getString(SmvDesc) else ""
   }
 
+  /**
+   * Adds labels to the specified columns.
+   *
+   * A column may have multiple labels.  Adding the same label twice
+   * to a column has the same effect as adding that label once.
+   *
+   * For multiple colNames, the same set of labels will be added to all of them.
+   * When colNames is empty, the set of labels will be added to all columns of the df.
+   * labels parameters must be non-empty.
+   */
   def addLabel(colNames: Seq[String], labels: Seq[String]): DataFrame = {
     require(!labels.isEmpty)
     val allCol = colNames.isEmpty

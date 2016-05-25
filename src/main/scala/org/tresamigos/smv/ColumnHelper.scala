@@ -639,10 +639,19 @@ class ColumnHelper(column: Column) {
    * {{{
    * df.select($"amt" as "amount" withDesc "Dollar amount spend")
    * }}}
+   *
+   * Since on Column level (before resolved on a DF), we can't access to existing meta
+   * data (stored in the schema), there is no way to preserve the existing meta data.
+   * Another DF level method is provided to add the description with preserving existing
+   * metadata:
+   * e.g.
+   * {{{
+   * df.smvDesc("amt" -> "Dollar amount spend", "o" -> "some other field")
+   * }}}
    **/
+  @deprecated("should use smvDesc instead")
   def withDesc(desc: String) = {
-    val m = Metadata.fromJson(s"""{"${SmvKeys.SmvDesc}": "${desc}"}""")
-    column.as(column.getName, m)
+    (new ColumnMetaOps(column)).addDesc(desc)
   }
 
   /**

@@ -898,11 +898,19 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Adds labels to the specified columns.
    *
-   * A column may have multiple labels.  Adding the same label twice
-   * to a column has the same effect as adding that label once.
+   * Each column could have multiple labels.
    *
-   * Both the column names and the labels parameters must be
-   * non-empty.
+   * Example:
+   * {{{
+   *   val res = df.smvLabel("name", "sex")("red", "yellow").smvLabel("sex")("green")
+   * }}}
+   *
+   * In this example, assume df has no labels, the res' "name" column will have
+   * "red" and "yellow" labels, and "sex" column will have "red", "yellow", and "green"
+   * labels.
+   *
+   * @param colNames: list of column names which the labels will be added, if empty all columns will be added the labels
+   * @param labels: list of labels need to be added to the specified columns. Can't be empty
    */
   def smvLabel(colNames: String*)(labels: String*): DataFrame =
     (new SchemaMetaOps(df)).addLabel(colNames, labels)
@@ -913,6 +921,11 @@ class SmvDFHelper(df: DataFrame) {
 
   /**
    * Removes the specified labels from the specified columns.
+   *
+   * Example:
+   * {{{
+   *   df.smvRemoveLabel("sex")("yellow", "green")
+   * }}}
    *
    * If no columns are specified, the specified labels are removed
    * from all applicable columns in the data frame.
@@ -928,51 +941,79 @@ class SmvDFHelper(df: DataFrame) {
     (new SchemaMetaOps(df)).removeLabel(colNames, labels)
 
   /**
-   * Returns all columns in the data frame that contain all the
+   * Returns all column names in the data frame that contain all the
    * specified labels.  If the labels argument is an empty sequence,
    * returns all unlabeled columns in the data frame.
    *
    * Will throw if there are no columns that satisfy the condition.
    *
    * Example:
-   *   df.select(df.smvWithLabel("A", "B") :+ df("other"):_*)
-   *
-   * will return a data frame containing all columns from `df` that
-   * are labeled with "A" and "B", and the `other` column
-   *
-   * Note: As of spark 1.5, most of the additional operations on the
-   * returned columns, other than aliasing, will result in a new column
-   * without the labels and other meta data on the original column.
+   * {{{
+   *   val cols = df.smvWithLabel("A", "B")
+   * }}}
    */
   def smvWithLabel(labels: String*): Seq[String] =
     (new SchemaMetaOps(df)).colWithLabel(labels)
 
+  /**
+   * DataFrame projection based on labels
+   *
+   * Example:
+   * {{{
+   *   val res = df.selectByLabel("yellow")
+   * }}}
+   **/
   def selectByLabel(labels: String*): DataFrame = {
     val cols = smvWithLabel(labels: _*).map{s => df(s)}
     df.select(cols: _*)
   }
 
+  /**
+   * Adds column descriptions
+   *
+   * Example:
+   * {{{
+   *   val res = df.smvDesc(
+   *     "name" -> "This is customer's name",
+   *     "sex"  -> "This is customer's self-identified sex"
+   *   )
+   * }}}
+   **/
   def smvDesc(colDescs: (String, String)*): DataFrame =
     (new SchemaMetaOps(df)).addDesc(colDescs)
 
+  /**
+   * Return column description of a specified column (by name string)
+   **/
   def smvGetDesc(colName: String): String =
     (new SchemaMetaOps(df)).getDesc(colName)
 
-  def smvGetDesc(): Seq[String] =
-    df.columns.map{smvGetDesc(_)}
+  /**
+   * Return the sequence of field name - description pairs
+   **/
+  def smvGetDesc(): Seq[(String, String)] =
+    df.columns.map{c => (c, smvGetDesc(c))}
 
+  /**
+   * Remove descriptions from specified columns (by name string)
+   * If parameter is empty, {{{df.smvRemoveDesc()}}}, remove all descriptions
+   **/
   def smvRemoveDesc(colNames: String*): DataFrame =
     (new SchemaMetaOps(df)).removeDesc(colNames)
 
   /**
-   * Print column names with description, where description is added by `withDesc` method
+   * Print column names with description
    * e.g.
    * {{{
-   * scala> val res = df.select($"a" withDesc "column a is ....")
+   * scala> val res = df.smvDesc("a" -> "column a is ....")
    * scala> res.printDesc
    * }}}
    **/
-  def printDesc() = df.schema.getDescs().foreach{case (n, d) => println("%s: %s".format(n,d))}
+  def printDesc() = {
+    val discs = df.smvGetDesc().toMap
+    val width = discs.keys.map{_.size}.max
+    discs.foreach{case (n, d) => printf(s"%-${width}s: %s\n", n,d)}
+  }
 
   /**
    * Display a dataframe row in transposed view.

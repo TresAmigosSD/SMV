@@ -126,7 +126,7 @@ class ColumnHelperTest extends SmvTestUtil {
     import ssc.implicits._
     val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
     val res = df.selectWithReplace($"t" withDesc "the time sequence")
-    assertUnorderedSeqEqual(res.schema.getDescs(), Seq(("k",""), ("t","the time sequence"), ("v","")))
+    assertUnorderedSeqEqual(res.smvGetDesc(), Seq(("k",""), ("t","the time sequence"), ("v","")))
   }
 
   test("test Percentile of DoubleBinHistogram") {

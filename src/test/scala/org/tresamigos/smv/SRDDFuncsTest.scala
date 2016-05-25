@@ -136,20 +136,20 @@ class renameFieldTest extends SmvTestUtil {
     val df = createSchemaRdd("a:Integer; b:String", "1,abc;1,def;2,ghij")
     val desc = "c description"
     val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) withDesc desc as "c")
-    res1.schema.getDescs shouldBe Seq(("a" -> ""), ("c" -> desc))
+    res1.smvGetDesc() shouldBe Seq(("a" -> ""), ("c" -> desc))
 
     val res2 = res1.renameField("c" -> "d")
-    res2.schema.getDescs shouldBe Seq(("a" -> ""), ("d" -> desc))
+    res2.smvGetDesc() shouldBe Seq(("a" -> ""), ("d" -> desc))
   }
 
   test("rename field should preserve metadata for unrenamed fields") {
     val df = createSchemaRdd("a:Integer; b:String", "1,abc;1,def;2,ghij")
     val desc = "c description"
     val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) withDesc desc as "c")
-    res1.schema.getDescs shouldBe Seq(("a" -> ""), ("c" -> desc))
+    res1.smvGetDesc() shouldBe Seq(("a" -> ""), ("c" -> desc))
 
     val res2 = res1.renameField("a" -> "d")
-    res2.schema.getDescs shouldBe Seq(("d" -> ""), ("c" -> desc))
+    res2.smvGetDesc() shouldBe Seq(("d" -> ""), ("c" -> desc))
   }
 }
 
