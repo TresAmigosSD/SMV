@@ -904,30 +904,12 @@ class SmvDFHelper(df: DataFrame) {
    * Both the column names and the labels parameters must be
    * non-empty.
    */
-  def smvLabel(colNames: String*)(labels: String*): DataFrame = {
-    require(!colNames.isEmpty && !labels.isEmpty)
-
-    val columns = df.schema.fields map { f =>
-      val c = f.name
-
-      // if new label should be added to this column
-      if (colNames.contains(c)) {
-        // preserve the current meta data
-        val builder = new MetadataBuilder().withMetadata(f.metadata)
-        val meta = builder.putStringArray(SmvKeys.SmvLabel, (f.labels ++ labels).distinct.toArray).build
-        df(c).as(c, meta)
-      } else df(f.name)
-    }
-
-    df.select(columns:_*)
-  }
+  def smvLabel(colNames: String*)(labels: String*): DataFrame =
+    (new SchemaMetaOps(df)).addLabel(colNames, labels)
 
   /** Returns all the labels on a specified column; throws if the column is missing */
-  def smvGetLabels(col: String): Seq[String] = {
-    val field = df.schema.fields find (_.name == col)
-    require(!field.isEmpty, s"""column [$col] is not found in the dataframe with ${df.columns.mkString(",")}""")
-    field.get.labels
-  }
+  def smvGetLabels(col: String): Seq[String] =
+    (new SchemaMetaOps(df)).getLabel(col)
 
   /**
    * Removes the specified labels from the specified columns.
@@ -942,21 +924,8 @@ class SmvDFHelper(df: DataFrame) {
    * lists are empty, then all labels are removed from all columns in
    * the data frame, essentially clearing the label meta data.
    */
-  def smvRemoveLabel(colNames: String*)(labels: String*): DataFrame = {
-    val allCol = colNames.isEmpty
-    val allLabels = labels.isEmpty
-
-    val columns = df.schema.fields map { f =>
-      val c = f.name
-      if (allCol || colNames.contains(c)) {
-        val newLabels = if (allLabels) Seq.empty else (f.labels diff labels).distinct
-        val builder = new MetadataBuilder().withMetadata(f.metadata)
-        val meta = builder.putStringArray(SmvKeys.SmvLabel, newLabels.toArray).build
-        df(c) as (c, meta)
-      } else df(c)
-    }
-    df.select(columns:_*)
-  }
+  def smvRemoveLabel(colNames: String*)(labels: String*): DataFrame =
+    (new SchemaMetaOps(df)).removeLabel(colNames, labels)
 
   /**
    * Returns all columns in the data frame that contain all the
@@ -975,28 +944,25 @@ class SmvDFHelper(df: DataFrame) {
    * returned columns, other than aliasing, will result in a new column
    * without the labels and other meta data on the original column.
    */
-  def smvWithLabel(labels: String*): Seq[Column] = {
-    import SmvKeys.SmvLabel
-    val filterFn: Metadata => Boolean = { meta =>
-      if (labels.isEmpty)
-        !meta.contains(SmvLabel) || meta.getStringArray(SmvLabel).isEmpty
-      else
-        meta.contains(SmvLabel) && labels.toSet.subsetOf(meta.getStringArray(SmvLabel).toSet)
-    }
+  def smvWithLabel(labels: String*): Seq[String] =
+    (new SchemaMetaOps(df)).colWithLabel(labels)
 
-    val ret = for {
-      f <- df.schema.fields if (filterFn(f.metadata))
-    } yield df(f.name)
-
-    require(!ret.isEmpty,
-      if (labels.isEmpty)
-        s"""there are no unlabeled columns in the data frame [${df.columns.mkString(",")}]"""
-      else
-        s"""there are no columns labeled with ${labels} in the data frame [${df.columns.mkString(",")}]"""
-    )
-
-    ret
+  def selectByLabel(labels: String*): DataFrame = {
+    val cols = smvWithLabel(labels: _*).map{s => df(s)}
+    df.select(cols: _*)
   }
+
+  def smvDesc(colDescs: (String, String)*): DataFrame =
+    (new SchemaMetaOps(df)).addDesc(colDescs)
+
+  def smvGetDesc(colName: String): String =
+    (new SchemaMetaOps(df)).getDesc(colName)
+
+  def smvGetDesc(): Seq[String] =
+    df.columns.map{smvGetDesc(_)}
+
+  def smvRemoveDesc(colNames: String*): DataFrame =
+    (new SchemaMetaOps(df)).removeDesc(colNames)
 
   /**
    * Print column names with description, where description is added by `withDesc` method

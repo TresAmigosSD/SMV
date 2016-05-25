@@ -88,13 +88,13 @@ class SmvLabelTest extends SmvTestUtil {
   test("selecting labeled columns should return only columns that have all the specified labels") {
     val label1 = fixture.smvLabel("name", "sex")("white")
     val label2 = label1.smvLabel("name")("red")
-    val res = label2.select(label2.smvWithLabel("white", "red") :_*)
+    val res = label2.selectByLabel("white", "red")
     res.columns shouldBe Seq("name")
   }
 
   test("calling smvWithLabel with an empty argument list should return unlabeled columns") {
     val label1 = fixture.smvLabel("name", "sex")("white")
-    val res = label1.select(label1.smvWithLabel():_*)
+    val res = label1.selectByLabel()
     res.columns shouldBe Seq("id")
   }
 
