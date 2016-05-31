@@ -26,4 +26,4 @@ where the <CLASS_DIR> is the same value as `smv.class_server.class_dir`, such as
 
 ## REPL
 
-A new method `hotdeploy` is added to the Spark Context to allow the Executor to create a new class loader so that changes in the code can be relaoded.  For some changes in the code, this method does not need to be invoked for the Spark Executor to pick up the change.  When you do need to propagate the change, such as when redefining a method, in the REPL call `sc.hotdeploy` before recomputing the module.
+A new method `hotdeploy` has been added to `SparkContext` to allow Executors to create a new class loader so that changes in the code can be relaoded.  In `smv_shell_init.scala` the `ddf()` method will try to call this method if it's available before trying to resolve the SMV module. If you want to manually to trigger the classloader change, call `sc.hotdeploy` in the REPL.

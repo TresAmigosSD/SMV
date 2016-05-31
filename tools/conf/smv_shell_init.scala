@@ -10,6 +10,7 @@ sc.setLogLevel("ERROR")
 SmvApp.init(Seq("-m", "None").toArray, Option(sc), Option(sqlContext))
 
 object i {
+  import org.apache.spark._
   import org.apache.spark.sql.DataFrame
   import org.apache.spark.rdd.RDD
   import java.io.{File, PrintWriter}
@@ -27,8 +28,21 @@ object i {
     app.resolveRDD(ds)
   }
 
+  def hotdeployIfCapable(cl: ClassLoader = getClass.getClassLoader): Unit = {
+    import scala.reflect.runtime.universe
+
+    val mir = universe.runtimeMirror(cl).reflect(sc)
+    val meth = mir.symbol.typeSignature.member(universe.newTermName("hotdeploy"))
+
+    if (meth.isMethod)
+      mir.reflectMethod(meth.asMethod)()
+    else
+      println("hotdeploy is not available in the current SparkContext")
+  }
+
   def ddf(fqn: String) = {
     val cl = getClass.getClassLoader
+    hotdeployIfCapable(cl)
     app.dynamicResolveRDD(fqn, cl)
   }
 
