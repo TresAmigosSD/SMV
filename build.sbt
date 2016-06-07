@@ -32,3 +32,14 @@ libraryDependencies ++= Seq(
 parallelExecution in Test := false
 
 publishArtifact in Test := true
+
+mainClass in assembly := Some("org.tresamigos.smv.SmvApp")
+
+assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
+
+assemblyJarName in assembly := s"${name.value}-${version.value}-jar-with-dependencies.jar"
+
+// to skip tests in assembly uncomment the following
+//   test in assembly := {}
+// or in SBT console enter the following
+//   set test in assembly := {}
