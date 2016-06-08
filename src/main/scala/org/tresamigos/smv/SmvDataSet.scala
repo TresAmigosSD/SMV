@@ -606,7 +606,7 @@ trait SmvRunConfig
 /**
  * SmvDataSet that can be configured to return different DataFrames.
  */
-trait Using[T <: SmvRunConfig] {
+trait Using[+T <: SmvRunConfig] {
   self: SmvDataSet =>
 
   /** The default run configuration object to use if none is specified */
