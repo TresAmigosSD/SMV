@@ -23,6 +23,8 @@ import scala.tools.nsc.reporters.StoreReporter
 import scala.tools.nsc.{Settings, Global}
 
 class ClassCRCTest extends FunSuite with Matchers {
+  val CurrCl = getClass.getClassLoader
+
   test("test two classes have different CRC") {
     val crc1 = ClassCRC("org.tresamigos.smv.ClassCRCTest")
     val crc2 = ClassCRC("org.tresamigos.smv.SmvModule")
@@ -50,6 +52,8 @@ class ClassCRCTest extends FunSuite with Matchers {
     val settings = new Settings()
     // settings.processArguments(List("-usejavacp"), processAll = true)
     settings.bootclasspath.append(jarpath("scala-library"))
+    CurrCl.asInstanceOf[java.net.URLClassLoader].getURLs.take(2) foreach {u =>
+      println(u.getFile); settings.classpath.append(u.getFile)}
     // settings.bootclasspath.append(jarpath("scala-reflect"))
     // settings.bootclasspath.append(jarpath("scala-compiler"))
     // settings.bootclasspath.append(sys.props("user.home") + "/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.10.4.jar")
@@ -80,6 +84,10 @@ class ClassCRCTest extends FunSuite with Matchers {
 
   def compile(scalaCode: String): List[(String, Array[Byte])] = {
     new compiler.Run().compileSources(List(new BatchSourceFile("source.scala", scalaCode)))
+    if (compiler.reporter.hasErrors) {
+      println(compiler.reporter.asInstanceOf[StoreReporter].infos)
+      throw new RuntimeException("compilation failed")
+    }
     getGeneratedClassfiles(compiler.settings.outputDirs.getSingleOutput.get)
   }
 
@@ -102,9 +110,8 @@ class ClassCRCTest extends FunSuite with Matchers {
     val r1 = compile(src1)
     val r2 = compile(src2)
 
-    val currCl = getClass.getClassLoader
-    val cl1 = new CompiledClassesFirstClassLoader(r1, currCl)
-    val cl2 = new CompiledClassesFirstClassLoader(r2, currCl)
+    val cl1 = new CompiledClassesFirstClassLoader(r1, CurrCl)
+    val cl2 = new CompiledClassesFirstClassLoader(r2, CurrCl)
 
     ClassCRC.checksum(classname, cl1).getValue == (ClassCRC.checksum(classname, cl2)).getValue
   }
@@ -156,11 +163,51 @@ class ClassCRCTest extends FunSuite with Matchers {
 
     sameChecksum(src1, src2, "E$") shouldBe false
   }
+
+  // TODO: consult the test harnesses for Scala itself to see how to
+  // set up compilers properly so we can actually compile SmvModules
+  // and calculate real hash of hash during test
+  ignore("#319: Changing configuration should result in checksum change") {
+    val src1 = """
+    | abstract class BaseModule(val name: String)
+    | trait BaseConfig {
+    |   def name: String
+    | }
+    | object ConfigA extends BaseConfig {
+    |   override val name = "Adam"
+    | }
+    | object ConfigB extends BaseConfig {
+    |   override val name = "Eve"
+    | }
+    | object X extends BaseModule("Test") with Using[BaseConfig] {
+    |   override val defaultRunConfig = ConfigA
+    | }
+    |""".stripMargin
+    val src2 = """
+    | abstract class BaseModule(val name: String)
+    | trait BaseConfig {
+    |   def name: String
+    | }
+    | object ConfigA extends BaseConfig {
+    |   override val name = "Adam"
+    | }
+    | object ConfigB extends BaseConfig {
+    |   override val name = "Eve"
+    | }
+    | object X extends BaseModule("Test") with Using[BaseConfig] {
+    |   override val defaultRunConfig = ConfigB
+    | }
+    |""".stripMargin
+
+    sameChecksum(src1, src2, "X$") shouldBe false
+  }
 }
 
 /** A classloader for classes compiled during test */
 class CompiledClassesFirstClassLoader(compiled: Seq[(String, Array[Byte])],
   parent: ClassLoader) extends ClassLoader(parent) {
+  require(!compiled.isEmpty, "compilation failed")
+
   override def findClass(fqn: String) =
     compiled.find(_._1 == fqn + ".class") map (x =>
       defineClass(fqn, x._2, 0, x._2.length)) getOrElse super.findClass(fqn)

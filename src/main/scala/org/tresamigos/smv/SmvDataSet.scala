@@ -599,3 +599,30 @@ case class SmvCsvStringData(
  */
 trait SmvOutput { this : SmvDataSet =>
 }
+
+/** Base marker trait for run configuration objects */
+trait SmvRunConfig
+
+/**
+ * SmvDataSet that can be configured to return different DataFrames.
+ */
+trait Using[T <: SmvRunConfig] {
+  self: SmvDataSet =>
+
+  /** The default run configuration object to use if none is specified */
+  def defaultRunConfig: T
+
+  /** The actual run configuration object */
+  lazy val RunConfig: T = {
+    import scala.reflect.runtime.{universe => ru}
+    val mir = ru.runtimeMirror(getClass.getClassLoader)
+
+    val specified: Option[T] = for {
+      fqn <- self.app.smvConfig.runConfObj
+      sym = mir.staticModule(fqn)
+      module = mir.reflectModule(sym)
+    } yield module.instance.asInstanceOf[T]
+
+    specified getOrElse defaultRunConfig
+  }
+}

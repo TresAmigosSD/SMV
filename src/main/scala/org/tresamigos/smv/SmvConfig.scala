@@ -55,6 +55,8 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
 
   val json = opt[List[String]]("json", noshort = true, default = None, descr = "generate a json object to represent app's module dependency for a given set of stages (modules are not run)")
 
+  val runConfObj = opt[String]("run-conf-obj", noshort = true, default = None, descr = "load and instantiate the configuration object by its fqn")
+
   // --- data directories override
   val dataDir    = opt[String]("data-dir",    noshort = true, descr = "specify the top level data directory")
   val inputDir   = opt[String]("input-dir",   noshort = true, descr = "specify the input directory (default: datadir/input")
@@ -179,6 +181,9 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       case _ => throw new java.lang.RuntimeException(s"Module name [${name}] is not specific enough, as it is found in multiple stages [${stageNames.mkString(", ")}]")
     }
   }
+
+  /** The FQN of configuration object for a particular run.  See github issue #319 */
+  val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get("smv.runConfObj"))
 
   // ---------- hierarchy of data / input / output directories
 
