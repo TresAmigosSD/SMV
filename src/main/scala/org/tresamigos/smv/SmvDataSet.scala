@@ -613,7 +613,7 @@ trait Using[T <: SmvRunConfig] {
   def defaultRunConfig: T
 
   /** The actual run configuration object */
-  lazy val RunConfig: T = {
+  lazy val runConfig: T = {
     import scala.reflect.runtime.{universe => ru}
     val mir = ru.runtimeMirror(getClass.getClassLoader)
 
