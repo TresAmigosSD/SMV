@@ -60,7 +60,7 @@ abstract class SmvDataSet {
     if (isObjectInShell)
       0l
     else
-      ClassCRC(this.getClass.getName, this.getClass.getClassLoader).crc
+      ClassCRC(this)
   }
 
   /** Hash computed from the dataset, could be overridden to include things other than CRC */

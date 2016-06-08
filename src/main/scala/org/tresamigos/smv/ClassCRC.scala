@@ -24,14 +24,13 @@ import scala.tools.asm
  * computes the CRC32 checksum for the code of the given class name.
  * The class must be reachable through the configured java class path.
  */
-private[smv] case class ClassCRC(
-  className: String,
-  classLoader : ClassLoader = getClass.getClassLoader) {
-  import ClassCRC._
-  lazy val crc: Long = checksum(className, classLoader).getValue
-}
-
 object ClassCRC {
+  def apply(dataset: SmvDataSet): Long =
+    checksum(dataset, dataset.getClass.getClassLoader).getValue
+
+  def apply(className: String, classLoader: ClassLoader = getClass.getClassLoader): Long =
+    checksum(className, classLoader).getValue
+
   private[smv] def cksum0(acc: CRC32, reader: asm.ClassReader): CRC32 = {
     val code = AsmUtil.asmTrace(reader).getBytes("UTF-8")
     acc.update(code)
@@ -40,32 +39,44 @@ object ClassCRC {
 
   def checksum(bytecode: Array[Byte]): CRC32 = cksum0(new CRC32, new asm.ClassReader(bytecode))
 
+  /** compute checksum for a SmvDataSet, including config object if any */
+  def checksum(dataset: SmvDataSet, classLoader: ClassLoader): CRC32 = {
+    val crc = checksum(dataset.getClass.getName, classLoader)
+
+    // #319: include configuration object in the hash calculation
+    if (dataset.isInstanceOf[Using[_]]) {
+      checksum(dataset.asInstanceOf[Using[SmvRunConfig]].runConfig.getClass.getName, classLoader, crc)
+    } else {
+      crc
+    }
+  }
+
   /**
    * Compute a checksum of the bytecode of the class and all its
    * supertypes in linearized order, excluding java.lang.Object and
    * scala.Any
    */
-  def checksum(className: String, classLoader: ClassLoader): CRC32 = {
-    /** calculate CRC for a single class */
-    def step(fqn: String, crc: CRC32): CRC32 = {
-      val classResourcePath = fqn.replace('.', '/') + ".class"
-      val is: InputStream = classLoader.getResourceAsStream(classResourcePath)
+  def checksum(className: String, classLoader: ClassLoader, initial: CRC32 = new CRC32): CRC32 = {
+    // include self
+    val contribs: Seq[String] = className +: (for {
+      n <- new SmvReflection(classLoader).basesOf(className)
+      if (!n.startsWith("java.")) && (!n.startsWith("scala.")) && (!n.startsWith("org.tresamigos.smv."))
+    } yield n)
 
-      try {
-        cksum0(crc, new asm.ClassReader(is))
-      } catch {
-        case NonFatal(t) => throw new IllegalArgumentException("invalid class name for crc: " + fqn, t)
-      } finally {
-        if (is != null) is.close
-      }
-    }
-
-    // basesOf returns the parents but not include the caller class, added to the end
-    val bases = new SmvReflection(classLoader).basesOf(className).filter(s =>
-      !s.startsWith("java.") && !s.startsWith("scala.") && !s.startsWith("org.tresamigos.smv.")
-    ) :+ className
-
-    bases.foldRight(new CRC32)((e, acc) => step(e, acc))
+    contribs.foldRight(initial)((e, acc) => step(classLoader, e, acc))
   }
 
+  /** calculate CRC for a single class */
+  private[this] def step(classLoader: ClassLoader, fqn: String, crc: CRC32): CRC32 = {
+    val classResourcePath = fqn.replace('.', '/') + ".class"
+    val is: InputStream = classLoader.getResourceAsStream(classResourcePath)
+
+    try {
+      cksum0(crc, new asm.ClassReader(is))
+    } catch {
+      case NonFatal(t) => throw new IllegalArgumentException("invalid class name for crc: " + fqn, t)
+    } finally {
+      if (is != null) is.close
+    }
+  }
 }

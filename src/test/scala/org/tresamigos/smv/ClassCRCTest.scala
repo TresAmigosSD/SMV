@@ -29,20 +29,19 @@ class ClassCRCTest extends FunSuite with Matchers {
     val crc1 = ClassCRC("org.tresamigos.smv.ClassCRCTest")
     val crc2 = ClassCRC("org.tresamigos.smv.SmvModule")
 
-    assert(crc1.crc != crc2.crc)
+    assert(crc1 != crc2)
   }
 
   test("test same class has same CRC") {
     val crc1 = ClassCRC("org.tresamigos.smv.ClassCRCTest")
     val crc2 = ClassCRC("org.tresamigos.smv.ClassCRCTest")
 
-    assert(crc1.crc == crc2.crc)
+    assert(crc1 == crc2)
   }
 
   test("test for invalid class name CRC") {
     intercept[ClassNotFoundException] {
-      val crc = ClassCRC("org.tresamigos.class_does_not_exist")
-      crc.crc
+      ClassCRC("org.tresamigos.class_does_not_exist")
     }
   }
 
