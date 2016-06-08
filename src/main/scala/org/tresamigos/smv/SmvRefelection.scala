@@ -39,11 +39,22 @@ private[smv] class SmvReflection(private val classLoader: ClassLoader) {
       toSeq
   }
 
-  /** returns the base classes of a type, itself first, in linearized order */
+  /** return the super types in linearized order */
   def basesOf(fqn: String): Seq[String] = {
     val klass = Class.forName(fqn, false, classLoader)
     val sym = mirror.classSymbol(klass)
     sym.baseClasses map (_.fullName)
+  }
+
+  /** return member value of an object */
+  def get[T: ru.TypeTag : ClassTag](obj: T, name: String): Any = {
+    val field = ru.typeOf[T].member(ru.newTermName(name)).asTerm
+    mirror.reflect(obj).reflectField(field).get
+  }
+
+  def invoke[T: ru.TypeTag : ClassTag](obj: T, name: String): Any = {
+    val method = ru.typeOf[T].member(ru.newTermName(name)).asMethod
+    mirror.reflect(obj).reflectMethod(method)()
   }
 }
 
@@ -77,4 +88,7 @@ private[smv] object SmvReflection {
 
   /** returns the base classes of a type, itself first, in linearized order */
   def basesOf(fqn: String): Seq[String] = ref.basesOf(fqn)
+
+  /** return member value of an object */
+  def get[T: ru.TypeTag : ClassTag](obj: T, name: String): Any = ref.get(obj, name)
 }
