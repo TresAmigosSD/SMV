@@ -65,6 +65,43 @@ object MyModule extends SmvModule("mod description") {
 }
 ```
 
+## Configurable Modules
+In some situations, such as building subsets by filtering, different sets `DataFrame`s are genereated from the same input with almost the same _logic_.  Using a _configurable_ module enables code reuse while minizing boilerplate.
+
+In addition to input modules specified with the `requireDS()` method, a _configurable_ module depends on a specific configuration object, that must be a subclass of the `SmvRunConfig` trait, to produce its desired output.  Which configuration object to use is specified by the value of `smv.runConfObj`, either in the application's <a href="app_config.md">configuration</a> file, or on the command line with `--run-conf-obj <name>` option or with `--smv-props smv.runConfObj=<name>`.
+
+By default, the name of the configuration object is the fully qualified class name (FQN) of the implementing object.  However, one could override `runConfig` in trait `Using[T]` to change the way the configuration object is obtained.
+
+Below is an example of how to use a configurable module:
+
+```scala
+trait BaseStudio extends SmvRunConfig {
+  def actors: Seq[String]
+  def directors: Seq[String]
+}
+
+object Hollywood extends BaseStudio {
+  override val actors = Seq("Hillary Clinton", "Bernie Sanders")
+  override val directors = Seq("George Soros")
+}
+
+object Bollywood extends BaseStudio {
+  override val actors = Seq()
+  override val directors = Seq()
+}
+
+object Budget extends SmvModule("Projects cost of film production") with Using[BaseStudio] {
+  ...
+  override def run (i: runParams) = {
+    // Access to the actual configuration is provided by the runConfig object
+    val available = df.where(df("name").isin(runConfig.actors))
+    ....
+  }
+}
+```
+
+Here the run configuration is defined with the `BaseStudio` trait, which extends `SmvRunConfig`.  It contains two pieces of information: lists of available actors and directors.  There are two specific configurations specified by `Hollywood` and `Bollywood`, each with its own list of available actors and directors.  And the module `Budget` declares that it needs the information from a `BaseStudio` by mixing in the trait `Using[BaseStudio]`, which provides the actual configuration through the `runConfig` object.  To specify the use of `Hollywood`, one invokes `smv-run --smv-props runConfObj=Hollywood`; to use `Bollywood`, one invokes `smv-shell --run-conf-obj Bollywood`.  Both ways of specifying a configuration object work with smv-shell or smv-run.
+
 # Output Modules
 As the number of modules in a given SMV stage grows, it becomes more difficult to track which
 modules are the "leaf"/output modules within the stage.

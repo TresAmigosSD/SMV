@@ -82,6 +82,13 @@ Example: "com.company.proj.etl, com.company.proj.model"</td>
 </tr>
 
 <tr>
+<td>smv.runConfigObj</td>
+<td>empty</td>
+<td>Optional</td>
+<td>The configuration object to use. See <a href="smv_module.md">SmvModule</a> for details</td>
+</tr>
+
+<tr>
 <th colspan="4">Data Directories Parameters</th>
 </tr>
 
