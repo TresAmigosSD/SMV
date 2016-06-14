@@ -609,20 +609,19 @@ trait SmvRunConfig
 trait Using[+T <: SmvRunConfig] {
   self: SmvDataSet =>
 
-  /** The default run configuration object to use if none is specified */
-  def defaultRunConfig: T
-
   /** The actual run configuration object */
   lazy val runConfig: T = {
+    val confObj = self.app.smvConfig.runConfObj
+
+    require(confObj.isDefined,
+      s"Expected a run configuration object provided with ${SmvConfig.RunConfObjKey} but found none")
+
+
     import scala.reflect.runtime.{universe => ru}
     val mir = ru.runtimeMirror(getClass.getClassLoader)
 
-    val specified: Option[T] = for {
-      fqn <- self.app.smvConfig.runConfObj
-      sym = mir.staticModule(fqn)
-      module = mir.reflectModule(sym)
-    } yield module.instance.asInstanceOf[T]
-
-    specified getOrElse defaultRunConfig
+    val sym = mir.staticModule(confObj.get)
+    val module = mir.reflectModule(sym)
+    module.instance.asInstanceOf[T]
   }
 }

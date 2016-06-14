@@ -90,6 +90,7 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
  */
 class SmvConfig(cmdLineArgs: Seq[String]) {
   import java.nio.file.Paths
+  import SmvConfig._
 
   /*pathJoin has the following behavior:
    *pathJoin("/a/b", "c/d") -> "/a/b/c/d"
@@ -183,7 +184,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   }
 
   /** The FQN of configuration object for a particular run.  See github issue #319 */
-  val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get("smv.runConfObj"))
+  val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
   // ---------- hierarchy of data / input / output directories
 
@@ -266,4 +267,8 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private[smv] def getPropAsInt(propName: String) : Option[Int] = {
     mergedProps.get(propName).flatMap { s: String => Try(s.toInt).toOption }
   }
+}
+
+object SmvConfig {
+  val RunConfObjKey: String = "smv.runConfObj"
 }
