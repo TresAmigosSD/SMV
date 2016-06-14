@@ -25,6 +25,36 @@ import scala.tools.nsc.{Settings, Global}
 class ClassCRCTest extends FunSuite with Matchers {
   val CurrCl = getClass.getClassLoader
 
+  val ScalaBinaryVersion: String = {
+    val PreReleasePattern = """.*-(M|RC).*""".r
+    val Pattern = """(\d+\.\d+)\..*""".r
+    val SnapshotPattern = """(\d+\.\d+\.\d+)-\d+-\d+-.*""".r
+    scala.util.Properties.versionNumberString match {
+      case s @ PreReleasePattern(_) => s
+      case SnapshotPattern(v) => v + "-SNAPSHOT"
+      case Pattern(v) => v
+      case _          => ""
+    }
+  }
+
+  val testClasspath = {
+    val f = new java.io.File(s"target/scala-${ScalaBinaryVersion}/classes")
+    if (!f.exists) sys.error(s"output directory ${f.getAbsolutePath} does not exist.")
+    f.getAbsolutePath
+  }
+
+  def mkGlobal(options: String = "-cp ${testClasspath}"): Global = {
+    val settings = new Settings()
+    settings.processArgumentString(options)
+    val initClassPath = settings.classpath.value
+    settings.embeddedDefaults(getClass.getClassLoader)
+    if (initClassPath == settings.classpath.value)
+      settings.usejavacp.value = true // not running under SBT, try to use the Java claspath instead
+    val compiler = new Global(settings, new StoreReporter)
+    compiler.settings.outputDirs.setSingleOutput(new VirtualDirectory("(memory)", None))
+    compiler
+  }
+
   test("test two classes have different CRC") {
     val crc1 = ClassCRC("org.tresamigos.smv.ClassCRCTest")
     val crc2 = ClassCRC("org.tresamigos.smv.SmvModule")
@@ -43,24 +73,6 @@ class ClassCRCTest extends FunSuite with Matchers {
     intercept[ClassNotFoundException] {
       ClassCRC("org.tresamigos.class_does_not_exist")
     }
-  }
-
-  def jarpath(name: String) = sys.props("user.home") + s"/.m2/repository/org/scala-lang/${name}/2.10.4/${name}-2.10.4.jar"
-
-  val compiler: Global = {
-    val settings = new Settings()
-    // settings.processArguments(List("-usejavacp"), processAll = true)
-    settings.bootclasspath.append(jarpath("scala-library"))
-    CurrCl.asInstanceOf[java.net.URLClassLoader].getURLs.take(2) foreach {u =>
-      println(u.getFile); settings.classpath.append(u.getFile)}
-    // settings.bootclasspath.append(jarpath("scala-reflect"))
-    // settings.bootclasspath.append(jarpath("scala-compiler"))
-    // settings.bootclasspath.append(sys.props("user.home") + "/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.10.4.jar")
-    // settings.bootclasspath.append(sys.props("user.home") + "/.ivy2/cache/org.scala-lang/scala-library/jars/scala-reflect-2.10.4.jar")
-    // settings.bootclasspath.append(sys.props("user.home") + "/.ivy2/cache/org.scala-lang/scala-library/jars/scala-compiler-2.10.4.jar")
-    val compiler = new Global(settings, new StoreReporter)
-    compiler.settings.outputDirs.setSingleOutput(new VirtualDirectory("(memory)", None))
-    compiler
   }
 
   // tests that involve compilers can run in sbt, but not in mvn via scalatest-mvn plugin
@@ -82,10 +94,10 @@ class ClassCRCTest extends FunSuite with Matchers {
   def singleClassBytecode(scalaCode: String): Array[Byte] = compile(scalaCode)(0)._2
 
   def compile(scalaCode: String): List[(String, Array[Byte])] = {
+    val compiler = mkGlobal()
     new compiler.Run().compileSources(List(new BatchSourceFile("source.scala", scalaCode)))
     if (compiler.reporter.hasErrors) {
-      println(compiler.reporter.asInstanceOf[StoreReporter].infos)
-      throw new RuntimeException("compilation failed")
+      throw new RuntimeException("compilation failed with " + compiler.reporter.asInstanceOf[StoreReporter].infos)
     }
     getGeneratedClassfiles(compiler.settings.outputDirs.getSingleOutput.get)
   }
@@ -163,13 +175,10 @@ class ClassCRCTest extends FunSuite with Matchers {
     sameChecksum(src1, src2, "E$") shouldBe false
   }
 
-  // TODO: consult the test harnesses for Scala itself to see how to
-  // set up compilers properly so we can actually compile SmvModules
-  // and calculate real hash of hash during test
   ignore("#319: Changing configuration should result in checksum change") {
     val src1 = """
-    | abstract class BaseModule(val name: String)
-    | trait BaseConfig {
+    | import org.tresamigos.smv._
+    | trait BaseConfig extends SmvRunConfig {
     |   def name: String
     | }
     | object ConfigA extends BaseConfig {
@@ -178,13 +187,17 @@ class ClassCRCTest extends FunSuite with Matchers {
     | object ConfigB extends BaseConfig {
     |   override val name = "Eve"
     | }
-    | object X extends BaseModule("Test") with Using[BaseConfig] {
-    |   override val defaultRunConfig = ConfigA
+    | object X extends SmvModule("Test") with Using[BaseConfig] {
+    |   override def requiresDS = Seq()
+    |   override def run (i: runParams) = {
+    |     app.createDF("k:String", runConfig.name)
+    |   }
+    |   override lazy val runConfig = ConfigA
     | }
     |""".stripMargin
     val src2 = """
-    | abstract class BaseModule(val name: String)
-    | trait BaseConfig {
+    | import org.tresamigos.smv._
+    | trait BaseConfig extends SmvRunConfig {
     |   def name: String
     | }
     | object ConfigA extends BaseConfig {
@@ -193,8 +206,12 @@ class ClassCRCTest extends FunSuite with Matchers {
     | object ConfigB extends BaseConfig {
     |   override val name = "Eve"
     | }
-    | object X extends BaseModule("Test") with Using[BaseConfig] {
-    |   override val defaultRunConfig = ConfigB
+    | object X extends SmvModule("Test") with Using[BaseConfig] {
+    |   override def requiresDS = Seq()
+    |   override def run (i: runParams) = {
+    |     app.createDF("k:String", runConfig.name)
+    |   }
+    |   override lazy val runConfig = ConfigB
     | }
     |""".stripMargin
 
