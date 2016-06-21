@@ -37,7 +37,8 @@ class ClassCRCTest extends FunSuite with Matchers {
     }
   }
 
-  val testClasspath = {
+  // works only with SBT
+  lazy val testClasspath = {
     val f = new java.io.File(s"target/scala-${ScalaBinaryVersion}/classes")
     if (!f.exists) sys.error(s"output directory ${f.getAbsolutePath} does not exist.")
     f.getAbsolutePath
