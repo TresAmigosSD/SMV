@@ -121,8 +121,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
     // Prevent user from relying on dynamic resolution till we can
     // hot-deploy SMV modules on Spark
-    if (AsmUtil.hasAnonfun(fqn, cl))
-      throw new IllegalArgumentException(s"Module [${fqn}] contains anonymous functions, which is currently not supported for hot-deploy on Spark")
+    // if (AsmUtil.hasAnonfun(fqn, cl))
+    //   throw new IllegalArgumentException(s"Module [${fqn}] contains anonymous functions, which is currently not supported for hot-deploy on Spark")
 
     val ref = new SmvReflection(cl)
     val dsObject = ref.objectNameToInstance[SmvDataSet](fqn)
