@@ -234,9 +234,12 @@ trait SmvTestUtil extends SparkTestUtil {
   /**
    * df creater is in SmvApp now. This is just a wrapper
    */
+  @deprecated("Use dfFrom instead", "1.5.0")
   def createSchemaRdd(schemaStr: String, data: String) = {
     app.createDF(schemaStr, data)
   }
+
+  def dfFrom(schemaStr: String, data: String): DataFrame = app.createDF(schemaStr, data)
 }
 
 /** Base trait for unit tests that do not need a Spark test environment */

@@ -153,12 +153,21 @@ package object smv {
    */
   def columnIf[T](cond: Column, l: Column, r: T): Column = columnIf(cond, l, lit(r))
 
+  /** True if any of the columns is not null */
+  def hasNonNull(columns: Column*) = columns.foldRight(lit(false))((c, acc) => acc || c.isNotNull)
+
   /**
    * Patch Spark's `concat` and `concat_ws` to treat null as empty string in concatenation.
    **/
-  def smvStrCat(columns: Column*) = concat(columns.map{c => coalesce(c, lit(""))}:_*)
+  def smvStrCat(columns: Column*) =
+    when(hasNonNull(columns:_*),
+      concat(columns.map{c => coalesce(c, lit(""))}:_*)).
+      otherwise(lit(null))
 
-  def smvStrCat(sep: String, columns: Column*) = concat_ws(sep, columns.map(c => coalesce(c, lit(""))):_*)
+  def smvStrCat(sep: String, columns: Column*) =
+    when(hasNonNull(columns:_*),
+      concat_ws(sep, columns.map(c => coalesce(c, lit(""))):_*)).
+      otherwise(lit(null))
 
   /**
    * Put a group of columns in an Array field
