@@ -74,11 +74,11 @@ object smvfuncs {
   }
 
   /** For an Array column create a String column with the Array values */
-  def smvArrayCat(sep: String, col: Column): Column = {
+  def smvArrayCat(sep: String, col: Column, fn: Any => String = (x => x.toString)): Column = {
     val catF = {a:Seq[Any] =>
       a.map{
         case null => ""
-        case s => s.toString
+        case s => fn(s)
       }.mkString(sep)
     }
 
