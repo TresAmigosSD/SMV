@@ -727,7 +727,7 @@ class SmvDFHelper(df: DataFrame) {
 
   /**
    * Similar to groupBy, instead of creating GroupedData, create an `SmvGroupedData` object.
-   * See [[org.tresamigos.smv.SmvGroupedDataFunc]] for list of functions that can be applied to the grouped data.`
+   * See [[org.tresamigos.smv.SmvGroupedDataFunc]] for list of functions that can be applied to the grouped data.
    *
    * Note: This is going away shortly and user will be able to use standard Spark `groupBy` method directly.
    *
