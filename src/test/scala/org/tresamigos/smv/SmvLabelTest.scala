@@ -2,6 +2,8 @@ package org.tresamigos.smv
 
 class SmvLabelTest extends SmvTestUtil {
   def fixture = createSchemaRdd("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
+  def descriptionDF = createSchemaRdd("variables:String;decriptions:String", 
+    "id,This is an ID field;name,This is a name field;sex,This is a sex filed")
 
   test("labeling a column should not affect other columns") {
     val labeled = fixture.smvLabel("name")("white")
@@ -128,4 +130,11 @@ class SmvLabelTest extends SmvTestUtil {
     val res = df2.smvRemoveDesc()
     res.smvGetDesc() shouldBe Seq(("id", ""), ("name",""), ("sex", ""))
   }
+  
+  test("adding description through DF should generate correct descriptions") {
+    val df = fixture
+    val res = df.smvDescFromDF(descriptionDF)
+    res.smvGetDesc() shouldBe Seq(("id", "This is an ID field"), ("name","This is a name field"), ("sex", "This is a sex filed"))
+  }
+
 }

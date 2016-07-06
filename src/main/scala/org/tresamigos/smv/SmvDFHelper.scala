@@ -727,7 +727,7 @@ class SmvDFHelper(df: DataFrame) {
 
   /**
    * Similar to groupBy, instead of creating GroupedData, create an `SmvGroupedData` object.
-   * See [[org.tresamigos.smv.SmvGroupedDataFunc]] for list of functions that can be applied to the grouped data.
+   * See [[org.tresamigos.smv.SmvGroupedDataFunc]] for list of functions that can be applied to the grouped data.`
    *
    * Note: This is going away shortly and user will be able to use standard Spark `groupBy` method directly.
    *
@@ -981,6 +981,21 @@ class SmvDFHelper(df: DataFrame) {
    **/
   def smvDesc(colDescs: (String, String)*): DataFrame =
     (new SchemaMetaOps(df)).addDesc(colDescs)
+
+  /**
+   * Adds column descriptions with a companion 2-column desciptionDF, which has variable names as 
+   * column 1 and corresponding variable descriptions as column 2
+   *
+   * Example:
+   * {{{
+   *   val res = df.smvDescFromDF(desciptionDF)
+   * }}}
+   **/
+  def smvDescFromDF(dfDescs: DataFrame): DataFrame = {
+    val in = dfDescs.collect
+    in.foldLeft(df){ (acc, t) =>
+      acc.smvDesc(t(0).toString -> t(1).toString)}
+  }
 
   /**
    * Return column description of a specified column (by name string)
