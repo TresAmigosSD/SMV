@@ -16,7 +16,8 @@ need to add an optional description which can be persisted and printed.
 * Empty string description is equivalent to no description
 
 ### SmvDesc DataFrame Helper Methods
-* `smvDesc` - add Descriptions to columns
+* `smvDesc` - add Descriptions to columns through code
+* `smvDescFromDF` - add Descriptions to columns through another DF
 * `smvGetDesc` - get Description for a given column or all the name-description pairs
 * `smvRemoveDesc` - remove descriptions from a specified column or all columns
 * `printDesc` - print schema with descriptions on screen
@@ -28,6 +29,19 @@ scala> res.printDesc
 a:
 b:
 c:
+phy_id: Physician ID from CMS
+
+scala> descriptionDF.show
++---------+---------------------+
+|variables|descriptions         |
++---------+---------------------+
+|phy_id   |Physician ID from CMS|
++---------+---------------------+
+scala> val res2 = df.smvDescFromDF(descriptionDF)
+scala> res2.printDesc
+a     : 
+b     : 
+c     : 
 phy_id: Physician ID from CMS
 ```
 
