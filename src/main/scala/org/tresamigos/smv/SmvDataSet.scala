@@ -21,18 +21,23 @@ import org.joda.time._
 import org.joda.time.format._
 import dqm._
 
+/** Allows stackable module naming, such as with Using[SmvRunConfig] */
+trait HasName {
+  def name: String
+}
+
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result DataFrame.
  */
-abstract class SmvDataSet {
+abstract class SmvDataSet extends HasName {
 
   lazy val app: SmvApp = SmvApp.app
   private var rddCache: DataFrame = null
 
-  def name() = this.getClass().getName().filterNot(_=='$')
+  override def name = this.getClass().getName().filterNot(_=='$')
   def description(): String
 
   /** modules must override to provide set of datasets they depend on. */
@@ -606,7 +611,7 @@ trait SmvRunConfig
 /**
  * SmvDataSet that can be configured to return different DataFrames.
  */
-trait Using[+T <: SmvRunConfig] {
+trait Using[+T <: SmvRunConfig] extends HasName {
   self: SmvDataSet =>
 
   /** The actual run configuration object */
@@ -623,5 +628,11 @@ trait Using[+T <: SmvRunConfig] {
     val sym = mir.staticModule(confObj.get)
     val module = mir.reflectModule(sym)
     module.instance.asInstanceOf[T]
+  }
+
+  // Configurable SmvDataSet has the configuration object appended to its name
+  abstract override def name = {
+    val confObjStr = runConfig.toString
+    super.name + '-' + confObjStr.substring(1+confObjStr.lastIndexOf('.'), confObjStr.lastIndexOf('$'))
   }
 }
