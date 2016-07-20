@@ -6,6 +6,43 @@
   <meta name="generator" content="pandoc" />
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
   <link rel="stylesheet" type="text/css" href="github.css">
 </head>
 <body>
@@ -20,39 +57,59 @@
 
 <article class="markdown-body">
 <h1 id="run-smv-app-using-spark-r-shell">Run SMV App using Spark R Shell</h1>
-<h3 id="synopsis">Synopsis</h3>
+<h2 id="synopsis">Synopsis</h2>
 <pre class="shell"><code>$ _SMV_HOME_/tools/smv-r [smv-options]</code></pre>
 <p><strong>Note:</strong> The above command should be run from the project top level directory.</p>
-<p><br><br /><table></p>
+<p><br><br />
+<table></p>
 <tr>
 <th colspan="3">Options</th>
 </tr>
-
-
 <tr>
 <th>Option</th>
 <th>Default</th>
 <th>Description</th>
 </tr>
-
-
 <tr>
 <td>-g|-rs</td>
 <td>false</td>
-<td>Use graphical R shell (Rconsole or Rstudio). Not Supported Yet!!!</td>
+<td>Use graphical R shell (Rconsole or Rstudio). Only supported in Mac OS, for Linux need to modify the smv-r script slightly</td>
 </tr>
-
-
 </table>
-
-
-
-<h3 id="running-smv-modules-from-r-shell">Running SMV modules from R Shell</h3>
+<h2 id="use-sparkr-and-smvr-in-r">Use SparkR and smvR in R</h2>
+<p><code>smv-r</code> shell script simply setup some environment variables and start R in shell or Rstudio with</p>
+<ul>
+<li>library path configured to include <code>SparkR</code> and <code>smvR</code> packages</li>
+<li>preload <code>sc</code> for SparkContext, <code>sqlContext</code> and <code>smvApp</code> in the <code>.GlobalEnv</code></li>
+</ul>
+<p>As a contrary to the <code>sparkR</code> command provided by Spark itself, <code>smv-r</code> does NOT load either <code>SparkR</code> or <code>smvR</code> as <code>defaultPackages</code>.<br />
+To use functions in them, user should either attach them:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(SparkR)
+<span class="kw">library</span>(smvR)</code></pre></div>
+<p>or refer the functions with the package name:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">SparkR::<span class="kw">select</span>(...)
+smvR::<span class="kw">runSmvModuleRdd</span>(...)</code></pre></div>
+<p>The reason that we are not loading <code>SparkR</code> package as default is that some base functions, such as <code>table</code>, are masked (&quot;overload&quot;) by <code>SparkR</code> package,<br />
+which could be very confusing. We'd rather let user to attach <code>SparkR</code> explicitly.</p>
+<p>In the rest of the document, we assume <code>SparkR</code> and <code>smvR</code> are attached.</p>
+<h2 id="running-smv-modules-from-r-shell">Running SMV modules from R Shell</h2>
 <h3 id="runsmvmodulerdd">runSmvModuleRdd</h3>
-<p>The <code>runSmvModuleRdd</code> method can be used to run a specific module. It accepts a single string argument that specifies the name of the module to run. The name can be specified in the same manner as the &quot;-m&quot; option to <code>smv-shell</code>. It will return the Spark DataFrame result of running the module. This result can be used with any of the standard SparkR commands.<br />For example:</p>
+<p>The <code>runSmvModuleRdd</code> method can be used to run a specific module. It accepts a single string argument that specifies the name of the module to run. The name can be specified in the same manner as the &quot;-m&quot; option to <code>smv-shell</code>. It will return the Spark DataFrame result of running the module. This result can be used with any of the standard SparkR commands.<br />
+For example:</p>
 <pre class="shell"><code>$ smv-r
 ...
 &gt; df &lt;- runSmvModuleRdd(&quot;EmploymentByState&quot;)
+...
+&gt; count(df) // or other SparkR command</code></pre>
+<h3 id="dynsmvmodulerdd">dynSmvModuleRdd</h3>
+<p>The <code>dynSmvModuleRdd</code> method is similar to <code>runSmvModuleRdd</code>, it can run a specified<br />
+module. The difference is that this method load the module dynamically. Please refer<br />
+<a href="class_loader.html">Dynamic Class Loading</a> for the concept of dynamic module loading.<br />
+Currently this method only accept FQN as module name.<br />
+For example:</p>
+<pre class="shell"><code>$ smv-r
+...
+&gt; df &lt;- dymSmvModuleRdd(&quot;com.mycompany.MyApp.stage2.StageEmpCategory&quot;)
 ...
 &gt; count(df) // or other SparkR command</code></pre>
 <h3 id="runsmvmodule">runSmvModule</h3>

@@ -575,9 +575,9 @@ For Example:</p><pre>df.prefixFieldNames(<span class="lit">"x_"</span>)</pre><p>
         <span class="name">printDesc</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Print column names with description, where description is added by <code>withDesc</code> method
-e.</p><div class="fullcomment"><div class="comment cmt"><p>Print column names with description, where description is added by <code>withDesc</code> method
-e.g.</p><pre>scala&gt; <span class="kw">val</span> res = df.select($<span class="lit">"a"</span> withDesc <span class="lit">"column a is ...."</span>)
+      <p class="shortcomment cmt">Print column names with description
+e.</p><div class="fullcomment"><div class="comment cmt"><p>Print column names with description
+e.g.</p><pre>scala&gt; <span class="kw">val</span> res = df.smvDesc(<span class="lit">"a"</span> -&gt; <span class="lit">"column a is ...."</span>)
 scala&gt; res.printDesc</pre></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#renameField" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="renameField(namePairs:(String,String)*):org.apache.spark.sql.DataFrame"></a>
@@ -610,6 +610,19 @@ as of 1.5.2, would drop them.
       </h4>
       <p class="shortcomment cmt">persist the <code>DataFrame</code> as a CSV file (along with a schema file).</p><div class="fullcomment"><div class="comment cmt"><p>persist the <code>DataFrame</code> as a CSV file (along with a schema file).</p><pre>df.saveAsCsvWithSchema(<span class="lit">"/tmp/output/test.csv"</span>)</pre></div><dl class="paramcmts block"><dt class="param">dataPath</dt><dd class="cmt"><p>direct path where file is persisted.  Can also be a relative path.  The configured app data/output dir are not considered.</p></dd><dt class="param">ca</dt><dd class="cmt"><p>CSV attributes used to format output file.  Defaults to <code>CsvAttributes.defaultCsv</code></p></dd><dt class="param">schemaWithMeta</dt><dd class="cmt"><p>Provide the companion schema (usually used when we need to persist some schema meta data along with the standard schema)
 </p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#selectByLabel" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="selectByLabel(labels:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="selectByLabel(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">selectByLabel</span><span class="params">(<span name="labels">labels: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">DataFrame projection based on labels</p><div class="fullcomment"><div class="comment cmt"><p>DataFrame projection based on labels</p><p>Example:</p><pre><span class="kw">val</span> res = df.selectByLabel(<span class="lit">"yellow"</span>)</pre></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#selectExpandStruct" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="selectExpandStruct(colNames:String*):org.apache.spark.sql.DataFrame"></a>
       <a id="selectExpandStruct(String*):DataFrame"></a>
@@ -729,6 +742,37 @@ column will be replaced with the new expression)
       </span>
       </h4>
       <p class="shortcomment cmt">Similar to the <code>cube</code> Spark DF method, but using &quot;*&quot; instead of null to represent &quot;Any&quot;</p><div class="fullcomment"><div class="comment cmt"><p>Similar to the <code>cube</code> Spark DF method, but using &quot;*&quot; instead of null to represent &quot;Any&quot;</p><p>Example:</p><pre>df.smvCube(<span class="lit">"zip"</span>, <span class="lit">"month"</span>).agg(<span class="lit">"zip"</span>, <span class="lit">"month"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvDesc" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvDesc(colDescs:(String,String)*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvDesc((String,String)*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvDesc</span><span class="params">(<span name="colDescs">colDescs: (<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>)*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Adds column descriptions</p><div class="fullcomment"><div class="comment cmt"><p>Adds column descriptions</p><p>Example:</p><pre><span class="kw">val</span> res = df.smvDesc(
+<span class="lit">"name"</span> -&gt; <span class="lit">"This is customer's name"</span>,
+<span class="lit">"sex"</span>  -&gt; <span class="lit">"This is customer's self-identified sex"</span>
+)</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvDescFromDF" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvDescFromDF(dfDescs:org.apache.spark.sql.DataFrame):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvDescFromDF(DataFrame):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvDescFromDF</span><span class="params">(<span name="dfDescs">dfDescs: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Adds column descriptions with a companion 2-column desciptionDF, which has variable names as
+column 1 and corresponding variable descriptions as column 2</p><div class="fullcomment"><div class="comment cmt"><p>Adds column descriptions with a companion 2-column desciptionDF, which has variable names as
+column 1 and corresponding variable descriptions as column 2</p><p>Example:</p><pre><span class="kw">val</span> res = df.smvDescFromDF(desciptionDF)</pre></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvDiscoverPK" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvDiscoverPK(n:Integer,debug:Boolean):(Seq[String],Long)"></a>
       <a id="smvDiscoverPK(Integer,Boolean):(Seq[String],Long)"></a>
@@ -895,6 +939,34 @@ only the extra columns that does not have the corresponding number of bin will b
 The columns_to_bin are expected to be of type double</p><pre>df.smvDoubleBinHistogram(<span class="std">Seq</span>(<span class="lit">"key1"</span>, <span class="lit">"key2"</span>), <span class="std">Seq</span>(col1, col2), <span class="std">Seq</span>(<span class="num">100</span>, <span class="num">200</span>))</pre><p>Create a new columns named the same as the columns to bin post fixed with post_fix.
 The post_fix  is defaulted to &quot;_bin&quot;
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvGetDesc" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvGetDesc():Seq[(String,String)]"></a>
+      <a id="smvGetDesc():Seq[(String,String)]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvGetDesc</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>)]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Return the sequence of field name - description pairs
+</p>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvGetDesc" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvGetDesc(colName:String):String"></a>
+      <a id="smvGetDesc(String):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvGetDesc</span><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Return column description of a specified column (by name string)
+</p>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvGetLabels" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvGetLabels(col:String):Seq[String]"></a>
       <a id="smvGetLabels(String):Seq[String]"></a>
@@ -970,9 +1042,9 @@ MurmurHash3 algorithm is used for generating the hash</p><pre>df.smvHashSample($
         <span class="name">smvLabel</span><span class="params">(<span name="colNames">colNames: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="labels">labels: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Adds labels to the specified columns.</p><div class="fullcomment"><div class="comment cmt"><p>Adds labels to the specified columns.</p><p>A column may have multiple labels.  Adding the same label twice
-to a column has the same effect as adding that label once.</p><p>Both the column names and the labels parameters must be
-non-empty.
+      <p class="shortcomment cmt">Adds labels to the specified columns.</p><div class="fullcomment"><div class="comment cmt"><p>Adds labels to the specified columns.</p><p>Each column could have multiple labels.</p><p>Example:</p><pre><span class="kw">val</span> res = df.smvLabel(<span class="lit">"name"</span>, <span class="lit">"sex"</span>)(<span class="lit">"red"</span>, <span class="lit">"yellow"</span>).smvLabel(<span class="lit">"sex"</span>)(<span class="lit">"green"</span>)</pre><p>In this example, assume df has no labels, the res' &quot;name&quot; column will have
+&quot;red&quot; and &quot;yellow&quot; labels, and &quot;sex&quot; column will have &quot;red&quot;, &quot;yellow&quot;, and &quot;green&quot;
+labels.
 </p></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvOverlapCheck" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvOverlapCheck(key:String,partition:Int)(dfother:org.apache.spark.sql.DataFrame*):org.apache.spark.sql.DataFrame"></a>
@@ -1037,6 +1109,23 @@ It ranks records sequentially by partition.
 Please refer to Spark's document for the detail behavior of <code>zipWithIndex</code>.
 <b>Note:</b> May force an action on the DataFrame if the DataFrame has more than one partition.</p><pre>df.smvRank(<span class="lit">"seqId"</span>, <span class="num">100</span>L)</pre><p>Create a new column named &quot;seqId&quot; and start from 100.
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvRemoveDesc" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvRemoveDesc(colNames:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvRemoveDesc(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvRemoveDesc</span><span class="params">(<span name="colNames">colNames: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Remove descriptions from specified columns (by name string)
+If parameter is empty, </p><div class="fullcomment"><div class="comment cmt"><p>Remove descriptions from specified columns (by name string)
+If parameter is empty, </p><pre>df.smvRemoveDesc()</pre><p>, remove all descriptions</p><p>df.smvRemoveDesc()
+}}}
+</p></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvRemoveLabel" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvRemoveLabel(colNames:String*)(labels:String*):org.apache.spark.sql.DataFrame"></a>
       <a id="smvRemoveLabel(String*)(String*):DataFrame"></a>
@@ -1049,7 +1138,7 @@ Please refer to Spark's document for the detail behavior of <code>zipWithIndex</
         <span class="name">smvRemoveLabel</span><span class="params">(<span name="colNames">colNames: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="labels">labels: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Removes the specified labels from the specified columns.</p><div class="fullcomment"><div class="comment cmt"><p>Removes the specified labels from the specified columns.</p><p>If no columns are specified, the specified labels are removed
+      <p class="shortcomment cmt">Removes the specified labels from the specified columns.</p><div class="fullcomment"><div class="comment cmt"><p>Removes the specified labels from the specified columns.</p><p>Example:</p><pre>df.smvRemoveLabel(<span class="lit">"sex"</span>)(<span class="lit">"yellow"</span>, <span class="lit">"green"</span>)</pre><p>If no columns are specified, the specified labels are removed
 from all applicable columns in the data frame.</p><p>If no labels are specified, all labels are removed from the
 specified columns.</p><p>If neither columns nor labels are specified, i.e. both parameter
 lists are empty, then all labels are removed from all columns in
@@ -1166,26 +1255,21 @@ would transform the table into the following</p><p>+-----+-----+------+------+--
       <p class="shortcomment cmt">Just an alias to smvGroupBy to make client code more readable
 </p>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvWithLabel" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="smvWithLabel(labels:String*):Seq[org.apache.spark.sql.Column]"></a>
-      <a id="smvWithLabel(String*):Seq[Column]"></a>
+      <a id="smvWithLabel(labels:String*):Seq[String]"></a>
+      <a id="smvWithLabel(String*):Seq[String]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smvWithLabel</span><span class="params">(<span name="labels">labels: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="org.apache.spark.sql.Column">Column</span>]</span>
+        <span class="name">smvWithLabel</span><span class="params">(<span name="labels">labels: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Returns all columns in the data frame that contain all the
-specified labels.</p><div class="fullcomment"><div class="comment cmt"><p>Returns all columns in the data frame that contain all the
+      <p class="shortcomment cmt">Returns all column names in the data frame that contain all the
+specified labels.</p><div class="fullcomment"><div class="comment cmt"><p>Returns all column names in the data frame that contain all the
 specified labels.  If the labels argument is an empty sequence,
-returns all unlabeled columns in the data frame.</p><p>Will throw if there are no columns that satisfy the condition.</p><p>Example:
-  df.select(df.smvWithLabel(&quot;A&quot;, &quot;B&quot;) :+ df(&quot;other&quot;):_*)</p><p>will return a data frame containing all columns from <code>df</code> that
-are labeled with &quot;A&quot; and &quot;B&quot;, and the <code>other</code> column</p><p>Note: As of spark 1.5, most of the additional operations on the
-returned columns, other than aliasing, will result in a new column
-without the labels and other meta data on the original column.
-</p></div></div>
+returns all unlabeled columns in the data frame.</p><p>Will throw if there are no columns that satisfy the condition.</p><p>Example:</p><pre><span class="kw">val</span> cols = df.smvWithLabel(<span class="lit">"A"</span>, <span class="lit">"B"</span>)</pre></div></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>

@@ -439,6 +439,21 @@ This method also checks for cycles in the module dependency graph.
       <p class="shortcomment cmt">The main entry point into the app.</p><div class="fullcomment"><div class="comment cmt"><p>The main entry point into the app.  This will parse the command line arguments
 to determine which modules should be run/graphed/etc.
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvApp#runDynamicModuleByName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="runDynamicModuleByName(fqn:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="runDynamicModuleByName(String):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">runDynamicModuleByName</span><span class="params">(<span name="fqn">fqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Dynamically load a module given FQN.</p><div class="fullcomment"><div class="comment cmt"><p>Dynamically load a module given FQN. This is mostly used by SparkR to dynamically
+resolve modules
+</p></div></div>
     </li><li name="org.tresamigos.smv.SmvApp#runModuleByName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="runModuleByName(modName:String):org.apache.spark.sql.DataFrame"></a>
       <a id="runModuleByName(String):DataFrame"></a>

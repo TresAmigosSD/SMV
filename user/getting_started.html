@@ -7,23 +7,41 @@
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
+div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
 table.sourceCode { width: 100%; line-height: 100%; }
 td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
 td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; }
-code > span.dt { color: #902000; }
-code > span.dv { color: #40a070; }
-code > span.bn { color: #40a070; }
-code > span.fl { color: #40a070; }
-code > span.ch { color: #4070a0; }
-code > span.st { color: #4070a0; }
-code > span.co { color: #60a0b0; font-style: italic; }
-code > span.ot { color: #007020; }
-code > span.al { color: #ff0000; font-weight: bold; }
-code > span.fu { color: #06287e; }
-code > span.er { color: #ff0000; font-weight: bold; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
   </style>
   <link rel="stylesheet" type="text/css" href="github.css">
 </head>
@@ -40,20 +58,23 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <article class="markdown-body">
 <h1 id="smv-getting-started">SMV Getting Started</h1>
 <h2 id="create-example-app">Create example App</h2>
-<p>SMV provides a shell script to easily create an example application.<br />The example app can be used for exploring SVM and it can also be used as an initialization script for a new project.</p>
+<p>SMV provides a shell script to easily create an example application.<br />
+The example app can be used for exploring SVM and it can also be used as an initialization script for a new project.</p>
 <p>The <code>smv-init</code> script can be used to create the initial SMV app. <code>smv-init</code> only requires two parameters.</p>
 <ul>
-<li>The name of the directory to create for the application<br /></li>
-<li>The FQN of the package to use for Maven and source files.<br />For example:</li>
+<li>The name of the directory to create for the application</li>
+<li>The FQN of the package to use for Maven and source files.<br />
+For example:</li>
 </ul>
-<pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">_SMV_HOME_/tools/smv-init</span> MyApp com.mycompany.myapp</code></pre>
-<p>The above command will create the <code>MyApp</code> directory and<br />install the source, configuration, and build files required for a minimal example SMV app.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">_SMV_HOME_/tools/smv-init</span> MyApp com.mycompany.myapp</code></pre></div>
+<p>The above command will create the <code>MyApp</code> directory and<br />
+install the source, configuration, and build files required for a minimal example SMV app.</p>
 <p>The rest of this document assumes the above command was run to show what is generated and how to use it.</p>
 <p><strong>Note:</strong> User can skip to the &quot;Run Example App&quot; section if they are not interested in exploring the output from <code>smv-init</code></p>
 <h3 id="example-app-configuration-files">Example App Configuration Files</h3>
 <p>The generated example app contains two configuration files.</p>
 <ul>
-<li><code>smv-app-conf.props</code> : The application level configuration parameters. This file should define the application name and the configured stages.<br /></li>
+<li><code>smv-app-conf.props</code> : The application level configuration parameters. This file should define the application name and the configured stages.</li>
 <li><code>smv-user-conf.props</code> : The user level configuration parameters. This file is normally <strong>NOT</strong> checked in</li>
 </ul>
 <p>See <a href="app_config.html">Application Configuration</a> for more details about available configuration parameters.</p>
@@ -65,24 +86,28 @@ $ unzip CB1200CZ11.zip
 $ mv CB1200CZ11.dat CB1200CZ11.csv</code></pre>
 <p>More info can be found on <a href="http://factfinder.census.gov/faces/tableservices/jsf/pages/productview.xhtml?pid=BP_2012_00CZ1&amp;prodType=table">US Census site</a></p>
 <h3 id="example-app-pom.xml">Example App pom.xml</h3>
-<p>A valid pom.xml file is generated using the package name provided on the command line.<br />The last part of the provided package name is used as the Maven &quot;artifactID&quot; and the first section is used as the &quot;groupID&quot;<br />In the example above, the artifactId will be set to <code>myapp</code> and the groupID will be <code>com.mycompany</code></p>
+<p>A valid pom.xml file is generated using the package name provided on the command line.<br />
+The last part of the provided package name is used as the Maven &quot;artifactID&quot; and the first section is used as the &quot;groupID&quot;<br />
+In the example above, the artifactId will be set to <code>myapp</code> and the groupID will be <code>com.mycompany</code></p>
 <h3 id="example-app-sources">Example App sources</h3>
-<p>The example app generates an app with a two stages <code>stage1</code> and <code>stage2</code>. Having two stages for such a tiny example is overkill, but they are there for demonstration purposes.<br />The generated source files are:</p>
+<p>The example app generates an app with a two stages <code>stage1</code> and <code>stage2</code>. Having two stages for such a tiny example is overkill, but they are there for demonstration purposes.<br />
+The generated source files are:</p>
 <ul>
-<li><code>stage1/InputSetS1.scala</code> : contains definitions of all input files into stage1 and their DQM rules/policies.<br /></li>
-<li><code>stage1/EmploymentByState.scala</code> : contains sample ETL module for processing the provided employment data.<br /></li>
-<li><code>stage2/InputFilesS2.scala</code> : defines the input links to the output modules in <code>stage1</code><br /></li>
+<li><code>stage1/InputSetS1.scala</code> : contains definitions of all input files into stage1 and their DQM rules/policies.</li>
+<li><code>stage1/EmploymentByState.scala</code> : contains sample ETL module for processing the provided employment data.</li>
+<li><code>stage2/InputFilesS2.scala</code> : defines the input links to the output modules in <code>stage1</code></li>
 <li><code>stage2/StageEmpCategory.scala</code> : sample &quot;modeling&quot; module for creating categorical variables.</li>
 </ul>
 <p><strong>Note:</strong> In practice, a single stage will have multiple module files and possibly additional input files (depending on the number and complexity of inputs)</p>
 <h2 id="build-example-app">Build Example App</h2>
 <p>The generated application must be built before it is run. This is simply done by running the following maven command:</p>
 <pre class="shell"><code>$ mvn clean install</code></pre>
-<p>The above command should generate a target directory that contains the application &quot;fat&quot; jar <code>myapp-1.0-SNAPSHOT-jar-with-dependencies.jar</code>.<br />This jar file will contain the compiled application class files, all the SMV class files and everything else that SMV depends on (except for the Spark libraries)</p>
+<p>The above command should generate a target directory that contains the application &quot;fat&quot; jar <code>myapp-1.0-SNAPSHOT-jar-with-dependencies.jar</code>.<br />
+This jar file will contain the compiled application class files, all the SMV class files and everything else that SMV depends on (except for the Spark libraries)</p>
 <h2 id="run-example-app">Run Example App</h2>
 <p>The built app can be run by two methods.</p>
 <ul>
-<li><code>smv-run</code> : used to run specific modules, stages, or entire app from the command line.<br /></li>
+<li><code>smv-run</code> : used to run specific modules, stages, or entire app from the command line.</li>
 <li><code>smv-shell</code> : uses the Spark Shell to interactively run and explore the output of individual modules and files.</li>
 </ul>
 <h3 id="run-example-app-using-smv-run">Run Example App using <code>smv-run</code></h3>
@@ -110,19 +135,23 @@ $ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.schema/p
 FIRST(&#39;ST): String
 EMP: Long</code></pre>
 <p><strong>Note</strong>: the output above may be different as it depends on order of execution of partitions.</p>
-<pre class="sourceCode scala"><code class="sourceCode scala">$ _SMV_HOME_/tools/smv-run -m com.<span class="fu">mycompany</span>.<span class="fu">myapp</span>.<span class="fu">stage1</span>.<span class="fu">EmploymentByState</span> -g</code></pre>
-<p>With the <code>-g</code> flag, instead of produce and persist the module, the module dependency<br />graph will be created as a <code>dot</code> file. It can be converted to <code>png</code> using the<br /><code>dot</code> command.</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">$ _SMV_HOME_/tools/smv-run -m com.<span class="fu">mycompany</span>.<span class="fu">myapp</span>.<span class="fu">stage1</span>.<span class="fu">EmploymentByState</span> -g</code></pre></div>
+<p>With the <code>-g</code> flag, instead of produce and persist the module, the module dependency<br />
+graph will be created as a <code>dot</code> file. It can be converted to <code>png</code> using the<br />
+<code>dot</code> command.</p>
 <pre class="shell"><code>$ dot -Tpng com.mycompany.MyApp.stage1.EmploymentByState.dot -o graph.png</code></pre>
 <p>You main need to install <code>graphviz</code> on your system to use the <code>dot</code> command.</p>
 <p>See <a href="run_app.html">Run SMV Application</a> for further details.</p>
 <h3 id="run-example-app-using-smv-shell">Run Example App using <code>smv-shell</code></h3>
 <h4 id="launch-shell">Launch shell</h4>
-<p>Spark shell can be used to allow the user to run individual modules interactively.<br />The <code>smv-shell</code> script is provided by SMV to make it easy to launch the Spark shell with the &quot;fat&quot; jar attached.</p>
+<p>Spark shell can be used to allow the user to run individual modules interactively.<br />
+The <code>smv-shell</code> script is provided by SMV to make it easy to launch the Spark shell with the &quot;fat&quot; jar attached.</p>
 <pre class="shell"><code>$ _SMV_HOME_/tools/smv-shell</code></pre>
 <p>See <a href="run_shell.html">Run Spark Shell</a> for details.</p>
 <h4 id="exploring-smvdatasets-smvfiles-and-smvmodules">Exploring SmvDataSets (SmvFiles and SmvModules)</h4>
-<p>Once we are inside the spark shell, we can &quot;source&quot; (using the <code>s()</code> smv shell helper function) any <code>SmvFile</code> or <code>SmvModule</code> instance<br />and inspect the contents (because the <code>s</code> function returns a standard Spark <code>DataFrame</code> object)</p>
-<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d1=<span class="fu">s</span>(stage1.<span class="fu">input</span>.<span class="fu">employment</span>)
+<p>Once we are inside the spark shell, we can &quot;source&quot; (using the <code>s()</code> smv shell helper function) any <code>SmvFile</code> or <code>SmvModule</code> instance<br />
+and inspect the contents (because the <code>s</code> function returns a standard Spark <code>DataFrame</code> object)</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d1=<span class="fu">s</span>(stage1.<span class="fu">input</span>.<span class="fu">employment</span>)
 
 scala&gt; d1.<span class="fu">count</span>
 res1: Long = <span class="dv">38818</span>
@@ -137,9 +166,10 @@ scala&gt; d1.<span class="fu">select</span>(<span class="st">&quot;ZIPCODE&quot;
 ZIPCODE YEAR ESTAB EMP
 <span class="dv">35004</span>   <span class="dv">2012</span> <span class="dv">167</span>   <span class="dv">2574</span>
 <span class="dv">35005</span>   <span class="dv">2012</span> <span class="dv">88</span>    <span class="dv">665</span>
-...</code></pre>
-<p>You can also access SmvModules defined in the code.<br />This is <strong>not</strong> limited to output modules.</p>
-<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d2 = <span class="fu">s</span>(stage1.<span class="fu">EmploymentByState</span>)
+...</code></pre></div>
+<p>You can also access SmvModules defined in the code.<br />
+This is <strong>not</strong> limited to output modules.</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> d2 = <span class="fu">s</span>(stage1.<span class="fu">EmploymentByState</span>)
 d2: org.<span class="fu">apache</span>.<span class="fu">spark</span>.<span class="fu">sql</span>.<span class="fu">DataFrame</span> = [ST: string, EMP: bigint]
 
 scala&gt; d2.<span class="fu">printSchema</span>
@@ -148,11 +178,15 @@ root
  |-- EMP: <span class="dt">long</span> (nullable = <span class="kw">true</span>)
 
 scala&gt; d2.<span class="fu">count</span>
-res2: Long = <span class="dv">52</span></code></pre>
-<p><code>EmploymentByState</code> is defined in stage1 <code>EmploymentByState.scala</code> file.<br />As you can see above, when you try to refer to a SmvModule, it will do the calculation and<br />then persist it for future use. Now you can use <code>d2</code>, a DataFrame, to refer to the<br />SmvModule output, although in this example, there are nothing intersecting in that<br />data other than the <code>EMP</code> field.</p>
+res2: Long = <span class="dv">52</span></code></pre></div>
+<p><code>EmploymentByState</code> is defined in stage1 <code>EmploymentByState.scala</code> file.<br />
+As you can see above, when you try to refer to a SmvModule, it will do the calculation and<br />
+then persist it for future use. Now you can use <code>d2</code>, a DataFrame, to refer to the<br />
+SmvModule output, although in this example, there are nothing intersecting in that<br />
+data other than the <code>EMP</code> field.</p>
 <h4 id="run-edd-on-data">Run EDD on data</h4>
 <p>To quickly get an overall idea of the input data, we can use the SMV EDD (Extended Data Dictionary) tool.</p>
-<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; d1.<span class="fu">select</span>(<span class="st">&quot;ZIPCODE&quot;</span>, <span class="st">&quot;YEAR&quot;</span>, <span class="st">&quot;ESTAB&quot;</span>, <span class="st">&quot;EMP&quot;</span>).<span class="fu">edd</span>.<span class="fu">summary</span>().<span class="fu">eddShow</span>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; d1.<span class="fu">select</span>(<span class="st">&quot;ZIPCODE&quot;</span>, <span class="st">&quot;YEAR&quot;</span>, <span class="st">&quot;ESTAB&quot;</span>, <span class="st">&quot;EMP&quot;</span>).<span class="fu">edd</span>.<span class="fu">summary</span>().<span class="fu">eddShow</span>
 ZIPCODE              Non-Null Count         <span class="dv">38818</span>
 ZIPCODE              Min Length             <span class="dv">5</span>
 ZIPCODE              Max Length             <span class="dv">5</span>
@@ -188,7 +222,7 @@ key                      count      Pct    cumCount   cumPct
 <span class="fl">300.0</span>                     <span class="dv">1235</span>    <span class="fl">3.18</span>%       <span class="dv">22003</span>   <span class="fl">56.68</span>%
 <span class="fl">400.0</span>                      <span class="dv">988</span>    <span class="fl">2.55</span>%       <span class="dv">22991</span>   <span class="fl">59.23</span>%
 <span class="fl">500.0</span>                      <span class="dv">738</span>    <span class="fl">1.90</span>%       <span class="dv">23729</span>   <span class="fl">61.13</span>%
-...</code></pre>
+...</code></pre></div>
 <p>Please see <a href="edd.html">EDD doc</a> for more details.</p>
 </article>
 </body>

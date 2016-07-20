@@ -871,21 +871,6 @@ but we sometimes need access to the expression.</p><pre>($<span class="lit">"v"<
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="org.tresamigos.smv.ColumnHelper#withDesc" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="withDesc(desc:String):org.apache.spark.sql.Column"></a>
-      <a id="withDesc(String):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">withDesc</span><span class="params">(<span name="desc">desc: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Add description as metadata to a column
-e.</p><div class="fullcomment"><div class="comment cmt"><p>Add description as metadata to a column
-e.g.</p><pre>df.select($<span class="lit">"amt"</span> as <span class="lit">"amount"</span> withDesc <span class="lit">"Dollar amount spend"</span>)</pre></div></div>
     </li></ol>
             </div>
 
@@ -976,6 +961,28 @@ Must only be applied to <code>String</code> columns.</p><pre>df.select($<span cl
                 <span class="name">@deprecated</span>
               
         </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use Spark trim() function</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#withDesc" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="withDesc(desc:String):org.apache.spark.sql.Column"></a>
+      <a id="withDesc(String):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: should use smvDesc instead">withDesc</span><span class="params">(<span name="desc">desc: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Add description as metadata to a column
+e.</p><div class="fullcomment"><div class="comment cmt"><p>Add description as metadata to a column
+e.g.</p><pre>df.select($<span class="lit">"amt"</span> as <span class="lit">"amount"</span> withDesc <span class="lit">"Dollar amount spend"</span>)</pre><p>Since on Column level (before resolved on a DF), we can't access to existing meta
+data (stored in the schema), there is no way to preserve the existing meta data.
+Another DF level method is provided to add the description with preserving existing
+metadata:
+e.g.</p><pre>df.smvDesc(<span class="lit">"amt"</span> -&gt; <span class="lit">"Dollar amount spend"</span>, <span class="lit">"o"</span> -&gt; <span class="lit">"some other field"</span>)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p>should use smvDesc instead</p></dd></dl></div>
     </li></ol>
             </div>
         </div>

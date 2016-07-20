@@ -346,6 +346,19 @@ the hierarchy structure.</p>
       </span>
       </h4>
       <p class="comment cmt">SMV Dataset Wrapper around a hive table.</p>
+    </li><li name="org.tresamigos.smv.SmvKeys" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SmvKeysextendsAnyRef"></a>
+      <a id="SmvKeys:SmvKeys"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvKeys.html"><span class="name">SmvKeys</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.SmvModule" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvModuleextendsSmvDataSet"></a>
       <a id="SmvModule:SmvModule"></a>
@@ -412,6 +425,19 @@ the same schema and CsvAttributes.</p>
       </span>
       </h4>
       <p class="comment cmt">A marker trait that indicates that a SmvDataSet/SmvModule decorated with this trait is an output DataSet/module.</p>
+    </li><li name="org.tresamigos.smv.SmvRunConfig" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SmvRunConfigextendsAnyRef"></a>
+      <a id="SmvRunConfig:SmvRunConfig"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvRunConfig.html"><span class="name">SmvRunConfig</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Base marker trait for run configuration objects</p>
     </li><li name="org.tresamigos.smv.SmvSchema" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvSchemaextendsSerializable"></a>
       <a id="SmvSchema:SmvSchema"></a>
@@ -425,6 +451,19 @@ the same schema and CsvAttributes.</p>
       </span>
       </h4>
       <p class="comment cmt">CSV file schema definition.</p>
+    </li><li name="org.tresamigos.smv.Using" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Using[+T&lt;:org.tresamigos.smv.SmvRunConfig]extendsAnyRef"></a>
+      <a id="Using[+T&lt;:SmvRunConfig]:Using[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Using.html"><span class="name">Using</span></a><span class="tparams">[<span name="T">+T &lt;: <a href="SmvRunConfig.html" class="extype" name="org.tresamigos.smv.SmvRunConfig">SmvRunConfig</a></span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">SmvDataSet that can be configured to return different DataFrames.</p>
     </li><li name="org.tresamigos.smv.ValidationError" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ValidationErrorextendsException"></a>
       <a id="ValidationError:ValidationError"></a>
@@ -458,7 +497,33 @@ the same schema and CsvAttributes.</p>
 
         <div id="values" class="values members">
               <h3>Value Members</h3>
-              <ol><li name="org.tresamigos.smv.CsvAttributes" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="org.tresamigos.smv.AsmUtil" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AsmUtil"></a>
+      <a id="AsmUtil:AsmUtil"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="AsmUtil$.html"><span class="name">AsmUtil</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">Utility methods for analysis of class bytecode.</p>
+    </li><li name="org.tresamigos.smv.ClassCRC" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ClassCRC"></a>
+      <a id="ClassCRC:ClassCRC"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="ClassCRC$.html"><span class="name">ClassCRC</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">computes the CRC32 checksum for the code of the given class name.</p>
+    </li><li name="org.tresamigos.smv.CsvAttributes" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="CsvAttributes"></a>
       <a id="CsvAttributes:CsvAttributes"></a>
       <h4 class="signature">
@@ -484,6 +549,19 @@ the same schema and CsvAttributes.</p>
       </span>
       </h4>
       <p class="comment cmt">Common entry point for all SMV applications.</p>
+    </li><li name="org.tresamigos.smv.SmvConfig" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvConfig"></a>
+      <a id="SmvConfig:SmvConfig"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvConfig$.html"><span class="name">SmvConfig</span></a>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.SmvJoinType" visbl="pub" data-isabs="false" fullComment="no" group="other">
       <a id="SmvJoinType"></a>
       <a id="SmvJoinType:SmvJoinType"></a>
@@ -497,19 +575,6 @@ the same schema and CsvAttributes.</p>
       </span>
       </h4>
       <p class="comment cmt">Instead of using String for join type, always use the link here.</p>
-    </li><li name="org.tresamigos.smv.SmvKeys" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvKeys"></a>
-      <a id="SmvKeys:SmvKeys"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a href="SmvKeys$.html"><span class="name">SmvKeys</span></a>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.SmvSchema" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvSchema"></a>
       <a id="SmvSchema:SmvSchema"></a>
@@ -632,6 +697,19 @@ and user can define aggregations on this sub-set of data.</p>
       </span>
       </h4>
       <p class="comment cmt">Provides Extended Data Dictionary functions for ad hoc data analysis</p>
+    </li><li name="org.tresamigos.smv.package#hasNonNull" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="hasNonNull(columns:org.apache.spark.sql.Column*):org.apache.spark.sql.Column"></a>
+      <a id="hasNonNull(Column*):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hasNonNull</span><span class="params">(<span name="columns">columns: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">True if any of the columns is not null</p>
     </li><li name="org.tresamigos.smv.histBoolean" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="histBoolean"></a>
       <a id="histBoolean:histBoolean"></a>
@@ -832,6 +910,19 @@ and user can define aggregations on this sub-set of data.</p>
       </span>
       <span class="symbol">
         <a href="panel/package.html"><span class="name">panel</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.python" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="python"></a>
+      <a id="python:python"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="python/package.html"><span class="name">python</span></a>
       </span>
       </h4>
       

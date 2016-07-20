@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>SmvApp - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.SmvApp</title>
-          <meta name="description" content="SmvApp - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.SmvApp" />
-          <meta name="keywords" content="SmvApp Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.SmvApp" />
+          <title>ClassCRC - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.ClassCRC</title>
+          <meta name="description" content="ClassCRC - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.ClassCRC" />
+          <meta name="keywords" content="ClassCRC Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.ClassCRC" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -12,7 +12,7 @@
       <script type="text/javascript">
          if(top === self) {
             var url = '../../../index.html';
-            var hash = 'org.tresamigos.smv.SmvApp$';
+            var hash = 'org.tresamigos.smv.ClassCRC$';
             var anchor = window.location.hash;
             var anchor_opt = '';
             if (anchor.length >= 1)
@@ -24,9 +24,9 @@
         </head>
         <body class="value">
       <div id="definition">
-        <a href="SmvApp.html" title="Go to companion"><img src="../../../lib/object_to_class_big.png" /></a>
+        <img src="../../../lib/object_big.png" />
         <p id="owner"><a href="../../package.html" class="extype" name="org">org</a>.<a href="../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
-        <h1><a href="SmvApp.html" title="Go to companion">SmvApp</a></h1>
+        <h1>ClassCRC</h1>
       </div>
 
       <h4 id="signature" class="signature">
@@ -35,11 +35,12 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">SmvApp</span>
+        <span class="name">ClassCRC</span>
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Common entry point for all SMV applications.  This is the object that should be provided to spark-submit.
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>computes the CRC32 checksum for the code of the given class name.
+The class must be reachable through the configured java class path.
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
@@ -60,7 +61,7 @@
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.SmvApp"><span>SmvApp</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.ClassCRC"><span>ClassCRC</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -151,16 +152,29 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvApp#app" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="app:org.tresamigos.smv.SmvApp"></a>
-      <a id="app:SmvApp"></a>
+    </li><li name="org.tresamigos.smv.ClassCRC#apply" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="apply(className:String,classLoader:ClassLoader):Long"></a>
+      <a id="apply(String,ClassLoader):Long"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">var</span>
+        <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">app</span><span class="result">: <a href="SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>
+        <span class="name">apply</span><span class="params">(<span name="className">className: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="classLoader">classLoader: <span class="extype" name="java.lang.ClassLoader">ClassLoader</span> = <span class="symbol">getClass.getClassLoader</span></span>)</span><span class="result">: <span class="extype" name="scala.Long">Long</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.ClassCRC#apply" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="apply(dataset:org.tresamigos.smv.SmvDataSet):Long"></a>
+      <a id="apply(SmvDataSet):Long"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">apply</span><span class="params">(<span name="dataset">dataset: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>)</span><span class="result">: <span class="extype" name="scala.Long">Long</span></span>
       </span>
       </h4>
       
@@ -177,6 +191,49 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.ClassCRC#checksum" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="checksum(className:String,classLoader:ClassLoader,initial:java.util.zip.CRC32):java.util.zip.CRC32"></a>
+      <a id="checksum(String,ClassLoader,CRC32):CRC32"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">checksum</span><span class="params">(<span name="className">className: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="classLoader">classLoader: <span class="extype" name="java.lang.ClassLoader">ClassLoader</span></span>, <span name="initial">initial: <span class="extype" name="java.util.zip.CRC32">CRC32</span> = <span class="symbol">new CRC32</span></span>)</span><span class="result">: <span class="extype" name="java.util.zip.CRC32">CRC32</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Compute a checksum of the bytecode of the class and all its
+supertypes in linearized order, excluding java.</p><div class="fullcomment"><div class="comment cmt"><p>Compute a checksum of the bytecode of the class and all its
+supertypes in linearized order, excluding java.lang.Object and
+scala.Any
+</p></div></div>
+    </li><li name="org.tresamigos.smv.ClassCRC#checksum" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="checksum(dataset:org.tresamigos.smv.SmvDataSet,classLoader:ClassLoader):java.util.zip.CRC32"></a>
+      <a id="checksum(SmvDataSet,ClassLoader):CRC32"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">checksum</span><span class="params">(<span name="dataset">dataset: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>, <span name="classLoader">classLoader: <span class="extype" name="java.lang.ClassLoader">ClassLoader</span></span>)</span><span class="result">: <span class="extype" name="java.util.zip.CRC32">CRC32</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">compute checksum for a SmvDataSet, including config object if any</p>
+    </li><li name="org.tresamigos.smv.ClassCRC#checksum" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="checksum(bytecode:Array[Byte]):java.util.zip.CRC32"></a>
+      <a id="checksum(Array[Byte]):CRC32"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">checksum</span><span class="params">(<span name="bytecode">bytecode: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]</span>)</span><span class="result">: <span class="extype" name="java.util.zip.CRC32">CRC32</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a>
       <a id="clone():AnyRef"></a>
@@ -267,19 +324,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvApp#init" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="init(args:Array[String],_sc:Option[org.apache.spark.SparkContext],_sql:Option[org.apache.spark.sql.SQLContext]):org.tresamigos.smv.SmvApp"></a>
-      <a id="init(Array[String],Option[SparkContext],Option[SQLContext]):SmvApp"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">init</span><span class="params">(<span name="args">args: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="_sc">_sc: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.spark.SparkContext">SparkContext</span>] = <span class="symbol">None</span></span>, <span name="_sql">_sql: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span>] = <span class="symbol">None</span></span>)</span><span class="result">: <a href="SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>
-      </span>
-      </h4>
-      
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -293,19 +337,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvApp#main" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="main(args:Array[String]):Unit"></a>
-      <a id="main(Array[String]):Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">main</span><span class="params">(<span name="args">args: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -319,20 +350,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvApp#newApp" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="newApp(sqlContext:org.apache.spark.sql.SQLContext,appPath:String):org.tresamigos.smv.SmvApp"></a>
-      <a id="newApp(SQLContext,String):SmvApp"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">newApp</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="appPath">appPath: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Creates a new app instances from a sql context.</p><div class="fullcomment"><div class="comment cmt"><p>Creates a new app instances from a sql context.  This is used by SparkR to create a new app.
-</p></div></div>
     </li><li name="scala.AnyRef#notify" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notify():Unit"></a>
       <a id="notify():Unit"></a>
