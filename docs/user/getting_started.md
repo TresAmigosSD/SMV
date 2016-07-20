@@ -51,9 +51,9 @@ In the example above, the artifactId will be set to `myapp` and the groupID will
 ### Example App sources
 The example app generates an app with a two stages `stage1` and `stage2`.  Having two stages for such a tiny example is overkill, but they are there for demonstration purposes.
 The generated source files are:
-* `stage1/InputSetS1.scala` : contains definitions of all input files into stage1 and their DQM rules/policies.
+* `stage1/input/InputSetS1.scala` : contains definitions of all input files into stage1 and their DQM rules/policies.
 * `stage1/EmploymentByState.scala` : contains sample ETL module for processing the provided employment data.
-* `stage2/InputFilesS2.scala` : defines the input links to the output modules in `stage1`
+* `stage2/input/InputFilesS2.scala` : defines the input links to the output modules in `stage1`
 * `stage2/StageEmpCategory.scala` : sample "modeling" module for creating categorical variables.
 
 **Note:** In practice, a single stage will have multiple module files and possibly additional input files (depending on the number and complexity of inputs)
