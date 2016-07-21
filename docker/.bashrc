@@ -57,7 +57,7 @@ if [ -n "$force_color_prompt" ]; then
 fi
 
 #Let user know they're in the cli with smv
-PS1='user@smv:\w$'
+PS1='user@smv:\w$ '
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
