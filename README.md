@@ -22,12 +22,20 @@ Please refer to [User Guide](docs/user/0_user_toc.md) and
 
 **Note:** The sections below were extracted from the User Guide and it should be consulted for more detailed instructions.
 
-# Install SMV
+# Install SMV with Docker
 
+## Docker
+Install [Docker](https://www.docker.com/what-docker). An installation guide for your machine may be found [here](https://docs.docker.com/engine/installation/).
+
+## SMV
+Pull this repository, navigate to the docker directory, and build the SMV docker image with 
 ```shell
-$ git clone https://github.com/TresAmigosSD/SMV.git
-$ mvn clean install
+docker build -t smv .
 ```
+Now run SMV with
+```shell
+docker run -rm -it -v /path/to/projects:/projects -v /path/to/data:/data smv
+``` 
 
 # SMV Getting Started
 
