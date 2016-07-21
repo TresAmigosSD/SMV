@@ -54,7 +54,7 @@ under the License.
   -->
   
   <!-- The user will mount their smv workspace this directory -->
-  <localRepository>/home/smv/projects/.m2</localRepository>
+  <localRepository>/projects/.m2</localRepository>
 
 
   <!-- interactiveMode

@@ -16,10 +16,12 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update &&\
     apt-get install -y $EDITOR &&\
     apt-get install unzip &&\
-    useradd --create-home --shell /bin/bash smv
+    useradd --create-home --shell /bin/bash smv &&\
+    mkdir /projects &&\
+    chown smv:smv /projects
 
 USER smv
-WORKDIR /home/smv
+WORKDIR /projects
 ENV PATH=$PATH:$M2_HOME/bin:$SPARK_HOME/bin:$SMV_HOME/tools
 
 RUN mkdir $SMV_USER_LIB &&\
@@ -35,8 +37,7 @@ RUN mkdir $SMV_USER_LIB &&\
     unzip master.zip &&\
     rm master.zip &&\
     mv SMV-master $SMV_HOME/ &&\
-    mvn clean install -DskipTests -f $SMV_HOME/pom.xml &&\
-    mkdir projects
+    mvn clean install -DskipTests -f $SMV_HOME/pom.xml
 
 #Custom mvn settings cofigure repository to live on users host mount but also leverage build cache from SMV build
 COPY ./settings.xml $M2_HOME/conf/settings.xml
