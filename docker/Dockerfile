@@ -5,6 +5,8 @@ ENV SMV_USER_LIB=/home/smv/lib \
     SPARK_HOME=/home/smv/lib/spark \
     SPARK_VERSION=1.5.2 \
     HADOOP_VERSION=2.6 \
+    SBT_HOME=/home/smv/lib/sbt \
+    SBT_VERSION=0.13.12 \
     SMV_HOME=/home/smv/lib/SMV \
     MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" \
     MVN_VERSION=3.3.9 \
@@ -22,7 +24,7 @@ RUN apt-get update &&\
 
 USER smv
 WORKDIR /projects
-ENV PATH=$PATH:$M2_HOME/bin:$SPARK_HOME/bin:$SMV_HOME/tools
+ENV PATH=$PATH:$M2_HOME/bin:$SPARK_HOME/bin:$SBT_HOME/bin:$SMV_HOME/tools
 
 RUN mkdir $SMV_USER_LIB &&\
     wget http://www-us.apache.org/dist/maven/maven-3/$MVN_VERSION/binaries/apache-maven-$MVN_VERSION-bin.tar.gz &&\
@@ -33,6 +35,11 @@ RUN mkdir $SMV_USER_LIB &&\
     tar xzvf spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz &&\
     rm spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz &&\
     mv spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION $SPARK_HOME/ &&\
+    wget https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz &&\
+    tar -xzvf sbt-$SBT_VERSION.tgz &&\
+    mv sbt /home/smv/lib &&\
+    rm sbt-$SBT_VERSION.tgz &&\
+    sbt exit &&\
     wget http://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     unzip master.zip &&\
     rm master.zip &&\
