@@ -614,25 +614,25 @@ trait SmvRunConfig
 trait Using[+T <: SmvRunConfig] extends HasName {
   self: SmvDataSet =>
 
+  lazy val confObjName = self.app.smvConfig.runConfObj
+
   /** The actual run configuration object */
   lazy val runConfig: T = {
-    val confObj = self.app.smvConfig.runConfObj
-
-    require(confObj.isDefined,
+    require(confObjName.isDefined,
       s"Expected a run configuration object provided with ${SmvConfig.RunConfObjKey} but found none")
 
 
     import scala.reflect.runtime.{universe => ru}
     val mir = ru.runtimeMirror(getClass.getClassLoader)
 
-    val sym = mir.staticModule(confObj.get)
+    val sym = mir.staticModule(confObjName.get)
     val module = mir.reflectModule(sym)
     module.instance.asInstanceOf[T]
   }
 
   // Configurable SmvDataSet has the configuration object appended to its name
   abstract override def name = {
-    val confObjStr = confObj.get
+    val confObjStr = confObjName.get
     super.name + '-' + confObjStr.substring(1+confObjStr.lastIndexOf('.'), confObjStr.lastIndexOf('$'))
   }
 }
