@@ -633,6 +633,6 @@ trait Using[+T <: SmvRunConfig] extends HasName {
   // Configurable SmvDataSet has the configuration object appended to its name
   abstract override def name = {
     val confObjStr = confObjName.get
-    super.name + '-' + confObjStr.substring(1+confObjStr.lastIndexOf('.'), confObjStr.lastIndexOf('$'))
+    super.name + '-' + confObjStr.substring(1 + confObjStr.lastIndexOf('.'))
   }
 }
