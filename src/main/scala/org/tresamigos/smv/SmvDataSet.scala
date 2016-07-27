@@ -43,6 +43,10 @@ abstract class SmvDataSet extends HasName {
   /** modules must override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet]
 
+  /** All dependencies with the dependency hierarchy flattened */
+  def dependencies: Seq[SmvDataSet] =
+    (requiresDS.foldLeft(Seq.empty[SmvDataSet]) { (acc, elem) => elem.dependencies ++ (elem +: acc) }).distinct
+
   def requiresAnc() : Seq[SmvAncillary] = Seq.empty
 
   /** TODO: remove this method as checkDependency replaced this function */

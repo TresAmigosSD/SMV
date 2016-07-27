@@ -116,17 +116,14 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * The module and all its dependents are loaded into their own classloader so that we can have multiple
    * instances of the same module loaded at different times.
    */
-  def dynamicResolveRDD(fqn: String, parentClassLoader: ClassLoader) = {
+  def dynamicResolveRDD(fqn: String, parentClassLoader: ClassLoader) =
+    resolveRDD(dsForName(fqn, parentClassLoader))
+
+  /** Looks up an SmvDataSet by its fully-qualified name */
+  def dsForName(fqn: String, parentClassLoader: ClassLoader) = {
     val cl = SmvClassLoader(smvConfig, parentClassLoader)
-
-    // Prevent user from relying on dynamic resolution till we can
-    // hot-deploy SMV modules on Spark
-    // if (AsmUtil.hasAnonfun(fqn, cl))
-    //   throw new IllegalArgumentException(s"Module [${fqn}] contains anonymous functions, which is currently not supported for hot-deploy on Spark")
-
     val ref = new SmvReflection(cl)
-    val dsObject = ref.objectNameToInstance[SmvDataSet](fqn)
-    resolveRDD(dsObject)
+    ref.objectNameToInstance[SmvDataSet](fqn)
   }
 
   lazy val packagesPrefix = {

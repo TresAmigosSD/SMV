@@ -28,22 +28,27 @@ object i {
     app.resolveRDD(ds)
   }
 
-  def hotdeployIfCapable(cl: ClassLoader = getClass.getClassLoader): Unit = {
+  def hotdeployIfCapable(ds: SmvDataSet, cl: ClassLoader = getClass.getClassLoader): Unit = {
     import scala.reflect.runtime.universe
 
     val mir = universe.runtimeMirror(cl).reflect(sc)
     val meth = mir.symbol.typeSignature.member(universe.newTermName("hotdeploy"))
 
-    if (meth.isMethod)
+    if (meth.isMethod) {
+      println("The following dependent SmvDataSets will be recomputed:")
+      ds.dependencies foreach (x => println(x.getClass.getName))
+
       mir.reflectMethod(meth.asMethod)()
-    else
+    } else {
       println("hotdeploy is not available in the current SparkContext")
+    }
   }
 
   def ddf(fqn: String) = {
     val cl = getClass.getClassLoader
-    hotdeployIfCapable(cl)
-    app.dynamicResolveRDD(fqn, cl)
+    val ds = app.dsForName(fqn, cl)
+    hotdeployIfCapable(ds, cl)
+    app.resolveRDD(ds)
   }
 
   /*for existing SmvDataSet (loaded through the fat-jar or previously loaded
