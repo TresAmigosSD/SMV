@@ -6,7 +6,7 @@ ENV SMV_USER_LIB=/home/smv/lib \
     SPARK_VERSION=1.5.2 \
     HADOOP_VERSION=2.6 \
     SBT_HOME=/home/smv/lib/sbt \
-    SBT_VERSION=0.13.12 \
+    SBT_VERSION=0.13.11 \
     SMV_HOME=/home/smv/lib/SMV \
     MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" \
     MVN_VERSION=3.3.9 \
@@ -26,6 +26,7 @@ USER smv
 WORKDIR /projects
 ENV PATH=$PATH:$M2_HOME/bin:$SPARK_HOME/bin:$SBT_HOME/bin:$SMV_HOME/tools
 
+# Install maven, sbt, spark, smv
 RUN mkdir $SMV_USER_LIB &&\
     wget http://www-us.apache.org/dist/maven/maven-3/$MVN_VERSION/binaries/apache-maven-$MVN_VERSION-bin.tar.gz &&\
     tar xzvf apache-maven-$MVN_VERSION-bin.tar.gz &&\
@@ -39,17 +40,21 @@ RUN mkdir $SMV_USER_LIB &&\
     tar -xzvf sbt-$SBT_VERSION.tgz &&\
     mv sbt /home/smv/lib &&\
     rm sbt-$SBT_VERSION.tgz &&\
-    sbt exit &&\
     wget http://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     unzip master.zip &&\
     rm master.zip &&\
     mv SMV-master $SMV_HOME/ &&\
-    mvn clean install -DskipTests -f $SMV_HOME/pom.xml
+    cd $SMV_HOME &&\
+    mvn clean install -DskipTests &&\
+    sbt publish-local
 
-#Custom mvn settings cofigure repository to live on users host mount but also leverage build cache from SMV build
+#Custom mvn settings cofigure repository to live on user's host mount but also leverage cache from SMV build
 COPY ./settings.xml $M2_HOME/conf/settings.xml
 
-#Cust .bashrc sets prompt
+#Custom sbt repositories file configures ivy to live on user's but also leverage cache from SMV bild
+COPY ./repositories /home/smv/.sbt/repositories
+
+#Custom .bashrc customizes prompt
 COPY ./.bashrc /home/smv
 
 CMD bash
