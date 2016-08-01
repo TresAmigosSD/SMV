@@ -54,7 +54,7 @@ under the License.
   -->
   
   <!-- The user will mount their smv workspace this directory -->
-  <localRepository>/projects/.m2</localRepository>
+  <localRepository>/projects/.m2/repository</localRepository>
 
 
   <!-- interactiveMode
@@ -250,17 +250,6 @@ under the License.
     -->
     
     <!-- This profile will allow the user to leverage the chache created when building SMV. Below it is set to be always active. -->
-    <profile>
-      <id>smv</id>
-      <repositories>
-        <repository>
-          <id>smv-repo</id>
-          <name>smv dependency repo</name>
-          <url>file:///home/smv/.m2/repository</url>
-        </repository>
-      </repositories>
-    </profile>
-
   </profiles>
 
   <!-- activeProfiles
@@ -271,8 +260,4 @@ under the License.
     <activeProfile>anotherAlwaysActiveProfile</activeProfile>
   </activeProfiles>
   -->
-
-  <activeProfiles>
-    <activeProfile>smv</activeProfile>
-  </activeProfiles>
 </settings>

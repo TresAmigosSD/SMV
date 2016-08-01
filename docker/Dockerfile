@@ -14,10 +14,13 @@ ENV SMV_USER_LIB=/home/smv/lib \
     
 ARG DEBIAN_FRONTEND=noninteractive
 
+COPY ./entrypoint.sh /usr/bin/entrypoint.sh
+
 #apt-get must be run as root
 RUN apt-get update &&\
     apt-get install -y $EDITOR &&\
-    apt-get install unzip &&\
+    apt-get install -y unzip &&\
+    apt-get install -y rsync &&\
     useradd --create-home --shell /bin/bash smv &&\
     mkdir /projects &&\
     chown smv:smv /projects
@@ -51,10 +54,12 @@ RUN mkdir $SMV_USER_LIB &&\
 #Custom mvn settings cofigure repository to live on user's host mount but also leverage cache from SMV build
 COPY ./settings.xml $M2_HOME/conf/settings.xml
 
-#Custom sbt repositories file configures ivy to live on user's but also leverage cache from SMV bild
-COPY ./repositories /home/smv/.sbt/repositories
+#Custom sbtops configures sbt to use ivy dependency and local caches on host mount
+COPY ./sbtopts /home/smv/lib/sbt/conf/sbtopts
 
 #Custom .bashrc customizes prompt
 COPY ./.bashrc /home/smv
 
-CMD bash
+
+#Must use bracket syntax (["command"]) so that user can supply params
+ENTRYPOINT ["entrypoint.sh"]
