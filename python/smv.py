@@ -16,3 +16,14 @@ def selectPlus(df, *col):
 from pyspark.sql import DataFrame
 DataFrame.peek = peek
 DataFrame.selectPlus = selectPlus
+
+class Smv(object):
+    """Creates a proxy to SmvApp.
+
+    The SmvApp instance is exposed through the `app` attribute.
+    """
+    def __init__(self, sqlContext):
+        self.sqlContext = sqlContext
+        self._jvm = sqlContext._sc._jvm
+        self.smv = self._jvm.org.tresamigos.smv.python.SmvPythonProxy()
+        self.app = self.smv.init(sqlContext._ssql_ctx)
