@@ -22,8 +22,21 @@ class Smv(object):
 
     The SmvApp instance is exposed through the `app` attribute.
     """
+
     def __init__(self, sqlContext):
         self.sqlContext = sqlContext
         self._jvm = sqlContext._sc._jvm
         self.smv = self._jvm.org.tresamigos.smv.python.SmvPythonProxy()
         self.app = self.smv.init(sqlContext._ssql_ctx)
+
+    def runModule(self, fqn):
+        """Runs a Scala SmvModule by its Fully Qualified Name(fqn)
+        """
+        jdf = self.app.runModuleByName(fqn)
+        return DataFrame(jdf, self.sqlContext)
+
+    def runDynamic(self, fqn):
+        """Dynamically runs a Scala SmvModule by its Fully Qualified Name(fqn)
+        """
+        jdf = self.app.runDynamicModuleByName(fqn)
+        return DataFrame(jdf, self.sqlContext)
