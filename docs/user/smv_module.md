@@ -102,6 +102,34 @@ object Budget extends SmvModule("Projects cost of film production") with Using[B
 
 Here the run configuration is defined with the `BaseStudio` trait, which extends `SmvRunConfig`.  It contains two pieces of information: lists of available actors and directors.  There are two specific configurations specified by `Hollywood` and `Bollywood`, each with its own list of available actors and directors.  And the module `Budget` declares that it needs the information from a `BaseStudio` by mixing in the trait `Using[BaseStudio]`, which provides the actual configuration through the `runConfig` object.  To specify the use of `Hollywood`, one invokes `smv-run --smv-props runConfObj=Hollywood`; to use `Bollywood`, one invokes `smv-run --run-conf-obj Bollywood`.  Both ways of specifying a configuration object on the commandline work with smv-run.  However, because smv-shell does not directly run the main program in SmvApp -- and therefore will not pass any commandline arguments to SmvApp -- the only way to specify a `runConfig` object, when you are running an interactive shell, is through the use of an SMV configuration file.
 
+`SmvRunConfig` can contain arbitrary information, including `SmvDataSet`s.  For example, the first stage of processing often involves concatenating data sets from different sources, with some preliminary processing such as null-sanitization.  The data source may be CSV files or Hive tables.  The following code shows how to use `SmvRunConfig` in this situation:
+
+```scala
+trait BaseAppInput extends SmvRunConfig {
+  def in_01: SmvDataSet
+  def in_02: SmvDataSet
+}
+
+object CsvAppInput extends BaseAppInput {
+  override val in_01 = SmvCsvFile("some/file.csv")
+  override val in_02 = SmvCsvFile("some/other/file.csv")
+}
+
+object HiveAppInput extends BaseAppInput {
+  override val in_01 = SmvHiveTable("some_table")
+  override val in_02 = SmvHiveTable("some_other_table")
+}
+
+object ConcatInput extends SmvModule("Concatenate input data sets") with Using[BaseAppInput] {
+  override def reuqiresDS = Seq(runConfig.in_01, runConfig.in_02)
+  override def run (i: runParams) = {
+    // load the first input data set, specified with a runtime configuration
+    val df1 = i(runConfig.in_01)
+    ...
+  }
+}
+```
+
 # Output Modules
 As the number of modules in a given SMV stage grows, it becomes more difficult to track which
 modules are the "leaf"/output modules within the stage.
