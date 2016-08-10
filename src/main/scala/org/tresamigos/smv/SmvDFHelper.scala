@@ -1060,6 +1060,38 @@ class SmvDFHelper(df: DataFrame) {
 
   def peek(colRegex: String): Unit = peek(1, colRegex)
 
+  /**
+   * Show histograms within groups (Issue #330)
+   */
+  def showHist(groupBy1: String, rest: String*)(colA: Column, more: Column*): Unit = {
+    val col = smvStrCat(colA +: more:_*)
+    val r1 = df.groupBy(groupBy1, rest:_*).agg(histStr(col) as "histogram").coalesce(1)
+
+    // | age | gender |
+    // | 10  | M      | ... => age(10), gender(M)
+    // | 20  | F      | ... => age(20), gender(F)
+    val groups: Seq[Column] = (groupBy1 +: rest) map (c => smvStrCat(lit(c), lit("("), r1(c), lit(")")))
+
+    // TODO: do we need to use UnionRDD the way it's done in EDDTaskGroup?
+    val res = r1.select(smvStrCat(", ", groups:_*) as "groups", r1("histogram")).collect
+
+    val output = for {
+      row <-res
+      header = "Histogram of [" + (colA +: more).mkString(", ") + "] in group " + row(0) +
+      "\nkey                      count      Pct    cumCount   cumPct\n"
+      histo = row(1).asInstanceOf[Map[String, Long]].toSeq
+      csum = histo.scanLeft(0l){(c,m) => c + m._2}.tail
+      total = csum(csum.size - 1)
+      content = (histo zip csum).map{
+        case ((k,c), sum) =>
+          val pct = c.toDouble/total*100
+          val cpct = sum.toDouble/total*100
+          f"$k%-20s$c%10d$pct%8.2f%%$sum%12d$cpct%8.2f%%"
+      }.mkString("\n")
+    } yield header + content
+
+    print(output.mkString("\n-------------------------------------------------\n"))
+  }
 
   /**
    * Find column combinations which uniquely identify a row from the data
