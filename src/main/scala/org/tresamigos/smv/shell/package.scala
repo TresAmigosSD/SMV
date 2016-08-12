@@ -32,12 +32,41 @@ import graph._
 package object shell {
   private val appGU = new SmvGraphUtil(SmvApp.app.stages)
 
+  /**
+   * list all the smv-shell commands
+   **/
+  def help = println(
+    """Here is a list of SMV-shell command
+      |
+      |Please refer to the API doc for details:
+      |http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.shell.package
+      |
+      |* lsStage
+      |* ls
+      |* ls(stageName: String)
+      |* lsDead
+      |* lsDead(stageName: String)
+      |* lsLeaf
+      |* lsLeaf(stageName: String)
+      |* graph
+      |* graph(ds: SmvDataSet)
+      |* graph(stageName: String)
+      |* ancestors(ds: SmvDataSet)
+      |* descendants(ds: SmvDataSet)
+      |* peek(df: DataFrame, pos: Int = 1)
+      |* now
+      """.stripMargin
+  )
+
+  /**
+   * list all the stages
+   **/
   def lsStage = SmvApp.app.stages.stageNames.foreach(println)
 
   /**
    * list all datasets in a stage
    * @param stageName could be the FQN or just the basename
-   */
+   **/
   def ls(stageName: String) = println(appGU.createDSList(SmvApp.app.stages.findStage(stageName)))
 
   /**
