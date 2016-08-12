@@ -7,41 +7,23 @@
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
-div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
 table.sourceCode { width: 100%; line-height: 100%; }
 td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
 td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
   </style>
   <link rel="stylesheet" type="text/css" href="github.css">
 </head>
@@ -59,20 +41,18 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h1 id="smvmodule">SmvModule</h1>
 <p>An SMV Module is a collection of transformation operations and validation rules. Each module depends on one or more <code>SmvDataSet</code>s (<code>SmvFile</code> or <code>SmvModule</code>) and defines a set of transformation on its inputs that define the module output.</p>
 <h2 id="module-dependency-definition">Module Dependency Definition</h2>
-<p>Each module <strong>must</strong> define its input dependency by overriding the <code>requireDS</code> method. The <code>requireDS</code> method should return a sequence of required datasets for the running of this module.<br />
-The dependent datasets <strong>must</strong> be defined in the same stage as this module. External dependencies should use the <code>SmvModuleLink</code> class as described in <a href="smv_stages.html">SmvStage</a>.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;mod description&quot;</span>) {
+<p>Each module <strong>must</strong> define its input dependency by overriding the <code>requireDS</code> method. The <code>requireDS</code> method should return a sequence of required datasets for the running of this module.<br />The dependent datasets <strong>must</strong> be defined in the same stage as this module. External dependencies should use the <code>SmvModuleLink</code> class as described in <a href="smv_stages.html">SmvStage</a>.</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;mod description&quot;</span>) {
  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">requireDS</span>() = Seq(Mod1, Mod2)
- ...</code></pre></div>
-<p>Note that <code>requireDS</code> returns a sequence of the actual <code>SmvDataSet</code> objects that the module depends on, <strong>not</strong> the name. This makes typos visible at compile time rather than run time.<br />
-The dependency can be on any combination of files/modules. It is not limited to other <code>SmvModules</code>.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;mod description&quot;</span>) {
+ ...</code></pre>
+<p>Note that <code>requireDS</code> returns a sequence of the actual <code>SmvDataSet</code> objects that the module depends on, <strong>not</strong> the name. This makes typos visible at compile time rather than run time.<br />The dependency can be on any combination of files/modules. It is not limited to other <code>SmvModules</code>.</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;mod description&quot;</span>) {
  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">requireDS</span>() = Seq(File1, File2, Mod1)
- ...</code></pre></div>
+ ...</code></pre>
 <p><code>File1</code>, <code>File2</code> are instances of <code>SmvFile</code> and <code>Mod1</code> is an instance of <code>SmvModule</code>. From the perspective of <code>MyModule</code>, the type of the dependent dataset is irrelevant.</p>
 <h2 id="module-transformation-definition-run">Module Transformation Definition (run)</h2>
 <p>The module <strong>must</strong> also provide a <code>run()</code> method that performs the transformations on the inputs to produce the module output. The <code>run</code> method will be provided with the results (DataFrame) of running the dependent input modules as a map keyed by the dependent module.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;mod description&quot;</span>) {
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;mod description&quot;</span>) {
  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">requireDS</span>() = Seq(Mod1, Mod2)
 
  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">run</span>(inputs: runParams) = {
@@ -81,32 +61,26 @@ The dependency can be on any combination of files/modules. It is not limited to 
 
    M1df.<span class="fu">join</span>(M2df, ...)
        .<span class="fu">select</span>(<span class="st">&quot;col1&quot;</span>, <span class="st">&quot;col2&quot;</span>, ...)
- }</code></pre></div>
+ }</code></pre>
 <p>The <code>run</code> method should return the result of the transformations on the input as a <code>DataFrame</code>.</p>
-<p>The parameter of the <code>run</code> method has type <code>runParams</code>, which is just an alias to type<br />
-<code>Map[SmvDataSet, DataFrame]</code>. The driver program (Smv framework itself) will provide<br />
-the lookup map, &quot;inputs: runParams&quot;, to map all the required modules to their<br />
-output <code>DataFrame</code>. As in above example, <code>val M1df = inputs(Mod1)</code> provides the <code>run</code><br />
-method the access to the result <code>DataFrame</code> of module <code>Mod1</code>.</p>
+<p>The parameter of the <code>run</code> method has type <code>runParams</code>, which is just an alias to type<br /><code>Map[SmvDataSet, DataFrame]</code>. The driver program (Smv framework itself) will provide<br />the lookup map, &quot;inputs: runParams&quot;, to map all the required modules to their<br />output <code>DataFrame</code>. As in above example, <code>val M1df = inputs(Mod1)</code> provides the <code>run</code><br />method the access to the result <code>DataFrame</code> of module <code>Mod1</code>.</p>
 <h2 id="module-validation-rules">Module Validation Rules</h2>
 <p>Each module may also define its own set of <a href="dqm.html">DQM validation rules</a>. By default, if the user does not override the <code>dqm</code> method, the module will have an empty set of rules.</p>
 <h2 id="module-persistence">Module Persistence</h2>
-<p>To aid in development and debugging, the output of each module is persisted by default. Subsequent requests for the module output will result in reading the persisted state rather than in re-running the module.<br />
-The persisted file is versioned. The version is computed from the CRC of this module and all dependent modules. Therefore, if this module code or any of the dependent module code changes, then the module will be re-run.<br />
-On a large development team, this makes it very easy to &quot;pull&quot; the latest code changes and regenerate the output by only running the modules that changed.</p>
+<p>To aid in development and debugging, the output of each module is persisted by default. Subsequent requests for the module output will result in reading the persisted state rather than in re-running the module.<br />The persisted file is versioned. The version is computed from the CRC of this module and all dependent modules. Therefore, if this module code or any of the dependent module code changes, then the module will be re-run.<br />On a large development team, this makes it very easy to &quot;pull&quot; the latest code changes and regenerate the output by only running the modules that changed.</p>
 <p>However, for trivial modules (e.g. filter), it might be too expensive to persist/read the module output. In these cases, the module may override the default persist behaviour by setting the <code>isEphemeral</code> flag to true. In that case, the module output will not be persisted (unless the module was run explicitly).</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;mod description&quot;</span>) {
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;mod description&quot;</span>) {
   <span class="kw">override</span> <span class="kw">val</span> isEphemeral = <span class="kw">true</span>
   <span class="kw">override</span> <span class="kw">def</span> <span class="fu">run</span>(inputs: runParams) = {
      <span class="fu">inputs</span>(Mod1).<span class="fu">where</span>($<span class="st">&quot;a&quot;</span> &gt; <span class="dv">100</span>)
   }
-}</code></pre></div>
+}</code></pre>
 <h2 id="configurable-modules">Configurable Modules</h2>
 <p>In some situations, such as building subsets by filtering, different sets <code>DataFrame</code>s are genereated from the same input with almost the same <em>logic</em>. Using a <em>configurable</em> module enables code reuse while minizing boilerplate.</p>
 <p>In addition to input modules specified with the <code>requireDS()</code> method, a <em>configurable</em> module depends on a specific configuration object, that must be a subclass of the <code>SmvRunConfig</code> trait, to produce its desired output. Which configuration object to use is specified by the value of <code>smv.runConfObj</code>, either in the application's <a href="app_config.html">configuration</a> file, or on the command line with <code>--run-conf-obj &lt;name&gt;</code> option or with <code>--smv-props smv.runConfObj=&lt;name&gt;</code>.</p>
 <p>By default, the name of the configuration object is the fully qualified class name (FQN) of the implementing object. However, one could override <code>runConfig</code> in trait <code>Using[T]</code> to change the way the configuration object is obtained.</p>
 <p>Below is an example of how to use a configurable module:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">trait</span> BaseStudio <span class="kw">extends</span> SmvRunConfig {
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">trait</span> BaseStudio <span class="kw">extends</span> SmvRunConfig {
   <span class="kw">def</span> actors: Seq[String]
   <span class="kw">def</span> directors: Seq[String]
 }
@@ -128,22 +102,43 @@ On a large development team, this makes it very easy to &quot;pull&quot; the lat
     <span class="kw">val</span> available = df.<span class="fu">where</span>(<span class="fu">df</span>(<span class="st">&quot;name&quot;</span>).<span class="fu">isin</span>(runConfig.<span class="fu">actors</span>))
     ....
   }
-}</code></pre></div>
-<p>Here the run configuration is defined with the <code>BaseStudio</code> trait, which extends <code>SmvRunConfig</code>. It contains two pieces of information: lists of available actors and directors. There are two specific configurations specified by <code>Hollywood</code> and <code>Bollywood</code>, each with its own list of available actors and directors. And the module <code>Budget</code> declares that it needs the information from a <code>BaseStudio</code> by mixing in the trait <code>Using[BaseStudio]</code>, which provides the actual configuration through the <code>runConfig</code> object. To specify the use of <code>Hollywood</code>, one invokes <code>smv-run --smv-props runConfObj=Hollywood</code>; to use <code>Bollywood</code>, one invokes <code>smv-shell --run-conf-obj Bollywood</code>. Both ways of specifying a configuration object work with smv-shell or smv-run.</p>
+}</code></pre>
+<p>Here the run configuration is defined with the <code>BaseStudio</code> trait, which extends <code>SmvRunConfig</code>. It contains two pieces of information: lists of available actors and directors. There are two specific configurations specified by <code>Hollywood</code> and <code>Bollywood</code>, each with its own list of available actors and directors. And the module <code>Budget</code> declares that it needs the information from a <code>BaseStudio</code> by mixing in the trait <code>Using[BaseStudio]</code>, which provides the actual configuration through the <code>runConfig</code> object. To specify the use of <code>Hollywood</code>, one invokes <code>smv-run --smv-props runConfObj=Hollywood</code>; to use <code>Bollywood</code>, one invokes <code>smv-run --run-conf-obj Bollywood</code>. Both ways of specifying a configuration object on the commandline work with smv-run. However, because smv-shell does not directly run the main program in SmvApp -- and therefore will not pass any commandline arguments to SmvApp -- the only way to specify a <code>runConfig</code> object, when you are running an interactive shell, is through the use of an SMV configuration file.</p>
+<p><code>SmvRunConfig</code> can contain arbitrary information, including <code>SmvDataSet</code>s. For example, the first stage of processing often involves concatenating data sets from different sources, with some preliminary processing such as null-sanitization. The data source may be CSV files or Hive tables. The following code shows how to use <code>SmvRunConfig</code> in this situation:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">trait</span> BaseAppInput <span class="kw">extends</span> SmvRunConfig {
+  <span class="kw">def</span> in_01: SmvDataSet
+  <span class="kw">def</span> in_02: SmvDataSet
+}
+
+<span class="kw">object</span> CsvAppInput <span class="kw">extends</span> BaseAppInput {
+  <span class="kw">override</span> <span class="kw">val</span> in_01 = <span class="fu">SmvCsvFile</span>(<span class="st">&quot;some/file.csv&quot;</span>)
+  <span class="kw">override</span> <span class="kw">val</span> in_02 = <span class="fu">SmvCsvFile</span>(<span class="st">&quot;some/other/file.csv&quot;</span>)
+}
+
+<span class="kw">object</span> HiveAppInput <span class="kw">extends</span> BaseAppInput {
+  <span class="kw">override</span> <span class="kw">val</span> in_01 = <span class="fu">SmvHiveTable</span>(<span class="st">&quot;some_table&quot;</span>)
+  <span class="kw">override</span> <span class="kw">val</span> in_02 = <span class="fu">SmvHiveTable</span>(<span class="st">&quot;some_other_table&quot;</span>)
+}
+
+<span class="kw">object</span> ConcatInput <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;Concatenate input data sets&quot;</span>) <span class="kw">with</span> Using[BaseAppInput] {
+  <span class="kw">override</span> <span class="kw">def</span> reuqiresDS = Seq(runConfig.<span class="fu">in_01</span>, runConfig.<span class="fu">in_02</span>)
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">run</span> (i: runParams) = {
+    <span class="co">// load the first input data set, specified with a runtime configuration</span>
+    <span class="kw">val</span> df1 = <span class="fu">i</span>(runConfig.<span class="fu">in_01</span>)
+    ...
+  }
+}</code></pre>
 <h1 id="output-modules">Output Modules</h1>
-<p>As the number of modules in a given SMV stage grows, it becomes more difficult to track which<br />
-modules are the &quot;leaf&quot;/output modules within the stage.<br />
-Any module or SmvDataSet within the stage can be marked as an output module by mixing-in the <code>SmvOutput</code> trait.<br />
-For example:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;this is my module&quot;</span>) <span class="kw">with</span> SmvOutput {
+<p>As the number of modules in a given SMV stage grows, it becomes more difficult to track which<br />modules are the &quot;leaf&quot;/output modules within the stage.<br />Any module or SmvDataSet within the stage can be marked as an output module by mixing-in the <code>SmvOutput</code> trait.<br />For example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyModule <span class="kw">extends</span> <span class="fu">SmvModule</span>(<span class="st">&quot;this is my module&quot;</span>) <span class="kw">with</span> SmvOutput {
 ...
-}</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyData <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;path/to/file/data.csv&quot;</span>, CA.<span class="fu">ca</span>) <span class="kw">with</span> SmvOutput</code></pre></div>
+}</code></pre>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> MyData <span class="kw">extends</span> <span class="fu">SmvCsvFile</span>(<span class="st">&quot;path/to/file/data.csv&quot;</span>, CA.<span class="fu">ca</span>) <span class="kw">with</span> SmvOutput</code></pre>
 <p>The set of <code>SmvOutput</code> output modules in a stage define the data <em>interface/api</em> of the stage. Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.</p>
 <p>In addition to the above, the ability to mark certain modules as output has the following benefits:</p>
 <ul>
-<li>Allows user to easily &quot;run&quot; all output modules within a stage (using the <code>-s</code> option to <code>smv-run</code>)</li>
-<li>A future option might be added to allow for listing of &quot;dead&quot; modules. That is, any module in a stage that does not contribute to any output module either directly or indirectly.</li>
+<li>Allows user to easily &quot;run&quot; all output modules within a stage (using the <code>-s</code> option to <code>smv-run</code>)<br /></li>
+<li>A future option might be added to allow for listing of &quot;dead&quot; modules. That is, any module in a stage that does not contribute to any output module either directly or indirectly.<br /></li>
 <li>We may add a future option to <code>SmvApp</code> that allows the user to display a &quot;catalog&quot; of output modules and their description.</li>
 </ul>
 <p>See <a href="smv_stages.html">Smv Stages</a> for details on how to configure multiple stages.</p>

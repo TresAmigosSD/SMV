@@ -7,41 +7,23 @@
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
-div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
 table.sourceCode { width: 100%; line-height: 100%; }
 td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
 td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
   </style>
   <link rel="stylesheet" type="text/css" href="github.css">
 </head>
@@ -57,47 +39,35 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <article class="markdown-body">
 <h1 id="create-schema-for-new-csv-files">Create Schema for new Csv files</h1>
-<p>As in the example project created by the <code>smv-init</code> command (see <a href="getting_started.html">Getting Started</a><br />
-for details), there is a <code>Csv</code> data file, <code>data/input/employment/CB1200CZ11.csv</code>. Also there is<br />
-a <code>.schema</code> file associated with the <code>Csv</code> file.</p>
-<p>However, when we just download the data from it's original source, there is no Schema file. So to make<br />
-data usable for SMV and Spark, we need to create the Schema file. SMV has a Schema discovery tool to<br />
-help user quickly create it.</p>
+<p>As in the example project created by the <code>smv-init</code> command (see <a href="getting_started.html">Getting Started</a><br />for details), there is a <code>Csv</code> data file, <code>data/input/employment/CB1200CZ11.csv</code>. Also there is<br />a <code>.schema</code> file associated with the <code>Csv</code> file.</p>
+<p>However, when we just download the data from it's original source, there is no Schema file. So to make<br />data usable for SMV and Spark, we need to create the Schema file. SMV has a Schema discovery tool to<br />help user quickly create it.</p>
 <h2 id="where-to-put-the-csv-files">Where to put the Csv files</h2>
-<p>SMV will look for <code>smv.dataDir</code> when it load the configuration(see <a href="app_config.html">Application Configuration</a> for deatails). If multiple places defined the parameter, the order of<br />
-priority from high to low is,</p>
+<p>SMV will look for <code>smv.dataDir</code> when it load the configuration(see <a href="app_config.html">Application Configuration</a> for deatails). If multiple places defined the parameter, the order of<br />priority from high to low is,</p>
 <ul>
-<li>command line options</li>
-<li>project user level config file (default: conf/smv-user-conf.props)</li>
-<li>global user level config file (~/.smv/smv-user-conf.props)</li>
+<li>command line options<br /></li>
+<li>project user level config file (default: conf/smv-user-conf.props)<br /></li>
+<li>global user level config file (~/.smv/smv-user-conf.props)<br /></li>
 <li>app level config file (default: conf/smv-app-conf.props)</li>
 </ul>
-<p>In the future, we will implement the <code>smv.inputDir</code> also. For now, only <code>smv.dataDir</code> is in use, and<br />
-the <code>path</code> parameters in the <code>SmvCsvFile</code> definitions in the project are relative to <code>smv.dataDir</code>.</p>
+<p>In the future, we will implement the <code>smv.inputDir</code> also. For now, only <code>smv.dataDir</code> is in use, and<br />the <code>path</code> parameters in the <code>SmvCsvFile</code> definitions in the project are relative to <code>smv.dataDir</code>.</p>
 <p>For best practice, we typically put all the input data of a project into the <code>input</code> sub-folder under the dataDir.</p>
-<p>Data specific sub-folder could be created under <code>input</code>, and the Csv file should be put in there.<br />
-Typically, one could also put some info file within the same folder to capture some basic info of the<br />
-source of the data.</p>
-<p>Please note that in a cluster environment, the <code>dataDir</code> might be on <code>HDSF</code>, hdfs command might be<br />
-needed to setup the directory structures.</p>
+<p>Data specific sub-folder could be created under <code>input</code>, and the Csv file should be put in there.<br />Typically, one could also put some info file within the same folder to capture some basic info of the<br />source of the data.</p>
+<p>Please note that in a cluster environment, the <code>dataDir</code> might be on <code>HDSF</code>, hdfs command might be<br />needed to setup the directory structures.</p>
 <h2 id="discover-schema-from-shell">Discover Schema from Shell</h2>
-<p>Within the SMV Spark shell environment (see <a href="run_shell.html">Run Spark Shell</a> for details), a<br />
-<code>discoverSchema</code> command is provided.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">discoverSchema</span>(<span class="st">&quot;/path/to/file.csv&quot;</span>)</code></pre></div>
+<p>Within the SMV Spark shell environment (see <a href="run_shell.html">Run Spark Shell</a> for details), a<br /><code>discoverSchema</code> command is provided.</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">discoverSchema</span>(<span class="st">&quot;/path/to/file.csv&quot;</span>)</code></pre>
 <p>For above case, the Csv file is assumed to be</p>
 <ul>
-<li>Comma delimited</li>
+<li>Comma delimited<br /></li>
 <li>with a single line header</li>
 </ul>
 <p>You can specify the appropriate CsvAttributes for your file</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">discoverSchema</span>(<span class="st">&quot;/path/to/file.csv&quot;</span>, ca = <span class="kw">new</span> <span class="fu">CsvAttributes</span>(delimiter = &#39;|&#39;, hasHeader = <span class="kw">true</span>))</code></pre></div>
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">discoverSchema</span>(<span class="st">&quot;/path/to/file.csv&quot;</span>, ca = <span class="kw">new</span> <span class="fu">CsvAttributes</span>(delimiter = &#39;|&#39;, hasHeader = <span class="kw">true</span>))</code></pre>
 <p>Please see <a href="smv_file.html">SMV Files</a> for more CsvAttributes details.</p>
-<p><strong>Note</strong> SMV currently can't handle Csv files with multiple lines of header. Other tools might be needed<br />
-to remove extra header lines before try to discover schema.</p>
-<p>The shell <code>discoverSchema</code> method will create a schema file on the local running dir with name <code>file.schema.toBeReviewed</code>. As<br />
-hinted by the file name, human need to review the schema file.</p>
+<p><strong>Note</strong> SMV currently can't handle Csv files with multiple lines of header. Other tools might be needed<br />to remove extra header lines before try to discover schema.</p>
+<p>The shell <code>discoverSchema</code> method will create a schema file on the local running dir with name <code>file.schema.toBeReviewed</code>. As<br />hinted by the file name, human need to review the schema file.</p>
 <p>Using the <code>CB1200CZ11.csv</code> file as an example,</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">discoverSchema</span>(<span class="st">&quot;data/input/employment/CB1200CZ11.csv&quot;</span>, ca = <span class="kw">new</span> <span class="fu">CsvAttributes</span>(delimiter = &#39;|&#39;, hasHeader = <span class="kw">true</span>))</code></pre></div>
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">discoverSchema</span>(<span class="st">&quot;data/input/employment/CB1200CZ11.csv&quot;</span>, ca = <span class="kw">new</span> <span class="fu">CsvAttributes</span>(delimiter = &#39;|&#39;, hasHeader = <span class="kw">true</span>))</code></pre>
 <p>The path here is relative to the project root dir, where I started the <code>smv-shell</code>.</p>
 <p>A <code>CB1200CZ11.schema.toBeReviewed</code> file is generated. The first a couple of lines are</p>
 <pre><code>ST: Integer
@@ -105,11 +75,8 @@ ZIPCODE: Integer
 GEO_ID: String
 GEO_TTL: String
 ...</code></pre>
-<p>As you can see that <code>ZIPCODE</code> is identified as <code>Integer</code>. In the review, one should edit the<br />
-file and change it to <code>String</code>, since we don't want to do any arithmetic on <code>ZIPCODE</code> and we don't<br />
-want to consider <code>04532</code> as <code>4532</code>.</p>
-<p>After review and editing, you can rename the file by removing the postfix, and move it to the same dir<br />
-of the <code>csv</code> file. Now the data is ready for SMV.</p>
+<p>As you can see that <code>ZIPCODE</code> is identified as <code>Integer</code>. In the review, one should edit the<br />file and change it to <code>String</code>, since we don't want to do any arithmetic on <code>ZIPCODE</code> and we don't<br />want to consider <code>04532</code> as <code>4532</code>.</p>
+<p>After review and editing, you can rename the file by removing the postfix, and move it to the same dir<br />of the <code>csv</code> file. Now the data is ready for SMV.</p>
 <p><strong>Note</strong> field names with &quot;.&quot; in them may cause columns unable to be resolved, therefore, avoid field names that has &quot;.&quot; in them&quot;.</p>
 <p>For Csv data without header, the field name in the generated schema file will be <code>f1</code>, <code>f2</code>, etc.</p>
 </article>

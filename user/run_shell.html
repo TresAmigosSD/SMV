@@ -7,41 +7,23 @@
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
-div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
 table.sourceCode { width: 100%; line-height: 100%; }
 td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
 td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
   </style>
   <link rel="stylesheet" type="text/css" href="github.css">
 </head>
@@ -61,40 +43,35 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <pre class="shell"><code>$ _SMV_HOME_/tools/smv-shell [standard spark-shell-options] [smv-options]</code></pre>
 <p><strong>Note:</strong> The above command should be run from the project top level directory.</p>
 <h3 id="options">Options</h3>
-<p>By default, the <code>smv-shell</code> command will use the latest &quot;fat&quot; jar in the target directory to use with Spark Shell.<br />
-The user can provide <code>--jar</code> option to override the default. See <a href="run_app.html">Run Application</a> for details about this flag.</p>
+<p>By default, the <code>smv-shell</code> command will use the latest &quot;fat&quot; jar in the target directory to use with Spark Shell.<br />The user can provide <code>--jar</code> option to override the default. See <a href="run_app.html">Run Application</a> for details about this flag.</p>
 <h2 id="shell-init">Shell init</h2>
-<p>When <code>smv-shell</code> is launched, it will source the file <code>_SMV_HOME_/tools/conf/smv_shell_init.scala</code> to provide some<br />
-helper functions and create a default SMV dummy application (<code>app</code>)</p>
+<p>When <code>smv-shell</code> is launched, it will source the file <code>_SMV_HOME_/tools/conf/smv_shell_init.scala</code> to provide some<br />helper functions and create a default SMV dummy application (<code>app</code>)</p>
 <ul>
-<li><code>df(data_set)</code> : Load/Run the given dataset and return the resulting <code>DataFrame</code></li>
-<li><code>ddf(data_set)</code> : Dynamically Load/Run the given dataset and return the resulting <code>DataFrame</code>. Please refer <a href="class_loader.html">Dynamic Class Loading</a> for the dynamic load concept</li>
-<li><code>open(path)</code> : open the csv/schema file at the given path and return the corresponding <code>DataFrame</code></li>
-<li><code>df.save(path)</code> : save the given df to a csv/schema file pair at the given path.</li>
-<li><code>df.savel(path)</code> : save the contents of the <code>DataFrame</code> to a local (none HDFS) filesystem. WARNING: The contents must be able to fit in memory!!!</li>
-<li><code>discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)</code> : use the first <code>n</code> (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules. The discovered schema is saved to the current path with postfix<br />
- &quot;.schema.toBeReviewed&quot;</li>
+<li><code>df(data_set)</code> : Load/Run the given dataset and return the resulting <code>DataFrame</code><br /></li>
+<li><code>ddf(data_set)</code> : Dynamically Load/Run the given dataset and return the resulting <code>DataFrame</code>. Please refer <a href="class_loader.html">Dynamic Class Loading</a> for the dynamic load concept<br /></li>
+<li><code>open(path)</code> : open the csv/schema file at the given path and return the corresponding <code>DataFrame</code><br /></li>
+<li><code>df.save(path)</code> : save the given df to a csv/schema file pair at the given path.<br /></li>
+<li><code>df.savel(path)</code> : save the contents of the <code>DataFrame</code> to a local (none HDFS) filesystem. WARNING: The contents must be able to fit in memory!!!<br /></li>
+<li><code>discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)</code> : use the first <code>n</code> (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules. The discovered schema is saved to the current path with postfix<br /> &quot;.schema.toBeReviewed&quot;<br /></li>
 <li><code>dumpEdd(data_set)</code> : Generate base EDD results for given <code>SmvDataSet</code> and dump the results to the screen.</li>
 </ul>
 <h2 id="shell-package-provided-functions">Shell package provided functions</h2>
-<p>With <code>import org.tresamigos.smv.shell._</code> in the <code>smv_shell_init.scala</code>, the following<br />
-functions are provided to the shell,</p>
+<p>With <code>import org.tresamigos.smv.shell._</code> in the <code>smv_shell_init.scala</code>, the following<br />functions are provided to the shell,</p>
 <ul>
-<li><code>lsStage</code> : list all the stages of the project</li>
-<li><code>ls(stageName)</code>: list SmvDataSet in the given stage</li>
-<li><code>ls</code>: list all the SmvDataSet in the project, organized by stages</li>
-<li><code>lsDead(stageName)</code>/<code>lsDead</code>: list <code>dead</code> datasets. A <code>dead</code> dataset is defined as &quot;no contribution to the Output modules of the stage&quot;</li>
-<li><code>lsLeaf(stageName)</code>/<code>lsLeaf</code>: list <code>leaf</code> datasets. A <code>leaf</code> dataset is defined as &quot;no modules in the stage depend on it, excluding Output modules&quot;</li>
-<li><code>graph(stageName)</code>: print dependency graph of all DS in this stage, without unused input DS</li>
-<li><code>graph</code>: print dependency graph of stages and inter-stage links</li>
-<li><code>graph(dataset)</code>: print in-stage dependency of that DS</li>
-<li><code>ancestors(dataset)</code>: list all <code>ancestors</code> of a dataset</li>
+<li><code>lsStage</code> : list all the stages of the project<br /></li>
+<li><code>ls(stageName)</code>: list SmvDataSet in the given stage<br /></li>
+<li><code>ls</code>: list all the SmvDataSet in the project, organized by stages<br /></li>
+<li><code>lsDead(stageName)</code>/<code>lsDead</code>: list <code>dead</code> datasets. A <code>dead</code> dataset is defined as &quot;no contribution to the Output modules of the stage&quot;<br /></li>
+<li><code>lsLeaf(stageName)</code>/<code>lsLeaf</code>: list <code>leaf</code> datasets. A <code>leaf</code> dataset is defined as &quot;no modules in the stage depend on it, excluding Output modules&quot;<br /></li>
+<li><code>graph(stageName)</code>: print dependency graph of all DS in this stage, without unused input DS<br /></li>
+<li><code>graph</code>: print dependency graph of stages and inter-stage links<br /></li>
+<li><code>graph(dataset)</code>: print in-stage dependency of that DS<br /></li>
+<li><code>ancestors(dataset)</code>: list all <code>ancestors</code> of a dataset<br /></li>
 <li><code>descendants(dataset)</code>: list all <code>descendants</code> of a dataset</li>
 </ul>
 <h2 id="project-shell-init">Project Shell Init</h2>
-<p>In addition to the standard <code>smv_shell_init.scala</code> file, the <code>smv-shell</code> script will look for an optional <code>conf/shell_init.scala</code> file and source it if found.<br />
-Project specific initialization code, such as common imports, and functions, can be put in the <code>conf/shell_init.scala</code> file. For example:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// create the app init object &quot;a&quot; rather than create initialization at top level because shell</span>
+<p>In addition to the standard <code>smv_shell_init.scala</code> file, the <code>smv-shell</code> script will look for an optional <code>conf/shell_init.scala</code> file and source it if found.<br />Project specific initialization code, such as common imports, and functions, can be put in the <code>conf/shell_init.scala</code> file. For example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// create the app init object &quot;a&quot; rather than create initialization at top level because shell</span>
 <span class="co">// would launch a separate command for each evaluation which slows down startup considerably.</span>
 <span class="kw">import</span> com.<span class="fu">mycompany</span>.<span class="fu">myproject</span>.<span class="fu">stage1</span>.<span class="fu">_</span>
 <span class="kw">import</span> com.<span class="fu">mycompany</span>.<span class="fu">myproject</span>.<span class="fu">stage1</span>.<span class="fu">_</span>
@@ -110,10 +87,10 @@ Project specific initialization code, such as common imports, and functions, can
 }
 
 <span class="co">// move the above imports/functions/etc into global namespace for easy access.</span>
-<span class="kw">import</span> a.<span class="fu">_</span></code></pre></div>
+<span class="kw">import</span> a.<span class="fu">_</span></code></pre>
 <h2 id="examples">Examples</h2>
 <h3 id="create-temporary-dataframe-for-testing">Create temporary DataFrame for testing</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> tmpDF = app.<span class="fu">createDF</span>(<span class="st">&quot;a:String;b:Integer;c:Timestamp[yyyy-MM-dd]&quot;</span>, <span class="st">&quot;a,10,2015-09-30&quot;</span>)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> tmpDF = app.<span class="fu">createDF</span>(<span class="st">&quot;a:String;b:Integer;c:Timestamp[yyyy-MM-dd]&quot;</span>, <span class="st">&quot;a,10,2015-09-30&quot;</span>)
 scala&gt; tmpDF.<span class="fu">printSchema</span>
 root
  |-- a: <span class="fu">string</span> (nullable = <span class="kw">true</span>)
@@ -123,9 +100,9 @@ root
 
 scala&gt; tmpDF.<span class="fu">show</span>
 a b  c
-a <span class="dv">10</span> <span class="dv">2015-09-30</span> <span class="dv">00</span>:<span class="dv">00</span>:...</code></pre></div>
+a <span class="dv">10</span> <span class="dv">2015-09-30</span> <span class="dv">00</span>:<span class="dv">00</span>:...</code></pre>
 <h3 id="resolve-existing-smvmodule">Resolve existing SmvModule</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> s2res=<span class="fu">s</span>(StageEmpCategory)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> s2res=<span class="fu">s</span>(StageEmpCategory)
 scala&gt; s2res.<span class="fu">printSchema</span>
 root
  |-- ST: <span class="fu">string</span> (nullable = <span class="kw">true</span>)
@@ -150,11 +127,11 @@ Histogram of cat_high_emp: Boolean
 key                      count      Pct    cumCount   cumPct
 <span class="kw">false</span>                       <span class="dv">20</span>   <span class="fl">38.46</span>%          <span class="dv">20</span>   <span class="fl">38.46</span>%
 <span class="kw">true</span>                        <span class="dv">32</span>   <span class="fl">61.54</span>%          <span class="dv">52</span>  <span class="fl">100.00</span>%
--------------------------------------------------</code></pre></div>
+-------------------------------------------------</code></pre>
 <h3 id="discover-schema">Discover schema</h3>
 <p>Please see <a href="schema_discovery.html">Schema Discovery</a></p>
 <h3 id="list-all-datasets">List all DataSets</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; ls
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; ls
 
 com.<span class="fu">mycompany</span>.<span class="fu">MyApp</span>.<span class="fu">stage1</span>:
   (O) EmploymentByState
@@ -162,31 +139,31 @@ com.<span class="fu">mycompany</span>.<span class="fu">MyApp</span>.<span class=
 
 com.<span class="fu">mycompany</span>.<span class="fu">MyApp</span>.<span class="fu">stage2</span>:
   (O) StageEmpCategory
-  (L) input.<span class="fu">EmploymentStateLink</span></code></pre></div>
+  (L) input.<span class="fu">EmploymentStateLink</span></code></pre>
 <p>There are 4 values of the leading label</p>
 <ul>
-<li>&quot;O&quot; - SmvOutput</li>
-<li>&quot;L&quot; - SmvModuleLink</li>
-<li>&quot;F&quot; - SmvFile</li>
-<li>&quot;M&quot; - SmvModule (but neither SmvOutput nor SmvModuleLink)</li>
+<li>&quot;O&quot; - SmvOutput<br /></li>
+<li>&quot;L&quot; - SmvModuleLink<br /></li>
+<li>&quot;F&quot; - SmvFile<br /></li>
+<li>&quot;M&quot; - SmvModule (but neither SmvOutput nor SmvModuleLink)<br /></li>
 <li>&quot;H&quot; - Hive Table</li>
 </ul>
 <p>Please see <a href="smv_intro.html">SMV Introduction</a> for details of the 4 types.</p>
 <h3 id="list-datasets-in-a-stage">List DataSets in a Stage</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">ls</span>(<span class="st">&quot;stage1&quot;</span>)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">ls</span>(<span class="st">&quot;stage1&quot;</span>)
 (O) EmploymentByState
-(F) input.<span class="fu">employment_CB1200CZ11</span></code></pre></div>
+(F) input.<span class="fu">employment_CB1200CZ11</span></code></pre>
 <h3 id="list-ancestors-of-a-given-dataset">List ancestors of a given DataSet</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">ancestors</span>(StageEmpCategory)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">ancestors</span>(StageEmpCategory)
 (L) stage2.<span class="fu">input</span>.<span class="fu">EmploymentStateLink</span>
 (O) stage1.<span class="fu">EmploymentByState</span>
-(F) stage1.<span class="fu">input</span>.<span class="fu">employment_CB1200CZ11</span></code></pre></div>
+(F) stage1.<span class="fu">input</span>.<span class="fu">employment_CB1200CZ11</span></code></pre>
 <h3 id="list-descendants-of-a-given-dataset">List descendants of a given DataSet</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">descendants</span>(EmploymentByState)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">descendants</span>(EmploymentByState)
 (L) stage2.<span class="fu">input</span>.<span class="fu">EmploymentStateLink</span>
-(O) stage2.<span class="fu">StageEmpCategory</span></code></pre></div>
+(O) stage2.<span class="fu">StageEmpCategory</span></code></pre>
 <h3 id="plot-stage-level-dependency-graph">Plot stage level dependency graph</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; graph
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; graph
                      ┌──────┐
                      │stage1│
                      └────┬─┘
@@ -200,9 +177,9 @@ com.<span class="fu">mycompany</span>.<span class="fu">MyApp</span>.<span class=
                          v
                      ┌──────┐
                      │stage2│
-                     └──────┘</code></pre></div>
+                     └──────┘</code></pre>
 <h3 id="plot-datasets-dependency-graph-in-a-stage">Plot DataSets dependency graph in a stage</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">graph</span>(<span class="st">&quot;stage2&quot;</span>)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">graph</span>(<span class="st">&quot;stage2&quot;</span>)
  ┌────────────┐
  │(L) input.<span class="fu">Em</span>│
  │ploymentStat│
@@ -213,9 +190,9 @@ com.<span class="fu">mycompany</span>.<span class="fu">MyApp</span>.<span class=
  ┌────────────┐
  │(O) StageEmp│
  │  Category  │
- └────────────┘</code></pre></div>
+ └────────────┘</code></pre>
 <h3 id="plot-dependency-graph-of-a-single-dataset">Plot dependency graph of a single DataSet</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">graph</span>(EmploymentByState)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="fu">graph</span>(EmploymentByState)
  ┌────────────┐
  │(F) input.<span class="fu">em</span>│
  │ployment_CB1│
@@ -226,7 +203,7 @@ com.<span class="fu">mycompany</span>.<span class="fu">MyApp</span>.<span class=
  ┌────────────┐
  │(O) Employme│
  │ ntByState  │
- └────────────┘</code></pre></div>
+ └────────────┘</code></pre>
 </article>
 </body>
 </html>

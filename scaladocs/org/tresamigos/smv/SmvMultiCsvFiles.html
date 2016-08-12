@@ -45,7 +45,7 @@ slices. In that case if none of them has headers, it's equivalent to <code>SmvMu
 However if every file has header, <code>SmvCsvFile</code> will not remove header correctly.
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><a href="SmvDSWithParser.html" class="extype" name="org.tresamigos.smv.SmvDSWithParser">SmvDSWithParser</a>, <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a>, <span class="extype" name="org.tresamigos.smv.SmvInputDataSet">SmvInputDataSet</span>, <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><a href="SmvDSWithParser.html" class="extype" name="org.tresamigos.smv.SmvDSWithParser">SmvDSWithParser</a>, <a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a>, <span class="extype" name="org.tresamigos.smv.SmvInputDataSet">SmvInputDataSet</span>, <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>, <a href="HasName.html" class="extype" name="org.tresamigos.smv.HasName">HasName</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -63,7 +63,7 @@ However if every file has header, <code>SmvCsvFile</code> will not remove header
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.SmvMultiCsvFiles"><span>SmvMultiCsvFiles</span></li><li class="in" name="org.tresamigos.smv.SmvDSWithParser"><span>SmvDSWithParser</span></li><li class="in" name="org.tresamigos.smv.SmvFile"><span>SmvFile</span></li><li class="in" name="org.tresamigos.smv.SmvInputDataSet"><span>SmvInputDataSet</span></li><li class="in" name="org.tresamigos.smv.SmvDataSet"><span>SmvDataSet</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.SmvMultiCsvFiles"><span>SmvMultiCsvFiles</span></li><li class="in" name="org.tresamigos.smv.SmvDSWithParser"><span>SmvDSWithParser</span></li><li class="in" name="org.tresamigos.smv.SmvFile"><span>SmvFile</span></li><li class="in" name="org.tresamigos.smv.SmvInputDataSet"><span>SmvInputDataSet</span></li><li class="in" name="org.tresamigos.smv.SmvDataSet"><span>SmvDataSet</span></li><li class="in" name="org.tresamigos.smv.HasName"><span>HasName</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -243,6 +243,19 @@ However if every file has header, <code>SmvCsvFile</code> will not remove header
       </span>
       </h4>
       <p class="shortcomment cmt">Hash computed from the dataset, could be overridden to include things other than CRC</p><div class="fullcomment"><div class="comment cmt"><p>Hash computed from the dataset, could be overridden to include things other than CRC</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvFile.html" class="extype" name="org.tresamigos.smv.SmvFile">SmvFile</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#dependencies" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="dependencies:Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="dependencies:Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">dependencies</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">All dependencies with the dependency hierarchy flattened</p><div class="fullcomment"><div class="comment cmt"><p>All dependencies with the dependency hierarchy flattened</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvFile#description" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="description():String"></a>
       <a id="description():String"></a>
@@ -466,18 +479,18 @@ Note: the module will still be persisted if it was specifically selected to run 
       </h4>
       <p class="shortcomment cmt">Returns the path for the module's csv output</p><div class="fullcomment"><div class="comment cmt"><p>Returns the path for the module's csv output</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#name" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="name():String"></a>
-      <a id="name():String"></a>
+      <a id="name:String"></a>
+      <a id="name:String"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">name</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+        <span class="name">name</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
       </span>
       </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a> → <a href="HasName.html" class="extype" name="org.tresamigos.smv.HasName">HasName</a></dd></dl></div>
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -714,6 +727,8 @@ ETL operations.
               <h3>Inherited from <span class="extype" name="org.tresamigos.smv.SmvInputDataSet">SmvInputDataSet</span></h3>
             </div><div class="parent" name="org.tresamigos.smv.SmvDataSet">
               <h3>Inherited from <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></h3>
+            </div><div class="parent" name="org.tresamigos.smv.HasName">
+              <h3>Inherited from <a href="HasName.html" class="extype" name="org.tresamigos.smv.HasName">HasName</a></h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">

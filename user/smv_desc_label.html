@@ -7,41 +7,23 @@
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
-div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
 table.sourceCode { width: 100%; line-height: 100%; }
 td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
 td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
   </style>
   <link rel="stylesheet" type="text/css" href="github.css">
 </head>
@@ -57,29 +39,25 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <article class="markdown-body">
 <h1 id="smvdesc-and-smvlabel">SmvDesc and SmvLabel</h1>
-<p>Both <code>SmvDesc</code> and <code>SmvLabel</code> are <code>metadata</code> components of <code>DataFrame</code>'s schema and with a<br />
-group of helper methods for user convenience. However they are designed to support different<br />
-use cases.</p>
+<p>Both <code>SmvDesc</code> and <code>SmvLabel</code> are <code>metadata</code> components of <code>DataFrame</code>'s schema and with a<br />group of helper methods for user convenience. However they are designed to support different<br />use cases.</p>
 <h2 id="smvdesc---column-description">SmvDesc - Column Description</h2>
-<p>Sometimes to clearly describe a column with a single column name is very challenging.<br />
-Either the name becomes too long or the meaning are ambiguous, or both. There is a<br />
-need to add an optional description which can be persisted and printed.</p>
+<p>Sometimes to clearly describe a column with a single column name is very challenging.<br />Either the name becomes too long or the meaning are ambiguous, or both. There is a<br />need to add an optional description which can be persisted and printed.</p>
 <p><code>SmvDesc</code> is designed for above use case. It has the following features:</p>
 <ul>
-<li>Each column can have 1 and only 1 description, <code>SmvDesc</code>, as a <code>String</code></li>
-<li>Adding new description will overwrite old one</li>
+<li>Each column can have 1 and only 1 description, <code>SmvDesc</code>, as a <code>String</code><br /></li>
+<li>Adding new description will overwrite old one<br /></li>
 <li>Empty string description is equivalent to no description</li>
 </ul>
 <h3 id="smvdesc-dataframe-helper-methods">SmvDesc DataFrame Helper Methods</h3>
 <ul>
-<li><code>smvDesc</code> - add Descriptions to columns through code</li>
-<li><code>smvDescFromDF</code> - add Descriptions to columns through another DF</li>
-<li><code>smvGetDesc</code> - get Description for a given column or all the name-description pairs</li>
-<li><code>smvRemoveDesc</code> - remove descriptions from a specified column or all columns</li>
+<li><code>smvDesc</code> - add Descriptions to columns through code<br /></li>
+<li><code>smvDescFromDF</code> - add Descriptions to columns through another DF<br /></li>
+<li><code>smvGetDesc</code> - get Description for a given column or all the name-description pairs<br /></li>
+<li><code>smvRemoveDesc</code> - remove descriptions from a specified column or all columns<br /></li>
 <li><code>printDesc</code> - print schema with descriptions on screen</li>
 </ul>
 <h3 id="example-code">Example code</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> res = df.<span class="fu">smvDesc</span>(<span class="st">&quot;phy_id&quot;</span> -&gt; <span class="st">&quot;Physician ID from CMS&quot;</span>)
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> res = df.<span class="fu">smvDesc</span>(<span class="st">&quot;phy_id&quot;</span> -&gt; <span class="st">&quot;Physician ID from CMS&quot;</span>)
 scala&gt; res.<span class="fu">printDesc</span>
 a:
 b:
@@ -97,52 +75,45 @@ scala&gt; res2.<span class="fu">printDesc</span>
 a     : 
 b     : 
 c     : 
-phy_id: Physician ID from CMS</code></pre></div>
+phy_id: Physician ID from CMS</code></pre>
 <h2 id="smvlabel---column-labels-or-tags">SmvLabel - Column Labels (or Tags)</h2>
-<p>Analytics work typically work on wide tables. In that scenario, grouping the columns<br />
-with labels (or tags) will be very helpful.</p>
+<p>Analytics work typically work on wide tables. In that scenario, grouping the columns<br />with labels (or tags) will be very helpful.</p>
 <p><code>SmvLabel</code> is designed for above use case. It has the following features:</p>
 <ul>
-<li>Each column can have a Set of labels, <code>SmvLabel</code>, as a <code>Seq[String]</code></li>
-<li>Adding new labels will add into the existing Set</li>
-<li>Adding the same label which already exist in the current label set has no impact</li>
+<li>Each column can have a Set of labels, <code>SmvLabel</code>, as a <code>Seq[String]</code><br /></li>
+<li>Adding new labels will add into the existing Set<br /></li>
+<li>Adding the same label which already exist in the current label set has no impact<br /></li>
 <li>Empty set label is equivalent to unset <code>SmvLabel</code></li>
 </ul>
 <h3 id="smvlabel-dataframe-helper-methods">SmvLabel DataFrame Helper Methods</h3>
 <ul>
-<li><code>smvLabel</code> - add labels to columns</li>
-<li><code>smvGetLabels</code> - get labels from a give column</li>
-<li><code>smvRemoveLabel</code> - remove label values from give columns</li>
-<li><code>smvWithLabel</code> - return column names which has the given label</li>
+<li><code>smvLabel</code> - add labels to columns<br /></li>
+<li><code>smvGetLabels</code> - get labels from a give column<br /></li>
+<li><code>smvRemoveLabel</code> - remove label values from give columns<br /></li>
+<li><code>smvWithLabel</code> - return column names which has the given label<br /></li>
 <li><code>selectByLabel</code> - do DF projection on columns which has the given label</li>
 </ul>
 <h3 id="example-code-1">Example code</h3>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> df1 = df.<span class="fu">smvLabel</span>(<span class="st">&quot;name&quot;</span>, <span class="st">&quot;sex&quot;</span>)(<span class="st">&quot;red&quot;</span>, <span class="st">&quot;yellow&quot;</span>).<span class="fu">smvLabel</span>(<span class="st">&quot;sex&quot;</span>)(<span class="st">&quot;green&quot;</span>)
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> df1 = df.<span class="fu">smvLabel</span>(<span class="st">&quot;name&quot;</span>, <span class="st">&quot;sex&quot;</span>)(<span class="st">&quot;red&quot;</span>, <span class="st">&quot;yellow&quot;</span>).<span class="fu">smvLabel</span>(<span class="st">&quot;sex&quot;</span>)(<span class="st">&quot;green&quot;</span>)
 <span class="kw">val</span> df2 = df1.<span class="fu">smvRemoveLabel</span>(<span class="st">&quot;sex&quot;</span>)(<span class="st">&quot;red&quot;</span>)
-<span class="kw">val</span> res = df2.<span class="fu">smvGetLabels</span>(<span class="st">&quot;sex&quot;</span>)  <span class="co">// Seq(&quot;yellow&quot;, &quot;green&quot;)</span></code></pre></div>
+<span class="kw">val</span> res = df2.<span class="fu">smvGetLabels</span>(<span class="st">&quot;sex&quot;</span>)  <span class="co">// Seq(&quot;yellow&quot;, &quot;green&quot;)</span></code></pre>
 <h2 id="persisted-smvmodule-with-metadata">Persisted SmvModule with Metadata</h2>
-<p>When the output of an SmvModule has descriptions and/or labels, they will be persisted in the<br />
-schema file. As the following,</p>
+<p>When the output of an SmvModule has descriptions and/or labels, they will be persisted in the<br />schema file. As the following,</p>
 <pre><code>a: String
 b: Integer
 c: String
 phy_id: String @metadata={&quot;smvDesc&quot;:&quot;Physician ID from CMS&quot;,&quot;smvLabel&quot;:[&quot;id&quot;]}</code></pre>
 <p>When the persisted data read back in, the descriptions and labels are still there.</p>
 <h2 id="metadata-propagation">Metadata Propagation</h2>
-<p>Most DataFrame operations do not support metadata propagation, since there is not<br />
-general logic of doing so. From implementation angle, since the metadata is stored in the<br />
-schema (as part of the DataFrame) instead of the <code>Column</code> objects, almost all column methods and<br />
-functions can't propagate metadata. The only exception is <code>as</code> method, the following<br />
-example demonstrates it:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> df = app.<span class="fu">createDF</span>(<span class="st">&quot;a:String&quot;</span>, <span class="st">&quot;a&quot;</span>)
+<p>Most DataFrame operations do not support metadata propagation, since there is not<br />general logic of doing so. From implementation angle, since the metadata is stored in the<br />schema (as part of the DataFrame) instead of the <code>Column</code> objects, almost all column methods and<br />functions can't propagate metadata. The only exception is <code>as</code> method, the following<br />example demonstrates it:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> df = app.<span class="fu">createDF</span>(<span class="st">&quot;a:String&quot;</span>, <span class="st">&quot;a&quot;</span>)
 scala&gt; <span class="kw">val</span> df1 = df.<span class="fu">smvDesc</span>(<span class="st">&quot;a&quot;</span> -&gt; <span class="st">&quot;test col a&quot;</span>)
 scala&gt; df1.<span class="fu">select</span>($<span class="st">&quot;a&quot;</span> as <span class="st">&quot;b&quot;</span>).<span class="fu">printDesc</span>
 b:
 
 scala&gt; df1.<span class="fu">select</span>(<span class="fu">df1</span>(<span class="st">&quot;a&quot;</span>) as <span class="st">&quot;b&quot;</span>).<span class="fu">printDesc</span>
-b: test col a</code></pre></div>
-<p>As you can see, rename will persist the metadata when you referring the original<br />
-column as <code>df(colname)</code> instead of <code>$&quot;colname&quot;</code>.</p>
+b: test col a</code></pre>
+<p>As you can see, rename will persist the metadata when you referring the original<br />column as <code>df(colname)</code> instead of <code>$&quot;colname&quot;</code>.</p>
 <p>Regular projections without re-calculation will preserve metadata.</p>
 </article>
 </body>

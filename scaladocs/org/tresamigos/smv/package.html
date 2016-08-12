@@ -120,6 +120,19 @@
       </span>
       </h4>
       <p class="comment cmt">Using asm to figure out SmvDataSet dependency</p>
+    </li><li name="org.tresamigos.smv.HasName" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="HasNameextendsAnyRef"></a>
+      <a id="HasName:HasName"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="HasName.html"><span class="name">HasName</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Allows stackable module naming, such as with Using[SmvRunConfig]</p>
     </li><li name="org.tresamigos.smv.SchemaDiscoveryHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SchemaDiscoveryHelperextendsAnyRef"></a>
       <a id="SchemaDiscoveryHelper:SchemaDiscoveryHelper"></a>
@@ -240,7 +253,7 @@
 common part to the new ABC: SmvDSWithParser
 </p>
     </li><li name="org.tresamigos.smv.SmvDataSet" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="SmvDataSetextendsAnyRef"></a>
+      <a id="SmvDataSetextendsHasName"></a>
       <a id="SmvDataSet:SmvDataSet"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -248,7 +261,7 @@ common part to the new ABC: SmvDSWithParser
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="SmvDataSet.html"><span class="name">SmvDataSet</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <a href="SmvDataSet.html"><span class="name">SmvDataSet</span></a><span class="result"> extends <a href="HasName.html" class="extype" name="org.tresamigos.smv.HasName">HasName</a></span>
       </span>
       </h4>
       <p class="comment cmt">Dependency management unit within the SMV application framework.</p>
@@ -452,7 +465,7 @@ the same schema and CsvAttributes.</p>
       </h4>
       <p class="comment cmt">CSV file schema definition.</p>
     </li><li name="org.tresamigos.smv.Using" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="Using[+T&lt;:org.tresamigos.smv.SmvRunConfig]extendsAnyRef"></a>
+      <a id="Using[+T&lt;:org.tresamigos.smv.SmvRunConfig]extendsHasName"></a>
       <a id="Using[+T&lt;:SmvRunConfig]:Using[T]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -460,7 +473,7 @@ the same schema and CsvAttributes.</p>
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a href="Using.html"><span class="name">Using</span></a><span class="tparams">[<span name="T">+T &lt;: <a href="SmvRunConfig.html" class="extype" name="org.tresamigos.smv.SmvRunConfig">SmvRunConfig</a></span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <a href="Using.html"><span class="name">Using</span></a><span class="tparams">[<span name="T">+T &lt;: <a href="SmvRunConfig.html" class="extype" name="org.tresamigos.smv.SmvRunConfig">SmvRunConfig</a></span>]</span><span class="result"> extends <a href="HasName.html" class="extype" name="org.tresamigos.smv.HasName">HasName</a></span>
       </span>
       </h4>
       <p class="comment cmt">SmvDataSet that can be configured to return different DataFrames.</p>
