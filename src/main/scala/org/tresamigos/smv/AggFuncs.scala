@@ -176,16 +176,15 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
   def inputSchema = new StructType().
     add("v", DoubleType).
     add("min_val", DoubleType).
-    add("min_val", DoubleType).
+    add("max_val", DoubleType).
     add("num_of_bins", IntegerType)
 
-  var min_val: Double = _
-  var max_val: Double = _
-  var num_of_bins: Int = _
-  var interval_length: Double = _
-
   //Create a map that has bin index to bin count.
-  def bufferSchema = new StructType().add("bin_count", DataTypes.createMapType(IntegerType, IntegerType))
+  def bufferSchema = new StructType().
+    add("bin_count", DataTypes.createMapType(IntegerType, IntegerType)).
+    add("min_val", DoubleType).
+    add("max_val", DoubleType).
+    add("num_of_bins", IntegerType)
 
   val return_type_struct_fields = Array(
     StructField("interval_low_bound", DoubleType),
@@ -198,12 +197,21 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
 
   def initialize(buffer: MutableAggregationBuffer) = {
     buffer.update(0, Map():Map[Int, Int])
+    buffer.update(1, Double.MaxValue)     //Init min_val to the largest Double
+    buffer.update(2, Double.MinValue)     //Init max_val to the smallest Double
+    buffer.update(3, -1)                  //Init num_of_bins to -1
   }
 
   /**
    * given a value return the bin index it belong to. The index is 0 based.
    */
-  private def value_to_bin(value: Double): Int = {
+  private def value_to_bin(input: Row): Int = {
+    val value = input.getDouble(0)
+    val min_val = input.getDouble(1)
+    val max_val = input.getDouble(2)
+    val num_of_bins = input.getInt(3)
+    val interval_length = (max_val - min_val) / num_of_bins
+
     //Bound the value
     val v = if (value < min_val) min_val else if (value > max_val) max_val else value
 
@@ -221,20 +229,14 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
     // Null value should be an entry also
     val m = buffer.getMap(0).asInstanceOf[Map[Int,Int]]
 
-    if (!input.isNullAt(1) && !input.isNullAt(2) && !input.isNullAt(3)) {
-      min_val = input.getDouble(1)
-      max_val = input.getDouble(2)
-      num_of_bins = input.getInt(3)
-      interval_length = (max_val - min_val) / num_of_bins
-    } else {
-      return
-    }
-
     //Ignoring null values
-    if(!input.isNullAt(0)) {
-      val bin = value_to_bin(input.getDouble(0))
+    if(!input.isNullAt(0) && !input.isNullAt(1) && !input.isNullAt(2) && !input.isNullAt(3)) {
+      val bin = value_to_bin(input)
       val cnt = m.getOrElse(bin, 0) + 1
       buffer.update(0, m + (bin -> cnt))
+      buffer.update(1, input.getDouble(1))
+      buffer.update(2, input.getDouble(2))
+      buffer.update(3, input.getInt(3))
     }
   }
 
@@ -243,13 +245,23 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
     val m2 = buffer2.getMap(0).asInstanceOf[Map[Int,Int]]
     //This is performing a left fold to merge the keys of two maps.
     val m = (m1 /: m2){case (map,(k,v)) => map + (k -> ((map.getOrElse(k,0) + v)))}
+
+    val min_val = math.min(buffer1.getDouble(1), buffer2.getDouble(1))
+    val max_val = math.max(buffer1.getDouble(2), buffer2.getDouble(2))
+    val num_of_bins = math.max(buffer1.getInt(3), buffer2.getInt(3))
+
     buffer1.update(0, m)
+    buffer1.update(1, min_val)
+    buffer1.update(2, max_val)
+    buffer1.update(3, num_of_bins)
   }
 
   /**
    * helper method that takes a given bin index(0 based) and return the associated interval
    */
-  private def bin_interval(bin_index: Int) : (Double, Double) = {
+  private def bin_interval(bin_index: Int, min_val: Double, max_val: Double, num_of_bins: Int) : (Double, Double) = {
+    val interval_length = (max_val - min_val) / num_of_bins
+
     if(bin_index == 0) {
       (min_val, min_val + interval_length)
     } else if (bin_index == (num_of_bins - 1)) {
@@ -267,7 +279,7 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
     } else {
       val bin_frequencies = buffer.getMap(0).asInstanceOf[Map[Int, Int]].toSeq.sortBy(_._1)
       bin_frequencies.map { bin_freq =>
-        val bin_inter = bin_interval(bin_freq._1)
+        val bin_inter = bin_interval(bin_freq._1, buffer.getDouble(1), buffer.getDouble(2), buffer.getInt(3))
         Row(bin_inter._1, bin_inter._2, bin_freq._2)
       }
     }
