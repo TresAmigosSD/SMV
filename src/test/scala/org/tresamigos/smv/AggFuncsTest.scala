@@ -35,6 +35,14 @@ class AggFuncsTest extends SmvTestUtil {
     assert(hist === Map("231"->1l,"123"->2l))
   }
 
+  test("test MostFrequentValue") {
+    val ssc = sqlContext
+    import ssc.implicits._
+    val df = open(testDataDir + "AggTest/test2.csv")
+    val std = df.agg(mfv('id)).collect()(0)(0).asInstanceOf[Map[String, Long]]
+    assert(1==1)
+  }
+
   test("test DoubleBinHistogram") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "AggTest/test2.csv")
