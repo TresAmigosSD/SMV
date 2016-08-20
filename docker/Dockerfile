@@ -21,7 +21,9 @@ RUN apt-get update &&\
     apt-get install -y $EDITOR &&\
     apt-get install -y unzip &&\
     apt-get install -y rsync &&\
-    useradd --create-home --shell /bin/bash smv &&\
+    apt-get install -y sudo &&\
+    useradd -G sudo --create-home --shell /bin/bash smv &&\
+    echo "smv ALL = NOPASSWD: ALL" >> /etc/sudoers &&\
     mkdir /projects &&\
     chown smv:smv /projects
 
