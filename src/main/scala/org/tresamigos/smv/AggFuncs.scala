@@ -14,18 +14,18 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql._, types._
+import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions._
-
 import org.apache.spark.sql.expressions._
+import org.apache.spark.sql.types._
 
 /** Since UserDefinedAggregateFunction is not very flexible on input/output schema(or type),
- we have to separate histogram function for different data types. At some stage we may come back
- to this implementation, if UserDefinedAggregateFunction doesn't provide the flexiblity in the
- future. For now, we will convert to use UserDefinedAggregateFunction and separate the histogram
- function
-*/
+  * we have to separate histogram function for different data types. At some stage we may come back
+  * to this implementation, if UserDefinedAggregateFunction doesn't provide the flexiblity in the
+  * future. For now, we will convert to use UserDefinedAggregateFunction and separate the histogram
+  * function
+  */
 
 private[smv] class Histogram(inputDT: DataType) extends UserDefinedAggregateFunction {
   def inputSchema = new StructType().add("v", inputDT)
@@ -37,21 +37,21 @@ private[smv] class Histogram(inputDT: DataType) extends UserDefinedAggregateFunc
   def deterministic = true
 
   def initialize(buffer: MutableAggregationBuffer) = {
-    buffer.update(0, Map():Map[Any, Long])
+    buffer.update(0, Map(): Map[Any, Long])
   }
 
   def update(buffer: MutableAggregationBuffer, input: Row) = {
     // Null value should be an entry also
-    val m = buffer.getMap(0).asInstanceOf[Map[Any,Long]]
+    val m = buffer.getMap(0).asInstanceOf[Map[Any, Long]]
     val k = input.get(0)
     val cnt = m.getOrElse(k, 0L) + 1L
     buffer.update(0, m + (k -> cnt))
   }
 
   def merge(buffer1: MutableAggregationBuffer, buffer2: Row) = {
-    val m1 = buffer1.getMap(0).asInstanceOf[Map[Any,Long]]
-    val m2 = buffer2.getMap(0).asInstanceOf[Map[Any,Long]]
-    val m = (m1 /: m2){case (map,(k,v)) => map + (k -> ((map.getOrElse(k,0L) + v)))}
+    val m1 = buffer1.getMap(0).asInstanceOf[Map[Any, Long]]
+    val m2 = buffer2.getMap(0).asInstanceOf[Map[Any, Long]]
+    val m = (m1 /: m2) { case (map, (k, v)) => map + (k -> ((map.getOrElse(k, 0L) + v))) }
     buffer1.update(0, m)
   }
 
@@ -59,9 +59,57 @@ private[smv] class Histogram(inputDT: DataType) extends UserDefinedAggregateFunc
 }
 
 object histStr extends Histogram(StringType)
+
 object histInt extends Histogram(IntegerType)
+
 object histBoolean extends Histogram(BooleanType)
+
 object histDouble extends Histogram(DoubleType)
+
+private[smv] class MostFrequentValue(in: DataType) extends Histogram(in) {
+  override def merge(buffer1: MutableAggregationBuffer, buffer2: Row) = {
+    val m1 = buffer1.getMap(0).asInstanceOf[Map[Any, Long]]
+    val m2 = buffer2.getMap(0).asInstanceOf[Map[Any, Long]]
+    val m = (m1 /: m2) { case (map, (k, v)) => map + (k -> ((map.getOrElse(k, 0L) + v))) }
+    buffer1.update(0, m)
+  }
+
+  override def evaluate(buffer: Row) = {
+    val reducedMap = buffer.getMap(0).asInstanceOf[Map[Any, Long]]
+    val hist = reducedMap.toList
+    val max = maxBySeq(hist)(_._2)
+    max.toMap.asInstanceOf[Map[Nothing, Nothing]]
+  }
+
+  //since stdlib maxBy returns a single element, and we need to return Seq for the case that we have multiple modes
+  //in our data.
+  def maxBySeq[A, B: Ordering](xs: List[A])(f: A => B): Seq[A] = {
+    val result = {
+      var bigs = xs.take(0)
+      var bestSoFar = f(xs.head)
+      xs.foreach { x =>
+        if (bigs.isEmpty) bigs = x :: bigs
+        else {
+          val fx = f(x)
+          val result = Ordering[B].compare(fx, bestSoFar)
+          if (result > 0) {
+            bestSoFar = fx
+            bigs = List(x)
+          }
+          else if (result == 0) bigs = x :: bigs
+        }
+      }
+      bigs
+    }
+
+    result
+  }
+}
+
+
+object mfvStr extends MostFrequentValue(StringType)
+
+object mfvInt extends MostFrequentValue(IntegerType)
 
 private[smv] object stddev extends UserDefinedAggregateFunction {
   // Schema you get as an input
@@ -69,9 +117,9 @@ private[smv] object stddev extends UserDefinedAggregateFunction {
 
   // Schema of the row which is used for aggregation
   def bufferSchema = new StructType().
-  add("count", LongType).
-  add("avg", DoubleType).
-  add("m2", DoubleType)
+    add("count", LongType).
+    add("avg", DoubleType).
+    add("m2", DoubleType)
 
   // Returned type
   def dataType = DoubleType
@@ -88,7 +136,7 @@ private[smv] object stddev extends UserDefinedAggregateFunction {
 
   // Similar to seqOp in aggregate
   def update(buffer: MutableAggregationBuffer, input: Row) = {
-    if (!input.isNullAt(0)){
+    if (!input.isNullAt(0)) {
       val x = input.getDouble(0)
       val count = buffer.getLong(0)
       val avg = buffer.getDouble(1)
@@ -116,7 +164,7 @@ private[smv] object stddev extends UserDefinedAggregateFunction {
 
     if (count2 > 0) {
       val delta = avg1 - avg2
-      val avg = (avg1 * count1 + avg2 * count2 ) / (count1 + count2)
+      val avg = (avg1 * count1 + avg2 * count2) / (count1 + count2)
       val m2 = m21 + m22 + delta * delta * count1 * count2 / (count1 + count2)
       val count = count1 + count2
 
@@ -131,7 +179,7 @@ private[smv] object stddev extends UserDefinedAggregateFunction {
     val count = buffer.getLong(0)
     val avg = buffer.getDouble(1)
     val m2 = buffer.getDouble(2)
-    if (count<2) 0.0 else scala.math.sqrt(m2/(count-1))
+    if (count < 2) 0.0 else scala.math.sqrt(m2 / (count - 1))
   }
 }
 
@@ -140,8 +188,11 @@ private[smv] case class SmvFirst(child: Expression) extends UnaryExpression with
   def this() = this(null)
 
   override def nullable: Boolean = true
+
   override def dataType: DataType = child.dataType
+
   override def toString: String = s"SmvFirst($child)"
+
   override def newInstance(): SmvFirstFunction =
     new SmvFirstFunction(child, this)
 }
@@ -153,7 +204,7 @@ private[smv] case class SmvFirstFunction(expr: Expression, base: AggregateExpres
   var result: Any = null
 
   override def update(input: InternalRow): Unit = {
-    if(! calculated){
+    if (!calculated) {
       result = expr.eval(input)
       calculated = true
     }
@@ -163,14 +214,14 @@ private[smv] case class SmvFirstFunction(expr: Expression, base: AggregateExpres
 }
 
 /**
- * Performs a linear bin based histogram. This UDF takes the following parameters:
- * the value to bin, the min value, the max value and the number of bins
- * example: df.agg(DoubleBinHistogram('val, lit(0.0), lit(100.0), lit(2))) where
- *   'val is the column to bin
- *   0.0 : the minimum value
- *   100.0: the max value
- *   2: the number of bins
- */
+  * Performs a linear bin based histogram. This UDF takes the following parameters:
+  * the value to bin, the min value, the max value and the number of bins
+  * example: df.agg(DoubleBinHistogram('val, lit(0.0), lit(100.0), lit(2))) where
+  * 'val is the column to bin
+  * 0.0 : the minimum value
+  * 100.0: the max value
+  * 2: the number of bins
+  */
 //TODO: investigate a way to pass the number of bins as a const value instead of a column value.
 private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
   def inputSchema = new StructType().
@@ -189,22 +240,22 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
   val return_type_struct_fields = Array(
     StructField("interval_low_bound", DoubleType),
     StructField("interval_high_bound", DoubleType),
-    StructField("count", IntegerType) )
+    StructField("count", IntegerType))
 
-  def dataType =  DataTypes.createArrayType(DataTypes.createStructType(return_type_struct_fields))
+  def dataType = DataTypes.createArrayType(DataTypes.createStructType(return_type_struct_fields))
 
   def deterministic = true
 
   def initialize(buffer: MutableAggregationBuffer) = {
-    buffer.update(0, Map():Map[Int, Int])
-    buffer.update(1, Double.MaxValue)     //Init min_val to the largest Double
-    buffer.update(2, Double.MinValue)     //Init max_val to the smallest Double
-    buffer.update(3, -1)                  //Init num_of_bins to -1
+    buffer.update(0, Map(): Map[Int, Int])
+    buffer.update(1, Double.MaxValue) //Init min_val to the largest Double
+    buffer.update(2, Double.MinValue) //Init max_val to the smallest Double
+    buffer.update(3, -1) //Init num_of_bins to -1
   }
 
   /**
-   * given a value return the bin index it belong to. The index is 0 based.
-   */
+    * given a value return the bin index it belong to. The index is 0 based.
+    */
   private def value_to_bin(input: Row): Int = {
     val value = input.getDouble(0)
     val min_val = input.getDouble(1)
@@ -220,17 +271,17 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
     } else if (v == min_val) {
       0
     } else {
-      val bin = ((v - min_val)/interval_length).toInt
+      val bin = ((v - min_val) / interval_length).toInt
       bin
     }
   }
 
-  def update(buffer: MutableAggregationBuffer, input: Row): Unit =  {
+  def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
     // Null value should be an entry also
-    val m = buffer.getMap(0).asInstanceOf[Map[Int,Int]]
+    val m = buffer.getMap(0).asInstanceOf[Map[Int, Int]]
 
     //Ignoring null values
-    if(!input.isNullAt(0) && !input.isNullAt(1) && !input.isNullAt(2) && !input.isNullAt(3)) {
+    if (!input.isNullAt(0) && !input.isNullAt(1) && !input.isNullAt(2) && !input.isNullAt(3)) {
       val bin = value_to_bin(input)
       val cnt = m.getOrElse(bin, 0) + 1
       buffer.update(0, m + (bin -> cnt))
@@ -241,10 +292,10 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
   }
 
   def merge(buffer1: MutableAggregationBuffer, buffer2: Row) = {
-    val m1 = buffer1.getMap(0).asInstanceOf[Map[Int,Int]]
-    val m2 = buffer2.getMap(0).asInstanceOf[Map[Int,Int]]
+    val m1 = buffer1.getMap(0).asInstanceOf[Map[Int, Int]]
+    val m2 = buffer2.getMap(0).asInstanceOf[Map[Int, Int]]
     //This is performing a left fold to merge the keys of two maps.
-    val m = (m1 /: m2){case (map,(k,v)) => map + (k -> ((map.getOrElse(k,0) + v)))}
+    val m = (m1 /: m2) { case (map, (k, v)) => map + (k -> ((map.getOrElse(k, 0) + v))) }
 
     val min_val = math.min(buffer1.getDouble(1), buffer2.getDouble(1))
     val max_val = math.max(buffer1.getDouble(2), buffer2.getDouble(2))
@@ -257,18 +308,18 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
   }
 
   /**
-   * helper method that takes a given bin index(0 based) and return the associated interval
-   */
-  private def bin_interval(bin_index: Int, min_val: Double, max_val: Double, num_of_bins: Int) : (Double, Double) = {
+    * helper method that takes a given bin index(0 based) and return the associated interval
+    */
+  private def bin_interval(bin_index: Int, min_val: Double, max_val: Double, num_of_bins: Int): (Double, Double) = {
     val interval_length = (max_val - min_val) / num_of_bins
 
-    if(bin_index == 0) {
+    if (bin_index == 0) {
       (min_val, min_val + interval_length)
     } else if (bin_index == (num_of_bins - 1)) {
       (max_val - interval_length, max_val)
     } else {
       val start = bin_index * interval_length
-      (start, start +  interval_length)
+      (start, start + interval_length)
     }
   }
 
