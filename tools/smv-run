@@ -11,6 +11,8 @@ if [ "$1" = "-h" ]; then
   echo "USAGE: `basename $0` [-h] [spark_args] <smv_app_args>"
   echo "spark_args:"
   echo "    [--master master]"
+  echo "    [--executor-memory exec-mem]"
+  echo "    [--driver-memory driver-mem]"
   echo "    [--class class]"
   echo "    [--jar fat_jar]"
   echo "smv_app_args:"
@@ -28,6 +30,6 @@ echo "START RUN =============================="
 date
 
 export SPARK_PRINT_LAUNCH_COMMAND=1
-spark-submit --executor-memory 6G --master ${MASTER} --class ${SMV_APP_CLASS} "$APP_JAR" ${ARGS[@]}
+spark-submit --executor-memory ${EXECUTOR_MEMORY} --driver-memory ${DRIVER_MEMORY} --master ${MASTER} --class ${SMV_APP_CLASS} "$APP_JAR" ${ARGS[@]}
 date
 

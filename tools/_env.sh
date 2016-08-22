@@ -62,6 +62,8 @@ function find_fat_jar()
 
 function extract_spark_args()
 {
+		extract_arg EXECUTOR_MEMORY --executor-memory "6G"
+		extract_arg DRIVER_MEMORY   --driver-memory   "2G"
     extract_arg MASTER --master ${SMV_MASTER:-'local[*]'}
     extract_arg SMV_APP_CLASS --class "org.tresamigos.smv.SmvApp"
     extract_arg APP_JAR --jar ""
