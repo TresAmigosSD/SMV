@@ -22,27 +22,30 @@ Please refer to [User Guide](docs/user/0_user_toc.md) and
 
 **Note:** The sections below were extracted from the User Guide and it should be consulted for more detailed instructions.
 
-# Install SMV with Docker
+# Use SMV with Docker
 
 ## Docker
 Install [Docker](https://www.docker.com/what-docker). An installation guide for your machine may be found [here](https://docs.docker.com/engine/installation/).
 
-## SMV
-Pull this repository, navigate to the docker directory, and build the SMV docker image with 
+## For users
+The first time you run the smv Docker image, Docker will download it for you automatically. You need to tell Docker where to find your projects directory and your data directory. You will enter a shell with all SMV tools installed. Find your projects in /projects and your data in /data.
 ```shell
-docker build -t smv .
+$ docker run -it -v /path/to/projects:/projects -v /path/to/data:/data tresamigos/smv
 ```
-Now run SMV with
+
+## For developers
+
+The smv-core image contains only the tools needed for SMV development, so you may build SMV from source with mvn or sbt. Find your SMV source in /smv and your projects in /projects in the container.
 ```shell
-docker run -rm -it -v /path/to/projects:/projects -v /path/to/data:/data smv
-``` 
+$ _SMV_HOME_/docker/smv-core/smv-core.sh /path/to/smv /path/to/projects
+```
 
 # SMV Getting Started
 
 ## Create example App
 
 SMV provides a shell script to easily create an example application.
-The example app can be used for exploring SVM and it can also be used as an initialization script for a new project.
+The example app can be used for exploring SMV and it can also be used as an initialization script for a new project.
 
 ```bash
 $ _SMV_HOME_/tools/smv-init MyApp com.mycompany.myapp
