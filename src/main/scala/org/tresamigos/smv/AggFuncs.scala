@@ -63,6 +63,44 @@ object histInt extends Histogram(IntegerType)
 object histBoolean extends Histogram(BooleanType)
 object histDouble extends Histogram(DoubleType)
 
+private[smv] class MostFrequentValue(in: DataType) extends Histogram(in) {
+  override def evaluate(buffer: Row) = {
+    val reducedMap = buffer.getMap(0).asInstanceOf[Map[Any, Long]]
+    val hist = reducedMap.toList
+    val max = maxBySeq(hist)(_._2)
+    max.toMap.asInstanceOf[Map[Nothing, Nothing]]
+  }
+
+  //since stdlib maxBy returns a single element, and we need to return Seq for the case that we have multiple modes
+  //in our data.
+  def maxBySeq[A, B: Ordering](xs: List[A])(f: A => B): Seq[A] = {
+    val result = {
+      var bigs = xs.take(0)
+      var bestSoFar = f(xs.head)
+      xs.foreach { x =>
+        if (bigs.isEmpty) bigs = x :: bigs
+        else {
+          val fx = f(x)
+          val result = Ordering[B].compare(fx, bestSoFar)
+          if (result > 0) {
+            bestSoFar = fx
+            bigs = List(x)
+          }
+          else if (result == 0) bigs = x :: bigs
+        }
+      }
+      bigs
+    }
+
+    result
+  }
+}
+
+
+object mfvStr extends MostFrequentValue(StringType)
+
+object mfvInt extends MostFrequentValue(IntegerType)
+
 private[smv] object stddev extends UserDefinedAggregateFunction {
   // Schema you get as an input
   def inputSchema = new StructType().add("v", DoubleType)
