@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 
 # ensure that the mvn and ivy caches have been copied to the host mount
 mkdir -p /projects/.ivy2 /projects/.m2
