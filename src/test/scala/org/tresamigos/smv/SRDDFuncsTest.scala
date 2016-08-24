@@ -1,5 +1,5 @@
 /*
- * This file is licensed under the Apache License, Version 2.0
+ * This file is licensed nder the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
@@ -267,6 +267,26 @@ class JoinHelperTest extends SmvTestUtil {
       """1,x1;
         |5,null""".stripMargin
     )
+  }
+}
+
+class smvUionTest extends SmvTestUtil {
+  test("test smvUion") {
+    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+      """1,2.0,hello;
+         2,3.0,hello2"""
+    )
+    val df2 = createSchemaRdd("c:String; a:Integer; d:Double",
+      """hello5,5,21.0;
+         hello6,6,22.0"""
+    )
+
+    val result =df.smvUnion(df2)
+    assertUnorderedSeqEqual(result.collect.map(_.toString), Seq(
+      "[1,2.0,hello,null]", 
+      "[2,3.0,hello2,null]", 
+      "[5,null,hello5,21.0]", 
+      "[6,null,hello6,22.0]" ))
   }
 }
 

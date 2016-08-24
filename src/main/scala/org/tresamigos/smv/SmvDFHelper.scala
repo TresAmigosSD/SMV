@@ -514,6 +514,39 @@ class SmvDFHelper(df: DataFrame) {
 
     df.sqlContext.createDataFrame(res, newSchema)
   }
+   /** Union two data frames that have shared columns, kept columns on both side*/
+  private[smv] def RowBind(
+    dfother: DataFrame): DataFrame = {
+    import df.sqlContext.implicits._
+
+    val leftNeed = dfother.columns diff df.columns
+    val leftStruct = leftNeed map (colName => dfother.schema.filter(_.name == colName)(0))
+    val leftFull = df.selectPlus((leftStruct map (sf => lit(null).cast(sf.dataType) as sf.name)):_*)
+
+    val rightNeed = df.columns diff dfother.columns
+    val rightStruct = rightNeed map (colName => df.schema.filter(_.name == colName)(0))
+    val rightFull = dfother.selectPlus((rightStruct map (sf => lit(null).cast(sf.dataType) as sf.name)):_*)
+
+    val overlap = df.columns intersect dfother.columns
+    val overlapLeftStruct = overlap map (colName => df.schema.filter(_.name == colName)(0))
+    val overlapRightStruct = overlap map (colName => dfother.schema.filter(_.name == colName)(0))
+    val diffColumns = overlapLeftStruct diff overlapRightStruct
+    if (diffColumns.isEmpty) {
+      leftFull.unionAll(rightFull.select(leftFull.columns.head, leftFull.columns.tail:_*))}
+      else {
+        val diffNames = diffColumns.map{col => col.name}.mkString(",")
+        throw new IllegalStateException(s"fail to union columns with same name but different StructTypes: ${diffNames}")
+      }
+  }
+  
+  /**
+   * smvUnion unions DataFrames with different number of columns by column name & schema.
+   * spark unionAll ignores column names & schema, and can only be performed on tables with the same number of columns.
+   */
+  def smvUnion(
+    dfothers: DataFrame*):DataFrame = {
+    dfothers.foldLeft(df){(acc, dfother) => RowBind(dfother)}
+  }
 
   /**
    * smvPivot adds the pivoted columns without additional
