@@ -30,19 +30,23 @@ WORKDIR /projects
 
 RUN sudo mkdir -p $LIB_DIR &&\
     sudo chown smv:smv /projects &&\
+    \
     wget http://www-us.apache.org/dist/maven/maven-3/$MVN_VERSION/binaries/apache-maven-$MVN_VERSION-bin.tar.gz &&\
     tar xzvf apache-maven-$MVN_VERSION-bin.tar.gz &&\
     rm apache-maven-$MVN_VERSION-bin.tar.gz &&\
     sudo mv apache-maven-$MVN_VERSION $M2_HOME/ &&\
+    \
     wget http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz &&\
     tar xzvf spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz &&\
     rm spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz &&\
     sudo mv spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION $SPARK_HOME/ &&\
+    \
     wget https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz &&\
     tar -xzvf sbt-$SBT_VERSION.tgz &&\
     sudo mv sbt $SBT_HOME &&\
     rm sbt-$SBT_VERSION.tgz &&\
+# dry run of sbt forces download of sbt dependencies
     sbt exit
 
-#Custom .bashrc customizes prompt
+# Customizes prompt
 COPY ./.bashrc /home/smv

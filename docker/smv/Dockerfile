@@ -11,13 +11,15 @@ RUN wget http://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     mvn clean install -DskipTests &&\
     sbt publish-local
 
-#Custom mvn settings cofigure repository to live on user's host mount but also leverage cache from SMV build
+# Configures maven repository to live on user's host mount (i.e. in /projects)
 COPY ./settings.xml $M2_HOME/conf/settings.xml
 
-#Custom sbtops configures sbt to use ivy dependency and local caches on host mount
+# Configures ivy (through sbt) repository to live on user's host mount (i.e. in /projects)
 COPY ./sbtopts /home/smv/lib/sbt/conf/sbtopts
 
+# Entrypoint rsyncs maven and ivy caches from the container to the host
+# mount, then executes user-supplied command or starts bash
 COPY ./entrypoint.sh /usr/bin/entrypoint.sh
 
-#Must use bracket syntax (["command"]) so that user can supply params
+# Must use bracket syntax (["command"]) so that user can supply params (additional commands to execute)
 ENTRYPOINT ["entrypoint.sh"]
