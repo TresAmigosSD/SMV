@@ -35,7 +35,7 @@ object i {
     val meth = mir.symbol.typeSignature.member(universe.newTermName("hotdeploy"))
 
     if (meth.isMethod) {
-      println("The following dependent SmvDataSets will be recomputed:")
+      println("The following dependent SmvDataSets will be reloaded:")
       ds.dependencies foreach (x => println(x.getClass.getName))
 
       mir.reflectMethod(meth.asMethod)()
