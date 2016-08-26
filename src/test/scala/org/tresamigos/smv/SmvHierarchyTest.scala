@@ -185,6 +185,50 @@ class SmvHierarchyTest extends SmvTestUtil {
                         2014,Territory,001,Division,01,-10.0,8.0,300.0,-10.0,8.0,300.0""")
   }
 
+  ignore("levelRollup with count aggregation test"){
+    import org.apache.spark.sql.functions._
+
+    object GeoHier extends SmvHierarchies(
+      "geo",
+      SmvHierarchy("terr", hierTestPkg1.GeoMapFile, Seq("zip", "Territory", "Division"))
+    )
+
+    val df = app.createDF("zip:String",
+      """100;
+      102;
+      103;
+      201;
+      301;
+      401;
+      405""")
+
+    val res = GeoHier.levelRollup(
+        df, "zip", "Territory", "Division"
+      )(
+        count("zip") as "Zip_Cnt"
+      )().orderBy( asc("geo_type"), asc("geo_value") )
+
+    assertSrddSchemaEqual(res, """geo_type: String;
+                        geo_value: String;
+                        Zip_Cnt: Long""")
+
+    assertSrddDataEqual(res, """
+      Division,01,4;
+      Division,02,3;
+      Territory,001,3;
+      Territory,002,1;
+      Territory,003,1;
+      Territory,004,2;
+      zip,100,1;
+      zip,102,1;
+      zip,103,1;
+      zip,201,1;
+      zip,301,1;
+      zip,401,1;
+      zip,405,1
+      """)
+  }
+
 }
 
 }
