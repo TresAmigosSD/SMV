@@ -84,8 +84,17 @@ package object smv {
    * Useful when choosing a unique column name to add to a data frame.
    */
   @scala.annotation.tailrec
-  def mkUniq(collection: Seq[String], candidate: String): String =
-    if (collection.exists(_ == candidate)) mkUniq(collection, "_" + candidate) else candidate
+  def mkUniq(
+    collection: Seq[String],
+    candidate: String,
+    ignoreCase: Boolean = false,
+    postfix: String = null
+  ): String = {
+    val col_comp = if(ignoreCase) collection.map{c => c.toLowerCase} else collection
+    val can_comp = if(ignoreCase) candidate.toLowerCase else candidate
+    val can_to = if(postfix == null) "_" + candidate else candidate + postfix
+    if (col_comp.exists(_ == can_comp)) mkUniq(collection, can_to) else candidate
+  }
 
   /**
    * Instead of using String for join type, always use the link here.

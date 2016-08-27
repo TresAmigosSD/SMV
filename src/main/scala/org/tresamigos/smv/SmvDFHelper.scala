@@ -286,12 +286,9 @@ class SmvDFHelper(df: DataFrame) {
     postfix: String = null
   ) : DataFrame = {
     val namesLower = df.columns.map{c => c.toLowerCase}
-    val renamedFields = otherPlan.columns.filter{c =>
-      namesLower.contains(c.toLowerCase)
-    }.map{c =>
-      if(postfix == null) c -> ("_" + c)
-      else c -> (c + postfix)
-    }
+    val renamedFields = otherPlan.columns.map{c =>
+      c -> mkUniq(df.columns, c, ignoreCase = true, postfix)
+    }.filter{case (l, r) => l != r}
 
     df.join(otherPlan.renameField(renamedFields: _*), on: Column, joinType)
   }
@@ -324,11 +321,7 @@ class SmvDFHelper(df: DataFrame) {
   ): DataFrame = {
     import df.sqlContext.implicits._
 
-    val rightKeys =
-      if(postfix == null)
-        keys.map{k => "_" + k}
-      else
-        keys.map{k => k + postfix}
+    val rightKeys = keys.map{k => mkUniq(df.columns, k, ignoreCase = true, postfix)}
 
     val joinedKeys = keys zip rightKeys
     val renamedFields = joinedKeys.map{case (l,r) => (l -> r)}
@@ -538,7 +531,7 @@ class SmvDFHelper(df: DataFrame) {
         throw new IllegalStateException(s"fail to union columns with same name but different StructTypes: ${diffNames}")
       }
   }
-  
+
   /**
    * smvUnion unions DataFrames with different number of columns by column name & schema.
    * spark unionAll ignores column names & schema, and can only be performed on tables with the same number of columns.
@@ -1016,7 +1009,7 @@ class SmvDFHelper(df: DataFrame) {
     (new SchemaMetaOps(df)).addDesc(colDescs)
 
   /**
-   * Adds column descriptions with a companion 2-column desciptionDF, which has variable names as 
+   * Adds column descriptions with a companion 2-column desciptionDF, which has variable names as
    * column 1 and corresponding variable descriptions as column 2
    *
    * Example:

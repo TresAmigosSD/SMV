@@ -245,6 +245,18 @@ class JoinHelperTest extends SmvTestUtil {
       "[3,3,null,y4]"))
   }
 
+  test("joinByKey with underscore column name on the left table") {
+    val df1 = app.createDF("a:String;_a:String", "a,1;a,2")
+    val df2 = app.createDF("a:String;x:String", "a,f")
+
+    val res = df1.joinByKey(df2, Seq("a"), SmvJoinType.Inner)
+    assert(res.columns === Seq("a", "_a", "x"))
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[a,1,f]",
+      "[a,2,f]")
+    )
+  }
+
   test("joinMultipleByKey") {
     val df1 = createSchemaRdd("a:Integer;b:String", """1,x1;2,y1;3,z1""")
     val df2 = createSchemaRdd("a:Integer;b:String", """1,x1;4,w2;""")
@@ -283,9 +295,9 @@ class smvUionTest extends SmvTestUtil {
 
     val result =df.smvUnion(df2)
     assertUnorderedSeqEqual(result.collect.map(_.toString), Seq(
-      "[1,2.0,hello,null]", 
-      "[2,3.0,hello2,null]", 
-      "[5,null,hello5,21.0]", 
+      "[1,2.0,hello,null]",
+      "[2,3.0,hello2,null]",
+      "[5,null,hello5,21.0]",
       "[6,null,hello6,22.0]" ))
   }
 }
