@@ -6,6 +6,9 @@ import org.tresamigos.smv._
 
 /** Use an object instead of a module so interface using py4j is more straight-forward */
 class SmvPythonProxy {
+  def runMain(args: Array[String], sqlContext: SQLContext) =
+    SmvApp.init(args, Option(sqlContext.sparkContext), Option(sqlContext)).run
+
   def init(sqlContext: SQLContext): SmvApp =
     SmvApp.init(Array("-m", "None"), Option(sqlContext.sparkContext), Option(sqlContext))
 
