@@ -185,8 +185,9 @@ class SmvHierarchyTest extends SmvTestUtil {
                         2014,Territory,001,Division,01,-10.0,8.0,300.0,-10.0,8.0,300.0""")
   }
 
-  ignore("levelRollup with count aggregation test"){
+  test("levelRollup with count aggregation test"){
     import org.apache.spark.sql.functions._
+    val ssc = sqlContext; import ssc.implicits._
 
     object GeoHier extends SmvHierarchies(
       "geo",
@@ -200,12 +201,12 @@ class SmvHierarchyTest extends SmvTestUtil {
       201;
       301;
       401;
-      405""")
+      405""").selectPlus($"zip" as "_zip")
 
     val res = GeoHier.levelRollup(
         df, "zip", "Territory", "Division"
       )(
-        count("zip") as "Zip_Cnt"
+        count("_zip") as "Zip_Cnt"
       )().orderBy( asc("geo_type"), asc("geo_value") )
 
     assertSrddSchemaEqual(res, """geo_type: String;

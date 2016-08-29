@@ -405,6 +405,33 @@ class SmvHierarchies(
    * h2,        13,         2.0
    * }}}
    *
+   * Please note that due to the feature/limitation of Spark's own `rollup` method,
+   * the rollup keys can't be used in the aggregations. For example
+   * {{{
+   * val df=app.createDF("a:String;b:String", "1,a;1,b;2,b")
+   * df.rollup("a","b").agg(count("b") as "n").show
+   * }}}
+   * will result as
+   * {{{
+   * +----+----+---+
+   * |   a|   b|  n|
+   * +----+----+---+
+   * |   1|   a|  1|
+   * |null|null|  0|
+   * |   1|   b|  1|
+   * |   1|null|  0|
+   * |   2|   b|  1|
+   * |   2|null|  0|
+   * +----+----+---+
+   * }}}
+   * which is not the expected result. To actually get aggregation result on the keys,
+   * one need to copy the key to a new column and then apply the aggregate funtion on
+   * the new column, like the following,
+   * {{{
+   * df.selectPlus($"b" as "newb").rollup("a", "b").agg(count("newb") as "n")
+   * }}}
+   *
+   *
    * One can also specify additional keys as the following
    * {{{
    * ProdHier.levelRollup(df.smvWithKeys("time"), "h1", "h2")(...)()
