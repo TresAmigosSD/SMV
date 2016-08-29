@@ -48,8 +48,25 @@ Also I utilized `.ssh/config` to specify server ssh connection details. I aliase
 `rserver` in the config file. For details please refer
 http://nerderati.com/2011/03/17/simplify-your-life-with-an-ssh-config-file/
 
+My `.ssh/config` example:
+```
+host rserver
+    User ninjapapa
+    Hostname myserver.mycompany.com
+```
+
 With `atom-sync`, whenever you save on local version, it will `rsync` to the remote copy, so that
 the experience is pretty similar to editing the remote file directly.
+
+Here are the steps of using `atom-sync`,
+* On sever, `git clone` the project
+* On local machine, create a project folder, and edit `.sync-config.cson` as discribed above
+* Launch `atom` (with `atom-sync` installed) on the local project folder
+* Right click on the project folder and sync from remote to local
+* Edit on the code, when save code, it will be synced up to the server
+
+Recommend to do all the `git` operation on the server, and let `atom-sync` to sync down the `.git` directory
+also (does not put `.git` in the `exclude` list in the config file).
 
 Combining using this, SBT continuous compile, SMV class loader in SMV shell on the remote server,
 you can simplify the entire edit-compile-try cycle of SMV Module development.
