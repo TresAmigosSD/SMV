@@ -398,7 +398,20 @@ h1,        <span class="num">2</span>,          <span class="num">3.0</span>
 h2,        <span class="num">02</span>,         <span class="num">3.0</span>
 h2,        <span class="num">05</span>          <span class="num">3.0</span>
 h2,        <span class="num">12</span>,         <span class="num">1.0</span>
-h2,        <span class="num">13</span>,         <span class="num">2.0</span></pre><p>One can also specify additional keys as the following</p><pre>ProdHier.levelRollup(df.smvWithKeys(<span class="lit">"time"</span>), <span class="lit">"h1"</span>, <span class="lit">"h2"</span>)(...)()</pre><p>The last parameter list is an optional <code>SmvHierOpParam</code>, the default value
+h2,        <span class="num">13</span>,         <span class="num">2.0</span></pre><p>Please note that due to the feature/limitation of Spark's own <code>rollup</code> method,
+the rollup keys can't be used in the aggregations. For example</p><pre><span class="kw">val</span> df=app.createDF(<span class="lit">"a:String;b:String"</span>, <span class="lit">"1,a;1,b;2,b"</span>)
+df.rollup(<span class="lit">"a"</span>,<span class="lit">"b"</span>).agg(count(<span class="lit">"b"</span>) as <span class="lit">"n"</span>).show</pre><p>will result as</p><pre>+----+----+---+
+|   a|   b|  n|
++----+----+---+
+|   <span class="num">1</span>|   a|  <span class="num">1</span>|
+|<span class="kw">null</span>|<span class="kw">null</span>|  <span class="num">0</span>|
+|   <span class="num">1</span>|   b|  <span class="num">1</span>|
+|   <span class="num">1</span>|<span class="kw">null</span>|  <span class="num">0</span>|
+|   <span class="num">2</span>|   b|  <span class="num">1</span>|
+|   <span class="num">2</span>|<span class="kw">null</span>|  <span class="num">0</span>|
++----+----+---+</pre><p>which is not the expected result. To actually get aggregation result on the keys,
+one need to copy the key to a new column and then apply the aggregate funtion on
+the new column, like the following,</p><pre>df.selectPlus($<span class="lit">"b"</span> as <span class="lit">"newb"</span>).rollup(<span class="lit">"a"</span>, <span class="lit">"b"</span>).agg(count(<span class="lit">"newb"</span>) as <span class="lit">"n"</span>)</pre><p>One can also specify additional keys as the following</p><pre>ProdHier.levelRollup(df.smvWithKeys(<span class="lit">"time"</span>), <span class="lit">"h1"</span>, <span class="lit">"h2"</span>)(...)()</pre><p>The last parameter list is an optional <code>SmvHierOpParam</code>, the default value
 is to have no name no parent columns. Please see <code>SmvHierOpParam</code>'s document
 of other options.
 </p></div></div>

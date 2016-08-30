@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>histDouble - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.histDouble</title>
-          <meta name="description" content="histDouble - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.histDouble" />
-          <meta name="keywords" content="histDouble Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.histDouble" />
+          <title>mfvStr - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.mfvStr</title>
+          <meta name="description" content="mfvStr - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.mfvStr" />
+          <meta name="keywords" content="mfvStr Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.mfvStr" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -12,7 +12,7 @@
       <script type="text/javascript">
          if(top === self) {
             var url = '../../../index.html';
-            var hash = 'org.tresamigos.smv.histDouble$';
+            var hash = 'org.tresamigos.smv.mfvStr$';
             var anchor = window.location.hash;
             var anchor_opt = '';
             if (anchor.length >= 1)
@@ -26,7 +26,7 @@
       <div id="definition">
         <img src="../../../lib/object_big.png" />
         <p id="owner"><a href="../../package.html" class="extype" name="org">org</a>.<a href="../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
-        <h1>histDouble</h1>
+        <h1>mfvStr</h1>
       </div>
 
       <h4 id="signature" class="signature">
@@ -35,13 +35,13 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">histDouble</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span></span>
+        <span class="name">mfvStr</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.MostFrequentValue">MostFrequentValue</span></span>
       </span>
       </h4>
       
           <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span>, <span class="extype" name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction">UserDefinedAggregateFunction</span>, <span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="org.tresamigos.smv.MostFrequentValue">MostFrequentValue</span>, <span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span>, <span class="extype" name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction">UserDefinedAggregateFunction</span>, <span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -59,7 +59,7 @@
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.histDouble"><span>histDouble</span></li><li class="in" name="org.tresamigos.smv.Histogram"><span>Histogram</span></li><li class="in" name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction"><span>UserDefinedAggregateFunction</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.mfvStr"><span>mfvStr</span></li><li class="in" name="org.tresamigos.smv.MostFrequentValue"><span>MostFrequentValue</span></li><li class="in" name="org.tresamigos.smv.Histogram"><span>Histogram</span></li><li class="in" name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction"><span>UserDefinedAggregateFunction</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -279,8 +279,8 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.Histogram#evaluate" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="evaluate(buffer:org.apache.spark.sql.Row):scala.collection.Map[Nothing,Nothing]"></a>
+    </li><li name="org.tresamigos.smv.MostFrequentValue#evaluate" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="evaluate(buffer:org.apache.spark.sql.Row):Map[Nothing,Nothing]"></a>
       <a id="evaluate(Row):Map[Nothing,Nothing]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -288,10 +288,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">evaluate</span><span class="params">(<span name="buffer">buffer: <span class="extype" name="org.apache.spark.sql.Row">Row</span></span>)</span><span class="result">: <span class="extype" name="scala.collection.Map">Map</span>[<span class="extype" name="scala.Nothing">Nothing</span>, <span class="extype" name="scala.Nothing">Nothing</span>]</span>
+        <span class="name">evaluate</span><span class="params">(<span name="buffer">buffer: <span class="extype" name="org.apache.spark.sql.Row">Row</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Nothing">Nothing</span>, <span class="extype" name="scala.Nothing">Nothing</span>]</span>
       </span>
       </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Histogram → UserDefinedAggregateFunction</dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>MostFrequentValue → Histogram → UserDefinedAggregateFunction</dd></dl></div>
     </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <a id="finalize():Unit"></a>
@@ -376,6 +376,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.MostFrequentValue#maxBySeq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="maxBySeq[A,B](xs:List[A])(f:A=&gt;B)(implicitevidence$1:Ordering[B]):Seq[A]"></a>
+      <a id="maxBySeq[A,B](List[A])((A)⇒B)(Ordering[B]):Seq[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">maxBySeq</span><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>]</span><span class="params">(<span name="xs">xs: <span class="extype" name="scala.List">List</span>[<span class="extype" name="org.tresamigos.smv.MostFrequentValue.maxBySeq.A">A</span>]</span>)</span><span class="params">(<span name="f">f: (<span class="extype" name="org.tresamigos.smv.MostFrequentValue.maxBySeq.A">A</span>) ⇒ <span class="extype" name="org.tresamigos.smv.MostFrequentValue.maxBySeq.B">B</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.Ordering">Ordering</span>[<span class="extype" name="org.tresamigos.smv.MostFrequentValue.maxBySeq.B">B</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="org.tresamigos.smv.MostFrequentValue.maxBySeq.A">A</span>]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>MostFrequentValue</dd></dl></div>
     </li><li name="org.tresamigos.smv.Histogram#merge" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="merge(buffer1:org.apache.spark.sql.expressions.MutableAggregationBuffer,buffer2:org.apache.spark.sql.Row):Unit"></a>
       <a id="merge(MutableAggregationBuffer,Row):Unit"></a>
@@ -533,7 +546,9 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="org.tresamigos.smv.Histogram">
+        <div class="parent" name="org.tresamigos.smv.MostFrequentValue">
+              <h3>Inherited from <span class="extype" name="org.tresamigos.smv.MostFrequentValue">MostFrequentValue</span></h3>
+            </div><div class="parent" name="org.tresamigos.smv.Histogram">
               <h3>Inherited from <span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span></h3>
             </div><div class="parent" name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction">
               <h3>Inherited from <span class="extype" name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction">UserDefinedAggregateFunction</span></h3>

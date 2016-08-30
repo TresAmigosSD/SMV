@@ -71,7 +71,20 @@ code > span.er { color: #ff0000; font-weight: bold; }
     <span class="st">&quot;dist&quot;</span>
   <span class="ot">]</span></code></pre>
 <p>Please note that I configured private-public key pair for &quot;ssh&quot; so that &quot;rsync&quot; can run quietly.<br />Also I utilized <code>.ssh/config</code> to specify server ssh connection details. I aliased my server as<br /><code>rserver</code> in the config file. For details please refer<br /><a href="http://nerderati.com/2011/03/17/simplify-your-life-with-an-ssh-config-file/">http://nerderati.com/2011/03/17/simplify-your-life-with-an-ssh-config-file/</a></p>
+<p>My <code>.ssh/config</code> example:</p>
+<pre><code>host rserver
+    User ninjapapa
+    Hostname myserver.mycompany.com</code></pre>
 <p>With <code>atom-sync</code>, whenever you save on local version, it will <code>rsync</code> to the remote copy, so that<br />the experience is pretty similar to editing the remote file directly.</p>
+<p>Here are the steps of using <code>atom-sync</code>,</p>
+<ul>
+<li>On sever, <code>git clone</code> the project<br /></li>
+<li>On local machine, create a project folder, and edit <code>.sync-config.cson</code> as discribed above<br /></li>
+<li>Launch <code>atom</code> (with <code>atom-sync</code> installed) on the local project folder<br /></li>
+<li>Right click on the project folder and sync from remote to local<br /></li>
+<li>Edit on the code, when save code, it will be synced up to the server</li>
+</ul>
+<p>Recommend to do all the <code>git</code> operation on the server, and let <code>atom-sync</code> to sync down the <code>.git</code> directory<br />also (does not put <code>.git</code> in the <code>exclude</code> list in the config file).</p>
 <p>Combining using this, SBT continuous compile, SMV class loader in SMV shell on the remote server,<br />you can simplify the entire edit-compile-try cycle of SMV Module development.</p>
 <h2 id="use-snippets">Use Snippets</h2>
 <p>One can add the following to ~/.atom/snippets.cson</p>

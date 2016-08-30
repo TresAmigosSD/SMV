@@ -1184,6 +1184,21 @@ the data frame, essentially clearing the label meta data.
       </span>
       </h4>
       <p class="shortcomment cmt">Similar to the <code>rollup</code> Spark DF method, but using &quot;*&quot; instead of null to represent &quot;Any&quot;</p><div class="fullcomment"><div class="comment cmt"><p>Similar to the <code>rollup</code> Spark DF method, but using &quot;*&quot; instead of null to represent &quot;Any&quot;</p><p>Example:</p><pre>df.smvRollup(<span class="lit">"county"</span>, <span class="lit">"zip"</span>).agg(<span class="lit">"county"</span>, <span class="lit">"zip"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvUnion" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvUnion(dfothers:org.apache.spark.sql.DataFrame*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvUnion(DataFrame*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvUnion</span><span class="params">(<span name="dfothers">dfothers: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">smvUnion unions DataFrames with different number of columns by column name &amp; schema.</p><div class="fullcomment"><div class="comment cmt"><p>smvUnion unions DataFrames with different number of columns by column name &amp; schema.
+spark unionAll ignores column names &amp; schema, and can only be performed on tables with the same number of columns.
+</p></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvUnpivot" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvUnpivot(valueCols:String*):org.apache.spark.sql.DataFrame"></a>
       <a id="smvUnpivot(String*):DataFrame"></a>

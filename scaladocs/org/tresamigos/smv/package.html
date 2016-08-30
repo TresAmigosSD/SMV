@@ -601,6 +601,19 @@ the same schema and CsvAttributes.</p>
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.SmvUtil" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvUtil"></a>
+      <a id="SmvUtil:SmvUtil"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvUtil$.html"><span class="name">SmvUtil</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">These methods were originally implemented in SmvDataSet.</p>
     </li><li name="org.tresamigos.smv.cds" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="cds"></a>
       <a id="cds:cds"></a>
@@ -896,16 +909,42 @@ and user can define aggregations on this sub-set of data.</p>
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.mfvInt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="mfvInt"></a>
+      <a id="mfvInt:mfvInt"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="mfvInt$.html"><span class="name">mfvInt</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.MostFrequentValue">MostFrequentValue</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.mfvStr" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="mfvStr"></a>
+      <a id="mfvStr:mfvStr"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="mfvStr$.html"><span class="name">mfvStr</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.MostFrequentValue">MostFrequentValue</span></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.package#mkUniq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="mkUniq(collection:Seq[String],candidate:String):String"></a>
-      <a id="mkUniq(Seq[String],String):String"></a>
+      <a id="mkUniq(collection:Seq[String],candidate:String,ignoreCase:Boolean,postfix:String):String"></a>
+      <a id="mkUniq(Seq[String],String,Boolean,String):String"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">mkUniq</span><span class="params">(<span name="collection">collection: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="candidate">candidate: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+        <span class="name">mkUniq</span><span class="params">(<span name="collection">collection: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="candidate">candidate: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ignoreCase">ignoreCase: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>, <span name="postfix">postfix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">Repeatedly changes <code>candidate</code> so that it is not found in the <code>collection</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Repeatedly changes <code>candidate</code> so that it is not found in the <code>collection</code>.</p><p>Useful when choosing a unique column name to add to a data frame.

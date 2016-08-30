@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>histDouble - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.histDouble</title>
-          <meta name="description" content="histDouble - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.histDouble" />
-          <meta name="keywords" content="histDouble Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.histDouble" />
+          <title>SmvUtil - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.SmvUtil</title>
+          <meta name="description" content="SmvUtil - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.SmvUtil" />
+          <meta name="keywords" content="SmvUtil Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.SmvUtil" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -12,7 +12,7 @@
       <script type="text/javascript">
          if(top === self) {
             var url = '../../../index.html';
-            var hash = 'org.tresamigos.smv.histDouble$';
+            var hash = 'org.tresamigos.smv.SmvUtil$';
             var anchor = window.location.hash;
             var anchor_opt = '';
             if (anchor.length >= 1)
@@ -26,7 +26,7 @@
       <div id="definition">
         <img src="../../../lib/object_big.png" />
         <p id="owner"><a href="../../package.html" class="extype" name="org">org</a>.<a href="../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
-        <h1>histDouble</h1>
+        <h1>SmvUtil</h1>
       </div>
 
       <h4 id="signature" class="signature">
@@ -35,13 +35,16 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">histDouble</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span></span>
+        <span class="name">SmvUtil</span>
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>These methods were originally implemented in SmvDataSet.  They are
+extracted to this utility class so they can be shared with
+SmvModules written in Python.
+</p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span>, <span class="extype" name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction">UserDefinedAggregateFunction</span>, <span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -59,7 +62,7 @@
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.histDouble"><span>histDouble</span></li><li class="in" name="org.tresamigos.smv.Histogram"><span>Histogram</span></li><li class="in" name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction"><span>UserDefinedAggregateFunction</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.SmvUtil"><span>SmvUtil</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -150,22 +153,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction#apply" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="apply(exprs:org.apache.spark.sql.Column*):org.apache.spark.sql.Column"></a>
-      <a id="apply(Column*):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">apply</span><span class="params">(<span name="exprs">exprs: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>UserDefinedAggregateFunction</dd><dt>Annotations</dt><dd>
-                <span class="name">@varargs</span><span class="args">()</span>
-              
-        </dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <a id="asInstanceOf[T0]:T0"></a>
@@ -179,19 +166,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.Histogram#bufferSchema" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="bufferSchema:org.apache.spark.sql.types.StructType"></a>
-      <a id="bufferSchema:StructType"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">bufferSchema</span><span class="result">: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Histogram → UserDefinedAggregateFunction</dd></dl></div>
     </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a>
       <a id="clone():AnyRef"></a>
@@ -211,48 +185,19 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="org.tresamigos.smv.Histogram#dataType" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="dataType:org.apache.spark.sql.types.MapType"></a>
-      <a id="dataType:MapType"></a>
+    </li><li name="org.tresamigos.smv.SmvUtil#compute" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="compute(dataset:org.tresamigos.smv.SmvDataSet):org.apache.spark.sql.DataFrame"></a>
+      <a id="compute(SmvDataSet):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">dataType</span><span class="result">: <span class="extype" name="org.apache.spark.sql.types.MapType">MapType</span></span>
+        <span class="name">compute</span><span class="params">(<span name="dataset">dataset: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Histogram → UserDefinedAggregateFunction</dd></dl></div>
-    </li><li name="org.tresamigos.smv.Histogram#deterministic" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="deterministic:Boolean"></a>
-      <a id="deterministic:Boolean"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">deterministic</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Histogram → UserDefinedAggregateFunction</dd></dl></div>
-    </li><li name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction#distinct" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="distinct(exprs:org.apache.spark.sql.Column*):org.apache.spark.sql.Column"></a>
-      <a id="distinct(Column*):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">distinct</span><span class="params">(<span name="exprs">exprs: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>UserDefinedAggregateFunction</dd><dt>Annotations</dt><dd>
-                <span class="name">@varargs</span><span class="args">()</span>
-              
-        </dd></dl></div>
+      
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -279,19 +224,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.Histogram#evaluate" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="evaluate(buffer:org.apache.spark.sql.Row):scala.collection.Map[Nothing,Nothing]"></a>
-      <a id="evaluate(Row):Map[Nothing,Nothing]"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">evaluate</span><span class="params">(<span name="buffer">buffer: <span class="extype" name="org.apache.spark.sql.Row">Row</span></span>)</span><span class="result">: <span class="extype" name="scala.collection.Map">Map</span>[<span class="extype" name="scala.Nothing">Nothing</span>, <span class="extype" name="scala.Nothing">Nothing</span>]</span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Histogram → UserDefinedAggregateFunction</dd></dl></div>
     </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <a id="finalize():Unit"></a>
@@ -337,32 +269,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.Histogram#initialize" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="initialize(buffer:org.apache.spark.sql.expressions.MutableAggregationBuffer):Unit"></a>
-      <a id="initialize(MutableAggregationBuffer):Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">initialize</span><span class="params">(<span name="buffer">buffer: <span class="extype" name="org.apache.spark.sql.expressions.MutableAggregationBuffer">MutableAggregationBuffer</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Histogram → UserDefinedAggregateFunction</dd></dl></div>
-    </li><li name="org.tresamigos.smv.Histogram#inputSchema" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="inputSchema:org.apache.spark.sql.types.StructType"></a>
-      <a id="inputSchema:StructType"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">inputSchema</span><span class="result">: <span class="extype" name="org.apache.spark.sql.types.StructType">StructType</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Histogram → UserDefinedAggregateFunction</dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -376,19 +282,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.Histogram#merge" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="merge(buffer1:org.apache.spark.sql.expressions.MutableAggregationBuffer,buffer2:org.apache.spark.sql.Row):Unit"></a>
-      <a id="merge(MutableAggregationBuffer,Row):Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">merge</span><span class="params">(<span name="buffer1">buffer1: <span class="extype" name="org.apache.spark.sql.expressions.MutableAggregationBuffer">MutableAggregationBuffer</span></span>, <span name="buffer2">buffer2: <span class="extype" name="org.apache.spark.sql.Row">Row</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Histogram → UserDefinedAggregateFunction</dd></dl></div>
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -428,6 +321,36 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvUtil#persist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="persist(sqlContext:org.apache.spark.sql.SQLContext,dataframe:org.apache.spark.sql.DataFrame,path:String,generateEdd:Boolean):Unit"></a>
+      <a id="persist(SQLContext,DataFrame,String,Boolean):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">persist</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="dataframe">dataframe: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="generateEdd">generateEdd: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Save the dataframe content to disk, optionally generate edd.</p>
+    </li><li name="org.tresamigos.smv.SmvUtil#readPersistedFile" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="readPersistedFile(sqlContext:org.apache.spark.sql.SQLContext,path:String,attr:org.tresamigos.smv.CsvAttributes):scala.util.Try[org.apache.spark.sql.DataFrame]"></a>
+      <a id="readPersistedFile(SQLContext,String,CsvAttributes):Try[DataFrame]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">readPersistedFile</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="attr">attr: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a> = <span class="symbol"><span class="name"><a href="CsvAttributes$.html">CsvAttributes.defaultCsv</a></span></span></span>)</span><span class="result">: <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Try to read a dataframe from a persisted file path, that is
+usually an input data set or the output of an upstream SmvModule.</p><div class="fullcomment"><div class="comment cmt"><p>Try to read a dataframe from a persisted file path, that is
+usually an input data set or the output of an upstream SmvModule.</p><p>The default format is headerless CSV with '&quot;' as the quote
+character
+</p></div></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>
@@ -454,19 +377,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.Histogram#update" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="update(buffer:org.apache.spark.sql.expressions.MutableAggregationBuffer,input:org.apache.spark.sql.Row):Unit"></a>
-      <a id="update(MutableAggregationBuffer,Row):Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">update</span><span class="params">(<span name="buffer">buffer: <span class="extype" name="org.apache.spark.sql.expressions.MutableAggregationBuffer">MutableAggregationBuffer</span></span>, <span name="input">input: <span class="extype" name="org.apache.spark.sql.Row">Row</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Histogram → UserDefinedAggregateFunction</dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <a id="wait():Unit"></a>
@@ -533,15 +443,7 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="org.tresamigos.smv.Histogram">
-              <h3>Inherited from <span class="extype" name="org.tresamigos.smv.Histogram">Histogram</span></h3>
-            </div><div class="parent" name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction">
-              <h3>Inherited from <span class="extype" name="org.apache.spark.sql.expressions.UserDefinedAggregateFunction">UserDefinedAggregateFunction</span></h3>
-            </div><div class="parent" name="scala.Serializable">
-              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
-            </div><div class="parent" name="java.io.Serializable">
-              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
-            </div><div class="parent" name="scala.AnyRef">
+        <div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
