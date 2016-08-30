@@ -17,4 +17,9 @@ if __name__ == "__main__":
         java_args[i] = arglist[i]
 
     proxy = sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
-    proxy.runMain(java_args, sqlContext._ssql_ctx)
+    app = proxy.init(java_args, sqlContext._ssql_ctx)
+    print("----------------------------------------")
+    print("will run the following modules:")
+    for m in app.smvConfig().moduleNames():
+        print("   " + m)
+    print("----------------------------------------")

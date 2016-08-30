@@ -180,7 +180,6 @@ abstract class SmvDataSet extends HasName {
   private[smv] def computeRDD: DataFrame = {
     val dsDqm = new DQMValidator(createDsDqm())
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
-    println(s"computing ${name}, isEphemeral is ${isEphemeral}")
 
     if (isEphemeral) {
       val df = dsDqm.attachTasks(doRun(dsDqm))
