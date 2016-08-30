@@ -171,44 +171,16 @@ abstract class SmvDataSet extends HasName {
     Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath())
   }
 
-  private[smv] def persist(rdd: DataFrame, prefix: String = "") = {
-    val filePath = moduleCsvPath(prefix)
-    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
+  private[smv] def persist(rdd: DataFrame, prefix: String = "") =
+    SmvUtil.persist(app.sqlContext, rdd, moduleCsvPath(prefix), app.genEdd)
 
-    val counter = app.sc.accumulator(0l)
-    val before = DateTime.now()
-    println(s"${fmt.print(before)} PERSISTING: ${filePath}")
-
-    val df = rdd.smvPipeCount(counter)
-    val handler = new FileIOHandler(app.sqlContext, filePath)
-
-    //Always persist null string as a special value with assumption that it's not
-    //a valid data value
-    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
-
-    val after = DateTime.now()
-    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
-    val n = counter.value
-
-    println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
-
-    // if EDD flag was specified, generate EDD for the just saved file!
-    // Use the "cached" file that was just saved rather than cause an action
-    // on the input RDD which may cause some expensive computation to re-occur.
-    if (app.genEdd)
-      readPersistedFile(prefix).get.edd.persistBesideData(filePath)
-  }
-
-  private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] = {
-    Try({
-      val handler = new FileIOHandler(app.sqlContext, moduleCsvPath(prefix))
-      handler.csvFileWithSchema(CsvAttributes.defaultCsv)
-    })
-  }
+  private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
+    SmvUtil.readPersistedFile(app.sqlContext, moduleCsvPath(prefix))
 
   private[smv] def computeRDD: DataFrame = {
     val dsDqm = new DQMValidator(createDsDqm())
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
+    println(s"computing ${name}, isEphemeral is ${isEphemeral}")
 
     if (isEphemeral) {
       val df = dsDqm.attachTasks(doRun(dsDqm))

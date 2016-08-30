@@ -93,11 +93,13 @@ class SmvAppTest extends SmvTestUtil {
   }
 
   object A_cycle extends SmvModule("A Cycle") {
+    override val isEphemeral = true
     override def requiresDS() = Seq(B_cycle)
     override def run(inputs: runParams) = null
   }
 
   object B_cycle extends SmvModule("B Cycle") {
+    override val isEphemeral = true
     override def requiresDS() = Seq(A_cycle)
     override def run(inputs: runParams) = null
   }
