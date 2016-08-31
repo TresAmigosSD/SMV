@@ -1,3 +1,14 @@
+def for_name(name):
+    """Dynamically load a class by its name.
+
+    Equivalent to Java's Class.forName
+    """
+    components = name.split('.')
+    mod = __import__(components[0])
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod
+
 # provides df.peek() in python shell
 def peek(df):
     smv = df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
@@ -40,14 +51,19 @@ class Smv(object):
     def runModule(self, fqn):
         """Runs a Scala SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.app.runModuleByName(fqn)
+        jdf = self.app.app.runModuleByName(fqn)
         return DataFrame(jdf, self.sqlContext)
 
     def runDynamic(self, fqn):
         """Dynamically runs a Scala SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.app.runDynamicModuleByName(fqn)
+        jdf = self.app.app.runDynamicModuleByName(fqn)
         return DataFrame(jdf, self.sqlContext)
+
+    def run_python_module(self, name):
+        mod = for_name(name)()
+        # TODO: run dependent modules first
+        self.app.persist(mod.compute(self)._jdf, "tmp/result", True)
 
 class SmvPyModule(object):
     """Base class for SmvModules written in Python
