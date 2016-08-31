@@ -3,6 +3,21 @@ import sys
 from pyspark import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 
+# dynamically load a class by its name
+# equivalent to Java's Class.forName
+def for_name(name):
+    components = name.split('.')
+    mod = __import__(components[0])
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod
+
+# runs the module
+def run_module(name):
+    mod = for_name(name)
+    # TODO: run dependent modules first
+    mod.compute()
+
 if __name__ == "__main__":
 
     # initialize SparkContext from Python to get the python-java gateway
@@ -16,10 +31,14 @@ if __name__ == "__main__":
     for i in range(0, len(java_args)):
         java_args[i] = arglist[i]
 
-    proxy = sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
-    app = proxy.init(java_args, sqlContext._ssql_ctx)
+    smv = sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
+    app = smv.init(java_args, sqlContext._ssql_ctx)
     print("----------------------------------------")
     print("will run the following modules:")
-    for m in app.smvConfig().moduleNames():
-        print("   " + m)
+    mods = app.smvConfig().moduleNames()
+    for name in mods:
+        print("   " + name)
     print("----------------------------------------")
+
+    for name in mods:
+        run_module(name)
