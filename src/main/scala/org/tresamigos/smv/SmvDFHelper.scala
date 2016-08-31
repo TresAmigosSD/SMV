@@ -627,6 +627,9 @@ class SmvDFHelper(df: DataFrame) {
   def smvUnpivot(valueCols: Seq[String],
     colNameFn: String => (String, String),
     indexColName: Option[String] = Some("Index")): DataFrame = {
+
+    import df.sqlContext.implicits._
+
     // see the inline comments in the returned tuple for this computation
     val (t1, t2, tbl) =
       valueCols.foldRight((Seq[String](), Seq[String](), Map[(String, String), String]())) {
@@ -651,7 +654,7 @@ class SmvDFHelper(df: DataFrame) {
     val embedded = indexValues map { v =>
       val fields = lit(v).as(indexName) +: (for {
         k <- colNames
-        col = tbl.get((k, v)).map(df(_)) getOrElse lit(null).cast(StringType)
+        col = tbl.get((k, v)).map(c => $"$c") getOrElse lit(null).cast(StringType) // We use $"$c" instead of df(c), since df(c) caused some type mismatch error in real data, which I can't reproduce as a test case.
       } yield col as k)
 
       struct(fields:_*)
