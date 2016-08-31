@@ -149,6 +149,11 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     directMods ++ stageMods ++ appMods
   }
 
+  /**
+   * Exposed for Python interface
+   */
+  def moduleNames: Array[String] = cmdLine.modsToRun.orElse(Some(Seq.empty[String]))().toArray
+
   def findModuleInStage(stage: String, name: String): Option[SmvModule] = {
     val candidates = (for {
       pkg <- stage.split('.').reverse.tails //  stage "a.b.c" -> ["c","b", "a"] ->

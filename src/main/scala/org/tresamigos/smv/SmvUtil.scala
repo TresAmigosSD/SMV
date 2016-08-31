@@ -34,7 +34,6 @@ object SmvUtil {
   def readPersistedFile(sqlContext: SQLContext, path: String,
     attr: CsvAttributes = CsvAttributes.defaultCsv): Try[DataFrame] =
     Try {
-      println("reading dataframe from ${path}")
       new FileIOHandler(sqlContext, path).csvFileWithSchema(attr)
     }
 
@@ -42,7 +41,6 @@ object SmvUtil {
    * Save the dataframe content to disk, optionally generate edd.
    */
   def persist(sqlContext: SQLContext, dataframe: DataFrame, path: String, generateEdd: Boolean) = {
-    println("persisting dataframe to ${path}")
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
     val counter = sqlContext.sparkContext.accumulator(0l)
