@@ -1,5 +1,5 @@
 from smv import *
 
 class PyZipPrimaryCounty(SmvPyModule):
-    def compute(self, app):
-        super(PyZipPrimaryCounty, self).compute(app)
+    def compute(self, smv):
+        super(PyZipPrimaryCounty, self).compute(smv)

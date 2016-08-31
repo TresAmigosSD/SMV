@@ -23,11 +23,19 @@ class Smv(object):
     The SmvApp instance is exposed through the `app` attribute.
     """
 
-    def __init__(self, sqlContext):
+    def __init__(self, arglist, sqlContext):
         self.sqlContext = sqlContext
-        self._jvm = sqlContext._sc._jvm
-        self.smv = self._jvm.org.tresamigos.smv.python.SmvPythonProxy()
-        self.app = self.smv.init(sqlContext._ssql_ctx)
+        sc = sqlContext._sc
+        self._jvm = sc._jvm
+        self.proxy = self._jvm.org.tresamigos.smv.python.SmvPythonProxy()
+
+        # convert python arglist to java String array
+        java_args = sc._gateway.new_array(sc._jvm.String, len(arglist))
+        for i in range(0, len(java_args)):
+            java_args[i] = arglist[i]
+
+        factory = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory()
+        self.app = factory.init(java_args, sqlContext._ssql_ctx)
 
     def runModule(self, fqn):
         """Runs a Scala SmvModule by its Fully Qualified Name(fqn)
