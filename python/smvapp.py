@@ -13,10 +13,10 @@ def for_name(name):
     return mod
 
 # runs the module
-def run_module(name):
+def run_module(app, name):
     mod = for_name(name)
     # TODO: run dependent modules first
-    mod().compute()
+    mod().compute(app)
 
 if __name__ == "__main__":
 
@@ -31,14 +31,15 @@ if __name__ == "__main__":
     for i in range(0, len(java_args)):
         java_args[i] = arglist[i]
 
-    smv = sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
+    smv = sc._jvm.org.tresamigos.smv.python.SmvPythonAppFactory()
     app = smv.init(java_args, sqlContext._ssql_ctx)
+
     print("----------------------------------------")
     print("will run the following modules:")
-    mods = app.smvConfig().moduleNames()
+    mods = app.moduleNames()
     for name in mods:
         print("   " + name)
     print("----------------------------------------")
 
     for name in mods:
-        run_module(name)
+        run_module(app, name)

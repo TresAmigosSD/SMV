@@ -48,5 +48,5 @@ class SmvPyModule(object):
     def __init__(self):
         pass
 
-    def compute(self):
+    def compute(self, app):
         print(".... computing module " + self.__module__ + "." + self.__class__.__name__)
