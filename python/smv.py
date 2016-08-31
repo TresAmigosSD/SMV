@@ -40,3 +40,13 @@ class Smv(object):
         """
         jdf = self.app.runDynamicModuleByName(fqn)
         return DataFrame(jdf, self.sqlContext)
+
+class SmvPyModule(object):
+    """Base class for SmvModules written in Python
+    """
+
+    def __init__(self):
+        pass
+
+    def compute(self):
+        print(".... computing module " + self.__module__ + "." + self.__class__.__name__)

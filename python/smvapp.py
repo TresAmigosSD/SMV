@@ -16,7 +16,7 @@ def for_name(name):
 def run_module(name):
     mod = for_name(name)
     # TODO: run dependent modules first
-    mod.compute()
+    mod().compute()
 
 if __name__ == "__main__":
 
