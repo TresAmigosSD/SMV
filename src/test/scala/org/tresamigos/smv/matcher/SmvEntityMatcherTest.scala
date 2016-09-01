@@ -51,11 +51,11 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       )
     ).doMatch(createDF1, createDF2)
 
-    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Full_Name_Match:Boolean; First_Name_Match:Boolean; Levenshtein_City:Boolean; Levenshtein_City_Value:Float")
+    assertSrddSchemaEqual(resultDF, "id: String; _id: String; Full_Name_Match: Boolean; First_Name_Match: Boolean; Levenshtein_City: Boolean; Levenshtein_City_Value: Float; MatchBitmap: String")
 
     assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[2,1,true,null,null,null]",
-      "[1,3,false,false,true,1.0]"))
+      "[2,1,true,null,null,null,100]",
+      "[1,3,false,false,true,1.0,001]"))
   }
 
   test("Main name matcher: only fuzzy level") {
@@ -70,10 +70,10 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       )
     ).doMatch(createDF1, createDF2)
 
-    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float")
+    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; MatchBitmap: String")
 
     assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[2,1,true,1.0]"
+      "[2,1,true,1.0,1]"
     ))
   }
 
@@ -89,11 +89,11 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       )
     ).doMatch(createDF1, createDF2)
 
-    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_Match:Boolean")
+    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_Match:Boolean; MatchBitmap:String")
 
     assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[1,1,true]",
-      "[2,1,true]"
+      "[1,1,true,1]",
+      "[2,1,true,1]"
     ))
   }
 
@@ -110,17 +110,17 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       )
     ).doMatch(createDF1, createDF2)
 
-    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; Zip_Not_Match:Boolean")
+    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; Zip_Not_Match:Boolean; MatchBitmap:String")
 
     assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[1,2,false,0.3,true]",
-      "[1,3,false,1.0,true]",
-      "[2,1,true,1.0,false]",
-      "[3,1,false,0.3,true]",
-      "[2,2,false,0.111111104,true]",
-      "[2,3,false,0.100000024,true]",
-      "[3,2,false,0.100000024,true]",
-      "[3,3,false,0.0,true]"
+      "[1,2,false,0.3,true,01]",
+      "[1,3,false,1.0,true,01]",
+      "[2,1,true,1.0,false,10]",
+      "[3,1,false,0.3,true,01]",
+      "[2,2,false,0.111111104,true,01]",
+      "[2,3,false,0.100000024,true,01]",
+      "[3,2,false,0.100000024,true,01]",
+      "[3,3,false,0.0,true,01]"
     ))
   }
 
@@ -137,12 +137,12 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       )
     ).doMatch(createDF1, createDF2)
 
-    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; Zip_Not_Match:Boolean")
+    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; Zip_Not_Match:Boolean; MatchBitmap:String")
 
     assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[1,3,false,1.0,true]",
-      "[2,1,true,1.0,false]",
-      "[3,3,false,0.0,true]"
+      "[1,3,false,1.0,true,01]",
+      "[2,1,true,1.0,false,10]",
+      "[3,3,false,0.0,true,01]"
     ))
   }
 
@@ -160,14 +160,14 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
     ).doMatch(createDF1, createDF2)
 
     assertSrddSchemaEqual(resultDF, "id:String; _id:String; Full_Name_Match:Boolean; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; " +
-      "Zip_Not_Match:Boolean")
+      "Zip_Not_Match:Boolean; MatchBitmap:String")
 
     assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[2,1,true,null,null,null]",
-      "[1,2,false,false,0.3,true]",
-      "[1,3,false,false,1.0,true]",
-      "[3,2,false,false,0.100000024,true]",
-      "[3,3,false,false,0.0,true]"
+      "[2,1,true,null,null,null,100]",
+      "[1,2,false,false,0.3,true,001]",
+      "[1,3,false,false,1.0,true,001]",
+      "[3,2,false,false,0.100000024,true,001]",
+      "[3,3,false,false,0.0,true,001]"
     ))
   }
 
