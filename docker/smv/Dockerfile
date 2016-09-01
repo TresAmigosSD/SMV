@@ -8,7 +8,7 @@ RUN wget http://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     rm master.zip &&\
     sudo mv SMV-master $SMV_HOME/ &&\
     cd $SMV_HOME &&\
-    mvn clean install -DskipTests &&\
+    mvn install -DskipTests &&\
     sbt publish-local
 
 # Configures maven repository to live on user's host mount (i.e. in /projects)
