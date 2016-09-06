@@ -61,16 +61,39 @@ class Smv(object):
         return DataFrame(jdf, self.sqlContext)
 
     def run_python_module(self, name):
-        mod = for_name(name)()
+        mod = for_name(name)(self)
         # TODO: run dependent modules first
-        self.app.persist(mod.compute(self)._jdf, "tmp/result", True)
+        self.app.persist(mod.compute()._jdf, "tmp/result", True)
 
-class SmvPyModule(object):
+class SmvPyDataSet(object):
+    """Base class for all SmvDataSets written in Python
+    """
+
+    def __init__(self, smv):
+        self.smv = smv
+
+class SmvPyCsvFile(SmvPyDataSet):
+    """Raw input file in CSV format
+    """
+
+    # TODO: add csv attributes
+    def __init__(self, smv, path):
+        super(SmvPyCsvFile, self).__init__(smv)
+        self._smvCsvFile = smv.app.smvCsvFile(path)
+
+    def requiresDS(self):
+        return []
+
+    def compute(self):
+        jdf = self._smvCsvFile.rdd()
+        return DataFrame(jdf, self.smv.sqlContext)
+
+class SmvPyModule(SmvPyDataSet):
     """Base class for SmvModules written in Python
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, smv):
+        super(SmvPyModule, self).__init__(smv)
 
-    def compute(self, app):
+    def compute(self):
         print(".... computing module " + self.__module__ + "." + self.__class__.__name__)
