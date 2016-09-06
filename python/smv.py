@@ -47,6 +47,7 @@ class Smv(object):
 
         factory = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory()
         self.app = factory.init(java_args, sqlContext._ssql_ctx)
+        self.pymods = {}
 
     def runModule(self, fqn):
         """Runs a Scala SmvModule by its Fully Qualified Name(fqn)
@@ -61,9 +62,31 @@ class Smv(object):
         return DataFrame(jdf, self.sqlContext)
 
     def run_python_module(self, name):
-        mod = for_name(name)(self)
-        # TODO: run dependent modules first
-        self.app.persist(mod.compute()._jdf, "tmp/result", True)
+        if (name in self.pymods):
+            return self.pymods[name]
+        else:
+            mod = for_name(name)(self)
+            return self.__resolve(mod, [name])
+
+    def __resolve(self, mod, stack):
+        for dep in mod.requiresDS():
+            depname = dep.fqn()
+            if (depname in stack):
+                raise RuntimeError("Circular module dependency detected", dep, stack)
+
+            stack.append(depname)
+            res = self.__resolve(dep, stack)
+            self.pymods[depname] = res
+            stack.pop()
+
+        # TODO: read from persisted if any
+        ret = mod.compute()
+
+        if not mod.isInput():
+            self.app.persist(mod.compute()._jdf, mod.modulePath(), True)
+
+        self.pymods[mod.fqn()] = ret
+        return ret
 
 class SmvPyDataSet(object):
     """Base class for all SmvDataSets written in Python
@@ -71,6 +94,20 @@ class SmvPyDataSet(object):
 
     def __init__(self, smv):
         self.smv = smv
+
+    def requiresDS(self):
+        return []
+
+    def modulePath(self):
+        return self.smv.app.outputDir() + "/" + self.fqn() + ".csv"
+
+    def fqn(self):
+        """Returns the fully qualified name
+        """
+        return self.__module__ + "." + self.__class__.__name__
+
+    def isInput(self):
+        return False
 
 class SmvPyCsvFile(SmvPyDataSet):
     """Raw input file in CSV format
@@ -81,8 +118,8 @@ class SmvPyCsvFile(SmvPyDataSet):
         super(SmvPyCsvFile, self).__init__(smv)
         self._smvCsvFile = smv.app.smvCsvFile(path)
 
-    def requiresDS(self):
-        return []
+    def isInput(self):
+        return True
 
     def compute(self):
         jdf = self._smvCsvFile.rdd()
@@ -96,4 +133,4 @@ class SmvPyModule(SmvPyDataSet):
         super(SmvPyModule, self).__init__(smv)
 
     def compute(self):
-        print(".... computing module " + self.__module__ + "." + self.__class__.__name__)
+        print(".... computing module " + self.fqn())

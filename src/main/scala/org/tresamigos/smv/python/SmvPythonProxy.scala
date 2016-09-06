@@ -41,4 +41,7 @@ class SmvPythonApp(val app: SmvApp) {
   /** Create a SmvCsvFile for use in Python */
   // TODO: add csv attributes parameter
   def smvCsvFile(path: String): SmvCsvFile = SmvCsvFile(path, CsvAttributes.defaultCsvWithHeader)
+
+  /** Output directory for files */
+  def outputDir: String = app.smvConfig.outputDir
 }
