@@ -15,6 +15,16 @@ class SmvPythonAppFactory {
 class SmvPythonProxy {
   def peek(df: DataFrame) = df.peek()
   def selectPlus(df: DataFrame, cols: Array[Column]) = df.selectPlus(cols:_*)
+
+  def smvGroupBy(df: DataFrame, cols: Array[Column]) =
+    new SmvGroupedDataProxy(df.smvGroupBy(cols:_*))
+
+  def smvJoinByKey(df: DataFrame, other: DataFrame, keys: Array[String], joinType: String) =
+    df.joinByKey(other, keys.toSeq, joinType)
+}
+
+class SmvGroupedDataProxy(grouped: SmvGroupedData) {
+  def smvTopNRecs(maxElems: Int, orders: Array[Column]) = grouped.smvTopNRecs(maxElems, orders:_*)
 }
 
 /**

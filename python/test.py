@@ -1,4 +1,6 @@
 from smv import *
+from pyspark.sql.functions import col
+from pyspark.sql import DataFrame
 
 class InputZipCounty(SmvPyCsvFile):
     def __init__(self, smv):
@@ -10,7 +12,17 @@ class PyZipPrimaryCounty(SmvPyModule):
 
     def compute(self):
         super(PyZipPrimaryCounty, self).compute()
+
         df = self.smv.pymods['test.InputZipCounty']
-        df.peek()
-        df.show()
-        return df
+
+        filtered = df.select(
+            df['ZCTA5'].alias("Zip"),
+            df['GEOID'].alias("County"),
+            df['POPPT'].alias("Population"),
+            df['HUPT'].alias("HouseHold")
+        )
+
+        grouped = filtered.smvGroupBy(col("Zip"))
+        p1 = DataFrame(grouped.smvTopNRecs(1, smv_copy_array(df._sc, col('Population').desc())), self.smv.sqlContext)
+        p2 = p1.select(p1["Zip"], p1["County"].alias("PCounty"))
+        return DataFrame(filtered.joinByKey(p2, ["Zip"], "inner"), self.smv.sqlContext)

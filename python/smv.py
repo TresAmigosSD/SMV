@@ -1,3 +1,5 @@
+from pyspark.sql.column import Column
+
 def for_name(name):
     """Dynamically load a class by its name.
 
@@ -14,19 +16,45 @@ def peek(df):
     smv = df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
     return smv.peek(df._jdf)
 
+def smv_copy_array(sc, *cols):
+    """Copies Python columns parameter to Java array"""
+    elem = cols[0]
+    if (isinstance(elem, basestring)):
+        jcols = sc._gateway.new_array(sc._jvm.java.lang.String, len(cols))
+        for i in range(0, len(jcols)):
+            jcols[i] = cols[i]
+    elif (isinstance(elem, Column)):
+        jcols = sc._gateway.new_array(sc._jvm.org.apache.spark.sql.Column, len(cols))
+        for i in range(0, len(jcols)):
+            jcols[i] = cols[i]._jc
+    else:
+        raise RuntimeError("Cannot copy array of type", type(elem))
+
+    return jcols
+
+# TODO: make proxy methods static
+
 # provides df.selectPlus(...) in python shell
 # example: df.selectPlus(lit(1).alias('col'))
-def selectPlus(df, *col):
+def selectPlus(df, *cols):
     smv = df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
-    cols = df._sc._gateway.new_array(df._sc._jvm.org.apache.spark.sql.Column, len(col))
-    for i in range(0, len(col)):
-        cols[i] = col[i]._jc
-    return smv.selectPlus(df._jdf, cols)
+    return smv.selectPlus(df._jdf, smv_copy_array(df._sc, *cols))
+
+def smvGroupBy(df, *cols):
+    smv = df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
+    return smv.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols))
+
+def smvJoinByKey(df, other, keys, joinType):
+    smv = df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
+    return smv.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType)
 
 # enhances the spark DataFrame with smv helper functions
 from pyspark.sql import DataFrame
 DataFrame.peek = peek
 DataFrame.selectPlus = selectPlus
+
+DataFrame.smvGroupBy = smvGroupBy
+DataFrame.joinByKey  = smvJoinByKey
 
 class Smv(object):
     """Creates a proxy to SmvApp.
