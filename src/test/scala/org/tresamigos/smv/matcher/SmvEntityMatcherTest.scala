@@ -19,14 +19,14 @@ import org.apache.spark.sql.types._
 import org.tresamigos.smv._
 
 trait NameMatcherTestFixture extends SmvTestUtil {
-  def createDF1 = createSchemaRdd(
+  def createDF1 = dfFrom(
     "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String",
     "1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson;" +
       "2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone;" +
       "3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington"
   )
 
-  def createDF2 = createSchemaRdd(
+  def createDF2 = dfFrom(
     "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String",
     "1,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone;" +
       "2,Alice,Kramden,328 Chauncey Street,Brooklyn,NY,11233,Alice Kramden;" +

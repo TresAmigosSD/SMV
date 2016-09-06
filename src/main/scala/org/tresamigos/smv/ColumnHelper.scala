@@ -649,7 +649,7 @@ class ColumnHelper(column: Column) {
    * df.smvDesc("amt" -> "Dollar amount spend", "o" -> "some other field")
    * }}}
    **/
-  @deprecated("should use smvDesc instead")
+  @deprecated("should use smvDesc instead", "1.5")
   def withDesc(desc: String) = {
     (new ColumnMetaOps(column)).addDesc(desc)
   }

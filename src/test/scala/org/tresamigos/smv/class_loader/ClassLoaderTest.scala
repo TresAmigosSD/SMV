@@ -37,6 +37,7 @@ trait ClassLoaderTestHelper {
   }
 
   def testLoadOfValidClass(classLoader: ClassLoader) = {
+    import scala.language.existentials
     // Foo has a dependency on Bar so loading Foo should also load Bar!!!
     val foo = classLoader.loadClass("com.smv.Foo")
     val bar = foo.getSuperclass
