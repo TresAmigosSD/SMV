@@ -36,8 +36,17 @@ $ docker run -it -v /path/to/projects:/projects -v /path/to/data:/data tresamigo
 ## For developers
 
 The smv-core image contains only the tools needed for SMV development, so you may build SMV from source with mvn or sbt. Find your SMV source in /smv and your projects in /projects in the container.
+
+Run smv-core.sh from \_SMV_HOME\_/docker/smv-core
+
 ```shell
-$ _SMV_HOME_/docker/smv-core/smv-core.sh /path/to/smv /path/to/projects
+_SMV_HOME_/docker/smv-core/$ ./smv-core.sh /path/to/projects
+```
+
+or any other directory
+
+```shell
+/any/other/directory$ _SMV_HOME_/docker/smv-core/smv-core.sh /path/to/projects /path/to/smv
 ```
 
 # SMV Getting Started
