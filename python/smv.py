@@ -14,6 +14,9 @@ def for_name(name):
 def smv_copy_array(sc, *cols):
     """Copy Python list to appropriate Java array
     """
+    if (len(cols) == 0):        # may need to pass the correct java type somehow
+        return sc._gateway.new_array(sc._jvm.java.lang.String, 0)
+
     elem = cols[0]
     if (isinstance(elem, basestring)):
         jcols = sc._gateway.new_array(sc._jvm.java.lang.String, len(cols))
@@ -23,6 +26,13 @@ def smv_copy_array(sc, *cols):
         jcols = sc._gateway.new_array(sc._jvm.org.apache.spark.sql.Column, len(cols))
         for i in range(0, len(jcols)):
             jcols[i] = cols[i]._jc
+    elif (isinstance(elem, list)): # a list of list
+        # use Java List as the outermost container; an Array[Array]
+        # will not always work, because the inner list may be of
+        # different lengths
+        jcols = sc._jvm.java.util.ArrayList()
+        for i in range(0, len(cols)):
+            jcols.append(smv_copy_array(sc, *cols[i]))
     else:
         raise RuntimeError("Cannot copy array of type", type(elem))
 
