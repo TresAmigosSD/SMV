@@ -166,3 +166,11 @@ class SmvGroupedData(object):
 
     def smvTopNRecs(self, maxElems, *cols):
         return DataFrame(self.sgd.smvTopNRecs(maxElems, smv_copy_array(self.df._sc, *cols)), self.df.sql_ctx)
+
+    def smvPivotSum(self, pivotCols, valueCols, baseOutput):
+        """Perform a normal SmvPivot using the pivot and value columns, followed by summing all the output.
+        TODO: docstring parameters and return values
+        pivotCols: list of list of strings
+        valueCols: list of strings
+        baseOutput: list of strings"""
+        return DataFrame(self.sgd.smvPivotSum(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)

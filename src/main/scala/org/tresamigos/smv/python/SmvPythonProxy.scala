@@ -2,6 +2,8 @@ package org.tresamigos.smv.python
 
 import org.apache.spark._, sql._
 import org.tresamigos.smv._
+
+import scala.collection.JavaConversions._
 import scala.util.Try
 
 /** Use a class instead of object to avoid name-mangling when using py4j */
@@ -25,7 +27,12 @@ object SmvPythonProxy {
 }
 
 class SmvGroupedDataProxy(grouped: SmvGroupedData) {
-  def smvTopNRecs(maxElems: Int, orders: Array[Column]) = grouped.smvTopNRecs(maxElems, orders:_*)
+  def smvTopNRecs(maxElems: Int, orders: Array[Column]): DataFrame =
+    grouped.smvTopNRecs(maxElems, orders:_*)
+
+  def smvPivotSum(pivotCols: java.util.List[Array[String]],
+    valueCols: Array[String], baseOutput: Array[String]): DataFrame =
+    grouped.smvPivotSum(pivotCols.map(_.toSeq).toSeq :_*)(valueCols:_*)(baseOutput:_*)
 }
 
 /**
