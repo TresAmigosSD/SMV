@@ -2,6 +2,7 @@ package org.tresamigos.smv.python
 
 import org.apache.spark._, sql._
 import org.tresamigos.smv._
+import scala.util.Try
 
 /** Use a class instead of object to avoid name-mangling when using py4j */
 class SmvPythonAppFactory {
@@ -40,9 +41,9 @@ class SmvPythonApp(val app: SmvApp) {
   /** The name to dataframe look-up table */
   var runParams: Map[String, DataFrame] = Map.empty
 
-  /** Reads the dataframe from persisted files, may throw error */
-  def readPersistedFile(path: String): DataFrame =
-    SmvUtil.readPersistedFile(app.sqlContext, path).get
+  /** Try to read a dataframe from persisted files */
+  def tryReadPersistedFile(path: String): Try[DataFrame] =
+    SmvUtil.readPersistedFile(app.sqlContext, path)
 
   /** Saves the dataframe to disk */
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
