@@ -13,8 +13,7 @@ def for_name(name):
 
 # provides df.peek() in python shell
 def peek(df):
-    smv = df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
-    return smv.peek(df._jdf)
+    return df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.peek(df._jdf)
 
 def smv_copy_array(sc, *cols):
     """Copies Python columns parameter to Java array"""
@@ -37,16 +36,13 @@ def smv_copy_array(sc, *cols):
 # provides df.selectPlus(...) in python shell
 # example: df.selectPlus(lit(1).alias('col'))
 def selectPlus(df, *cols):
-    smv = df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
-    return smv.selectPlus(df._jdf, smv_copy_array(df._sc, *cols))
+    return df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.selectPlus(df._jdf, smv_copy_array(df._sc, *cols))
 
 def smvGroupBy(df, *cols):
-    smv = df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
-    return smv.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols))
+    return df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols))
 
 def smvJoinByKey(df, other, keys, joinType):
-    smv = df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy()
-    return smv.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType)
+    return df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType)
 
 # enhances the spark DataFrame with smv helper functions
 from pyspark.sql import DataFrame
@@ -66,7 +62,6 @@ class Smv(object):
         self.sqlContext = sqlContext
         sc = sqlContext._sc
         self._jvm = sc._jvm
-        self.proxy = self._jvm.org.tresamigos.smv.python.SmvPythonProxy()
 
         # convert python arglist to java String array
         java_args = sc._gateway.new_array(sc._jvm.String, len(arglist))

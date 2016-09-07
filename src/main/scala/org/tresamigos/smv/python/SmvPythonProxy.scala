@@ -12,7 +12,7 @@ class SmvPythonAppFactory {
 }
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
-class SmvPythonProxy {
+object SmvPythonProxy {
   def peek(df: DataFrame) = df.peek()
   def selectPlus(df: DataFrame, cols: Array[Column]) = df.selectPlus(cols:_*)
 
