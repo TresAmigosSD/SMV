@@ -41,4 +41,4 @@ echo "Mounting SMV directory from $SMV_DIR"
 VOL_STR="$VOL_STR -v $M2_REPO:/home/smv/.m2 -v $IVY_REPO:/home/smv/.ivy2 -v $SMV_DIR:/SMV"
 
 
-docker run --rm -it $VOL_STR smv-core
+docker run --rm -it $VOL_STR tresamigos/smv-core
