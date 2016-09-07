@@ -11,12 +11,9 @@ def for_name(name):
         mod = getattr(mod, comp)
     return mod
 
-# provides df.peek() in python shell
-def peek(df):
-    return df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.peek(df._jdf)
-
 def smv_copy_array(sc, *cols):
-    """Copies Python columns parameter to Java array"""
+    """Copy Python list to appropriate Java array
+    """
     elem = cols[0]
     if (isinstance(elem, basestring)):
         jcols = sc._gateway.new_array(sc._jvm.java.lang.String, len(cols))
@@ -31,26 +28,17 @@ def smv_copy_array(sc, *cols):
 
     return jcols
 
-# TODO: make proxy methods static
+# enhances the spark DataFrame with smv helper functions
+from pyspark.sql import DataFrame
+DataFrame.peek = lambda df: df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.peek(df._jdf)
 
 # provides df.selectPlus(...) in python shell
 # example: df.selectPlus(lit(1).alias('col'))
-def selectPlus(df, *cols):
-    return df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.selectPlus(df._jdf, smv_copy_array(df._sc, *cols))
+DataFrame.selectPlus = lambda df, *cols: df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.selectPlus(df._jdf, smv_copy_array(df._sc, *cols))
 
-def smvGroupBy(df, *cols):
-    return df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols))
+DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
 
-def smvJoinByKey(df, other, keys, joinType):
-    return df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType)
-
-# enhances the spark DataFrame with smv helper functions
-from pyspark.sql import DataFrame
-DataFrame.peek = peek
-DataFrame.selectPlus = selectPlus
-
-DataFrame.smvGroupBy = smvGroupBy
-DataFrame.joinByKey  = smvJoinByKey
+DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
 
 class Smv(object):
     """Creates a proxy to SmvApp.
@@ -157,3 +145,12 @@ class SmvPyModule(SmvPyDataSet):
 
     def compute(self):
         print(".... computing module " + self.fqn())
+
+class SmvGroupedData(object):
+    """Wrapper around the Scala SmvGroupedData"""
+    def __init__(self, df, sgd):
+        self.df = df
+        self.sgd = sgd
+
+    def smvTopNRecs(self, maxElems, *cols):
+        return DataFrame(self.sgd.smvTopNRecs(maxElems, smv_copy_array(self.df._sc, *cols)), self.df.sql_ctx)

@@ -23,6 +23,6 @@ class PyZipPrimaryCounty(SmvPyModule):
         )
 
         grouped = filtered.smvGroupBy(col("Zip"))
-        p1 = DataFrame(grouped.smvTopNRecs(1, smv_copy_array(df._sc, col('Population').desc())), self.smv.sqlContext)
+        p1 = grouped.smvTopNRecs(1, col('Population').desc())
         p2 = p1.select(p1["Zip"], p1["County"].alias("PCounty"))
-        return DataFrame(filtered.joinByKey(p2, ["Zip"], "inner"), self.smv.sqlContext)
+        return filtered.smvJoinByKey(p2, ["Zip"], "inner")
