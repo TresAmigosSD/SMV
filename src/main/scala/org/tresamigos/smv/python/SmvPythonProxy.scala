@@ -6,27 +6,19 @@ import org.tresamigos.smv._
 import scala.collection.JavaConversions._
 import scala.util.Try
 
-/** Use a class instead of object to avoid name-mangling when using py4j */
-class SmvPythonAppFactory {
-  def init(sqlContext: SQLContext): SmvPythonApp = init(Array("-m", "None"), sqlContext)
-
-  def init(args: Array[String], sqlContext: SQLContext): SmvPythonApp =
-    new SmvPythonApp(SmvApp.init(args, Option(sqlContext.sparkContext), Option(sqlContext)))
-}
-
 /** Provides access to enhanced methods on DataFrame, Column, etc */
-object SmvPythonProxy {
+object SmvPythonHelper {
   def peek(df: DataFrame) = df.peek()
   def selectPlus(df: DataFrame, cols: Array[Column]) = df.selectPlus(cols:_*)
 
   def smvGroupBy(df: DataFrame, cols: Array[Column]) =
-    new SmvGroupedDataProxy(df.smvGroupBy(cols:_*))
+    new SmvGroupedDataAdaptor(df.smvGroupBy(cols:_*))
 
   def smvJoinByKey(df: DataFrame, other: DataFrame, keys: Array[String], joinType: String) =
     df.joinByKey(other, keys.toSeq, joinType)
 }
 
-class SmvGroupedDataProxy(grouped: SmvGroupedData) {
+class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
   def smvTopNRecs(maxElems: Int, orders: Array[Column]): DataFrame =
     grouped.smvTopNRecs(maxElems, orders:_*)
 
@@ -62,4 +54,12 @@ class SmvPythonApp(val app: SmvApp) {
 
   /** Output directory for files */
   def outputDir: String = app.smvConfig.outputDir
+}
+
+/** Not a companion object because we need to access it from Python */
+object SmvPythonAppFactory {
+  def init(sqlContext: SQLContext): SmvPythonApp = init(Array("-m", "None"), sqlContext)
+
+  def init(args: Array[String], sqlContext: SQLContext): SmvPythonApp =
+    new SmvPythonApp(SmvApp.init(args, Option(sqlContext.sparkContext), Option(sqlContext)))
 }

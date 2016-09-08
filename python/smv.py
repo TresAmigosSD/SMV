@@ -40,15 +40,15 @@ def smv_copy_array(sc, *cols):
 
 # enhances the spark DataFrame with smv helper functions
 from pyspark.sql import DataFrame
-DataFrame.peek = lambda df: df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.peek(df._jdf)
+DataFrame.peek = lambda df: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.peek(df._jdf)
 
 # provides df.selectPlus(...) in python shell
 # example: df.selectPlus(lit(1).alias('col'))
-DataFrame.selectPlus = lambda df, *cols: df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.selectPlus(df._jdf, smv_copy_array(df._sc, *cols))
+DataFrame.selectPlus = lambda df, *cols: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.selectPlus(df._jdf, smv_copy_array(df._sc, *cols))
 
-DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
+DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
 
-DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonProxy.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
+DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
 
 class Smv(object):
     """Creates a proxy to SmvApp.
@@ -66,8 +66,7 @@ class Smv(object):
         for i in range(0, len(java_args)):
             java_args[i] = arglist[i]
 
-        factory = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory()
-        self.app = factory.init(java_args, sqlContext._ssql_ctx)
+        self.app = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
         self.pymods = {}
 
     def runModule(self, fqn):
