@@ -106,7 +106,7 @@ class Smv(object):
         else:
             ret = mod.compute()
             if not mod.isInput():
-                self.app.persist(mod.compute()._jdf, mod.modulePath(), True)
+                self.app.persist(ret._jdf, mod.modulePath(), True)
 
         self.pymods[mod.fqn()] = ret
         return ret
