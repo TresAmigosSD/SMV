@@ -33,6 +33,8 @@ class SmvStagesTest extends SmvTestUtil {
   override def appArgs = Seq(
     "--smv-props",
     "smv.stages=com.myproj.s1:com.myproj.s2",
+    "smv.stages.com.myproj.s1.version=publishedS1",
+    "smv.stages.s2.version=publishedS2",
     "-m", "None")
 
   test("Test getAllPackageNames method.") {
@@ -40,6 +42,16 @@ class SmvStagesTest extends SmvTestUtil {
 
     val expPkgs = Seq("com.myproj.s1", "com.myproj.s1.input", "com.myproj.s2", "com.myproj.s2.input")
     assert(testApp.stages.getAllPackageNames() === expPkgs)
+  }
+
+  test("Stage version should work with smv.stage.basename.version") {
+    val s2 = app.stages.findStage("s2")
+    assert(s2.version.getOrElse("") === "publishedS2")
+  }
+
+  test("Stage version should work with smv.stage.FQN.version") {
+    val s1 = app.stages.findStage("s1")
+    assert(s1.version.getOrElse("") === "publishedS1")
   }
 }
 

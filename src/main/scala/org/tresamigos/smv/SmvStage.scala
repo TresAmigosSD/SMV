@@ -162,10 +162,13 @@ private[smv] object SmvStage {
    */
   def apply(name: String, conf: SmvConfig) = {
     val baseName = FQN.extractBaseName(name)
-    val stagePropPrefix = s"smv.stages.${baseName}"
+    val stageBasePropPrefix = s"smv.stages.${baseName}"
+    val stageFQNPropPrefix = s"smv.stages.${name}"
 
     // get stage version (if any)
-    val version = conf.getProp(stagePropPrefix + ".version")
+    val version = conf.getProp(stageBasePropPrefix + ".version").orElse(
+      conf.getProp(stageFQNPropPrefix + ".version")
+    )
 
     new SmvStage(name, version)
   }
