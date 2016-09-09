@@ -84,6 +84,12 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
   def numStages = stages.size
   def stageNames = stages map {s => s.name}
   def findStage(stageName: String) : SmvStage = {
+    val ambiguous = stages.map{s => FQN.extractBaseName(s.name)}.
+      groupBy(a => a).filter{case (k, v) => v.size > 1}.map{_._1}.toSeq
+
+    if (ambiguous.contains(stageName))
+      throw new IllegalArgumentException(s"Stage name ${stageName} is ambiguous")
+
     stages.find { s =>
       stageName == s.name || stageName == FQN.extractBaseName(s.name)
     }.get

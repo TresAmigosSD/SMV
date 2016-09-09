@@ -32,7 +32,7 @@ object testAppArgs {
 class SmvStagesTest extends SmvTestUtil {
   override def appArgs = Seq(
     "--smv-props",
-    "smv.stages=com.myproj.s1:com.myproj.s2",
+    "smv.stages=com.myproj.s1:com.myproj.s2:com.myproj2.s1",
     "smv.stages.com.myproj.s1.version=publishedS1",
     "smv.stages.s2.version=publishedS2",
     "-m", "None")
@@ -40,7 +40,11 @@ class SmvStagesTest extends SmvTestUtil {
   test("Test getAllPackageNames method.") {
     val testApp = app
 
-    val expPkgs = Seq("com.myproj.s1", "com.myproj.s1.input", "com.myproj.s2", "com.myproj.s2.input")
+    val expPkgs = Seq(
+      "com.myproj.s1", "com.myproj.s1.input",
+      "com.myproj.s2", "com.myproj.s2.input",
+      "com.myproj2.s1", "com.myproj2.s1.input"
+    )
     assert(testApp.stages.getAllPackageNames() === expPkgs)
   }
 
@@ -49,8 +53,16 @@ class SmvStagesTest extends SmvTestUtil {
     assert(s2.version.getOrElse("") === "publishedS2")
   }
 
+  test("findStage should fail if stage name is ambiguous") {
+    val e = intercept[IllegalArgumentException] {
+      val s1 = app.stages.findStage("s1")
+    }
+
+    assert(e.getMessage === "Stage name s1 is ambiguous")
+  }
+
   test("Stage version should work with smv.stage.FQN.version") {
-    val s1 = app.stages.findStage("s1")
+    val s1 = app.stages.findStage("com.myproj.s1")
     assert(s1.version.getOrElse("") === "publishedS1")
   }
 }
