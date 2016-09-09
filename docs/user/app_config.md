@@ -67,18 +67,10 @@ Note that for sequence/list type parameters (e.g. smv.stages), a "," or ":" can 
 </tr>
 
 <tr>
-<td>smv.stages.X.packages</td>
-<td>empty</td>
-<td>Required</td>
-<td>List of package names in stage X.  The package names must be the fully qualified name.<br>
-Example: "com.company.proj.etl, com.company.proj.model"</td>
-</tr>
-
-<tr>
 <td>smv.stages.X.version</td>
-<td>0</td>
+<td>empty</td>
 <td>Optional</td>
-<td>Current version of stage X. See <a href="smv_stages.md"> for details on stage versions</td>
+<td>Current version name of stage X. See <a href="smv_stages.md"> for details on stage versions</td>
 </tr>
 
 <tr>

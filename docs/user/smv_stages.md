@@ -61,15 +61,20 @@ To avoid having to "re-run" `rawAccounts` continuously, the user may choose to "
 $ _SMV_HOME_/tools/smv-run --publish V1 -s etl
 ```
 
-**2. Pin model to use published ETL output**
+**2. Pin `model` stage to use published ETL output**
 
 Modify the user configuration file (`conf/smv-user-conf.props`) to specify the etl stage version to use.  For example, to use the above published version:
 ```
-# specify version of etl package to use.  Note use of stage basename
+# specify version of etl package to use.  If no ambiguity, stage basename can be used here
 smv.stages.etl.version = V1
 ```
+Or
+```
+# Use FQN of the stage is always recommended
+smv.stages.com.mycompany.myproj.etl.version = V1
+```
 
-When `modelAccts` is re-run it will use the published output of `rawAccounts` rather than rerun `rawAccounts`.
+When `modelAccts` re-runs it will use the published output of `rawAccounts` rather than rerun `rawAccounts`.
 
 Since we already setup the version control to ignore `conf/smv-user-conf.props`,
 this provides isolation for the model authors from changes in the ETL code.  Once ETL stage is stabilized, it can either be republished with a new version or the config version can be removed to get the latest and greatest ETL output as before.
