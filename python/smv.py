@@ -103,7 +103,7 @@ class Smv(object):
         if (tryRead.isSuccess()):
             ret = tryRead.get
         else:
-            ret = mod.compute()
+            ret = mod.compute(self.pymods)
             if not mod.isInput():
                 self.app.persist(ret._jdf, mod.modulePath(), True)
 
@@ -143,7 +143,7 @@ class SmvPyCsvFile(SmvPyDataSet):
     def isInput(self):
         return True
 
-    def compute(self):
+    def compute(self, i):
         jdf = self._smvCsvFile.rdd()
         return DataFrame(jdf, self.smv.sqlContext)
 
@@ -154,7 +154,7 @@ class SmvPyModule(SmvPyDataSet):
     def __init__(self, smv):
         super(SmvPyModule, self).__init__(smv)
 
-    def compute(self):
+    def compute(self, i):
         print(".... computing module " + self.fqn())
 
 class SmvGroupedData(object):

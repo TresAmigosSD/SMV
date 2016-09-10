@@ -10,10 +10,10 @@ class PyZipPrimaryCounty(SmvPyModule):
     def requiresDS(self):
         return [InputZipCounty]
 
-    def compute(self):
-        super(PyZipPrimaryCounty, self).compute()
+    def compute(self, i):
+        super(PyZipPrimaryCounty, self).compute(i)
 
-        df = self.smv.pymods[InputZipCounty]
+        df = i[InputZipCounty]
 
         filtered = df.select(
             df['ZCTA5'].alias("Zip"),
