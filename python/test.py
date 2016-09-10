@@ -8,12 +8,12 @@ class InputZipCounty(SmvPyCsvFile):
 
 class PyZipPrimaryCounty(SmvPyModule):
     def requiresDS(self):
-        return [InputZipCounty(self.smv)]
+        return [InputZipCounty]
 
     def compute(self):
         super(PyZipPrimaryCounty, self).compute()
 
-        df = self.smv.pymods['test.InputZipCounty']
+        df = self.smv.pymods[InputZipCounty]
 
         filtered = df.select(
             df['ZCTA5'].alias("Zip"),
@@ -25,4 +25,4 @@ class PyZipPrimaryCounty(SmvPyModule):
         grouped = filtered.smvGroupBy(col("Zip"))
         p1 = grouped.smvTopNRecs(1, col('Population').desc())
         p2 = p1.select(p1["Zip"], p1["County"].alias("PCounty"))
-        return filtered.smvJoinByKey(p2, ["Zip"], "inner")
+        return filtered.smvJoinByKey(p2, ["Zip"], "inner").repartition(8)

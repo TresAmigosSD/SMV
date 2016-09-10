@@ -82,21 +82,21 @@ class Smv(object):
         return DataFrame(jdf, self.sqlContext)
 
     def run_python_module(self, name):
-        if (name in self.pymods):
-            return self.pymods[name]
+        klass = for_name(name)
+        if (klass in self.pymods):
+            return self.pymods[klass]
         else:
-            mod = for_name(name)(self)
-            return self.__resolve(mod, [name])
+            return self.__resolve(klass, [klass])
 
-    def __resolve(self, mod, stack):
+    def __resolve(self, klass, stack):
+        mod = klass(self)
         for dep in mod.requiresDS():
-            depname = dep.fqn()
-            if (depname in stack):
-                raise RuntimeError("Circular module dependency detected", dep, stack)
+            if (dep in stack):
+                raise RuntimeError("Circular module dependency detected", dep.fqn(), stack)
 
-            stack.append(depname)
+            stack.append(dep)
             res = self.__resolve(dep, stack)
-            self.pymods[depname] = res
+            self.pymods[dep] = res
             stack.pop()
 
         tryRead = self.app.tryReadPersistedFile(mod.modulePath())
@@ -107,7 +107,7 @@ class Smv(object):
             if not mod.isInput():
                 self.app.persist(ret._jdf, mod.modulePath(), True)
 
-        self.pymods[mod.fqn()] = ret
+        self.pymods[mod] = ret
         return ret
 
 class SmvPyDataSet(object):
