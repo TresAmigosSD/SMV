@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.Accumulator
-import org.apache.spark.sql._
+import org.apache.spark.sql._, expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions._
@@ -740,6 +740,23 @@ class SmvDFHelper(df: DataFrame) {
 
   def smvRollup(cols: Column*) = {
     new RollupCubeOp(df, Nil, cols.map(_.getName)).rollup()
+  }
+
+  /**
+   * For return the global top N records according to an ordering
+   *
+   * Example:
+   * {{{
+   *   df.smvTopNRecs(3, $"amt".desc)
+   * }}}
+   * Will keep the 3 largest amt records
+   **/
+  def smvTopNRecs(maxElems: Int, orders: Column*) = {
+    val w = Window.orderBy(orders:_*)
+    val rankcol = mkUniq(df.columns, "rank")
+    val rownum = mkUniq(df.columns, "rownum")
+    val r1 = df.selectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).selectMinus(rankcol, rownum)
   }
 
   /**

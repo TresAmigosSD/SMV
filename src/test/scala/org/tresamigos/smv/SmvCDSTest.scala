@@ -147,6 +147,18 @@ class SmvCDSTest extends SmvTestUtil {
       "[z,5,1.2]"))
   }
 
+  test("smvTopNRecs should work with DF also") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = app.createDF("k:String; t:Integer; v:Double",
+      "z,5,1.2;z,5,2.2;a,1,0.3")
+
+    val res = df.smvTopNRecs(2, $"v".desc)
+    assertSrddSchemaEqual(res, "k: String; t: Integer; v: Double")
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
+      "[z,5,2.2]",
+      "[z,5,1.2]"))
+  }
+
   test("Test Lag inplemented with InLastN") {
     val ssc = sqlContext;
     import ssc.implicits._
