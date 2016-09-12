@@ -105,7 +105,7 @@ class Smv(object):
         if (tryRead.isSuccess()):
             ret = tryRead.get
         else:
-            ret = mod.compute(self.pymods)
+            ret = mod.run(self.pymods)
             if not mod.isInput():
                 self.app.persist(ret._jdf, mod.modulePath(), True)
 
@@ -121,8 +121,17 @@ class SmvPyDataSet(object):
     def __init__(self, smv):
         self.smv = smv
 
+    @abc.abstractmethod
+    def description(self):
+        """A brief description of this dataset"""
+
+    @abc.abstractmethod
     def requiresDS(self):
-        return []
+        """The list of dataset dependencies"""
+
+    @abc.abstractmethod
+    def run(self, i):
+        """Comput this dataset, including its depencies if necessary"""
 
     def modulePath(self):
         return self.smv.app.outputDir() + "/" + self.fqn() + ".csv"
@@ -144,6 +153,9 @@ class SmvPyCsvFile(SmvPyDataSet):
         super(SmvPyCsvFile, self).__init__(smv)
         self._smvCsvFile = smv.app.smvCsvFile(self.path())
 
+    def description(self):
+        return "Input file @" + self.path()
+
     @abc.abstractproperty
     def path(self):
         """The path to the csv input file"""
@@ -151,7 +163,10 @@ class SmvPyCsvFile(SmvPyDataSet):
     def isInput(self):
         return True
 
-    def compute(self, i):
+    def requiresDS(self):
+        return []
+
+    def run(self, i):
         jdf = self._smvCsvFile.rdd()
         return DataFrame(jdf, self.smv.sqlContext)
 
@@ -162,7 +177,7 @@ class SmvPyModule(SmvPyDataSet):
     def __init__(self, smv):
         super(SmvPyModule, self).__init__(smv)
 
-    def compute(self, i):
+    def prerun(self, i):
         print(".... computing module " + self.fqn())
 
 class SmvGroupedData(object):

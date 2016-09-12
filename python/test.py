@@ -7,11 +7,14 @@ class InputZipCounty(SmvPyCsvFile):
         return "pdda_raw/00_geo/zip_to_county.csv"
 
 class PyZipPrimaryCounty(SmvPyModule):
+    def description(self):
+        return "For each Zip assign the County with the largets population as the primary county"
+
     def requiresDS(self):
         return [InputZipCounty]
 
-    def compute(self, i):
-        super(PyZipPrimaryCounty, self).compute(i)
+    def run(self, i):
+        self.prerun(i)
 
         df = i[InputZipCounty]
 
