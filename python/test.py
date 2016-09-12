@@ -3,8 +3,8 @@ from pyspark.sql.functions import col
 from pyspark.sql import DataFrame
 
 class InputZipCounty(SmvPyCsvFile):
-    def __init__(self, smv):
-        super(InputZipCounty, self).__init__(smv, "pdda_raw/00_geo/zip_to_county.csv")
+    def path(self):
+        return "pdda_raw/00_geo/zip_to_county.csv"
 
 class PyZipPrimaryCounty(SmvPyModule):
     def requiresDS(self):

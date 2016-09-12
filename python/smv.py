@@ -50,6 +50,8 @@ DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tres
 
 DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
 
+import abc
+
 class Smv(object):
     """Creates a proxy to SmvApp.
 
@@ -114,6 +116,8 @@ class SmvPyDataSet(object):
     """Base class for all SmvDataSets written in Python
     """
 
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, smv):
         self.smv = smv
 
@@ -136,9 +140,13 @@ class SmvPyCsvFile(SmvPyDataSet):
     """
 
     # TODO: add csv attributes
-    def __init__(self, smv, path):
+    def __init__(self, smv):
         super(SmvPyCsvFile, self).__init__(smv)
-        self._smvCsvFile = smv.app.smvCsvFile(path)
+        self._smvCsvFile = smv.app.smvCsvFile(self.path())
+
+    @abc.abstractproperty
+    def path(self):
+        """The path to the csv input file"""
 
     def isInput(self):
         return True
