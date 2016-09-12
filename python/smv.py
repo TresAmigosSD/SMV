@@ -50,6 +50,8 @@ DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tres
 
 DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
 
+import abc
+
 class Smv(object):
     """Creates a proxy to SmvApp.
 
@@ -82,43 +84,54 @@ class Smv(object):
         return DataFrame(jdf, self.sqlContext)
 
     def run_python_module(self, name):
-        if (name in self.pymods):
-            return self.pymods[name]
+        klass = for_name(name)
+        if (klass in self.pymods):
+            return self.pymods[klass]
         else:
-            mod = for_name(name)(self)
-            return self.__resolve(mod, [name])
+            return self.__resolve(klass, [klass])
 
-    def __resolve(self, mod, stack):
+    def __resolve(self, klass, stack):
+        mod = klass(self)
         for dep in mod.requiresDS():
-            depname = dep.fqn()
-            if (depname in stack):
-                raise RuntimeError("Circular module dependency detected", dep, stack)
+            if (dep in stack):
+                raise RuntimeError("Circular module dependency detected", dep.fqn(), stack)
 
-            stack.append(depname)
+            stack.append(dep)
             res = self.__resolve(dep, stack)
-            self.pymods[depname] = res
+            self.pymods[dep] = res
             stack.pop()
 
         tryRead = self.app.tryReadPersistedFile(mod.modulePath())
         if (tryRead.isSuccess()):
             ret = tryRead.get
         else:
-            ret = mod.compute()
+            ret = mod.run(self.pymods)
             if not mod.isInput():
                 self.app.persist(ret._jdf, mod.modulePath(), True)
 
-        self.pymods[mod.fqn()] = ret
+        self.pymods[mod] = ret
         return ret
 
 class SmvPyDataSet(object):
     """Base class for all SmvDataSets written in Python
     """
 
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, smv):
         self.smv = smv
 
+    @abc.abstractmethod
+    def description(self):
+        """A brief description of this dataset"""
+
+    @abc.abstractmethod
     def requiresDS(self):
-        return []
+        """The list of dataset dependencies"""
+
+    @abc.abstractmethod
+    def run(self, i):
+        """Comput this dataset, including its depencies if necessary"""
 
     def modulePath(self):
         return self.smv.app.outputDir() + "/" + self.fqn() + ".csv"
@@ -136,14 +149,24 @@ class SmvPyCsvFile(SmvPyDataSet):
     """
 
     # TODO: add csv attributes
-    def __init__(self, smv, path):
+    def __init__(self, smv):
         super(SmvPyCsvFile, self).__init__(smv)
-        self._smvCsvFile = smv.app.smvCsvFile(path)
+        self._smvCsvFile = smv.app.smvCsvFile(self.path())
+
+    def description(self):
+        return "Input file @" + self.path()
+
+    @abc.abstractproperty
+    def path(self):
+        """The path to the csv input file"""
 
     def isInput(self):
         return True
 
-    def compute(self):
+    def requiresDS(self):
+        return []
+
+    def run(self, i):
         jdf = self._smvCsvFile.rdd()
         return DataFrame(jdf, self.smv.sqlContext)
 
@@ -154,7 +177,7 @@ class SmvPyModule(SmvPyDataSet):
     def __init__(self, smv):
         super(SmvPyModule, self).__init__(smv)
 
-    def compute(self):
+    def prerun(self, i):
         print(".... computing module " + self.fqn())
 
 class SmvGroupedData(object):

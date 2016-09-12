@@ -3,17 +3,20 @@ from pyspark.sql.functions import col
 from pyspark.sql import DataFrame
 
 class InputZipCounty(SmvPyCsvFile):
-    def __init__(self, smv):
-        super(InputZipCounty, self).__init__(smv, "pdda_raw/00_geo/zip_to_county.csv")
+    def path(self):
+        return "pdda_raw/00_geo/zip_to_county.csv"
 
 class PyZipPrimaryCounty(SmvPyModule):
+    def description(self):
+        return "For each Zip assign the County with the largets population as the primary county"
+
     def requiresDS(self):
-        return [InputZipCounty(self.smv)]
+        return [InputZipCounty]
 
-    def compute(self):
-        super(PyZipPrimaryCounty, self).compute()
+    def run(self, i):
+        self.prerun(i)
 
-        df = self.smv.pymods['test.InputZipCounty']
+        df = i[InputZipCounty]
 
         filtered = df.select(
             df['ZCTA5'].alias("Zip"),
@@ -25,4 +28,4 @@ class PyZipPrimaryCounty(SmvPyModule):
         grouped = filtered.smvGroupBy(col("Zip"))
         p1 = grouped.smvTopNRecs(1, col('Population').desc())
         p2 = p1.select(p1["Zip"], p1["County"].alias("PCounty"))
-        return filtered.smvJoinByKey(p2, ["Zip"], "inner")
+        return filtered.smvJoinByKey(p2, ["Zip"], "inner").repartition(8)
