@@ -77,18 +77,35 @@ function copy_data_files()
     cp -R "${TEMPLATE_DIR}/data" "$PROJ_DIR"
 }
 
+function copy_src_dir()
+{
+    subdir=$1
+    proj_cp=$2
+    DST_DIR="${PROJ_DIR_FULL_PATH}/src/${subdir}/${proj_cp}"
+
+    (cd ${TEMPLATE_DIR}/src/${subdir}; find . -type f | while read f; do
+      SRC_FILE="${TEMPLATE_DIR}/src/${subdir}/$f"
+      DST_FILE="${DST_DIR}/$f"
+      copy_with_inject "$SRC_FILE" "$DST_FILE"
+    done)
+}
+
 function copy_src_files()
 {
     echo "-- copying source files"
 
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
-    DST_DIR="${PROJ_DIR_FULL_PATH}/src/main/scala/${PROJ_CLASS_PATH}"
 
-    (cd ${TEMPLATE_DIR}/src/main/scala; find . -type f | while read f; do
-      SRC_FILE="${TEMPLATE_DIR}/src/main/scala/$f"
-      DST_FILE="${DST_DIR}/$f"
-      copy_with_inject "$SRC_FILE" "$DST_FILE"
-    done)
+    for subdir in main/scala main/python; do
+        copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
+    done
+}
+
+function create_python_packages()
+{
+    for dir in $(ls -d ${PROJ_DIR_FULL_PATH}/src/main/python/*/); do
+        find ${dir} -type d -print0 | xargs -0 -i touch \{\}/__init__.py
+    done
 }
 
 # --- MAIN ---
@@ -97,3 +114,4 @@ create_proj_dir
 copy_conf_files
 copy_data_files
 copy_src_files
+create_python_packages
