@@ -5,9 +5,12 @@ def for_name(name):
 
     Equivalent to Java's Class.forName
     """
-    components = name.split('.')
-    mod = __import__(components[0])
-    for comp in components[1:]:
+    lastdot = name.rfind('.')
+    if (lastdot == -1):
+        return getattr(__import('__main__'), name)
+
+    mod = __import__(name[:lastdot])
+    for comp in name.split('.')[1:]:
         mod = getattr(mod, comp)
     return mod
 
@@ -148,10 +151,9 @@ class SmvPyCsvFile(SmvPyDataSet):
     """Raw input file in CSV format
     """
 
-    # TODO: add csv attributes
     def __init__(self, smv):
         super(SmvPyCsvFile, self).__init__(smv)
-        self._smvCsvFile = smv.app.smvCsvFile(self.path())
+        self._smvCsvFile = smv.app.smvCsvFile(self.path(), self.csvFormat())
 
     def description(self):
         return "Input file @" + self.path()
@@ -159,6 +161,13 @@ class SmvPyCsvFile(SmvPyDataSet):
     @abc.abstractproperty
     def path(self):
         """The path to the csv input file"""
+
+    def csvFormat(self):
+        """The csv file format, valid values are:
+        schema - read from the schema file, equivalent to null in Scala API
+        csv+h  - default csv with header
+        """
+        return "schema"
 
     def isInput(self):
         return True
