@@ -38,13 +38,10 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/
     # dry run of sbt forces download of sbt dependencies
     sbt exit &&\
     \
-    wget https://github.com/Kai-Chen/spark/archive/1.5.2_hd.zip &&\
-    unzip 1.5.2_hd.zip &&\
-    mv spark-1.5.2_hd $SPARK_HOME/ &&\
-    rm 1.5.2_hd.zip &&\
-    cd $SPARK_HOME &&\
-    mvn -DskipTests -Psparkr -Phive -Phive-thriftserver -Pyarn -Phadoop-2.6 -Dhadoop.version=2.6.0 package &&\
-    rm -rf ~/.m2/repository/* &&\
+    wget https://github.com/TresAmigosSD/spark/releases/download/1.5.2_hd/spark-1.5.2-bin-2.7.2.tgz &&\
+    tar xzvf spark-1.5.2-bin-2.7.2.tgz &&\
+    mv spark-1.5.2-bin-2.7.2 $SPARK_HOME/ &&\
+    rm spark-1.5.2-bin-2.7.2.tgz &&\
     \
     useradd -G sudo --create-home --shell /bin/bash smv &&\
     echo "smv ALL = NOPASSWD: ALL" >> /etc/sudoers &&\
