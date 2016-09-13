@@ -136,8 +136,13 @@ class SmvPyDataSet(object):
     def run(self, i):
         """Comput this dataset, including its depencies if necessary"""
 
+    def version(self):
+        """All datasets are versioned, with a string,
+        so that code and the data it produces can be tracked together."""
+        return "0";
+
     def modulePath(self):
-        return self.smv.app.outputDir() + "/" + self.fqn() + ".csv"
+        return self.smv.app.outputDir() + "/" + self.fqn() + "_" + self.version() + ".csv"
 
     def fqn(self):
         """Returns the fully qualified name
@@ -153,7 +158,7 @@ class SmvPyCsvFile(SmvPyDataSet):
 
     def __init__(self, smv):
         super(SmvPyCsvFile, self).__init__(smv)
-        self._smvCsvFile = smv.app.smvCsvFile(self.path(), self.csvFormat())
+        self._smvCsvFile = smv.app.smvCsvFile(self.fqn() + "_" + self.version(), self.path(), self.csvFormat())
 
     def description(self):
         return "Input file @" + self.path()

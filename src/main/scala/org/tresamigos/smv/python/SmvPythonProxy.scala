@@ -49,14 +49,15 @@ class SmvPythonApp(val app: SmvApp) {
     SmvUtil.persist(app.sqlContext, dataframe, path, generateEdd)
 
   /** Create a SmvCsvFile for use in Python */
-  def smvCsvFile(path: String, csv: String): SmvCsvFile = {
+  def smvCsvFile(moduleName: String, path: String, csv: String): SmvCsvFile = {
     val attr: CsvAttributes = csv match {
       case "schema" => null
       case "csv+h"  => CsvAttributes.defaultCsvWithHeader
       // TODO: finish all csv types
       case _        => throw new RuntimeException(s"csv format ${csv} is not supported")
     }
-    SmvCsvFile(path, attr)
+
+    new SmvCsvFile(path, attr) { override def name = moduleName }
   }
 
   /** Output directory for files */
