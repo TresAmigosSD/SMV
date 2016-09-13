@@ -366,45 +366,30 @@ class SmvSchema (val entries: Seq[SchemaEntry], val attributes: Map[String,Strin
    */
   private[smv] def rowToCsvString(row: Row, ca: CsvAttributes) = {
     require(row.size == entries.size)
-    val sb = new StringBuilder
+
     val quote = ca.quotechar.toString
     val doubleQuote = quote + quote
     val regexOfEscapeAndQuote = "([" + "\\\\" + quote + "])"
 
-    // TODO: should be done using zip,map and mkstring rather than index.
-    for (idx <- 0 until row.length) {
-      // prepend delimiter except for first item.
-      if (idx > 0)
-        sb.append(ca.delimiter)
-
-      val se = entries(idx).typeFormat
-
-      // If we are encoding for the Excel CSV format, double up all the double quotes for
-      //    strings - that could have double quotes inside them
-      //    maps and arrays which could have strings and hence double quotes as well
-      //    other types, such as numbers will not have quotes, so no need to escape them
-      // If we are not encoding this format, escape all the quote and escape chars
-      // for strings, maps, and arrays with an escape character
-      if (ca.isExcelCSV) {
-        (se.dataType.typeName: @switch) match {
-          case "string" | "map" | "array" =>
-            sb.append(quote + se.valToStr(row(idx)).replace(quote, doubleQuote) + quote)
-          case _ => sb.append(se.valToStr(row(idx)))
-        }
+    // If we are encoding for the Excel CSV format, double up all the double quotes for
+    //    strings - that could have double quotes inside them
+    //    maps and arrays which could have strings and hence double quotes as well
+    //    other types, such as numbers will not have quotes, so no need to escape them
+    // If we are not encoding this format, escape all the quote and escape chars
+    // for strings, maps, and arrays with an escape character
+    row.toSeq.zip(entries).map{case (v, s) =>
+      val se = s.typeFormat
+      val quoted = if(ca.isExcelCSV) {
+        quote + se.valToStr(v).replace(quote, doubleQuote) + quote
       } else {
-        (se.dataType.typeName: @switch) match {
-          // TODO: handle timestamp here to convert to desired format
-          case "string" | "map" | "array" =>
-            // TODO: need to handle this better!
-            sb.append(ca.quotechar)
-            sb.append(se.valToStr(row(idx)).replaceAll(regexOfEscapeAndQuote, "\\\\$1"))
-            sb.append(ca.quotechar)
-          case _ => sb.append(se.valToStr(row(idx)))
-        }
+        quote + se.valToStr(v).replaceAll(regexOfEscapeAndQuote, "\\\\$1") + quote
       }
-    }
 
-    sb.toString
+      se match {
+        case StringTypeFormat(_, _) | MapTypeFormat(_, _) | ArrayTypeFormat(_) => quoted
+        case _ => se.valToStr(v)
+      }
+    }.mkString(ca.delimiter.toString)
   }
 
   /**
