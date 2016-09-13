@@ -24,7 +24,7 @@ cd ${APP_NAME}
 $MVN clean package
 
 echo "--------- RUN SAMPLE APP -------------"
-../../../tools/smv-run --master local[*] --run-app
+../../../tools/smv-run --master local[*] --smv-props smv.inputDir=data/input smv.outputDir=data/output --run-app
 
 echo "--------- VERIFY SAMPLE APP OUTPUT -------------"
 COUNT=$(cat data/output/com.mycompany.MyApp.stage2.StageEmpCategory_*.csv/part* | wc -l)
