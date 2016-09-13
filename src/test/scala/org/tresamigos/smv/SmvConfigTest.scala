@@ -101,12 +101,18 @@ package org.tresamigos.smv {
     }
 
   test("test input/output/data dir command line override") {
+    import java.io.File
     val conf = mkconfig("--smv-props", "smv.dataDir=D1", "smv.inputDir=I1", "--input-dir", "I2",
       "-m", "mod1")
 
     assert(conf.dataDir === "D1")
     assert(conf.inputDir === "I2") // should use command line override rather than prop.
-    assert(conf.outputDir === "D1/output") // should use default derived from data dir
+
+    //Since ${HOME}/.smv/smv-user-conf.props might exist, the outputDir could already been set
+    val homeConfFile = new File(conf.DEFAULT_SMV_HOME_CONF_FILE)
+    if (!homeConfFile.isFile()){
+      assert(conf.outputDir === "D1/output") // should use default derived from data dir
+    }
   }
 
     val stageNames = Seq("org.tresamigos.smv.test1", "org.tresamigos.smv.test2")
