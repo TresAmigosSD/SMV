@@ -22,7 +22,7 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/
     apt-get install -y vim &&\
     apt-get install -y rsync &&\
     apt-get install -y git &&\
-
+    apt-get install -y python &&\
     \
     mkdir -p $LIB_DIR &&\
     \
