@@ -158,7 +158,7 @@ class SmvPyCsvFile(SmvPyDataSet):
 
     def __init__(self, smv):
         super(SmvPyCsvFile, self).__init__(smv)
-        self._smvCsvFile = smv.app.smvCsvFile(self.fqn() + "_" + self.version(), self.path(), self.csvFormat())
+        self._smvCsvFile = smv.app.smvCsvFile(self.fqn() + "_" + self.version(), self.path(), self.csvAttr())
 
     def description(self):
         return "Input file @" + self.path()
@@ -167,12 +167,23 @@ class SmvPyCsvFile(SmvPyDataSet):
     def path(self):
         """The path to the csv input file"""
 
-    def csvFormat(self):
-        """The csv file format, valid values are:
-        schema - read from the schema file, equivalent to null in Scala API
-        csv+h  - default csv with header
+    def __mkCsvAttr(self, delimiter=',', quotechar='""', hasHeader=False):
+        """Factory method for creating instances of Scala case class CsvAttributes"""
+        return self.smv._jvm.org.tresamigos.smv.CsvAttributes(delimiter, quotechar, hasHeader)
+
+    def defaultCsvWithHeader(self):
+        return self.__mkCsvAttr(hasHeader=True)
+
+    def defaultTsv(self):
+        return self.__mkCsvAttr(delimiter='\t')
+
+    def defaultTsvWitHeader(self):
+        return self.__mkCsvAttr(delimier='\t', hasHeader=True)
+
+    def csvAttr(self):
+        """Specifies the csv file format.  Corresponds to the CsvAttributes case class in Scala.
         """
-        return "schema"
+        return None
 
     def isInput(self):
         return True
