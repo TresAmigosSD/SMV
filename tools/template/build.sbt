@@ -42,3 +42,6 @@ ${smvInit}
 
 // clean up spark context
 cleanupCommands in console := "sc.stop"
+
+// Uncomment the following to include python scripts in the fat jar
+// unmanagedResourceDirectories in Compile += (sourceDirectory in Compile).value / "python"
