@@ -47,7 +47,7 @@ DataFrame.peek = lambda df: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelpe
 
 # provides df.selectPlus(...) in python shell
 # example: df.selectPlus(lit(1).alias('col'))
-DataFrame.selectPlus = lambda df, *cols: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.selectPlus(df._jdf, smv_copy_array(df._sc, *cols))
+DataFrame.selectPlus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.selectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
 DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
 
@@ -106,7 +106,7 @@ class Smv(object):
 
         tryRead = self.app.tryReadPersistedFile(mod.modulePath())
         if (tryRead.isSuccess()):
-            ret = tryRead.get
+            ret = DataFrame(tryRead.get(), self.sqlContext)
         else:
             ret = mod.run(self.pymods)
             if not mod.isInput():
