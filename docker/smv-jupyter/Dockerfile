@@ -2,9 +2,6 @@ FROM tresamigos/smv
 
 ARG BUILD_DEPS_APT="python-pip"
 
-ENV PYSPARK_DRIVE_PYTHON="jupyter" \
-    IPYTHON_OPTS="notebook --ip=*"
-
 RUN sudo apt-get update &&\
     sudo apt-get install -y $BUILD_DEPS_APT &&\
     sudo pip install --upgrade pip &&\
@@ -12,4 +9,12 @@ RUN sudo apt-get update &&\
     sudo apt-get remove --purge -y $BUILD_DEPS_APT &&\
     sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-ENTRYPOINT $SMV_HOME/tools/smv-pyshell
+COPY kernel.json /usr/local/share/jupyter/kernels/smv-pyshell/kernel.json
+
+COPY entrypoint.sh /usr/bin/entrypoint.sh
+
+RUN sudo chmod a+x /usr/bin/entrypoint.sh
+
+WORKDIR /proj
+
+ENTRYPOINT ["entrypoint.sh"] 
