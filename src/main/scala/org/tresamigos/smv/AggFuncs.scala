@@ -305,7 +305,7 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
     } else if (bin_index == (num_of_bins - 1)) {
       (max_val - interval_length, max_val)
     } else {
-      val start = bin_index * interval_length
+      val start = bin_index * interval_length + min_val
       (start, start +  interval_length)
     }
   }

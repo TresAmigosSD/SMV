@@ -13,6 +13,7 @@
  */
 
 package org.tresamigos.smv
+import org.apache.spark.sql.functions._
 
 
 class DoubleBinHistogramTest extends SmvTestUtil {
@@ -86,5 +87,16 @@ class DoubleBinHistogramTest extends SmvTestUtil {
 
     val res0 = df_with_bins.select('v_xyz.smvBinPercentile(10.0))
     assertSrddDataEqual(res0, "25.0")
+  }
+
+  test("smvDoubleBinHistogram with min is not zero") {
+    val ssc = sqlContext; import ssc.implicits._
+
+    val df = app.createDF("age:Integer", "60;56;63;36;41;43;69")
+    val res = df.selectPlus(lit(1) as "id").
+      smvDoubleBinHistogram(Seq("id"), "age", 30).
+      select($"age_bin".smvBinPercentile(50.0) as "age_med")
+
+    assertSrddDataEqual(res, "56.349999999999994")
   }
 }
