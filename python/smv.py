@@ -1,4 +1,9 @@
 from pyspark.sql.column import Column
+import sys
+
+if sys.version >= '3':
+    basestring = unicode = str
+    long = int
 
 def for_name(name):
     """Dynamically load a class by its name.
