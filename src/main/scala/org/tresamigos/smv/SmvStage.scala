@@ -99,15 +99,20 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
 
   def stageBaseName(s: String) = FQN.removePrefix(s, fqnPrefix)
 
-  /**
-   * Find the stage that a given dataset belongs to.
-   */
   // Issue # 349: look up stage by the dataset's name instead of the
   // object identity because after hot-deploy in shell via a new
   // classloader, the same datset no longer has the same object
   // instance.
-  def findStageForDataSet(ds: SmvDataSet) : SmvStage =
-    stages.find(s => s.allDatasets.map(_.name).contains(ds.name)) getOrElse null
+  lazy val dsname2stage: Map[String, SmvStage] =
+    (for {
+      st <- stages
+      ds <- st.allDatasets
+    } yield (ds.name, st)).toMap
+
+  /**
+   * Find the stage that a given dataset belongs to.
+   */
+  def findStageForDataSet(ds: SmvDataSet) : SmvStage = dsname2stage.get(ds.name) getOrElse null
 
   override lazy val predecessors: Map[SmvDataSet, Seq[SmvDataSet]] =
     allDatasets.map{

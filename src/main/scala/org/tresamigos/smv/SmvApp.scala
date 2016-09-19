@@ -77,6 +77,14 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /**
+   * Does the dataset follow dependency rules?
+   */
+  def checkDependencyRules(ds: SmvDataSet): Seq[DependencyViolation] = {
+    val results = SmvApp.DependencyRules map (_.check(ds))
+    results.foldRight(Seq.empty[DependencyViolation])((elem, acc) => elem.toSeq ++: acc)
+  }
+
+  /**
    * Get the RDD associated with data set.  The rdd plan (not data) is cached in the SmvDataSet
    * to ensure only a single DataFrame exists for a given data set (file/module).
    * The module can create a data cache itself and the cached data will be used by all
@@ -286,6 +294,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
  */
 object SmvApp {
   var app: SmvApp = _
+
+  val DependencyRules: Seq[DependencyRule] = Seq(SameStageDependency, LinkFromDiffStage)
 
   def init(args: Array[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) = {
     app = new SmvApp(args, _sc, _sql)

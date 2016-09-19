@@ -47,7 +47,7 @@ DataFrame.peek = lambda df: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelpe
 
 # provides df.selectPlus(...) in python shell
 # example: df.selectPlus(lit(1).alias('col'))
-DataFrame.selectPlus = lambda df, *cols: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.selectPlus(df._jdf, smv_copy_array(df._sc, *cols))
+DataFrame.selectPlus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.selectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
 DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
 
@@ -106,7 +106,7 @@ class Smv(object):
 
         tryRead = self.app.tryReadPersistedFile(mod.modulePath())
         if (tryRead.isSuccess()):
-            ret = tryRead.get
+            ret = DataFrame(tryRead.get(), self.sqlContext)
         else:
             ret = mod.run(self.pymods)
             if not mod.isInput():
@@ -136,8 +136,13 @@ class SmvPyDataSet(object):
     def run(self, i):
         """Comput this dataset, including its depencies if necessary"""
 
+    def version(self):
+        """All datasets are versioned, with a string,
+        so that code and the data it produces can be tracked together."""
+        return "0";
+
     def modulePath(self):
-        return self.smv.app.outputDir() + "/" + self.fqn() + ".csv"
+        return self.smv.app.outputDir() + "/" + self.fqn() + "_" + self.version() + ".csv"
 
     def fqn(self):
         """Returns the fully qualified name
@@ -153,7 +158,7 @@ class SmvPyCsvFile(SmvPyDataSet):
 
     def __init__(self, smv):
         super(SmvPyCsvFile, self).__init__(smv)
-        self._smvCsvFile = smv.app.smvCsvFile(self.path(), self.csvFormat())
+        self._smvCsvFile = smv.app.smvCsvFile(self.fqn() + "_" + self.version(), self.path(), self.csvAttr())
 
     def description(self):
         return "Input file @" + self.path()
@@ -162,12 +167,23 @@ class SmvPyCsvFile(SmvPyDataSet):
     def path(self):
         """The path to the csv input file"""
 
-    def csvFormat(self):
-        """The csv file format, valid values are:
-        schema - read from the schema file, equivalent to null in Scala API
-        csv+h  - default csv with header
+    def __mkCsvAttr(self, delimiter=',', quotechar='""', hasHeader=False):
+        """Factory method for creating instances of Scala case class CsvAttributes"""
+        return self.smv._jvm.org.tresamigos.smv.CsvAttributes(delimiter, quotechar, hasHeader)
+
+    def defaultCsvWithHeader(self):
+        return self.__mkCsvAttr(hasHeader=True)
+
+    def defaultTsv(self):
+        return self.__mkCsvAttr(delimiter='\t')
+
+    def defaultTsvWitHeader(self):
+        return self.__mkCsvAttr(delimier='\t', hasHeader=True)
+
+    def csvAttr(self):
+        """Specifies the csv file format.  Corresponds to the CsvAttributes case class in Scala.
         """
-        return "schema"
+        return None
 
     def isInput(self):
         return True

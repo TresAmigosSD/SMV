@@ -101,3 +101,48 @@ case class DataSetDependency(className: String) {
     stringWriter.toString()
   }
 }
+
+/** rule violation report */
+case class DependencyViolation(description: String, components: Seq[SmvDataSet])
+
+sealed trait DependencyRule {
+
+  /** Convenience method to convert a list of offending datasets to Violation instances */
+  def toViolation(results: Seq[SmvDataSet]): Option[DependencyViolation] =
+    if (results.isEmpty) None else Some(DependencyViolation(description, results))
+
+  def description: String
+
+  /** Returns None if the rule is followed, Some(violations) if violated */
+  def check(ds: SmvDataSet): Option[DependencyViolation]
+
+}
+
+object SameStageDependency extends DependencyRule {
+  override val description = "Dependency modules must be in the same stage"
+
+  override def check(ds: SmvDataSet) = {
+    val diff = for {
+      dep <- ds.requiresDS
+      if (!dep.isInstanceOf[SmvModuleLink]) &&
+      dep.parentStage != ds.parentStage
+    } yield dep
+
+    toViolation(diff)
+  }
+}
+
+object LinkFromDiffStage extends DependencyRule {
+  override val description = "Module Links must come from another stage"
+
+  override def check(ds: SmvDataSet) = {
+    val links = for {
+      link <- ds.requiresDS
+      if link.isInstanceOf[SmvModuleLink] &&
+      link.parentStage == ds.parentStage &&
+      link.asInstanceOf[SmvModuleLink].smvModule.parentStage == ds.parentStage
+    } yield link
+
+    toViolation(links)
+  }
+}

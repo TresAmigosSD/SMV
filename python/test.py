@@ -6,8 +6,8 @@ class InputZipCounty(SmvPyCsvFile):
     def path(self):
         return "pdda_raw/00_geo/zip_to_county.csv"
 
-    def csvFormat(self):
-        return "csv+h"
+    def csvAttr(self):
+        return self.defaultCsvWithHeader()
 
 class PyZipPrimaryCounty(SmvPyModule):
     def description(self):

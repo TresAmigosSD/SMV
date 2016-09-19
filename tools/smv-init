@@ -104,7 +104,7 @@ function copy_src_files()
 function create_python_packages()
 {
     for dir in $(ls -d ${PROJ_DIR_FULL_PATH}/src/main/python/*/); do
-        find ${dir} -type d -print0 | xargs -0 -i touch \{\}/__init__.py
+        find ${dir} -type d -print0 | xargs -0 -I\{\} touch \{\}/__init__.py
     done
 }
 

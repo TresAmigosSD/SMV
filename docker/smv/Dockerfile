@@ -9,7 +9,10 @@ RUN wget http://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     sudo mv SMV-master $SMV_HOME/ &&\
     cd $SMV_HOME &&\
     mvn install -DskipTests &&\
-    sbt publish-local
+    sbt publish-local &&\
+    rm -rf /home/smv/.ivy2/cache/* &&\
+    find /home/smv/.m2/repository -mindepth 1 \! -path '*tresamigos*' -exec rm -rf \{\} + &&\ 
+    rm -rf $SMV_HOME/target
 
 # Configures maven repository to live on user's host mount (i.e. in /projects)
 COPY ./settings.xml $M2_HOME/conf/settings.xml
