@@ -122,7 +122,12 @@ object SameStageDependency extends DependencyRule {
   override val description = "Dependency modules must be in the same stage"
 
   override def check(ds: SmvDataSet) = {
-    val diff = ds.requiresDS filterNot (_.parentStage == ds.parentStage)
+    val diff = for {
+      dep <- ds.requiresDS
+      if (!dep.isInstanceOf[SmvModuleLink]) &&
+      dep.parentStage != ds.parentStage
+    } yield dep
+
     toViolation(diff)
   }
 }
