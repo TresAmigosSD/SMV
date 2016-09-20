@@ -90,7 +90,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       v <- violations
       header = s"${indent}${v.description}"
     } yield
-      header +: v.components.map(m => s"${indent}${indent}${m.name}")
+      (header +: v.components.map(m => s"${indent}${indent}${m.name}")).mkString("\n")
     ).mkString("\n")
 
   /**
@@ -304,7 +304,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
       println()
       println("..checking dependency rules for all modules")
-      val all = mods.flatMap(_.dependencies).distinct
+      val all = (mods ++ mods.flatMap(_.dependencies)).distinct
       all.foreach { m =>
         val violations = checkDependencyRules(m)
         if (violations.isEmpty)
