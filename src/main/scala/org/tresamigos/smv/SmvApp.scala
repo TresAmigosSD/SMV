@@ -84,6 +84,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     results.foldRight(Seq.empty[DependencyViolation])((elem, acc) => elem.toSeq ++: acc)
   }
 
+  /** Textual representation for output to console */
+  def mkViolationString(violations: Seq[DependencyViolation], indent: String = ".."): String =
+    (for {
+      v <- violations
+      header = s"${indent}${v.description}"
+    } yield
+      header +: v.components.map(m => s"${indent}${indent}${m.name}")
+    ).mkString("\n")
+
   /**
    * Get the RDD associated with data set.  The rdd plan (not data) is cached in the SmvDataSet
    * to ensure only a single DataFrame exists for a given data set (file/module).
@@ -104,6 +113,17 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
        In Spark shell, when ds.rdd fails, dsName is still in the stack, need to pop it
        so that redefining the same ds will not cause a "cycle" error */
     val resRdd = try {
+      val violations = checkDependencyRules(ds)
+      if (!violations.isEmpty) {
+        println(s"""Module ${ds.name} violates dependency rules""")
+        println(mkViolationString(violations))
+
+        if (!smvConfig.permitDependencyViolation)
+          throw new IllegalStateException(s"Terminating module resolution when dependency rules are violated.  To change this behavior, please run the app with option --${smvConfig.cmdLine.permitDependencyViolation.name}")
+        else
+          println("Continuing module resolution as the app is to configured to permit dependency rule violation")
+      }
+
       ds.rdd()
     } catch {
       case NonFatal(t) => {
@@ -275,11 +295,25 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * to determine which modules should be run/graphed/etc.
    */
   def run() = {
-    if (smvConfig.modulesToRun().nonEmpty) {
+    val mods = smvConfig.modulesToRun
+    if (mods.nonEmpty) {
       println("Modules to run/publish")
       println("----------------------")
-      smvConfig.modulesToRun().foreach(m => println(m.name))
+      println(mods.map(_.name).mkString("\n"))
       println("----------------------")
+
+      println()
+      println("..checking dependency rules for all modules")
+      val all = mods.flatMap(_.dependencies).distinct
+      all.foreach { m =>
+        val violations = checkDependencyRules(m)
+        if (violations.isEmpty)
+          println(s"..module ${m.name} .... pass")
+        else {
+          println(s"..module ${m.name} violates dependency rules ... FAIL")
+          println(mkViolationString(violations, "...."))
+        }
+      }
     }
 
     purgeOldOutputFiles()

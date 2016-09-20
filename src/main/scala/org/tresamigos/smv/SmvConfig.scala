@@ -63,6 +63,12 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val outputDir  = opt[String]("output-dir",  noshort = true, descr = "specify the output directory (default: datadir/output")
   val publishDir = opt[String]("publish-dir", noshort = true, descr = "specify the publish directory (default: datadir/publish")
 
+  val permitDependencyViolation = toggle(
+    "permit-dependency-violation",
+    short = 'p',
+    descrYes = "allows module resolution even if the module violates dependency rules",
+    default = Some(false))
+
   val purgeOldOutput = toggle("purge-old-output", noshort = true, default = Some(false),
     descrYes = "remove all old output files in output dir ")
   val modsToRun = opt[List[String]]("run-module", 'm', descr = "run specified list of module FQNs")
@@ -134,6 +140,8 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   val stages = new SmvStages(stagesList.toSeq)
 
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
+
+  val permitDependencyViolation: Boolean = cmdLine.permitDependencyViolation()
 
   /**
    * sequence of SmvModules to run based on the command line arguments.
