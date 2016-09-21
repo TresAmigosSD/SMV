@@ -10,7 +10,8 @@
 * [Run Spark R Shell](smv_r.md)
 * [Extended Data Dictionary (EDD)](edd.md)
 * [SMV Files](smv_file.md)
-* [SMV Modules](smv_module.md)
+* [SMV Scala Modules](smv_module.md)
+* [SMV Python Modules](smv_module_python.md) :new:
 * [SMV Hive Tables](smv_hive.md)
 * [SMV Stages](smv_stages.md)
 * [SMV Functions](functions.md)
