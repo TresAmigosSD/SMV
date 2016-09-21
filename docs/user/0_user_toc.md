@@ -2,6 +2,7 @@
 
 * [Installation](smv_install.md)
 * [Getting Started](getting_started.md)
+* [Getting Started Python](getting_started_python.md) :new:
 * [SMV Introduction](smv_intro.md)
 * [Application Configuration](app_config.md)
 * [Run Application](run_app.md)
