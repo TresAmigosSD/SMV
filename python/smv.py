@@ -166,7 +166,7 @@ class SmvPyCsvFile(SmvPyDataSet):
         self._smvCsvFile = smv.app.smvCsvFile(self.fqn() + "_" + self.version(), self.path(), self.csvAttr())
 
     def description(self):
-        return "Input file @" + self.path()
+        return "Input file: @" + self.path()
 
     @abc.abstractproperty
     def path(self):
@@ -199,6 +199,30 @@ class SmvPyCsvFile(SmvPyDataSet):
     def run(self, i):
         jdf = self._smvCsvFile.rdd()
         return DataFrame(jdf, self.smv.sqlContext)
+
+class SmvPyHiveTable(SmvPyDataSet):
+    """Input data source from a Hive table
+    """
+
+    def __init__(self, smv):
+        super(SmvPyHiveTable, self).__init__(smv)
+        self._smvHiveTable = self.smv._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName())
+
+    def description(self):
+        return "Hive Table: @" + self.tableName()
+
+    @abc.abstractproperty
+    def tableName(self):
+        """The qualified Hive table name"""
+
+    def isInput(self):
+        return True
+
+    def requiresDS(self):
+        return []
+
+    def run(self, i):
+        return DataFrame(self._smvHiveTable.rdd(), self.smv.sqlContext)
 
 class SmvPyModule(SmvPyDataSet):
     """Base class for SmvModules written in Python
