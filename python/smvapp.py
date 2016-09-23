@@ -23,3 +23,8 @@ if __name__ == "__main__":
 
     for name in mods:
         smv.run_python_module(name)
+
+    table = app.config().exportHive()
+    if (table.isDefined()):
+        app.verifyConfig()
+        app.exportHive(smv.run_python_module(mods[0])._jdf, table.get())

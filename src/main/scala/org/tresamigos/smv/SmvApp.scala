@@ -241,6 +241,30 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }.orElse(Some(false))()
   }
 
+  // TODO: temporary helper function, throws on error;
+  // change to return a validation result object when we need to refactor
+  def verifyConfig(): Unit = {
+    // exactly 1 module must be specified when exporting to hive
+    if (smvConfig.cmdLine.exportHive.isDefined) {
+      smvConfig.moduleNames.size match {
+        case 1 => // expected
+        case 0 =>
+          throw new IllegalArgumentException("No module defined for hive-export")
+        case _ =>
+          throw new IllegalArgumentException(s"Can only export 1 module at a time to hive table; but modules ${smvConfig.moduleNames} are in the run-queue")
+      }
+    }
+  }
+
+  def exportOutputModule() : Boolean =
+    smvConfig.cmdLine.exportHive.get match {
+      case None => false
+      case Some(tableName) =>
+        verifyConfig()
+        SmvUtil.exportHive(smvConfig.modulesToRun()(0).rdd(), tableName)
+        true
+    }
+
   /**
    * Publish the specified modules if the "--publish" flag was specified on command line.
    * @return true if modules were published, otherwise return false.
@@ -319,7 +343,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    compareEddResults() || generateGraphJSON() || generateDependencyGraphs() || publishOutputModules() || generateOutputModules()
+    compareEddResults() || generateGraphJSON() || generateDependencyGraphs() || exportOutputModule() ||  publishOutputModules() || generateOutputModules()
   }
 }
 

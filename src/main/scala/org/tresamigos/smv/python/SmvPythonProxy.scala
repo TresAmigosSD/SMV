@@ -33,6 +33,10 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
  * The collection types should be accessible through the py4j gateway.
  */
 class SmvPythonApp(val app: SmvApp) {
+  val config = app.smvConfig
+
+  def verifyConfig(): Unit = app.verifyConfig()
+
   /** The names of the modules to run in this app */
   // TODO relocate moduleNames() from SmvConfig to here
   val moduleNames: Array[String] = app.smvConfig.moduleNames
@@ -47,6 +51,10 @@ class SmvPythonApp(val app: SmvApp) {
   /** Saves the dataframe to disk */
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
     SmvUtil.persist(app.sqlContext, dataframe, path, generateEdd)
+
+  /** Export as hive table */
+  def exportHive(dataframe: DataFrame, tableName: String): Unit =
+    SmvUtil.exportHive(dataframe, tableName)
 
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes): SmvCsvFile =
