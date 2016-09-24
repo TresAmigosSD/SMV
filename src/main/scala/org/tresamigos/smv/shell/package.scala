@@ -139,4 +139,11 @@ package object shell {
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
     println(fmt.print(DateTime.now()))
   }
+
+  /**
+   * Read in a Hive table as DF
+   **/
+  def openHive(tabelName: String) = {
+    SmvApp.app.sqlContext.sql("select * from " + tabelName)
+  }
 }
