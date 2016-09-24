@@ -1076,14 +1076,11 @@ class SmvDFHelper(df: DataFrame) {
     discs.foreach{case (n, d) => printf(s"%-${width}s: %s\n", n,d)}
   }
 
-  /**
-   * Display a dataframe row in transposed view.
-   */
-  def peek(pos: Int, colRegex: String = ".*"): Unit = {
+  private def _peek(pos: Int, colRegex: String): String = {
     val rows = df.take(pos)
 
     if (!rows.isEmpty) {
-      val r = df.take(pos).last
+      val r = rows.last
 
       val labels = for {
         (f, i) <- df.schema.zipWithIndex
@@ -1091,12 +1088,20 @@ class SmvDFHelper(df: DataFrame) {
       } yield (s"${f.name}:${f.dataType.toString.replaceAll("Type", "")}", i)
 
       val width = labels.maxBy(_._1.length)._1.length
-      labels.foreach { t =>
-        printf(s"%-${width}s = %s\n", t._1, r(t._2))
-      }
+      labels.map{t => s"%-${width}s = %s".format(t._1, r(t._2))}.mkString("\n")
     } else {
-      printf("Cannot peek an empty DataFrame")
+      "Cannot peek an empty DataFrame"
     }
+  }
+
+  /**
+   * Display a dataframe row in transposed view.
+   *
+   * @param pos the n-th row to display, default as 1
+   * @param colRegex show the columns with name match the regex, default as ".*"
+   */
+  def peek(pos: Int, colRegex: String = ".*"): Unit = {
+    println(_peek(pos, colRegex))
   }
 
   /**
@@ -1104,7 +1109,23 @@ class SmvDFHelper(df: DataFrame) {
    **/
   def peek(): Unit = peek(1)
 
+  /**
+   * Display 1st row in transposed view
+   *
+   * @param colRegex show the columns with name match the regex, default as ".*"
+   **/
   def peek(colRegex: String): Unit = peek(1, colRegex)
+
+  /**
+   * Write `peek` result to a file
+   *
+   * @param path local file name to write
+   * @param pos the n-th row to display, default as 1
+   * @param colRegex show the columns with names match the regex, default as ".*"
+   **/
+  def peekSave(path: String, pos: Int = 1, colRegex: String = ".*") = {
+    SmvReportIO.saveLocalReport(_peek(pos, colRegex) + "\n", path)
+  }
 
   /**
    * Show histograms within groups (Issue #330)

@@ -54,6 +54,7 @@ package object shell {
       |* ancestors(ds: SmvDataSet)
       |* descendants(ds: SmvDataSet)
       |* peek(df: DataFrame, pos: Int = 1)
+      |* openHive(tabelName: String)
       |* now
       """.stripMargin
   )
