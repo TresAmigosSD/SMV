@@ -35,4 +35,6 @@ Within the `run` methods, all operations on Spark DataFrames are available, as w
 
 # SmvPyHiveTable
 
-:soon:
+To read from a Hive table, subclass `SmvPyHiveTable` and implement the `tableName` method to return the name of the Hive table.  This dataset can then be input (as dependency) to downstream modules.
+
+To save a module to a Hive table, the current (2016-09-24) solution is to use the `smv-pyrun` or `smv-run` command, passing `--export-hive <table-name>` option.  In this operation, there can be only one module in the run, usually defined on the commandline with the `-m` switch.
