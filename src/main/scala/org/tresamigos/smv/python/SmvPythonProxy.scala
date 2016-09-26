@@ -16,6 +16,9 @@ object SmvPythonHelper {
 
   def smvJoinByKey(df: DataFrame, other: DataFrame, keys: Array[String], joinType: String) =
     df.joinByKey(other, keys.toSeq, joinType)
+
+  def smvHashSample(df: DataFrame, key: Column, rate: Double, seed: Int) =
+    df.smvHashSample(key, rate, seed)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
