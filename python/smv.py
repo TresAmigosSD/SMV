@@ -58,7 +58,7 @@ DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tres
 
 DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
 
-DataFrame.smvHashSample = lambda df, key, rate=0.01, seed=23: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvHashSample(df._jdf, key, rate, seed, df.sql_ctx)
+DataFrame.smvHashSample = lambda df, key, rate=0.01, seed=23: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvHashSample(df._jdf, key, rate, seed, df.sql_ctx))
 
 import abc
 
