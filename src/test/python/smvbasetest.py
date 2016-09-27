@@ -1,4 +1,5 @@
 import unittest
+import runtests
 from smv import Smv
 
 import pyspark
@@ -9,15 +10,11 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.sc = SparkContext('local[*]', cls.__name__)
-        cls.sqlContext = HiveContext(cls.sc)
+        conf = runtests.TestConfig()
+        cls.sqlContext = conf.sqlContext()
         cls.smv = Smv(['-m', 'None'], cls.sqlContext)
         cls.app = cls.smv.app
 
     @classmethod
-    def tearDownClass(cls):
-        cls.sc.stop()
-
-    @classmethod
     def createDF(cls, schema, data):
-        return DataFrame(app.createDF(schema, data, False)._jdf, cls.sqlContext)
+        return DataFrame(cls.app.dfFrom(schema, data), cls.sqlContext)

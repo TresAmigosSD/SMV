@@ -65,6 +65,10 @@ class SmvPythonApp(val app: SmvApp) {
 
   /** Output directory for files */
   def outputDir: String = app.smvConfig.outputDir
+
+  /** Used to create small dataframes for testing */
+  def dfFrom(schema: String, data: String): DataFrame =
+    app.createDF(schema, data)
 }
 
 /** Not a companion object because we need to access it from Python */
