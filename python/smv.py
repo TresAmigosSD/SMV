@@ -100,6 +100,9 @@ class Smv(object):
         else:
             return self.__resolve(klass, [klass])
 
+    def createDF(self, schema, data):
+        return DataFrame(self.app.dfFrom(schema, data), self.sqlContext)
+
     def __resolve(self, klass, stack):
         mod = klass(self)
         for dep in mod.requiresDS():

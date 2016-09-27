@@ -35,6 +35,11 @@ if os.path.exists(historyPath):
 atexit.register(save_history)
 del os, atexit, readline, rlcompleter, save_history, historyPath
 
+# Import commonly used pyspark lib
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+# Imnport smv
 from smv import Smv
 app = Smv(['-m', 'None'], sqlContext)
 
