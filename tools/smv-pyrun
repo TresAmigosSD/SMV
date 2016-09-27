@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Run one or more SMV modules / stages / app.
-# USAGE: smv-runpy [-h] spark_args smv_app_args
+# USAGE: smv-pyrun [-h] spark_args smv_app_args
 #
 # user can specify spark args (such as --master, --class or --jar to override the fat jar selection)
 # the rest of the arguments are the standard SmvApp arguments.
@@ -15,6 +15,7 @@ if [ "$1" = "-h" ]; then
   echo "    [--driver-memory driver-mem]"
   echo "    [--jar fat_jar]"
   echo "smv_app_args:"
+  echo "    [--help]"
   echo "    [--purge-old-output]"
   echo "    [--data-dir dir] ..."
   echo "    <-m mod1 [mod2 ...] | -s stage1 [stage2 ...] | --run-app> ..."
@@ -23,19 +24,12 @@ fi
 
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 source $SMV_TOOLS/_env.sh
+source $SMV_TOOLS/_pyenv.sh
 
 echo "START RUN =============================="
 
 date
 
-export PYTHONPATH="$PYTHONPATH:${SMV_TOOLS}/../python:src/main/python"
-export SPARK_PRINT_LAUNCH_COMMAND=1
-spark-submit --executor-memory ${EXECUTOR_MEMORY} --driver-memory ${DRIVER_MEMORY} --master ${MASTER} --jars "$APP_JAR" --driver-class-path "$APP_JAR" ${SMV_TOOLS}/../python/smvapp.py ${ARGS[@]}
+run_pyspark_with ${SMV_TOOLS}/../python/smvapp.py
 
-# The following delivers the packaged python script in the jar as the
-# script, as arguments to the --py-files option has precedence over
-# PYTHONPATH
-#
-#spark-submit --executor-memory ${EXECUTOR_MEMORY} --driver-memory ${DRIVER_MEMORY} --master ${MASTER} --jars "$APP_JAR" --driver-class-path "$APP_JAR" --py-files "$APP_JAR" ${SMV_TOOLS}/../python/smvapp.py ${ARGS[@]}
 date
-
