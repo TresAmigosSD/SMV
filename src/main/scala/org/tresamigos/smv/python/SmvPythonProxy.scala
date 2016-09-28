@@ -8,7 +8,7 @@ import scala.util.Try
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
-  def peek(df: DataFrame) = df.peek()
+  def peekStr(df: DataFrame, pos: Int, colRegex: String) = df._peek(pos, colRegex)
   def selectPlus(df: DataFrame, cols: Array[Column]) = df.selectPlus(cols:_*)
 
   def smvGroupBy(df: DataFrame, cols: Array[Column]) =

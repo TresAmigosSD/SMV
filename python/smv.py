@@ -48,7 +48,10 @@ def smv_copy_array(sc, *cols):
 
 # enhances the spark DataFrame with smv helper functions
 from pyspark.sql import DataFrame
-DataFrame.peek = lambda df: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.peek(df._jdf)
+
+# peek from Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout
+import sys
+DataFrame.peek = lambda df, pos = 1, colRegex = ".*": sys.stdout.write(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.peekStr(df._jdf, pos, colRegex) + "\n")
 
 # provides df.selectPlus(...) in python shell
 # example: df.selectPlus(lit(1).alias('col'))

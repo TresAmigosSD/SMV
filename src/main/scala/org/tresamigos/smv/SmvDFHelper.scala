@@ -1076,7 +1076,7 @@ class SmvDFHelper(df: DataFrame) {
     discs.foreach{case (n, d) => printf(s"%-${width}s: %s\n", n,d)}
   }
 
-  private def _peek(pos: Int, colRegex: String): String = {
+  private[smv] def _peek(pos: Int, colRegex: String): String = {
     val rows = df.take(pos)
 
     if (!rows.isEmpty) {
