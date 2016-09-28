@@ -18,6 +18,7 @@ import org.apache.spark.sql.functions._
 
 import org.joda.time._
 import org.joda.time.format._
+import java.io.File
 
 import graph._
 
@@ -54,8 +55,12 @@ package object shell {
       |* ancestors(ds: SmvDataSet)
       |* descendants(ds: SmvDataSet)
       |* peek(df: DataFrame, pos: Int = 1)
+      |* openCsv(path: String, ca: CsvAttributes = null, parserCheck: Boolean = false)
       |* openHive(tabelName: String)
       |* now
+      |* df(ds: SmvDataSet)
+      |* ddf(fqn: String)
+      |* discoverSchema(path: String, n: Int = 100000, ca: CsvAttributes = CsvWithHeader)
       """.stripMargin
   )
 
@@ -144,7 +149,84 @@ package object shell {
   /**
    * Read in a Hive table as DF
    **/
-  def openHive(tabelName: String) = {
-    SmvApp.app.sqlContext.sql("select * from " + tabelName)
+  def openHive(tableName: String) = {
+    new SmvHiveTable(tableName).rdd()
+  }
+
+  /**
+   * Read in a Csv file as DF
+   **/
+  def openCsv(path: String, ca: CsvAttributes = null, parserCheck: Boolean = false) = {
+    /** isFullPath = true to avoid prepending data_dir */
+    object file extends SmvCsvFile(path, ca, null, true) {
+      override val forceParserCheck = false
+      override val failAtParsingError = parserCheck
+    }
+    file.rdd()
+  }
+
+  /**
+   * Resolve SmvDataSet
+   *
+   * @param ds an SmvDataSet
+   * @return result DataFrame
+   **/
+  def df(ds: SmvDataSet) = {
+    SmvApp.app.resolveRDD(ds)
+  }
+
+  /**
+   * Reload modules using custom class loader
+   **/
+  private[smv] def hotdeployIfCapable(ds: SmvDataSet, cl: ClassLoader = getClass.getClassLoader): Unit = {
+    import scala.reflect.runtime.universe
+
+    val mir = universe.runtimeMirror(cl).reflect(SmvApp.app.sc)
+    val meth = mir.symbol.typeSignature.member(universe.newTermName("hotdeploy"))
+
+    if (meth.isMethod) {
+      println("The following dependent SmvDataSets will be reloaded:")
+      ds.dependencies foreach (x => println(x.getClass.getName))
+
+      mir.reflectMethod(meth.asMethod)()
+    } else {
+      println("hotdeploy is not available in the current SparkContext")
+    }
+  }
+
+  /**
+   * Dynamically load modules
+   *
+   * @param fqn the fully qualified name of SmvDataSet
+   * @return result DataFrame
+   **/
+  def ddf(fqn: String) = {
+    val cl = getClass.getClassLoader
+    val ds = SmvApp.app.dsForName(fqn, cl)
+    hotdeployIfCapable(ds, cl)
+    SmvApp.app.resolveRDD(ds)
+  }
+
+  /**
+   * Try best to discover Schema from raw Csv file
+   *
+   * @param path Csv file path and name
+   * @param n number of records to check for schema discovery, default 100k
+   * @param ca CsvAttributes, default CsvWithHeader
+   *
+   * Will save a schema file with postfix ".toBeReviewed" in local directory.
+   **/
+  def discoverSchema(
+    path: String,
+    n: Int = 100000,
+    ca: CsvAttributes = CsvAttributes.defaultCsvWithHeader
+  ) = {
+    implicit val csvAttributes=ca
+    val helper = new SchemaDiscoveryHelper(SmvApp.app.sqlContext)
+    val schema = helper.discoverSchemaFromFile(path, n)
+    val outpath = SmvSchema.dataPathToSchemaPath(path) + ".toBeReviewed"
+    val outFileName = (new File(outpath)).getName
+    schema.saveToLocalFile(outFileName)
+    println(s"Discovered schema file saved as ${outFileName}, please review and make changes.")
   }
 }
