@@ -64,6 +64,8 @@ DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm
 DataFrame.smvHashSample = lambda df, key, rate=0.01, seed=23: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvHashSample(df._jdf, key, rate, seed, df.sql_ctx))
 
 import abc
+from pyspark import SparkContext
+from pyspark.sql import HiveContext
 
 class Smv(object):
     """Creates a proxy to SmvApp.
@@ -71,9 +73,14 @@ class Smv(object):
     The SmvApp instance is exposed through the `app` attribute.
     """
 
-    def __init__(self, arglist, sqlContext):
+    def init(self, arglist, _sc = None, _sqlContext = None):
+
+        #TODO: appName should be read from the config files
+        #      need to process the arglist first and create smvConfig before init SmvApp 
+        sc = SparkContext(appName="smvapp.py") if _sc is None else _sc
+        sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
+
         self.sqlContext = sqlContext
-        sc = sqlContext._sc
         self._jvm = sc._jvm
 
         # convert python arglist to java String array
@@ -83,6 +90,7 @@ class Smv(object):
 
         self.app = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
         self.pymods = {}
+        return self
 
     def runModule(self, fqn):
         """Runs a Scala SmvModule by its Fully Qualified Name(fqn)

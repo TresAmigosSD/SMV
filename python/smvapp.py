@@ -4,14 +4,11 @@ from pyspark import SparkContext
 from pyspark.sql import HiveContext
 from smv import Smv
 
+SmvApp = Smv()
+
 if __name__ == "__main__":
-
-    # initialize SparkContext from Python to get the python-java gateway
-    sc = SparkContext(appName="smvapp.py")
-    sqlContext = HiveContext(sc)
-
     # skip the first argument, which is this program
-    smv = Smv(sys.argv[1:], sqlContext)
+    smv = SmvApp.init(sys.argv[1:])
     app = smv.app
 
     print("----------------------------------------")

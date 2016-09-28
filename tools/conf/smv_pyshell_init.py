@@ -40,8 +40,8 @@ from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
 # Imnport smv
-from smv import Smv
-app = Smv(['-m', 'None'], sqlContext)
+from smvapp import SmvApp
+app = SmvApp.init(['-m', 'None'], sc, sqlContext)
 
 # The following code evokes a loop of importing
 # The ./bin/pyspark script stores the old PYTHONSTARTUP value in OLD_PYTHONSTARTUP,
