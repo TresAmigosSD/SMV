@@ -1,9 +1,13 @@
 from pyspark.sql.column import Column
 import sys
+import dis
 
 if sys.version >= '3':
     basestring = unicode = str
     long = int
+    from io import StringIO
+else:
+    from cStringIO import StringIO
 
 def for_name(name):
     """Dynamically load a class by its name.
@@ -45,6 +49,22 @@ def smv_copy_array(sc, *cols):
         raise RuntimeError("Cannot copy array of type", type(elem))
 
     return jcols
+
+def disassemble(mod):
+    """Disassembles a module and returns bytecode as a string.
+    """
+    buf = StringIO()
+    import dis
+    if sys.version >= '3':
+        dis.dis(mod, file=buf)
+    else:
+        stdout = sys.stdout
+        sys.stdout = buf
+        dis.dis(mod)
+        sys.stdout = stdout
+    ret = buf.getvalue()
+    buf.close()
+    return ret
 
 # enhances the spark DataFrame with smv helper functions
 from pyspark.sql import DataFrame
