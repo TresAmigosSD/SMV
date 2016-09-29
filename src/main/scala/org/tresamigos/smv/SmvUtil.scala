@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql._
 import org.joda.time._, format._
 import scala.util.Try
 
@@ -40,7 +40,7 @@ object SmvUtil {
   /**
    * Save the dataframe content to disk, optionally generate edd.
    */
-  def persist(sqlContext: SQLContext, dataframe: DataFrame, path: String, generateEdd: Boolean) = {
+  def persist(sqlContext: SQLContext, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
     val counter = sqlContext.sparkContext.accumulator(0l)
@@ -67,6 +67,10 @@ object SmvUtil {
       readPersistedFile(sqlContext, path).get.edd.persistBesideData(path)
   }
 
-  def compute(dataset: SmvDataSet): DataFrame = ???
+  /**
+   * Exports a dataframe to a hive table.
+   */
+  def exportHive(dataframe: DataFrame, tableName: String): Unit =
+    dataframe.write.mode(SaveMode.Overwrite).saveAsTable(tableName)
 
 }

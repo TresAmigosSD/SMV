@@ -16,10 +16,8 @@ package org.tresamigos.smv
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 
-import org.joda.time._
-import org.joda.time.format._
+import java.io.File
 
-import graph._
 
 /**
  * Provide functions for the interactive shell
@@ -30,61 +28,38 @@ import graph._
  * }}}
  **/
 package object shell {
-  private val appGU = new SmvGraphUtil(SmvApp.app.stages)
-
   /**
    * list all the smv-shell commands
    **/
-  def help = println(
-    """Here is a list of SMV-shell command
-      |
-      |Please refer to the API doc for details:
-      |http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.shell.package
-      |
-      |* lsStage
-      |* ls
-      |* ls(stageName: String)
-      |* lsDead
-      |* lsDead(stageName: String)
-      |* lsLeaf
-      |* lsLeaf(stageName: String)
-      |* graph
-      |* graph(ds: SmvDataSet)
-      |* graph(stageName: String)
-      |* ancestors(ds: SmvDataSet)
-      |* descendants(ds: SmvDataSet)
-      |* peek(df: DataFrame, pos: Int = 1)
-      |* now
-      """.stripMargin
-  )
+  def help = println(ShellCmd.help)
 
   /**
    * list all the stages
    **/
-  def lsStage = SmvApp.app.stages.stageNames.foreach(println)
+  def lsStage = println(ShellCmd.lsStage)
 
   /**
    * list all datasets in a stage
    * @param stageName could be the FQN or just the basename
    **/
-  def ls(stageName: String) = println(appGU.createDSList(SmvApp.app.stages.findStage(stageName)))
+  def ls(stageName: String) = println(ShellCmd.ls(stageName))
 
   /**
    * list all the datasets in the entire project
    **/
-  def ls = println(appGU.createDSList())
+  def ls = println(ShellCmd.ls)
 
   /**
    * list `dead` datasets in a stage
    * `dead` dataset is defined as "no contribution to the Output modules of the stage"
    * @param stageName could be the FQN or the basename
    **/
-  def lsDead(stageName: String) = println(appGU.createDeadDSList(SmvApp.app.stages.findStage(stageName)))
+  def lsDead(stageName: String) = println(ShellCmd.lsDead(stageName))
 
   /**
    * list `dead` datasets in the entire project
    **/
-  def lsDead = println(appGU.createDeadDSList())
+  def lsDead = println(ShellCmd.lsDead)
 
   /**
    * list `leaf` datasets in a stage
@@ -92,51 +67,89 @@ package object shell {
    * Note: a `leaf` dataset must be `dead`, but some `dead` datasets are Not `leaf`s
    * @param stageName could be the FQN or the basename
    */
-  def lsLeaf(stageName: String) = println(appGU.createLeafDSList(SmvApp.app.stages.findStage(stageName)))
+  def lsLeaf(stageName: String) = println(ShellCmd.lsLeaf(stageName))
 
   /**
    * list `leaf` datasets in the entire project
    **/
-  def lsLeaf = println(appGU.createLeafDSList())
+  def lsLeaf = println(ShellCmd.lsLeaf)
 
   /** take a stage name and print all DS in this stage, without unused input DS */
-  def graph(stageName: String) = {
-    val singleStgGU = new SmvGraphUtil(new SmvStages(Seq(SmvApp.app.stages.findStage(stageName))))
-    println(singleStgGU.createDSAsciiGraph())
-  }
+  def graph(stageName: String) = println(ShellCmd._graph(stageName))
 
   /** take no parameter, print stages and inter-stage links */
-  def graph() = println(appGU.createStageAsciiGraph())
+  def graph() = println(ShellCmd._graph())
 
   /** take a DS, print in-stage dependency of that DS */
-  def graph(ds: SmvDataSet) = println(appGU.createDSAsciiGraph(Seq(ds)))
+  def graph(ds: SmvDataSet) = println(ShellCmd._graph(ds))
 
   /**
    * list all `ancestors` of a dataset
    * `ancestors` are datasets current dataset depends on, directly or in-directly,
    * even include datasets from other stages
    **/
-  def ancestors(ds: SmvDataSet) = println(appGU.createAncestorDSList(ds))
+  def ancestors(ds: SmvDataSet) = println(ShellCmd.ancestors(ds))
 
   /**
    * list all `descendants` of a dataset
    * `descendants` are datasets which depend on the current dataset directly or in-directly,
    * even include datasets from other stages
    **/
-  def descendants(ds: SmvDataSet) = println(appGU.createDescendantDSList(ds))
-
-  /**
-   * Display a dataframe row in transposed view.
-   */
-  def peek(df: DataFrame, pos: Int = 1) = {
-    df.peek(pos)
-  }
+  def descendants(ds: SmvDataSet) = println(ShellCmd.descendants(ds))
 
   /**
    * Print current time
    **/
-  def now() = {
-    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
-    println(fmt.print(DateTime.now()))
+  def now() = println(ShellCmd.now())
+
+  /**
+   * Read in a Hive table as DF
+   **/
+  def openHive(tableName: String) = ShellCmd.openHive(tableName)
+
+  /**
+   * Read in a Csv file as DF
+   **/
+  def openCsv(path: String, ca: CsvAttributes = null, parserCheck: Boolean = false)
+    = ShellCmd.openCsv(path, ca, parserCheck)
+
+  /**
+   * Resolve SmvDataSet
+   *
+   * @param ds an SmvDataSet
+   * @return result DataFrame
+   **/
+  def df(ds: SmvDataSet) = ShellCmd.df(ds)
+
+
+  /**
+   * Dynamically load modules
+   *
+   * @param fqn the fully qualified name of SmvDataSet
+   * @return result DataFrame
+   **/
+  def ddf(fqn: String) = ShellCmd.ddf(fqn)
+
+  /**
+   * Try best to discover Schema from raw Csv file
+   *
+   * @param path Csv file path and name
+   * @param n number of records to check for schema discovery, default 100k
+   * @param ca CsvAttributes, default CsvWithHeader
+   *
+   * Will save a schema file with postfix ".toBeReviewed" in local directory.
+   **/
+  def discoverSchema(
+    path: String,
+    n: Int = 100000,
+    ca: CsvAttributes = CsvAttributes.defaultCsvWithHeader
+  ) = {
+    implicit val csvAttributes=ca
+    val helper = new SchemaDiscoveryHelper(SmvApp.app.sqlContext)
+    val schema = helper.discoverSchemaFromFile(path, n)
+    val outpath = SmvSchema.dataPathToSchemaPath(path) + ".toBeReviewed"
+    val outFileName = (new File(outpath)).getName
+    schema.saveToLocalFile(outFileName)
+    println(s"Discovered schema file saved as ${outFileName}, please review and make changes.")
   }
 }

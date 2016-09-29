@@ -8,7 +8,7 @@ import scala.util.Try
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
-  def peek(df: DataFrame) = df.peek()
+  def peekStr(df: DataFrame, pos: Int, colRegex: String) = df._peek(pos, colRegex)
   def selectPlus(df: DataFrame, cols: Array[Column]) = df.selectPlus(cols:_*)
 
   def smvGroupBy(df: DataFrame, cols: Array[Column]) =
@@ -16,6 +16,11 @@ object SmvPythonHelper {
 
   def smvJoinByKey(df: DataFrame, other: DataFrame, keys: Array[String], joinType: String) =
     df.joinByKey(other, keys.toSeq, joinType)
+
+  def smvHashSample(df: DataFrame, key: Column, rate: Double, seed: Int) =
+    df.smvHashSample(key, rate, seed)
+
+  def lsStage = SmvApp.app.stages.stageNames.mkString("\n")
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
@@ -33,6 +38,10 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
  * The collection types should be accessible through the py4j gateway.
  */
 class SmvPythonApp(val app: SmvApp) {
+  val config = app.smvConfig
+
+  def verifyConfig(): Unit = app.verifyConfig()
+
   /** The names of the modules to run in this app */
   // TODO relocate moduleNames() from SmvConfig to here
   val moduleNames: Array[String] = app.smvConfig.moduleNames
@@ -48,12 +57,20 @@ class SmvPythonApp(val app: SmvApp) {
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
     SmvUtil.persist(app.sqlContext, dataframe, path, generateEdd)
 
+  /** Export as hive table */
+  def exportHive(dataframe: DataFrame, tableName: String): Unit =
+    SmvUtil.exportHive(dataframe, tableName)
+
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes): SmvCsvFile =
     new SmvCsvFile(path, csvAttr) { override def name = moduleName }
 
   /** Output directory for files */
   def outputDir: String = app.smvConfig.outputDir
+
+  /** Used to create small dataframes for testing */
+  def dfFrom(schema: String, data: String): DataFrame =
+    app.createDF(schema, data)
 }
 
 /** Not a companion object because we need to access it from Python */

@@ -21,3 +21,4 @@ metastore_db/
 .RData
 
 .sync-config.cson
+*.pyc

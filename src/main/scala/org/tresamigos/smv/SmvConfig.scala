@@ -43,6 +43,10 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val publish = opt[String]("publish", noshort = true,
     default = None,
     descr = "publish the given modules/stage/app as given version")
+
+  val exportHive = opt[String]("export-hive", noshort=true, default=None,
+    descr="temporary solution to publish|export to a hive table")
+
   val compareEdd = opt[List[String]]("edd-compare", noshort = true,
     default = None,
     descr = "compare two edd result files")
@@ -62,6 +66,12 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val inputDir   = opt[String]("input-dir",   noshort = true, descr = "specify the input directory (default: datadir/input")
   val outputDir  = opt[String]("output-dir",  noshort = true, descr = "specify the output directory (default: datadir/output")
   val publishDir = opt[String]("publish-dir", noshort = true, descr = "specify the publish directory (default: datadir/publish")
+
+  val permitDependencyViolation = toggle(
+    "permit-dependency-violation",
+    short = 'p',
+    descrYes = "allows module resolution even if the module violates dependency rules",
+    default = Some(false))
 
   val purgeOldOutput = toggle("purge-old-output", noshort = true, default = Some(false),
     descrYes = "remove all old output files in output dir ")
@@ -134,6 +144,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   val stages = new SmvStages(stagesList.toSeq)
 
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
+
+  val permitDependencyViolation: Boolean = cmdLine.permitDependencyViolation()
+
+  val exportHive: Option[String] = cmdLine.exportHive.get
 
   /**
    * sequence of SmvModules to run based on the command line arguments.

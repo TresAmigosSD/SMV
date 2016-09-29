@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
 #
-# Run one or more SMV modules / stages / app.
-# USAGE: smv-pyrun [-h] spark_args smv_app_args
+# Run SMV unit tests
+# USAGE: smv-pytest [-h] spark_args
+#
+# TODO: add test arguments, e.g. to specify a single test to run
 #
 # user can specify spark args (such as --master, --class or --jar to override the fat jar selection)
 # the rest of the arguments are the standard SmvApp arguments.
 
 set -e
 if [ "$1" = "-h" ]; then
-  echo "USAGE: `basename $0` [-h] [spark_args] <smv_app_args>"
+  echo "USAGE: `basename $0` [-h] [spark_args]"
   echo "spark_args:"
   echo "    [--master master]"
   echo "    [--executor-memory exec-mem]"
   echo "    [--driver-memory driver-mem]"
   echo "    [--jar fat_jar]"
-  echo "smv_app_args:"
-  echo "    [--help]"
-  echo "    [--purge-old-output]"
-  echo "    [--data-dir dir] ..."
-  echo "    <-m mod1 [mod2 ...] | -s stage1 [stage2 ...] | --run-app> ..."
+  # echo "smv_app_args:"
+  # echo "    [--help]"
+  # echo "    [--purge-old-output]"
+  # echo "    [--data-dir dir] ..."
+  # echo "    <-m mod1 [mod2 ...] | -s stage1 [stage2 ...] | --run-app> ..."
   exit 0
 fi
 
@@ -26,10 +28,4 @@ SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 source $SMV_TOOLS/_env.sh
 source $SMV_TOOLS/_pyenv.sh
 
-echo "START RUN =============================="
-
-date
-
-run_pyspark_with ${SMV_TOOLS}/../python/smvapp.py
-
-date
+run_pyspark_with ${SMV_TOOLS}/../python/runtests.py

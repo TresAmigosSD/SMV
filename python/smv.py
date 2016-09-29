@@ -1,9 +1,13 @@
 from pyspark.sql.column import Column
 import sys
+import dis
 
 if sys.version >= '3':
     basestring = unicode = str
     long = int
+    from io import StringIO
+else:
+    from cStringIO import StringIO
 
 def for_name(name):
     """Dynamically load a class by its name.
@@ -46,9 +50,28 @@ def smv_copy_array(sc, *cols):
 
     return jcols
 
+def disassemble(mod):
+    """Disassembles a module and returns bytecode as a string.
+    """
+    buf = StringIO()
+    import dis
+    if sys.version >= '3':
+        dis.dis(mod, file=buf)
+    else:
+        stdout = sys.stdout
+        sys.stdout = buf
+        dis.dis(mod)
+        sys.stdout = stdout
+    ret = buf.getvalue()
+    buf.close()
+    return ret
+
 # enhances the spark DataFrame with smv helper functions
 from pyspark.sql import DataFrame
-DataFrame.peek = lambda df: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.peek(df._jdf)
+
+# peek from Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout
+import sys
+DataFrame.peek = lambda df, pos = 1, colRegex = ".*": sys.stdout.write(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.peekStr(df._jdf, pos, colRegex) + "\n")
 
 # provides df.selectPlus(...) in python shell
 # example: df.selectPlus(lit(1).alias('col'))
@@ -58,7 +81,11 @@ DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tres
 
 DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
 
+DataFrame.smvHashSample = lambda df, key, rate=0.01, seed=23: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvHashSample(df._jdf, key, rate, seed, df.sql_ctx))
+
 import abc
+from pyspark import SparkContext
+from pyspark.sql import HiveContext
 
 class Smv(object):
     """Creates a proxy to SmvApp.
@@ -66,9 +93,14 @@ class Smv(object):
     The SmvApp instance is exposed through the `app` attribute.
     """
 
-    def __init__(self, arglist, sqlContext):
+    def init(self, arglist, _sc = None, _sqlContext = None):
+
+        #TODO: appName should be read from the config files
+        #      need to process the arglist first and create smvConfig before init SmvApp 
+        sc = SparkContext(appName="smvapp.py") if _sc is None else _sc
+        sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
+
         self.sqlContext = sqlContext
-        sc = sqlContext._sc
         self._jvm = sc._jvm
 
         # convert python arglist to java String array
@@ -78,6 +110,7 @@ class Smv(object):
 
         self.app = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
         self.pymods = {}
+        return self
 
     def runModule(self, fqn):
         """Runs a Scala SmvModule by its Fully Qualified Name(fqn)
@@ -97,6 +130,9 @@ class Smv(object):
             return self.pymods[klass]
         else:
             return self.__resolve(klass, [klass])
+
+    def createDF(self, schema, data):
+        return DataFrame(self.app.dfFrom(schema, data), self.sqlContext)
 
     def __resolve(self, klass, stack):
         mod = klass(self)
@@ -166,7 +202,7 @@ class SmvPyCsvFile(SmvPyDataSet):
         self._smvCsvFile = smv.app.smvCsvFile(self.fqn() + "_" + self.version(), self.path(), self.csvAttr())
 
     def description(self):
-        return "Input file @" + self.path()
+        return "Input file: @" + self.path()
 
     @abc.abstractproperty
     def path(self):
@@ -199,6 +235,30 @@ class SmvPyCsvFile(SmvPyDataSet):
     def run(self, i):
         jdf = self._smvCsvFile.rdd()
         return DataFrame(jdf, self.smv.sqlContext)
+
+class SmvPyHiveTable(SmvPyDataSet):
+    """Input data source from a Hive table
+    """
+
+    def __init__(self, smv):
+        super(SmvPyHiveTable, self).__init__(smv)
+        self._smvHiveTable = self.smv._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName())
+
+    def description(self):
+        return "Hive Table: @" + self.tableName()
+
+    @abc.abstractproperty
+    def tableName(self):
+        """The qualified Hive table name"""
+
+    def isInput(self):
+        return True
+
+    def requiresDS(self):
+        return []
+
+    def run(self, i):
+        return DataFrame(self._smvHiveTable.rdd(), self.smv.sqlContext)
 
 class SmvPyModule(SmvPyDataSet):
     """Base class for SmvModules written in Python

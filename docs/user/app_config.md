@@ -38,6 +38,24 @@ put project level shared (accross team members) config into `smv-app-conf.props`
 specific config into `smv-user-conf`. Also config the version control system to ignore
 `conf/smv-user-conf.props`.
 
+The property files `smv-app-conf.props` and `smv-user-conf.props` are standard Jave property files.
+Here is an example:
+```
+# application name
+smv.appName = My Sample App
+
+# stage definitions
+smv.stages = org.tresamigos.sample.etl.internal, \
+             org.tresamigos.sample.etl.external, \
+             org.tresamigos.sample.dm.account, \
+             org.tresamigos.sample.dm.customer
+
+# spark sql properties
+spark.sql.shuffle.partitions = 256
+
+# App config
+smv.runConfObj = org.tresamigos.sample.conf.Conf1
+```
 
 ## SMV Config Parameters
 
