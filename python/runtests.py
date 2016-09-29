@@ -19,9 +19,20 @@ class TestConfig(object):
         return cls.sqlc
 
 if __name__ == "__main__":
-    conf = TestConfig()
 
-    suite = TestLoader().discover("./src/test/python")
+    TestPath = "./src/test/python"
+
+    conf = TestConfig()
+    loader = TestLoader()
+
+    import sys
+    argv = sys.argv[1:]
+    if (len(argv) == 0):
+        suite = loader.discover(TestPath)
+    else:
+        sys.path.append(TestPath)
+        suite = loader.loadTestsFromNames(argv)
+
     result = TextTestRunner(verbosity=2).run(suite)
     print("result is ", result)
     exit(len(result.errors) + len(result.failures))
