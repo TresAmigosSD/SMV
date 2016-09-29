@@ -43,6 +43,8 @@ from pyspark.sql.types import *
 from smvapp import SmvApp
 app = SmvApp.init(['-m', 'None'], sc, sqlContext)
 
+from smvshell import *
+
 # The following code evokes a loop of importing
 # The ./bin/pyspark script stores the old PYTHONSTARTUP value in OLD_PYTHONSTARTUP,
 # which allows us to execute the user's PYTHONSTARTUP file:
