@@ -35,8 +35,6 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/
     tar -xzvf sbt-$SBT_VERSION.tgz &&\
     mv sbt $SBT_HOME &&\
     rm sbt-$SBT_VERSION.tgz &&\
-    # dry run of sbt forces download of sbt dependencies
-    sbt exit &&\
     \
     wget https://github.com/TresAmigosSD/spark/releases/download/1.5.2_hd/spark-1.5.2-bin-2.7.2.tgz &&\
     tar xzvf spark-1.5.2-bin-2.7.2.tgz &&\
@@ -58,3 +56,6 @@ COPY ./.bashrc /home/smv
 
 USER smv
 WORKDIR /projects
+
+# dry run of sbt forces download of sbt dependencies
+RUN sbt exit
