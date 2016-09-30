@@ -108,7 +108,7 @@ class SmvDFHelper(df: DataFrame) {
       // refer to the columns being updated
       // the last select is to make sure the ordering of columns don't change
       df.selectPlus(uniquelyNamed:_*).
-        selectMinus(origColNames.head, origColNames.tail:_*).
+        smvSelectMinus(origColNames.head, origColNames.tail:_*).
         renameField(renameArgs:_*).
         select(currColNames.head, currColNames.tail: _*)
     }
@@ -144,38 +144,44 @@ class SmvDFHelper(df: DataFrame) {
    * Remove one or more columns from current DataFrame.
    * Column names are specified as string.
    * {{{
-   *   df.selectMinus("col1", "col2")
+   *   df.smvSelectMinus("col1", "col2")
    * }}}
    */
-  def selectMinus(s: String, others: String*): DataFrame = {
+  def smvSelectMinus(s: String, others: String*): DataFrame = {
     val names = s +: others
     checkNames(names)
     val all = df.columns diff names
     df.select(all.map{l=>df(l)} : _* )
   }
 
-  /**
-   * Remove one or more columns from current DataFrame.
-   * Column names are specified as `Column`
-   * {{{
-   *   df.selectMinus($"col1", df("col2"))
-   * }}}
-   */
-  def selectMinus(cols: Column*): DataFrame = {
-    val names = cols.map(_.getName)
-    selectMinus(names(0), names.tail: _*)
-  }
+  @deprecated("1.5", "use smvSelectMinus instead")
+  def selectMinus(s: String, others: String*): DataFrame = smvSelectMinus(s, others:_*)
 
   /**
    * Remove one or more columns from current DataFrame.
    * Column names are specified as `Column`
    * {{{
-   *   df.selectMinus('col1, 'col2)
+   *   df.smvSelectMinus($"col1", df("col2"))
+   * }}}
+   */
+  def smvSelectMinus(cols: Column*): DataFrame = {
+    val names = cols.map(_.getName)
+    smvSelectMinus(names(0), names.tail: _*)
+  }
+
+  @deprecated("1.5", "use smvSelectMinus instead")
+  def selectMinus(cols: Column*): DataFrame = smvSelectMinus(cols:_*)
+
+  /**
+   * Remove one or more columns from current DataFrame.
+   * Column names are specified as `Column`
+   * {{{
+   *   df.smvSelectMinus('col1, 'col2)
    * }}}
    */
   @deprecated("use String instead of Symbol", "1.3")
-  def selectMinus(s1: Symbol, sleft: Symbol*): DataFrame =
-    selectMinus(s1.name, sleft.map{l=>l.name}: _*)
+  def smvSelectMinus(s1: Symbol, sleft: Symbol*): DataFrame =
+    smvSelectMinus(s1.name, sleft.map{l=>l.name}: _*)
 
   /**
    * Rename one or more fields of a `DataFrame`.
@@ -271,7 +277,7 @@ class SmvDFHelper(df: DataFrame) {
       fields.map{f => df(col).getField(f) as f}
     }.flatten.toSeq
 
-    df.selectPlus(exprs: _*).selectMinus(colNames.head, colNames.tail: _*)
+    df.selectPlus(exprs: _*).smvSelectMinus(colNames.head, colNames.tail: _*)
   }
 
   /**
@@ -343,7 +349,7 @@ class SmvDFHelper(df: DataFrame) {
         })
       case _ => dfJoined
     }
-    dfCoalescedKeys.selectMinus(rightKeys(0), rightKeys.tail: _*)
+    dfCoalescedKeys.smvSelectMinus(rightKeys(0), rightKeys.tail: _*)
   }
 
   /**
@@ -673,8 +679,8 @@ class SmvDFHelper(df: DataFrame) {
     }
     // now add each field in the embedded struct as a column
     r3.selectPlus((colNames.map(c => r3("_kvpair")(c) as c)):_*).
-      selectMinus("_unpivoted_values", "_kvpair"). // remove intermediate results
-      selectMinus(valueCols.head, valueCols.tail:_*)
+      smvSelectMinus("_unpivoted_values", "_kvpair"). // remove intermediate results
+      smvSelectMinus(valueCols.head, valueCols.tail:_*)
   }
 
   /**
@@ -761,7 +767,7 @@ class SmvDFHelper(df: DataFrame) {
     val rankcol = mkUniq(df.columns, "rank")
     val rownum = mkUniq(df.columns, "rownum")
     val r1 = df.selectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
-    r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).selectMinus(rankcol, rownum)
+    r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 
   /**
@@ -879,7 +885,7 @@ class SmvDFHelper(df: DataFrame) {
       val r = p._2
       c.join(r, $"${key}" === $"${newkey}", SmvJoinType.Outer).
         selectPlus(coalesce($"${key}", $"${newkey}") as "tmp").
-        selectMinus(key).renameField("tmp" -> key)
+        smvSelectMinus(key).renameField("tmp" -> key)
     }
 
     val hasCols = Range(0, otherSimple.size + 1).map{i =>

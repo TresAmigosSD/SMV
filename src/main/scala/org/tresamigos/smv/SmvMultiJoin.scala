@@ -57,7 +57,7 @@ class SmvMultiJoin(val dfChain: Seq[SmvJoinDF], val conf: SmvMultiJoinConf) {
     }.distinct
 
     if (dropExtra && (! colsWithPostfix.isEmpty))
-      res.selectMinus(colsWithPostfix.head, colsWithPostfix.tail: _*)
+      res.smvSelectMinus(colsWithPostfix.head, colsWithPostfix.tail: _*)
     else
       res
   }

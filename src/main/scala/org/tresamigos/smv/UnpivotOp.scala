@@ -62,7 +62,7 @@ private[smv] class UnpivotOp(val df: DataFrame, val valueCols: Seq[String]) {
     df.selectPlus(arrayCol as "_unpivot_vals").
       selectPlus(explode($"_unpivot_vals") as "_kvpair").
       selectPlus($"_kvpair".getField("column") as "column", $"_kvpair".getField("value") as "value").
-      selectMinus($"_unpivot_vals", $"_kvpair").
-      selectMinus(valueCols.head, valueCols.tail: _*)
+      smvSelectMinus($"_unpivot_vals", $"_kvpair").
+      smvSelectMinus(valueCols.head, valueCols.tail: _*)
   }
 }

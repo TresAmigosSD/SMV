@@ -79,7 +79,7 @@ case class SmvHierarchy(
     val raw = df.join(map, (
       df(cols.typeName) === map(hierCols.typeName) &&
       df(cols.valueName) === map(hierCols.valueName)
-    ), LeftOuter).selectMinus(hierCols.typeName, hierCols.valueName)
+    ), LeftOuter).smvSelectMinus(hierCols.typeName, hierCols.valueName)
 
     if (df.columns.contains(cols.nameName)) {
       raw.selectWithReplace(coalesce(raw(cols.nameName), raw(hierCols.nameName)) as cols.nameName)
@@ -106,12 +106,12 @@ case class SmvHierarchy(
       hierCols.pTypeName -> cols.pTypeName,
       hierCols.pValueName -> cols.pValueName,
       hierCols.pNameName -> cols.pNameName
-    ).selectMinus(hierCols.typeName, hierCols.valueName).select(
+    ).smvSelectMinus(hierCols.typeName, hierCols.valueName).select(
       keptCol.map{s => new Column(s)}: _*
     )
 
     if(withName) raw
-    else raw.selectMinus(cols.nameName, cols.pNameName)
+    else raw.smvSelectMinus(cols.nameName, cols.pNameName)
   }
 }
 
@@ -366,7 +366,7 @@ class SmvHierarchies(
       prepared(colNames.pValueName) === right("_right_" + colNames.valueName)
     )).reduce(_ && _)
 
-    prepared.join(right, compareCol, LeftOuter).selectMinus(keyCols: _*)
+    prepared.join(right, compareCol, LeftOuter).smvSelectMinus(keyCols: _*)
   }
 
   /**

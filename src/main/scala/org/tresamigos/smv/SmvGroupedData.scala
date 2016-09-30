@@ -363,7 +363,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
     if(doDropRange){
       df.joinByKey(withRanges, keys, SmvJoinType.Inner).selectPlus(scaleExprs: _*).
-        selectMinus(cols.flatMap{v =>
+        smvSelectMinus(cols.flatMap{v =>
           val name = v.getName
           Seq($"${name}_min", $"${name}_max")
         }: _*)
@@ -461,7 +461,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val rankcol = mkUniq(df.columns, "rank")
     val rownum = mkUniq(df.columns, "rownum")
     val r1 = df.selectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
-    r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).selectMinus(rankcol, rownum)
+    r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 
   /**
@@ -762,7 +762,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val res = df.groupBy(keys.head, keys.tail: _*).
       agg(udf(missings).apply(smvfuncs.collectSet(StringType)($"$colName")) as tmpCol).
       selectPlus(explode($"$tmpCol") as colName).
-      selectMinus(tmpCol).
+      smvSelectMinus(tmpCol).
       selectPlus(nullCols: _*).
       select(df.columns.map{s => $"$s"}: _*).
       unionAll(df)
@@ -825,7 +825,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
      * Non-null last */
     val aggExprs = values.zip(renamed).map{case (v, nv) => last(v) as nv}.map{makeSmvCDSAggColumn}
     runAggPlus(orders: _*)(aggExprs: _*).
-      selectMinus(values: _*).
+      smvSelectMinus(values: _*).
       renameField(renamed.zip(values.map{_.getName}): _*).
       select(df.columns.head, df.columns.tail: _*)
   }

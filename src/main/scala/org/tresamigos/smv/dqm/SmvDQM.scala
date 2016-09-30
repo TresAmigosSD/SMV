@@ -124,7 +124,7 @@ class DQMValidator (dqm: SmvDQM) extends ValidationTask {
       df.
         selectPlus(plusCols: _*).
         where(filterCol).
-        selectMinus(minusCols: _*)
+        smvSelectMinus(minusCols: _*)
     }
   }
 
