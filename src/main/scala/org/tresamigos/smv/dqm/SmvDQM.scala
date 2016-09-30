@@ -122,7 +122,7 @@ class DQMValidator (dqm: SmvDQM) extends ValidationTask {
       val minusCols = ruleColTriplets.map{_._3}
 
       df.
-        selectPlus(plusCols: _*).
+        smvSelectPlus(plusCols: _*).
         where(filterCol).
         smvSelectMinus(minusCols: _*)
     }

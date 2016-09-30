@@ -201,7 +201,7 @@ class SmvHierarchyTest extends SmvTestUtil {
       201;
       301;
       401;
-      405""").selectPlus($"zip" as "_zip")
+      405""").smvSelectPlus($"zip" as "_zip")
 
     val res = GeoHier.levelRollup(
         df, "zip", "Territory", "Division"

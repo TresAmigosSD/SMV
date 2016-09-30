@@ -59,9 +59,9 @@ private[smv] class UnpivotOp(val df: DataFrame, val valueCols: Seq[String]) {
   val arrayCol = array(valueCols.map{c => struct(lit(c) as "column", $"${c}" as "value")}: _*)
 
   def unpivot() = {
-    df.selectPlus(arrayCol as "_unpivot_vals").
-      selectPlus(explode($"_unpivot_vals") as "_kvpair").
-      selectPlus($"_kvpair".getField("column") as "column", $"_kvpair".getField("value") as "value").
+    df.smvSelectPlus(arrayCol as "_unpivot_vals").
+      smvSelectPlus(explode($"_unpivot_vals") as "_kvpair").
+      smvSelectPlus($"_kvpair".getField("column") as "column", $"_kvpair".getField("value") as "value").
       smvSelectMinus($"_unpivot_vals", $"_kvpair").
       smvSelectMinus(valueCols.head, valueCols.tail: _*)
   }

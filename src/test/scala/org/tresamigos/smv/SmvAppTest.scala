@@ -62,7 +62,7 @@ class SmvAppTest extends SmvTestUtil {
     override def run(inputs: runParams) = {
       val sc = inputs(A).sqlContext; import sc.implicits._
       require(inputs.size === 1)
-      inputs(A).selectPlus('a + 1 as 'b)
+      inputs(A).smvSelectPlus('a + 1 as 'b)
     }
     override val isEphemeral = true
   }
@@ -72,7 +72,7 @@ class SmvAppTest extends SmvTestUtil {
     override def run(inputs: runParams) = {
       val sc = inputs(A).sqlContext; import sc.implicits._
       require(inputs.size === 2)
-      inputs(B).selectPlus('b + 1 as 'c)
+      inputs(B).smvSelectPlus('b + 1 as 'c)
     }
     override val isEphemeral = true
   }

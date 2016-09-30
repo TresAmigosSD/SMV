@@ -93,7 +93,7 @@ class ColumnHelper(column: Column) {
    * Determine if the given column value is an NaN (not a number)
    *
    * {{{
-   *   df.selectPlus($"v".smvIsNan as 'v_is_nan)
+   *   df.smvSelectPlus($"v".smvIsNan as 'v_is_nan)
    * }}}
    */
   @deprecated("should use Column.isNan instead", "1.5")
@@ -591,12 +591,12 @@ class ColumnHelper(column: Column) {
    * }}}
    *
    * Since runAgg can't perform expressions on columns with SmvCDS, you need to do additional
-   * calculation in a separate `selectPlus`.
+   * calculation in a separate `smvSelectPlus`.
    * For example, to calculate the difference between "v" and "v_lag",
    * you need to and another step
    *
    * {{{
-   * val resWithDiff = res.selectPlus($"v" - $"v_lag" as "v_increase")
+   * val resWithDiff = res.smvSelectPlus($"v" - $"v_lag" as "v_increase")
    * }}}
    *
    * @return The previous value of the column in the group.
@@ -623,7 +623,7 @@ class ColumnHelper(column: Column) {
    * Trim leading/trailing space from `String` column.
    *
    * {{{
-   * df.selectPlus($"sWithBlank".smvStrTrim() as "sTrimmed")
+   * df.smvSelectPlus($"sWithBlank".smvStrTrim() as "sTrimmed")
    * }}}
    **/
   @deprecated("should use Spark trim() function", "1.5")
@@ -747,7 +747,7 @@ class ColumnHelper(column: Column) {
    * sequence
    *
    * {{{
-   * df.selectPlus($"arrayCol".isAnyIn(seqVals: _*) as "isFound")
+   * df.smvSelectPlus($"arrayCol".isAnyIn(seqVals: _*) as "isFound")
    * }}}
    **/
    def isAnyIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
@@ -764,7 +764,7 @@ class ColumnHelper(column: Column) {
    * paraneter sequence
    *
    * {{{
-   * df.selectPlus($"arrayCol".isAllIn(seqVals: _*) as "isFound")
+   * df.smvSelectPlus($"arrayCol".isAllIn(seqVals: _*) as "isFound")
    * }}}
    **/
    def isAllIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
@@ -781,7 +781,7 @@ class ColumnHelper(column: Column) {
    * Array column
    *
    * {{{
-   * df.selectPlus($"arrayCol".containsAll(seqVals: _*) as "isFound")
+   * df.smvSelectPlus($"arrayCol".containsAll(seqVals: _*) as "isFound")
    * }}}
    **/
    def containsAll[T](candidates: T*)(implicit tt: ClassTag[T]) = {

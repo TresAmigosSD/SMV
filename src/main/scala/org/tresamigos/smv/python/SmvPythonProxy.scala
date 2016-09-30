@@ -29,6 +29,8 @@ object SmvPythonHelper {
   def smvSelectMinus(df: DataFrame, cols: Array[Column]): DataFrame =
     df.smvSelectMinus(cols:_*)
 
+  def smvSelectPlus(df: DataFrame, cols: Array[Column]) = df.smvSelectPlus(cols:_*)
+
   def lsStage: String = SmvApp.app.stages.stageNames.mkString("\n")
 }
 

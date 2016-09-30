@@ -48,7 +48,7 @@ case class SmvEntityMatcher(
     // add boolean false column to the joined data frame if we extracted some ids.  if we used an identity extractor, then don't add anything.
     val (s2, j2) = ex match {
       case x: ExactMatchFilter =>
-        (s1.selectPlus(lit(true) as x.colName), j1.selectPlus(lit(false) as x.colName))
+        (s1.smvSelectPlus(lit(true) as x.colName), j1.smvSelectPlus(lit(false) as x.colName))
       case _ => (s1, j1)
     }
 
@@ -56,10 +56,10 @@ case class SmvEntityMatcher(
     val s3 = levelMatchers.foldLeft(s2) { (df, matcher) =>
       matcher match {
         case m: ExactLevelMatcher =>
-          df.selectPlus(lit(null).cast(BooleanType) as m.getMatchColName)
+          df.smvSelectPlus(lit(null).cast(BooleanType) as m.getMatchColName)
 
         case m: FuzzyLevelMatcher =>
-          df.selectPlus(
+          df.smvSelectPlus(
             lit(null).cast(BooleanType) as m.getMatchColName,
             lit(null).cast(FloatType) as m.valueColName
           )
@@ -79,7 +79,7 @@ case class SmvEntityMatcher(
       levelMatchers.map{l => l.getMatchColName}
 
     //add MatchBitmap column
-    s5.selectPlus(smvBoolsToBitmap(allLevels.head, allLevels.tail: _*).as("MatchBitmap"))
+    s5.smvSelectPlus(smvBoolsToBitmap(allLevels.head, allLevels.tail: _*).as("MatchBitmap"))
   }
 
   // Returns a predicate that would evaluate to true if any of the
@@ -246,7 +246,7 @@ private[smv] sealed abstract class LevelMatcher {
 case class ExactLevelMatcher(colName:String, exactMatchExpression:Column) extends LevelMatcher {
   require(colName != null && exactMatchExpression != null)
   private[smv] override def getMatchColName: String = colName
-  private[smv] override def addCols(df: DataFrame): DataFrame = df.selectPlus(exactMatchExpression.as(colName))
+  private[smv] override def addCols(df: DataFrame): DataFrame = df.smvSelectPlus(exactMatchExpression.as(colName))
 }
 
 /**
@@ -280,6 +280,6 @@ case class FuzzyLevelMatcher(
       else
         predicate && (valueExpr > threshold)
 
-    df.selectPlus(cond as colName).selectPlus(valueExpr as valueColName)
+    df.smvSelectPlus(cond as colName).smvSelectPlus(valueExpr as valueColName)
   }
 }

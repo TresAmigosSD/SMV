@@ -26,7 +26,7 @@ class EddTest extends SmvTestUtil {
     assert(EddResult(row1).toReport === "col_a                Average                13.75")
 
     val df2 = createSchemaRdd("a:String;b:String;c:String;d:String",
-      """col_a,hist,key,by Key""").selectPlus(lit("""{"histSortByFreq":false,"hist":{"\"2\"":1,"\"5\"":1,"\"1\"":2}}""") as "f")
+      """col_a,hist,key,by Key""").smvSelectPlus(lit("""{"histSortByFreq":false,"hist":{"\"2\"":1,"\"5\"":1,"\"1\"":2}}""") as "f")
 
     assert(EddResult(df2.rdd.first).toReport === """Histogram of col_a: by Key
 key                      count      Pct    cumCount   cumPct

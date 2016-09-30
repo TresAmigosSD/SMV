@@ -112,7 +112,7 @@ private[smv] case class SmvPivot(
       concat_ws("_", pivotColsExpr: _*)
     }
 
-    origDF.selectPlus(array(arrayExp: _*) as tempPivotValCol)
+    origDF.smvSelectPlus(array(arrayExp: _*) as tempPivotValCol)
   }
 
   /**

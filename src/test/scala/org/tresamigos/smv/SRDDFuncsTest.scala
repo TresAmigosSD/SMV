@@ -52,7 +52,7 @@ class SelectPlusMinusTest extends SmvTestUtil {
   test("test SelectPlus") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
-    val res = df.selectPlus('b + 2.0 as 'bplus2)
+    val res = df.smvSelectPlus('b + 2.0 as 'bplus2)
     assertSrddDataEqual(res,
       "1.0,10.0,12.0;" +
       "2.0,20.0,22.0;" +

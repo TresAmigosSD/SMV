@@ -93,7 +93,7 @@ class DoubleBinHistogramTest extends SmvTestUtil {
     val ssc = sqlContext; import ssc.implicits._
 
     val df = app.createDF("age:Integer", "60;56;63;36;41;43;69")
-    val res = df.selectPlus(lit(1) as "id").
+    val res = df.smvSelectPlus(lit(1) as "id").
       smvDoubleBinHistogram(Seq("id"), "age", 30).
       select($"age_bin".smvBinPercentile(50.0) as "age_med")
 

@@ -36,7 +36,7 @@ import org.apache.spark.annotation._
  *  - Programmatic data quality management
  *
  * Main classes
- *  - [[org.tresamigos.smv.SmvDFHelper]]: extends DataFrame methods. E.g. `selectPlus`
+ *  - [[org.tresamigos.smv.SmvDFHelper]]: extends DataFrame methods. E.g. `smvSelectPlus`
  *  - [[org.tresamigos.smv.ColumnHelper]]: extends Column methods. E.g. `smvStrToTimestamp`
  *  - [[org.tresamigos.smv.SmvGroupedDataFunc]]: extends GroupedData methods. E.g. `smvPivot`
  *

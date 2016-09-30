@@ -272,7 +272,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     require(numBins >= 2)
     val total = df.groupBy(keys.head, keys.tail:_*).agg(sum(valueCol) as s"${valueCol}_total")
     val w = winspec.orderBy(valueCol)
-    df.selectPlus(
+    df.smvSelectPlus(
       sum(valueCol) over w as s"${valueCol}_rsum",
       udf(percent2nTile).apply((percentRank() over w)) as s"${valueCol}_quantile").
       joinByKey(total, keys, SmvJoinType.Inner)
@@ -362,13 +362,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     }
 
     if(doDropRange){
-      df.joinByKey(withRanges, keys, SmvJoinType.Inner).selectPlus(scaleExprs: _*).
+      df.joinByKey(withRanges, keys, SmvJoinType.Inner).smvSelectPlus(scaleExprs: _*).
         smvSelectMinus(cols.flatMap{v =>
           val name = v.getName
           Seq($"${name}_min", $"${name}_max")
         }: _*)
     } else {
-      df.joinByKey(withRanges, keys, SmvJoinType.Inner).selectPlus(scaleExprs: _*)
+      df.joinByKey(withRanges, keys, SmvJoinType.Inner).smvSelectPlus(scaleExprs: _*)
     }
   }
 
@@ -460,7 +460,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val w = winspec.orderBy(orders:_*)
     val rankcol = mkUniq(df.columns, "rank")
     val rownum = mkUniq(df.columns, "rownum")
-    val r1 = df.selectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    val r1 = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 
@@ -761,9 +761,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
     val res = df.groupBy(keys.head, keys.tail: _*).
       agg(udf(missings).apply(smvfuncs.collectSet(StringType)($"$colName")) as tmpCol).
-      selectPlus(explode($"$tmpCol") as colName).
+      smvSelectPlus(explode($"$tmpCol") as colName).
       smvSelectMinus(tmpCol).
-      selectPlus(nullCols: _*).
+      smvSelectPlus(nullCols: _*).
       select(df.columns.map{s => $"$s"}: _*).
       unionAll(df)
 

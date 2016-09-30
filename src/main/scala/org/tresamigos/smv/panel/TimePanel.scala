@@ -189,7 +189,7 @@ case class TimePanel(start: PartialTime, end: PartialTime) extends Serializable 
 
     val expectedValues = smvTimeSeq.toSet
 
-    df.selectPlus(start.timeStampToSmvTime(df(timeStampColName)) as timeColName).
+    df.smvSelectPlus(start.timeStampToSmvTime(df(timeStampColName)) as timeColName).
       smvGroupBy(keys.map{s => df(s)}: _*).
       fillExpectedWithNull(timeColName, expectedValues, doFiltering)
   }

@@ -428,7 +428,7 @@ class SmvHierarchies(
    * one need to copy the key to a new column and then apply the aggregate funtion on
    * the new column, like the following,
    * {{{
-   * df.selectPlus($"b" as "newb").rollup("a", "b").agg(count("newb") as "n")
+   * df.smvSelectPlus($"b" as "newb").rollup("a", "b").agg(count("newb") as "n")
    * }}}
    *
    *

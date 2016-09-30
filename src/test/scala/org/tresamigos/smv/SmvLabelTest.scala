@@ -23,7 +23,7 @@ class SmvLabelTest extends SmvTestUtil {
 
   test("labeling a column should preserve previous meta data on the column") {
     val df1 = fixture
-    val df2 = df1.selectPlus(df1("id") + 1 as "id1").smvDesc("id1" -> "id plus 1")
+    val df2 = df1.smvSelectPlus(df1("id") + 1 as "id1").smvDesc("id1" -> "id plus 1")
     val labeled = df2.smvLabel("id1")("purple")
     labeled.smvGetDesc() shouldBe Seq("id" -> "", "name" -> "", "sex" -> "", "id1" -> "id plus 1")
   }
@@ -42,7 +42,7 @@ class SmvLabelTest extends SmvTestUtil {
 
   test("removing labels should preserve other meta data") {
     val df1 = fixture
-    val df2 = df1.selectPlus(df1("id") + 1 as "id1").smvDesc("id1" -> "id plus 1")
+    val df2 = df1.smvSelectPlus(df1("id") + 1 as "id1").smvDesc("id1" -> "id plus 1")
     val label1 = df2.smvLabel("id1")("white", "blue")
     val label2 = label1.smvRemoveLabel("id1")("white", "blue")
     label2.smvGetDesc() shouldBe Seq("id" -> "", "name" -> "", "sex" -> "", "id1" -> "id plus 1")

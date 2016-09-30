@@ -54,7 +54,7 @@ class DQMTest extends SmvTestUtil {
     val state = new DQMState(sc, Seq("rule1"), Nil)
     val dqmRule1 = DQMRule((new Column("a")) + (new Column("b")) > 0.3, "rule1")
     val (c1, c2, c3) = dqmRule1.createCheckCol(state)
-    val res = df.selectPlus(c1).where(c2).smvSelectMinus(c3)
+    val res = df.smvSelectPlus(c1).where(c2).smvSelectMinus(c3)
 
     assertSrddDataEqual(res, "1,0.3")
     state.snapshot()

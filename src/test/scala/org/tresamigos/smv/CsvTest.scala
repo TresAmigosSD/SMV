@@ -28,7 +28,7 @@ class CsvTest extends SmvTestUtil {
     object TestFile extends SmvCsvFile("./" + testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader) {
       override def run(df: DataFrame) = {
         import df.sqlContext.implicits._
-        df.selectPlus(smvStrCat($"name", $"id") as "name_id")
+        df.smvSelectPlus(smvStrCat($"name", $"id") as "name_id")
       }
     }
     val df = TestFile.rdd
@@ -74,7 +74,7 @@ class CsvTest extends SmvTestUtil {
     object A extends SmvModule("A Module") {
       override def requiresDS() = Seq()
       override def run(inputs: runParams) = {
-        app.createDF("a:String", "1;;3").selectPlus(lit("") as "b").repartition(1)
+        app.createDF("a:String", "1;;3").smvSelectPlus(lit("") as "b").repartition(1)
       }
     }
 

@@ -15,7 +15,7 @@ The basic working unit within the SMV framework is SmvModule. Here is an example
       val df = i(input.EmploymentStateLink)
       import df.sqlContext.implicits._
 
-      df.selectPlus(
+      df.smvSelectPlus(
         $"EMP" >  lit(1000000) as "cat_high_emp"
       )
     }

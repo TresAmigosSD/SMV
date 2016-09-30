@@ -107,26 +107,29 @@ class SmvDFHelper(df: DataFrame) {
       // add the new columns first, because they could (and usually)
       // refer to the columns being updated
       // the last select is to make sure the ordering of columns don't change
-      df.selectPlus(uniquelyNamed:_*).
+      df.smvSelectPlus(uniquelyNamed:_*).
         smvSelectMinus(origColNames.head, origColNames.tail:_*).
         renameField(renameArgs:_*).
         select(currColNames.head, currColNames.tail: _*)
     }
 
-    edited.selectPlus(add: _*)
+    edited.smvSelectPlus(add: _*)
   }
 
   /**
    * selects all the current columns in current `DataFrame` plus the supplied expressions.
    * The new columns are added to the end of the current column list.
    * {{{
-   *   df.selectPlus($"price" * $"count" as "amt")
+   *   df.smvSelectPlus($"price" * $"count" as "amt")
    * }}}
    */
-  def selectPlus(exprs: Column*): DataFrame = {
+  def smvSelectPlus(exprs: Column*): DataFrame = {
     val all = df.columns.map{l=>df(l)}
     df.select( all ++ exprs : _* )
   }
+
+  @deprecated("1.5", "use smvSelectPlus instead")
+  def selectPlus(exprs: Column*): DataFrame = smvSelectPlus(exprs:_*)
 
   /**
    * Same as selectPlus but the new columns are prepended to result.
@@ -277,7 +280,7 @@ class SmvDFHelper(df: DataFrame) {
       fields.map{f => df(col).getField(f) as f}
     }.flatten.toSeq
 
-    df.selectPlus(exprs: _*).smvSelectMinus(colNames.head, colNames.tail: _*)
+    df.smvSelectPlus(exprs: _*).smvSelectMinus(colNames.head, colNames.tail: _*)
   }
 
   /**
@@ -525,11 +528,11 @@ class SmvDFHelper(df: DataFrame) {
 
     val leftNeed = dfother.columns diff df.columns
     val leftStruct = leftNeed map (colName => dfother.schema.filter(_.name == colName)(0))
-    val leftFull = df.selectPlus((leftStruct map (sf => lit(null).cast(sf.dataType) as sf.name)):_*)
+    val leftFull = df.smvSelectPlus((leftStruct map (sf => lit(null).cast(sf.dataType) as sf.name)):_*)
 
     val rightNeed = df.columns diff dfother.columns
     val rightStruct = rightNeed map (colName => df.schema.filter(_.name == colName)(0))
-    val rightFull = dfother.selectPlus((rightStruct map (sf => lit(null).cast(sf.dataType) as sf.name)):_*)
+    val rightFull = dfother.smvSelectPlus((rightStruct map (sf => lit(null).cast(sf.dataType) as sf.name)):_*)
 
     val overlap = df.columns intersect dfother.columns
     val overlapLeftStruct = overlap map (colName => df.schema.filter(_.name == colName)(0))
@@ -671,14 +674,14 @@ class SmvDFHelper(df: DataFrame) {
       struct(fields:_*)
     }
 
-    val r1 = df.selectPlus(array(embedded:_*) as "_unpivoted_values")
-    val r2 = r1.selectPlus(explode(r1("_unpivoted_values")) as "_kvpair")
+    val r1 = df.smvSelectPlus(array(embedded:_*) as "_unpivoted_values")
+    val r2 = r1.smvSelectPlus(explode(r1("_unpivoted_values")) as "_kvpair")
     val r3 = indexColName match {
       case None => r2
-      case Some(indexCol) => r2.selectPlus(r2("_kvpair")(indexName) as indexCol)
+      case Some(indexCol) => r2.smvSelectPlus(r2("_kvpair")(indexName) as indexCol)
     }
     // now add each field in the embedded struct as a column
-    r3.selectPlus((colNames.map(c => r3("_kvpair")(c) as c)):_*).
+    r3.smvSelectPlus((colNames.map(c => r3("_kvpair")(c) as c)):_*).
       smvSelectMinus("_unpivoted_values", "_kvpair"). // remove intermediate results
       smvSelectMinus(valueCols.head, valueCols.tail:_*)
   }
@@ -766,7 +769,7 @@ class SmvDFHelper(df: DataFrame) {
     val w = Window.orderBy(orders:_*)
     val rankcol = mkUniq(df.columns, "rank")
     val rownum = mkUniq(df.columns, "rownum")
-    val r1 = df.selectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    val r1 = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 
@@ -884,7 +887,7 @@ class SmvDFHelper(df: DataFrame) {
       val newkey = p._1
       val r = p._2
       c.join(r, $"${key}" === $"${newkey}", SmvJoinType.Outer).
-        selectPlus(coalesce($"${key}", $"${newkey}") as "tmp").
+        smvSelectPlus(coalesce($"${key}", $"${newkey}") as "tmp").
         smvSelectMinus(key).renameField("tmp" -> key)
     }
 

@@ -8,9 +8,9 @@ from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col
 
 class DfHelperTest(SmvBaseTest):
-    def test_selectPlus(self):
+    def test_smvSelectPlus(self):
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
-        r1 = df.selectPlus((col('v') + 1).alias("v2"))
+        r1 = df.smvSelectPlus((col('v') + 1).alias("v2"))
         expect = self.createDF("k:String;v:Integer;v2:Integer", "a,1,2;b,2,3")
         self.should_be_same(expect, r1)
 
