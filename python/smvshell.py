@@ -1,4 +1,4 @@
-from smvapp import SmvApp
+from smv import SmvApp
 from pyspark.sql import DataFrame
 
 jvmShellCmd = SmvApp._jvm.org.tresamigos.smv.shell.ShellCmd

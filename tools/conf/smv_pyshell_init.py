@@ -40,7 +40,7 @@ from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
 # Imnport smv
-from smvapp import SmvApp
+from smv import SmvApp
 app = SmvApp.init(['-m', 'None'], sc, sqlContext)
 
 from smvshell import *

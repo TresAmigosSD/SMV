@@ -2,9 +2,7 @@ import sys
 
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
-from smv import Smv
-
-SmvApp = Smv()
+from smv import SmvApp
 
 if __name__ == "__main__":
     # skip the first argument, which is this program

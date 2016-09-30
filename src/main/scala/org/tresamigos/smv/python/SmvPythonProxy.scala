@@ -19,8 +19,6 @@ object SmvPythonHelper {
 
   def smvHashSample(df: DataFrame, key: Column, rate: Double, seed: Int) =
     df.smvHashSample(key, rate, seed)
-
-  def lsStage = SmvApp.app.stages.stageNames.mkString("\n")
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

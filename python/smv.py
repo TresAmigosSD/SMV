@@ -96,7 +96,7 @@ class Smv(object):
     def init(self, arglist, _sc = None, _sqlContext = None):
 
         #TODO: appName should be read from the config files
-        #      need to process the arglist first and create smvConfig before init SmvApp 
+        #      need to process the arglist first and create smvConfig before init SmvApp
         sc = SparkContext(appName="smvapp.py") if _sc is None else _sc
         sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
 
@@ -286,3 +286,9 @@ class SmvGroupedData(object):
         valueCols: list of strings
         baseOutput: list of strings"""
         return DataFrame(self.sgd.smvPivotSum(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
+
+# Create the SmvApp "Singleton"
+SmvApp = Smv()
+
+# ColumnHelper methods:
+Column.smvStrToTimestamp = lambda c, fmt: Column(SmvApp._jvm.org.tresamigos.smv.ColumnHelper(c._jc).smvStrToTimestamp(fmt))
