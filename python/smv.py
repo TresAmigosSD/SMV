@@ -1,4 +1,5 @@
 from pyspark.sql.column import Column
+from pyspark.sql.functions import col
 import sys
 import dis
 
@@ -84,7 +85,15 @@ DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tres
 
 DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
 
-DataFrame.smvHashSample = lambda df, key, rate=0.01, seed=23: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvHashSample(df._jdf, key, rate, seed), df.sql_ctx)
+def __smvHashSample(df, key, rate=0.01, seed=23):
+    if (isinstance(key, basestring)):
+        jkey = col(key)._jc
+    elif (isinstance(key, Column)):
+        jkey = key._jc
+    else:
+        raise RuntimeError("key parameter must be either a String or a Column")
+    return DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvHashSample(df._jdf, jkey, rate, seed), df.sql_ctx)
+DataFrame.smvHashSample = __smvHashSample
 
 DataFrame.smvSelectMinus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvSelectMinus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 

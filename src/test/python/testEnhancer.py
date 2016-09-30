@@ -8,14 +8,20 @@ from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col
 
 class DfHelperTest(SmvBaseTest):
-    def test_smvSelectPlus(self):
-        df = self.createDF("k:String;v:Integer", "a,1;b,2")
-        r1 = df.smvSelectPlus((col('v') + 1).alias("v2"))
-        expect = self.createDF("k:String;v:Integer;v2:Integer", "a,1,2;b,2,3")
-        self.should_be_same(expect, r1)
-
     def test_smvGroupBy(self):
         return "TODO implement"
+
+    def test_smvHashSample_with_string(self):
+        df = self.createDF("k:String", "a;b;c;d;e;f;g;h;i;j;k")
+        r1 = df.unionAll(df).smvHashSample('k', 0.3)
+        expect = self.createDF("k:String", "a;g;i;a;g;i")
+        self.should_be_same(expect, r1)
+
+    def test_smvHashSample_with_column(self):
+        df = self.createDF("k:String", "a;b;c;d;e;f;g;h;i;j;k")
+        r1 = df.unionAll(df).smvHashSample(col('k'), 0.3)
+        expect = self.createDF("k:String", "a;g;i;a;g;i")
+        self.should_be_same(expect, r1)
 
     def test_dedupByKey(self):
         schema = "a:Integer; b:Double; c:String"
@@ -46,6 +52,12 @@ class DfHelperTest(SmvBaseTest):
         df = self.createDF(schema, "a,1,2;b,2,3")
         r1 = df.smvSelectMinus(col("v1"))
         expect = self.createDF("k:String;v2:Integer", "a,2;b,3")
+        self.should_be_same(expect, r1)
+
+    def test_smvSelectPlus(self):
+        df = self.createDF("k:String;v:Integer", "a,1;b,2")
+        r1 = df.smvSelectPlus((col('v') + 1).alias("v2"))
+        expect = self.createDF("k:String;v:Integer;v2:Integer", "a,1,2;b,2,3")
         self.should_be_same(expect, r1)
 
 class ColumnHelperTest(unittest.TestCase):
