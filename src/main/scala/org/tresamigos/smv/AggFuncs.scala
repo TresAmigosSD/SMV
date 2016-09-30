@@ -55,7 +55,7 @@ private[smv] class Histogram(inputDT: DataType) extends UserDefinedAggregateFunc
     buffer1.update(0, m)
   }
 
-  def evaluate(buffer: Row) = buffer.getMap(0)
+  def evaluate(buffer: Row) = OldVersionHelper.dataCV150(buffer.getMap(0), dataType)
 }
 
 object histStr extends Histogram(StringType)
@@ -68,7 +68,7 @@ private[smv] class MostFrequentValue(in: DataType) extends Histogram(in) {
     val reducedMap = buffer.getMap(0).asInstanceOf[Map[Any, Long]]
     val hist = reducedMap.toList
     val max = maxBySeq(hist)(_._2)
-    max.toMap.asInstanceOf[Map[Nothing, Nothing]]
+    OldVersionHelper.dataCV150(max.toMap, dataType)
   }
 
   //since stdlib maxBy returns a single element, and we need to return Seq for the case that we have multiple modes
@@ -169,7 +169,8 @@ private[smv] object stddev extends UserDefinedAggregateFunction {
     val count = buffer.getLong(0)
     val avg = buffer.getDouble(1)
     val m2 = buffer.getDouble(2)
-    if (count<2) 0.0 else scala.math.sqrt(m2/(count-1))
+    val res = if (count<2) 0.0 else scala.math.sqrt(m2/(count-1))
+    OldVersionHelper.dataCV150(res, dataType)
   }
 }
 
@@ -316,10 +317,24 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
       null
     } else {
       val bin_frequencies = buffer.getMap(0).asInstanceOf[Map[Int, Int]].toSeq.sortBy(_._1)
-      bin_frequencies.map { bin_freq =>
+      val res = bin_frequencies.map { bin_freq =>
         val bin_inter = bin_interval(bin_freq._1, buffer.getDouble(1), buffer.getDouble(2), buffer.getInt(3))
         Row(bin_inter._1, bin_inter._2, bin_freq._2)
       }
+      OldVersionHelper.dataCV150(res, dataType)
     }
   }
+}
+
+private[smv] object OldVersionHelper {
+  import org.apache.spark.sql.contrib.smv._
+  def version = SmvApp.app.sc.version
+
+  /**
+   * Addressing: 1.5.0's bug
+   * https://issues.apache.org/jira/browse/SPARK-10639
+   **/
+  def dataCV150(sv: Any, dt: DataType) =
+    if(version < "1.5.1") convertDataToCatalyst(sv, dt)
+    else sv
 }

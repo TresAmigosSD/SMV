@@ -57,4 +57,9 @@ package object smv {
     val converter = CatalystTypeConverters.createToScalaConverter(schema)
     rowRDD.map(converter(_).asInstanceOf[Row])
   }
+
+  def convertDataToCatalyst(sv: Any, dt: DataType) = {
+    val converter = CatalystTypeConverters.createToCatalystConverter(dt)
+    converter(sv)
+  }
 }
