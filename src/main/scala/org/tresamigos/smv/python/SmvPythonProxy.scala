@@ -8,20 +8,28 @@ import scala.util.Try
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
-  def peekStr(df: DataFrame, pos: Int, colRegex: String) = df._peek(pos, colRegex)
+  def peekStr(df: DataFrame, pos: Int, colRegex: String): String = df._peek(pos, colRegex)
   def selectPlus(df: DataFrame, cols: Array[Column]) = df.selectPlus(cols:_*)
 
-  def smvGroupBy(df: DataFrame, cols: Array[Column]) =
+  def smvExpandStruct(df: DataFrame, cols: Array[String]): DataFrame =
+    df.smvExpandStruct(cols: _*)
+
+  def smvGroupBy(df: DataFrame, cols: Array[Column]): SmvGroupedDataAdaptor =
     new SmvGroupedDataAdaptor(df.smvGroupBy(cols:_*))
 
-  def smvJoinByKey(df: DataFrame, other: DataFrame, keys: Array[String], joinType: String) =
+  def smvJoinByKey(df: DataFrame, other: DataFrame, keys: Array[String], joinType: String): DataFrame =
     df.joinByKey(other, keys.toSeq, joinType)
 
-  def smvHashSample(df: DataFrame, key: Column, rate: Double, seed: Int) =
+  def smvHashSample(df: DataFrame, key: Column, rate: Double, seed: Int): DataFrame =
     df.smvHashSample(key, rate, seed)
 
-  def smvExpandStruct(df: DataFrame, cols: Array[String]) =
-    df.smvExpandStruct(cols: _*)
+  def smvSelectMinus(df: DataFrame, cols: Array[String]): DataFrame =
+    df.smvSelectMinus(cols.head, cols.tail:_*)
+
+  def smvSelectMinus(df: DataFrame, cols: Array[Column]): DataFrame =
+    df.smvSelectMinus(cols:_*)
+
+  def lsStage: String = SmvApp.app.stages.stageNames.mkString("\n")
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

@@ -75,7 +75,10 @@ DataFrame.peek = lambda df, pos = 1, colRegex = ".*": sys.stdout.write(df._sc._j
 
 # provides df.selectPlus(...) in python shell
 # example: df.selectPlus(lit(1).alias('col'))
+# TODO: remove
 DataFrame.selectPlus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.selectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
+
+DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvExpandStruct(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
 DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
 
@@ -83,7 +86,9 @@ DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm
 
 DataFrame.smvHashSample = lambda df, key, rate=0.01, seed=23: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvHashSample(df._jdf, key, rate, seed), df.sql_ctx)
 
-DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvExpandStruct(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
+DataFrame.smvSelectMinus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvSelectMinus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
+
+DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvSelectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
 import abc
 from pyspark import SparkContext
@@ -106,10 +111,7 @@ class Smv(object):
         self._jvm = sc._jvm
 
         # convert python arglist to java String array
-        java_args = sc._gateway.new_array(sc._jvm.String, len(arglist))
-        for i in range(0, len(java_args)):
-            java_args[i] = arglist[i]
-
+        java_args =  smv_copy_array(sc, *arglist)
         self.app = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
         self.pymods = {}
         return self

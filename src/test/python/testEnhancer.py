@@ -34,6 +34,20 @@ class DfHelperTest(SmvBaseTest):
         )
         self.should_be_same(expect, r1)
 
+    def test_smvSelectMinus_with_string(self):
+        schema = "k:String;v1:Integer;v2:Integer"
+        df = self.createDF(schema, "a,1,2;b,2,3")
+        r1 = df.smvSelectMinus("v1")
+        expect = self.createDF("k:String;v2:Integer", "a,2;b,3")
+        self.should_be_same(expect, r1)
+
+    def test_smvSelectMinus_with_column(self):
+        schema = "k:String;v1:Integer;v2:Integer"
+        df = self.createDF(schema, "a,1,2;b,2,3")
+        r1 = df.smvSelectMinus(col("v1"))
+        expect = self.createDF("k:String;v2:Integer", "a,2;b,3")
+        self.should_be_same(expect, r1)
+
 class ColumnHelperTest(unittest.TestCase):
     def test_smvMonth(self):
         return "TODO implement"
