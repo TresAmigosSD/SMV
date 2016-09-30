@@ -99,6 +99,8 @@ DataFrame.smvSelectMinus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigo
 
 DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvSelectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
+DataFrame.smvDedupByKey = lambda df, keys: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
+
 import abc
 from pyspark import SparkContext
 from pyspark.sql import HiveContext

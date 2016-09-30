@@ -31,6 +31,9 @@ object SmvPythonHelper {
 
   def smvSelectPlus(df: DataFrame, cols: Array[Column]) = df.smvSelectPlus(cols:_*)
 
+  def smvDedupByKey(df: DataFrame, keys: Array[String]) =
+    df.dedupByKey(keys.head, keys.tail:_*)
+
   def lsStage: String = SmvApp.app.stages.stageNames.mkString("\n")
 }
 

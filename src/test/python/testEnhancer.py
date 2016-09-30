@@ -32,11 +32,13 @@ class DfHelperTest(SmvBaseTest):
             2,10.0,hello2;
             2,11.0,hello3"""
         )
-        r1 = df.dedupByKey("a")
+        r1 = df.smvDedupByKey("a")
+        # TODO: smvDedupByKey is reordering the output. Need to assert unordered like Scala?
         expect = self.createDF(
             schema,
-            """1,2.0,hello;
-            2,10.0,hello2"""
+            """2,10.0,hello2;
+            1,2.0,hello
+            """
         )
         self.should_be_same(expect, r1)
 
