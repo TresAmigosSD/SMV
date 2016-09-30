@@ -19,6 +19,9 @@ object SmvPythonHelper {
 
   def smvHashSample(df: DataFrame, key: Column, rate: Double, seed: Int) =
     df.smvHashSample(key, rate, seed)
+
+  def smvExpandStruct(df: DataFrame, cols: Array[String]) =
+    df.smvExpandStruct(cols: _*)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

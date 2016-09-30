@@ -257,10 +257,10 @@ class SmvDFHelper(df: DataFrame) {
    *
    * Example code:
    * {{{
-   *  df.selectExpandStruct("address")
+   *  df.smvExpandStruct("address")
    * }}}
    **/
-  def selectExpandStruct(colNames: String*): DataFrame = {
+  def smvExpandStruct(colNames: String*): DataFrame = {
     checkNames(colNames)
 
     val subFields = colNames.map{n =>
@@ -273,6 +273,11 @@ class SmvDFHelper(df: DataFrame) {
 
     df.selectPlus(exprs: _*).selectMinus(colNames.head, colNames.tail: _*)
   }
+
+  /**
+   * @deprecated("Renamed to smvExpandStruct")
+   **/
+  def selectExpandStruct(colNames: String*): DataFrame = smvExpandStruct(colNames: _*)
 
   /**
    * Perform a join of the left/right `DataFrames` and rename duplicated column names by
