@@ -1,7 +1,6 @@
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
 import sys
-import dis
 
 if sys.version >= '3':
     basestring = unicode = str
@@ -51,9 +50,11 @@ def smv_copy_array(sc, *cols):
 
     return jcols
 
-def disassemble(mod):
+def disassemble(obj):
     """Disassembles a module and returns bytecode as a string.
     """
+    mod = obj if (isinstance(obj, type)) else obj.__class__
+
     buf = StringIO()
     import dis
     if sys.version >= '3':
@@ -197,8 +198,29 @@ class SmvPyDataSet(object):
         so that code and the data it produces can be tracked together."""
         return "0";
 
+    @classmethod
+    def datasetHash(cls):
+        try:
+            import inspect
+            src = inspect.getsource(cls)
+            code = compile(src, inspect.getsourcefile(cls), 'exec')
+            res = hash(code)
+        except: # `inspect` will raise error for classes defined in the REPL
+            res = hash(disassemble(cls))
+        return res
+
+    def hashOfHash(self):
+        res = hash(self.version() + str(self.datasetHash()))
+
+        # include datasetHash of dependency modules
+        if sys.version >= '3':
+            from functools import reduce
+        res = reduce(lambda x,y: x+y, [m.datasetHash() for m in self.requiresDS()], res)
+
+        return res
+
     def modulePath(self):
-        return self.smv.app.outputDir() + "/" + self.fqn() + "_" + self.version() + ".csv"
+        return self.smv.app.outputDir() + "/" + self.fqn() + "_" + hex(self.hashOfHash() & 0xffffffff)[2:] + ".csv"
 
     def fqn(self):
         """Returns the fully qualified name
