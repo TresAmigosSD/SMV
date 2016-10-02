@@ -24,6 +24,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.annotation.Experimental
 import cds._
 import edd._
+import smvfuncs._
 
 class SmvDFHelper(df: DataFrame) {
 
@@ -1397,4 +1398,127 @@ class SmvDFHelper(df: DataFrame) {
   def smvDoubleBinHistogram(key: String, column_to_bin: String): DataFrame = {
     smvDoubleBinHistogram(Seq(key), Seq(column_to_bin))
   }
+
+
+  /* Shared private method */
+  private[smv] def _smvEdd(cols: String*) = df.edd.summary(cols: _*).createReport()
+
+  private[smv] def _smvHist(cols: String*) = df.edd.histogram(cols.head, cols.tail: _*).createReport()
+
+  private[smv] def _smvConcatHist(cols: Seq[String]) = {
+    import df.sqlContext.implicits._
+    val colName = cols.mkString("_")
+    df.selectPlus(
+      smvStrCat("_", cols.map{c => $"$c"}: _*) as colName
+    ).edd.histogram(colName).createReport()
+  }
+
+  private[smv] def _smvFreqHist(cols: String*) = {
+    val hists = cols.map{c => Hist(c, sortByFreq = true)}
+    df.edd.histogram(hists: _*).createReport()
+  }
+
+  private[smv] def _smvBinHist(colWithBin: (String, Double)*) = {
+    val hists = colWithBin.map{case (c, b) => Hist(c, binSize = b)}
+    df.edd.histogram(hists: _*).createReport()
+  }
+
+  private[smv] def _smvCountHist(keys: Seq[String], _binSize: Int) = {
+    val colName = ("N" +: keys).mkString("_")
+    df.groupBy(keys.head, keys.tail: _*).agg(count(lit(1)) as colName).
+      edd.histogram(Hist(colName, binSize = _binSize)).createReport()
+  }
+
+  /**
+   * Print EDD summary
+   *
+   * {{{
+   * df.smvEdd()
+   * }}}
+   * Perform EDD summary on all columns
+   *
+   * {{{
+   * df.smvEdd("a", "b")
+   * }}}
+   * Perform EDD summary on specified columns
+   **/
+  def smvEdd(cols: String*) = println(_smvEdd(cols: _*))
+
+  /**
+   * Save Edd summary
+   **/
+  def smvEddSave(cols: String*)(path: String) = SmvReportIO.saveLocalReport(_smvEdd(cols: _*), path)
+
+  /**
+   * Print EDD histogram (each col's histogram prints separately)
+   **/
+  def smvHist(cols: String*) = println(_smvHist(cols: _*))
+
+  /**
+   * Save Edd histogram
+   **/
+  def smvHistSave(cols: String*)(path: String) = SmvReportIO.saveLocalReport(_smvHist(cols: _*), path)
+
+  /**
+   * Print EDD histogram of a group of cols (joint distribution)
+   **/
+  def smvConcatHist(cols: Seq[String]) = println(_smvConcatHist(cols))
+
+  /**
+   * Save Edd histogram of a group of cols (joint distribution)
+   **/
+  def smvConcatHistSave(cols: Seq[String])(path: String) = SmvReportIO.saveLocalReport(_smvConcatHist(cols), path)
+
+  /**
+   * Print EDD histogram with frequency sorting
+   **/
+  def smvFreqHist(cols: String*) = println(_smvFreqHist(cols: _*))
+
+  /**
+   * Save Edd histogram with frequency sorting
+   **/
+  def smvFreqHistSave(cols: String*)(path: String) = SmvReportIO.saveLocalReport(_smvFreqHist(cols: _*), path)
+
+  /**
+   * Print Edd histogram with bins
+   **/
+  def smvBinHist(colWithBin: (String, Double)*) = println(_smvBinHist(colWithBin: _*))
+
+  /**
+   * Save Edd histogram with bins
+   **/
+  def smvBinHistSave(colWithBin: (String, Double)*)(path: String) = SmvReportIO.saveLocalReport(_smvBinHist(colWithBin: _*), path)
+
+  /**
+   * Print Edd histogram on count of records for a group of given keys
+   *
+   * Example Input
+   * {{{
+   * id, v
+   * 1, 1.0
+   * 1, 1.5
+   * 2, 0.3
+   * }}}
+   *
+   * {{{
+   * df.smvCountHist(Seq("id"))
+   * }}}
+   *
+   * Output
+   * {{{
+   * N_id
+   * 1     1     33.3%
+   * 2     2     66.6%
+   * }}}
+   */
+  def smvCountHist(keys: Seq[String], binSize: Int = 1): Unit = println(_smvCountHist(keys, binSize))
+
+  def smvCountHist(key: String): Unit = smvCountHist(Seq(key), 1)
+
+  /**
+   * Save Edd histogram on count of records for a group of given keys
+   **/
+  def smvCountHistSave(keys: Seq[String], binSize: Int = 1)(path: String): Unit = SmvReportIO.saveLocalReport(_smvCountHist(keys, binSize), path)
+
+  def smvCountHistSave(key: String)(path: String): Unit = smvCountHistSave(Seq(key), 1)(path)
 }

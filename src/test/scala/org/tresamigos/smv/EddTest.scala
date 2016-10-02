@@ -275,7 +275,7 @@ a                            1   25.00%           4  100.00%
   test("test EddSummary") {
     val res = df.edd.summary()
 
-    assert(res.createReport().mkString("\n") === """k                    Non-Null Count         4
+    assert(res.createReport() === """k                    Non-Null Count         4
 k                    Min Length             1
 k                    Max Length             1
 k                    Approx Distinct Count  2
@@ -330,7 +330,7 @@ true                         2   50.00%           4  100.00%
     val df2 = createSchemaRdd("v:decimal[8, 3]", "12.455;123.134;122.5;5")
     val res = df2.edd.summary()
 
-    assert(res.createReport().mkString("\n") === """v                    Non-Null Count         4
+    assert(res.createReport() === """v                    Non-Null Count         4
 v                    Average                65.77225
 v                    Standard Deviation     65.94038595769668
 v                    Min                    5.0
@@ -364,18 +364,13 @@ v                    Max                    123.134"""
     val res2 = df2.edd.histogram("t")
     val res3 = df2.select(df2("d").smvYear as "year").edd.histogram("year")
     val res4 = df2.edd.histogram("b")
-/* As long as above run without issue the test is success
-    res1.createReport.foreach(println)
-    res2.createReport.foreach(println)
-    res3.createReport.foreach(println)
-    res4.createReport.foreach(println)
-    */
+/* As long as above run without issue the test is success*/
   }
 
   test("test Null rate") {
     val res = df.edd.nullRate()
 
-    assert(res.createReport().mkString("\n") === """k                    Null Rate              0.0
+    assert(res.createReport() === """k                    Null Rate              0.0
 t                    Null Rate              0.0
 p                    Null Rate              0.0
 v                    Null Rate              0.0

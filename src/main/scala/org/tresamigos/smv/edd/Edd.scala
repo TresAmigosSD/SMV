@@ -115,9 +115,9 @@ class Edd(val df: DataFrame) {
  **/
 case class EddResultFunctions(eddRes: DataFrame) {
 
-  private[smv] def createReport(): Seq[String] = {
+  private[smv] def createReport(): String = {
     val rows = eddRes.rdd.collect
-    rows.map{r => EddResult(r).toReport}
+    rows.map{r => EddResult(r).toReport}.mkString("\n")
   }
 
   private[smv] def createJsonDF(): RDD[String] = {
@@ -126,12 +126,12 @@ case class EddResultFunctions(eddRes: DataFrame) {
 
   /** print edd result to console **/
   def eddShow(): Unit = {
-    createReport().foreach(println)
+    println(createReport())
   }
 
   /** print edd result to file **/
   def eddSave(path: String): Unit = {
-    SmvReportIO.saveLocalReport(createReport().mkString("\n"), path)
+    SmvReportIO.saveLocalReport(createReport(), path)
   }
 
   /** save report as RDD[String] **/
