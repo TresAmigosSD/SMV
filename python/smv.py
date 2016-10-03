@@ -196,9 +196,8 @@ class SmvPyDataSet(object):
         res = hash(self.version() + str(self.datasetHash()))
 
         # include datasetHash of dependency modules
-        if sys.version >= '3':
-            from functools import reduce
-        res = reduce(lambda x,y: x+y, [m.datasetHash() for m in self.requiresDS()], res)
+        for m in self.requiresDS():
+            res += m.datasetHash()
 
         return res
 
