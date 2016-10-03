@@ -41,7 +41,7 @@ object SmvPythonHelper {
   def smvCountHist(df: DataFrame, keys: Array[String], binSize: Int) = df._smvCountHist(keys.toSeq, binSize)
   def smvBinHist(df: DataFrame, _colWithBin: java.util.List[java.util.List[Any]]) = {
     val colWithBin = _colWithBin.map{t =>
-      (t.get(0).asInstanceOf[String], t.get(1).toScala.asInstanceOf[Double])
+      (t.get(0).asInstanceOf[String], t.get(1).asInstanceOf[Double])
     }.toSeq
     df._smvBinHist(colWithBin: _*)
   }
