@@ -34,7 +34,17 @@ object SmvPythonHelper {
   def smvDedupByKey(df: DataFrame, keys: Array[String]) =
     df.dedupByKey(keys.head, keys.tail:_*)
 
-  def lsStage: String = SmvApp.app.stages.stageNames.mkString("\n")
+  def smvEdd(df: DataFrame, colNames: Array[String]) = df._smvEdd(colNames: _*)
+  def smvHist(df: DataFrame, colNames: Array[String]) = df._smvHist(colNames: _*)
+  def smvConcatHist(df: DataFrame, colNames: Array[String]) = df._smvConcatHist(colNames.toSeq)
+  def smvFreqHist(df: DataFrame, colNames: Array[String]) = df._smvFreqHist(colNames: _*)
+  def smvCountHist(df: DataFrame, keys: Array[String], binSize: Int) = df._smvCountHist(keys.toSeq, binSize)
+  def smvBinHist(df: DataFrame, _colWithBin: java.util.List[java.util.List[Any]]) = {
+    val colWithBin = _colWithBin.map{t =>
+      (t.get(0).asInstanceOf[String], t.get(1).toScala.asInstanceOf[Double])
+    }.toSeq
+    df._smvBinHist(colWithBin: _*)
+  }
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

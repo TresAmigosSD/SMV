@@ -45,6 +45,13 @@ def smv_copy_array(sc, *cols):
         jcols = sc._jvm.java.util.ArrayList()
         for i in range(0, len(cols)):
             jcols.append(smv_copy_array(sc, *cols[i]))
+    elif (isinstance(elem, tuple)):
+        jcols = sc._jvm.java.util.ArrayList()
+        for i in range(0, len(cols)):
+            # Use Java List for tuple
+            je = sc._jvm.java.util.ArrayList()
+            for e in cols[i]: je.append(e)
+            jcols.append(je)
     else:
         raise RuntimeError("Cannot copy array of type", type(elem))
 
@@ -71,36 +78,6 @@ def disassemble(obj):
 # enhances the spark DataFrame with smv helper functions
 from pyspark.sql import DataFrame
 
-# peek from Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout
-import sys
-DataFrame.peek = lambda df, pos = 1, colRegex = ".*": sys.stdout.write(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.peekStr(df._jdf, pos, colRegex) + "\n")
-
-# provides df.selectPlus(...) in python shell
-# example: df.selectPlus(lit(1).alias('col'))
-# TODO: remove
-DataFrame.selectPlus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.selectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
-
-DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvExpandStruct(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
-
-DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
-
-DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
-
-def __smvHashSample(df, key, rate=0.01, seed=23):
-    if (isinstance(key, basestring)):
-        jkey = col(key)._jc
-    elif (isinstance(key, Column)):
-        jkey = key._jc
-    else:
-        raise RuntimeError("key parameter must be either a String or a Column")
-    return DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvHashSample(df._jdf, jkey, rate, seed), df.sql_ctx)
-DataFrame.smvHashSample = __smvHashSample
-
-DataFrame.smvSelectMinus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvSelectMinus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
-
-DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvSelectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
-
-DataFrame.smvDedupByKey = lambda df, keys: DataFrame(df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
 
 import abc
 from pyspark import SparkContext
@@ -127,6 +104,9 @@ class Smv(object):
         self.app = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
         self.pymods = {}
         return self
+
+    def helper(self):
+        return self._jvm.org.tresamigos.smv.python.SmvPythonHelper
 
     def runModule(self, fqn):
         """Runs a Scala SmvModule by its Fully Qualified Name(fqn)
@@ -327,5 +307,72 @@ class SmvGroupedData(object):
 # Create the SmvApp "Singleton"
 SmvApp = Smv()
 
+import sys
+
+helper = lambda df: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper
+
+# provides df.selectPlus(...) in python shell
+# example: df.selectPlus(lit(1).alias('col'))
+# TODO: remove
+DataFrame.selectPlus = lambda df, *cols: DataFrame(helper(df).selectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
+
+DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(helper(df).smvExpandStruct(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
+
+DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, helper(df).smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
+
+DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(helper(df).smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
+
+def __smvHashSample(df, key, rate=0.01, seed=23):
+    if (isinstance(key, basestring)):
+        jkey = col(key)._jc
+    elif (isinstance(key, Column)):
+        jkey = key._jc
+    else:
+        raise RuntimeError("key parameter must be either a String or a Column")
+    return DataFrame(helper(df).smvHashSample(df._jdf, jkey, rate, seed), df.sql_ctx)
+DataFrame.smvHashSample = __smvHashSample
+
+DataFrame.smvSelectMinus = lambda df, *cols: DataFrame(helper(df).smvSelectMinus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
+
+DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(helper(df).smvSelectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
+
+DataFrame.smvDedupByKey = lambda df, keys: DataFrame(helper(df).smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
+
+#############################################
+# DfHelpers which print to STDOUT
+# Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout
+#############################################
+println = lambda str: sys.stdout.write(str + "\n")
+
+DataFrame.peek = lambda df, pos = 1, colRegex = ".*": println(helper(df).peekStr(df._jdf, pos, colRegex))
+
+def _smvEdd(df, *cols): return helper(df).smvEdd(df._jdf, smv_copy_array(df._sc, *cols))
+def _smvHist(df, *cols): return helper(df).smvHist(df._jdf, smv_copy_array(df._sc, *cols))
+def _smvConcatHist(df, cols): return helper(df).smvConcatHist(df._jdf, smv_copy_array(df._sc, *cols))
+def _smvFreqHist(df, *cols): return helper(df).smvFreqHist(df._jdf, smv_copy_array(df._sc, *cols))
+def _smvCountHist(df, keys, binSize): return helper(df).smvCountHist(df._jdf, smv_copy_array(df._sc, *keys), binSize)
+def _smvBinHist(df, *colWithBin):
+    for elem in colWithBin:
+        assert type(elem) is tuple, "smvBinHist takes a list of tuple(string, double) as paraeter"
+        assert len(elem) == 2, "smvBinHist takes a list of tuple(string, double) as parameter"
+    insureDouble = map(lambda (x, y): (x, y * 1.0), colWithBin)
+    return helper(df).smvBinHist(df._jdf, smv_copy_array(df._sc, *insureDouble))
+
+DataFrame.smvEdd = lambda df, *cols: println(_smvEdd(df, *cols))
+DataFrame.smvHist = lambda df, *cols: println(_smvHist(df, *cols))
+DataFrame.smvConcatHist = lambda df, cols: println(_smvConcatHist(df, cols))
+DataFrame.smvFreqHist = lambda df, *cols: println(_smvFreqHist(df, *cols))
+
+def __smvCountHistFn(df, keys, binSize = 1):
+    if (isinstance(keys, basestring)):
+        return println(_smvCountHist(df, [keys], binSize))
+    else:
+        return println(_smvCountHist(df, keys, binSize))
+DataFrame.smvCountHist = __smvCountHistFn
+
+DataFrame.smvBinHist = lambda df, *colWithBin: println(_smvBinHist(df, *colWithBin))
+
+#############################################
 # ColumnHelper methods:
+#############################################
 Column.smvStrToTimestamp = lambda c, fmt: Column(SmvApp._jvm.org.tresamigos.smv.ColumnHelper(c._jc).smvStrToTimestamp(fmt))
