@@ -26,4 +26,4 @@ class PythonEmploymentByStateCategory(SmvPyModule):
 
     def run(self, i):
         df = i[PythonEmploymentByState]
-        return df.selectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
+        return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))

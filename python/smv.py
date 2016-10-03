@@ -314,11 +314,6 @@ import sys
 
 helper = lambda df: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper
 
-# provides df.selectPlus(...) in python shell
-# example: df.selectPlus(lit(1).alias('col'))
-# TODO: remove
-DataFrame.selectPlus = lambda df, *cols: DataFrame(helper(df).selectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
-
 DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(helper(df).smvExpandStruct(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
 DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, helper(df).smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))

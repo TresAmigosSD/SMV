@@ -9,7 +9,6 @@ import scala.util.Try
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
   def peekStr(df: DataFrame, pos: Int, colRegex: String): String = df._peek(pos, colRegex)
-  def selectPlus(df: DataFrame, cols: Array[Column]) = df.selectPlus(cols:_*)
 
   def smvExpandStruct(df: DataFrame, cols: Array[String]): DataFrame =
     df.smvExpandStruct(cols: _*)
