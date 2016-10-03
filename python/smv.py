@@ -339,7 +339,7 @@ DataFrame.smvSelectMinus = lambda df, *cols: DataFrame(helper(df).smvSelectMinus
 
 DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(helper(df).smvSelectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
-DataFrame.smvDedupByKey = lambda df, keys: DataFrame(helper(df).smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
+DataFrame.smvDedupByKey = lambda df, *keys: DataFrame(helper(df).smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
 
 #############################################
 # DfHelpers which print to STDOUT

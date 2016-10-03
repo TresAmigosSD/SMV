@@ -31,8 +31,11 @@ object SmvPythonHelper {
 
   def smvSelectPlus(df: DataFrame, cols: Array[Column]) = df.smvSelectPlus(cols:_*)
 
-  def smvDedupByKey(df: DataFrame, keys: Array[String]) =
+  def smvDedupByKey(df: DataFrame, keys: Array[String]): DataFrame =
     df.dedupByKey(keys.head, keys.tail:_*)
+
+  def smvDedupByKey(df: DataFrame, cols: Array[Column]): DataFrame =
+    df.dedupByKey(cols:_*)
 
   def smvEdd(df: DataFrame, colNames: Array[String]) = df._smvEdd(colNames: _*)
   def smvHist(df: DataFrame, colNames: Array[String]) = df._smvHist(colNames: _*)

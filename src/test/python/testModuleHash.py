@@ -27,3 +27,4 @@ class A(BaseModule):
         self.assertEquals(BaseModule.hashsource(a), BaseModule.hashsource(b))
 
     def test_change_dependency_should_change_hash(self):
+        pass
