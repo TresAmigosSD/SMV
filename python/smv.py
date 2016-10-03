@@ -179,12 +179,15 @@ class SmvPyDataSet(object):
         return "0";
 
     @classmethod
+    def hashsource(cls, src, fname='inline'):
+        return hash(compile(src, fname, 'exec'))
+
+    @classmethod
     def datasetHash(cls):
         try:
             import inspect
             src = inspect.getsource(cls)
-            code = compile(src, inspect.getsourcefile(cls), 'exec')
-            res = hash(code)
+            res = cls.hashsource(src, inspect.getsourcefile(cls))
         except: # `inspect` will raise error for classes defined in the REPL
             res = hash(disassemble(cls))
         return res
