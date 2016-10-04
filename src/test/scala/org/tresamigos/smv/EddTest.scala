@@ -38,6 +38,18 @@ key                      count      Pct    cumCount   cumPct
     assert(EddResult(df2.rdd.first).toJSON === """{"colName":"col_a","taskType":"hist","taskName":"key","taskDesc":"by Key","valueJSON":"{\"histSortByFreq\":false,\"hist\":{\"\\\"2\\\"\":1,\"\\\"5\\\"\":1,\"\\\"1\\\"\":2}}"}""")
   }
 
+  test("Edd Report with groupKey") {
+    val df1 = dfFrom("groupKey:String;a:String;b:String;c:String;d:String;f:String",
+      """A,col_a,stat,avg,Average,13.75;
+         B,col_b,stat,avg,Average,21.7""")
+    val res = EddResultFunctions(df1).createReport()
+
+    assert(res  === """Group A
+  col_a                Average                13.75
+Group B
+  col_b                Average                21.7""")
+  }
+
   test("test EddResult equals") {
     val df1 = createSchemaRdd("a:String;b:String;c:String;d:String;f:String",
       "col_a,stat,avg,Average,13.75;col_a,stat,avg,Average,13.7501")

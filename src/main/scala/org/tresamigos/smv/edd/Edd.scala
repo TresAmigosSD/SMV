@@ -18,6 +18,7 @@ import org.apache.spark.{SparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, DataFrame}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
 import org.tresamigos.smv._
 
@@ -116,8 +117,24 @@ class Edd(val df: DataFrame) {
 case class EddResultFunctions(eddRes: DataFrame) {
 
   private[smv] def createReport(): String = {
-    val rows = eddRes.rdd.collect
-    rows.map{r => EddResult(r).toReport}.mkString("\n")
+    import eddRes.sqlContext.implicits._
+
+    val cached = eddRes.cache
+    val res = if (cached.columns.contains("groupKey")){
+      val keys = cached.select($"groupKey".cast(StringType)).
+        distinct.collect.map{r => r(0).asInstanceOf[String]}.toSeq
+
+      //TODO: implement indentation
+      keys.map{k =>
+        val rows = cached.where($"groupKey" === k).drop("groupKey").rdd.collect
+        s"Group $k\n  " + rows.map{r => EddResult(r).toReport}.mkString("\n")
+      }.mkString("\n")
+    } else {
+      val rows = cached.rdd.collect
+      rows.map{r => EddResult(r).toReport}.mkString("\n")
+    }
+    cached.unpersist
+    res
   }
 
   private[smv] def createJsonDF(): RDD[String] = {
