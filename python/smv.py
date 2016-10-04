@@ -38,6 +38,10 @@ def smv_copy_array(sc, *cols):
         jcols = sc._gateway.new_array(sc._jvm.org.apache.spark.sql.Column, len(cols))
         for i in range(0, len(jcols)):
             jcols[i] = cols[i]._jc
+    elif (isinstance(elem, DataFrame)):
+        jcols = sc._gateway.new_array(sc._jvm.org.apache.spark.sql.DataFrame, len(cols))
+        for i in range(0, len(jcols)):
+            jcols[i] = cols[i]._jdf
     elif (isinstance(elem, list)): # a list of list
         # use Java List as the outermost container; an Array[Array]
         # will not always work, because the inner list may be of
@@ -336,6 +340,8 @@ DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(helper(df).smvSelectPlus(d
 DataFrame.smvDedupByKey = lambda df, *keys: DataFrame(helper(df).smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
 
 DataFrame.smvDedupByKeyWithOrder = lambda df, keys, orderCol: DataFrame(helper(df).smvDedupByKeyWithOrder(df._jdf, smv_copy_array(df._sc, *keys), smv_copy_array(df._sc, *orderCol)), df.sql_ctx)
+
+DataFrame.smvUnion = lambda df, *dfothers: DataFrame(helper(df).smvUnion(df._jdf, smv_copy_array(df._sc, *dfothers)), df.sql_ctx)
 
 #############################################
 # DfHelpers which print to STDOUT

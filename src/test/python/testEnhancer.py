@@ -91,6 +91,31 @@ class DfHelperTest(SmvBaseTest):
         )
         self.should_be_same(expect, r1)
 
+    def test_smvUnion(self):
+        schema       = "a:Integer; b:Double; c:String"
+        schema2      = "c:String; a:Integer; d:Double"
+        schemaExpect = "a:Integer; b:Double; c:String; d:Double"
+
+        df = self.createDF(
+            schema,
+            """1,2.0,hello;
+               2,3.0,hello2"""
+        )
+        df2 = self.createDF(
+            schema2,
+            """hello5,5,21.0;
+               hello6,6,22.0"""
+        )
+        result = df.smvUnion(df2)
+        expect = self.createDF(
+            schemaExpect,
+            """1,2.0,hello,;
+            2,3.0,hello2,;
+            5,,hello5,21.0;
+            6,,hello6,22.0;"""
+        )
+        self.should_be_same(expect, result)
+
     def test_smvSelectMinus_with_string(self):
         schema = "k:String;v1:Integer;v2:Integer"
         df = self.createDF(schema, "a,1,2;b,2,3")
