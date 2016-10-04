@@ -23,7 +23,7 @@ class DfHelperTest(SmvBaseTest):
         expect = self.createDF("k:String", "a;g;i;a;g;i")
         self.should_be_same(expect, r1)
 
-    def test_dedupByKey_with_string(self):
+    def test_smvDedupByKey_with_string(self):
         schema = "a:Integer; b:Double; c:String"
         df = self.createDF(
             schema,
@@ -40,7 +40,7 @@ class DfHelperTest(SmvBaseTest):
         )
         self.should_be_same(expect, r1)
 
-    def test_dedupByKey_with_column(self):
+    def test_smvDedupByKey_with_column(self):
         schema = "a:Integer; b:Double; c:String"
         df = self.createDF(
             schema,
@@ -57,7 +57,7 @@ class DfHelperTest(SmvBaseTest):
         )
         self.should_be_same(expect, r1)
 
-    def test_dedupByKeyWithOrder_with_string(self):
+    def test_smvDedupByKeyWithOrder_with_string(self):
         schema = "a:Integer; b:Double; c:String"
         df = self.createDF(
             schema,
@@ -74,7 +74,7 @@ class DfHelperTest(SmvBaseTest):
         )
         self.should_be_same(expect, r1)
 
-    def test_dedupByKeyWithOrder_with_column(self):
+    def test_smvDedupByKeyWithOrder_with_column(self):
         schema = "a:Integer; b:Double; c:String"
         df = self.createDF(
             schema,
