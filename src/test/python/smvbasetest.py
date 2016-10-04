@@ -31,4 +31,4 @@ class SmvBaseTest(unittest.TestCase):
     def should_be_same(self, left, right):
         """Returns true if the two dataframes are exactly the same, with both columns and rows in the same order.
         """
-        self.assertEqual(left.collect(), right.collect())
+        self.assertEqual(left.collect().sort(), right.collect().sort())
