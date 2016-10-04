@@ -137,10 +137,6 @@ case class EddResultFunctions(eddRes: DataFrame) {
     res
   }
 
-  private[smv] def createJsonDF(): RDD[String] = {
-    eddRes.rdd.map{r => EddResult(r).toJSON}
-  }
-
   /** print edd result to console **/
   def eddShow(): Unit = {
     println(createReport())
@@ -151,9 +147,15 @@ case class EddResultFunctions(eddRes: DataFrame) {
     SmvReportIO.saveLocalReport(createReport(), path)
   }
 
-  /** save report as RDD[String] **/
+  /**
+   * Save report as Json
+   * Could be read back in as
+   * {{{
+   * val eddDf = sqlContext.read.json(path)
+   * }}}
+   **/
   def saveReport(path: String): Unit = {
-    createJsonDF.saveAsTextFile(path)
+    eddRes.write.json(path)
   }
 
   /** Dump Edd report on screen */
@@ -163,8 +165,11 @@ case class EddResultFunctions(eddRes: DataFrame) {
   /** edd result df **/
   def toDF = eddRes
 
+  //TODO: Need to create test for groupKey support
   def compareWith(that: DataFrame): (Boolean, String) = {
-    require(that.columns.toSeq.toSet == Set("colName", "taskType", "taskName", "taskDesc", "valueJSON"))
+    val isGroup = eddRes.columns.contains("groupKey")
+
+    require(that.drop("groupKey").columns.toSeq.toSet == Set("colName", "taskType", "taskName", "taskDesc", "valueJSON"))
 
     import eddRes.sqlContext.implicits._
 
@@ -178,26 +183,39 @@ case class EddResultFunctions(eddRes: DataFrame) {
       if (thisCnt != thatCnt) {
         (false, Option(s"Edd DFs have different counts: ${thisCnt} vs. ${thatCnt}"))
       } else {
-        val joined = cacheThis.join(cacheThat,
-          (($"colName" === $"_colName") && ($"taskType" === $"_taskType") && ($"taskName" === $"_taskName")),
-          SmvJoinType.Inner
-        ) // Spark 1.5.0 has a bug which prevent cache on a join result
+        val joinCond = if(isGroup) {
+          (($"groupKey" === "_groupKey") && ($"colName" === $"_colName") && ($"taskType" === $"_taskType") && ($"taskName" === $"_taskName"))
+        } else {
+          (($"colName" === $"_colName") && ($"taskType" === $"_taskType") && ($"taskName" === $"_taskName"))
+        }
+
+        val joined = cacheThis.join(cacheThat, joinCond, SmvJoinType.Inner)
+        // Spark 1.5.0 has a bug which prevent cache on a join result
+
         val joinedCnt = joined.count
         val res = if (joinedCnt != thisCnt) {
           (false, Option(s"Edd DFs are not matched. Joined count: ${joinedCnt}, Original count: ${thisCnt}"))
         } else {
-          val eddResSeq = joined.
-            select("colName", "taskType", "taskName", "taskDesc", "valueJSON",
-            "_colName", "_taskType", "_taskName", "_taskDesc", "_valueJSON").
-            rdd.collect.map{r =>
-              (EddResult(Row(r.toSeq.slice(0,5): _*)), EddResult(Row(r.toSeq.slice(5,10): _*)))
-            }
-          val resSeq = eddResSeq.map{case (e1, e2) =>
-            (e1 == e2, if(e1 == e2) None else Option(s"not equal: ${e1.colName}, ${e1.taskType}, ${e1.taskName}, ${e1.taskDesc}"))
+          val resSeq = if(isGroup) {
+            joined.select($"colName", $"taskType", $"taskName", $"taskDesc", $"valueJSON",
+                          $"_colName", $"_taskType", $"_taskName", $"_taskDesc", $"_valueJSON", $"groupKey".cast(StringType)).
+              rdd.collect.map{r =>
+                val k = r(10).asInstanceOf[String]
+                val e1 = EddResult(Row(r.toSeq.slice(0,5): _*))
+                val e2 = EddResult(Row(r.toSeq.slice(5,10): _*))
+                (e1 == e2, if(e1 == e2) None else Option(s"not equal: Key - ${k}: ${e1.colName}, ${e1.taskType}, ${e1.taskName}, ${e1.taskDesc}"))
+              }
+          } else {
+            joined.select($"colName", $"taskType", $"taskName", $"taskDesc", $"valueJSON",
+                          $"_colName", $"_taskType", $"_taskName", $"_taskDesc", $"_valueJSON").
+              rdd.collect.map{r =>
+                val e1 = EddResult(Row(r.toSeq.slice(0,5): _*))
+                val e2 = EddResult(Row(r.toSeq.slice(5,10): _*))
+                (e1 == e2, if(e1 == e2) None else Option(s"not equal: ${e1.colName}, ${e1.taskType}, ${e1.taskName}, ${e1.taskDesc}"))
+              }
           }
           (resSeq.map{_._1}.reduce(_ && _), Option(resSeq.flatMap(_._2).mkString("\n")))
         }
-        //joined.unpersist() //Spark 1.5.0 bug
         res
       }
     cacheThis.unpersist()
