@@ -354,7 +354,7 @@ def _smvBinHist(df, *colWithBin):
     for elem in colWithBin:
         assert type(elem) is tuple, "smvBinHist takes a list of tuple(string, double) as paraeter"
         assert len(elem) == 2, "smvBinHist takes a list of tuple(string, double) as parameter"
-    insureDouble = map(lambda (x, y): (x, y * 1.0), colWithBin)
+    insureDouble = map(lambda t: (t[0], t[1] * 1.0), colWithBin)
     return helper(df).smvBinHist(df._jdf, smv_copy_array(df._sc, *insureDouble))
 
 DataFrame.smvEdd = lambda df, *cols: println(_smvEdd(df, *cols))
