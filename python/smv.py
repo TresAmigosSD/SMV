@@ -1,5 +1,7 @@
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
+
+import inspect
 import sys
 
 if sys.version >= '3':
@@ -189,7 +191,6 @@ class SmvPyDataSet(object):
     @classmethod
     def datasetHash(cls):
         try:
-            import inspect
             src = inspect.getsource(cls)
             res = cls.hashsource(src, inspect.getsourcefile(cls))
         except: # `inspect` will raise error for classes defined in the REPL
@@ -202,6 +203,11 @@ class SmvPyDataSet(object):
         # include datasetHash of dependency modules
         for m in self.requiresDS():
             res += m.datasetHash()
+
+        # include datasetHash of parent classes
+        for m in inspect.getmro(self.__class__):
+            if (issubclass(m, SmvPyDataSet) and m != SmvPyDataSet and m != self.__class__):
+                res += m.datasetHash()
 
         return res
 
