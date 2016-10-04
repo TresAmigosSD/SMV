@@ -36,6 +36,12 @@ object SmvPythonHelper {
   def smvDedupByKey(df: DataFrame, cols: Array[Column]): DataFrame =
     df.dedupByKey(cols:_*)
 
+  def smvDedupByKeyWithOrder(df: DataFrame, keys: Array[String], orderCol: Array[Column]): DataFrame =
+    df.dedupByKeyWithOrder(keys.head, keys.tail:_*)(orderCol:_*)
+
+  def smvDedupByKeyWithOrder(df: DataFrame, cols: Array[Column], orderCol: Array[Column]): DataFrame =
+    df.dedupByKeyWithOrder(cols:_*)(orderCol:_*)
+
   def smvEdd(df: DataFrame, colNames: Array[String]) = df._smvEdd(colNames: _*)
   def smvHist(df: DataFrame, colNames: Array[String]) = df._smvHist(colNames: _*)
   def smvConcatHist(df: DataFrame, colNames: Array[String]) = df._smvConcatHist(colNames.toSeq)

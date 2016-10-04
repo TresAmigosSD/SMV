@@ -57,6 +57,40 @@ class DfHelperTest(SmvBaseTest):
       )
       self.should_be_same(expect, r1)
 
+    def test_dedupByKeyWithOrder_with_string(self):
+        schema = "a:Integer; b:Double; c:String"
+        df = self.createDF(
+            schema,
+            """1,2.0,hello;
+            1,3.0,hello;
+            2,10.0,hello2;
+            2,11.0,hello3"""
+        )
+        r1 = df.smvDedupByKeyWithOrder(["a"], [col("b").desc()]).orderBy("a")
+        expect = self.createDF(
+            schema,
+            """1,3.0,hello;
+            2,11.0,hello3"""
+        )
+        self.should_be_same(expect, r1)
+
+    def test_dedupByKeyWithOrder_with_column(self):
+        schema = "a:Integer; b:Double; c:String"
+        df = self.createDF(
+            schema,
+            """1,2.0,hello;
+            1,3.0,hello;
+            2,10.0,hello2;
+            2,11.0,hello3"""
+        )
+        r1 = df.smvDedupByKeyWithOrder([col("a")], [col("b").desc()]).orderBy("a")
+        expect = self.createDF(
+            schema,
+            """1,3.0,hello;
+            2,11.0,hello3"""
+        )
+        self.should_be_same(expect, r1)
+
     def test_smvSelectMinus_with_string(self):
         schema = "k:String;v1:Integer;v2:Integer"
         df = self.createDF(schema, "a,1,2;b,2,3")

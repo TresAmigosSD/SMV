@@ -335,6 +335,8 @@ DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(helper(df).smvSelectPlus(d
 
 DataFrame.smvDedupByKey = lambda df, *keys: DataFrame(helper(df).smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
 
+DataFrame.smvDedupByKeyWithOrder = lambda df, keys, orderCol: DataFrame(helper(df).smvDedupByKeyWithOrder(df._jdf, smv_copy_array(df._sc, *keys), smv_copy_array(df._sc, *orderCol)), df.sql_ctx)
+
 #############################################
 # DfHelpers which print to STDOUT
 # Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout
