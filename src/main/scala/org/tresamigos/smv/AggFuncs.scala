@@ -328,7 +328,10 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
 
 private[smv] object OldVersionHelper {
   import org.apache.spark.sql.contrib.smv._
-  def version = SmvApp.app.sc.version
+  /* In Yarn mode the executors have no access to server side variables including sc,
+   * so we need to inject the version from the server when initiate SmvApp.
+   */
+  var version = "1.5.2"
 
   /**
    * Addressing: 1.5.0's bug

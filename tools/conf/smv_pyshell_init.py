@@ -39,6 +39,8 @@ del os, atexit, readline, rlcompleter, save_history, historyPath
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
+sc.setLogLevel("ERROR")
+
 # Imnport smv
 from smv import SmvApp
 app = SmvApp.init(['-m', 'None'], sc, sqlContext)

@@ -11,6 +11,7 @@ class SmvBaseTest(unittest.TestCase):
     def setUpClass(cls):
         conf = runtests.TestConfig()
         cls.sqlContext = conf.sqlContext()
+        cls.sqlContext._sc.setLogLevel("ERROR")
         cls.smv = Smv().init(['-m', 'None'], cls.sqlContext._sc, cls.sqlContext)
         cls.app = cls.smv.app
 
@@ -21,6 +22,7 @@ class SmvBaseTest(unittest.TestCase):
         if not hasattr(cls, 'app'):
             conf = runtests.TestConfig()
             cls.sqlContext = conf.sqlContext()
+            cls.sqlContext._sc.setLogLevel("ERROR")
             cls.smv = Smv().init(['-m', 'None'], cls.sqlContext._sc, cls.sqlContext)
             cls.app = cls.smv.app
 
