@@ -1,5 +1,12 @@
 # SMV Python Porting Progress Tracking
 
+## Framework
+  * [x] SmvPyCsvFile
+  * [x] SmvPyHiveTable
+  * [x] SmvPyModule
+  * [ ] SmvPyOutput
+  * [ ] SmvPyModuleLink
+
 ## DataFrame Helpers
   * [x] `smvSelectPlus((col("a") + 1).alias("b"))`
   * [x] `smvSelectMinus("a")`
@@ -26,5 +33,12 @@
 
 ## Column Helpers
   * [x] `smvStrToTimestamp("yyyyMMdd")`
+
+## Misc in Shell
+  * [x] `pdf("com.mycomp.myapp.mypythonfile.mymodule")`
+  * [x] `ddf("com.mycomp.myapp.myscalamodule")`
+  * [x] `openHive("hiveDBname.hivetableName")`
+  * [x] `openCsv("path/to/csvFile.csv")`
+  * [x] `app.createDF("a:String", "a;b;c")`
 
 **Note** To keep an eye on the progress, please check `python/smv.py`.
