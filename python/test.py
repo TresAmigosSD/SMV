@@ -10,8 +10,7 @@ class InputZipCounty(SmvPyCsvFile):
         return self.defaultCsvWithHeader()
 
 class PyZipPrimaryCounty(SmvPyModule):
-    def description(self):
-        return "For each Zip assign the County with the largets population as the primary county"
+    """For each Zip assign the County with the largets population as the primary county"""
 
     def requiresDS(self):
         return [InputZipCounty]

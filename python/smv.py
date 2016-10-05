@@ -167,9 +167,8 @@ class SmvPyDataSet(object):
     def __init__(self, smv):
         self.smv = smv
 
-    @abc.abstractmethod
     def description(self):
-        """A brief description of this dataset"""
+        return self.__doc__
 
     @abc.abstractmethod
     def requiresDS(self):

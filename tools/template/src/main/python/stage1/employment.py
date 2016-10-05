@@ -6,8 +6,7 @@ from _PROJ_CLASS_.stage1 import inputdata
 __all__ = ['PythonEmploymentByState']
 
 class PythonEmploymentByState(SmvPyModule):
-    def description(self):
-        return "Python ETL Example: Employment"
+    """Python ETL Example: employ by state"""
 
     def requiresDS(self):
         return [inputdata.PythonEmployment]
@@ -18,8 +17,7 @@ class PythonEmploymentByState(SmvPyModule):
 
 
 class PythonEmploymentByStateCategory(SmvPyModule):
-    def description(self):
-        return "Python Employment By State With Category"
+    """Python ETL Example: employment by state with category"""
 
     def requiresDS(self):
         return [PythonEmploymentByState]
