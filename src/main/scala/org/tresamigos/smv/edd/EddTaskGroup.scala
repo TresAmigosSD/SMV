@@ -22,8 +22,14 @@ import org.apache.spark.rdd.UnionRDD
 
 private[smv] abstract class EddTaskGroup {
   val df: DataFrame
+
+  val keys: Seq[String] = Seq()
+
   val taskList: Seq[edd.EddTask]
+
   def run(): DataFrame = {
+    import df.sqlContext.implicits._
+
     /* Have to separate tasks to "old" aggregations and "new" aggregations, since
       till 1.5.1 there are 2 types of aggregations, and they can't be mixed */
     val aggCols: Seq[Either[EddTask, EddTask]] = taskList.map{t => t match {
@@ -35,22 +41,30 @@ private[smv] abstract class EddTaskGroup {
     val aggNews = aggCols.flatMap{e => e.right.toOption}.map{t => t.aggCol}
 
     val resultCols = taskList.map{t => t.resultCols}
+    val hasKey = !keys.isEmpty
 
-    // this DF only has 1 row
-    val res =
+    val res = if (!hasKey) {
+      // this DF only has 1 row
       if (aggOlds.isEmpty) df.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
       else if (aggNews.isEmpty) df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1)
       else df.agg(aggNews.head, aggNews.tail: _*).coalesce(1).join(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
+    } else {
+      // on row per group
+      val dfGd = df.smvSelectPlus(smvStrCat("_", keys.map{c => $"$c"}: _*) as "groupKey").groupBy("groupKey")
+      if (aggOlds.isEmpty) dfGd.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
+      else if (aggNews.isEmpty) dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1)
+      else dfGd.agg(aggNews.head, aggNews.tail: _*).coalesce(1).join(dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
+    }
 
     val resCached = res.cache
 
-    val schema = SmvSchema.fromString(
+    val schemaStr = (if (hasKey) "groupKey: String" else "") +
       "colName: String;" +
       "taskType: String;" +
       "taskName: String;" +
       "taskDesc: String;" +
       "valueJSON: String"
-    )
+
 
     /* since DF unionAll operation on a lot small DFs may build a large tree.
        The schema comparison on a large tree could introduce significant overhead.
@@ -58,14 +72,15 @@ private[smv] abstract class EddTaskGroup {
        is a very cheap operation */
     /* collect here before unpersist resCached */
     val resRdds = resultCols.map{rcols =>
-      val rddArray=resCached.select(rcols: _*).rdd.collect
+      val cols = if (hasKey) $"groupKey" +: rcols else rcols
+      val rddArray=resCached.select(cols: _*).rdd.collect
       df.sqlContext.sparkContext.makeRDD(rddArray, 1)
     }
     resCached.unpersist()
 
     val resRdd = new UnionRDD(df.sqlContext.sparkContext, resRdds)
 
-    df.sqlContext.createDataFrame(resRdd, schema.toStructType)
+    df.sqlContext.createDataFrame(resRdd, SmvSchema.fromString(schemaStr).toStructType)
   }
 
 }
