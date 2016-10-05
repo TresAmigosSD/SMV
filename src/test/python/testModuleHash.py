@@ -2,8 +2,7 @@ from smvbasetest import SmvBaseTest
 from smv import SmvPyDataSet
 
 class BaseModule(SmvPyDataSet):
-    def description(self):
-        return """Base class for modules written for testing"""
+    """Base class for modules written for testing"""
     def requiresDS(self):
         return []
     def run(self, i):
