@@ -44,10 +44,10 @@ key                      count      Pct    cumCount   cumPct
          B,col_b,stat,avg,Average,21.7""")
     val res = EddResultFunctions(df1).createReport()
 
-    assert(res  === """Group A
-  col_a                Average                13.75
-Group B
-  col_b                Average                21.7""")
+    assert(res  === """Group A:
+col_a                Average                13.75
+Group B:
+col_b                Average                21.7""")
   }
 
   test("test EddResult equals") {
@@ -382,6 +382,21 @@ v                    Max                    123.134"""
     assert(isEqual)
   }
 
+  test("test EddHistogram with groupKey") {
+    val res = df.select("k", "p").smvGroupBy("k").edd.histogram("p").orderBy("groupKey")
+    assert(EddResultFunctions(res).createReport() === """Group a:
+Histogram of p: String sort by Key
+key                      count      Pct    cumCount   cumPct
+a                            1  100.00%           1  100.00%
+-------------------------------------------------
+Group z:
+Histogram of p: String sort by Key
+key                      count      Pct    cumCount   cumPct
+a                            2   66.67%           2   66.67%
+b                            1   33.33%           3  100.00%
+-------------------------------------------------""")
+  }
+
   test("test null handling in histogram") {
     val df2 = createSchemaRdd("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
       """z,,a,0.2000001,19010701,;
@@ -405,5 +420,23 @@ p                    Null Rate              0.0
 v                    Null Rate              0.0
 d                    Null Rate              0.0
 b                    Null Rate              0.25""")
+  }
+  
+  test("test Null rate with groupKey ") {
+    val res = df.smvGroupBy("k").edd.nullRate()
+    assert(res.createReport() === """Group a:
+k                    Null Rate              0.0
+t                    Null Rate              0.0
+p                    Null Rate              0.0
+v                    Null Rate              0.0
+d                    Null Rate              0.0
+b                    Null Rate              0.0
+Group z:
+k                    Null Rate              0.0
+t                    Null Rate              0.0
+p                    Null Rate              0.0
+v                    Null Rate              0.0
+d                    Null Rate              0.0
+b                    Null Rate              0.3333333333333333""")
   }
 }

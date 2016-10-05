@@ -60,7 +60,7 @@ class Edd(val df: DataFrame, val keys: Seq[String] = Seq()) {
    * @return [[org.tresamigos.smv.edd.EddResultFunctions]]
    **/
   def histogram(histCols: HistColumn*): EddResultFunctions = {
-    val res = new edd.EddHistogram(df)(histCols: _*).run()
+    val res = new edd.EddHistogram(df, keys)(histCols: _*).run()
     EddResultFunctions(res)
   }
 
@@ -76,7 +76,7 @@ class Edd(val df: DataFrame, val keys: Seq[String] = Seq()) {
   }
 
   def nullRate(colNames: String*): EddResultFunctions = {
-    val res = (new NullRate(df)(colNames: _*).run())
+    val res = (new NullRate(df, keys)(colNames: _*).run())
     EddResultFunctions(res)
   }
 
