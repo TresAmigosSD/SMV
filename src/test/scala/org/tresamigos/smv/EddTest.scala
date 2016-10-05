@@ -338,6 +338,23 @@ true                         2   50.00%           4  100.00%
 -------------------------------------------------""")
   }
 
+  test("test EddSummary with groupKey") {
+    val res = df.select("k", "t").smvGroupBy("k").edd.summary().orderBy("groupKey")
+
+    assert(EddResultFunctions(res).createReport() === """Group a:
+t                    Non-Null Count         1
+t                    Average                1.0
+t                    Standard Deviation     0.0
+t                    Min                    1.0
+t                    Max                    1.0
+Group z:
+t                    Non-Null Count         3
+t                    Average                2.6666666666666665
+t                    Standard Deviation     2.0816659994661326
+t                    Min                    1.0
+t                    Max                    5.0""")
+  }
+
   test("test edd summary with decimal"){
     val df2 = createSchemaRdd("v:decimal[8, 3]", "12.455;123.134;122.5;5")
     val res = df2.edd.summary()

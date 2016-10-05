@@ -27,7 +27,7 @@ import org.tresamigos.smv._
  *
  * Provides `summary` and `histogram` methods
  **/
-class Edd(val df: DataFrame) {
+class Edd(val df: DataFrame, val keys: Seq[String] = Seq()) {
 
   /**
    * For all the columns with the name in the parameters, run a group of statistics
@@ -45,7 +45,7 @@ class Edd(val df: DataFrame) {
    * @return [[org.tresamigos.smv.edd.EddResultFunctions]]
    **/
   def summary(colNames: String*): EddResultFunctions = {
-    val res = (new EddSummary(df)(colNames: _*)).run
+    val res = (new EddSummary(df, keys)(colNames: _*)).run
     EddResultFunctions(res)
   }
 
@@ -127,7 +127,7 @@ case class EddResultFunctions(eddRes: DataFrame) {
       //TODO: implement indentation
       keys.map{k =>
         val rows = cached.where($"groupKey" === k).drop("groupKey").rdd.collect
-        s"Group $k\n  " + rows.map{r => EddResult(r).toReport}.mkString("\n")
+        s"Group $k:\n" + rows.map{r => EddResult(r).toReport}.mkString("\n")
       }.mkString("\n")
     } else {
       val rows = cached.rdd.collect

@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv.edd
 
-import org.tresamigos.smv._
+import org.tresamigos.smv._, SmvJoinType._
 import org.apache.spark.sql.{DataFrame, Column}
 import org.apache.spark.sql.types._
 import org.apache.spark.rdd.UnionRDD
@@ -53,18 +53,17 @@ private[smv] abstract class EddTaskGroup {
       val dfGd = df.smvSelectPlus(smvStrCat("_", keys.map{c => $"$c"}: _*) as "groupKey").groupBy("groupKey")
       if (aggOlds.isEmpty) dfGd.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
       else if (aggNews.isEmpty) dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1)
-      else dfGd.agg(aggNews.head, aggNews.tail: _*).coalesce(1).join(dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
+      else dfGd.agg(aggNews.head, aggNews.tail: _*).coalesce(1).joinByKey(dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1), Seq("groupKey"), Inner)
     }
 
     val resCached = res.cache
 
-    val schemaStr = (if (hasKey) "groupKey: String" else "") +
+    val schemaStr = (if (hasKey) "groupKey: String;" else "") +
       "colName: String;" +
       "taskType: String;" +
       "taskName: String;" +
       "taskDesc: String;" +
       "valueJSON: String"
-
 
     /* since DF unionAll operation on a lot small DFs may build a large tree.
        The schema comparison on a large tree could introduce significant overhead.
@@ -85,12 +84,17 @@ private[smv] abstract class EddTaskGroup {
 
 }
 
-private[smv] class EddSummary(override val df: DataFrame)(colNames: String*) extends EddTaskGroup {
+private[smv] class EddSummary(
+  override val df: DataFrame,
+  override val keys: Seq[String] = Seq()
+)(colNames: String*) extends EddTaskGroup {
+
   val listSeq =
-    if (colNames.isEmpty)
-      df.columns.toSeq
-    else
+    if (colNames.isEmpty) {
+      df.columns.diff(keys).toSeq
+    } else {
       colNames.toSet.toSeq
+    }
 
   override val taskList = listSeq.flatMap{ l =>
     val s = df(l)

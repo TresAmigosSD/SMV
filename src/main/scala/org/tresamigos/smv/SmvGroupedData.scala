@@ -24,6 +24,7 @@ import org.apache.spark.Partitioner
 import org.apache.spark.annotation._
 
 import cds._
+import edd._
 import org.apache.spark.sql.types.StringType
 
 /**
@@ -863,4 +864,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val hashPart = new HashPartitioner(numParts)
     smvRePartition(hashPart)
   }
+
+  def edd(): Edd = new Edd(df, keys)
 }
