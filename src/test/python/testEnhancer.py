@@ -116,6 +116,23 @@ class DfHelperTest(SmvBaseTest):
         )
         self.should_be_same(expect, result)
 
+    def test_smvRenameField(self):
+        schema       = "a:Integer; b:Double; c:String"
+        schemaExpect = "aa:Integer; b:Double; cc:String"
+        df = self.createDF(
+            schema,
+            """1,2.0,hello"""
+        )
+        result = df.smvRenameField(("a", "aa"), ("c", "cc"))
+        expect = self.createDF(
+            schemaExpect,
+            """1,2.0,hello"""
+        )
+
+        fieldNames = result.columns
+        self.assertEqual(fieldNames, ['aa', 'b', 'cc'])
+        self.should_be_same(expect, result)
+
     def test_smvSelectMinus_with_string(self):
         schema = "k:String;v1:Integer;v2:Integer"
         df = self.createDF(schema, "a,1,2;b,2,3")

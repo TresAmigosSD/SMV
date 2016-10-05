@@ -349,6 +349,8 @@ DataFrame.smvDedupByKeyWithOrder = lambda df, keys, orderCol: DataFrame(helper(d
 
 DataFrame.smvUnion = lambda df, *dfothers: DataFrame(helper(df).smvUnion(df._jdf, smv_copy_array(df._sc, *dfothers)), df.sql_ctx)
 
+DataFrame.smvRenameField = lambda df, *namePairs: DataFrame(helper(df).smvRenameField(df._jdf, smv_copy_array(df._sc, *namePairs)), df.sql_ctx)
+
 #############################################
 # DfHelpers which print to STDOUT
 # Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout

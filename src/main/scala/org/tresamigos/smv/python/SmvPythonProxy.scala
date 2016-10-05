@@ -5,6 +5,7 @@ import org.tresamigos.smv._
 
 import scala.collection.JavaConversions._
 import scala.util.Try
+import java.util.ArrayList
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
@@ -44,6 +45,11 @@ object SmvPythonHelper {
 
   def smvUnion(df: DataFrame, dfothers: Array[DataFrame]): DataFrame =
     df.smvUnion(dfothers:_*)
+
+  def smvRenameField(df: DataFrame, namePairsAsList: ArrayList[ArrayList[String]]): DataFrame = {
+    val namePairs = namePairsAsList.map(inner => Tuple2(inner(0), inner(1)))
+    df.renameField(namePairs:_*)
+  }
 
   def smvEdd(df: DataFrame, colNames: Array[String]) = df._smvEdd(colNames: _*)
   def smvHist(df: DataFrame, colNames: Array[String]) = df._smvHist(colNames: _*)
