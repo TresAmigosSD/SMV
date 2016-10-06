@@ -1381,17 +1381,18 @@ class SmvDFHelper(df: DataFrame) {
 
   private[smv] def _smvHist(cols: String*) = df.edd.histogram(cols.head, cols.tail: _*).createReport()
 
-  private[smv] def _smvConcatHist(cols: Seq[String]) = {
+  private[smv] def _smvConcatHist(colSeqs: Seq[String]*) = {
     import df.sqlContext.implicits._
-    val colName = cols.mkString("_")
-    val dfWithKey = if(cols.size <= 1) {
+    val colNames = colSeqs.map{cols => cols.mkString("_")}
+    val exprs = colSeqs.zip(colNames).filter{case (cols, name) =>
+      cols.size > 1
+    }.map{case (cols, name) => smvStrCat("_", cols.map{c => $"$c"}: _*).as(name)}
+    val dfWithKey = if(exprs.isEmpty) {
       df
     } else {
-      df.selectPlus(
-        smvStrCat("_", cols.map{c => $"$c"}: _*) as colName
-      )
+      df.selectPlus(exprs: _*)
     }
-    dfWithKey.edd.histogram(colName).createReport()
+    dfWithKey.edd.histogram(colNames.head, colNames.tail: _*).createReport()
   }
 
   private[smv] def _smvFreqHist(cols: String*) = {
@@ -1443,12 +1444,12 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Print EDD histogram of a group of cols (joint distribution)
    **/
-  def smvConcatHist(cols: Seq[String]) = println(_smvConcatHist(cols))
+  def smvConcatHist(cols: Seq[String]*) = println(_smvConcatHist(cols: _*))
 
   /**
    * Save Edd histogram of a group of cols (joint distribution)
    **/
-  def smvConcatHistSave(cols: Seq[String])(path: String) = SmvReportIO.saveLocalReport(_smvConcatHist(cols), path)
+  def smvConcatHistSave(cols: Seq[String]*)(path: String) = SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*), path)
 
   /**
    * Print EDD histogram with frequency sorting

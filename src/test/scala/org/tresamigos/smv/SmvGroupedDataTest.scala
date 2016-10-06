@@ -132,4 +132,30 @@ a_20                         1  100.00%           1  100.00%
 -------------------------------------------------"""
     )
   }
+
+  test("GroupedData with smvConcatHist with multiple key sequences") {
+    val df = dfFrom("k:String;t:String;t2:String", "1,a,b;1,b,b;2,a,b")
+    val res = df.smvGroupBy("k")._smvConcatHist(Seq("t2", "t"), Seq("t"))
+
+    assert(res === """Group 1:
+Histogram of t2_t: String sort by Key
+key                      count      Pct    cumCount   cumPct
+b_a                          1   50.00%           1   50.00%
+b_b                          1   50.00%           2  100.00%
+-------------------------------------------------
+Histogram of t: String sort by Key
+key                      count      Pct    cumCount   cumPct
+a                            1   50.00%           1   50.00%
+b                            1   50.00%           2  100.00%
+-------------------------------------------------
+Group 2:
+Histogram of t2_t: String sort by Key
+key                      count      Pct    cumCount   cumPct
+b_a                          1  100.00%           1  100.00%
+-------------------------------------------------
+Histogram of t: String sort by Key
+key                      count      Pct    cumCount   cumPct
+a                            1  100.00%           1  100.00%
+-------------------------------------------------""")
+  }
 }
