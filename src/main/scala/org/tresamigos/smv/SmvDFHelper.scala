@@ -780,7 +780,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * Example:
    * {{{
-   * scala> df.summary().eddShow
+   * scala> df.edd.summary().eddShow
    * }}}
    */
   @Experimental
@@ -1145,34 +1145,10 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Show histograms within groups (Issue #330)
    */
+  @deprecated("1.5", """use df.smvGroupBy("k").smvConcatHist(Seq("c1", "c2")) instead""")
   def showHist(groupBy1: String, rest: String*)(colA: Column, more: Column*): Unit = {
-    val col = smvStrCat(colA +: more:_*)
-    val r1 = df.groupBy(groupBy1, rest:_*).agg(histStr(col) as "histogram").coalesce(1)
-
-    // | age | gender |
-    // | 10  | M      | ... => age(10), gender(M)
-    // | 20  | F      | ... => age(20), gender(F)
-    val groups: Seq[Column] = (groupBy1 +: rest) map (c => smvStrCat(lit(c), lit("("), r1(c), lit(")")))
-
-    // TODO: do we need to use UnionRDD the way it's done in EDDTaskGroup?
-    val res = r1.select(smvStrCat(", ", groups:_*) as "groups", r1("histogram")).collect
-
-    val output = for {
-      row <-res
-      header = "Histogram of [" + (colA +: more).mkString(", ") + "] in group " + row(0) +
-      "\nkey                      count      Pct    cumCount   cumPct\n"
-      histo = row(1).asInstanceOf[Map[String, Long]].toSeq
-      csum = histo.scanLeft(0l){(c,m) => c + m._2}.tail
-      total = csum(csum.size - 1)
-      content = (histo zip csum).map{
-        case ((k,c), sum) =>
-          val pct = c.toDouble/total*100
-          val cpct = sum.toDouble/total*100
-          f"$k%-20s$c%10d$pct%8.2f%%$sum%12d$cpct%8.2f%%"
-      }.mkString("\n")
-    } yield header + content
-
-    print(output.mkString("\n-------------------------------------------------\n"))
+    import df.sqlContext.implicits._
+    df.smvGroupBy(groupBy1, rest:_*).smvConcatHist((colA +: more).map{_.getName})
   }
 
   /**
@@ -1408,9 +1384,14 @@ class SmvDFHelper(df: DataFrame) {
   private[smv] def _smvConcatHist(cols: Seq[String]) = {
     import df.sqlContext.implicits._
     val colName = cols.mkString("_")
-    df.selectPlus(
-      smvStrCat("_", cols.map{c => $"$c"}: _*) as colName
-    ).edd.histogram(colName).createReport()
+    val dfWithKey = if(cols.size <= 1) {
+      df
+    } else {
+      df.selectPlus(
+        smvStrCat("_", cols.map{c => $"$c"}: _*) as colName
+      )
+    }
+    dfWithKey.edd.histogram(colName).createReport()
   }
 
   private[smv] def _smvFreqHist(cols: String*) = {

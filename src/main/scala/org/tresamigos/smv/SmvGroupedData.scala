@@ -865,5 +865,44 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     smvRePartition(hashPart)
   }
 
+  /**
+   * Create an Edd on SmvGroupedData.
+   * See [[org.tresamigos.smv.edd.Edd]] for details.
+   *
+   * Example:
+   * {{{
+   * scala> df.smvGroupBy("k").edd.summary().eddShow
+   * }}}
+   */
   def edd(): Edd = new Edd(df, keys)
+
+  private[smv] def _smvHist(cols: String*) = edd.histogram(cols.head, cols.tail: _*).createReport()
+
+  private[smv] def _smvConcatHist(cols: Seq[String]) = {
+    import df.sqlContext.implicits._
+    val colName = cols.mkString("_")
+    df.smvSelectPlus(
+      smvStrCat("_", cols.map{c => $"$c"}: _*) as colName
+    ).smvGroupBy(keys.map{k => $"$k"}: _*).edd.histogram(colName).createReport()
+  }
+
+  /**
+  * Print EDD histogram (each col's histogram prints separately)
+  **/
+  def smvHist(cols: String*) = println(_smvHist(cols: _*))
+
+  /**
+  * Save Edd histogram
+  **/
+  def smvHistSave(cols: String*)(path: String) = SmvReportIO.saveLocalReport(_smvHist(cols: _*), path)
+
+  /**
+   * Print EDD histogram of a group of cols (joint distribution)
+   **/
+  def smvConcatHist(cols: Seq[String]) = println(_smvConcatHist(cols))
+
+  /**
+   * Save Edd histogram of a group of cols (joint distribution)
+   **/
+  def smvConcatHistSave(cols: Seq[String])(path: String) = SmvReportIO.saveLocalReport(_smvConcatHist(cols), path)
 }
