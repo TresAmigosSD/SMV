@@ -39,8 +39,10 @@
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>TODO document the meaning of each parameter
-</p></div><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>SmvEntityMatcher
+Perform multiple level entity matching with exact and/or fuzzy logic
+</p></div><dl class="paramcmts block"><dt class="param">exactMatchFilter</dt><dd class="cmt"><p>top level exact match condition, if records matched no further tests will be performed</p></dd><dt class="param">commonLevelMatcher</dt><dd class="cmt"><p>for all levels (except top level) shared deterministic condition for narrow down the search space</p></dd><dt class="param">levelMatchers</dt><dd class="cmt"><p>a list of common match conditions, all of them will be tested
+</p></dd></dl><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.Product">Product</span>, <span class="extype" name="scala.Equals">Equals</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
@@ -80,7 +82,7 @@
         <div id="allMembers">
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
-              <ol><li name="org.tresamigos.smv.matcher.SmvEntityMatcher#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="org.tresamigos.smv.matcher.SmvEntityMatcher#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="&lt;init&gt;(exactMatchFilter:org.tresamigos.smv.matcher.AbstractExactMatchFilter,commonLevelMatcher:org.tresamigos.smv.matcher.CommonLevelMatcher,levelMatchers:List[org.tresamigos.smv.matcher.LevelMatcher]):org.tresamigos.smv.matcher.SmvEntityMatcher"></a>
       <a id="&lt;init&gt;:SmvEntityMatcher"></a>
       <h4 class="signature">
@@ -92,7 +94,8 @@
         <span class="name">SmvEntityMatcher</span><span class="params">(<span name="exactMatchFilter">exactMatchFilter: <span class="extype" name="org.tresamigos.smv.matcher.AbstractExactMatchFilter">AbstractExactMatchFilter</span></span>, <span name="commonLevelMatcher">commonLevelMatcher: <span class="extype" name="org.tresamigos.smv.matcher.CommonLevelMatcher">CommonLevelMatcher</span></span>, <span name="levelMatchers">levelMatchers: <span class="extype" name="scala.List">List</span>[<span class="extype" name="org.tresamigos.smv.matcher.LevelMatcher">LevelMatcher</span>]</span>)</span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt"></p><div class="fullcomment"><div class="comment cmt"></div><dl class="paramcmts block"><dt class="param">exactMatchFilter</dt><dd class="cmt"><p>top level exact match condition, if records matched no further tests will be performed</p></dd><dt class="param">commonLevelMatcher</dt><dd class="cmt"><p>for all levels (except top level) shared deterministic condition for narrow down the search space</p></dd><dt class="param">levelMatchers</dt><dd class="cmt"><p>a list of common match conditions, all of them will be tested
+</p></dd></dl></div>
     </li></ol>
             </div>
 
@@ -211,8 +214,8 @@
         <span class="name">commonLevelMatcher</span><span class="result">: <span class="extype" name="org.tresamigos.smv.matcher.CommonLevelMatcher">CommonLevelMatcher</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.matcher.SmvEntityMatcher#doMatch" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <p class="shortcomment cmt">for all levels (except top level) shared deterministic condition for narrow down the search space</p>
+    </li><li name="org.tresamigos.smv.matcher.SmvEntityMatcher#doMatch" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="doMatch(df1:org.apache.spark.sql.DataFrame,df2:org.apache.spark.sql.DataFrame):org.apache.spark.sql.DataFrame"></a>
       <a id="doMatch(DataFrame,DataFrame):DataFrame"></a>
       <h4 class="signature">
@@ -224,8 +227,12 @@
         <span class="name">doMatch</span><span class="params">(<span name="df1">df1: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="df2">df2: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">TODO: API doc for this public method
-</p>
+      <p class="shortcomment cmt">Apply <code>SmvEntityMatcher</code> to the 2 DataFrames
+</p><div class="fullcomment"><div class="comment cmt"><p>Apply <code>SmvEntityMatcher</code> to the 2 DataFrames
+</p></div><dl class="paramcmts block"><dt class="param">df1</dt><dd class="cmt"><p>DataFrame 1 with an id column with name &quot;id&quot;</p></dd><dt class="param">df2</dt><dd class="cmt"><p>DataFrame 2 with an id column with name &quot;id&quot;</p></dd><dt>returns</dt><dd class="cmt"><p>a DataFrame with df1's id as &quot;id&quot; and df2's id as &quot;_id&quot; and match flags of all the
+        levels. For levels with fuzzy logic, the matching score is also provided.
+        A column named &quot;MatchBitmap&quot; also provided to summarize all the matching flags
+</p></dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -251,7 +258,7 @@
         <span class="name">exactMatchFilter</span><span class="result">: <span class="extype" name="org.tresamigos.smv.matcher.AbstractExactMatchFilter">AbstractExactMatchFilter</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">top level exact match condition, if records matched no further tests will be performed</p>
     </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <a id="finalize():Unit"></a>
@@ -309,7 +316,8 @@
         <span class="name">levelMatchers</span><span class="result">: <span class="extype" name="scala.List">List</span>[<span class="extype" name="org.tresamigos.smv.matcher.LevelMatcher">LevelMatcher</span>]</span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">a list of common match conditions, all of them will be tested
+</p>
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>

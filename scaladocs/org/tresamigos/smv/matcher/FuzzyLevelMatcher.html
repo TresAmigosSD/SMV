@@ -39,7 +39,8 @@
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Level match with fuzzy logic</p></div><dl class="paramcmts block"><dt class="param">colName</dt><dd class="cmt"><p>level name used in the output DF</p></dd><dt class="param">predicate</dt><dd class="cmt"><p>a condition column, no match if this condition evaluated as false</p></dd><dt class="param">valueExpr</dt><dd class="cmt"><p>a value column, which typically return a score, higher score means higher chance of matching</p></dd><dt class="param">threshold</dt><dd class="cmt"><p>No match if the evaluated <code>valueExpr</code> &lt; this value
+</p></dd></dl><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.Product">Product</span>, <span class="extype" name="scala.Equals">Equals</span>, <span class="extype" name="org.tresamigos.smv.matcher.LevelMatcher">LevelMatcher</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
@@ -79,7 +80,7 @@
         <div id="allMembers">
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
-              <ol><li name="org.tresamigos.smv.matcher.FuzzyLevelMatcher#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="org.tresamigos.smv.matcher.FuzzyLevelMatcher#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="&lt;init&gt;(colName:String,predicate:org.apache.spark.sql.Column,valueExpr:org.apache.spark.sql.Column,threshold:Float):org.tresamigos.smv.matcher.FuzzyLevelMatcher"></a>
       <a id="&lt;init&gt;:FuzzyLevelMatcher"></a>
       <h4 class="signature">
@@ -91,7 +92,8 @@
         <span class="name">FuzzyLevelMatcher</span><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="predicate">predicate: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="valueExpr">valueExpr: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="threshold">threshold: <span class="extype" name="scala.Float">Float</span></span>)</span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt"></p><div class="fullcomment"><div class="comment cmt"></div><dl class="paramcmts block"><dt class="param">colName</dt><dd class="cmt"><p>level name used in the output DF</p></dd><dt class="param">predicate</dt><dd class="cmt"><p>a condition column, no match if this condition evaluated as false</p></dd><dt class="param">valueExpr</dt><dd class="cmt"><p>a value column, which typically return a score, higher score means higher chance of matching</p></dd><dt class="param">threshold</dt><dd class="cmt"><p>No match if the evaluated <code>valueExpr</code> &lt; this value
+</p></dd></dl></div>
     </li></ol>
             </div>
 
@@ -210,7 +212,7 @@
         <span class="name">colName</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">level name used in the output DF</p>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -320,7 +322,7 @@
         <span class="name">predicate</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">a condition column, no match if this condition evaluated as false</p>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>
@@ -346,7 +348,8 @@
         <span class="name">threshold</span><span class="result">: <span class="extype" name="scala.Float">Float</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">No match if the evaluated <code>valueExpr</code> &lt; this value
+</p>
     </li><li name="org.tresamigos.smv.matcher.FuzzyLevelMatcher#valueExpr" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="valueExpr:org.apache.spark.sql.Column"></a>
       <a id="valueExpr:Column"></a>
@@ -359,7 +362,7 @@
         <span class="name">valueExpr</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">a value column, which typically return a score, higher score means higher chance of matching</p>
     </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <a id="wait():Unit"></a>

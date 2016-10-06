@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
+  <link rel="stylesheet" type="text/css" href="github.css">
+</head>
+<body>
+<table class="nav-table">
+    <tr>
+        <td class="nav-left">&lArr;&nbsp;<a href="smv_module.html">SMV Scala Modules</a></td>
+        <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
+        <td class="nav-right"><a href="smv_hive.html">SMV Hive Tables</a>&nbsp;&rArr;</td>
+    </tr>
+</table>
+<hr>
+
+<article class="markdown-body">
+<h1 id="smv-python-modules">SMV Python Modules</h1>
+<h1 id="smvpydataset">SmvPyDataSet</h1>
+<p>The Python base class <code>SmvPyDataSet</code> implements shared functionalities such as <code>modulePath()</code>, <code>fqn()</code>, <code>isInput()</code> etc. It also ensures that all subclass must implement the following abstract methods:</p>
+<ul>
+<li><code>description</code> - what is this dataset about<br /></li>
+<li><code>requiresDS</code> - the upstream dependencies, in other words, what other datasets need to be run first<br /></li>
+<li><code>run(i)</code> - how to compute this dataset from the input declared in <code>requiresDS</code></li>
+</ul>
+<p>The <code>description</code> method is used instead of making it part of the constructor (as in Scala) so that the complex syntax for subclass constructor can be avoided. This pattern is applied consistently throughout the SMV Python API.</p>
+<h1 id="smvpycsvfile">SmvPyCsvFile</h1>
+<p>The simplest type of input dataset. To create a Python module representing input from a csv file, subclass <code>SmvPyCsvFile</code> as show below</p>
+<pre class="sourceCode python"><code class="sourceCode python"><span class="ch">from</span> smv <span class="ch">import</span> *
+<span class="kw">class</span> PythonCsvFile(SmvPyCsvFile):
+    <span class="kw">def</span> path(<span class="ot">self</span>):
+        <span class="kw">return</span> <span class="st">&quot;path/to/filename.csv&quot;</span>
+
+    <span class="kw">def</span> csvAttr(<span class="ot">self</span>):
+        <span class="kw">return</span> <span class="ot">self</span>.defaultCsvWithHeader()</code></pre>
+<p>The <code>path</code> method (annotated as a property) is equivalent to the constructor parameter <code>path</code> in Scala; it returns the path to the input file. All subclasses must provide an implementation for this method. The <code>csvAttr()</code> method is optional. The default implementation returns <code>None</code>, which maps to <code>null</code> in Java. The meaning of having no <code>csvAttr()</code> is such that SMV runtime will read the schema information stored in the corresponding <code>.schema</code> file. Alternatively, the subclass can also provide a csvAttr. There are 3 factory methods in <code>SmvPyCsvFile</code>: <code>defaultCsvWithHeader</code>, <code>defaultTsv</code> (tab-delimited format), and <code>defaultTsvWithHeader</code>. These correspond to their Scala counterparts.</p>
+<h1 id="smvpymodule">SmvPyModule</h1>
+<p>To create an SMV module in Python, subclass <code>SmvPyModule</code> and override the 3 abstract methods listed in the section on SmvPyDataSet.</p>
+<p>The <code>requiresDS</code> method may return an empty array, if the module does not depend on anything. The class literal of the dependencies are returned in the array.</p>
+<p>The parameter <code>i</code> that's passed to the <code>run</code> method is named the same way as in the Scala API. Even though it does take up an often-used name in the scope, we left it as is for the sake of consistency. The <code>i</code> is a dictionary mapping module class to its resulting <code>DataFrame</code>s. Through it modules can retrieve the results of its dependent modules.</p>
+<p>Within the <code>run</code> methods, all operations on Spark DataFrames are available, as well as most of SMV enrichments to the Spark SQL API.</p>
+<h1 id="smvpyhivetable">SmvPyHiveTable</h1>
+<p>To read from a Hive table, subclass <code>SmvPyHiveTable</code> and implement the <code>tableName</code> method to return the name of the Hive table. This dataset can then be input (as dependency) to downstream modules.</p>
+<p>To save a module to a Hive table, the current (2016-09-24) solution is to use the <code>smv-pyrun</code> or <code>smv-run</code> command, passing <code>--export-hive &lt;table-name&gt;</code> option. In this operation, there can be only one module in the run, usually defined on the commandline with the <code>-m</code> switch.</p>
+</article>
+</body>
+</html>

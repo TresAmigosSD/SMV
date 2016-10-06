@@ -66,11 +66,14 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p>As described above, <code>modelAccts</code> will depend on the <strong>output</strong> of <code>rawAccounts</code>. Normally, this would read the versioned output that is persisted in the output directory.<br />To avoid having to &quot;re-run&quot; <code>rawAccounts</code> continuously, the user may choose to &quot;publish&quot; the current <code>etl</code> stage output and pin the links to the published version as follows:</p>
 <p><strong>1. Publish ETL stage</strong></p>
 <pre class="shell"><code>$ _SMV_HOME_/tools/smv-run --publish V1 -s etl</code></pre>
-<p><strong>2. Pin model to use published ETL output</strong></p>
+<p><strong>2. Pin <code>model</code> stage to use published ETL output</strong></p>
 <p>Modify the user configuration file (<code>conf/smv-user-conf.props</code>) to specify the etl stage version to use. For example, to use the above published version:</p>
-<pre><code># specify version of etl package to use.  Note use of stage basename
+<pre><code># specify version of etl package to use.  If no ambiguity, stage basename can be used here
 smv.stages.etl.version = V1</code></pre>
-<p>When <code>modelAccts</code> is re-run it will use the published output of <code>rawAccounts</code> rather than rerun <code>rawAccounts</code>.</p>
+<p>Or</p>
+<pre><code># Use FQN of the stage is always recommended
+smv.stages.com.mycompany.myproj.etl.version = V1</code></pre>
+<p>When <code>modelAccts</code> re-runs it will use the published output of <code>rawAccounts</code> rather than rerun <code>rawAccounts</code>.</p>
 <p>Since we already setup the version control to ignore <code>conf/smv-user-conf.props</code>,<br />this provides isolation for the model authors from changes in the ETL code. Once ETL stage is stabilized, it can either be republished with a new version or the config version can be removed to get the latest and greatest ETL output as before.</p>
 <h2 id="publish-entire-app">Publish entire app</h2>
 <p>TODO: show how to publish all stages in app.</p>

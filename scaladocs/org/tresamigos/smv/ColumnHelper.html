@@ -213,7 +213,7 @@
       </h4>
       <p class="shortcomment cmt">A boolean, which is true if ALL of the given parameters are contained in the
 Array column</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is true if ALL of the given parameters are contained in the
-Array column</p><pre>df.selectPlus($<span class="lit">"arrayCol"</span>.containsAll(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
+Array column</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.containsAll(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -313,7 +313,7 @@ Array column</p><pre>df.selectPlus($<span class="lit">"arrayCol"</span>.contains
       </h4>
       <p class="shortcomment cmt">A boolean, which is true if ALL of the Array column's elements are in the given
 paraneter sequence</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is true if ALL of the Array column's elements are in the given
-paraneter sequence</p><pre>df.selectPlus($<span class="lit">"arrayCol"</span>.isAllIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
+paraneter sequence</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.isAllIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#isAnyIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isAnyIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
       <a id="isAnyIn[T](T*)(ClassTag[T]):Column"></a>
@@ -328,7 +328,7 @@ paraneter sequence</p><pre>df.selectPlus($<span class="lit">"arrayCol"</span>.is
       </h4>
       <p class="shortcomment cmt">A boolean, which is ture if ANY one of the Array column element is in the given parameter
 sequence</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is ture if ANY one of the Array column element is in the given parameter
-sequence</p><pre>df.selectPlus($<span class="lit">"arrayCol"</span>.isAnyIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
+sequence</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.isAnyIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -496,9 +496,9 @@ $<span class="lit">"t"</span>,
 $<span class="lit">"v"</span>,
 $<span class="lit">"v"</span>.smvLag(<span class="num">1</span>) as <span class="lit">"v_lag"</span>
 )</pre><p>Since runAgg can't perform expressions on columns with SmvCDS, you need to do additional
-calculation in a separate <code>selectPlus</code>.
+calculation in a separate <code>smvSelectPlus</code>.
 For example, to calculate the difference between &quot;v&quot; and &quot;v_lag&quot;,
-you need to and another step</p><pre><span class="kw">val</span> resWithDiff = res.selectPlus($<span class="lit">"v"</span> - $<span class="lit">"v_lag"</span> as <span class="lit">"v_increase"</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The previous value of the column in the group.
+you need to and another step</p><pre><span class="kw">val</span> resWithDiff = res.smvSelectPlus($<span class="lit">"v"</span> - $<span class="lit">"v_lag"</span> as <span class="lit">"v_increase"</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The previous value of the column in the group.
 </p></dd></dl></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvMetaphone" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvMetaphone:org.apache.spark.sql.Column"></a>
@@ -890,7 +890,7 @@ but we sometimes need access to the expression.</p><pre>($<span class="lit">"v"<
         <span class="name deprecated" title="Deprecated: (Since version 1.5) should use Column.isNan instead">smvIsNaN</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Determine if the given column value is an NaN (not a number)</p><div class="fullcomment"><div class="comment cmt"><p>Determine if the given column value is an NaN (not a number)</p><pre>df.selectPlus($<span class="lit">"v"</span>.smvIsNan as 'v_is_nan)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+      <p class="shortcomment cmt">Determine if the given column value is an NaN (not a number)</p><div class="fullcomment"><div class="comment cmt"><p>Determine if the given column value is an NaN (not a number)</p><pre>df.smvSelectPlus($<span class="lit">"v"</span>.smvIsNan as 'v_is_nan)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@deprecated</span>
               
         </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use Column.isNan instead</p></dd></dl></div>
@@ -957,7 +957,7 @@ Must only be applied to <code>String</code> columns.</p><pre>df.select($<span cl
         <span class="name deprecated" title="Deprecated: (Since version 1.5) should use Spark trim() function">smvStrTrim</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Trim leading/trailing space from <code>String</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Trim leading/trailing space from <code>String</code> column.</p><pre>df.selectPlus($<span class="lit">"sWithBlank"</span>.smvStrTrim() as <span class="lit">"sTrimmed"</span>)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+      <p class="shortcomment cmt">Trim leading/trailing space from <code>String</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Trim leading/trailing space from <code>String</code> column.</p><pre>df.smvSelectPlus($<span class="lit">"sWithBlank"</span>.smvStrTrim() as <span class="lit">"sTrimmed"</span>)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@deprecated</span>
               
         </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use Spark trim() function</p></dd></dl></div>
@@ -970,7 +970,7 @@ Must only be applied to <code>String</code> columns.</p><pre>df.select($<span cl
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name deprecated" title="Deprecated: should use smvDesc instead">withDesc</span><span class="params">(<span name="desc">desc: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+        <span class="name deprecated" title="Deprecated: (Since version 1.5) should use smvDesc instead">withDesc</span><span class="params">(<span name="desc">desc: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">Add description as metadata to a column
@@ -982,7 +982,7 @@ metadata:
 e.g.</p><pre>df.smvDesc(<span class="lit">"amt"</span> -&gt; <span class="lit">"Dollar amount spend"</span>, <span class="lit">"o"</span> -&gt; <span class="lit">"some other field"</span>)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@deprecated</span>
               
-        </dd><dt>Deprecated</dt><dd class="cmt"><p>should use smvDesc instead</p></dd></dl></div>
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use smvDesc instead</p></dd></dl></div>
     </li></ol>
             </div>
         </div>

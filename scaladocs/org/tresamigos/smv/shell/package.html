@@ -99,6 +99,19 @@
       </h4>
       <p class="comment cmt">Provides list functions for a SmvStage or SmvStages
 </p>
+    </li><li name="org.tresamigos.smv.shell.ShellCmd" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ShellCmd"></a>
+      <a id="ShellCmd:ShellCmd"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="ShellCmd$.html"><span class="name">ShellCmd</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">Provide functions for the interactive shell</p>
     </li><li name="org.tresamigos.smv.shell.package#ancestors" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ancestors(ds:org.tresamigos.smv.SmvDataSet):Unit"></a>
       <a id="ancestors(SmvDataSet):Unit"></a>
@@ -115,6 +128,22 @@
 <code>ancestors</code> are datasets current dataset depends on, directly or in-directly,
 even include datasets from other stages
 </p>
+    </li><li name="org.tresamigos.smv.shell.package#ddf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ddf(fqn:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="ddf(String):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ddf</span><span class="params">(<span name="fqn">fqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Dynamically load modules
+</p><div class="fullcomment"><div class="comment cmt"><p>Dynamically load modules
+</p></div><dl class="paramcmts block"><dt class="param">fqn</dt><dd class="cmt"><p>the fully qualified name of SmvDataSet</p></dd><dt>returns</dt><dd class="cmt"><p>result DataFrame
+</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.shell.package#descendants" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="descendants(ds:org.tresamigos.smv.SmvDataSet):Unit"></a>
       <a id="descendants(SmvDataSet):Unit"></a>
@@ -131,6 +160,38 @@ even include datasets from other stages
 <code>descendants</code> are datasets which depend on the current dataset directly or in-directly,
 even include datasets from other stages
 </p>
+    </li><li name="org.tresamigos.smv.shell.package#df" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="df(ds:org.tresamigos.smv.SmvDataSet):org.apache.spark.sql.DataFrame"></a>
+      <a id="df(SmvDataSet):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">df</span><span class="params">(<span name="ds">ds: <a href="../SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Resolve SmvDataSet
+</p><div class="fullcomment"><div class="comment cmt"><p>Resolve SmvDataSet
+</p></div><dl class="paramcmts block"><dt class="param">ds</dt><dd class="cmt"><p>an SmvDataSet</p></dd><dt>returns</dt><dd class="cmt"><p>result DataFrame
+</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.shell.package#discoverSchema" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="discoverSchema(path:String,n:Int,ca:org.tresamigos.smv.CsvAttributes):Unit"></a>
+      <a id="discoverSchema(String,Int,CsvAttributes):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">discoverSchema</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="n">n: <span class="extype" name="scala.Int">Int</span> = <span class="symbol">100000</span></span>, <span name="ca">ca: <a href="../CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a> = <span class="symbol"><span class="name"><a href="../CsvAttributes$.html">CsvAttributes.defaultCsvWithHeader</a></span></span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Try best to discover Schema from raw Csv file
+</p><div class="fullcomment"><div class="comment cmt"><p>Try best to discover Schema from raw Csv file
+</p></div><dl class="paramcmts block"><dt class="param">path</dt><dd class="cmt"><p>Csv file path and name</p></dd><dt class="param">n</dt><dd class="cmt"><p>number of records to check for schema discovery, default 100k</p></dd><dt class="param">ca</dt><dd class="cmt"><p>CsvAttributes, default CsvWithHeader</p><p>Will save a schema file with postfix &quot;.toBeReviewed&quot; in local directory.
+</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.shell.package#graph" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="graph(ds:org.tresamigos.smv.SmvDataSet):Unit"></a>
       <a id="graph(SmvDataSet):Unit"></a>
@@ -302,19 +363,34 @@ Note: a <code>leaf</code> dataset must be <code>dead</code>, but some <code>dead
       </h4>
       <p class="shortcomment cmt">Print current time
 </p>
-    </li><li name="org.tresamigos.smv.shell.package#peek" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="peek(df:org.apache.spark.sql.DataFrame,pos:Int):Unit"></a>
-      <a id="peek(DataFrame,Int):Unit"></a>
+    </li><li name="org.tresamigos.smv.shell.package#openCsv" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="openCsv(path:String,ca:org.tresamigos.smv.CsvAttributes,parserCheck:Boolean):org.apache.spark.sql.DataFrame"></a>
+      <a id="openCsv(String,CsvAttributes,Boolean):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">peek</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="pos">pos: <span class="extype" name="scala.Int">Int</span> = <span class="symbol">1</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">openCsv</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ca">ca: <a href="../CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a> = <span class="symbol">null</span></span>, <span name="parserCheck">parserCheck: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Display a dataframe row in transposed view.</p>
+      <p class="shortcomment cmt">Read in a Csv file as DF
+</p>
+    </li><li name="org.tresamigos.smv.shell.package#openHive" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="openHive(tableName:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="openHive(String):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">openHive</span><span class="params">(<span name="tableName">tableName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Read in a Hive table as DF
+</p>
     </li></ol>
             </div>
 

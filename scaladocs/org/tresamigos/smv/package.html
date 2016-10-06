@@ -39,7 +39,7 @@
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><h4> Spark Modularized View (SMV) </h4><ul><li>Provide a framework to use Spark to develop large scale data applications</li><li>Synchronize between code management and data management</li><li>Data API for large projects/large teams</li><li>Programmatic data quality management</li></ul><p>Main classes</p><ul><li><a href="SmvDFHelper.html" class="extype" name="org.tresamigos.smv.SmvDFHelper">org.tresamigos.smv.SmvDFHelper</a>: extends DataFrame methods. E.g. <code>selectPlus</code></li><li><a href="ColumnHelper.html" class="extype" name="org.tresamigos.smv.ColumnHelper">org.tresamigos.smv.ColumnHelper</a>: extends Column methods. E.g. <code>smvStrToTimestamp</code></li><li><a href="SmvGroupedDataFunc.html" class="extype" name="org.tresamigos.smv.SmvGroupedDataFunc">org.tresamigos.smv.SmvGroupedDataFunc</a>: extends GroupedData methods. E.g. <code>smvPivot</code></li></ul><p>Main packages</p><ul><li><a href="edd/package.html" class="extype" name="org.tresamigos.smv.edd">org.tresamigos.smv.edd</a>: extended data dictionary. E.g. <code>df.edd.summary().eddShow</code></li><li><a href="dqm/package.html" class="extype" name="org.tresamigos.smv.dqm">org.tresamigos.smv.dqm</a>: data quality management. E.g. <code>SmvDQM().add(DQMRule(...))</code></li></ul></div><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><h4> Spark Modularized View (SMV) </h4><ul><li>Provide a framework to use Spark to develop large scale data applications</li><li>Synchronize between code management and data management</li><li>Data API for large projects/large teams</li><li>Programmatic data quality management</li></ul><p>Main classes</p><ul><li><a href="SmvDFHelper.html" class="extype" name="org.tresamigos.smv.SmvDFHelper">org.tresamigos.smv.SmvDFHelper</a>: extends DataFrame methods. E.g. <code>smvSelectPlus</code></li><li><a href="ColumnHelper.html" class="extype" name="org.tresamigos.smv.ColumnHelper">org.tresamigos.smv.ColumnHelper</a>: extends Column methods. E.g. <code>smvStrToTimestamp</code></li><li><a href="SmvGroupedDataFunc.html" class="extype" name="org.tresamigos.smv.SmvGroupedDataFunc">org.tresamigos.smv.SmvGroupedDataFunc</a>: extends GroupedData methods. E.g. <code>smvPivot</code></li></ul><p>Main packages</p><ul><li><a href="edd/package.html" class="extype" name="org.tresamigos.smv.edd">org.tresamigos.smv.edd</a>: extended data dictionary. E.g. <code>df.edd.summary().eddShow</code></li><li><a href="dqm/package.html" class="extype" name="org.tresamigos.smv.dqm">org.tresamigos.smv.dqm</a>: data quality management. E.g. <code>SmvDQM().add(DQMRule(...))</code></li></ul></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
@@ -120,6 +120,32 @@
       </span>
       </h4>
       <p class="comment cmt">Using asm to figure out SmvDataSet dependency</p>
+    </li><li name="org.tresamigos.smv.DependencyRule" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DependencyRuleextendsAnyRef"></a>
+      <a id="DependencyRule:DependencyRule"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="DependencyRule.html"><span class="name">DependencyRule</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.DependencyViolation" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DependencyViolationextendsProductwithSerializable"></a>
+      <a id="DependencyViolation:DependencyViolation"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="DependencyViolation.html"><span class="name">DependencyViolation</span></a><span class="params">(<span name="description">description: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="components">components: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">rule violation report</p>
     </li><li name="org.tresamigos.smv.HasName" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="HasNameextendsAnyRef"></a>
       <a id="HasName:HasName"></a>
@@ -546,6 +572,32 @@ the same schema and CsvAttributes.</p>
       </span>
       <span class="symbol">
         <a href="CsvAttributes$.html"><span class="name">CsvAttributes</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.LinkFromDiffStage" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="LinkFromDiffStage"></a>
+      <a id="LinkFromDiffStage:LinkFromDiffStage"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="LinkFromDiffStage$.html"><span class="name">LinkFromDiffStage</span></a><span class="result"> extends <a href="DependencyRule.html" class="extype" name="org.tresamigos.smv.DependencyRule">DependencyRule</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SameStageDependency" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SameStageDependency"></a>
+      <a id="SameStageDependency:SameStageDependency"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SameStageDependency$.html"><span class="name">SameStageDependency</span></a><span class="result"> extends <a href="DependencyRule.html" class="extype" name="org.tresamigos.smv.DependencyRule">DependencyRule</a></span>
       </span>
       </h4>
       

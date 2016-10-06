@@ -37,6 +37,21 @@
 <li>smv default options</li>
 </ul>
 <p>Since SMV support both <code>smv-user-conf.props</code> and <code>smv-app-conf.props</code>, a typical practice is to<br />put project level shared (accross team members) config into <code>smv-app-conf.props</code> and user<br />specific config into <code>smv-user-conf</code>. Also config the version control system to ignore<br /><code>conf/smv-user-conf.props</code>.</p>
+<p>The property files <code>smv-app-conf.props</code> and <code>smv-user-conf.props</code> are standard Jave property files.<br />Here is an example:</p>
+<pre><code># application name
+smv.appName = My Sample App
+
+# stage definitions
+smv.stages = org.tresamigos.sample.etl.internal, \
+             org.tresamigos.sample.etl.external, \
+             org.tresamigos.sample.dm.account, \
+             org.tresamigos.sample.dm.customer
+
+# spark sql properties
+spark.sql.shuffle.partitions = 256
+
+# App config
+smv.runConfObj = org.tresamigos.sample.conf.Conf1</code></pre>
 <h2 id="smv-config-parameters">SMV Config Parameters</h2>
 <p>The table below describes all available SMV configuration parameters.<br />Note that for sequence/list type parameters (e.g. smv.stages), a &quot;,&quot; or &quot;:&quot; can be used to separate out the items in the list.<br /><strong>For command line arguments, only the &quot;:&quot; can be used as a separator.</strong><br /><table><tr><th>Property Name</th><th>Default</th><th>Required/<br>Optional</th><th>Description</th></tr></p>
 <tr>
@@ -56,19 +71,10 @@
 
 
 <tr>
-<td>smv.stages.X.packages</td>
-<td>empty</td>
-<td>Required</td>
-<td>List of package names in stage X.  The package names must be the fully qualified name.<br>
-Example: "com.company.proj.etl, com.company.proj.model"</td>
-</tr>
-
-
-<tr>
 <td>smv.stages.X.version</td>
-<td>0</td>
+<td>empty</td>
 <td>Optional</td>
-<td>Current version of stage X. See <a href="smv_stages.html"> for details on stage versions</td>
+<td>Current version name of stage X. See <a href="smv_stages.html"> for details on stage versions</td>
 </tr>
 
 

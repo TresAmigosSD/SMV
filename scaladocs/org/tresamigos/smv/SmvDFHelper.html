@@ -306,7 +306,7 @@ This function's format is more convenient for us and hence has remained un-depre
       </span>
       </h4>
       <p class="shortcomment cmt">Create an Edd on DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Create an Edd on DataFrame.
-See <a href="edd/Edd.html" class="extype" name="org.tresamigos.smv.edd.Edd">org.tresamigos.smv.edd.Edd</a> for details.</p><p>Example:</p><pre>scala&gt; df.summary().eddShow</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+See <a href="edd/Edd.html" class="extype" name="org.tresamigos.smv.edd.Edd">org.tresamigos.smv.edd.Edd</a> for details.</p><p>Example:</p><pre>scala&gt; df.edd.summary().eddShow</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@Experimental</span><span class="args">()</span>
               
         </dd></dl></div>
@@ -493,7 +493,7 @@ renamed with postfix &quot;_df2&quot;, and, df3's column will be renamed with po
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#peek" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.SmvDFHelper#peek" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="peek(colRegex:String):Unit"></a>
       <a id="peek(String):Unit"></a>
       <h4 class="signature">
@@ -505,7 +505,10 @@ renamed with postfix &quot;_df2&quot;, and, df3's column will be renamed with po
         <span class="name">peek</span><span class="params">(<span name="colRegex">colRegex: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">Display 1st row in transposed view
+</p><div class="fullcomment"><div class="comment cmt"><p>Display 1st row in transposed view
+</p></div><dl class="paramcmts block"><dt class="param">colRegex</dt><dd class="cmt"><p>show the columns with name match the regex, default as &quot;.*&quot;
+</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#peek" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="peek():Unit"></a>
       <a id="peek():Unit"></a>
@@ -520,7 +523,7 @@ renamed with postfix &quot;_df2&quot;, and, df3's column will be renamed with po
       </h4>
       <p class="shortcomment cmt">Use default peek with or without the parenthesis
 </p>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#peek" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.SmvDFHelper#peek" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="peek(pos:Int,colRegex:String):Unit"></a>
       <a id="peek(Int,String):Unit"></a>
       <h4 class="signature">
@@ -532,7 +535,25 @@ renamed with postfix &quot;_df2&quot;, and, df3's column will be renamed with po
         <span class="name">peek</span><span class="params">(<span name="pos">pos: <span class="extype" name="scala.Int">Int</span></span>, <span name="colRegex">colRegex: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;.*&quot;</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Display a dataframe row in transposed view.</p>
+      <p class="shortcomment cmt">Display a dataframe row in transposed view.</p><div class="fullcomment"><div class="comment cmt"><p>Display a dataframe row in transposed view.
+</p></div><dl class="paramcmts block"><dt class="param">pos</dt><dd class="cmt"><p>the n-th row to display, default as 1</p></dd><dt class="param">colRegex</dt><dd class="cmt"><p>show the columns with name match the regex, default as &quot;.*&quot;
+</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#peekSave" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="peekSave(path:String,pos:Int,colRegex:String):Unit"></a>
+      <a id="peekSave(String,Int,String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">peekSave</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="pos">pos: <span class="extype" name="scala.Int">Int</span> = <span class="symbol">1</span></span>, <span name="colRegex">colRegex: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;.*&quot;</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Write <code>peek</code> result to a file
+</p><div class="fullcomment"><div class="comment cmt"><p>Write <code>peek</code> result to a file
+</p></div><dl class="paramcmts block"><dt class="param">path</dt><dd class="cmt"><p>local file name to write</p></dd><dt class="param">pos</dt><dd class="cmt"><p>the n-th row to display, default as 1</p></dd><dt class="param">colRegex</dt><dd class="cmt"><p>show the columns with names match the regex, default as &quot;.*&quot;
+</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#postfixFieldNames" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="postfixFieldNames(postfix:String):org.apache.spark.sql.DataFrame"></a>
       <a id="postfixFieldNames(String):DataFrame"></a>
@@ -623,7 +644,7 @@ as of 1.5.2, would drop them.
       </span>
       </h4>
       <p class="shortcomment cmt">DataFrame projection based on labels</p><div class="fullcomment"><div class="comment cmt"><p>DataFrame projection based on labels</p><p>Example:</p><pre><span class="kw">val</span> res = df.selectByLabel(<span class="lit">"yellow"</span>)</pre></div></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#selectExpandStruct" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.SmvDFHelper#selectExpandStruct" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="selectExpandStruct(colNames:String*):org.apache.spark.sql.DataFrame"></a>
       <a id="selectExpandStruct(String*):DataFrame"></a>
       <h4 class="signature">
@@ -635,51 +656,7 @@ as of 1.5.2, would drop them.
         <span class="name">selectExpandStruct</span><span class="params">(<span name="colNames">colNames: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Expand structure type column to a group of columns
-Example input df:</p><div class="fullcomment"><div class="comment cmt"><p>Expand structure type column to a group of columns
-Example input df:</p><pre>[id:string, address: struct&lt;state:string, zip:string, street:string&gt;]</pre><p>output df:</p><pre>[id:string, state:string, zip:string, street:string]</pre><p>Example code:</p><pre>df.selectExpandStruct(<span class="lit">"address"</span>)</pre></div></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#selectMinus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="selectMinus(cols:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
-      <a id="selectMinus(Column*):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">selectMinus</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Remove one or more columns from current DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Remove one or more columns from current DataFrame.
-Column names are specified as <code>Column</code></p><pre>df.selectMinus($<span class="lit">"col1"</span>, df(<span class="lit">"col2"</span>))</pre></div></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#selectMinus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="selectMinus(s:String,others:String*):org.apache.spark.sql.DataFrame"></a>
-      <a id="selectMinus(String,String*):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">selectMinus</span><span class="params">(<span name="s">s: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Remove one or more columns from current DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Remove one or more columns from current DataFrame.
-Column names are specified as string.</p><pre>df.selectMinus(<span class="lit">"col1"</span>, <span class="lit">"col2"</span>)</pre></div></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#selectPlus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="selectPlus(exprs:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
-      <a id="selectPlus(Column*):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">selectPlus</span><span class="params">(<span name="exprs">exprs: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">selects all the current columns in current <code>DataFrame</code> plus the supplied expressions.</p><div class="fullcomment"><div class="comment cmt"><p>selects all the current columns in current <code>DataFrame</code> plus the supplied expressions.
-The new columns are added to the end of the current column list.</p><pre>df.selectPlus($<span class="lit">"price"</span> * $<span class="lit">"count"</span> as <span class="lit">"amt"</span>)</pre></div></div>
+      <p class="shortcomment cmt"></p>
     </li><li name="org.tresamigos.smv.SmvDFHelper#selectPlusPrefix" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="selectPlusPrefix(exprs:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
       <a id="selectPlusPrefix(Column*):DataFrame"></a>
@@ -716,19 +693,119 @@ the &quot;age&quot; column, unless there is already another column that
 happens to have the same spark-generated name (in which case that
 column will be replaced with the new expression)
 </p></div></div>
-    </li><li name="org.tresamigos.smv.SmvDFHelper#showHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="showHist(groupBy1:String,rest:String*)(colA:org.apache.spark.sql.Column,more:org.apache.spark.sql.Column*):Unit"></a>
-      <a id="showHist(String,String*)(Column,Column*):Unit"></a>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvBinHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvBinHist(colWithBin:(String,Double)*):Unit"></a>
+      <a id="smvBinHist((String,Double)*):Unit"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">showHist</span><span class="params">(<span name="groupBy1">groupBy1: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="rest">rest: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="colA">colA: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="more">more: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">smvBinHist</span><span class="params">(<span name="colWithBin">colWithBin: (<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Double">Double</span>)*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Show histograms within groups (Issue #330)
+      <p class="shortcomment cmt">Print Edd histogram with bins
+</p>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvBinHistSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvBinHistSave(colWithBin:(String,Double)*)(path:String):Unit"></a>
+      <a id="smvBinHistSave((String,Double)*)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvBinHistSave</span><span class="params">(<span name="colWithBin">colWithBin: (<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Double">Double</span>)*</span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Save Edd histogram with bins
+</p>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvConcatHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvConcatHist(cols:Seq[String]*):Unit"></a>
+      <a id="smvConcatHist(Seq[String]*):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvConcatHist</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Print EDD histogram of a group of cols (joint distribution)
+</p>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvConcatHistSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvConcatHistSave(cols:Seq[String]*)(path:String):Unit"></a>
+      <a id="smvConcatHistSave(Seq[String]*)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvConcatHistSave</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Save Edd histogram of a group of cols (joint distribution)
+</p>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvCountHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvCountHist(key:String):Unit"></a>
+      <a id="smvCountHist(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCountHist</span><span class="params">(<span name="key">key: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvCountHist" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvCountHist(keys:Seq[String],binSize:Int):Unit"></a>
+      <a id="smvCountHist(Seq[String],Int):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCountHist</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="binSize">binSize: <span class="extype" name="scala.Int">Int</span> = <span class="symbol">1</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Print Edd histogram on count of records for a group of given keys</p><div class="fullcomment"><div class="comment cmt"><p>Print Edd histogram on count of records for a group of given keys</p><p>Example Input</p><pre>id, v
+<span class="num">1</span>, <span class="num">1.0</span>
+<span class="num">1</span>, <span class="num">1.5</span>
+<span class="num">2</span>, <span class="num">0.3</span></pre><pre>df.smvCountHist(<span class="std">Seq</span>(<span class="lit">"id"</span>))</pre><p>Output</p><pre>N_id
+<span class="num">1</span>     <span class="num">1</span>     <span class="num">33.3</span>%
+<span class="num">2</span>     <span class="num">2</span>     <span class="num">66.6</span>%</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvCountHistSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvCountHistSave(key:String)(path:String):Unit"></a>
+      <a id="smvCountHistSave(String)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCountHistSave</span><span class="params">(<span name="key">key: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvCountHistSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvCountHistSave(keys:Seq[String],binSize:Int)(path:String):Unit"></a>
+      <a id="smvCountHistSave(Seq[String],Int)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCountHistSave</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="binSize">binSize: <span class="extype" name="scala.Int">Int</span> = <span class="symbol">1</span></span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Save Edd histogram on count of records for a group of given keys
 </p>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvCube" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvCube(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
@@ -953,6 +1030,77 @@ only the extra columns that does not have the corresponding number of bin will b
 The columns_to_bin are expected to be of type double</p><pre>df.smvDoubleBinHistogram(<span class="std">Seq</span>(<span class="lit">"key1"</span>, <span class="lit">"key2"</span>), <span class="std">Seq</span>(col1, col2), <span class="std">Seq</span>(<span class="num">100</span>, <span class="num">200</span>))</pre><p>Create a new columns named the same as the columns to bin post fixed with post_fix.
 The post_fix  is defaulted to &quot;_bin&quot;
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvEdd" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvEdd(cols:String*):Unit"></a>
+      <a id="smvEdd(String*):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvEdd</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Print EDD summary</p><div class="fullcomment"><div class="comment cmt"><p>Print EDD summary</p><pre>df.smvEdd()</pre><p>Perform EDD summary on all columns</p><pre>df.smvEdd(<span class="lit">"a"</span>, <span class="lit">"b"</span>)</pre><p>Perform EDD summary on specified columns
+</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvEddSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvEddSave(cols:String*)(path:String):Unit"></a>
+      <a id="smvEddSave(String*)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvEddSave</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Save Edd summary
+</p>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvExpandStruct" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvExpandStruct(colNames:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvExpandStruct(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvExpandStruct</span><span class="params">(<span name="colNames">colNames: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Expand structure type column to a group of columns
+Example input df:</p><div class="fullcomment"><div class="comment cmt"><p>Expand structure type column to a group of columns
+Example input df:</p><pre>[id:string, address: struct&lt;state:string, zip:string, street:string&gt;]</pre><p>output df:</p><pre>[id:string, state:string, zip:string, street:string]</pre><p>Example code:</p><pre>df.smvExpandStruct(<span class="lit">"address"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvFreqHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvFreqHist(cols:String*):Unit"></a>
+      <a id="smvFreqHist(String*):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvFreqHist</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Print EDD histogram with frequency sorting
+</p>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvFreqHistSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvFreqHistSave(cols:String*)(path:String):Unit"></a>
+      <a id="smvFreqHistSave(String*)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvFreqHistSave</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Save Edd histogram with frequency sorting
+</p>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvGetDesc" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvGetDesc():Seq[(String,String)]"></a>
       <a id="smvGetDesc():Seq[(String,String)]"></a>
@@ -1044,6 +1192,34 @@ See <a href="SmvGroupedDataFunc.html" class="extype" name="org.tresamigos.smv.Sm
       <p class="shortcomment cmt">Sample the df according to the hash of a column.</p><div class="fullcomment"><div class="comment cmt"><p>Sample the df according to the hash of a column.
 MurmurHash3 algorithm is used for generating the hash</p><pre>df.smvHashSample($<span class="lit">"key"</span>, rate=<span class="num">0.1</span>, seed=<span class="num">123</span>)</pre></div><dl class="paramcmts block"><dt class="param">key</dt><dd class="cmt"><p>column to sample on.</p></dd><dt class="param">rate</dt><dd class="cmt"><p>sample rate in range (0, 1] with a default of 0.01 (1%)</p></dd><dt class="param">seed</dt><dd class="cmt"><p>random generator integer seed with a default of 23.
 </p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvHist(cols:String*):Unit"></a>
+      <a id="smvHist(String*):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvHist</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Print EDD histogram (each col's histogram prints separately)
+</p>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvHistSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvHistSave(cols:String*)(path:String):Unit"></a>
+      <a id="smvHistSave(String*)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvHistSave</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Save Edd histogram
+</p>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvLabel" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvLabel(colNames:String*)(labels:String*):org.apache.spark.sql.DataFrame"></a>
       <a id="smvLabel(String*)(String*):DataFrame"></a>
@@ -1184,6 +1360,62 @@ the data frame, essentially clearing the label meta data.
       </span>
       </h4>
       <p class="shortcomment cmt">Similar to the <code>rollup</code> Spark DF method, but using &quot;*&quot; instead of null to represent &quot;Any&quot;</p><div class="fullcomment"><div class="comment cmt"><p>Similar to the <code>rollup</code> Spark DF method, but using &quot;*&quot; instead of null to represent &quot;Any&quot;</p><p>Example:</p><pre>df.smvRollup(<span class="lit">"county"</span>, <span class="lit">"zip"</span>).agg(<span class="lit">"county"</span>, <span class="lit">"zip"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvSelectMinus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvSelectMinus(cols:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvSelectMinus(Column*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvSelectMinus</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Remove one or more columns from current DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Remove one or more columns from current DataFrame.
+Column names are specified as <code>Column</code></p><pre>df.smvSelectMinus($<span class="lit">"col1"</span>, df(<span class="lit">"col2"</span>))</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvSelectMinus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvSelectMinus(s:String,others:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvSelectMinus(String,String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvSelectMinus</span><span class="params">(<span name="s">s: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Remove one or more columns from current DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Remove one or more columns from current DataFrame.
+Column names are specified as string.</p><pre>df.smvSelectMinus(<span class="lit">"col1"</span>, <span class="lit">"col2"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvSelectPlus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvSelectPlus(exprs:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvSelectPlus(Column*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvSelectPlus</span><span class="params">(<span name="exprs">exprs: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">selects all the current columns in current <code>DataFrame</code> plus the supplied expressions.</p><div class="fullcomment"><div class="comment cmt"><p>selects all the current columns in current <code>DataFrame</code> plus the supplied expressions.
+The new columns are added to the end of the current column list.</p><pre>df.smvSelectPlus($<span class="lit">"price"</span> * $<span class="lit">"count"</span> as <span class="lit">"amt"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvTopNRecs" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvTopNRecs(maxElems:Int,orders:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvTopNRecs(Int,Column*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvTopNRecs</span><span class="params">(<span name="maxElems">maxElems: <span class="extype" name="scala.Int">Int</span></span>, <span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">For return the global top N records according to an ordering</p><div class="fullcomment"><div class="comment cmt"><p>For return the global top N records according to an ordering</p><p>Example:</p><pre>df.smvTopNRecs(<span class="num">3</span>, $<span class="lit">"amt"</span>.desc)</pre><p>Will keep the 3 largest amt records
+</p></div></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvUnion" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvUnion(dfothers:org.apache.spark.sql.DataFrame*):org.apache.spark.sql.DataFrame"></a>
       <a id="smvUnion(DataFrame*):DataFrame"></a>
@@ -1468,22 +1700,71 @@ The old/new names are given as symbol pairs.</p><pre>df.renameField( <span class
               
         </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.3)</i> use String instead of Symbol</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#selectMinus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="selectMinus(s1:Symbol,sleft:Symbol*):org.apache.spark.sql.DataFrame"></a>
-      <a id="selectMinus(Symbol,Symbol*):DataFrame"></a>
+      <a id="selectMinus(cols:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
+      <a id="selectMinus(Column*):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.3) use String instead of Symbol">selectMinus</span><span class="params">(<span name="s1">s1: <span class="extype" name="scala.Symbol">Symbol</span></span>, <span name="sleft">sleft: <span class="extype" name="scala.Symbol">Symbol</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name deprecated" title="Deprecated: (Since version use smvSelectMinus instead) 1.5">selectMinus</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Remove one or more columns from current DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Remove one or more columns from current DataFrame.
-Column names are specified as <code>Column</code></p><pre>df.selectMinus(<span class="lit">'col1, '</span>col2)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@deprecated</span>
               
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.3)</i> use String instead of Symbol</p></dd></dl></div>
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version use smvSelectMinus instead)</i> 1.5</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#selectMinus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="selectMinus(s:String,others:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="selectMinus(String,String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version use smvSelectMinus instead) 1.5">selectMinus</span><span class="params">(<span name="s">s: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version use smvSelectMinus instead)</i> 1.5</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#selectPlus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="selectPlus(exprs:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
+      <a id="selectPlus(Column*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version use smvSelectPlus instead) 1.5">selectPlus</span><span class="params">(<span name="exprs">exprs: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version use smvSelectPlus instead)</i> 1.5</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#showHist" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="showHist(groupBy1:String,rest:String*)(colA:org.apache.spark.sql.Column,more:org.apache.spark.sql.Column*):Unit"></a>
+      <a id="showHist(String,String*)(Column,Column*):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version use df.smvGroupBy(&quot;k&quot;).smvConcatHist(Seq(&quot;c1&quot;, &quot;c2&quot;)) instead) 1.5">showHist</span><span class="params">(<span name="groupBy1">groupBy1: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="rest">rest: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="colA">colA: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="more">more: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Show histograms within groups (Issue #330)
+</p><div class="fullcomment"><div class="comment cmt"><p>Show histograms within groups (Issue #330)
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version use df.smvGroupBy(&quot;k&quot;).smvConcatHist(Seq(&quot;c1&quot;, &quot;c2&quot;)) instead)</i> 1.5</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvCoalesce" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvCoalesce(n:Int):org.apache.spark.sql.DataFrame"></a>
       <a id="smvCoalesce(Int):DataFrame"></a>
@@ -1501,6 +1782,23 @@ Column names are specified as <code>Column</code></p><pre>df.selectMinus(<span c
                 <span class="name">@deprecated</span>
               
         </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> should use spark df coalesce after 1.3</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDFHelper#smvSelectMinus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvSelectMinus(s1:Symbol,sleft:Symbol*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvSelectMinus(Symbol,Symbol*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.3) use String instead of Symbol">smvSelectMinus</span><span class="params">(<span name="s1">s1: <span class="extype" name="scala.Symbol">Symbol</span></span>, <span name="sleft">sleft: <span class="extype" name="scala.Symbol">Symbol</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Remove one or more columns from current DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Remove one or more columns from current DataFrame.
+Column names are specified as <code>Column</code></p><pre>df.smvSelectMinus(<span class="lit">'col1, '</span>col2)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.3)</i> use String instead of Symbol</p></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDFHelper#smvUnpivot" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvUnpivot(valueCol:Symbol,others:Symbol*):org.apache.spark.sql.DataFrame"></a>
       <a id="smvUnpivot(Symbol,Symbol*):DataFrame"></a>

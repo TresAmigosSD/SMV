@@ -70,7 +70,7 @@
         <a href="CommonLevelMatcherExpression.html"><span class="name">CommonLevelMatcherExpression</span></a><span class="params">(<span name="expr">expr: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher.CommonLevelMatcher">CommonLevelMatcher</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
-      
+      <p class="comment cmt">Specify the shared matching condition of all the levels (except the top-level exact match)</p>
     </li><li name="org.tresamigos.smv.matcher.ExactLevelMatcher" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ExactLevelMatcherextendsLevelMatcherwithProductwithSerializable"></a>
       <a id="ExactLevelMatcher:ExactLevelMatcher"></a>
@@ -83,7 +83,7 @@
         <a href="ExactLevelMatcher.html"><span class="name">ExactLevelMatcher</span></a><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="exactMatchExpression">exactMatchExpression: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher.LevelMatcher">LevelMatcher</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
-      
+      <p class="comment cmt">Level match with exact logic</p>
     </li><li name="org.tresamigos.smv.matcher.ExactMatchFilter" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ExactMatchFilterextendsAbstractExactMatchFilterwithProductwithSerializable"></a>
       <a id="ExactMatchFilter:ExactMatchFilter"></a>
@@ -96,7 +96,7 @@
         <a href="ExactMatchFilter.html"><span class="name">ExactMatchFilter</span></a><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="expr">expr: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher.AbstractExactMatchFilter">AbstractExactMatchFilter</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
-      
+      <p class="comment cmt">Specify the top-level exact match</p>
     </li><li name="org.tresamigos.smv.matcher.FuzzyLevelMatcher" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="FuzzyLevelMatcherextendsLevelMatcherwithProductwithSerializable"></a>
       <a id="FuzzyLevelMatcher:FuzzyLevelMatcher"></a>
@@ -109,7 +109,7 @@
         <a href="FuzzyLevelMatcher.html"><span class="name">FuzzyLevelMatcher</span></a><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="predicate">predicate: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="valueExpr">valueExpr: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="threshold">threshold: <span class="extype" name="scala.Float">Float</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher.LevelMatcher">LevelMatcher</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
-      
+      <p class="comment cmt">Level match with fuzzy logic</p>
     </li><li name="org.tresamigos.smv.matcher.SmvEntityMatcher" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvEntityMatcherextendsProductwithSerializable"></a>
       <a id="SmvEntityMatcher:SmvEntityMatcher"></a>
@@ -122,7 +122,8 @@
         <a href="SmvEntityMatcher.html"><span class="name">SmvEntityMatcher</span></a><span class="params">(<span name="exactMatchFilter">exactMatchFilter: <span class="extype" name="org.tresamigos.smv.matcher.AbstractExactMatchFilter">AbstractExactMatchFilter</span></span>, <span name="commonLevelMatcher">commonLevelMatcher: <span class="extype" name="org.tresamigos.smv.matcher.CommonLevelMatcher">CommonLevelMatcher</span></span>, <span name="levelMatchers">levelMatchers: <span class="extype" name="scala.List">List</span>[<span class="extype" name="org.tresamigos.smv.matcher.LevelMatcher">LevelMatcher</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
-      <p class="comment cmt">TODO document the meaning of each parameter
+      <p class="comment cmt">SmvEntityMatcher
+Perform multiple level entity matching with exact and/or fuzzy logic
 </p>
     </li></ol>
             </div>

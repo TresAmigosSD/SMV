@@ -253,6 +253,20 @@ Input:</p><pre>k, ts, v
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#edd" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="edd():org.tresamigos.smv.edd.Edd"></a>
+      <a id="edd():Edd"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">edd</span><span class="params">()</span><span class="result">: <a href="edd/Edd.html" class="extype" name="org.tresamigos.smv.edd.Edd">Edd</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create an Edd on SmvGroupedData.</p><div class="fullcomment"><div class="comment cmt"><p>Create an Edd on SmvGroupedData.
+See <a href="edd/Edd.html" class="extype" name="org.tresamigos.smv.edd.Edd">org.tresamigos.smv.edd.Edd</a> for details.</p><p>Example:</p><pre>scala&gt; df.smvGroupBy(<span class="lit">"k"</span>).edd.summary().eddShow</pre></div></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -495,6 +509,34 @@ sum('v) as <span class="lit">"nv3"</span>)</pre></div><dl class="attributes bloc
                 <span class="name">@Experimental</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvConcatHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvConcatHist(cols:Seq[String]*):Unit"></a>
+      <a id="smvConcatHist(Seq[String]*):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvConcatHist</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Print EDD histogram of a group of cols (joint distribution)
+</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvConcatHistSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvConcatHistSave(cols:Seq[String]*)(path:String):Unit"></a>
+      <a id="smvConcatHistSave(Seq[String]*)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvConcatHistSave</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Save Edd histogram of a group of cols (joint distribution)
+</p>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvCube(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
       <a id="smvCube(Column*):SmvGroupedData"></a>
@@ -559,6 +601,34 @@ Rather than using nulls as the pig version, a sentinel value of &quot;*&quot; wi
       <p class="shortcomment cmt">Compute the decile for a given column value with a DataFrame group.</p><div class="fullcomment"><div class="comment cmt"><p>Compute the decile for a given column value with a DataFrame group.
 Equivelant to <code>smvQuantile</code> with <code>numBins</code> set to 10.
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvHist(cols:String*):Unit"></a>
+      <a id="smvHist(String*):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvHist</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Print EDD histogram (each col's histogram prints separately)
+</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvHistSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvHistSave(cols:String*)(path:String):Unit"></a>
+      <a id="smvHistSave(String*)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvHistSave</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Save Edd histogram
+</p>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvMapGroup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvMapGroup(gdo:org.tresamigos.smv.cds.SmvGDO,needConvert:Boolean):org.tresamigos.smv.SmvGroupedData"></a>
       <a id="smvMapGroup(SmvGDO,Boolean):SmvGroupedData"></a>

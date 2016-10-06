@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>EddResultFunctions - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.edd.EddResultFunctions</title>
-          <meta name="description" content="EddResultFunctions - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.edd.EddResultFunctions" />
-          <meta name="keywords" content="EddResultFunctions Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.edd.EddResultFunctions" />
+          <title>SmvPythonApp - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.python.SmvPythonApp</title>
+          <meta name="description" content="SmvPythonApp - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.python.SmvPythonApp" />
+          <meta name="keywords" content="SmvPythonApp Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.python.SmvPythonApp" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -12,7 +12,7 @@
       <script type="text/javascript">
          if(top === self) {
             var url = '../../../../index.html';
-            var hash = 'org.tresamigos.smv.edd.EddResultFunctions';
+            var hash = 'org.tresamigos.smv.python.SmvPythonApp';
             var anchor = window.location.hash;
             var anchor_opt = '';
             if (anchor.length >= 1)
@@ -25,27 +25,24 @@
         <body class="type">
       <div id="definition">
         <img src="../../../../lib/class_big.png" />
-        <p id="owner"><a href="../../../package.html" class="extype" name="org">org</a>.<a href="../../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="../package.html" class="extype" name="org.tresamigos.smv">smv</a>.<a href="package.html" class="extype" name="org.tresamigos.smv.edd">edd</a></p>
-        <h1>EddResultFunctions</h1>
+        <p id="owner"><a href="../../../package.html" class="extype" name="org">org</a>.<a href="../../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="../package.html" class="extype" name="org.tresamigos.smv">smv</a>.<a href="package.html" class="extype" name="org.tresamigos.smv.python">python</a></p>
+        <h1>SmvPythonApp</h1>
       </div>
 
       <h4 id="signature" class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">case class</span>
+        <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">EddResultFunctions</span><span class="params">(<span name="eddRes">eddRes: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">SmvPythonApp</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Implement methods on Edd results</p><pre>scala&gt; <span class="kw">import</span> org.tresamigos.smv.edd._
-scala&gt; df.summary().eddShow
-scala&gt; df.summary().saveReport(<span class="lit">"file/path"</span>)
-scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><p>with import the <code>edd</code> package, <code>EddResultFunctions</code> can be implicitly converted to <code>DataFrame</code>
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Provide app-level methods for use in Python.</p><p>The collection types should be accessible through the py4j gateway.
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.Product">Product</span>, <span class="extype" name="scala.Equals">Equals</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -63,7 +60,7 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.edd.EddResultFunctions"><span>EddResultFunctions</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.Product"><span>Product</span></li><li class="in" name="scala.Equals"><span>Equals</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.python.SmvPythonApp"><span>SmvPythonApp</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -83,16 +80,16 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
         <div id="allMembers">
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
-              <ol><li name="org.tresamigos.smv.edd.EddResultFunctions#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(eddRes:org.apache.spark.sql.DataFrame):org.tresamigos.smv.edd.EddResultFunctions"></a>
-      <a id="&lt;init&gt;:EddResultFunctions"></a>
+              <ol><li name="org.tresamigos.smv.python.SmvPythonApp#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(app:org.tresamigos.smv.SmvApp):org.tresamigos.smv.python.SmvPythonApp"></a>
+      <a id="&lt;init&gt;:SmvPythonApp"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">EddResultFunctions</span><span class="params">(<span name="eddRes">eddRes: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span>
+        <span class="name">SmvPythonApp</span><span class="params">(<span name="app">app: <a href="../SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>)</span>
       </span>
       </h4>
       
@@ -170,6 +167,19 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#app" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="app:org.tresamigos.smv.SmvApp"></a>
+      <a id="app:SmvApp"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">app</span><span class="result">: <a href="../SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <a id="asInstanceOf[T0]:T0"></a>
@@ -202,58 +212,32 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="org.tresamigos.smv.edd.EddResultFunctions#compareWith" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="compareWith(that:org.apache.spark.sql.DataFrame):(Boolean,String)"></a>
-      <a id="compareWith(DataFrame):(Boolean,String)"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">compareWith</span><span class="params">(<span name="that">that: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span><span class="result">: (<span class="extype" name="scala.Boolean">Boolean</span>, <span class="extype" name="scala.Predef.String">String</span>)</span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.edd.EddResultFunctions#eddRes" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="eddRes:org.apache.spark.sql.DataFrame"></a>
-      <a id="eddRes:DataFrame"></a>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#config" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="config:org.tresamigos.smv.SmvConfig"></a>
+      <a id="config:SmvConfig"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">eddRes</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">config</span><span class="result">: <a href="../SmvConfig.html" class="extype" name="org.tresamigos.smv.SmvConfig">SmvConfig</a></span>
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.edd.EddResultFunctions#eddSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="eddSave(path:String):Unit"></a>
-      <a id="eddSave(String):Unit"></a>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#dfFrom" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="dfFrom(schema:String,data:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="dfFrom(String,String):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eddSave</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">dfFrom</span><span class="params">(<span name="schema">schema: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">print edd result to file *</p>
-    </li><li name="org.tresamigos.smv.edd.EddResultFunctions#eddShow" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="eddShow():Unit"></a>
-      <a id="eddShow():Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">eddShow</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">print edd result to console *</p>
+      <p class="shortcomment cmt">Used to create small dataframes for testing</p>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -267,6 +251,32 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#equals" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="equals(x$1:Any):Boolean"></a>
+      <a id="equals(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#exportHive" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="exportHive(dataframe:org.apache.spark.sql.DataFrame,tableName:String):Unit"></a>
+      <a id="exportHive(DataFrame,String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">exportHive</span><span class="params">(<span name="dataframe">dataframe: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="tableName">tableName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Export as hive table</p>
     </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <a id="finalize():Unit"></a>
@@ -299,6 +309,19 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#hashCode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="hashCode():Int"></a>
+      <a id="hashCode():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -312,6 +335,19 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#moduleNames" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="moduleNames:Array[String]"></a>
+      <a id="moduleNames:Array[String]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">moduleNames</span><span class="result">: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">The names of the modules to run in this app</p>
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -351,21 +387,58 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.edd.EddResultFunctions#saveReport" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="saveReport(path:String):Unit"></a>
-      <a id="saveReport(String):Unit"></a>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#outputDir" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="outputDir:String"></a>
+      <a id="outputDir:String"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveReport</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">outputDir</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Save report as Json
-Could be read back in as</p><div class="fullcomment"><div class="comment cmt"><p>Save report as Json
-Could be read back in as</p><pre><span class="kw">val</span> eddDf = sqlContext.read.json(path)</pre></div></div>
+      <p class="shortcomment cmt">Output directory for files</p>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#persist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="persist(dataframe:org.apache.spark.sql.DataFrame,path:String,generateEdd:Boolean):Unit"></a>
+      <a id="persist(DataFrame,String,Boolean):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">persist</span><span class="params">(<span name="dataframe">dataframe: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="generateEdd">generateEdd: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Saves the dataframe to disk</p>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#runParams" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="runParams:Map[String,org.apache.spark.sql.DataFrame]"></a>
+      <a id="runParams:Map[String,DataFrame]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">var</span>
+      </span>
+      <span class="symbol">
+        <span class="name">runParams</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">The name to dataframe look-up table</p>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#smvCsvFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvCsvFile(moduleName:String,path:String,csvAttr:org.tresamigos.smv.CsvAttributes):org.tresamigos.smv.SmvCsvFile"></a>
+      <a id="smvCsvFile(String,String,CsvAttributes):SmvCsvFile"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCsvFile</span><span class="params">(<span name="moduleName">moduleName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttr">csvAttr: <a href="../CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>)</span><span class="result">: <a href="../SmvCsvFile.html" class="extype" name="org.tresamigos.smv.SmvCsvFile">SmvCsvFile</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create a SmvCsvFile for use in Python</p>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>
@@ -379,19 +452,45 @@ Could be read back in as</p><pre><span class="kw">val</span> eddDf = sqlContext.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.edd.EddResultFunctions#toDF" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="toDF:org.apache.spark.sql.DataFrame"></a>
-      <a id="toDF:DataFrame"></a>
+    </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toString():String"></a>
+      <a id="toString():String"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toDF</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">edd result df *</p>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#tryReadPersistedFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="tryReadPersistedFile(path:String):scala.util.Try[org.apache.spark.sql.DataFrame]"></a>
+      <a id="tryReadPersistedFile(String):Try[DataFrame]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tryReadPersistedFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Try to read a dataframe from persisted files</p>
+    </li><li name="org.tresamigos.smv.python.SmvPythonApp#verifyConfig" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="verifyConfig():Unit"></a>
+      <a id="verifyConfig():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">verifyConfig</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <a id="wait():Unit"></a>
@@ -454,38 +553,11 @@ Could be read back in as</p><pre><span class="kw">val</span> eddDf = sqlContext.
 
         
 
-        <div id="values" class="values members">
-              <h3>Deprecated Value Members</h3>
-              <ol><li name="org.tresamigos.smv.edd.EddResultFunctions#dump" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="dump:Unit"></a>
-      <a id="dump:Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.5) Should use eddShow Method">dump</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Dump Edd report on screen</p><div class="fullcomment"><div class="comment cmt"><p>Dump Edd report on screen</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.5)</i> Should use eddShow Method</p></dd></dl></div>
-    </li></ol>
-            </div>
+        
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.Serializable">
-              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
-            </div><div class="parent" name="java.io.Serializable">
-              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
-            </div><div class="parent" name="scala.Product">
-              <h3>Inherited from <span class="extype" name="scala.Product">Product</span></h3>
-            </div><div class="parent" name="scala.Equals">
-              <h3>Inherited from <span class="extype" name="scala.Equals">Equals</span></h3>
-            </div><div class="parent" name="scala.AnyRef">
+        <div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>

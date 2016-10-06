@@ -411,7 +411,7 @@ df.rollup(<span class="lit">"a"</span>,<span class="lit">"b"</span>).agg(count(<
 |   <span class="num">2</span>|<span class="kw">null</span>|  <span class="num">0</span>|
 +----+----+---+</pre><p>which is not the expected result. To actually get aggregation result on the keys,
 one need to copy the key to a new column and then apply the aggregate funtion on
-the new column, like the following,</p><pre>df.selectPlus($<span class="lit">"b"</span> as <span class="lit">"newb"</span>).rollup(<span class="lit">"a"</span>, <span class="lit">"b"</span>).agg(count(<span class="lit">"newb"</span>) as <span class="lit">"n"</span>)</pre><p>One can also specify additional keys as the following</p><pre>ProdHier.levelRollup(df.smvWithKeys(<span class="lit">"time"</span>), <span class="lit">"h1"</span>, <span class="lit">"h2"</span>)(...)()</pre><p>The last parameter list is an optional <code>SmvHierOpParam</code>, the default value
+the new column, like the following,</p><pre>df.smvSelectPlus($<span class="lit">"b"</span> as <span class="lit">"newb"</span>).rollup(<span class="lit">"a"</span>, <span class="lit">"b"</span>).agg(count(<span class="lit">"newb"</span>) as <span class="lit">"n"</span>)</pre><p>One can also specify additional keys as the following</p><pre>ProdHier.levelRollup(df.smvWithKeys(<span class="lit">"time"</span>), <span class="lit">"h1"</span>, <span class="lit">"h2"</span>)(...)()</pre><p>The last parameter list is an optional <code>SmvHierOpParam</code>, the default value
 is to have no name no parent columns. Please see <code>SmvHierOpParam</code>'s document
 of other options.
 </p></div></div>
