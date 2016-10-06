@@ -4,6 +4,8 @@ from pyspark import SparkContext
 from pyspark.sql import HiveContext
 from smv import Smv
 
+import sys
+
 # shared spark and sql context
 class TestConfig(object):
     @classmethod
@@ -19,6 +21,7 @@ class TestConfig(object):
         return cls.sqlc
 
 if __name__ == "__main__":
+    print("Testing with Python " + sys.version)
 
     TestPath = "./src/test/python"
 

@@ -18,7 +18,7 @@ def for_name(name):
     """
     lastdot = name.rfind('.')
     if (lastdot == -1):
-        return getattr(__import('__main__'), name)
+        return getattr(__import__('__main__'), name)
 
     mod = __import__(name[:lastdot])
     for comp in name.split('.')[1:]:
@@ -194,6 +194,12 @@ class SmvPyDataSet(object):
             res = cls.hashsource(src, inspect.getsourcefile(cls))
         except: # `inspect` will raise error for classes defined in the REPL
             res = hash(disassemble(cls))
+
+        # include datasetHash of parent classes
+        for m in inspect.getmro(cls):
+            if (issubclass(m, SmvPyDataSet) and m != SmvPyDataSet and m != cls and m != object):
+                res += m.datasetHash()
+
         return res
 
     def hashOfHash(self):
@@ -202,11 +208,6 @@ class SmvPyDataSet(object):
         # include datasetHash of dependency modules
         for m in self.requiresDS():
             res += m.datasetHash()
-
-        # include datasetHash of parent classes
-        for m in inspect.getmro(self.__class__):
-            if (issubclass(m, SmvPyDataSet) and m != SmvPyDataSet and m != self.__class__):
-                res += m.datasetHash()
 
         return res
 
