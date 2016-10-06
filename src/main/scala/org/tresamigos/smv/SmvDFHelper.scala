@@ -378,7 +378,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * @return an `SmvMultiJoin` object which support `joinWith` and `doJoin` method
    **/
-  def joinMultipleByKey(keys: Seq[String], defaultJoinType: String) = {
+  def smvJoinMultipleByKey(keys: Seq[String], defaultJoinType: String) = {
     new SmvMultiJoin(Nil, SmvMultiJoinConf(df, keys, defaultJoinType))
   }
 
@@ -1390,7 +1390,7 @@ class SmvDFHelper(df: DataFrame) {
     val dfWithKey = if(exprs.isEmpty) {
       df
     } else {
-      df.selectPlus(exprs: _*)
+      df.smvSelectPlus(exprs: _*)
     }
     dfWithKey.edd.histogram(colNames.head, colNames.tail: _*).createReport()
   }
