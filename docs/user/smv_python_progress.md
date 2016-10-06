@@ -11,6 +11,7 @@
   * [x] `smvSelectPlus((col("a") + 1).alias("b"))`
   * [x] `smvSelectMinus("a")`
   * [x] `smvJoinByKey(df2, ["k1"], "inner")`
+  * [x] `smvJoinMultipleByKey(["k1"], "inner")`
   * [x] `smvHashSample("k", 0.02)`
   * [x] `smvDedupByKey("k1", "k2")`
   * [ ] `smvDedupByKeyWithOrder(["k1", "k2"], [col("t").desc()])`

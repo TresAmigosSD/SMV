@@ -20,6 +20,9 @@ object SmvPythonHelper {
   def smvJoinByKey(df: DataFrame, other: DataFrame, keys: Array[String], joinType: String): DataFrame =
     df.joinByKey(other, keys.toSeq, joinType)
 
+  def smvJoinMultipleByKey(df: DataFrame, keys: Array[String], joinType: String): SmvMultiJoinAdaptor =
+    new SmvMultiJoinAdaptor(df.smvJoinMultipleByKey(keys, joinType))
+
   def smvHashSample(df: DataFrame, key: Column, rate: Double, seed: Int): DataFrame =
     df.smvHashSample(key, rate, seed)
 
@@ -71,6 +74,13 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
   def smvPivotSum(pivotCols: java.util.List[Array[String]],
     valueCols: Array[String], baseOutput: Array[String]): DataFrame =
     grouped.smvPivotSum(pivotCols.map(_.toSeq).toSeq :_*)(valueCols:_*)(baseOutput:_*)
+}
+
+class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
+  def joinWith(df: DataFrame, postfix: String, joinType: String): SmvMultiJoinAdaptor =
+    new SmvMultiJoinAdaptor(joiner.joinWith(df, postfix, joinType))
+
+  def doJoin(dropExtra: Boolean): DataFrame = joiner.doJoin(dropExtra)
 }
 
 /**

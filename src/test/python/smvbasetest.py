@@ -31,6 +31,6 @@ class SmvBaseTest(unittest.TestCase):
         return DataFrame(cls.app.dfFrom(schema, data), cls.sqlContext)
 
     def should_be_same(self, left, right):
-        """Returns true if the two dataframes are exactly the same, with both columns and rows in the same order.
+        """Returns true if the two dataframes contain the same data, regardless of order
         """
         self.assertEqual(left.collect().sort(), right.collect().sort())

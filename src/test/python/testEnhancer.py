@@ -91,6 +91,24 @@ class DfHelperTest(SmvBaseTest):
         )
         self.should_be_same(expect, r1)
 
+    def test_smvJoinMultipleByKey(self):
+        df1 = self.createDF("a:Integer;b:String", """1,x1;2,y1;3,z1""")
+        df2 = self.createDF("a:Integer;b:String", """1,x1;4,w2;""")
+        df3 = self.createDF("a:Integer;b:String", """1,x3;5,w3;""")
+
+        mj = df1.smvJoinMultipleByKey(['a'], 'inner').joinWith(df2, '_df2').joinWith(df3, '_df3', 'outer')
+        r1 = mj.doJoin()
+
+        self.assertEquals(r1.columns, ['a', 'b', 'b_df2', 'b_df3'])
+        self.should_be_same(r1, self.createDF(
+            "a:Integer;b:String;b_df2:String;b_df3:String",
+            "1,x1,x1,x3;5,,,w3"))
+
+        r2 = mj.doJoin(True)
+        self.should_be_same(r2, self.createDF(
+            "a:Integer;b:String",
+            "1,x1;5,"))
+
     def test_smvUnion(self):
         schema       = "a:Integer; b:Double; c:String"
         schema2      = "c:String; a:Integer; d:Double"

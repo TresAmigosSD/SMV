@@ -316,6 +316,18 @@ class SmvGroupedData(object):
         baseOutput: list of strings"""
         return DataFrame(self.sgd.smvPivotSum(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
 
+class SmvMultiJoin(object):
+    """Wrapper around Scala's SmvMultiJoin"""
+    def __init__(self, sqlContext, mj):
+        self.sqlContext = sqlContext
+        self.mj = mj
+
+    def joinWith(self, df, postfix, jointype = 'inner'):
+        return SmvMultiJoin(self.sqlContext, self.mj.joinWith(df._jdf, postfix, jointype))
+
+    def doJoin(self, dropextra = False):
+        return DataFrame(self.mj.doJoin(dropextra), self.sqlContext)
+
 # Create the SmvApp "Singleton"
 SmvApp = Smv()
 
@@ -327,8 +339,6 @@ DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(helper(df).smvExpandStru
 
 DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, helper(df).smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
 
-DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(helper(df).smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
-
 def __smvHashSample(df, key, rate=0.01, seed=23):
     if (isinstance(key, basestring)):
         jkey = col(key)._jc
@@ -338,6 +348,10 @@ def __smvHashSample(df, key, rate=0.01, seed=23):
         raise RuntimeError("key parameter must be either a String or a Column")
     return DataFrame(helper(df).smvHashSample(df._jdf, jkey, rate, seed), df.sql_ctx)
 DataFrame.smvHashSample = __smvHashSample
+
+DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(helper(df).smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
+
+DataFrame.smvJoinMultipleByKey = lambda df, keys, joinType = 'inner': SmvMultiJoin(df.sql_ctx, helper(df).smvJoinMultipleByKey(df._jdf, smv_copy_array(df._sc, *keys), joinType))
 
 DataFrame.smvSelectMinus = lambda df, *cols: DataFrame(helper(df).smvSelectMinus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
