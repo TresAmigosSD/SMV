@@ -365,6 +365,8 @@ DataFrame.smvUnion = lambda df, *dfothers: DataFrame(helper(df).smvUnion(df._jdf
 
 DataFrame.smvRenameField = lambda df, *namePairs: DataFrame(helper(df).smvRenameField(df._jdf, smv_copy_array(df._sc, *namePairs)), df.sql_ctx)
 
+DataFrame.smvExportCsv = lambda df, path, n=None: helper(df).smvExportCsv(df._jdf, path, n)
+
 #############################################
 # DfHelpers which print to STDOUT
 # Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout

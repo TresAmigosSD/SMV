@@ -1,6 +1,7 @@
 import unittest
 
 from smvbasetest import SmvBaseTest
+from smv import SmvPyCsvFile
 
 import pyspark
 from pyspark.context import SparkContext
@@ -90,6 +91,19 @@ class DfHelperTest(SmvBaseTest):
             2,11.0,hello3"""
         )
         self.should_be_same(expect, r1)
+
+    def test_smvExportCsv(self):
+        df = self.createDF("k:String;v:Integer", "a,1;b,2")
+        path = "./target/python-test-export-csv.csv"
+        df.smvExportCsv(path)
+
+        code = """class T(SmvPyCsvFile):
+        def path(self):    return "{}"
+        def csvAttr(self): return self.defaultCsvWithHeader()
+"""
+        exec(code.format(path), globals())
+        res = self.smv.run_python_module(self.__module__ + ".T")
+        self.should_be_same(df, res)
 
     def test_smvJoinMultipleByKey(self):
         df1 = self.createDF("a:Integer;b:String", """1,x1;2,y1;3,z1""")

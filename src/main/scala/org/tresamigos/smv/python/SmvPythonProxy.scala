@@ -54,6 +54,9 @@ object SmvPythonHelper {
     df.renameField(namePairs:_*)
   }
 
+  def smvExportCsv(df: DataFrame, path: String, n: Integer): Unit =
+    df.exportCsv(path, n)
+
   def smvEdd(df: DataFrame, colNames: Array[String]) = df._smvEdd(colNames: _*)
   def smvHist(df: DataFrame, colNames: Array[String]) = df._smvHist(colNames: _*)
   def smvConcatHist(df: DataFrame, colNames: Array[String]) = df._smvConcatHist(colNames.toSeq)
