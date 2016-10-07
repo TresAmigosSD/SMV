@@ -184,7 +184,7 @@ class ColumnHelperTest extends SmvTestUtil {
     import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "a,b;c,d;,").select(array($"k", $"v") as "arr")
 
-    val res = df.select($"arr".isAllIn("a", "b", "c") as "isFound")
+    val res = df.select($"arr".smvIsAllIn("a", "b", "c") as "isFound")
     assertSrddDataEqual(res, "true;false;false")
   }
 

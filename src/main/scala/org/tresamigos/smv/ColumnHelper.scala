@@ -764,17 +764,20 @@ class ColumnHelper(column: Column) {
    * paraneter sequence
    *
    * {{{
-   * df.smvSelectPlus($"arrayCol".isAllIn(seqVals: _*) as "isFound")
+   * df.smvSelectPlus($"arrayCol".smvIsAllIn(seqVals: _*) as "isFound")
    * }}}
    **/
-   def isAllIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
-     val name = s"isAllIn(${column})"
+   def smvIsAllIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
+     val name = s"smvIsAllIn(${column})"
      val f = (v: Seq[Any]) => {
        if (v.isEmpty) false
        else v.map{c => candidates.contains(c)}.reduce(_&&_)
      }
      udf(f).apply(column) as name
    }
+
+  @deprecated("1.5", "use smvIsAllIn instead")
+  def isAllIn[T](candidates: T*)(implicit tt: ClassTag[T]) = smvIsAllIn(candidates:_*)
 
   /**
    * A boolean, which is true if ALL of the given parameters are contained in the

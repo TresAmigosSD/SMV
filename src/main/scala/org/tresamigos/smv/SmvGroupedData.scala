@@ -887,7 +887,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val dfWithKey = if(exprs.isEmpty) {
       df
     } else {
-      df.selectPlus(exprs: _*)
+      df.smvSelectPlus(exprs: _*)
     }
     dfWithKey.smvGroupBy(keys.map{k => $"$k"}: _*).edd.histogram(colNames.head, colNames.tail: _*).createReport()
   }

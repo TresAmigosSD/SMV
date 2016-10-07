@@ -248,7 +248,3 @@ key                      count      Pct    cumCount   cumPct
 0.0                          2   66.67%           2   66.67%
 200.0                        1   33.33%           3  100.00%
 -------------------------------------------------""")
-
-class ColumnHelperTest(unittest.TestCase):
-    def test_smvMonth(self):
-        return "TODO implement"
