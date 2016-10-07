@@ -1,5 +1,9 @@
+from pyspark import SparkContext
+from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
+
+import abc
 
 import inspect
 import sys
@@ -81,13 +85,30 @@ def disassemble(obj):
     buf.close()
     return ret
 
-# enhances the spark DataFrame with smv helper functions
-from pyspark.sql import DataFrame
+# Copied from Spark
+def _to_seq(sc, cols, converter=None):
+    """
+    Convert a list of Column (or names) into a JVM Seq of Column.
+
+    An optional `converter` could be used to convert items in `cols`
+    into JVM Column objects.
+    """
+    if converter:
+        cols = [converter(c) for c in cols]
+    return sc._jvm.PythonUtils.toSeq(cols)
 
 
-import abc
-from pyspark import SparkContext
-from pyspark.sql import HiveContext
+# Copied from Spark
+def _to_list(sc, cols, converter=None):
+    """
+    Convert a list of Column (or names) into a JVM (Scala) List of Column.
+
+    An optional `converter` could be used to convert items in `cols`
+    into JVM Column objects.
+    """
+    if converter:
+        cols = [converter(c) for c in cols]
+    return sc._jvm.PythonUtils.toList(cols)
 
 class Smv(object):
     """Creates a proxy to SmvApp.
@@ -104,6 +125,10 @@ class Smv(object):
 
         self.sqlContext = sqlContext
         self._jvm = sc._jvm
+
+        from py4j.java_gateway import java_import
+        java_import(self._jvm, "org.tresamigos.smv.ColumnHelper")
+        java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
 
         # convert python arglist to java String array
         java_args =  smv_copy_array(sc, *arglist)
@@ -331,9 +356,7 @@ class SmvMultiJoin(object):
 # Create the SmvApp "Singleton"
 SmvApp = Smv()
 
-import sys
-
-helper = lambda df: df._sc._jvm.org.tresamigos.smv.python.SmvPythonHelper
+helper = lambda df: df._sc._jvm.SmvPythonHelper
 
 DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(helper(df).smvExpandStruct(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
@@ -404,4 +427,12 @@ DataFrame.smvBinHist = lambda df, *colWithBin: println(_smvBinHist(df, *colWithB
 #############################################
 # ColumnHelper methods:
 #############################################
-Column.smvStrToTimestamp = lambda c, fmt: Column(SmvApp._jvm.org.tresamigos.smv.ColumnHelper(c._jc).smvStrToTimestamp(fmt))
+def _smvIsAllIn(col, *vals):
+    # accept a single list argument as well
+    if len(vals) == 1 and isinstance(vals[0], (list, set)):
+        vals = vals[0]
+    sc = SparkContext._active_spark_context
+    return Column(sc._jvm.SmvPythonHelper.smvIsAllIn(col._jc, _to_seq(sc, vals)))
+
+Column.smvIsAllIn = _smvIsAllIn
+Column.smvStrToTimestamp = lambda c, fmt: Column(SmvApp._jvm.ColumnHelper(c._jc).smvStrToTimestamp(fmt))

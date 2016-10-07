@@ -30,7 +30,8 @@ class SmvBaseTest(unittest.TestCase):
     def createDF(cls, schema, data):
         return DataFrame(cls.app.dfFrom(schema, data), cls.sqlContext)
 
-    def should_be_same(self, left, right):
+    def should_be_same(self, expected, result):
         """Returns true if the two dataframes contain the same data, regardless of order
         """
-        self.assertEqual(left.collect().sort(), right.collect().sort())
+        self.assertEqual(expected.columns, result.columns)
+        self.assertEqual(expected.collect().sort(), result.collect().sort())

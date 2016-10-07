@@ -68,6 +68,8 @@ object SmvPythonHelper {
     }.toSeq
     df._smvBinHist(colWithBin: _*)
   }
+
+  def smvIsAllIn(col: Column, values: Any*): Column = col.smvIsAllIn(values:_*)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

@@ -34,6 +34,7 @@
 
 ## Column Helpers
   * [x] `smvStrToTimestamp("yyyyMMdd")`
+  * [x] `smvIsAllIn("value 1", "value 2")
 
 ## Misc in Shell
   * [x] `pdf("com.mycomp.myapp.mypythonfile.mymodule")`
