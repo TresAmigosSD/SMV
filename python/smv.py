@@ -85,7 +85,7 @@ def disassemble(obj):
     buf.close()
     return ret
 
-# Copied from Spark
+# Modified from Spark column.py
 def _to_seq(sc, cols, converter=None):
     """
     Convert a list of Column (or names) into a JVM Seq of Column.
@@ -95,6 +95,8 @@ def _to_seq(sc, cols, converter=None):
     """
     if converter:
         cols = [converter(c) for c in cols]
+    if len(cols) > 0 and isinstance(cols[0], Column):
+        cols = [c._jc for c in cols]
     return sc._jvm.PythonUtils.toSeq(cols)
 
 
@@ -109,6 +111,9 @@ def _to_list(sc, cols, converter=None):
     if converter:
         cols = [converter(c) for c in cols]
     return sc._jvm.PythonUtils.toList(cols)
+
+def _sparkContext():
+    return SparkContext._active_spark_context
 
 class Smv(object):
     """Creates a proxy to SmvApp.
@@ -128,6 +133,7 @@ class Smv(object):
 
         from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.ColumnHelper")
+        java_import(self._jvm, "org.tresamigos.smv.SmvDFHelper")
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
 
         # convert python arglist to java String array
@@ -135,9 +141,6 @@ class Smv(object):
         self.app = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
         self.pymods = {}
         return self
-
-    def helper(self):
-        return self._jvm.org.tresamigos.smv.python.SmvPythonHelper
 
     def runModule(self, fqn):
         """Runs a Scala SmvModule by its Fully Qualified Name(fqn)
@@ -357,28 +360,37 @@ class SmvMultiJoin(object):
 SmvApp = Smv()
 
 helper = lambda df: df._sc._jvm.SmvPythonHelper
+def dfhelper(df):
+    return _sparkContext()._jvm.SmvDFHelper(df._jdf)
 
+def colhelper(c):
+    return _sparkContext()._jvm.ColumnHelper(c._jc)
+
+# TODO need test
 DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(helper(df).smvExpandStruct(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
+# TODO can we port this without going through the proxy?
 DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, helper(df).smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
 
 def __smvHashSample(df, key, rate=0.01, seed=23):
+    sc = _sparkContext()
     if (isinstance(key, basestring)):
         jkey = col(key)._jc
     elif (isinstance(key, Column)):
         jkey = key._jc
     else:
         raise RuntimeError("key parameter must be either a String or a Column")
-    return DataFrame(helper(df).smvHashSample(df._jdf, jkey, rate, seed), df.sql_ctx)
+    return DataFrame(dfhelper(df).smvHashSample(jkey, rate, seed), df.sql_ctx)
 DataFrame.smvHashSample = __smvHashSample
 
+# TODO need test
 DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(helper(df).smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
 
 DataFrame.smvJoinMultipleByKey = lambda df, keys, joinType = 'inner': SmvMultiJoin(df.sql_ctx, helper(df).smvJoinMultipleByKey(df._jdf, smv_copy_array(df._sc, *keys), joinType))
 
 DataFrame.smvSelectMinus = lambda df, *cols: DataFrame(helper(df).smvSelectMinus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
-DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(helper(df).smvSelectPlus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
+DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(dfhelper(df).smvSelectPlus(_to_seq(df._sc, cols)), df.sql_ctx)
 
 DataFrame.smvDedupByKey = lambda df, *keys: DataFrame(helper(df).smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
 
@@ -431,8 +443,8 @@ def _smvIsAllIn(col, *vals):
     # accept a single list argument as well
     if len(vals) == 1 and isinstance(vals[0], (list, set)):
         vals = vals[0]
-    sc = SparkContext._active_spark_context
+    sc = _sparkContext()
     return Column(sc._jvm.SmvPythonHelper.smvIsAllIn(col._jc, _to_seq(sc, vals)))
 
 Column.smvIsAllIn = _smvIsAllIn
-Column.smvStrToTimestamp = lambda c, fmt: Column(SmvApp._jvm.ColumnHelper(c._jc).smvStrToTimestamp(fmt))
+Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
