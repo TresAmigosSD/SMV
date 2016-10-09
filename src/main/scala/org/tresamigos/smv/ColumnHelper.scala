@@ -747,17 +747,20 @@ class ColumnHelper(column: Column) {
    * sequence
    *
    * {{{
-   * df.smvSelectPlus($"arrayCol".isAnyIn(seqVals: _*) as "isFound")
+   * df.smvSelectPlus($"arrayCol".smvIsAnyIn(seqVals: _*) as "isFound")
    * }}}
    **/
-   def isAnyIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
-     val name = s"isAnyIn(${column})"
+   def smvIsAnyIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
+     val name = s"smvIsAnyIn(${column})"
      val f = (v: Seq[Any]) => {
        if (v.isEmpty) false
        else v.map{c => candidates.contains(c)}.reduce(_||_)
      }
      udf(f).apply(column) as name
    }
+
+  @deprecated("1.5", "use smvIsAnyIn instead")
+  def isAnyIn[T](candidates: T*)(implicit tt: ClassTag[T]) = smvIsAnyIn(candidates)
 
   /**
    * A boolean, which is true if ALL of the Array column's elements are in the given

@@ -439,12 +439,21 @@ DataFrame.smvBinHist = lambda df, *colWithBin: println(_smvBinHist(df, *colWithB
 #############################################
 # ColumnHelper methods:
 #############################################
-def _smvIsAllIn(c, *vals):
-    # accept a single list argument as well
-    if len(vals) == 1 and isinstance(vals[0], (list, set)):
-        vals = vals[0]
-    # SmvPythonHelper is necessary because the Scala method is generic
-    return Column(_sparkContext()._jvm.SmvPythonHelper.smvIsAllIn(c._jc, _to_seq(vals)))
 
-Column.smvIsAllIn = _smvIsAllIn
+# SmvPythonHelper is necessary as frontend to generic Scala functions
+Column.smvIsAllIn = lambda c, *vals: Column(_sparkContext()._jvm.SmvPythonHelper.smvIsAllIn(c._jc, _to_seq(vals)))
+Column.smvIsAnyIn = lambda c, *vals: Column(_sparkContext()._jvm.SmvPythonHelper.smvIsAnyIn(c._jc, _to_seq(vals)))
+
+Column.smvMonth      = lambda c: Column(colhelper(c).smvMonth())
+Column.smvYear       = lambda c: Column(colhelper(c).smvYear())
+Column.smvQuarter    = lambda c: Column(colhelper(c).smvQuarter())
+Column.smvDayOfMonth = lambda c: Column(colhelper(c).smvDayOfMonth())
+Column.smvDayOfWeek  = lambda c: Column(colhelper(c).smvDayOfWeek())
+Column.smvHour       = lambda c: Column(colhelper(c).smvHour())
+
+Column.smvPlusDays   = lambda c, delta: Column(colhelper(c).smvPlusDays(delta))
+Column.smvPlusWeeks  = lambda c, delta: Column(colhelper(c).smvPlusWeeks(delta))
+Column.smvPlusMonths = lambda c, delta: Column(colhelper(c).smvPlusMonths(delta))
+Column.smvPlusYears  = lambda c, delta: Column(colhelper(c).smvPlusYears(delta))
+
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))

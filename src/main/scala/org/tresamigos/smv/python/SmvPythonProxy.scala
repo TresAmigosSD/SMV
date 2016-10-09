@@ -56,6 +56,7 @@ object SmvPythonHelper {
   }
 
   def smvIsAllIn(col: Column, values: Any*): Column = col.smvIsAllIn(values:_*)
+  def smvIsAnyIn(col: Column, values: Any*): Column = col.smvIsAnyIn(values:_*)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

@@ -170,12 +170,12 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddDataEqual(res0, "75.0")
   }
 
-  test("test isAnyIn"){
+  test("test smvIsAnyIn"){
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "a,b;c,d;,").select(array($"k", $"v") as "arr")
 
-    val res = df.select($"arr".isAnyIn("a", "z") as "isFound")
+    val res = df.select($"arr".smvIsAnyIn("a", "z") as "isFound")
     assertSrddDataEqual(res, "true;false;false")
   }
 

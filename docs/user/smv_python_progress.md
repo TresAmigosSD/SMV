@@ -33,8 +33,19 @@
   * [x] `smvBinHist(("k", 100.0))`
 
 ## Column Helpers
-  * [x] `smvStrToTimestamp("yyyyMMdd")`
   * [x] `smvIsAllIn("value 1", "value 2")
+  * [x] `smvIsAnyIn("value 1", "value 2")
+  * [x] `smvStrToTimestamp("yyyyMMdd")`
+  * [x] `smvMonth`
+  * [x] `smvYear`
+  * [x] `smvQuarter`
+  * [x] `smvDayOfMonth`
+  * [x] `smvDayOfYear`
+  * [x] `smvHour`
+  * [x] `smvPlusDays`
+  * [x] `smvPlusWeeks`
+  * [x] `smvPlusMonths`
+  * [x] `smvPlusYears`
 
 ## Misc in Shell
   * [x] `pdf("com.mycomp.myapp.mypythonfile.mymodule")`
