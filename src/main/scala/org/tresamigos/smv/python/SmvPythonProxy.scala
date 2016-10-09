@@ -23,16 +23,11 @@ object SmvPythonHelper {
   def smvJoinMultipleByKey(df: DataFrame, keys: Array[String], joinType: String): SmvMultiJoinAdaptor =
     new SmvMultiJoinAdaptor(df.smvJoinMultipleByKey(keys, joinType))
 
-  def smvHashSample(df: DataFrame, key: Column, rate: Double, seed: Int): DataFrame =
-    df.smvHashSample(key, rate, seed)
-
   def smvSelectMinus(df: DataFrame, cols: Array[String]): DataFrame =
     df.smvSelectMinus(cols.head, cols.tail:_*)
 
   def smvSelectMinus(df: DataFrame, cols: Array[Column]): DataFrame =
     df.smvSelectMinus(cols:_*)
-
-  def smvSelectPlus(df: DataFrame, cols: Array[Column]) = df.smvSelectPlus(cols:_*)
 
   def smvDedupByKey(df: DataFrame, keys: Array[String]): DataFrame =
     df.dedupByKey(keys.head, keys.tail:_*)
@@ -46,22 +41,13 @@ object SmvPythonHelper {
   def smvDedupByKeyWithOrder(df: DataFrame, cols: Array[Column], orderCol: Array[Column]): DataFrame =
     df.dedupByKeyWithOrder(cols:_*)(orderCol:_*)
 
-  def smvUnion(df: DataFrame, dfothers: Array[DataFrame]): DataFrame =
-    df.smvUnion(dfothers:_*)
-
   def smvRenameField(df: DataFrame, namePairsAsList: ArrayList[ArrayList[String]]): DataFrame = {
     val namePairs = namePairsAsList.map(inner => Tuple2(inner(0), inner(1)))
     df.renameField(namePairs:_*)
   }
 
-  def smvExportCsv(df: DataFrame, path: String, n: Integer): Unit =
-    df.exportCsv(path, n)
-
-  def smvEdd(df: DataFrame, colNames: Array[String]) = df._smvEdd(colNames: _*)
-  def smvHist(df: DataFrame, colNames: Array[String]) = df._smvHist(colNames: _*)
   def smvConcatHist(df: DataFrame, colNames: Array[String]) = df._smvConcatHist(colNames.toSeq)
-  def smvFreqHist(df: DataFrame, colNames: Array[String]) = df._smvFreqHist(colNames: _*)
-  def smvCountHist(df: DataFrame, keys: Array[String], binSize: Int) = df._smvCountHist(keys.toSeq, binSize)
+
   def smvBinHist(df: DataFrame, _colWithBin: java.util.List[java.util.List[Any]]) = {
     val colWithBin = _colWithBin.map{t =>
       (t.get(0).asInstanceOf[String], t.get(1).asInstanceOf[Double])

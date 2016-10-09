@@ -85,8 +85,12 @@ def disassemble(obj):
     buf.close()
     return ret
 
+# common converters to pass to _to_seq and _to_list
+def _jcol(c): return c._jc
+def _jdf(df): return df._jdf
+
 # Modified from Spark column.py
-def _to_seq(sc, cols, converter=None):
+def _to_seq(cols, converter=None):
     """
     Convert a list of Column (or names) into a JVM Seq of Column.
 
@@ -95,13 +99,10 @@ def _to_seq(sc, cols, converter=None):
     """
     if converter:
         cols = [converter(c) for c in cols]
-    if len(cols) > 0 and isinstance(cols[0], Column):
-        cols = [c._jc for c in cols]
-    return sc._jvm.PythonUtils.toSeq(cols)
+    return _sparkContext()._jvm.PythonUtils.toSeq(cols)
 
-
-# Copied from Spark
-def _to_list(sc, cols, converter=None):
+# Modified from Spark column.py
+def _to_list(cols, converter=None):
     """
     Convert a list of Column (or names) into a JVM (Scala) List of Column.
 
@@ -110,7 +111,7 @@ def _to_list(sc, cols, converter=None):
     """
     if converter:
         cols = [converter(c) for c in cols]
-    return sc._jvm.PythonUtils.toList(cols)
+    return _sparkContext()._jvm.PythonUtils.toList(cols)
 
 def _sparkContext():
     return SparkContext._active_spark_context
@@ -373,7 +374,6 @@ DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(helper(df).smvExpandStru
 DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, helper(df).smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
 
 def __smvHashSample(df, key, rate=0.01, seed=23):
-    sc = _sparkContext()
     if (isinstance(key, basestring)):
         jkey = col(key)._jc
     elif (isinstance(key, Column)):
@@ -390,17 +390,17 @@ DataFrame.smvJoinMultipleByKey = lambda df, keys, joinType = 'inner': SmvMultiJo
 
 DataFrame.smvSelectMinus = lambda df, *cols: DataFrame(helper(df).smvSelectMinus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
-DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(dfhelper(df).smvSelectPlus(_to_seq(df._sc, cols)), df.sql_ctx)
+DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(dfhelper(df).smvSelectPlus(_to_seq(cols, _jcol)), df.sql_ctx)
 
 DataFrame.smvDedupByKey = lambda df, *keys: DataFrame(helper(df).smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
 
 DataFrame.smvDedupByKeyWithOrder = lambda df, keys, orderCol: DataFrame(helper(df).smvDedupByKeyWithOrder(df._jdf, smv_copy_array(df._sc, *keys), smv_copy_array(df._sc, *orderCol)), df.sql_ctx)
 
-DataFrame.smvUnion = lambda df, *dfothers: DataFrame(helper(df).smvUnion(df._jdf, smv_copy_array(df._sc, *dfothers)), df.sql_ctx)
+DataFrame.smvUnion = lambda df, *dfothers: DataFrame(dfhelper(df).smvUnion(_to_seq(dfothers, _jdf)), df.sql_ctx)
 
 DataFrame.smvRenameField = lambda df, *namePairs: DataFrame(helper(df).smvRenameField(df._jdf, smv_copy_array(df._sc, *namePairs)), df.sql_ctx)
 
-DataFrame.smvExportCsv = lambda df, path, n=None: helper(df).smvExportCsv(df._jdf, path, n)
+DataFrame.smvExportCsv = lambda df, path, n=None: dfhelper(df).smvExportCsv(path, n)
 
 #############################################
 # DfHelpers which print to STDOUT
@@ -410,11 +410,11 @@ println = lambda str: sys.stdout.write(str + "\n")
 
 DataFrame.peek = lambda df, pos = 1, colRegex = ".*": println(helper(df).peekStr(df._jdf, pos, colRegex))
 
-def _smvEdd(df, *cols): return helper(df).smvEdd(df._jdf, smv_copy_array(df._sc, *cols))
-def _smvHist(df, *cols): return helper(df).smvHist(df._jdf, smv_copy_array(df._sc, *cols))
+def _smvEdd(df, *cols): return dfhelper(df)._smvEdd(_to_seq(cols))
+def _smvHist(df, *cols): return dfhelper(df)._smvHist(_to_seq(cols))
 def _smvConcatHist(df, cols): return helper(df).smvConcatHist(df._jdf, smv_copy_array(df._sc, *cols))
-def _smvFreqHist(df, *cols): return helper(df).smvFreqHist(df._jdf, smv_copy_array(df._sc, *cols))
-def _smvCountHist(df, keys, binSize): return helper(df).smvCountHist(df._jdf, smv_copy_array(df._sc, *keys), binSize)
+def _smvFreqHist(df, *cols): return dfhelper(df)._smvFreqHist(_to_seq(cols))
+def _smvCountHist(df, keys, binSize): return dfhelper(df)._smvCountHist(_to_seq(keys), binSize)
 def _smvBinHist(df, *colWithBin):
     for elem in colWithBin:
         assert type(elem) is tuple, "smvBinHist takes a list of tuple(string, double) as paraeter"
@@ -439,12 +439,12 @@ DataFrame.smvBinHist = lambda df, *colWithBin: println(_smvBinHist(df, *colWithB
 #############################################
 # ColumnHelper methods:
 #############################################
-def _smvIsAllIn(col, *vals):
+def _smvIsAllIn(c, *vals):
     # accept a single list argument as well
     if len(vals) == 1 and isinstance(vals[0], (list, set)):
         vals = vals[0]
-    sc = _sparkContext()
-    return Column(sc._jvm.SmvPythonHelper.smvIsAllIn(col._jc, _to_seq(sc, vals)))
+    # SmvPythonHelper is necessary because the Scala method is generic
+    return Column(_sparkContext()._jvm.SmvPythonHelper.smvIsAllIn(c._jc, _to_seq(vals)))
 
 Column.smvIsAllIn = _smvIsAllIn
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))

@@ -1177,7 +1177,7 @@ class SmvDFHelper(df: DataFrame) {
    * have to be launched as either local or yar-client mode. Also it is user's responsibility
    * to make sure that the DF is small enought to fit into memory.
    **/
-  def exportCsv(path: String, n: Integer = null) {
+  def smvExportCsv(path: String, n: Integer = null) {
     val schema = SmvSchema.fromDataFrame(df)
     val ca = CsvAttributes.defaultCsv
 
@@ -1199,6 +1199,9 @@ class SmvDFHelper(df: DataFrame) {
 
     SmvReportIO.saveLocalReport(headerStr + "\n" + bodyStr + "\n", path)
   }
+
+  @deprecated("1.5", "use smvExportCsv instead")
+  def exportCsv(path: String, n: Integer = null) = smvExportCsv(path, n)
 
   /**
    * Add a set of DoubleBinHistogram columns to a DataFrame.
