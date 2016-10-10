@@ -382,7 +382,10 @@ def __smvHashSample(df, key, rate=0.01, seed=23):
     return DataFrame(dfhelper(df).smvHashSample(jkey, rate, seed), df.sql_ctx)
 DataFrame.smvHashSample = __smvHashSample
 
-DataFrame.smvJoinByKey = lambda df, other, keys, joinType, postfix = None, dropRightKey = True: DataFrame(dfhelper(df).smvJoinByKey(other._jdf, _to_seq(keys), joinType, postfix, dropRightKey), df.sql_ctx)
+# FIXME py4j method resolution with null argument can fail, so we
+# temporarily remove the trailing parameters till we can find a
+# workaround
+DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(helper(df).smvJoinByKey(df._jdf, other._jdf, _to_seq(keys), joinType), df.sql_ctx)
 
 DataFrame.smvJoinMultipleByKey = lambda df, keys, joinType = 'inner': SmvMultiJoin(df.sql_ctx, helper(df).smvJoinMultipleByKey(df._jdf, smv_copy_array(df._sc, *keys), joinType))
 

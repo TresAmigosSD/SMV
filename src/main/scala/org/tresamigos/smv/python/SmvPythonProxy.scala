@@ -17,6 +17,14 @@ object SmvPythonHelper {
   def smvGroupBy(df: DataFrame, cols: Array[Column]): SmvGroupedDataAdaptor =
     new SmvGroupedDataAdaptor(df.smvGroupBy(cols:_*))
 
+  /**
+   * FIXME py4j method resolution with null argument can fail, so we
+   * temporarily remove the trailing parameters till we can find a
+   * workaround
+   */
+  def smvJoinByKey(df: DataFrame, other: DataFrame, keys: Seq[String], joinType: String): DataFrame =
+    df.smvJoinByKey(other, keys, joinType)
+
   def smvJoinMultipleByKey(df: DataFrame, keys: Array[String], joinType: String): SmvMultiJoinAdaptor =
     new SmvMultiJoinAdaptor(df.smvJoinMultipleByKey(keys, joinType))
 
