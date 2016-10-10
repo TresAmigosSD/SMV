@@ -67,7 +67,7 @@ class DfHelperTest(SmvBaseTest):
             2,10.0,hello2;
             2,11.0,hello3"""
         )
-        r1 = df.smvDedupByKeyWithOrder(["a"], [col("b").desc()])
+        r1 = df.smvDedupByKeyWithOrder("a")(col("b").desc())
         expect = self.createDF(
             schema,
             """1,3.0,hello;
@@ -84,7 +84,7 @@ class DfHelperTest(SmvBaseTest):
             2,10.0,hello2;
             2,11.0,hello3"""
         )
-        r1 = df.smvDedupByKeyWithOrder([col("a")], [col("b").desc()])
+        r1 = df.smvDedupByKeyWithOrder(col("a"))(col("b").desc())
         expect = self.createDF(
             schema,
             """1,3.0,hello;

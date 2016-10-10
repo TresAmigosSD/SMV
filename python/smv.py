@@ -395,7 +395,11 @@ DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(dfhelper(df).smvSelectPlus
 
 DataFrame.smvDedupByKey = lambda df, *keys: DataFrame(helper(df).smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
 
-DataFrame.smvDedupByKeyWithOrder = lambda df, keys, orderCol: DataFrame(helper(df).smvDedupByKeyWithOrder(df._jdf, smv_copy_array(df._sc, *keys), smv_copy_array(df._sc, *orderCol)), df.sql_ctx)
+def __smvDedupByKeyWithOrder(df, *keys):
+    def _withOrder(*orderCols):
+        return DataFrame(helper(df).smvDedupByKeyWithOrder(df._jdf, smv_copy_array(df._sc, *keys), smv_copy_array(df._sc, *orderCols)), df.sql_ctx)
+    return _withOrder
+DataFrame.smvDedupByKeyWithOrder = __smvDedupByKeyWithOrder
 
 DataFrame.smvUnion = lambda df, *dfothers: DataFrame(dfhelper(df).smvUnion(_to_seq(dfothers, _jdf)), df.sql_ctx)
 
