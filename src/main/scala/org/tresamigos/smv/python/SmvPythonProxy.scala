@@ -17,9 +17,6 @@ object SmvPythonHelper {
   def smvGroupBy(df: DataFrame, cols: Array[Column]): SmvGroupedDataAdaptor =
     new SmvGroupedDataAdaptor(df.smvGroupBy(cols:_*))
 
-  def smvJoinByKey(df: DataFrame, other: DataFrame, keys: Array[String], joinType: String): DataFrame =
-    df.joinByKey(other, keys.toSeq, joinType)
-
   def smvJoinMultipleByKey(df: DataFrame, keys: Array[String], joinType: String): SmvMultiJoinAdaptor =
     new SmvMultiJoinAdaptor(df.smvJoinMultipleByKey(keys, joinType))
 

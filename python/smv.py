@@ -367,7 +367,6 @@ def dfhelper(df):
 def colhelper(c):
     return _sparkContext()._jvm.ColumnHelper(c._jc)
 
-# TODO need test
 DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(helper(df).smvExpandStruct(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
 
 # TODO can we port this without going through the proxy?
@@ -383,8 +382,7 @@ def __smvHashSample(df, key, rate=0.01, seed=23):
     return DataFrame(dfhelper(df).smvHashSample(jkey, rate, seed), df.sql_ctx)
 DataFrame.smvHashSample = __smvHashSample
 
-# TODO need test
-DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(helper(df).smvJoinByKey(df._jdf, other._jdf, smv_copy_array(df._sc, *keys), joinType), df.sql_ctx)
+DataFrame.smvJoinByKey = lambda df, other, keys, joinType, postfix = None, dropRightKey = True: DataFrame(dfhelper(df).smvJoinByKey(other._jdf, _to_seq(keys), joinType, postfix, dropRightKey), df.sql_ctx)
 
 DataFrame.smvJoinMultipleByKey = lambda df, keys, joinType = 'inner': SmvMultiJoin(df.sql_ctx, helper(df).smvJoinMultipleByKey(df._jdf, smv_copy_array(df._sc, *keys), joinType))
 

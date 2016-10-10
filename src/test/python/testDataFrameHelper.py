@@ -6,7 +6,7 @@ from smv import SmvPyCsvFile
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, struct
 
 class DfHelperTest(SmvBaseTest):
     def test_smvGroupBy(self):
@@ -92,6 +92,14 @@ class DfHelperTest(SmvBaseTest):
         )
         self.should_be_same(expect, r1)
 
+    def test_smvExpandStruct(self):
+        schema = "id:String;a:Double;b:Double"
+        df1 = self.createDF(schema, "a,1.0,10.0;a,2.0,20.0;b,3.0,30.0")
+        df2 = df1.select(col("id"), struct("a", "b").alias("c"))
+        res = df2.smvExpandStruct("c")
+        expect = self.createDF(schema, "a,1.0,10.0;a,2.0,20.0;b,3.0,30.0")
+        self.should_be_same(expect, res)
+
     def test_smvExportCsv(self):
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
         path = "./target/python-test-export-csv.csv"
@@ -104,6 +112,22 @@ class DfHelperTest(SmvBaseTest):
         exec(code.format(path), globals())
         res = self.smv.run_python_module(self.__module__ + ".T")
         self.should_be_same(df, res)
+
+    def test_smvJoinByKey(self):
+        df1 = self.createDF(
+            "a:Integer; b:Double; c:String",
+            """1,2.0,hello;
+            1,3.0,hello;
+            2,10.0,hello2;
+            2,11.0,hello3"""
+        )
+        df2 = self.createDF("a:Integer; c:String", """1,asdf;2,asdfg""")
+        res = df1.smvJoinByKey(df2, ['a'], "inner")
+        expect = self.createDF(
+            "a:Integer;b:Double;c:String;_c:String",
+            "1,2.0,hello,asdf;1,3.0,hello,asdf;2,10.0,hello2,asdfg;2,11.0,hello3,asdfg"
+        )
+        self.should_be_same(expect, res)
 
     def test_smvJoinMultipleByKey(self):
         df1 = self.createDF("a:Integer;b:String", """1,x1;2,y1;3,z1""")
