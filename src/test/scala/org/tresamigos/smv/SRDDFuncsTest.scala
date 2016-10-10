@@ -79,11 +79,11 @@ class SelectPlusMinusTest extends SmvTestUtil {
       "3.0")
   }
 
-  test("test selectExpandStruct") {
+  test("test smvExpandStruct") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("id:String;a:Double;b:Double", "a,1.0,10.0;a,2.0,20.0;b,3.0,30.0")
     val dfStruct = df.select($"id", struct("a", "b") as "c")
-    val res = dfStruct.selectExpandStruct("c")
+    val res = dfStruct.smvExpandStruct("c")
     assertSrddDataEqual(res, "a,1.0,10.0;a,2.0,20.0;b,3.0,30.0")
   }
 }
@@ -194,7 +194,7 @@ class JoinHelperTest extends SmvTestUtil {
     assertSrddSchemaEqual(result, "a: Integer; b: Double; C: String; a2: Integer; _c: String")
   }
 
-  test("test joinByKey") {
+  test("test smvJoinByKey") {
     val ssc = sqlContext; import ssc.implicits._
     val srdd1 = createSchemaRdd("a:Integer; b:Double; c:String",
       """1,2.0,hello;
@@ -208,7 +208,7 @@ class JoinHelperTest extends SmvTestUtil {
          2,asdfg"""
     )
 
-    val result = srdd1.joinByKey(srdd2, Seq("a"), "inner")
+    val result = srdd1.smvJoinByKey(srdd2, Seq("a"), "inner")
     val fieldNames = result.columns
     assert(fieldNames === Seq("a", "b", "c", "_c"))
     assertUnorderedSeqEqual(result.collect.map(_.toString), Seq(
@@ -218,10 +218,10 @@ class JoinHelperTest extends SmvTestUtil {
     "[2,11.0,hello3,asdfg]"))
   }
 
-  test("outer joinByKey with single key column") {
+  test("outer smvJoinByKey with single key column") {
     val df1 = createSchemaRdd("a:Integer;b:String", """1,x1;2,y1;3,z1""")
     val df2 = createSchemaRdd("a:Integer;b:String", """1,x2;4,w2;""")
-    val res = df1.joinByKey(df2, Seq("a"), SmvJoinType.Outer)
+    val res = df1.smvJoinByKey(df2, Seq("a"), SmvJoinType.Outer)
     assert(res.columns === Seq("a", "b", "_b"))
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
     "[1,x1,x2]",
@@ -230,10 +230,10 @@ class JoinHelperTest extends SmvTestUtil {
     "[4,null,w2]"))
   }
 
-  test("outer joinByKey with multiple key columns") {
+  test("outer smvJoinByKey with multiple key columns") {
     val df1 = createSchemaRdd("k1:Integer;k2:Integer;a:String", "1,1,x1;1,2,x2;2,1,x3;2,2,x4")
     val df2 = createSchemaRdd("k1:Integer;k2:Integer;b:String", "1,1,y1;1,3,y2;3,1,y3;3,3,y4")
-    val res = df1.joinByKey(df2, Seq("k1", "k2"), SmvJoinType.Outer)
+    val res = df1.smvJoinByKey(df2, Seq("k1", "k2"), SmvJoinType.Outer)
     assert(res.columns === Seq("k1", "k2", "a", "b"))
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[1,1,x1,y1]",
@@ -245,11 +245,11 @@ class JoinHelperTest extends SmvTestUtil {
       "[3,3,null,y4]"))
   }
 
-  test("joinByKey with underscore column name on the left table") {
+  test("smvJoinByKey with underscore column name on the left table") {
     val df1 = app.createDF("a:String;_a:String", "a,1;a,2")
     val df2 = app.createDF("a:String;x:String", "a,f")
 
-    val res = df1.joinByKey(df2, Seq("a"), SmvJoinType.Inner)
+    val res = df1.smvJoinByKey(df2, Seq("a"), SmvJoinType.Inner)
     assert(res.columns === Seq("a", "_a", "x"))
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,1,f]",

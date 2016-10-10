@@ -284,9 +284,7 @@ class SmvDFHelper(df: DataFrame) {
     df.smvSelectPlus(exprs: _*).smvSelectMinus(colNames.head, colNames.tail: _*)
   }
 
-  /**
-   * @deprecated("Renamed to smvExpandStruct")
-   **/
+  @deprecated("1.5", "use smvExpandStruct instead")
   def selectExpandStruct(colNames: String*): DataFrame = smvExpandStruct(colNames: _*)
 
   /**
@@ -313,12 +311,12 @@ class SmvDFHelper(df: DataFrame) {
    * If both left and right side of the join operation contain the same key,
    * the result `DataFrame` is unusable.
    *
-   * The `joinByKey` method will allow the user to join two `DataFrames` using the same join key.
+   * The `smvJoinByKey` method will allow the user to join two `DataFrames` using the same join key.
    * Post join, only the left side keys will remain. In case of outer-join, the
    * `coalesce(leftkey, rightkey)` will replace the left key to be kept.
    *
    * {{{
-   *   df1.joinByKey(df2, Seq("k"), SmvJoinType.Inner)
+   *   df1.smvJoinByKey(df2, Seq("k"), SmvJoinType.Inner)
    * }}}
    * Note the use of the `SmvJoinType.Inner` const instead of the naked "inner" string.
    *
@@ -327,7 +325,7 @@ class SmvDFHelper(df: DataFrame) {
    * `postfix` parameter is specified, otherwise df2 version with be postfixed with
    * the specified `postfix`.
    */
-  def joinByKey(
+  def smvJoinByKey(
     otherPlan: DataFrame,
     keys: Seq[String],
     joinType: String,
@@ -355,6 +353,15 @@ class SmvDFHelper(df: DataFrame) {
     }
     dfCoalescedKeys.smvSelectMinus(rightKeys(0), rightKeys.tail: _*)
   }
+
+  @deprecated("1.5", "use smvJoinByKey instead")
+  def joinByKey(
+    otherPlan: DataFrame,
+    keys: Seq[String],
+    joinType: String,
+    postfix: String = null,
+    dropRightKey: Boolean = true
+  ) = smvJoinByKey(otherPlan, keys, joinType, postfix, dropRightKey)
 
   /**
    * Create multiple DF join builder: `SmvMultiJoin`.
@@ -1236,7 +1243,7 @@ class SmvDFHelper(df: DataFrame) {
       val min_max_df = df.groupBy(key_cols: _*).agg(min_max_cols(0), min_max_cols.tail: _*)
 
 
-      val df_with_min_max = df.joinByKey(min_max_df, keys, SmvJoinType.Inner)
+      val df_with_min_max = df.smvJoinByKey(min_max_df, keys, SmvJoinType.Inner)
 
       var number_of_bins = num_of_bins
       //Make sure that size of number_of_bins is equal to size of columns_to_bin.

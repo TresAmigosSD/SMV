@@ -53,7 +53,7 @@ private[smv] abstract class EddTaskGroup {
       val dfGd = df.smvSelectPlus(smvStrCat("_", keys.map{c => $"$c"}: _*) as "groupKey").groupBy("groupKey")
       if (aggOlds.isEmpty) dfGd.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
       else if (aggNews.isEmpty) dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1)
-      else dfGd.agg(aggNews.head, aggNews.tail: _*).coalesce(1).joinByKey(dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1), Seq("groupKey"), Inner)
+      else dfGd.agg(aggNews.head, aggNews.tail: _*).coalesce(1).smvJoinByKey(dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1), Seq("groupKey"), Inner)
     }
 
     val resCached = res.cache

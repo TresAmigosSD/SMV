@@ -232,7 +232,7 @@ class SmvHierarchies(
       toMap
 
     mapDFsMap.foldLeft(df)((res, pair) =>
-      pair match {case (k, v) => res.joinByKey(v, Seq(k), Inner)}
+      pair match {case (k, v) => res.smvJoinByKey(v, Seq(k), Inner)}
     )
   }
 

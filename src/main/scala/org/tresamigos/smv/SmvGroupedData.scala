@@ -276,7 +276,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     df.smvSelectPlus(
       sum(valueCol) over w as s"${valueCol}_rsum",
       udf(percent2nTile).apply((percentRank() over w)) as s"${valueCol}_quantile").
-      joinByKey(total, keys, SmvJoinType.Inner)
+      smvJoinByKey(total, keys, SmvJoinType.Inner)
   }
 
   /** same as `smvQuantile(String, Integer)` but uses a `Column` type to specify the column name */
@@ -363,13 +363,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     }
 
     if(doDropRange){
-      df.joinByKey(withRanges, keys, SmvJoinType.Inner).smvSelectPlus(scaleExprs: _*).
+      df.smvJoinByKey(withRanges, keys, SmvJoinType.Inner).smvSelectPlus(scaleExprs: _*).
         smvSelectMinus(cols.flatMap{v =>
           val name = v.getName
           Seq($"${name}_min", $"${name}_max")
         }: _*)
     } else {
-      df.joinByKey(withRanges, keys, SmvJoinType.Inner).smvSelectPlus(scaleExprs: _*)
+      df.smvJoinByKey(withRanges, keys, SmvJoinType.Inner).smvSelectPlus(scaleExprs: _*)
     }
   }
 
