@@ -187,6 +187,17 @@ class Smv(object):
         self.pymods[mod] = ret
         return ret
 
+    def __getattr__(self, method):
+        """Any missing method is forwarded to SmvPythonRpc with a dictionary
+        """
+        def _rpc(**params):
+            # TODO: may need to register converters for common return types such as DataFrame
+            res = self._jvm.org.tresamigos.smv.python.SmvPythonRpc.request(
+                method, self._jvm.PythonUtils.toScalaMap(params))
+            # TODO: dispatch by return status code
+            return res
+        return _rpc
+
 class SmvPyDataSet(object):
     """Base class for all SmvDataSets written in Python
     """
