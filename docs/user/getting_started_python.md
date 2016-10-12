@@ -16,10 +16,16 @@ The `smv-init` script will create a `src/main/python` directory and copy the exa
 
 Even if you are writing an SMV application in 100% Python, you still need to have the SMV Scala library in order to use its core functionality.  Hence the necessity to run a build, which is not common in Python projects.  In the future, this step may also be eliminated.  But fortunately, in a pure Python project, you only need to do it once.
 
-In the project root directory , simply run
+In the project root directory , if you use SBT for Scala compiling, simply run
 ```shell
 $ sbt assembly
 ```
+
+If you use Maven, then run
+```shell
+$ mvn package
+```
+
 
 ## Run Example Application
 
