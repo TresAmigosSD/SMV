@@ -187,6 +187,15 @@ class Smv(object):
         self.pymods[mod] = ret
         return ret
 
+    def resolve(self, modname):
+        res = self._jvm.org.tresamigos.smv.python.SmvPythonRpc.resolve(modname)
+        if res.isSuccess():
+            return res.get()
+        else:
+            # TODO try to resolve module as a python module; if
+            # successful, register with the app, otherwise fail
+            return None
+
     def __getattr__(self, method):
         """Any missing method is forwarded to SmvPythonRpc with a dictionary
         """
@@ -194,7 +203,14 @@ class Smv(object):
             # TODO: may need to register converters for common return types such as DataFrame
             res = self._jvm.org.tresamigos.smv.python.SmvPythonRpc.request(
                 method, self._jvm.PythonUtils.toScalaMap(params))
-            # TODO: dispatch by return status code
+
+            if res['status'] == 'OK':
+                if res['dataframe']:
+                    return DataFrame(res['dataframe'], self.sqlContext)
+                else:
+                    return None
+            elif res['status'] == 'Not Found':
+                # TODO dispatch on method
             return res
         return _rpc
 
