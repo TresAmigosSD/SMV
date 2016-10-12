@@ -26,13 +26,13 @@ You can view your notebooks at localhost:8888.
 
 # Jupyter notebook keyboard shortcuts
 
-```shell
+```
 Command Mode (press Esc to enable)
 
 Enter              enter edit mode
-Shift-Enter        run cell, select below
+Shift-Enter        run cell, and select below
 Ctrl-Enter         run cell
-Alt-Enter          run cell, insert below
+Alt-Enter          run cell, and insert below
 M                  to markdown
 1                  to heading 1
 2,3,4,5,6          to heading 2,3,4,5,6
@@ -42,13 +42,13 @@ Z                  undo last cell deletion
 Shift-M            merge cell below
 ```
 
-```shell
+```
 Edit Mode (press Enter to enable)
 
 Tab                code completion or indent
 Ctrl-Up            go to cell start
 Ctrl-Down          go to cell end
-Esc                command mode
+Esc                enter command mode
 Shift-Enter        run cell, select below
 ```
 
@@ -58,13 +58,13 @@ For more shortcuts, refer [Jupyter notebook keyboard shortcuts](https://www.chea
 
 View the first `n` rows of the dataframe `df` with
 
-```shell
+```
 df.limit(n).toPandas().head(n)
 ```
 
 The default maximal number of columns to display is 20, and maximal number of rows to display is 60. To display more rows or columns, set display options with
 
-```shell
+```
 import pandas as pd
 pd.set_option("display.max_columns", column_number)
 pd.set_option("display.max_rows", row_number)
@@ -72,7 +72,7 @@ pd.set_option("display.max_rows", row_number)
 
 Set float number display precision with
 
-```shell
+```
 pd.set_option('display.precision', 2)
 ```
 
@@ -80,20 +80,20 @@ pd.set_option('display.precision', 2)
 
 Install `matplotlib` for data visualization, and import with
 
-```shell
+```
 import matplotlib.pyplot as plt
 %matplotlib inline
 ```
 
 X-Y plot  
 
-```shell
+```
 df.plot(x='column1', y='column2' )
 ```
 
 Bar plot
 
-```shell
+```
 df['column1'].plot(kind='bar')
 ```
 
