@@ -182,7 +182,7 @@ class Smv(object):
         else:
             ret = mod.run(self.pymods)
             if not mod.isInput():
-                self.app.persist(ret._jdf, mod.modulePath(), True)
+                self.app.persist(ret._jdf, mod.modulePath(), False)
 
         self.pymods[mod] = ret
         return ret
