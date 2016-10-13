@@ -211,7 +211,7 @@ class Smv(object):
                     return None
             elif res['status'] == 'Not Found':
                 # TODO dispatch on method
-            return res
+                return res
         return _rpc
 
 class SmvPyDataSet(object):
