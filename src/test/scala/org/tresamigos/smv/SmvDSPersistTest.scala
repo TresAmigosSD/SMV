@@ -18,7 +18,8 @@ class SmvDSPersistTest extends SmvTestUtil {
   override def appArgs = Seq(
     "--smv-props",
     "smv.stages=org.tresamigos.smv.dspersistPkg",
-    "-m", "None"
+    "-m", "None",
+    "--data-dir", testcaseTempDir
   )
 
   test("test read back persisted module with meta data") {
