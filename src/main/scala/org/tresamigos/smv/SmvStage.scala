@@ -112,7 +112,16 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
   /**
    * Find the stage that a given dataset belongs to.
    */
-  def findStageForDataSet(ds: SmvDataSet) : SmvStage = dsname2stage.get(ds.name) getOrElse null
+  def findStageForDataSet(ds: SmvDataSet) : Option[SmvStage] = dsname2stage.get(ds.name)
+
+  /**
+   * Since `findStageForDataSet` uses the pre-built map, for dynamically loaded
+   * modules, it will not be in the map. Since we are not dynamically load new stages,
+   * we can actually infer the stage a new module is in by check the longest matched stage
+   * name string.
+   **/
+  def inferStageForDataSet(ds: SmvDataSet) : Option[SmvStage] =
+    stages.map{_.name}.filter(ds.name.startsWith(_)).sortBy(_.size).lastOption.map{n => findStage(n)}
 
   override lazy val predecessors: Map[SmvDataSet, Seq[SmvDataSet]] =
     allDatasets.map{

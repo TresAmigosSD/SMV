@@ -41,7 +41,8 @@ class SmvNewAppTest extends SparkTestUtil {
 class SmvAppTest extends SmvTestUtil {
   override def appArgs = Seq("-m", "C",
     "--data-dir", testcaseTempDir,
-    "--input-dir", testcaseTempDir
+    "--input-dir", testcaseTempDir,
+    "--permit-dependency-violation"
   )
 
   val fx = new SmvTestFile("FX")

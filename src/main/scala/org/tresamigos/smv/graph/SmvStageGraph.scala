@@ -71,7 +71,7 @@ private[smv] case class SmvStageInterface(fromStage: SmvStage, toStage: SmvStage
 private[smv] class SmvStageGraph(stages: SmvStages) {
   val stageNodes: Seq[SmvStage] = stages.stages
   val interfaceNodes: Seq[SmvStageInterface] = stageNodes.flatMap{s =>
-    s.allLinks.groupBy(l => stages.findStageForDataSet(l.smvModule)).filter{
+    s.allLinks.groupBy(l => stages.findStageForDataSet(l.smvModule).getOrElse(null)).filter{
       case (upStage, links) => upStage != null
     }.map{case (upStage, links) => SmvStageInterface(upStage, s, links)}
   }

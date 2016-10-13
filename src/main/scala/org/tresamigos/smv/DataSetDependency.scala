@@ -125,7 +125,7 @@ object SameStageDependency extends DependencyRule {
     val diff = for {
       dep <- ds.requiresDS
       if (!dep.isInstanceOf[SmvModuleLink]) &&
-      dep.parentStage != ds.parentStage
+      (ds.parentStage == null || dep.parentStage != ds.parentStage)
     } yield dep
 
     toViolation(diff)

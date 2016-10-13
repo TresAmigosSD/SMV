@@ -10,3 +10,14 @@ object MyModule extends SmvModule("desc") {
   }
 }
 
+object MyModule2 extends SmvModule("desc2") {
+  override val isEphemeral = true
+  override def requiresDS() = Seq(
+    MyModule
+  )
+
+  override def run(i: runParams) = {
+    val df = i(MyModule)
+    df
+  }
+}

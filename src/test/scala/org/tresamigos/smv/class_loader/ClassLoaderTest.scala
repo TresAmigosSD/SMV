@@ -28,6 +28,7 @@ trait ClassLoaderTestHelper {
       s"smv.class_server.host=${host}",
       s"smv.class_server.port=${port}",
       s"smv.class_server.class_dir=${classDir}",
+      "smv.stages=com.smv",
       "smv.dataDir=.",
       "-m", "mod1")
   }
@@ -62,6 +63,11 @@ class SmvAppDynamicResolveTest extends SmvTestUtil with ClassLoaderTestHelper {
 
   test("test SmvApp.dynamicResolveRDD function") {
     val df = app.dynamicResolveRDD("com.smv.MyModule", getClass.getClassLoader)
+    assertSrddDataEqual(df, "1;2;3")
+  }
+
+  test("test SmvApp.dynamicResolveRDD load module with dependency") {
+    val df = app.dynamicResolveRDD("com.smv.MyModule2", getClass.getClassLoader)
     assertSrddDataEqual(df, "1;2;3")
   }
 }
