@@ -672,11 +672,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    **/
   def timePanelValueFill(smvTimeColName: String, backwardFill: Boolean = true)(values: String*) = {
     import df.sqlContext.implicits._
-    val foreward = fillNullWithPrevValue($"$smvTimeColName".asc)(values.map{s => $"${s}"}: _*)
+    val foreward = smvFillNullWithPrevValue($"$smvTimeColName".asc)(values.map{s => $"${s}"}: _*)
 
     if(backwardFill)
       foreward.smvGroupBy(keys.map{k => $"${k}"}: _*).
-        fillNullWithPrevValue($"$smvTimeColName".desc)(values.map{s => $"${s}"}: _*)
+        smvFillNullWithPrevValue($"$smvTimeColName".desc)(values.map{s => $"${s}"}: _*)
     else
       foreward
   }
@@ -789,7 +789,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    *
    * {{{
-   * df.smvGroupBy("K").fillNullWithPrevValue($"T".asc)($"V")
+   * df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)($"V")
    * }}}
    *
    * Output:
@@ -806,8 +806,8 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * allow fill backward at the beginning of the sequence, you can apply
    * this method again with reverse ordering:
    * {{{
-   * df.smvGroupBy("K").fillNullWithPrevValue($"T".asc)($"V").
-   *   smvGroupBy("K").fillNullWithPrevValue($"T".desc)($"V")
+   * df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)($"V").
+   *   smvGroupBy("K").smvFillNullWithPrevValue($"T".desc)($"V")
    * }}}
    *
    * Output:
@@ -819,7 +819,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * a, 4, b
    * }}}
    **/
-  private[smv] def fillNullWithPrevValue(orders: Column*)(values: Column*): DataFrame = {
+  def smvFillNullWithPrevValue(orders: Column*)(values: Column*): DataFrame = {
     val renamed = values.map{c => c.getName}.map{n => mkUniq(df.columns, s"_${n}")}
 
     /* We are using the `last` aggregate function's feature that it's actually
