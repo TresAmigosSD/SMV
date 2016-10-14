@@ -2,6 +2,7 @@ package org.tresamigos.smv.python
 
 import org.apache.spark._, sql._
 import org.tresamigos.smv._
+import org.tresamigos.smv.rpc.SmvRpc
 
 import scala.collection.JavaConversions._
 import scala.util.Try
@@ -62,6 +63,8 @@ object SmvPythonHelper {
 
   def smvIsAllIn(col: Column, values: Any*): Column = col.smvIsAllIn(values:_*)
   def smvIsAnyIn(col: Column, values: Any*): Column = col.smvIsAnyIn(values:_*)
+
+  def hi(rpc: SmvRpc, modname: String): String = rpc.hi(modname)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
