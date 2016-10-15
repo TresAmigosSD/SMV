@@ -34,6 +34,10 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     default = Some("."),
     descr = "SMV app directory"
   )
+
+  val cbsPort = opt[Int]("cbs-port", noshort=true, default=None,
+    descr = "python callback server port")
+
   val smvAppConfFile = opt("smv-app-conf", noshort = true,
     default = Some(DEFAULT_SMV_APP_CONF_FILE),
     descr = "app level (static) SMV configuration file path")

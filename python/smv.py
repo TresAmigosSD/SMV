@@ -1,3 +1,5 @@
+from py4j.java_gateway import java_import, JavaObject
+
 from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
@@ -140,6 +142,19 @@ class Smv(object):
         # convert python arglist to java String array
         java_args =  smv_copy_array(sc, *arglist)
         self.app = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
+        cbsp = self.app.callbackServerPort()
+        if cbsp.isDefined():
+            print("starting callback server on port {}".format(cbsp.get()))
+            from pyspark.streaming.context import _daemonize_callback_server
+            _daemonize_callback_server()
+            gw = sc._gateway
+            gw._shutdown_callback_server()
+            gw._start_callback_server(cbsp.get())
+            gw._python_proxy_port = gw._callback_server.port
+            # get the GatewayServer object in JVM by ID
+            jgws = JavaObject("GATEWAY_SERVER", gw._gateway_client)
+            # update the port of CallbackClient with real port
+            gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
         self.pymods = {}
         return self
 
@@ -189,33 +204,6 @@ class Smv(object):
 
         self.pymods[mod] = ret
         return ret
-
-    def resolve(self, modname):
-        res = self._jvm.org.tresamigos.smv.python.SmvPythonRpc.resolve(modname)
-        if res.isSuccess():
-            return res.get()
-        else:
-            # TODO try to resolve module as a python module; if
-            # successful, register with the app, otherwise fail
-            return None
-
-    def __getattr__(self, method):
-        """Any missing method is forwarded to SmvPythonRpc with a dictionary
-        """
-        def _rpc(**params):
-            # TODO: may need to register converters for common return types such as DataFrame
-            res = self._jvm.org.tresamigos.smv.python.SmvPythonRpc.request(
-                method, self._jvm.PythonUtils.toScalaMap(params))
-
-            if res['status'] == 'OK':
-                if res['dataframe']:
-                    return DataFrame(res['dataframe'], self.sqlContext)
-                else:
-                    return None
-            elif res['status'] == 'Not Found':
-                # TODO dispatch on method
-                return res
-        return _rpc
 
 class SmvPyDataSet(object):
     """Base class for all SmvDataSets written in Python
@@ -513,16 +501,3 @@ class PythonSmvRpc(object):
 
     class Java:
         implements = ['org.tresamigos.smv.rpc.SmvRpc']
-
-def testcb():
-    sc = _sparkContext()
-    gw = SparkContext._gateway
-
-    # TODO ensure callback_server is not started
-    gw.restart_callback_server()
-    print(gw.jvm.SmvPythonHelper.hi(PythonSmvRpc(), 'com.my.stage1.MyPythonModule01'))
-
-    # TODO shutdown hook doesn't work; steal from the streaming code to daemonize cb_server thread
-    # import atexit
-    # atexit.register(lambda: SparkContext._gateway._shutdown_callback_server())
-    gw._shutdown_callback_server()
