@@ -3,6 +3,7 @@ package org.tresamigos.smv.python
 import org.apache.spark._, sql._
 import org.tresamigos.smv._
 import org.tresamigos.smv.rpc.SmvRpc
+import py4j.GatewayServer
 
 import scala.collection.JavaConversions._
 import scala.util.Try
@@ -65,6 +66,16 @@ object SmvPythonHelper {
   def smvIsAnyIn(col: Column, values: Any*): Column = col.smvIsAnyIn(values:_*)
 
   def hi(rpc: SmvRpc, modname: String): String = rpc.hi(modname)
+
+  /**
+   * Update the port of callback client
+   */
+  def updatePythonGatewayPort(gws: GatewayServer, port: Int): Unit = {
+    val cl = gws.getCallbackClient
+    val f = cl.getClass.getDeclaredField("port")
+    f.setAccessible(true)
+    f.setInt(cl, port)
+  }
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
@@ -91,11 +102,13 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
 class SmvPythonApp(val app: SmvApp) {
   val config = app.smvConfig
 
+  def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
+
   def verifyConfig(): Unit = app.verifyConfig()
 
   /** The names of the modules to run in this app */
   // TODO relocate moduleNames() from SmvConfig to here
-  val moduleNames: Array[String] = app.smvConfig.moduleNames
+  val moduleNames: Array[String] = config.moduleNames
 
   /** The name to dataframe look-up table */
   var runParams: Map[String, DataFrame] = Map.empty
