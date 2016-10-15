@@ -24,6 +24,10 @@ Any arguments following smv-jupyter will be passed to jupyter notebook
 
 You can view your notebooks at localhost:8888.
 
+You could also install Jupyter on your host machine without docker. To run `smv-jupyter`, you need to change
+directory to the project root, compile the project with `mvn package` or `sbt assembly`, then run `smv-jupyter`.
+It will look for `nodebooks` directory under the project root for store notebooks. 
+
 # Jupyter notebook keyboard shortcuts
 
 ```
