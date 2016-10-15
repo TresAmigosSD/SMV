@@ -180,9 +180,12 @@ class Smv(object):
         if (tryRead.isSuccess()):
             ret = DataFrame(tryRead.get(), self.sqlContext)
         else:
-            ret = mod.doRun(self.pymods)
+            _ret = mod.doRun(self.pymods)
             if not mod.isInput():
-                self.app.persist(ret._jdf, mod.modulePath(), False)
+                self.app.persist(_ret._jdf, mod.modulePath(), False)
+                ret = DataFrame(self.app.tryReadPersistedFile(mod.modulePath()).get(), self.sqlContext)
+            else:
+                ret = _ret
 
         self.pymods[mod] = ret
         return ret
