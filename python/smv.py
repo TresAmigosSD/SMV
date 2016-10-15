@@ -180,7 +180,7 @@ class Smv(object):
         if (tryRead.isSuccess()):
             ret = DataFrame(tryRead.get(), self.sqlContext)
         else:
-            ret = mod.run(self.pymods)
+            ret = mod.doRun(self.pymods)
             if not mod.isInput():
                 self.app.persist(ret._jdf, mod.modulePath(), False)
 
@@ -231,7 +231,7 @@ class SmvPyDataSet(object):
         """The list of dataset dependencies"""
 
     @abc.abstractmethod
-    def run(self, i):
+    def doRun(self, i):
         """Comput this dataset, including its depencies if necessary"""
 
     def version(self):
@@ -317,7 +317,7 @@ class SmvPyCsvFile(SmvPyDataSet):
     def requiresDS(self):
         return []
 
-    def run(self, i):
+    def doRun(self, i):
         jdf = self._smvCsvFile.rdd()
         return DataFrame(jdf, self.smv.sqlContext)
 
@@ -342,8 +342,12 @@ class SmvPyHiveTable(SmvPyDataSet):
     def requiresDS(self):
         return []
 
-    def run(self, i):
-        return DataFrame(self._smvHiveTable.rdd(), self.smv.sqlContext)
+    def run(self, df):
+        """This can be override by concrete SmvPyHiveTable"""
+        return df
+
+    def doRun(self, i):
+        return self.run(DataFrame(self._smvHiveTable.rdd(), self.smv.sqlContext))
 
 class SmvPyModule(SmvPyDataSet):
     """Base class for SmvModules written in Python
@@ -354,6 +358,13 @@ class SmvPyModule(SmvPyDataSet):
 
     def prerun(self, i):
         print(".... computing module " + self.fqn())
+
+    @abc.abstractproperty
+    def run(self, i):
+        """This defines the real work done by this module"""
+
+    def doRun(self, i):
+        return self.run(i)
 
 class SmvGroupedData(object):
     """Wrapper around the Scala SmvGroupedData"""
