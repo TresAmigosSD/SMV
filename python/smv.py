@@ -489,3 +489,26 @@ Column.smvPlusMonths = lambda c, delta: Column(colhelper(c).smvPlusMonths(delta)
 Column.smvPlusYears  = lambda c, delta: Column(colhelper(c).smvPlusYears(delta))
 
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
+
+class PythonSmvRpc(object):
+    def hi(self, modname):
+        return 'hi ' + modname
+
+    def runModule(self, modname):
+        raise RuntimeError("TODO implement")
+
+    class Java:
+        implements = ['org.tresamigos.smv.rpc.SmvRpc']
+
+def testcb():
+    sc = _sparkContext()
+    gw = SparkContext._gateway
+
+    # TODO ensure callback_server is not started
+    gw.restart_callback_server()
+    print(gw.jvm.SmvPythonHelper.hi(PythonSmvRpc(), 'com.my.stage1.MyPythonModule01'))
+
+    # TODO shutdown hook doesn't work; steal from the streaming code to daemonize cb_server thread
+    # import atexit
+    # atexit.register(lambda: SparkContext._gateway._shutdown_callback_server())
+    gw._shutdown_callback_server()
