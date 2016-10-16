@@ -142,19 +142,28 @@ class Smv(object):
         # convert python arglist to java String array
         java_args =  smv_copy_array(sc, *arglist)
         self.app = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
+
+        # user may choose a port for the callback server
+        gw = sc._gateway
         cbsp = self.app.callbackServerPort()
-        if cbsp.isDefined():
-            print("starting callback server on port {}".format(cbsp.get()))
-            from pyspark.streaming.context import _daemonize_callback_server
-            _daemonize_callback_server()
-            gw = sc._gateway
-            gw._shutdown_callback_server()
-            gw._start_callback_server(cbsp.get())
-            gw._python_proxy_port = gw._callback_server.port
-            # get the GatewayServer object in JVM by ID
-            jgws = JavaObject("GATEWAY_SERVER", gw._gateway_client)
-            # update the port of CallbackClient with real port
-            gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
+        cbs_port = cbsp.get() if cbsp.isDefined() else gw._python_proxy_port
+
+        # this was a workaround for py4j 0.8.2.1, shipped with spark
+        # 1.5.x, to prevent the callback server from hanging the
+        # python, and hence the java, process
+        from pyspark.streaming.context import _daemonize_callback_server
+        _daemonize_callback_server()
+
+        print("starting callback server on port {}".format(cbs_port))
+        gw._shutdown_callback_server() # in case another has already started
+        gw._start_callback_server(cbs_port)
+        gw._python_proxy_port = gw._callback_server.port
+
+        # get the GatewayServer object in JVM by ID
+        jgws = JavaObject("GATEWAY_SERVER", gw._gateway_client)
+        # update the port of CallbackClient with real port
+        gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
+
         self.pymods = {}
         return self
 
@@ -492,12 +501,12 @@ Column.smvPlusYears  = lambda c, delta: Column(colhelper(c).smvPlusYears(delta))
 
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
 
-class PythonSmvRpc(object):
-    def hi(self, modname):
-        return 'hi ' + modname
+class SmvPythonModuleRepository(object):
+    def exists(self, modname):
+        return False
 
     def runModule(self, modname):
         raise RuntimeError("TODO implement")
 
     class Java:
-        implements = ['org.tresamigos.smv.rpc.SmvRpc']
+        implements = ['org.tresamigos.smv.SmvModuleRepository']
