@@ -7,7 +7,7 @@ import scala.util.{Success, Failure}
 /**
  * Repository for data sets written in Scala.
  */
-class ScalaDataSetRepository(config: SmvConfig) extends SmvDataSetRepository {
+class ScalaDataSetRepository extends SmvDataSetRepository {
   private var content: Map[String, SmvDataSet] = Map.empty
 
   def dsForName(modfqn: String): Option[SmvDataSet] =
@@ -24,15 +24,18 @@ class ScalaDataSetRepository(config: SmvConfig) extends SmvDataSetRepository {
   override def hasDataSet(modfqn: String): Boolean =
     dsForName(modfqn).isDefined
 
+  @inline private def notFound(modfqn: String, msg: String) =
+    throw new IllegalArgumentException(s"dataset [${modfqn}] is not found in ${getClass.getName}: ${msg}")
+
   override def dependencies(modfqn: String): java.util.List[String] =
     dsForName(modfqn) match {
-      case None => Nil
+      case None => notFound(modfqn, "cannot get dependencies")
       case Some(ds) => ds.requiresDS.map(_.name)
     }
 
   override def getDataFrame(modfqn: String, modules: java.util.Map[String, DataFrame]): DataFrame =
     dsForName(modfqn) match {
-      case None => null
+      case None => notFound(modfqn, "cannot get dataframe")
       case Some(ds) => ??? // TODO may need to refactor so DQM and RunParams can have the same interface
     }
 }

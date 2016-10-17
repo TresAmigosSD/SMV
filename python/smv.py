@@ -501,12 +501,43 @@ Column.smvPlusYears  = lambda c, delta: Column(colhelper(c).smvPlusYears(delta))
 
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
 
-class SmvPythonModuleRepository(object):
-    def exists(self, modname):
-        return False
+class PythonDataSetRepository(object):
+    def __init__(self, smv):
+        self.smv = smv
+        self.content = {}
 
-    def runModule(self, modname):
-        raise RuntimeError("TODO implement")
+    def ds_for_name(self, modfqn):
+        """Returns the instance of SmvPyDataSet by its fully qualified name
+        """
+        if modfqn in self.content:
+            return self.content[modfqn]
+        else:
+            try:
+                ret = for_name(modfqn)(self.smv)
+                self.content[modfqn] = ret
+                return ret
+            except AttributeError:
+                return None
+
+    def hasDataSet(self, modfqn):
+        return self.ds_for_name(modfqn) is not None
+
+    def notFound(self, modfqn, msg):
+        raise ValueError("dataset [{}] is not found in {}: {}".format(modfqn, self.__class__.__name__, msg))
+
+    def dependencies(self, modfqn):
+        ds = self.ds_for_name(modfqn)
+        if ds is None:
+            self.notFound(modfqn, "cannot get dependencies")
+        else:
+            return [x.name for x in ds.requiresDS()]
+
+    def getDataFrame(self, modfqn, modules):
+        ds = self.ds_for_name(modfqn)
+        if ds is None:
+            self.notFound(modfqn, "cannot get dataframe")
+        else:
+            return ds.doRun(modules)
 
     class Java:
-        implements = ['org.tresamigos.smv.SmvModuleRepository']
+        implements = ['org.tresamigos.smv.SmvDataSetRepository']
