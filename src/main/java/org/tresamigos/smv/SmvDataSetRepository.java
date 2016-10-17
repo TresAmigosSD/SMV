@@ -1,5 +1,7 @@
 package org.tresamigos.smv;
 
+import java.util.List;
+import java.util.Map;
 import org.apache.spark.sql.DataFrame;
 
 /**
@@ -7,15 +9,20 @@ import org.apache.spark.sql.DataFrame;
  * Python class, to allow modules written in different languages to
  * work together in an SMV application.
  */
-public interface SmvModuleRepository {
+public interface SmvDataSetRepository {
 	/**
-	 * Does the named module exist?
+	 * Does the named data set exist?
 	 */
-	boolean hasModule(String modfqn);
+	boolean hasDataSet(String modfqn);
+
+	/**
+	 * Names of dependent modules or an empty list.
+	 */
+	List<String> dependencies(String modfqn);
 
 	/**
 	 * Try to run the module by its fully-qualified name and return its
 	 * result in a DataFrame.
 	 */
-	DataFrame runModule(String modfqn);
+	DataFrame getDataFrame(String modfqn, Map<String, DataFrame> modules);
 }

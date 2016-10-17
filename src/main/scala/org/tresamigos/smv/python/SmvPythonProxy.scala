@@ -134,7 +134,7 @@ class SmvPythonApp(val app: SmvApp) {
     app.createDF(schema, data)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(modfqn: String, repo: SmvModuleRepository): DataFrame = {
+  def runModule(modfqn: String, repo: SmvDataSetRepository): DataFrame = {
     // TODO: SmvApp can also implement SmvModuleRepository
     // first try to resolve module in the scala implementation; if not
     // found, use the callback to run
