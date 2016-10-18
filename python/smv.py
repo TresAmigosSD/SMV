@@ -154,15 +154,15 @@ class Smv(object):
         from pyspark.streaming.context import _daemonize_callback_server
         _daemonize_callback_server()
 
-        print("starting callback server on port {}".format(cbs_port))
-        gw._shutdown_callback_server() # in case another has already started
-        gw._start_callback_server(cbs_port)
-        gw._python_proxy_port = gw._callback_server.port
-
-        # get the GatewayServer object in JVM by ID
-        jgws = JavaObject("GATEWAY_SERVER", gw._gateway_client)
-        # update the port of CallbackClient with real port
-        gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
+        if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
+            print("starting callback server on port {}".format(cbs_port))
+            gw._shutdown_callback_server() # in case another has already started
+            gw._start_callback_server(cbs_port)
+            gw._python_proxy_port = gw._callback_server.port
+            # get the GatewayServer object in JVM by ID
+            jgws = JavaObject("GATEWAY_SERVER", gw._gateway_client)
+            # update the port of CallbackClient with real port
+            gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
 
         self.pymods = {}
         return self
