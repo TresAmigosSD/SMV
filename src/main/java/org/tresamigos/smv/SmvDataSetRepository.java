@@ -16,9 +16,12 @@ public interface SmvDataSetRepository {
 	boolean hasDataSet(String modfqn);
 
 	/**
-	 * Names of dependent modules or an empty list.
+	 * A CSV of dependent module fqns or an empty string.
+	 *
+	 * Using a csv string is a temporary workaround until we can solve
+	 * the issue of type conversion between Python and Java VMs.
 	 */
-	List<String> dependencies(String modfqn);
+	String dependencies(String modfqn);
 
 	/**
 	 * Try to run the module by its fully-qualified name and return its

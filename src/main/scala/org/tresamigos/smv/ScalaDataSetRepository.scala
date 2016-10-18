@@ -27,10 +27,10 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   @inline private def notFound(modfqn: String, msg: String) =
     throw new IllegalArgumentException(s"dataset [${modfqn}] is not found in ${getClass.getName}: ${msg}")
 
-  override def dependencies(modfqn: String): java.util.List[String] =
+  override def dependencies(modfqn: String): String =
     dsForName(modfqn) match {
       case None => notFound(modfqn, "cannot get dependencies")
-      case Some(ds) => ds.requiresDS.map(_.name)
+      case Some(ds) => ds.requiresDS.map(_.name).mkString(",")
     }
 
   override def getDataFrame(modfqn: String, modules: java.util.Map[String, DataFrame]): DataFrame =
