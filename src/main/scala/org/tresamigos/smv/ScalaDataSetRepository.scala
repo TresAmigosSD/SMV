@@ -22,13 +22,14 @@ import scala.util.{Success, Failure}
  * Repository for data sets written in Scala.
  */
 class ScalaDataSetRepository extends SmvDataSetRepository {
-  private var content: Map[String, SmvDataSet] = Map.empty
+  private var scalaDataSets: Map[String, SmvDataSet] = Map.empty
+  private var dataframes: Map[SmvDataSet, DataFrame] = Map.empty
 
   def dsForName(modfqn: String): Option[SmvDataSet] =
-    content.get(modfqn) orElse {
+    scalaDataSets.get(modfqn) orElse {
       SmvReflection.findObjectByName[SmvDataSet](modfqn) match {
         case Success(ds) =>
-          content = content + (modfqn -> ds)
+          scalaDataSets = scalaDataSets + (modfqn -> ds)
           Some(ds)
         case Failure(_) =>
           None
@@ -50,6 +51,12 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   override def getDataFrame(modfqn: String, modules: java.util.Map[String, DataFrame]): DataFrame =
     dsForName(modfqn) match {
       case None => notFound(modfqn, "cannot get dataframe")
-      case Some(ds) => ??? // TODO may need to refactor so DQM and RunParams can have the same interface
+      case Some(ds) =>
+        dataframes.get(ds) match {
+          case Some(df) => df
+          case None =>
+            // TODO: move SmvDataSet.computeRDD here
+            ds.doRun(new dqm.DQMValidator(ds.createDsDqm()))
+        }
     }
 }

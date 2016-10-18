@@ -533,7 +533,7 @@ class PythonDataSetRepository(object):
                 ret = for_name(modfqn)(self.smv)
                 self.pythonDataSets[modfqn] = ret
                 return ret
-            except AttributeError:
+            except:
                 return None
 
     def hasDataSet(self, modfqn):
@@ -560,7 +560,6 @@ class PythonDataSetRepository(object):
             else:
                 df = ds.doRun(self.dataframes)
                 self.dataframes[key] = df
-                df.show()
                 return df._jdf
 
     class Java:

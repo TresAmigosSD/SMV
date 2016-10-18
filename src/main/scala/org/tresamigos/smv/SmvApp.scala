@@ -313,20 +313,25 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       dataframes(modfqn)
     else if (repos.isEmpty)
       runModule(modfqn, scalaDataSets)
-    else
-      repos.find(_.hasDataSet(modfqn)) match {
+    else {
+      println(s"running module ${modfqn}")
+      val r = repos.find(_.hasDataSet(modfqn))
+      println(s"module ${modfqn} is found in repo ${r}")
+      r match {
         case None =>
           throw new IllegalArgumentException(s"Cannot find module [${modfqn}]")
         case Some(repo) =>
           import scala.collection.JavaConversions._
           // TODO: check circular dependency
-          repo.dependencies(modfqn).split(',') foreach { dep =>
-            if (!dep.isEmpty())
-              runModule(dep, repos:_*)
-          }
+          val deps = repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
+          println(s"""${modfqn} has dependencies: ${deps.mkString(",")}""")
+          deps foreach (runModule(_, repos:_*))
+
           val df = repo.getDataFrame(modfqn, dataframes)
           dataframes = dataframes + (modfqn -> df)
+          df.show()
           df
+      }
       }
 
   /**
