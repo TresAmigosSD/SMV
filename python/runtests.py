@@ -25,7 +25,6 @@ if __name__ == "__main__":
 
     TestPath = "./src/test/python"
 
-    conf = TestConfig()
     loader = TestLoader()
 
     import sys

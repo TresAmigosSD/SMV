@@ -142,26 +142,36 @@ class Smv(object):
         # convert python arglist to java String array
         java_args =  smv_copy_array(sc, *arglist)
         self.app = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
+
+        # user may choose a port for the callback server
+        gw = sc._gateway
         cbsp = self.app.callbackServerPort()
-        if cbsp.isDefined():
-            print("starting callback server on port {}".format(cbsp.get()))
-            from pyspark.streaming.context import _daemonize_callback_server
-            _daemonize_callback_server()
-            gw = sc._gateway
-            gw._shutdown_callback_server()
-            gw._start_callback_server(cbsp.get())
+        cbs_port = cbsp.get() if cbsp.isDefined() else gw._python_proxy_port
+
+        # this was a workaround for py4j 0.8.2.1, shipped with spark
+        # 1.5.x, to prevent the callback server from hanging the
+        # python, and hence the java, process
+        from pyspark.streaming.context import _daemonize_callback_server
+        _daemonize_callback_server()
+
+        if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
+            print("starting callback server on port {}".format(cbs_port))
+            gw._shutdown_callback_server() # in case another has already started
+            gw._start_callback_server(cbs_port)
             gw._python_proxy_port = gw._callback_server.port
             # get the GatewayServer object in JVM by ID
             jgws = JavaObject("GATEWAY_SERVER", gw._gateway_client)
             # update the port of CallbackClient with real port
             gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
+
         self.pymods = {}
+        self.repo = PythonDataSetRepository(self)
         return self
 
     def runModule(self, fqn):
-        """Runs a Scala SmvModule by its Fully Qualified Name(fqn)
+        """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.app.app.runModuleByName(fqn)
+        jdf = self.app.runModule(fqn, self.repo)
         return DataFrame(jdf, self.sqlContext)
 
     def runDynamic(self, fqn):
@@ -492,12 +502,49 @@ Column.smvPlusYears  = lambda c, delta: Column(colhelper(c).smvPlusYears(delta))
 
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
 
-class PythonSmvRpc(object):
-    def hi(self, modname):
-        return 'hi ' + modname
+class PythonDataSetRepository(object):
+    def __init__(self, smv):
+        self.smv = smv
+        self.content = {}
 
-    def runModule(self, modname):
-        raise RuntimeError("TODO implement")
+    def ds_for_name(self, modfqn):
+        """Returns the instance of SmvPyDataSet by its fully qualified name
+        """
+        if modfqn in self.content:
+            return self.content[modfqn]
+        else:
+            try:
+                ret = for_name(modfqn)(self.smv)
+                self.content[modfqn] = ret
+                return ret
+            except AttributeError:
+                return None
+
+    def hasDataSet(self, modfqn):
+        return self.ds_for_name(modfqn) is not None
+
+    def notFound(self, modfqn, msg):
+        raise ValueError("dataset [{}] is not found in {}: {}".format(modfqn, self.__class__.__name__, msg))
+
+    def dependencies(self, modfqn):
+        ds = self.ds_for_name(modfqn)
+        if ds is None:
+            self.notFound(modfqn, "cannot get dependencies")
+        else:
+            return [x.name for x in ds.requiresDS()]
+
+    def getDataFrame(self, modfqn, modules):
+        print("in python getDataFrame for module {} with map {}".format(modfqn, modules))
+        ds = self.ds_for_name(modfqn)
+        if ds is None:
+            self.notFound(modfqn, "cannot get dataframe")
+        else:
+            # TODO need to refactor dependency resolution in modules to delegate to Repository
+            # df = ds.doRun(modules)
+            df = self.smv.createDF("k:String;v:Integer", 'a,1;b,2')
+            df.show()
+            # print("finished run")
+            return df._jdf
 
     class Java:
-        implements = ['org.tresamigos.smv.rpc.SmvRpc']
+        implements = ['org.tresamigos.smv.SmvDataSetRepository']

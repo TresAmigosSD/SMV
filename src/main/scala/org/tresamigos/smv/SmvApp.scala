@@ -45,6 +45,11 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
 
+  /** Dataframes from resolved modules */
+  private var dataframes: Map[String, DataFrame] = Map.empty
+
+  val scalaDataSets = new ScalaDataSetRepository
+
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver 
   OldVersionHelper.version = sc.version
 
@@ -299,6 +304,23 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
     smvConfig.modulesToRun().nonEmpty
   }
+
+  /** Run a specific module by its fully qualified name */
+  def runModule(modfqn: String, repos: SmvDataSetRepository*): DataFrame =
+    if (dataframes.contains(modfqn))
+      dataframes(modfqn)
+    else if (repos.isEmpty)
+      runModule(modfqn, scalaDataSets)
+    else
+      repos.find(_.hasDataSet(modfqn)) match {
+        case None =>
+          throw new IllegalArgumentException(s"Cannot find module [${modfqn}]")
+        case Some(repo) =>
+          import scala.collection.JavaConversions._
+          val df = repo.getDataFrame(modfqn, dataframes)
+          dataframes = dataframes + (modfqn -> df)
+          df
+      }
 
   /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.

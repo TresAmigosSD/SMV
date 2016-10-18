@@ -1,6 +1,6 @@
 import unittest
-import runtests
-from smv import Smv
+from runtests import TestConfig
+from smv import SmvApp
 
 import pyspark
 from pyspark.context import SparkContext
@@ -9,10 +9,10 @@ from pyspark.sql import *
 class SmvBaseTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        conf = runtests.TestConfig()
-        cls.sqlContext = conf.sqlContext()
-        cls.sqlContext._sc.setLogLevel("ERROR")
-        cls.smv = Smv().init(['-m', 'None'], cls.sqlContext._sc, cls.sqlContext)
+        cls.sparkContext = TestConfig.sparkContext()
+        cls.sqlContext = TestConfig.sqlContext()
+        cls.sparkContext.setLogLevel("ERROR")
+        cls.smv = SmvApp.init(['-m', 'None'], cls.sparkContext, cls.sqlContext)
         cls.app = cls.smv.app
 
     def setUp(self):
@@ -20,10 +20,10 @@ class SmvBaseTest(unittest.TestCase):
         """
         cls = self.__class__
         if not hasattr(cls, 'app'):
-            conf = runtests.TestConfig()
-            cls.sqlContext = conf.sqlContext()
-            cls.sqlContext._sc.setLogLevel("ERROR")
-            cls.smv = Smv().init(['-m', 'None'], cls.sqlContext._sc, cls.sqlContext)
+            cls.sparkContext = TestConfig.sparkContext()
+            cls.sqlContext = TestConfig.sqlContext()
+            cls.sparkContext.setLogLevel("ERROR")
+            cls.smv = SmvApp.init(['-m', 'None'], cls.sparkContext, cls.sqlContext)
             cls.app = cls.smv.app
 
     @classmethod

@@ -1,8 +1,21 @@
+/*
+ * This file is licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.tresamigos.smv.python
 
 import org.apache.spark._, sql._
 import org.tresamigos.smv._
-import org.tresamigos.smv.rpc.SmvRpc
 import py4j.GatewayServer
 
 import scala.collection.JavaConversions._
@@ -64,8 +77,6 @@ object SmvPythonHelper {
 
   def smvIsAllIn(col: Column, values: Any*): Column = col.smvIsAllIn(values:_*)
   def smvIsAnyIn(col: Column, values: Any*): Column = col.smvIsAnyIn(values:_*)
-
-  def hi(rpc: SmvRpc, modname: String): String = rpc.hi(modname)
 
   /**
    * Update the port of callback client
@@ -135,6 +146,10 @@ class SmvPythonApp(val app: SmvApp) {
   /** Used to create small dataframes for testing */
   def dfFrom(schema: String, data: String): DataFrame =
     app.createDF(schema, data)
+
+  /** Runs an SmvModule written in either Python or Scala */
+  def runModule(modfqn: String, repo: SmvDataSetRepository): DataFrame =
+    app.runModule(modfqn, repo, app.scalaDataSets)
 }
 
 /** Not a companion object because we need to access it from Python */
