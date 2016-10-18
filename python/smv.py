@@ -168,7 +168,7 @@ class Smv(object):
         _daemonize_callback_server()
 
         if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
-            print("starting callback server on port {}".format(cbs_port))
+            print("starting callback server on port {0}".format(cbs_port))
             gw._shutdown_callback_server() # in case another has already started
             gw._start_callback_server(cbs_port)
             gw._python_proxy_port = gw._callback_server.port
