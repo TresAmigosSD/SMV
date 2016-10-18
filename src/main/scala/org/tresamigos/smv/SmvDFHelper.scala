@@ -389,6 +389,9 @@ class SmvDFHelper(df: DataFrame) {
     new SmvMultiJoin(Nil, SmvMultiJoinConf(df, keys, defaultJoinType))
   }
 
+  @deprecated("1.5", "use smvJoinMultipleByKey instead")
+  def joinMultipleByKey(keys: Seq[String], defaultJoinType: String) = smvJoinMultipleByKey(keys, defaultJoinType)
+
   /**
    * Remove duplicate records from the `DataFrame` by arbitrarly selecting the first record
    * from a set of records with same primary key or key combo.
