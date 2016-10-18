@@ -1,3 +1,17 @@
+/*
+ * This file is licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.tresamigos.smv.python
 
 import org.apache.spark._, sql._
@@ -134,12 +148,8 @@ class SmvPythonApp(val app: SmvApp) {
     app.createDF(schema, data)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(modfqn: String, repo: SmvDataSetRepository): DataFrame = {
-    // TODO: SmvApp can also implement SmvModuleRepository
-    // first try to resolve module in the scala implementation; if not
-    // found, use the callback to run
-    ???
-  }
+  def runModule(modfqn: String, repo: SmvDataSetRepository): DataFrame =
+    app.runModule(modfqn, repo, app.scalaDataSets)
 }
 
 /** Not a companion object because we need to access it from Python */

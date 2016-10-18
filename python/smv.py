@@ -165,12 +165,13 @@ class Smv(object):
             gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
 
         self.pymods = {}
+        self.repo = PythonDataSetRepository(self)
         return self
 
     def runModule(self, fqn):
-        """Runs a Scala SmvModule by its Fully Qualified Name(fqn)
+        """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.app.app.runModuleByName(fqn)
+        jdf = self.app.runModule(fqn, self.repo)
         return DataFrame(jdf, self.sqlContext)
 
     def runDynamic(self, fqn):
@@ -533,11 +534,17 @@ class PythonDataSetRepository(object):
             return [x.name for x in ds.requiresDS()]
 
     def getDataFrame(self, modfqn, modules):
+        print("in python getDataFrame for module {} with map {}".format(modfqn, modules))
         ds = self.ds_for_name(modfqn)
         if ds is None:
             self.notFound(modfqn, "cannot get dataframe")
         else:
-            return ds.doRun(modules)
+            # TODO need to refactor dependency resolution in modules to delegate to Repository
+            # df = ds.doRun(modules)
+            df = self.smv.createDF("k:String;v:Integer", 'a,1;b,2')
+            df.show()
+            # print("finished run")
+            return df._jdf
 
     class Java:
         implements = ['org.tresamigos.smv.SmvDataSetRepository']
