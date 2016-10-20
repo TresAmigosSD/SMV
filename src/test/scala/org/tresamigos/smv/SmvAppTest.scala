@@ -164,19 +164,13 @@ class SmvAppPurgeTest extends SparkTestUtil {
 package org.tresamigos.fixture.smvapptest {
   import org.tresamigos.smv._, dqm._
 
-  object f1 extends SmvFile {
-    val path = "F1.csv"
-    def doRun(dsDqm: DQMValidator): DataFrame = null
-  }
-  object f2 extends SmvFile {
-    val path = "F2.csv"
-    def doRun(dsDqm: DQMValidator): DataFrame = null
+  class TestFile(override val path: String) extends SmvFile {
+    override def doRun(dsDqm: DQMValidator, lookup: String => DataFrame): DataFrame = null
   }
 
-  object f3 extends SmvFile {
-    val path = "F1.csv"
-    def doRun(dsDqm: DQMValidator): DataFrame = null
-  }
+  object f1 extends TestFile("F1.csv")
+  object f2 extends TestFile("F2.csv")
+  object f3 extends TestFile("F1.csv")
 }
 
 package org.tresamigos.fixture.hashofhash {

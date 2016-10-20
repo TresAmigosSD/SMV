@@ -21,3 +21,14 @@ object EmploymentByState extends SmvModule("ETL Example: Employment") with SmvOu
     )
   }
 }
+
+object EmploymentByState2 extends SmvModule("Example: using a Python module") with SmvOutput {
+  val dep = SmvExtDataSet("_PROJ_CLASS_.stage1.inputdata.PythonEmployment")
+
+  override val requiresDS = Seq(dep)
+
+  override def run(i: runParams) = {
+    val df = i(dep)
+    df.groupBy("ST").agg(sum("EMP") as "EMP")
+  }
+}
