@@ -305,21 +305,33 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     smvConfig.modulesToRun().nonEmpty
   }
 
-  /** Run a specific module by its fully qualified name */
+  /** Run a module by its fully qualified name in its respective language environment */
   def runModule(modfqn: String, repos: SmvDataSetRepository*): DataFrame =
-    if (dataframes.contains(modfqn))
+    if (modfqn.isEmpty)
+      return null
+    else if (dataframes.contains(modfqn))
       dataframes(modfqn)
     else if (repos.isEmpty)
       runModule(modfqn, scalaDataSets)
-    else
-      repos.find(_.hasDataSet(modfqn)) match {
+    else {
+      println(s"running module ${modfqn}")
+      val r = repos.find(_.hasDataSet(modfqn))
+      println(s"module ${modfqn} is found in repo ${r}")
+      r match {
         case None =>
           throw new IllegalArgumentException(s"Cannot find module [${modfqn}]")
         case Some(repo) =>
           import scala.collection.JavaConversions._
+          // TODO: check circular dependency
+          val deps = repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
+          println(s"""${modfqn} has dependencies: ${deps.mkString(",")}""")
+          deps foreach (runModule(_, repos:_*))
+
           val df = repo.getDataFrame(modfqn, dataframes)
           dataframes = dataframes + (modfqn -> df)
+          df.show()
           df
+      }
       }
 
   /**

@@ -1,3 +1,16 @@
+#
+# This file is licensed under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from py4j.java_gateway import java_import, JavaObject
 
 from pyspark import SparkContext
@@ -155,7 +168,7 @@ class Smv(object):
         _daemonize_callback_server()
 
         if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
-            print("starting callback server on port {}".format(cbs_port))
+            print("starting callback server on port {0}".format(cbs_port))
             gw._shutdown_callback_server() # in case another has already started
             gw._start_callback_server(cbs_port)
             gw._python_proxy_port = gw._callback_server.port
@@ -271,10 +284,11 @@ class SmvPyDataSet(object):
     def modulePath(self):
         return self.smv.app.outputDir() + "/" + self.fqn() + "_" + hex(self.hashOfHash() & 0xffffffff)[2:] + ".csv"
 
-    def fqn(self):
+    @classmethod
+    def fqn(cls):
         """Returns the fully qualified name
         """
-        return self.__module__ + "." + self.__class__.__name__
+        return cls.__module__ + "." + cls.__name__
 
     def isInput(self):
         return False
@@ -509,46 +523,48 @@ Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(
 class PythonDataSetRepository(object):
     def __init__(self, smv):
         self.smv = smv
-        self.content = {}
+        self.pythonDataSets = {} # SmvPyDataSet FQN -> instances
+        self.dataframes = {}     # SmvPyDataSet class -> DataFrame results
 
-    def ds_for_name(self, modfqn):
-        """Returns the instance of SmvPyDataSet by its fully qualified name
+    def dsForName(self, modfqn):
+        """Returns the instance of SmvPyDataSet by its fully qualified name.
+        Returns None if the FQN is not a valid SmvPyDataSet name.
         """
-        if modfqn in self.content:
-            return self.content[modfqn]
+        if modfqn in self.pythonDataSets:
+            return self.pythonDataSets[modfqn]
         else:
             try:
                 ret = for_name(modfqn)(self.smv)
-                self.content[modfqn] = ret
+                self.pythonDataSets[modfqn] = ret
                 return ret
-            except AttributeError:
+            except:
                 return None
 
     def hasDataSet(self, modfqn):
-        return self.ds_for_name(modfqn) is not None
+        return self.dsForName(modfqn) is not None
 
     def notFound(self, modfqn, msg):
         raise ValueError("dataset [{}] is not found in {}: {}".format(modfqn, self.__class__.__name__, msg))
 
     def dependencies(self, modfqn):
-        ds = self.ds_for_name(modfqn)
+        ds = self.dsForName(modfqn)
         if ds is None:
             self.notFound(modfqn, "cannot get dependencies")
         else:
-            return [x.name for x in ds.requiresDS()]
+            return ','.join([x.fqn() for x in ds.requiresDS()])
 
     def getDataFrame(self, modfqn, modules):
-        print("in python getDataFrame for module {} with map {}".format(modfqn, modules))
-        ds = self.ds_for_name(modfqn)
+        ds = self.dsForName(modfqn)
         if ds is None:
             self.notFound(modfqn, "cannot get dataframe")
         else:
-            # TODO need to refactor dependency resolution in modules to delegate to Repository
-            # df = ds.doRun(modules)
-            df = self.smv.createDF("k:String;v:Integer", 'a,1;b,2')
-            df.show()
-            # print("finished run")
-            return df._jdf
+            key = ds.__class__
+            if key in self.dataframes:
+                return self.dataframes[key]._jdf
+            else:
+                df = ds.doRun(self.dataframes)
+                self.dataframes[key] = df
+                return df._jdf
 
     class Java:
         implements = ['org.tresamigos.smv.SmvDataSetRepository']
