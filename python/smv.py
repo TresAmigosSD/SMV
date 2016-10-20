@@ -446,6 +446,7 @@ DataFrame.smvRenameField = lambda df, *namePairs: DataFrame(helper(df).smvRename
 
 DataFrame.smvExportCsv = lambda df, path, n=None: dfhelper(df).smvExportCsv(path, n)
 
+
 #############################################
 # DfHelpers which print to STDOUT
 # Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout
@@ -466,10 +467,13 @@ def _smvBinHist(df, *colWithBin):
     insureDouble = map(lambda t: (t[0], t[1] * 1.0), colWithBin)
     return helper(df).smvBinHist(df._jdf, smv_copy_array(df._sc, *insureDouble))
 
+def _smvEddCompare(df, df2, ignoreColName): return dfhelper(df)._smvEddCompare(df2._jdf, ignoreColName)
+
 DataFrame.smvEdd = lambda df, *cols: println(_smvEdd(df, *cols))
 DataFrame.smvHist = lambda df, *cols: println(_smvHist(df, *cols))
 DataFrame.smvConcatHist = lambda df, cols: println(_smvConcatHist(df, cols))
 DataFrame.smvFreqHist = lambda df, *cols: println(_smvFreqHist(df, *cols))
+DataFrame.smvEddCompare = lambda df, df2, ignoreColName=False: println(_smvEddCompare(df, df2, ignoreColName))
 
 def __smvCountHistFn(df, keys, binSize = 1):
     if (isinstance(keys, basestring)):

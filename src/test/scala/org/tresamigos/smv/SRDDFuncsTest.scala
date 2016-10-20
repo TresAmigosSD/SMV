@@ -485,6 +485,17 @@ key                      count      Pct    cumCount   cumPct
 1200.0                       1   25.00%           4  100.00%
 -------------------------------------------------""")
   }
+
+  test("df.smvEddCompare(df2)") {
+    val a = dfFrom("id:String; v:Double", "a,100;b,1201.5;a,231;a,2")
+    val b = dfFrom("id:String; v:Double", "a,100;b,1201;a,231;a,2")
+
+    val res = a._smvEddCompare(b, false)
+    assert(res == """Not Match
+not equal: v, stat, avg, Average
+not equal: v, stat, std, Standard Deviation
+not equal: v, stat, max, Max""")
+  }
 }
 
 class OtherDFHelperTest extends SmvTestUtil {

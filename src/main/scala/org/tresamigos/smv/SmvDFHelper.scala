@@ -1516,4 +1516,33 @@ class SmvDFHelper(df: DataFrame) {
   def smvCountHistSave(keys: Seq[String], binSize: Int = 1)(path: String): Unit = SmvReportIO.saveLocalReport(_smvCountHist(keys, binSize), path)
 
   def smvCountHistSave(key: String)(path: String): Unit = smvCountHistSave(Seq(key), 1)(path)
+
+  private[smv] def _smvEddCompare(df2: DataFrame, ignoreColName: Boolean) = {
+    val toBeCom = if(ignoreColName) {
+      require(df.columns.size == df2.columns.size)
+      df2.sqlContext.createDataFrame(df2.rdd, df.schema)
+    } else {
+      df2
+    }
+
+    val (res, mess) = df.edd.summary().compareWith(toBeCom.edd.summary())
+    if (res) {
+      "Matched"
+    } else {
+      s"Not Match\n${mess}"
+    }
+  }
+
+  /**
+   * Compare 2 DFs by comparing their Edd Summary result
+   *
+   * Example
+   * {{{
+   * df.smvEddCompare(df2)
+   * df.smvEddCompare(df2, ignoreColName = true)
+   * }}}
+   *
+   * Print out comparing result
+   **/
+  def smvEddCompare(df2: DataFrame, ignoreColName: Boolean = false) = println(_smvEddCompare(df2, ignoreColName))
 }
