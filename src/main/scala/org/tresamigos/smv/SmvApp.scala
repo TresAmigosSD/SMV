@@ -46,7 +46,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
 
   /** Dataframes from resolved modules */
-  private var dataframes: Map[String, DataFrame] = Map.empty
+  private[smv] var dataframes: Map[String, DataFrame] = Map.empty
 
   val scalaDataSets = new ScalaDataSetRepository
 
@@ -315,9 +315,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       runModule(modfqn, scalaDataSets)
     else {
       println(s"running module ${modfqn}")
-      val r = repos.find(_.hasDataSet(modfqn))
-      println(s"module ${modfqn} is found in repo ${r}")
-      r match {
+      repos.find(_.hasDataSet(modfqn)) match {
         case None =>
           throw new IllegalArgumentException(s"Cannot find module [${modfqn}]")
         case Some(repo) =>

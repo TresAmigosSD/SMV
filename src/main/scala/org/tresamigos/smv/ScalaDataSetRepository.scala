@@ -56,7 +56,7 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
           case Some(df) => df
           case None =>
             // TODO: move SmvDataSet.computeRDD here
-            ds.doRun(new dqm.DQMValidator(ds.createDsDqm()))
+            ds.doRun(new dqm.DQMValidator(ds.createDsDqm()), modules)
         }
     }
 }
