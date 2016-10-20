@@ -35,6 +35,10 @@ if os.path.exists(historyPath):
 atexit.register(save_history)
 del os, atexit, readline, rlcompleter, save_history, historyPath
 
+# Get a random port for callback server
+import random;
+callback_server_port = random.randint(20000, 65535)
+
 # Import commonly used pyspark lib
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
@@ -43,7 +47,7 @@ sc.setLogLevel("ERROR")
 
 # Imnport smv
 from smv import SmvApp
-app = SmvApp.init(['-m', 'None'], sc, sqlContext)
+app = SmvApp.init(['-m', 'None', '--cbs-port', str(callback_server_port)], sc, sqlContext)
 
 from smvshell import *
 
