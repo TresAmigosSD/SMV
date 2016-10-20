@@ -86,11 +86,16 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /**
    * Does the dataset follow dependency rules?
+   *
+   * TODO: need to figure out if we should enforce dependency rules
+   * across modules written in different languages, and how if we
+   * should.  Right now we skip external dataset references.
    */
-  def checkDependencyRules(ds: SmvDataSet): Seq[DependencyViolation] = {
-    val results = SmvApp.DependencyRules map (_.check(ds))
-    results.foldRight(Seq.empty[DependencyViolation])((elem, acc) => elem.toSeq ++: acc)
-  }
+  def checkDependencyRules(ds: SmvDataSet): Seq[DependencyViolation] =
+    if (ds.isInstanceOf[SmvExtDataSet]) Seq.empty else {
+      val results = SmvApp.DependencyRules map (_.check(ds))
+      results.foldRight(Seq.empty[DependencyViolation])((elem, acc) => elem.toSeq ++: acc)
+    }
 
   /** Textual representation for output to console */
   def mkViolationString(violations: Seq[DependencyViolation], indent: String = ".."): String =

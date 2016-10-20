@@ -545,6 +545,21 @@ class SmvModuleLink(outputModule: SmvOutput) extends
 }
 
 /**
+ * Represents a module written in another language.
+ *
+ * All methods should throw Error, because they should all be
+ * forwarded to the appropriate dataset repository and should never be
+ * invoked directly.
+ */
+case class SmvExtDataSet(override val name: String) extends SmvModule(
+  s"External dataset for ${name}") {
+  @inline private def err =
+    throw new UnsupportedOperationException(s"Should not call method on ${this} from Scala")
+  override def requiresDS = err
+  override def run(i: runParams) = err
+}
+
+/**
  * a built-in SmvModule from schema string and data string
  *
  * E.g.
