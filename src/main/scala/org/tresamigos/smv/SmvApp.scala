@@ -310,6 +310,24 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     smvConfig.modulesToRun().nonEmpty
   }
 
+  /** The "versioned" module file base name. */
+  private def versionedPath(suffix: String, prefix: String = "")(name: String, hash: Int): String = {
+    val verHex = f"${hash}%08x"
+    s"""${smvConfig.outputDir}/${prefix}${name}_${verHex}.${suffix}"""
+  }
+
+  /** Returns the path for the module's csv output */
+  def moduleCsvPath = versionedPath("csv") _
+
+  /** Returns the path for the module's schema file */
+  private[smv] def moduleSchemaPath = versionedPath("schema") _
+
+  /** Returns the path for the module's edd report output */
+  private[smv] def moduleEddPath = versionedPath("edd") _
+
+  /** Returns the path for the module's reject report output */
+  private[smv] def moduleValidPath = versionedPath("valid") _
+
   /** Run a module by its fully qualified name in its respective language environment */
   def runModule(modfqn: String, repos: SmvDataSetRepository*): DataFrame =
     if (modfqn.isEmpty)
@@ -330,12 +348,25 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           println(s"""${modfqn} has dependencies: ${deps.mkString(",")}""")
           deps foreach (runModule(_, repos:_*))
 
-          val df = repo.getDataFrame(modfqn, dataframes)
+          val ext = repo.getExternalDsName(modfqn)
+          val df = if (!ext.isEmpty()) runModule(ext, repos:_*) else {
+            // TODO: does dqm, isEphemeral, validation (from DataSet.computeRDD) belong here?
+            val hash = repo.datasetHash(modfqn, true)
+            val path = moduleCsvPath(modfqn, hash.toInt)
+            SmvUtil.readPersistedFile(sqlContext, path).recoverWith { case ex =>
+              val r = repo.getDataFrame(modfqn, dataframes)
+              SmvUtil.persist(sqlContext, r, path, genEdd)
+              SmvUtil.readPersistedFile(sqlContext, path)
+            }.get
+          }
+
+          // dataframe from external modules would be registered under
+          // both its implementing module name and the referenced name
           dataframes = dataframes + (modfqn -> df)
           df.show()
           df
       }
-      }
+    }
 
   /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.

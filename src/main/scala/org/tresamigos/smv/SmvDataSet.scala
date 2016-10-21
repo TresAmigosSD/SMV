@@ -433,7 +433,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   override private[smv] def doRun(dsDqm: DQMValidator, known: String => DataFrame): DataFrame = {
     // TODO turn on dependency check by uncomment the following line after test against projects
     // checkDependency()
-    // TODO: build a function that can chain known by repositories
+
+    // run(requiresDS().map(r => (r, known(r.name))).toMap)
     run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 
@@ -551,8 +552,9 @@ class SmvModuleLink(outputModule: SmvOutput) extends
  * forwarded to the appropriate dataset repository and should never be
  * invoked directly.
  */
-case class SmvExtDataSet(override val name: String) extends SmvModule(
-  s"External dataset for ${name}") {
+case class SmvExtDataSet(refname: String) extends SmvModule(
+  s"External dataset for ${refname}") {
+  override val name = ExtDsPrefix  + refname
   @inline private def err =
     throw new UnsupportedOperationException(s"Should not call method on ${this} from Scala")
   override def requiresDS = err

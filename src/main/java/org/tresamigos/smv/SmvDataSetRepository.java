@@ -30,6 +30,17 @@ public interface SmvDataSetRepository {
 	boolean hasDataSet(String modfqn);
 
 	/**
+	 * Is the named dataset external?
+	 */
+	boolean isExternal(String modfqn);
+
+	/**
+	 * Return the name of the external dataset if the name links to one;
+	 * otherwise return an empty string.
+	 */
+	String getExternalDsName(String modfqn);
+
+	/**
 	 * A CSV of dependent module fqns or an empty string.
 	 *
 	 * Using a csv string is a temporary workaround until we can solve
@@ -42,4 +53,11 @@ public interface SmvDataSetRepository {
 	 * result in a DataFrame.
 	 */
 	DataFrame getDataFrame(String modfqn, Map<String, DataFrame> modules);
+
+	/**
+	 * Calculate a hash for the named data set; can optionally include
+	 * the hash for all its super classes up to and excluding the base
+	 * class provided by SMV.
+	 */
+	long datasetHash(String modfqn, boolean includeSuperClass);
 }

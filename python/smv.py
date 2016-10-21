@@ -381,6 +381,23 @@ class SmvPyModule(SmvPyDataSet):
     def doRun(self, i):
         return self.run(i)
 
+class SmvPyExtDataSet(SmvPyDataSet):
+    """An external dataset, written in another language, that's used by a Python SmvModule
+    """
+
+    def __init__(self, smv, refname):
+        super(SmvPyExtDataSet, self).__init__(smv)
+        self.refname = refname
+
+    def err(self):
+        raise AttributeError("Cannot call methods on " + self.fqn())
+
+    def requiresDS(self):
+        self.err()
+
+    def doRun(self, i):
+        self.err()
+
 class SmvGroupedData(object):
     """Wrapper around the Scala SmvGroupedData"""
     def __init__(self, df, sgd):
@@ -543,6 +560,15 @@ class PythonDataSetRepository(object):
     def hasDataSet(self, modfqn):
         return self.dsForName(modfqn) is not None
 
+    def getExternalDsName(self, modfqn):
+        ds = self.dsForName(modfqn)
+        if ds is None:
+            self.notFound(modfqn, "cannot get external dataset name")
+        elif isinstance(ds, SmvPyExtDataSet):
+            return ds.refname
+        else:
+            return ''
+
     def notFound(self, modfqn, msg):
         raise ValueError("dataset [{}] is not found in {}: {}".format(modfqn, self.__class__.__name__, msg))
 
@@ -565,6 +591,13 @@ class PythonDataSetRepository(object):
                 df = ds.doRun(self.dataframes)
                 self.dataframes[key] = df
                 return df._jdf
+
+    def datasetHash(self, modfqn, includeSuperClass):
+        ds = self.dsForName(modfqn)
+        if ds is None:
+            self.notFound(modfqn, "cannot calc dataset hash")
+        else:
+            return ds.datasetHash()
 
     class Java:
         implements = ['org.tresamigos.smv.SmvDataSetRepository']

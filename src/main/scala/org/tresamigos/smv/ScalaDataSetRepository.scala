@@ -25,25 +25,37 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   private var scalaDataSets: Map[String, SmvDataSet] = Map.empty
   private var dataframes: Map[SmvDataSet, DataFrame] = Map.empty
 
-  def dsForName(modfqn: String): Option[SmvDataSet] =
+  private def dsForName(modfqn: String): Option[SmvDataSet] =
     scalaDataSets.get(modfqn) orElse {
-      SmvReflection.findObjectByName[SmvDataSet](modfqn) match {
-        case Success(ds) =>
-          scalaDataSets = scalaDataSets + (modfqn -> ds)
-          Some(ds)
-        case Failure(_) =>
-          None
-      }
+      val ret =
+        if (isExternal(modfqn))
+          Some(SmvExtDataSet(modfqn.substring(ExtDsPrefix.length)))
+        else
+          SmvReflection.findObjectByName[SmvDataSet](modfqn).toOption
+
+      if (ret.isDefined)
+        scalaDataSets = scalaDataSets + (modfqn -> ret.get)
+      ret
     }
 
   override def hasDataSet(modfqn: String): Boolean =
     dsForName(modfqn).isDefined
 
-  @inline private def notFound(modfqn: String, msg: String) =
+  override def isExternal(modfqn: String): Boolean =
+    modfqn.startsWith(ExtDsPrefix)
+
+  override def getExternalDsName(modfqn: String): String =
+    dsForName(modfqn) match {
+      case None => notFound(modfqn, "cannot get external dataset name")
+      case Some(ds: SmvExtDataSet) => ds.refname
+      case _ => ""
+    }
+
+  private def notFound(modfqn: String, msg: String) =
     throw new IllegalArgumentException(s"dataset [${modfqn}] is not found in ${getClass.getName}: ${msg}")
 
   override def dependencies(modfqn: String): String =
-    dsForName(modfqn) match {
+    if (isExternal(modfqn)) "" else dsForName(modfqn) match {
       case None => notFound(modfqn, "cannot get dependencies")
       case Some(ds) => ds.requiresDS.map(_.name).mkString(",")
     }
@@ -55,8 +67,13 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
         dataframes.get(ds) match {
           case Some(df) => df
           case None =>
-            // TODO: move SmvDataSet.computeRDD here
             ds.doRun(new dqm.DQMValidator(ds.createDsDqm()), modules)
         }
+    }
+
+  override def datasetHash(modfqn: String, includeSuperClass: Boolean = true): Long =
+    dsForName(modfqn) match {
+      case None => notFound(modfqn, "cannot calc dataset hash")
+      case Some(ds) => ds.datasetCRC
     }
 }
