@@ -17,7 +17,7 @@ object StageEmpCategory extends SmvModule("Employment By Stage with Category") w
     val df = i(input.EmploymentStateLink)
     import df.sqlContext.implicits._
 
-    df.selectPlus(
+    df.smvSelectPlus(
       $"EMP" >  lit(1000000) as "cat_high_emp"
     )
   }
