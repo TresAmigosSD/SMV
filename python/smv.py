@@ -207,7 +207,7 @@ class Smv(object):
         mod = klass(self)
         for dep in mod.requiresDS():
             if (dep in stack):
-                raise RuntimeError("Circular module dependency detected", dep.fqn(), stack)
+                raise RuntimeError("Circular module dependency detected", dep.name(), stack)
 
             stack.append(dep)
             res = self.__resolve(dep, stack)
@@ -244,9 +244,12 @@ class SmvPyDataSet(object):
     def requiresDS(self):
         """The list of dataset dependencies"""
 
+    def dqm(self):
+        return self.smv._jvm.org.tresamigos.smv.dqm.SmvDQM.apply()
+
     @abc.abstractmethod
-    def doRun(self, i):
-        """Comput this dataset, including its depencies if necessary"""
+    def doRun(self, dsDqm, known):
+        """Comput this dataset, and return the dataframe"""
 
     def version(self):
         """All datasets are versioned, with a string,
@@ -270,7 +273,8 @@ class SmvPyDataSet(object):
             if (issubclass(m, SmvPyDataSet) and m != SmvPyDataSet and m != cls and m != object):
                 res += m.datasetHash()
 
-        return res
+        # ensure python's long type can fit in a java.lang.Long
+        return res & 0x7fffffffffffffff
 
     def hashOfHash(self):
         res = hash(self.version() + str(self.datasetHash()))
@@ -282,10 +286,10 @@ class SmvPyDataSet(object):
         return res
 
     def modulePath(self):
-        return self.smv.app.outputDir() + "/" + self.fqn() + "_" + hex(self.hashOfHash() & 0xffffffff)[2:] + ".csv"
+        return self.smv.app.outputDir() + "/" + self.name() + "_" + hex(self.hashOfHash() & 0xffffffff)[2:] + ".csv"
 
     @classmethod
-    def fqn(cls):
+    def name(cls):
         """Returns the fully qualified name
         """
         return cls.__module__ + "." + cls.__name__
@@ -299,7 +303,7 @@ class SmvPyCsvFile(SmvPyDataSet):
 
     def __init__(self, smv):
         super(SmvPyCsvFile, self).__init__(smv)
-        self._smvCsvFile = smv.app.smvCsvFile(self.fqn() + "_" + self.version(), self.path(), self.csvAttr())
+        self._smvCsvFile = smv.app.smvCsvFile(self.name() + "_" + self.version(), self.path(), self.csvAttr())
 
     def description(self):
         return "Input file: @" + self.path()
@@ -332,7 +336,7 @@ class SmvPyCsvFile(SmvPyDataSet):
     def requiresDS(self):
         return []
 
-    def doRun(self, i):
+    def doRun(self, dsDqm, known):
         jdf = self._smvCsvFile.rdd()
         return DataFrame(jdf, self.smv.sqlContext)
 
@@ -361,7 +365,7 @@ class SmvPyHiveTable(SmvPyDataSet):
         """This can be override by concrete SmvPyHiveTable"""
         return df
 
-    def doRun(self, i):
+    def doRun(self, dsDqm, known):
         return self.run(DataFrame(self._smvHiveTable.rdd(), self.smv.sqlContext))
 
 class SmvPyModule(SmvPyDataSet):
@@ -372,30 +376,36 @@ class SmvPyModule(SmvPyDataSet):
         super(SmvPyModule, self).__init__(smv)
 
     def prerun(self, i):
-        print(".... computing module " + self.fqn())
+        print(".... computing module " + self.name())
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def run(self, i):
         """This defines the real work done by this module"""
 
-    def doRun(self, i):
+    def doRun(self, dsDqm, known):
+        i = {}
+        for dep in self.requiresDS():
+            # the values in known are Java DataFrames
+            i[dep] = DataFrame(known[dep.name()], self.smv.sqlContext)
         return self.run(i)
 
 class SmvPyExtDataSet(SmvPyDataSet):
     """An external dataset, written in another language, that's used by a Python SmvModule
     """
 
+    ExtDsPrefix = "SmvPyExtDataSet."
+
     def __init__(self, smv, refname):
         super(SmvPyExtDataSet, self).__init__(smv)
         self.refname = refname
 
     def err(self):
-        raise AttributeError("Cannot call methods on " + self.fqn())
+        raise AttributeError("Cannot call methods on " + self.name())
 
     def requiresDS(self):
         self.err()
 
-    def doRun(self, i):
+    def doRun(self, dsDqm, known):
         self.err()
 
 class SmvGroupedData(object):
@@ -540,8 +550,8 @@ Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(
 class PythonDataSetRepository(object):
     def __init__(self, smv):
         self.smv = smv
-        self.pythonDataSets = {} # SmvPyDataSet FQN -> instances
-        self.dataframes = {}     # SmvPyDataSet class -> DataFrame results
+        self.pythonDataSets = {} # SmvPyDataSet FQN -> instance
+        self.dataframes = {}     # SmvPyDataSet instance -> DataFrame result
 
     def dsForName(self, modfqn):
         """Returns the instance of SmvPyDataSet by its fully qualified name.
@@ -560,6 +570,9 @@ class PythonDataSetRepository(object):
     def hasDataSet(self, modfqn):
         return self.dsForName(modfqn) is not None
 
+    def isExternal(self, modfqn):
+        return modfqn.startswith(SmvPyExtDataSet.ExtDsPrefix)
+
     def getExternalDsName(self, modfqn):
         ds = self.dsForName(modfqn)
         if ds is None:
@@ -573,23 +586,25 @@ class PythonDataSetRepository(object):
         raise ValueError("dataset [{}] is not found in {}: {}".format(modfqn, self.__class__.__name__, msg))
 
     def dependencies(self, modfqn):
-        ds = self.dsForName(modfqn)
-        if ds is None:
-            self.notFound(modfqn, "cannot get dependencies")
+        if (self.isExternal(modfqn)):
+            return ''
         else:
-            return ','.join([x.fqn() for x in ds.requiresDS()])
+            ds = self.dsForName(modfqn)
+            if ds is None:
+                self.notFound(modfqn, "cannot get dependencies")
+            else:
+                return ','.join([x.name() for x in ds.requiresDS()])
 
     def getDataFrame(self, modfqn, modules):
         ds = self.dsForName(modfqn)
         if ds is None:
             self.notFound(modfqn, "cannot get dataframe")
         else:
-            key = ds.__class__
-            if key in self.dataframes:
-                return self.dataframes[key]._jdf
+            if ds in self.dataframes:
+                return self.dataframes[ds]._jdf
             else:
-                df = ds.doRun(self.dataframes)
-                self.dataframes[key] = df
+                df = ds.doRun(ds.dqm(), modules)
+                self.dataframes[ds] = df
                 return df._jdf
 
     def datasetHash(self, modfqn, includeSuperClass):
