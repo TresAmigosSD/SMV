@@ -317,16 +317,16 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /** Returns the path for the module's csv output */
-  def moduleCsvPath = versionedPath("csv") _
+  val moduleCsvPath = versionedPath("csv") _
 
   /** Returns the path for the module's schema file */
-  private[smv] def moduleSchemaPath = versionedPath("schema") _
+  private[smv] val moduleSchemaPath = versionedPath("schema") _
 
   /** Returns the path for the module's edd report output */
-  private[smv] def moduleEddPath = versionedPath("edd") _
+  private[smv] val moduleEddPath = versionedPath("edd") _
 
   /** Returns the path for the module's reject report output */
-  private[smv] def moduleValidPath = versionedPath("valid") _
+  private[smv] val moduleValidPath = versionedPath("valid") _
 
   /** Run a module by its fully qualified name in its respective language environment */
   def runModule(modfqn: String, repos: SmvDataSetRepository*): DataFrame =
