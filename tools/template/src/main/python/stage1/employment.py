@@ -25,3 +25,16 @@ class PythonEmploymentByStateCategory(SmvPyModule):
     def run(self, i):
         df = i[PythonEmploymentByState]
         return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
+
+class PythonEmploymentByStateCategory2(SmvPyModule):
+    """Python ETL Example: depending on Scala module
+    """
+
+    ScalaMod = SmvPyExtDataSet("com.my.stage1.EmploymentByState")
+
+    def requiresDS(self):
+        return [self.ScalaMod]
+
+    def run(self, i):
+        df = i[self.ScalaMod]
+        return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))

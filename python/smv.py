@@ -389,24 +389,17 @@ class SmvPyModule(SmvPyDataSet):
             i[dep] = DataFrame(known[dep.name()], self.smv.sqlContext)
         return self.run(i)
 
-class SmvPyExtDataSet(SmvPyDataSet):
-    """An external dataset, written in another language, that's used by a Python SmvModule
-    """
-
-    ExtDsPrefix = "SmvPyExtDataSet."
-
-    def __init__(self, smv, refname):
-        super(SmvPyExtDataSet, self).__init__(smv)
-        self.refname = refname
-
-    def err(self):
-        raise AttributeError("Cannot call methods on " + self.name())
-
-    def requiresDS(self):
-        self.err()
-
-    def doRun(self, dsDqm, known):
-        self.err()
+ExtDsPrefix = "SmvPyExtDataSet."
+PyExtDataSetCache = {}
+def SmvPyExtDataSet(refname):
+    if refname in PyExtDataSetCache:
+        return PyExtDataSetCache[refname]
+    cls = type("SmvPyExtDataSet", (SmvPyDataSet,), {
+        "refname" : refname
+    })
+    cls.name = classmethod(lambda klass: ExtDsPrefix + refname)
+    PyExtDataSetCache[refname] = cls
+    return cls
 
 class SmvGroupedData(object):
     """Wrapper around the Scala SmvGroupedData"""
@@ -559,25 +552,27 @@ class PythonDataSetRepository(object):
         """
         if modfqn in self.pythonDataSets:
             return self.pythonDataSets[modfqn]
+        elif self.isExternal(modfqn):
+            ret = SmvPyExtDataSet(modfqn[len(ExtDsPrefix):])
         else:
             try:
                 ret = for_name(modfqn)(self.smv)
-                self.pythonDataSets[modfqn] = ret
-                return ret
             except:
                 return None
+        self.pythonDataSets[modfqn] = ret
+        return ret
 
     def hasDataSet(self, modfqn):
         return self.dsForName(modfqn) is not None
 
     def isExternal(self, modfqn):
-        return modfqn.startswith(SmvPyExtDataSet.ExtDsPrefix)
+        return modfqn.startswith(ExtDsPrefix)
 
     def getExternalDsName(self, modfqn):
         ds = self.dsForName(modfqn)
         if ds is None:
             self.notFound(modfqn, "cannot get external dataset name")
-        elif isinstance(ds, SmvPyExtDataSet):
+        elif self.isExternal(modfqn):
             return ds.refname
         else:
             return ''
