@@ -35,6 +35,14 @@ public interface SmvDataSetRepository {
 	boolean isExternal(String modfqn);
 
 	/**
+	 * Does the named dataset need to be persisted?
+	 *
+	 * Input datasets and simple filter and map modules typically don't
+	 * need to be persisted.
+	 */
+	boolean isEphemeral(String modfqn);
+
+	/**
 	 * Return the name of the external dataset if the name links to one;
 	 * otherwise return an empty string.
 	 */

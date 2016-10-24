@@ -219,7 +219,7 @@ class Smv(object):
             ret = DataFrame(tryRead.get(), self.sqlContext)
         else:
             _ret = mod.doRun(mod.dqm(), self.pymods)
-            if not mod.isInput():
+            if not mod.isEphemeral():
                 self.app.persist(_ret._jdf, mod.modulePath(), False)
                 ret = DataFrame(self.app.tryReadPersistedFile(mod.modulePath()).get(), self.sqlContext)
             else:
@@ -294,7 +294,9 @@ class SmvPyDataSet(object):
         """
         return cls.__module__ + "." + cls.__name__
 
-    def isInput(self):
+    def isEphemeral(self):
+        """Does this dataset need to be persisted?
+        """
         return False
 
 class SmvPyCsvFile(SmvPyDataSet):
@@ -330,7 +332,7 @@ class SmvPyCsvFile(SmvPyDataSet):
         """
         return None
 
-    def isInput(self):
+    def isEphemeral(self):
         return True
 
     def requiresDS(self):
@@ -355,7 +357,7 @@ class SmvPyHiveTable(SmvPyDataSet):
     def tableName(self):
         """The qualified Hive table name"""
 
-    def isInput(self):
+    def isEphemeral(self):
         return True
 
     def requiresDS(self):
@@ -548,7 +550,6 @@ class PythonDataSetRepository(object):
     def __init__(self, smv):
         self.smv = smv
         self.pythonDataSets = {} # SmvPyDataSet FQN -> instance
-        self.dataframes = {}     # SmvPyDataSet instance -> DataFrame result
 
     def dsForName(self, modfqn):
         """Returns the instance of SmvPyDataSet by its fully qualified name.
@@ -572,6 +573,16 @@ class PythonDataSetRepository(object):
     def isExternal(self, modfqn):
         return modfqn.startswith(ExtDsPrefix)
 
+    def isEphemeral(self, modfqn):
+        if self.isExternal(modfqn):
+            raise ValueError("Cannot know if {0} is ephemeral because it is external".format(modfqn))
+        else:
+            ds = self.dsForName(modfqn)
+            if ds is None:
+                self.notFound(modfqn, "cannot get isEphemeral")
+            else:
+                return ds.isEphemeral()
+
     def getExternalDsName(self, modfqn):
         ds = self.dsForName(modfqn)
         if ds is None:
@@ -582,7 +593,7 @@ class PythonDataSetRepository(object):
             return ''
 
     def notFound(self, modfqn, msg):
-        raise ValueError("dataset [{}] is not found in {}: {}".format(modfqn, self.__class__.__name__, msg))
+        raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modfqn, self.__class__.__name__, msg))
 
     def dependencies(self, modfqn):
         if (self.isExternal(modfqn)):
@@ -599,12 +610,7 @@ class PythonDataSetRepository(object):
         if ds is None:
             self.notFound(modfqn, "cannot get dataframe")
         else:
-            if ds in self.dataframes:
-                return self.dataframes[ds]._jdf
-            else:
-                df = ds.doRun(ds.dqm(), modules)
-                self.dataframes[ds] = df
-                return df._jdf
+            return ds.doRun(ds.dqm(), modules)._jdf
 
     def datasetHash(self, modfqn, includeSuperClass):
         ds = self.dsForName(modfqn)

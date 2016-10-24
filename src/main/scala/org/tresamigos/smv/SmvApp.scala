@@ -345,20 +345,23 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           import scala.collection.JavaConversions._
           // TODO: check circular dependency
           val deps = repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
-          println(s"""${modfqn} has dependencies: ${deps.mkString(",")}""")
           deps foreach (runModule(_, repos:_*))
 
-          val ext = repo.getExternalDsName(modfqn)
-          val df = if (!ext.isEmpty()) runModule(ext, repos:_*) else {
-            // TODO: does dqm, isEphemeral, validation (from DataSet.computeRDD) belong here?
-            val hash = repo.datasetHash(modfqn, true)
-            val path = moduleCsvPath(modfqn, hash.toInt)
-            SmvUtil.readPersistedFile(sqlContext, path).recoverWith { case ex =>
-              val r = repo.getDataFrame(modfqn, dataframes)
-              SmvUtil.persist(sqlContext, r, path, genEdd)
-              SmvUtil.readPersistedFile(sqlContext, path)
-            }.get
-          }
+          // TODO: attach DQM Tasks and Validate
+          val df =
+            if (repo.isExternal(modfqn))
+              runModule(repo.getExternalDsName(modfqn), repos:_*)
+            else if (repo.isEphemeral(modfqn))
+              repo.getDataFrame(modfqn, dataframes)
+            else {
+              val hash = repo.datasetHash(modfqn, true)
+              val path = moduleCsvPath(modfqn, hash.toInt)
+              SmvUtil.readPersistedFile(sqlContext, path).recoverWith { case ex =>
+                val r = repo.getDataFrame(modfqn, dataframes)
+                SmvUtil.persist(sqlContext, r, path, genEdd)
+                SmvUtil.readPersistedFile(sqlContext, path)
+              }.get
+            }
 
           // dataframe from external modules would be registered under
           // both its implementing module name and the referenced name

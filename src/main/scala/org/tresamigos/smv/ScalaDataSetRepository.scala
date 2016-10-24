@@ -23,7 +23,6 @@ import scala.util.{Success, Failure}
  */
 class ScalaDataSetRepository extends SmvDataSetRepository {
   private var scalaDataSets: Map[String, SmvDataSet] = Map.empty
-  private var dataframes: Map[SmvDataSet, DataFrame] = Map.empty
 
   private def dsForName(modfqn: String): Option[SmvDataSet] =
     scalaDataSets.get(modfqn) orElse {
@@ -44,6 +43,15 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   override def isExternal(modfqn: String): Boolean =
     modfqn.startsWith(ExtDsPrefix)
 
+  override def isEphemeral(modfqn: String): Boolean =
+    if (isExternal(modfqn))
+      throw new IllegalArgumentException(s"Cannot know if ${modfqn} is ephemeral because it is external")
+    else
+      dsForName(modfqn) match {
+        case None => notFound(modfqn, "cannot check if the module is ephemeral")
+        case Some(ds) => ds.isEphemeral
+      }
+
   override def getExternalDsName(modfqn: String): String =
     dsForName(modfqn) match {
       case None => notFound(modfqn, "cannot get external dataset name")
@@ -63,12 +71,7 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   override def getDataFrame(modfqn: String, modules: java.util.Map[String, DataFrame]): DataFrame =
     dsForName(modfqn) match {
       case None => notFound(modfqn, "cannot get dataframe")
-      case Some(ds) =>
-        dataframes.get(ds) match {
-          case Some(df) => df
-          case None =>
-            ds.doRun(new dqm.DQMValidator(ds.createDsDqm()), modules)
-        }
+      case Some(ds) => ds.doRun(new dqm.DQMValidator(ds.createDsDqm()), modules)
     }
 
   override def datasetHash(modfqn: String, includeSuperClass: Boolean = true): Long =
