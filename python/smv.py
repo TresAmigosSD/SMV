@@ -218,7 +218,7 @@ class Smv(object):
         if (tryRead.isSuccess()):
             ret = DataFrame(tryRead.get(), self.sqlContext)
         else:
-            _ret = mod.doRun(self.pymods)
+            _ret = mod.doRun(mod.dqm(), self.pymods)
             if not mod.isInput():
                 self.app.persist(_ret._jdf, mod.modulePath(), False)
                 ret = DataFrame(self.app.tryReadPersistedFile(mod.modulePath()).get(), self.sqlContext)
@@ -385,8 +385,12 @@ class SmvPyModule(SmvPyDataSet):
     def doRun(self, dsDqm, known):
         i = {}
         for dep in self.requiresDS():
-            # the values in known are Java DataFrames
-            i[dep] = DataFrame(known[dep.name()], self.smv.sqlContext)
+            # temporarily keep the old code working
+            try:
+                i[dep] = known[dep]
+            except:
+                # the values in known are Java DataFrames
+                i[dep] = DataFrame(known[dep.name()], self.smv.sqlContext)
         return self.run(i)
 
 ExtDsPrefix = "SmvPyExtDataSet."
