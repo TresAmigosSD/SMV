@@ -430,7 +430,7 @@ class SmvMultiJoin(object):
         self.sqlContext = sqlContext
         self.mj = mj
 
-    def joinWith(self, df, postfix, jointype = 'inner'):
+    def joinWith(self, df, postfix, jointype = None):
         return SmvMultiJoin(self.sqlContext, self.mj.joinWith(df._jdf, postfix, jointype))
 
     def doJoin(self, dropextra = False):

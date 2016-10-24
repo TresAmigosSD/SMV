@@ -160,6 +160,14 @@ class DfHelperTest(SmvBaseTest):
             "a:Integer;b:String",
             "1,x1;5,"))
 
+        r3 = df1.smvJoinMultipleByKey(['a'], 'leftouter').joinWith(df2, "_df2").doJoin()
+        self.should_be_same(r3, self.createDF(
+            "a:Integer;b:String;b_df2:String",
+            """1,x1,x1;
+            2,y1,;
+            3,z1,"""
+        ))
+
     def test_smvUnion(self):
         schema       = "a:Integer; b:Double; c:String"
         schema2      = "c:String; a:Integer; d:Double"
