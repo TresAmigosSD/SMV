@@ -336,19 +336,22 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       dataframes(modfqn)
     else if (repos.isEmpty)
       runModule(modfqn, scalaDataSets)
+    else if (resolveStack contains modfqn)
+      throw new IllegalStateException(s"cycle found while resolving ${modfqn}: " + resolveStack.mkString(","))
     else {
       println(s"running module ${modfqn}")
+      resolveStack.push(modfqn)
       repos.find(_.hasDataSet(modfqn)) match {
         case None =>
+          resolveStack.pop()
           throw new IllegalArgumentException(s"Cannot find module [${modfqn}]")
         case Some(repo) =>
           import scala.collection.JavaConversions._
-          // TODO: check circular dependency
           val deps = repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
           deps foreach (runModule(_, repos:_*))
 
           // TODO: attach DQM Tasks and Validate
-          val df =
+          val df = try {
             if (repo.isExternal(modfqn))
               runModule(repo.getExternalDsName(modfqn), repos:_*)
             else if (repo.isEphemeral(modfqn))
@@ -362,6 +365,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
                 SmvUtil.readPersistedFile(sqlContext, path)
               }.get
             }
+          } finally {
+            resolveStack.pop()
+          }
 
           // dataframe from external modules would be registered under
           // both its implementing module name and the referenced name
