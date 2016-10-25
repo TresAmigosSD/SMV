@@ -245,7 +245,12 @@ class SmvPyDataSet(object):
         """The list of dataset dependencies"""
 
     def dqm(self):
+        """DQM Factory method"""
         return self.smv._jvm.org.tresamigos.smv.dqm.SmvDQM.apply()
+
+    def createDsDqm(self):
+        """Subclasses with a non-default DQM policy should override this method"""
+        return self.dqm()
 
     @abc.abstractmethod
     def doRun(self, dsDqm, known):
@@ -592,6 +597,13 @@ class PythonDataSetRepository(object):
         else:
             return ''
 
+    def getDqm(self, modfqn):
+        ds = self.dsForName(modfqn)
+        if ds is None:
+            self.notFound(modfqn, "cannot get dqm")
+        else:
+            return ds.createDsDqm()
+
     def notFound(self, modfqn, msg):
         raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modfqn, self.__class__.__name__, msg))
 
@@ -605,12 +617,12 @@ class PythonDataSetRepository(object):
             else:
                 return ','.join([x.name() for x in ds.requiresDS()])
 
-    def getDataFrame(self, modfqn, modules):
+    def getDataFrame(self, modfqn, validator, modules):
         ds = self.dsForName(modfqn)
         if ds is None:
             self.notFound(modfqn, "cannot get dataframe")
         else:
-            return ds.doRun(ds.dqm(), modules)._jdf
+            return ds.doRun(validator, modules)._jdf
 
     def datasetHash(self, modfqn, includeSuperClass):
         ds = self.dsForName(modfqn)

@@ -16,6 +16,7 @@ package org.tresamigos.smv
 
 import org.tresamigos.smv.class_loader.SmvClassLoader
 import org.tresamigos.smv.shell.EddCompare
+import dqm.DQMValidator
 
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
@@ -354,16 +355,28 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           val df = try {
             if (repo.isExternal(modfqn))
               runModule(repo.getExternalDsName(modfqn), repos:_*)
-            else if (repo.isEphemeral(modfqn))
-              repo.getDataFrame(modfqn, dataframes)
             else {
-              val hash = repo.datasetHash(modfqn, true)
-              val path = moduleCsvPath(modfqn, hash.toInt)
-              SmvUtil.readPersistedFile(sqlContext, path).recoverWith { case ex =>
-                val r = repo.getDataFrame(modfqn, dataframes)
-                SmvUtil.persist(sqlContext, r, path, genEdd)
-                SmvUtil.readPersistedFile(sqlContext, path)
-              }.get
+              val hashval: Int = repo.datasetHash(modfqn, true).toInt
+              // modules defined in spark shell starts with '$'
+              val persistValidation = !modfqn.startsWith("$")
+              val dqm = new DQMValidator(repo.getDqm(modfqn))
+              val validator = new ValidationSet(Seq(dqm), persistValidation)
+
+              if (repo.isEphemeral(modfqn)) {
+                val r = dqm.attachTasks(repo.getDataFrame(modfqn, dqm, dataframes))
+                // no action before this  point
+                validator.validate(r, false, moduleValidPath(modfqn, hashval))
+                r
+              } else {
+                val path = moduleCsvPath(modfqn, hashval)
+                SmvUtil.readPersistedFile(sqlContext, path).recoverWith { case ex =>
+                  val r = dqm.attachTasks(repo.getDataFrame(modfqn, dqm, dataframes))
+                  SmvUtil.persist(sqlContext, r, path, genEdd)
+                  // already had action from persist
+                  validator.validate(r, true, moduleValidPath(modfqn, hashval))
+                  SmvUtil.readPersistedFile(sqlContext, path)
+                }.get
+              }
             }
           } finally {
             resolveStack.pop()
