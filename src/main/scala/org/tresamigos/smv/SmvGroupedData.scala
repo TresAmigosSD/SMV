@@ -672,11 +672,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    **/
   def timePanelValueFill(smvTimeColName: String, backwardFill: Boolean = true)(values: String*) = {
     import df.sqlContext.implicits._
-    val foreward = smvFillNullWithPrevValue($"$smvTimeColName".asc)(values.map{s => $"${s}"}: _*)
+    val foreward = smvFillNullWithPrevValue($"$smvTimeColName".asc)(values: _*)
 
     if(backwardFill)
       foreward.smvGroupBy(keys.map{k => $"${k}"}: _*).
-        smvFillNullWithPrevValue($"$smvTimeColName".desc)(values.map{s => $"${s}"}: _*)
+        smvFillNullWithPrevValue($"$smvTimeColName".desc)(values: _*)
     else
       foreward
   }
@@ -789,7 +789,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    *
    * {{{
-   * df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)($"V")
+   * df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)("V")
    * }}}
    *
    * Output:
@@ -806,8 +806,8 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * allow fill backward at the beginning of the sequence, you can apply
    * this method again with reverse ordering:
    * {{{
-   * df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)($"V").
-   *   smvGroupBy("K").smvFillNullWithPrevValue($"T".desc)($"V")
+   * df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)("V").
+   *   smvGroupBy("K").smvFillNullWithPrevValue($"T".desc)("V")
    * }}}
    *
    * Output:
@@ -819,15 +819,15 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * a, 4, b
    * }}}
    **/
-  def smvFillNullWithPrevValue(orders: Column*)(values: Column*): DataFrame = {
-    val renamed = values.map{c => c.getName}.map{n => mkUniq(df.columns, s"_${n}")}
+  def smvFillNullWithPrevValue(orders: Column*)(values: String*): DataFrame = {
+    val renamed = values.map{n => mkUniq(df.columns, s"_${n}")}
 
     /* We are using the `last` aggregate function's feature that it's actually
      * Non-null last */
     val aggExprs = values.zip(renamed).map{case (v, nv) => last(v) as nv}.map{makeSmvCDSAggColumn}
     runAggPlus(orders: _*)(aggExprs: _*).
-      smvSelectMinus(values: _*).
-      renameField(renamed.zip(values.map{_.getName}): _*).
+      smvSelectMinus(values.head, values.tail: _*).
+      renameField(renamed.zip(values): _*).
       select(df.columns.head, df.columns.tail: _*)
   }
 

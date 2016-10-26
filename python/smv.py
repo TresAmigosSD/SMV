@@ -424,6 +424,30 @@ class SmvGroupedData(object):
         baseOutput: list of strings"""
         return DataFrame(self.sgd.smvPivotSum(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
 
+    def smvFillNullWithPrevValue(self, *orderCols):
+        """Fill in Null values with "previous" value according to an ordering
+           * Example:
+           * Input:
+           * K, T, V
+           * a, 1, null
+           * a, 2, a
+           * a, 3, b
+           * a, 4, null
+           *
+           * df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)("V")
+           *
+           * Output:
+           * K, T, V
+           * a, 1, null
+           * a, 2, a
+           * a, 3, b
+           * a, 4, b
+           *
+        """
+        def __doFill(*valueCols):
+            return DataFrame(self.sgd.smvFillNullWithPrevValue(smv_copy_array(self.df._sc, *orderCols), smv_copy_array(self.df._sc, *valueCols)), self.df.sql_ctx)
+        return __doFill
+
 class SmvMultiJoin(object):
     """Wrapper around Scala's SmvMultiJoin"""
     def __init__(self, sqlContext, mj):

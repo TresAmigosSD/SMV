@@ -32,6 +32,11 @@ object SmvPythonHelper {
   def smvGroupBy(df: DataFrame, cols: Array[Column]): SmvGroupedDataAdaptor =
     new SmvGroupedDataAdaptor(df.smvGroupBy(cols:_*))
 
+  def smvGroupBy(df: DataFrame, cols: Array[String]): SmvGroupedDataAdaptor = {
+    import df.sqlContext.implicits._
+    new SmvGroupedDataAdaptor(df.smvGroupBy(cols.toSeq.map{c => $"$c"}:_*))
+  }
+
   /**
    * FIXME py4j method resolution with null argument can fail, so we
    * temporarily remove the trailing parameters till we can find a
@@ -96,6 +101,9 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
   def smvPivotSum(pivotCols: java.util.List[Array[String]],
     valueCols: Array[String], baseOutput: Array[String]): DataFrame =
     grouped.smvPivotSum(pivotCols.map(_.toSeq).toSeq :_*)(valueCols:_*)(baseOutput:_*)
+
+  def smvFillNullWithPrevValue(orderCols: Array[Column], valueCols: Array[String]): DataFrame =
+    grouped.smvFillNullWithPrevValue(orderCols: _*)(valueCols: _*)
 }
 
 class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
