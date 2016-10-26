@@ -25,7 +25,7 @@ class SmvHashOfHashTest extends SmvTestUtil {
   }
 }
 
-class SmvTestFile(override val name: String) extends SmvModule("") {
+object SmvTestFile extends SmvModule("") {
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
   override def run(i: runParams) = app.createDF("a:Integer", "1;2;3")
@@ -45,42 +45,11 @@ class SmvAppTest extends SmvTestUtil {
     "--permit-dependency-violation"
   )
 
-  val fx = new SmvTestFile("FX")
-
-  object A extends SmvModule("A Module") {
-    var moduleRunCount = 0
-    override def requiresDS() = Seq(fx)
-    override def run(inputs: runParams) = {
-      moduleRunCount = moduleRunCount + 1
-      require(inputs.size === 1)
-      app.createDF("a:Integer", "1;2;3")
-    }
-    override val isEphemeral = true
-  }
-
-  object B extends SmvModule("B Module") {
-    override def requiresDS() = Seq(A)
-    override def run(inputs: runParams) = {
-      val sc = inputs(A).sqlContext; import sc.implicits._
-      require(inputs.size === 1)
-      inputs(A).smvSelectPlus('a + 1 as 'b)
-    }
-    override val isEphemeral = true
-  }
-
-  object C extends SmvModule("C Module") {
-    override def requiresDS() = Seq(A, B)
-    override def run(inputs: runParams) = {
-      val sc = inputs(A).sqlContext; import sc.implicits._
-      require(inputs.size === 2)
-      inputs(B).smvSelectPlus('b + 1 as 'c)
-    }
-    override val isEphemeral = true
-  }
-
   test("Test normal dependency execution") {
+    import org.tresamigos.fixture.smvapptest._
     resetTestcaseTempDir()
 
+    // val res = app.runModule(C.name)
     val res = app.resolveRDD(C)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
 
@@ -88,26 +57,16 @@ class SmvAppTest extends SmvTestUtil {
     assert(A.moduleRunCount === 1)
 
     //Resolve the same module, it should read the persisted file and not run the module again
+    // val res2 = app.runModule(C.name)
     val res2 = app.resolveRDD(C)
     assertSrddDataEqual(res2, "1,2,3;2,3,4;3,4,5")
     assert(A.moduleRunCount === 1)
   }
 
-  object A_cycle extends SmvModule("A Cycle") {
-    override val isEphemeral = true
-    override def requiresDS() = Seq(B_cycle)
-    override def run(inputs: runParams) = null
-  }
-
-  object B_cycle extends SmvModule("B Cycle") {
-    override val isEphemeral = true
-    override def requiresDS() = Seq(A_cycle)
-    override def run(inputs: runParams) = null
-  }
-
   test("Test cycle dependency execution") {
+    import org.tresamigos.fixture.smvapptest.B_cycle
     intercept[IllegalStateException] {
-      app.resolveRDD(B_cycle)
+      app.runModule(B_cycle.name)
     }
   }
 
@@ -171,6 +130,50 @@ package org.tresamigos.fixture.smvapptest {
   object f1 extends TestFile("F1.csv")
   object f2 extends TestFile("F2.csv")
   object f3 extends TestFile("F1.csv")
+
+  object A extends SmvModule("A Module") {
+    var moduleRunCount = 0
+    override def requiresDS() = Seq(SmvTestFile)
+    override def run(inputs: runParams) = {
+      moduleRunCount = moduleRunCount + 1
+      require(inputs.size == 1)
+      app.createDF("a:Integer", "1;2;3")
+    }
+    override val isEphemeral = true
+  }
+
+  object B extends SmvModule("B Module") {
+    override def requiresDS() = Seq(A)
+    override def run(inputs: runParams) = {
+      val sc = inputs(A).sqlContext; import sc.implicits._
+      require(inputs.size == 1)
+      inputs(A).smvSelectPlus('a + 1 as 'b)
+    }
+    override val isEphemeral = true
+  }
+
+  object C extends SmvModule("C Module") {
+    override def requiresDS() = Seq(A, B)
+    override def run(inputs: runParams) = {
+      val sc = inputs(A).sqlContext; import sc.implicits._
+      require(inputs.size == 2)
+      inputs(B).smvSelectPlus('b + 1 as 'c)
+    }
+    override val isEphemeral = true
+  }
+
+  object A_cycle extends SmvModule("A Cycle") {
+    override val isEphemeral = true
+    override def requiresDS() = Seq(B_cycle)
+    override def run(inputs: runParams) = null
+  }
+
+  object B_cycle extends SmvModule("B Cycle") {
+    override val isEphemeral = true
+    override def requiresDS() = Seq(A_cycle)
+    override def run(inputs: runParams) = null
+  }
+
 }
 
 package org.tresamigos.fixture.hashofhash {

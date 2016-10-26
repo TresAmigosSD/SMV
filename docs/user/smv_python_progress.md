@@ -31,6 +31,7 @@
   * [x] `smvFreqHist("k")`
   * [x] `smvCountHist("k")`
   * [x] `smvBinHist(("k", 100.0))`
+  * [x] `smvEddCompare(otherDf)`
 
 ## Column Helpers
   * [x] `smvIsAllIn("value 1", "value 2")

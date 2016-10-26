@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
+import dqm.{SmvDQM, DQMValidator}
 import scala.collection.JavaConversions._
 import scala.util.{Success, Failure}
 
@@ -59,6 +60,12 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
       case _ => ""
     }
 
+  override def getDqm(modfqn: String): SmvDQM =
+    dsForName(modfqn) match {
+      case None => notFound(modfqn, "cannot get dqm")
+      case Some(ds) => ds.createDsDqm()
+    }
+
   private def notFound(modfqn: String, msg: String) =
     throw new IllegalArgumentException(s"dataset [${modfqn}] is not found in ${getClass.getName}: ${msg}")
 
@@ -68,10 +75,11 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
       case Some(ds) => ds.requiresDS.map(_.name).mkString(",")
     }
 
-  override def getDataFrame(modfqn: String, modules: java.util.Map[String, DataFrame]): DataFrame =
+  override def getDataFrame(modfqn: String, validator: DQMValidator,
+    known: java.util.Map[String, DataFrame]): DataFrame =
     dsForName(modfqn) match {
       case None => notFound(modfqn, "cannot get dataframe")
-      case Some(ds) => ds.doRun(new dqm.DQMValidator(ds.createDsDqm()), modules)
+      case Some(ds) => ds.doRun(validator, known)
     }
 
   override def datasetHash(modfqn: String, includeSuperClass: Boolean = true): Long =
