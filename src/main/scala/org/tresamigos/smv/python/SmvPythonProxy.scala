@@ -158,6 +158,9 @@ class SmvPythonApp(val app: SmvApp) {
   /** Runs an SmvModule written in either Python or Scala */
   def runModule(modfqn: String, repo: SmvDataSetRepository): DataFrame =
     app.runModule(modfqn, repo, app.scalaDataSets)
+
+  def runDynamicModule(modfqn: String, repo: SmvDataSetRepository): DataFrame =
+    app.runDynamicModule(modfqn, repo, app.scalaDataSets)
 }
 
 /** Not a companion object because we need to access it from Python */

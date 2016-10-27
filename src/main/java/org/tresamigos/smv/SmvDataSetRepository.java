@@ -71,6 +71,11 @@ public interface SmvDataSetRepository {
 	DataFrame getDataFrame(String modfqn, DQMValidator validator,  Map<String, DataFrame> known);
 
 	/**
+	 * Re-run the named module after code change.
+	 */
+	DataFrame rerun(String modfqn, DQMValidator validator, Map<String, DataFrame> known);
+
+	/**
 	 * Calculate a hash for the named data set; can optionally include
 	 * the hash for all its super classes up to and excluding the base
 	 * class provided by SMV.

@@ -22,6 +22,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
+import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
 
 /**
@@ -347,36 +348,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           resolveStack.pop()
           throw new IllegalArgumentException(s"Cannot find module [${modfqn}]")
         case Some(repo) =>
-          import scala.collection.JavaConversions._
           val deps = repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
           deps foreach (runModule(_, repos:_*))
 
-          // TODO: attach DQM Tasks and Validate
           val df = try {
             if (repo.isExternal(modfqn))
               runModule(repo.getExternalDsName(modfqn), repos:_*)
             else {
-              val hashval: Int = repo.datasetHash(modfqn, true).toInt
-              // modules defined in spark shell starts with '$'
-              val persistValidation = !modfqn.startsWith("$")
               val dqm = new DQMValidator(repo.getDqm(modfqn))
-              val validator = new ValidationSet(Seq(dqm), persistValidation)
-
-              if (repo.isEphemeral(modfqn)) {
-                val r = dqm.attachTasks(repo.getDataFrame(modfqn, dqm, dataframes))
-                // no action before this  point
-                validator.validate(r, false, moduleValidPath(modfqn, hashval))
-                r
-              } else {
-                val path = moduleCsvPath(modfqn, hashval)
-                SmvUtil.readPersistedFile(sqlContext, path).recoverWith { case ex =>
-                  val r = dqm.attachTasks(repo.getDataFrame(modfqn, dqm, dataframes))
-                  SmvUtil.persist(sqlContext, r, path, genEdd)
-                  // already had action from persist
-                  validator.validate(r, true, moduleValidPath(modfqn, hashval))
-                  SmvUtil.readPersistedFile(sqlContext, path)
-                }.get
-              }
+              persist(repo, modfqn, dqm, repo.getDataFrame(modfqn, dqm, dataframes))
             }
           } finally {
             resolveStack.pop()
@@ -389,6 +369,52 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           df
       }
     }
+
+  private def persist(repo: SmvDataSetRepository, modfqn: String, dqm: DQMValidator, df: DataFrame): DataFrame = {
+    val hashval: Int = repo.datasetHash(modfqn, true).toInt
+    // modules defined in spark shell starts with '$'
+    val persistValidation = !modfqn.startsWith("$")
+    val validator = new ValidationSet(Seq(dqm), persistValidation)
+    if (repo.isEphemeral(modfqn)) {
+      val r = dqm.attachTasks(df)
+      // no action before this  point
+      validator.validate(r, false, moduleValidPath(modfqn, hashval))
+      r
+    } else {
+      val path = moduleCsvPath(modfqn, hashval)
+      SmvUtil.readPersistedFile(sqlContext, path).recoverWith { case ex =>
+        val r = dqm.attachTasks(df)
+        SmvUtil.persist(sqlContext, r, path, genEdd)
+        // already had action from persist
+        validator.validate(r, true, moduleValidPath(modfqn, hashval))
+        SmvUtil.readPersistedFile(sqlContext, path)
+      }.get
+    }
+  }
+
+  /**
+   * Discard the cached result of the module, if any, and re-run.
+   *
+   * This is usually used in an interactive shell to re-run a module after it's been modified.
+   */
+  def runDynamicModule(modfqn: String, repos: SmvDataSetRepository*): DataFrame =
+    if (modfqn.isEmpty)
+      return null
+    else if (repos.isEmpty)
+      runDynamicModule(modfqn, scalaDataSets)
+    else
+      repos.find(_.hasDataSet(modfqn)) match {
+        case None =>
+          throw new IllegalArgumentException("")
+        case Some(repo) =>
+          dataframes = dataframes - modfqn
+          if (repo.isExternal(modfqn))
+            runDynamicModule(repo.getExternalDsName(modfqn), repos:_*)
+          else {
+            val dqm = new DQMValidator(repo.getDqm(modfqn))
+            persist(repo, modfqn, dqm, repo.rerun(modfqn, dqm, dataframes))
+          }
+      }
 
   /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.

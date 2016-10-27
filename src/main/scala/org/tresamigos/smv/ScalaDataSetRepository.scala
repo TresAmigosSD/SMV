@@ -82,6 +82,10 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
       case Some(ds) => ds.doRun(validator, known)
     }
 
+  override def rerun(modfqn: String, validator: DQMValidator,
+    known: java.util.Map[String, DataFrame]): DataFrame =
+    ??? // TODO:implement
+
   override def datasetHash(modfqn: String, includeSuperClass: Boolean = true): Long =
     dsForName(modfqn) match {
       case None => notFound(modfqn, "cannot calc dataset hash")

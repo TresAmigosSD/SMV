@@ -27,6 +27,7 @@ if sys.version >= '3':
     basestring = unicode = str
     long = int
     from io import StringIO
+    from importlib import reload
 else:
     from cStringIO import StringIO
 
@@ -187,6 +188,10 @@ class Smv(object):
         jdf = self.app.runModule(fqn, self.repo)
         return DataFrame(jdf, self.sqlContext)
 
+    def runDynamicModule(self, fqn):
+        """Re-run a Scala or Python module by its fqn"""
+        return DataFrame(self.app.runDynamicModule(fqn, self.repo), self.sqlContext)
+
     def runDynamic(self, fqn):
         """Dynamically runs a Scala SmvModule by its Fully Qualified Name(fqn)
         """
@@ -218,7 +223,7 @@ class Smv(object):
         if (tryRead.isSuccess()):
             ret = DataFrame(tryRead.get(), self.sqlContext)
         else:
-            _ret = mod.doRun(mod.dqm(), self.pymods)
+            _ret = mod.doRun(None, self.pymods)
             if not mod.isEphemeral():
                 self.app.persist(_ret._jdf, mod.modulePath(), False)
                 ret = DataFrame(self.app.tryReadPersistedFile(mod.modulePath()).get(), self.sqlContext)
@@ -253,7 +258,7 @@ class SmvPyDataSet(object):
         return self.dqm()
 
     @abc.abstractmethod
-    def doRun(self, dsDqm, known):
+    def doRun(self, validator, known):
         """Comput this dataset, and return the dataframe"""
 
     def version(self):
@@ -343,7 +348,7 @@ class SmvPyCsvFile(SmvPyDataSet):
     def requiresDS(self):
         return []
 
-    def doRun(self, dsDqm, known):
+    def doRun(self, validator, known):
         jdf = self._smvCsvFile.rdd()
         return DataFrame(jdf, self.smv.sqlContext)
 
@@ -372,7 +377,7 @@ class SmvPyHiveTable(SmvPyDataSet):
         """This can be override by concrete SmvPyHiveTable"""
         return df
 
-    def doRun(self, dsDqm, known):
+    def doRun(self, validator, known):
         return self.run(DataFrame(self._smvHiveTable.rdd(), self.smv.sqlContext))
 
 class SmvPyModule(SmvPyDataSet):
@@ -389,7 +394,7 @@ class SmvPyModule(SmvPyDataSet):
     def run(self, i):
         """This defines the real work done by this module"""
 
-    def doRun(self, dsDqm, known):
+    def doRun(self, validator, known):
         i = {}
         for dep in self.requiresDS():
             # temporarily keep the old code working
@@ -596,6 +601,20 @@ class PythonDataSetRepository(object):
         self.pythonDataSets[modfqn] = ret
         return ret
 
+    def reloadDs(self, modfqn):
+        """Reload the module by its fully qualified name, replace the old
+        instance with a new one from the new definnition.
+        """
+        lastdot = modfqn.rfind('.')
+        if (lastdot == -1):
+            klass = reload(name)
+        else:
+            mod = reload(sys.modules[modfqn[:lastdot]])
+            klass = getattr(mod, modfqn[lastdot+1:])
+        ret = klass(self.smv)
+        self.pythonDataSets[modfqn] = ret
+        return ret
+
     def hasDataSet(self, modfqn):
         return self.dsForName(modfqn) is not None
 
@@ -641,12 +660,23 @@ class PythonDataSetRepository(object):
             else:
                 return ','.join([x.name() for x in ds.requiresDS()])
 
-    def getDataFrame(self, modfqn, validator, modules):
+    def getDataFrame(self, modfqn, validator, known):
         ds = self.dsForName(modfqn)
         if ds is None:
             self.notFound(modfqn, "cannot get dataframe")
         else:
-            return ds.doRun(validator, modules)._jdf
+            return ds.doRun(validator, known)._jdf
+
+    def rerun(self, modfqn, validator, known):
+        ds = self.reloadDs(modfqn)
+        # Python issue https://bugs.python.org/issue1218234
+        # need to invalidate inspect.linecache to make dataset hash work
+        srcfile = inspect.getsourcefile(ds.__class__)
+        if srcfile:
+            inspect.linecache.checkcache(srcfile)
+        if ds is None:
+            self.notFound(modfqn, "cannot rerun")
+        return ds.doRun(validator, known)._jdf
 
     def datasetHash(self, modfqn, includeSuperClass):
         ds = self.dsForName(modfqn)
