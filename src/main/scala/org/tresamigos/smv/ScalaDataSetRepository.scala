@@ -83,8 +83,15 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
     }
 
   override def rerun(modfqn: String, validator: DQMValidator,
-    known: java.util.Map[String, DataFrame]): DataFrame =
-    ??? // TODO:implement
+    known: java.util.Map[String, DataFrame]): DataFrame = {
+    val parentClassLoader = getClass.getClassLoader
+    val cl = class_loader.SmvClassLoader(SmvApp.app.smvConfig, parentClassLoader)
+    val ds = new SmvReflection(cl).objectNameToInstance[SmvDataSet](modfqn)
+    val message = shell.ShellCmd.hotdeployIfCapable(ds, parentClassLoader)
+    println(message)
+    scalaDataSets = scalaDataSets + (modfqn -> ds)
+    ds.doRun(validator, known)
+  }
 
   override def datasetHash(modfqn: String, includeSuperClass: Boolean = true): Long =
     dsForName(modfqn) match {

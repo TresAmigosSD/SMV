@@ -408,12 +408,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           throw new IllegalArgumentException("")
         case Some(repo) =>
           dataframes = dataframes - modfqn
-          if (repo.isExternal(modfqn))
-            runDynamicModule(repo.getExternalDsName(modfqn), repos:_*)
-          else {
-            val dqm = new DQMValidator(repo.getDqm(modfqn))
-            persist(repo, modfqn, dqm, repo.rerun(modfqn, dqm, dataframes))
-          }
+          val df =
+            if (repo.isExternal(modfqn))
+              runDynamicModule(repo.getExternalDsName(modfqn), repos:_*)
+            else {
+              val dqm = new DQMValidator(repo.getDqm(modfqn))
+              persist(repo, modfqn, dqm, repo.rerun(modfqn, dqm, dataframes))
+            }
+          dataframes = dataframes + (modfqn -> df)
+          df
       }
 
   /**
