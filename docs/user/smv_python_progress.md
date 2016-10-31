@@ -23,6 +23,7 @@
 ## SmvGroupedData Helper
   * [x] `smvTopNRecs(10, col("t").desc(), col("a").asc())`
   * [x] `smvPivotSum(["city"], ["pop"], ["ny", "la", "sd", "sf"])`
+  * [x] `smvFillNullWithPreValue(col("T").asc())("V")`
 
 ## DataFrame Helper in Shell
   * [x] `smvEdd()`
