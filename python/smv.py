@@ -315,10 +315,18 @@ class SmvPyCsvFile(SmvPyDataSet):
 
     def __init__(self, smv):
         super(SmvPyCsvFile, self).__init__(smv)
-        self._smvCsvFile = smv.app.smvCsvFile(self.name() + "_" + self.version(), self.path(), self.csvAttr())
+        self._smvCsvFile = smv.app.smvCsvFile(
+            self.name() + "_" + self.version(), self.path(), self.csvAttr(),
+            self.forceParserCheck(), self.failAtParsingError())
 
     def description(self):
         return "Input file: @" + self.path()
+
+    def forceParserCheck(self):
+        return True
+
+    def failAtParsingError(self):
+        return True
 
     @abc.abstractproperty
     def path(self):
@@ -349,7 +357,7 @@ class SmvPyCsvFile(SmvPyDataSet):
         return []
 
     def doRun(self, validator, known):
-        jdf = self._smvCsvFile.rdd()
+        jdf = self._smvCsvFile.doRun(validator, known)
         return DataFrame(jdf, self.smv.sqlContext)
 
 class SmvPyHiveTable(SmvPyDataSet):

@@ -145,8 +145,14 @@ class SmvPythonApp(val app: SmvApp) {
     SmvUtil.exportHive(dataframe, tableName)
 
   /** Create a SmvCsvFile for use in Python */
-  def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes): SmvCsvFile =
-    new SmvCsvFile(path, csvAttr) { override def name = moduleName }
+  def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes,
+    pForceParserCheck: Boolean, pFailAtParsingError: Boolean
+  ): SmvCsvFile =
+    new SmvCsvFile(path, csvAttr) with SmvDSWithParser {
+      override def name = moduleName
+      override val forceParserCheck = pForceParserCheck
+      override val failAtParsingError = pFailAtParsingError
+    }
 
   /** Output directory for files */
   def outputDir: String = app.smvConfig.outputDir
