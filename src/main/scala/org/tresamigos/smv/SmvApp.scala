@@ -52,7 +52,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   val scalaDataSets = new ScalaDataSetRepository
 
-  // Since OldVersionHelper will be used by executors, need to inject the version from the driver 
+  // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
@@ -365,7 +365,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           // dataframe from external modules would be registered under
           // both its implementing module name and the referenced name
           dataframes = dataframes + (modfqn -> df)
-          df.show()
           df
       }
     }

@@ -16,8 +16,8 @@ from pyspark.sql import DataFrame
 
 jvmShellCmd = SmvApp._jvm.org.tresamigos.smv.shell.ShellCmd
 
-pdf = lambda fqn: SmvApp.run_python_module(fqn)
-ddf = lambda fqn: DataFrame(jvmShellCmd.ddf(fqn), SmvApp.sqlContext)
+pdf = lambda fqn: SmvApp.runModule(fqn)
+ddf = lambda fqn: SmvApp.runModule(fqn)
 openHive = lambda tableName: DataFrame(jvmShellCmd.openHive(tableName), SmvApp.sqlContext)
 openCsv = lambda path: DataFrame(jvmShellCmd.openCsv(path), SmvApp.sqlContext)
 
