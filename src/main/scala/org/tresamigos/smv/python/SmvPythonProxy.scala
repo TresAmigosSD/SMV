@@ -148,7 +148,7 @@ class SmvPythonApp(val app: SmvApp) {
   def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes,
     pForceParserCheck: Boolean, pFailAtParsingError: Boolean
   ): SmvCsvFile =
-    new SmvCsvFile(path, csvAttr) with SmvDSWithParser {
+    new SmvCsvFile(path, csvAttr) {
       override def name = moduleName
       override val forceParserCheck = pForceParserCheck
       override val failAtParsingError = pFailAtParsingError

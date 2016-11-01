@@ -151,6 +151,7 @@ class Smv(object):
         from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.ColumnHelper")
         java_import(self._jvm, "org.tresamigos.smv.SmvDFHelper")
+        java_import(self._jvm, "org.tresamigos.smv.dqm.*")
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
 
         # convert python arglist to java String array
@@ -251,7 +252,7 @@ class SmvPyDataSet(object):
 
     def dqm(self):
         """DQM Factory method"""
-        return self.smv._jvm.org.tresamigos.smv.dqm.SmvDQM.apply()
+        return self.smv._jvm.SmvDQM.apply()
 
     def createDsDqm(self):
         """Subclasses with a non-default DQM policy should override this method"""
