@@ -193,11 +193,9 @@ class Smv(object):
         """Re-run a Scala or Python module by its fqn"""
         return DataFrame(self.app.runDynamicModule(fqn, self.repo), self.sqlContext)
 
-    def runDynamic(self, fqn):
-        """Dynamically runs a Scala SmvModule by its Fully Qualified Name(fqn)
-        """
-        jdf = self.app.app.runDynamicModuleByName(fqn)
-        return DataFrame(jdf, self.sqlContext)
+    def scalaOption(self, val):
+        """Returns a Scala Option containing the value"""
+        return self._jvm.scala.Option.apply(val)
 
     def run_python_module(self, name):
         klass = for_name(name)
@@ -250,13 +248,16 @@ class SmvPyDataSet(object):
     def requiresDS(self):
         """The list of dataset dependencies"""
 
-    def dqm(self):
-        """DQM Factory method"""
+    def smvDQM(self):
+        """Factory method for Scala SmvDQM"""
         return self.smv._jvm.SmvDQM.apply()
 
-    def createDsDqm(self):
+    def FailParserCountPolicy(self, threshold):
+        return self.smv._jvm.FailParserCountPolicy(threshold)
+
+    def dqm(self):
         """Subclasses with a non-default DQM policy should override this method"""
-        return self.dqm()
+        return self.smvDQM()
 
     @abc.abstractmethod
     def doRun(self, validator, known):
@@ -684,7 +685,7 @@ class PythonDataSetRepository(object):
         if ds is None:
             self.notFound(modfqn, "cannot get dqm")
         else:
-            return ds.createDsDqm()
+            return ds.dqm()
 
     def notFound(self, modfqn, msg):
         raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modfqn, self.__class__.__name__, msg))

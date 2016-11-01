@@ -8,4 +8,5 @@ class PythonEmployment(SmvPyCsvFile):
         return False
 
     def dqm(self):
-        return self.smv._jvm.SmvDQM.apply().add(self.smv._jvm.FailParserCountPolicy(10), self.smv._jvm.scala.Option.apply(True))
+        """An example DQM policy"""
+        return self.smvDQM().add(self.FailParserCountPolicy(10), self.smv.scalaOption(True))
