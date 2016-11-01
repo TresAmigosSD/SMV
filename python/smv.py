@@ -360,6 +360,36 @@ class SmvPyCsvFile(SmvPyDataSet):
         jdf = self._smvCsvFile.doRun(validator, known)
         return DataFrame(jdf, self.smv.sqlContext)
 
+class SmvPyCsvStringData(SmvPyDataSet):
+    """Input data from a Schema String and Data String
+    """
+
+    def __init__(self, smv):
+        super(SmvPyCsvStringData, self).__init__(smv)
+        self._smvCsvStringData = self.smv._jvm.org.tresamigos.smv.SmvCsvStringData(
+            self.schemaStr(),
+            self.dataStr(),
+            False
+        )
+
+    @abc.abstractproperty
+    def schemaStr(self):
+        """Smv Schema string. E.g. "id:String; dt:Timestamp"
+        """
+
+    @abc.abstractproperty
+    def dataStr(self):
+        """Smv data string. E.g. "212,2016-10-03;119,2015-01-07"
+        """
+
+    def requiresDS(self):
+        return []
+
+    def doRun(self, validator, known):
+        jdf = self._smvCsvStringData.doRun(validator, known)
+        return DataFrame(jdf, self.smv.sqlContext)
+
+
 class SmvPyHiveTable(SmvPyDataSet):
     """Input data source from a Hive table
     """
