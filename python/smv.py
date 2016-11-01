@@ -252,8 +252,42 @@ class SmvPyDataSet(object):
         """Factory method for Scala SmvDQM"""
         return self.smv._jvm.SmvDQM.apply()
 
+    # Factory methods for DQM policies
     def FailParserCountPolicy(self, threshold):
         return self.smv._jvm.FailParserCountPolicy(threshold)
+
+    def FailTotalRuleCountPolicy(self, threshold):
+        return self.smv._jvm.FailTotalRuleCountPolicy(threshold)
+
+    def FailTotalFixCountPolicy(self, threshold):
+        return self.smv._jvm.FailTotalFixCountPolicy(threshold)
+
+    def FailTotalRulePercentPolicy(self, threshold):
+        return self.smv._jvm.FailTotalRulePercentPolicy(threshold * 1.0)
+
+    def FailTotalFixPercentPolicy(self, threshold):
+        return self.smv._jvm.FailTotalFixPercentPolicy(threshold * 1.0)
+
+    # DQM task policies
+    def FailNone(self):
+        return self.smv._jvm.DqmTaskPolicies.failNone()
+
+    def FailAny(self):
+        return self.smv._jvm.DqmTaskPolicies.failAny()
+
+    def FailCount(self, threshold):
+        return self.smv._jvm.FailCount(threshold)
+
+    def FailPercent(self, threshold):
+        return self.smv._jvm.FailPercent(threshold * 1.0)
+
+    def DQMRule(self, rule, name = None, taskPolicy = None):
+        task = taskPolicy or self.FailNone()
+        return self.smv._jvm.DQMRule(rule._jc, name, task)
+
+    def DQMFix(self, condition, fix, name = None, taskPolicy = None):
+        task = taskPolicy or self.FailNone()
+        return self.smv._jvm.DQMFix(condition._jc, fix._jc, name, task)
 
     def dqm(self):
         """Subclasses with a non-default DQM policy should override this method"""

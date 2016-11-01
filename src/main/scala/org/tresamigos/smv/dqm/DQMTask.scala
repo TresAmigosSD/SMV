@@ -35,6 +35,12 @@ case object FailAny extends DQMTaskPolicy {
   private[smv] def createPolicy(name: String) = ImplementFailCountPolicy(name, 1)
 }
 
+/** For access by Python modules */
+object DqmTaskPolicies {
+  val failNone: DQMTaskPolicy = FailNone
+  val failAny: DQMTaskPolicy  = FailAny
+}
+
 /** Tasks with FailCount(n) will fail the DF if the task is triggered >= n times */
 case class FailCount(threshold: Int) extends DQMTaskPolicy {
   private[smv] def createPolicy(name: String) = ImplementFailCountPolicy(name, threshold)
