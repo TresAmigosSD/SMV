@@ -23,3 +23,4 @@
 * [Work on data with hierarchies](smv_hier.md)
 * [Column level Description and Labels](smv_desc_label.md)
 * [Smv Python Progress Tracking](smv_python_progress.md) :new: 
+* [Smv Jupyter](smv_jupyter.md) :new:
