@@ -632,6 +632,12 @@ DataFrame.smvCountHist = __smvCountHistFn
 
 DataFrame.smvBinHist = lambda df, *colWithBin: println(_smvBinHist(df, *colWithBin))
 
+def __smvDiscoverPK(df, n):
+    res = helper(df).smvDiscoverPK(df._jdf, n)
+    println("[{}], {}".format(", ".join(map(str, res._1())), res._2()))
+
+DataFrame.smvDiscoverPK = lambda df, n=10000: __smvDiscoverPK(df, n)
+
 #############################################
 # ColumnHelper methods:
 #############################################

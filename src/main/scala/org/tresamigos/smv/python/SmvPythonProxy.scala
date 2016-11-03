@@ -83,6 +83,12 @@ object SmvPythonHelper {
   def smvIsAllIn(col: Column, values: Any*): Column = col.smvIsAllIn(values:_*)
   def smvIsAnyIn(col: Column, values: Any*): Column = col.smvIsAnyIn(values:_*)
 
+  //case class DiscoveredPK(pks: ArrayList[String], cnt: Long)
+  def smvDiscoverPK(df: DataFrame, n: Int): (ArrayList[String], Long) = {
+    val res = df.smvDiscoverPK(n, false)
+    (new ArrayList(res._1), res._2)
+  }
+
   /**
    * Update the port of callback client
    */

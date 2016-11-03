@@ -19,6 +19,7 @@
   * [x] `smvUnion(df2, df3)`
   * [x] `smvExpandStruct("c1", "c2")`
   * [x] `smvGroupBy("k1", "k2")`
+  * [x] `smvDiscoverPK()`
 
 ## SmvGroupedData Helper
   * [x] `smvTopNRecs(10, col("t").desc(), col("a").asc())`
@@ -35,8 +36,8 @@
   * [x] `smvEddCompare(otherDf)`
 
 ## Column Helpers
-  * [x] `smvIsAllIn("value 1", "value 2")
-  * [x] `smvIsAnyIn("value 1", "value 2")
+  * [x] `smvIsAllIn("value 1", "value 2")`
+  * [x] `smvIsAnyIn("value 1", "value 2")`
   * [x] `smvStrToTimestamp("yyyyMMdd")`
   * [x] `smvMonth`
   * [x] `smvYear`
