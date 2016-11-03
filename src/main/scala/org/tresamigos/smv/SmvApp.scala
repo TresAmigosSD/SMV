@@ -401,6 +401,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       return null
     else if (repos.isEmpty)
       runDynamicModule(modfqn, scalaDataSets)
+    else if (!dataframes.contains(modfqn))
+      runModule(modfqn, repos:_*)
     else
       repos.find(_.hasDataSet(modfqn)) match {
         case None =>
