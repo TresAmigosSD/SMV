@@ -21,6 +21,7 @@ from pyspark.sql.functions import col
 import abc
 
 import inspect
+import pkgutil
 import sys
 
 if sys.version >= '3':
@@ -33,11 +34,27 @@ else:
 
 def modfqnsForStage(stagename):
     """Returns a generator of SmvPyDataSet names in a given stage
-        """
-    from pkgutil import walk_packages
-    for loader, name, is_pkg in walk_packages():
+    """
+    # `walk_packages` can generate AttributeError if the system has
+    # Gtk modules, which are not designed to use with reflection or
+    # introspection. Best action to take in this situation is probably
+    # to simply suppress the error.
+    def err(name): pass
+        # print("Error importing module %s" % name)
+        # t, v, tb = sys.exc_info()
+        # print("type is {0}, value is {1}".format(t, v))
+    for loader, name, is_pkg in pkgutil.walk_packages(onerror=err):
         if name.startswith(stagename) and not is_pkg:
             yield name
+
+def loadSmvModules(pymodfqn):
+    pymod = for_name(pymodfqn)
+    ret = []
+    for name in dir(pymod):
+        obj = getattr(pymod, name)
+        if isinstance(obj, type) and issubclass(obj, SmvPyModule):
+            ret.append(name)
+    return ret
 
 def for_name(name):
     """Dynamically load a class by its name.
