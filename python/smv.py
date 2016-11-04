@@ -31,6 +31,14 @@ if sys.version >= '3':
 else:
     from cStringIO import StringIO
 
+def modfqnsForStage(stagename):
+    """Returns a generator of SmvPyDataSet names in a given stage
+        """
+    from pkgutil import walk_packages
+    for loader, name, is_pkg in walk_packages():
+        if name.startswith(stagename) and not is_pkg:
+            yield name
+
 def for_name(name):
     """Dynamically load a class by its name.
 
