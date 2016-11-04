@@ -237,7 +237,7 @@ class Smv(object):
             else:
                 ret = _ret
 
-        self.pymods[mod] = ret
+        self.pymods[klass] = ret
         return ret
 
 class SmvPyDataSet(object):
