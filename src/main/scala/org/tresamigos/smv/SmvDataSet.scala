@@ -340,7 +340,7 @@ case class SmvCsvFile(
 ) extends SmvFile with SmvDSWithParser {
 
   override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
-    val parserValidator = dsDqm.createParserValidator()
+    val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
     val df = handler.csvFileWithSchema(csvAttributes)
@@ -370,7 +370,7 @@ class SmvMultiCsvFiles(
   }
 
   override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
-    val parserValidator = dsDqm.createParserValidator()
+    val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
 
     val filesInDir = SmvHDFS.dirList(fullPath).map{n => s"${fullPath}/${n}"}
 
@@ -390,7 +390,7 @@ case class SmvFrlFile(
   ) extends SmvFile with SmvDSWithParser {
 
   override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
-    val parserValidator = dsDqm.createParserValidator()
+    val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
     val df = handler.frlFileWithSchema()
@@ -592,7 +592,7 @@ case class SmvCsvStringData(
     val schema = SmvSchema.fromString(schemaStr)
     val dataArray = data.split(";").map(_.trim)
 
-    val parserValidator = dsDqm.createParserValidator()
+    val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
   }
