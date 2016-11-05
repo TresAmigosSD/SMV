@@ -257,9 +257,20 @@ class Smv(object):
         self.pymods[klass] = ret
         return ret
 
+class SmvPyOutput(object):
+    """Marks an SmvPyModule as one of the output of its stage"""
+    IsSmvPyOutput = True
+
 class SmvPyDataSet(object):
     """Base class for all SmvDataSets written in Python
     """
+
+    # Python's issubclass() check does not work well with dynamically
+    # loaded modules.  In addition, there are some issues with the
+    # check, when the `abc` module is used as a metaclass, that we
+    # don't yet quite understand.  So for a workaround we add the
+    # typcheck in the Smv hierarchies themselves.
+    IsSmvPyDataSet = True
 
     __metaclass__ = abc.ABCMeta
 
@@ -482,6 +493,8 @@ class SmvPyHiveTable(SmvPyDataSet):
 class SmvPyModule(SmvPyDataSet):
     """Base class for SmvModules written in Python
     """
+
+    IsSmvPyModule = True
 
     def __init__(self, smv):
         super(SmvPyModule, self).__init__(smv)
