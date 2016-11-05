@@ -783,7 +783,16 @@ class PythonDataSetRepository(object):
         if ds is None:
             self.notFound(modfqn, "cannot get dataframe")
         else:
-            return ds.doRun(validator, known)._jdf
+            try:
+                ret = ds.doRun(validator, known)._jdf
+            except Exception as e:
+                print("----------------------------------------")
+                print("Error when running Python SmvModule [{0}]".format(modfqn))
+                import traceback
+                traceback.print_exc()
+                print("----------------------------------------")
+                raise e
+            return ret
 
     def rerun(self, modfqn, validator, known):
         ds = self.reloadDs(modfqn)
