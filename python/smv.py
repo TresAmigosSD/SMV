@@ -505,9 +505,6 @@ class SmvPyModule(SmvPyDataSet):
     def __init__(self, smv):
         super(SmvPyModule, self).__init__(smv)
 
-    def prerun(self, i):
-        print(".... computing module " + self.name())
-
     @abc.abstractmethod
     def run(self, i):
         """This defines the real work done by this module"""

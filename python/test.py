@@ -16,8 +16,6 @@ class PyZipPrimaryCounty(SmvPyModule):
         return [InputZipCounty]
 
     def run(self, i):
-        self.prerun(i)
-
         df = i[InputZipCounty]
 
         filtered = df.select(
