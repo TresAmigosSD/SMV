@@ -645,7 +645,13 @@ DataFrame.smvExportCsv = lambda df, path, n=None: dfhelper(df).smvExportCsv(path
 #############################################
 println = lambda str: sys.stdout.write(str + "\n")
 
+def printFile(f, str):
+    tgt = open(f, "w")
+    tgt.write(str + "\n")
+    tgt.close()
+
 DataFrame.peek = lambda df, pos = 1, colRegex = ".*": println(helper(df).peekStr(df._jdf, pos, colRegex))
+DataFrame.peekSave = lambda df, path, pos = 1, colRegex = ".*": printFile(path, helper(df).peekStr(df._jdf, pos, colRegex))
 
 def _smvEdd(df, *cols): return dfhelper(df)._smvEdd(_to_seq(cols))
 def _smvHist(df, *cols): return dfhelper(df)._smvHist(_to_seq(cols))
