@@ -23,6 +23,7 @@ import abc
 import inspect
 import pkgutil
 import sys
+import traceback
 
 if sys.version >= '3':
     basestring = unicode = str
@@ -222,6 +223,8 @@ class Smv(object):
 
     def runDynamicModule(self, fqn):
         """Re-run a Scala or Python module by its fqn"""
+        if self.repo.hasDataSet(fqn):
+            self.repo.reloadDs(fqn)
         return DataFrame(self.app.runDynamicModule(fqn, self.repo), self.sqlContext)
 
     def scalaOption(self, val):
@@ -723,7 +726,8 @@ class PythonDataSetRepository(object):
         else:
             try:
                 ret = for_name(modfqn)(self.smv)
-            except:
+            except Exception as e:
+                traceback.print_exc()
                 return None
         self.pythonDataSets[modfqn] = ret
         return ret
@@ -734,7 +738,7 @@ class PythonDataSetRepository(object):
         """
         lastdot = modfqn.rfind('.')
         if (lastdot == -1):
-            klass = reload(name)
+            klass = reload(modfqn)
         else:
             mod = reload(sys.modules[modfqn[:lastdot]])
             klass = getattr(mod, modfqn[lastdot+1:])
@@ -797,7 +801,6 @@ class PythonDataSetRepository(object):
             except Exception as e:
                 print("----------------------------------------")
                 print("Error when running Python SmvModule [{0}]".format(modfqn))
-                import traceback
                 traceback.print_exc()
                 print("----------------------------------------")
                 raise e
