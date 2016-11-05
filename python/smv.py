@@ -32,8 +32,8 @@ if sys.version >= '3':
 else:
     from cStringIO import StringIO
 
-def modfqnsForStage(stagename):
-    """Returns a generator of SmvPyDataSet names in a given stage
+def pymodsForStage(stagename):
+    """Returns a generator of Python module names (not SmvPyModules) in a given stage
     """
     # `walk_packages` can generate AttributeError if the system has
     # Gtk modules, which are not designed to use with reflection or
@@ -48,12 +48,18 @@ def modfqnsForStage(stagename):
             yield name
 
 def loadSmvModules(pymodfqn):
-    pymod = for_name(pymodfqn)
+    pymod = __import__(pymodfqn)
+    for c in pymodfqn.split('.')[1:]:
+        pymod = getattr(pymod, c)
+
     ret = []
     for name in dir(pymod):
         obj = getattr(pymod, name)
-        if isinstance(obj, type) and issubclass(obj, SmvPyModule):
-            ret.append(name)
+        try:
+            if (obj.IsSmvPyModule):
+                ret.append(name)
+        except AttributeError:
+            continue
     return ret
 
 def for_name(name):
