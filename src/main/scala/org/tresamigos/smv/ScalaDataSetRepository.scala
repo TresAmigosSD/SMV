@@ -69,6 +69,11 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   private def notFound(modfqn: String, msg: String) =
     throw new IllegalArgumentException(s"dataset [${modfqn}] is not found in ${getClass.getName}: ${msg}")
 
+  override def outputModsForStage(stageName: String): String = {
+    val stage = SmvApp.app.smvConfig.stages.findStage(stageName)
+    stage.allOutputModules.map(_.name).mkString(",")
+  }
+
   override def dependencies(modfqn: String): String =
     if (isExternal(modfqn)) "" else dsForName(modfqn) match {
       case None => notFound(modfqn, "cannot get dependencies")

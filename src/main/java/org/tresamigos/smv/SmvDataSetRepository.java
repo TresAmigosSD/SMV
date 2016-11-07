@@ -56,6 +56,11 @@ public interface SmvDataSetRepository {
 	SmvDQM getDqm(String modfqn);
 
 	/**
+	 * A CSV of output module fqns for a stage.
+	 */
+	String outputModsForStage(String stageName);
+
+	/**
 	 * A CSV of dependent module fqns or an empty string.
 	 *
 	 * Using a csv string is a temporary workaround until we can solve

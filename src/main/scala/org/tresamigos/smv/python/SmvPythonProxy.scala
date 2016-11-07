@@ -135,9 +135,6 @@ class SmvPythonApp(val app: SmvApp) {
   // TODO relocate moduleNames() from SmvConfig to here
   val moduleNames: Array[String] = config.moduleNames
 
-  /** The name to dataframe look-up table */
-  var runParams: Map[String, DataFrame] = Map.empty
-
   /** Try to read a dataframe from persisted files */
   def tryReadPersistedFile(path: String): Try[DataFrame] =
     SmvUtil.readPersistedFile(app.sqlContext, path)

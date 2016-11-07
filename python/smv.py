@@ -33,21 +33,6 @@ if sys.version >= '3':
 else:
     from cStringIO import StringIO
 
-def pymodsForStage(stagename):
-    """Returns a generator of Python module names (not SmvPyModules) in a given stage
-    """
-    # `walk_packages` can generate AttributeError if the system has
-    # Gtk modules, which are not designed to use with reflection or
-    # introspection. Best action to take in this situation is probably
-    # to simply suppress the error.
-    def err(name): pass
-        # print("Error importing module %s" % name)
-        # t, v, tb = sys.exc_info()
-        # print("type is {0}, value is {1}".format(t, v))
-    for loader, name, is_pkg in pkgutil.walk_packages(onerror=err):
-        if name.startswith(stagename) and not is_pkg:
-            yield name
-
 def loadSmvModules(pymodfqn):
     pymod = __import__(pymodfqn)
     for c in pymodfqn.split('.')[1:]:
@@ -780,6 +765,22 @@ class PythonDataSetRepository(object):
 
     def notFound(self, modfqn, msg):
         raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modfqn, self.__class__.__name__, msg))
+
+    def outputModsForStage(self, stageName):
+        # `walk_packages` can generate AttributeError if the system has
+        # Gtk modules, which are not designed to use with reflection or
+        # introspection. Best action to take in this situation is probably
+        # to simply suppress the error.
+        def err(name): pass
+        # print("Error importing module %s" % name)
+        # t, v, tb = sys.exc_info()
+        # print("type is {0}, value is {1}".format(t, v))
+        buf = []
+        for loader, name, is_pkg in pkgutil.walk_packages(onerror=err):
+            if name.startswith(stageName) and not is_pkg:
+                buf.append(name)
+        # TODO load modules and filter for IsSmvPyOutput
+        return ','.join(buf)
 
     def dependencies(self, modfqn):
         if (self.isExternal(modfqn)):
