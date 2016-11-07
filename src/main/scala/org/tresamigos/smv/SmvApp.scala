@@ -346,6 +346,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /** Returns the path for the module's reject report output */
   private[smv] val moduleValidPath = versionedPath("valid") _
 
+  /** Path for published module of a specified version */
+  private def publishPath(name: String, version: String) =
+    s"""${smvConfig.publishDir}/${version}/${name}.csv"""
+
   /** Run a module by its fully qualified name in its respective language environment */
   def runModule(modfqn: String, repos: SmvDataSetRepository*): DataFrame =
     if (modfqn.isEmpty)

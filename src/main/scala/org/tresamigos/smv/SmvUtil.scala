@@ -67,6 +67,17 @@ object SmvUtil {
       readPersistedFile(sqlContext, path).get.edd.persistBesideData(path)
   }
 
+  def publish(sqlContext: SQLContext, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {
+    val handler = new FileIOHandler(sqlContext, path)
+    //Same as in persist, publish null string as a special value with assumption that it's not
+    //a valid data value
+    handler.saveAsCsvWithSchema(dataframe, strNullValue = "_SmvStrNull_")
+
+    /* publish should also calculate edd if generarte Edd flag was turned on */
+    if (generateEdd)
+      dataframe.edd.persistBesideData(path)
+  }
+
   /**
    * Exports a dataframe to a hive table.
    */
