@@ -16,7 +16,7 @@ class PythonEmploymentByState(SmvPyModule):
         return df.groupBy(col("ST")).agg(sum(col("EMP")).alias("EMP"))
 
 
-class PythonEmploymentByStateCategory(SmvPyModule):
+class PythonEmploymentByStateCategory(SmvPyModule, SmvPyOutput):
     """Python ETL Example: employment by state with category"""
 
     def requiresDS(self):
@@ -26,7 +26,7 @@ class PythonEmploymentByStateCategory(SmvPyModule):
         df = i[PythonEmploymentByState]
         return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
 
-class PythonEmploymentByStateCategory2(SmvPyModule):
+class PythonEmploymentByStateCategory2(SmvPyModule, SmvPyOutput):
     """Python ETL Example: depending on Scala module
     """
 

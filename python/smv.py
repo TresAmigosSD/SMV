@@ -33,21 +33,6 @@ if sys.version >= '3':
 else:
     from cStringIO import StringIO
 
-def loadSmvModules(pymodfqn):
-    pymod = __import__(pymodfqn)
-    for c in pymodfqn.split('.')[1:]:
-        pymod = getattr(pymod, c)
-
-    ret = []
-    for name in dir(pymod):
-        obj = getattr(pymod, name)
-        try:
-            if (obj.IsSmvPyModule):
-                ret.append(name)
-        except AttributeError:
-            continue
-    return ret
-
 def for_name(name):
     """Dynamically load a class by its name.
 
@@ -778,8 +763,17 @@ class PythonDataSetRepository(object):
         buf = []
         for loader, name, is_pkg in pkgutil.walk_packages(onerror=err):
             if name.startswith(stageName) and not is_pkg:
-                buf.append(name)
-        # TODO load modules and filter for IsSmvPyOutput
+                pymod = __import__(name)
+                for c in name.split('.')[1:]:
+                    pymod = getattr(pymod, c)
+
+                for n in dir(pymod):
+                    obj = getattr(pymod, n)
+                    try:
+                        if (obj.IsSmvPyOutput and obj.IsSmvPyModule):
+                            buf.append(obj.name())
+                    except AttributeError:
+                        continue
         return ','.join(buf)
 
     def dependencies(self, modfqn):
