@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     print("----------------------------------------")
     print("will run the following modules:")
-    mods = app.moduleNames()
+    mods = app.moduleNames(smv.repo)
     for name in mods:
         print("   " + name)
     print("----------------------------------------")

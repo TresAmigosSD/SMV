@@ -73,6 +73,22 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /** all modules known to this app. */
   private[smv] def allAppModules = stages.allModules
 
+  /** The names of output modules in a given stage */
+  def outputModsForStage(stageName: String, repos: SmvDataSetRepository*): Seq[String] =
+    if (repos.isEmpty) outputModsForStage(stageName, scalaDataSets) else
+      repos.flatMap(_.outputModsForStage(stageName).split(","))
+
+  /** Output modules */
+  def modulesToRun(repos: SmvDataSetRepository*): Seq[String] = {
+    val cl = smvConfig.cmdLine
+    val directMods: Seq[String] = cl.modsToRun()
+    val stageMods: Seq[String] = cl.stagesToRun().flatMap(outputModsForStage(_, repos:_*))
+    val appMods: Seq[String] =
+      if (cl.runAllApp()) stages.stageNames.flatMap(outputModsForStage(_, repos:_*)) else Nil
+
+    (directMods ++ stageMods ++ appMods).filterNot(_.isEmpty)
+  }
+
   /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
   private[smv] def validFilesInOutputDir() : Seq[String] = {
     allAppModules.

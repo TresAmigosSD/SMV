@@ -132,8 +132,8 @@ class SmvPythonApp(val app: SmvApp) {
   def verifyConfig(): Unit = app.verifyConfig()
 
   /** The names of the modules to run in this app */
-  // TODO relocate moduleNames() from SmvConfig to here
-  val moduleNames: Array[String] = config.moduleNames
+  def moduleNames(repo: SmvDataSetRepository): java.util.List[String] =
+    app.modulesToRun(repo, app.scalaDataSets)
 
   /** Try to read a dataframe from persisted files */
   def tryReadPersistedFile(path: String): Try[DataFrame] =

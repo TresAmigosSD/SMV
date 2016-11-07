@@ -79,8 +79,12 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
 
   val purgeOldOutput = toggle("purge-old-output", noshort = true, default = Some(false),
     descrYes = "remove all old output files in output dir ")
-  val modsToRun = opt[List[String]]("run-module", 'm', descr = "run specified list of module FQNs")
-  val stagesToRun = opt[List[String]]("run-stage", 's', descr = "run all output modules in specified stages")
+  val modsToRun = opt[List[String]]("run-module", 'm',
+    default = Some(Nil),
+    descr = "run specified list of module FQNs")
+  val stagesToRun = opt[List[String]]("run-stage", 's',
+    default = Some(Nil),
+    descr = "run all output modules in specified stages")
   val runAllApp = toggle("run-app", noshort = true, default = Some(false),
                   descrYes = "run all output modules in all stages in app.")
 
