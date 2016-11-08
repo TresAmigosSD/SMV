@@ -696,7 +696,11 @@ class PythonDataSetRepository(object):
         else:
             try:
                 ret = for_name(modfqn)(self.smv)
-            except Exception as e:
+            except AttributeError: # module not found is anticipated
+                return None
+            except ImportError as e:
+                return None
+            except Exception as e: # other errors should be reported, such as syntax error
                 traceback.print_exc()
                 return None
         self.pythonDataSets[modfqn] = ret
@@ -763,9 +767,13 @@ class PythonDataSetRepository(object):
         buf = []
         for loader, name, is_pkg in pkgutil.walk_packages(onerror=err):
             if name.startswith(stageName) and not is_pkg:
-                pymod = __import__(name)
-                for c in name.split('.')[1:]:
-                    pymod = getattr(pymod, c)
+                try:
+                    pymod = __import__(name)
+                except:
+                    continue
+                else:
+                    for c in name.split('.')[1:]:
+                        pymod = getattr(pymod, c)
 
                 for n in dir(pymod):
                     obj = getattr(pymod, n)

@@ -18,6 +18,11 @@ from pyspark.sql import HiveContext
 from smv import SmvApp
 
 if __name__ == "__main__":
+    import compileall
+    r = compileall.compile_dir('src/main/python', quiet=1)
+    if not r:
+        exit(-1)
+
     # skip the first argument, which is this program
     smv = SmvApp.init(sys.argv[1:])
     app = smv.app
