@@ -34,10 +34,14 @@ if __name__ == "__main__":
         print("   " + name)
     print("----------------------------------------")
 
+    publish = app.publishVersion().isDefined()
     for name in mods:
-        smv.run_python_module(name)
+        if publish:
+            smv.publishModule(name)
+        else:
+            smv.runModule(name)
 
     table = app.config().exportHive()
     if (table.isDefined()):
         app.verifyConfig()
-        app.exportHive(smv.run_python_module(mods[0])._jdf, table.get())
+        app.exportHive(smv.runModule(mods[0])._jdf, table.get())

@@ -197,6 +197,11 @@ class Smv(object):
             self.repo.reloadDs(fqn)
         return DataFrame(self.app.runDynamicModule(fqn, self.repo), self.sqlContext)
 
+    def publishModule(self, fqn):
+        """Publish a Scala or a Python SmvModule by its FQN
+        """
+        self.app.publishModule(fqn, self.repo)
+
     def scalaOption(self, val):
         """Returns a Scala Option containing the value"""
         return self._jvm.scala.Option.apply(val)

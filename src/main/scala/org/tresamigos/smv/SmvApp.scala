@@ -441,6 +441,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       }
 
   /**
+   * Publish the result of an SmvModule
+   */
+  def publishModule(modfqn: String, version: String, repos: SmvDataSetRepository*): Unit = {
+    val df = runModule(modfqn, repos:_*)
+    val path = publishPath(modfqn, version)
+    SmvUtil.publish(sqlContext, df, path, genEdd)
+  }
+
+  /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
    */
   def runModuleByName(modName: String) : DataFrame = {

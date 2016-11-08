@@ -129,6 +129,8 @@ class SmvPythonApp(val app: SmvApp) {
 
   def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
 
+  def publishVersion: Option[String] = config.cmdLine.publish.get
+
   def verifyConfig(): Unit = app.verifyConfig()
 
   /** The names of the modules to run in this app */
@@ -170,6 +172,11 @@ class SmvPythonApp(val app: SmvApp) {
 
   def runDynamicModule(modfqn: String, repo: SmvDataSetRepository): DataFrame =
     app.runDynamicModule(modfqn, repo, app.scalaDataSets)
+
+  /** Publish the result of an SmvModule */
+  def publishModule(modfqn: String, repo: SmvDataSetRepository): Unit =
+    app.publishModule(modfqn, publishVersion.get, repo, app.scalaDataSets)
+
 }
 
 /** Not a companion object because we need to access it from Python */
