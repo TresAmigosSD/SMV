@@ -347,7 +347,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   private[smv] val moduleValidPath = versionedPath("valid") _
 
   /** Path for published module of a specified version */
-  private def publishPath(name: String, version: String) =
+  private[smv] def publishPath(name: String, version: String) =
     s"""${smvConfig.publishDir}/${version}/${name}.csv"""
 
   /** Run a module by its fully qualified name in its respective language environment */
@@ -368,8 +368,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           resolveStack.pop()
           throw new IllegalArgumentException(s"Cannot find module [${modfqn}]")
         case Some(repo) =>
-          val deps = repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
-          deps foreach (runModule(_, repos:_*))
+          dependencies(repo, modfqn) foreach (runModule(_, repos:_*))
 
           val df = try {
             if (repo.isExternal(modfqn))
@@ -389,8 +388,18 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       }
     }
 
+  // helper method till we can return the Seq directly from Python implementation
+  private def dependencies(repo: SmvDataSetRepository, modfqn: String): Seq[String] =
+    repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
+
+  def hashOfHash(repo: SmvDataSetRepository, modfqn: String): Int =
+    dependencies(repo, modfqn).foldLeft(
+      repo.datasetHash(modfqn, true)) { (acc, dep) =>
+      acc + hashOfHash(repo, dep)
+    }.toInt
+
   private def persist(repo: SmvDataSetRepository, modfqn: String, dqm: DQMValidator, df: DataFrame): DataFrame = {
-    val hashval: Int = repo.datasetHash(modfqn, true).toInt
+    val hashval: Int = hashOfHash(repo, modfqn)
     // modules defined in spark shell starts with '$'
     val persistValidation = !modfqn.startsWith("$")
     val validator = new ValidationSet(Seq(dqm), persistValidation)
@@ -428,6 +437,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
         case None =>
           throw new IllegalArgumentException("")
         case Some(repo) =>
+          dependencies(repo, modfqn) foreach (runDynamicModule(_, repos:_*))
+
           dataframes = dataframes - modfqn
           val df =
             if (repo.isExternal(modfqn))
@@ -437,6 +448,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
               persist(repo, modfqn, dqm, repo.rerun(modfqn, dqm, dataframes))
             }
           dataframes = dataframes + (modfqn -> df)
+
           df
       }
 

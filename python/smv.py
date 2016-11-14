@@ -365,7 +365,7 @@ class SmvPyDataSet(object):
         return cls.__module__ + "." + cls.__name__
 
     def isEphemeral(self):
-        """Does this dataset need to be persisted?
+        """If set to true, the run result of this dataset will not be persisted
         """
         return False
 
@@ -727,6 +727,18 @@ class PythonDataSetRepository(object):
             klass = getattr(mod, modfqn[lastdot+1:])
         ret = klass(self.smv)
         self.pythonDataSets[modfqn] = ret
+
+        # Python issue https://bugs.python.org/issue1218234
+        # need to invalidate inspect.linecache to make dataset hash work
+        srcfile = inspect.getsourcefile(ret.__class__)
+        if srcfile:
+            inspect.linecache.checkcache(srcfile)
+
+        # issue #417
+        # recursively reload all dependent modules
+        for dep in ret.requiresDS():
+            self.reloadDs(dep.name())
+
         return ret
 
     def hasDataSet(self, modfqn):
@@ -820,11 +832,6 @@ class PythonDataSetRepository(object):
 
     def rerun(self, modfqn, validator, known):
         ds = self.reloadDs(modfqn)
-        # Python issue https://bugs.python.org/issue1218234
-        # need to invalidate inspect.linecache to make dataset hash work
-        srcfile = inspect.getsourcefile(ds.__class__)
-        if srcfile:
-            inspect.linecache.checkcache(srcfile)
         if ds is None:
             self.notFound(modfqn, "cannot rerun")
         return ds.doRun(validator, known)._jdf
