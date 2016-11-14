@@ -245,6 +245,10 @@ class SmvPyOutput(object):
     """Marks an SmvPyModule as one of the output of its stage"""
     IsSmvPyOutput = True
 
+    def tableName(self):
+        """The table name this SmvPyOutput will export to"""
+        return None
+
 class SmvPyDataSet(object):
     """Base class for all SmvDataSets written in Python
     """
