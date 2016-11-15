@@ -245,7 +245,7 @@ private[smv] object TypeFormat {
           TypeFormat(valTypeStr))
       case ArrayPattern(valTypeStr) =>
         ArrayTypeFormat(TypeFormat(valTypeStr))
-      case _ => throw new IllegalArgumentException(s"unknown type: $typeStr")
+      case _ => throw new SmvUnsupportedType(s"unknown type: $typeStr")
     }
   }
 
@@ -267,7 +267,7 @@ private[smv] object TypeFormat {
       case ArrayType(valType, _) =>
         ArrayTypeFormat(
           TypeFormat(valType, strNullValue))
-      case _ => throw new IllegalArgumentException(s"unknown type: ${dataType.toString}")
+      case _ => throw new SmvUnsupportedType(s"unknown type: ${dataType.toString}")
     }
   }
 
