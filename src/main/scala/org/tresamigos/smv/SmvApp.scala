@@ -292,7 +292,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       case None => false
       case Some(tableName) =>
         verifyConfig()
-        SmvUtil.exportHive(smvConfig.modulesToRun()(0).rdd(), tableName)
+        SmvUtil.exportHive(sqlContext, smvConfig.modulesToRun()(0).rdd(), tableName)
         true
     }
 

@@ -147,7 +147,7 @@ class SmvPythonApp(val app: SmvApp) {
 
   /** Export as hive table */
   def exportHive(dataframe: DataFrame, tableName: String): Unit =
-    SmvUtil.exportHive(dataframe, tableName)
+    SmvUtil.exportHive(app.sqlContext, dataframe, tableName)
 
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes,
