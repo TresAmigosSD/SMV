@@ -25,7 +25,11 @@ class SmvBaseTest(unittest.TestCase):
         cls.sparkContext = TestConfig.sparkContext()
         cls.sqlContext = TestConfig.sqlContext()
         cls.sparkContext.setLogLevel("ERROR")
-        cls.smv = SmvApp.init(['-m', 'None'], cls.sparkContext, cls.sqlContext)
+
+        import random;
+        callback_server_port = random.randint(20000, 65535)
+
+        cls.smv = SmvApp.init(['-m', 'None', '--cbs-port', str(callback_server_port)], cls.sparkContext, cls.sqlContext)
         cls.app = cls.smv.app
 
     def setUp(self):
@@ -36,7 +40,11 @@ class SmvBaseTest(unittest.TestCase):
             cls.sparkContext = TestConfig.sparkContext()
             cls.sqlContext = TestConfig.sqlContext()
             cls.sparkContext.setLogLevel("ERROR")
-            cls.smv = SmvApp.init(['-m', 'None'], cls.sparkContext, cls.sqlContext)
+
+            import random;
+            callback_server_port = random.randint(20000, 65535)
+
+            cls.smv = SmvApp.init(['-m', 'None', '--cbs-port', str(callback_server_port)], cls.sparkContext, cls.sqlContext)
             cls.app = cls.smv.app
 
     @classmethod
