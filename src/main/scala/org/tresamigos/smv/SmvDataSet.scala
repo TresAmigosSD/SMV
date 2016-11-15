@@ -601,7 +601,11 @@ case class SmvCsvStringData(
 /**
  * A marker trait that indicates that a SmvDataSet/SmvModule decorated with this trait is an output DataSet/module.
  */
-trait SmvOutput { this : SmvDataSet =>
+trait SmvOutput {
+  this : SmvDataSet =>
+
+  /** full name of hive output table if this module is published to hive. */
+  val tableName = null;
 }
 
 /** Base marker trait for run configuration objects */
