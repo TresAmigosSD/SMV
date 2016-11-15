@@ -120,7 +120,7 @@ private[smv] case class SmvCDSAggColumn(aggExpr: Expression, cds: SmvCDS = NoOpC
   def isAgg(): Boolean = {aggExpr match {
       case Alias(e: AggregateExpression, n) => true
       case _: NamedExpression => false
-      case _ => throw new IllegalArgumentException(s"${aggExpr.toString} need  to be a NamedExpression")
+      case _ => throw new SmvRuntimeException(s"${aggExpr.toString} need  to be a NamedExpression")
     }
   }
 }

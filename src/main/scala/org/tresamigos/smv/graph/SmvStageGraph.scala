@@ -38,7 +38,7 @@ private[smv] class SmvDSGraph(stages: SmvStages, targetDSs: Seq[SmvDataSet] = Ni
     val fromDSs = stages.predecessors.getOrElse(ds, Nil)
     fromDSs.map{fds =>
       val _fds = if(fds.isInstanceOf[SmvModuleLink])
-        stages.predecessors.getOrElse(fds, throw new IllegalArgumentException(s"SmvModuleLink ${fds} has no predecessors")).head
+        stages.predecessors.getOrElse(fds, throw new SmvRuntimeException(s"SmvModuleLink ${fds} has no predecessors")).head
         else fds
       _fds -> ds
     }
@@ -107,7 +107,7 @@ private[smv] class SmvGraphUtil(stages: SmvStages) {
     case d: SmvFile       => "(F) " + baseName(d)
     case d: SmvModule     => "(M) " + baseName(d)
     case d: SmvHiveTable  => "(H) " + baseName(d)
-    case d => throw new IllegalArgumentException(s"unknown type of ${d}")
+    case d => throw new SmvRuntimeException(s"unknown type of ${d}")
   }
 
   /**

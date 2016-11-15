@@ -176,7 +176,7 @@ class SmvHierarchies(
   private lazy val allHierMapCols = mapLinks.map{l => getDF(l).columns}.flatten.toSeq.distinct
 
   private def findHier(name: String) = hierarchies.find(_.name == name).getOrElse(
-    throw new IllegalArgumentException(s"${name} is not in any hierarchy")
+    throw new SmvRuntimeException(s"${name} is not in any hierarchy")
   )
 
   private val colNames = new SmvHierarchyColumns(prefix)

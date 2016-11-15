@@ -104,7 +104,7 @@ class renameFieldTest extends SmvTestUtil {
     val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
-    val e = intercept[IllegalArgumentException] {
+    val e = intercept[SmvRuntimeException] {
       val result = df.renameField("a" -> "c")
     }
     assert(e.getMessage === "Rename to existing fields: c")

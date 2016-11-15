@@ -203,7 +203,7 @@ class SmvDFHelper(df: DataFrame) {
 
     // We don't want to rename to some field names which already exist
     val overlap = df.columns.intersect(namePairsMap.values.toSeq)
-    if (!overlap.isEmpty) throw new IllegalArgumentException(
+    if (!overlap.isEmpty) throw new SmvRuntimeException(
       "Rename to existing fields: " + overlap.mkString(", ")
     )
 

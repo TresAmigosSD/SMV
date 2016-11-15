@@ -158,7 +158,7 @@ object PartialTime {
       case pQ(year, quarter) => new Quarter(year.toInt, quarter.toInt)
       case pM(year, month) => new Month(year.toInt, month.toInt)
       case pD(year, month, day) => new Day(year.toInt, month.toInt, day.toInt)
-      case _ => throw new IllegalArgumentException(s"String parameter to Day has to be in Ddddddddd format")
+      case _ => throw new SmvRuntimeException(s"String parameter to Day has to be in Ddddddddd format")
     }
   }
 }

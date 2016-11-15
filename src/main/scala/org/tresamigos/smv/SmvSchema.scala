@@ -300,7 +300,7 @@ object SchemaEntry {
     val parseNT = """\s*([^:]*?)\s*:\s*([^@]*?)\s*(@metadata=(.*))?""".r
     nameAndType match {
       case parseNT(n, t, dummy, meta) => SchemaEntry(n, t, meta)
-      case _ => throw new IllegalArgumentException(s"Illegal SchemaEmtry string: $nameAndType")
+      case _ => throw new SmvRuntimeException(s"Illegal SchemaEmtry string: $nameAndType")
     }
   }
 

@@ -68,7 +68,7 @@ object smvfuncs {
         toKeys(histDouble(c)) as s"collectSet($c)"
       }
       case _ => {
-        throw new IllegalArgumentException("collectSet unsupported type: " + dt.typeName)
+        throw new SmvUnsupportedType("collectSet unsupported type: " + dt.typeName)
       }
     }
   }

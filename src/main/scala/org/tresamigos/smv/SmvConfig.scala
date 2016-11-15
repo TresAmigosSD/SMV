@@ -98,7 +98,7 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   printedName = "SmvApp"
   errorMessageHandler = { errMsg =>
     println(printedName + ": " + errMsg)
-    throw new IllegalArgumentException(errMsg)
+    throw new SmvRuntimeException(errMsg)
   }
 
 }
@@ -204,7 +204,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     } yield m
 
     mods.size match {
-      case 0 => throw new java.lang.IllegalArgumentException(s"""Cannot find module named [${name}] in any of the stages [${stageNames.mkString(", ")}]""")
+      case 0 => throw new SmvRuntimeException(s"""Cannot find module named [${name}] in any of the stages [${stageNames.mkString(", ")}]""")
       case 1 => mods.head
       case _ => throw new java.lang.RuntimeException(s"Module name [${name}] is not specific enough, as it is found in multiple stages [${stageNames.mkString(", ")}]")
     }
@@ -221,7 +221,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     cmdLine.dataDir.get.
       orElse(mergedProps.get("smv.dataDir")).
       orElse(sys.env.get("DATA_DIR")).
-      getOrElse(throw new IllegalArgumentException("Must specify a data-dir either on command line or in conf."))
+      getOrElse(throw new SmvRuntimeException("Must specify a data-dir either on command line or in conf."))
   }
 
   def inputDir : String = {

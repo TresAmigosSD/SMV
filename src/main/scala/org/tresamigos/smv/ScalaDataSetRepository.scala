@@ -46,7 +46,7 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
 
   override def isEphemeral(modfqn: String): Boolean =
     if (isExternal(modfqn))
-      throw new IllegalArgumentException(s"Cannot know if ${modfqn} is ephemeral because it is external")
+      throw new SmvRuntimeException(s"Cannot know if ${modfqn} is ephemeral because it is external")
     else
       dsForName(modfqn) match {
         case None => notFound(modfqn, "cannot check if the module is ephemeral")
@@ -67,7 +67,7 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
     }
 
   private def notFound(modfqn: String, msg: String) =
-    throw new IllegalArgumentException(s"dataset [${modfqn}] is not found in ${getClass.getName}: ${msg}")
+    throw new SmvRuntimeException(s"dataset [${modfqn}] is not found in ${getClass.getName}: ${msg}")
 
   override def outputModsForStage(stageName: String): String = {
     val stage = SmvApp.app.smvConfig.stages.findStage(stageName)

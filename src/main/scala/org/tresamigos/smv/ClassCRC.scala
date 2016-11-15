@@ -74,7 +74,7 @@ object ClassCRC {
     try {
       cksum0(crc, new asm.ClassReader(is))
     } catch {
-      case NonFatal(t) => throw new IllegalArgumentException("invalid class name for crc: " + fqn, t)
+      case NonFatal(t) => throw new SmvRuntimeException("invalid class name for crc: " + fqn, t)
     } finally {
       if (is != null) is.close
     }

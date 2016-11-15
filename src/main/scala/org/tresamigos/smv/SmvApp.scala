@@ -280,9 +280,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       smvConfig.moduleNames.size match {
         case 1 => // expected
         case 0 =>
-          throw new IllegalArgumentException("No module defined for hive-export")
+          throw new SmvRuntimeException("No module defined for hive-export")
         case _ =>
-          throw new IllegalArgumentException(s"Can only export 1 module at a time to hive table; but modules ${smvConfig.moduleNames} are in the run-queue")
+          throw new SmvRuntimeException(s"Can only export 1 module at a time to hive table; but modules ${smvConfig.moduleNames} are in the run-queue")
       }
     }
   }
@@ -366,7 +366,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       repos.find(_.hasDataSet(modfqn)) match {
         case None =>
           resolveStack.pop()
-          throw new IllegalArgumentException(s"Cannot find module [${modfqn}]")
+          throw new SmvRuntimeException(s"Cannot find module [${modfqn}]")
         case Some(repo) =>
           dependencies(repo, modfqn) foreach (runModule(_, repos:_*))
 
@@ -435,7 +435,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     else
       repos.find(_.hasDataSet(modfqn)) match {
         case None =>
-          throw new IllegalArgumentException("")
+          throw new SmvRuntimeException("")
         case Some(repo) =>
           dependencies(repo, modfqn) foreach (runDynamicModule(_, repos:_*))
 

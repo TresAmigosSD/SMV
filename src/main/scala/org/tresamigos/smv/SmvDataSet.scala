@@ -54,7 +54,7 @@ abstract class SmvDataSet extends HasName {
   /** TODO: remove this method as checkDependency replaced this function */
   def getAncillary[T <: SmvAncillary](anc: T) = {
     if (requiresAnc.contains(anc)) anc
-    else throw new IllegalArgumentException(s"SmvAncillary: ${anc} is not in requiresAnc")
+    else throw new SmvRuntimeException(s"SmvAncillary: ${anc} is not in requiresAnc")
   }
 
   /** user tagged code "version".  Derived classes should update the value when code or data */
@@ -450,13 +450,13 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
       map{s => (s, SmvReflection.objectNameToInstance[SmvAncillary](s))}.
       filterNot{case (s,a) => requiresAnc().contains(a)}.
       foreach{case (s, a) =>
-        throw new IllegalArgumentException(s"SmvAncillary ${s} need to be specified in requiresAnc")
+        throw new SmvRuntimeException(s"SmvAncillary ${s} need to be specified in requiresAnc")
       }
     dep.dependsDS.
       map{s => (s, SmvReflection.objectNameToInstance[SmvDataSet](s))}.
       filterNot{case (s,a) => requiresDS().contains(a)}.
       foreach{case (s, a) =>
-        throw new IllegalArgumentException(s"SmvDataSet ${s} need to be specified in requiresDS, ${a}")
+        throw new SmvRuntimeException(s"SmvDataSet ${s} need to be specified in requiresDS, ${a}")
       }
   }
 

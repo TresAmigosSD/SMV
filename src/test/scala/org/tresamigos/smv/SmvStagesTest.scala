@@ -54,7 +54,7 @@ class SmvStagesTest extends SmvTestUtil {
   }
 
   test("findStage should fail if stage name is ambiguous") {
-    val e = intercept[IllegalArgumentException] {
+    val e = intercept[SmvRuntimeException] {
       val s1 = app.stages.findStage("s1")
     }
 
