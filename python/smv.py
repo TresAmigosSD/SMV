@@ -326,7 +326,7 @@ class SmvPyDataSet(object):
         so that code and the data it produces can be tracked together."""
         return "0";
 
-    def datasetHash(self):
+    def datasetHash(self, includeSuperClass = True):
         cls = self.__class__
         try:
             src = inspect.getsource(cls)
@@ -335,16 +335,16 @@ class SmvPyDataSet(object):
             res = hash(disassemble(cls))
 
         # include datasetHash of parent classes
-        for m in inspect.getmro(cls):
-            try:
-                if m.IsSmvPyDataSet and m != cls and not m.name().startswith("smv."):
-                    parent = m(self.smv)
-                    if parent is None:
-                        print("Error in datasetHash(): cannot find module {0}".format(m.name()))
-                    else:
-                        res += parent.datasetHash()
-            except:
-                pass
+        if includeSuperClass:
+            for m in inspect.getmro(cls):
+                try:
+                    if m.IsSmvPyDataSet and m != cls and not m.name().startswith("smv."):
+                        parent = m(self.smv)
+                        if parent is None:
+                            print("Error in datasetHash(): cannot find module {0}".format(m.name()))
+                        else:
+                            res += parent.datasetHash()
+                except: pass
 
         # ensure python's long type can fit in a java.lang.Long
         return res & 0x7fffffffffffffff
@@ -354,7 +354,7 @@ class SmvPyDataSet(object):
 
         # include datasetHash of dependency modules
         for m in self.requiresDS():
-            res += m.datasetHash()
+            res += m(self.smv).datasetHash()
 
         return res
 
@@ -844,7 +844,7 @@ class PythonDataSetRepository(object):
         if ds is None:
             self.notFound(modfqn, "cannot calc dataset hash")
         else:
-            return ds.datasetHash()
+            return ds.datasetHash(includeSuperClass)
 
     class Java:
         implements = ['org.tresamigos.smv.SmvDataSetRepository']

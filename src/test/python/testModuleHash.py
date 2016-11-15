@@ -101,3 +101,25 @@ class A(BaseModule):
         h2 = for_name(self.__module__ + ".A")(SmvApp).datasetHash()
 
         self.assertFalse(h1 == h2)
+
+    def test_change_upstream_module_should_change_hashofhash(self):
+        p1 = """class Upstream(BaseModule):
+    def f(self): return True
+"""
+        p2 = """class Upstream(BaseModule):
+    def f(self): return False
+"""
+        a = """class A(BaseModule):
+    def requiresDS(self): return [Upstream]
+    def m(self, a): return a
+"""
+        exec(p1 + a, globals())
+        d1 = for_name(self.__module__ + ".A")(SmvApp).datasetHash()
+        h1 = for_name(self.__module__ + ".A")(SmvApp).hashOfHash()
+
+        exec(p2 + a, globals())
+        d2 = for_name(self.__module__ + ".A")(SmvApp).datasetHash()
+        h2 = for_name(self.__module__ + ".A")(SmvApp).hashOfHash()
+
+        self.asesrtTrue(d1 == d2, "datasetHash should be the same")
+        self.assertFalse(h1 == h2, "hashOfHash should be different")
