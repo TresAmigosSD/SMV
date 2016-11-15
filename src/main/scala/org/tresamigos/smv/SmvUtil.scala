@@ -84,9 +84,8 @@ object SmvUtil {
   def exportHive(sqlContext: SQLContext, dataframe: DataFrame, tableName: String): Unit = {
     // register the dataframe as a temp table.  Will be overwritten on next register.
     dataframe.registerTempTable("etable")
+    sqlContext.sql(s"drop table if exists ${tableName}")
     sqlContext.sql(s"create table ${tableName} as select * from etable")
-    // TODO: remove commented code below once above is tested on client side.
-    // dataframe.write.mode(SaveMode.Overwrite).saveAsTable(tableName)
   }
 
 }
