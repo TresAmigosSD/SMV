@@ -159,7 +159,7 @@ class DQMTest extends SmvTestUtil {
         add(FailTotalRuleCountPolicy(2)).
         add(FailTotalFixCountPolicy(1))
     }
-    intercept[ValidationError] {
+    intercept[SmvDqmValidationError] {
       file.rdd.show
     }
   }
@@ -173,7 +173,7 @@ class DQMTest extends SmvTestUtil {
         add(FormatRule($"c", ".")).
         add(FailTotalRuleCountPolicy(3))
     }
-    intercept[ValidationError] {
+    intercept[SmvDqmValidationError] {
       file.rdd.show
     }
   }
@@ -201,7 +201,7 @@ class DQMTest extends SmvTestUtil {
         add(DQMPolicy(policy, "udp"))
     }
 
-    intercept[ValidationError] {
+    intercept[SmvDqmValidationError] {
       file.rdd
     }
   }

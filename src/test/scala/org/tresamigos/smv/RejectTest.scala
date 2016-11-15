@@ -37,7 +37,7 @@ class RejectTest extends SmvTestUtil {
   }
 
   test("test csvFile loader rejection with exception") {
-    val e = intercept[ValidationError] {
+    val e = intercept[SmvDqmValidationError] {
       val df = open(testDataDir + "RejectTest/test2")
     }
     val m = e.getMessage
@@ -63,7 +63,7 @@ class RejectTest extends SmvTestUtil {
   }
 
   test("test csvParser rejection with exception") {
-    val e = intercept[ValidationError] {
+    val e = intercept[SmvDqmValidationError] {
       val dataStr = """231,67.21  ,20121009101621,"02122011"""
       val prdd = createSchemaRdd("a:String;b:Double;c:String;d:String", dataStr)
       println(prdd.collect.mkString("\n"))

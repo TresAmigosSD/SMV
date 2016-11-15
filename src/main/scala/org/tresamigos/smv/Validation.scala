@@ -109,7 +109,7 @@ private[smv] class ValidationSet(val tasks: Seq[ValidationTask], val isPersist: 
   private def terminateAtError(result: ValidationResult) = {
     if (!result.passed) {
       val r = result.toJSON()
-      throw new ValidationError(r)
+      throw new SmvDqmValidationError(r)
     }
   }
 
@@ -163,5 +163,3 @@ private[smv] class ValidationSet(val tasks: Seq[ValidationTask], val isPersist: 
     }
   }
 }
-
-class ValidationError(msg: String) extends Exception(msg)
