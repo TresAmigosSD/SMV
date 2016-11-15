@@ -121,5 +121,5 @@ class A(BaseModule):
         d2 = for_name(self.__module__ + ".A")(SmvApp).datasetHash()
         h2 = for_name(self.__module__ + ".A")(SmvApp).hashOfHash()
 
-        self.asesrtTrue(d1 == d2, "datasetHash should be the same")
+        self.assertTrue(d1 == d2, "datasetHash should be the same")
         self.assertFalse(h1 == h2, "hashOfHash should be different")

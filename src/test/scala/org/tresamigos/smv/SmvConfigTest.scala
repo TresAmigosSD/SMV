@@ -83,7 +83,7 @@ package org.tresamigos.smv {
     val conf = mkconfig("-m", "mod1")
 
     val ss = conf.stages
-    assert(ss.numStages === 2)
+    assert(ss.stages.size === 2)
     assertUnorderedSeqEqual(ss.stageNames, Seq("com.myproj.s1pkg", "com.myproj.s2pkg"))
 
     val s1 = ss.findStage("com.myproj.s1pkg")

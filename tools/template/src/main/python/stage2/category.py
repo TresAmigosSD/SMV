@@ -1,29 +1,18 @@
 from smv import *
 from pyspark.sql.functions import col, sum, lit
 
-from _PROJ_CLASS_.stage1 import inputdata
+from _PROJ_CLASS_.stage2 import inputdata
 
-__all__ = ['PythonEmploymentByState']
-
-class PythonEmploymentByState(SmvPyModule, SmvPyOutput):
-    """Python ETL Example: employ by state"""
-
-    def requiresDS(self):
-        return [inputdata.PythonEmployment]
-
-    def run(self, i):
-        df = i[inputdata.PythonEmployment]
-        return df.groupBy(col("ST")).agg(sum(col("EMP")).alias("EMP"))
-
+__all__ = ['PythonEmploymentByStateCategory']
 
 class PythonEmploymentByStateCategory(SmvPyModule, SmvPyOutput):
     """Python ETL Example: employment by state with category"""
 
     def requiresDS(self):
-        return [PythonEmploymentByState]
+        return [inputdata.EmploymentByStateLink]
 
     def run(self, i):
-        df = i[PythonEmploymentByState]
+        df = i[inputdata.EmploymentByStateLink]
         return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
 
 class PythonEmploymentByStateCategory2(SmvPyModule, SmvPyOutput):

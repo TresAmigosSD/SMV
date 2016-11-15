@@ -81,8 +81,8 @@ private[smv] trait SmvPackageManager {
  * Extracted out of SmvApp to separate out stage related methods/data.
  */
 private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManager {
-  def numStages = stages.size
-  def stageNames = stages map {s => s.name}
+  lazy val stageNames = stages map {s => s.name}
+
   def findStage(stageName: String) : SmvStage = {
     val ambiguous = stages.map{s => FQN.extractBaseName(s.name)}.
       groupBy(a => a).filter{case (k, v) => v.size > 1}.map{_._1}.toSeq
@@ -117,11 +117,14 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
   /**
    * Since `findStageForDataSet` uses the pre-built map, for dynamically loaded
    * modules, it will not be in the map. Since we are not dynamically load new stages,
-   * we can actually infer the stage a new module is in by check the longest matched stage
+   * we can actually infer the stage a new module is in by check the longest matching stage
    * name string.
    **/
+  def inferStageNameFromDsName(dsname: String): Option[String] =
+    stageNames.filter(dsname.startsWith).sortBy(_.size).lastOption
+
   def inferStageForDataSet(ds: SmvDataSet) : Option[SmvStage] =
-    stages.map{_.name}.filter(ds.name.startsWith(_)).sortBy(_.size).lastOption.map{n => findStage(n)}
+    inferStageNameFromDsName(ds.name) map findStage
 
   override lazy val predecessors: Map[SmvDataSet, Seq[SmvDataSet]] =
     allDatasets.map{
