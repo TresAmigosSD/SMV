@@ -72,7 +72,7 @@ private[smv] class EddResult(
         case v: Long => v.hashCode
         case v: String => v.hashCode
         case v: Decimal => v.hashCode
-        case _ => throw new IllegalArgumentException("unsupported type")
+        case _ => throw new SmvUnsupportedType("unsupported type")
       }
       case "hist" => EddResult.parseHistJson(valueJSON).map{ case (k, c) =>
         k match {
@@ -82,7 +82,7 @@ private[smv] class EddResult(
           case v: Boolean => v.hashCode + c.hashCode
           case v: Double => BigDecimal(v, mc).hashCode + BigDecimal(c, mc).hashCode
           case v: Decimal => v.hashCode + c.hashCode
-          case _ => throw new IllegalArgumentException("unsupported type")
+          case _ => throw new SmvUnsupportedType("unsupported type")
         }
       }.reduce(_ + _)
     }
@@ -159,7 +159,7 @@ private[smv] object EddResult {
       case k: String => implicitly[Ordering[String]].asInstanceOf[Ordering[Any]]
       case k: Boolean => implicitly[Ordering[Boolean]].asInstanceOf[Ordering[Any]]
       case k: Decimal => implicitly[Ordering[Decimal]].asInstanceOf[Ordering[Any]]
-      case _ => throw new IllegalArgumentException("unsupported type")
+      case _ => throw new SmvUnsupportedType("unsupported type")
     }
 
     if(histSortByFreq)
@@ -182,7 +182,7 @@ private[smv] object EddResult {
       case JDecimal(k) => k
       case JString(k) => k
       case JNull => JNull
-      case x => throw new IllegalArgumentException("unsupported type " + x.getClass())
+      case x => throw new SmvUnsupportedType("unsupported type " + x.getClass())
     }
     res
   }
@@ -208,7 +208,7 @@ private[smv] object EddResult {
           case (JDouble(k),JInt(v)) => (k, v.toLong)
           case (JDecimal(k), JInt(v)) => (k, v.toLong)
           case (JNull, JInt(v)) => (null, v.toLong)
-          case _ => throw new IllegalArgumentException("unsupported type")
+          case _ => throw new SmvUnsupportedType("unsupported type")
         }
       }.toMap
       histSort(h, histSortByFreq)

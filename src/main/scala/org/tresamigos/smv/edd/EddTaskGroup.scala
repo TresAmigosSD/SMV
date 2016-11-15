@@ -148,7 +148,7 @@ private[smv] class EddHistogram(
         else edd.StringByKeyHistogram(s)
       case _: NumericType => edd.BinNumericHistogram(s, histCol.binSize)
       case BooleanType => edd.BooleanHistogram(s)
-      case t => throw new IllegalArgumentException(s"data type: ${t} is not supported")
+      case t => throw new SmvUnsupportedType(s"data type: ${t} is not supported")
     }
   }
 
@@ -156,7 +156,7 @@ private[smv] class EddHistogram(
     c match {
       case h: edd.Hist => createHist(h)
       case edd.AmtHist(colName: String) => edd.AmountHistogram(df(colName))
-      case t => throw new IllegalArgumentException(s"data type: ${t} is not supported")
+      case t => throw new SmvUnsupportedType(s"data type: ${t} is not supported")
     }
   }
 }

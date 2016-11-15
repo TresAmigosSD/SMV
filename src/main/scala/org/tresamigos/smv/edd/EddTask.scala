@@ -65,7 +65,7 @@ private object EddTask extends Serializable {
       case v: Boolean => compact(render(v))
       case v: java.math.BigDecimal => compact(render(BigDecimal(v)))
       case null => compact(render(null))
-      case _ => throw new IllegalArgumentException("unsupported type")
+      case _ => throw new SmvUnsupportedType("unsupported type")
     }
   }
 }
