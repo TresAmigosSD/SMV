@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smvbasetest import SmvBaseTest
-from smv import SmvPyDataSet, for_name
+from smv import SmvPyDataSet, SmvApp, for_name
 
 import imp
 import sys
@@ -25,6 +25,11 @@ class BaseModule(SmvPyDataSet):
         sqlcontext = self.smv.sqlContext
         from pyspark.sql.types import StructType
         return sqlContext.createDataFrame(sqlContext._sc.emptyRDD(), StructType([]))
+    def doRun(self, validator, known):
+        return self.run(known)
+    @classmethod
+    def hashsource(cls, src, fname='inline'):
+        return hash(compile(src, fname, 'exec'))
 
 class ModuleHashTest(SmvBaseTest):
     def test_add_comment_should_not_change_hash(self):
@@ -69,10 +74,10 @@ class A(BaseModule):
 """
 
         exec(a+b+c1, globals())
-        h1 = for_name(self.__module__ + ".C").datasetHash()
+        h1 = for_name(self.__module__ + ".C")(SmvApp).datasetHash()
 
         exec(a+b+c2, globals())
-        h2 = for_name(self.__module__ + ".C").datasetHash()
+        h2 = for_name(self.__module__ + ".C")(SmvApp).datasetHash()
 
         self.assertFalse(h1 == h2)
 
@@ -90,9 +95,9 @@ class A(BaseModule):
         return a
 """
         exec(p1 + a, globals())
-        h1 = for_name(self.__module__ + ".A").datasetHash()
+        h1 = for_name(self.__module__ + ".A")(SmvApp).datasetHash()
 
         exec(p2 + a, globals())
-        h2 = for_name(self.__module__ + ".A").datasetHash()
+        h2 = for_name(self.__module__ + ".A")(SmvApp).datasetHash()
 
         self.assertFalse(h1 == h2)

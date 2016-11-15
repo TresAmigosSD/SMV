@@ -326,22 +326,25 @@ class SmvPyDataSet(object):
         so that code and the data it produces can be tracked together."""
         return "0";
 
-    @classmethod
-    def hashsource(cls, src, fname='inline'):
-        return hash(compile(src, fname, 'exec'))
-
-    @classmethod
-    def datasetHash(cls):
+    def datasetHash(self):
+        cls = self.__class__
         try:
             src = inspect.getsource(cls)
-            res = cls.hashsource(src, inspect.getsourcefile(cls))
+            res = hash(compile(src, inspect.getsourcefile(cls), 'exec'))
         except: # `inspect` will raise error for classes defined in the REPL
             res = hash(disassemble(cls))
 
         # include datasetHash of parent classes
         for m in inspect.getmro(cls):
-            if (issubclass(m, SmvPyDataSet) and m != SmvPyDataSet and m != cls and m != object):
-                res += m.datasetHash()
+            try:
+                if m.IsSmvPyDataSet and m != cls and not m.name().startswith("smv."):
+                    parent = m(self.smv)
+                    if parent is None:
+                        print("Error in datasetHash(): cannot find module {0}".format(m.name()))
+                    else:
+                        res += parent.datasetHash()
+            except:
+                pass
 
         # ensure python's long type can fit in a java.lang.Long
         return res & 0x7fffffffffffffff
