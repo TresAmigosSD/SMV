@@ -4,7 +4,7 @@
   * [x] SmvPyCsvFile
   * [x] SmvPyHiveTable
   * [x] SmvPyModule
-  * [ ] SmvPyOutput
+  * [x] SmvPyOutput
   * [ ] SmvPyModuleLink
 
 ## DataFrame Helpers
@@ -20,6 +20,7 @@
   * [x] `smvExpandStruct("c1", "c2")`
   * [x] `smvGroupBy("k1", "k2")`
   * [x] `smvDiscoverPK()`
+  * [x] `smvDumpDF()`
 
 ## SmvGroupedData Helper
   * [x] `smvTopNRecs(10, col("t").desc(), col("a").asc())`
