@@ -43,16 +43,21 @@ class SmvDFHelper(df: DataFrame) {
     handler.saveAsCsvWithSchema(df, schemaWithMeta, ca, strNullValue)
   }
 
+  def _smvDumpDF(): String = {
+    val s = SmvSchema.fromDataFrame(df).toStringsWithMeta.mkString(";")
+    val d = df.collect.map(r => r.mkString(",")).mkString(";\n")
+    s"${s}\n${d}"
+  }
+
   /**
    * Dump the schema and data of given df to screen for debugging purposes.
    * Similar to `show()` method of DF from Spark 1.3, although the format is slightly different.
    * This function's format is more convenient for us and hence has remained un-deprecated.
    */
-  def dumpSRDD = {
-    val schema = SmvSchema.fromDataFrame(df)
-    println(SmvSchema.fromDataFrame(df))
-    df.collect.foreach(r => println(r.mkString(",")))
-  }
+  def smvDumpDF() = println(_smvDumpDF())
+
+  @deprecated("Use smvDumpDF instead")
+  def dumpSRDD = println(_smvDumpDF())
 
   /**
    * checkNames: Require all the list of strings are real column names

@@ -689,6 +689,8 @@ def __smvDiscoverPK(df, n):
 
 DataFrame.smvDiscoverPK = lambda df, n=10000: __smvDiscoverPK(df, n)
 
+DataFrame.smvDumpDF = lambda df: println(dfhelper(df)._smvDumpDF())
+
 #############################################
 # ColumnHelper methods:
 #############################################
