@@ -21,6 +21,7 @@
   * [x] `smvGroupBy("k1", "k2")`
   * [x] `smvDiscoverPK()`
   * [x] `smvDumpDF()`
+  * [x] `smvUnpivot("colx", "coly", "colx")`
 
 ## SmvGroupedData Helper
   * [x] `smvTopNRecs(10, col("t").desc(), col("a").asc())`

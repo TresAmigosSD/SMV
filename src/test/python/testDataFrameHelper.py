@@ -210,6 +210,19 @@ class DfHelperTest(SmvBaseTest):
         self.assertEqual(fieldNames, ['aa', 'b', 'cc'])
         self.should_be_same(expect, result)
 
+    def test_smvUnpivot(self):
+        df = self.createDF("id:String; X:String; Y:String; Z:String",
+            """1,A,B,C; 2,D,E,F""")
+        res = df.smvUnpivot("X", "Y", "Z")
+        expect = self.createDF("id: String;column: String;value: String",
+            """1,X,A;
+            1,Y,B;
+            1,Z,C;
+            2,X,D;
+            2,Y,E;
+            2,Z,F""")
+        self.should_be_same(expect, res)
+
     def test_smvSelectMinus_with_string(self):
         schema = "k:String;v1:Integer;v2:Integer"
         df = self.createDF(schema, "a,1,2;b,2,3")
