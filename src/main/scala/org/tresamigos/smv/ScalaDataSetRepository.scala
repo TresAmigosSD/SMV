@@ -44,6 +44,26 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   override def isExternal(modfqn: String): Boolean =
     modfqn.startsWith(ExtDsPrefix)
 
+  override def getExternalDsName(modfqn: String): String =
+    dsForName(modfqn) match {
+      case None => notFound(modfqn, "cannot get external dataset name")
+      case Some(ds: SmvExtDataSet) => ds.refname
+      case _ => ""
+    }
+
+  override def isLink(modfqn: String): Boolean =
+    dsForName(modfqn) match {
+      case None => notFound(modfqn, "cannot check if module is link")
+      case Some(ds) => ds.isInstanceOf[SmvModuleLink]
+    }
+
+  override def getLinkTargetName(modfqn: String): String =
+    dsForName(modfqn) match {
+      case None => notFound(modfqn, "cannot check if module is link")
+      case Some(ds: SmvModuleLink) => ds.smvModule.name
+      case _ => ""
+    }
+
   override def isEphemeral(modfqn: String): Boolean =
     if (isExternal(modfqn))
       throw new SmvRuntimeException(s"Cannot know if ${modfqn} is ephemeral because it is external")
@@ -52,13 +72,6 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
         case None => notFound(modfqn, "cannot check if the module is ephemeral")
         case Some(ds) => ds.isEphemeral
       }
-
-  override def getExternalDsName(modfqn: String): String =
-    dsForName(modfqn) match {
-      case None => notFound(modfqn, "cannot get external dataset name")
-      case Some(ds: SmvExtDataSet) => ds.refname
-      case _ => ""
-    }
 
   override def getDqm(modfqn: String): SmvDQM =
     dsForName(modfqn) match {

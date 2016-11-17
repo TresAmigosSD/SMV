@@ -137,6 +137,10 @@ class SmvPythonApp(val j_smvapp: SmvApp) {
   def moduleNames(repo: SmvDataSetRepository): java.util.List[String] =
     j_smvapp.modulesToRun(repo, j_smvapp.scalaDataSets)
 
+  /** Infers the name of the stage to which a named module belongs */
+  def inferStageNameFromDsName(modfqn: String): Option[String] =
+    j_smvapp.stages.inferStageNameFromDsName(modfqn)
+
   /** Try to read a dataframe from persisted files */
   def tryReadPersistedFile(path: String): Try[DataFrame] =
     SmvUtil.readPersistedFile(j_smvapp.sqlContext, path)
