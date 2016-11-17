@@ -262,8 +262,8 @@ class SmvPyDataSet(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, smv):
-        self.smv = smv
+    def __init__(self, smvapp):
+        self.smvapp = smvapp
 
     def description(self):
         return self.__doc__
@@ -274,44 +274,44 @@ class SmvPyDataSet(object):
 
     def smvDQM(self):
         """Factory method for Scala SmvDQM"""
-        return self.smv._jvm.SmvDQM.apply()
+        return self.smvapp._jvm.SmvDQM.apply()
 
     # Factory methods for DQM policies
     def FailParserCountPolicy(self, threshold):
-        return self.smv._jvm.FailParserCountPolicy(threshold)
+        return self.smvapp._jvm.FailParserCountPolicy(threshold)
 
     def FailTotalRuleCountPolicy(self, threshold):
-        return self.smv._jvm.FailTotalRuleCountPolicy(threshold)
+        return self.smvapp._jvm.FailTotalRuleCountPolicy(threshold)
 
     def FailTotalFixCountPolicy(self, threshold):
-        return self.smv._jvm.FailTotalFixCountPolicy(threshold)
+        return self.smvapp._jvm.FailTotalFixCountPolicy(threshold)
 
     def FailTotalRulePercentPolicy(self, threshold):
-        return self.smv._jvm.FailTotalRulePercentPolicy(threshold * 1.0)
+        return self.smvapp._jvm.FailTotalRulePercentPolicy(threshold * 1.0)
 
     def FailTotalFixPercentPolicy(self, threshold):
-        return self.smv._jvm.FailTotalFixPercentPolicy(threshold * 1.0)
+        return self.smvapp._jvm.FailTotalFixPercentPolicy(threshold * 1.0)
 
     # DQM task policies
     def FailNone(self):
-        return self.smv._jvm.DqmTaskPolicies.failNone()
+        return self.smvapp._jvm.DqmTaskPolicies.failNone()
 
     def FailAny(self):
-        return self.smv._jvm.DqmTaskPolicies.failAny()
+        return self.smvapp._jvm.DqmTaskPolicies.failAny()
 
     def FailCount(self, threshold):
-        return self.smv._jvm.FailCount(threshold)
+        return self.smvapp._jvm.FailCount(threshold)
 
     def FailPercent(self, threshold):
-        return self.smv._jvm.FailPercent(threshold * 1.0)
+        return self.smvapp._jvm.FailPercent(threshold * 1.0)
 
     def DQMRule(self, rule, name = None, taskPolicy = None):
         task = taskPolicy or self.FailNone()
-        return self.smv._jvm.DQMRule(rule._jc, name, task)
+        return self.smvapp._jvm.DQMRule(rule._jc, name, task)
 
     def DQMFix(self, condition, fix, name = None, taskPolicy = None):
         task = taskPolicy or self.FailNone()
-        return self.smv._jvm.DQMFix(condition._jc, fix._jc, name, task)
+        return self.smvapp._jvm.DQMFix(condition._jc, fix._jc, name, task)
 
     def dqm(self):
         """Subclasses with a non-default DQM policy should override this method"""
@@ -339,7 +339,7 @@ class SmvPyDataSet(object):
             for m in inspect.getmro(cls):
                 try:
                     if m.IsSmvPyDataSet and m != cls and not m.name().startswith("smv."):
-                        res += m(self.smv).datasetHash()
+                        res += m(self.smvapp).datasetHash()
                 except: pass
 
         # ensure python's long type can fit in a java.lang.Long
@@ -350,12 +350,12 @@ class SmvPyDataSet(object):
 
         # include datasetHash of dependency modules
         for m in self.requiresDS():
-            res += m(self.smv).datasetHash()
+            res += m(self.smvapp).datasetHash()
 
         return res
 
     def modulePath(self):
-        return self.smv._jsmv.outputDir() + "/" + self.name() + "_" + hex(self.hashOfHash() & 0xffffffff)[2:] + ".csv"
+        return self.smvapp._jsmv.outputDir() + "/" + self.name() + "_" + hex(self.hashOfHash() & 0xffffffff)[2:] + ".csv"
 
     @classmethod
     def name(cls):
@@ -372,9 +372,9 @@ class SmvPyCsvFile(SmvPyDataSet):
     """Raw input file in CSV format
     """
 
-    def __init__(self, smv):
-        super(SmvPyCsvFile, self).__init__(smv)
-        self._smvCsvFile = smv._jsmv.smvCsvFile(
+    def __init__(self, smvapp):
+        super(SmvPyCsvFile, self).__init__(smvapp)
+        self._smvCsvFile = smvapp._jsmv.smvCsvFile(
             self.name() + "_" + self.version(), self.path(), self.csvAttr(),
             self.forceParserCheck(), self.failAtParsingError())
 
@@ -393,7 +393,7 @@ class SmvPyCsvFile(SmvPyDataSet):
 
     def __mkCsvAttr(self, delimiter=',', quotechar='""', hasHeader=False):
         """Factory method for creating instances of Scala case class CsvAttributes"""
-        return self.smv._jvm.org.tresamigos.smv.CsvAttributes(delimiter, quotechar, hasHeader)
+        return self.smvapp._jvm.org.tresamigos.smv.CsvAttributes(delimiter, quotechar, hasHeader)
 
     def defaultCsvWithHeader(self):
         return self.__mkCsvAttr(hasHeader=True)
@@ -417,15 +417,15 @@ class SmvPyCsvFile(SmvPyDataSet):
 
     def doRun(self, validator, known):
         jdf = self._smvCsvFile.doRun(validator, known)
-        return DataFrame(jdf, self.smv.sqlContext)
+        return DataFrame(jdf, self.smvapp.sqlContext)
 
 class SmvPyCsvStringData(SmvPyDataSet):
     """Input data from a Schema String and Data String
     """
 
-    def __init__(self, smv):
-        super(SmvPyCsvStringData, self).__init__(smv)
-        self._smvCsvStringData = self.smv._jvm.org.tresamigos.smv.SmvCsvStringData(
+    def __init__(self, smvapp):
+        super(SmvPyCsvStringData, self).__init__(smvapp)
+        self._smvCsvStringData = self.smvapp._jvm.org.tresamigos.smv.SmvCsvStringData(
             self.schemaStr(),
             self.dataStr(),
             False
@@ -446,16 +446,16 @@ class SmvPyCsvStringData(SmvPyDataSet):
 
     def doRun(self, validator, known):
         jdf = self._smvCsvStringData.doRun(validator, known)
-        return DataFrame(jdf, self.smv.sqlContext)
+        return DataFrame(jdf, self.smvapp.sqlContext)
 
 
 class SmvPyHiveTable(SmvPyDataSet):
     """Input data source from a Hive table
     """
 
-    def __init__(self, smv):
-        super(SmvPyHiveTable, self).__init__(smv)
-        self._smvHiveTable = self.smv._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName())
+    def __init__(self, smvapp):
+        super(SmvPyHiveTable, self).__init__(smvapp)
+        self._smvHiveTable = self.smvapp._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName())
 
     def description(self):
         return "Hive Table: @" + self.tableName()
@@ -475,7 +475,7 @@ class SmvPyHiveTable(SmvPyDataSet):
         return df
 
     def doRun(self, validator, known):
-        return self.run(DataFrame(self._smvHiveTable.rdd(), self.smv.sqlContext))
+        return self.run(DataFrame(self._smvHiveTable.rdd(), self.smvapp.sqlContext))
 
 class SmvPyModule(SmvPyDataSet):
     """Base class for SmvModules written in Python
@@ -483,8 +483,8 @@ class SmvPyModule(SmvPyDataSet):
 
     IsSmvPyModule = True
 
-    def __init__(self, smv):
-        super(SmvPyModule, self).__init__(smv)
+    def __init__(self, smvapp):
+        super(SmvPyModule, self).__init__(smvapp)
 
     @abc.abstractmethod
     def run(self, i):
@@ -498,7 +498,7 @@ class SmvPyModule(SmvPyDataSet):
                 i[dep] = known[dep]
             except:
                 # the values in known are Java DataFrames
-                i[dep] = DataFrame(known[dep.name()], self.smv.sqlContext)
+                i[dep] = DataFrame(known[dep.name()], self.smvapp.sqlContext)
         return self.run(i)
 
 class SmvPyModuleLink(SmvPyModule):
@@ -516,7 +516,9 @@ class SmvPyModuleLink(SmvPyModule):
         """Returns the target SmvModule class from another stage to which this link points"""
 
     def datasetHash(self, includeSuperClass=True):
-        stage = self.smv._jsmv.j_smvapp().stages().inferStageNameFromDsName(self.target().name())
+        stage = self.smvapp._jsmv.j_smvapp().stages().inferStageNameFromDsName(self.target().name())
+        # TODO get hashOfHash of external target module
+        dephash = hash(stage.get()) if stage.isDefined() else self.target()(SmvApp).datasetHash()
         if (stage.isDefined()):
             print("stage is {0}".format(stage.get()))
         else:
@@ -716,8 +718,8 @@ Column.smvPlusYears  = lambda c, delta: Column(colhelper(c).smvPlusYears(delta))
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
 
 class PythonDataSetRepository(object):
-    def __init__(self, smv):
-        self.smv = smv
+    def __init__(self, smvapp):
+        self.smvapp = smvapp
         self.pythonDataSets = {} # SmvPyDataSet FQN -> instance
 
     def dsForName(self, modfqn):
@@ -730,7 +732,7 @@ class PythonDataSetRepository(object):
             ret = SmvPyExtDataSet(modfqn[len(ExtDsPrefix):])
         else:
             try:
-                ret = for_name(modfqn)(self.smv)
+                ret = for_name(modfqn)(self.smvapp)
             except AttributeError: # module not found is anticipated
                 return None
             except ImportError as e:
@@ -751,7 +753,7 @@ class PythonDataSetRepository(object):
         else:
             mod = reload(sys.modules[modfqn[:lastdot]])
             klass = getattr(mod, modfqn[lastdot+1:])
-        ret = klass(self.smv)
+        ret = klass(self.smvapp)
         self.pythonDataSets[modfqn] = ret
 
         # Python issue https://bugs.python.org/issue1218234
