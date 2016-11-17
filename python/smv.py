@@ -158,11 +158,11 @@ class Smv(object):
 
         # convert python arglist to java String array
         java_args =  smv_copy_array(sc, *arglist)
-        self.app = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
+        self._jsmv = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
 
         # user may choose a port for the callback server
         gw = sc._gateway
-        cbsp = self.app.callbackServerPort()
+        cbsp = self._jsmv.callbackServerPort()
         cbs_port = cbsp.get() if cbsp.isDefined() else gw._python_proxy_port
 
         # this was a workaround for py4j 0.8.2.1, shipped with spark
@@ -188,19 +188,19 @@ class Smv(object):
     def runModule(self, fqn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.app.runModule(fqn, self.repo)
+        jdf = self._jsmv.runModule(fqn, self.repo)
         return DataFrame(jdf, self.sqlContext)
 
     def runDynamicModule(self, fqn):
         """Re-run a Scala or Python module by its fqn"""
         if self.repo.hasDataSet(fqn):
             self.repo.reloadDs(fqn)
-        return DataFrame(self.app.runDynamicModule(fqn, self.repo), self.sqlContext)
+        return DataFrame(self._jsmv.runDynamicModule(fqn, self.repo), self.sqlContext)
 
     def publishModule(self, fqn):
         """Publish a Scala or a Python SmvModule by its FQN
         """
-        self.app.publishModule(fqn, self.repo)
+        self._jsmv.publishModule(fqn, self.repo)
 
     def scalaOption(self, val):
         """Returns a Scala Option containing the value"""
@@ -214,7 +214,7 @@ class Smv(object):
             return self.__resolve(klass, [klass])
 
     def createDF(self, schema, data):
-        return DataFrame(self.app.dfFrom(schema, data), self.sqlContext)
+        return DataFrame(self._jsmv.dfFrom(schema, data), self.sqlContext)
 
     def __resolve(self, klass, stack):
         mod = klass(self)
@@ -227,14 +227,14 @@ class Smv(object):
             self.pymods[dep] = res
             stack.pop()
 
-        tryRead = self.app.tryReadPersistedFile(mod.modulePath())
+        tryRead = self._jsmv.tryReadPersistedFile(mod.modulePath())
         if (tryRead.isSuccess()):
             ret = DataFrame(tryRead.get(), self.sqlContext)
         else:
             _ret = mod.doRun(None, self.pymods)
             if not mod.isEphemeral():
-                self.app.persist(_ret._jdf, mod.modulePath(), False)
-                ret = DataFrame(self.app.tryReadPersistedFile(mod.modulePath()).get(), self.sqlContext)
+                self._jsmv.persist(_ret._jdf, mod.modulePath(), False)
+                ret = DataFrame(self._jsmv.tryReadPersistedFile(mod.modulePath()).get(), self.sqlContext)
             else:
                 ret = _ret
 
@@ -355,7 +355,7 @@ class SmvPyDataSet(object):
         return res
 
     def modulePath(self):
-        return self.smv.app.outputDir() + "/" + self.name() + "_" + hex(self.hashOfHash() & 0xffffffff)[2:] + ".csv"
+        return self.smv._jsmv.outputDir() + "/" + self.name() + "_" + hex(self.hashOfHash() & 0xffffffff)[2:] + ".csv"
 
     @classmethod
     def name(cls):
@@ -374,7 +374,7 @@ class SmvPyCsvFile(SmvPyDataSet):
 
     def __init__(self, smv):
         super(SmvPyCsvFile, self).__init__(smv)
-        self._smvCsvFile = smv.app.smvCsvFile(
+        self._smvCsvFile = smv._jsmv.smvCsvFile(
             self.name() + "_" + self.version(), self.path(), self.csvAttr(),
             self.forceParserCheck(), self.failAtParsingError())
 
@@ -516,7 +516,7 @@ class SmvPyModuleLink(SmvPyModule):
         """Returns the target SmvModule class from another stage to which this link points"""
 
     def datasetHash(self, includeSuperClass=True):
-        stage = self.smv.app.app().stages().inferStageNameFromDsName(self.target().name())
+        stage = self.smv._jsmv.j_smvapp().stages().inferStageNameFromDsName(self.target().name())
         if (stage.isDefined()):
             print("stage is {0}".format(stage.get()))
         else:
