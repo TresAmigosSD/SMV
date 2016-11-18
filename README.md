@@ -28,7 +28,7 @@ Please refer to [User Guide](docs/user/0_user_toc.md) and
 Install [Docker](https://www.docker.com/what-docker). An installation guide for your machine may be found [here](https://docs.docker.com/engine/installation/).
 
 ## For users
-The first time you run the smv Docker image, Docker will download it for you automatically. You need to tell Docker where to find your projects directory and your data directory. You will enter a shell with all SMV tools installed. Find your projects in /projects and your data in /data.
+The first time you run the smv Docker image, Docker will download it for you automatically. You need to tell Docker where to find your projects directory and your data directory. You will enter a shell with all SMV tools installed. Find your projects in /projects and your data in /data.  Note that both the projects and data directories **must** already exist on the host system.
 ```shell
 $ docker run -it -v /path/to/projects:/projects -v /path/to/data:/data tresamigos/smv
 ```
