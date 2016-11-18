@@ -20,6 +20,12 @@ from pyspark.context import SparkContext
 from pyspark.sql import *
 
 class SmvBaseTest(unittest.TestCase):
+    DataDir = "./target/data"
+
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['-m', 'None']
+
     @classmethod
     def setUpClass(cls):
         cls.sparkContext = TestConfig.sparkContext()
@@ -29,7 +35,8 @@ class SmvBaseTest(unittest.TestCase):
         import random;
         callback_server_port = random.randint(20000, 65535)
 
-        SmvApp.init(['-m', 'None', '--cbs-port', str(callback_server_port)], cls.sparkContext, cls.sqlContext)
+        args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
+        SmvApp.init(args, cls.sparkContext, cls.sqlContext)
         cls.j_smv = SmvApp._jsmv
 
     def setUp(self):
@@ -44,7 +51,8 @@ class SmvBaseTest(unittest.TestCase):
             import random;
             callback_server_port = random.randint(20000, 65535)
 
-            SmvApp.init(['-m', 'None', '--cbs-port', str(callback_server_port)], cls.sparkContext, cls.sqlContext)
+            args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
+            SmvApp.init(args, cls.sparkContext, cls.sqlContext)
             cls.j_smv = SmvApp._jsmv
 
     @classmethod
