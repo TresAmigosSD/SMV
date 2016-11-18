@@ -15,9 +15,17 @@ from smvbasetest import SmvBaseTest
 from smv import SmvApp
 
 class ModuleLinkTest(SmvBaseTest):
+    PublishDir = 'testpub'
+
     @classmethod
     def smvAppInitArgs(cls):
-        return ['-m', 'None', '--publish', 'testpub']
+        return ['-m', 'None', '--publish', cls.PublishDir]
+
+    @classmethod
+    def tearDownClass(cls):
+        import shutil
+        import os
+        shutil.rmtree(os.path.join(cls.DataDir, 'publish', cls.PublishDir), ignore_errors=True)
 
     def setUp(self):
         super(ModuleLinkTest, self).setUp()
