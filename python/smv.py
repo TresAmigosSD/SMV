@@ -147,6 +147,8 @@ class Smv(object):
         sc = SparkContext(appName="smvapp.py") if _sc is None else _sc
         sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
 
+        sc.setLogLevel("ERROR")
+        
         self.sqlContext = sqlContext
         self._jvm = sc._jvm
 
