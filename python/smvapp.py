@@ -24,24 +24,24 @@ if __name__ == "__main__":
         exit(-1)
 
     # skip the first argument, which is this program
-    smv = SmvApp.init(sys.argv[1:])
-    app = smv.app
+    SmvApp.init(sys.argv[1:])
+    j_smv = SmvApp._jsmv
 
     print("----------------------------------------")
     print("will run the following modules:")
-    mods = app.moduleNames(smv.repo)
+    mods = j_smv.moduleNames(SmvApp.repo)
     for name in mods:
         print("   " + name)
     print("----------------------------------------")
 
-    publish = app.publishVersion().isDefined()
+    publish = j_smv.publishVersion().isDefined()
     for name in mods:
         if publish:
-            smv.publishModule(name)
+            SmvApp.publishModule(name)
         else:
-            smv.runModule(name)
+            SmvApp.runModule(name)
 
-    table = app.config().exportHive()
+    table = j_smv.config().exportHive()
     if (table.isDefined()):
-        app.verifyConfig()
-        app.exportHive(smv.runModule(mods[0])._jdf, table.get())
+        j_smv.verifyConfig()
+        j_smv.exportHive(SmvApp.runModule(mods[0])._jdf, table.get())

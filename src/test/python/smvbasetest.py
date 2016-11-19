@@ -20,6 +20,12 @@ from pyspark.context import SparkContext
 from pyspark.sql import *
 
 class SmvBaseTest(unittest.TestCase):
+    DataDir = "./target/data"
+
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['-m', 'None']
+
     @classmethod
     def setUpClass(cls):
         cls.sparkContext = TestConfig.sparkContext()
@@ -29,14 +35,15 @@ class SmvBaseTest(unittest.TestCase):
         import random;
         callback_server_port = random.randint(20000, 65535)
 
-        cls.smv = SmvApp.init(['-m', 'None', '--cbs-port', str(callback_server_port)], cls.sparkContext, cls.sqlContext)
-        cls.app = cls.smv.app
+        args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
+        SmvApp.init(args, cls.sparkContext, cls.sqlContext)
+        cls.j_smv = SmvApp._jsmv
 
     def setUp(self):
         """Patch for Python 2.6 without using unittest
         """
         cls = self.__class__
-        if not hasattr(cls, 'app'):
+        if not hasattr(cls, 'j_smv'):
             cls.sparkContext = TestConfig.sparkContext()
             cls.sqlContext = TestConfig.sqlContext()
             cls.sparkContext.setLogLevel("ERROR")
@@ -44,12 +51,13 @@ class SmvBaseTest(unittest.TestCase):
             import random;
             callback_server_port = random.randint(20000, 65535)
 
-            cls.smv = SmvApp.init(['-m', 'None', '--cbs-port', str(callback_server_port)], cls.sparkContext, cls.sqlContext)
-            cls.app = cls.smv.app
+            args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
+            SmvApp.init(args, cls.sparkContext, cls.sqlContext)
+            cls.j_smv = SmvApp._jsmv
 
     @classmethod
     def createDF(cls, schema, data):
-        return DataFrame(cls.app.dfFrom(schema, data), cls.sqlContext)
+        return DataFrame(cls.j_smv.dfFrom(schema, data), cls.sqlContext)
 
     def should_be_same(self, expected, result):
         """Returns true if the two dataframes contain the same data, regardless of order

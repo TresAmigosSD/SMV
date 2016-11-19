@@ -371,8 +371,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           dependencies(repo, modfqn) foreach (runModule(_, repos:_*))
 
           val df = try {
-            if (repo.isExternal(modfqn))
+            if (repo.isExternal(modfqn)) {
               runModule(repo.getExternalDsName(modfqn), repos:_*)
+            }
+            else if (repo.isLink(modfqn)) {
+              val targetName = repo.getLinkTargetName(modfqn)
+              stages.inferStageNameFromDsName(modfqn) flatMap { stageVersion =>
+                SmvUtil.readPersistedFile(sqlContext, publishPath(targetName, stageVersion), null).toOption
+              } getOrElse runModule(targetName, repos:_*)
+            }
             else {
               val dqm = new DQMValidator(repo.getDqm(modfqn))
               persist(repo, modfqn, dqm, repo.getDataFrame(modfqn, dqm, dataframes))
@@ -392,6 +399,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   private def dependencies(repo: SmvDataSetRepository, modfqn: String): Seq[String] =
     repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
 
+  // TODO: handle external dependencies
   def hashOfHash(repo: SmvDataSetRepository, modfqn: String): Int =
     dependencies(repo, modfqn).foldLeft(
       repo.datasetHash(modfqn, true)) { (acc, dep) =>

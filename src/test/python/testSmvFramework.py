@@ -14,7 +14,7 @@
 import unittest
 
 from smvbasetest import SmvBaseTest
-from smv import SmvPyCsvStringData
+from smv import SmvApp, SmvPyCsvStringData
 
 import pyspark
 from pyspark.context import SparkContext
@@ -30,6 +30,6 @@ class D1(SmvPyCsvStringData):
 class SmvFrameworkTest(SmvBaseTest):
     def test_SmvCsvStringData(self):
         fqn = self.__module__ + ".D1"
-        df = self.smv.runModule(fqn)
+        df = SmvApp.runModule(fqn)
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
