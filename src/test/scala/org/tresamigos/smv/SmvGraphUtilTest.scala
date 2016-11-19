@@ -154,4 +154,31 @@ org.tresamigos.smv.smvAppTestPkg3:
   }
 }
 
+
+class SmvGraphUtilWithStrTest extends SmvTestUtil {
+  override def appArgs = Seq(
+    "--smv-props",
+    "smv.stages=org.tresamigos.smv.smvAppTestPkgStr")
+
+  test("Test list modules") {
+    val gu = new graph.SmvGraphUtil(app.stages)
+    val dsL = gu.createDSList()
+
+    println(dsL)
+
+    assert(dsL ===  """
+org.tresamigos.smv.smvAppTestPkgStr:
+  (*) StrData""")
+  }
+}
 } // package: org.tresamigos.smv
+
+package org.tresamigos.smv.smvAppTestPkgStr {
+
+import org.tresamigos.smv.SmvCsvStringData
+
+object StrData extends SmvCsvStringData(
+  "a:String;b:Integer", "1,2;3,4"
+)
+
+}

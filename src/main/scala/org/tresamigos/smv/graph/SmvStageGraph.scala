@@ -107,7 +107,7 @@ private[smv] class SmvGraphUtil(stages: SmvStages) {
     case d: SmvFile       => "(F) " + baseName(d)
     case d: SmvModule     => "(M) " + baseName(d)
     case d: SmvHiveTable  => "(H) " + baseName(d)
-    case d => throw new SmvRuntimeException(s"unknown type of ${d}")
+    case d => "(*) " + baseName(d)
   }
 
   /**
