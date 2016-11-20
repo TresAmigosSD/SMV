@@ -344,8 +344,8 @@ class SmvPyDataSet(object):
                         res += m(self.smvapp).datasetHash()
                 except: pass
 
-        # ensure python's long type can fit in a java.lang.Long
-        return res & 0x7fffffffffffffff
+        # ensure python's numeric type can fit in a java.lang.Integer
+        return res & 0x7fffffff
 
     def hashOfHash(self):
         res = hash(self.version() + str(self.datasetHash()))
@@ -354,7 +354,8 @@ class SmvPyDataSet(object):
         for m in self.requiresDS():
             res += m(self.smvapp).datasetHash()
 
-        return res
+        # ensure python's numeric type can fit in a java.lang.Integer
+        return res & 0x7fffffff
 
     def modulePath(self):
         return self.smvapp._jsmv.outputDir() + "/" + self.name() + "_" + hex(self.hashOfHash() & 0xffffffff)[2:] + ".csv"
@@ -523,7 +524,8 @@ class SmvPyModuleLink(SmvPyModule):
         stage = self.smvapp._jsmv.inferStageNameFromDsName(self.target().name())
         # TODO get hashOfHash of external target module
         dephash = hash(stage.get()) if stage.isDefined() else self.target()(self.smvapp).datasetHash()
-        return (dephash + super(SmvPyModuleLink, self).datasetHash(includeSuperClass)) & 0x7fffffffffffffff
+        # ensure python's numeric type can fit in a java.lang.Integer
+        return (dephash + super(SmvPyModuleLink, self).datasetHash(includeSuperClass)) & 0x7fffffff
 
     def run(self, i):
         raise RuntimeError("Cannot run a module link directly")
@@ -752,6 +754,9 @@ class PythonDataSetRepository(object):
         """Reload the module by its fully qualified name, replace the old
         instance with a new one from the new definnition.
         """
+        if self.isExternal(modfqn):
+            return self.dsForName(modfqn)
+
         lastdot = modfqn.rfind('.')
         if (lastdot == -1):
             klass = reload(modfqn)

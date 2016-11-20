@@ -111,9 +111,9 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
     ds.doRun(validator, known)
   }
 
-  override def datasetHash(modfqn: String, includeSuperClass: Boolean = true): Long =
+  override def datasetHash(modfqn: String, includeSuperClass: Boolean = true): Int =
     dsForName(modfqn) match {
       case None => notFound(modfqn, "cannot calc dataset hash")
-      case Some(ds) => ds.datasetCRC
+      case Some(ds) => ds.datasetCRC.toInt
     }
 }

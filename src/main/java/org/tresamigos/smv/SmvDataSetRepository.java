@@ -96,5 +96,5 @@ public interface SmvDataSetRepository {
 	 * the hash for all its super classes up to and excluding the base
 	 * class provided by SMV.
 	 */
-	long datasetHash(String modfqn, boolean includeSuperClass);
+	int datasetHash(String modfqn, boolean includeSuperClass);
 }
