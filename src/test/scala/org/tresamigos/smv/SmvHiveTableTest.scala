@@ -11,7 +11,7 @@ class SmvHiveTableTest extends SmvTestUtil {
     // create a temporary hive table with two columns.
     val t = app.createDF("k:String; v:Integer",
       """k1,15; k2,20; k3,25""")
-    SmvUtil.exportHive(sqlContext, t, "bar")
+    SmvUtil.exportDataFrameToHive(sqlContext, t, "bar")
 
     val ht = new SmvHiveTable("bar")
     val df = ht.rdd()

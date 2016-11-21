@@ -41,7 +41,6 @@ if __name__ == "__main__":
         else:
             SmvApp.runModule(name)
 
-    table = j_smv.config().exportHive()
-    if (table.isDefined()):
-        j_smv.verifyConfig()
-        j_smv.exportHive(SmvApp.runModule(mods[0])._jdf, table.get())
+    # TODO: get table name from SmvPyOutput instead of hardcoding!!!
+    if (j_smv.publishHive()):
+        j_smv.exportDataFrameToHive(SmvApp.runModule(mods[0])._jdf, "0_replace_me")

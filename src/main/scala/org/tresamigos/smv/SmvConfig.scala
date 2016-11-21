@@ -47,9 +47,10 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val publish = opt[String]("publish", noshort = true,
     default = None,
     descr = "publish the given modules/stage/app as given version")
-
-  val exportHive = opt[String]("export-hive", noshort=true, default=None,
-    descr="temporary solution to publish|export to a hive table")
+  val publishHive = toggle("publish-hive", noshort=true,
+    default=Some(false),
+    descrYes="publish|export given modules/stage/app to hive tables",
+    descrNo="Do not publish results to hive tables.")
 
   val compareEdd = opt[List[String]]("edd-compare", noshort = true,
     default = None,
@@ -154,8 +155,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
 
   val permitDependencyViolation: Boolean = cmdLine.permitDependencyViolation()
-
-  val exportHive: Option[String] = cmdLine.exportHive.get
 
   /**
    * sequence of SmvModules to run based on the command line arguments.

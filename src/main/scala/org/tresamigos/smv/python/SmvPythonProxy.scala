@@ -126,12 +126,11 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
  */
 class SmvPythonApp(val j_smvapp: SmvApp) {
   val config = j_smvapp.smvConfig
+  val publishHive = j_smvapp.publishHive
 
   def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
 
   def publishVersion: Option[String] = config.cmdLine.publish.get
-
-  def verifyConfig(): Unit = j_smvapp.verifyConfig()
 
   /** The names of the modules to run in this app */
   def moduleNames(repo: SmvDataSetRepository): java.util.List[String] =
@@ -149,9 +148,9 @@ class SmvPythonApp(val j_smvapp: SmvApp) {
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
     SmvUtil.persist(j_smvapp.sqlContext, dataframe, path, generateEdd)
 
-  /** Export as hive table */
-  def exportHive(dataframe: DataFrame, tableName: String): Unit =
-    SmvUtil.exportHive(j_smvapp.sqlContext, dataframe, tableName)
+  /** Export a dataframe as hive table */
+  def exportDataFrameToHive(dataframe: DataFrame, tableName: String): Unit =
+    SmvUtil.exportDataFrameToHive(j_smvapp.sqlContext, dataframe, tableName)
 
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes,

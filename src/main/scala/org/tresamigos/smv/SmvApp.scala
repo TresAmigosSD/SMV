@@ -33,6 +33,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   val smvConfig = new SmvConfig(cmdLineArgs)
   val genEdd = smvConfig.cmdLine.genEdd()
+  val publishHive = smvConfig.cmdLine.publishHive()
   val stages = smvConfig.stages
   val sparkConf = new SparkConf().setAppName(smvConfig.appName)
 
@@ -272,29 +273,19 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }.orElse(Some(false))()
   }
 
-  // TODO: temporary helper function, throws on error;
-  // change to return a validation result object when we need to refactor
-  def verifyConfig(): Unit = {
-    // exactly 1 module must be specified when exporting to hive
-    if (smvConfig.cmdLine.exportHive.isDefined) {
-      smvConfig.moduleNames.size match {
-        case 1 => // expected
-        case 0 =>
-          throw new SmvRuntimeException("No module defined for hive-export")
-        case _ =>
-          throw new SmvRuntimeException(s"Can only export 1 module at a time to hive table; but modules ${smvConfig.moduleNames} are in the run-queue")
-      }
-    }
+  /**
+   * if the publish to hive flag is set, the publish
+   */
+  def publishModulesToHive() : Boolean = {
+    false
+    // if (publishHive) {
+    //   // TODO: add call to publish a specific module.
+    //   //smvConfig.modulesToRun().foreach { module => module.publish() }
+    //   true
+    // } else {
+    //   false
+    // }
   }
-
-  def exportOutputModule() : Boolean =
-    smvConfig.cmdLine.exportHive.get match {
-      case None => false
-      case Some(tableName) =>
-        verifyConfig()
-        SmvUtil.exportHive(sqlContext, smvConfig.modulesToRun()(0).rdd(), tableName)
-        true
-    }
 
   /**
    * Publish the specified modules if the "--publish" flag was specified on command line.
@@ -515,7 +506,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    compareEddResults() || generateGraphJSON() || generateDependencyGraphs() || exportOutputModule() ||  publishOutputModules() || generateOutputModules()
+    compareEddResults() || generateGraphJSON() || generateDependencyGraphs() || publishModulesToHive() ||  publishOutputModules() || generateOutputModules()
   }
 }
 
