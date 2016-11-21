@@ -1,0 +1,13 @@
+#!/bin/bash
+
+SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
+source $SMV_TOOLS/_env.sh
+
+export SMV_APP_HOME="$(pwd)"
+export SMV_HOME="$(cd "${SMV_TOOLS}/.."; pwd)"
+export SMV_APP_JAR="$SMV_APP_HOME/$APP_JAR"
+export SMV_SERVER_HOME="$SMV_HOME/server"
+
+set_spark_home
+
+$SMV_SERVER_HOME/start.py $SMV_APP_HOME
