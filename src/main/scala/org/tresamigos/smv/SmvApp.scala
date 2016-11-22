@@ -373,7 +373,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
             }
             else {
               val dqm = new DQMValidator(repo.getDqm(modfqn))
-              persist(repo, modfqn, dqm, repo.getDataFrame(modfqn, dqm, dataframes))
+              val hashval = hashOfHash(modfqn, repos:_*)
+              val df = repo.getDataFrame(modfqn, dqm, dataframes)
+              persist(repo, modfqn, hashval, dqm, df)
             }
           } finally {
             resolveStack.pop()
@@ -390,15 +392,22 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   private def dependencies(repo: SmvDataSetRepository, modfqn: String): Seq[String] =
     repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
 
-  // TODO: handle external dependencies
-  def hashOfHash(repo: SmvDataSetRepository, modfqn: String): Int =
-    dependencies(repo, modfqn).foldLeft(
-      repo.datasetHash(modfqn, true)) { (acc, dep) =>
-      acc + hashOfHash(repo, dep)
-    }.toInt
+  def hashOfHash(modfqn: String, repos: SmvDataSetRepository*): Int =
+    repos.find(_.hasDataSet(modfqn)) match {
+      case None => throw new SmvRuntimeException(s"Cannot find module ${modfqn}")
+      case Some(repo) =>
+        if (repo.isExternal(modfqn))
+          hashOfHash(repo.getExternalDsName(modfqn), repos:_*)
+        else if (repo.isLink(modfqn))
+          hashOfHash(repo.getLinkTargetName(modfqn), repos:_*)
+        else
+          dependencies(repo, modfqn).foldLeft(
+            repo.datasetHash(modfqn, true)) { (acc, dep) =>
+            acc + hashOfHash(dep, repos:_*)
+          }.toInt
+    }
 
-  private def persist(repo: SmvDataSetRepository, modfqn: String, dqm: DQMValidator, df: DataFrame): DataFrame = {
-    val hashval: Int = hashOfHash(repo, modfqn)
+  private def persist(repo: SmvDataSetRepository, modfqn: String, hashval: Int, dqm: DQMValidator, df: DataFrame): DataFrame = {
     // modules defined in spark shell starts with '$'
     val persistValidation = !modfqn.startsWith("$")
     val validator = new ValidationSet(Seq(dqm), persistValidation)
@@ -442,9 +451,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           val df =
             if (repo.isExternal(modfqn))
               runDynamicModule(repo.getExternalDsName(modfqn), repos:_*)
+            else if (repo.isLink(modfqn))
+              runDynamicModule(repo.getLinkTargetName(modfqn), repos:_*)
             else {
               val dqm = new DQMValidator(repo.getDqm(modfqn))
-              persist(repo, modfqn, dqm, repo.rerun(modfqn, dqm, dataframes))
+              val hashval = hashOfHash(modfqn, repos:_*)
+              val df = repo.rerun(modfqn, dqm, dataframes)
+              persist(repo, modfqn, hashval, dqm, df)
             }
           dataframes = dataframes + (modfqn -> df)
 
