@@ -5,3 +5,7 @@ import org.tresamigos.smv._
 import _PROJ_CLASS_.stage1._
 
 object EmploymentStateLink extends SmvModuleLink(EmploymentByState)
+
+/** Can link to a Python module */
+object EmploymentStateLink2 extends SmvModuleLink(
+  new SmvExtDataSet("_PROJ_CLASS_.stage1.employment.PythonEmploymentByState") with SmvOutput)

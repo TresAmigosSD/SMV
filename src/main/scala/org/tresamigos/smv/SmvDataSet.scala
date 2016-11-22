@@ -67,7 +67,7 @@ abstract class SmvDataSet extends HasName {
   /**
    * SmvDataSet code (not data) CRC. Always return 0 for objects created in spark shell
    */
-  private[smv] val datasetCRC = {
+  private[smv] lazy val datasetCRC = {
     if (isObjectInShell)
       0l
     else
