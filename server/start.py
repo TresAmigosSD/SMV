@@ -1,83 +1,64 @@
-#!/usr/bin/env python
+#
+# This file is licensed under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-import os
 import sys
-import fnmatch
-import re
-from flask import Flask, request, Response
+from flask import Flask, request
+from smv import SmvContext
+import compileall
+
 app = Flask(__name__)
 
-def get_full_module_name(module_name, file_path):
-    file_prefix = APP_HOME + '/src/main/'
-    module_library = file_path.replace(file_prefix, '').split('/')[1:-1]
-    module_library.append(module_name)
-    full_module_name = '.'.join(module_library)
-    return full_module_name
+def compile_python_files():
+    r = compileall.compile_dir('src/main/python', quiet=1)
+    if not r:
+        exit(-1)
 
-def get_all_files_with_suffix(suffix):
-    '''
-    This function recurseively searches for all the files with certain suffix
-    under smv code path and return the absolute file names in a list.
-    '''
-    matches = []
-    for root, dirnames, filenames in os.walk(CODE_DIR):
-        for filename in fnmatch.filter(filenames, '*.%s' % suffix):
-            matches.append(os.path.join(root, filename))
-    return matches
+def print_module_names(mods):
+    print("----------------------------------------")
+    print("will run the following modules:")
+    for name in mods:
+        print("   " + name)
+    print("----------------------------------------")
 
-def get_module_file():
+@app.route("/run_modules", methods = ['GET'])
+def run_modules():
     '''
-    This function returns a dictionary where the key is the full module name and
-    the value is the absolute path of the file containing this module.
-    '''
-    module_dict = {}
-    # 1. search and map in Scala files
-    regexp = re.compile(r'(SmvModule|SmvHiveTable|SmvCsvFile)\(')
-    scala_files = get_all_files_with_suffix('scala')
-    for file_path in scala_files:
-        with open(file_path, 'rb') as f:
-            for line in f.readlines():
-                if regexp.search(line) is not None:
-                    module_name = line.split()[1]
-                    module_name = get_full_module_name(module_name, file_path)
-                    module_dict[module_name] = file_path
-    # 2. search and map in Python files
-    # TODO
-    return module_dict
-
-def get_file(filename):
-    try:
-        return open(filename).read()
-    except IOError as exc:
-        return str(exc)
-
-@app.route("/module_code", methods = ['GET'])
-def return_module_code():
-    '''
-    Return module code
+    Take FQNs as parameter and run the modules
     '''
     module_name = request.args.get('name', 'NA')
-    content = get_file(MODULE_FILE_DICT[module_name])
-    return Response(content, mimetype="text/html")
-
-@app.route("/module_schema", methods = ['GET'])
-def return_module_schema():
-    '''
-    TODO: return module's schema
-    '''
-    module_name = request.args.get('name', 'NA')
-    return None
-
-@app.route("/module_output", methods = ['GET'])
-def return_module_output():
-    '''
-    TODO: return module's output
-    '''
-    module_name = request.args.get('name', 'NA')
-    return None
+    # create SMV app instance
+    arglist = ['-m'] + module_name.strip().split()
+    smv_app = SMV_CTX.create_smv_app(arglist)
+    # run modules
+    modules = smv_app.moduleNames(SMV_CTX.repo)
+    print_module_names(modules)
+    publish = smv_app.publishVersion().isDefined()
+    for name in modules:
+        if publish:
+            SMV_CTX.publishModule(name)
+        else:
+            SMV_CTX.runModule(name)
+    return ''
 
 if __name__ == "__main__":
-    APP_HOME = sys.argv[1]
-    CODE_DIR = APP_HOME + '/src'
-    MODULE_FILE_DICT = get_module_file()
+    compile_python_files()
+
+    # initialize a SMV context
+    config = {
+        'name': 'SmvServer',
+        'log_level': 'ERROR',
+    }
+    SMV_CTX = SmvContext(config)
+
+    # start server
     app.run()

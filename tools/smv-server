@@ -1,13 +1,20 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# Start a SMV runtime server.
+# USAGE: smv-server [-h] spark_args smv_app_args
 
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
-source $SMV_TOOLS/_env.sh
+source ${SMV_TOOLS}/_env.sh
+source ${SMV_TOOLS}/_pyenv.sh
 
-export SMV_APP_HOME="$(pwd)"
-export SMV_HOME="$(cd "${SMV_TOOLS}/.."; pwd)"
-export SMV_APP_JAR="$SMV_APP_HOME/$APP_JAR"
-export SMV_SERVER_HOME="$SMV_HOME/server"
+echo "START SMV SERVER =============================="
 
-set_spark_home
+#spark-submit \
+#  --executor-memory ${EXECUTOR_MEMORY} \
+#  --driver-memory ${DRIVER_MEMORY} \
+#  --master ${MASTER} \
+#  --jars ${APP_JAR} \
+#  --driver-class-path "$APP_JAR"
+#  $1 ${ARGS[@]}
 
-$SMV_SERVER_HOME/start.py $SMV_APP_HOME
+run_pyspark_with ${SMV_TOOLS}/../server/start.py
