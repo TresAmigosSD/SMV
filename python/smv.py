@@ -148,7 +148,7 @@ class Smv(object):
         sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
 
         sc.setLogLevel("ERROR")
-        
+
         self.sqlContext = sqlContext
         self._jvm = sc._jvm
 
@@ -203,6 +203,24 @@ class Smv(object):
         """Publish a Scala or a Python SmvModule by its FQN
         """
         self._jsmv.publishModule(fqn, self.repo)
+
+    def publishHiveModule(self, fqn):
+        """Publish a python SmvModule (by FQN) to a hive table.
+           This currently only works with python modules as the repo concept needs to be revisited.
+        """
+        ds = SmvApp.repo.dsForName(fqn)
+        if ds == None:
+            raise ValueError("Can not load python module {0} to publish".format(fqn))
+        tableName = None
+        isOutputModule = None
+        try:
+            tableName = ds.tableName()
+            isOutputModule = ds.IsSmvPyOutput
+        except: pass
+        if not tableName or not isOutputModule:
+            raise ValueError("module {0} must be an python output module and define a tablename to be exported to hive".format(fqn))
+        jdf = self.runModule(fqn)._jdf
+        self._jsmv.exportDataFrameToHive(jdf, tableName)
 
     def scalaOption(self, val):
         """Returns a Scala Option containing the value"""

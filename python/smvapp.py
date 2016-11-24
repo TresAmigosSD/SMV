@@ -27,20 +27,21 @@ if __name__ == "__main__":
     SmvApp.init(sys.argv[1:])
     j_smv = SmvApp._jsmv
 
+    # TODO: code below should all move in the SmvApp instance.  Does not belong here.
+
     print("----------------------------------------")
-    print("will run the following modules:")
+    print("will run/publish the following modules:")
     mods = j_smv.moduleNames(SmvApp.repo)
     for name in mods:
         print("   " + name)
+
     print("----------------------------------------")
 
     publish = j_smv.publishVersion().isDefined()
     for name in mods:
         if publish:
             SmvApp.publishModule(name)
+        elif j_smv.publishHive():
+            SmvApp.publishHiveModule(name)
         else:
             SmvApp.runModule(name)
-
-    # TODO: get table name from SmvPyOutput instead of hardcoding!!!
-    if (j_smv.publishHive()):
-        j_smv.exportDataFrameToHive(SmvApp.runModule(mods[0])._jdf, "0_replace_me")

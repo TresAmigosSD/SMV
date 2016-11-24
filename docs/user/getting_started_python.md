@@ -26,18 +26,35 @@ If you use Maven, then run
 $ mvn package
 ```
 
-
 ## Run Example Application
-
 Python SMV applications can be run using the `smv-pyrun` script.
 
 ```shell
 $ _SMV_HOME_/tools/smv-pyrun -m com.mycompany.myapp.stage1.employment.PythonEmploymentByStateCategory
 ```
 
+### Publish to Hive Table
+If the `--publish-hive` flag is specified, then the selected modules will be published/exported to a hive table.  The have table name will be determined by the `tableName` method of the module.  The selected module must also implement `SmvPyOutput`.  For example, Given the module `X` in package `a.b.c` below:
+```python
+class X(SmvPyModule, SmvPyOutput):
+    """python module"""
+    def tableName(self):
+        return "schema.foobar"
+    def requiresDS(self): ...
+    def run(self, i): ...
+```
+
+Then running the following command will publish the result of module `X` to table `schema.foobar`
+
+```bash
+$ _SMV_HOME_/tools/smv-pyrun --publish-hive -m a.b.c.X
+```
+
+**Note:** only python modules can be published to Hive tables currently due to upcoming internal restructure.
+
 :information_source: Note: Python modules must be specified using the fully-qualified name on the cmdline, unlike Scala where unambiguous basenames can be used.  Basename-only feature may be added in the future for Python.  The fully qualified name for a Python module includes the file name (hence the `employment` part in the above example, because the module is defined in the file `employment.py`).
 
-:soon: `--publish`
+
 :soon: `-s stage`
 
 ## Interactive Shell
