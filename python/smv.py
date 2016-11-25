@@ -141,9 +141,6 @@ class Smv(object):
     """
 
     def init(self, arglist, _sc = None, _sqlContext = None):
-
-        #TODO: appName should be read from the config files
-        #      need to process the arglist first and create smvConfig before init SmvApp
         sc = SparkContext(appName="smvapp.py") if _sc is None else _sc
         sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
 
@@ -161,6 +158,9 @@ class Smv(object):
         # convert python arglist to java String array
         java_args =  smv_copy_array(sc, *arglist)
         self._jsmv = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
+
+        # issue #429 set application name from smv config
+        sc._conf.setAppName(self._jsmv.j_smvapp().smvConfig().appName())
 
         # user may choose a port for the callback server
         gw = sc._gateway
