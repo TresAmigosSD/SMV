@@ -12,11 +12,15 @@
 # limitations under the License.
 
 import sys
-from flask import Flask, request
+import os
+import glob
+from flask import Flask, request, jsonify
 from smv import SmvContext
 import compileall
 
 app = Flask(__name__)
+
+# ---------- Helper Functions ---------- #
 
 def compile_python_files():
     r = compileall.compile_dir('src/main/python', quiet=1)
@@ -29,6 +33,32 @@ def print_module_names(mods):
     for name in mods:
         print("   " + name)
     print("----------------------------------------")
+
+def get_output_dir():
+    output_dir = SMV_CTX.outputDir()
+    if(output_dir.startswith('file://')):
+        output_dir = output_dir[7:]
+    return output_dir
+
+def get_latest_file_dir(output_dir, module_name, suffix):
+    latest_file_dir = max([f for f in os.listdir(output_dir) \
+        if f.startswith(module_name) and f.endswith(suffix)], \
+        key=lambda f: os.path.getctime(os.path.join(output_dir, f)))
+    return os.path.join(output_dir, latest_file_dir)
+
+def read_file_dir(file_dir, limit=999999999):
+    lines = []
+    for file in glob.glob('%s/part-*' % file_dir):
+        with open(file, 'rb') as readfile:
+            for line in readfile.readlines():
+                lines.append(line)
+                if len(lines) >= limit:
+                    break
+        if len(lines) >= limit:
+            break
+    return lines
+
+# ---------- API Definition ---------- #
 
 @app.route("/run_modules", methods = ['GET'])
 def run_modules():
@@ -49,6 +79,17 @@ def run_modules():
         else:
             SMV_CTX.runModule(name)
     return ''
+
+@app.route("/get_sample_output", methods = ['GET'])
+def get_sample_output():
+    '''
+    Take FQN as parameter and return the sample output
+    '''
+    module_name = request.args.get('name', 'NA')
+    output_dir = get_output_dir()
+    latest_dir = get_latest_file_dir(output_dir, module_name, '.csv')
+    res = read_file_dir(latest_dir, limit=20)
+    return jsonify(res=res)
 
 if __name__ == "__main__":
     compile_python_files()

@@ -197,6 +197,9 @@ class SmvContext(object):
         """
         self._jsmv.publishModule(fqn, self.repo)
 
+    def outputDir(self):
+        return self._jsmv.outputDir()
+
     def scalaOption(self, val):
         """Returns a Scala Option containing the value"""
         return self.sc._jvm.scala.Option.apply(val)
