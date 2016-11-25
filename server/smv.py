@@ -148,6 +148,7 @@ class SmvContext(object):
         self.start_callback_server()
         self.pymods = {}
         self.repo = PythonDataSetRepository(self)
+        self.create_smv_app(['-m'])
 
     def create_smv_app(self, arglist):
         java_args = smv_copy_array(self.sc, *arglist)
