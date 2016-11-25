@@ -91,6 +91,17 @@ def get_sample_output():
     res = read_file_dir(latest_dir, limit=20)
     return jsonify(res=res)
 
+@app.route("/get_module_schema", methods = ['GET'])
+def get_module_schema():
+    '''
+    Take FQN as parameter and return the module schema
+    '''
+    module_name = request.args.get('name', 'NA')
+    output_dir = get_output_dir()
+    latest_dir = get_latest_file_dir(output_dir, module_name, '.schema')
+    res = read_file_dir(latest_dir)
+    return jsonify(res=res)
+
 if __name__ == "__main__":
     compile_python_files()
 
