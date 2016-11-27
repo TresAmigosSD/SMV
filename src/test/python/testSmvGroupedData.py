@@ -32,3 +32,15 @@ class GroupedDataTest(SmvBaseTest):
                  a,4,b"""
         )
         self.should_be_same(expect, res)
+
+    def test_smvPivotCoalesce(self):
+        df = self.createDF("k:String; p:String; v:Integer", "a,c,1;a,d,2;a,e,;a,f,5")
+        res = df.smvGroupBy("k").smvPivotCoalesce(
+            [['p']],
+            ['v'],
+            ['c', 'd', 'e', 'f']
+        )
+        expect = self.createDF("k: String;v_c: Integer;v_d: Integer;v_e: Integer;v_f: Integer",
+            "a,1,2,,5"
+        )
+        self.should_be_same(expect, res)

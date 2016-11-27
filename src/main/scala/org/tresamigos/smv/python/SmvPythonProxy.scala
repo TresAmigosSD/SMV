@@ -108,6 +108,10 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
     valueCols: Array[String], baseOutput: Array[String]): DataFrame =
     grouped.smvPivotSum(pivotCols.map(_.toSeq).toSeq :_*)(valueCols:_*)(baseOutput:_*)
 
+  def smvPivotCoalesce(pivotCols: java.util.List[Array[String]],
+    valueCols: Array[String], baseOutput: Array[String]): DataFrame =
+    grouped.smvPivotCoalesce(pivotCols.map(_.toSeq).toSeq :_*)(valueCols:_*)(baseOutput:_*)
+
   def smvFillNullWithPrevValue(orderCols: Array[Column], valueCols: Array[String]): DataFrame =
     grouped.smvFillNullWithPrevValue(orderCols: _*)(valueCols: _*)
 }

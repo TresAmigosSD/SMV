@@ -580,6 +580,13 @@ class SmvGroupedData(object):
         baseOutput: list of strings"""
         return DataFrame(self.sgd.smvPivotSum(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
 
+    def smvPivotCoalesce(self, pivotCols, valueCols, baseOutput):
+        """Perform a normal SmvPivot using the pivot and value columns, followed by coalescing all the output.
+        pivotCols: list of list of strings
+        valueCols: list of strings
+        baseOutput: list of strings"""
+        return DataFrame(self.sgd.smvPivotCoalesce(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
+
     def smvFillNullWithPrevValue(self, *orderCols):
         """Fill in Null values with "previous" value according to an ordering
            * Example:
