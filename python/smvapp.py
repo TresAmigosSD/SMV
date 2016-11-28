@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     # skip the first argument, which is this program
     smvPy.init(sys.argv[1:])
-    j_smv = smvPy._jsmv
+    j_smv = smvPy.j_smvPyClient
 
     # TODO: code below should all move in the smvPy instance.  Does not belong here.
 

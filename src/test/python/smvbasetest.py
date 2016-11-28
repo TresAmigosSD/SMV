@@ -37,13 +37,13 @@ class SmvBaseTest(unittest.TestCase):
 
         args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
         smvPy.init(args, cls.sparkContext, cls.sqlContext)
-        cls.j_smv = smvPy._jsmv
+        cls.smvPy = smvPy
 
     def setUp(self):
         """Patch for Python 2.6 without using unittest
         """
         cls = self.__class__
-        if not hasattr(cls, 'j_smv'):
+        if not hasattr(cls, 'smvPy'):
             cls.sparkContext = TestConfig.sparkContext()
             cls.sqlContext = TestConfig.sqlContext()
             cls.sparkContext.setLogLevel("ERROR")
@@ -53,11 +53,11 @@ class SmvBaseTest(unittest.TestCase):
 
             args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
             smvPy.init(args, cls.sparkContext, cls.sqlContext)
-            cls.j_smv = smvPy._jsmv
+            cls.smvPy = smvPy
 
     @classmethod
     def createDF(cls, schema, data):
-        return DataFrame(cls.j_smv.dfFrom(schema, data), cls.sqlContext)
+        return cls.smvPy.createDF(schema, data)
 
     def should_be_same(self, expected, result):
         """Returns true if the two dataframes contain the same data, regardless of order

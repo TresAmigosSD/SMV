@@ -29,7 +29,7 @@ class ModuleLinkTest(SmvBaseTest):
 
     def setUp(self):
         super(ModuleLinkTest, self).setUp()
-        self.j_smv.publishModule('fixture.stage1.output.A', smvPy.repo)
+        self.smvPy.publishModule('fixture.stage1.output.A')
 
     def test_module_link_can_be_resolved(self):
         a = smvPy.runModule('fixture.stage1.output.A')

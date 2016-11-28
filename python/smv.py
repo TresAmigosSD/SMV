@@ -159,14 +159,17 @@ class SmvPy(object):
         java_import(self._jvm, "org.tresamigos.smv.dqm.*")
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
 
-        self._jsmv = self.create_smv_pyclient(arglist)
+        self.j_smvPyClient = self.create_smv_pyclient(arglist)
+
+        # shortcut is meant for internal use only
+        self.j_smvApp = self.j_smvPyClient.j_smvApp()
 
         # issue #429 set application name from smv config
-        sc._conf.setAppName(self._jsmv.j_smvApp().smvConfig().appName())
+        sc._conf.setAppName(self.appName())
 
         # user may choose a port for the callback server
         gw = sc._gateway
-        cbsp = self._jsmv.callbackServerPort()
+        cbsp = self.j_smvPyClient.callbackServerPort()
         cbs_port = cbsp.get() if cbsp.isDefined() else gw._python_proxy_port
 
         # this was a workaround for py4j 0.8.2.1, shipped with spark
@@ -188,6 +191,9 @@ class SmvPy(object):
         self.repo = PythonDataSetRepository(self)
         self.module_file_map = self.get_module_code_file_mapping()
         return self
+
+    def appName(self):
+        return self.j_smvApp.smvConfig().appName()
 
     def get_module_code_file_mapping(self):
         '''
@@ -266,8 +272,8 @@ class SmvPy(object):
         return lines
 
     def get_graph_json(self):
-        self._jsmv.j_smvApp().generateAllGraphJSON()
-        file_name = self._jsmv.j_smvApp().smvConfig().appName() + '.json'
+        self.j_smvApp.generateAllGraphJSON()
+        file_name = self.appName() + '.json'
         file_path = os.path.sep.join([os.getcwd(), file_name])
         with open(file_path, 'rb') as f:
             lines = f.read()
@@ -276,19 +282,19 @@ class SmvPy(object):
     def runModule(self, fqn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self._jsmv.runModule(fqn, self.repo)
+        jdf = self.j_smvPyClient.runModule(fqn, self.repo)
         return DataFrame(jdf, self.sqlContext)
 
     def runDynamicModule(self, fqn):
         """Re-run a Scala or Python module by its fqn"""
         if self.repo.hasDataSet(fqn):
             self.repo.reloadDs(fqn)
-        return DataFrame(self._jsmv.runDynamicModule(fqn, self.repo), self.sqlContext)
+        return DataFrame(self.j_smvPyClient.runDynamicModule(fqn, self.repo), self.sqlContext)
 
     def publishModule(self, fqn):
         """Publish a Scala or a Python SmvModule by its FQN
         """
-        self._jsmv.publishModule(fqn, self.repo)
+        self.j_smvPyClient.publishModule(fqn, self.repo)
 
     def publishHiveModule(self, fqn):
         """Publish a python SmvModule (by FQN) to a hive table.
@@ -306,17 +312,17 @@ class SmvPy(object):
         if not tableName or not isOutputModule:
             raise ValueError("module {0} must be an python output module and define a tablename to be exported to hive".format(fqn))
         jdf = self.runModule(fqn)._jdf
-        self._jsmv.exportDataFrameToHive(jdf, tableName)
+        self.j_smvPyClient.exportDataFrameToHive(jdf, tableName)
 
     def outputDir(self):
-        return self._jsmv.outputDir()
+        return self.j_smvPyClient.outputDir()
 
     def scalaOption(self, val):
         """Returns a Scala Option containing the value"""
         return self._jvm.scala.Option.apply(val)
 
     def createDF(self, schema, data):
-        return DataFrame(self._jsmv.dfFrom(schema, data), self.sqlContext)
+        return DataFrame(self.j_smvPyClient.dfFrom(schema, data), self.sqlContext)
 
 class SmvPyOutput(object):
     """Marks an SmvPyModule as one of the output of its stage"""
@@ -439,7 +445,7 @@ class SmvPyCsvFile(SmvPyDataSet):
 
     def __init__(self, smvapp):
         super(SmvPyCsvFile, self).__init__(smvapp)
-        self._smvCsvFile = smvapp._jsmv.smvCsvFile(
+        self._smvCsvFile = smvapp.j_smvPyClient.smvCsvFile(
             self.name() + "_" + self.version(), self.path(), self.csvAttr(),
             self.forceParserCheck(), self.failAtParsingError())
 
@@ -583,7 +589,7 @@ class SmvPyModuleLink(SmvPyModule):
         """Returns the target SmvModule class from another stage to which this link points"""
 
     def datasetHash(self, includeSuperClass=True):
-        stage = self.smvapp._jsmv.inferStageNameFromDsName(self.target().name())
+        stage = self.smvapp.j_smvPyClient.inferStageNameFromDsName(self.target().name())
         dephash = hash(stage.get()) if stage.isDefined() else self.target()(self.smvapp).datasetHash()
         # ensure python's numeric type can fit in a java.lang.Integer
         return (dephash + super(SmvPyModuleLink, self).datasetHash(includeSuperClass)) & 0x7fffffff
