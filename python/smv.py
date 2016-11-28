@@ -163,7 +163,7 @@ class Smv(object):
         self.create_smv_app(arglist)
 
         # issue #429 set application name from smv config
-        sc._conf.setAppName(self._jsmv.j_smvapp().smvConfig().appName())
+        sc._conf.setAppName(self._jsmv.j_smvApp().smvConfig().appName())
 
         # user may choose a port for the callback server
         gw = sc._gateway
@@ -257,7 +257,7 @@ class Smv(object):
 
     def create_smv_app(self, arglist):
         java_args =  smv_copy_array(self.sc, *arglist)
-        self._jsmv = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, self.sqlContext._ssql_ctx)
+        self._jsmv = self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
         return self._jsmv
 
     def get_module_code(self, module_name):
@@ -267,8 +267,8 @@ class Smv(object):
         return lines
 
     def get_graph_json(self):
-        self._jsmv.j_smvapp().generateAllGraphJSON()
-        file_name = self._jsmv.j_smvapp().smvConfig().appName() + '.json'
+        self._jsmv.j_smvApp().generateAllGraphJSON()
+        file_name = self._jsmv.j_smvApp().smvConfig().appName() + '.json'
         file_path = os.path.sep.join([os.getcwd(), file_name])
         with open(file_path, 'rb') as f:
             lines = f.read()

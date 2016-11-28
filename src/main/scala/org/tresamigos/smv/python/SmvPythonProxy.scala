@@ -128,9 +128,9 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
  *
  * The collection types should be accessible through the py4j gateway.
  */
-class SmvPythonApp(val j_smvapp: SmvApp) {
-  val config = j_smvapp.smvConfig
-  val publishHive = j_smvapp.publishHive
+class SmvPyClient(val j_smvApp: SmvApp) {
+  val config = j_smvApp.smvConfig
+  val publishHive = j_smvApp.publishHive
 
   def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
 
@@ -138,23 +138,23 @@ class SmvPythonApp(val j_smvapp: SmvApp) {
 
   /** The names of the modules to run in this app */
   def moduleNames(repo: SmvDataSetRepository): java.util.List[String] =
-    j_smvapp.modulesToRun(repo, j_smvapp.scalaDataSets)
+    j_smvApp.modulesToRun(repo, j_smvApp.scalaDataSets)
 
   /** Infers the name of the stage to which a named module belongs */
   def inferStageNameFromDsName(modfqn: String): Option[String] =
-    j_smvapp.stages.inferStageNameFromDsName(modfqn)
+    j_smvApp.stages.inferStageNameFromDsName(modfqn)
 
   /** Try to read a dataframe from persisted files */
   def tryReadPersistedFile(path: String): Try[DataFrame] =
-    SmvUtil.readPersistedFile(j_smvapp.sqlContext, path)
+    SmvUtil.readPersistedFile(j_smvApp.sqlContext, path)
 
   /** Saves the dataframe to disk */
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
-    SmvUtil.persist(j_smvapp.sqlContext, dataframe, path, generateEdd)
+    SmvUtil.persist(j_smvApp.sqlContext, dataframe, path, generateEdd)
 
   /** Export a dataframe as hive table */
   def exportDataFrameToHive(dataframe: DataFrame, tableName: String): Unit =
-    SmvUtil.exportDataFrameToHive(j_smvapp.sqlContext, dataframe, tableName)
+    SmvUtil.exportDataFrameToHive(j_smvApp.sqlContext, dataframe, tableName)
 
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes,
@@ -167,29 +167,29 @@ class SmvPythonApp(val j_smvapp: SmvApp) {
     }
 
   /** Output directory for files */
-  def outputDir: String = j_smvapp.smvConfig.outputDir
+  def outputDir: String = j_smvApp.smvConfig.outputDir
 
   /** Used to create small dataframes for testing */
   def dfFrom(schema: String, data: String): DataFrame =
-    j_smvapp.createDF(schema, data)
+    j_smvApp.createDF(schema, data)
 
   /** Runs an SmvModule written in either Python or Scala */
   def runModule(modfqn: String, repo: SmvDataSetRepository): DataFrame =
-    j_smvapp.runModule(modfqn, repo, j_smvapp.scalaDataSets)
+    j_smvApp.runModule(modfqn, repo, j_smvApp.scalaDataSets)
 
   def runDynamicModule(modfqn: String, repo: SmvDataSetRepository): DataFrame =
-    j_smvapp.runDynamicModule(modfqn, repo, j_smvapp.scalaDataSets)
+    j_smvApp.runDynamicModule(modfqn, repo, j_smvApp.scalaDataSets)
 
   /** Publish the result of an SmvModule */
   def publishModule(modfqn: String, repo: SmvDataSetRepository): Unit =
-    j_smvapp.publishModule(modfqn, publishVersion.get, repo, j_smvapp.scalaDataSets)
+    j_smvApp.publishModule(modfqn, publishVersion.get, repo, j_smvApp.scalaDataSets)
 
 }
 
 /** Not a companion object because we need to access it from Python */
-object SmvPythonAppFactory {
-  def init(sqlContext: SQLContext): SmvPythonApp = init(Array("-m", "None"), sqlContext)
+object SmvPyClientFactory {
+  def init(sqlContext: SQLContext): SmvPyClient = init(Array("-m", "None"), sqlContext)
 
-  def init(args: Array[String], sqlContext: SQLContext): SmvPythonApp =
-    new SmvPythonApp(SmvApp.init(args, Option(sqlContext.sparkContext), Option(sqlContext)))
+  def init(args: Array[String], sqlContext: SQLContext): SmvPyClient =
+    new SmvPyClient(SmvApp.init(args, Option(sqlContext.sparkContext), Option(sqlContext)))
 }
