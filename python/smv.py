@@ -423,19 +423,6 @@ class SmvPyDataSet(object):
         # ensure python's numeric type can fit in a java.lang.Integer
         return res & 0x7fffffff
 
-    def hashOfHash(self):
-        res = hash(self.version() + str(self.datasetHash()))
-
-        # include datasetHash of dependency modules
-        for m in self.requiresDS():
-            res += m(self.smvapp).datasetHash()
-
-        # ensure python's numeric type can fit in a java.lang.Integer
-        return res & 0x7fffffff
-
-    def modulePath(self):
-        return self.smvapp._jsmv.outputDir() + "/" + self.name() + "_" + hex(self.hashOfHash() & 0xffffffff)[2:] + ".csv"
-
     @classmethod
     def name(cls):
         """Returns the fully qualified name
@@ -598,7 +585,6 @@ class SmvPyModuleLink(SmvPyModule):
 
     def datasetHash(self, includeSuperClass=True):
         stage = self.smvapp._jsmv.inferStageNameFromDsName(self.target().name())
-        # TODO get hashOfHash of external target module
         dephash = hash(stage.get()) if stage.isDefined() else self.target()(self.smvapp).datasetHash()
         # ensure python's numeric type can fit in a java.lang.Integer
         return (dephash + super(SmvPyModuleLink, self).datasetHash(includeSuperClass)) & 0x7fffffff

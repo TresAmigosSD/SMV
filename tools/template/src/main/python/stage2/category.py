@@ -19,7 +19,7 @@ class PythonEmploymentByStateCategory2(SmvPyModule, SmvPyOutput):
     """Python ETL Example: depending on Scala module
     """
 
-    ScalaMod = SmvPyExtDataSet("__PROJ_CLASS_.stage1.EmploymentByState")
+    ScalaMod = SmvPyExtDataSet("_PROJ_CLASS_.stage1.EmploymentByState")
 
     def requiresDS(self):
         return [self.ScalaMod]
