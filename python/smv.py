@@ -217,21 +217,29 @@ class Smv(object):
                                 module_name = m.group(1).strip()
                                 file_name = file
                                 fqn = get_fqn(module_name, file_name)
-                                module_dict[fqn] = file_name
+                                if (fqn):
+                                    module_dict[fqn] = file_name
             return module_dict
 
         def get_fqn(module_name, file_name):
             sep = os.path.sep
             file_name_split = file_name.strip().split(sep)
-            start_index = file_name_split.index('com')
-            if file_name_split[-1].endswith('.scala'):
-                file_name_split.pop()
-            elif file_name_split[-1].endswith('.py'):
-                file_name_split[-1] = file_name_split[-1][:-3]
-            fqn_split = file_name_split[start_index:]
-            fqn_split.append(module_name)
-            fqn = '.'.join(fqn_split)
-            return fqn
+
+            # TODO there are also other top-level package (e.g. org)
+            # need to figure out a more general way to find the modules
+            try:
+                start_index = file_name_split.index('com')
+            except ValueError:
+                return None
+            else:
+                if file_name_split[-1].endswith('.scala'):
+                    file_name_split.pop()
+                elif file_name_split[-1].endswith('.py'):
+                    file_name_split[-1] = file_name_split[-1][:-3]
+                fqn_split = file_name_split[start_index:]
+                fqn_split.append(module_name)
+                fqn = '.'.join(fqn_split)
+                return fqn
 
         code_dir = os.getcwd() + '/src'
         scala_files = get_all_files_with_suffix(code_dir, 'scala')
