@@ -13,7 +13,7 @@
 
 import unittest
 from runtests import TestConfig
-from smv import SmvApp
+from smv import smvPy
 
 import pyspark
 from pyspark.context import SparkContext
@@ -36,8 +36,8 @@ class SmvBaseTest(unittest.TestCase):
         callback_server_port = random.randint(20000, 65535)
 
         args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
-        SmvApp.init(args, cls.sparkContext, cls.sqlContext)
-        cls.j_smv = SmvApp._jsmv
+        smvPy.init(args, cls.sparkContext, cls.sqlContext)
+        cls.j_smv = smvPy._jsmv
 
     def setUp(self):
         """Patch for Python 2.6 without using unittest
@@ -52,8 +52,8 @@ class SmvBaseTest(unittest.TestCase):
             callback_server_port = random.randint(20000, 65535)
 
             args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
-            SmvApp.init(args, cls.sparkContext, cls.sqlContext)
-            cls.j_smv = SmvApp._jsmv
+            smvPy.init(args, cls.sparkContext, cls.sqlContext)
+            cls.j_smv = smvPy._jsmv
 
     @classmethod
     def createDF(cls, schema, data):

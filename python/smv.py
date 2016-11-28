@@ -137,7 +137,7 @@ def _to_list(cols, converter=None):
 def _sparkContext():
     return SparkContext._active_spark_context
 
-class Smv(object):
+class SmvPy(object):
     """Creates a proxy to SmvApp.
 
     The SmvApp instance is exposed through the `app` attribute.
@@ -159,8 +159,7 @@ class Smv(object):
         java_import(self._jvm, "org.tresamigos.smv.dqm.*")
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
 
-        # convert python arglist to java String array
-        self.create_smv_app(arglist)
+        self._jsmv = self.create_smv_pyclient(arglist)
 
         # issue #429 set application name from smv config
         sc._conf.setAppName(self._jsmv.j_smvApp().smvConfig().appName())
@@ -255,10 +254,10 @@ class Smv(object):
         module_dict = get_module_file_mapping(files, patterns)
         return module_dict
 
-    def create_smv_app(self, arglist):
+    def create_smv_pyclient(self, arglist):
+        # convert python arglist to java String array
         java_args =  smv_copy_array(self.sc, *arglist)
-        self._jsmv = self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
-        return self._jsmv
+        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
 
     def get_module_code(self, module_name):
         file_name = self.module_file_map[module_name]
@@ -295,7 +294,7 @@ class Smv(object):
         """Publish a python SmvModule (by FQN) to a hive table.
            This currently only works with python modules as the repo concept needs to be revisited.
         """
-        ds = SmvApp.repo.dsForName(fqn)
+        ds = smvPy.repo.dsForName(fqn)
         if ds == None:
             raise ValueError("Can not load python module {0} to publish".format(fqn))
         tableName = None
@@ -667,8 +666,8 @@ class SmvMultiJoin(object):
     def doJoin(self, dropextra = False):
         return DataFrame(self.mj.doJoin(dropextra), self.sqlContext)
 
-# Create the SmvApp "Singleton"
-SmvApp = Smv()
+# Create the SmvPy "Singleton"
+smvPy = SmvPy()
 
 helper = lambda df: df._sc._jvm.SmvPythonHelper
 def dfhelper(df):

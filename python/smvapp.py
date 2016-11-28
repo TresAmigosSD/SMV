@@ -15,7 +15,7 @@ import sys
 
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
-from smv import SmvApp
+from smv import smvPy
 
 if __name__ == "__main__":
     import compileall
@@ -24,14 +24,14 @@ if __name__ == "__main__":
         exit(-1)
 
     # skip the first argument, which is this program
-    SmvApp.init(sys.argv[1:])
-    j_smv = SmvApp._jsmv
+    smvPy.init(sys.argv[1:])
+    j_smv = smvPy._jsmv
 
-    # TODO: code below should all move in the SmvApp instance.  Does not belong here.
+    # TODO: code below should all move in the smvPy instance.  Does not belong here.
 
     print("----------------------------------------")
     print("will run/publish the following modules:")
-    mods = j_smv.moduleNames(SmvApp.repo)
+    mods = j_smv.moduleNames(smvPy.repo)
     for name in mods:
         print("   " + name)
 
@@ -40,8 +40,8 @@ if __name__ == "__main__":
     publish = j_smv.publishVersion().isDefined()
     for name in mods:
         if publish:
-            SmvApp.publishModule(name)
+            smvPy.publishModule(name)
         elif j_smv.publishHive():
-            SmvApp.publishHiveModule(name)
+            smvPy.publishHiveModule(name)
         else:
-            SmvApp.runModule(name)
+            smvPy.runModule(name)

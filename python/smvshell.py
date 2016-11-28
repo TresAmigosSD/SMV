@@ -11,15 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp
+from smv import smvPy
 from pyspark.sql import DataFrame
 
-jvmShellCmd = SmvApp._jvm.org.tresamigos.smv.shell.ShellCmd
+jvmShellCmd = smvPy._jvm.org.tresamigos.smv.shell.ShellCmd
 
-pdf = lambda fqn: SmvApp.runModule(fqn)
-ddf = lambda fqn: SmvApp.runDynamicModule(fqn)
-openHive = lambda tableName: DataFrame(jvmShellCmd.openHive(tableName), SmvApp.sqlContext)
-openCsv = lambda path: DataFrame(jvmShellCmd.openCsv(path), SmvApp.sqlContext)
+pdf = lambda fqn: smvPy.runModule(fqn)
+ddf = lambda fqn: smvPy.runDynamicModule(fqn)
+openHive = lambda tableName: DataFrame(jvmShellCmd.openHive(tableName), smvPy.sqlContext)
+openCsv = lambda path: DataFrame(jvmShellCmd.openCsv(path), smvPy.sqlContext)
 
 def lsStage():
     print(jvmShellCmd.lsStage())

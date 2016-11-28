@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smvbasetest import SmvBaseTest
-from smv import SmvApp
+from smv import smvPy
 
 class ModuleLinkTest(SmvBaseTest):
     PublishDir = 'testpub'
@@ -29,13 +29,13 @@ class ModuleLinkTest(SmvBaseTest):
 
     def setUp(self):
         super(ModuleLinkTest, self).setUp()
-        self.j_smv.publishModule('fixture.stage1.output.A', SmvApp.repo)
+        self.j_smv.publishModule('fixture.stage1.output.A', smvPy.repo)
 
     def test_module_link_can_be_resolved(self):
-        a = SmvApp.runModule('fixture.stage1.output.A')
-        l = SmvApp.runModule('fixture.stage2.links.L')
+        a = smvPy.runModule('fixture.stage1.output.A')
+        l = smvPy.runModule('fixture.stage2.links.L')
         self.should_be_same(a, l) # link resolution
 
-        b = SmvApp.runModule('fixture.stage2.links.B')
+        b = smvPy.runModule('fixture.stage2.links.B')
         expected = self.createDF("k:String;v:Integer;v2:Integer", "a,,;b,2,3")
         self.should_be_same(expected, b) # link as dependency

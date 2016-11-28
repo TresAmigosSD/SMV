@@ -15,7 +15,7 @@ import sys
 import os
 import glob
 from flask import Flask, request, jsonify
-from smv import Smv
+from smv import SmvPy
 import compileall
 
 app = Flask(__name__)
@@ -68,7 +68,7 @@ def run_modules():
     module_name = request.args.get('name', 'NA')
     # create SMV app instance
     arglist = ['-m'] + module_name.strip().split()
-    smv_app = SMV_CTX.create_smv_app(arglist)
+    smv_app = SMV_CTX.create_smv_pyclient(arglist)
     # run modules
     modules = smv_app.moduleNames(SMV_CTX.repo)
     print_module_names(modules)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     compile_python_files('src/main/python')
 
     # init Smv context
-    SMV_CTX = Smv().init([])
+    SMV_CTX = SmvPy().init([])
 
     # start server
     app.run()

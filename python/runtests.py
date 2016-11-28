@@ -15,7 +15,6 @@ from unittest import *
 
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
-from smv import Smv
 
 import sys
 

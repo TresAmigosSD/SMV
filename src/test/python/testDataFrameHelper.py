@@ -14,7 +14,7 @@
 import unittest
 
 from smvbasetest import SmvBaseTest
-from smv import SmvApp, SmvPyCsvFile
+from smv import smvPy, SmvPyCsvFile
 
 import pyspark
 from pyspark.context import SparkContext
@@ -123,7 +123,7 @@ class DfHelperTest(SmvBaseTest):
         def csvAttr(self): return self.defaultCsvWithHeader()
 """
         exec(code.format(path), globals())
-        res = SmvApp.runModule(self.__module__ + ".T")
+        res = smvPy.runModule(self.__module__ + ".T")
         self.should_be_same(df, res)
 
     def test_smvJoinByKey(self):

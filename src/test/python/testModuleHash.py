@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smvbasetest import SmvBaseTest
-from smv import SmvPyDataSet, SmvApp, for_name
+from smv import SmvPyDataSet, smvPy, for_name
 
 import imp
 import sys
@@ -74,10 +74,10 @@ class A(BaseModule):
 """
 
         exec(a+b+c1, globals())
-        h1 = for_name(self.__module__ + ".C")(SmvApp).datasetHash()
+        h1 = for_name(self.__module__ + ".C")(smvPy).datasetHash()
 
         exec(a+b+c2, globals())
-        h2 = for_name(self.__module__ + ".C")(SmvApp).datasetHash()
+        h2 = for_name(self.__module__ + ".C")(smvPy).datasetHash()
 
         self.assertFalse(h1 == h2)
 
@@ -95,10 +95,10 @@ class A(BaseModule):
         return a
 """
         exec(p1 + a, globals())
-        h1 = for_name(self.__module__ + ".A")(SmvApp).datasetHash()
+        h1 = for_name(self.__module__ + ".A")(smvPy).datasetHash()
 
         exec(p2 + a, globals())
-        h2 = for_name(self.__module__ + ".A")(SmvApp).datasetHash()
+        h2 = for_name(self.__module__ + ".A")(smvPy).datasetHash()
 
         self.assertFalse(h1 == h2)
 
@@ -114,9 +114,9 @@ class A(BaseModule):
     def m(self, a): return a
 """
         exec(p1 + a, globals())
-        d1 = for_name(self.__module__ + ".A")(SmvApp).datasetHash()
+        d1 = for_name(self.__module__ + ".A")(smvPy).datasetHash()
 
         exec(p2 + a, globals())
-        d2 = for_name(self.__module__ + ".A")(SmvApp).datasetHash()
+        d2 = for_name(self.__module__ + ".A")(smvPy).datasetHash()
 
         self.assertTrue(d1 == d2, "datasetHash should be the same")
