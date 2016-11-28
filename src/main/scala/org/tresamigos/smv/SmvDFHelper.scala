@@ -196,14 +196,14 @@ class SmvDFHelper(df: DataFrame) {
    * Rename one or more fields of a `DataFrame`.
    * The old/new names are given as string pairs.
    * {{{
-   *   df.renameField( "a" -> "aa", "b" -> "bb" )
+   *   df.smvRenameField( "a" -> "aa", "b" -> "bb" )
    * }}}
    *
    * The method preserves any pre-existing metadata associated with
    * renamed columns, whereas the method withColumnRenamed in Spark,
    * as of 1.5.2, would drop them.
    */
-  def renameField(namePairs: (String, String)*): DataFrame = {
+  def smvRenameField(namePairs: (String, String)*): DataFrame = {
     val namePairsMap = namePairs.toMap
 
     // We don't want to rename to some field names which already exist
@@ -217,6 +217,9 @@ class SmvDFHelper(df: DataFrame) {
     }
     df.select(renamedFields: _*)
   }
+
+  @deprecated("use smvRenameField", "1.5")
+  def renameField(namePairs: (String, String)*): DataFrame = smvRenameField(namePairs: _*)
 
   /**
    * Rename one or more fields of a `DataFrame`.

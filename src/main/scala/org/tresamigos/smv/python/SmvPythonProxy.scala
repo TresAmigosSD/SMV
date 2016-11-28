@@ -68,7 +68,7 @@ object SmvPythonHelper {
 
   def smvRenameField(df: DataFrame, namePairsAsList: ArrayList[ArrayList[String]]): DataFrame = {
     val namePairs = namePairsAsList.map(inner => Tuple2(inner(0), inner(1)))
-    df.renameField(namePairs:_*)
+    df.smvRenameField(namePairs:_*)
   }
 
   def smvConcatHist(df: DataFrame, colNames: Array[String]) = df._smvConcatHist(colNames.toSeq)
