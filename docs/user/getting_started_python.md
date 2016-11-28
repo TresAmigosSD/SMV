@@ -68,7 +68,7 @@ Using Python version 3.4.0 (default, Jun 19 2015 14:20:21)
 SparkContext available as sc, HiveContext available as sqlContext.
 >>> import smv
 >>> app = smv.Smv(['-m', 'None'], sqlContext)
->>> r1 = app.run_python_module('com.my.stage1.employment.PythonEmploymentByState')
+>>> r1 = app.runModule('com.my.stage1.employment.PythonEmploymentByState')
 >>> r1.show()
 ```
 

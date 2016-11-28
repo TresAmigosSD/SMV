@@ -186,7 +186,6 @@ class Smv(object):
             # update the port of CallbackClient with real port
             gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
 
-        self.pymods = {}
         self.repo = PythonDataSetRepository(self)
         self.module_file_map = self.get_module_code_file_mapping()
         return self
@@ -309,40 +308,8 @@ class Smv(object):
         """Returns a Scala Option containing the value"""
         return self._jvm.scala.Option.apply(val)
 
-    def run_python_module(self, name):
-        klass = for_name(name)
-        if (klass in self.pymods):
-            return self.pymods[klass]
-        else:
-            return self.__resolve(klass, [klass])
-
     def createDF(self, schema, data):
         return DataFrame(self._jsmv.dfFrom(schema, data), self.sqlContext)
-
-    def __resolve(self, klass, stack):
-        mod = klass(self)
-        for dep in mod.requiresDS():
-            if (dep in stack):
-                raise RuntimeError("Circular module dependency detected", dep.name(), stack)
-
-            stack.append(dep)
-            res = self.__resolve(dep, stack)
-            self.pymods[dep] = res
-            stack.pop()
-
-        tryRead = self._jsmv.tryReadPersistedFile(mod.modulePath())
-        if (tryRead.isSuccess()):
-            ret = DataFrame(tryRead.get(), self.sqlContext)
-        else:
-            _ret = mod.doRun(None, self.pymods)
-            if not mod.isEphemeral():
-                self._jsmv.persist(_ret._jdf, mod.modulePath(), False)
-                ret = DataFrame(self._jsmv.tryReadPersistedFile(mod.modulePath()).get(), self.sqlContext)
-            else:
-                ret = _ret
-
-        self.pymods[klass] = ret
-        return ret
 
 class SmvPyOutput(object):
     """Marks an SmvPyModule as one of the output of its stage"""
