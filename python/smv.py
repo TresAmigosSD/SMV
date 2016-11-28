@@ -246,13 +246,18 @@ class Smv(object):
             'class (.+?)\(SmvPyCsvFile',
         ]
         module_dict = get_module_file_mapping(files, patterns)
-        print module_dict
         return module_dict
 
     def create_smv_app(self, arglist):
         java_args =  smv_copy_array(self.sc, *arglist)
         self._jsmv = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, self.sqlContext._ssql_ctx)
         return self._jsmv
+
+    def get_module_code(self, module_name):
+        file_name = self.module_file_map[module_name]
+        with open(file_name, 'rb') as f:
+            lines = f.readlines()
+        return lines
 
     def runModule(self, fqn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)

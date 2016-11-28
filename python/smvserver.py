@@ -80,6 +80,15 @@ def run_modules():
             SMV_CTX.runModule(name)
     return ''
 
+@app.route("/get_module_code", methods = ['GET'])
+def get_module_code():
+    '''
+    Take FQN as parameter and return the module code
+    '''
+    module_name = request.args.get('name', 'NA')
+    res = SMV_CTX.get_module_code(module_name)
+    return jsonify(res=res)
+
 @app.route("/get_sample_output", methods = ['GET'])
 def get_sample_output():
     '''
