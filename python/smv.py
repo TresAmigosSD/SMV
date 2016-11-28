@@ -259,6 +259,14 @@ class Smv(object):
             lines = f.readlines()
         return lines
 
+    def get_graph_json(self):
+        self._jsmv.j_smvapp().generateAllGraphJSON()
+        file_name = self._jsmv.j_smvapp().smvConfig().appName() + '.json'
+        file_path = os.path.sep.join([os.getcwd(), file_name])
+        with open(file_path, 'rb') as f:
+            lines = f.read()
+        return lines
+
     def runModule(self, fqn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """

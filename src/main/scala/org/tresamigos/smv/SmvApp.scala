@@ -273,6 +273,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }.orElse(Some(false))()
   }
 
+  def generateAllGraphJSON() = {
+    genJSON(stages.stageNames)
+  }
+
   /**
    * if the publish to hive flag is set, the publish
    */

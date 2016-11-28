@@ -111,6 +111,11 @@ def get_module_schema():
     res = read_file_dir(latest_dir)
     return jsonify(res=res)
 
+@app.route("/get_graph_json", methods = ['GET'])
+def get_graph_json():
+    res = SMV_CTX.get_graph_json()
+    return jsonify(res=res)
+
 if __name__ == "__main__":
     compile_python_files('src/main/python')
 
