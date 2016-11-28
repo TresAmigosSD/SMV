@@ -17,4 +17,4 @@ echo "START SMV SERVER =============================="
 #  --driver-class-path "$APP_JAR"
 #  $1 ${ARGS[@]}
 
-run_pyspark_with ${SMV_TOOLS}/../server/start.py
+run_pyspark_with ${SMV_TOOLS}/../python/smvserver.py

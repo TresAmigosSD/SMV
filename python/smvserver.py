@@ -15,15 +15,15 @@ import sys
 import os
 import glob
 from flask import Flask, request, jsonify
-from smv import SmvContext
+from smv import Smv
 import compileall
 
 app = Flask(__name__)
 
 # ---------- Helper Functions ---------- #
 
-def compile_python_files():
-    r = compileall.compile_dir('src/main/python', quiet=1)
+def compile_python_files(path):
+    r = compileall.compile_dir(path, quiet=1)
     if not r:
         exit(-1)
 
@@ -103,14 +103,10 @@ def get_module_schema():
     return jsonify(res=res)
 
 if __name__ == "__main__":
-    compile_python_files()
+    compile_python_files('src/main/python')
 
-    # initialize a SMV context
-    config = {
-        'name': 'SmvServer',
-        'log_level': 'ERROR',
-    }
-    SMV_CTX = SmvContext(config)
+    # init Smv context
+    SMV_CTX = Smv().init([])
 
     # start server
     app.run()

@@ -147,6 +147,7 @@ class Smv(object):
         sc.setLogLevel("ERROR")
 
         self.sqlContext = sqlContext
+        self.sc = sc
         self._jvm = sc._jvm
 
         from py4j.java_gateway import java_import
@@ -156,8 +157,7 @@ class Smv(object):
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
 
         # convert python arglist to java String array
-        java_args =  smv_copy_array(sc, *arglist)
-        self._jsmv = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, sqlContext._ssql_ctx)
+        self.create_smv_app(arglist)
 
         # issue #429 set application name from smv config
         sc._conf.setAppName(self._jsmv.j_smvapp().smvConfig().appName())
@@ -186,6 +186,11 @@ class Smv(object):
         self.pymods = {}
         self.repo = PythonDataSetRepository(self)
         return self
+
+    def create_smv_app(self, arglist):
+        java_args =  smv_copy_array(self.sc, *arglist)
+        self._jsmv = self._jvm.org.tresamigos.smv.python.SmvPythonAppFactory.init(java_args, self.sqlContext._ssql_ctx)
+        return self._jsmv
 
     def runModule(self, fqn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
@@ -221,6 +226,9 @@ class Smv(object):
             raise ValueError("module {0} must be an python output module and define a tablename to be exported to hive".format(fqn))
         jdf = self.runModule(fqn)._jdf
         self._jsmv.exportDataFrameToHive(jdf, tableName)
+
+    def outputDir(self):
+        return self._jsmv.outputDir()
 
     def scalaOption(self, val):
         """Returns a Scala Option containing the value"""
