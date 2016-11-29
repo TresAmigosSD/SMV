@@ -216,6 +216,8 @@ class SmvPy(object):
             for file in files:
                 with open(file, 'rb') as readfile:
                     for line in readfile.readlines():
+                        # in Python 3, readlines() return a bytes-like object
+                        if sys.version >= '3': line = line.decode()
                         for pattern in patterns:
                             m = re.search(pattern, line)
                             if m:
