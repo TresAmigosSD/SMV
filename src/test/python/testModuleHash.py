@@ -22,7 +22,7 @@ class BaseModule(SmvPyDataSet):
     def requiresDS(self):
         return []
     def run(self, i):
-        sqlcontext = self.smvapp.sqlContext
+        sqlcontext = self.smvPy.sqlContext
         from pyspark.sql.types import StructType
         return sqlContext.createDataFrame(sqlContext._sc.emptyRDD(), StructType([]))
     def doRun(self, validator, known):
