@@ -25,7 +25,7 @@ class SmvLinkFollowTest extends SmvTestUtil {
   }
 
   test("Test SmvModuleLink datasetHash follows linked module") {
-    assert(smvLinkTestPkg2.L.datasetHash() === -1638856213l) // when Y's version is 2
+    assert(smvLinkTestPkg2.L.datasetHash() === 1702152846L) // when Y's version is 2
   }
 }
 
