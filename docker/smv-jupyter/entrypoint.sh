@@ -16,4 +16,4 @@ fi
 
 export PYSPARK_SUBMIT_ARGS="--verbose --executor-memory 6G --driver-memory 2G --master local[*] --jars $APP_JAR --driver-class-path $APP_JAR pyspark-shell"
 
-jupyter notebook "$@"
+jupyter notebook "$@" --ip=0.0.0.0
