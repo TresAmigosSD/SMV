@@ -804,6 +804,9 @@ Column.smvPlusWeeks  = lambda c, delta: Column(colhelper(c).smvPlusWeeks(delta))
 Column.smvPlusMonths = lambda c, delta: Column(colhelper(c).smvPlusMonths(delta))
 Column.smvPlusYears  = lambda c, delta: Column(colhelper(c).smvPlusYears(delta))
 
+Column.smvDay70 = lambda c: Column(colhelper(c).smvDay70())
+Column.smvMonth70 = lambda c: Column(colhelper(c).smvMonth70())
+
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
 
 class PythonDataSetRepository(object):

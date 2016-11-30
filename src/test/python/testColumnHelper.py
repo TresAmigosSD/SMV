@@ -87,3 +87,14 @@ class ColumnHelperTest(SmvBaseTest):
         self.should_be_same(e3, r3)
         self.should_be_same(e4, r4)
         self.should_be_same(e5, r5)
+
+    def test_smvDayMonth70(self):
+        df = self.createDF("t:Timestamp[yyyyMMdd]", "19760131;20120229")
+        r1 = df.select(col("t").smvDay70().alias("t_day70"))
+        r2 = df.select(col("t").smvMonth70().alias("t_month70"))
+
+        e1 = self.createDF("t_day70: Integer", "2221;15399")
+        e2 = self.createDF("t_month70: Integer", "72;505")
+
+        self.should_be_same(e1, r1)
+        self.should_be_same(e2, r2)
