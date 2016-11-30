@@ -98,3 +98,17 @@ class ColumnHelperTest(SmvBaseTest):
 
         self.should_be_same(e1, r1)
         self.should_be_same(e2, r2)
+
+    def test_smvNullSub(self):
+        df = self.createDF("age:Integer; payroll:Float; avg_age:Integer", "50,60.5,45;,70,45;34,,45")
+        r1 = df.select(col("age").smvNullSub(46).alias("age_nullsub"))
+        r2 = df.select(col("payroll").smvNullSub(40.5).alias("payroll_nullsub"))
+        r3 = df.select(col("age").smvNullSub(col("avg_age")).alias("age_nullsub2"))
+
+        e1 = self.createDF("age_nullsub: Integer", "50;46;34")
+        e2 = self.createDF("payroll_nullsub: Float", "60.5;70;40.5")
+        e3 = self.createDF("age_nullsub2: Integer", "50;45;34")
+
+        self.should_be_same(e1, r1)
+        self.should_be_same(e2, r2)
+        self.should_be_same(e3, r3)

@@ -52,6 +52,9 @@
   * [x] `smvPlusWeeks`
   * [x] `smvPlusMonths`
   * [x] `smvPlusYears`
+  * [x] `smvDay70`
+  * [x] `smvMonth70`
+  * [x] `smvNullSub`
 
 ## Misc in Shell
   * [x] `pdf("com.mycomp.myapp.mypythonfile.mymodule")`
