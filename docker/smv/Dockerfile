@@ -4,7 +4,7 @@ ENV SMV_HOME=/usr/lib/SMV \
     PATH=$PATH:/usr/lib/SMV/tools
 
 RUN sudo apt-get update &&\
-    sudo apt-get install -y "python-pip"\
+    sudo apt-get install -y "python-pip" &&\
     sudo pip install --upgrade pip &&\
     sudo pip install Flask
 
