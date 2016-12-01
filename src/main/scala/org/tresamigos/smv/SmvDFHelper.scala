@@ -56,7 +56,7 @@ class SmvDFHelper(df: DataFrame) {
    */
   def smvDumpDF() = println(_smvDumpDF())
 
-  @deprecated("Use smvDumpDF instead")
+  @deprecated("Use smvDumpDF instead", "1.5")
   def dumpSRDD = println(_smvDumpDF())
 
   /**
@@ -115,7 +115,7 @@ class SmvDFHelper(df: DataFrame) {
       // the last select is to make sure the ordering of columns don't change
       df.smvSelectPlus(uniquelyNamed:_*).
         smvSelectMinus(origColNames.head, origColNames.tail:_*).
-        renameField(renameArgs:_*).
+        smvRenameField(renameArgs:_*).
         select(currColNames.head, currColNames.tail: _*)
     }
 
@@ -134,7 +134,7 @@ class SmvDFHelper(df: DataFrame) {
     df.select( all ++ exprs : _* )
   }
 
-  @deprecated("1.5", "use smvSelectPlus instead")
+  @deprecated("use smvSelectPlus instead", "1.5")
   def selectPlus(exprs: Column*): DataFrame = smvSelectPlus(exprs:_*)
 
   /**
@@ -163,7 +163,7 @@ class SmvDFHelper(df: DataFrame) {
     df.select(all.map{l=>df(l)} : _* )
   }
 
-  @deprecated("1.5", "use smvSelectMinus instead")
+  @deprecated("use smvSelectMinus instead", "1.5")
   def selectMinus(s: String, others: String*): DataFrame = smvSelectMinus(s, others:_*)
 
   /**
@@ -178,7 +178,7 @@ class SmvDFHelper(df: DataFrame) {
     smvSelectMinus(names(0), names.tail: _*)
   }
 
-  @deprecated("1.5", "use smvSelectMinus instead")
+  @deprecated("use smvSelectMinus instead", "1.5")
   def selectMinus(cols: Column*): DataFrame = smvSelectMinus(cols:_*)
 
   /**
@@ -292,7 +292,7 @@ class SmvDFHelper(df: DataFrame) {
     df.smvSelectPlus(exprs: _*).smvSelectMinus(colNames.head, colNames.tail: _*)
   }
 
-  @deprecated("1.5", "use smvExpandStruct instead")
+  @deprecated("use smvExpandStruct instead", "1.5")
   def selectExpandStruct(colNames: String*): DataFrame = smvExpandStruct(colNames: _*)
 
   /**
@@ -311,7 +311,7 @@ class SmvDFHelper(df: DataFrame) {
       c -> mkUniq(df.columns, c, ignoreCase = true, postfix)
     }.filter{case (l, r) => l != r}
 
-    df.join(otherPlan.renameField(renamedFields: _*), on: Column, joinType)
+    df.join(otherPlan.smvRenameField(renamedFields: _*), on: Column, joinType)
   }
 
   /**
@@ -346,7 +346,7 @@ class SmvDFHelper(df: DataFrame) {
 
     val joinedKeys = keys zip rightKeys
     val renamedFields = joinedKeys.map{case (l,r) => (l -> r)}
-    val newOther = otherPlan.renameField(renamedFields: _*)
+    val newOther = otherPlan.smvRenameField(renamedFields: _*)
     val joinOpt = joinedKeys.map{case (l, r) => ($"$l" === $"$r")}.reduce(_ && _)
 
     val dfJoined = df.joinUniqFieldNames(newOther, joinOpt, joinType, postfix)
@@ -362,7 +362,7 @@ class SmvDFHelper(df: DataFrame) {
     dfCoalescedKeys.smvSelectMinus(rightKeys(0), rightKeys.tail: _*)
   }
 
-  @deprecated("1.5", "use smvJoinByKey instead")
+  @deprecated("use smvJoinByKey instead", "1.5")
   def joinByKey(
     otherPlan: DataFrame,
     keys: Seq[String],
@@ -397,7 +397,7 @@ class SmvDFHelper(df: DataFrame) {
     new SmvMultiJoin(Nil, SmvMultiJoinConf(df, keys, defaultJoinType))
   }
 
-  @deprecated("1.5", "use smvJoinMultipleByKey instead")
+  @deprecated("use smvJoinMultipleByKey instead", "1.5")
   def joinMultipleByKey(keys: Seq[String], defaultJoinType: String) = smvJoinMultipleByKey(keys, defaultJoinType)
 
   /**
@@ -915,7 +915,7 @@ class SmvDFHelper(df: DataFrame) {
       val r = p._2
       c.join(r, $"${key}" === $"${newkey}", SmvJoinType.Outer).
         smvSelectPlus(coalesce($"${key}", $"${newkey}") as "tmp").
-        smvSelectMinus(key).renameField("tmp" -> key)
+        smvSelectMinus(key).smvRenameField("tmp" -> key)
     }
 
     val hasCols = Range(0, otherSimple.size + 1).map{i =>
@@ -1171,7 +1171,7 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Show histograms within groups (Issue #330)
    */
-  @deprecated("1.5", """use df.smvGroupBy("k").smvConcatHist(Seq("c1", "c2")) instead""")
+  @deprecated("""use df.smvGroupBy("k").smvConcatHist(Seq("c1", "c2")) instead""", "1.5")
   def showHist(groupBy1: String, rest: String*)(colA: Column, more: Column*): Unit = {
     import df.sqlContext.implicits._
     df.smvGroupBy(groupBy1, rest:_*).smvConcatHist((colA +: more).map{_.getName})
@@ -1226,7 +1226,7 @@ class SmvDFHelper(df: DataFrame) {
     SmvReportIO.saveLocalReport(headerStr + "\n" + bodyStr + "\n", path)
   }
 
-  @deprecated("1.5", "use smvExportCsv instead")
+  @deprecated("use smvExportCsv instead", "1.5")
   def exportCsv(path: String, n: Integer = null) = smvExportCsv(path, n)
 
   /**
