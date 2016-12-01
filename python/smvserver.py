@@ -15,7 +15,7 @@ import sys
 import os
 import glob
 from flask import Flask, request, jsonify
-from smv import SmvPy
+from smv import smvPy
 import compileall
 
 app = Flask(__name__)
@@ -35,7 +35,7 @@ def print_module_names(mods):
     print("----------------------------------------")
 
 def get_output_dir():
-    output_dir = SMV_CTX.outputDir()
+    output_dir = smvPy.outputDir()
     if(output_dir.startswith('file://')):
         output_dir = output_dir[7:]
     return output_dir
@@ -68,16 +68,16 @@ def run_modules():
     module_name = request.args.get('name', 'NA')
     # create SMV app instance
     arglist = ['-m'] + module_name.strip().split()
-    SMV_CTX.create_smv_pyclient(arglist)
+    smvPy.create_smv_pyclient(arglist)
     # run modules
-    modules = SMV_CTX.moduleNames()
+    modules = smvPy.moduleNames()
     print_module_names(modules)
-    publish = SMV_CTX.isPublish()
+    publish = smvPy.isPublish()
     for name in modules:
         if publish:
-            SMV_CTX.publishModule(name)
+            smvPy.publishModule(name)
         else:
-            SMV_CTX.runModule(name)
+            smvPy.runModule(name)
     return ''
 
 @app.route("/get_module_code", methods = ['GET'])
@@ -86,7 +86,7 @@ def get_module_code():
     Take FQN as parameter and return the module code
     '''
     module_name = request.args.get('name', 'NA')
-    res = SMV_CTX.get_module_code(module_name)
+    res = smvPy.get_module_code(module_name)
     return jsonify(res=res)
 
 @app.route("/get_sample_output", methods = ['GET'])
@@ -113,14 +113,14 @@ def get_module_schema():
 
 @app.route("/get_graph_json", methods = ['GET'])
 def get_graph_json():
-    res = SMV_CTX.get_graph_json()
+    res = smvPy.get_graph_json()
     return jsonify(res=res)
 
 if __name__ == "__main__":
     compile_python_files('src/main/python')
 
     # init Smv context
-    SMV_CTX = SmvPy().init([])
+    smvPy.init([])
 
     # start server
     app.run(host='0.0.0.0')
