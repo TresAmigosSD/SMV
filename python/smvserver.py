@@ -13,6 +13,8 @@
 
 import sys
 import os
+import fnmatch
+import re
 import glob
 from flask import Flask, request, jsonify
 from smv import smvPy
@@ -58,6 +60,73 @@ def read_file_dir(file_dir, limit=999999999):
             break
     return lines
 
+def get_module_code_file_mapping():
+    '''
+    This function returns a dictionary where the key is the module name and the
+    value is the absolute file path of this module.
+    '''
+    def get_all_files_with_suffix(path, suffix):
+        '''
+        This function recurseively searches for all the files with certain
+        suffix under certain path and return the absolute file names in a list.
+        '''
+        matches = []
+        for root, dirnames, filenames in os.walk(path):
+            for filename in fnmatch.filter(filenames, '*.%s' % suffix):
+                matches.append(os.path.join(root, filename))
+        return matches
+
+    def get_module_file_mapping(files, patterns):
+        module_dict = {}
+        for file in files:
+            with open(file, 'rb') as readfile:
+                for line in readfile.readlines():
+                    # in Python 3, readlines() return a bytes-like object
+                    if sys.version >= '3': line = line.decode()
+                    for pattern in patterns:
+                        m = re.search(pattern, line)
+                        if m:
+                            module_name = m.group(1).strip()
+                            file_name = file
+                            fqn = get_fqn(module_name, file_name)
+                            if (fqn):
+                                module_dict[fqn] = file_name
+        return module_dict
+
+    def get_fqn(module_name, file_name):
+        sep = os.path.sep
+        file_name_split = file_name.strip().split(sep)
+
+        # TODO there are also other top-level package (e.g. org)
+        # need to figure out a more general way to find the modules
+        try:
+            start_index = file_name_split.index('com')
+        except ValueError:
+            return None
+        else:
+            if file_name_split[-1].endswith('.scala'):
+                file_name_split.pop()
+            elif file_name_split[-1].endswith('.py'):
+                file_name_split[-1] = file_name_split[-1][:-3]
+            fqn_split = file_name_split[start_index:]
+            fqn_split.append(module_name)
+            fqn = '.'.join(fqn_split)
+            return fqn
+
+    code_dir = os.getcwd() + '/src'
+    scala_files = get_all_files_with_suffix(code_dir, 'scala')
+    python_files = get_all_files_with_suffix(code_dir, 'py')
+
+    files = scala_files + python_files
+    patterns = [
+        'object (.+?) extends( )+SmvModule\(',
+        'object (.+?) extends( )+SmvCsvFile\(',
+        'class (.+?)\(SmvPyModule',
+        'class (.+?)\(SmvPyCsvFile',
+    ]
+    module_dict = get_module_file_mapping(files, patterns)
+    return module_dict
+
 # ---------- API Definition ---------- #
 
 @app.route("/run_modules", methods = ['GET'])
@@ -86,7 +155,12 @@ def get_module_code():
     Take FQN as parameter and return the module code
     '''
     module_name = request.args.get('name', 'NA')
-    res = smvPy.get_module_code(module_name)
+    global module_file_map
+    if not module_file_map:
+        module_file_map = get_module_code_file_mapping()
+    file_name = module_file_map[module_name]
+    with open(file_name, 'rb') as f:
+        res = f.readlines()
     return jsonify(res=res)
 
 @app.route("/get_sample_output", methods = ['GET'])
@@ -121,6 +195,7 @@ if __name__ == "__main__":
 
     # init Smv context
     smvPy.init([])
+    module_file_map = {}
 
     # start server
     app.run(host='0.0.0.0')
