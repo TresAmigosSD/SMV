@@ -809,14 +809,6 @@ Column.smvMonth70 = lambda c: Column(colhelper(c).smvMonth70())
 
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
 
-def __smvNullSub(c, sub):
-    if (isinstance(sub, Column)):
-        jsub = _jcol(sub)
-    else:
-        jsub = sub
-    return Column(colhelper(c).smvNullSub(jsub))
-
-Column.smvNullSub = __smvNullSub
 
 class PythonDataSetRepository(object):
     def __init__(self, smvPy):
