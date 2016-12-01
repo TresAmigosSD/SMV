@@ -18,9 +18,9 @@ We've patched Spark with the ability to hot deploy code.  This works well in con
 ## Configuration
 
 1. Configure the `smv.class_server.class_dir` property in $HOME/.smv/smv-user-conf.props or conf/smv-user-conf-props in the current SMV project.  By default this points `./target/classes` which is the target directory where mvn compiles the class files.  Change this to `./target/scala-2.10/classes` for use with sbt with `~compile`, and scala-2.10.
-2. Run `spark-shell` with the following commandline from the current SMV project directory
+2. Run `spark-shell` with the following command line from the current SMV project directory
 ```shell
-spark-shell --master <MASTER> --conf 'spark.executor.userClassPathFirst=true' --conf 'spark.repl.dyncl.classdir=<CLASS_DIR>' --jars <FAT_JAR_PATH>
+spark-shell -- --master <MASTER> --conf 'spark.executor.userClassPathFirst=true' --conf 'spark.repl.dyncl.classdir=<CLASS_DIR>' --jars <FAT_JAR_PATH>
 ```
 where the <CLASS_DIR> is the same value as `smv.class_server.class_dir`, such as `./target/scala-2.10/classes' and the <FAT_JAR_PATH> is the path to the assembled jar containing the SMV module.
 

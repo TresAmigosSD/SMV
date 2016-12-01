@@ -1,35 +1,23 @@
 #!/bin/bash
 #
 # Run one or more SMV modules / stages / app.
-# USAGE: smv-run [-h] spark_args smv_app_args
+# USAGE: smv-run [-h] smv_app_args -- spark_args
 #
-# user can specify spark args (such as --master, --class or --jar to override the fat jar selection)
-# the rest of the arguments are the standard SmvApp arguments.
+# user can specify optional spark args (such as --master, --executor-memory, etc)
 
 set -e
-if [ "$1" = "-h" ]; then
-  echo "USAGE: `basename $0` [-h] [spark_args] <smv_app_args>"
-  echo "spark_args:"
-  echo "    [--master master]"
-  echo "    [--executor-memory exec-mem]"
-  echo "    [--driver-memory driver-mem]"
-  echo "    [--class class]"
-  echo "    [--jar fat_jar]"
-  echo "smv_app_args:"
-  echo "    [--purge-old-output]"
-  echo "    [--data-dir dir] ..."
-  echo "    <-m mod1 [mod2 ...] | -s stage1 [stage2 ...] | --run-app> ..."
-  exit 0
-fi
-
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 source $SMV_TOOLS/_env.sh
 
-echo "START RUN =============================="
+if [ "$1" = "-h" ]; then
+  show_run_usage_message `basename $0`
+  exit 0
+fi
 
+echo "START RUN =============================="
 date
 
 export SPARK_PRINT_LAUNCH_COMMAND=1
-spark-submit --executor-memory ${EXECUTOR_MEMORY} --driver-memory ${DRIVER_MEMORY} --master ${MASTER} --class ${SMV_APP_CLASS} "$APP_JAR" ${ARGS[@]}
-date
+spark-submit --class ${SMV_APP_CLASS} "${SPARK_ARGS[@]}" "${APP_JAR}" "${SMV_ARGS[@]}"
 
+date

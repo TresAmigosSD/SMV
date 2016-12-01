@@ -2,7 +2,7 @@
 
 ### Synopsis
 ```shell
-$ _SMV_HOME_/tools/smv-shell [standard spark-shell-options] [smv-options]
+$ _SMV_HOME_/tools/smv-shell [smv-options] -- [standard spark-shell-options]
 ```
 
 **Note:**  The above command should be run from the project top level directory.

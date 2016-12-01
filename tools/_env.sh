@@ -2,45 +2,28 @@
 # setup common environment used by smv-run and smv-shell scripts
 #
 # The following vars will be set once this script is sourced:
-# ARGS : command line args (other than the spark args which are extracted separately)
+# SMV_ARGS : command line args (other than the spark args which are extracted separately)
+# SPARK_ARGS : spark specific command line args (everything after "--" on command line)
 # USER_CMD : name of the script that was launched (caller of this script)
-# MASTER : the user specified --master spark arg (or a valid default)
 # SMV_APP_CLASS : user specified --class name to use for spark-submit or SmvApp as default
 # APP_JAR : user specified --jar option or the discovered application fat jar.
 #
 
-declare -a ARGS
-ARGS=($@)
-USER_CMD=`basename $0`
-
-# extract an argument of the form "--arg arg_val" from the command line arguments
-# Return the arg_val if found (and remove the flag and value from ARGS), else return
-# the passed in default value.
-# NOTE: assumes there is an array named ARGS that is set to the command line arguments.
-# USAGE: extract_arg dest_var_name argument_flag default_value
-# Example: extract_arg MASTER --master localhost
-# the above will look for "--master value" in args and if found, set MASTER to value,
-# otherwise, set MASTER to default value "localhost"
-function extract_arg()
+# This function is used to split the command line arguments into SMV / Spark
+# arguments.  Everything before "--" are considered SMV arguments and everything
+# after "--" are considered spark arguments.
+function split_smv_spark_args()
 {
-    local arg_var="$1"
-    local arg_name="$2"
-    local arg_default="$3"
-
-    local arg_val=""
-    for i in ${!ARGS[@]}; do
-      if [ "${ARGS[i]}" = "$arg_name" ]; then
-        arg_val="${ARGS[i+1]}"
-        unset "ARGS[i]" "ARGS[i+1]"
-        break
-      fi
+    while [ $# -ne 0 ]; do
+        if [ "$1" == "--" ]; then
+            shift
+            break
+        fi
+        SMV_ARGS=("${SMV_ARGS[@]}" "$1")
+        shift
     done
 
-    if [ -z "$arg_val" ]; then
-      arg_val="$arg_default"
-    fi
-
-    eval $arg_var="'$arg_val'"
+    SPARK_ARGS=("$@")
 }
 
 function find_fat_jar()
@@ -60,19 +43,6 @@ function find_fat_jar()
   fi
 }
 
-function extract_spark_args()
-{
-    extract_arg EXECUTOR_MEMORY --executor-memory "6G"
-    extract_arg DRIVER_MEMORY   --driver-memory   "2G"
-    extract_arg MASTER --master ${SMV_MASTER:-'local[*]'}
-    extract_arg SMV_APP_CLASS --class "org.tresamigos.smv.SmvApp"
-    extract_arg APP_JAR --jar ""
-
-    if [ -z "$APP_JAR" ]; then
-        find_fat_jar
-    fi
-}
-
 function set_spark_home() {
     if [ -z "$SPARK_HOME" ]; then
         sparkSubmit=$(type -p spark-submit)
@@ -84,6 +54,23 @@ function set_spark_home() {
     fi
 }
 
+function show_run_usage_message() {
+  echo "USAGE: $1 [-h] <smv_app_args> [-- spark_args]"
+  echo "smv_app_args:"
+  echo "    [--purge-old-output]"
+  echo "    [--data-dir dir] ..."
+  echo "    <-m mod1 [mod2 ...] | -s stage1 [stage2 ...] | --run-app> ..."
+  echo "    ..."
+  echo "spark_args:"
+  echo "    [--master master]"
+  echo "    [--driver-memory=driver-mem]"
+  echo "    ..."
+}
+
 
 # --- MAIN ---
-extract_spark_args
+declare -a SMV_ARGS SPARK_ARGS
+USER_CMD=`basename $0`
+SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
+find_fat_jar
+split_smv_spark_args "$@"

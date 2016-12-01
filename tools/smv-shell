@@ -11,4 +11,4 @@ else
     echo
 fi
 
-spark-shell -deprecation --executor-memory ${EXECUTOR_MEMORY} --driver-memory ${DRIVER_MEMORY} --master ${MASTER} --jars "$APP_JAR" -i "${SMV_TOOLS}/conf/smv_shell_init.scala" $APP_SHELL_INIT
+spark-shell -deprecation "${SPARK_ARGS[@]}" --jars "$APP_JAR" -i "${SMV_TOOLS}/conf/smv_shell_init.scala" $APP_SHELL_INIT

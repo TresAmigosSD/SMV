@@ -5,7 +5,7 @@ a convenient script `smv-run` is provided to make it easy to run an application 
 
 ### Synopsis
 ```shell
-$ _SMV_HOME_/tools/smv-run [standard spark-submit-options] [smv-options] [what-to-run]
+$ _SMV_HOME_/tools/smv-run [smv-options] [what-to-run] -- [standard spark-submit-options]
 ```
 
 **Note:**  The above command should be run from the project top level directory.
@@ -22,27 +22,6 @@ $ _SMV_HOME_/tools/smv-run [standard spark-submit-options] [smv-options] [what-t
 <th>Option</th>
 <th>Default</th>
 <th>Description</th>
-</tr>
-
-<tr>
-<td>--master</td>
-<td>local[*]</td>
-<td>Specify the spark master to use (standard spark option)</td>
-</tr>
-
-<tr>
-<td>--class</td>
-<td>org.tresamigos.smv.SmvApp</td>
-<td>Specify the application entry point.
-The default should suffice unless the user wants to create some special initialization code and implement their own object main()</td>
-</tr>
-
-<tr>
-<td>--jar</td>
-<td>target/*jar-with-dependencies.jar</td>
-<td>Specify the application fat jar.
-This is the jar built using the package command using the supplied `pom.xml` example.
-The default is to use the latest (by time, not version) that is found in the target directory
 </tr>
 
 <tr>
@@ -206,4 +185,9 @@ $ _SMV_HOME_/tools/smv-run --purge-old-output
 Publish the output modules in stage "s1" as version "xyz".  The modules will be output to `/tmp/publish/xyz` dir.
 ```shell
 $ _SMV_HOME_/tools/smv-run --publish xyz --publish-dir /tmp/publish -s s1
+```
+
+Provide spark specific arguments
+```shell
+$ _SMV_HOME_/tools/smv-run -m com.mycom.myproj.stage1.M1 -- --executor-memory=2G --driver-memory=1G --master yarn-client
 ```
