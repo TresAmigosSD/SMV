@@ -165,7 +165,7 @@ class SmvPy(object):
         java_import(self._jvm, "org.tresamigos.smv.dqm.*")
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
 
-        self.j_smvPyClient = self.create_smv_pyclient(arglist)
+        self.create_smv_pyclient(arglist)
 
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
@@ -269,9 +269,13 @@ class SmvPy(object):
         return module_dict
 
     def create_smv_pyclient(self, arglist):
+        '''
+        "self.j_smvPyClient" is not exposed to users, but user can call this
+        function to change its value.
+        '''
         # convert python arglist to java String array
         java_args =  smv_copy_array(self.sc, *arglist)
-        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
+        self.j_smvPyClient = self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
 
     def get_module_code(self, module_name):
         file_name = self.module_file_map[module_name]
@@ -286,6 +290,12 @@ class SmvPy(object):
         with open(file_path, 'rb') as f:
             lines = f.read()
         return lines
+
+    def moduleNames(self):
+        return self.j_smvPyClient.moduleNames(self.repo)
+
+    def isPublish(self):
+        return self.j_smvPyClient.publishVersion().isDefined()
 
     def runModule(self, fqn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)

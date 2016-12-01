@@ -68,11 +68,11 @@ def run_modules():
     module_name = request.args.get('name', 'NA')
     # create SMV app instance
     arglist = ['-m'] + module_name.strip().split()
-    smv_app = SMV_CTX.create_smv_pyclient(arglist)
+    SMV_CTX.create_smv_pyclient(arglist)
     # run modules
-    modules = smv_app.moduleNames(SMV_CTX.repo)
+    modules = SMV_CTX.moduleNames()
     print_module_names(modules)
-    publish = smv_app.publishVersion().isDefined()
+    publish = SMV_CTX.isPublish()
     for name in modules:
         if publish:
             SMV_CTX.publishModule(name)
