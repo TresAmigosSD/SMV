@@ -216,12 +216,6 @@ class SmvPy(object):
             lines = f.read()
         return lines
 
-    def moduleNames(self):
-        return self.j_smvPyClient.moduleNames(self.repo)
-
-    def isPublish(self):
-        return self.j_smvPyClient.publishVersion().isDefined()
-
     def runModule(self, fqn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
