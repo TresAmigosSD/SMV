@@ -95,23 +95,21 @@ def get_module_code_file_mapping():
 
     def get_fqn(module_name, file_name):
         sep = os.path.sep
-        file_name_split = file_name.strip().split(sep)
-
-        # TODO there are also other top-level package (e.g. org)
-        # need to figure out a more general way to find the modules
-        try:
-            start_index = file_name_split.index('com')
-        except ValueError:
-            return None
-        else:
-            if file_name_split[-1].endswith('.scala'):
-                file_name_split.pop()
-            elif file_name_split[-1].endswith('.py'):
-                file_name_split[-1] = file_name_split[-1][:-3]
-            fqn_split = file_name_split[start_index:]
-            fqn_split.append(module_name)
-            fqn = '.'.join(fqn_split)
-            return fqn
+        patterns = [
+            '(.+?)%s(.+?)$' % sep.join(['src', 'main', 'scala', '']),
+            '(.+?)%s(.+?)$' % sep.join(['src', 'main', 'python', '']),
+        ]
+        for pattern in patterns:
+            m = re.search(pattern, file_name)
+            if m:
+                fqn_split = m.group(2).strip().split(sep)
+                if fqn_split[-1].endswith('.scala'):
+                    fqn_split.pop()
+                elif fqn_split[-1].endswith('.py'):
+                    fqn_split[-1] = fqn_split[-1][:-3]
+                fqn_split.append(module_name)
+                fqn = '.'.join(fqn_split)
+                return fqn
 
     code_dir = os.getcwd() + '/src'
     scala_files = get_all_files_with_suffix(code_dir, 'scala')
