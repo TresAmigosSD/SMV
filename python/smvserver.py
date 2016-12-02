@@ -24,11 +24,13 @@ app = Flask(__name__)
 
 # ---------- Helper Functions ---------- #
 
+# TODO: why are we compiling the files?
 def compile_python_files(path):
     r = compileall.compile_dir(path, quiet=1)
     if not r:
         exit(-1)
 
+# TODO: this is not needed on the restful server.
 def print_module_names(mods):
     print("----------------------------------------")
     print("will run the following modules:")
@@ -38,16 +40,19 @@ def print_module_names(mods):
 
 def get_output_dir():
     output_dir = smvPy.outputDir()
-    if(output_dir.startswith('file://')):
+    if (output_dir.startswith('file://')):
         output_dir = output_dir[7:]
     return output_dir
 
+# TODO: need to document this function.  Explain why we want the latest and give an example
+# of how there would multiple data file dirs with same name/suffix.
 def get_latest_file_dir(output_dir, module_name, suffix):
     latest_file_dir = max([f for f in os.listdir(output_dir) \
         if f.startswith(module_name) and f.endswith(suffix)], \
         key=lambda f: os.path.getctime(os.path.join(output_dir, f)))
     return os.path.join(output_dir, latest_file_dir)
 
+# TODO: explain what a file dir is and what it consists of.
 def read_file_dir(file_dir, limit=999999999):
     lines = []
     for file in glob.glob('%s/part-*' % file_dir):
@@ -84,6 +89,7 @@ def get_module_code_file_mapping():
                     # in Python 3, readlines() return a bytes-like object
                     if sys.version >= '3': line = line.decode()
                     for pattern in patterns:
+                        # TODO: should probably compile the set of patterns once at beginning of this function.   This is a very expensive step and should only be done once and not multiple times per line per file.
                         m = re.search(pattern, line)
                         if m:
                             module_name = m.group(1).strip()
@@ -93,6 +99,7 @@ def get_module_code_file_mapping():
                                 module_dict[fqn] = file_name
         return module_dict
 
+# TODO: document this and how it works (not very obvious from code)
     def get_fqn(module_name, file_name):
         sep = os.path.sep
         file_name_split = file_name.strip().split(sep)
@@ -129,11 +136,15 @@ def get_module_code_file_mapping():
 
 # ---------- API Definition ---------- #
 
+# TODO: each entry point should have a comment with a description of the required parameters.
+# TODO: need to handle errors better.  What if the "name" is not specified, or module does not exit, etc.
+
 @app.route("/run_modules", methods = ['GET'])
 def run_modules():
     '''
     Take FQNs as parameter and run the modules
     '''
+    # TODO: use single instance of smvApp as discussed on github
     module_name = request.args.get('name', 'NA')
     # create SMV app instance
     arglist = ['-m'] + module_name.strip().split()
@@ -189,6 +200,8 @@ def get_module_schema():
 def get_graph_json():
     res = smvPy.get_graph_json()
     return jsonify(res=res)
+
+
 
 if __name__ == "__main__":
     compile_python_files('src/main/python')
