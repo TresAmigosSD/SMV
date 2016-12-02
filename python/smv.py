@@ -164,7 +164,7 @@ class SmvPy(object):
         java_import(self._jvm, "org.tresamigos.smv.dqm.*")
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
 
-        self.create_smv_pyclient(arglist)
+        self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
@@ -201,12 +201,11 @@ class SmvPy(object):
 
     def create_smv_pyclient(self, arglist):
         '''
-        "self.j_smvPyClient" is not exposed to users, but user can call this
-        function to change its value.
+        return a smvPyClient instance
         '''
         # convert python arglist to java String array
         java_args =  smv_copy_array(self.sc, *arglist)
-        self.j_smvPyClient = self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
+        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
 
     def get_graph_json(self):
         self.j_smvApp.generateAllGraphJSON()
