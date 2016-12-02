@@ -30,30 +30,32 @@ def compile_python_files(path):
     if not r:
         exit(-1)
 
-# TODO: this is not needed on the restful server.
-def print_module_names(mods):
-    print("----------------------------------------")
-    print("will run the following modules:")
-    for name in mods:
-        print("   " + name)
-    print("----------------------------------------")
-
 def get_output_dir():
     output_dir = smvPy.outputDir()
     if (output_dir.startswith('file://')):
         output_dir = output_dir[7:]
     return output_dir
 
-# TODO: need to document this function.  Explain why we want the latest and give an example
-# of how there would multiple data file dirs with same name/suffix.
 def get_latest_file_dir(output_dir, module_name, suffix):
+    '''
+    There could be multiple output snapshots for a module in the output dir, like:
+        com.mycompany.myproj.stage1.employment.PythonEmploymentByState_13e82a9b.csv
+        com.mycompany.myproj.stage1.employment.PythonEmploymentByState_51d96a9b.csv
+        ...
+    This function is to find the latest output version for certain module.
+    '''
     latest_file_dir = max([f for f in os.listdir(output_dir) \
         if f.startswith(module_name) and f.endswith(suffix)], \
         key=lambda f: os.path.getctime(os.path.join(output_dir, f)))
     return os.path.join(output_dir, latest_file_dir)
 
-# TODO: explain what a file dir is and what it consists of.
 def read_file_dir(file_dir, limit=999999999):
+    '''
+    "file_dir" is the data/schema path of SMV output. The SMV output is split into
+    multiple parts and stored under "file_dir" like part-00001, part-00002...
+    This function is to read lines of all the files and return them as a list.
+    User can use the "limit" parameter to return the first n lines.
+    '''
     lines = []
     for file in glob.glob('%s/part-*' % file_dir):
         with open(file, 'rb') as readfile:
@@ -99,8 +101,15 @@ def get_module_code_file_mapping():
                                 module_dict[fqn] = file_name
         return module_dict
 
-# TODO: document this and how it works (not very obvious from code)
     def get_fqn(module_name, file_name):
+        '''
+        "module_name" is like "EmploymentByState".
+        "file_name" is the absolute file path containing this module, like
+            "/xxx/xxx/MyApp/src/main/scala/com/mycompany/myproj/stage1/EmploymentByState.scala".
+        This function will return the fqn of the module, like
+            "com.mycompany.myproj.stage1.EmploymentByState".
+        It will work for both scala and python modules.
+        '''
         sep = os.path.sep
         patterns = [
             '(.+?)%s(.+?)$' % sep.join(['src', 'main', 'scala', '']),
@@ -147,7 +156,6 @@ def run_modules():
     module_names = request.args.get('name', '')
     if module_names:
         module_names = module_names.strip().split()
-        print_module_names(module_names)
         for fqn in module_names:
             smvPy.runModule(fqn)
     return ''
