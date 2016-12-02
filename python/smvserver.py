@@ -134,19 +134,12 @@ def run_modules():
     '''
     Take FQNs as parameter and run the modules
     '''
-    module_name = request.args.get('name', 'NA')
-    # create SMV app instance
-    arglist = ['-m'] + module_name.strip().split()
-    smvPy.create_smv_pyclient(arglist)
-    # run modules
-    modules = smvPy.moduleNames()
-    print_module_names(modules)
-    publish = smvPy.isPublish()
-    for name in modules:
-        if publish:
-            smvPy.publishModule(name)
-        else:
-            smvPy.runModule(name)
+    module_names = request.args.get('name', '')
+    if module_names:
+        module_names = module_names.strip().split()
+        print_module_names(module_names)
+        for fqn in module_names:
+            smvPy.runModule(fqn)
     return ''
 
 @app.route("/get_module_code", methods = ['GET'])
