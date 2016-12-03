@@ -20,6 +20,8 @@ the following features:
 Please refer to [User Guide](docs/user/0_user_toc.md) and
 [API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.package) for details.
 
+:cherries::cherries: Please see [***Important Announcment***](docs/announcement.md) for latest update which may impact users' projects or scripts.
+
 **Note:** The sections below were extracted from the User Guide and it should be consulted for more detailed instructions.
 
 # Use SMV with Docker
