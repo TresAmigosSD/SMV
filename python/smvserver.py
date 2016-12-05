@@ -138,8 +138,6 @@ def get_module_code_file_mapping():
 
 # ---------- API Definition ---------- #
 
-# TODO: need to handle errors better.  What if the "name" is not specified, or module does not exit, etc.
-
 @app.route("/run_module", methods = ['GET'])
 def run_module():
     '''
@@ -147,9 +145,13 @@ def run_module():
     function: run the module
     '''
     module_name = request.args.get('name', '')
-    if module_name:
+    if not module_name:
+        raise ValueError('No module name is provided!')
+    try:
         smvPy.runModule(module_name.strip())
-    return ''
+        return ''
+    except:
+        raise ValueError('Error running the module. Please check whether the module name is valid!')
 
 @app.route("/get_module_code", methods = ['GET'])
 def get_module_code():
@@ -157,14 +159,19 @@ def get_module_code():
     params: name = 'xxx' (fqn)
     function: return the module's code
     '''
-    module_name = request.args.get('name', 'NA')
-    global module_file_map
-    if not module_file_map:
-        module_file_map = get_module_code_file_mapping()
-    file_name = module_file_map[module_name]
-    with open(file_name, 'rb') as f:
-        res = f.readlines()
-    return jsonify(res=res)
+    module_name = request.args.get('name', '')
+    if not module_name:
+        raise ValueError('No module name is provided!')
+    try:
+        global module_file_map
+        if not module_file_map:
+            module_file_map = get_module_code_file_mapping()
+        file_name = module_file_map[module_name]
+        with open(file_name, 'rb') as f:
+            res = f.readlines()
+        return jsonify(res=res)
+    except:
+        raise ValueError('Error returning the code. Please check whether the module name is valid!')
 
 @app.route("/get_sample_output", methods = ['GET'])
 def get_sample_output():
@@ -172,11 +179,16 @@ def get_sample_output():
     params: name = 'xxx' (fqn)
     function: return the module's sample output
     '''
-    module_name = request.args.get('name', 'NA')
-    output_dir = get_output_dir()
-    latest_dir = get_latest_file_dir(output_dir, module_name, '.csv')
-    res = read_file_dir(latest_dir, limit=20)
-    return jsonify(res=res)
+    module_name = request.args.get('name', '')
+    if not module_name:
+        raise ValueError('No module name is provided!')
+    try:
+        output_dir = get_output_dir()
+        latest_dir = get_latest_file_dir(output_dir, module_name, '.csv')
+        res = read_file_dir(latest_dir, limit=20)
+        return jsonify(res=res)
+    except:
+        raise ValueError('Error returning sample output. Please check whether the module name is valid!')
 
 @app.route("/get_module_schema", methods = ['GET'])
 def get_module_schema():
@@ -184,11 +196,16 @@ def get_module_schema():
     params: name = 'xxx' (fqn)
     function: return the module's schema
     '''
-    module_name = request.args.get('name', 'NA')
-    output_dir = get_output_dir()
-    latest_dir = get_latest_file_dir(output_dir, module_name, '.schema')
-    res = read_file_dir(latest_dir)
-    return jsonify(res=res)
+    module_name = request.args.get('name', '')
+    if not module_name:
+        raise ValueError('No module name is provided!')
+    try:
+        output_dir = get_output_dir()
+        latest_dir = get_latest_file_dir(output_dir, module_name, '.schema')
+        res = read_file_dir(latest_dir)
+        return jsonify(res=res)
+    except:
+        raise ValueError('Error returning module schema. Please check whether the module name is valid!')
 
 @app.route("/get_graph_json", methods = ['GET'])
 def get_graph_json():
