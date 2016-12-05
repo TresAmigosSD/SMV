@@ -123,6 +123,10 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
   def inferStageNameFromDsName(dsname: String): Option[String] =
     stageNames.filter(dsname.startsWith).sortBy(_.size).lastOption
 
+  /** Returns the stage version, if any, configured for a published named dataset */
+  def stageVersionFor(dsname: String): Option[String] =
+    inferStageNameFromDsName(dsname).flatMap(findStage(_).version)
+
   def inferStageForDataSet(ds: SmvDataSet) : Option[SmvStage] =
     inferStageNameFromDsName(ds.name) map findStage
 

@@ -177,7 +177,7 @@ abstract class SmvDataSet extends HasName {
     SmvUtil.persist(app.sqlContext, rdd, moduleCsvPath(prefix), app.genEdd)
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
-    SmvUtil.readPersistedFile(app.sqlContext, moduleCsvPath(prefix))
+    Try(SmvUtil.readFile(app.sqlContext, moduleCsvPath(prefix)))
 
   private[smv] def computeRDD: DataFrame = {
     val dsDqm = new DQMValidator(createDsDqm())

@@ -25,17 +25,15 @@ import scala.util.Try
  */
 object SmvUtil {
   /**
-   * Try to read a dataframe from a persisted file path, that is
-   * usually an input data set or the output of an upstream SmvModule.
+   * Read a dataframe from a persisted file path, that is usually an
+   * input data set or the output of an upstream SmvModule.
    *
    * The default format is headerless CSV with '"' as the quote
    * character
    */
-  def readPersistedFile(sqlContext: SQLContext, path: String,
-    attr: CsvAttributes = CsvAttributes.defaultCsv): Try[DataFrame] =
-    Try {
+  def readFile(sqlContext: SQLContext, path: String,
+    attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
       new FileIOHandler(sqlContext, path).csvFileWithSchema(attr)
-    }
 
   /**
    * Save the dataframe content to disk, optionally generate edd.
@@ -64,7 +62,7 @@ object SmvUtil {
     // Use the "cached" file that was just saved rather than cause an action
     // on the input RDD which may cause some expensive computation to re-occur.
     if (generateEdd)
-      readPersistedFile(sqlContext, path).get.edd.persistBesideData(path)
+      readFile(sqlContext, path).edd.persistBesideData(path)
   }
 
   def publish(sqlContext: SQLContext, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {

@@ -24,6 +24,7 @@ import org.apache.spark.{SparkContext, SparkConf}
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
+import scala.util.Try
 
 /**
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
@@ -371,8 +372,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
             }
             else if (repo.isLink(modfqn)) {
               val targetName = repo.getLinkTargetName(modfqn)
-              stages.inferStageNameFromDsName(modfqn) flatMap { stageVersion =>
-                SmvUtil.readPersistedFile(sqlContext, publishPath(targetName, stageVersion), null).toOption
+              stages.stageVersionFor(targetName) map { stageVersion =>
+                SmvUtil.readFile(sqlContext, publishPath(targetName, stageVersion), null)
               } getOrElse runModule(targetName, repos:_*)
             }
             else {
@@ -422,12 +423,12 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       r
     } else {
       val path = moduleCsvPath(modfqn, hashval)
-      SmvUtil.readPersistedFile(sqlContext, path).recoverWith { case ex =>
+      Try(SmvUtil.readFile(sqlContext, path)).recoverWith { case ex =>
         val r = dqm.attachTasks(df)
         SmvUtil.persist(sqlContext, r, path, genEdd)
         // already had action from persist
         validator.validate(r, true, moduleValidPath(modfqn, hashval))
-        SmvUtil.readPersistedFile(sqlContext, path)
+        Try(SmvUtil.readFile(sqlContext, path))
       }.get
     }
   }

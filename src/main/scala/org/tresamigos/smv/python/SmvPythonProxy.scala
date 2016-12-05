@@ -146,7 +146,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   /** Try to read a dataframe from persisted files */
   def tryReadPersistedFile(path: String): Try[DataFrame] =
-    SmvUtil.readPersistedFile(j_smvApp.sqlContext, path)
+    Try(SmvUtil.readFile(j_smvApp.sqlContext, path))
 
   /** Saves the dataframe to disk */
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
