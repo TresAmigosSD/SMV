@@ -138,13 +138,13 @@ def get_module_code_file_mapping():
 
 # ---------- API Definition ---------- #
 
-# TODO: each entry point should have a comment with a description of the required parameters.
 # TODO: need to handle errors better.  What if the "name" is not specified, or module does not exit, etc.
 
 @app.route("/run_module", methods = ['GET'])
 def run_module():
     '''
-    Take FQN as parameter and run the module
+    params: name = 'xxx' (fqn)
+    function: run the module
     '''
     module_name = request.args.get('name', '')
     if module_name:
@@ -154,7 +154,8 @@ def run_module():
 @app.route("/get_module_code", methods = ['GET'])
 def get_module_code():
     '''
-    Take FQN as parameter and return the module code
+    params: name = 'xxx' (fqn)
+    function: return the module's code
     '''
     module_name = request.args.get('name', 'NA')
     global module_file_map
@@ -168,7 +169,8 @@ def get_module_code():
 @app.route("/get_sample_output", methods = ['GET'])
 def get_sample_output():
     '''
-    Take FQN as parameter and return the sample output
+    params: name = 'xxx' (fqn)
+    function: return the module's sample output
     '''
     module_name = request.args.get('name', 'NA')
     output_dir = get_output_dir()
@@ -179,7 +181,8 @@ def get_sample_output():
 @app.route("/get_module_schema", methods = ['GET'])
 def get_module_schema():
     '''
-    Take FQN as parameter and return the module schema
+    params: name = 'xxx' (fqn)
+    function: return the module's schema
     '''
     module_name = request.args.get('name', 'NA')
     output_dir = get_output_dir()
@@ -189,6 +192,10 @@ def get_module_schema():
 
 @app.route("/get_graph_json", methods = ['GET'])
 def get_graph_json():
+    '''
+    params: none
+    function: return the json file of the entire dependency graph
+    '''
     res = smvPy.get_graph_json()
     return jsonify(res=res)
 
