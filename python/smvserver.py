@@ -24,12 +24,6 @@ app = Flask(__name__)
 
 # ---------- Helper Functions ---------- #
 
-# TODO: why are we compiling the files?
-def compile_python_files(path):
-    r = compileall.compile_dir(path, quiet=1)
-    if not r:
-        exit(-1)
-
 def get_output_dir():
     output_dir = smvPy.outputDir()
     if (output_dir.startswith('file://')):
@@ -204,8 +198,6 @@ def get_graph_json():
 
 
 if __name__ == "__main__":
-    compile_python_files('src/main/python')
-
     # init Smv context
     smvPy.init([])
     module_file_map = {}
