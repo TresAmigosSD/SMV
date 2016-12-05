@@ -79,14 +79,15 @@ def get_module_code_file_mapping():
 
     def get_module_file_mapping(files, patterns):
         module_dict = {}
+        # compile the patterns
+        patterns = [re.compile(pattern) for pattern in patterns]
         for file in files:
             with open(file, 'rb') as readfile:
                 for line in readfile.readlines():
                     # in Python 3, readlines() return a bytes-like object
                     if sys.version >= '3': line = line.decode()
                     for pattern in patterns:
-                        # TODO: should probably compile the set of patterns once at beginning of this function.   This is a very expensive step and should only be done once and not multiple times per line per file.
-                        m = re.search(pattern, line)
+                        m = pattern.search(line)
                         if m:
                             module_name = m.group(1).strip()
                             file_name = file
