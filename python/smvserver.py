@@ -140,18 +140,14 @@ def get_module_code_file_mapping():
 # TODO: each entry point should have a comment with a description of the required parameters.
 # TODO: need to handle errors better.  What if the "name" is not specified, or module does not exit, etc.
 
-# TODO: entrpy point should be /run_module (singular) and only accept a single module name (note the current mix of plurality of module_names vs. name).  The rest of the code is acting on a single module so we will be consistent here and only run one module at a time.
-# 
-@app.route("/run_modules", methods = ['GET'])
-def run_modules():
+@app.route("/run_module", methods = ['GET'])
+def run_module():
     '''
-    Take FQNs as parameter and run the modules
+    Take FQN as parameter and run the module
     '''
-    module_names = request.args.get('name', '')
-    if module_names:
-        module_names = module_names.strip().split()
-        for fqn in module_names:
-            smvPy.runModule(fqn)
+    module_name = request.args.get('name', '')
+    if module_name:
+        smvPy.runModule(module_name.strip())
     return ''
 
 @app.route("/get_module_code", methods = ['GET'])
