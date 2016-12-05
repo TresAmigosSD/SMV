@@ -129,6 +129,7 @@ package object shell {
    * @return result DataFrame
    **/
   def ddf(fqn: String) = ShellCmd.ddf(fqn)
+  def ddf(ds: SmvDataSet) = ShellCmd.ddf(ds.name)
 
   /**
    * Try best to discover Schema from raw Csv file

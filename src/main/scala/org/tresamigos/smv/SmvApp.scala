@@ -169,6 +169,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     if (popRdd != dsName)
       throw new IllegalStateException(s"resolveStack corrupted.  Got ${popRdd}, expected ${dsName}")
 
+    dataframes = dataframes + (dsName -> resRdd)
     resRdd
   }
 
@@ -313,7 +314,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     deleteOutputModules()
 
     smvConfig.modulesToRun().foreach { module =>
-      val modResult = resolveRDD(module)
+      val modResult = runModule(module.name)
 
       // if module was ephemeral, then it was not saved during graph execution and we need
       // to persist it here explicitly.

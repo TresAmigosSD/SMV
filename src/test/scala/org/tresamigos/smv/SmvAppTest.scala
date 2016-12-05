@@ -50,7 +50,7 @@ class SmvAppTest extends SmvTestUtil {
     resetTestcaseTempDir()
 
     // val res = app.runModule(C.name)
-    val res = app.resolveRDD(C)
+    val res = app.runModule(C.name)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
 
     // even though both B and C depended on A, A should have only run once!
@@ -58,7 +58,7 @@ class SmvAppTest extends SmvTestUtil {
 
     //Resolve the same module, it should read the persisted file and not run the module again
     // val res2 = app.runModule(C.name)
-    val res2 = app.resolveRDD(C)
+    val res2 = app.runModule(C.name)
     assertSrddDataEqual(res2, "1,2,3;2,3,4;3,4,5")
     assert(A.moduleRunCount === 1)
   }

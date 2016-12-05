@@ -9,4 +9,4 @@ class EmploymentByStateLink(SmvPyModuleLink):
 class EmploymentByStateLink2(SmvPyModuleLink):
     """Example: linking to an external dataset"""
     def target(self):
-        return SmvPyExtDataSet("com.my.stage1.EmploymentByState")
+        return SmvPyExtDataSet("_PROJ_CLASS_.stage1.EmploymentByState")

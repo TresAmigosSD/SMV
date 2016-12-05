@@ -24,7 +24,7 @@ cd ${APP_NAME}
 $MVN clean package
 
 echo "--------- RUN SAMPLE APP -------------"
-../../../tools/smv-run --smv-props \
+../../../tools/smv-pyrun --smv-props \
     smv.inputDir="file://$(pwd)/data/input" \
     smv.outputDir="file://$(pwd)/data/output" --run-app \
     -- --master 'local[*]'

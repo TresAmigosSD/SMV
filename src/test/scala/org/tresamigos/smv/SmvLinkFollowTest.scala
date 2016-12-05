@@ -21,7 +21,7 @@ class SmvLinkFollowTest extends SmvTestUtil {
   )++ Seq("-m", "org.tresamigos.smv.smvLinkTestPkg2.T") ++ Seq("--data-dir", testcaseTempDir)
 
   test("Test SmvModuleLink follow link") {
-    val res = app.resolveRDD(smvLinkTestPkg2.T)
+    val res = app.runModule(smvLinkTestPkg2.T.name)
   }
 
   test("Test SmvModuleLink datasetHash follows linked module") {
@@ -47,7 +47,7 @@ class SmvLinkFollowWithVersionTest extends SmvTestUtil {
 
   test("Test SmvModuleLink follow link with version config") {
     intercept[org.apache.hadoop.mapred.InvalidInputException]{
-      val res = app.resolveRDD(smvLinkTestPkg2.T2)
+      val res = app.runModule(smvLinkTestPkg2.T2.name)
     }
   }
 

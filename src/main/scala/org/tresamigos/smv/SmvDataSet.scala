@@ -436,8 +436,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     // TODO turn on dependency check by uncomment the following line after test against projects
     // checkDependency()
 
-    // run(requiresDS().map(r => (r, known(r.name))).toMap)
-    run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
+    run(requiresDS().map(r => (r, known(r.name))).toMap)
+    // run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 
   /** Use Bytecode analysis to figure out dependency and check against
