@@ -15,6 +15,8 @@ function start_server() {
         smv-server
     else
         # if a project is found, start the server directly
+        # ${PROJECT_DIR} is the project path name
+        cd "${PROJECT_DIR}"
         sbt assembly
         smv-server
     fi
