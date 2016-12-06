@@ -7,8 +7,17 @@ rsync -r /home/smv/.m2/* /projects/.m2
 
 function start_server() {
     cd /projects
-    sbt assembly
-    smv-server
+    if [ `ls | wc -l` = 0 ]; then
+        # if no project is mounted, create a sample app and start the server
+        smv-init MyApp com.mycompany.myproj
+        cd MyApp/
+        sbt assembly
+        smv-server
+    else
+        # if a project is found, start the server directly
+        sbt assembly
+        smv-server
+    fi
 }
 
 # if no params supplied, start bash
