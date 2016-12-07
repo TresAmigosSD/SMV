@@ -89,6 +89,9 @@ object SmvPythonHelper {
     (new ArrayList(res._1), res._2)
   }
 
+  def discoverSchema(path: String, nsamples: Int, csvattr: CsvAttributes): Unit =
+    shell.discoverSchema(path, nsamples, csvattr)
+
   /**
    * Update the port of callback client
    */
