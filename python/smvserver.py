@@ -236,4 +236,6 @@ if __name__ == "__main__":
     module_file_map = {}
 
     # start server
-    app.run(host='0.0.0.0')
+    host = os.environ.get('SMV_HOST', '0.0.0.0')
+    port = os.environ.get('SMV_PORT', '5000')
+    app.run(host=host, port=int(port))
