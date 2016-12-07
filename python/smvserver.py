@@ -142,7 +142,7 @@ MODULE_NOT_PROVIDED_ERR = 'ERROR: No module name is provided!'
 MODULE_NOT_FOUND_ERR = 'ERROR: Job failed to run. Please check whether the module name is valid!'
 JOB_SUCCESS = 'SUCCESS: Job finished.'
 
-@app.route("/run_module", methods = ['POST'])
+@app.route("/api/run_module", methods = ['POST'])
 def run_module():
     '''
     body: name = 'xxx' (fqn)
@@ -159,7 +159,7 @@ def run_module():
     except:
         raise ValueError(MODULE_NOT_FOUND_ERR)
 
-@app.route("/get_module_code", methods = ['POST'])
+@app.route("/api/get_module_code", methods = ['POST'])
 def get_module_code():
     '''
     body: name = 'xxx' (fqn)
@@ -181,7 +181,7 @@ def get_module_code():
     except:
         raise ValueError(MODULE_NOT_FOUND_ERR)
 
-@app.route("/get_sample_output", methods = ['POST'])
+@app.route("/api/get_sample_output", methods = ['POST'])
 def get_sample_output():
     '''
     body: name = 'xxx' (fqn)
@@ -200,7 +200,7 @@ def get_sample_output():
     except:
         raise ValueError(MODULE_NOT_FOUND_ERR)
 
-@app.route("/get_module_schema", methods = ['POST'])
+@app.route("/api/get_module_schema", methods = ['POST'])
 def get_module_schema():
     '''
     body: name = 'xxx' (fqn)
@@ -219,7 +219,7 @@ def get_module_schema():
     except:
         raise ValueError(MODULE_NOT_FOUND_ERR)
 
-@app.route("/get_graph_json", methods = ['POST'])
+@app.route("/api/get_graph_json", methods = ['POST'])
 def get_graph_json():
     '''
     body: none
