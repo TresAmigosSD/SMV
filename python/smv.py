@@ -260,6 +260,19 @@ class SmvPy(object):
     def createDF(self, schema, data):
         return DataFrame(self.j_smvPyClient.dfFrom(schema, data), self.sqlContext)
 
+    def __mkCsvAttr(self, delimiter=',', quotechar='""', hasHeader=False):
+        """Factory method for creating instances of Scala case class CsvAttributes"""
+        return self._jvm.org.tresamigos.smv.CsvAttributes(delimiter, quotechar, hasHeader)
+
+    def defaultCsvWithHeader(self):
+        return self.__mkCsvAttr(hasHeader=True)
+
+    def defaultTsv(self):
+        return self.__mkCsvAttr(delimiter='\t')
+
+    def defaultTsvWithHeader(self):
+        return self.__mkCsvAttr(delimier='\t', hasHeader=True)
+
 class SmvPyOutput(object):
     """Marks an SmvPyModule as one of the output of its stage"""
     IsSmvPyOutput = True
@@ -403,13 +416,13 @@ class SmvPyCsvFile(SmvPyDataSet):
         return self.smvPy._jvm.org.tresamigos.smv.CsvAttributes(delimiter, quotechar, hasHeader)
 
     def defaultCsvWithHeader(self):
-        return self.__mkCsvAttr(hasHeader=True)
+        return self.smvPy.defaultCsvWithHeader()
 
     def defaultTsv(self):
-        return self.__mkCsvAttr(delimiter='\t')
+        return self.smvPy.defaultTsv()
 
-    def defaultTsvWitHeader(self):
-        return self.__mkCsvAttr(delimier='\t', hasHeader=True)
+    def defaultTsvWithHeader(self):
+        return self.smvPy.defaultTsvWithHeader()
 
     def csvAttr(self):
         """Specifies the csv file format.  Corresponds to the CsvAttributes case class in Scala.
