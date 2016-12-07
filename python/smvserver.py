@@ -138,30 +138,38 @@ def get_module_code_file_mapping():
 
 # ---------- API Definition ---------- #
 
-@app.route("/run_module", methods = ['GET'])
+MODULE_NOT_PROVIDED_ERR = 'ERROR: No module name is provided!'
+MODULE_NOT_FOUND_ERR = 'ERROR: Job failed to run. Please check whether the module name is valid!'
+JOB_SUCCESS = 'SUCCESS: Job finished.'
+
+@app.route("/run_module", methods = ['POST'])
 def run_module():
     '''
-    params: name = 'xxx' (fqn)
+    body: name = 'xxx' (fqn)
     function: run the module
     '''
-    module_name = request.args.get('name', '')
-    if not module_name:
-        raise ValueError('No module name is provided!')
+    try:
+        module_name = request.form['name']
+    except:
+        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+
     try:
         smvPy.runModule(module_name.strip())
-        return ''
+        return JOB_SUCCESS
     except:
-        raise ValueError('Error running the module. Please check whether the module name is valid!')
+        raise ValueError(MODULE_NOT_FOUND_ERR)
 
-@app.route("/get_module_code", methods = ['GET'])
+@app.route("/get_module_code", methods = ['POST'])
 def get_module_code():
     '''
-    params: name = 'xxx' (fqn)
+    body: name = 'xxx' (fqn)
     function: return the module's code
     '''
-    module_name = request.args.get('name', '')
-    if not module_name:
-        raise ValueError('No module name is provided!')
+    try:
+        module_name = request.form['name']
+    except:
+        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+
     try:
         global module_file_map
         if not module_file_map:
@@ -171,46 +179,50 @@ def get_module_code():
             res = f.readlines()
         return jsonify(res=res)
     except:
-        raise ValueError('Error returning the code. Please check whether the module name is valid!')
+        raise ValueError(MODULE_NOT_FOUND_ERR)
 
-@app.route("/get_sample_output", methods = ['GET'])
+@app.route("/get_sample_output", methods = ['POST'])
 def get_sample_output():
     '''
-    params: name = 'xxx' (fqn)
+    body: name = 'xxx' (fqn)
     function: return the module's sample output
     '''
-    module_name = request.args.get('name', '')
-    if not module_name:
-        raise ValueError('No module name is provided!')
+    try:
+        module_name = request.form['name']
+    except:
+        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+
     try:
         output_dir = get_output_dir()
         latest_dir = get_latest_file_dir(output_dir, module_name, '.csv')
         res = read_file_dir(latest_dir, limit=20)
         return jsonify(res=res)
     except:
-        raise ValueError('Error returning sample output. Please check whether the module name is valid!')
+        raise ValueError(MODULE_NOT_FOUND_ERR)
 
-@app.route("/get_module_schema", methods = ['GET'])
+@app.route("/get_module_schema", methods = ['POST'])
 def get_module_schema():
     '''
-    params: name = 'xxx' (fqn)
+    body: name = 'xxx' (fqn)
     function: return the module's schema
     '''
-    module_name = request.args.get('name', '')
-    if not module_name:
-        raise ValueError('No module name is provided!')
+    try:
+        module_name = request.form['name']
+    except:
+        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+
     try:
         output_dir = get_output_dir()
         latest_dir = get_latest_file_dir(output_dir, module_name, '.schema')
         res = read_file_dir(latest_dir)
         return jsonify(res=res)
     except:
-        raise ValueError('Error returning module schema. Please check whether the module name is valid!')
+        raise ValueError(MODULE_NOT_FOUND_ERR)
 
-@app.route("/get_graph_json", methods = ['GET'])
+@app.route("/get_graph_json", methods = ['POST'])
 def get_graph_json():
     '''
-    params: none
+    body: none
     function: return the json file of the entire dependency graph
     '''
     res = smvPy.get_graph_json()
