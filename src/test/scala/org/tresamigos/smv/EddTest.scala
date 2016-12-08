@@ -288,19 +288,23 @@ a                            1   25.00%           4  100.00%
     val res = df.edd.summary()
 
     assert(res.createReport() === """k                    Non-Null Count         4
+k                    Null Count             0
 k                    Min Length             1
 k                    Max Length             1
 k                    Approx Distinct Count  2
 t                    Non-Null Count         4
+t                    Null Count             0
 t                    Average                2.25
 t                    Standard Deviation     1.8929694486000912
 t                    Min                    1.0
 t                    Max                    5.0
 p                    Non-Null Count         4
+p                    Null Count             0
 p                    Min Length             1
 p                    Max Length             1
 p                    Approx Distinct Count  2
 v                    Non-Null Count         4
+v                    Null Count             0
 v                    Average                1.025
 v                    Standard Deviation     0.9535023160258536
 v                    Min                    0.2
@@ -343,12 +347,14 @@ true                         2   50.00%           4  100.00%
 
     assert(EddResultFunctions(res).createReport() === """Group a:
 t                    Non-Null Count         1
+t                    Null Count             0
 t                    Average                1.0
 t                    Standard Deviation     0.0
 t                    Min                    1.0
 t                    Max                    1.0
 Group z:
 t                    Non-Null Count         3
+t                    Null Count             0
 t                    Average                2.6666666666666665
 t                    Standard Deviation     2.0816659994661326
 t                    Min                    1.0
@@ -360,6 +366,7 @@ t                    Max                    5.0""")
     val res = df2.edd.summary()
 
     assert(res.createReport() === """v                    Non-Null Count         4
+v                    Null Count             0
 v                    Average                65.77225
 v                    Standard Deviation     65.94038595769668
 v                    Min                    5.0
@@ -421,7 +428,7 @@ v                    Null Rate              0.0
 d                    Null Rate              0.0
 b                    Null Rate              0.25""")
   }
-  
+
   test("test Null rate with groupKey ") {
     val res = df.smvGroupBy("k").edd.nullRate()
     assert(res.createReport() === """Group a:

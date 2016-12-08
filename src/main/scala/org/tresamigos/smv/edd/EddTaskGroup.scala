@@ -99,21 +99,22 @@ private[smv] class EddSummary(
   override val taskList = listSeq.flatMap{ l =>
     val s = df(l)
     df.schema(l).dataType match {
-      case _: NumericType => Seq(CntTask(s), AvgTask(s), StdDevTask(s), MinTask(s), MaxTask(s))
+      case _: NumericType => Seq(CntTask(s), NulCntTask(s), AvgTask(s), StdDevTask(s), MinTask(s), MaxTask(s))
       case BooleanType => Seq(edd.BooleanHistogram(s))
       case TimestampType => Seq(
-        edd.TimeMinTask(s),
-        edd.TimeMaxTask(s),
-        edd.YearHistogram(s),
-        edd.MonthHistogram(s),
-        edd.DoWHistogram(s),
-        edd.HourHistogram(s)
+        TimeMinTask(s),
+        TimeMaxTask(s),
+        YearHistogram(s),
+        MonthHistogram(s),
+        DoWHistogram(s),
+        HourHistogram(s)
       )
       case StringType => Seq(
-        edd.CntTask(s),
-        edd.StringMinLenTask(s),
-        edd.StringMaxLenTask(s),
-        edd.StringDistinctCountTask(s)
+        CntTask(s),
+        NulCntTask(s),
+        StringMinLenTask(s),
+        StringMaxLenTask(s),
+        StringDistinctCountTask(s)
       )
     }
   }
