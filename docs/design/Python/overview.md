@@ -14,15 +14,34 @@ The callback feature in the py4j library allows a Python class to implement any 
 
 We define an interface `SmvDataSetRepository` (TODO: may need to come up with a better name, DataSetManager, Handler, Pool, etc) to encapsulate the common operations that can be performed with and upon `SmvDataSet`s.
 
-# What the interface Provides
+# What the Interface Provides
 
-# Naming modules
+Through the interface you can make the following queries:
+
+* `hasDataSet(modfqn)`       : does it contain the named `SmvDataSet`?
+* `isEphemeral(modfqn)`	     : does the result of the `SmvDataSet` need to be persisted?
+* `dependencies(modfqn)`     : what other datasets does the `SmvDataSet` depend on? (returns a csv of names)
+* `datasetHash(modfqn, sup)` : the dataset hash (by default include all its superclasses)
+* `outputModsForStage(stage)`: what are the output modules for a given stage (returns a csv of names)
+
+The interface also defines the following operations:
+
+* `getDqm(modfqn)` : returns the `DQM` policy for the named `SmvDataSet`
+* `getDataFrame(modfqn, dqmValidator, fqn~>dataframe)` : returns the result of running the `SmvDataSet`
+* `rerun(modfqn, dqmValidator, fqn~>dataframe)` : re-run the `SmvDataSet` after code change
+
+# Changes to SmvApp
+
+The original `resolveRDD` method, which takes an `SmvDataSet` and returns a `DataFrame`, is replaced with a `runModule` method, that takes the name of the `SmvDataSet` and a sequence of `SmvDataSetRepository`s and returns the `DataFrame` result from running the named `SmvDataSet` (TODO: this may be refactored so that at the start of the `SmvApp`, all implementing repositories are registered, then the `runModule` method would simply search through the known repositories for one that knows about the named `SmvDataSet`).
+
+Within the `runModule` method, the owning repository is queried for the dependencies of the named `SmvDataSet`, and each dependency is recursively passed to `runModule` before the named `SmvDataSet` is run.
+
+Cross-stage (`SmvModuleLink`) - as well as cross-language (`SmvExtDataSet`) - dependencies are also resolved to their appropriate owning repository and cannonical names (in the form of `urn:smv:mod:<fqn>`) in the `runModule` method.
+
+# Naming SmvModules
 
 # Scala Implementation
 
 # Python Implementation
 
-# Changes to SmvApp
-
 # Changes to SmvDataSet
-

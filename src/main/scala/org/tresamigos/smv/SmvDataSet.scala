@@ -437,7 +437,6 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     // checkDependency()
 
     run(requiresDS().map(r => (r, known(r.name))).toMap)
-    // run(requiresDS().map(r => (r, app.resolveRDD(r))).toMap)
   }
 
   /** Use Bytecode analysis to figure out dependency and check against
@@ -549,18 +548,19 @@ class SmvModuleLink(outputModule: SmvOutput) extends
 
 /**
  * Represents a module written in another language.
- *
- * All methods should throw Error, because they should all be
- * forwarded to the appropriate dataset repository and should never be
- * invoked directly.
  */
-case class SmvExtDataSet(refname: String) extends SmvModule(
-  s"External dataset for ${refname}") {
+case class SmvExtDataSet(refname: String) extends SmvModule(s"External dataset for ${refname}") {
   override val name = ExtDsPrefix  + refname
-  @inline private def err =
-    throw new UnsupportedOperationException(s"Should not call method on ${this} from Scala")
-  override def requiresDS = err
-  override def run(i: runParams) = err
+  override val isEphemeral = true
+  override def requiresDS = app.dependencies(refname) map ( dep =>
+    // if an external dataset in turn depends on its `external`
+    // dataset, look up in native scala repository
+    if (dep startsWith ExtDsPrefix)
+      app.scalaDataSets.dsForName(dep).get
+    else
+      SmvExtDataSet(dep)
+  )
+  override def run(i: runParams) = app.runModule(refname)
 }
 
 /**

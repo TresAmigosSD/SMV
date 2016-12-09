@@ -51,6 +51,9 @@ app = smvPy.init(['-m', 'None', '--cbs-port', str(callback_server_port)], sc, sq
 
 from smvshell import *
 
+def discoverSchema(path, n=100000, ca=smvPy.defaultCsvWithHeader()):
+    smvPy._jvm.SmvPythonHelper.discoverSchema(path, n, ca)
+
 # The following code evokes a loop of importing
 # The ./bin/pyspark script stores the old PYTHONSTARTUP value in OLD_PYTHONSTARTUP,
 # which allows us to execute the user's PYTHONSTARTUP file:

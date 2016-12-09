@@ -50,7 +50,7 @@ import org.apache.spark.annotation._
  */
 package object smv {
   /** External dataset prefix */
-  val ExtDsPrefix = "SmvExtDataSet."
+  val ExtDsPrefix = "urn:smv:ext:"
 
   /** implicitly convert `Column` to `ColumnHelper` */
   implicit def makeColHelper(col: Column) = new ColumnHelper(col)

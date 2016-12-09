@@ -89,6 +89,9 @@ object SmvPythonHelper {
     (new ArrayList(res._1), res._2)
   }
 
+  def discoverSchema(path: String, nsamples: Int, csvattr: CsvAttributes): Unit =
+    shell.discoverSchema(path, nsamples, csvattr)
+
   /**
    * Update the port of callback client
    */
@@ -174,16 +177,18 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     j_smvApp.createDF(schema, data)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(modfqn: String, repo: SmvDataSetRepository): DataFrame =
-    j_smvApp.runModule(modfqn, repo, j_smvApp.scalaDataSets)
+  def runModule(modfqn: String): DataFrame =
+    j_smvApp.runModule(modfqn)
 
-  def runDynamicModule(modfqn: String, repo: SmvDataSetRepository): DataFrame =
-    j_smvApp.runDynamicModule(modfqn, repo, j_smvApp.scalaDataSets)
+  def runDynamicModule(modfqn: String): DataFrame =
+    j_smvApp.runDynamicModule(modfqn)
 
   /** Publish the result of an SmvModule */
-  def publishModule(modfqn: String, repo: SmvDataSetRepository): Unit =
-    j_smvApp.publishModule(modfqn, publishVersion.get, repo, j_smvApp.scalaDataSets)
+  def publishModule(modfqn: String): Unit =
+    j_smvApp.publishModule(modfqn, publishVersion.get)
 
+  def register(id: String, repo: SmvDataSetRepository): Unit =
+    j_smvApp.register(id, repo)
 }
 
 /** Not a companion object because we need to access it from Python */

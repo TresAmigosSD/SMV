@@ -25,7 +25,7 @@ import scala.util.{Success, Failure}
 class ScalaDataSetRepository extends SmvDataSetRepository {
   private var scalaDataSets: Map[String, SmvDataSet] = Map.empty
 
-  private def dsForName(modfqn: String): Option[SmvDataSet] =
+  private[smv] def dsForName(modfqn: String): Option[SmvDataSet] =
     scalaDataSets.get(modfqn) orElse {
       val ret =
         if (isExternal(modfqn))
