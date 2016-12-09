@@ -194,6 +194,7 @@ class SmvPy(object):
             gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
 
         self.repo = PythonDataSetRepository(self)
+        self.j_smvPyClient.register('Python', self.repo)
         return self
 
     def appName(self):
@@ -218,19 +219,19 @@ class SmvPy(object):
     def runModule(self, fqn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.j_smvPyClient.runModule(fqn, self.repo)
+        jdf = self.j_smvPyClient.runModule(fqn)
         return DataFrame(jdf, self.sqlContext)
 
     def runDynamicModule(self, fqn):
         """Re-run a Scala or Python module by its fqn"""
         if self.repo.hasDataSet(fqn):
             self.repo.reloadDs(fqn)
-        return DataFrame(self.j_smvPyClient.runDynamicModule(fqn, self.repo), self.sqlContext)
+        return DataFrame(self.j_smvPyClient.runDynamicModule(fqn), self.sqlContext)
 
     def publishModule(self, fqn):
         """Publish a Scala or a Python SmvModule by its FQN
         """
-        self.j_smvPyClient.publishModule(fqn, self.repo)
+        self.j_smvPyClient.publishModule(fqn)
 
     def publishHiveModule(self, fqn):
         """Publish a python SmvModule (by FQN) to a hive table.

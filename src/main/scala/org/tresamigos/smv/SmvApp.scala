@@ -54,6 +54,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   val scalaDataSets = new ScalaDataSetRepository
 
+  private var datasetRepositories: Map[String, SmvDataSetRepository] = Map("Scala" -> scalaDataSets)
+  def register(id: String, repo: SmvDataSetRepository): Unit =
+    datasetRepositories = datasetRepositories + (id -> repo)
+
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
 
@@ -348,38 +352,36 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     s"""${smvConfig.publishDir}/${version}/${name}.csv"""
 
   /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(modfqn: String, repos: SmvDataSetRepository*): DataFrame =
+  def runModule(modfqn: String): DataFrame =
     if (modfqn.isEmpty)
       return null
     else if (dataframes.contains(modfqn))
       dataframes(modfqn)
-    else if (repos.isEmpty)
-      runModule(modfqn, scalaDataSets)
     else if (resolveStack contains modfqn)
       throw new IllegalStateException(s"cycle found while resolving ${modfqn}: " + resolveStack.mkString(","))
     else {
       println(s"running module ${modfqn}")
       resolveStack.push(modfqn)
-      repos.find(_.hasDataSet(modfqn)) match {
+      findRepoWith(modfqn) match {
         case None =>
           resolveStack.pop()
-          throw new SmvRuntimeException(s"Cannot find module [${modfqn}]")
+          notfound(modfqn)
         case Some(repo) =>
-          dependencies(repo, modfqn) foreach (runModule(_, repos:_*))
+          dependencies(repo, modfqn) foreach runModule
 
           val df = try {
             if (repo.isExternal(modfqn)) {
-              runModule(repo.getExternalDsName(modfqn), repos:_*)
+              runModule(repo.getExternalDsName(modfqn))
             }
             else if (repo.isLink(modfqn)) {
               val targetName = repo.getLinkTargetName(modfqn)
               stages.stageVersionFor(targetName) map { stageVersion =>
                 SmvUtil.readFile(sqlContext, publishPath(targetName, stageVersion), null)
-              } getOrElse runModule(targetName, repos:_*)
+              } getOrElse runModule(targetName)
             }
             else {
               val dqm = new DQMValidator(repo.getDqm(modfqn))
-              val hashval = hashOfHash(modfqn, repos:_*)
+              val hashval = hashOfHash(modfqn)
               val df = repo.getDataFrame(modfqn, dqm, dataframes)
               persist(repo, modfqn, hashval, dqm, df)
             }
@@ -398,18 +400,29 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   private def dependencies(repo: SmvDataSetRepository, modfqn: String): Seq[String] =
     repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
 
-  def hashOfHash(modfqn: String, repos: SmvDataSetRepository*): Int =
-    repos.find(_.hasDataSet(modfqn)) match {
-      case None => throw new SmvRuntimeException(s"Cannot find module ${modfqn}")
+  private[smv] def findRepoWith(modfqn: String): Option[SmvDataSetRepository] =
+    datasetRepositories.values.find(_.hasDataSet(modfqn))
+
+  def dependencies(modfqn: String): Seq[String] =
+    findRepoWith(modfqn) match {
+      case None => notfound(modfqn)
+      case Some(repo) => dependencies(repo, modfqn)
+    }
+
+  @inline private def notfound(modfqn: String) = throw new SmvRuntimeException(s"Cannot find module ${modfqn}")
+
+  def hashOfHash(modfqn: String): Int =
+    findRepoWith(modfqn) match {
+      case None => notfound(modfqn)
       case Some(repo) =>
         if (repo.isExternal(modfqn))
-          hashOfHash(repo.getExternalDsName(modfqn), repos:_*)
+          hashOfHash(repo.getExternalDsName(modfqn))
         else if (repo.isLink(modfqn))
-          hashOfHash(repo.getLinkTargetName(modfqn), repos:_*)
+          hashOfHash(repo.getLinkTargetName(modfqn))
         else
           dependencies(repo, modfqn).foldLeft(
             repo.datasetHash(modfqn, true)) { (acc, dep) =>
-            acc + hashOfHash(dep, repos:_*)
+            acc + hashOfHash(dep)
           }.toInt
     }
 
@@ -439,29 +452,26 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    *
    * This is usually used in an interactive shell to re-run a module after it's been modified.
    */
-  def runDynamicModule(modfqn: String, repos: SmvDataSetRepository*): DataFrame =
+  def runDynamicModule(modfqn: String): DataFrame =
     if (modfqn.isEmpty)
       return null
-    else if (repos.isEmpty)
-      runDynamicModule(modfqn, scalaDataSets)
     else if (!dataframes.contains(modfqn))
-      runModule(modfqn, repos:_*)
+      runModule(modfqn)
     else
-      repos.find(_.hasDataSet(modfqn)) match {
-        case None =>
-          throw new SmvRuntimeException("")
+      findRepoWith(modfqn) match {
+        case None => notfound(modfqn)
         case Some(repo) =>
-          dependencies(repo, modfqn) foreach (runDynamicModule(_, repos:_*))
+          dependencies(repo, modfqn) foreach runDynamicModule
 
           dataframes = dataframes - modfqn
           val df =
             if (repo.isExternal(modfqn))
-              runDynamicModule(repo.getExternalDsName(modfqn), repos:_*)
+              runDynamicModuleByName(repo.getExternalDsName(modfqn))
             else if (repo.isLink(modfqn))
-              runDynamicModule(repo.getLinkTargetName(modfqn), repos:_*)
+              runDynamicModule(repo.getLinkTargetName(modfqn))
             else {
               val dqm = new DQMValidator(repo.getDqm(modfqn))
-              val hashval = hashOfHash(modfqn, repos:_*)
+              val hashval = hashOfHash(modfqn)
               val df = repo.rerun(modfqn, dqm, dataframes)
               persist(repo, modfqn, hashval, dqm, df)
             }
@@ -473,8 +483,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /**
    * Publish the result of an SmvModule
    */
-  def publishModule(modfqn: String, version: String, repos: SmvDataSetRepository*): Unit = {
-    val df = runModule(modfqn, repos:_*)
+  def publishModule(modfqn: String, version: String): Unit = {
+    val df = runModule(modfqn)
     val path = publishPath(modfqn, version)
     SmvUtil.publish(sqlContext, df, path, genEdd)
   }
