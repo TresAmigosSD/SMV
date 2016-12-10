@@ -25,95 +25,95 @@ import scala.util.{Success, Failure}
 class ScalaDataSetRepository extends SmvDataSetRepository {
   private var scalaDataSets: Map[String, SmvDataSet] = Map.empty
 
-  private[smv] def dsForName(modfqn: String): Option[SmvDataSet] =
-    scalaDataSets.get(modfqn) orElse {
+  private[smv] def dsForName(modUrn: String): Option[SmvDataSet] =
+    scalaDataSets.get(modUrn) orElse {
       val ret =
-        if (isExternal(modfqn))
-          Some(SmvExtDataSet(modfqn.substring(ExtDsPrefix.length)))
+        if (isExternal(modUrn))
+          Some(SmvExtDataSet(modUrn.substring(ExtDsPrefix.length)))
         else
-          SmvReflection.findObjectByName[SmvDataSet](modfqn).toOption
+          SmvReflection.findObjectByName[SmvDataSet](modUrn).toOption
 
       if (ret.isDefined)
-        scalaDataSets = scalaDataSets + (modfqn -> ret.get)
+        scalaDataSets = scalaDataSets + (modUrn -> ret.get)
       ret
     }
 
-  override def hasDataSet(modfqn: String): Boolean =
-    dsForName(modfqn).isDefined
+  override def hasDataSet(modUrn: String): Boolean =
+    dsForName(modUrn).isDefined
 
-  override def isExternal(modfqn: String): Boolean =
-    modfqn.startsWith(ExtDsPrefix)
+  override def isExternal(modUrn: String): Boolean =
+    modUrn.startsWith(ExtDsPrefix)
 
-  override def getExternalDsName(modfqn: String): String =
-    dsForName(modfqn) match {
-      case None => notFound(modfqn, "cannot get external dataset name")
+  override def getExternalDsName(modUrn: String): String =
+    dsForName(modUrn) match {
+      case None => notFound(modUrn, "cannot get external dataset name")
       case Some(ds: SmvExtDataSet) => ds.refname
       case _ => ""
     }
 
-  override def isLink(modfqn: String): Boolean =
-    dsForName(modfqn) match {
-      case None => notFound(modfqn, "cannot check if module is link")
+  override def isLink(modUrn: String): Boolean =
+    dsForName(modUrn) match {
+      case None => notFound(modUrn, "cannot check if module is link")
       case Some(ds) => ds.isInstanceOf[SmvModuleLink]
     }
 
-  override def getLinkTargetName(modfqn: String): String =
-    dsForName(modfqn) match {
-      case None => notFound(modfqn, "cannot check if module is link")
+  override def getLinkTargetName(modUrn: String): String =
+    dsForName(modUrn) match {
+      case None => notFound(modUrn, "cannot check if module is link")
       case Some(ds: SmvModuleLink) => ds.smvModule.name
       case _ => ""
     }
 
-  override def isEphemeral(modfqn: String): Boolean =
-    if (isExternal(modfqn))
-      throw new SmvRuntimeException(s"Cannot know if ${modfqn} is ephemeral because it is external")
+  override def isEphemeral(modUrn: String): Boolean =
+    if (isExternal(modUrn))
+      throw new SmvRuntimeException(s"Cannot know if ${modUrn} is ephemeral because it is external")
     else
-      dsForName(modfqn) match {
-        case None => notFound(modfqn, "cannot check if the module is ephemeral")
+      dsForName(modUrn) match {
+        case None => notFound(modUrn, "cannot check if the module is ephemeral")
         case Some(ds) => ds.isEphemeral
       }
 
-  override def getDqm(modfqn: String): SmvDQM =
-    dsForName(modfqn) match {
-      case None => notFound(modfqn, "cannot get dqm")
+  override def getDqm(modUrn: String): SmvDQM =
+    dsForName(modUrn) match {
+      case None => notFound(modUrn, "cannot get dqm")
       case Some(ds) => ds.createDsDqm()
     }
 
-  private def notFound(modfqn: String, msg: String) =
-    throw new SmvRuntimeException(s"dataset [${modfqn}] is not found in ${getClass.getName}: ${msg}")
+  private def notFound(modUrn: String, msg: String) =
+    throw new SmvRuntimeException(s"dataset [${modUrn}] is not found in ${getClass.getName}: ${msg}")
 
   override def outputModsForStage(stageName: String): String = {
     val stage = SmvApp.app.smvConfig.stages.findStage(stageName)
     stage.allOutputModules.map(_.name).mkString(",")
   }
 
-  override def dependencies(modfqn: String): String =
-    if (isExternal(modfqn)) "" else dsForName(modfqn) match {
-      case None => notFound(modfqn, "cannot get dependencies")
+  override def dependencies(modUrn: String): String =
+    if (isExternal(modUrn)) "" else dsForName(modUrn) match {
+      case None => notFound(modUrn, "cannot get dependencies")
       case Some(ds) => ds.requiresDS.map(_.name).mkString(",")
     }
 
-  override def getDataFrame(modfqn: String, validator: DQMValidator,
+  override def getDataFrame(modUrn: String, validator: DQMValidator,
     known: java.util.Map[String, DataFrame]): DataFrame =
-    dsForName(modfqn) match {
-      case None => notFound(modfqn, "cannot get dataframe")
+    dsForName(modUrn) match {
+      case None => notFound(modUrn, "cannot get dataframe")
       case Some(ds) => ds.doRun(validator, known)
     }
 
-  override def rerun(modfqn: String, validator: DQMValidator,
+  override def rerun(modUrn: String, validator: DQMValidator,
     known: java.util.Map[String, DataFrame]): DataFrame = {
     val parentClassLoader = getClass.getClassLoader
     val cl = class_loader.SmvClassLoader(SmvApp.app.smvConfig, parentClassLoader)
-    val ds = new SmvReflection(cl).objectNameToInstance[SmvDataSet](modfqn)
+    val ds = new SmvReflection(cl).objectNameToInstance[SmvDataSet](modUrn)
     val message = shell.ShellCmd.hotdeployIfCapable(ds, parentClassLoader)
     println(message)
-    scalaDataSets = scalaDataSets + (modfqn -> ds)
+    scalaDataSets = scalaDataSets + (modUrn -> ds)
     ds.doRun(validator, known)
   }
 
-  override def datasetHash(modfqn: String, includeSuperClass: Boolean = true): Int =
-    dsForName(modfqn) match {
-      case None => notFound(modfqn, "cannot calc dataset hash")
+  override def datasetHash(modUrn: String, includeSuperClass: Boolean = true): Int =
+    dsForName(modUrn) match {
+      case None => notFound(modUrn, "cannot calc dataset hash")
       case Some(ds) => ds.datasetCRC.toInt
     }
 }

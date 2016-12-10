@@ -144,8 +144,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     j_smvApp.modulesToRun(repo, j_smvApp.scalaDataSets)
 
   /** Infers the name of the stage to which a named module belongs */
-  def inferStageNameFromDsName(modfqn: String): Option[String] =
-    j_smvApp.stages.inferStageNameFromDsName(modfqn)
+  def inferStageNameFromDsName(modUrn: String): Option[String] =
+    j_smvApp.stages.inferStageNameFromDsName(modUrn)
 
   /** Try to read a dataframe from persisted files */
   def tryReadPersistedFile(path: String): Try[DataFrame] =
@@ -177,15 +177,15 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     j_smvApp.createDF(schema, data)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(modfqn: String): DataFrame =
-    j_smvApp.runModule(modfqn)
+  def runModule(modUrn: String): DataFrame =
+    j_smvApp.runModule(modUrn)
 
-  def runDynamicModule(modfqn: String): DataFrame =
-    j_smvApp.runDynamicModule(modfqn)
+  def runDynamicModule(modUrn: String): DataFrame =
+    j_smvApp.runDynamicModule(modUrn)
 
   /** Publish the result of an SmvModule */
-  def publishModule(modfqn: String): Unit =
-    j_smvApp.publishModule(modfqn, publishVersion.get)
+  def publishModule(modUrn: String): Unit =
+    j_smvApp.publishModule(modUrn, publishVersion.get)
 
   def register(id: String, repo: SmvDataSetRepository): Unit =
     j_smvApp.register(id, repo)

@@ -555,8 +555,8 @@ def SmvPyExtDataSet(refname):
     PyExtDataSetCache[refname] = cls
     return cls
 
-def _is_external(modfqn):
-    return modfqn.startswith(ExtDsPrefix)
+def _is_external(modUrn):
+    return modUrn.startswith(ExtDsPrefix)
 
 class SmvGroupedData(object):
     """Wrapper around the Scala SmvGroupedData"""
@@ -753,17 +753,17 @@ class PythonDataSetRepository(object):
         self.smvPy = smvPy
         self.pythonDataSets = {} # SmvPyDataSet FQN -> instance
 
-    def dsForName(self, modfqn):
+    def dsForName(self, modUrn):
         """Returns the instance of SmvPyDataSet by its fully qualified name.
         Returns None if the FQN is not a valid SmvPyDataSet name.
         """
-        if modfqn in self.pythonDataSets:
-            return self.pythonDataSets[modfqn]
-        elif self.isExternal(modfqn):
-            ret = SmvPyExtDataSet(modfqn[len(ExtDsPrefix):])
+        if modUrn in self.pythonDataSets:
+            return self.pythonDataSets[modUrn]
+        elif self.isExternal(modUrn):
+            ret = SmvPyExtDataSet(modUrn[len(ExtDsPrefix):])
         else:
             try:
-                ret = for_name(modfqn)(self.smvPy)
+                ret = for_name(modUrn)(self.smvPy)
             except AttributeError: # module not found is anticipated
                 return None
             except ImportError as e:
@@ -771,24 +771,24 @@ class PythonDataSetRepository(object):
             except Exception as e: # other errors should be reported, such as syntax error
                 traceback.print_exc()
                 return None
-        self.pythonDataSets[modfqn] = ret
+        self.pythonDataSets[modUrn] = ret
         return ret
 
-    def reloadDs(self, modfqn):
+    def reloadDs(self, modUrn):
         """Reload the module by its fully qualified name, replace the old
         instance with a new one from the new definnition.
         """
-        if self.isExternal(modfqn):
-            return self.dsForName(modfqn)
+        if self.isExternal(modUrn):
+            return self.dsForName(modUrn)
 
-        lastdot = modfqn.rfind('.')
+        lastdot = modUrn.rfind('.')
         if (lastdot == -1):
-            klass = reload(modfqn)
+            klass = reload(modUrn)
         else:
-            mod = reload(sys.modules[modfqn[:lastdot]])
-            klass = getattr(mod, modfqn[lastdot+1:])
+            mod = reload(sys.modules[modUrn[:lastdot]])
+            klass = getattr(mod, modUrn[lastdot+1:])
         ret = klass(self.smvPy)
-        self.pythonDataSets[modfqn] = ret
+        self.pythonDataSets[modUrn] = ret
 
         # Python issue https://bugs.python.org/issue1218234
         # need to invalidate inspect.linecache to make dataset hash work
@@ -803,57 +803,57 @@ class PythonDataSetRepository(object):
 
         return ret
 
-    def hasDataSet(self, modfqn):
-        return self.dsForName(modfqn) is not None
+    def hasDataSet(self, modUrn):
+        return self.dsForName(modUrn) is not None
 
-    def isExternal(self, modfqn):
-        return _is_external(modfqn)
+    def isExternal(self, modUrn):
+        return _is_external(modUrn)
 
-    def getExternalDsName(self, modfqn):
-        ds = self.dsForName(modfqn)
+    def getExternalDsName(self, modUrn):
+        ds = self.dsForName(modUrn)
         if ds is None:
-            self.notFound(modfqn, "cannot get external dataset name")
-        elif self.isExternal(modfqn):
+            self.notFound(modUrn, "cannot get external dataset name")
+        elif self.isExternal(modUrn):
             return ds.refname
         else:
             return ''
 
-    def isLink(self, modfqn):
-        ds = self.dsForName(modfqn)
+    def isLink(self, modUrn):
+        ds = self.dsForName(modUrn)
         if ds is None:
-            self.notFound(modfqn, "cannot test if it is link")
+            self.notFound(modUrn, "cannot test if it is link")
         else:
             try:
                 return ds.IsSmvPyModuleLink
             except:
                 return False
 
-    def getLinkTargetName(self, modfqn):
-        ds = self.dsForName(modfqn)
+    def getLinkTargetName(self, modUrn):
+        ds = self.dsForName(modUrn)
         if ds is None:
-            self.notFound(modfqn, "cannot get link target")
+            self.notFound(modUrn, "cannot get link target")
         else:
             return ds.target().name()
 
-    def isEphemeral(self, modfqn):
-        if self.isExternal(modfqn):
-            raise ValueError("Cannot know if {0} is ephemeral because it is external".format(modfqn))
+    def isEphemeral(self, modUrn):
+        if self.isExternal(modUrn):
+            raise ValueError("Cannot know if {0} is ephemeral because it is external".format(modUrn))
         else:
-            ds = self.dsForName(modfqn)
+            ds = self.dsForName(modUrn)
             if ds is None:
-                self.notFound(modfqn, "cannot get isEphemeral")
+                self.notFound(modUrn, "cannot get isEphemeral")
             else:
                 return ds.isEphemeral()
 
-    def getDqm(self, modfqn):
-        ds = self.dsForName(modfqn)
+    def getDqm(self, modUrn):
+        ds = self.dsForName(modUrn)
         if ds is None:
-            self.notFound(modfqn, "cannot get dqm")
+            self.notFound(modUrn, "cannot get dqm")
         else:
             return ds.dqm()
 
-    def notFound(self, modfqn, msg):
-        raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modfqn, self.__class__.__name__, msg))
+    def notFound(self, modUrn, msg):
+        raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))
 
     def outputModsForStage(self, stageName):
         # `walk_packages` can generate AttributeError if the system has
@@ -884,41 +884,41 @@ class PythonDataSetRepository(object):
                         continue
         return ','.join(buf)
 
-    def dependencies(self, modfqn):
-        if self.isExternal(modfqn):
+    def dependencies(self, modUrn):
+        if self.isExternal(modUrn):
             return ''
         else:
-            ds = self.dsForName(modfqn)
+            ds = self.dsForName(modUrn)
             if ds is None:
-                self.notFound(modfqn, "cannot get dependencies")
+                self.notFound(modUrn, "cannot get dependencies")
             else:
                 return ','.join([x.name() for x in ds.requiresDS()])
 
-    def getDataFrame(self, modfqn, validator, known):
-        ds = self.dsForName(modfqn)
+    def getDataFrame(self, modUrn, validator, known):
+        ds = self.dsForName(modUrn)
         if ds is None:
-            self.notFound(modfqn, "cannot get dataframe")
+            self.notFound(modUrn, "cannot get dataframe")
         else:
             try:
                 ret = ds.doRun(validator, known)._jdf
             except Exception as e:
                 print("----------------------------------------")
-                print("Error when running Python SmvModule [{0}]".format(modfqn))
+                print("Error when running Python SmvModule [{0}]".format(modUrn))
                 traceback.print_exc()
                 print("----------------------------------------")
                 raise e
             return ret
 
-    def rerun(self, modfqn, validator, known):
-        ds = self.reloadDs(modfqn)
+    def rerun(self, modUrn, validator, known):
+        ds = self.reloadDs(modUrn)
         if ds is None:
-            self.notFound(modfqn, "cannot rerun")
+            self.notFound(modUrn, "cannot rerun")
         return ds.doRun(validator, known)._jdf
 
-    def datasetHash(self, modfqn, includeSuperClass):
-        ds = self.dsForName(modfqn)
+    def datasetHash(self, modUrn, includeSuperClass):
+        ds = self.dsForName(modUrn)
         if ds is None:
-            self.notFound(modfqn, "cannot calc dataset hash")
+            self.notFound(modUrn, "cannot calc dataset hash")
         else:
             return ds.datasetHash(includeSuperClass)
 

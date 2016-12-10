@@ -352,38 +352,38 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     s"""${smvConfig.publishDir}/${version}/${name}.csv"""
 
   /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(modfqn: String): DataFrame =
-    if (modfqn.isEmpty)
+  def runModule(modUrn: String): DataFrame =
+    if (modUrn.isEmpty)
       return null
-    else if (dataframes.contains(modfqn))
-      dataframes(modfqn)
-    else if (resolveStack contains modfqn)
-      throw new IllegalStateException(s"cycle found while resolving ${modfqn}: " + resolveStack.mkString(","))
+    else if (dataframes.contains(modUrn))
+      dataframes(modUrn)
+    else if (resolveStack contains modUrn)
+      throw new IllegalStateException(s"cycle found while resolving ${modUrn}: " + resolveStack.mkString(","))
     else {
-      println(s"running module ${modfqn}")
-      resolveStack.push(modfqn)
-      findRepoWith(modfqn) match {
+      println(s"running module ${modUrn}")
+      resolveStack.push(modUrn)
+      findRepoWith(modUrn) match {
         case None =>
           resolveStack.pop()
-          notfound(modfqn)
+          notfound(modUrn)
         case Some(repo) =>
-          dependencies(repo, modfqn) foreach runModule
+          dependencies(repo, modUrn) foreach runModule
 
           val df = try {
-            if (repo.isExternal(modfqn)) {
-              runModule(repo.getExternalDsName(modfqn))
+            if (repo.isExternal(modUrn)) {
+              runModule(repo.getExternalDsName(modUrn))
             }
-            else if (repo.isLink(modfqn)) {
-              val targetName = repo.getLinkTargetName(modfqn)
+            else if (repo.isLink(modUrn)) {
+              val targetName = repo.getLinkTargetName(modUrn)
               stages.stageVersionFor(targetName) map { stageVersion =>
                 SmvUtil.readFile(sqlContext, publishPath(targetName, stageVersion), null)
               } getOrElse runModule(targetName)
             }
             else {
-              val dqm = new DQMValidator(repo.getDqm(modfqn))
-              val hashval = hashOfHash(modfqn)
-              val df = repo.getDataFrame(modfqn, dqm, dataframes)
-              persist(repo, modfqn, hashval, dqm, df)
+              val dqm = new DQMValidator(repo.getDqm(modUrn))
+              val hashval = hashOfHash(modUrn)
+              val df = repo.getDataFrame(modUrn, dqm, dataframes)
+              persist(repo, modUrn, hashval, dqm, df)
             }
           } finally {
             resolveStack.pop()
@@ -391,57 +391,57 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
           // dataframe from external modules would be registered under
           // both its implementing module name and the referenced name
-          dataframes = dataframes + (modfqn -> df)
+          dataframes = dataframes + (modUrn -> df)
           df
       }
     }
 
   // helper method till we can return the Seq directly from Python implementation
-  private def dependencies(repo: SmvDataSetRepository, modfqn: String): Seq[String] =
-    repo.dependencies(modfqn).split(',').filterNot(_.isEmpty)
+  private def dependencies(repo: SmvDataSetRepository, modUrn: String): Seq[String] =
+    repo.dependencies(modUrn).split(',').filterNot(_.isEmpty)
 
-  private[smv] def findRepoWith(modfqn: String): Option[SmvDataSetRepository] =
-    datasetRepositories.values.find(_.hasDataSet(modfqn))
+  private[smv] def findRepoWith(modUrn: String): Option[SmvDataSetRepository] =
+    datasetRepositories.values.find(_.hasDataSet(modUrn))
 
-  def dependencies(modfqn: String): Seq[String] =
-    findRepoWith(modfqn) match {
-      case None => notfound(modfqn)
-      case Some(repo) => dependencies(repo, modfqn)
+  def dependencies(modUrn: String): Seq[String] =
+    findRepoWith(modUrn) match {
+      case None => notfound(modUrn)
+      case Some(repo) => dependencies(repo, modUrn)
     }
 
-  @inline private def notfound(modfqn: String) = throw new SmvRuntimeException(s"Cannot find module ${modfqn}")
+  @inline private def notfound(modUrn: String) = throw new SmvRuntimeException(s"Cannot find module ${modUrn}")
 
-  def hashOfHash(modfqn: String): Int =
-    findRepoWith(modfqn) match {
-      case None => notfound(modfqn)
+  def hashOfHash(modUrn: String): Int =
+    findRepoWith(modUrn) match {
+      case None => notfound(modUrn)
       case Some(repo) =>
-        if (repo.isExternal(modfqn))
-          hashOfHash(repo.getExternalDsName(modfqn))
-        else if (repo.isLink(modfqn))
-          hashOfHash(repo.getLinkTargetName(modfqn))
+        if (repo.isExternal(modUrn))
+          hashOfHash(repo.getExternalDsName(modUrn))
+        else if (repo.isLink(modUrn))
+          hashOfHash(repo.getLinkTargetName(modUrn))
         else
-          dependencies(repo, modfqn).foldLeft(
-            repo.datasetHash(modfqn, true)) { (acc, dep) =>
+          dependencies(repo, modUrn).foldLeft(
+            repo.datasetHash(modUrn, true)) { (acc, dep) =>
             acc + hashOfHash(dep)
           }.toInt
     }
 
-  private def persist(repo: SmvDataSetRepository, modfqn: String, hashval: Int, dqm: DQMValidator, df: DataFrame): DataFrame = {
+  private def persist(repo: SmvDataSetRepository, modUrn: String, hashval: Int, dqm: DQMValidator, df: DataFrame): DataFrame = {
     // modules defined in spark shell starts with '$'
-    val persistValidation = !modfqn.startsWith("$")
+    val persistValidation = !modUrn.startsWith("$")
     val validator = new ValidationSet(Seq(dqm), persistValidation)
-    if (repo.isEphemeral(modfqn)) {
+    if (repo.isEphemeral(modUrn)) {
       val r = dqm.attachTasks(df)
       // no action before this  point
-      validator.validate(r, false, moduleValidPath(modfqn, hashval))
+      validator.validate(r, false, moduleValidPath(modUrn, hashval))
       r
     } else {
-      val path = moduleCsvPath(modfqn, hashval)
+      val path = moduleCsvPath(modUrn, hashval)
       Try(SmvUtil.readFile(sqlContext, path)).recoverWith { case ex =>
         val r = dqm.attachTasks(df)
         SmvUtil.persist(sqlContext, r, path, genEdd)
         // already had action from persist
-        validator.validate(r, true, moduleValidPath(modfqn, hashval))
+        validator.validate(r, true, moduleValidPath(modUrn, hashval))
         Try(SmvUtil.readFile(sqlContext, path))
       }.get
     }
@@ -452,30 +452,30 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    *
    * This is usually used in an interactive shell to re-run a module after it's been modified.
    */
-  def runDynamicModule(modfqn: String): DataFrame =
-    if (modfqn.isEmpty)
+  def runDynamicModule(modUrn: String): DataFrame =
+    if (modUrn.isEmpty)
       return null
-    else if (!dataframes.contains(modfqn))
-      runModule(modfqn)
+    else if (!dataframes.contains(modUrn))
+      runModule(modUrn)
     else
-      findRepoWith(modfqn) match {
-        case None => notfound(modfqn)
+      findRepoWith(modUrn) match {
+        case None => notfound(modUrn)
         case Some(repo) =>
-          dependencies(repo, modfqn) foreach runDynamicModule
+          dependencies(repo, modUrn) foreach runDynamicModule
 
-          dataframes = dataframes - modfqn
+          dataframes = dataframes - modUrn
           val df =
-            if (repo.isExternal(modfqn))
-              runDynamicModuleByName(repo.getExternalDsName(modfqn))
-            else if (repo.isLink(modfqn))
-              runDynamicModule(repo.getLinkTargetName(modfqn))
+            if (repo.isExternal(modUrn))
+              runDynamicModuleByName(repo.getExternalDsName(modUrn))
+            else if (repo.isLink(modUrn))
+              runDynamicModule(repo.getLinkTargetName(modUrn))
             else {
-              val dqm = new DQMValidator(repo.getDqm(modfqn))
-              val hashval = hashOfHash(modfqn)
-              val df = repo.rerun(modfqn, dqm, dataframes)
-              persist(repo, modfqn, hashval, dqm, df)
+              val dqm = new DQMValidator(repo.getDqm(modUrn))
+              val hashval = hashOfHash(modUrn)
+              val df = repo.rerun(modUrn, dqm, dataframes)
+              persist(repo, modUrn, hashval, dqm, df)
             }
-          dataframes = dataframes + (modfqn -> df)
+          dataframes = dataframes + (modUrn -> df)
 
           df
       }
@@ -483,9 +483,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /**
    * Publish the result of an SmvModule
    */
-  def publishModule(modfqn: String, version: String): Unit = {
-    val df = runModule(modfqn)
-    val path = publishPath(modfqn, version)
+  def publishModule(modUrn: String, version: String): Unit = {
+    val df = runModule(modUrn)
+    val path = publishPath(modUrn, version)
     SmvUtil.publish(sqlContext, df, path, genEdd)
   }
 

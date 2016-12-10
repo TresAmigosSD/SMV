@@ -18,17 +18,17 @@ We define an interface `SmvDataSetRepository` (TODO: may need to come up with a 
 
 Through the interface you can make the following queries:
 
-* `hasDataSet(modfqn)`       : does it contain the named `SmvDataSet`?
-* `isEphemeral(modfqn)`	     : does the result of the `SmvDataSet` need to be persisted?
-* `dependencies(modfqn)`     : what other datasets does the `SmvDataSet` depend on? (returns a csv of names)
-* `datasetHash(modfqn, sup)` : the dataset hash (by default include all its superclasses)
+* `hasDataSet(modUrn)`       : does it contain the named `SmvDataSet`?
+* `isEphemeral(modUrn)`	     : does the result of the `SmvDataSet` need to be persisted?
+* `dependencies(modUrn)`     : what other datasets does the `SmvDataSet` depend on? (returns a csv of names)
+* `datasetHash(modUrn, sup)` : the dataset hash (by default include all its superclasses)
 * `outputModsForStage(stage)`: what are the output modules for a given stage (returns a csv of names)
 
 The interface also defines the following operations:
 
-* `getDqm(modfqn)` : returns the `DQM` policy for the named `SmvDataSet`
-* `getDataFrame(modfqn, dqmValidator, fqn~>dataframe)` : returns the result of running the `SmvDataSet`
-* `rerun(modfqn, dqmValidator, fqn~>dataframe)` : re-run the `SmvDataSet` after code change
+* `getDqm(modUrn)` : returns the `DQM` policy for the named `SmvDataSet`
+* `getDataFrame(modUrn, dqmValidator, fqn~>dataframe)` : returns the result of running the `SmvDataSet`
+* `rerun(modUrn, dqmValidator, fqn~>dataframe)` : re-run the `SmvDataSet` after code change
 
 # Changes to SmvApp
 

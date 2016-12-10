@@ -29,29 +29,29 @@ public interface SmvDataSetRepository {
 	/**
 	 * Does the named data set exist?
 	 */
-	boolean hasDataSet(String modfqn);
+	boolean hasDataSet(String modUrn);
 
 	/**
 	 * Is the named dataset external?
 	 */
-	boolean isExternal(String modfqn);
+	boolean isExternal(String modUrn);
 
 	/**
 	 * Return the name of the external dataset if the name links to one;
 	 * otherwise return an empty string.
 	 */
-	String getExternalDsName(String modfqn);
+	String getExternalDsName(String modUrn);
 
 	/**
 	 * Is the named dataset a link to a published module?
 	 */
-	boolean isLink(String modfqn);
+	boolean isLink(String modUrn);
 
 	/**
 	 * Return the name of the target dataset to which a named dataset
 	 * links to; otherwise return an empty string.
 	 */
-	String getLinkTargetName(String modfqn);
+	String getLinkTargetName(String modUrn);
 
 	/**
 	 * Does the named dataset need to be persisted?
@@ -59,12 +59,12 @@ public interface SmvDataSetRepository {
 	 * Input datasets and simple filter and map modules typically don't
 	 * need to be persisted.
 	 */
-	boolean isEphemeral(String modfqn);
+	boolean isEphemeral(String modUrn);
 
 	/**
 	 * The DQM policy attached to a named dataset.
 	 */
-	SmvDQM getDqm(String modfqn);
+	SmvDQM getDqm(String modUrn);
 
 	/**
 	 * A CSV of output module fqns for a stage.
@@ -78,23 +78,23 @@ public interface SmvDataSetRepository {
 	 * the issue of type conversion between Python and Java VMs when it
 	 * comes to a Python class that implements a Java interface.
 	 */
-	String dependencies(String modfqn);
+	String dependencies(String modUrn);
 
 	/**
 	 * Try to run the module by its fully-qualified name and return its
 	 * result in a DataFrame.
 	 */
-	DataFrame getDataFrame(String modfqn, DQMValidator validator,  Map<String, DataFrame> known);
+	DataFrame getDataFrame(String modUrn, DQMValidator validator,  Map<String, DataFrame> known);
 
 	/**
 	 * Re-run the named module after code change.
 	 */
-	DataFrame rerun(String modfqn, DQMValidator validator, Map<String, DataFrame> known);
+	DataFrame rerun(String modUrn, DQMValidator validator, Map<String, DataFrame> known);
 
 	/**
 	 * Calculate a hash for the named data set; can optionally include
 	 * the hash for all its super classes up to and excluding the base
 	 * class provided by SMV.
 	 */
-	int datasetHash(String modfqn, boolean includeSuperClass);
+	int datasetHash(String modUrn, boolean includeSuperClass);
 }
