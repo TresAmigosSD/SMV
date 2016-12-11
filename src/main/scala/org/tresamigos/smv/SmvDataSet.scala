@@ -40,6 +40,7 @@ abstract class SmvDataSet extends HasName {
   private var rddCache: DataFrame = null
 
   override def name = this.getClass().getName().filterNot(_=='$')
+  val urn: String = ModDsPrefix + name
   def description(): String
 
   /** modules must override to provide set of datasets they depend on. */
@@ -435,8 +436,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
     // TODO turn on dependency check by uncomment the following line after test against projects
     // checkDependency()
-
-    run(requiresDS().map(r => (r, known(r.name))).toMap)
+    run(requiresDS().map(r => (r, known(r.urn))).toMap)
   }
 
   /** Use Bytecode analysis to figure out dependency and check against
@@ -493,7 +493,9 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
  * Similar to File/Module, a `dqm()` method can also be overriden in the link
  */
 class SmvModuleLink(outputModule: SmvOutput) extends
-  SmvModule(s"Link to ${outputModule.asInstanceOf[SmvDataSet].name}") {
+    SmvModule(s"Link to ${outputModule.asInstanceOf[SmvDataSet].name}") {
+
+  override val urn = LinkDsPrefix + name
 
   private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
@@ -550,12 +552,12 @@ class SmvModuleLink(outputModule: SmvOutput) extends
  * Represents a module written in another language.
  */
 case class SmvExtDataSet(refname: String) extends SmvModule(s"External dataset for ${refname}") {
-  override val name = ExtDsPrefix  + refname
+  override val urn = ExtDsPrefix  + refname
   override val isEphemeral = true
   override def requiresDS = app.dependencies(refname) map ( dep =>
     // if an external dataset in turn depends on its `external`
     // dataset, look up in native scala repository
-    if (dep startsWith ExtDsPrefix)
+    if (isExternalMod(dep))
       app.scalaDataSets.dsForName(dep).get
     else
       SmvExtDataSet(dep)

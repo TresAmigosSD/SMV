@@ -762,8 +762,9 @@ class PythonDataSetRepository(object):
         elif self.isExternal(modUrn):
             ret = SmvPyExtDataSet(modUrn[len(ExtDsPrefix):])
         else:
+            fqn = self.smvPy.j_smvPyClient.urn2fqn(modUrn)
             try:
-                ret = for_name(modUrn)(self.smvPy)
+                ret = for_name(fqn)(self.smvPy)
             except AttributeError: # module not found is anticipated
                 return None
             except ImportError as e:

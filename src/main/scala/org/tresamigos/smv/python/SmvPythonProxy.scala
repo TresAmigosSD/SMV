@@ -176,6 +176,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def dfFrom(schema: String, data: String): DataFrame =
     j_smvApp.createDF(schema, data)
 
+  def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
+
   /** Runs an SmvModule written in either Python or Scala */
   def runModule(modUrn: String): DataFrame =
     j_smvApp.runModule(modUrn)

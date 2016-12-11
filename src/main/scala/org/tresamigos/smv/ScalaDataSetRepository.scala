@@ -28,10 +28,10 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   private[smv] def dsForName(modUrn: String): Option[SmvDataSet] =
     scalaDataSets.get(modUrn) orElse {
       val ret =
-        if (isExternal(modUrn))
-          Some(SmvExtDataSet(modUrn.substring(ExtDsPrefix.length)))
+        if (isExternalMod(modUrn))
+          Some(SmvExtDataSet(urn2fqn(modUrn)))
         else
-          SmvReflection.findObjectByName[SmvDataSet](modUrn).toOption
+          SmvReflection.findObjectByName[SmvDataSet](urn2fqn(modUrn)).toOption
 
       if (ret.isDefined)
         scalaDataSets = scalaDataSets + (modUrn -> ret.get)
@@ -41,15 +41,9 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   override def hasDataSet(modUrn: String): Boolean =
     dsForName(modUrn).isDefined
 
-  override def isExternal(modUrn: String): Boolean =
-    modUrn.startsWith(ExtDsPrefix)
-
-  override def getExternalDsName(modUrn: String): String =
-    dsForName(modUrn) match {
-      case None => notFound(modUrn, "cannot get external dataset name")
-      case Some(ds: SmvExtDataSet) => ds.refname
-      case _ => ""
-    }
+  // TODO: remove methods after python side is ready
+  override def isExternal(modUrn: String): Boolean = false
+  override def getExternalDsName(modUrn: String): String = ???
 
   override def isLink(modUrn: String): Boolean =
     dsForName(modUrn) match {
@@ -65,13 +59,10 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
     }
 
   override def isEphemeral(modUrn: String): Boolean =
-    if (isExternal(modUrn))
-      throw new SmvRuntimeException(s"Cannot know if ${modUrn} is ephemeral because it is external")
-    else
-      dsForName(modUrn) match {
-        case None => notFound(modUrn, "cannot check if the module is ephemeral")
-        case Some(ds) => ds.isEphemeral
-      }
+    dsForName(modUrn) match {
+      case None => notFound(modUrn, "cannot check if the module is ephemeral")
+      case Some(ds) => ds.isEphemeral
+    }
 
   override def getDqm(modUrn: String): SmvDQM =
     dsForName(modUrn) match {
@@ -88,9 +79,9 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   }
 
   override def dependencies(modUrn: String): String =
-    if (isExternal(modUrn)) "" else dsForName(modUrn) match {
+    dsForName(modUrn) match {
       case None => notFound(modUrn, "cannot get dependencies")
-      case Some(ds) => ds.requiresDS.map(_.name).mkString(",")
+      case Some(ds) => ds.requiresDS.map(_.urn).mkString(",")
     }
 
   override def getDataFrame(modUrn: String, validator: DQMValidator,

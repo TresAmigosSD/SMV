@@ -138,16 +138,16 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * This method also checks for cycles in the module dependency graph.
    */
   def resolveRDD(ds: SmvDataSet): DataFrame = {
-    val dsName = ds.name
-    if (resolveStack.contains(dsName))
-      throw new IllegalStateException(s"cycle found while resolving ${dsName}: " +
+    val dsUrn = ds.urn
+    if (resolveStack.contains(dsUrn))
+      throw new IllegalStateException(s"cycle found while resolving ${dsUrn}: " +
         resolveStack.mkString(","))
 
-    resolveStack.push(dsName)
+    resolveStack.push(dsUrn)
 
     /* ds.rdd will trigger resolveRDD on all the DataSets current one depends on, which
        will push them all to the stack.
-       In Spark shell, when ds.rdd fails, dsName is still in the stack, need to pop it
+       In Spark shell, when ds.rdd fails, dsUrn is still in the stack, need to pop it
        so that redefining the same ds will not cause a "cycle" error */
     val resRdd = try {
       val violations = checkDependencyRules(ds)
@@ -170,10 +170,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
 
     val popRdd = resolveStack.pop()
-    if (popRdd != dsName)
-      throw new IllegalStateException(s"resolveStack corrupted.  Got ${popRdd}, expected ${dsName}")
+    if (popRdd != dsUrn)
+      throw new IllegalStateException(s"resolveStack corrupted.  Got ${popRdd}, expected ${dsUrn}")
 
-    dataframes = dataframes + (dsName -> resRdd)
+    dataframes = dataframes + (dsUrn -> resRdd)
     resRdd
   }
 
@@ -182,14 +182,14 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * The module and all its dependents are loaded into their own classloader so that we can have multiple
    * instances of the same module loaded at different times.
    */
-  def dynamicResolveRDD(fqn: String, parentClassLoader: ClassLoader) =
-    resolveRDD(dsForName(fqn, parentClassLoader))
+  def dynamicResolveRDD(urn: String, parentClassLoader: ClassLoader) =
+    resolveRDD(dsForName(urn, parentClassLoader))
 
   /** Looks up an SmvDataSet by its fully-qualified name */
-  def dsForName(fqn: String, parentClassLoader: ClassLoader) = {
+  def dsForName(urn: String, parentClassLoader: ClassLoader) = {
     val cl = SmvClassLoader(smvConfig, parentClassLoader)
     val ref = new SmvReflection(cl)
-    ref.objectNameToInstance[SmvDataSet](fqn)
+    ref.objectNameToInstance[SmvDataSet](urn2fqn(urn))
   }
 
   lazy val packagesPrefix = {
@@ -357,6 +357,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       return null
     else if (dataframes.contains(modUrn))
       dataframes(modUrn)
+    else if (!modUrn.startsWith(UrnSmvNs))
+      runModule(ModDsPrefix + modUrn)
     else if (resolveStack contains modUrn)
       throw new IllegalStateException(s"cycle found while resolving ${modUrn}: " + resolveStack.mkString(","))
     else {
