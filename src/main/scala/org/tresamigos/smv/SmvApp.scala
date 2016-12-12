@@ -80,17 +80,16 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   private[smv] def allAppModules = stages.allModules
 
   /** The names of output modules in a given stage */
-  def outputModsForStage(stageName: String, repos: SmvDataSetRepository*): Seq[String] =
-    if (repos.isEmpty) outputModsForStage(stageName, scalaDataSets) else
-      repos.flatMap(_.outputModsForStage(stageName).split(","))
+  def outputModsForStage(stageName: String): Seq[String] =
+      datasetRepositories.values.toSeq.flatMap(_.outputModsForStage(stageName).split(","))
 
   /** Output modules */
-  def modulesToRun(repos: SmvDataSetRepository*): Seq[String] = {
+  def modulesToRun: Seq[String] = {
     val cl = smvConfig.cmdLine
     val directMods: Seq[String] = cl.modsToRun()
-    val stageMods: Seq[String] = cl.stagesToRun().flatMap(outputModsForStage(_, repos:_*))
+    val stageMods: Seq[String] = cl.stagesToRun().flatMap(outputModsForStage)
     val appMods: Seq[String] =
-      if (cl.runAllApp()) stages.stageNames.flatMap(outputModsForStage(_, repos:_*)) else Nil
+      if (cl.runAllApp()) stages.stageNames.flatMap(outputModsForStage) else Nil
 
     (directMods ++ stageMods ++ appMods).filterNot(_.isEmpty)
   }

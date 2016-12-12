@@ -20,9 +20,9 @@ Through the interface you can make the following queries:
 
 * `hasDataSet(modUrn)`       : does it contain the named `SmvDataSet`?
 * `isEphemeral(modUrn)`	     : does the result of the `SmvDataSet` need to be persisted?
-* `dependencies(modUrn)`     : what other datasets does the `SmvDataSet` depend on? (returns a csv of names)
+* `dependencies(modUrn)`     : what other datasets does the `SmvDataSet` depend on? (returns a csv of urns)
 * `datasetHash(modUrn, sup)` : the dataset hash (by default include all its superclasses)
-* `outputModsForStage(stage)`: what are the output modules for a given stage (returns a csv of names)
+* `outputModsForStage(stage)`: what are the output modules for a given stage (returns a csv of urns)
 
 The interface also defines the following operations:
 
