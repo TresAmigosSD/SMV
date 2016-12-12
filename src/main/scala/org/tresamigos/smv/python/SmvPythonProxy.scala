@@ -186,8 +186,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     j_smvApp.runDynamicModule(modUrn)
 
   /** Publish the result of an SmvModule */
-  def publishModule(modUrn: String): Unit =
-    j_smvApp.publishModule(modUrn, publishVersion.get)
+  def publishModule(modFqn: String): Unit =
+    j_smvApp.publishModule(modFqn, publishVersion.get)
 
   def register(id: String, repo: SmvDataSetRepository): Unit =
     j_smvApp.register(id, repo)

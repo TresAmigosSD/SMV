@@ -428,21 +428,22 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
 
   private def persist(repo: SmvDataSetRepository, modUrn: String, hashval: Int, dqm: DQMValidator, df: DataFrame): DataFrame = {
+    val fqn = urn2fqn(modUrn)
     // modules defined in spark shell starts with '$'
-    val persistValidation = !modUrn.startsWith("$")
+    val persistValidation = !fqn.startsWith("$")
     val validator = new ValidationSet(Seq(dqm), persistValidation)
-    if (repo.isEphemeral(modUrn)) {
+    if (repo.isEphemeral(fqn)) {
       val r = dqm.attachTasks(df)
       // no action before this  point
-      validator.validate(r, false, moduleValidPath(modUrn, hashval))
+      validator.validate(r, false, moduleValidPath(fqn, hashval))
       r
     } else {
-      val path = moduleCsvPath(modUrn, hashval)
+      val path = moduleCsvPath(fqn, hashval)
       Try(SmvUtil.readFile(sqlContext, path)).recoverWith { case ex =>
         val r = dqm.attachTasks(df)
         SmvUtil.persist(sqlContext, r, path, genEdd)
         // already had action from persist
-        validator.validate(r, true, moduleValidPath(modUrn, hashval))
+        validator.validate(r, true, moduleValidPath(fqn, hashval))
         Try(SmvUtil.readFile(sqlContext, path))
       }.get
     }
@@ -484,9 +485,11 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /**
    * Publish the result of an SmvModule
    */
-  def publishModule(modUrn: String, version: String): Unit = {
-    val df = runModule(modUrn)
-    val path = publishPath(modUrn, version)
+  def publishModule(modFqn: String, version: String): Unit = {
+    println(s"publishing module ${modFqn}")
+    val df = runModule(modFqn)
+    val path = publishPath(modFqn, version)
+    println(s"publish path is ${path}")
     SmvUtil.publish(sqlContext, df, path, genEdd)
   }
 

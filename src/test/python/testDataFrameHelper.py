@@ -248,10 +248,12 @@ class DfHelperTest(SmvBaseTest):
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
         res = smv._smvEdd(df)
         self.assertEqual(res, """k                    Non-Null Count         2
+k                    Null Count             0
 k                    Min Length             1
 k                    Max Length             1
 k                    Approx Distinct Count  2
 v                    Non-Null Count         2
+v                    Null Count             0
 v                    Average                1.5
 v                    Standard Deviation     0.7071067811865476
 v                    Min                    1.0

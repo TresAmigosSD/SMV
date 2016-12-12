@@ -384,6 +384,10 @@ class SmvPyDataSet(object):
         """
         return cls.__module__ + "." + cls.__name__
 
+    @classmethod
+    def urn(cls):
+        return 'urn:smv:mod:' + cls.name()
+
     def isEphemeral(self):
         """If set to true, the run result of this dataset will not be persisted
         """
@@ -447,6 +451,9 @@ class SmvPyCsvStringData(SmvPyDataSet):
             self.dataStr(),
             False
         )
+
+    def isEphemeral(self):
+        return True
 
     @abc.abstractproperty
     def schemaStr(self):
@@ -515,7 +522,7 @@ class SmvPyModule(SmvPyDataSet):
                 i[dep] = known[dep]
             except:
                 # the values in known are Java DataFrames
-                i[dep] = DataFrame(known[dep.name()], self.smvPy.sqlContext)
+                i[dep] = DataFrame(known[dep.urn()], self.smvPy.sqlContext)
         return self.run(i)
 
 class SmvPyModuleLink(SmvPyModule):
@@ -523,6 +530,10 @@ class SmvPyModuleLink(SmvPyModule):
     """
 
     IsSmvPyModuleLink = True
+
+    @classmethod
+    def urn(cls):
+        return 'urn:smv:link:' + cls.name()
 
     def isEphemeral(self):
         return True
@@ -552,6 +563,7 @@ def SmvPyExtDataSet(refname):
         "refname" : refname
     })
     cls.name = classmethod(lambda klass: ExtDsPrefix + refname)
+    cls.urn = classmethod(lambda klass: 'urn:smv:ext:' + refname)
     PyExtDataSetCache[refname] = cls
     return cls
 
@@ -880,7 +892,7 @@ class PythonDataSetRepository(object):
                     obj = getattr(pymod, n)
                     try:
                         if (obj.IsSmvPyOutput and obj.IsSmvPyModule):
-                            buf.append(obj.name())
+                            buf.append(obj.urn())
                     except AttributeError:
                         continue
         return ','.join(buf)
@@ -893,7 +905,7 @@ class PythonDataSetRepository(object):
             if ds is None:
                 self.notFound(modUrn, "cannot get dependencies")
             else:
-                return ','.join([x.name() for x in ds.requiresDS()])
+                return ','.join([x.urn() for x in ds.requiresDS()])
 
     def getDataFrame(self, modUrn, validator, known):
         ds = self.dsForName(modUrn)
