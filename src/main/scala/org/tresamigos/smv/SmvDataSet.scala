@@ -492,7 +492,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
  * }}}
  * Similar to File/Module, a `dqm()` method can also be overriden in the link
  */
-class SmvModuleLink(outputModule: SmvOutput) extends
+class SmvModuleLink(val outputModule: SmvOutput) extends
     SmvModule(s"Link to ${outputModule.asInstanceOf[SmvDataSet].name}") {
 
   override val urn = LinkDsPrefix + name
@@ -555,12 +555,12 @@ case class SmvExtDataSet(refname: String) extends SmvModule(s"External dataset f
   override val urn = ExtDsPrefix  + refname
   override val isEphemeral = true
   override def requiresDS = app.dependencies(refname) map ( dep =>
-    // if an external dataset in turn depends on its `external`
+    // if an external dataset in turn depends on *its* `external`
     // dataset, look up in native scala repository
     if (isExternalMod(dep))
       app.scalaDataSets.dsForName(dep).get
     else
-      SmvExtDataSet(dep)
+      SmvExtDataSet(urn2fqn(dep))
   )
   override def run(i: runParams) = app.runModule(refname)
 }

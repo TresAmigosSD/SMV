@@ -432,7 +432,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     // modules defined in spark shell starts with '$'
     val persistValidation = !fqn.startsWith("$")
     val validator = new ValidationSet(Seq(dqm), persistValidation)
-    if (repo.isEphemeral(fqn)) {
+    if (repo.isEphemeral(modUrn)) {
       val r = dqm.attachTasks(df)
       // no action before this  point
       validator.validate(r, false, moduleValidPath(fqn, hashval))
