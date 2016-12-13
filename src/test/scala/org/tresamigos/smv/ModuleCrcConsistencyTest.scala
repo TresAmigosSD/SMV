@@ -34,14 +34,11 @@ package smv {
   class ModuleCrcConsistencyTest extends SmvTestUtil {
 
     test("test moduleCrc changed or not") {
-
-      // assert(fixture.Module1.datasetCRC === 2743763818L)
-      assert(fixture.Module1.datasetCRC === 1583326931L)
+      assert(fixture.Module1.datasetCRC === 1274349047L)
     }
 
     test("test moduleCrc on SmvFile"){
-      // assert(fixture.file.datasetCRC === 108332644L)
-      assert(fixture.file.datasetCRC === 2450765395L)
+      assert(fixture.file.datasetCRC === 3184102556L)
     }
   }
 
