@@ -554,7 +554,7 @@ class SmvPyModuleLink(SmvPyModule):
     def run(self, i):
         raise RuntimeError("Cannot run a module link directly")
 
-ExtDsPrefix = "SmvPyExtDataSet."
+ExtDsPrefix = "urn:smv:ext:"
 PyExtDataSetCache = {}
 def SmvPyExtDataSet(refname):
     if refname in PyExtDataSetCache:
@@ -563,7 +563,7 @@ def SmvPyExtDataSet(refname):
         "refname" : refname
     })
     cls.name = classmethod(lambda klass: ExtDsPrefix + refname)
-    cls.urn = classmethod(lambda klass: 'urn:smv:ext:' + refname)
+    cls.urn = classmethod(lambda klass:  ExtDsPrefix + refname)
     PyExtDataSetCache[refname] = cls
     return cls
 
