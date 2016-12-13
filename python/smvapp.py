@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     print("----------------------------------------")
     print("will run/publish the following modules:")
-    mods = j_smv.moduleNames
+    mods = j_smv.moduleNames()
     for name in mods:
         print("   " + name)
 
