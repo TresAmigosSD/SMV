@@ -823,9 +823,6 @@ class PythonDataSetRepository(object):
     def hasDataSet(self, modUrn):
         return self.dsForName(modUrn) is not None
 
-    def isLink(self, modUrn): return False
-    def getLinkTargetName(self, modUrn): return 'should not work'
-
     def isEphemeral(self, modUrn):
         ds = self.dsForName(modUrn)
         if ds is None:

@@ -41,10 +41,6 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
   override def hasDataSet(modUrn: String): Boolean =
     dsForName(modUrn).isDefined
 
-  // TODO: remove methods after python side is ready
-  override def isLink(modUrn: String): Boolean = false
-  override def getLinkTargetName(modUrn: String): String = ???
-
   override def isEphemeral(modUrn: String): Boolean =
     dsForName(modUrn) match {
       case None => notFound(modUrn, "cannot check if the module is ephemeral")

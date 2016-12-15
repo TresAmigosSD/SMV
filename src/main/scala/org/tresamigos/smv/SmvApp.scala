@@ -371,18 +371,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           dependencies(repo, modUrn) foreach runModule
 
           val df = try {
-            if (repo.isLink(modUrn)) {
-              val targetName = repo.getLinkTargetName(modUrn)
-              stages.stageVersionFor(targetName) map { stageVersion =>
-                SmvUtil.readFile(sqlContext, publishPath(targetName, stageVersion), null)
-              } getOrElse runModule(targetName)
-            }
-            else {
-              val dqm = new DQMValidator(repo.getDqm(modUrn))
-              val hashval = hashOfHash(modUrn)
-              val df = repo.getDataFrame(modUrn, dqm, dataframes)
-              persist(repo, modUrn, hashval, dqm, df)
-            }
+            val dqm = new DQMValidator(repo.getDqm(modUrn))
+            val hashval = hashOfHash(modUrn)
+            val df = repo.getDataFrame(modUrn, dqm, dataframes)
+            persist(repo, modUrn, hashval, dqm, df)
           } finally {
             resolveStack.pop()
           }
@@ -413,13 +405,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     findRepoWith(modUrn) match {
       case None => notfound(modUrn)
       case Some(repo) =>
-        if (repo.isLink(modUrn))
-          hashOfHash(repo.getLinkTargetName(modUrn))
-        else
-          dependencies(repo, modUrn).foldLeft(
-            repo.datasetHash(modUrn, true)) { (acc, dep) =>
-            acc + hashOfHash(dep)
-          }.toInt
+        dependencies(repo, modUrn).foldLeft(
+          repo.datasetHash(modUrn, true)) { (acc, dep) =>
+          acc + hashOfHash(dep)
+        }.toInt
     }
 
   private def persist(repo: SmvDataSetRepository, modUrn: String, hashval: Int, dqm: DQMValidator, df: DataFrame): DataFrame = {
@@ -461,15 +450,12 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           dependencies(repo, modUrn) foreach runDynamicModule
 
           dataframes = dataframes - modUrn
-          val df =
-            if (repo.isLink(modUrn))
-              runDynamicModule(repo.getLinkTargetName(modUrn))
-            else {
-              val dqm = new DQMValidator(repo.getDqm(modUrn))
-              val hashval = hashOfHash(modUrn)
-              val df = repo.rerun(modUrn, dqm, dataframes)
-              persist(repo, modUrn, hashval, dqm, df)
-            }
+          val df = {
+            val dqm = new DQMValidator(repo.getDqm(modUrn))
+            val hashval = hashOfHash(modUrn)
+            val df = repo.rerun(modUrn, dqm, dataframes)
+            persist(repo, modUrn, hashval, dqm, df)
+          }
           dataframes = dataframes + (modUrn -> df)
 
           df

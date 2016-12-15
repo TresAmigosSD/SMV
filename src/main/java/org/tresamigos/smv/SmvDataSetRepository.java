@@ -32,17 +32,6 @@ public interface SmvDataSetRepository {
 	boolean hasDataSet(String modUrn);
 
 	/**
-	 * Is the named dataset a link to a published module?
-	 */
-	boolean isLink(String modUrn);
-
-	/**
-	 * Return the name of the target dataset to which a named dataset
-	 * links to; otherwise return an empty string.
-	 */
-	String getLinkTargetName(String modUrn);
-
-	/**
 	 * Does the named dataset need to be persisted?
 	 *
 	 * Input datasets and simple filter and map modules typically don't
