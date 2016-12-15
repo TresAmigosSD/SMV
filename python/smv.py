@@ -517,12 +517,7 @@ class SmvPyModule(SmvPyDataSet):
     def doRun(self, validator, known):
         i = {}
         for dep in self.requiresDS():
-            # temporarily keep the old code working
-            try:
-                i[dep] = known[dep]
-            except:
-                # the values in known are Java DataFrames
-                i[dep] = DataFrame(known[dep.urn()], self.smvPy.sqlContext)
+            i[dep] = DataFrame(known[dep.urn()], self.smvPy.sqlContext)
         return self.run(i)
 
 class SmvPyModuleLink(SmvPyModule):
@@ -560,15 +555,19 @@ def SmvPyExtDataSet(refname):
     if refname in PyExtDataSetCache:
         return PyExtDataSetCache[refname]
     cls = type("SmvPyExtDataSet", (SmvPyDataSet,), {
-        "refname" : refname
+        "refname" : refname,
+        "smvPy"   : smvPy,
+        "isEphemeral": lambda self: true,
+        "requiresDS": lambda self: \
+            [smvPy.repo.dsForName(i) if i.startswith(ExtDsPrefix) \
+             else SmvPyExtDataSet(i) for i in \
+             smvPy.j_smvApp.dependencies(refname).mkString(",").split(',')],
+        "doRun"   : lambda self, validator, known: smvPy.runModule(refname)
     })
     cls.name = classmethod(lambda klass: ExtDsPrefix + refname)
     cls.urn = classmethod(lambda klass:  ExtDsPrefix + refname)
     PyExtDataSetCache[refname] = cls
     return cls
-
-def _is_external(modUrn):
-    return modUrn.startswith(ExtDsPrefix)
 
 class SmvGroupedData(object):
     """Wrapper around the Scala SmvGroupedData"""
@@ -771,7 +770,7 @@ class PythonDataSetRepository(object):
         """
         if modUrn in self.pythonDataSets:
             return self.pythonDataSets[modUrn]
-        elif self.isExternal(modUrn):
+        elif modUrn.startswith(ExtDsPrefix):
             ret = SmvPyExtDataSet(modUrn[len(ExtDsPrefix):])
         else:
             fqn = self.smvPy.j_smvPyClient.urn2fqn(modUrn)
@@ -791,7 +790,7 @@ class PythonDataSetRepository(object):
         """Reload the module by its fully qualified name, replace the old
         instance with a new one from the new definnition.
         """
-        if self.isExternal(modUrn):
+        if modUrn.startswith(ExtDsPrefix):
             return self.dsForName(modUrn)
 
         lastdot = modUrn.rfind('.')
@@ -819,17 +818,8 @@ class PythonDataSetRepository(object):
     def hasDataSet(self, modUrn):
         return self.dsForName(modUrn) is not None
 
-    def isExternal(self, modUrn):
-        return _is_external(modUrn)
-
-    def getExternalDsName(self, modUrn):
-        ds = self.dsForName(modUrn)
-        if ds is None:
-            self.notFound(modUrn, "cannot get external dataset name")
-        elif self.isExternal(modUrn):
-            return ds.refname
-        else:
-            return ''
+    def isExternal(self, modUrn): return False
+    def getExternalDsName(self, modUrn): return ''
 
     def isLink(self, modUrn):
         ds = self.dsForName(modUrn)
@@ -849,14 +839,11 @@ class PythonDataSetRepository(object):
             return ds.target().name()
 
     def isEphemeral(self, modUrn):
-        if self.isExternal(modUrn):
-            raise ValueError("Cannot know if {0} is ephemeral because it is external".format(modUrn))
+        ds = self.dsForName(modUrn)
+        if ds is None:
+            self.notFound(modUrn, "cannot get isEphemeral")
         else:
-            ds = self.dsForName(modUrn)
-            if ds is None:
-                self.notFound(modUrn, "cannot get isEphemeral")
-            else:
-                return ds.isEphemeral()
+            return ds.isEphemeral()
 
     def getDqm(self, modUrn):
         ds = self.dsForName(modUrn)
@@ -898,14 +885,11 @@ class PythonDataSetRepository(object):
         return ','.join(buf)
 
     def dependencies(self, modUrn):
-        if self.isExternal(modUrn):
-            return ''
+        ds = self.dsForName(modUrn)
+        if ds is None:
+            self.notFound(modUrn, "cannot get dependencies")
         else:
-            ds = self.dsForName(modUrn)
-            if ds is None:
-                self.notFound(modUrn, "cannot get dependencies")
-            else:
-                return ','.join([x.urn() for x in ds.requiresDS()])
+            return ','.join([x.urn() for x in ds.requiresDS()])
 
     def getDataFrame(self, modUrn, validator, known):
         ds = self.dsForName(modUrn)
