@@ -32,17 +32,6 @@ public interface SmvDataSetRepository {
 	boolean hasDataSet(String modUrn);
 
 	/**
-	 * Is the named dataset external?
-	 */
-	boolean isExternal(String modUrn);
-
-	/**
-	 * Return the name of the external dataset if the name links to one;
-	 * otherwise return an empty string.
-	 */
-	String getExternalDsName(String modUrn);
-
-	/**
 	 * Is the named dataset a link to a published module?
 	 */
 	boolean isLink(String modUrn);

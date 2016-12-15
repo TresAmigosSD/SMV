@@ -42,8 +42,6 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
     dsForName(modUrn).isDefined
 
   // TODO: remove methods after python side is ready
-  override def isExternal(modUrn: String): Boolean = false
-  override def getExternalDsName(modUrn: String): String = ???
   override def isLink(modUrn: String): Boolean = false
   override def getLinkTargetName(modUrn: String): String = ???
 

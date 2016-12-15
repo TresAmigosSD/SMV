@@ -818,9 +818,6 @@ class PythonDataSetRepository(object):
     def hasDataSet(self, modUrn):
         return self.dsForName(modUrn) is not None
 
-    def isExternal(self, modUrn): return False
-    def getExternalDsName(self, modUrn): return ''
-
     def isLink(self, modUrn):
         ds = self.dsForName(modUrn)
         if ds is None:
