@@ -228,6 +228,10 @@ class SmvPy(object):
             self.repo.reloadDs(fqn)
         return DataFrame(self.j_smvPyClient.runDynamicModule(fqn), self.sqlContext)
 
+    def urn2fqn(self, urnOrFqn):
+        """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged"""
+        return self.j_smvPyClient.urn2fqn(urnOrFqn)
+
     def publishModule(self, fqn):
         """Publish a Scala or a Python SmvModule by its FQN
         """
@@ -547,7 +551,8 @@ class SmvPyModuleLink(SmvPyModule):
         return (dephash + super(SmvPyModuleLink, self).datasetHash(includeSuperClass)) & 0x7fffffff
 
     def run(self, i):
-        raise RuntimeError("Cannot run a module link directly")
+        res = self.smvPy.j_smvPyClient.readPublishedData(self.target().name())
+        return res.get() if res.isDefined() else self.smvPy.runModule(self.target().urn())
 
 ExtDsPrefix = "urn:smv:ext:"
 PyExtDataSetCache = {}
@@ -773,7 +778,7 @@ class PythonDataSetRepository(object):
         elif modUrn.startswith(ExtDsPrefix):
             ret = SmvPyExtDataSet(modUrn[len(ExtDsPrefix):])
         else:
-            fqn = self.smvPy.j_smvPyClient.urn2fqn(modUrn)
+            fqn = self.smvPy.urn2fqn(modUrn)
             try:
                 ret = for_name(fqn)(self.smvPy)
             except AttributeError: # module not found is anticipated
@@ -818,22 +823,8 @@ class PythonDataSetRepository(object):
     def hasDataSet(self, modUrn):
         return self.dsForName(modUrn) is not None
 
-    def isLink(self, modUrn):
-        ds = self.dsForName(modUrn)
-        if ds is None:
-            self.notFound(modUrn, "cannot test if it is link")
-        else:
-            try:
-                return ds.IsSmvPyModuleLink
-            except:
-                return False
-
-    def getLinkTargetName(self, modUrn):
-        ds = self.dsForName(modUrn)
-        if ds is None:
-            self.notFound(modUrn, "cannot get link target")
-        else:
-            return ds.target().name()
+    def isLink(self, modUrn): return False
+    def getLinkTargetName(self, modUrn): return 'should not work'
 
     def isEphemeral(self, modUrn):
         ds = self.dsForName(modUrn)
