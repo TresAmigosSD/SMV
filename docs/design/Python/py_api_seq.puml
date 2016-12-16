@@ -1,0 +1,30 @@
+@startuml
+title simple python module resolution and run
+
+Actor User
+Participant SmvApp as app
+Participant SmvPythonRepo as repo
+Participant SmvModuleProxy as prox
+Participant SmvPyModule as pymod
+'Participant SmvApp
+'Participant SmvApp
+
+User -> app : findDataSet(fqn)
+app -> app : findLocalDS(fqn)
+app -> app : findExternalDS(fqn)
+activate app
+  app -> repo : findDataSet(fqn)
+  repo -> pymod : <<create>>
+  activate pymod
+  repo --> app : mod :\nSmvJavaModInt
+  app -> prox : <<create>>
+  activate prox
+  app --> User : DataSet :\nSmvModuleProxy
+deactivate app
+
+User -> prox : run
+prox -> pymod : run
+pymod --> prox : res
+prox --> User : res
+
+@enduml

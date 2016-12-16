@@ -1,0 +1,50 @@
+@startuml
+
+hide empty methods
+hide empty fields
+hide circle
+
+package Scala {
+  class SmvApp {
+    findDataSet(fqn:String) : SmvDataSet
+  }
+  class SmvOutput
+  class SmvDataSet
+  class Scala.SmvJavaModuleInterface {
+    requiresDS()
+    hash()
+    run()
+    ???()
+  }
+
+  SmvApp o-- Python.SmvPythonRepo
+  SmvApp *-- "*" SmvDataSet
+
+  class SmvModuleLink extends SmvModule
+  SmvModuleLink *-- SmvOutput
+
+  class SmvModule extends SmvDataSet
+
+  class SmvModuleProxy extends SmvModule
+  SmvModuleProxy o-- Scala.SmvJavaModuleInterface
+
+  class SmvExtModule extends SmvDataSet {
+    ctor(fqn: String)
+    ctor(proxy: SmvModuleProxy)
+  }
+  SmvExtModule *-- SmvModuleProxy
+
+  class SmvExtOutputModule extends SmvExtModule
+  SmvExtOutputModule -U-|> SmvOutput
+}
+
+package Python {
+  class SmvPythonRepo
+  class SmvPyDataSet
+  class SmvPyModule extends Scala.SmvJavaModuleInterface
+  SmvPyModule -U-|> SmvPyDataSet
+
+  SmvPythonRepo *-- "*" SmvPyDataSet : "cache"
+}
+
+@enduml
