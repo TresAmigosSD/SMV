@@ -15,6 +15,10 @@ RUN wget http://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     cd $SMV_HOME &&\
     mvn install -DskipTests &&\
     sbt publish-local &&\
+    cd /projects &&\
+    smv-init MyApp com.mycompany.myapp &&\
+    cd /projects/MyApp &&\
+    sbt assembly &&\
     rm -rf /home/smv/.ivy2/cache/* &&\
     find /home/smv/.m2/repository -mindepth 1 \! -path '*tresamigos*' -exec rm -rf \{\} + &&\ 
     rm -rf $SMV_HOME/target
