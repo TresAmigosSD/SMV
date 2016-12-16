@@ -6,20 +6,13 @@ rsync -r /home/smv/.ivy2/* /projects/.ivy2
 rsync -r /home/smv/.m2/* /projects/.m2
 
 function start_server() {
-    cd /projects
-    if [ `ls | wc -l` = 0 ]; then
-        # if no project is mounted, create a sample app and start the server
-        smv-init MyApp com.mycompany.myproj
-        cd MyApp/
-        sbt assembly
-        smv-server
-    else
-        # if a project is found, start the server directly
-        # ${PROJECT_DIR} is the project path name
-        cd "${PROJECT_DIR}"
-        sbt assembly
-        smv-server
+    # ${PROJECT_DIR} is the pre-built project path name, "MyApp" by default
+    if [ -z ${PROJECT_DIR+x} ]; then
+        echo ">> No project defined. Start to use sample app..."
+        PROJECT_DIR="MyApp"
     fi
+    cd /projects/${PROJECT_DIR}
+    smv-server
 }
 
 # if no params supplied, start bash
