@@ -1,17 +1,27 @@
 @startuml
 
+title SMV Python integration class diagram
+
 hide empty methods
 hide empty fields
 hide circle
 
 package Scala {
   class SmvApp {
-    findDataSet(fqn:String) : SmvDataSet
+    DataSetFactory(fqn: String) : Option[SmvDataSet]
+    findExternalModule(fqn: String) : Option[SmvExtModuleInt]
+    findExternalInput(fqn: String) : Option[SmvExtInputInt]
   }
   class SmvOutput
   class SmvDataSet
-  class Scala.SmvJavaModuleInterface {
+  class SmvInputDataSet extends SmvDataSet
+  class Scala.SmvExtModuleInt <<Java>> {
     requiresDS()
+    hash()
+    run()
+    ???()
+  }
+  class Scala.SmvExtInputInt <<Java>> {
     hash()
     run()
     ???()
@@ -25,26 +35,36 @@ package Scala {
 
   class SmvModule extends SmvDataSet
 
-  class SmvModuleProxy extends SmvModule
-  SmvModuleProxy o-- Scala.SmvJavaModuleInterface
-
-  class SmvExtModule extends SmvDataSet {
-    ctor(fqn: String)
-    ctor(proxy: SmvModuleProxy)
+  class SmvExtModule extends SmvModule {
+    ctor(mod: SmvExtModuleInt)
   }
-  SmvExtModule *-- SmvModuleProxy
+  SmvExtModule o-- Scala.SmvExtModuleInt
+
+  class SmvExtInput extends SmvInputDataSet {
+    ctor(in: SmvExtInputInt)
+  }
+  SmvExtInput o-- Scala.SmvExtInputInt
 
   class SmvExtOutputModule extends SmvExtModule
   SmvExtOutputModule -U-|> SmvOutput
 }
 
 package Python {
-  class SmvPythonRepo
+  class SmvPythonRepo {
+    findModule(fqn)
+    findInput(fqn)
+  }
   class SmvPyDataSet
-  class SmvPyModule extends Scala.SmvJavaModuleInterface
+
+  class SmvPyModule extends Scala.SmvExtModuleInt
   SmvPyModule -U-|> SmvPyDataSet
 
+  class SmvPyInputDataSet extends Scala.SmvExtInputInt
+  SmvPyInputDataSet -U-|> SmvPyDataSet
+
   SmvPythonRepo *-- "*" SmvPyDataSet : "cache"
+
+  SmvPyCsvFile -U-|> SmvPyInputDataSet
 }
 
 @enduml

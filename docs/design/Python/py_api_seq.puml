@@ -3,28 +3,31 @@ title simple python module resolution and run
 
 Actor User
 Participant SmvApp as app
+Participant SmvExtModule as extmod
 Participant SmvPythonRepo as repo
-Participant SmvModuleProxy as prox
 Participant SmvPyModule as pymod
-'Participant SmvApp
-'Participant SmvApp
 
-User -> app : findDataSet(fqn)
-app -> app : findLocalDS(fqn)
-app -> app : findExternalDS(fqn)
+User -> app : DataSetFactory(fqn)
 activate app
-  app -> repo : findDataSet(fqn)
-  repo -> pymod : <<create>>
-  activate pymod
-  repo --> app : mod :\nSmvJavaModInt
-  app -> prox : <<create>>
-  activate prox
-  app --> User : DataSet :\nSmvModuleProxy
+  app -> app : findLocalDS(fqn)
+  app -> app : findExternalInput(fqn)
+  app -> app : findExternalModule(fqn)
+  activate app
+  app -> repo : findModule(fqn)
+    activate repo
+      repo -> pymod : <<create>>
+      activate pymod
+      repo --> app : mod :\nSmvExtModuleInt
+    deactivate repo
+  deactivate app
+  app -> extmod : <<create>>
+  activate extmod
+  app --> User : DataSet :\nSmvExtModule
 deactivate app
 
-User -> prox : run
-prox -> pymod : run
-pymod --> prox : res
-prox --> User : res
+User -> extmod : run
+extmod -> pymod : run
+pymod --> extmod : res
+extmod --> User : res
 
 @enduml
