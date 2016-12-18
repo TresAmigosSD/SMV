@@ -16,6 +16,7 @@ import os
 import fnmatch
 import re
 import glob
+import json
 from flask import Flask, request, jsonify
 from smv import smvPy
 import compileall
@@ -206,6 +207,8 @@ def update_module_code():
 
     if (module_file_map.has_key(module_name)):
         file_name = module_file_map[module_name]
+        module_code = json.loads(module_code)
+        module_code = [line.encode('utf-8') for line in module_code]
         with open(file_name, 'wb') as f:
             f.writelines(os.linesep.join(module_code))
         return JOB_SUCCESS
