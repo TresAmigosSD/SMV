@@ -139,6 +139,7 @@ def get_module_code_file_mapping():
 # ---------- API Definition ---------- #
 
 MODULE_NOT_PROVIDED_ERR = 'ERROR: No module name is provided!'
+CODE_NOT_PROVIDED_ERR = 'ERROR: No module code is provided!'
 MODULE_NOT_FOUND_ERR = 'ERROR: Job failed to run. Please check whether the module name is valid!'
 JOB_SUCCESS = 'SUCCESS: Job finished.'
 
@@ -179,6 +180,37 @@ def get_module_code():
             res = f.readlines()
         return jsonify(res=res)
     except:
+        raise ValueError(MODULE_NOT_FOUND_ERR)
+
+@app.route("/api/update_module_code", methods = ['POST'])
+def update_module_code():
+    '''
+    body:
+        name = 'xxx' (fqn)
+        code = ['line1', 'line2', ...]
+    function: update the module's code
+    '''
+    try:
+        module_name = request.form['name']
+    except:
+        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+
+    try:
+        module_code = request.form['code']
+    except:
+        raise ValueError(CODE_NOT_PROVIDED_ERR)
+
+    global module_file_map
+    if not module_file_map:
+        module_file_map = get_module_code_file_mapping()
+
+    if (module_file_map.has_key(module_name)):
+        file_name = module_file_map[module_name]
+        with open(file_name, 'wb') as f:
+            f.writelines(os.linesep.join(module_code))
+        return JOB_SUCCESS
+    else:
+        # TODO: deal with new module
         raise ValueError(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/get_sample_output", methods = ['POST'])
