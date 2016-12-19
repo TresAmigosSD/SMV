@@ -58,7 +58,7 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
 
   override def outputModsForStage(stageName: String): String = {
     val stage = SmvApp.app.smvConfig.stages.findStage(stageName)
-    stage.allOutputModules.map(_.name).mkString(",")
+    stage.allOutputModules.map(_.fqn).mkString(",")
   }
 
   override def dependencies(modUrn: String): String =

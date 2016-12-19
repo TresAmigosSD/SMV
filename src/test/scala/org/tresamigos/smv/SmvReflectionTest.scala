@@ -8,7 +8,7 @@ class SmvReflectionTest extends SparkTestUtil {
 
     assertUnorderedSeqEqual(mods,
       Seq(org.tresamigos.smv.smvAppTestPkg1.X, org.tresamigos.smv.smvAppTestPkg1.Y))(
-        Ordering.by[SmvModule, String](_.name))
+        Ordering.by[SmvModule, String](_.fqn))
 
 
     // TODO: CLEANUP: this doesn't belong here

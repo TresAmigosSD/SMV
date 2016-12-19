@@ -126,7 +126,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       v <- violations
       header = s"${indent}${v.description}"
     } yield
-      (header +: v.components.map(m => s"${indent}${indent}${m.name}")).mkString("\n")
+      (header +: v.components.map(m => s"${indent}${indent}${m.fqn}")).mkString("\n")
     ).mkString("\n")
 
   /**
@@ -151,7 +151,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     val resRdd = try {
       val violations = checkDependencyRules(ds)
       if (!violations.isEmpty) {
-        println(s"""Module ${ds.name} violates dependency rules""")
+        println(s"""Module ${ds.fqn} violates dependency rules""")
         println(mkViolationString(violations))
 
         if (!smvConfig.permitDependencyViolation)
@@ -194,17 +194,17 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   lazy val packagesPrefix = {
     val m = allAppModules
     if (m.isEmpty) ""
-    else m.map(_.name).reduce{(l,r) =>
+    else m.map(_.fqn).reduce{(l,r) =>
         (l.split('.') zip r.split('.')).
           collect{ case (a, b) if (a==b) => a}.mkString(".")
       } + "."
   }
 
   /** clean name in graph output */
-  private[smv] def moduleNameForPrint(ds: SmvDataSet) = ds.name.stripPrefix(packagesPrefix)
+  private[smv] def moduleNameForPrint(ds: SmvDataSet) = ds.fqn.stripPrefix(packagesPrefix)
 
   private def genDotGraph(module: SmvModule) = {
-    val pathName = s"${module.name}.dot"
+    val pathName = s"${module.fqn}.dot"
     val graphString = new graph.SmvGraphUtil(stages).createGraphvisCode(Seq(module))
     SmvReportIO.saveLocalReport(graphString, pathName)
   }
@@ -317,7 +317,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     deleteOutputModules()
 
     smvConfig.modulesToRun().foreach { module =>
-      val modResult = runModule(module.name)
+      val modResult = runModule(module.fqn)
 
       // if module was ephemeral, then it was not saved during graph execution and we need
       // to persist it here explicitly.
@@ -422,6 +422,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       validator.validate(r, false, moduleValidPath(fqn, hashval))
       r
     } else {
+      // TODO: need to get fnpart for the module
       val path = moduleCsvPath(fqn, hashval)
       Try(SmvUtil.readFile(sqlContext, path)).recoverWith { case ex =>
         val r = dqm.attachTasks(df)
@@ -498,7 +499,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     if (mods.nonEmpty) {
       println("Modules to run/publish")
       println("----------------------")
-      println(mods.map(_.name).mkString("\n"))
+      println(mods.map(_.fqn).mkString("\n"))
       println("----------------------")
 
       println()
@@ -507,9 +508,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       all.foreach { m =>
         val violations = checkDependencyRules(m)
         if (violations.isEmpty)
-          println(s"..module ${m.name} .... pass")
+          println(s"..module ${m.fqn} .... pass")
         else {
-          println(s"..module ${m.name} violates dependency rules ... FAIL")
+          println(s"..module ${m.fqn} violates dependency rules ... FAIL")
           println(mkViolationString(violations, "...."))
         }
       }
