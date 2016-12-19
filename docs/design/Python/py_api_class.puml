@@ -8,7 +8,7 @@ hide circle
 
 package Scala {
   class SmvApp {
-    DataSetFactory(fqn: String) : Option[SmvDataSet]
+    DataSetFactory(urn: String) : Option[SmvDataSet]
     findExternalModule(fqn: String) : Option[SmvExtModuleInt]
     findExternalInput(fqn: String) : Option[SmvExtInputInt]
   }
@@ -45,8 +45,8 @@ package Scala {
   }
   SmvExtInput o-- Scala.SmvExtInputInt
 
-  class SmvExtOutputModule extends SmvExtModule
-  SmvExtOutputModule -U-|> SmvOutput
+  class SmvExtModuleLink extends SmvModuleLink
+  SmvExtModuleLink *-- SmvExtModule
 }
 
 package Python {
