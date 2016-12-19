@@ -72,7 +72,7 @@ private[smv] trait SmvPackageManager {
   /** remove package name from class FQN
    *  e.g. a.b.input.c -> input.c
    **/
-  def datasetBaseName(ds: SmvDataSet) = FQN.removePrefix(ds.name, fqnPrefix)
+  def datasetBaseName(ds: SmvDataSet) = FQN.removePrefix(ds.fqn, fqnPrefix)
 
 }
 
@@ -107,12 +107,12 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
     (for {
       st <- stages
       ds <- st.allDatasets
-    } yield (ds.name, st)).toMap
+    } yield (ds.fqn, st)).toMap
 
   /**
    * Find the stage that a given dataset belongs to.
    */
-  def findStageForDataSet(ds: SmvDataSet) : Option[SmvStage] = dsname2stage.get(ds.name)
+  def findStageForDataSet(ds: SmvDataSet) : Option[SmvStage] = dsname2stage.get(ds.fqn)
 
   /**
    * Since `findStageForDataSet` uses the pre-built map, for dynamically loaded
@@ -128,7 +128,7 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
     inferStageNameFromDsName(dsname).flatMap(findStage(_).version)
 
   def inferStageForDataSet(ds: SmvDataSet) : Option[SmvStage] =
-    inferStageNameFromDsName(ds.name) map findStage
+    inferStageNameFromDsName(ds.fqn) map findStage
 
   override lazy val predecessors: Map[SmvDataSet, Seq[SmvDataSet]] =
     allDatasets.map{

@@ -237,7 +237,7 @@ private[smv] class SmvGraphUtil(stages: SmvStages) {
   }
 
   private def _listInStage(d: Seq[SmvDataSet], prefix: String = ""): Seq[String] = {
-    val dss = d.sortBy(_.name)
+    val dss = d.sortBy(_.fqn)
     dss.map{ds => prefix + baseNameWithFlag(ds)}
   }
 

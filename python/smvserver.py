@@ -16,6 +16,7 @@ import os
 import fnmatch
 import re
 import glob
+import json
 from flask import Flask, request, jsonify
 from smv import smvPy
 import compileall
@@ -139,6 +140,7 @@ def get_module_code_file_mapping():
 # ---------- API Definition ---------- #
 
 MODULE_NOT_PROVIDED_ERR = 'ERROR: No module name is provided!'
+CODE_NOT_PROVIDED_ERR = 'ERROR: No module code is provided!'
 MODULE_NOT_FOUND_ERR = 'ERROR: Job failed to run. Please check whether the module name is valid!'
 JOB_SUCCESS = 'SUCCESS: Job finished.'
 
@@ -177,8 +179,42 @@ def get_module_code():
         file_name = module_file_map[module_name]
         with open(file_name, 'rb') as f:
             res = f.readlines()
+        res = [line.rstrip() for line in res]
         return jsonify(res=res)
     except:
+        raise ValueError(MODULE_NOT_FOUND_ERR)
+
+@app.route("/api/update_module_code", methods = ['POST'])
+def update_module_code():
+    '''
+    body:
+        name = 'xxx' (fqn)
+        code = ['line1', 'line2', ...]
+    function: update the module's code
+    '''
+    try:
+        module_name = request.form['name']
+    except:
+        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+
+    try:
+        module_code = request.form['code']
+    except:
+        raise ValueError(CODE_NOT_PROVIDED_ERR)
+
+    global module_file_map
+    if not module_file_map:
+        module_file_map = get_module_code_file_mapping()
+
+    if (module_file_map.has_key(module_name)):
+        file_name = module_file_map[module_name]
+        module_code = json.loads(module_code)
+        module_code = [line.encode('utf-8') for line in module_code]
+        with open(file_name, 'wb') as f:
+            f.writelines(os.linesep.join(module_code))
+        return JOB_SUCCESS
+    else:
+        # TODO: deal with new module
         raise ValueError(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/get_sample_output", methods = ['POST'])

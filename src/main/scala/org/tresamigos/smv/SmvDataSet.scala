@@ -23,9 +23,9 @@ import dqm._
 import scala.collection.JavaConversions._
 import scala.util.Try
 
-/** Allows stackable module naming, such as with Using[SmvRunConfig] */
-trait HasName {
-  def name: String
+/** A module's file name part is stackable, e.g. with Using[SmvRunConfig] */
+trait FilenamePart {
+  def fnpart: String
 }
 
 /**
@@ -34,13 +34,23 @@ trait HasName {
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result DataFrame.
  */
-abstract class SmvDataSet extends HasName {
+abstract class SmvDataSet extends FilenamePart {
 
   lazy val app: SmvApp = SmvApp.app
   private var rddCache: DataFrame = null
 
-  override def name = this.getClass().getName().filterNot(_=='$')
-  val urn: String = ModDsPrefix + name
+  /**
+   * The FQN of an SmvDataSet is its classname for Scala implementations.
+   *
+   * Scala proxies for implementations in other languages must
+   * override this to name the proxied FQN.
+   */
+  def fqn: String = this.getClass().getName().filterNot(_=='$')
+
+  /** Names the persisted file for the result of this SmvDataSet */
+  override def fnpart = fqn
+
+  val urn: String = ModDsPrefix + fqn
   def description(): String
 
   /** modules must override to provide set of datasets they depend on. */
@@ -130,7 +140,7 @@ abstract class SmvDataSet extends HasName {
   /** The "versioned" module file base name. */
   private def versionedBasePath(prefix: String): String = {
     val verHex = f"${hashOfHash}%08x"
-    s"""${app.smvConfig.outputDir}/${prefix}${name}_${verHex}"""
+    s"""${app.smvConfig.outputDir}/${prefix}${fqn}_${verHex}"""
   }
 
   /** Returns the path for the module's csv output */
@@ -199,7 +209,7 @@ abstract class SmvDataSet extends HasName {
   }
 
   /** path of published data for a given version. */
-  private def publishPath(version: String) = s"${app.smvConfig.publishDir}/${version}/${name}.csv"
+  private def publishPath(version: String) = s"${app.smvConfig.publishDir}/${version}/${fqn}.csv"
 
   /**
    * Publish the current module data to the publish directory.
@@ -493,9 +503,9 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
  * Similar to File/Module, a `dqm()` method can also be overriden in the link
  */
 class SmvModuleLink(val outputModule: SmvOutput) extends
-    SmvModule(s"Link to ${outputModule.asInstanceOf[SmvDataSet].name}") {
+    SmvModule(s"Link to ${outputModule.asInstanceOf[SmvDataSet].fqn}") {
 
-  override val urn = LinkDsPrefix + name
+  override val urn = LinkDsPrefix + fqn
 
   private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
@@ -616,7 +626,7 @@ trait SmvRunConfig
 /**
  * SmvDataSet that can be configured to return different DataFrames.
  */
-trait Using[+T <: SmvRunConfig] extends HasName {
+trait Using[+T <: SmvRunConfig] extends FilenamePart {
   self: SmvDataSet =>
 
   lazy val confObjName = self.app.smvConfig.runConfObj
@@ -636,8 +646,8 @@ trait Using[+T <: SmvRunConfig] extends HasName {
   }
 
   // Configurable SmvDataSet has the configuration object appended to its name
-  abstract override def name = {
+  abstract override def fnpart = {
     val confObjStr = confObjName.get
-    super.name + '-' + confObjStr.substring(1 + confObjStr.lastIndexOf('.'))
+    super.fnpart + '-' + confObjStr.substring(1 + confObjStr.lastIndexOf('.'))
   }
 }

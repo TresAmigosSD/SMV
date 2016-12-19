@@ -404,7 +404,7 @@ class SmvPyCsvFile(SmvPyDataSet):
     def __init__(self, smvPy):
         super(SmvPyCsvFile, self).__init__(smvPy)
         self._smvCsvFile = smvPy.j_smvPyClient.smvCsvFile(
-            self.name() + "_" + self.version(), self.path(), self.csvAttr(),
+            self.name(), self.path(), self.csvAttr(),
             self.forceParserCheck(), self.failAtParsingError())
 
     def description(self):
