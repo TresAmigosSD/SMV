@@ -199,7 +199,7 @@ object ShellCmd {
    **/
   def ddf(fqn: String) = {
     val cl = getClass.getClassLoader
-    val ds = SmvApp.app.dsForName(fqn, cl)
+    val ds = SmvApp.app.scalaDsForName(fqn, cl)
     val message = hotdeployIfCapable(ds, cl)
     println(message) // The message will not show in Pyshell
     

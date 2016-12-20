@@ -182,13 +182,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * instances of the same module loaded at different times.
    */
   def dynamicResolveRDD(urn: String, parentClassLoader: ClassLoader) =
-    resolveRDD(dsForName(urn, parentClassLoader))
+    resolveRDD(scalaDsForName(urn, parentClassLoader))
 
-  /** Looks up an SmvDataSet by its fully-qualified name */
-  def dsForName(urn: String, parentClassLoader: ClassLoader) = {
+  /** Looks up an Scala SmvDataSet by its fully-qualified name */
+  def scalaDsForName(fqn: String, parentClassLoader: ClassLoader) = {
     val cl = SmvClassLoader(smvConfig, parentClassLoader)
     val ref = new SmvReflection(cl)
-    ref.objectNameToInstance[SmvDataSet](urn2fqn(urn))
+    ref.objectNameToInstance[SmvDataSet](urn2fqn(fqn))
   }
 
   lazy val packagesPrefix = {
