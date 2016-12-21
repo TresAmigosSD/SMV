@@ -179,7 +179,11 @@ def get_module_code():
         file_name = module_file_map[module_name]
         with open(file_name, 'rb') as f:
             res = f.readlines()
-        res = [line.rstrip() for line in res]
+        file_content = [line.rstrip() for line in res]
+        res = {
+            'fileName': file_name,
+            'fileContent': file_content,
+        }
         return jsonify(res=res)
     except:
         raise ValueError(MODULE_NOT_FOUND_ERR)
