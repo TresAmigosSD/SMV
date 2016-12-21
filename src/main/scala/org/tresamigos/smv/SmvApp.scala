@@ -24,7 +24,7 @@ import org.apache.spark.{SparkContext, SparkConf}
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
-import scala.util.Try
+import scala.util.{Try, Success, Failure}
 
 /**
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
@@ -183,6 +183,27 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   def dynamicResolveRDD(urn: String, parentClassLoader: ClassLoader) =
     resolveRDD(scalaDsForName(urn, parentClassLoader))
+
+  /** Factory method to look up any SmvDataSet by its urn */
+  def dsForName(urn: String, parentClassLoader: ClassLoader = getClass.getClassLoader): SmvDataSet =
+    Try(scalaDsForName(urn, parentClassLoader)) match {
+      case Success(ds) => ds
+      case Failure(_) =>
+        if (isLink(urn)){
+          val fqn = urn2fqn(urn)
+          dsForName(fqn, parentClassLoader) match {
+            // TODO: check that the external module is Output
+            case x: SmvExtModule => SmvExtModuleLink(fqn)
+            case x: SmvDataSet with SmvOutput => new SmvModuleLink(x)
+            case x => throw new SmvRuntimeException(s"Module [${fqn}] is not an SmvOutput module: ${x}")
+          }
+        }
+        else
+          findRepoWith(urn) match {
+            case Some(repo) => SmvExtModule(urn)
+            case None => notfound(urn)
+          }
+    }
 
   /** Looks up an Scala SmvDataSet by its fully-qualified name */
   def scalaDsForName(fqn: String, parentClassLoader: ClassLoader) = {
@@ -356,8 +377,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       return null
     else if (dataframes.contains(modUrn))
       dataframes(modUrn)
-    else if (!modUrn.startsWith(UrnSmvNs))
-      runModule(ModDsPrefix + modUrn)
     else if (resolveStack contains modUrn)
       throw new IllegalStateException(s"cycle found while resolving ${modUrn}: " + resolveStack.mkString(","))
     else {

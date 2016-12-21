@@ -390,7 +390,7 @@ class SmvPyDataSet(object):
 
     @classmethod
     def urn(cls):
-        return 'urn:smv:mod:' + cls.name()
+        return cls.name()
 
     def isEphemeral(self):
         """If set to true, the run result of this dataset will not be persisted
@@ -532,7 +532,7 @@ class SmvPyModuleLink(SmvPyModule):
 
     @classmethod
     def urn(cls):
-        return 'urn:smv:link:' + cls.name()
+        return 'link:' + cls.name()
 
     def isEphemeral(self):
         return True

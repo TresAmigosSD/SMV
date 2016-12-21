@@ -50,7 +50,7 @@ abstract class SmvDataSet extends FilenamePart {
   /** Names the persisted file for the result of this SmvDataSet */
   override def fnpart = fqn
 
-  val urn: String = ModDsPrefix + fqn
+  val urn: String = fqn
   def description(): String
 
   /** modules must override to provide set of datasets they depend on. */
@@ -505,8 +505,6 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 class SmvModuleLink(val outputModule: SmvOutput) extends
     SmvModule(s"Link to ${outputModule.asInstanceOf[SmvDataSet].fqn}") {
 
-  override val urn = LinkDsPrefix + fqn
-
   private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
   /**
@@ -560,6 +558,7 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
 
 /**
  * Represents a module written in another language.
+ * TODO: remove SmvExtDataSet after refactor
  */
 case class SmvExtDataSet(refname: String) extends SmvModule(s"External dataset for ${refname}") {
   override val urn = ExtDsPrefix  + refname
@@ -573,6 +572,28 @@ case class SmvExtDataSet(refname: String) extends SmvModule(s"External dataset f
       SmvExtDataSet(urn2fqn(dep))
   )
   override def run(i: runParams) = app.runModule(refname)
+}
+
+/**
+ * Represents an external module written in another language.
+ */
+case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${modFqn}") {
+  lazy val repo = app.findRepoWith(modFqn).get
+  // helper method till we can return the Seq directly from Python implementation
+  lazy val depFqns: Seq[String] =
+    repo.dependencies(modFqn).split(',').filterNot(_.isEmpty)
+
+  override val fqn = modFqn
+  override val isEphemeral = true
+  override def requiresDS = depFqns map (app.dsForName(_))
+  override def run(i: runParams) = app.runModule(modFqn)
+  override def datasetHash = repo.datasetHash(modFqn, true)
+  override def createDsDqm = repo.getDqm(modFqn)
+}
+
+/** Link to a external module from another stage */
+case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput) {
+  override val fqn = modFqn
 }
 
 /**
