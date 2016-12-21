@@ -86,7 +86,7 @@ case class SmvHierarchy(
     } else {
       val keyCols = Seq(cols.typeName, cols.valueName)
       val varCols = df.columns.diff(keyCols)
-      raw.renameField(hierCols.nameName -> cols.nameName).select(keptCol.map{s => new Column(s)}: _*)
+      raw.smvRenameField(hierCols.nameName -> cols.nameName).select(keptCol.map{s => new Column(s)}: _*)
     }
   }
 
@@ -101,7 +101,7 @@ case class SmvHierarchy(
     val raw = df.join(mapWithNameAndParent, (
       df(cols.typeName) === mapWithNameAndParent(hierCols.typeName) &&
       df(cols.valueName) === mapWithNameAndParent(hierCols.valueName)
-    ), LeftOuter).renameField(
+    ), LeftOuter).smvRenameField(
       hierCols.nameName -> cols.nameName,
       hierCols.pTypeName -> cols.pTypeName,
       hierCols.pValueName -> cols.pValueName,
