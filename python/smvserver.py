@@ -55,7 +55,7 @@ def read_file_dir(file_dir, limit=999999999):
     for file in glob.glob('%s/part-*' % file_dir):
         with open(file, 'rb') as readfile:
             for line in readfile.readlines():
-                lines.append(line)
+                lines.append(line.rstrip())
                 if len(lines) >= limit:
                     break
         if len(lines) >= limit:
