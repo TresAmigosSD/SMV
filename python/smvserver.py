@@ -140,8 +140,11 @@ def get_module_code_file_mapping():
 # ---------- API Definition ---------- #
 
 MODULE_NOT_PROVIDED_ERR = 'ERROR: No module name is provided!'
-CODE_NOT_PROVIDED_ERR = 'ERROR: No module code is provided!'
 MODULE_NOT_FOUND_ERR = 'ERROR: Job failed to run. Please check whether the module name is valid!'
+MODULE_ALREADY_EXISTS_ERR = 'ERROR: Module already exists!'
+TYPE_NOT_PROVIDED_ERR = 'ERROR: No module type is provided!'
+TYPE_NOT_SUPPORTED_ERR = 'ERROR: Module type not supported!'
+CODE_NOT_PROVIDED_ERR = 'ERROR: No module code is provided!'
 JOB_SUCCESS = 'SUCCESS: Job finished.'
 
 @app.route("/api/run_module", methods = ['POST'])
@@ -266,6 +269,60 @@ def get_graph_json():
     function: return the json file of the entire dependency graph
     '''
     res = smvPy.get_graph_json()
+    return jsonify(res=res)
+
+@app.route("/api/create_module", methods = ['POST'])
+def craete_module():
+    '''
+    body:
+        name = 'xxx' (fqn)
+        type = 'xxx' ('scala'/'python'/'sql')
+    function:
+        1. create code file (if not exists)
+        2. add module into module_file_map
+    '''
+    try:
+        module_name = request.form['name'].encode('utf-8')
+    except:
+        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+
+    try:
+        module_type = request.form['type'].encode('utf-8')
+    except:
+        raise ValueError(TYPE_NOT_PROVIDED_ERR)
+
+    # get module_name and module_code_file mapping
+    global module_file_map
+    if not module_file_map:
+        module_file_map = get_module_code_file_mapping()
+
+    # if module_name already exists, then it is not a new module
+    if (module_file_map.has_key(module_name)):
+        raise ValueError(MODULE_ALREADY_EXISTS_ERR)
+
+    # get module_code_file for the given module_name
+    if (module_type == 'python'):
+        main_path = os.getcwd() + '/src/main/python/'
+        file_path = '/'.join(module_name.split('.')[:-1])
+        suffix = '.py'
+    elif (module_type == 'scala'):
+        main_path = os.getcwd() + '/src/main/scala/'
+        file_path = '/'.join(module_name.split('.'))
+        suffix = '.scala'
+    else:
+        raise ValueError(TYPE_NOT_SUPPORTED_ERR)
+
+    file_full_path = main_path + file_path + suffix
+
+    # create an empty file if the module_code_file not exists
+    open(file_full_path, 'a').close()
+
+    # add the new module into module_name and module_code_file mapping
+    module_file_map[module_name] = file_full_path
+
+    res = {
+        'moduleName': module_name,
+    }
     return jsonify(res=res)
 
 
