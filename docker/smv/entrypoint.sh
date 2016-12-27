@@ -12,7 +12,8 @@ function start_server() {
         PROJECT_DIR="MyApp"
     fi
     cd /projects/${PROJECT_DIR}
-    smv-server
+    smv-server &
+    smv-jupyter &
 }
 
 # if no params supplied, start bash
