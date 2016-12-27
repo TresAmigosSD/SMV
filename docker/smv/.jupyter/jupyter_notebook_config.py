@@ -17,7 +17,9 @@ c.NotebookApp.open_browser = False
 
 ## Supply overrides for the tornado.web.Application that the Jupyter notebook
 #  uses.
+#  This is to allow third party app to embed notebook page in iframe
 c.NotebookApp.tornado_settings = {
     'headers': {
+        'Content-Security-Policy': "frame-ancestors *"
     }
 }
