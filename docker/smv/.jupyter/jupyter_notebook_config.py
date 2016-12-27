@@ -6,6 +6,9 @@ c.NotebookApp.ip = os.environ.get('JUPYTER_HOST', '*')
 ## The port the notebook server will listen on.
 c.NotebookApp.port = int(os.environ.get('JUPYTER_PORT', '8888'))
 
+## Disable authentication
+c.NotebookApp.token = ''
+
 ## The work directory
 c.FileContentsManager.root_dir = u'notebooks'
 
