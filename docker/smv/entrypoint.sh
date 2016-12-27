@@ -13,7 +13,7 @@ function start_server() {
     fi
     cd /projects/${PROJECT_DIR}
     smv-server &
-    smv-jupyter &
+    smv-jupyter
 }
 
 # if no params supplied, start bash
