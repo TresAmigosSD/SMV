@@ -181,8 +181,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * The module and all its dependents are loaded into their own classloader so that we can have multiple
    * instances of the same module loaded at different times.
    */
-  def dynamicResolveRDD(urn: String, parentClassLoader: ClassLoader) =
-    resolveRDD(scalaDsForName(urn, parentClassLoader))
+  def dynamicResolveRDD(fqn: String, parentClassLoader: ClassLoader) =
+    resolveRDD(scalaDsForName(fqn, parentClassLoader))
 
   /** Factory method to look up any SmvDataSet by its urn */
   def dsForName(urn: String, parentClassLoader: ClassLoader = getClass.getClassLoader): SmvDataSet =
@@ -209,7 +209,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   def scalaDsForName(fqn: String, parentClassLoader: ClassLoader) = {
     val cl = SmvClassLoader(smvConfig, parentClassLoader)
     val ref = new SmvReflection(cl)
-    ref.objectNameToInstance[SmvDataSet](urn2fqn(fqn))
+    ref.objectNameToInstance[SmvDataSet](fqn)
   }
 
   lazy val packagesPrefix = {
@@ -372,38 +372,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     s"""${smvConfig.publishDir}/${version}/${name}.csv"""
 
   /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(modUrn: String): DataFrame =
-    if (modUrn.isEmpty)
-      return null
-    else if (dataframes.contains(modUrn))
-      dataframes(modUrn)
-    else if (resolveStack contains modUrn)
-      throw new IllegalStateException(s"cycle found while resolving ${modUrn}: " + resolveStack.mkString(","))
-    else {
-      println(s"running module ${modUrn}")
-      resolveStack.push(modUrn)
-      findRepoWith(modUrn) match {
-        case None =>
-          resolveStack.pop()
-          notfound(modUrn)
-        case Some(repo) =>
-          dependencies(repo, modUrn) foreach runModule
-
-          val df = try {
-            val dqm = new DQMValidator(repo.getDqm(modUrn))
-            val hashval = hashOfHash(modUrn)
-            val df = repo.getDataFrame(modUrn, dqm, dataframes)
-            persist(repo, modUrn, hashval, dqm, df)
-          } finally {
-            resolveStack.pop()
-          }
-
-          // dataframe from external modules would be registered under
-          // both its implementing module name and the referenced name
-          dataframes = dataframes + (modUrn -> df)
-          df
-      }
-    }
+  def runModule(modUrn: String): DataFrame = resolveRDD(dsForName(modUrn))
 
   // helper method till we can return the Seq directly from Python implementation
   private def dependencies(repo: SmvDataSetRepository, modUrn: String): Seq[String] =

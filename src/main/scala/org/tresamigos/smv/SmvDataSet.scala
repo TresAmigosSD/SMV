@@ -446,7 +446,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
     // TODO turn on dependency check by uncomment the following line after test against projects
     // checkDependency()
-    run(requiresDS().map(r => (r, known(r.urn))).toMap)
+    requiresDS foreach app.resolveRDD
+    run(requiresDS().map(r => (r, app.dataframes(r.urn))).toMap)
   }
 
   /** Use Bytecode analysis to figure out dependency and check against
@@ -583,10 +584,11 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
   lazy val depFqns: Seq[String] =
     repo.dependencies(modFqn).split(',').filterNot(_.isEmpty)
 
-  override val fqn = modFqn
+  override val urn = modFqn
   override val isEphemeral = true
   override def requiresDS = depFqns map (app.dsForName(_))
-  override def run(i: runParams) = app.runModule(modFqn)
+  override def run(i: runParams) =
+    repo.getDataFrame(modFqn, new DQMValidator(createDsDqm), app.dataframes)
   override def datasetHash = repo.datasetHash(modFqn, true)
   override def createDsDqm = repo.getDqm(modFqn)
 }
