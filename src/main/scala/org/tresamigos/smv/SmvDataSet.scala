@@ -560,24 +560,6 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
 }
 
 /**
- * Represents a module written in another language.
- * TODO: remove SmvExtDataSet after refactor
- */
-case class SmvExtDataSet(refname: String) extends SmvModule(s"External dataset for ${refname}") {
-  override val urn = ExtDsPrefix  + refname
-  override val isEphemeral = true
-  override def requiresDS = app.dependencies(refname) map ( dep =>
-    // if an external dataset in turn depends on *its* `external`
-    // dataset, look up in native scala repository
-    if (isExternalMod(dep))
-      app.scalaDataSets.dsForName(dep).get
-    else
-      SmvExtDataSet(urn2fqn(dep))
-  )
-  override def run(i: runParams) = app.runModule(refname)
-}
-
-/**
  * Represents an external module written in another language.
  */
 case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${modFqn}") {
