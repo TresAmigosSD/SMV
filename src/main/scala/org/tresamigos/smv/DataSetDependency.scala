@@ -124,8 +124,7 @@ object SameStageDependency extends DependencyRule {
   override def check(ds: SmvDataSet) = {
     val diff = for {
       dep <- ds.requiresDS
-      if (!dep.isInstanceOf[SmvModuleLink]) &&
-      (ds.parentStage == null || dep.parentStage != ds.parentStage)
+      if dep.parentStage != ds.parentStage
     } yield dep
 
     toViolation(diff)
@@ -137,11 +136,10 @@ object LinkFromDiffStage extends DependencyRule {
 
   override def check(ds: SmvDataSet) = {
     val links = for {
-      link <- ds.requiresDS
-      if link.isInstanceOf[SmvModuleLink] &&
-      link.parentStage == ds.parentStage &&
-      link.asInstanceOf[SmvModuleLink].smvModule.parentStage == ds.parentStage
-    } yield link
+      dep <- ds.requiresDS
+      if dep.isInstanceOf[SmvModuleLink] &&
+      dep.asInstanceOf[SmvModuleLink].smvModule.parentStage == ds.parentStage
+    } yield dep
 
     toViolation(links)
   }

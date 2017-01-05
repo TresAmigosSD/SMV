@@ -19,7 +19,8 @@ class ModuleLinkTest(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['-m', 'None', '--publish', cls.PublishDir]
+        return ['--smv-props', 'smv.stages=fixture.stage1:fixture.stage2',
+                '-m', 'None', '--publish', cls.PublishDir]
 
     @classmethod
     def tearDownClass(cls):

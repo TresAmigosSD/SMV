@@ -508,6 +508,8 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
 
   private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
+  override val urn = LinkDsPrefix + smvModule.fqn
+
   /**
    *  No need to check isEphemeral any more
    *  SmvOutput will be published anyhow regardless of ephemeral or not
@@ -595,7 +597,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
 
 /** Link to a external module from another stage */
 case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput) {
-  override val fqn = modFqn
+  override val urn = LinkDsPrefix + modFqn
 }
 
 /**
