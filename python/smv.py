@@ -532,7 +532,7 @@ class SmvPyModuleLink(SmvPyModule):
 
     @classmethod
     def urn(cls):
-        return 'link:' + cls.name()
+        return 'link:' + cls.target().name()
 
     def isEphemeral(self):
         return True
@@ -540,9 +540,10 @@ class SmvPyModuleLink(SmvPyModule):
     def requiresDS(self):
         return []
 
-    @abc.abstractproperty
+    @classmethod
     def target(self):
         """Returns the target SmvModule class from another stage to which this link points"""
+        raise ValueError('Expect to be implemented by subclass')
 
     def datasetHash(self, includeSuperClass=True):
         stage = self.smvPy.j_smvPyClient.inferStageNameFromDsName(self.target().name())

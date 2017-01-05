@@ -4,6 +4,15 @@ class SmvExtModuleLinkTest extends SmvTestUtil {
   override val appArgs = Seq("--smv-props", "smv.stages=s1:s2", "-m", "None")
 
   test("The parent stage of an external module link should be the parent stage of its target") {
-    SmvExtModuleLink("link:s2.A").parentStage.name shouldBe "s2"
+    val extLink: SmvModuleLink = SmvExtModuleLink("s2.A")
+    extLink.smvModule.parentStage shouldBe app.stages.findStage("s2")
+  }
+
+  test("External modules dependent on links should observe link stage rule") {
+    val extMod = new SmvExtModule("s2.A") {
+      override def requiresDS = Seq(SmvExtModuleLink("s1.L"))
+    }
+
+    app.checkDependencyRules(extMod) shouldBe 'Empty
   }
 }

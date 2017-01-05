@@ -3,10 +3,12 @@ from _PROJ_CLASS_.stage1 import employment as emp
 
 class EmploymentByStateLink(SmvPyModuleLink):
     """Example: how to use SmvPyModuleLink"""
-    def target(self):
+    @classmethod
+    def target(cls):
         return emp.PythonEmploymentByState
 
 class EmploymentByStateLink2(SmvPyModuleLink):
     """Example: linking to an external dataset"""
-    def target(self):
+    @classmethod
+    def target(cls):
         return SmvPyExtDataSet("_PROJ_CLASS_.stage1.EmploymentByState")

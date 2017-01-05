@@ -587,6 +587,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
     repo.dependencies(modFqn).split(',').filterNot(_.isEmpty)
 
   override val urn = modFqn
+  override val fqn = modFqn
   override val isEphemeral = true
   override def requiresDS = depFqns map (app.dsForName(_))
   override def run(i: runParams) =
@@ -596,9 +597,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
 }
 
 /** Link to a external module from another stage */
-case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput) {
-  override val urn = LinkDsPrefix + modFqn
-}
+case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput)
 
 /**
  * a built-in SmvModule from schema string and data string
