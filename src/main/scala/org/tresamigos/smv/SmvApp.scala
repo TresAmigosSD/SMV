@@ -114,19 +114,18 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * across modules written in different languages, and how if we
    * should.  Right now we skip external dataset references.
    */
-  def checkDependencyRules(ds: SmvDataSet): Seq[DependencyViolation] =
-    if (ds.isInstanceOf[SmvExtDataSet]) Seq.empty else {
-      val results = SmvApp.DependencyRules map (_.check(ds))
-      results.foldRight(Seq.empty[DependencyViolation])((elem, acc) => elem.toSeq ++: acc)
-    }
+  def checkDependencyRules(ds: SmvDataSet): Seq[DependencyViolation] = {
+    val results = SmvApp.DependencyRules map (_.check(ds))
+    results.foldRight(Seq.empty[DependencyViolation])((elem, acc) => elem.toSeq ++: acc)
+  }
 
   /** Textual representation for output to console */
   def mkViolationString(violations: Seq[DependencyViolation], indent: String = ".."): String =
     (for {
       v <- violations
-      header = s"${indent}${v.description}"
+      header = s"${indent} ${v.description}"
     } yield
-      (header +: v.components.map(m => s"${indent}${indent}${m.fqn}")).mkString("\n")
+      (header +: v.components.map(m => s"${indent}${indent} ${m.urn}")).mkString("\n")
     ).mkString("\n")
 
   /**
@@ -151,7 +150,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     val resRdd = try {
       val violations = checkDependencyRules(ds)
       if (!violations.isEmpty) {
-        println(s"""Module ${ds.fqn} violates dependency rules""")
+        println(s"""Module ${ds.urn} violates dependency rules""")
         println(mkViolationString(violations))
 
         if (!smvConfig.permitDependencyViolation)
@@ -192,9 +191,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
         if (isLink(urn)){
           val fqn = urn2fqn(urn)
           dsForName(fqn, parentClassLoader) match {
-            // TODO: check that the external module is Output
-            case x: SmvExtModule => SmvExtModuleLink(fqn)
-            case x: SmvDataSet with SmvOutput => new SmvModuleLink(x)
+            case _: SmvExtModule => SmvExtModuleLink(fqn)
+            case x: SmvModule with SmvOutput => new SmvExtModuleLink(x.fqn)
             case x => throw new SmvRuntimeException(s"Module [${fqn}] is not an SmvOutput module: ${x}")
           }
         }

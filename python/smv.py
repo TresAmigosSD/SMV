@@ -541,7 +541,7 @@ class SmvPyModuleLink(SmvPyModule):
         return []
 
     @classmethod
-    def target(self):
+    def target(cls):
         """Returns the target SmvModule class from another stage to which this link points"""
         raise ValueError('Expect to be implemented by subclass')
 
@@ -570,9 +570,19 @@ def SmvPyExtDataSet(refname):
              smvPy.j_smvApp.dependencies(refname).mkString(",").split(',')],
         "doRun"   : lambda self, validator, known: smvPy.runModule(refname)
     })
-    cls.name = classmethod(lambda klass: ExtDsPrefix + refname)
-    cls.urn = classmethod(lambda klass:  ExtDsPrefix + refname)
+    cls.name = classmethod(lambda klass: refname)
+    cls.urn = classmethod(lambda klass:  refname)
     PyExtDataSetCache[refname] = cls
+    return cls
+
+def SmvPyExtLink(refname):
+    if refname in PyExtDataSetCache:
+        return PyExtDataSetCache[refname]
+    cls = type("SmvPyExtDataSet", (SmvPyDataSet,), {
+        "requiresDS": lambda self: []
+    })
+    cls.name = classmethod(lambda klass: "link:"+refname)
+    cls.urn = classmethod(lambda klass: "link:"+refname)
     return cls
 
 class SmvGroupedData(object):

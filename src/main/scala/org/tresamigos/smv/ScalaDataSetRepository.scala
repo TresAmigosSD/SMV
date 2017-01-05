@@ -29,7 +29,7 @@ class ScalaDataSetRepository extends SmvDataSetRepository {
     scalaDataSets.get(modUrn) orElse {
       val ret =
         if (isExternalMod(modUrn))
-          Some(SmvExtDataSet(urn2fqn(modUrn)))
+          Some(SmvExtModule(urn2fqn(modUrn)))
         else
           SmvReflection.findObjectByName[SmvDataSet](urn2fqn(modUrn)).toOption
 
