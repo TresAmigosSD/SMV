@@ -52,9 +52,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /** Dataframes from resolved modules */
   private[smv] var dataframes: Map[String, DataFrame] = Map.empty
 
-  val scalaDataSets = new ScalaDataSetRepository
-
-  private var datasetRepositories: Map[String, SmvDataSetRepository] = Map("Scala" -> scalaDataSets)
+  private var datasetRepositories: Map[String, SmvDataSetRepository] = Map.empty
   def register(id: String, repo: SmvDataSetRepository): Unit =
     datasetRepositories = datasetRepositories + (id -> repo)
 
@@ -81,7 +79,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /** The names of output modules in a given stage */
   def outputModsForStage(stageName: String): Seq[String] =
-      datasetRepositories.values.toSeq.flatMap(_.outputModsForStage(stageName).split(","))
+    stages.findStage(stageName).allOutputModules.map(_.fqn) ++
+  datasetRepositories.values.toSeq.flatMap(_.outputModsForStage(stageName).split(","))
 
   /** Output modules */
   def modulesToRun: Seq[String] = {
@@ -192,7 +191,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           val fqn = urn2fqn(urn)
           dsForName(fqn, parentClassLoader) match {
             case _: SmvExtModule => SmvExtModuleLink(fqn)
-            case x: SmvModule with SmvOutput => new SmvExtModuleLink(x.fqn)
+            case x: SmvModule with SmvOutput => new SmvModuleLink(x)
             case x => throw new SmvRuntimeException(s"Module [${fqn}] is not an SmvOutput module: ${x}")
           }
         }

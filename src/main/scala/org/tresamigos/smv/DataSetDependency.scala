@@ -128,7 +128,7 @@ object SameStageDependency extends DependencyRule {
       // target link fqn.  The name for the link module itself is not
       // included in the urn.  So we won't be able to infer the stage
       // of the external link module.  Hence the exclusion from this test.
-      if !dep.isInstanceOf[SmvExtModuleLink] && dep.parentStage != ds.parentStage
+      if !dep.isInstanceOf[SmvModuleLink] && dep.parentStage != ds.parentStage
     } yield dep
 
     toViolation(diff)
