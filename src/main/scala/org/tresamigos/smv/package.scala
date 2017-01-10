@@ -49,15 +49,9 @@ import org.apache.spark.annotation._
  * @groupname other All others
  */
 package object smv {
-  val UrnSmvNs = "urn:smv"
-
-  /** External dataset prefix */
-  val ExtDsPrefix = s"${UrnSmvNs}:ext:"
-  val ModDsPrefix = s"${UrnSmvNs}:mod:"
   val LinkDsPrefix = "link:"
 
   /** Predicate functions working with urn */
-  def isExternalMod(modUrn: String): Boolean = modUrn.startsWith(ExtDsPrefix)
   def isLink(modUrn: String): Boolean = modUrn startsWith LinkDsPrefix
 
   /** Converts a possible urn to the module's fqn */

@@ -555,7 +555,6 @@ class SmvPyModuleLink(SmvPyModule):
         res = self.smvPy.j_smvPyClient.readPublishedData(self.target().name())
         return res.get() if res.isDefined() else self.smvPy.runModule(self.target().urn())
 
-ExtDsPrefix = "urn:smv:ext:"
 PyExtDataSetCache = {}
 def SmvPyExtDataSet(refname):
     if refname in PyExtDataSetCache:
@@ -563,26 +562,11 @@ def SmvPyExtDataSet(refname):
     cls = type("SmvPyExtDataSet", (SmvPyDataSet,), {
         "refname" : refname,
         "smvPy"   : smvPy,
-        "isEphemeral": lambda self: true,
-        "requiresDS": lambda self: \
-            [smvPy.repo.dsForName(i) if i.startswith(ExtDsPrefix) \
-             else SmvPyExtDataSet(i) for i in \
-             smvPy.j_smvApp.dependencies(refname).mkString(",").split(',')],
         "doRun"   : lambda self, validator, known: smvPy.runModule(refname)
     })
     cls.name = classmethod(lambda klass: refname)
     cls.urn = classmethod(lambda klass:  refname)
     PyExtDataSetCache[refname] = cls
-    return cls
-
-def SmvPyExtLink(refname):
-    if refname in PyExtDataSetCache:
-        return PyExtDataSetCache[refname]
-    cls = type("SmvPyExtDataSet", (SmvPyDataSet,), {
-        "requiresDS": lambda self: []
-    })
-    cls.name = classmethod(lambda klass: "link:"+refname)
-    cls.urn = classmethod(lambda klass: "link:"+refname)
     return cls
 
 class SmvGroupedData(object):
@@ -786,8 +770,6 @@ class PythonDataSetRepository(object):
         """
         if modUrn in self.pythonDataSets:
             return self.pythonDataSets[modUrn]
-        elif modUrn.startswith(ExtDsPrefix):
-            ret = SmvPyExtDataSet(modUrn[len(ExtDsPrefix):])
         else:
             fqn = self.smvPy.urn2fqn(modUrn)
             try:
@@ -806,9 +788,6 @@ class PythonDataSetRepository(object):
         """Reload the module by its fully qualified name, replace the old
         instance with a new one from the new definnition.
         """
-        if modUrn.startswith(ExtDsPrefix):
-            return self.dsForName(modUrn)
-
         lastdot = modUrn.rfind('.')
         if (lastdot == -1):
             klass = reload(modUrn)
