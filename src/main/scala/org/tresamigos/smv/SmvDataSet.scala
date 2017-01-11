@@ -570,7 +570,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
 
   override val urn = modFqn
   override val fqn = modFqn
-  override val isEphemeral = true
+  override val isEphemeral = repo.isEphemeral(modFqn)
   override def requiresDS = depFqns map (app.dsForName(_))
   override def run(i: runParams) =
     repo.getDataFrame(modFqn, new DQMValidator(createDsDqm), app.dataframes)
