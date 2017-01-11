@@ -4,7 +4,7 @@ ENV SMV_HOME=/usr/lib/SMV \
     PATH=$PATH:/usr/lib/SMV/tools
 
 RUN sudo apt-get update &&\
-    sudo apt-get install -y "python-pip" &&\
+    sudo apt-get install -y "python-dev" "python-pip" &&\
     sudo pip install --upgrade pip &&\
     sudo pip install Flask &&\
     sudo pip install jupyter
@@ -24,7 +24,8 @@ RUN wget http://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     find /home/smv/.m2/repository -mindepth 1 \! -path '*tresamigos*' -exec rm -rf \{\} + &&\ 
     rm -rf $SMV_HOME/target
 
-RUN sudo apt-get remove --purge -y python-pip &&\
+RUN sudo apt-get remove --purge -y python-dev &&\
+    sudo apt-get remove --purge -y python-pip &&\
     sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Configures maven repository to live on user's host mount (i.e. in /projects)
