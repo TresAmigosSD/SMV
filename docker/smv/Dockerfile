@@ -32,10 +32,11 @@ COPY ./settings.xml $M2_HOME/conf/settings.xml
 
 # Configures ivy (through sbt) repository to live on user's host mount (i.e. in /projects)
 COPY ./sbtopts /home/smv/lib/sbt/conf/sbtopts
-
 COPY ./kernel.json /usr/local/share/jupyter/kernels/smv-pyshell/kernel.json
-
 COPY ./.jupyter /home/smv/.jupyter
+
+RUN sudo chown -R smv:smv /home/smv/.jupyter &&\
+    sudo chown -R smv:smv /home/smv/lib
 
 # Entrypoint rsyncs maven and ivy caches from the container to the host
 # mount, then executes user-supplied command or starts bash
