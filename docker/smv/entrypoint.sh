@@ -12,15 +12,26 @@ function start_server() {
         PROJECT_DIR="MyApp"
     fi
     cd /projects/${PROJECT_DIR}
-    smv-jupyter &
     smv-server
+}
+
+function start_jupyter() {
+    # ${PROJECT_DIR} is the pre-built project path name, "MyApp" by default
+    if [ -z ${PROJECT_DIR+x} ]; then
+        echo ">> No project defined. Start to use sample app..."
+        PROJECT_DIR="MyApp"
+    fi
+    cd /projects/${PROJECT_DIR}
+    smv-jupyter
 }
 
 # if no params supplied, start bash
 if [[ $# == 0 ]]; then
     bash
-elif [[ $1 == "--server" ]]; then
+elif [[ $1 == "--start-server" ]]; then
     start_server
+elif [[ $1 == "--start-jupyter" ]]; then
+    start_jupyter
 # if params supplied, execute them as a command
 else
     "$@"
