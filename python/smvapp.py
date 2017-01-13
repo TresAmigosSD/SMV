@@ -25,23 +25,4 @@ if __name__ == "__main__":
 
     # skip the first argument, which is this program
     smvPy.init(sys.argv[1:])
-    j_smv = smvPy.j_smvPyClient
-
-    # TODO: code below should all move in the smvPy instance.  Does not belong here.
-
-    print("----------------------------------------")
-    print("will run/publish the following modules:")
-    mods = j_smv.moduleNames()
-    for name in mods:
-        print("   " + name)
-
-    print("----------------------------------------")
-
-    publish = j_smv.publishVersion().isDefined()
-    for name in mods:
-        if publish:
-            smvPy.publishModule(name)
-        elif j_smv.publishHive():
-            smvPy.publishHiveModule(name)
-        else:
-            smvPy.runModule(name)
+    smvPy.j_smvApp.run()
