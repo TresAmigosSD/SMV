@@ -564,18 +564,16 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
  */
 case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${modFqn}") {
   lazy val repo = app.findRepoWith(modFqn).get
-  // helper method till we can return the Seq directly from Python implementation
-  lazy val depFqns: Seq[String] =
-    repo.dependencies(modFqn).filterNot(_.isEmpty)
+  lazy val target: ISmvModule = repo.getSmvModule(modFqn)
 
   override val urn = modFqn
   override val fqn = modFqn
-  override def isEphemeral = repo.isEphemeral(modFqn)
-  override def requiresDS = depFqns map (app.dsForName(_))
+  override def isEphemeral = target.isEphemeral()
+  override def requiresDS = target.dependencies map (app.dsForName(_))
   override def run(i: runParams) =
-    repo.getDataFrame(modFqn, new DQMValidator(createDsDqm), app.dataframes)
-  override def datasetHash = repo.datasetHash(modFqn, true)
-  override def createDsDqm = repo.getDqm(modFqn)
+    target.getDataFrame(new DQMValidator(createDsDqm), app.dataframes)
+  override def datasetHash = target.datasetHash(true)
+  override def createDsDqm = target.getDqm()
 }
 
 /** Link to a external module from another stage */

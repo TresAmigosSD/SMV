@@ -397,6 +397,18 @@ class SmvPyDataSet(object):
         """
         return False
 
+    def getDqm(self):
+        return self.dqm()
+
+    def dependencies(self):
+        return smv_copy_array(self.smvPy.sc, *[x.urn() for x in self.requiresDS()])
+
+    def getDataFrame(self, validator, known):
+        return self.doRun(validator, known)._jdf
+
+    class Java:
+        implements = ['org.tresamigos.smv.ISmvModule']
+
 class SmvPyCsvFile(SmvPyDataSet):
     """Raw input file in CSV format
     """
@@ -783,6 +795,9 @@ class PythonDataSetRepository(object):
                 return None
         self.pythonDataSets[modUrn] = ret
         return ret
+
+    def getSmvModule(self, modUrn):
+        return self.dsForName(modUrn)
 
     def reloadDs(self, modUrn):
         """Reload the module by its fully qualified name, replace the old

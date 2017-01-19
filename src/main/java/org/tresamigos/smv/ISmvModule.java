@@ -25,34 +25,19 @@ import org.tresamigos.smv.dqm.DQMValidator;
  * Python class, to allow modules written in different languages to
  * work together in an SMV application.
  */
-public interface SmvDataSetRepository {
+public interface ISmvModule {
 	/**
-	 * Does the named data set exist?
-	 */
-	boolean hasDataSet(String modUrn);
-
-	/**
-	 * Factory method for ISmvModule
-	 */
-	ISmvModule getSmvModule(String modUrn);
-
-	/**
-	 * Does the named dataset need to be persisted?
+	 * Does the result of this module need to be persisted?
 	 *
 	 * Input datasets and simple filter and map modules typically don't
 	 * need to be persisted.
 	 */
-	boolean isEphemeral(String modUrn);
+	boolean isEphemeral();
 
 	/**
-	 * The DQM policy attached to a named dataset.
+	 * The attached DQM policy.
 	 */
-	SmvDQM getDqm(String modUrn);
-
-	/**
-	 * A CSV of output module fqns for a stage.
-	 */
-	String outputModsForStage(String stageName);
+	SmvDQM getDqm();
 
 	/**
 	 * Dependent module fqns or an empty array.
@@ -60,23 +45,18 @@ public interface SmvDataSetRepository {
 	 * Python implementation of this method needs to return a Java array
 	 * using the accompanying smv_copy_array() method.
 	 */
-	String[] dependencies(String modUrn);
+	String[] dependencies();
 
 	/**
 	 * Try to run the module by its fully-qualified name and return its
 	 * result in a DataFrame.
 	 */
-	DataFrame getDataFrame(String modUrn, DQMValidator validator,  Map<String, DataFrame> known);
+	DataFrame getDataFrame(DQMValidator validator,  Map<String, DataFrame> known);
 
 	/**
-	 * Re-run the named module after code change.
-	 */
-	DataFrame rerun(String modUrn, DQMValidator validator, Map<String, DataFrame> known);
-
-	/**
-	 * Calculate a hash for the named data set; can optionally include
+	 * Calculate a hash for this module; can optionally include
 	 * the hash for all its super classes up to and excluding the base
 	 * class provided by SMV.
 	 */
-	int datasetHash(String modUrn, boolean includeSuperClass);
+	int datasetHash(boolean includeSuperClass);
 }
