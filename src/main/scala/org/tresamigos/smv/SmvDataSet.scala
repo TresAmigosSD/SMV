@@ -437,7 +437,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    * is not needed.  By default all modules are persisted unless the flag is overriden to true.
    * Note: the module will still be persisted if it was specifically selected to run by the user.
    */
-  override val isEphemeral = false
+  override def isEphemeral = false
 
   type runParams = Map[SmvDataSet, DataFrame]
   def run(inputs: runParams) : DataFrame
@@ -566,11 +566,11 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
   lazy val repo = app.findRepoWith(modFqn).get
   // helper method till we can return the Seq directly from Python implementation
   lazy val depFqns: Seq[String] =
-    repo.dependencies(modFqn).split(',').filterNot(_.isEmpty)
+    repo.dependencies(modFqn).filterNot(_.isEmpty)
 
   override val urn = modFqn
   override val fqn = modFqn
-  override val isEphemeral = repo.isEphemeral(modFqn)
+  override def isEphemeral = repo.isEphemeral(modFqn)
   override def requiresDS = depFqns map (app.dsForName(_))
   override def run(i: runParams) =
     repo.getDataFrame(modFqn, new DQMValidator(createDsDqm), app.dataframes)

@@ -864,7 +864,7 @@ class PythonDataSetRepository(object):
         if ds is None:
             self.notFound(modUrn, "cannot get dependencies")
         else:
-            return ','.join([x.urn() for x in ds.requiresDS()])
+            return smv_copy_array(self.smvPy.sc, *[x.urn() for x in ds.requiresDS()])
 
     def getDataFrame(self, modUrn, validator, known):
         ds = self.dsForName(modUrn)

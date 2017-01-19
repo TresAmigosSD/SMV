@@ -50,13 +50,12 @@ public interface SmvDataSetRepository {
 	String outputModsForStage(String stageName);
 
 	/**
-	 * A CSV of dependent module fqns or an empty string.
+	 * Dependent module fqns or an empty array.
 	 *
-	 * Using a csv string is a temporary workaround until we can solve
-	 * the issue of type conversion between Python and Java VMs when it
-	 * comes to a Python class that implements a Java interface.
+	 * Python implementation of this method needs to return a Java array
+	 * using the accompanying smv_copy_array() method.
 	 */
-	String dependencies(String modUrn);
+	String[] dependencies(String modUrn);
 
 	/**
 	 * Try to run the module by its fully-qualified name and return its

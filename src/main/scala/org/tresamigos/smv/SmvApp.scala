@@ -371,18 +371,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /** Run a module by its fully qualified name in its respective language environment */
   def runModule(modUrn: String): DataFrame = resolveRDD(dsForName(modUrn))
 
-  // helper method till we can return the Seq directly from Python implementation
-  private def dependencies(repo: SmvDataSetRepository, modUrn: String): Seq[String] =
-    repo.dependencies(modUrn).split(',').filterNot(_.isEmpty)
-
   private[smv] def findRepoWith(modUrn: String): Option[SmvDataSetRepository] =
     datasetRepositories.values.find(_.hasDataSet(modUrn))
-
-  def dependencies(modUrn: String): Seq[String] =
-    findRepoWith(modUrn) match {
-      case None => notfound(modUrn)
-      case Some(repo) => dependencies(repo, modUrn)
-    }
 
   @inline private def notfound(modUrn: String) = throw new SmvRuntimeException(s"Cannot find module ${modUrn}")
 
@@ -390,7 +380,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     findRepoWith(modUrn) match {
       case None => notfound(modUrn)
       case Some(repo) =>
-        dependencies(repo, modUrn).foldLeft(
+        repo.dependencies(modUrn).foldLeft(
           repo.datasetHash(modUrn, true)) { (acc, dep) =>
           acc + hashOfHash(dep)
         }.toInt
@@ -433,7 +423,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       findRepoWith(modUrn) match {
         case None => notfound(modUrn)
         case Some(repo) =>
-          dependencies(repo, modUrn) foreach runDynamicModule
+          repo.dependencies(modUrn) foreach runDynamicModule
 
           dataframes = dataframes - modUrn
           val df = {
