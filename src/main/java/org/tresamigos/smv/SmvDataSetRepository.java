@@ -36,9 +36,9 @@ public interface SmvDataSetRepository {
 	ISmvModule getSmvModule(String modUrn);
 
 	/**
-	 * A CSV of output module fqns for a stage.
+	 * Output module fqns for a stage.
 	 */
-	String outputModsForStage(String stageName);
+	String[] outputModsForStage(String stageName);
 
 	/**
 	 * Re-run the named module after code change.

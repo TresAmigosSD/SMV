@@ -80,7 +80,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /** The names of output modules in a given stage */
   def outputModsForStage(stageName: String): Seq[String] =
     stages.findStage(stageName).allOutputModules.map(_.fqn) ++
-  datasetRepositories.values.toSeq.flatMap(_.outputModsForStage(stageName).split(","))
+  datasetRepositories.values.toSeq.flatMap(_.outputModsForStage(stageName))
 
   /** Output modules */
   def modulesToRun: Seq[String] = {

@@ -828,20 +828,6 @@ class PythonDataSetRepository(object):
     def hasDataSet(self, modUrn):
         return self.dsForName(modUrn) is not None
 
-    def isEphemeral(self, modUrn):
-        ds = self.dsForName(modUrn)
-        if ds is None:
-            self.notFound(modUrn, "cannot get isEphemeral")
-        else:
-            return ds.isEphemeral()
-
-    def getDqm(self, modUrn):
-        ds = self.dsForName(modUrn)
-        if ds is None:
-            self.notFound(modUrn, "cannot get dqm")
-        else:
-            return ds.dqm()
-
     def notFound(self, modUrn, msg):
         raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))
 
@@ -872,42 +858,13 @@ class PythonDataSetRepository(object):
                             buf.append(obj.urn())
                     except AttributeError:
                         continue
-        return ','.join(buf)
-
-    def dependencies(self, modUrn):
-        ds = self.dsForName(modUrn)
-        if ds is None:
-            self.notFound(modUrn, "cannot get dependencies")
-        else:
-            return smv_copy_array(self.smvPy.sc, *[x.urn() for x in ds.requiresDS()])
-
-    def getDataFrame(self, modUrn, validator, known):
-        ds = self.dsForName(modUrn)
-        if ds is None:
-            self.notFound(modUrn, "cannot get dataframe")
-        else:
-            try:
-                ret = ds.doRun(validator, known)._jdf
-            except Exception as e:
-                print("----------------------------------------")
-                print("Error when running Python SmvModule [{0}]".format(modUrn))
-                traceback.print_exc()
-                print("----------------------------------------")
-                raise e
-            return ret
+        return smv_copy_array(self.smvPy.sc, *buf)
 
     def rerun(self, modUrn, validator, known):
         ds = self.reloadDs(modUrn)
         if ds is None:
             self.notFound(modUrn, "cannot rerun")
         return ds.doRun(validator, known)._jdf
-
-    def datasetHash(self, modUrn, includeSuperClass):
-        ds = self.dsForName(modUrn)
-        if ds is None:
-            self.notFound(modUrn, "cannot calc dataset hash")
-        else:
-            return ds.datasetHash(includeSuperClass)
 
     class Java:
         implements = ['org.tresamigos.smv.SmvDataSetRepository']
