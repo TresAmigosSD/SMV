@@ -380,8 +380,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     findRepoWith(modUrn) match {
       case None => notfound(modUrn)
       case Some(repo) =>
-        repo.dependencies(modUrn).foldLeft(
-          repo.datasetHash(modUrn, true)) { (acc, dep) =>
+        val ds = repo.getSmvModule(modUrn)
+        ds.dependencies.foldLeft(
+          ds.datasetHash(true)) { (acc, dep) =>
           acc + hashOfHash(dep)
         }.toInt
     }
@@ -391,7 +392,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     // modules defined in spark shell starts with '$'
     val persistValidation = !fqn.startsWith("$")
     val validator = new ValidationSet(Seq(dqm), persistValidation)
-    if (repo.isEphemeral(modUrn)) {
+    val ds = repo.getSmvModule(modUrn)
+    if (ds.isEphemeral) {
       val r = dqm.attachTasks(df)
       // no action before this  point
       validator.validate(r, false, moduleValidPath(fqn, hashval))
@@ -423,11 +425,12 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       findRepoWith(modUrn) match {
         case None => notfound(modUrn)
         case Some(repo) =>
-          repo.dependencies(modUrn) foreach runDynamicModule
+          val ds = repo.getSmvModule(modUrn)
+          ds.dependencies foreach runDynamicModule
 
           dataframes = dataframes - modUrn
           val df = {
-            val dqm = new DQMValidator(repo.getDqm(modUrn))
+            val dqm = new DQMValidator(ds.getDqm)
             val hashval = hashOfHash(modUrn)
             val df = repo.rerun(modUrn, dqm, dataframes)
             persist(repo, modUrn, hashval, dqm, df)
@@ -479,7 +482,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
       println()
       println("..checking dependency rules for all modules")
-      val all = (mods ++ mods.flatMap(_.dependencies)).distinct
+      val all = (mods ++ mods.flatMap(_.allDeps)).distinct
       all.foreach { m =>
         val violations = checkDependencyRules(m)
         if (violations.isEmpty)

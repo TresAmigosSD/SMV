@@ -56,9 +56,12 @@ abstract class SmvDataSet extends FilenamePart {
   /** modules must override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet]
 
+  /** The dependency modules's urn's */
+  def dependencies: Seq[String] = requiresDS map (_.urn)
+
   /** All dependencies with the dependency hierarchy flattened */
-  def dependencies: Seq[SmvDataSet] =
-    (requiresDS.foldLeft(Seq.empty[SmvDataSet]) { (acc, elem) => elem.dependencies ++ (elem +: acc) }).distinct
+  def allDeps: Seq[SmvDataSet] =
+    (requiresDS.foldLeft(Seq.empty[SmvDataSet]) { (acc, elem) => elem.allDeps ++ (elem +: acc) }).distinct
 
   def requiresAnc() : Seq[SmvAncillary] = Seq.empty
 
@@ -86,7 +89,7 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
-  def datasetHash(): Int = datasetCRC.toInt
+  def datasetHash: Int = datasetCRC.toInt
 
   /**
    * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
@@ -119,6 +122,7 @@ abstract class SmvDataSet extends FilenamePart {
    * The default is to provide an empty set of DQM rules/fixes.
    */
   def dqm(): SmvDQM = SmvDQM()
+  def getDqm: SmvDQM = dqm()
 
   /**
    * createDsDqm could be overridden by smv internal SmvDataSet's sub-classes
