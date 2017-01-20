@@ -4,6 +4,7 @@ set -e
 
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 source $SMV_TOOLS/_env.sh
+source $SMV_TOOLS/_pyenv.sh
 
 export SPARK_PRINT_LAUNCH_COMMAND=1
 
