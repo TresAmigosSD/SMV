@@ -26,16 +26,28 @@ function split_smv_spark_args()
     SPARK_ARGS=("$@")
 }
 
+function find_file_in_dir()
+{
+  filepat=$1
+  shift
+  for dir in "$@"; do
+    APP_JAR=`ls -1t ${dir}/${filepat} 2>/dev/null | head -1`
+    if [ -n "$APP_JAR" ]; then
+      break
+    fi
+  done
+}
+
+# find latest fat jar in target directory.
 function find_fat_jar()
 {
-  # find latest fat jar in target directory.
   # try sbt-build location first
-  APP_JAR=`ls -1t target/scala-2.10/*jar-with-dependencies.jar 2>/dev/null| head -1`
-
   # if not found try mvn-build location next
-  if [ -z "$APP_JAR" ]; then
-    APP_JAR=`ls -1t target/*jar-with-dependencies.jar 2>/dev/null| head -1`
-  fi
+
+  # then repeat from the parent directory, because the shell is
+  # sometimes run from a notebook subdirectory of a data project
+  dirs=("target/scala-2.10" "target" "../target/scala-2.10" "../target")
+  find_file_in_dir "*jar-with-dependencies.jar" "${dirs[@]}"
 
   if [ -z "$APP_JAR" ]; then
     echo "ERROR: could not find an app jar in target directory"
