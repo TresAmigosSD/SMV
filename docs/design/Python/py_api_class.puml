@@ -40,13 +40,16 @@ package Scala {
   }
   SmvExtModule o-- Scala.SmvExtModuleInt
 
+  class SmvExtOutputModule <<anonymous>> extends SmvExtModule
+  SmvExtOutputModule --|> SmvOutput
+
   class SmvExtInput extends SmvInputDataSet {
     ctor(in: SmvExtInputInt)
   }
   SmvExtInput o-- Scala.SmvExtInputInt
 
   class SmvExtModuleLink extends SmvModuleLink
-  SmvExtModuleLink *-- SmvExtModule
+  SmvExtModuleLink *-- SmvExtOutputModule
 }
 
 package Python {
