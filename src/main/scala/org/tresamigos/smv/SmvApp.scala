@@ -82,17 +82,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     stages.findStage(stageName).allOutputModules.map(_.fqn) ++
   datasetRepositories.values.toSeq.flatMap(_.outputModsForStage(stageName))
 
-  /** Output modules */
-  def modulesToRun: Seq[String] = {
-    val cl = smvConfig.cmdLine
-    val directMods: Seq[String] = cl.modsToRun()
-    val stageMods: Seq[String] = cl.stagesToRun().flatMap(outputModsForStage)
-    val appMods: Seq[String] =
-      if (cl.runAllApp()) stages.stageNames.flatMap(outputModsForStage) else Nil
-
-    (directMods ++ stageMods ++ appMods).filterNot(_.isEmpty)
-  }
-
   /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
   private[smv] def validFilesInOutputDir() : Seq[String] = {
     allAppModules.
@@ -251,7 +240,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   private def deleteOutputModules() = {
     // TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
-    smvConfig.modulesToRun().foreach {m => m.deleteOutputs()}
+    modulesToRun foreach {m => m.deleteOutputs()}
   }
 
   /**
@@ -260,7 +249,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   private def generateDependencyGraphs() : Boolean = {
     if (smvConfig.cmdLine.graph()) {
-      smvConfig.modulesToRun().foreach { module =>
+      modulesToRun foreach { module =>
         // TODO: need to combine the modules for graphs into a single graph.
         genDotGraph(module)
       }
@@ -320,7 +309,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   private def publishOutputModules() : Boolean = {
     if (smvConfig.cmdLine.publish.isDefined) {
-      smvConfig.modulesToRun().foreach { module => module.publish() }
+      modulesToRun foreach { module => module.publish() }
       true
     } else {
       false
@@ -334,7 +323,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   private def generateOutputModules() : Boolean = {
     deleteOutputModules()
 
-    smvConfig.modulesToRun().foreach { module =>
+    modulesToRun foreach { module =>
       val modResult = runModule(module.fqn)
 
       // if module was ephemeral, then it was not saved during graph execution and we need
@@ -343,7 +332,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
         module.persist(modResult)
     }
 
-    smvConfig.modulesToRun().nonEmpty
+    modulesToRun.nonEmpty
   }
 
   /** The "versioned" module file base name. */
@@ -455,7 +444,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
    */
   def runModuleByName(modName: String) : DataFrame = {
-    val module = smvConfig.resolveModuleByName(modName)
+    val module = resolveModuleByName(modName)
     resolveRDD(module)
   }
 
@@ -468,12 +457,63 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     dynamicResolveRDD(fqn: String, cl)
   }
 
+  def findModuleInStage(stage: String, name: String): Option[SmvModule] = {
+    val candidates = (for {
+      pkg <- stage.split('.').reverse.tails //  stage "a.b.c" -> ["c","b", "a"] ->
+                                            //  [
+                                            //    ["c", "b", "a"],
+                                            //    ["b", "a"],
+                                            //    ["a"],
+                                            //    []
+                                            //  ]
+      candidate = (name +: pkg).reverse.mkString(".") //  "name" and ["c", "b", "a"] -> "a.b.c.name"
+                                                      //  "name" and ["b", "a"] -> "a.b.name"
+
+      // try each in turn as module object name
+      // skip those that do not have an SmvModule defined
+      m <- SmvReflection.findObjectByName[SmvModule](candidate).toOption
+    }
+    yield m).toSeq
+
+    candidates.headOption
+  }
+
+  def resolveModuleByName(name: String): SmvModule = {
+    val stageNames = smvConfig.stageNames
+    val mods = for {
+      stage <- stageNames.toSet[String]
+      m <- findModuleInStage(stage, name)
+    } yield m
+
+    mods.size match {
+      case 0 => throw new SmvRuntimeException(
+        s"""Cannot find module named [${name}] in any of the stages [${stageNames.mkString(", ")}]""")
+      case 1 => mods.head
+      case _ => throw new SmvRuntimeException(
+        s"Module name [${name}] is not specific enough, as it is found in multiple stages [${stageNames.mkString(", ")}]")
+    }
+  }
+
+  /**
+   * sequence of SmvModules to run based on the command line arguments.
+   * Returns the union of -a/-m/-s command line flags.
+   */
+  private[smv] def modulesToRun() : Seq[SmvModule] = {
+    val cmdline = smvConfig.cmdLine
+    val empty = Some(Seq.empty[String])
+    val directMods = cmdline.modsToRun.orElse(empty)().map {resolveModuleByName }
+    val stageMods = cmdline.stagesToRun.orElse(empty)().flatMap(s => stages.findStage(s).allOutputModules)
+    val appMods = if (cmdline.runAllApp()) stages.allOutputModules else Seq.empty[SmvModule]
+
+    directMods ++ stageMods ++ appMods
+  }
+
   /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
    */
   def run() = {
-    val mods = smvConfig.modulesToRun
+    val mods = modulesToRun
     if (mods.nonEmpty) {
       println("Modules to run/publish")
       println("----------------------")
