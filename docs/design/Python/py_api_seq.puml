@@ -4,30 +4,33 @@ title simple python module resolution and run
 Actor User
 Participant SmvApp as app
 Participant SmvExtModule as extmod
-Participant SmvPythonRepo as repo
+Participant PythonDataSetRepository as repo
 Participant SmvPyModule as pymod
 
-User -> app : DataSetFactory(fqn)
+User -> app : dsForName(urn)
 activate app
-  app -> app : findLocalDS(fqn)
-  app -> app : findExternalInput(fqn)
-  app -> app : findExternalModule(fqn)
-  activate app
-  app -> repo : findModule(fqn)
-    activate repo
-      repo -> pymod : <<create>>
-      activate pymod
-      repo --> app : mod :\nSmvExtModuleInt
-    deactivate repo
-  deactivate app
+  app -> app : scalaDsForName(urn)
+  app -> app : if isLink dsForName(urn)
+  app -> app : else findRepoWith(urn)
+	app -> repo : hasDataSet(urn)?
+	activate repo
+	repo -> app : yes
+	deactivate repo
   app -> extmod : <<create>>
-  activate extmod
   app --> User : DataSet :\nSmvExtModule
 deactivate app
 
 User -> extmod : run
-extmod -> pymod : run
-pymod --> extmod : res
-extmod --> User : res
+  activate extmod
+  extmod -> repo : getSmvModule(fqn)
+    activate repo
+      repo -> pymod : <<create>>
+      activate pymod
+      repo --> extmod : mod :\nISmvModule
+    deactivate repo
+  deactivate extmod
+  extmod -> pymod : getDataFrame
+  pymod --> extmod : dataframe
+extmod --> User : dataframe
 
 @enduml
