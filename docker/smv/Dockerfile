@@ -35,9 +35,11 @@ COPY ./settings.xml $M2_HOME/conf/settings.xml
 COPY ./sbtopts /home/smv/lib/sbt/conf/sbtopts
 COPY ./kernel.json /usr/local/share/jupyter/kernels/smv-pyshell/kernel.json
 COPY ./.jupyter /home/smv/.jupyter
+COPY ./hive-site.xml /usr/lib/spark/conf/hive-site.xml
 
 RUN sudo chown -R smv:smv /home/smv/.jupyter &&\
-    sudo chown -R smv:smv /home/smv/lib
+    sudo chown -R smv:smv /home/smv/lib &&\
+    sudo chown -R smv:smv /usr/lib/spark/conf/hive-site.xml
 
 # Entrypoint rsyncs maven and ivy caches from the container to the host
 # mount, then executes user-supplied command or starts bash
