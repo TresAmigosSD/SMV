@@ -502,7 +502,12 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     val cmdline = smvConfig.cmdLine
     val empty = Some(Seq.empty[String])
     val directMods = cmdline.modsToRun.orElse(empty)().map {resolveModuleByName }
-    val stageMods = cmdline.stagesToRun.orElse(empty)().flatMap(s => stages.findStage(s).allOutputModules)
+    val stageMods =
+      for {
+        s <- cmdline.stagesToRun.orElse(empty)()
+        m <- outputModsForStage(s)
+      } yield dsForName(m).asInstanceOf[SmvModule]
+
     val appMods = if (cmdline.runAllApp()) stages.allOutputModules else Seq.empty[SmvModule]
 
     directMods ++ stageMods ++ appMods
