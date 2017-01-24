@@ -139,10 +139,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def publishVersion: Option[String] = config.cmdLine.publish.get
 
-  /** The names of the modules to run in this app */
-  def moduleNames: java.util.List[String] =
-    j_smvApp.modulesToRun
-
   /** Infers the name of the stage to which a named module belongs */
   def inferStageNameFromDsName(modFqn: String): Option[String] =
     j_smvApp.stages.inferStageNameFromDsName(modFqn)

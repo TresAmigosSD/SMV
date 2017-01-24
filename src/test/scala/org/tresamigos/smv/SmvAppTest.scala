@@ -84,6 +84,51 @@ class SmvAppTest extends SmvTestUtil {
   }
 }
 
+  class SmvAppModuleResolutionTest extends SparkTestUtil {
+    val stageNames = Seq("org.tresamigos.smv.test1", "org.tresamigos.smv.test2")
+    def config(modname: String): Unit = SmvApp.init(Array(
+      "--smv-props", s"""smv.stages=${stageNames.mkString(":")}""",
+      "-m", modname), Option(sc), Option(sqlContext))
+
+    test("should report non-existing modules") {
+      val modname = "tooth-fary"
+      config(modname)
+
+      val thrown = the [SmvRuntimeException] thrownBy SmvApp.app.modulesToRun()
+      thrown.getMessage shouldBe
+      s"""Cannot find module named [${modname}] in any of the stages [${stageNames.mkString(", ")}]"""
+    }
+
+    // #155
+    test("should find a module by its basename") {
+      config("obj1")
+      SmvApp.app.modulesToRun shouldBe Seq(org.tresamigos.smv.test1.obj1)
+    }
+
+    test("should resolve name ambiguity if only 1 is an SmvModule") {
+      config("obj2")
+      SmvApp.app.modulesToRun shouldBe Seq(org.tresamigos.smv.test2.obj2)
+    }
+
+    test("should report ambiguous module names") {
+      val modname = "obj3"
+      config(modname)
+      val thrown = the [java.lang.RuntimeException] thrownBy SmvApp.app.modulesToRun()
+      thrown.getMessage shouldBe
+      s"""Module name [${modname}] is not specific enough, as it is found in multiple stages [${stageNames.mkString(", ")}]"""
+    }
+
+    test("should recursively search package namespace") {
+      config("obj4")
+      SmvApp.app.modulesToRun shouldBe Seq(org.tresamigos.smv.obj4)
+    }
+
+    test("should resolve name ambiguity by prepending a containing package name") {
+      config("test1.obj3")
+      SmvApp.app.modulesToRun shouldBe Seq(org.tresamigos.smv.test1.obj3)
+    }
+  }
+
 class SmvAppPurgeTest extends SparkTestUtil {
   test("Test purgeOldOutputFiles") {
     resetTestcaseTempDir()
@@ -185,4 +230,21 @@ package org.tresamigos.fixture.hashofhash {
     override def requiresDS() = Seq()
     override def run(i: runParams) = null
   }
+}
+
+package org.tresamigos.smv.test1 {
+  import org.tresamigos.smv.TestSmvModule
+  object obj1 extends TestSmvModule
+  object obj2
+  object obj3 extends TestSmvModule
+}
+
+package org.tresamigos.smv.test2 {
+  import org.tresamigos.smv.TestSmvModule
+  object obj2 extends TestSmvModule
+  object obj3 extends TestSmvModule
+}
+
+package org.tresamigos.smv {
+  object obj4 extends TestSmvModule
 }

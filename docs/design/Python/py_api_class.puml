@@ -8,23 +8,23 @@ hide circle
 
 package Scala {
   class SmvApp {
-    DataSetFactory(urn: String) : Option[SmvDataSet]
-    findExternalModule(fqn: String) : Option[SmvExtModuleInt]
-    findExternalInput(fqn: String) : Option[SmvExtInputInt]
+    dsForName(urn: String) : SmvDataSet
+    register(id: String, repo: SmvDataSetRepository)
+  }
+  class SmvDataSetRepository <<Java>> {
+    hasDataSet(modUrn: String): boolean
+    getSmvModule(modUrn: String): ISmvModule
+    outputModsForStage(stageName: String): String[]
   }
   class SmvOutput
   class SmvDataSet
   class SmvInputDataSet extends SmvDataSet
-  class Scala.SmvExtModuleInt <<Java>> {
-    requiresDS()
-    hash()
-    run()
-    ???()
-  }
-  class Scala.SmvExtInputInt <<Java>> {
-    hash()
-    run()
-    ???()
+  class Scala.ISmvModule <<Java>> {
+    dependencies()
+    datasetHash()
+    getDataFrame()
+    isEphemeral()
+    getDqm()
   }
   class Scala.SmvDataSetRepository {
     getSmvModule : SmvExtModuleInt
@@ -32,7 +32,7 @@ package Scala {
     ...
   }
 
-  SmvApp o-- Python.SmvPythonRepo
+  SmvApp o-- Python.PythonDataSetRepository
   SmvApp *-- "*" SmvDataSet
 
   class SmvModuleLink extends SmvModule
@@ -41,23 +41,16 @@ package Scala {
   class SmvModule extends SmvDataSet
 
   class SmvExtModule extends SmvModule {
-    ctor(mod: SmvExtModuleInt)
+    ctor(urn: String)
   }
-  SmvExtModule o-- Scala.SmvExtModuleInt
-
-  class SmvExtOutputModule <<anonymous>> extends SmvExtModule
-  SmvExtOutputModule --|> SmvOutput
-
-  class SmvExtInput extends SmvInputDataSet {
-    ctor(in: SmvExtInputInt)
-  }
-  SmvExtInput o-- Scala.SmvExtInputInt
+  SmvExtModule o-- Scala.ISmvModule
 
   class SmvExtModuleLink extends SmvModuleLink
-  SmvExtModuleLink *-- SmvExtOutputModule
+  SmvExtModuleLink *-- SmvExtModule
 }
 
 package Python {
+<<<<<<< HEAD
   class SmvPythonRepo extends Scala.SmvDataSetRepository
   class SmvPyDataSet
 
@@ -70,8 +63,14 @@ package Python {
   class SmvPyModuleLink extends SmvPyDataSet
 
   SmvPythonRepo *-- "*" SmvPyDataSet : "cache"
+=======
+  class PythonDataSetRepository extends Scala.SmvDataSetRepository
+  class SmvPyDataSet extends Scala.ISmvModule
 
-  SmvPyCsvFile -U-|> SmvPyInputDataSet
+  class SmvPyModule extends SmvPyDataSet
+>>>>>>> d1959cf48334485ae55d708f57a8219b503ede02
+
+  PythonDataSetRepository *-- "*" SmvPyDataSet : "cache"
 }
 
 @enduml

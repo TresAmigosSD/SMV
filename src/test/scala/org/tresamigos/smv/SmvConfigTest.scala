@@ -115,41 +115,6 @@ package org.tresamigos.smv {
     }
   }
 
-    val stageNames = Seq("org.tresamigos.smv.test1", "org.tresamigos.smv.test2")
-    private def config(modname: String): SmvConfig = new SmvConfig(Seq(
-      "--smv-props", "smv.stages=" + stageNames.mkString(":"), "-m", modname))
-
-    test("should report non-existing modules") {
-      val modname = "tooth-fary"
-      val conf = config(modname)
-      val thrown = the [java.lang.RuntimeException] thrownBy conf.modulesToRun()
-      thrown.getMessage shouldBe s"""Cannot find module named [${modname}] in any of the stages [${stageNames.mkString(", ")}]"""
-    }
-
-    // #155
-    test("should find a module by its basename") {
-      config("obj1").modulesToRun shouldBe Seq(org.tresamigos.smv.test1.obj1)
-    }
-
-    test("should resolve name ambiguity if only 1 is an SmvModule") {
-      config("obj2").modulesToRun shouldBe Seq(org.tresamigos.smv.test2.obj2)
-    }
-
-    test("should report ambiguous module names") {
-      val modname = "obj3"
-      val conf = config(modname)
-      val thrown = the [java.lang.RuntimeException] thrownBy conf.modulesToRun()
-      thrown.getMessage shouldBe s"""Module name [${modname}] is not specific enough, as it is found in multiple stages [${stageNames.mkString(", ")}]"""
-    }
-
-    test("should recursively search package namespace") {
-      config("obj4").modulesToRun shouldBe Seq(org.tresamigos.smv.obj4)
-    }
-
-    test("should resolve name ambiguity by prepending a containing package name") {
-      config("test1.obj3").modulesToRun shouldBe Seq(org.tresamigos.smv.test1.obj3)
-    }
-
   }
 
   /**
@@ -161,21 +126,4 @@ package org.tresamigos.smv {
     override def requiresDS() = Seq.empty
     override def run(i: runParams) = null
   }
-}
-
-package org.tresamigos.smv.test1 {
-  import org.tresamigos.smv.TestSmvModule
-  object obj1 extends TestSmvModule
-  object obj2
-  object obj3 extends TestSmvModule
-}
-
-package org.tresamigos.smv.test2 {
-  import org.tresamigos.smv.TestSmvModule
-  object obj2 extends TestSmvModule
-  object obj3 extends TestSmvModule
-}
-
-package org.tresamigos.smv {
-  object obj4 extends TestSmvModule
 }

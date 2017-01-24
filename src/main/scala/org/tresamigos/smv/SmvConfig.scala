@@ -156,54 +156,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   val permitDependencyViolation: Boolean = cmdLine.permitDependencyViolation()
 
-  /**
-   * sequence of SmvModules to run based on the command line arguments.
-   * Returns the union of -a/-m/-s command line flags.
-   */
-  private[smv] def modulesToRun() : Seq[SmvModule] = {
-
-    val empty = Some(Seq.empty[String])
-    val directMods = cmdLine.modsToRun.orElse(empty)().map {resolveModuleByName }
-    val stageMods = cmdLine.stagesToRun.orElse(empty)().flatMap(s => stages.findStage(s).allOutputModules)
-    val appMods = if (cmdLine.runAllApp()) stages.allOutputModules else Seq.empty[SmvModule]
-
-    directMods ++ stageMods ++ appMods
-  }
-
-  def findModuleInStage(stage: String, name: String): Option[SmvModule] = {
-    val candidates = (for {
-      pkg <- stage.split('.').reverse.tails //  stage "a.b.c" -> ["c","b", "a"] ->
-                                            //  [
-                                            //    ["c", "b", "a"],
-                                            //    ["b", "a"],
-                                            //    ["a"],
-                                            //    []
-                                            //  ]
-      candidate = (name +: pkg).reverse.mkString(".") //  "name" and ["c", "b", "a"] -> "a.b.c.name"
-                                                      //  "name" and ["b", "a"] -> "a.b.name"
-
-      // try each in turn as module object name
-      // skip those that do not have an SmvModule defined
-      m <- SmvReflection.findObjectByName[SmvModule](candidate).toOption
-    }
-    yield m).toSeq
-
-    candidates.headOption
-  }
-
-  def resolveModuleByName(name: String): SmvModule = {
-    val mods = for {
-      stage <- stageNames.toSet[String]
-      m <- findModuleInStage(stage, name)
-    } yield m
-
-    mods.size match {
-      case 0 => throw new SmvRuntimeException(s"""Cannot find module named [${name}] in any of the stages [${stageNames.mkString(", ")}]""")
-      case 1 => mods.head
-      case _ => throw new java.lang.RuntimeException(s"Module name [${name}] is not specific enough, as it is found in multiple stages [${stageNames.mkString(", ")}]")
-    }
-  }
-
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
