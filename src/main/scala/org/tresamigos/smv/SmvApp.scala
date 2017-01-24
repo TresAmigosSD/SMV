@@ -471,7 +471,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
       // try each in turn as module object name
       // skip those that do not have an SmvModule defined
-      m <- SmvReflection.findObjectByName[SmvModule](candidate).toOption
+      m <- Try(dsForName(candidate).asInstanceOf[SmvModule]).toOption
     }
     yield m).toSeq
 

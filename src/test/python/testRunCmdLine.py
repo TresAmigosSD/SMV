@@ -20,7 +20,7 @@ class RunModuleFromCmdLineTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
         return ['--smv-props', 'smv.stages=fixture.cmdline.runmod.stage1',
-                '-m', cls.modUrn]
+                '-m', "modules.A"]
 
     def test_can_run_module_from_cmdline(self):
         smvPy.j_smvApp.run()
