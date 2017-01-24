@@ -50,25 +50,11 @@ package Scala {
 }
 
 package Python {
-<<<<<<< HEAD
-  class SmvPythonRepo extends Scala.SmvDataSetRepository
-  class SmvPyDataSet
 
-  class SmvPyModule extends Scala.SmvExtModuleInt
-  SmvPyModule -U-|> SmvPyDataSet
-
-  class SmvPyInputDataSet extends Scala.SmvExtInputInt
-  SmvPyInputDataSet -U-|> SmvPyDataSet
-
-  class SmvPyModuleLink extends SmvPyDataSet
-
-  SmvPythonRepo *-- "*" SmvPyDataSet : "cache"
-=======
   class PythonDataSetRepository extends Scala.SmvDataSetRepository
   class SmvPyDataSet extends Scala.ISmvModule
 
   class SmvPyModule extends SmvPyDataSet
->>>>>>> d1959cf48334485ae55d708f57a8219b503ede02
 
   PythonDataSetRepository *-- "*" SmvPyDataSet : "cache"
 }
