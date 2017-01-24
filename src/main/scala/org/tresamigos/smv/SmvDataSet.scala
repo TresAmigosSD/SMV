@@ -576,7 +576,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
   override def requiresDS = target.dependencies map (app.dsForName(_))
   override def run(i: runParams) =
     target.getDataFrame(new DQMValidator(createDsDqm), app.dataframes)
-  override def datasetHash = target.datasetHash(true)
+  override def datasetHash = target.datasetHash()
   override def createDsDqm = target.getDqm()
 }
 

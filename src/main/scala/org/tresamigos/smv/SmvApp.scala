@@ -370,8 +370,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       case None => notfound(modUrn)
       case Some(repo) =>
         val ds = repo.getSmvModule(modUrn)
-        ds.dependencies.foldLeft(
-          ds.datasetHash(true)) { (acc, dep) =>
+        ds.dependencies.foldLeft(ds.datasetHash) { (acc, dep) =>
           acc + hashOfHash(dep)
         }.toInt
     }

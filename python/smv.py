@@ -363,7 +363,7 @@ class SmvPyDataSet(object):
         so that code and the data it produces can be tracked together."""
         return "0";
 
-    def datasetHash(self, includeSuperClass=True):
+    def datasetHash(self):
         cls = self.__class__
         try:
             src = inspect.getsource(cls)
@@ -372,12 +372,11 @@ class SmvPyDataSet(object):
             res = hash(disassemble(cls))
 
         # include datasetHash of parent classes
-        if includeSuperClass:
-            for m in inspect.getmro(cls):
-                try:
-                    if m.IsSmvPyDataSet and m != cls and not m.name().startswith("smv."):
-                        res += m(self.smvPy).datasetHash()
-                except: pass
+        for m in inspect.getmro(cls):
+            try:
+                if m.IsSmvPyDataSet and m != cls and not m.name().startswith("smv."):
+                    res += m(self.smvPy).datasetHash()
+            except: pass
 
         # ensure python's numeric type can fit in a java.lang.Integer
         return res & 0x7fffffff
@@ -557,11 +556,11 @@ class SmvPyModuleLink(SmvPyModule):
         """Returns the target SmvModule class from another stage to which this link points"""
         raise ValueError('Expect to be implemented by subclass')
 
-    def datasetHash(self, includeSuperClass=True):
+    def datasetHash(self):
         stage = self.smvPy.j_smvPyClient.inferStageNameFromDsName(self.target().name())
         dephash = hash(stage.get()) if stage.isDefined() else self.target()(self.smvPy).datasetHash()
         # ensure python's numeric type can fit in a java.lang.Integer
-        return (dephash + super(SmvPyModuleLink, self).datasetHash(includeSuperClass)) & 0x7fffffff
+        return (dephash + super(SmvPyModuleLink, self).datasetHash()) & 0x7fffffff
 
     def run(self, i):
         res = self.smvPy.j_smvPyClient.readPublishedData(self.target().name())

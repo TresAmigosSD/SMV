@@ -58,5 +58,5 @@ public interface ISmvModule {
 	 * the hash for all its super classes up to and excluding the base
 	 * class provided by SMV.
 	 */
-	int datasetHash(boolean includeSuperClass);
+	int datasetHash();
 }
