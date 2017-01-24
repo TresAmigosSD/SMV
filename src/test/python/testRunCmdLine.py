@@ -27,3 +27,18 @@ class RunModuleFromCmdLineTest(SmvBaseTest):
         a = smvPy.runModule(self.modUrn)
         expected = self.createDF("k:String;v:Integer", "a,;b,2")
         self.should_be_same(a, expected)
+
+class RunStageFromCmdLineTest(SmvBaseTest):
+    stageName = 'fixture.cmdline.runstage.stage1'
+
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=fixture.cmdline.runstage.stage1',
+                '-s', cls.stageName]
+
+    def test_can_run_stage_from_cmdline(self):
+        smvPy.j_smvApp.run()
+        a = smvPy.runModule(self.stageName + ".modules.A")
+        self.should_be_same(a, self.createDF("k:String;v:Integer", "a,;b,2"))
+        b = smvPy.runModule(self.stageName + ".modules.B")
+        self.should_be_same(a, self.createDF("k:String;v:Integer", "c,3;d,4"))
