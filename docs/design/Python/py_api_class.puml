@@ -26,6 +26,11 @@ package Scala {
     run()
     ???()
   }
+  class Scala.SmvDataSetRepository {
+    getSmvModule : SmvExtModuleInt
+    hasDataSet
+    ...
+  }
 
   SmvApp o-- Python.SmvPythonRepo
   SmvApp *-- "*" SmvDataSet
@@ -53,10 +58,7 @@ package Scala {
 }
 
 package Python {
-  class SmvPythonRepo {
-    findModule(fqn)
-    findInput(fqn)
-  }
+  class SmvPythonRepo extends Scala.SmvDataSetRepository
   class SmvPyDataSet
 
   class SmvPyModule extends Scala.SmvExtModuleInt
@@ -64,6 +66,8 @@ package Python {
 
   class SmvPyInputDataSet extends Scala.SmvExtInputInt
   SmvPyInputDataSet -U-|> SmvPyDataSet
+
+  class SmvPyModuleLink extends SmvPyDataSet
 
   SmvPythonRepo *-- "*" SmvPyDataSet : "cache"
 
