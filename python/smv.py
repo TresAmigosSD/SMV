@@ -452,7 +452,7 @@ class SmvPyCsvFile(SmvPyDataSet):
         return []
 
     def doRun(self, validator, known):
-        jdf = self._smvCsvFile.doRun(validator, known)
+        jdf = self._smvCsvFile.doRun(validator)
         return DataFrame(jdf, self.smvPy.sqlContext)
 
 class SmvPyCsvStringData(SmvPyDataSet):
@@ -484,7 +484,7 @@ class SmvPyCsvStringData(SmvPyDataSet):
         return []
 
     def doRun(self, validator, known):
-        jdf = self._smvCsvStringData.doRun(validator, known)
+        jdf = self._smvCsvStringData.doRun(validator)
         return DataFrame(jdf, self.smvPy.sqlContext)
 
 

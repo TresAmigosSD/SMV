@@ -181,6 +181,7 @@ object ShellCmd {
 
     val message = if (meth.isMethod) {
       mir.reflectMethod(meth.asMethod)()
+      SmvApp.app.removeDataSet(ds.urn)
 
       "The following dependent SmvDataSets will be reloaded:\n" +
         ds.dependencies.map(_.getClass.getName).mkString("\n")

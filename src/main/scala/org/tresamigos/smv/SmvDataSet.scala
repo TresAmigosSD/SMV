@@ -164,7 +164,7 @@ abstract class SmvDataSet extends FilenamePart {
     versionedBasePath(prefix) + ".valid"
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame
+  private[smv] def doRun(dsDqm: DQMValidator): DataFrame
 
   /**
    * delete the output(s) associated with this module (csv file and schema).
@@ -199,12 +199,12 @@ abstract class SmvDataSet extends FilenamePart {
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
 
     if (isEphemeral) {
-      val df = dsDqm.attachTasks(doRun(dsDqm, app.dataframes))
+      val df = dsDqm.attachTasks(doRun(dsDqm))
       validator.validate(df, false, moduleValidPath()) // no action before this point
       df
     } else {
       readPersistedFile().recoverWith {case e =>
-        val df = dsDqm.attachTasks(doRun(dsDqm, app.dataframes))
+        val df = dsDqm.attachTasks(doRun(dsDqm))
         persist(df)
         validator.validate(df, true, moduleValidPath()) // has already had action (from persist)
         readPersistedFile()
@@ -277,7 +277,7 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
 case class SmvHiveTable(val tableName: String) extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
 
-  override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
+  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val df = app.sqlContext.sql("select * from " + tableName)
     run(df)
   }
@@ -354,7 +354,7 @@ case class SmvCsvFile(
   override val isFullPath: Boolean = false
 ) extends SmvFile with SmvDSWithParser {
 
-  override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
+  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
@@ -384,7 +384,7 @@ class SmvMultiCsvFiles(
     else Option(findFullPath(schemaPath))
   }
 
-  override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
+  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
 
     val filesInDir = SmvHDFS.dirList(fullPath).map{n => s"${fullPath}/${n}"}
@@ -404,7 +404,7 @@ case class SmvFrlFile(
     override val isFullPath: Boolean = false
   ) extends SmvFile with SmvDSWithParser {
 
-  override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
+  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
@@ -447,11 +447,10 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   def run(inputs: runParams) : DataFrame
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
+  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     // TODO turn on dependency check by uncomment the following line after test against projects
     // checkDependency()
-    requiresDS foreach app.resolveRDD
-    run(requiresDS().map(r => (r, app.dataframes(r.urn))).toMap)
+    run(app.mkRunParam(this))
   }
 
   /** Use Bytecode analysis to figure out dependency and check against
@@ -552,7 +551,7 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
    * and run the DS, or "not-follow-the-link", which will try to read from the persisted data dir
    * and fail if not found.
    */
-  override private[smv] def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
+  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     if (isFollowLink) {
       smvModule.readPublishedData().getOrElse(smvModule.rdd())
     } else {
@@ -575,7 +574,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
   override def isEphemeral = target.isEphemeral()
   override def requiresDS = target.dependencies map (app.dsForName(_))
   override def run(i: runParams) =
-    target.getDataFrame(new DQMValidator(createDsDqm), app.dataframes)
+    target.getDataFrame(new DQMValidator(createDsDqm), i.map {case (ds, df) => (ds.urn, df)})
   override def datasetHash = target.datasetHash()
   override def createDsDqm = target.getDqm()
 }
@@ -608,7 +607,7 @@ case class SmvCsvStringData(
     (crc.getValue + datasetCRC).toInt
   }
 
-  override def doRun(dsDqm: DQMValidator, known: java.util.Map[String, DataFrame]): DataFrame = {
+  override def doRun(dsDqm: DQMValidator): DataFrame = {
     val schema = SmvSchema.fromString(schemaStr)
     val dataArray = data.split(";").map(_.trim)
 

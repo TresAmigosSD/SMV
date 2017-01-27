@@ -46,7 +46,7 @@ class SmvHierarchyTest extends SmvTestUtil {
   test("Test SmvHierarchyFuncs") {
     val ssc = sqlContext; import ssc.implicits._
 
-    val df = createSchemaRdd("id:String;zip3:String;terr:String;div:String;v:Double",
+    val df = dfFrom("id:String;zip3:String;terr:String;div:String;v:Double",
     """a,100,001,01,10.3;
        a,102,001,01,1.0;
        a,102,001,01,2.0;

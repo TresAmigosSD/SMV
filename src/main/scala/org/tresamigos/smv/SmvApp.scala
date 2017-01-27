@@ -50,7 +50,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
 
   /** Dataframes from resolved modules */
-  private[smv] var dataframes: Map[String, DataFrame] = Map.empty
+  private[smv] var urn2ds: Map[String, SmvDataSet] = Map.empty
+  def removeDataSet(urn: String): Unit = urn2ds -= urn
+  def addDataSet(urn: String, ds: SmvDataSet): Unit = urn2ds += urn->ds
 
   private var datasetRepositories: Map[String, SmvDataSetRepository] = Map.empty
   def register(id: String, repo: SmvDataSetRepository): Unit =
@@ -159,9 +161,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     if (popRdd != dsUrn)
       throw new IllegalStateException(s"resolveStack corrupted.  Got ${popRdd}, expected ${dsUrn}")
 
-    dataframes = dataframes + (dsUrn -> resRdd)
     resRdd
   }
+
+  /**
+   * Recursively resolve all dependent datasets and build a map of
+   * dataset -> dataframe with the result
+   */
+  def mkRunParam(ds: SmvDataSet): Map[SmvDataSet, DataFrame] =
+    (ds.requiresDS map (dep => (dep, resolveRDD(dep)))).toMap
 
   /**
    * dynamically resolve a module.
@@ -173,25 +181,31 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /** Factory method to look up any SmvDataSet by its urn */
   def dsForName(urn: String, parentClassLoader: ClassLoader = getClass.getClassLoader): SmvDataSet =
-    if (isLink(urn)) {
-      val targetUrn = link2mod(urn)
-      dsForName(targetUrn, parentClassLoader) match {
-        case _: SmvExtModule => SmvExtModuleLink(targetUrn)
-        case x: SmvModule with SmvOutput => new SmvModuleLink(x)
-        case x => throw new SmvRuntimeException(s"Module [${targetUrn}] is not an SmvOutput module: ${x}")
-      }
-    }
-    else {
-      val fqn = urn2fqn(urn)
-      Try(scalaDsForName(fqn, parentClassLoader)) match {
-        case Success(ds) => ds
-        case Failure(_) =>
-          findRepoWith(urn) match {
-            case Some(repo) => SmvExtModule(fqn)
-            case None => notfound(urn)
+    urn2ds.get(urn) match {
+      case Some(ds) => ds
+      case None =>
+        val ds = if (isLink(urn)) {
+          val targetUrn = link2mod(urn)
+          dsForName(targetUrn, parentClassLoader) match {
+            case _: SmvExtModule => SmvExtModuleLink(targetUrn)
+            case x: SmvModule with SmvOutput => new SmvModuleLink(x)
+            case x => throw new SmvRuntimeException(s"Module [${targetUrn}] is not an SmvOutput module: ${x}")
           }
-      }
+        } else {
+          val fqn = urn2fqn(urn)
+          Try(scalaDsForName(fqn, parentClassLoader)) match {
+            case Success(ds) => ds
+            case Failure(_) =>
+              findRepoWith(urn) match {
+                case Some(repo) => SmvExtModule(fqn)
+                case None => notfound(urn)
+              }
+          }
+        }
+        addDataSet(urn, ds)
+        ds
     }
+
 
   /** Looks up an Scala SmvDataSet by its fully-qualified name */
   def scalaDsForName(fqn: String, parentClassLoader: ClassLoader) = {
@@ -409,7 +423,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   def runDynamicModule(modUrn: String): DataFrame =
     if (modUrn.isEmpty)
       return null
-    else if (!dataframes.contains(modUrn))
+    else if (!urn2ds.contains(modUrn))
       runModule(modUrn)
     else
       findRepoWith(modUrn) match {
@@ -418,14 +432,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
           val ds = repo.getSmvModule(modUrn)
           ds.dependencies foreach runDynamicModule
 
-          dataframes = dataframes - modUrn
           val df = {
             val dqm = new DQMValidator(ds.getDqm)
             val hashval = hashOfHash(modUrn)
-            val df = repo.rerun(modUrn, dqm, dataframes)
+            val df = repo.rerun(modUrn, dqm,
+              mkRunParam(dsForName(modUrn)).map{case (ds, df) => (ds.urn, df)})
             persist(repo, modUrn, hashval, dqm, df)
           }
-          dataframes = dataframes + (modUrn -> df)
 
           df
       }
