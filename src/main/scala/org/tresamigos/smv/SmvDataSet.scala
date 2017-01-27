@@ -195,7 +195,6 @@ abstract class SmvDataSet extends FilenamePart {
     Try(SmvUtil.readFile(app.sqlContext, moduleCsvPath(prefix)))
 
   private[smv] def computeRDD: DataFrame = {
-    println(s"computeRDD: class is ${getClass} module fqn is ${fqn}, valid path is ${moduleValidPath()}")
     val dsDqm = new DQMValidator(createDsDqm())
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
 
