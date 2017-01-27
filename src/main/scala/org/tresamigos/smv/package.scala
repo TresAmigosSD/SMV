@@ -49,13 +49,23 @@ import org.apache.spark.annotation._
  * @groupname other All others
  */
 package object smv {
+  val ModDsPrefix = "mod:"
   val LinkDsPrefix = "link:"
+
+  /** Create an urn for a module from its fqn */
+  def mkModUrn(modFqn: String) = ModDsPrefix + modFqn
+
+  /** Create an urn for a link from its target fqn */
+  def mkLinkUrn(targetFqn: String) = LinkDsPrefix + targetFqn
 
   /** Predicate functions working with urn */
   def isLink(modUrn: String): Boolean = modUrn startsWith LinkDsPrefix
 
   /** Converts a possible urn to the module's fqn */
   def urn2fqn(modUrn: String): String = modUrn.substring(modUrn.lastIndexOf(':')+1)
+
+  /** Converts a link urn to the mod urn representing its target */
+  def link2mod(linkUrn: String): String = mkModUrn(urn2fqn(linkUrn))
 
   /** implicitly convert `Column` to `ColumnHelper` */
   implicit def makeColHelper(col: Column) = new ColumnHelper(col)
