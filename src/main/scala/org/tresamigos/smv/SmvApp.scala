@@ -173,22 +173,24 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /** Factory method to look up any SmvDataSet by its urn */
   def dsForName(urn: String, parentClassLoader: ClassLoader = getClass.getClassLoader): SmvDataSet =
-    Try(scalaDsForName(urn, parentClassLoader)) match {
-      case Success(ds) => ds
-      case Failure(_) =>
-        if (isLink(urn)){
-          val fqn = urn2fqn(urn)
-          dsForName(fqn, parentClassLoader) match {
-            case _: SmvExtModule => SmvExtModuleLink(fqn)
-            case x: SmvModule with SmvOutput => new SmvModuleLink(x)
-            case x => throw new SmvRuntimeException(s"Module [${fqn}] is not an SmvOutput module: ${x}")
-          }
-        }
-        else
+    if (isLink(urn)) {
+      val targetUrn = link2mod(urn)
+      dsForName(targetUrn, parentClassLoader) match {
+        case _: SmvExtModule => SmvExtModuleLink(targetUrn)
+        case x: SmvModule with SmvOutput => new SmvModuleLink(x)
+        case x => throw new SmvRuntimeException(s"Module [${targetUrn}] is not an SmvOutput module: ${x}")
+      }
+    }
+    else {
+      val fqn = urn2fqn(urn)
+      Try(scalaDsForName(fqn, parentClassLoader)) match {
+        case Success(ds) => ds
+        case Failure(_) =>
           findRepoWith(urn) match {
-            case Some(repo) => SmvExtModule(urn)
+            case Some(repo) => SmvExtModule(fqn)
             case None => notfound(urn)
           }
+      }
     }
 
   /** Looks up an Scala SmvDataSet by its fully-qualified name */

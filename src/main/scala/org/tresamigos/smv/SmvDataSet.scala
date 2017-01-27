@@ -50,7 +50,7 @@ abstract class SmvDataSet extends FilenamePart {
   /** Names the persisted file for the result of this SmvDataSet */
   override def fnpart = fqn
 
-  val urn: String = fqn
+  val urn: String = mkModUrn(fqn)
   def description(): String
 
   /** modules must override to provide set of datasets they depend on. */
@@ -195,6 +195,7 @@ abstract class SmvDataSet extends FilenamePart {
     Try(SmvUtil.readFile(app.sqlContext, moduleCsvPath(prefix)))
 
   private[smv] def computeRDD: DataFrame = {
+    println(s"computeRDD: class is ${getClass} module fqn is ${fqn}, valid path is ${moduleValidPath()}")
     val dsDqm = new DQMValidator(createDsDqm())
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
 
@@ -512,7 +513,7 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
 
   private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
-  override val urn = LinkDsPrefix + smvModule.fqn
+  override val urn = mkLinkUrn(smvModule.fqn)
 
   /**
    *  No need to check isEphemeral any more
@@ -570,8 +571,8 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
   lazy val repo = app.findRepoWith(modFqn).get
   lazy val target: ISmvModule = repo.getSmvModule(modFqn)
 
-  override val urn = modFqn
   override val fqn = modFqn
+  override val urn = mkModUrn(modFqn)
   override def isEphemeral = target.isEphemeral()
   override def requiresDS = target.dependencies map (app.dsForName(_))
   override def run(i: runParams) =

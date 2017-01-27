@@ -374,7 +374,7 @@ class SmvPyDataSet(object):
         # include datasetHash of parent classes
         for m in inspect.getmro(cls):
             try:
-                if m.IsSmvPyDataSet and m != cls and not m.name().startswith("smv."):
+                if m.IsSmvPyDataSet and m != cls and not m.fqn().startswith("smv."):
                     res += m(self.smvPy).datasetHash()
             except: pass
 
@@ -382,14 +382,14 @@ class SmvPyDataSet(object):
         return res & 0x7fffffff
 
     @classmethod
-    def name(cls):
+    def fqn(cls):
         """Returns the fully qualified name
         """
         return cls.__module__ + "." + cls.__name__
 
     @classmethod
     def urn(cls):
-        return cls.name()
+        return "mod:" + cls.fqn()
 
     def isEphemeral(self):
         """If set to true, the run result of this dataset will not be persisted
@@ -415,7 +415,7 @@ class SmvPyCsvFile(SmvPyDataSet):
     def __init__(self, smvPy):
         super(SmvPyCsvFile, self).__init__(smvPy)
         self._smvCsvFile = smvPy.j_smvPyClient.smvCsvFile(
-            self.name(), self.path(), self.csvAttr(),
+            self.fqn(), self.path(), self.csvAttr(),
             self.forceParserCheck(), self.failAtParsingError())
 
     def description(self):
@@ -543,7 +543,7 @@ class SmvPyModuleLink(SmvPyModule):
 
     @classmethod
     def urn(cls):
-        return 'link:' + cls.target().name()
+        return 'link:' + cls.target().fqn()
 
     def isEphemeral(self):
         return True
@@ -557,13 +557,13 @@ class SmvPyModuleLink(SmvPyModule):
         raise ValueError('Expect to be implemented by subclass')
 
     def datasetHash(self):
-        stage = self.smvPy.j_smvPyClient.inferStageNameFromDsName(self.target().name())
+        stage = self.smvPy.j_smvPyClient.inferStageNameFromDsName(self.target().fqn())
         dephash = hash(stage.get()) if stage.isDefined() else self.target()(self.smvPy).datasetHash()
         # ensure python's numeric type can fit in a java.lang.Integer
         return (dephash + super(SmvPyModuleLink, self).datasetHash()) & 0x7fffffff
 
     def run(self, i):
-        res = self.smvPy.j_smvPyClient.readPublishedData(self.target().name())
+        res = self.smvPy.j_smvPyClient.readPublishedData(self.target().fqn())
         return res.get() if res.isDefined() else self.smvPy.runModule(self.target().urn())
 
 PyExtDataSetCache = {}
@@ -820,7 +820,7 @@ class PythonDataSetRepository(object):
         # issue #417
         # recursively reload all dependent modules
         for dep in ret.requiresDS():
-            self.reloadDs(dep.name())
+            self.reloadDs(dep.urn())
 
         return ret
 
