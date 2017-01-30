@@ -27,7 +27,8 @@ import org.apache.spark.annotation._
  * @param stages the collection of stages as the graph scope
  * @param targetDSs the collection of targeted DSs, if empty, all Modules are targets
  **/
-private[smv] class SmvDSGraph(stages: SmvStages, targetDSs: Seq[SmvDataSet] = Nil) {
+private[smv] class SmvDSGraph(app: SmvApp, pstages: SmvStages = null, targetDSs: Seq[SmvDataSet] = Nil) {
+  val stages = if (null == pstages) app.stages else pstages
   private val seeds = if(targetDSs.isEmpty) stages.allModules else targetDSs
 
   val nodes: Seq[SmvDataSet]= (seeds.flatMap{ds => stages.ancestors(ds)} ++ seeds).distinct.filterNot{
@@ -68,7 +69,8 @@ private[smv] case class SmvStageInterface(fromStage: SmvStage, toStage: SmvStage
  * Nodes are Stages or Stage-Interfaces
  * Edges are stage dependency
  **/
-private[smv] class SmvStageGraph(stages: SmvStages) {
+private[smv] class SmvStageGraph(app: SmvApp, pstages: SmvStages = null) {
+  val stages = if (null == pstages) app.stages else pstages
   val stageNodes: Seq[SmvStage] = stages.stages
   val interfaceNodes: Seq[SmvStageInterface] = stageNodes.flatMap{s =>
     s.allLinks.groupBy(l => stages.findStageForDataSet(l.smvModule).getOrElse(null)).filter{
@@ -94,7 +96,8 @@ private[smv] class SmvStageGraph(stages: SmvStages) {
 /**
  * Collection of method to actually "plot" the graph
  **/
-private[smv] class SmvGraphUtil(stages: SmvStages) {
+private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
+  val stages = if (null == pstages) app.stages else pstages
   // max string length per line in an ascii Box
   private val asciiBoxWidth = 12
 
@@ -114,7 +117,7 @@ private[smv] class SmvGraphUtil(stages: SmvStages) {
    * Create DS's Ascii Graph, for printing in shell
    **/
   def createDSAsciiGraph(targetDSs: Seq[SmvDataSet] = Nil): String = {
-    val g = new SmvDSGraph(stages, targetDSs)
+    val g = new SmvDSGraph(app, stages, targetDSs)
 
     val toPrint = (ds: SmvDataSet) => wrapStr(baseNameWithFlag(ds))
 
@@ -133,7 +136,7 @@ private[smv] class SmvGraphUtil(stages: SmvStages) {
    * Create Stage Ascii Graph, for printing in Shell
    **/
   def createStageAsciiGraph(): String = {
-    val g = new SmvStageGraph(stages)
+    val g = new SmvStageGraph(app, stages)
 
     val printStage = (s: SmvStage) => wrapStr(stages.stageBaseName(s.name))
     val printInterface = (i: SmvStageInterface) => i match {
@@ -156,7 +159,7 @@ private[smv] class SmvGraphUtil(stages: SmvStages) {
    * to `svg` or `png` files for sharing
    **/
   def createGraphvisCode(targetDSs: Seq[SmvDataSet] = Nil): String = {
-    val g = new SmvDSGraph(stages, targetDSs)
+    val g = new SmvDSGraph(app, stages, targetDSs)
 
     def toName(ds: SmvDataSet) = "\"" + baseName(ds) + "\""
     val toNodeStr = (ds: SmvDataSet) =>
@@ -193,7 +196,7 @@ private[smv] class SmvGraphUtil(stages: SmvStages) {
    * interactive dependency graph
    **/
   def createGraphJSON(targetDSs: Seq[SmvDataSet] = Nil): String = {
-    val g = new SmvDSGraph(stages, targetDSs)
+    val g = new SmvDSGraph(app, stages, targetDSs)
 
     def toName(ds: SmvDataSet) = "\"" + baseName(ds) + "\""
     def toNodeStr(nodeType: String)(m: SmvDataSet) =

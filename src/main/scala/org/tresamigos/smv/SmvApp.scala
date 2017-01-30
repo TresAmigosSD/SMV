@@ -228,7 +228,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   private def genDotGraph(module: SmvModule) = {
     val pathName = s"${module.fqn}.dot"
-    val graphString = new graph.SmvGraphUtil(stages).createGraphvisCode(Seq(module))
+    val graphString = new graph.SmvGraphUtil(this, stages).createGraphvisCode(Seq(module))
     SmvReportIO.saveLocalReport(graphString, pathName)
   }
 
@@ -236,7 +236,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     val pathName = s"${smvConfig.appName}.json"
 
     val stagesToGraph = packages.map{stages.findStage(_)}
-    val graphString = new graph.SmvGraphUtil(new SmvStages(stagesToGraph)).createGraphJSON()
+    val graphString = new graph.SmvGraphUtil(this, new SmvStages(stagesToGraph)).createGraphJSON()
 
     SmvReportIO.saveLocalReport(graphString, pathName)
   }

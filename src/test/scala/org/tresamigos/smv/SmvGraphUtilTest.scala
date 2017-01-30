@@ -24,7 +24,7 @@ class SmvGraphUtilTest extends SmvTestUtil {
   override def appArgs = testAppArgs.multiStage ++ Seq("-m", "None")
 
   test("Test list modules") {
-    val gu = new graph.SmvGraphUtil(app.stages)
+    val gu = new graph.SmvGraphUtil(app)
     val dsL = gu.createDSList()
 
     assert(dsL ===  """
@@ -55,7 +55,7 @@ org.tresamigos.smv.smvAppTestPkg3:
   }
 
   test("Test createGraphvisCode") {
-    val graphString = new graph.SmvGraphUtil(app.stages).createGraphvisCode(Seq(smvAppTestPkg3.U))
+    val graphString = new graph.SmvGraphUtil(app).createGraphvisCode(Seq(smvAppTestPkg3.U))
     val expectPart = """  subgraph cluster_0 {
     label="org.tresamigos.smv.smvAppTestPkg3"
     color="#e0e0e0"
@@ -67,7 +67,7 @@ org.tresamigos.smv.smvAppTestPkg3:
   }
 
   test("Test createDSAsciiGraph") {
-    val graphString = new graph.SmvGraphUtil(app.stages).createDSAsciiGraph()
+    val graphString = new graph.SmvGraphUtil(app).createDSAsciiGraph()
     //println(graphString)
     assertStrIgnoreSpace(graphString, """               ┌────────────┐
                │(M) smvAppTe│
@@ -90,7 +90,7 @@ org.tresamigos.smv.smvAppTestPkg3:
   }
 
   test("Test createStageAsciiGraph") {
-    val graphString = new graph.SmvGraphUtil(app.stages).createStageAsciiGraph()
+    val graphString = new graph.SmvGraphUtil(app).createStageAsciiGraph()
     assertStrIgnoreSpace(graphString, """        ┌────────────┐
         │smvAppTestPk│
         │     g1     │
@@ -109,7 +109,7 @@ org.tresamigos.smv.smvAppTestPkg3:
   }
 
   test("Test createGraphJSON") {
-    val graphString = new graph.SmvGraphUtil(app.stages).createGraphJSON()
+    val graphString = new graph.SmvGraphUtil(app).createGraphJSON()
     //println(graphString)
     val json =parse(graphString)
 
@@ -161,7 +161,7 @@ class SmvGraphUtilWithStrTest extends SmvTestUtil {
     "smv.stages=org.tresamigos.smv.smvAppTestPkgStr")
 
   test("Test list modules") {
-    val gu = new graph.SmvGraphUtil(app.stages)
+    val gu = new graph.SmvGraphUtil(app)
     val dsL = gu.createDSList()
 
     println(dsL)
