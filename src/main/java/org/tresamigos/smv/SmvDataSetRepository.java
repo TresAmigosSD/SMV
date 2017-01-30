@@ -36,7 +36,7 @@ public interface SmvDataSetRepository {
 	ISmvModule getSmvModule(String modUrn);
 
 	/**
-	 * Output module fqns for a stage.
+	 * Urns of output module for a stage in this repository
 	 */
 	String[] outputModsForStage(String stageName);
 

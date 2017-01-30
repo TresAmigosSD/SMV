@@ -49,7 +49,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
 
-  /** Dataframes from resolved modules */
   private[smv] var urn2ds: Map[String, SmvDataSet] = Map.empty
   def removeDataSet(urn: String): Unit = urn2ds -= urn
   def addDataSet(urn: String, ds: SmvDataSet): Unit = urn2ds += urn->ds
@@ -57,6 +56,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   private var datasetRepositories: Map[String, SmvDataSetRepository] = Map.empty
   def register(id: String, repo: SmvDataSetRepository): Unit =
     datasetRepositories = datasetRepositories + (id -> repo)
+  private def repositories: Seq[SmvDataSetRepository] = datasetRepositories.values.toSeq
 
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
@@ -82,7 +82,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /** The names of output modules in a given stage */
   def outputModsForStage(stageName: String): Seq[String] =
     stages.findStage(stageName).allOutputModules.map(_.fqn) ++
-  datasetRepositories.values.toSeq.flatMap(_.outputModsForStage(stageName))
+  repositories.flatMap(_.outputModsForStage(stageName))
 
   /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
   private[smv] def validFilesInOutputDir() : Seq[String] = {
@@ -377,7 +377,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   def runModule(modUrn: String): DataFrame = resolveRDD(dsForName(modUrn))
 
   private[smv] def findRepoWith(modUrn: String): Option[SmvDataSetRepository] =
-    datasetRepositories.values.find(_.hasDataSet(modUrn))
+    repositories.find(_.hasDataSet(modUrn))
 
   @inline private def notfound(modUrn: String) = throw new SmvRuntimeException(s"Cannot find module ${modUrn}")
 
