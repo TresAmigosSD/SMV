@@ -30,7 +30,7 @@ import scala.util.{Try, Success, Failure}
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) {
+class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) extends SmvPackageManager {
 
   val smvConfig = new SmvConfig(cmdLineArgs)
   val genEdd = smvConfig.cmdLine.genEdd()
@@ -66,6 +66,42 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /** stack of items currently being resolved.  Used for cyclic checks. */
   val resolveStack: mutable.Stack[String] = mutable.Stack()
+
+  override def getAllPackageNames = stages.stages flatMap (_.getAllPackageNames)
+  override lazy val allDatasets = stages.allDatasets ++ {
+    for {
+      s <- stages.stages
+      r <- repositories
+      ds <- r.dsUrnsForStage(s.name)
+    } yield dsForName(ds)
+  }
+
+  override lazy val allOutputModules =
+    for {
+      s <- stages.stages
+      urn <- outputModsForStage(s.name)
+    } yield dsForName(urn).asInstanceOf[SmvModule]
+
+  override lazy val predecessors =
+    allDatasets.map {
+      case d: SmvModuleLink => (d, Seq(d.smvModule))
+      case d: SmvDataSet => (d, d.requiresDS)
+    }.toMap
+
+  // Issue # 349: look up stage by the dataset's name instead of the
+  // object identity because after hot-deploy in shell via a new
+  // classloader, the same datset no longer has the same object
+  // instance.
+  lazy val dsname2stage: Map[String, SmvStage] =
+    (for {
+      st <- stages.stages
+      ds <- st.allDatasets
+    } yield (ds.fqn, st)).toMap
+
+  /**
+   * Find the stage that a given dataset belongs to.
+   */
+  def findStageForDataSet(ds: SmvDataSet) : Option[SmvStage] = dsname2stage.get(ds.fqn)
 
   /**
    * Create a DataFrame from string for temporary use (in test or shell)
@@ -232,7 +268,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   private def genDotGraph(module: SmvModule) = {
     val pathName = s"${module.fqn}.dot"
-    val graphString = new graph.SmvGraphUtil(stages).createGraphvisCode(Seq(module))
+    val graphString = new graph.SmvGraphUtil(this, stages).createGraphvisCode(Seq(module))
     SmvReportIO.saveLocalReport(graphString, pathName)
   }
 
@@ -240,7 +276,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     val pathName = s"${smvConfig.appName}.json"
 
     val stagesToGraph = packages.map{stages.findStage(_)}
-    val graphString = new graph.SmvGraphUtil(new SmvStages(stagesToGraph)).createGraphJSON()
+    val graphString = new graph.SmvGraphUtil(this, new SmvStages(stagesToGraph)).createGraphJSON()
 
     SmvReportIO.saveLocalReport(graphString, pathName)
   }

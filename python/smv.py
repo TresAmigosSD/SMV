@@ -833,7 +833,7 @@ class PythonDataSetRepository(object):
     def notFound(self, modUrn, msg):
         raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))
 
-    def outputModsForStage(self, stageName):
+    def moduleUrnsForStage(self, stageName, fn):
         # `walk_packages` can generate AttributeError if the system has
         # Gtk modules, which are not designed to use with reflection or
         # introspection. Best action to take in this situation is probably
@@ -856,11 +856,17 @@ class PythonDataSetRepository(object):
                 for n in dir(pymod):
                     obj = getattr(pymod, n)
                     try:
-                        if (obj.IsSmvPyOutput and obj.IsSmvPyModule):
+                        if fn(obj):
                             buf.append(obj.urn())
                     except AttributeError:
                         continue
         return smv_copy_array(self.smvPy.sc, *buf)
+
+    def outputModsForStage(self, stageName):
+        return moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyOutput and obj.IsSmvPyModule)
+
+    def dsUrnsForStage(self, stageName):
+        return moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
 
     def rerun(self, modUrn, validator, known):
         ds = self.reloadDs(modUrn)

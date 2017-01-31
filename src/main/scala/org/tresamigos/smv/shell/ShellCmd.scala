@@ -32,7 +32,7 @@ import org.tresamigos.smv._
 object ShellCmd {
   import org.tresamigos.smv.graph._
 
-  private val appGU = new SmvGraphUtil(SmvApp.app.stages)
+  private val appGU = new SmvGraphUtil(SmvApp.app)
 
   /**
    * list all the smv-shell commands
@@ -107,7 +107,7 @@ object ShellCmd {
 
   /** take a stage name and print all DS in this stage, without unused input DS */
   def _graph(stageName: String) = {
-    val singleStgGU = new SmvGraphUtil(new SmvStages(Seq(SmvApp.app.stages.findStage(stageName))))
+    val singleStgGU = new SmvGraphUtil(SmvApp.app, new SmvStages(Seq(SmvApp.app.stages.findStage(stageName))))
     singleStgGU.createDSAsciiGraph()
   }
 

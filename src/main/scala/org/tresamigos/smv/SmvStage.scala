@@ -24,6 +24,8 @@ private[smv] trait SmvPackageManager {
   /** common prefix of all the packages */
   lazy val fqnPrefix: String = FQN.sharedPrefix(getAllPackageNames())
 
+  def stageBaseName(s: String) = FQN.removePrefix(s, fqnPrefix)
+
   lazy val allDatasets : Seq[SmvDataSet] =
     getAllPackageNames.flatMap{ p => SmvReflection.objectsInPackage[SmvDataSet](p) }
 
@@ -96,23 +98,6 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
   }
 
   override def getAllPackageNames() = stages.flatMap(s => s.getAllPackageNames())
-
-  def stageBaseName(s: String) = FQN.removePrefix(s, fqnPrefix)
-
-  // Issue # 349: look up stage by the dataset's name instead of the
-  // object identity because after hot-deploy in shell via a new
-  // classloader, the same datset no longer has the same object
-  // instance.
-  lazy val dsname2stage: Map[String, SmvStage] =
-    (for {
-      st <- stages
-      ds <- st.allDatasets
-    } yield (ds.fqn, st)).toMap
-
-  /**
-   * Find the stage that a given dataset belongs to.
-   */
-  def findStageForDataSet(ds: SmvDataSet) : Option[SmvStage] = dsname2stage.get(ds.fqn)
 
   /**
    * Since `findStageForDataSet` uses the pre-built map, for dynamically loaded

@@ -41,6 +41,11 @@ public interface SmvDataSetRepository {
 	String[] outputModsForStage(String stageName);
 
 	/**
+	 * Urns of SmvModules for a stage in this repository
+	 */
+	String[] dsUrnsForStage(String stageName);
+
+	/**
 	 * Re-run the named module after code change.
 	 */
 	DataFrame rerun(String modUrn, DQMValidator validator, Map<String, DataFrame> known);
