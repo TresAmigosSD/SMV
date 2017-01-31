@@ -164,6 +164,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     resRdd
   }
 
+  // lb: deprecated by Ali. SmvDataSet should resolved its dependencies without
+  // delegating back to SmvApp
   /**
    * Recursively resolve all dependent datasets and build a map of
    * dataset -> dataframe with the result
