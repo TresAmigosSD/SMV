@@ -20,17 +20,18 @@ package org.tresamigos.smv {
   object DependencyTests {
     def stages(names: String*): SmvStages = new SmvStages(names.map(new SmvStage(_, None)))
     val TestStages = stages((1 to 4).map("org.tresamigos.smv.deptest%02d".format(_)):_*)
+    def findStageForDataSet(ds: SmvDataSet): Option[SmvStage] = TestStages.stages.find(_.allDatasets contains ds)
   }
 
   abstract class DependencyTestModule(deps: Seq[SmvDataSet] = Seq.empty) extends SmvModule("Dependency test") {
-    final override lazy val parentStage = DependencyTests.TestStages.findStageForDataSet(this).getOrElse(null)
+    final override lazy val parentStage = DependencyTests.findStageForDataSet(this).getOrElse(null)
 
     final override val requiresDS = deps
     final override def run(i: runParams) = null
   }
 
   abstract class DependencyTestModuleLink(output: SmvOutput) extends SmvModuleLink(output) {
-    final override lazy val parentStage = DependencyTests.TestStages.findStageForDataSet(this).getOrElse(null)
+    final override lazy val parentStage = DependencyTests.findStageForDataSet(this).getOrElse(null)
   }
 
   class SameStageDependencyTest extends FlatSpec with Matchers {
