@@ -224,6 +224,9 @@ class SmvPy(object):
 
     def runDynamicModule(self, fqn):
         """Re-run a Scala or Python module by its fqn"""
+        # lb: why should this logic be in python and not scala?
+        # runDynamicModule distinguishes between scala modules and externals and
+        # already looks up the repo so this logic could be extracted 
         if self.repo.hasDataSet(fqn):
             self.repo.reloadDs(fqn)
         return DataFrame(self.j_smvPyClient.runDynamicModule(fqn), self.sqlContext)

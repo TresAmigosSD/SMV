@@ -171,6 +171,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   def mkRunParam(ds: SmvDataSet): Map[SmvDataSet, DataFrame] =
     (ds.requiresDS map (dep => (dep, resolveRDD(dep)))).toMap
 
+  // lb: This method seems to be obsolete due to obsolescence of resolveModuleByName.
+  // This method is only invoked by resolveModuleByName and resolveDynamicModuleByName.
   /**
    * dynamically resolve a module.
    * The module and all its dependents are loaded into their own classloader so that we can have multiple
@@ -454,6 +456,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     SmvUtil.publish(sqlContext, df, path, genEdd)
   }
 
+  // lb: Since runModuleByName and runDynamicModuleByName are used exclusively
+  // by SparkR it can be retired once SparkR is integrated into the external
+  // module API being developed for Python
   /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
    */
@@ -471,6 +476,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     dynamicResolveRDD(fqn: String, cl)
   }
 
+  // lb: This method seems to be obsolete due to obsolescence of resolveModuleByName.
+  // This method is only invoked by resolveModuleByName
   def findModuleInStage(stage: String, name: String): Option[SmvModule] = {
     val candidates = (for {
       pkg <- stage.split('.').reverse.tails //  stage "a.b.c" -> ["c","b", "a"] ->
@@ -492,6 +499,11 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     candidates.headOption
   }
 
+  // lb: This method seems to be obsolete. For identification of module
+  // (and other datasets) by name, SmvApp now delegates in most places to
+  // dsForName. resolveModuleByName is now used by 1) SparkR 2) modulesToRun.
+  // SparkR should should transition to running modules in the same way as
+  // PySpark. modulesToRun can switch to using dsForName
   def resolveModuleByName(name: String): SmvModule = {
     val stageNames = smvConfig.stageNames
     val mods = for {
