@@ -1,0 +1,39 @@
+@startuml
+
+hide empty methods
+hide empty fields
+hide circle
+
+package Scala {
+  class SmvApp
+  class DSLoader {
+    loadDSWithDep(fqn: String): SmvDataSet
+    loadDSWithDep(fqns: List[String]): List(SmvDataSet)
+  }
+  class LoadState
+  class DSRepo {
+    loadDS(fqn: String): SmvDataSet
+    loadDSDep(ds: SmvDataSet): SmvDataSet
+  }
+  class ScalaDSRepo extends DSRepo
+  class IDSRepoAdapter extends DSRepo
+  class IDSRepo <<java>>
+  class SmvModule
+  class SmvExtModule extends SmvModule
+  class ISmvModule <<java>>
+
+  SmvApp *-- DSLoader
+  DSLoader o-- LoadState
+  DSLoader o-- DSRepo
+  DSRepo o-- SmvModule
+  SmvExtModule o-- ISmvModule
+  IDSRepoAdapter *-- IDSRepo
+  IDSRepo o-- ISmvModule
+}
+
+package Python {
+  class PythonDataSetRepository extends IDSRepo
+  class SmvPyModule extends ISmvModule
+}
+
+@enduml
