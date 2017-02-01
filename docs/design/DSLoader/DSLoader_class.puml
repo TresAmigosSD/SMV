@@ -13,7 +13,6 @@ package Scala {
   class LoadState
   class DSRepo {
     loadDS(fqn: String): SmvDataSet
-    loadDSDep(ds: SmvDataSet): SmvDataSet
   }
   class ScalaDSRepo extends DSRepo
   class IDSRepoAdapter extends DSRepo
