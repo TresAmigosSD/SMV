@@ -20,13 +20,14 @@ package Scala {
   class IDSRepo <<java>>
   class SmvModule
   class SmvExtModule extends SmvModule
+  class SmvResExtModule extends SmvModule
   class ISmvModule <<java>>
 
   SmvApp *-- DSLoader
   DSLoader o-- LoadState
   DSLoader o-- DSRepo
   DSRepo o-- SmvModule
-  SmvExtModule o-- ISmvModule
+  SmvResExtModule o-- ISmvModule
   IDSRepoAdapter *-- IDSRepo
   IDSRepo o-- ISmvModule
 }
