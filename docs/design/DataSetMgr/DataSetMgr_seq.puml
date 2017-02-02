@@ -37,8 +37,9 @@ activate app
           dsrp --> dsm: y: reqUrns=('z')
         deactivate dsrp
 
+        dsm -> mod: y.resReq( loadDSWDepWState(state) )
+
         activate mod
-          dsm -> mod: y.resReq( loadDSWDepWState(state) )
           mod -> dsm: loadDSWDepWState(state)('z')
 
           activate dsm
@@ -47,6 +48,12 @@ activate app
             activate dsrs
               dsrs --> dsm: z: reqUrns=()
             deactivate dsrs
+
+            dsm -> mod: z.resReq( loadDSwDepWState(state) )
+
+            activate mod
+              mod --> dsm: ()
+            deactivate mod
 
             dsm --> mod: z
           deactivate dsm
