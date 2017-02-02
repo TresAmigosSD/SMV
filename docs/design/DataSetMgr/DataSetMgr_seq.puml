@@ -7,29 +7,65 @@ Participant DataSetMgr as dsm
 Participant SmvModule as mod
 Participant DataSetRepoScala as dsrs
 Participant DataSetRepoPython as dsrp
-Participant IDataSetRepoPy4J as idsrp
 
 
 User -> app: smv-run -m x
-app -> dsm: loadDSWDep('x')
-dsm -> dsrs: loadDS('x')
-dsrs --> dsm: x: reqUrns=('y')
-dsm -> mod: x.resReq( loadDSWDepWState(state) )
-mod -> dsm: loadDSWithDepWState(state)('y')
-dsm -> dsrs: loadDS('y')
-dsrs --> dsm: Unit
-dsm -> dsrp: loadDS('y')
-dsrp --> dsm: y: reqUrns=('z')
-dsm -> mod: y.resReq( loadDSWDepWState(state) )
-mod -> dsm: loadDSWDepWState(state)('z')
-dsm -> dsrs: loadDS('z')
-dsrs --> dsm: z: reqUrns=()
-dsm --> mod: z
-mod --> dsm: (z)
-dsm --> mod: y
-mod --> dsm: (y)
-dsm --> app: x
-app --> app: (run x)
+activate app
+  app -> dsm: loadDSWDep('x')
+  activate dsm
+    dsm -> dsrs: loadDS('x')
+
+    activate dsrs
+      dsrs --> dsm: x: reqUrns=('y')
+    deactivate dsrs
+
+    dsm -> mod: x.resReq( loadDSWDepWState(state) )
+
+    activate mod
+      mod -> dsm: loadDSWithDepWState(state)('y')
+
+      activate dsm
+        dsm -> dsrs: loadDS('y')
+
+        activate dsrs
+          dsrs --> dsm: Unit
+        deactivate dsrs
+
+        dsm -> dsrp: loadDS('y')
+
+        activate dsrp
+          dsrp --> dsm: y: reqUrns=('z')
+        deactivate dsrp
+
+        activate mod
+          dsm -> mod: y.resReq( loadDSWDepWState(state) )
+          mod -> dsm: loadDSWDepWState(state)('z')
+
+          activate dsm
+            dsm -> dsrs: loadDS('z')
+
+            activate dsrs
+              dsrs --> dsm: z: reqUrns=()
+            deactivate dsrs
+
+            dsm --> mod: z
+          deactivate dsm
+
+          mod --> dsm: (z)
+        deactivate mod
+
+        dsm --> mod: y
+      deactivate dsm
+
+      mod --> dsm: (y)
+    deactivate mod
+
+    dsm --> app: x
+  deactivate dsm
+
+  app --> app: (run x)
+deactivate app
+
 app --> User: (print result)
 
 @enduml
