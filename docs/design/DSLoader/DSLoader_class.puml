@@ -6,34 +6,33 @@ hide circle
 
 package Scala {
   class SmvApp
-  class DSLoader {
-    loadDSWithDep(fqn: String): SmvDataSet
-    loadDSWithDep(fqns: List[String]): List(SmvDataSet)
+  class DataSetMgr {
+    loadDataSetWithDep(fqn: String): SmvDataSet
+    loadDataSetWithDep(fqns: List[String]): List(SmvDataSet)
   }
-  class LoadState
-  class DSRepo {
-    loadDS(fqn: String): SmvDataSet
+  class DataSetRepo {
+    loadDataSet(fqn: String): SmvDataSet
   }
-  class ScalaDSRepo extends DSRepo
-  class IDSRepoAdapter extends DSRepo
-  class IDSRepo <<java>>
+  class DataSetRepoScala extends DataSetRepo
+  class DataSetRepoPython extends DataSetRepo
+  class IDataSetRepoPy4J <<java>>
   class SmvModule
   class SmvExtModule extends SmvModule
-  class SmvResExtModule extends SmvModule
-  class ISmvModule <<java>>
+  class SmvExtModulePython extends SmvModule
+  class ISmvModulePy4J <<java>>
 
-  SmvApp *-- DSLoader
-  DSLoader o-- LoadState
-  DSLoader o-- DSRepo
-  DSRepo o-- SmvModule
-  SmvResExtModule o-- ISmvModule
-  IDSRepoAdapter *-- IDSRepo
-  IDSRepo o-- ISmvModule
+  SmvApp *-- DataSetMgr
+  DataSetMgr .. DataSetLoadState
+  DataSetMgr *-- "*" DataSetRepo
+  DataSetRepo ..> SmvModule : "create"
+  SmvExtModulePython *-- ISmvModulePy4J
+  DataSetRepoPython *-- IDataSetRepoPy4J
+  IDataSetRepoPy4J ..> ISmvModulePy4J : "create"
 }
 
 package Python {
-  class PythonDataSetRepository extends IDSRepo
-  class SmvPyModule extends ISmvModule
+  class PythonDataSetRepo extends IDataSetRepoPy4J
+  class SmvPyModule extends ISmvModulePy4J
 }
 
 @enduml
