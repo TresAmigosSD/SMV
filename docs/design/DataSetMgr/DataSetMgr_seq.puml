@@ -4,75 +4,40 @@ title run module with DataSetMgr example: x(scala)->y(py)->z(scala)
 Actor User
 Participant SmvApp as app
 Participant DataSetMgr as dsm
-Participant SmvModule as mod
 Participant DataSetRepoScala as dsrs
 Participant DataSetRepoPython as dsrp
-
+Participant "x:SmvModule" as x
+Participant "y:SmvExtModulePython" as y
+Participant "z:SmvModule" as z
 
 User -> app: smv-run -m x
-activate app
-  app -> dsm: loadDSWDep('x')
-  activate dsm
-    dsm -> dsrs: loadDS('x')
-
-    activate dsrs
-      dsrs --> dsm: x: reqUrns=('y')
-    deactivate dsrs
-
-    dsm -> mod: x.resReq( loadDSWDepWState(state) )
-
-    activate mod
-      mod -> dsm: loadDSWithDepWState(state)('y')
-
-      activate dsm
-        dsm -> dsrs: loadDS('y')
-
-        activate dsrs
-          dsrs --> dsm: Unit
-        deactivate dsrs
-
-        dsm -> dsrp: loadDS('y')
-
-        activate dsrp
-          dsrp --> dsm: y: reqUrns=('z')
-        deactivate dsrp
-
-        dsm -> mod: y.resReq( loadDSWDepWState(state) )
-
-        activate mod
-          mod -> dsm: loadDSWDepWState(state)('z')
-
-          activate dsm
-            dsm -> dsrs: loadDS('z')
-
-            activate dsrs
-              dsrs --> dsm: z: reqUrns=()
-            deactivate dsrs
-
-            dsm -> mod: z.resReq( loadDSwDepWState(state) )
-
-            activate mod
-              mod --> dsm: ()
-            deactivate mod
-
-            dsm --> mod: z
-          deactivate dsm
-
-          mod --> dsm: (z)
-        deactivate mod
-
-        dsm --> mod: y
-      deactivate dsm
-
-      mod --> dsm: (y)
-    deactivate mod
-
-    dsm --> app: x
-  deactivate dsm
-
-  app --> app: (run x)
-deactivate app
-
+app -> dsm: loadDSWDep('x')
+dsm -> dsrs: loadDS('x')
+dsrs -->> x: create
+activate x
+dsrs --> dsm: x: reqUrns=('y')
+dsm -> x: resReq( loadDSWDepWState(state) )
+x -> dsm: loadDSWithDepWState(state)('y')
+dsm -> dsrs: loadDS('y')
+dsrs --> dsm: Unit
+dsm -> dsrp: loadDS('y')
+dsrp -->> y: create
+activate y
+dsrp --> dsm: y: reqUrns=('z')
+dsm -> y: resReq( loadDSWDepWState(state) )
+y -> dsm: loadDSWDepWState(state)('z')
+dsm -> dsrs: loadDS('z')
+dsrs -->> z: create
+activate z
+dsrs --> dsm: z: reqUrns=()
+dsm -> z: resReq( loadDSwDepWState(state) )
+z --> dsm: ()
+dsm --> y: z
+y --> dsm: (z)
+dsm --> x: y
+x --> dsm: (y)
+dsm --> app: x
+app --> app: (run x)
 app --> User: (print result)
 
 @enduml
