@@ -17,37 +17,34 @@ At the level of `SmvApp`, all requests to load `SmvDataSet`s will be delegated t
 
 # Repositories
 
-Presently, the Scala `SmvApp` queries for Python modules through the `SmvDataSetRepository` Java interface. Rather than create a Scala module repository which implements this interface (which would be circular), we will create generic dataset repository class called `DataSetRepo` from which a Scala repository called `DataSetRepoScala` and a Python repository called `DataSetRepoPython` will inherit. The `DataSetRepoPython` will wrap the Java interface, which will be renamed `IDataSetRepoPy4J`. These classes each must implement a method `loadDataSet(fqn: String)`. The `DataSetMgr` will resolve an `SmvDataSet` by name by asking its containing repo to load it, then recursively doing the same for each of the `SmvDataSet`s specified in the resolved `SmvDataSet`'s dependency list. To prevent loading the same `SmvDataSet` twice, `DataSetMgr` will track the `SmvDataSet`s loaded during the current transaction in a `Map[String, SmvDataSet]` called `DataSetByName`.
-
+Presently, the Scala `SmvApp` queries for Python modules through the `SmvDataSetRepository` Java interface. Rather than create a Scala module repository which implements this interface (which would be circular), we will create generic dataset repository class called `DataSetRepo` from which a Scala repository called `DataSetRepoScala` and a Python repository called `DataSetRepoPython` will inherit.  `DataSetRepoPython` will wrap the Java interface, which will be renamed `IDataSetRepoPy4J`. `DataSetRepoPython` will also return an `SmvExtModulePython` - more on this later. These classes each must implement a method `loadDataSet(fqn: String)`. The `DataSetMgr` will resolve an `SmvDataSet` by name by asking its containing repo to load it, then recursively doing the same for each of the `SmvDataSet`s specified in the resolved `SmvDataSet`'s dependency list. To prevent loading the same `SmvDataSet` twice, `DataSetMgr` will track the `SmvDataSet`s loaded during the current transaction in a `Map[String, SmvDataSet]` called `DataSetByName`.
 
 
 # DataFrame Caching
 
-SMV and Spark perform various types of caching to minimize calculations and also for resiliency in case of failure. One cache kept by SMV is of the DataFrame (or RDD) that each `SmvDataSet` resolves to. Without this cache, an `SmvDataSet`'s DAG would be recaulcuated every time is resolved to an RDD.
+SMV and Spark perform various types of caching to minimize calculations and also for resiliency in case of failure. One cache kept by SMV is of the DataFrame (or RDD) that each `SmvDataSet` resolves to. Without this cache, an `SmvDataSet`'s DAG would be recalculated every time is resolved to an RDD.
 
 Currently, the DataFrame cache for each `SmvDataSet` is internal to the `SmvDataSet`. This means that we lose its cache _each time it's reloaded_. This is acceptable under the assumption that the user reloads the `SmvDataSet` (by running the module dynamically) only when they have made changes and want to see the result. However, if the `SmvDataSet` will be reloaded every time it is resolved by name we will need to move the cache somewhere that is persistent when the `SmvDataSet` reloads so that the DataFrame can be reused if no changes have been made.
 
 
-# Resolution of Dependencies
+# External Dependencies and requireDS()
 
-Dependencies for a `SmvModule` are specified by the user through the module's `requireDS()`. This method is then called internally e.g. in the `SmvModule`'s `doRun()`. If the user lists an `SmvExtModule` as a dependency, e.g. `requireDS = List(SmvExtModule('a.b.c'))`, a new ``SmvExtModule`` is instantiated _every_ time `requireDS()` is invoked - note that the user is in fact supplying a function, not a static value. Also, when an `SmvExtModule` is instantiated, the module will immediately try to get the external module from `DataSetMgr`. This presents a problem (probably multiple problems) for our design.
+Dependencies for a `SmvModule` are specified by the user through the module's `requireDS()`. This method is then called internally e.g. in the `SmvModule`'s `doRun()`. If the user lists an `SmvExtModule` as a dependency, e.g. `requireDS = List(SmvExtModule('a.b.c'))`, a new `SmvExtModule` is instantiated _every time_ `requireDS()` is invoked - note that the user is in fact supplying a function, not a static value. This presents the following problem for our design:
 
-Consider the following dependency scenario
+Consider a simple dependency scenario
 ```
-    x
-  /   \
-'y'    z
-       |
-      'y'
+ x (s)
+ |
+ y (p)
+ |
+ z (s)
 ```
-where `x` and `z` are both Scala `SmvModule`s that depend through an `SmvExtModule` on a Python `SmvPyModule` `y`, which may itself have an extensive dependency tree.
+where `x` and `z` are both Scala modules and `y` is a Python module. For simplicity's sake, assume none of them is ephemeral. Suppose the user runs `x` through any entrypoint.
 
-When `x` is resolved, it will instantiate both `z` _and_ an instance of `SmvExtModule` which will try to resolve `'y'` to an `ISmvModulePy4J`, implicitly instantiating the Python module `y`. When `z` instantiates it _also_ will instantiate an `SmvExtModule`, to the same effect. Among the problems created here is that there is now a duplicate instance of `y` in dependencies of `x`.
+First, `SmvApp` asks `DataSetMgr` to load `'x'`. `DataSetMgr` delegates to `DataSetRepoScala` to load `x`, then asks `x` for its dependencies through `requireDS()`, which returns a single `SmvExtModule` of `y`. Then, `DataSetMgr` delegates to `DataSetRepoPython` to load the `ISmvModulePy4J` for `y`, presumably wraps it in an `SmvExtModule` (the current wrapper for external modules) we will call `y1`, and returns `y1` to `DataSetMgr`.
 
-The solution is a bit complicated but manageable,
+Fast-forwarding a bit, `DataSetMgr` returns `x` to `SmvApp`, which runs `x` using `x.rdd()`. When `x` tries to compute its `DataFrame`, it will first try to read its cache on disk, invoking its `hashOfHash()` in the process. `hashOfHash()` recursively calls the `hashOfHash()` of each of `x`'s dependencies as discovered through `requireDS()`, including a _new_ `SmvExtModule` `y2` of `y`. Invoking `y2`'s `hashOfHash()` causes `y2` to resolve its `ISmvModulePy4J` by asking `DataSetMgr` to load `'y'`.
 
-1. We differentiate between the `SmvExtModule` declared by the user when listing dependencies and a new external module class, which we will call `SmvExtModulePython`, used on the back end. `SmvExtModule` is a placeholder that _does not trigger the instantiation of the external module_.  `SmvExtModulePython`, created only by `DataSetRepoPython`, is the `SmvModule` wrapper for `ISmvModulePy4J`.
+Problem: modules should be singletons, but `y` has now loaded twice. This will occur again when `x` resolves the RDDs of its dependencies. Also, each time this occurs, the entire dependency tree of `y` (which may be quite large) is reloaded.
 
-2. We differentiate between `requireDS()`, and a fixed list of dependency names we will call `reqUrns`, and a fixed list of resolved `SmvDataSet` dependencies we will call `reqRes`. `requireDS()` will be called internally only once: when the module is instantiated. Its result will be mapped to URNs to define `reqUrns`. A method of `SmvModule` called `resolveReq(resolver: String => `SmvDataSet`)` will set `reqRes` by mapping each URN to an `SmvDataSet` using the `resolver` function parameter. `DataSetMgr` will in fact provide the `resolver`, but `SmvModule` is agnostic of this.
-
-The previous scenario is reworked under this solution in the sequence diagram.
+Solution: For backwards compatibility's sake, we can't change how users specify dependencies. However, we can change how internals of SMV access a module's dependencies. We will differentiate between `requireDS()`, which will remain a function defined by the user to specify a module's dependencies, and `requireDSRes`, the module's (fixed) canonical list of dependencies. There are multiple ways that this property could be set, but the point is that all queries for the module's dependencies will return the same objects. Thus we will neither instantiate new `SmvExtModule`s nor load the same external module twice.
