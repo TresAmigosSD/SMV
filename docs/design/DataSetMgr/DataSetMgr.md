@@ -70,3 +70,32 @@ where Scala module `x` depends on Scala module `z` and both depend on Python mod
 Note that when we call `x` and `z`'s respective `requiresDS()`, each will still instantiate a distinct new `SmvExtModule` of `y`. This is the problematic for the same reasons as before.
 
 Solution: Separate the declarative functionality of `SmvExtModule` needed by the user and the external module interface functionality needed internally. `SmvExtModule` will continue to be a declarative sugar for the user, but will no longer resolve the `ISmvModulePy4J`. Instead, a new class `SmvExtModulePython` will take over this responsibility. `SmvExtModulePython` will be created only  `DataSetRepoPython`. Thus, although 2 `SmvExtModule`s of `y` are created when while loading `x`, neither of them forces a load of the Python module. In fact, `DataSetMgr` will load a `SmvExtModulePython` of `y` just once (using the same mechanism that prevents duplication of Scala modules) and this will be inserted in `x`'s `requireDSRes`. When `DataSetMgr` returns `x` to the app, its `requireDSRes` will include not an `SmvExtModule` but an `SmvExtModulePython`.
+
+
+# Module Resolution
+
+### Problem 1
+`DataSetMgr` must facilitate `SmvModule` in loading its Python dependencies and resolving them as `SmvExtModulePython`s, but it is desirable that `SmvModule` know nothing about the `DataSetRepo`s or the `DataSetMgr`.
+
+### Problem 2
+Consider the dependency scenario
+```
+   x(s)
+  /   \
+y(p)  z(s)
+```
+where `x` and `z` are both Scala modules and `y` is a Python module.
+
+When `DataSetMgr` loads `x`, it must ensure that the classes of `x`'s dependencies `y` and `z` are also loaded. Because of the way the Java `Classloader`s work, when the `Classloader` loads the class of `x` it will also load the class of `x`'s Scala (but not Python) dependencies, and if `DataSetMgr` invokes `x.requireDS()` it will create an instance of `z` and an instance of `SmvExtModule`; however, it will not create an instance of `y` on the Python side. Thus, we must ensure that `y` is loaded now, but `z` is not loaded a second time.
+
+These 2 problems motivate the distinction of a new responsibility which we will term resolution of `SmvDataSet`s. Within a single `DataSetMgr.load`, to resolve an `SmvDataSet` is to
+
+* Load its canonical class and instance if they have not already been loaded (in this transaction)
+* Resolve its dependencies
+* Return the canonical instance
+
+By canonical class for an `SmvDataSet` we indicate the `SmvDataSet` class which is actually runnable. The canonical class of a subclass `C` of `SmvDataSet` is `C` itself _unless_ `C` is an `SmvExtModule`, in which case it is the `SmvExtModulePython` that corresponds to the same `SmvPyModule`. By canonical instance we indicate the 'singleton' instance of the class.
+
+`SmvDataSet`s are already well-suited to walk their own dependency trees recursively, so they can resolve themselves if provided the logic for how and when to load dependencies. Empowering `SmvDataSet`s to resolve their own dependencies while being agnostic of the mechanism to do so will also solve problem 1.
+
+As for the logic for how and when to load dependencies, we will create a class `DataSetResolver` to which `DataSetMgr` delegates this responsibility. Particularly, each `DataSetMgr.load` will incur the creation of a new `DataSetResolver` which will track the state for that load transaction, ensuring that only one class loader is created and datasets are only loaded once.
