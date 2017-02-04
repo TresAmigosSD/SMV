@@ -10,20 +10,29 @@ package Scala {
     loadDataSetWithDep(fqn: String): SmvDataSet
     loadDataSetWithDep(fqns: List[String]): List(SmvDataSet)
   }
+  class DataSetResolver {
+    load(fqn: String): SmvDataSet
+    require(ds: SmvDataSet): SmvDataSet
+  }
   class DataSetRepo {
     loadDataSet(fqn: String): SmvDataSet
   }
   class DataSetRepoScala extends DataSetRepo
   class DataSetRepoPython extends DataSetRepo
   class IDataSetRepoPy4J <<java>>
-  class SmvModule
+  class SmvModule {
+    requireDS(): List[SmvDataSet]
+    resolve(res: Resolver): SmvDataSet
+    requireDSRes: List[SmvDataSet]
+  }
   class SmvExtModule extends SmvModule
   class SmvExtModulePython extends SmvModule
   class ISmvModulePy4J <<java>>
 
   SmvApp *-- DataSetMgr
-  DataSetMgr .. DataSetLoadState
+  DataSetMgr .. DataSetResolver
   DataSetMgr *-- "*" DataSetRepo
+  DataSetResolver o-- "*"   DataSetRepo
   DataSetRepo ..> SmvModule : "create"
   SmvExtModulePython *-- ISmvModulePy4J
   DataSetRepoPython *-- IDataSetRepoPy4J
