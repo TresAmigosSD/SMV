@@ -4,38 +4,47 @@ title run module with DataSetMgr example: x(scala)->y(py)->z(scala)
 Actor User
 Participant SmvApp as app
 Participant DataSetMgr as dsm
+Participant "res:Resolver" as res
 Participant DataSetRepoScala as dsrs
 Participant DataSetRepoPython as dsrp
 Participant "x:SmvModule" as x
-Participant "y:SmvExtModulePython" as y
+Participant "y1:SmvExtModule" as y1
+Participant "y2:SmvExtModulePython" as y2
 Participant "z:SmvModule" as z
 
 User -> app: smv-run -m x
 app -> dsm: loadDSWDep('x')
-dsm -> dsrs: loadDS('x')
+dsm -> res: load('x')
+res -> dsrs: loadDS('x')
 dsrs -->> x: create
 activate x
-dsrs --> dsm: x: reqUrns=('y')
-dsm -> x: resReq( loadDSWDepWState(state) )
-x -> dsm: loadDSWithDepWState(state)('y')
-dsm -> dsrs: loadDS('y')
-dsrs --> dsm: Unit
-dsm -> dsrp: loadDS('y')
-dsrp -->> y: create
-activate y
-dsrp --> dsm: y: reqUrns=('z')
-dsm -> y: resReq( loadDSWDepWState(state) )
-y -> dsm: loadDSWDepWState(state)('z')
-dsm -> dsrs: loadDS('z')
+dsrs --> res: x
+res -> x: resolve(this)
+x -->> y1: create
+activate y1
+x -> res: resolve(y1)
+res -> y1: resolve(this)
+y1 -> res: load('y')
+res -> dsrs: loadDS('y')
+dsrs -> res: Unit
+res -> dsrp: loadDS('y')
+dsrp -->> y2: create
+activate y2
+res --> y1: y2
+y1 --> y2: resolve(res)
+y2 -> res: load('z')
+res -> dsrs: loadDS('z')
 dsrs -->> z: create
 activate z
-dsrs --> dsm: z: reqUrns=()
-dsm -> z: resReq( loadDSwDepWState(state) )
-z --> dsm: ()
-dsm --> y: z
-y --> dsm: (z)
-dsm --> x: y
-x --> dsm: (y)
+dsrs --> res: z
+res -> z: resolve(this)
+z --> res: z
+res --> y2: z
+y2 --> y1: y2
+y1 --> res: y2
+res --> x: y2
+x --> res: x
+res --> dsm: x
 dsm --> app: x
 app --> app: (run x)
 app --> User: (print result)
