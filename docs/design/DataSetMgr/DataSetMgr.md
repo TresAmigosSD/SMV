@@ -22,14 +22,14 @@ At the level of `SmvApp`, all requests to load `SmvDataSet`s will be delegated t
 
 # Repositories
 
-Presently, the Scala `SmvApp` queries for Python modules through the `SmvDataSetRepository` Java interface. Rather than create a Scala module repository which implements this interface (which would be circular), we will create generic dataset repository class called `DataSetRepo` from which a Scala repository called `DataSetRepoScala` and a Python repository called `DataSetRepoPython` will inherit.  `DataSetRepoPython` will wrap the Java interface, which will be renamed `IDataSetRepoPy4J`. `DataSetRepoPython` will also return an `SmvExtModulePython` - more on this later. These classes each must implement a method `loadDataSet(fqn: String)`. The `DataSetMgr` will resolve an `SmvDataSet` by name by asking its containing repo to load it, then recursively doing the same for each of the `SmvDataSet`s specified in the resolved `SmvDataSet`'s dependency list. To prevent loading the same `SmvDataSet` twice, a transaction state object will track the `SmvDataSet`s already loaded since the app level invocation of `loadDataSetWithDep(fqn: String)`
+Presently, the Scala `SmvApp` queries for Python modules through the `SmvDataSetRepository` Java interface. Rather than create a Scala module repository which implements this interface (which would be circular), we will create generic dataset repository class called `DataSetRepo` from which a Scala repository called `DataSetRepoScala` and a Python repository called `DataSetRepoPython` will inherit.  `DataSetRepoPython` will wrap the Java interface, which will be renamed `IDataSetRepoPy4J`. `DataSetRepoPython` will also return an `SmvExtModulePython` - more on this later. These classes each must implement a method `loadDataSet(fqn: String)`. The `DataSetMgr` will resolve an `SmvDataSet` by name by asking its containing repo to load it, then recursively doing the same for each of the `SmvDataSet`s specified in the resolved `SmvDataSet`'s dependency list. To prevent loading the same `SmvDataSet` twice, a transaction state object (more on this later) should track the `SmvDataSet`s already loaded since the app level invocation of `loadDataSetWithDep(fqn: String)`
 
 
 # DataFrame Caching
 
-SMV and Spark perform various types of caching to minimize calculations and also for resiliency in case of failure. One cache kept by SMV is of the DataFrame (or RDD) that each `SmvDataSet` resolves to. Without this cache, an `SmvDataSet`'s DAG would be recalculated every time is resolved to an RDD.
+SMV and Spark perform various types of caching to minimize calculations and also for resiliency in case of failure. One cache kept by SMV is of the DataFrame (or RDD) that each `SmvDataSet` resolves to. Without this cache, an `SmvDataSet`'s DAG would be recalculated every time it is resolved to an RDD.
 
-Currently, the DataFrame cache for each `SmvDataSet` is internal to the `SmvDataSet`. This means that we lose its cache _each time it's reloaded_. This is acceptable under the assumption that the user reloads the `SmvDataSet` (by running the module dynamically) only when they have made changes and want to see the result. However, if the `SmvDataSet` will be reloaded every time it is resolved by name we will need to move the cache somewhere that is persistent when the `SmvDataSet` reloads so that the DataFrame can be reused if no changes have been made.
+Currently, the DataFrame cache for each `SmvDataSet` is internal to the `SmvDataSet`. This means that we lose its cache _each time it's reloaded_. This is acceptable under the assumption that the user reloads the `SmvDataSet` (by running the module dynamically) only when they have made changes and want to see the result. However, if the `SmvDataSet` will be reloaded every time it is resolved by name we will need to move the cache somewhere that is persistent when the `SmvDataSet` reloads so that the DataFrame can be reused if no changes have been made. The hash can be keyed using a combination of the FQN, path, and `hashOfHash` of the `SmvDataSet`.
 
 
 # External Dependencies and requireDS()
@@ -75,9 +75,6 @@ Solution: Separate the declarative functionality of `SmvExtModule` needed by the
 # Module Resolution
 
 ### Problem 1
-`DataSetMgr` must facilitate `SmvModule` in loading its Python dependencies and resolving them as `SmvExtModulePython`s, but it is desirable that `SmvModule` know nothing about the `DataSetRepo`s or the `DataSetMgr`.
-
-### Problem 2
 Consider the dependency scenario
 ```
    x(s)
@@ -88,14 +85,17 @@ where `x` and `z` are both Scala modules and `y` is a Python module.
 
 When `DataSetMgr` loads `x`, it must ensure that the classes of `x`'s dependencies `y` and `z` are also loaded. Because of the way the Java `Classloader`s work, when the `Classloader` loads the class of `x` it will also load the class of `x`'s Scala (but not Python) dependencies, and if `DataSetMgr` invokes `x.requireDS()` it will create an instance of `z` and an instance of `SmvExtModule`; however, it will not create an instance of `y` on the Python side. Thus, we must ensure that `y` is loaded now, but `z` is not loaded a second time.
 
+### Problem 2
+`DataSetMgr` must facilitate `SmvModule` in loading its Python dependencies and resolving them as `SmvExtModulePython`s, but it is desirable that `SmvModule` know nothing about the `DataSetRepo`s or the `DataSetMgr`.
+
 These 2 problems motivate the distinction of a new responsibility which we will term resolution of `SmvDataSet`s. Within a single `DataSetMgr.load`, to resolve an `SmvDataSet` is to
 
 * Load its canonical class and instance if they have not already been loaded (in this transaction)
 * Resolve its dependencies
 * Return the canonical instance
 
-By canonical class for an `SmvDataSet` we indicate the `SmvDataSet` class which is actually runnable. The canonical class of a subclass `C` of `SmvDataSet` is `C` itself _unless_ `C` is an `SmvExtModule`, in which case it is the `SmvExtModulePython` that corresponds to the same `SmvPyModule`. By canonical instance we indicate the 'singleton' instance of the class.
+By canonical class for an `SmvDataSet` we indicate the `SmvDataSet` class which is actually runnable, i.e. not an `SmvExtModule`. The canonical class of a subclass C of `SmvDataSet` is C itself _unless_ C is an `SmvExtModule`, in which case it is the `SmvExtModulePython` that corresponds to the same `SmvPyModule`. By canonical instance we indicate the 'singleton' instance of the class.
 
-`SmvDataSet`s are already well-suited to walk their own dependency trees recursively, so they can resolve themselves if provided the logic for how and when to load dependencies. Empowering `SmvDataSet`s to resolve their own dependencies while being agnostic of the mechanism to do so will also solve problem 1.
+`SmvDataSet`s are already well-suited to walk their own dependency trees recursively, so they can resolve themselves if provided the logic for how and when to load dependencies. Empowering `SmvDataSet`s to resolve their own dependencies while being agnostic of the mechanism to do so will also solve Problem 2.
 
 As for the logic for how and when to load dependencies, we will create a class `DataSetResolver` to which `DataSetMgr` delegates this responsibility. Particularly, each `DataSetMgr.load` will incur the creation of a new `DataSetResolver` which will track the state for that load transaction, ensuring that only one class loader is created and datasets are only loaded once.
