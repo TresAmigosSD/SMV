@@ -7,8 +7,7 @@ hide circle
 package Scala {
   class SmvApp
   class DataSetMgr {
-    loadDataSetWithDep(fqn: String): SmvDataSet
-    loadDataSetWithDep(fqns: List[String]): List(SmvDataSet)
+    loadDataSetWithDep(fqns: String*): Seq(SmvDataSet)
   }
   class DataSetResolver {
     loadDataSet(fqn: String): SmvDataSet
@@ -16,15 +15,20 @@ package Scala {
   }
   class DataSetRepo {
     loadDataSet(fqn: String): SmvDataSet
+    outputModulesForStage(fqn: String)
   }
-  class DataSetRepoScala extends DataSetRepo
-  class DataSetRepoPython extends DataSetRepo
+  together {
+    class DataSetRepoScala extends DataSetRepo
+    class DataSetRepoPython extends DataSetRepo
+  }
   class IDataSetRepoPy4J <<java>>
-  class SmvModule {
-    requireDS(): List[SmvDataSet]
-    resolve(res: Resolver): SmvDataSet
-    requireDSRes: List[SmvDataSet]
+  class SmvDataSet {
+    requireDS(): Seq[SmvDataSet]
+    resolve(res: DataSetResolver): SmvDataSet
+    run(i: runParams): DataFrame
+    requireRes: Seq[SmvDataSet]
   }
+  class SmvModule extends SmvDataSet
   class SmvExtModule extends SmvModule
   class SmvExtModulePython extends SmvModule
   class ISmvModulePy4J <<java>>
@@ -33,10 +37,11 @@ package Scala {
   DataSetMgr .. DataSetResolver
   DataSetMgr *-- "*" DataSetRepo
   DataSetResolver o-- "*"   DataSetRepo
-  DataSetRepo ..> SmvModule : "create"
+  DataSetRepoScala ..> "create " SmvDataSet
   SmvExtModulePython *-- ISmvModulePy4J
   DataSetRepoPython *-- IDataSetRepoPy4J
-  IDataSetRepoPy4J ..> ISmvModulePy4J : "create"
+  DataSetRepoPython ..> "create " SmvExtModulePython
+  IDataSetRepoPy4J ..> "create " ISmvModulePy4J
 }
 
 package Python {
