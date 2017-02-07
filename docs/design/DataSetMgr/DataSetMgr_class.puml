@@ -36,8 +36,9 @@ package Scala {
   SmvApp *-- DataSetMgr
   DataSetMgr .. DataSetResolver
   DataSetMgr *-- "*" DataSetRepo
-  DataSetResolver o-- "*"   DataSetRepo
+  DataSetResolver *-- "*"   DataSetRepo
   DataSetRepoScala ..> "create " SmvDataSet
+  DataSetRepoScala *-- SmvClassLoader
   SmvExtModulePython *-- ISmvModulePy4J
   DataSetRepoPython *-- IDataSetRepoPy4J
   DataSetRepoPython ..> "create " SmvExtModulePython
