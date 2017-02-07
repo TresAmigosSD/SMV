@@ -106,3 +106,8 @@ Since `DataSetResolver` tracks `SmvDataSet`s loaded in a transaction, each `Data
 Each transaction will need to create a new class loader, and will need to use that same class loader for every dataset loaded through `DataSetRepoScala`. Rather than store the class loader outside of `DataSetRepoScala` in any form, we will make all `DataSetRepo`s ephemeral so that each transaction creates a new set of each, and we will make each new `DataSetRepoScala` create its own class loader.
 
 Creating a new `DataSetRepoScala` is trivial. To create a new `DataSetRepoPython`, we will need for the Python proxy to provide a factory for `IDataSetRepoPy4J`. Rather than registering a repo, the proxy will register a factory with the `SmvApp`.
+
+
+# runParams
+
+Since `SmvExtModule`s for the same dataset will not be unique, `runParams` cannot be a simple map from `SmvDataSet` to `DataFrame` (the `SmvExtModule` used as a key by the user will not be the same created by `requireDS()`). `runParams` will internally map `SmvDataSet` to `DataFrame` by name.
