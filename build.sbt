@@ -2,13 +2,13 @@ name := "smv"
 
 organization := "org.tresamigos"
 
-version := "1.5-SNAPSHOT"
+version := "2.1-SNAPSHOT"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.8"
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 
-val sparkVersion = "1.5.2"
+val sparkVersion = "2.1.0"
 
 val jettyVersion = "8.1.18.v20150929"
 
@@ -25,8 +25,8 @@ libraryDependencies ++= Seq(
   "org.apache.httpcomponents" % "httpclient" % commonsHttpclientVersion,
   "org.joda" % "joda-convert" % "1.7",
   "joda-time" % "joda-time" % "2.7",
-  "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.2",
-  "com.github.mdr" %% "ascii-graphs" % "0.0.6"
+  "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4"
+//  "com.github.mdr" %% "ascii-graphs" % "0.0.6"
 )
 
 parallelExecution in Test := false
