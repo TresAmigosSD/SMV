@@ -53,18 +53,21 @@ abstract class SmvDataSet extends FilenamePart {
   val urn: String = mkModUrn(fqn)
   def description(): String
 
-  /** modules must override to provide set of datasets they depend on. */
+  /** modules must override to provide set of datasets they depend on.
+   * This is no longer the canonical list of dependencies. Internally
+   * we should query resolvedRequiresDS for dependencies.
+   */
   def requiresDS() : Seq[SmvDataSet]
 
   /** fixed list of SmvDataSet dependencies */
   lazy val resolvedRequiresDS: Seq[SmvDataSet] = requiresDS()
 
   /** The dependency modules's urn's */
-  def dependencies: Seq[String] = requiresDS map (_.urn)
+  def dependencies: Seq[String] = resolvedRequiresDS map (_.urn)
 
   /** All dependencies with the dependency hierarchy flattened */
   def allDeps: Seq[SmvDataSet] =
-    (requiresDS.foldLeft(Seq.empty[SmvDataSet]) { (acc, elem) => elem.allDeps ++ (elem +: acc) }).distinct
+    (resolvedRequiresDS.foldLeft(Seq.empty[SmvDataSet]) { (acc, elem) => elem.allDeps ++ (elem +: acc) }).distinct
 
   def requiresAnc() : Seq[SmvAncillary] = Seq.empty
 
@@ -102,7 +105,7 @@ abstract class SmvDataSet extends FilenamePart {
    * TODO: need to add requiresAnc dependency here
    */
   private[smv] lazy val hashOfHash : Int = {
-    (requiresDS().map(_.hashOfHash) ++ Seq(version, datasetHash)).hashCode()
+    (resolvedRequiresDS.map(_.hashOfHash) ++ Seq(version, datasetHash)).hashCode()
   }
 
   /**
@@ -466,7 +469,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   }
 
   /** Use Bytecode analysis to figure out dependency and check against
-   *  requiresDS and requiresAnc. Could consider to totaly drop requiresDS and
+   *  resolvedRequiresDS and requiresAnc. Could consider to totaly drop resolvedRequiresDS and
    *  requiresAnc, and always use ASM to derive the dependency
    **/
   private def checkDependency(): Unit = {
@@ -479,7 +482,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
       }
     dep.dependsDS.
       map{s => (s, SmvReflection.objectNameToInstance[SmvDataSet](s))}.
-      filterNot{case (s,a) => requiresDS().contains(a)}.
+      filterNot{case (s,a) => resolvedRequiresDS.contains(a)}.
       foreach{case (s, a) =>
         throw new SmvRuntimeException(s"SmvDataSet ${s} need to be specified in requiresDS, ${a}")
       }
@@ -586,7 +589,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
   override def isEphemeral = target.isEphemeral()
   override def requiresDS = target.dependencies map (app.dsForName(_))
   override def run(i: runParams) =
-    target.getDataFrame(new DQMValidator(createDsDqm), requiresDS.map {ds => (ds.urn, i(ds))}.toMap[String, DataFrame])
+    target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn, i(ds))}.toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()
   override def createDsDqm = target.getDqm()
 }
