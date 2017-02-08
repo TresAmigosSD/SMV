@@ -85,7 +85,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   override lazy val predecessors =
     allDatasets.map {
       case d: SmvModuleLink => (d, Seq(d.smvModule))
-      case d: SmvDataSet => (d, d.requiresDS)
+      case d: SmvDataSet => (d, d.resolvedRequiresDS)
     }.toMap
 
   // Issue # 349: look up stage by the dataset's name instead of the
@@ -207,7 +207,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * dataset -> dataframe with the result
    */
   def mkRunParam(ds: SmvDataSet): Map[SmvDataSet, DataFrame] =
-    (ds.requiresDS map (dep => (dep, resolveRDD(dep)))).toMap
+    (ds.resolvedRequiresDS map (dep => (dep, resolveRDD(dep)))).toMap
 
   // lb: This method seems to be obsolete due to obsolescence of resolveModuleByName.
   // This method is only invoked by resolveModuleByName and resolveDynamicModuleByName.
