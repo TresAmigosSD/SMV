@@ -427,6 +427,15 @@ object SmvFile {
     new SmvCsvFile(path, csvAttributes)
 }
 
+/**
+ * Maps SmvDataSet to DataFrame by FQN. This is the type of the parameter expected
+ * by SmvModule's run method.
+ */
+class RunParams(ds2df: Map[SmvDataSet, DataFrame]) {
+  val fqn2df = ds2df.map {case (ds, df) => (ds.fqn, df)}.toMap
+  def apply(ds: SmvDataSet) = fqn2df(ds.fqn)
+  def size = ds2df.size
+}
 
 /**
  * base module class.  All SMV modules need to extend this class and provide their
@@ -446,14 +455,14 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    */
   override def isEphemeral = false
 
-  type runParams = Map[SmvDataSet, DataFrame]
+  type runParams = RunParams
   def run(inputs: runParams) : DataFrame
 
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     // TODO turn on dependency check by uncomment the following line after test against projects
     // checkDependency()
-    run(app.mkRunParam(this))
+    run(new runParams(app.mkRunParam(this)))
   }
 
   /** Use Bytecode analysis to figure out dependency and check against
@@ -577,7 +586,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
   override def isEphemeral = target.isEphemeral()
   override def requiresDS = target.dependencies map (app.dsForName(_))
   override def run(i: runParams) =
-    target.getDataFrame(new DQMValidator(createDsDqm), i.map {case (ds, df) => (ds.urn, df)})
+    target.getDataFrame(new DQMValidator(createDsDqm), requiresDS.map {ds => (ds.urn, i(ds))}.toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()
   override def createDsDqm = target.getDqm()
 }

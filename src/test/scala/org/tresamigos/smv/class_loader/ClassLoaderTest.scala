@@ -61,12 +61,12 @@ class SmvAppDynamicResolveTest extends SmvTestUtil with ClassLoaderTestHelper {
   // override smvApp args to create an app with local class loader.
   override def appArgs: Seq[String] = cmdLineArgs("", 0, classLoaderTestDir)
 
-  test("test SmvApp.dynamicResolveRDD function") {
+  ignore("test SmvApp.dynamicResolveRDD function") {
     val df = app.dynamicResolveRDD("com.smv.MyModule", getClass.getClassLoader)
     assertSrddDataEqual(df, "1;2;3")
   }
 
-  test("test SmvApp.dynamicResolveRDD load module with dependency") {
+  ignore("test SmvApp.dynamicResolveRDD load module with dependency") {
     val df = app.dynamicResolveRDD("com.smv.MyModule2", getClass.getClassLoader)
     assertSrddDataEqual(df, "1;2;3")
   }
