@@ -1,7 +1,7 @@
 Todo list for implementation of DataSetMgr
 Note that all changes are being devloped in the loaduni branch
 
-[] Generalize runParams to map SmvExtModule to DataFrame correctly
+[x] Generalize runParams to map SmvExtModule to DataFrame by FQN
 [] Transition from requiresDS to resolvedRequiresDS internally
   [x] Add resolvedRequiresDS field
   [] Replace all references to requiresDS with resolvedRequiresDS, except where used to set resolvedRequiresDS
