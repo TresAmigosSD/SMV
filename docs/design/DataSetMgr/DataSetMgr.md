@@ -107,6 +107,7 @@ Each transaction will need to create a new class loader, and will need to use th
 
 Creating a new `DataSetRepoScala` is trivial. To create a new `DataSetRepoPython`, we will need for the Python proxy to provide a factory for `IDataSetRepoPy4J`. Rather than registering a repo, the proxy will register a factory with the `SmvApp`.
 
+We will create a new class hierarchy for repo factories. `DataSetRepoFactory` will be the generic repo factory interface. It will be implemented by `DataSetRepoPython` and `DataSetRepoScala`.
 
 # runParams
 
