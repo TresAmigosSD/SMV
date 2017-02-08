@@ -56,6 +56,9 @@ abstract class SmvDataSet extends FilenamePart {
   /** modules must override to provide set of datasets they depend on. */
   def requiresDS() : Seq[SmvDataSet]
 
+  /** fixed list of SmvDataSet dependencies */
+  lazy val resolvedRequiresDS: Seq[SmvDataSet] = requiresDS()
+
   /** The dependency modules's urn's */
   def dependencies: Seq[String] = requiresDS map (_.urn)
 
