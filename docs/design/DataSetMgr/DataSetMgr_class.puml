@@ -7,18 +7,26 @@ hide circle
 package Scala {
   class SmvApp
   class DataSetMgr {
+    repoFactories: Seq[DataSetRepoFactory]
+    registerRepoFactory(repoFactory: DataSetRepoFactory)
     loadDataSetWithDep(fqns: String*): Seq(SmvDataSet)
   }
   class DataSetResolver {
+    repos: Seq[DataSetRepo]
     loadDataSet(fqn: String): SmvDataSet
     resolveDataSet(ds: SmvDataSet): SmvDataSet
+  }
+  class DataSetRepoFactory {
+    createRepo(): DataSetRepo
   }
   class DataSetRepo {
     loadDataSet(fqn: String): SmvDataSet
     outputModulesForStage(fqn: String)
   }
   together {
-    class DataSetRepoScala extends DataSetRepo
+    class DataSetRepoScala extends DataSetRepo{
+      cl: SmvClassLoader
+    }
     class DataSetRepoPython extends DataSetRepo
   }
   class IDataSetRepoPy4J <<java>>
@@ -35,8 +43,9 @@ package Scala {
 
   SmvApp *-- DataSetMgr
   DataSetMgr .. DataSetResolver
-  DataSetMgr *-- "*" DataSetRepo
+  DataSetMgr *-- "*" DataSetRepoFactory
   DataSetResolver *-- "*"   DataSetRepo
+  DataSetRepoFactory ..> "create" DataSetRepo
   DataSetRepoScala ..> "create " SmvDataSet
   DataSetRepoScala *-- SmvClassLoader
   SmvExtModulePython *-- ISmvModulePy4J
