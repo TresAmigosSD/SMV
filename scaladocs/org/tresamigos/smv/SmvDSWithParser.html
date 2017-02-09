@@ -43,7 +43,7 @@
 common part to the new ABC: SmvDSWithParser
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>, <a href="HasName.html" class="extype" name="org.tresamigos.smv.HasName">HasName</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>, <a href="FilenamePart.html" class="extype" name="org.tresamigos.smv.FilenamePart">FilenamePart</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div><div class="toggleContainer block">
           <span class="toggle">Known Subclasses</span>
           <div class="subClasses hiddenContent"><a href="SmvCsvFile.html" class="extype" name="org.tresamigos.smv.SmvCsvFile">SmvCsvFile</a>, <a href="SmvCsvStringData.html" class="extype" name="org.tresamigos.smv.SmvCsvStringData">SmvCsvStringData</a>, <a href="SmvFrlFile.html" class="extype" name="org.tresamigos.smv.SmvFrlFile">SmvFrlFile</a>, <a href="SmvMultiCsvFiles.html" class="extype" name="org.tresamigos.smv.SmvMultiCsvFiles">SmvMultiCsvFiles</a></div>
@@ -64,7 +64,7 @@ common part to the new ABC: SmvDSWithParser
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.SmvDSWithParser"><span>SmvDSWithParser</span></li><li class="in" name="org.tresamigos.smv.SmvDataSet"><span>SmvDataSet</span></li><li class="in" name="org.tresamigos.smv.HasName"><span>HasName</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.SmvDSWithParser"><span>SmvDSWithParser</span></li><li class="in" name="org.tresamigos.smv.SmvDataSet"><span>SmvDataSet</span></li><li class="in" name="org.tresamigos.smv.FilenamePart"><span>FilenamePart</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -201,6 +201,19 @@ Note: the module will still be persisted if it was specifically selected to run 
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#allDeps" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="allDeps:Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="allDeps:Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">allDeps</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">All dependencies with the dependency hierarchy flattened</p><div class="fullcomment"><div class="comment cmt"><p>All dependencies with the dependency hierarchy flattened</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#app" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="app:org.tresamigos.smv.SmvApp"></a>
       <a id="app:SmvApp"></a>
@@ -262,31 +275,31 @@ Note: the module will still be persisted if it was specifically selected to run 
 </p><div class="fullcomment"><div class="comment cmt"><p>createDsDqm could be overridden by smv internal SmvDataSet's sub-classes
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvDSWithParser">SmvDSWithParser</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#datasetHash" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="datasetHash():Int"></a>
-      <a id="datasetHash():Int"></a>
+      <a id="datasetHash:Int"></a>
+      <a id="datasetHash:Int"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">datasetHash</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+        <span class="name">datasetHash</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">Hash computed from the dataset, could be overridden to include things other than CRC</p><div class="fullcomment"><div class="comment cmt"><p>Hash computed from the dataset, could be overridden to include things other than CRC</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#dependencies" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="dependencies:Seq[org.tresamigos.smv.SmvDataSet]"></a>
-      <a id="dependencies:Seq[SmvDataSet]"></a>
+      <a id="dependencies:Seq[String]"></a>
+      <a id="dependencies:Seq[String]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">dependencies</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+        <span class="name">dependencies</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       </h4>
-      <p class="shortcomment cmt">All dependencies with the dependency hierarchy flattened</p><div class="fullcomment"><div class="comment cmt"><p>All dependencies with the dependency hierarchy flattened</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+      <p class="shortcomment cmt">The dependency modules's urn's</p><div class="fullcomment"><div class="comment cmt"><p>The dependency modules's urn's</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#dqm" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="dqm():org.tresamigos.smv.dqm.SmvDQM"></a>
       <a id="dqm():SmvDQM"></a>
@@ -362,6 +375,19 @@ The default is to provide an empty set of DQM rules/fixes.
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#fnpart" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="fnpart:String"></a>
+      <a id="fnpart:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">fnpart</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Names the persisted file for the result of this SmvDataSet</p><div class="fullcomment"><div class="comment cmt"><p>Names the persisted file for the result of this SmvDataSet</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a> → <a href="FilenamePart.html" class="extype" name="org.tresamigos.smv.FilenamePart">FilenamePart</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDSWithParser#forceParserCheck" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="forceParserCheck:Boolean"></a>
       <a id="forceParserCheck:Boolean"></a>
@@ -375,6 +401,21 @@ The default is to provide an empty set of DQM rules/fixes.
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.SmvDataSet#fqn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="fqn:String"></a>
+      <a id="fqn:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">fqn</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">The FQN of an SmvDataSet is its classname for Scala implementations.</p><div class="fullcomment"><div class="comment cmt"><p>The FQN of an SmvDataSet is its classname for Scala implementations.</p><p>Scala proxies for implementations in other languages must
+override this to name the proxied FQN.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#getAncillary" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getAncillary[T&lt;:org.tresamigos.smv.SmvAncillary](anc:T):T"></a>
       <a id="getAncillary[T&lt;:SmvAncillary](T):T"></a>
@@ -401,6 +442,19 @@ The default is to provide an empty set of DQM rules/fixes.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#getDqm" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getDqm:org.tresamigos.smv.dqm.SmvDQM"></a>
+      <a id="getDqm:SmvDQM"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getDqm</span><span class="result">: <a href="dqm/SmvDQM.html" class="extype" name="org.tresamigos.smv.dqm.SmvDQM">SmvDQM</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="scala.AnyRef#hashCode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <a id="hashCode():Int"></a>
@@ -453,19 +507,6 @@ The default is to provide an empty set of DQM rules/fixes.
       </span>
       </h4>
       <p class="shortcomment cmt">Returns the path for the module's csv output</p><div class="fullcomment"><div class="comment cmt"><p>Returns the path for the module's csv output</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDataSet#name" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="name:String"></a>
-      <a id="name:String"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">name</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a> → <a href="HasName.html" class="extype" name="org.tresamigos.smv.HasName">HasName</a></dd></dl></div>
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -560,6 +601,19 @@ Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called her
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#urn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="urn:String"></a>
+      <a id="urn:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">urn</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#version" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="version():Int"></a>
       <a id="version():Int"></a>
@@ -641,8 +695,8 @@ Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called her
         <div id="inheritedMembers">
         <div class="parent" name="org.tresamigos.smv.SmvDataSet">
               <h3>Inherited from <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></h3>
-            </div><div class="parent" name="org.tresamigos.smv.HasName">
-              <h3>Inherited from <a href="HasName.html" class="extype" name="org.tresamigos.smv.HasName">HasName</a></h3>
+            </div><div class="parent" name="org.tresamigos.smv.FilenamePart">
+              <h3>Inherited from <a href="FilenamePart.html" class="extype" name="org.tresamigos.smv.FilenamePart">FilenamePart</a></h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">

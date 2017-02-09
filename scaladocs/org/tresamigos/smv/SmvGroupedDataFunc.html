@@ -601,6 +601,36 @@ Rather than using nulls as the pig version, a sentinel value of &quot;*&quot; wi
       <p class="shortcomment cmt">Compute the decile for a given column value with a DataFrame group.</p><div class="fullcomment"><div class="comment cmt"><p>Compute the decile for a given column value with a DataFrame group.
 Equivelant to <code>smvQuantile</code> with <code>numBins</code> set to 10.
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvFillNullWithPrevValue" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvFillNullWithPrevValue(orders:org.apache.spark.sql.Column*)(values:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvFillNullWithPrevValue(Column*)(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvFillNullWithPrevValue</span><span class="params">(<span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="params">(<span name="values">values: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Fill in Null values with &quot;previous&quot; value according to an ordering</p><div class="fullcomment"><div class="comment cmt"><p>Fill in Null values with &quot;previous&quot; value according to an ordering</p><p>Example:
+Input:</p><pre>K, T, V
+a, <span class="num">1</span>, <span class="kw">null</span>
+a, <span class="num">2</span>, a
+a, <span class="num">3</span>, b
+a, <span class="num">4</span>, <span class="kw">null</span></pre><pre>df.smvGroupBy(<span class="lit">"K"</span>).smvFillNullWithPrevValue($<span class="lit">"T"</span>.asc)(<span class="lit">"V"</span>)</pre><p>Output:</p><pre>K, T, V
+a, <span class="num">1</span>, <span class="kw">null</span>
+a, <span class="num">2</span>, a
+a, <span class="num">3</span>, b
+a, <span class="num">4</span>, b</pre><p>This methods only fill forward, which means that at T=1, V is still
+null as in above example. In case one need all the null filled and
+allow fill backward at the beginning of the sequence, you can apply
+this method again with reverse ordering:</p><pre>df.smvGroupBy(<span class="lit">"K"</span>).smvFillNullWithPrevValue($<span class="lit">"T"</span>.asc)(<span class="lit">"V"</span>).
+smvGroupBy(<span class="lit">"K"</span>).smvFillNullWithPrevValue($<span class="lit">"T"</span>.desc)(<span class="lit">"V"</span>)</pre><p>Output:</p><pre>K, T, V
+a, <span class="num">1</span>, a
+a, <span class="num">2</span>, a
+a, <span class="num">3</span>, b
+a, <span class="num">4</span>, b</pre></div></div>
     </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvHist(cols:String*):Unit"></a>
       <a id="smvHist(String*):Unit"></a>

@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>SmvPythonHelper - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.python.SmvPythonHelper</title>
-          <meta name="description" content="SmvPythonHelper - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.python.SmvPythonHelper" />
-          <meta name="keywords" content="SmvPythonHelper Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.python.SmvPythonHelper" />
+          <title>SmvPyClient - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.python.SmvPyClient</title>
+          <meta name="description" content="SmvPyClient - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.python.SmvPyClient" />
+          <meta name="keywords" content="SmvPyClient Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.python.SmvPyClient" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -12,7 +12,7 @@
       <script type="text/javascript">
          if(top === self) {
             var url = '../../../../index.html';
-            var hash = 'org.tresamigos.smv.python.SmvPythonHelper$';
+            var hash = 'org.tresamigos.smv.python.SmvPyClient';
             var anchor = window.location.hash;
             var anchor_opt = '';
             if (anchor.length >= 1)
@@ -22,24 +22,25 @@
    	  </script>
     
         </head>
-        <body class="value">
+        <body class="type">
       <div id="definition">
-        <img src="../../../../lib/object_big.png" />
+        <img src="../../../../lib/class_big.png" />
         <p id="owner"><a href="../../../package.html" class="extype" name="org">org</a>.<a href="../../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="../package.html" class="extype" name="org.tresamigos.smv">smv</a>.<a href="package.html" class="extype" name="org.tresamigos.smv.python">python</a></p>
-        <h1>SmvPythonHelper</h1>
+        <h1>SmvPyClient</h1>
       </div>
 
       <h4 id="signature" class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">object</span>
+        <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">SmvPythonHelper</span>
+        <span class="name">SmvPyClient</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Provides access to enhanced methods on DataFrame, Column, etc</p></div><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Provide app-level methods for use in Python.</p><p>The collection types should be accessible through the py4j gateway.
+</p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
@@ -59,7 +60,7 @@
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.python.SmvPythonHelper"><span>SmvPythonHelper</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.python.SmvPyClient"><span>SmvPyClient</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -77,7 +78,23 @@
 
       <div id="template">
         <div id="allMembers">
-        
+        <div id="constructors" class="members">
+              <h3>Instance Constructors</h3>
+              <ol><li name="org.tresamigos.smv.python.SmvPyClient#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(j_smvApp:org.tresamigos.smv.SmvApp):org.tresamigos.smv.python.SmvPyClient"></a>
+      <a id="&lt;init&gt;:SmvPyClient"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">SmvPyClient</span><span class="params">(<span name="j_smvApp">j_smvApp: <a href="../SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>)</span>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
 
         
 
@@ -163,6 +180,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#callbackServerPort" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="callbackServerPort:Option[Int]"></a>
+      <a id="callbackServerPort:Option[Int]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">callbackServerPort</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Int">Int</span>]</span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a>
       <a id="clone():AnyRef"></a>
@@ -182,19 +212,32 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#discoverSchema" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="discoverSchema(path:String,nsamples:Int,csvattr:org.tresamigos.smv.CsvAttributes):Unit"></a>
-      <a id="discoverSchema(String,Int,CsvAttributes):Unit"></a>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#config" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="config:org.tresamigos.smv.SmvConfig"></a>
+      <a id="config:SmvConfig"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">config</span><span class="result">: <a href="../SmvConfig.html" class="extype" name="org.tresamigos.smv.SmvConfig">SmvConfig</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#dfFrom" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="dfFrom(schema:String,data:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="dfFrom(String,String):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">discoverSchema</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="nsamples">nsamples: <span class="extype" name="scala.Int">Int</span></span>, <span name="csvattr">csvattr: <a href="../CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">dfFrom</span><span class="params">(<span name="schema">schema: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">Used to create small dataframes for testing</p>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -221,6 +264,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#exportDataFrameToHive" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="exportDataFrameToHive(dataframe:org.apache.spark.sql.DataFrame,tableName:String):Unit"></a>
+      <a id="exportDataFrameToHive(DataFrame,String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">exportDataFrameToHive</span><span class="params">(<span name="dataframe">dataframe: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="tableName">tableName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Export a dataframe as hive table</p>
     </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <a id="finalize():Unit"></a>
@@ -266,6 +322,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#inferStageNameFromDsName" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="inferStageNameFromDsName(modFqn:String):Option[String]"></a>
+      <a id="inferStageNameFromDsName(String):Option[String]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">inferStageNameFromDsName</span><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Infers the name of the stage to which a named module belongs</p>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -279,6 +348,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#j_smvApp" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="j_smvApp:org.tresamigos.smv.SmvApp"></a>
+      <a id="j_smvApp:SmvApp"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">j_smvApp</span><span class="result">: <a href="../SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -318,243 +400,136 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#peekStr" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="peekStr(df:org.apache.spark.sql.DataFrame,pos:Int,colRegex:String):String"></a>
-      <a id="peekStr(DataFrame,Int,String):String"></a>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#outputDir" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="outputDir:String"></a>
+      <a id="outputDir:String"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">peekStr</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="pos">pos: <span class="extype" name="scala.Int">Int</span></span>, <span name="colRegex">colRegex: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+        <span class="name">outputDir</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Output directory for files</p>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#persist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="persist(dataframe:org.apache.spark.sql.DataFrame,path:String,generateEdd:Boolean):Unit"></a>
+      <a id="persist(DataFrame,String,Boolean):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">persist</span><span class="params">(<span name="dataframe">dataframe: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="generateEdd">generateEdd: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Saves the dataframe to disk</p>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#publishHive" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="publishHive:Boolean"></a>
+      <a id="publishHive:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">publishHive</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvBinHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvBinHist(df:org.apache.spark.sql.DataFrame,_colWithBin:java.util.List[java.util.List[Any]]):String"></a>
-      <a id="smvBinHist(DataFrame,List[List[Any]]):String"></a>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#publishModule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="publishModule(modFqn:String):Unit"></a>
+      <a id="publishModule(String):Unit"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smvBinHist</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="_colWithBin">_colWithBin: <span class="extype" name="java.util.List">List</span>[<span class="extype" name="java.util.List">List</span>[<span class="extype" name="scala.Any">Any</span>]]</span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+        <span class="name">publishModule</span><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Publish the result of an SmvModule</p>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#publishVersion" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="publishVersion:Option[String]"></a>
+      <a id="publishVersion:Option[String]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">publishVersion</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvConcatHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvConcatHist(df:org.apache.spark.sql.DataFrame,colNames:Array[String]):String"></a>
-      <a id="smvConcatHist(DataFrame,Array[String]):String"></a>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#readPublishedData" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="readPublishedData(modFqn:String):Option[org.apache.spark.sql.DataFrame]"></a>
+      <a id="readPublishedData(String):Option[DataFrame]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smvConcatHist</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="colNames">colNames: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+        <span class="name">readPublishedData</span><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Reads the published data, if any, for a named SMV module</p>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#register" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="register(id:String,repo:org.tresamigos.smv.SmvDataSetRepository):Unit"></a>
+      <a id="register(String,SmvDataSetRepository):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">register</span><span class="params">(<span name="id">id: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="repo">repo: <a href="../SmvDataSetRepository.html" class="extype" name="org.tresamigos.smv.SmvDataSetRepository">SmvDataSetRepository</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvDedupByKey" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvDedupByKey(df:org.apache.spark.sql.DataFrame,cols:Array[org.apache.spark.sql.Column]):org.apache.spark.sql.DataFrame"></a>
-      <a id="smvDedupByKey(DataFrame,Array[Column]):DataFrame"></a>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#runDynamicModule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="runDynamicModule(modUrn:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="runDynamicModule(String):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smvDedupByKey</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="cols">cols: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="org.apache.spark.sql.Column">Column</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">runDynamicModule</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
       
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvDedupByKey" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvDedupByKey(df:org.apache.spark.sql.DataFrame,keys:Array[String]):org.apache.spark.sql.DataFrame"></a>
-      <a id="smvDedupByKey(DataFrame,Array[String]):DataFrame"></a>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#runModule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="runModule(modUrn:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="runModule(String):DataFrame"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smvDedupByKey</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="keys">keys: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">runModule</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvDedupByKeyWithOrder" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvDedupByKeyWithOrder(df:org.apache.spark.sql.DataFrame,cols:Array[org.apache.spark.sql.Column],orderCol:Array[org.apache.spark.sql.Column]):org.apache.spark.sql.DataFrame"></a>
-      <a id="smvDedupByKeyWithOrder(DataFrame,Array[Column],Array[Column]):DataFrame"></a>
+      <p class="shortcomment cmt">Runs an SmvModule written in either Python or Scala</p>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#smvCsvFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvCsvFile(moduleName:String,path:String,csvAttr:org.tresamigos.smv.CsvAttributes,pForceParserCheck:Boolean,pFailAtParsingError:Boolean):org.tresamigos.smv.SmvCsvFile"></a>
+      <a id="smvCsvFile(String,String,CsvAttributes,Boolean,Boolean):SmvCsvFile"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smvDedupByKeyWithOrder</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="cols">cols: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="org.apache.spark.sql.Column">Column</span>]</span>, <span name="orderCol">orderCol: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="org.apache.spark.sql.Column">Column</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+        <span class="name">smvCsvFile</span><span class="params">(<span name="moduleName">moduleName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttr">csvAttr: <a href="../CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="pForceParserCheck">pForceParserCheck: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="pFailAtParsingError">pFailAtParsingError: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <a href="../SmvCsvFile.html" class="extype" name="org.tresamigos.smv.SmvCsvFile">SmvCsvFile</a></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvDedupByKeyWithOrder" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvDedupByKeyWithOrder(df:org.apache.spark.sql.DataFrame,keys:Array[String],orderCol:Array[org.apache.spark.sql.Column]):org.apache.spark.sql.DataFrame"></a>
-      <a id="smvDedupByKeyWithOrder(DataFrame,Array[String],Array[Column]):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvDedupByKeyWithOrder</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="keys">keys: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="orderCol">orderCol: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="org.apache.spark.sql.Column">Column</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvDiscoverPK" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvDiscoverPK(df:org.apache.spark.sql.DataFrame,n:Int):(java.util.ArrayList[String],Long)"></a>
-      <a id="smvDiscoverPK(DataFrame,Int):(ArrayList[String],Long)"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvDiscoverPK</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: (<span class="extype" name="java.util.ArrayList">ArrayList</span>[<span class="extype" name="scala.Predef.String">String</span>], <span class="extype" name="scala.Long">Long</span>)</span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvExpandStruct" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvExpandStruct(df:org.apache.spark.sql.DataFrame,cols:Array[String]):org.apache.spark.sql.DataFrame"></a>
-      <a id="smvExpandStruct(DataFrame,Array[String]):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvExpandStruct</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="cols">cols: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvGroupBy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvGroupBy(df:org.apache.spark.sql.DataFrame,cols:Array[String]):org.tresamigos.smv.python.SmvGroupedDataAdaptor"></a>
-      <a id="smvGroupBy(DataFrame,Array[String]):SmvGroupedDataAdaptor"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvGroupBy</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="cols">cols: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <a href="SmvGroupedDataAdaptor.html" class="extype" name="org.tresamigos.smv.python.SmvGroupedDataAdaptor">SmvGroupedDataAdaptor</a></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvGroupBy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvGroupBy(df:org.apache.spark.sql.DataFrame,cols:Array[org.apache.spark.sql.Column]):org.tresamigos.smv.python.SmvGroupedDataAdaptor"></a>
-      <a id="smvGroupBy(DataFrame,Array[Column]):SmvGroupedDataAdaptor"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvGroupBy</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="cols">cols: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="org.apache.spark.sql.Column">Column</span>]</span>)</span><span class="result">: <a href="SmvGroupedDataAdaptor.html" class="extype" name="org.tresamigos.smv.python.SmvGroupedDataAdaptor">SmvGroupedDataAdaptor</a></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvIsAllIn" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvIsAllIn(col:org.apache.spark.sql.Column,values:Any*):org.apache.spark.sql.Column"></a>
-      <a id="smvIsAllIn(Column,Any*):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvIsAllIn</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="values">values: <span class="extype" name="scala.Any">Any</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvIsAnyIn" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvIsAnyIn(col:org.apache.spark.sql.Column,values:Any*):org.apache.spark.sql.Column"></a>
-      <a id="smvIsAnyIn(Column,Any*):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvIsAnyIn</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="values">values: <span class="extype" name="scala.Any">Any</span>*</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvJoinByKey" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvJoinByKey(df:org.apache.spark.sql.DataFrame,other:org.apache.spark.sql.DataFrame,keys:Seq[String],joinType:String):org.apache.spark.sql.DataFrame"></a>
-      <a id="smvJoinByKey(DataFrame,DataFrame,Seq[String],String):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvJoinByKey</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="other">other: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="keys">keys: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="joinType">joinType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">FIXME py4j method resolution with null argument can fail, so we
-temporarily remove the trailing parameters till we can find a
-workaround
-</p>
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvJoinMultipleByKey" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvJoinMultipleByKey(df:org.apache.spark.sql.DataFrame,keys:Array[String],joinType:String):org.tresamigos.smv.python.SmvMultiJoinAdaptor"></a>
-      <a id="smvJoinMultipleByKey(DataFrame,Array[String],String):SmvMultiJoinAdaptor"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvJoinMultipleByKey</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="keys">keys: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="joinType">joinType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="SmvMultiJoinAdaptor.html" class="extype" name="org.tresamigos.smv.python.SmvMultiJoinAdaptor">SmvMultiJoinAdaptor</a></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvRenameField" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvRenameField(df:org.apache.spark.sql.DataFrame,namePairsAsList:java.util.ArrayList[java.util.ArrayList[String]]):org.apache.spark.sql.DataFrame"></a>
-      <a id="smvRenameField(DataFrame,ArrayList[ArrayList[String]]):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvRenameField</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="namePairsAsList">namePairsAsList: <span class="extype" name="java.util.ArrayList">ArrayList</span>[<span class="extype" name="java.util.ArrayList">ArrayList</span>[<span class="extype" name="scala.Predef.String">String</span>]]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvSelectMinus" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvSelectMinus(df:org.apache.spark.sql.DataFrame,cols:Array[org.apache.spark.sql.Column]):org.apache.spark.sql.DataFrame"></a>
-      <a id="smvSelectMinus(DataFrame,Array[Column]):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvSelectMinus</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="cols">cols: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="org.apache.spark.sql.Column">Column</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#smvSelectMinus" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvSelectMinus(df:org.apache.spark.sql.DataFrame,cols:Array[String]):org.apache.spark.sql.DataFrame"></a>
-      <a id="smvSelectMinus(DataFrame,Array[String]):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvSelectMinus</span><span class="params">(<span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="cols">cols: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      
+      <p class="shortcomment cmt">Create a SmvCsvFile for use in Python</p>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>
@@ -581,20 +556,19 @@ workaround
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.python.SmvPythonHelper#updatePythonGatewayPort" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="updatePythonGatewayPort(gws:py4j.GatewayServer,port:Int):Unit"></a>
-      <a id="updatePythonGatewayPort(GatewayServer,Int):Unit"></a>
+    </li><li name="org.tresamigos.smv.python.SmvPyClient#urn2fqn" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="urn2fqn(modUrn:String):String"></a>
+      <a id="urn2fqn(String):String"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">updatePythonGatewayPort</span><span class="params">(<span name="gws">gws: <span class="extype" name="py4j.GatewayServer">GatewayServer</span></span>, <span name="port">port: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">urn2fqn</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Update the port of callback client
-</p>
+      
     </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <a id="wait():Unit"></a>

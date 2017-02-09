@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" type="text/css" href="github.css">
+</head>
+<body>
+<table class="nav-table">
+    <tr>
+        <td class="nav-left">&lArr;&nbsp;<a href="smv_python_progress.html">Smv Python Progress Tracking</a></td>
+        <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
+        <td class="nav-right"><a href="_dummy_.html"></a>&nbsp;&rArr;</td>
+    </tr>
+</table>
+<hr>
+
+<article class="markdown-body">
+<h1 id="jupyter">Jupyter</h1>
+<p><a href="http://jupyter.org/">Jupyter</a> is an open source browser interface for running data science scripts interactively.</p>
+<h1 id="smv-with-jupyter">SMV with Jupyter</h1>
+<p>The smv-jupyter docker image makes it easy to run SMV code through Jupyter. Jupyter started out as iPython, an interactive python interpreter, and the initial installation of Jupyter supports only Python code - even to use pyspark (without SMV) with Jupyter requires a special configuration. smv-jupyter currently configures Jupyter with an smv-pyshell <a href="http://jupyter.readthedocs.io/en/latest/projects/kernels.html">kernel</a>. Support for SMV in Scala and R is in the works.</p>
+<h1 id="how-to-use">How to use</h1>
+<p>Build the docker image yourself with</p>
+<pre class="shell"><code>$ docker build -t smv-jupyter _SMV_HOME_/docker/smv-jupyter</code></pre>
+<p>and run on a compiled project with</p>
+<pre class="shell"><code>$ docker run -it -p 8888:8888 -v /path/to/proj:/proj smv-jupyter</code></pre>
+<p>Any arguments following smv-jupyter will be passed to jupyter notebook</p>
+<p>You can view your notebooks at localhost:8888.</p>
+<p>You could also install Jupyter on your host machine without docker. To run <code>smv-jupyter</code>, you need to change<br />directory to the project root, compile the project with <code>mvn package</code> or <code>sbt assembly</code>, then run <code>smv-jupyter</code>.<br />It will look for <code>nodebooks</code> directory under the project root for store notebooks.</p>
+<h1 id="jupyter-notebook-keyboard-shortcuts">Jupyter notebook keyboard shortcuts</h1>
+<pre><code>Command Mode (press Esc to enable)
+
+Enter              enter edit mode
+Shift-Enter        run cell, and select below
+Ctrl-Enter         run cell
+Alt-Enter          run cell, and insert below
+M                  to markdown
+1                  to heading 1
+2,3,4,5,6          to heading 2,3,4,5,6
+X                  cut selected cell
+C                  copy selected cell
+Z                  undo last cell deletion
+Shift-M            merge cell below</code></pre>
+<pre><code>Edit Mode (press Enter to enable)
+
+Tab                code completion or indent
+Ctrl-Up            go to cell start
+Ctrl-Down          go to cell end
+Esc                enter command mode
+Shift-Enter        run cell, select below</code></pre>
+<p>For more shortcuts, refer <a href="https://www.cheatography.com/weidadeyue/cheat-sheets/jupyter-notebook/">Jupyter notebook keyboard shortcuts</a>.</p>
+<h1 id="view-data">View data</h1>
+<p>View the first <code>n</code> rows of the dataframe <code>df</code> with</p>
+<pre><code>df.limit(n).toPandas().head(n)</code></pre>
+<p>The default maximal number of columns to display is 20, and maximal number of rows to display is 60. To display more rows or columns, set display options with</p>
+<pre><code>import pandas as pd
+pd.set_option(&quot;display.max_columns&quot;, column_number)
+pd.set_option(&quot;display.max_rows&quot;, row_number)</code></pre>
+<p>Set float number display precision with</p>
+<pre><code>pd.set_option(&#39;display.precision&#39;, 2)</code></pre>
+<h1 id="data-visualization">Data visualization</h1>
+<p>Install <code>matplotlib</code> for data visualization, and import with</p>
+<pre><code>import matplotlib.pyplot as plt
+%matplotlib inline</code></pre>
+<p>X-Y plot</p>
+<pre><code>df.plot(x=&#39;column1&#39;, y=&#39;column2&#39; )</code></pre>
+<p>Bar plot</p>
+<pre><code>df[&#39;column1&#39;].plot(kind=&#39;bar&#39;)</code></pre>
+<p>For more commands and options of plot, refer <a href="http://matplotlib.org/">matplotlib documentation</a>.</p>
+<p><a href="https://github.com/mwaskom/seaborn">Seaborn</a> is a visualization library based on matplotlib for statistical plotting, and provides preset styles and color palettes for more attractive figures.</p>
+</article>
+</body>
+</html>

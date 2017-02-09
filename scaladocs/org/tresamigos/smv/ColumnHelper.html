@@ -299,36 +299,6 @@ Array column</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.conta
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.ColumnHelper#isAllIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="isAllIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
-      <a id="isAllIn[T](T*)(ClassTag[T]):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">isAllIn</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.isAllIn.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.isAllIn.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">A boolean, which is true if ALL of the Array column's elements are in the given
-paraneter sequence</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is true if ALL of the Array column's elements are in the given
-paraneter sequence</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.isAllIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
-    </li><li name="org.tresamigos.smv.ColumnHelper#isAnyIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="isAnyIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
-      <a id="isAnyIn[T](T*)(ClassTag[T]):Column"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">isAnyIn</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.isAnyIn.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.isAnyIn.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">A boolean, which is ture if ANY one of the Array column element is in the given parameter
-sequence</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is ture if ANY one of the Array column element is in the given parameter
-sequence</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.isAnyIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -477,6 +447,36 @@ sequence</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.isAnyIn(s
       </h4>
       <p class="shortcomment cmt">Extract hour component from a timestamp.</p><div class="fullcomment"><div class="comment cmt"><p>Extract hour component from a timestamp.</p><pre>lit(<span class="lit">"2014-04-25 13:45"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd HH:mm"</span>).smvHour <span class="cmt">// 13</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The hour component as an integer or null if input column is null
 </p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvIsAllIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvIsAllIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
+      <a id="smvIsAllIn[T](T*)(ClassTag[T]):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvIsAllIn</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.smvIsAllIn.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.smvIsAllIn.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">A boolean, which is true if ALL of the Array column's elements are in the given
+paraneter sequence</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is true if ALL of the Array column's elements are in the given
+paraneter sequence</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.smvIsAllIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvIsAnyIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvIsAnyIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
+      <a id="smvIsAnyIn[T](T*)(ClassTag[T]):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvIsAnyIn</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.smvIsAnyIn.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.smvIsAnyIn.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">A boolean, which is ture if ANY one of the Array column element is in the given parameter
+sequence</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is ture if ANY one of the Array column element is in the given parameter
+sequence</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.smvIsAnyIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
     </li><li name="org.tresamigos.smv.ColumnHelper#smvLag" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvLag(n:Int):org.tresamigos.smv.cds.SmvCDSAggColumn"></a>
       <a id="smvLag(Int):SmvCDSAggColumn"></a>
@@ -878,7 +878,39 @@ but we sometimes need access to the expression.</p><pre>($<span class="lit">"v"<
 
         <div id="values" class="values members">
               <h3>Deprecated Value Members</h3>
-              <ol><li name="org.tresamigos.smv.ColumnHelper#smvIsNaN" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+              <ol><li name="org.tresamigos.smv.ColumnHelper#isAllIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isAllIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
+      <a id="isAllIn[T](T*)(ClassTag[T]):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version use smvIsAllIn instead) 1.5">isAllIn</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.isAllIn.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.isAllIn.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version use smvIsAllIn instead)</i> 1.5</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#isAnyIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isAnyIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
+      <a id="isAnyIn[T](T*)(ClassTag[T]):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version use smvIsAnyIn instead) 1.5">isAnyIn</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.isAnyIn.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.isAnyIn.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version use smvIsAnyIn instead)</i> 1.5</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvIsNaN" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="smvIsNaN:org.apache.spark.sql.Column"></a>
       <a id="smvIsNaN:Column"></a>
       <h4 class="signature">

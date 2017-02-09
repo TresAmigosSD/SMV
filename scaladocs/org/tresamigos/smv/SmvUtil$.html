@@ -211,16 +211,16 @@ SmvModules written in Python.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvUtil#exportHive" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="exportHive(dataframe:org.apache.spark.sql.DataFrame,tableName:String):Unit"></a>
-      <a id="exportHive(DataFrame,String):Unit"></a>
+    </li><li name="org.tresamigos.smv.SmvUtil#exportDataFrameToHive" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="exportDataFrameToHive(sqlContext:org.apache.spark.sql.SQLContext,dataframe:org.apache.spark.sql.DataFrame,tableName:String):Unit"></a>
+      <a id="exportDataFrameToHive(SQLContext,DataFrame,String):Unit"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">exportHive</span><span class="params">(<span name="dataframe">dataframe: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="tableName">tableName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">exportDataFrameToHive</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="dataframe">dataframe: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="tableName">tableName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">Exports a dataframe to a hive table.</p>
@@ -334,21 +334,34 @@ SmvModules written in Python.
       </span>
       </h4>
       <p class="shortcomment cmt">Save the dataframe content to disk, optionally generate edd.</p>
-    </li><li name="org.tresamigos.smv.SmvUtil#readPersistedFile" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="readPersistedFile(sqlContext:org.apache.spark.sql.SQLContext,path:String,attr:org.tresamigos.smv.CsvAttributes):scala.util.Try[org.apache.spark.sql.DataFrame]"></a>
-      <a id="readPersistedFile(SQLContext,String,CsvAttributes):Try[DataFrame]"></a>
+    </li><li name="org.tresamigos.smv.SmvUtil#publish" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="publish(sqlContext:org.apache.spark.sql.SQLContext,dataframe:org.apache.spark.sql.DataFrame,path:String,generateEdd:Boolean):Unit"></a>
+      <a id="publish(SQLContext,DataFrame,String,Boolean):Unit"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">readPersistedFile</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="attr">attr: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a> = <span class="symbol"><span class="name"><a href="CsvAttributes$.html">CsvAttributes.defaultCsv</a></span></span></span>)</span><span class="result">: <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span>]</span>
+        <span class="name">publish</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="dataframe">dataframe: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="generateEdd">generateEdd: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Try to read a dataframe from a persisted file path, that is
-usually an input data set or the output of an upstream SmvModule.</p><div class="fullcomment"><div class="comment cmt"><p>Try to read a dataframe from a persisted file path, that is
-usually an input data set or the output of an upstream SmvModule.</p><p>The default format is headerless CSV with '&quot;' as the quote
+      
+    </li><li name="org.tresamigos.smv.SmvUtil#readFile" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="readFile(sqlContext:org.apache.spark.sql.SQLContext,path:String,attr:org.tresamigos.smv.CsvAttributes):org.apache.spark.sql.DataFrame"></a>
+      <a id="readFile(SQLContext,String,CsvAttributes):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">readFile</span><span class="params">(<span name="sqlContext">sqlContext: <span class="extype" name="org.apache.spark.sql.SQLContext">SQLContext</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="attr">attr: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a> = <span class="symbol"><span class="name"><a href="CsvAttributes$.html">CsvAttributes.defaultCsv</a></span></span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Read a dataframe from a persisted file path, that is usually an
+input data set or the output of an upstream SmvModule.</p><div class="fullcomment"><div class="comment cmt"><p>Read a dataframe from a persisted file path, that is usually an
+input data set or the output of an upstream SmvModule.</p><p>The default format is headerless CSV with '&quot;' as the quote
 character
 </p></div></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">

@@ -22,7 +22,7 @@
 <h1 id="running-smv-application">Running SMV Application</h1>
 <p>While an SMV application can be run using the standard &quot;spark-submit&quot; command,<br />a convenient script <code>smv-run</code> is provided to make it easy to run an application built using maven.</p>
 <h3 id="synopsis">Synopsis</h3>
-<pre class="shell"><code>$ _SMV_HOME_/tools/smv-run [standard spark-submit-options] [smv-options] [what-to-run]</code></pre>
+<pre class="shell"><code>$ _SMV_HOME_/tools/smv-run [smv-options] [what-to-run] -- [standard spark-submit-options]</code></pre>
 <p><strong>Note:</strong> The above command should be run from the project top level directory.</p>
 <h3 id="options">Options</h3>
 <p><br><br /><table></p>
@@ -35,30 +35,6 @@
 <th>Option</th>
 <th>Default</th>
 <th>Description</th>
-</tr>
-
-
-<tr>
-<td>--master</td>
-<td>local[*]</td>
-<td>Specify the spark master to use (standard spark option)</td>
-</tr>
-
-
-<tr>
-<td>--class</td>
-<td>org.tresamigos.smv.SmvApp</td>
-<td>Specify the application entry point.
-The default should suffice unless the user wants to create some special initialization code and implement their own object main()</td>
-</tr>
-
-
-<tr>
-<td>--jar</td>
-<td>target/*jar-with-dependencies.jar</td>
-<td>Specify the application fat jar.
-This is the jar built using the package command using the supplied `pom.xml` example.
-The default is to use the latest (by time, not version) that is found in the target directory
 </tr>
 
 
@@ -231,6 +207,8 @@ One of the options below must be specified.
 <pre class="shell"><code>$ _SMV_HOME_/tools/smv-run --purge-old-output</code></pre>
 <p>Publish the output modules in stage &quot;s1&quot; as version &quot;xyz&quot;. The modules will be output to <code>/tmp/publish/xyz</code> dir.</p>
 <pre class="shell"><code>$ _SMV_HOME_/tools/smv-run --publish xyz --publish-dir /tmp/publish -s s1</code></pre>
+<p>Provide spark specific arguments</p>
+<pre class="shell"><code>$ _SMV_HOME_/tools/smv-run -m com.mycom.myproj.stage1.M1 -- --executor-memory=2G --driver-memory=1G --master yarn-client</code></pre>
 </article>
 </body>
 </html>

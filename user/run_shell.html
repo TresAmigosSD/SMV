@@ -40,7 +40,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <article class="markdown-body">
 <h1 id="run-smv-app-using-spark-shell">Run SMV App using Spark Shell</h1>
 <h3 id="synopsis">Synopsis</h3>
-<pre class="shell"><code>$ _SMV_HOME_/tools/smv-shell [standard spark-shell-options] [smv-options]</code></pre>
+<pre class="shell"><code>$ _SMV_HOME_/tools/smv-shell [smv-options] -- [standard spark-shell-options]</code></pre>
 <p><strong>Note:</strong> The above command should be run from the project top level directory.</p>
 <h3 id="options">Options</h3>
 <p>By default, the <code>smv-shell</code> command will use the latest &quot;fat&quot; jar in the target directory to use with Spark Shell.<br />The user can provide <code>--jar</code> option to override the default. See <a href="run_app.html">Run Application</a> for details about this flag.</p>

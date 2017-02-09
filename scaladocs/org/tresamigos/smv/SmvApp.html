@@ -35,7 +35,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">SmvApp</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <span class="name">SmvApp</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.SmvPackageManager">SmvPackageManager</span></span>
       </span>
       </h4>
       
@@ -43,7 +43,7 @@
 launched using the SmvApp object (defined below)
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="org.tresamigos.smv.SmvPackageManager">SmvPackageManager</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -61,7 +61,7 @@ launched using the SmvApp object (defined below)
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.SmvApp"><span>SmvApp</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.SmvApp"><span>SmvApp</span></li><li class="in" name="org.tresamigos.smv.SmvPackageManager"><span>SmvPackageManager</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -168,6 +168,84 @@ launched using the SmvApp object (defined below)
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvApp#addDataSet" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="addDataSet(urn:String,ds:org.tresamigos.smv.SmvDataSet):Unit"></a>
+      <a id="addDataSet(String,SmvDataSet):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">addDataSet</span><span class="params">(<span name="urn">urn: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ds">ds: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvApp#allDatasets" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="allDatasets:Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="allDatasets:Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">allDatasets</span><span class="result">: <span class="extype" name="scala.collection.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a> → SmvPackageManager</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvPackageManager#allLinks" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="allLinks:Seq[org.tresamigos.smv.SmvModuleLink]"></a>
+      <a id="allLinks:Seq[SmvModuleLink]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">allLinks</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a>]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvPackageManager#allModules" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="allModules:Seq[org.tresamigos.smv.SmvModule]"></a>
+      <a id="allModules:Seq[SmvModule]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">allModules</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a>]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvApp#allOutputModules" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="allOutputModules:Seq[org.tresamigos.smv.SmvModule]"></a>
+      <a id="allOutputModules:Seq[SmvModule]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">allOutputModules</span><span class="result">: <span class="extype" name="scala.collection.Seq">Seq</span>[<a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a>]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a> → SmvPackageManager</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvPackageManager#ancestors" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ancestors(ds:org.tresamigos.smv.SmvDataSet):Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="ancestors(SmvDataSet):Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ancestors</span><span class="params">(<span name="ds">ds: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">ancestors(module) - all modules current module depends on</p><div class="fullcomment"><div class="comment cmt"><p>ancestors(module) - all modules current module depends on</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <a id="asInstanceOf[T0]:T0"></a>
@@ -181,7 +259,7 @@ launched using the SmvApp object (defined below)
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvApp#checkDependencyRules" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="org.tresamigos.smv.SmvApp#checkDependencyRules" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="checkDependencyRules(ds:org.tresamigos.smv.SmvDataSet):Seq[org.tresamigos.smv.DependencyViolation]"></a>
       <a id="checkDependencyRules(SmvDataSet):Seq[DependencyViolation]"></a>
       <h4 class="signature">
@@ -193,8 +271,10 @@ launched using the SmvApp object (defined below)
         <span class="name">checkDependencyRules</span><span class="params">(<span name="ds">ds: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="DependencyViolation.html" class="extype" name="org.tresamigos.smv.DependencyViolation">DependencyViolation</a>]</span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Does the dataset follow dependency rules?
-</p>
+      <p class="shortcomment cmt">Does the dataset follow dependency rules?</p><div class="fullcomment"><div class="comment cmt"><p>Does the dataset follow dependency rules?</p><p>TODO: need to figure out if we should enforce dependency rules
+across modules written in different languages, and how if we
+should.  Right now we skip external dataset references.
+</p></div></div>
     </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a>
       <a id="clone():AnyRef"></a>
@@ -229,8 +309,50 @@ launched using the SmvApp object (defined below)
       <p class="shortcomment cmt">Create a DataFrame from string for temporary use (in test or shell)
 By default, don't persist validation result
 </p>
+    </li><li name="org.tresamigos.smv.SmvPackageManager#datasetBaseName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="datasetBaseName(ds:org.tresamigos.smv.SmvDataSet):String"></a>
+      <a id="datasetBaseName(SmvDataSet):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">datasetBaseName</span><span class="params">(<span name="ds">ds: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">remove package name from class FQN
+ e.</p><div class="fullcomment"><div class="comment cmt"><p>remove package name from class FQN
+ e.g. a.b.input.c -&gt; input.c
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvPackageManager#deadDataSets" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="deadDataSets():Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="deadDataSets():Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">deadDataSets</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">is there any output module depends on the current module, if not, isDead = true</p><div class="fullcomment"><div class="comment cmt"><p>is there any output module depends on the current module, if not, isDead = true</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvPackageManager#descendants" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="descendants(ds:org.tresamigos.smv.SmvDataSet):Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="descendants(SmvDataSet):Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">descendants</span><span class="params">(<span name="ds">ds: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">descendants(module) - all modules which depend on current module</p><div class="fullcomment"><div class="comment cmt"><p>descendants(module) - all modules which depend on current module</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvApp#dsForName" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="dsForName(fqn:String,parentClassLoader:ClassLoader):org.tresamigos.smv.SmvDataSet"></a>
+      <a id="dsForName(urn:String,parentClassLoader:ClassLoader):org.tresamigos.smv.SmvDataSet"></a>
       <a id="dsForName(String,ClassLoader):SmvDataSet"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -238,10 +360,23 @@ By default, don't persist validation result
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">dsForName</span><span class="params">(<span name="fqn">fqn: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="parentClassLoader">parentClassLoader: <span class="extype" name="java.lang.ClassLoader">ClassLoader</span></span>)</span><span class="result">: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>
+        <span class="name">dsForName</span><span class="params">(<span name="urn">urn: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="parentClassLoader">parentClassLoader: <span class="extype" name="java.lang.ClassLoader">ClassLoader</span> = <span class="symbol">getClass.getClassLoader</span></span>)</span><span class="result">: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Looks up an SmvDataSet by its fully-qualified name</p>
+      <p class="shortcomment cmt">Factory method to look up any SmvDataSet by its urn</p>
+    </li><li name="org.tresamigos.smv.SmvApp#dsname2stage" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="dsname2stage:Map[String,org.tresamigos.smv.SmvStage]"></a>
+      <a id="dsname2stage:Map[String,SmvStage]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">dsname2stage</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="org.tresamigos.smv.SmvStage">SmvStage</span>]</span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.SmvApp#dynamicResolveRDD" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="dynamicResolveRDD(fqn:String,parentClassLoader:ClassLoader):org.apache.spark.sql.DataFrame"></a>
       <a id="dynamicResolveRDD(String,ClassLoader):DataFrame"></a>
@@ -284,19 +419,6 @@ instances of the same module loaded at different times.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvApp#exportOutputModule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="exportOutputModule():Boolean"></a>
-      <a id="exportOutputModule():Boolean"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">exportOutputModule</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
-      </span>
-      </h4>
-      
     </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <a id="finalize():Unit"></a>
@@ -316,6 +438,45 @@ instances of the same module loaded at different times.
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvApp#findModuleInStage" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="findModuleInStage(stage:String,name:String):Option[org.tresamigos.smv.SmvModule]"></a>
+      <a id="findModuleInStage(String,String):Option[SmvModule]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">findModuleInStage</span><span class="params">(<span name="stage">stage: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a>]</span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvApp#findStageForDataSet" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="findStageForDataSet(ds:org.tresamigos.smv.SmvDataSet):Option[org.tresamigos.smv.SmvStage]"></a>
+      <a id="findStageForDataSet(SmvDataSet):Option[SmvStage]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">findStageForDataSet</span><span class="params">(<span name="ds">ds: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>)</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.tresamigos.smv.SmvStage">SmvStage</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Find the stage that a given dataset belongs to.</p>
+    </li><li name="org.tresamigos.smv.SmvPackageManager#fqnPrefix" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="fqnPrefix:String"></a>
+      <a id="fqnPrefix:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">fqnPrefix</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">common prefix of all the packages</p><div class="fullcomment"><div class="comment cmt"><p>common prefix of all the packages</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvApp#genEdd" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="genEdd:Boolean"></a>
       <a id="genEdd:Boolean"></a>
@@ -342,6 +503,32 @@ instances of the same module loaded at different times.
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.SmvApp#generateAllGraphJSON" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="generateAllGraphJSON():Unit"></a>
+      <a id="generateAllGraphJSON():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">generateAllGraphJSON</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvApp#getAllPackageNames" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getAllPackageNames():Seq[String]"></a>
+      <a id="getAllPackageNames():Seq[String]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getAllPackageNames</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">any class extending SmvPackageManager must at a minimum implement getAllPackageNames.</p><div class="fullcomment"><div class="comment cmt"><p>any class extending SmvPackageManager must at a minimum implement getAllPackageNames.</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a> → SmvPackageManager</dd></dl></div>
     </li><li name="scala.AnyRef#getClass" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <a id="getClass():Class[_]"></a>
@@ -368,6 +555,32 @@ instances of the same module loaded at different times.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvApp#hashOfHash" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="hashOfHash(modUrn:String):Int"></a>
+      <a id="hashOfHash(String):Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashOfHash</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvPackageManager#inputDataSets" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="inputDataSets():Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="inputDataSets():Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">inputDataSets</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">All DS without any prarents</p><div class="fullcomment"><div class="comment cmt"><p>All DS without any prarents</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -381,6 +594,34 @@ instances of the same module loaded at different times.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvPackageManager#leafDataSets" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="leafDataSets():Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="leafDataSets():Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">leafDataSets</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">is there any module depends on current module, if not, isLeaf = true</p><div class="fullcomment"><div class="comment cmt"><p>is there any module depends on current module, if not, isLeaf = true</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvApp#mkRunParam" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="mkRunParam(ds:org.tresamigos.smv.SmvDataSet):Map[org.tresamigos.smv.SmvDataSet,org.apache.spark.sql.DataFrame]"></a>
+      <a id="mkRunParam(SmvDataSet):Map[SmvDataSet,DataFrame]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">mkRunParam</span><span class="params">(<span name="ds">ds: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>)</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>, <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Recursively resolve all dependent datasets and build a map of
+dataset -&gt; dataframe with the result
+</p>
     </li><li name="org.tresamigos.smv.SmvApp#mkViolationString" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="mkViolationString(violations:Seq[org.tresamigos.smv.DependencyViolation],indent:String):String"></a>
       <a id="mkViolationString(Seq[DependencyViolation],String):String"></a>
@@ -394,6 +635,19 @@ instances of the same module loaded at different times.
       </span>
       </h4>
       <p class="shortcomment cmt">Textual representation for output to console</p>
+    </li><li name="org.tresamigos.smv.SmvApp#moduleCsvPath" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="moduleCsvPath:(String,Int)=&gt;String"></a>
+      <a id="moduleCsvPath:(String,Int)⇒String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">moduleCsvPath</span><span class="result">: (<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Int">Int</span>) ⇒ <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Returns the path for the module's csv output</p>
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -433,6 +687,19 @@ instances of the same module loaded at different times.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvApp#outputModsForStage" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="outputModsForStage(stageName:String):Seq[String]"></a>
+      <a id="outputModsForStage(String):Seq[String]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">outputModsForStage</span><span class="params">(<span name="stageName">stageName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">The names of output modules in a given stage</p>
     </li><li name="org.tresamigos.smv.SmvApp#packagesPrefix" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="packagesPrefix:String"></a>
       <a id="packagesPrefix:String"></a>
@@ -443,6 +710,99 @@ instances of the same module loaded at different times.
       </span>
       <span class="symbol">
         <span class="name">packagesPrefix</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvApp#predecessors" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="predecessors:scala.collection.immutable.Map[org.tresamigos.smv.SmvDataSet,Seq[org.tresamigos.smv.SmvDataSet]]"></a>
+      <a id="predecessors:Map[SmvDataSet,Seq[SmvDataSet]]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">predecessors</span><span class="result">: <span class="extype" name="scala.collection.immutable.Map">Map</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>, <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a> → SmvPackageManager</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvApp#publishHive" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="publishHive:Boolean"></a>
+      <a id="publishHive:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">publishHive</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvApp#publishModule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="publishModule(modFqn:String,version:String):Unit"></a>
+      <a id="publishModule(String,String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">publishModule</span><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="version">version: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Publish the result of an SmvModule
+</p>
+    </li><li name="org.tresamigos.smv.SmvApp#publishModulesToHive" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="publishModulesToHive():Boolean"></a>
+      <a id="publishModulesToHive():Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">publishModulesToHive</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">if the publish to hive flag is set, the publish
+</p>
+    </li><li name="org.tresamigos.smv.SmvApp#register" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="register(id:String,repo:org.tresamigos.smv.SmvDataSetRepository):Unit"></a>
+      <a id="register(String,SmvDataSetRepository):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">register</span><span class="params">(<span name="id">id: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="repo">repo: <a href="SmvDataSetRepository.html" class="extype" name="org.tresamigos.smv.SmvDataSetRepository">SmvDataSetRepository</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvApp#removeDataSet" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="removeDataSet(urn:String):Unit"></a>
+      <a id="removeDataSet(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">removeDataSet</span><span class="params">(<span name="urn">urn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvApp#resolveModuleByName" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="resolveModuleByName(name:String):org.tresamigos.smv.SmvModule"></a>
+      <a id="resolveModuleByName(String):SmvModule"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">resolveModuleByName</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a></span>
       </span>
       </h4>
       
@@ -492,6 +852,20 @@ This method also checks for cycles in the module dependency graph.
       <p class="shortcomment cmt">The main entry point into the app.</p><div class="fullcomment"><div class="comment cmt"><p>The main entry point into the app.  This will parse the command line arguments
 to determine which modules should be run/graphed/etc.
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvApp#runDynamicModule" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="runDynamicModule(modUrn:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="runDynamicModule(String):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">runDynamicModule</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Discard the cached result of the module, if any, and re-run.</p><div class="fullcomment"><div class="comment cmt"><p>Discard the cached result of the module, if any, and re-run.</p><p>This is usually used in an interactive shell to re-run a module after it's been modified.
+</p></div></div>
     </li><li name="org.tresamigos.smv.SmvApp#runDynamicModuleByName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="runDynamicModuleByName(fqn:String):org.apache.spark.sql.DataFrame"></a>
       <a id="runDynamicModuleByName(String):DataFrame"></a>
@@ -507,6 +881,19 @@ to determine which modules should be run/graphed/etc.
       <p class="shortcomment cmt">Dynamically load a module given FQN.</p><div class="fullcomment"><div class="comment cmt"><p>Dynamically load a module given FQN. This is mostly used by SparkR to dynamically
 resolve modules
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvApp#runModule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="runModule(modUrn:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="runModule(String):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">runModule</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Run a module by its fully qualified name in its respective language environment</p>
     </li><li name="org.tresamigos.smv.SmvApp#runModuleByName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="runModuleByName(modName:String):org.apache.spark.sql.DataFrame"></a>
       <a id="runModuleByName(String):DataFrame"></a>
@@ -540,6 +927,19 @@ Since none of the SMV classes will be put in an RDD, register them or not does n
 significant performance improvement</p><p>val allSerializables = SmvReflection.objectsInPackage[Serializable](&quot;org.tresamigos.smv&quot;)
 sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
 </p></div></div>
+    </li><li name="org.tresamigos.smv.SmvApp#scalaDsForName" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="scalaDsForName(fqn:String,parentClassLoader:ClassLoader):org.tresamigos.smv.SmvDataSet"></a>
+      <a id="scalaDsForName(String,ClassLoader):SmvDataSet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">scalaDsForName</span><span class="params">(<span name="fqn">fqn: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="parentClassLoader">parentClassLoader: <span class="extype" name="java.lang.ClassLoader">ClassLoader</span></span>)</span><span class="result">: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Looks up an Scala SmvDataSet by its fully-qualified name</p>
     </li><li name="org.tresamigos.smv.SmvApp#smvConfig" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smvConfig:org.tresamigos.smv.SmvConfig"></a>
       <a id="smvConfig:SmvConfig"></a>
@@ -579,6 +979,19 @@ sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.SmvPackageManager#stageBaseName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="stageBaseName(s:String):String"></a>
+      <a id="stageBaseName(String):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">stageBaseName</span><span class="params">(<span name="s">s: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvApp#stages" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="stages:org.tresamigos.smv.SmvStages"></a>
       <a id="stages:SmvStages"></a>
@@ -592,6 +1005,19 @@ sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.SmvPackageManager#successors" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="successors:Map[org.tresamigos.smv.SmvDataSet,Seq[org.tresamigos.smv.SmvDataSet]]"></a>
+      <a id="successors:Map[SmvDataSet,Seq[SmvDataSet]]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">successors</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>, <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>SmvPackageManager</dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>
@@ -618,19 +1044,6 @@ sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvApp#verifyConfig" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="verifyConfig():Unit"></a>
-      <a id="verifyConfig():Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">verifyConfig</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      
     </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <a id="wait():Unit"></a>
@@ -697,7 +1110,9 @@ sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
+        <div class="parent" name="org.tresamigos.smv.SmvPackageManager">
+              <h3>Inherited from <span class="extype" name="org.tresamigos.smv.SmvPackageManager">SmvPackageManager</span></h3>
+            </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>

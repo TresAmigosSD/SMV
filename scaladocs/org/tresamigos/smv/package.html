@@ -146,19 +146,32 @@
       </span>
       </h4>
       <p class="comment cmt">rule violation report</p>
-    </li><li name="org.tresamigos.smv.HasName" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="HasNameextendsAnyRef"></a>
-      <a id="HasName:HasName"></a>
+    </li><li name="org.tresamigos.smv.FilenamePart" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="FilenamePartextendsAnyRef"></a>
+      <a id="FilenamePart:FilenamePart"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a href="HasName.html"><span class="name">HasName</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <a href="FilenamePart.html"><span class="name">FilenamePart</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       </h4>
-      <p class="comment cmt">Allows stackable module naming, such as with Using[SmvRunConfig]</p>
+      <p class="comment cmt">A module's file name part is stackable, e.</p>
+    </li><li name="org.tresamigos.smv.ISmvModule" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ISmvModuleextendsObject"></a>
+      <a id="ISmvModule:ISmvModule"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="ISmvModule.html"><span class="name">ISmvModule</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.SchemaDiscoveryHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SchemaDiscoveryHelperextendsAnyRef"></a>
       <a id="SchemaDiscoveryHelper:SchemaDiscoveryHelper"></a>
@@ -186,7 +199,7 @@
       </h4>
       
     </li><li name="org.tresamigos.smv.SmvApp" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SmvAppextendsAnyRef"></a>
+      <a id="SmvAppextendsSmvPackageManager"></a>
       <a id="SmvApp:SmvApp"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -194,7 +207,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="SmvApp.html"><span class="name">SmvApp</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <a href="SmvApp.html"><span class="name">SmvApp</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.SmvPackageManager">SmvPackageManager</span></span>
       </span>
       </h4>
       <p class="comment cmt">Driver for SMV applications.</p>
@@ -279,7 +292,7 @@
 common part to the new ABC: SmvDSWithParser
 </p>
     </li><li name="org.tresamigos.smv.SmvDataSet" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="SmvDataSetextendsHasName"></a>
+      <a id="SmvDataSetextendsFilenamePart"></a>
       <a id="SmvDataSet:SmvDataSet"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -287,10 +300,62 @@ common part to the new ABC: SmvDSWithParser
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="SmvDataSet.html"><span class="name">SmvDataSet</span></a><span class="result"> extends <a href="HasName.html" class="extype" name="org.tresamigos.smv.HasName">HasName</a></span>
+        <a href="SmvDataSet.html"><span class="name">SmvDataSet</span></a><span class="result"> extends <a href="FilenamePart.html" class="extype" name="org.tresamigos.smv.FilenamePart">FilenamePart</a></span>
       </span>
       </h4>
       <p class="comment cmt">Dependency management unit within the SMV application framework.</p>
+    </li><li name="org.tresamigos.smv.SmvDataSetRepository" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SmvDataSetRepositoryextendsObject"></a>
+      <a id="SmvDataSetRepository:SmvDataSetRepository"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvDataSetRepository.html"><span class="name">SmvDataSetRepository</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvDqmValidationError" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvDqmValidationErrorextendsSmvRuntimeException"></a>
+      <a id="SmvDqmValidationError:SmvDqmValidationError"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvDqmValidationError.html"><span class="name">SmvDqmValidationError</span></a><span class="result"> extends <a href="SmvRuntimeException.html" class="extype" name="org.tresamigos.smv.SmvRuntimeException">SmvRuntimeException</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.SmvExtModule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvExtModuleextendsSmvModulewithProductwithSerializable"></a>
+      <a id="SmvExtModule:SmvExtModule"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvExtModule.html"><span class="name">SmvExtModule</span></a><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Represents an external module written in another language.</p>
+    </li><li name="org.tresamigos.smv.SmvExtModuleLink" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvExtModuleLinkextendsSmvModuleLinkwithProductwithSerializable"></a>
+      <a id="SmvExtModuleLink:SmvExtModuleLink"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvExtModuleLink.html"><span class="name">SmvExtModuleLink</span></a><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Link to a external module from another stage</p>
     </li><li name="org.tresamigos.smv.SmvFile" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SmvFileextendsSmvInputDataSet"></a>
       <a id="SmvFile:SmvFile"></a>
@@ -477,6 +542,19 @@ the same schema and CsvAttributes.</p>
       </span>
       </h4>
       <p class="comment cmt">Base marker trait for run configuration objects</p>
+    </li><li name="org.tresamigos.smv.SmvRuntimeException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvRuntimeExceptionextendsRuntimeException"></a>
+      <a id="SmvRuntimeException:SmvRuntimeException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvRuntimeException.html"><span class="name">SmvRuntimeException</span></a><span class="result"> extends <span class="extype" name="scala.RuntimeException">RuntimeException</span></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.SmvSchema" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SmvSchemaextendsSerializable"></a>
       <a id="SmvSchema:SmvSchema"></a>
@@ -490,8 +568,21 @@ the same schema and CsvAttributes.</p>
       </span>
       </h4>
       <p class="comment cmt">CSV file schema definition.</p>
+    </li><li name="org.tresamigos.smv.SmvUnsupportedType" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvUnsupportedTypeextendsSmvRuntimeException"></a>
+      <a id="SmvUnsupportedType:SmvUnsupportedType"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvUnsupportedType.html"><span class="name">SmvUnsupportedType</span></a><span class="result"> extends <a href="SmvRuntimeException.html" class="extype" name="org.tresamigos.smv.SmvRuntimeException">SmvRuntimeException</a></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.Using" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="Using[+T&lt;:org.tresamigos.smv.SmvRunConfig]extendsHasName"></a>
+      <a id="Using[+T&lt;:org.tresamigos.smv.SmvRunConfig]extendsFilenamePart"></a>
       <a id="Using[+T&lt;:SmvRunConfig]:Using[T]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -499,23 +590,10 @@ the same schema and CsvAttributes.</p>
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a href="Using.html"><span class="name">Using</span></a><span class="tparams">[<span name="T">+T &lt;: <a href="SmvRunConfig.html" class="extype" name="org.tresamigos.smv.SmvRunConfig">SmvRunConfig</a></span>]</span><span class="result"> extends <a href="HasName.html" class="extype" name="org.tresamigos.smv.HasName">HasName</a></span>
+        <a href="Using.html"><span class="name">Using</span></a><span class="tparams">[<span name="T">+T &lt;: <a href="SmvRunConfig.html" class="extype" name="org.tresamigos.smv.SmvRunConfig">SmvRunConfig</a></span>]</span><span class="result"> extends <a href="FilenamePart.html" class="extype" name="org.tresamigos.smv.FilenamePart">FilenamePart</a></span>
       </span>
       </h4>
       <p class="comment cmt">SmvDataSet that can be configured to return different DataFrames.</p>
-    </li><li name="org.tresamigos.smv.ValidationError" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ValidationErrorextendsException"></a>
-      <a id="ValidationError:ValidationError"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a href="ValidationError.html"><span class="name">ValidationError</span></a><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span></span>
-      </span>
-      </h4>
-      
     </li><li name="org.tresamigos.smv.ValidationResult" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ValidationResultextendsProductwithSerializable"></a>
       <a id="ValidationResult:ValidationResult"></a>
@@ -575,6 +653,19 @@ the same schema and CsvAttributes.</p>
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.package#LinkDsPrefix" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="LinkDsPrefix:String"></a>
+      <a id="LinkDsPrefix:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">LinkDsPrefix</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4>
+      
     </li><li name="org.tresamigos.smv.LinkFromDiffStage" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="LinkFromDiffStage"></a>
       <a id="LinkFromDiffStage:LinkFromDiffStage"></a>
@@ -585,6 +676,19 @@ the same schema and CsvAttributes.</p>
       </span>
       <span class="symbol">
         <a href="LinkFromDiffStage$.html"><span class="name">LinkFromDiffStage</span></a><span class="result"> extends <a href="DependencyRule.html" class="extype" name="org.tresamigos.smv.DependencyRule">DependencyRule</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.package#ModDsPrefix" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ModDsPrefix:String"></a>
+      <a id="ModDsPrefix:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ModDsPrefix</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
       </span>
       </h4>
       
@@ -840,6 +944,32 @@ and user can define aggregations on this sub-set of data.</p>
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.package#isLink" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="isLink(modUrn:String):Boolean"></a>
+      <a id="isLink(String):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isLink</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Predicate functions working with urn</p>
+    </li><li name="org.tresamigos.smv.package#link2mod" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="link2mod(linkUrn:String):String"></a>
+      <a id="link2mod(String):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">link2mod</span><span class="params">(<span name="linkUrn">linkUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Converts a link urn to the mod urn representing its target</p>
     </li><li name="org.tresamigos.smv.package#makeColHelper" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="makeColHelper(col:org.apache.spark.sql.Column):org.tresamigos.smv.ColumnHelper"></a>
       <a id="makeColHelper(Column):ColumnHelper"></a>
@@ -987,6 +1117,32 @@ and user can define aggregations on this sub-set of data.</p>
       </span>
       </h4>
       
+    </li><li name="org.tresamigos.smv.package#mkLinkUrn" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="mkLinkUrn(targetFqn:String):String"></a>
+      <a id="mkLinkUrn(String):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">mkLinkUrn</span><span class="params">(<span name="targetFqn">targetFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create an urn for a link from its target fqn</p>
+    </li><li name="org.tresamigos.smv.package#mkModUrn" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="mkModUrn(modFqn:String):String"></a>
+      <a id="mkModUrn(String):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">mkModUrn</span><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create an urn for a module from its fqn</p>
     </li><li name="org.tresamigos.smv.package#mkUniq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="mkUniq(collection:Seq[String],candidate:String,ignoreCase:Boolean,postfix:String):String"></a>
       <a id="mkUniq(Seq[String],String,Boolean,String):String"></a>
@@ -1161,6 +1317,19 @@ NOTE: It returns false, if all the values are nulls
       </h4>
       <p class="comment cmt">Commonly used functions
 </p>
+    </li><li name="org.tresamigos.smv.package#urn2fqn" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="urn2fqn(modUrn:String):String"></a>
+      <a id="urn2fqn(String):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">urn2fqn</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Converts a possible urn to the module's fqn</p>
     </li></ol>
             </div>
 
