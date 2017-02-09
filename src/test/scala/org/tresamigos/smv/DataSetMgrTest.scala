@@ -12,23 +12,21 @@
  * limitations under the License.
  */
 
-package org.tresamigos
 
-package fixture {
-  import org.tresamigos.smv._
+package org.tresamigos.smv
 
-  object Mod extends SmvModule("test mod") {
+package sampleMods {
+  object m1 extends SmvModule("test mod") {
     override def requiresDS() = null
     override def run(i: runParams) = null
   }
 }
 
-package smv {
-  class SmvDSMLoadScalaModTest extends SmvTestUtil {
-    val dsm = new DataSetMgr
-    val loadedMod = dsm.load("org.tresamigos.fixture.Mod")
-    test("test DataSetMgr loads Scala SmvDataSets by name"){
-      assert( loadedMod === fixture.Mod )
-    }
+class SmvDSMLoadScalaModTest extends SmvTestUtil {
+  val dsm = new DataSetMgr
+
+  test("test DataSetMgr loads Scala SmvDataSets by name"){
+    val loadedMod = dsm.load("org.tresamigos.smv.sampleMods.m1")
+    assert( loadedMod === sampleMods.m1 )
   }
 }
