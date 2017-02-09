@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.tresamigos.smv.class_loader.SmvClassLoader
+
 abstract class DataSetRepo {
   def loadDataSet(urn: String): SmvDataSet
 }
@@ -22,12 +24,15 @@ abstract class DataSetRepoFactory {
   def createRepo(): DataSetRepo
 }
 
-class DataSetRepoScala extends DataSetRepo {
-  def loadDataSet(urn: String): SmvDataSet = {
-    SmvApp.app.dsForName(urn)
+class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
+  val cl = SmvClassLoader(smvConfig, getClass.getClassLoader)
+
+  def loadDataSet(fqn: String): SmvDataSet = {
+    val ref = new SmvReflection(cl)
+    ref.objectNameToInstance[SmvDataSet](fqn)
   }
 }
 
-class DataSetRepoFactoryScala extends DataSetRepoFactory {
-  def createRepo() = new DataSetRepoScala
+class DataSetRepoFactoryScala(smvConfig: SmvConfig = new SmvConfig(Seq())) extends DataSetRepoFactory {
+  def createRepo(): DataSetRepoScala = new DataSetRepoScala(smvConfig)
 }

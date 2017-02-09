@@ -23,8 +23,8 @@ class DataSetMgr() {
     dsRepoFactories = dsRepoFactories :+ newRepoFactory
   }
 
-  def load(urn: String): SmvDataSet = {
+  def load(fqn: String): SmvDataSet = {
     val dsRepos = dsRepoFactories.map( _.createRepo )
-    for dsRepos(0).loadDataSet(urn)
+    dsRepos(0).loadDataSet(fqn)
   }
 }
