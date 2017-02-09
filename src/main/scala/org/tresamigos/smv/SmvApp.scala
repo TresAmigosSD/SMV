@@ -18,7 +18,7 @@ import org.tresamigos.smv.class_loader.SmvClassLoader
 import org.tresamigos.smv.shell.EddCompare
 import dqm.DQMValidator
 
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
@@ -30,7 +30,7 @@ import scala.util.{Try, Success, Failure}
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) extends SmvPackageManager {
+class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] = None) extends SmvPackageManager {
 
   val smvConfig = new SmvConfig(cmdLineArgs)
   val genEdd = smvConfig.cmdLine.genEdd()
@@ -45,9 +45,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * val allSerializables = SmvReflection.objectsInPackage[Serializable]("org.tresamigos.smv")
    * sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
    **/
+  val spark = _spark getOrElse (SparkSession.builder()
+    .appName(smvConfig.appName)
+    .enableHiveSupport()
+    .getOrCreate())
 
-  val sc = _sc.getOrElse(new SparkContext(sparkConf))
-  val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
+  val sc = spark.sparkContext
+  val sqlContext = spark.sqlContext
 
   private[smv] var urn2ds: Map[String, SmvDataSet] = Map.empty
   def removeDataSet(urn: String): Unit = urn2ds -= urn
@@ -618,19 +622,18 @@ object SmvApp {
 
   val DependencyRules: Seq[DependencyRule] = Seq(SameStageDependency, LinkFromDiffStage)
 
-  def init(args: Array[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) = {
-    app = new SmvApp(args, _sc, _sql)
+  def init(args: Array[String], _spark: Option[SparkSession] = None) = {
+    app = new SmvApp(args, _spark)
     app
   }
 
   /**
    * Creates a new app instances from a sql context.  This is used by SparkR to create a new app.
    */
-  def newApp(sqlContext: SQLContext, appPath: String) : SmvApp = {
+  def newApp(sparkSession: SparkSession, appPath: String) : SmvApp = {
     SmvApp.init(
       Seq("-m", "None", "--smv-app-dir", appPath).toArray,
-      Option(sqlContext.sparkContext),
-      Option(sqlContext))
+      Option(sparkSession))
     SmvApp.app
   }
 
