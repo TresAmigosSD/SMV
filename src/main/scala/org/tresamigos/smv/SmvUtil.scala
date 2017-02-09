@@ -31,22 +31,22 @@ object SmvUtil {
    * The default format is headerless CSV with '"' as the quote
    * character
    */
-  def readFile(sqlContext: SQLContext, path: String,
+  def readFile(sparkSession: SparkSession, path: String,
     attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
-      new FileIOHandler(sqlContext, path).csvFileWithSchema(attr)
+      new FileIOHandler(sparkSession, path).csvFileWithSchema(attr)
 
   /**
    * Save the dataframe content to disk, optionally generate edd.
    */
-  def persist(sqlContext: SQLContext, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {
+  def persist(sparkSession: SparkSession, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
-    val counter = sqlContext.sparkContext.accumulator(0l)
+    val counter = sparkSession.sparkContext.accumulator(0l)
     val before = DateTime.now()
     println(s"${fmt.print(before)} PERSISTING: ${path}")
 
     val df = dataframe.smvPipeCount(counter)
-    val handler = new FileIOHandler(sqlContext, path)
+    val handler = new FileIOHandler(sparkSession, path)
 
     //Always persist null string as a special value with assumption that it's not
     //a valid data value
@@ -62,11 +62,11 @@ object SmvUtil {
     // Use the "cached" file that was just saved rather than cause an action
     // on the input RDD which may cause some expensive computation to re-occur.
     if (generateEdd)
-      readFile(sqlContext, path).edd.persistBesideData(path)
+      readFile(sparkSession, path).edd.persistBesideData(path)
   }
 
-  def publish(sqlContext: SQLContext, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {
-    val handler = new FileIOHandler(sqlContext, path)
+  def publish(sparkSession: SparkSession, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {
+    val handler = new FileIOHandler(sparkSession, path)
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(dataframe, strNullValue = "_SmvStrNull_")

@@ -146,12 +146,12 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   /** Reads the published data, if any, for a named SMV module */
   def readPublishedData(modFqn: String): Option[DataFrame] =
     j_smvApp.stages.stageVersionFor(modFqn) flatMap (ver =>
-      Try(SmvUtil.readFile(j_smvApp.sqlContext, j_smvApp.publishPath(modFqn, ver))).toOption
+      Try(SmvUtil.readFile(j_smvApp.sparkSession, j_smvApp.publishPath(modFqn, ver))).toOption
     )
 
   /** Saves the dataframe to disk */
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
-    SmvUtil.persist(j_smvApp.sqlContext, dataframe, path, generateEdd)
+    SmvUtil.persist(j_smvApp.sparkSession, dataframe, path, generateEdd)
 
   /** Export a dataframe as hive table */
   def exportDataFrameToHive(dataframe: DataFrame, tableName: String): Unit =
