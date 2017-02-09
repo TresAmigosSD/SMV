@@ -193,8 +193,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
 /** Not a companion object because we need to access it from Python */
 object SmvPyClientFactory {
-  def init(sqlContext: SQLContext): SmvPyClient = init(Array("-m", "None"), sqlContext)
+  def init(sparkSession: SparkSession): SmvPyClient = init(Array("-m", "None"), sparkSession)
 
-  def init(args: Array[String], sqlContext: SQLContext): SmvPyClient =
-    new SmvPyClient(SmvApp.init(args, Option(sqlContext.sparkContext), Option(sqlContext)))
+  def init(args: Array[String], sparkSession: SparkSession): SmvPyClient =
+    new SmvPyClient(SmvApp.init(args, Option(sparkSession)))
 }
