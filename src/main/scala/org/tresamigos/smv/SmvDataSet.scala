@@ -189,10 +189,10 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   private[smv] def persist(rdd: DataFrame, prefix: String = "") =
-    SmvUtil.persist(app.sqlContext, rdd, moduleCsvPath(prefix), app.genEdd)
+    SmvUtil.persist(app.sparkSession, rdd, moduleCsvPath(prefix), app.genEdd)
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
-    Try(SmvUtil.readFile(app.sqlContext, moduleCsvPath(prefix)))
+    Try(SmvUtil.readFile(app.sparkSession, moduleCsvPath(prefix)))
 
   private[smv] def computeRDD: DataFrame = {
     val dsDqm = new DQMValidator(createDsDqm())
@@ -222,7 +222,7 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def publish() = {
     val df = rdd()
     val version = app.smvConfig.cmdLine.publish()
-    val handler = new FileIOHandler(app.sqlContext, publishPath(version))
+    val handler = new FileIOHandler(app.sparkSession, publishPath(version))
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
@@ -250,7 +250,7 @@ abstract class SmvDataSet extends FilenamePart {
    */
   private[smv] def readPublishedData() : Option[DataFrame] = {
     stageVersion.map { v =>
-      val handler = new FileIOHandler(app.sqlContext, publishPath(v))
+      val handler = new FileIOHandler(app.sparkSession, publishPath(v))
       handler.csvFileWithSchema(null)
     }
   }
@@ -278,7 +278,7 @@ case class SmvHiveTable(val tableName: String) extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
 
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
-    val df = app.sqlContext.sql("select * from " + tableName)
+    val df = app.sparkSession.sql("select * from " + tableName)
     run(df)
   }
 }
@@ -357,7 +357,7 @@ case class SmvCsvFile(
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
-    val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
+    val handler = new FileIOHandler(app.sparkSession, fullPath, fullSchemaPath, parserValidator)
     val df = handler.csvFileWithSchema(csvAttributes)
     run(df)
   }
@@ -390,7 +390,7 @@ class SmvMultiCsvFiles(
     val filesInDir = SmvHDFS.dirList(fullPath).map{n => s"${fullPath}/${n}"}
 
     val df = filesInDir.map{s =>
-      val handler = new FileIOHandler(app.sqlContext, s, fullSchemaPath, parserValidator)
+      val handler = new FileIOHandler(app.sparkSession, s, fullSchemaPath, parserValidator)
       handler.csvFileWithSchema(csvAttributes)
     }.reduce(_ unionAll _)
 
@@ -407,7 +407,7 @@ case class SmvFrlFile(
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
-    val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
+    val handler = new FileIOHandler(app.sparkSession, fullPath, fullSchemaPath, parserValidator)
     val df = handler.frlFileWithSchema()
     run(df)
   }
@@ -612,7 +612,7 @@ case class SmvCsvStringData(
     val dataArray = data.split(";").map(_.trim)
 
     val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
-    val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
+    val handler = new FileIOHandler(app.sparkSession, null, None, parserValidator)
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
   }
 }
