@@ -14,24 +14,20 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.GenericRow
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
-
-import dqm.{ParserLogger, TerminateParserLogger}
 
 /**
  * A class to convert Csv strings to DF
  **/
 private[smv] class FileIOHandler(
-    sqlContext: SQLContext,
+    sparkSession: SparkSession,
     dataPath: String,
     schemaPath: Option[String] = None,
     parserValidator: ParserLogger = TerminateParserLogger
-  ) {
+) {
+  import sparkSession.implicits._
 
   private def fullSchemaPath = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
 
@@ -42,7 +38,7 @@ private[smv] class FileIOHandler(
   private[smv] def csvFileWithSchema(
     csvAttributes: CsvAttributes
   ): DataFrame = {
-    val sc = sqlContext.sparkContext
+    val sc = sparkSession.sparkContext
     val schema = SmvSchema.fromFile(sc, fullSchemaPath)
 
     val ca = if (csvAttributes == null) schema.extractCsvAttributes() else csvAttributes
@@ -54,7 +50,7 @@ private[smv] class FileIOHandler(
   }
 
   private[smv] def frlFileWithSchema(): DataFrame = {
-    val sc = sqlContext.sparkContext
+    val sc = sparkSession.sparkContext
     val slices = SmvSchema.slicesFromFile(sc, fullSchemaPath)
     val schema = SmvSchema.fromFile(sc, fullSchemaPath)
     require(slices.size == schema.getSize)
@@ -84,7 +80,7 @@ private[smv] class FileIOHandler(
         }
       }.collect{case Some(l) => l}
     }
-    sqlContext.createDataFrame(rowRdd, schema.toStructType)
+    spark.createDataFrame(rowRdd, schema.toStructType)
   }
 
   private[smv] def csvStringRDDToDF(

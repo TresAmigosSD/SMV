@@ -45,13 +45,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
    * val allSerializables = SmvReflection.objectsInPackage[Serializable]("org.tresamigos.smv")
    * sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
    **/
-  val spark = _spark getOrElse (SparkSession.builder()
+  val sparkSession = _spark getOrElse (SparkSession.builder()
     .appName(smvConfig.appName)
     .enableHiveSupport()
     .getOrCreate())
 
-  val sc = spark.sparkContext
-  val sqlContext = spark.sqlContext
+  val sc = sparkSession.sparkContext
+  val sqlContext = sparkSession.sqlContext
 
   private[smv] var urn2ds: Map[String, SmvDataSet] = Map.empty
   def removeDataSet(urn: String): Unit = urn2ds -= urn
@@ -449,12 +449,12 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
     } else {
       // TODO: need to get fnpart for the module
       val path = moduleCsvPath(fqn, hashval)
-      Try(SmvUtil.readFile(sqlContext, path)).recoverWith { case ex =>
+      Try(SmvUtil.readFile(sparkSession, path)).recoverWith { case ex =>
         val r = dqm.attachTasks(df)
-        SmvUtil.persist(sqlContext, r, path, genEdd)
+        SmvUtil.persist(sparkSession, r, path, genEdd)
         // already had action from persist
         validator.validate(r, true, moduleValidPath(fqn, hashval))
-        Try(SmvUtil.readFile(sqlContext, path))
+        Try(SmvUtil.readFile(sparkSession, path))
       }.get
     }
   }
@@ -495,7 +495,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
     val df = runModule(modFqn)
     val path = publishPath(modFqn, version)
     println(s"publish path is ${path}")
-    SmvUtil.publish(sqlContext, df, path, genEdd)
+    SmvUtil.publish(sparkSession, df, path, genEdd)
   }
 
   // lb: Since runModuleByName and runDynamicModuleByName are used exclusively
