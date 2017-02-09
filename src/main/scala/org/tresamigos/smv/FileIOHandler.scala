@@ -17,6 +17,7 @@ package org.tresamigos.smv
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
+import org.tresamigos.smv.dqm._
 
 /**
  * A class to convert Csv strings to DF
@@ -80,7 +81,7 @@ private[smv] class FileIOHandler(
         }
       }.collect{case Some(l) => l}
     }
-    spark.createDataFrame(rowRdd, schema.toStructType)
+    sparkSession.createDataFrame(rowRdd, schema.toStructType)
   }
 
   private[smv] def csvStringRDDToDF(
