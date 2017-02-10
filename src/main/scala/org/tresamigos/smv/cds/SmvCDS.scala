@@ -20,7 +20,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.dsl.plans._
-import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.expressions._, aggregate._
 import org.apache.spark.annotation._
 
 import org.tresamigos.smv._
@@ -76,7 +76,7 @@ abstract class SmvCDS extends Serializable {
 private[smv] trait RunAggOptimizable {
   def createRunAggIterator(
     crossSchema: StructType,
-    cum: Seq[AggregateFunction1],
+    cum: Seq[DeclarativeAggregate],
     getKept: InternalRow => Seq[Any]): (Iterable[InternalRow]) => Iterable[InternalRow]
 }
 
@@ -135,7 +135,7 @@ private[smv] case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpress
   def resolvedExprs(inSchema: StructType) =
     SmvLocalRelation(inSchema).resolveAggExprs(aggExprs)
 
-  def aggFunctions(inSchema: StructType): Seq[AggregateFunction1] =
+  def aggFunctions(inSchema: StructType): Seq[DeclarativeAggregate] =
     SmvLocalRelation(inSchema).bindAggExprs(aggExprs).map{_.newInstance()}
 
   def createExecuter(toBeComparedSchema: StructType, inSchema: StructType): (InternalRow, Iterable[InternalRow]) => Seq[Any] = {

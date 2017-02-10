@@ -19,7 +19,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.dsl.plans._
 
 import org.apache.spark.sql.types.{StructField, StructType}
-import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.expressions._, aggregate._
 
 private[smv] case class SmvLocalRelation(schema: StructType) {
   private val locRel = {
@@ -35,8 +35,8 @@ private[smv] case class SmvLocalRelation(schema: StructType) {
 
   def bindAggExprs(exprs: Seq[Expression]) = {
     val aggExprs = resolveAggExprs(exprs).map{
-      case Alias(e: AggregateExpression1, n) => e
-      case e: AggregateExpression1 => e
+      case Alias(e: AggregateExpression, n) => e
+      case e: AggregateExpression => e
     }
     aggExprs.map{e => BindReferences.bindReference(e, locRel.output)}
   }

@@ -16,8 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql._, types._
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions._
-
+import org.apache.spark.sql.catalyst.expressions._, aggregate._
 import org.apache.spark.sql.expressions._
 
 /** Since UserDefinedAggregateFunction is not very flexible on input/output schema(or type),
@@ -175,7 +174,7 @@ private[smv] object stddev extends UserDefinedAggregateFunction {
 }
 
 
-private[smv] case class SmvFirst(child: Expression) extends UnaryExpression with AggregateExpression1 {
+private[smv] case class SmvFirst(child: Expression) extends DeclarativeAggregate with ExpectsInputTypes {
   def this() = this(null)
 
   override def nullable: Boolean = true
@@ -185,7 +184,7 @@ private[smv] case class SmvFirst(child: Expression) extends UnaryExpression with
     new SmvFirstFunction(child, this)
 }
 
-private[smv] case class SmvFirstFunction(expr: Expression, base: AggregateExpression1) extends AggregateFunction1 {
+private[smv] case class SmvFirstFunction(expr: Expression, base: DeclarativeAggregate) extends DeclarativeAggregate {
   def this() = this(null, null)
 
   var calculated = false

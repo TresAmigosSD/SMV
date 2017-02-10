@@ -18,7 +18,7 @@ import org.apache.spark.sql.contrib.smv._
 
 import org.apache.spark.sql._, expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.expressions._, aggregate._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.Partitioner
 import org.apache.spark.annotation._
