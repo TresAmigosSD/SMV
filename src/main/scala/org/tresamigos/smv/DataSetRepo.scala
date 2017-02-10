@@ -36,3 +36,23 @@ class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
 class DataSetRepoFactoryScala(smvConfig: SmvConfig = new SmvConfig(Seq())) extends DataSetRepoFactory {
   def createRepo(): DataSetRepoScala = new DataSetRepoScala(smvConfig)
 }
+
+class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J) extends DataSetRepo {
+  def loadDataSet(fqn: String): SmvDataSet = iDSRepo.loadDataSet(fqn)
+}
+
+// This class will be implemented as its own Java interface, but for short term testing purposes
+// we will wire it through to the deprecated SmvDataSetRepo interface
+class IDataSetRepoPy4J() {
+  def loadDataSet(fqn: String): SmvDataSet = SmvExtModule(fqn)
+}
+
+class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J) extends DataSetRepoFactory {
+  def createRepo(): DataSetRepoPython = new DataSetRepoPython(iDSRepoFactory.createRepo())
+}
+
+// This class will be implemented as its own Java interface, but for short term testing purposes
+// we will shimmy it in
+class IDataSetRepoFactoryPy4J(repoFactoryMthd: () => IDataSetRepoPy4J) {
+  def createRepo(): IDataSetRepoPy4J = repoFactoryMthd()
+}

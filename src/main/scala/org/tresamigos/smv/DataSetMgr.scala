@@ -14,8 +14,14 @@
 
 package org.tresamigos.smv
 
+import scala.util.{Try, Success, Failure}
 
-class DataSetMgr() {
+class DataSetMgr {
+  object errors {
+    def dsNotFound(fqn: String): SmvRuntimeException =
+      new SmvRuntimeException(s"SmvDataSet ${fqn} not found")
+  }
+
   private var dsRepoFactories: Seq[DataSetRepoFactory] =
     Seq(new DataSetRepoFactoryScala)
 
@@ -25,6 +31,20 @@ class DataSetMgr() {
 
   def load(fqn: String): SmvDataSet = {
     val dsRepos = dsRepoFactories.map( _.createRepo )
-    dsRepos(0).loadDataSet(fqn)
+    findModInRepoList(fqn, dsRepos)
+  }
+
+  // Recursively search for ds in repos. Throw error if not found
+  def findModInRepoList(fqn: String, repoList: Seq[DataSetRepo]): SmvDataSet = {
+    Try( repoList.head ) match {
+      // If repoList is empty, dataset not found
+      case Failure(_) => throw errors.dsNotFound(fqn)
+      case Success(repo) =>
+        Try( repo.loadDataSet(fqn) ) match {
+          // If dataset not found in repo, try next repo
+          case Failure(_) => findModInRepoList( fqn, repoList.filterNot(repoInList => repo == repoInList) )
+          case Success(ds) => ds
+        }
+    }
   }
 }

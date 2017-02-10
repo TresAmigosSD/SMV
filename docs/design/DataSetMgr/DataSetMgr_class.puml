@@ -7,13 +7,11 @@ hide circle
 package Scala {
   class SmvApp
   class DataSetMgr {
-    repoFactories: Seq[DataSetRepoFactory]
     registerRepoFactory(repoFactory: DataSetRepoFactory)
-    loadDataSetWithDep(fqns: String*): Seq(SmvDataSet)
+    loadDataSetWithDep(urns: String*): Seq(SmvDataSet)
   }
   class DataSetResolver {
-    repos: Seq[DataSetRepo]
-    loadDataSet(fqn: String): SmvDataSet
+    loadDataSet(urn: String): SmvDataSet
     resolveDataSet(ds: SmvDataSet): SmvDataSet
   }
   class DataSetRepoFactory {
@@ -21,37 +19,44 @@ package Scala {
   }
   class DataSetRepo {
     loadDataSet(fqn: String): SmvDataSet
-    outputModulesForStage(fqn: String)
+    outputModsForStage(fqn: String): Seq[String]
   }
   together {
-    class DataSetRepoScala extends DataSetRepo{
-      cl: SmvClassLoader
-    }
+    class DataSetRepoScala extends DataSetRepo
     class DataSetRepoPython extends DataSetRepo
   }
-  class IDataSetRepoPy4J <<java>>
-  class SmvDataSet {
-    requireDS(): Seq[SmvDataSet]
-    resolve(res: DataSetResolver): SmvDataSet
-    run(i: runParams): DataFrame
-    resolvedRequireDS: Seq[SmvDataSet]
+  class IDataSetRepoPy4J <<java>> {
+    loadModule(fqn: String): ISmvModule
+    outputModsForStage(fqn: String): Seq[String]
   }
-  class SmvModule extends SmvDataSet
+  together {
+    class SmvDataSet {
+      requireDS(): Seq[SmvDataSet]
+      resolve(res: DataSetResolver): SmvDataSet
+      run(i: runParams): DataFrame
+      resolvedRequireDS: Seq[SmvDataSet]
+    }
+    class SmvExtModulePython -|> SmvModule
+    class SmvModule -L|> SmvDataSet
+  }
   class SmvExtModule extends SmvModule
-  class SmvExtModulePython extends SmvModule
-  class ISmvModulePy4J <<java>>
+  class SmvExtModuleLink extends SmvExtModule
+  class ISmvModulePy4J <<java>> {
+    isOutput(): Boolean
+  }
 
   SmvApp *-- DataSetMgr
   DataSetMgr .. DataSetResolver
-  DataSetMgr *-- "*" DataSetRepoFactory
-  DataSetResolver *-- "*"   DataSetRepo
+  DataSetMgr o-- "*" DataSetRepoFactory
+  DataSetResolver o-- "*"  DataSetRepo
   DataSetRepoFactory ..> "create" DataSetRepo
   DataSetRepoScala ..> "create " SmvDataSet
-  DataSetRepoScala *-- SmvClassLoader
+  DataSetRepoScala *-L- SmvClassLoader
   SmvExtModulePython *-- ISmvModulePy4J
   DataSetRepoPython *-- IDataSetRepoPy4J
   DataSetRepoPython ..> "create " SmvExtModulePython
   IDataSetRepoPy4J ..> "create " ISmvModulePy4J
+
 }
 
 package Python {
