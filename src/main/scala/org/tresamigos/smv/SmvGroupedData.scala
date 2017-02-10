@@ -34,7 +34,7 @@ import org.apache.spark.sql.types.StringType
 @Experimental
 private[smv] case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
   def toDF: DataFrame = df
-  def toGroupedData: GroupedData = df.groupBy(keys(0), keys.tail: _*)
+  def toGroupedData: RelationalGroupedDataset = df.groupBy(keys(0), keys.tail: _*)
 }
 
 /**

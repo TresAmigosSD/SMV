@@ -15,7 +15,6 @@
 package org.apache.spark.sql.contrib
 
 import org.apache.spark.sql.{Row, Column}
-import org.apache.spark.rdd.RDD
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.{InternalRow, CatalystTypeConverters}

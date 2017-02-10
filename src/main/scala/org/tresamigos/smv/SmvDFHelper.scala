@@ -27,6 +27,7 @@ import edd._
 import smvfuncs._
 
 class SmvDFHelper(df: DataFrame) {
+  import df.sparkSession.implicits._
 
   /**
    * persist the `DataFrame` as a CSV file (along with a schema file).

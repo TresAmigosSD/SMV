@@ -17,13 +17,11 @@ package org.tresamigos
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.{Column, ColumnName}
-import org.apache.spark.sql.GroupedData
+import org.apache.spark.sql.RelationalGroupedDataset
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.contrib.smv._
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{StructField, StructType}
 import scala.language.implicitConversions
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 import org.apache.spark.annotation._
 
