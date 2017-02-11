@@ -45,10 +45,11 @@ package Scala {
     isOutput(): Boolean
   }
 
+
   SmvApp *-- DataSetMgr
-  DataSetMgr .. DataSetResolver
-  DataSetMgr o-- "*" DataSetRepoFactory
-  DataSetResolver o-- "*"  DataSetRepo
+  DataSetMgr ..> "create " DataSetResolver
+  DataSetMgr *-- "*" DataSetRepoFactory
+  DataSetResolver *-- "*"  DataSetRepo
   DataSetRepoFactory ..> "create" DataSetRepo
   DataSetRepoScala ..> "create " SmvDataSet
   DataSetRepoScala *-L- SmvClassLoader
