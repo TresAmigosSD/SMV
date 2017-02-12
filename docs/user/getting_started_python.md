@@ -34,7 +34,7 @@ $ _SMV_HOME_/tools/smv-pyrun -m com.mycompany.myapp.stage1.employment.PythonEmpl
 ```
 
 ### Publish to Hive Table
-If the `--publish-hive` flag is specified, then the selected modules will be published/exported to a hive table.  The have table name will be determined by the `tableName` method of the module.  The selected module must also implement `SmvPyOutput`.  For example, Given the module `X` in package `a.b.c` below:
+If the `--publish-hive` flag is specified, then the selected modules will be published/exported to a hive table.  The hive table name will be determined by the `tableName` method of the module.  The selected module must also implement `SmvPyOutput`.  For example, Given the module `X` in package `a.b.c` below:
 ```python
 class X(SmvPyModule, SmvPyOutput):
     """python module"""
@@ -66,9 +66,7 @@ $ _SMV_HOME/tools/smv-pyshell
 ...
 Using Python version 3.4.0 (default, Jun 19 2015 14:20:21)
 SparkContext available as sc, HiveContext available as sqlContext.
->>> import smv
->>> app = smv.SmvPy(['-m', 'None'], sqlContext)
->>> r1 = app.runModule('com.mycompany.myapp.stage1.employment.PythonEmploymentByState')
+>>> r1 = pdf('com.mycompany.myapp.stage1.employment.PythonEmploymentByState')
 >>> r1.show()
 ```
 

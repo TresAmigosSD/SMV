@@ -1,15 +1,15 @@
 # SMV Python Modules
 
-# SmvPyDataSet
+## SmvPyDataSet
 
 The Python base class `SmvPyDataSet` implements shared functionalities such as `modulePath()`, `fqn()`, `isInput()` etc.  It also ensures that all subclass must implement the following abstract methods:
-* `description` - what is this dataset about
+* Class docstring - what is this dataset about
 * `requiresDS`  - the upstream dependencies, in other words, what other datasets need to be run first
 * `run(i)`      - how to compute this dataset from the input declared in `requiresDS`
 
-The `description` method is used instead of making it part of the constructor (as in Scala) so that the complex syntax for subclass constructor can be avoided.  This pattern is applied consistently throughout the SMV Python API.
+**Note:** `SmvPyDataSet` is a base class, user should not use it directly.
 
-# SmvPyCsvFile
+## SmvPyCsvFile
 
 The simplest type of input dataset.  To create a Python module representing input from a csv file, subclass `SmvPyCsvFile` as show below
 ```python
@@ -23,18 +23,100 @@ class PythonCsvFile(SmvPyCsvFile):
 ```
 The `path` method (annotated as a property) is equivalent to the constructor parameter `path` in Scala; it returns the path to the input file.  All subclasses must provide an implementation for this method.  The `csvAttr()` method is optional.  The default implementation returns `None`, which maps to `null` in Java.  The meaning of having no `csvAttr()` is such that SMV runtime will read the schema information stored in the corresponding `.schema` file.  Alternatively, the subclass can also provide a csvAttr.  There are 3 factory methods in `SmvPyCsvFile`: `defaultCsvWithHeader`, `defaultTsv` (tab-delimited format), and `defaultTsvWithHeader`.  These correspond to their Scala counterparts.
 
-# SmvPyModule
+## SmvPyHiveTable
 
-To create an SMV module in Python, subclass `SmvPyModule` and override the 3 abstract methods listed in the section on SmvPyDataSet.
+Smv input dataset from a Hive table.
 
-The `requiresDS` method may return an empty array, if the module does not depend on anything.  The class literal of the dependencies are returned in the array.
+E.g.
+```python
+class Phyn(SmvPyHiveTable):
+    """Physician table"""
+    def tableName(self):
+        return "hive_schema1.phyn_dim"
+```
 
-The parameter `i` that's passed to the `run` method is named the same way as in the Scala API.  Even though it does take up an often-used name in the scope, we left it as is for the sake of consistency.  The `i` is a dictionary mapping module class to its resulting `DataFrame`s.  Through it modules can retrieve the results of its dependent modules.
+Please note that to be able to access Hive tables from SMV, you need to have Spark configured to be able to access Hive.
+Also the user of SMV have to have access to the specified Hive schema (in the example, `hive_schema1`).
+
+## SmvPyCsvStringData
+Smv input dataset from a string.
+
+Sometimes we simply need to create some small reference tables as `SmvPyDataSet`. Instead of have the manually create the
+Csv file of Hive tables and then imported through `SmvPyCsvFile` or `SmvHiveTable`, we can just code the data string
+in a `SmvPyCsvStringData`.
+
+E.g.
+```python
+class RefT1(SmvPyCsvStringData):
+    """From Ref1.xlsx"""
+    def schemaStr(self): return "ID:String;Name:String"
+    def dataStr(self):
+        return """0000276690114,ABC;
+            0000276780114,BCD"""
+```
+
+## SmvPyModule
+
+To create an SMV module in Python, subclass `SmvPyModule` and override the 2 abstract methods listed in the section on SmvPyDataSet.
+
+The `requiresDS` method returns the dependencies in an array (of Classes).
+
+The parameter `i` that's passed to the `run` method is named the same way as in the Scala API. The `i` is a dictionary mapping module class to its resulting `DataFrame`s.  Through it modules can retrieve the results of its dependent modules.
 
 Within the `run` methods, all operations on Spark DataFrames are available, as well as most of SMV enrichments to the Spark SQL API.
 
-# SmvPyHiveTable
+E.g.
+```python
+class PythonEmploymentByState(SmvPyModule):
+    """Python ETL Example: employ by state"""
 
-To read from a Hive table, subclass `SmvPyHiveTable` and implement the `tableName` method to return the name of the Hive table.  This dataset can then be input (as dependency) to downstream modules.
+    def requiresDS(self):
+        return [inputdata.PythonEmployment]
 
-To save a module to a Hive table, the current (2016-09-24) solution is to use the `smv-pyrun` or `smv-run` command, passing `--export-hive <table-name>` option.  In this operation, there can be only one module in the run, usually defined on the commandline with the `-m` switch.
+    def run(self, i):
+        df = i[inputdata.PythonEmployment]
+        return df.groupBy(col("ST")).agg(sum(col("EMP")).alias("EMP"))
+
+```
+
+# SmvPyOutput
+
+`SmvPyOutput` is not a stand-along `SmvPyDataSet`. It can be mixed in with other `SmvDataSet` to label them as an
+output module.
+
+To support export a module to a Hive table, `SmvPyOutput` provides a method `tableName`, where user code can provide
+a Hive table name, so that when run time command specified to export this module, Smv will export data to Hive.
+
+E.g.
+```python
+class KPI(SmvPyModule, SmvPyOutput):
+    """
+    Normalized KPI
+    """
+    def tableName(self): return 'hive_bi_schema.nrmlz_kpi'
+
+    def requiresDS(self):
+        return [...]
+
+    def run(self, i):
+        ...
+```
+
+To save a module to a Hive table, use the `smv-pyrun` command, passing `--publish-hive` option.  With this
+operation, the runner will look for `SmvPyOutput` with `tableName` from all the specified modules (commandline
+  with the `-m` switch), after resolving them, it will push them to specified Hive tables.
+
+E.g. of a launching script
+```sh
+smv-pyrun --data-dir "${DATA_DIR}" --publish-hive -m \
+  com.myapp.KPI \
+  -- \
+  --master yarn-client \
+  --executor-memory ${EXECUTOR_MEMORY} \
+  --driver-memory ${DRIVER_MEMORY} \
+  --conf spark.dynamicAllocation.maxExecutors=${MAX_EXECUTORS} \
+  --conf spark.yarn.queue=${YARN_QUEUE} \
+  --conf spark.executor.cores=${EXECUTOR_CORES} \
+  --conf spark.yarn.executor.memoryOverhead=${MEMORY_OVERHEAD} \
+  2>&1 | tee $LOGFILE
+```
