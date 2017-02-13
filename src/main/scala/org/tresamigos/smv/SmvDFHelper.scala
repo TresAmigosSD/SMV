@@ -797,7 +797,7 @@ class SmvDFHelper(df: DataFrame) {
     val w = Window.orderBy(orders:_*)
     val rankcol = mkUniq(df.columns, "rank")
     val rownum = mkUniq(df.columns, "rownum")
-    val r1 = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    val r1 = df.smvSelectPlus(rank() over w as rankcol, row_number() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 

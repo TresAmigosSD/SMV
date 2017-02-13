@@ -275,7 +275,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val w = winspec.orderBy(valueCol)
     df.smvSelectPlus(
       sum(valueCol) over w as s"${valueCol}_rsum",
-      udf(percent2nTile).apply((percentRank() over w)) as s"${valueCol}_quantile").
+      udf(percent2nTile).apply((percent_rank() over w)) as s"${valueCol}_quantile").
       smvJoinByKey(total, keys, SmvJoinType.Inner)
   }
 
@@ -461,7 +461,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val w = winspec.orderBy(orders:_*)
     val rankcol = mkUniq(df.columns, "rank")
     val rownum = mkUniq(df.columns, "rownum")
-    val r1 = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    val r1 = df.smvSelectPlus(rank() over w as rankcol, row_number() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 

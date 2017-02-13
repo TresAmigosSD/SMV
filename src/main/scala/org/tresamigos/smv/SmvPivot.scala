@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions._, codegen.{CodeGenContext,GeneratedExpressionCode}
+import org.apache.spark.sql.catalyst.expressions._, codegen.CodegenContext
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 

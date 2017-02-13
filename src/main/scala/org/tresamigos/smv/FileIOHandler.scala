@@ -128,7 +128,7 @@ private[smv] class FileIOHandler(
       mkString(csvAttributes.delimiter.toString)
 
     val csvHeaderRDD = df.sqlContext.sparkContext.parallelize(Array(headerStr),1)
-    val csvBodyRDD = df.map(schema.rowToCsvString(_, csvAttributes))
+    val csvBodyRDD = df.map(schema.rowToCsvString(_, csvAttributes)).rdd
 
     //As far as I know the union maintain the order. So the header will end up being the
     //first line in the saved file.
