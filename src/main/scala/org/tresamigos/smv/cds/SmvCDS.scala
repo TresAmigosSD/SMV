@@ -68,18 +68,6 @@ abstract class SmvCDS extends Serializable {
   }
 }
 
-/**
- * TODO: remove this. This is for optimize "TillNow" CDS before we decided that all
- * runAgg should have that filter applied by default. Now the pre-sort optimization is
- * implemented in SmvRunAggGDO already
- **/
-private[smv] trait RunAggOptimizable {
-  def createRunAggIterator(
-    crossSchema: StructType,
-    cum: Seq[DeclarativeAggregate],
-    getKept: InternalRow => Seq[Any]): (Iterable[InternalRow]) => Iterable[InternalRow]
-}
-
 private[smv] case class CombinedCDS(cds1: SmvCDS, cds2: SmvCDS) extends SmvCDS {
   def filter(input: CDSSubGroup) = {
     cds1.filter(cds2.filter(input))
@@ -135,16 +123,16 @@ private[smv] case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpress
   def resolvedExprs(inSchema: StructType) =
     SmvLocalRelation(inSchema).resolveAggExprs(aggExprs)
 
-  def aggFunctions(inSchema: StructType): Seq[DeclarativeAggregate] =
-    SmvLocalRelation(inSchema).bindAggExprs(aggExprs).map{_.newInstance()}
+  def aggFunctions(inSchema: StructType): Seq[ImperativeAggregate] =
+    SmvLocalRelation(inSchema).bindAggExprs(aggExprs).map(_.asInstanceOf[ImperativeAggregate])
 
   def createExecuter(toBeComparedSchema: StructType, inSchema: StructType): (InternalRow, Iterable[InternalRow]) => Seq[Any] = {
     val cum = aggFunctions(inSchema)
     val itMap = cds.createIteratorMap(toBeComparedSchema, inSchema)
 
     {(toBeCompared, it) =>
-      itMap(toBeCompared, it).foreach{r => cum.foreach(c => c.update(r))}
-      cum.map{c => c.eval(null)}
+      itMap(toBeCompared, it).foreach{r => cum.foreach(c => c.update(toBeCompared, r))}
+      cum.map{c => c.eval(toBeCompared)}
     }
   }
 
@@ -175,7 +163,7 @@ private[smv] object SmvCDS {
 
   def orderColsToOrdering(inSchema: StructType, orderCols: Seq[Expression]): Ordering[InternalRow] = {
     val keyOrderPair: Seq[(NamedExpression, SortDirection)] = orderCols.map{c => c match {
-      case SortOrder(e: NamedExpression, dircation: SortDirection) => (e, dircation)
+      case SortOrder(e: NamedExpression, direction, nullOrdering) => (e, direction)
       case e: NamedExpression => (e, Ascending)
     }}
 
@@ -274,17 +262,7 @@ private[smv] class SmvRunAggGDO(orders: Seq[Expression], aggCols: Seq[SmvCDSAggC
     val getKept: InternalRow => Seq[Any] = { r => keptExprs.map { e => e.eval(r) } }
     val rowOrdering = SmvCDS.orderColsToOrdering(smvSchema, orders);
 
-    if (cdsAggsList.size == 1){
-      val cum = cdsAggsList(0).aggFunctions(smvSchema).toList; //toList: for serialization
-      cdsAggsList(0).cds match {
-        case c: RunAggOptimizable =>
-          {rows => c.createRunAggIterator(smvSchema, cum, getKept)(rows.toSeq.sorted(rowOrdering))}
-        case _ =>
-          {rows => runGeneral(executers, getKept)(rows.toSeq.sorted(rowOrdering))}
-      }
-    } else {
-      {rows => runGeneral(executers, getKept)(rows.toSeq.sorted(rowOrdering))}
-    }
+    {rows => runGeneral(executers, getKept)(rows.toSeq.sorted(rowOrdering))}
   }
 
   override def createCurrentSchema(crossSchema: StructType) = crossSchema
