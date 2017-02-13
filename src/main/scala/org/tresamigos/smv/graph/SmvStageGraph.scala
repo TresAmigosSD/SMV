@@ -15,8 +15,8 @@
 package org.tresamigos.smv.graph
 
 import org.tresamigos.smv._
-import com.github.mdr.ascii.graph.{Graph => AsciiGraph}
-import com.github.mdr.ascii.layout.{GraphLayout => AsciiGraphLayout}
+// import com.github.mdr.ascii.graph.{Graph => AsciiGraph}
+// import com.github.mdr.ascii.layout.{GraphLayout => AsciiGraphLayout}
 
 import org.apache.spark.annotation._
 
@@ -124,12 +124,13 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
     val vertices = g.nodeString(toPrint, toPrint).toSet
     val edges = g.edges.map{case (f, t) => toPrint(f) -> toPrint(t)}.toList
 
-    val graphObj = AsciiGraph(vertices, edges)
+    // val graphObj = AsciiGraph(vertices, edges)
 
-    /** Graph as a string */
-    val graphStr = AsciiGraphLayout.renderGraph(graphObj)
+    // /** Graph as a string */
+    // val graphStr = AsciiGraphLayout.renderGraph(graphObj)
 
-    graphStr
+    // graphStr
+    "TODO: waiting for asciigraph for scala 2.11"
   }
 
   /**
@@ -146,12 +147,13 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
     val vertices = g.nodeString(printStage, printInterface).toSet
     val edges = g.edgeStringPair(printStage, printInterface).toList
 
-    val graphObj = AsciiGraph(vertices, edges)
+    // val graphObj = AsciiGraph(vertices, edges)
 
-    /** Graph as a string */
-    val graphStr = AsciiGraphLayout.renderGraph(graphObj)
+    // /** Graph as a string */
+    // val graphStr = AsciiGraphLayout.renderGraph(graphObj)
 
-    graphStr
+    // graphStr
+    "TODO: waiting for asciigraph for scala 2.11"
   }
 
   /**
