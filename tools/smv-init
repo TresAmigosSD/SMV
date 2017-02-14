@@ -120,9 +120,15 @@ function copy_src_files()
 
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
 
-    for subdir in main/python; do
-        copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
-    done
+    if [ "$PROJ_TYPE" = "Simple" ]; then
+      for subdir in main/python; do
+          copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
+      done
+    else
+      for subdir in main/scala main/python; do
+          copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
+      done
+    fi
 }
 
 function create_python_packages()
