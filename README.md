@@ -71,7 +71,7 @@ class EmploymentByState(SmvPyModule, SmvPyOutput):
         return df1
 ```
 
-The `run` method of a module defines the operations needed to get the output based on the input. We would like to filter the table based on if each row's state is greater or less than 1,000,000. To accomplish this, we need to add an aggregation to the `run` method:
+The `run` method of a module defines the operations needed to get the output based on the input. We would like to filter the table based on if each row's state is greater or less than 1,000,000. To accomplish this, we need to add a filter to the `run` method:
 
 ```shell
   def run(self, i):
