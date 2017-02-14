@@ -57,7 +57,7 @@ $ smv-init -s MyApp
 Run the entire application with
 
 ```shell
-$ smv-run --run-app
+$ smv-pyrun --run-app
 ```
 
 The output csv file and schema can be found in the `data/output` directory
