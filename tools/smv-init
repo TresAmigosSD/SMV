@@ -6,6 +6,27 @@ if [ "$1" = "-q" ]; then
     shift
 fi
 
+TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/template"
+
+# default project type is Simple
+PROJ_TYPE="Simple"
+
+if [ "$1" = "-s" ]; then
+  PROJ_TYPE="Simple"
+  TEMPLATE_DIR+=$PROJ_TYPE
+  shift
+fi
+
+if [ "$1" = "-e" ]; then
+  PROJ_TYPE="Enterprise"
+  shift
+fi
+
+if [ "$1" = "-i" ]; then
+  PROJ_TYPE="Integration"
+  shift
+fi
+
 if [ $# -ne 2 ]; then
     echo "ERROR: Invalid number of arguments"
     echo "USAGE: $0 [-q] project_name base_project_class"
@@ -17,9 +38,12 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
-TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/template"
 PROJ_DIR="$1"
 PROJ_CLASS="$2"
+
+if [ "$PROJ_TYPE" = "Simple" ]; then
+  PROJ_CLASS="org.tresamigos.myapp"
+fi
 
 function extract_group_artifact_ids()
 {
@@ -96,7 +120,7 @@ function copy_src_files()
 
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
 
-    for subdir in main/scala main/python; do
+    for subdir in main/python; do
         copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
     done
 }
@@ -115,3 +139,7 @@ copy_conf_files
 copy_data_files
 copy_src_files
 create_python_packages
+
+if [ "$PROJ_TYPE" != "Simple" ]; then
+  echo "$PROJ_TYPE option not yet supported.  Using old behavior"
+fi
