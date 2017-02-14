@@ -54,7 +54,7 @@ org.tresamigos.smv.smvAppTestPkg3:
 (M) smvAppTestPkg1.X""")
   }
 
-  test("Test createGraphvisCode") {
+  ignore("Test createGraphvisCode") {
     val graphString = new graph.SmvGraphUtil(app).createGraphvisCode(Seq(smvAppTestPkg3.U))
     val expectPart = """  subgraph cluster_0 {
     label="org.tresamigos.smv.smvAppTestPkg3"
@@ -66,7 +66,7 @@ org.tresamigos.smv.smvAppTestPkg3:
     //println(graphString)
   }
 
-  test("Test createDSAsciiGraph") {
+  ignore("Test createDSAsciiGraph") {
     val graphString = new graph.SmvGraphUtil(app).createDSAsciiGraph()
     //println(graphString)
     assertStrIgnoreSpace(graphString, """               ┌────────────┐
@@ -89,7 +89,7 @@ org.tresamigos.smv.smvAppTestPkg3:
  └────────────┘ └────────────┘ └────────────┘""")
   }
 
-  test("Test createStageAsciiGraph") {
+  ignore("Test createStageAsciiGraph") {
     val graphString = new graph.SmvGraphUtil(app).createStageAsciiGraph()
     assertStrIgnoreSpace(graphString, """        ┌────────────┐
         │smvAppTestPk│
