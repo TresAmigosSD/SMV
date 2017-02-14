@@ -1,5 +1,6 @@
 # SMV User Guide Table of Contents
 
+* [Why Smv](why_smv.md)
 * [Installation](smv_install.md)
 * [Getting Started](getting_started.md)
 * [Getting Started Python](getting_started_python.md) :new:
