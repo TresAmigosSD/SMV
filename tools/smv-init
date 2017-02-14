@@ -6,30 +6,38 @@ if [ "$1" = "-q" ]; then
     shift
 fi
 
-TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/template"
+TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/templates"
 
-# default project type is Simple
-PROJ_TYPE="Simple"
+# PROJ_TYPE:
+#  - simple (default)
+#  - enterprise
+#  - integration
+PROJ_TYPE="simple"
 
 if [ "$1" = "-s" ]; then
-  PROJ_TYPE="Simple"
-  TEMPLATE_DIR+=$PROJ_TYPE
+  PROJ_TYPE="simple"
   shift
 fi
 
 if [ "$1" = "-e" ]; then
-  PROJ_TYPE="Enterprise"
+  PROJ_TYPE="enterprise"
   shift
 fi
 
 if [ "$1" = "-i" ]; then
-  PROJ_TYPE="Integration"
+  PROJ_TYPE="integration"
   shift
 fi
 
+TEMPLATE_DIR+="/$PROJ_TYPE"
+
 if [ $# -ne 2 ]; then
     echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q] project_name base_project_class"
+    echo "USAGE: $0 [-q] [-s|-e|-i] project_name base_project_class"
+    echo "project types:"
+    echo "  -s: simple (default)"
+    echo "  -e: enterprise"
+    echo "  -i: integration (for developers only)"
     echo "example:"
     echo "  \$ $0 MyProject com.mycompany.myproj"
     echo ""
@@ -41,7 +49,7 @@ fi
 PROJ_DIR="$1"
 PROJ_CLASS="$2"
 
-if [ "$PROJ_TYPE" = "Simple" ]; then
+if [ "$PROJ_TYPE" = "simple" ]; then
   PROJ_CLASS="org.tresamigos.myapp"
 fi
 
@@ -120,7 +128,7 @@ function copy_src_files()
 
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
 
-    if [ "$PROJ_TYPE" = "Simple" ]; then
+    if [ "$PROJ_TYPE" = "simple" ]; then
       for subdir in main/python; do
           copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
       done
@@ -146,6 +154,6 @@ copy_data_files
 copy_src_files
 create_python_packages
 
-if [ "$PROJ_TYPE" != "Simple" ]; then
+if [ "$PROJ_TYPE" != "simple" ]; then
   echo "$PROJ_TYPE option not yet supported.  Using old behavior"
 fi

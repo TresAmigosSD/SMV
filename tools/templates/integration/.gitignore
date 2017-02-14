@@ -1,0 +1,34 @@
+conf/smv-user-conf.props
+
+data/out
+
+.idea
+smv.iml
+/bin/
+/.settings/
+/.classpath
+/.project
+/.cache
+**/.c9*
+derby.log
+metastore_db/
+.DS_Store
+.ensime*
+
+*.class
+*.log
+
+# sbt specific
+.cache
+.history
+.lib/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
