@@ -47,7 +47,7 @@ private[smv] abstract class EddTaskGroup {
       // this DF only has 1 row
       if (aggOlds.isEmpty) df.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
       else if (aggNews.isEmpty) df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1)
-      else df.agg(aggNews.head, aggNews.tail: _*).coalesce(1).join(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
+      else df.agg(aggNews.head, aggNews.tail: _*).coalesce(1).crossJoin(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
     } else {
       // on row per group
       val dfGd = df.smvSelectPlus(smvStrCat("_", keys.map{c => $"$c"}: _*) as "groupKey").groupBy("groupKey")
