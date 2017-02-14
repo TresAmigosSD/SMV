@@ -16,7 +16,8 @@ package org.tresamigos.smv;
 
 import java.util.List;
 import java.util.Map;
-import org.apache.spark.sql.DataFrame;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.tresamigos.smv.dqm.SmvDQM;
 import org.tresamigos.smv.dqm.DQMValidator;
 
@@ -51,7 +52,7 @@ public interface ISmvModule {
 	 * Try to run the module by its fully-qualified name and return its
 	 * result in a DataFrame.
 	 */
-	DataFrame getDataFrame(DQMValidator validator,  Map<String, DataFrame> known);
+	Dataset<Row> getDataFrame(DQMValidator validator,  Map<String, Dataset<Row>> known);
 
 	/**
 	 * Calculate a hash for this module; can optionally include

@@ -16,7 +16,8 @@ package org.tresamigos.smv;
 
 import java.util.List;
 import java.util.Map;
-import org.apache.spark.sql.DataFrame;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.tresamigos.smv.dqm.SmvDQM;
 import org.tresamigos.smv.dqm.DQMValidator;
 
@@ -48,5 +49,5 @@ public interface SmvDataSetRepository {
 	/**
 	 * Re-run the named module after code change.
 	 */
-	DataFrame rerun(String modUrn, DQMValidator validator, Map<String, DataFrame> known);
+	Dataset<Row> rerun(String modUrn, DQMValidator validator, Map<String, Dataset<Row>> known);
 }
