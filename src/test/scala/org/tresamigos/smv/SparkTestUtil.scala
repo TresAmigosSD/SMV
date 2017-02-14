@@ -20,7 +20,7 @@ import org.apache.log4j.{LogManager, Logger, Level}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.hive.test.TestHive
+import org.apache.spark.sql.hive.test.SmvTestHive
 import org.scalatest._
 
 trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
@@ -61,7 +61,7 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
     else
       SparkTestUtil.setLoggingLevel(Level.ERROR)
 
-    sparkSession = TestHive.sparkSession
+    sparkSession = SmvTestHive.sparkSession
     sqlContext = sparkSession.sqlContext
     sc = sqlContext.sparkContext
     sqlContext.setConf("spark.sql.shuffle.partitions", "4")
