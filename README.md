@@ -24,75 +24,128 @@ Please refer to [User Guide](docs/user/0_user_toc.md) and
 
 **Note:** The sections below were extracted from the User Guide and it should be consulted for more detailed instructions.
 
-# Use SMV with Docker
+# Quick links
+* [Installation Guide](docs/installation.md)
+* [Getting Started](#env)
+* [User Guide](docs/0_user_toc.md)
+* [API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.package)
 
-## Docker
-Install [Docker](https://www.docker.com/what-docker). An installation guide for your machine may be found [here](https://docs.docker.com/engine/installation/).
 
-## For users
-The first time you run the smv Docker image, Docker will download it for you automatically. You need to tell Docker where to find your projects directory and your data directory. You will enter a shell with all SMV tools installed. Find your projects in /projects and your data in /data.  Note that both the projects and data directories **must** already exist on the host system.
-```shell
-$ docker run -it -v /path/to/projects:/projects -v /path/to/data:/data tresamigos/smv
-```
-
-## For developers
-
-The smv-core image contains only the tools needed for SMV development, so you may build SMV from source with mvn or sbt. Find your SMV source in /smv and your projects in /projects in the container.
-
-Run smv-core.sh from \_SMV_HOME\_/docker/smv-core
-
-```shell
-_SMV_HOME_/docker/smv-core/$ ./smv-core.sh /path/to/projects
-```
-
-or any other directory
-
-```shell
-/any/other/directory$ _SMV_HOME_/docker/smv-core/smv-core.sh /path/to/projects /path/to/smv
-```
-
+<a href='env'>
 # SMV Getting Started
+
+## Installation
+
+We avidly recommend using [Docker](https://docs.docker.com/engine/installation/) to install SMV. Using Docker, start an SMV container with
+
+```
+docker run -it --rm tresamigos/smv
+```
+
+If Docker is not an option on your system, see the [installation guide](docs/installation.md).
 
 ## Create example App
 
-SMV provides a shell script to easily create an example application.
-The example app can be used for exploring SMV and it can also be used as an initialization script for a new project.
-
-```bash
-$ _SMV_HOME_/tools/smv-init MyApp com.mycompany.myapp
-```
-
-## Build and Run Example App
+SMV provides a shell script to easily create template applications. We will use a simple example app to explore SMV.
 
 ```shell
-$ mvn clean install
-$ _SMV_HOME_/tools/smv-run --run-app
+$ smv-init -s MyApp
 ```
 
-The output csv file and schema can be found in the `data/output` directory (as configured in the `conf/smv-user-conf.props` files).
+## Run Example App
+
+Run the entire application with
+
+```shell
+$ smv-run --run-app
+```
+
+The output csv file and schema can be found in the `data/output` directory
 
 ```shell
 $ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
-"32",981295
-"33",508120
-"34",3324188
-"35",579916
-"36",7279345
+"50",245058
+"51",2933665
+"53",2310426
+"54",531834
+"55",2325877
 
 $ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.schema/part-*
-FIRST('ST): String
+@delimiter = ,
+@has-header = false
+@quote-char = "
+ST: String[,_SmvStrNull_]
 EMP: Long
 ```
 
-See [Getting Started](docs/user/getting_started.md) section of User Guide for further details.
+## Add an aggregation
 
-## Generate dependency graph
+The `EmploymentByState` module is defined in `src/python/com/mycompany/myapp/employment.py`:
 
-If `smv-run` is provided the `-g` flag, instead of running and persisting the module, the module dependency graph will be created as a `dot` file. It can be converted to `png` using the `dot` command.
+```shell
+class EmploymentByState(SmvPyModule, SmvPyOutput):
+    """Python ETL Example: employment by state"""
 
-```scala
-$ _SMV_HOME_/tools/smv-run -g -m com.mycompany.myapp.stage1.EmploymentByState
-$ dot -Tpng com.mycompany.MyApp.stage1.EmploymentByState.dot -o graph.png
+    def requiresDS(self):
+        return [inputdata.Employment]
+
+    def run(self, i):
+        df = i[inputdata.Employment]
+        df1 = df.groupBy(col("ST")).agg(sum(col("EMP")).alias("EMP"))
+        return df1
 ```
 
-See [Run SMV Application](docs/user/run_app.md) for further details.
+The `run` method of a module defines the operations needed to get the output based on the input. We would like to add a column describing whether or not employment number in each row's state is greater or less than 1,000,000. To accomplish this, we need to add an aggregation to the `run` method:
+
+```shell
+  def run(self, i):
+      df = i[inputdata.Employment]
+      df1 = df.groupBy(col("ST")).agg(sum(col("EMP")).alias("EMP"))
+      df2 = df1.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
+      return df2
+```
+
+Now inspect the output again:
+
+```shell
+$ cat data/output/com.mycompany.myapp.EmploymentByState_XXXXXXXX.csv/part-* | head -5
+"50",245058,false
+"51",2933665,true
+"53",2310426,true
+"54",531834,false
+"55",2325877,true
+
+$ cat data/output/com.mycompany.myapp.EmploymentByState_XXXXXXXX.schema/part-*
+@delimiter = ,
+@has-header = false
+@quote-char = "
+ST: String[,_SmvStrNull_]
+EMP: Long
+cat_high_emp: Boolean
+```
+
+## smv-pyshell
+
+We can also view the results in the smv-pyshell. To start the shell, run
+
+```
+$ smv-pyshell
+```
+
+To get the `DataFrame` of `EmploymentByState`,
+
+```shell
+>>> x = df('com.mycompany.myapp.stage1.EmploymentByState')
+
+```
+
+To peek at the first row of results,
+
+```shell
+>>> x.peek(1)
+ST:String            = 50
+EMP:Long             = 245058
+cat_high_emp:Boolean = false
+```
+
+See the [user guide](docs/0_user_toc.md) for further examples and documentation.
