@@ -20,7 +20,7 @@ docker run -it --rm tresamigos/smv
 
 If Docker is not an option on your system, see the [installation guide](docs/installation.md).
 
-## Create example App
+## Create Example App
 
 SMV provides a shell script to easily create template applications. We will use a simple example app to explore SMV.
 
@@ -36,7 +36,7 @@ Run the entire application with
 $ smv-pyrun --run-app
 ```
 
-The output csv file and schema can be found in the `data/output` directory
+The output csv file and schema can be found in the `data/output` directory. Note that 'XXXXXXXX' here substitutes for a number which is like the version of the module.
 
 ```shell
 $ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
@@ -54,7 +54,7 @@ ST: String[,_SmvStrNull_]
 EMP: Long
 ```
 
-## Add an aggregation
+## Edit Example App
 
 The `EmploymentByState` module is defined in `src/python/com/mycompany/myapp/employment.py`:
 
@@ -71,25 +71,32 @@ class EmploymentByState(SmvPyModule, SmvPyOutput):
         return df1
 ```
 
-The `run` method of a module defines the operations needed to get the output based on the input. We would like to add a column describing whether or not employment number in each row's state is greater or less than 1,000,000. To accomplish this, we need to add an aggregation to the `run` method:
+The `run` method of a module defines the operations needed to get the output based on the input. We would like to filter the table based on if each row's state is greater or less than 1,000,000. To accomplish this, we need to add an aggregation to the `run` method:
 
 ```shell
   def run(self, i):
       df = i[inputdata.Employment]
       df1 = df.groupBy(col("ST")).agg(sum(col("EMP")).alias("EMP"))
-      df2 = df1.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
+      df2 = df1.filter((col("EMP") > lit(1000000))
       return df2
 ```
 
-Now inspect the output again:
+Now remove the old output and run the module again with
+
+```shell
+smv-pyrun --purge-old-output --run-app
+```
+(make sure you run this from the from the root of the project)
+
+Inspect the new output to see the changes.
 
 ```shell
 $ cat data/output/com.mycompany.myapp.EmploymentByState_XXXXXXXX.csv/part-* | head -5
-"50",245058,false
-"51",2933665,true
-"53",2310426,true
-"54",531834,false
-"55",2325877,true
+"51",2933665
+"53",2310426
+"55",2325877
+"01",1501148
+"04",2027240
 
 $ cat data/output/com.mycompany.myapp.EmploymentByState_XXXXXXXX.schema/part-*
 @delimiter = ,
@@ -97,8 +104,10 @@ $ cat data/output/com.mycompany.myapp.EmploymentByState_XXXXXXXX.schema/part-*
 @quote-char = "
 ST: String[,_SmvStrNull_]
 EMP: Long
-cat_high_emp: Boolean
 ```
+
+Be sure to view the most recent
+
 
 ## smv-pyshell
 
