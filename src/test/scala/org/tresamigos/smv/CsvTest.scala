@@ -10,7 +10,7 @@ class CsvTest extends SmvTestUtil {
     val file = SmvCsvFile("./" + testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader)
     val df = file.rdd
     import df.sparkSession.implicits._
-    val res = df.map(r => (r(0), r(1))).collect.mkString(",")
+    val res = df.map(r => (r.getString(0), r.getInt(1))).collect.mkString(",")
     // TODO: should probably add a assertSRDDEqual() with expected rows instead of convert to string
     assert(res === "(Bob,1),(Fred,2)")
   }
