@@ -1,7 +1,7 @@
 # Spark Modularized View (SMV)
 Spark Modularized View enables users to build enterprise scale applications on Apache Spark platform.
 
-* [Installation Guide](docs/installation.md)
+* [Installation Guide](docs/smv_install.md)
 * [Getting Started](#env)
 * [User Guide](docs/0_user_toc.md)
 * [API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.package)
@@ -18,7 +18,7 @@ We avidly recommend using [Docker](https://docs.docker.com/engine/installation/)
 docker run -it --rm tresamigos/smv
 ```
 
-If Docker is not an option on your system, see the [installation guide](docs/installation.md).
+If Docker is not an option on your system, see the [installation guide](docs/smv_install.md).
 
 ## Create Example App
 
