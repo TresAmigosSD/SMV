@@ -56,7 +56,7 @@ EMP: Long
 
 ## Edit Example App
 
-The `EmploymentByState` module is defined in `src/python/com/mycompany/myapp/employment.py`:
+The `EmploymentByState` module is defined in `src/python/com/mycompany/myapp/stage1/employment.py`:
 
 ```shell
 class EmploymentByState(SmvPyModule, SmvPyOutput):
@@ -91,14 +91,14 @@ smv-pyrun --purge-old-output --run-app
 Inspect the new output to see the changes.
 
 ```shell
-$ cat data/output/com.mycompany.myapp.EmploymentByState_XXXXXXXX.csv/part-* | head -5
+$ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
 "51",2933665
 "53",2310426
 "55",2325877
 "01",1501148
 "04",2027240
 
-$ cat data/output/com.mycompany.myapp.EmploymentByState_XXXXXXXX.schema/part-*
+$ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.schema/part-*
 @delimiter = ,
 @has-header = false
 @quote-char = "
