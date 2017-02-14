@@ -147,10 +147,7 @@ package object smv {
    *
    * @group agg
    **/
-  def smvFirst(c: Column, nonNull: Boolean = false) = {
-    if (nonNull) first(c) // delegate to Spark's first for its non-null implementation (as of 1.5)
-    else new Column(SmvFirst(c.toExpr))
-  }
+  def smvFirst(c: Column, nonNull: Boolean = false) = first(c, nonNull)
 
   /**
    * Simple column functions to apply If-Else
