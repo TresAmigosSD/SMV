@@ -19,10 +19,12 @@ import java.io.{PrintWriter, File}
 import org.apache.log4j.{LogManager, Logger, Level}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.hive.test.TestHive
 import org.scalatest._
 
 trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
+  var sparkSession: SparkSession = _
   var sc: SparkContext = _
   var sqlContext: SQLContext = _
 
@@ -59,7 +61,8 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
     else
       SparkTestUtil.setLoggingLevel(Level.ERROR)
 
-    sqlContext = TestHive
+    sparkSession = TestHive.sparkSession
+    sqlContext = sparkSession.sqlContext
     sc = sqlContext.sparkContext
     sqlContext.setConf("spark.sql.shuffle.partitions", "4")
     resetTestcaseTempDir()
@@ -217,7 +220,7 @@ trait SmvTestUtil extends SparkTestUtil {
 
   override def beforeAll() = {
     super.beforeAll()
-    SmvApp.init(appArgs.toArray, Option(sc), Option(sqlContext))
+    SmvApp.init(appArgs.toArray, Option(sparkSession))
     app = SmvApp.app
   }
 

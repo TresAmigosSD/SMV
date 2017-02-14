@@ -33,7 +33,7 @@ object SmvTestFile extends SmvModule("") {
 
 class SmvNewAppTest extends SparkTestUtil {
   test("test newApp function") {
-    val app = SmvApp.newApp(sqlContext, testDataDir)
+    val app = SmvApp.newApp(sparkSession, testDataDir)
     assert(app.smvConfig.appName === "Smv Application")
   }
 }
@@ -88,7 +88,7 @@ class SmvAppTest extends SmvTestUtil {
     val stageNames = Seq("org.tresamigos.smv.test1", "org.tresamigos.smv.test2")
     def config(modname: String): Unit = SmvApp.init(Array(
       "--smv-props", s"""smv.stages=${stageNames.mkString(":")}""",
-      "-m", modname), Option(sc), Option(sqlContext))
+      "-m", modname), Option(sparkSession))
 
     test("should report non-existing modules") {
       val modname = "tooth-fary"
@@ -141,7 +141,7 @@ class SmvAppPurgeTest extends SparkTestUtil {
     }
 
     object testApp extends SmvApp(
-      Seq("--purge-old-output", "--output-dir", testcaseTempDir), Option(sc), Option(sqlContext)) {
+      Seq("--purge-old-output", "--output-dir", testcaseTempDir), Option(sparkSession)) {
       override def allAppModules = Seq(m)
     }
     SmvApp.app = testApp
