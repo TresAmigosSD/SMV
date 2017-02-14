@@ -34,7 +34,7 @@ package Scala {
       requireDS(): Seq[SmvDataSet]
       resolve(res: DataSetResolver): SmvDataSet
       run(i: runParams): DataFrame
-      resolvedRequireDS: Seq[SmvDataSet]
+      resolvedRequiresDS: Seq[SmvDataSet]
     }
     class SmvExtModulePython -|> SmvModule
     class SmvModule -L|> SmvDataSet
