@@ -230,7 +230,7 @@ case class CommonLevelMatcherExpression(expr:Column) extends CommonLevelMatcher 
 }
 
 object CommonLevelMatcherNone extends CommonLevelMatcher {
-  private[smv] override def join(df1:DataFrame, df2:DataFrame):DataFrame = df1.join(df2)
+  private[smv] override def join(df1:DataFrame, df2:DataFrame):DataFrame = df1.crossJoin(df2)
 }
 
 private[smv] sealed abstract class LevelMatcher {
