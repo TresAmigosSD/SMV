@@ -35,3 +35,10 @@ if [ "$COUNT" -ne 52 ]; then
     echo "Expected 52 lines in output but got $COUNT"
     exit 1
 fi
+
+TEST1_INPUT=$(< data/input/test1/table.csv)
+TEST1_OUTPUT=$(cat data/output/com.mycompany.MyApp.test1.S2_*.csv/part*)
+if [[ $TEST1_INPUT != $TEST1_OUTPUT ]]; then
+  echo "Test failure: test1"
+  exit 1
+fi
