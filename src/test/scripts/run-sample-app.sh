@@ -40,10 +40,10 @@ fi
 # unless run explicitly with -m
 PASSING_PYTHON_MODULES="com.mycompany.MyApp.stage1.employment.PythonEmploymentByState \
 com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory \
+com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory2 \
 "
 
 FAILING_PYTHON_MODULES=" \
-com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory2 \
 com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory \
 com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory2 \
 "

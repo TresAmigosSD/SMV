@@ -576,10 +576,9 @@ def SmvPyExtDataSet(refname):
     cls = type("SmvPyExtDataSet", (SmvPyDataSet,), {
         "refname" : refname,
         "smvPy"   : smvPy,
-        "doRun"   : lambda self, validator, known: smvPy.runModule(refname)
+        "doRun"   : lambda self, validator, known: smvPy.runModule(self.urn)
     })
-    cls.name = classmethod(lambda klass: refname)
-    cls.urn = classmethod(lambda klass:  refname)
+    cls.fqn = classmethod(lambda klass: refname)
     PyExtDataSetCache[refname] = cls
     return cls
 
