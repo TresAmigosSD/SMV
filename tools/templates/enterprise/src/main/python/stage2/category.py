@@ -14,13 +14,3 @@ class PythonEmploymentByStateCategory(SmvPyModule, SmvPyOutput):
     def run(self, i):
         df = i[inputdata.EmploymentByStateLink]
         return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
-
-class PythonEmploymentByStateCategory2(SmvPyModule, SmvPyOutput):
-    """Python ETL Example: link to a Scala module"""
-
-    def requiresDS(self):
-        return [inputdata.EmploymentByStateLink2]
-
-    def run(self, i):
-        df = i[inputdata.EmploymentByStateLink2]
-        return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
