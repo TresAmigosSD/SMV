@@ -11,21 +11,21 @@ TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/templates"
 # PROJ_TYPE:
 #  - simple (default)
 #  - enterprise
-#  - integration
+#  - test
 PROJ_TYPE="simple"
 
-if [ "$1" = "-s" ]; then
+if [ "$1" = "-s" ] || [ "$1" = "-simple" ]; then
   PROJ_TYPE="simple"
   shift
 fi
 
-if [ "$1" = "-e" ]; then
+if [ "$1" = "-e" ] || [ "$1" = "-enterprise" ]; then
   PROJ_TYPE="enterprise"
   shift
 fi
 
-if [ "$1" = "-i" ]; then
-  PROJ_TYPE="integration"
+if [ "$1" = "-t" ] || [ "$1" = "-test" ]; then
+  PROJ_TYPE="test"
   shift
 fi
 
@@ -33,11 +33,11 @@ TEMPLATE_DIR+="/$PROJ_TYPE"
 
 if [ $# -ne 2 ]; then
     echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q] [-s|-e|-i] project_name base_project_class"
+    echo "USAGE: $0 [-q] [-s|-e|-t] project_name base_project_class"
     echo "project types:"
     echo "  -s: simple (default)"
     echo "  -e: enterprise"
-    echo "  -i: integration (for developers only)"
+    echo "  -t: test (for developers only)"
     echo "example:"
     echo "  \$ $0 MyProject com.mycompany.myproj"
     echo ""
