@@ -35,3 +35,19 @@ if [ "$COUNT" -ne 52 ]; then
     echo "Expected 52 lines in output but got $COUNT"
     exit 1
 fi
+
+# The Python modules which are not dependencies of Scala modules won't run
+# unless run explicitly with -m
+PASSING_PYTHON_MODULES="com.mycompany.MyApp.stage1.employment.PythonEmploymentByState \
+com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory \
+"
+
+FAILING_PYTHON_MODULES=" \
+com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory2 \
+com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory \
+com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory2 \
+"
+
+echo "Skipping failing Python example modules: $FAILING_PYTHON_MODULES"
+
+../../../tools/smv-pyrun -m $PASSING_PYTHON_MODULES
