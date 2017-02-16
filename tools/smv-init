@@ -131,7 +131,7 @@ function copy_src_files()
 
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
 
-    if [ "$PROJ_TYPE" = "simple" ]; then
+    if [ "$PROJ_TYPE" = "simple" ] || [ "$PROJ_TYPE" = "enterprise" ]; then
       for subdir in main/python; do
           copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
       done
