@@ -3,9 +3,9 @@ from pyspark.sql.functions import col, sum, lit
 
 from _PROJ_CLASS_.stage2 import inputdata
 
-__all__ = ['PythonEmploymentByStateCategory']
+__all__ = ['EmploymentByStateCategory']
 
-class PythonEmploymentByStateCategory(SmvPyModule, SmvPyOutput):
+class EmploymentByStateCategory(SmvPyModule, SmvPyOutput):
     """Python ETL Example: employment by state with category"""
 
     def requiresDS(self):
