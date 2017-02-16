@@ -7,4 +7,8 @@ SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 export PYSPARK_DRIVER_PYTHON="$(which jupyter)"
 export PYSPARK_DRIVER_PYTHON_OPTS="notebook"
 
-$SMV_TOOLS/smv-pyshell
+# Pass through the options from `smv-jupyter` invocation through to `smv-pyshell`
+# This will allow the user to specify pyspark options like:
+# `smv-jupyter -- --master=yarn-client --num-executors=10`
+# `smv-jupyter -- --conf="spark.driver.maxResultSize=0"`
+$SMV_TOOLS/smv-pyshell "${@}"
