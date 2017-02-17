@@ -17,7 +17,7 @@ mkdir -p ${TEST_DIR}
 cd ${TEST_DIR}
 
 echo "--------- GENERATE SAMPLE APP -------------"
-../../tools/smv-init -i ${APP_NAME} com.mycompany.${APP_NAME}
+../../tools/smv-init -test ${APP_NAME} com.mycompany.${APP_NAME}
 
 echo "--------- BUILD SAMPLE APP -------------"
 cd ${APP_NAME}
