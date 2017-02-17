@@ -403,8 +403,9 @@ class SmvPyDataSet(object):
         return self.dqm()
 
     def dependencies(self):
-        # Short-term solution (read: hack) to ensure that the user gets a full
-        # stack trace when SmvPyDataSet user-defined methods causes errors
+        # Try/except block is a short-term solution (read: hack) to ensure that
+        # the user gets a full stack trace when SmvPyDataSet user-defined methods
+        # causes errors
         try:
             arr = smv_copy_array(self.smvPy.sc, *[x.urn() for x in self.requiresDS()])
         except:
@@ -412,7 +413,14 @@ class SmvPyDataSet(object):
         return arr
 
     def getDataFrame(self, validator, known):
-        return self.doRun(validator, known)._jdf
+        # Try/except block is a short-term solution (read: hack) to ensure that 
+        # the user gets a full stack trace when SmvPyDataSet user-defined methods
+        # causes errors
+        try:
+            df = self.doRun(validator, known)._jdf
+        except:
+            traceback.print_exc()
+        return df
 
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
