@@ -28,7 +28,18 @@ OLD_FAILING_PYTHON_MODULES=" \
 com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory2 \
 "
 
+# Test stages containing a dependency scenario with a Scala output module
 NEW_SCALA_MODULE_STAGES="test1"
+
+# Test stages containing a dependency scenario with a Python output module
+NEW_PYTHON_MODULE_STAGES="test2"
+
+PYTHON_MODULES_TO_RUN=$OLD_PASSING_PYTHON_MODULES
+for stage in $NEW_PYTHON_MODULE_STAGES; do
+  PYTHON_MODULES_TO_RUN="$PYTHON_MODULES_TO_RUN com.mycompany.MyApp.$stage.modules.M2"
+done
+
+NEW_MODULE_STAGES="$NEW_PYTHON_MODULE_STAGES $NEW_SCALA_MODULE_STAGES"
 
 echo "--------- GENERATE SAMPLE APP -------------"
 ../../tools/smv-init -test ${APP_NAME} com.mycompany.${APP_NAME}
@@ -50,7 +61,7 @@ echo "--------- FORCE RUN PYTHON MODULES -------------"
 
 echo "Skipping failing Python example modules: $OLD_FAILING_PYTHON_MODULES"
 
-../../../tools/smv-pyrun -m $OLD_PASSING_PYTHON_MODULES
+../../../tools/smv-pyrun -m $PYTHON_MODULES_TO_RUN
 
 
 echo "--------- VERIFY SAMPLE APP OUTPUT -------------"
@@ -63,6 +74,15 @@ fi
 for stage in $NEW_SCALA_MODULE_STAGES; do
   TEST_INPUT=$(< data/input/$stage/table.csv)
   TEST_OUTPUT=$(cat data/output/com.mycompany.MyApp.$stage.M2_*.csv/part*)
+  if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
+    echo "Test failure: $stage"
+    exit 1
+  fi
+done
+
+for stage in $NEW_PYTHON_MODULE_STAGES; do
+  TEST_INPUT=$(< data/input/$stage/table.csv)
+  TEST_OUTPUT=$(cat data/output/com.mycompany.MyApp.$stage.modules.M2_*.csv/part*)
   if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
     echo "Test failure: $stage"
     exit 1
