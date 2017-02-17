@@ -105,9 +105,6 @@ ST: String[,_SmvStrNull_]
 EMP: Long
 ```
 
-Be sure to view the most recent
-
-
 ## smv-pyshell
 
 We can also view the results in the smv-pyshell. To start the shell, run
