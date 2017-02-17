@@ -156,7 +156,3 @@ copy_conf_files
 copy_data_files
 copy_src_files
 create_python_packages
-
-if [ "$PROJ_TYPE" != "simple" ]; then
-  echo "$PROJ_TYPE option not yet supported.  Using old behavior"
-fi
