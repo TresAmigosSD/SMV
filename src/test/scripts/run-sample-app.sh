@@ -18,18 +18,22 @@ cd ${TEST_DIR}
 
 # For now, need to run original integration test modules AND the new dependency
 # scenario classes, then check output. New output check will be one module per stage
-OLD_PASSING_PYTHON_MODULES="com.mycompany.MyApp.stage1.employment.PythonEmploymentByState \
+OLD_PASSING_PYTHON_MODULES="\
+com.mycompany.MyApp.stage1.employment.PythonEmploymentByState \
 com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory \
 com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory2 \
 com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory \
 "
 
-OLD_FAILING_PYTHON_MODULES=" \
+OLD_FAILING_PYTHON_MODULES="\
 com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory2 \
 "
 
 # Test stages containing a dependency scenario with a Scala output module
-NEW_SCALA_MODULE_STAGES="test1"
+NEW_SCALA_MODULE_STAGES="\
+test1 \
+test3 \
+"
 
 # Test stages containing a dependency scenario with a Python output module
 NEW_PYTHON_MODULE_STAGES="test2"

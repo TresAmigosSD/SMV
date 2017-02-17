@@ -1,18 +1,14 @@
+# Test project for SMV
+Sample project to run integration tests against
 
-Full details on how to build/run/use this application can be found in the [Getting Started section of the SMV User Guide](https://github.com/TresAmigosSD/SMV/blob/master/docs/user/getting_started.md)
+## Test Stages
+Each test consists of a distinct module dependency scenario which contains 1 to 2 stages.
 
-# Build App
-```shell
-$ mvn clean install
-```
+### Test 1: test1
+Scala depends on Scala within same stage
 
-# Run App in batch
-```shell
-$ _SMV_HOME_/tools/smv-run --run-app
-```
+### Test 2: test2
+Python depends on Python within same stage
 
-# Run App in Spark Shell
-```shell
-$ _SMV_HOME_/tools/smv-shell
-```
-
+### Test 3: test3, test3_1
+Scala depends on Scala in different stage

@@ -5,4 +5,6 @@ smv.appName = Example App
 smv.stages = _PROJ_CLASS_.stage1, \
              _PROJ_CLASS_.stage2, \
              _PROJ_CLASS_.test1, \
-             _PROJ_CLASS_.test2
+             _PROJ_CLASS_.test2, \
+             _PROJ_CLASS_.test3, \
+             _PROJ_CLASS_.test3_1
