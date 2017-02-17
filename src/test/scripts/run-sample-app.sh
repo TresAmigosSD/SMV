@@ -16,6 +16,20 @@ rm -rf ${TEST_DIR}
 mkdir -p ${TEST_DIR}
 cd ${TEST_DIR}
 
+# For now, need to run original integration test modules AND the new dependency
+# scenario classes, then check output. New output check will be one module per stage
+OLD_PASSING_PYTHON_MODULES="com.mycompany.MyApp.stage1.employment.PythonEmploymentByState \
+com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory \
+com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory2 \
+com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory \
+"
+
+OLD_FAILING_PYTHON_MODULES=" \
+com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory2 \
+"
+
+NEW_SCALA_MODULE_STAGES="test1"
+
 echo "--------- GENERATE SAMPLE APP -------------"
 ../../tools/smv-init -test ${APP_NAME} com.mycompany.${APP_NAME}
 
@@ -29,28 +43,30 @@ echo "--------- RUN SAMPLE APP -------------"
     smv.outputDir="file://$(pwd)/data/output" --run-app \
     -- --master 'local[*]'
 
-echo "--------- VERIFY SAMPLE APP OUTPUT -------------"
-COUNT=$(cat data/output/com.mycompany.MyApp.stage2.StageEmpCategory_*.csv/part* | wc -l)
-if [ "$COUNT" -ne 52 ]; then
-    echo "Expected 52 lines in output but got $COUNT"
-    exit 1
-fi
 
 echo "--------- FORCE RUN PYTHON MODULES -------------"
 # The Python modules which are not dependencies of Scala modules won't run
 # unless run explicitly with -m
-PASSING_PYTHON_MODULES="com.mycompany.MyApp.stage1.employment.PythonEmploymentByState \
-com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory \
-com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory2 \
-com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory \
-"
 
-FAILING_PYTHON_MODULES=" \
-com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory2 \
-"
+echo "Skipping failing Python example modules: $OLD_FAILING_PYTHON_MODULES"
 
-echo "Skipping failing Python example modules: $FAILING_PYTHON_MODULES"
+../../../tools/smv-pyrun -m $OLD_PASSING_PYTHON_MODULES
 
-../../../tools/smv-pyrun -m $PASSING_PYTHON_MODULES
+
+echo "--------- VERIFY SAMPLE APP OUTPUT -------------"
+COUNT=$(cat data/output/com.mycompany.MyApp.stage2.StageEmpCategory_*.csv/part* | wc -l)
+if [ "$COUNT" -ne 52 ]; then
+    echo "Expected 52 lines in output of stage2.StageEmpCategory but got $COUNT"
+    exit 1
+fi
+
+for stage in $NEW_SCALA_MODULE_STAGES; do
+  TEST_INPUT=$(< data/input/$stage/table.csv)
+  TEST_OUTPUT=$(cat data/output/com.mycompany.MyApp.$stage.M2_*.csv/part*)
+  if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
+    echo "Test failure: $stage"
+    exit 1
+  fi
+done
 
 echo "--------- TEST COMPLETE -------------"
