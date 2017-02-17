@@ -583,9 +583,8 @@ def SmvPyExtDataSet(refname):
     return cls
 
 def SmvPyModuleLink(target):
-    cls = type("SmvPyModuleLink", (SmvPyModuleLinkTemplate,), {
-        "target": target
-    })
+    cls = type("SmvPyModuleLink", (SmvPyModuleLinkTemplate,), {})
+    cls.target = classmethod(lambda klass: target)
     return cls
 
 class SmvGroupedData(object):

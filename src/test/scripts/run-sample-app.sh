@@ -36,18 +36,21 @@ if [ "$COUNT" -ne 52 ]; then
     exit 1
 fi
 
+echo "--------- FORCE RUN PYTHON MODULES -------------"
 # The Python modules which are not dependencies of Scala modules won't run
 # unless run explicitly with -m
 PASSING_PYTHON_MODULES="com.mycompany.MyApp.stage1.employment.PythonEmploymentByState \
 com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory \
 com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory2 \
+com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory \
 "
 
 FAILING_PYTHON_MODULES=" \
-com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory \
 com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory2 \
 "
 
 echo "Skipping failing Python example modules: $FAILING_PYTHON_MODULES"
 
 ../../../tools/smv-pyrun -m $PASSING_PYTHON_MODULES
+
+echo "--------- TEST COMPLETE -------------"
