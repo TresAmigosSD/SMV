@@ -12,3 +12,9 @@ Python depends on Python within same stage
 
 ### Test 3: test3, test3_1
 Scala depends on Scala in different stage
+
+### Test 4: test4, test4_1
+Python depends on Python in different stage
+
+### Test 5: test5
+Scala depends on Python in different stages

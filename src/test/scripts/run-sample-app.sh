@@ -33,6 +33,7 @@ com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory2 \
 NEW_SCALA_MODULE_STAGES="\
 test1 \
 test3 \
+test5 \
 "
 
 # Test stages containing a dependency scenario with a Python output module
