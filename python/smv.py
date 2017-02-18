@@ -408,18 +408,22 @@ class SmvPyDataSet(object):
         # causes errors
         try:
             arr = smv_copy_array(self.smvPy.sc, *[x.urn() for x in self.requiresDS()])
-        except:
+        except BaseException as err:
             traceback.print_exc()
+            raise err
+
         return arr
 
     def getDataFrame(self, validator, known):
-        # Try/except block is a short-term solution (read: hack) to ensure that 
+        # Try/except block is a short-term solution (read: hack) to ensure that
         # the user gets a full stack trace when SmvPyDataSet user-defined methods
         # causes errors
         try:
             df = self.doRun(validator, known)._jdf
-        except:
+        except BaseException as err:
             traceback.print_exc()
+            raise err
+
         return df
 
     class Java:
