@@ -885,7 +885,7 @@ class PythonDataSetRepository(object):
         return smv_copy_array(self.smvPy.sc, *buf)
 
     def outputModsForStage(self, stageName):
-        return moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyOutput and obj.IsSmvPyModule)
+        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyOutput and obj.IsSmvPyModule)
 
     def dsUrnsForStage(self, stageName):
         return moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
