@@ -572,7 +572,17 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
         m <- outputModsForStage(s)
       } yield dsForName(m).asInstanceOf[SmvModule]
 
-    val appMods = if (cmdline.runAllApp()) stages.allOutputModules else Seq.empty[SmvModule]
+    // discover python output modules
+    val pyRepo = datasetRepositories("Python")
+
+    // from the list of stage names, get the (flattened) list of output module URNs
+    // and convert them to a sequence of SmvExtModule.
+    // This list will be appended to the Scala output modules in appMods
+    val pyOutMods = smvConfig.stageNames
+                    .flatMap(stage => pyRepo.outputModsForStage(stage))
+                    .map( modUrn => SmvExtModule(urn2fqn(modUrn)) )
+
+    val appMods = if (cmdline.runAllApp()) stages.allOutputModules ++ pyOutMods else Seq.empty[SmvModule]
 
     directMods ++ stageMods ++ appMods
   }
