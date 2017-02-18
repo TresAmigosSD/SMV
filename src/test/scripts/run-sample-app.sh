@@ -36,7 +36,10 @@ test3 \
 "
 
 # Test stages containing a dependency scenario with a Python output module
-NEW_PYTHON_MODULE_STAGES="test2"
+NEW_PYTHON_MODULE_STAGES="\
+test2 \
+test4 \
+"
 
 PYTHON_MODULES_TO_RUN=$OLD_PASSING_PYTHON_MODULES
 for stage in $NEW_PYTHON_MODULE_STAGES; do
