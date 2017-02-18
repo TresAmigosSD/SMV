@@ -17,4 +17,7 @@ Scala depends on Scala in different stage
 Python depends on Python in different stage
 
 ### Test 5: test5
-Scala depends on Python in different stages
+Scala depends on Python
+
+### Test 6: test6
+Python depends on Scala
