@@ -1,6 +1,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql._, functions._, types._
+import com.rockymadden.stringmetric.similarity._
 
 /**
  * Commonly used functions
@@ -112,4 +113,84 @@ object smvfuncs {
   }
 
   def smvHashKey(cols: Column*): Column = smvHashKey("", cols: _*)
+
+  /**
+   * Calculate N-gram (N=2) distance between 2 string typed columns
+   * Returns a float. 0 is no match, and 1 is full match
+   *
+   * Algorithm reference: https://en.wikipedia.org/wiki/N-gram
+   * Library reference: https://github.com/rockymadden/stringmetric
+   */
+  def nGram2(c1: Column, c2: Column) = {
+    val NGram2Fn: (String, String) => Option[Float] = {(s1, s2) =>
+      if (null == s1 || null == s2) None
+      else NGramMetric(2).compare(s1, s2) map (_.toFloat)
+    }
+    udf(NGram2Fn).apply(c1, c2).alias(s"nGram2(${c1}, ${c2})")
+  }
+
+  /**
+   * Calculate N-gram (N=3) distance between 2 string typed columns
+   * Returns a float. 0 is no match, and 1 is full match
+   *
+   * Algorithm reference: https://en.wikipedia.org/wiki/N-gram
+   * Library reference: https://github.com/rockymadden/stringmetric
+   */
+  def nGram3(c1: Column, c2: Column) = {
+    val NGram3Fn: (String, String) => Option[Float] = {(s1, s2) =>
+      if (null == s1 || null == s2) None
+      else NGramMetric(3).compare(s1, s2) map (_.toFloat)
+    }
+    udf(NGram3Fn).apply(c1, c2).alias(s"nGram3(${c1}, ${c2})")
+  }
+
+  /**
+   * Calculate Dice-Sorensen distance between 2 string typed columns
+   * Returns a float. 0 is no match, and 1 is full match
+   *
+   * Algorithm reference: https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
+   * Library reference: https://github.com/rockymadden/stringmetric
+   */
+  def diceSorensen(c1: Column, c2: Column) = {
+    val DiceSorensenFn: (String, String) => Option[Float] = {(s1, s2) =>
+      if (null == s1 || null == s2) None
+      else DiceSorensenMetric(2).compare(s1, s2) map (_.toFloat)
+    }
+    udf(DiceSorensenFn).apply(c1, c2).alias(s"DiceSorensen(${c1}, ${c2})")
+  }
+
+  /**
+   * Calculate Normalized Levenshtein distance between 2 string typed columns
+   * Returns a float. 0 is no match, and 1 is full match
+   *
+   * Algorithm reference: https://en.wikipedia.org/wiki/Levenshtein_distance
+   * Library reference: https://github.com/rockymadden/stringmetric
+   */
+  def normlevenshtein(c1: Column, c2: Column) = {
+    val NormalizedLevenshteinFn: (String, String) => Option[Float] = {(s1, s2) =>
+      if (null == s1 || null == s2) None
+      else LevenshteinMetric.compare(s1, s2) map { dist =>
+        // normalizing to 0..1
+        val maxLen = Seq(s1.length, s2.length).max
+        1.0f - (dist * 1.0f / maxLen)
+      }
+    }
+    udf(NormalizedLevenshteinFn).apply(c1, c2).alias(s"NormLevenshtein(${c1}, ${c2})")
+  }
+
+  /**
+   * Calculate Jaro–Winkler distance between 2 string typed columns
+   * Returns a float. 0 is no match, and 1 is full match
+   *
+   * Algorithm reference: https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance
+   * Library reference: https://github.com/rockymadden/stringmetric
+   */
+  def jaroWinkler(c1: Column, c2: Column) = {
+    val JaroWinklerFn: (String, String) => Option[Float] = {(s1, s2) =>
+      if (null == s1 || null == s2) None
+      else JaroWinklerMetric.compare(s1, s2) map (_.toFloat)
+    }
+    udf(JaroWinklerFn).apply(c1, c2).alias(s"JaroWinkler(${c1}, ${c2})")
+  }
+
 }

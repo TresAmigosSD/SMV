@@ -17,8 +17,7 @@ package org.tresamigos.smv.matcher2
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
-import org.tresamigos.smv._
-import org.tresamigos.smv.matcher.StringMetricUDFs
+import org.tresamigos.smv._, smvfuncs._
 
 trait NameMatcherTestFixture extends SmvTestUtil {
   def createDF1 = dfFrom(
@@ -49,7 +48,7 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       GroupCondition(soundex($"first_name") === soundex($"_first_name")),
       List(
         ExactLogic("First_Name_Match", $"first_name" === $"_first_name"),
-        FuzzyLogic("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f)
+        FuzzyLogic("Levenshtein_City", null, normlevenshtein($"city",$"_city"), 0.9f)
       )
     ).doMatch(createDF1, createDF2, false)
 
@@ -60,4 +59,11 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       "[1,3,false,false,true,1.0,001]"))
   }
 
+  test("GroupCondition only takes EqualTo expressions") {
+      val e = intercept[SmvUnsupportedType] {
+        GroupCondition(col("first_name") < col("full_name"))
+      }
+
+      assert(e.getMessage === "Expression should be in left === right form")
+  }
 }
