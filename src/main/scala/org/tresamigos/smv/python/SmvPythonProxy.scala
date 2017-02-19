@@ -187,6 +187,16 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def publishModule(modFqn: String): Unit =
     j_smvApp.publishModule(modFqn, publishVersion.get)
 
+  def moduleNames: java.util.List[String] = {
+    val cl = j_smvApp.smvConfig.cmdLine
+    val directMods: Seq[String] = cl.modsToRun()
+    val stageMods: Seq[String] = cl.stagesToRun().flatMap(j_smvApp.outputModsForStage)
+    val appMods: Seq[String] =
+      if (cl.runAllApp()) j_smvApp.stages.stageNames.flatMap(j_smvApp.outputModsForStage) else Nil
+
+      (directMods ++ stageMods ++ appMods).filterNot(_.isEmpty)
+  }
+
   def register(id: String, repo: SmvDataSetRepository): Unit =
     j_smvApp.register(id, repo)
 }
