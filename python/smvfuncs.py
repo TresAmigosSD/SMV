@@ -14,5 +14,17 @@
 from smv import smvPy
 from pyspark.sql.column import Column
 
+def nGram2(c1, c2):
+    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.nGram2(c1._jc, c2._jc))
+
+def nGram3(c1, c2):
+    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.nGram3(c1._jc, c2._jc))
+
+def diceSorensen(c1, c2):
+    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.diceSorensen(c1._jc, c2._jc))
+
 def normlevenshtein(c1, c2):
     return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.normlevenshtein(c1._jc, c2._jc))
+
+def jaroWinkler(c1, c2):
+    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.jaroWinkler(c1._jc, c2._jc))

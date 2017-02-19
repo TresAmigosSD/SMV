@@ -14,8 +14,6 @@
 from smv import smvPy, smv_copy_array
 from pyspark.sql import HiveContext, DataFrame
 
-#jvmShellCmd = smvPy._jvm.org.tresamigos.smv.shell.ShellCmd
-
 def ExactMatchFilter(colName, expr):
     return smvPy._jvm.org.tresamigos.smv.matcher2.ExactMatchFilter(colName, expr._jc)
 
