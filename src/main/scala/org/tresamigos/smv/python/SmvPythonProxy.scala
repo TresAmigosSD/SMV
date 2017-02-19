@@ -187,6 +187,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def publishModule(modFqn: String): Unit =
     j_smvApp.publishModule(modFqn, publishVersion.get)
 
+  // TODO: The following method should be removed when Scala side can
+  // handle publish-hive SmvPyOutput tables
   def moduleNames: java.util.List[String] = {
     val cl = j_smvApp.smvConfig.cmdLine
     val directMods: Seq[String] = cl.modsToRun()

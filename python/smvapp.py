@@ -27,7 +27,8 @@ if __name__ == "__main__":
     smvPy.init(sys.argv[1:])
     smvPy.j_smvApp.run()
 
-    # TODO:
+    # TODO: The following should be removed when Scala side can
+    # handle publish-hive SmvPyOutput tables
     j_smv = smvPy.j_smvPyClient
 
     mods = j_smv.moduleNames()
