@@ -20,7 +20,7 @@ import org.tresamigos.smv._, smvfuncs._
 case class SmvEntityMatcher(leftId: String, rightId: String,
                            exactMatchFilter:ExactMatchFilter,
                            groupCondition:GroupCondition,
-                           levelLogics: List[LevelLogic])
+                           levelLogics: Seq[LevelLogic])
 {
   require(levelLogics != null && levelLogics.nonEmpty)
 
