@@ -111,7 +111,7 @@ of `keepOriginalCols` is `True`.
 
 #### Output
 id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value|MatchBitmap|
----|---|---|---|---|---
+---|---|---|---|---|---|---
 2|1|true|null|null|null|100
 1|3|false|false|true|1.0|001
 
