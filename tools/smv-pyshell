@@ -17,7 +17,7 @@ export PYTHONPATH="$PYTHONPATH:$SMV_TOOLS/../python:src/main/python"
 # Since pyspark does not take app parameters, we have to pass SMV_ARGS to the
 # startup script. A little hackish before we figure out better ways.
 export SMV_ALL_ARGS="${SMV_ARGS[@]}"
-sed -e "s|_SMV_ALL_ARGS_|${SMV_ALL_ARGS}|" tools/conf/smv_pyshell_init.py.template > smv_pyshell_init.py
+sed -e "s|_SMV_ALL_ARGS_|${SMV_ALL_ARGS}|" $SMV_TOOLS/conf/smv_pyshell_init.py.template > smv_pyshell_init.py
 
 OLD_PYTHONSTARTUP=$PYTHONSTARTUP
 export PYTHONSTARTUP="smv_pyshell_init.py"
