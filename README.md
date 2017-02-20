@@ -36,14 +36,14 @@ $ smv-pyrun --run-app
 The output csv file and schema can be found in the `data/output` directory. Note that 'XXXXXXXX' here substitutes for a number which is like the version of the module.
 
 ```shell
-$ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
+$ cat data/output/org.tresamigos.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
 "50",245058
 "51",2933665
 "53",2310426
 "54",531834
 "55",2325877
 
-$ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.schema/part-*
+$ cat data/output/org.tresamigos.myapp.stage1.EmploymentByState_XXXXXXXX.schema/part-*
 @delimiter = ,
 @has-header = false
 @quote-char = "
@@ -53,7 +53,7 @@ EMP: Long
 
 ## Edit Example App
 
-The `EmploymentByState` module is defined in `src/python/com/mycompany/myapp/stage1/employment.py`:
+The `EmploymentByState` module is defined in `src/python/org/tresamigos/myapp/stage1/employment.py`:
 
 ```shell
 class EmploymentByState(SmvPyModule, SmvPyOutput):
@@ -88,19 +88,37 @@ smv-pyrun --purge-old-output --run-app
 Inspect the new output to see the changes.
 
 ```shell
-$ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
+$ cat data/output/org.tresamigos.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
 "51",2933665
 "53",2310426
 "55",2325877
 "01",1501148
 "04",2027240
 
-$ cat data/output/com.mycompany.myapp.stage1.EmploymentByState_XXXXXXXX.schema/part-*
+$ cat data/output/org.tresamigos.myapp.stage1.employmenyt.EmploymentByState_XXXXXXXX.schema/part-*
 @delimiter = ,
 @has-header = false
 @quote-char = "
 ST: String[,_SmvStrNull_]
 EMP: Long
+```
+
+### Publish to Hive Table
+
+If you would like to publish your module to a hive table, add a `tableName` method to EmploymentByState. It should return the name of the Hive table as a string.
+
+```python
+class EmploymentByState(SmvPyModule, SmvPyOutput):
+    ...
+    def tableName(self):
+        return "my.table.name"
+    def requiresDS(self): ...
+    def run(self, i): ...
+```
+
+Then use
+```bash
+$ smv-pyrun --publish-hive -m org.tresamigos.myapp.stage1.EmploymentByState
 ```
 
 ## smv-pyshell
@@ -114,7 +132,7 @@ $ smv-pyshell
 To get the `DataFrame` of `EmploymentByState`,
 
 ```shell
->>> x = df('com.mycompany.myapp.stage1.EmploymentByState')
+>>> x = df('org.tresamigos.myapp.stage1.EmploymentByState')
 
 ```
 
