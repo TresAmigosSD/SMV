@@ -1,13 +1,11 @@
 # Spark Modularized View (SMV)
 Spark Modularized View enables users to build enterprise scale applications on Apache Spark platform.
 
-* [Getting Started](#smv-getting-started)
-* [Installation Guide](docs/user/smv_install.md)
+* [Quick Start](#smv-quickstart)
 * [User Guide](docs/user/0_user_toc.md)
 * [API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.package)
 
-
-# SMV Getting Started
+# SMV Quickstart
 
 ## Installation
 
