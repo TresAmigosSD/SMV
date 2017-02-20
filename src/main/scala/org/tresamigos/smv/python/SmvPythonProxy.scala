@@ -21,6 +21,7 @@ import py4j.GatewayServer
 import scala.collection.JavaConversions._
 import scala.util.Try
 import java.util.ArrayList
+import matcher2._
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
@@ -100,6 +101,20 @@ object SmvPythonHelper {
     val f = cl.getClass.getDeclaredField("port")
     f.setAccessible(true)
     f.setInt(cl, port)
+  }
+
+  def createMatcher(
+    leftId: String, rightId: String,
+    exactMatchFilter:ExactMatchFilter,
+    groupCondition:GroupCondition,
+    levelLogics: Array[LevelLogic]
+  ): SmvEntityMatcher = {
+    val lls = levelLogics.toSeq
+    SmvEntityMatcher(leftId, rightId,
+      exactMatchFilter,
+      groupCondition,
+      lls
+    )
   }
 }
 
