@@ -632,7 +632,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   def addTimePanels(timeColName: String, doFiltering: Boolean = true)(panels: panel.TimePanel*) = {
     panels.map{tp =>
       tp.addToDF(df, timeColName, keys, doFiltering)
-    }.reduce(_.unionAll(_))
+    }.reduce(_.union(_))
   }
 
   /**
@@ -723,7 +723,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       tp.addToDF(df, timeColName, keys, doFiltering).
         smvGroupBy(keys.map{k => $"${k}"}: _*).
         timePanelValueFill(smvTimeName, backwardFill)(values: _*)
-    }.reduce(_.unionAll(_))
+    }.reduce(_.union(_))
   }
   /**
    * Add records within each group is expected values of a column is missing
@@ -766,7 +766,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       smvSelectMinus(tmpCol).
       smvSelectPlus(nullCols: _*).
       select(df.columns.map{s => $"$s"}: _*).
-      unionAll(df)
+      union(df)
 
     if(doFiltering) {
       res.where($"$colName".isin(expected.toSeq.map{lit}: _*))
@@ -827,7 +827,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val aggExprs = values.zip(renamed).map{case (v, nv) => last(v) as nv}.map{makeSmvCDSAggColumn}
     runAggPlus(orders: _*)(aggExprs: _*).
       smvSelectMinus(values.head, values.tail: _*).
-      renameField(renamed.zip(values): _*).
+      smvRenameField(renamed.zip(values): _*).
       select(df.columns.head, df.columns.tail: _*)
   }
 
