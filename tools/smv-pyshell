@@ -14,8 +14,14 @@ export SPARK_PRINT_LAUNCH_COMMAND=1
 export PYTHONPATH="$PYTHONPATH:$SMV_TOOLS/../python:src/main/python"
 
 # Set PYTHONSTARTUP to load the init script
+# Since pyspark does not take app parameters, we have to pass SMV_ARGS to the
+# startup script. A little hackish before we figure out better ways.
+export SMV_ALL_ARGS="${SMV_ARGS[@]}"
+sed -e "s|_SMV_ALL_ARGS_|${SMV_ALL_ARGS}|" tools/conf/smv_pyshell_init.py.template > smv_pyshell_init.py
+
 OLD_PYTHONSTARTUP=$PYTHONSTARTUP
-export PYTHONSTARTUP="$SMV_TOOLS/conf/smv_pyshell_init.py"
+export PYTHONSTARTUP="smv_pyshell_init.py"
+
 
 # PySpark pre-2.0.0 has a bug (see
 # https://issues.apache.org/jira/browse/SPARK-5185) that does not add
@@ -25,3 +31,5 @@ pyspark  "${SPARK_ARGS[@]}" --jars "$APP_JAR" --driver-class-path "${APP_JAR}"
 
 # Reset PYTHONSTARTUP
 export PYTHONSTARTUP=$OLD_PYTHONSTARTUP
+
+rm -f smv_pyshell_init.py
