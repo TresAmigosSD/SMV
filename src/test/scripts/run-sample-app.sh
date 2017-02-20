@@ -16,18 +16,6 @@ rm -rf ${TEST_DIR}
 mkdir -p ${TEST_DIR}
 cd ${TEST_DIR}
 
-# For now, need to run original integration test modules AND the new dependency
-# scenario classes, then check output. New output check will be one module per stage
-OLD_PASSING_PYTHON_MODULES="\
-com.mycompany.MyApp.stage1.employment.PythonEmploymentByState \
-com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory \
-com.mycompany.MyApp.stage1.employment.PythonEmploymentByStateCategory2 \
-com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory \
-"
-
-OLD_FAILING_PYTHON_MODULES="\
-com.mycompany.MyApp.stage2.category.PythonEmploymentByStateCategory2 \
-"
 
 # Test stages containing a dependency scenario with a Scala output module
 NEW_SCALA_MODULE_STAGES="\
@@ -43,11 +31,6 @@ test4 \
 test6 \
 "
 
-PYTHON_MODULES_TO_RUN=$OLD_PASSING_PYTHON_MODULES
-for stage in $NEW_PYTHON_MODULE_STAGES; do
-  PYTHON_MODULES_TO_RUN="$PYTHON_MODULES_TO_RUN com.mycompany.MyApp.$stage.modules.M2"
-done
-
 NEW_MODULE_STAGES="$NEW_PYTHON_MODULE_STAGES $NEW_SCALA_MODULE_STAGES"
 
 echo "--------- GENERATE SAMPLE APP -------------"
@@ -58,20 +41,11 @@ cd ${APP_NAME}
 $MVN clean package
 
 echo "--------- RUN SAMPLE APP -------------"
-../../../tools/smv-pyrun --smv-props \
+../../../tools/smv-pyrun \
+    --smv-props \
     smv.inputDir="file://$(pwd)/data/input" \
     smv.outputDir="file://$(pwd)/data/output" --run-app \
     -- --master 'local[*]'
-
-
-echo "--------- FORCE RUN PYTHON MODULES -------------"
-# The Python modules which are not dependencies of Scala modules won't run
-# unless run explicitly with -m
-
-echo "Skipping failing Python example modules: $OLD_FAILING_PYTHON_MODULES"
-
-../../../tools/smv-pyrun -m $PYTHON_MODULES_TO_RUN
-
 
 echo "--------- VERIFY SAMPLE APP OUTPUT -------------"
 COUNT=$(cat data/output/com.mycompany.MyApp.stage2.StageEmpCategory_*.csv/part* | wc -l)
@@ -94,6 +68,10 @@ for stage in $NEW_PYTHON_MODULE_STAGES; do
   TEST_OUTPUT=$(cat data/output/com.mycompany.MyApp.$stage.modules.M2_*.csv/part*)
   if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
     echo "Test failure: $stage"
+    echo "Expected output:"
+    echo $TEST_OUTPUT
+    echo "Got:"
+    echo $TEST_INPUT
     exit 1
   fi
 done
