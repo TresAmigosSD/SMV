@@ -551,6 +551,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
         case Alias(Max(_), _) => true
         case Alias(AggregateExpression(Last(_, _), x, y, z), _) => true
         case Alias(AggregateExpression(First(_, _), x, y, z), _) => true
+        case Alias(AggregateExpression(Count(_), x, y, z), _) => true
         case _: UnresolvedAttribute => true
         case _ => false
       }
