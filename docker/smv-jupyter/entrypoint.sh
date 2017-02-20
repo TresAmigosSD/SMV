@@ -2,7 +2,7 @@
 
 # Entrypoint must identify find app jar, since the kernel skips smv-shell script
 
-APP_JAR=`ls -1t target/scala-2.10/*jar-with-dependencies.jar 2>/dev/null| head -1`
+APP_JAR=`ls -1t target/scala-2.11/*jar-with-dependencies.jar 2>/dev/null| head -1`
 
 # if not found try mvn-build location next
 if [ -z "$APP_JAR" ]; then

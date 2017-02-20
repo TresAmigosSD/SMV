@@ -46,7 +46,7 @@ function find_fat_jar()
 
   # then repeat from the parent directory, because the shell is
   # sometimes run from a notebook subdirectory of a data project
-  dirs=("target/scala-2.10" "target" "../target/scala-2.10" "../target")
+  dirs=("target/scala-2.11" "target" "../target/scala-2.11" "../target")
   find_file_in_dir "*jar-with-dependencies.jar" "${dirs[@]}"
 
   if [ -z "$APP_JAR" ]; then
