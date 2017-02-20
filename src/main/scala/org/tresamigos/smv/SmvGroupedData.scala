@@ -18,6 +18,7 @@ import org.apache.spark.sql.contrib.smv._
 
 import org.apache.spark.sql._, expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions._, aggregate._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.Partitioner
@@ -548,6 +549,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
         case Alias(Count(_), _) => true
         case Alias(Min(_), _) => true
         case Alias(Max(_), _) => true
+        case Alias(AggregateExpression(Last(_, _), x, y, z), _) => true
+        case Alias(AggregateExpression(First(_, _), x, y, z), _) => true
+        case _: UnresolvedAttribute => true
         case _ => false
       }
       a.cds == NoOpCDS && supported
@@ -824,7 +828,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
     /* We are using the `last` aggregate function's feature that it's actually
      * Non-null last */
-    val aggExprs = values.zip(renamed).map{case (v, nv) => last(v) as nv}.map{makeSmvCDSAggColumn}
+    val aggExprs = values.zip(renamed).map{case (v, nv) => last(v, true) as nv}.map{makeSmvCDSAggColumn}
     runAggPlus(orders: _*)(aggExprs: _*).
       smvSelectMinus(values.head, values.tail: _*).
       smvRenameField(renamed.zip(values): _*).
