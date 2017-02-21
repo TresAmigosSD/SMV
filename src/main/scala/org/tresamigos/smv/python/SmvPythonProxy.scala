@@ -217,6 +217,9 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     directMods
   }
 
+  def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
+    j_smvApp.registerRepoFactory( new DataSetRepoFactoryPython(iRepoFactory) )
+
   def register(id: String, repo: SmvDataSetRepository): Unit =
     j_smvApp.register(id, repo)
 }

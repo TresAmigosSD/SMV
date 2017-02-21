@@ -58,6 +58,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     datasetRepositories = datasetRepositories + (id -> repo)
   private def repositories: Seq[SmvDataSetRepository] = datasetRepositories.values.toSeq
 
+  private val dsm = new DataSetMgr
+  def registerRepoFactory(factory: DataSetRepoFactory): Unit =
+    dsm.register(factory)
+
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
 
@@ -418,7 +422,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     s"""${smvConfig.publishDir}/${version}/${name}.csv"""
 
   /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(modUrn: String): DataFrame = resolveRDD(dsForName(modUrn))
+  def runModule(modUrn: String): DataFrame = resolveRDD(dsm.load(modUrn))
 
   private[smv] def findRepoWith(modUrn: String): Option[SmvDataSetRepository] =
     repositories.find(_.hasDataSet(modUrn))

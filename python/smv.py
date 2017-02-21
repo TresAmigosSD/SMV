@@ -203,6 +203,7 @@ class SmvPy(object):
 
         self.repo = PythonDataSetRepository(self)
         self.j_smvPyClient.register('Python', self.repo)
+        self.j_smvPyClient.registerRepoFactory('Python', DataSetRepoFactory(self))
         return self
 
     def appName(self):
@@ -806,6 +807,31 @@ Column.smvMonth70 = lambda c: Column(colhelper(c).smvMonth70())
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
 
 
+class DataSetRepoFactory(object):
+    def __init__(self, smvPy):
+        self.smvPy = smvPy
+
+    def createRepo(self):
+        return DataSetRepo(PythonDataSetRepository(self.smvPy))
+
+    class Java:
+        implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
+
+
+class DataSetRepo(object):
+    def __init__(self, oldRepo):
+        self.oldRepo = oldRepo
+
+    def hasDataSet(self, modUrn):
+        return self.oldRepo.hadDataSet(modUrn)
+
+    def loadDataSet(self, modUrn):
+        return self.oldRepo.dsForName(modUrn)
+
+    class Java:
+        implements = ['org.tresamigos.smv.IDataSetRepoPy4J']
+
+
 class PythonDataSetRepository(object):
     def __init__(self, smvPy):
         self.smvPy = smvPy
@@ -815,6 +841,7 @@ class PythonDataSetRepository(object):
         """Returns the instance of SmvPyDataSet by its fully qualified name.
         Returns None if the FQN is not a valid SmvPyDataSet name.
         """
+        print "looking for mod " + str(modUrn)
         if modUrn in self.pythonDataSets:
             return self.pythonDataSets[modUrn]
         else:
