@@ -45,7 +45,8 @@ from pyspark.sql.types import *
 
 sc.setLogLevel("ERROR")
 
-smv_args = "_SMV_ALL_ARGS_".split(" ")
+smv_arg_str = "_SMV_ALL_ARGS_"
+smv_args = smv_arg_str.split(" ") if len(smv_arg_str) > 0 else []
 # Imnport smv
 from smv import smvPy
 app = smvPy.init(['-m', 'None', '--cbs-port', str(callback_server_port)] + smv_args, sc, sqlContext)

@@ -105,6 +105,14 @@ def disassemble(obj):
     buf.close()
     return ret
 
+def smvhash(text):
+    """Python's hash function will return different numbers from run to
+    from, starting from 3.  Provide a deterministic hash function for
+    use to calculate datasetHash.
+    """
+    import binascii
+    return binascii.crc32(text)
+
 # common converters to pass to _to_seq and _to_list
 def _jcol(c): return c._jc
 def _jdf(df): return df._jdf
@@ -370,9 +378,9 @@ class SmvPyDataSet(object):
         cls = self.__class__
         try:
             src = inspect.getsource(cls)
-            res = hash(compile(src, inspect.getsourcefile(cls), 'exec'))
+            res = smvhash(compile(src, inspect.getsourcefile(cls), 'exec').co_code)
         except: # `inspect` will raise error for classes defined in the REPL
-            res = hash(disassemble(cls))
+            res = smvhash(disassemble(cls))
 
         # include datasetHash of parent classes
         for m in inspect.getmro(cls):
@@ -579,9 +587,9 @@ class SmvPyModuleLinkTemplate(SmvPyModule):
 
     def datasetHash(self):
         stage = self.smvPy.j_smvPyClient.inferStageNameFromDsName(self.target().fqn())
-        dephash = hash(stage.get()) if stage.isDefined() else self.target()(self.smvPy).datasetHash()
+        dephash = smvhash(stage.get()) if stage.isDefined() else self.target()(self.smvPy).datasetHash()
         # ensure python's numeric type can fit in a java.lang.Integer
-        return (dephash + super(SmvPyModuleLink, self).datasetHash()) & 0x7fffffff
+        return (dephash + super(SmvPyModuleLinkTemplate, self).datasetHash()) & 0x7fffffff
 
     def run(self, i):
         res = self.smvPy.j_smvPyClient.readPublishedData(self.target().fqn())
