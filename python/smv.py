@@ -581,7 +581,7 @@ class SmvPyModuleLinkTemplate(SmvPyModule):
         stage = self.smvPy.j_smvPyClient.inferStageNameFromDsName(self.target().fqn())
         dephash = hash(stage.get()) if stage.isDefined() else self.target()(self.smvPy).datasetHash()
         # ensure python's numeric type can fit in a java.lang.Integer
-        return (dephash + super(SmvPyModuleLink, self).datasetHash()) & 0x7fffffff
+        return (dephash + super(SmvPyModuleLinkTemplate, self).datasetHash()) & 0x7fffffff
 
     def run(self, i):
         res = self.smvPy.j_smvPyClient.readPublishedData(self.target().fqn())
