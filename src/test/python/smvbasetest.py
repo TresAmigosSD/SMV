@@ -28,15 +28,15 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.sparkSession = TestConfig.sparkSession()
         cls.sparkContext = TestConfig.sparkContext()
-        cls.sqlContext = TestConfig.sqlContext()
         cls.sparkContext.setLogLevel("ERROR")
 
         import random;
         callback_server_port = random.randint(20000, 65535)
 
         args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
-        smvPy.init(args, cls.sparkContext, cls.sqlContext)
+        smvPy.init(args, cls.sparkSession)
         cls.smvPy = smvPy
 
     def setUp(self):
@@ -44,15 +44,15 @@ class SmvBaseTest(unittest.TestCase):
         """
         cls = self.__class__
         if not hasattr(cls, 'smvPy'):
+            cls.sparkSession = TestConfig.sparkSession()
             cls.sparkContext = TestConfig.sparkContext()
-            cls.sqlContext = TestConfig.sqlContext()
             cls.sparkContext.setLogLevel("ERROR")
 
             import random;
             callback_server_port = random.randint(20000, 65535)
 
             args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
-            smvPy.init(args, cls.sparkContext, cls.sqlContext)
+            smvPy.init(args, cls.sparkSession)
             cls.smvPy = smvPy
 
     @classmethod

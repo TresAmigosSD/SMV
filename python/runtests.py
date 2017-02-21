@@ -14,23 +14,21 @@
 from unittest import *
 
 from pyspark import SparkContext
-from pyspark.sql import HiveContext
+from pyspark.sql import SparkSession
 
 import sys
 
 # shared spark and sql context
 class TestConfig(object):
     @classmethod
-    def sparkContext(cls):
-        if not hasattr(cls, 'sc'):
-            cls.sc = SparkContext(appName="SMV Python Tests")
-        return cls.sc
+    def sparkSession(cls):
+        if not hasattr(cls, "spark"):
+            cls.spark = SparkSession.builder.appName("SMV Python Tests").enableHiveSupport().getOrCreate()
+        return cls.spark
 
     @classmethod
-    def sqlContext(cls):
-        if not hasattr(cls, 'sqlc'):
-            cls.sqlc = HiveContext(cls.sparkContext())
-        return cls.sqlc
+    def sparkContext(cls):
+        return cls.sparkSession().sparkContext
 
 if __name__ == "__main__":
     print("Testing with Python " + sys.version)

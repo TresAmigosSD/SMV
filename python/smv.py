@@ -14,7 +14,7 @@
 from py4j.java_gateway import java_import, JavaObject
 
 from pyspark import SparkContext
-from pyspark.sql import HiveContext, DataFrame
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
 
@@ -148,13 +148,14 @@ class SmvPy(object):
 
     """
 
-    def init(self, arglist, _sc = None, _sqlContext = None):
-        sc = SparkContext() if _sc is None else _sc
-        sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
+    def init(self, arglist, _sparkSession = None):
+        self.sparkSession = SparkSession.builder.\
+            appName(self.appName()).enableHiveSupport().\
+            getOrCreate() if _sparkSession is None else _sparkSession
 
+        sc = self.sparkSession.sparkContext
         sc.setLogLevel("ERROR")
 
-        self.sqlContext = sqlContext
         self.sc = sc
         self._jvm = sc._jvm
 
@@ -206,7 +207,7 @@ class SmvPy(object):
         '''
         # convert python arglist to java String array
         java_args =  smv_copy_array(self.sc, *arglist)
-        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
+        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sparkSession._jsparkSession)
 
     def get_graph_json(self):
         self.j_smvApp.generateAllGraphJSON()
