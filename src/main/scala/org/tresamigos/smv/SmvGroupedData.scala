@@ -235,7 +235,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
         // get unique col name for in-group ranking
         val pcol = mkUniq(df.columns, "pivot")
         val r1 = runAgg(valueCols map (c => $"$c".asc) :_*)(
-          (keys ++ valueCols map (c => $"$c")) :+ (count(lit(1)) as pcol) map makeSmvCDSAggColumn :_*)
+          (keys ++ valueCols map (c => $"$c")) :+ (count(lit(1)) as pcol) :_*)
         // in-group ranking starting value is 0
         val r2 = r1.selectWithReplace(r1(pcol) - 1 as pcol)
         (r2, Seq(Seq(pcol)))
@@ -476,43 +476,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
   /**
-   * Please see the SmvCDS document for details.
-   * OneAgg uses the last record according to an ordering (Syntax is the same as orderBy) as the reference
-   * record, and apply CDSs to all the records in the group. For each group of input records, there is a
-   * single output record.
-   *
-   * Example:
-   * {{{
-   *       val res = df.smvGroupBy('k).oneAgg($"t")(
-   *                            $"k",
-   *                            $"t",
-   *                            sum('v) from last3 as "nv1",
-   *                            count('v) from last3 as "nv2",
-   *                            sum('v) as "nv3")
-   * }}}
-   *
-   * Use "t" column for ordering, so the biggest "t" record in a group is the reference record.
-   * Keep "k" and "t" column from the reference record. Sum "v" from last 3, depend on how we defined
-   * the SmvCDS "last3", which should refer to the reference record.
-   *
-   * '''This will significantly change in 1.5'''
-   **/
-  @Experimental
-  def oneAgg(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
-    val gdo = new SmvOneAggGDO(orders.map{o => o.toExpr}, aggCols)
-
-    /* Since SmvCDSAggGDO grouped aggregations with the same CDS together, the ordering of the
-       columns is no more the same as the input list specified. Here to put them in order */
-
-    val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
-    smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
-  }
-
-  @Experimental
-  def oneAgg(order: String, others: String*)(aggCols: SmvCDSAggColumn*): DataFrame =
-    oneAgg((order +: others).map{o => new ColumnName(o)}: _*)(aggCols: _*)
-
-  /**
    * RunAgg will sort the records in the each group according to the specified ordering (syntax is the same
    * as orderBy). For each record, it uses the current record as the reference record, and apply the CDS
    * and aggregation on all the records "till this point". Here "till this point" means that ever record less
@@ -533,7 +496,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   @Experimental
-  def runAgg(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
+  private[smv] def runAgg(orders: Column*)(aggCols: Column*): DataFrame = {
     /* In Spark 1.5.2 WindowSpec handles aggregate functions through
      * similar case matching as below. `first` and `last` are actually
      * implemented using Hive `first_value` and `last_value`, which have
@@ -542,8 +505,10 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
      * We only try to use window to suppory Avg, Sum, Count, Min and Max
      * for simple runAgg, all others will still use CDS approach
      */
-    val isSimpleRunAgg = aggCols.map{a =>
-      val supported = a.aggExpr match {
+    // In Spark 2.1 first and last aggregate functions take an
+    // ignoreNull argument and are supported in window spec.
+    val isSimpleRunAgg = aggCols.map { a =>
+      a.toExpr match {
         case Alias(Average(_), _) => true
         case Alias(Sum(_), _) => true
         case Alias(Count(_), _) => true
@@ -555,40 +520,37 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
         case _: UnresolvedAttribute => true
         case _ => false
       }
-      a.cds == NoOpCDS && supported
     }.reduce(_&&_)
 
     if (isSimpleRunAgg) {
       val w = winspec.orderBy(orders: _*).rowsBetween(Long.MinValue, 0)
       val cols = aggCols.map{aggCol =>
-        aggCol.aggExpr match {
+        aggCol.toExpr match {
           case Alias(e: AggregateExpression, n) => new Column(e) over w as n
           case e: AggregateExpression => new Column(e) over w
           case e => new Column(e)
         }
       }
       df.select(cols: _*)
-    } else {
-      val gdo = new SmvRunAggGDO(orders.map{o => o.toExpr}.toList, aggCols.toList)
-      val colNames = aggCols.map{a => a.aggExpr.asInstanceOf[NamedExpression].name}
-      smvMapGroup(gdo).toDF.select(colNames(0), colNames.tail: _*)
     }
+    else
+      throw new UnsupportedOperationException("runAgg no longer supports CDS and GDO")
   }
 
   @Experimental
-  def runAgg(order: String, others: String*)(aggCols: SmvCDSAggColumn*): DataFrame =
+  private[smv] def runAgg(order: String, others: String*)(aggCols: Column*): DataFrame =
     runAgg((order +: others).map{s => new ColumnName(s)}: _*)(aggCols: _*)
 
   /**
    * Same as `runAgg` but with all input column propagated to output.
    **/
   @Experimental
-  def runAggPlus(orders: Column*)(aggCols: SmvCDSAggColumn*): DataFrame = {
-    val inputCols = df.columns.map{c => new ColumnName(c)}.map{c => SmvCDSAggColumn(c.toExpr)}
+  private[smv] def runAggPlus(orders: Column*)(aggCols: Column*): DataFrame = {
+    val inputCols = df.columns.map{c => new ColumnName(c)}
     runAgg(orders: _*)((inputCols ++ aggCols): _*)
   }
   @Experimental
-  def runAggPlus(order: String, others: String*)(aggCols: SmvCDSAggColumn*): DataFrame =
+  private[smv] def runAggPlus(order: String, others: String*)(aggCols: Column*): DataFrame =
     runAggPlus((order +: others).map{s => new ColumnName(s)}: _*)(aggCols: _*)
 
   /**
@@ -829,7 +791,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
     /* We are using the `last` aggregate function's feature that it's actually
      * Non-null last */
-    val aggExprs = values.zip(renamed).map{case (v, nv) => last(v, true) as nv}.map{makeSmvCDSAggColumn}
+    val aggExprs = values.zip(renamed).map{case (v, nv) => last(v, true) as nv}
     runAggPlus(orders: _*)(aggExprs: _*).
       smvSelectMinus(values.head, values.tail: _*).
       smvRenameField(renamed.zip(values): _*).
