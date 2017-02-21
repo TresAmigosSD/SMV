@@ -227,7 +227,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
         val ds = if (isLink(urn)) {
           val targetUrn = link2mod(urn)
           dsForName(targetUrn, parentClassLoader) match {
-            case _: SmvExtModule => SmvExtModuleLink(urn2fqn(targetUrn))
             case x: SmvModule with SmvOutput => new SmvModuleLink(x)
             case x => throw new SmvRuntimeException(s"Module [${targetUrn}] is not an SmvOutput module: ${x}")
           }
@@ -237,7 +236,12 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
             case Success(ds) => ds
             case Failure(_) =>
               findRepoWith(urn) match {
-                case Some(repo) => SmvExtModule(fqn)
+                case Some(repo) =>
+                  val iDS = repo.getSmvModule(urn)
+                  if(iDS.isOutput)
+                    new SmvExtModulePython(iDS) with SmvOutput
+                  else
+                    new SmvExtModulePython(iDS)
                 case None => notfound(urn)
               }
           }
@@ -576,13 +580,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     // from the list of stage names, get the (flattened) list of output module URNs
     // and convert them to a sequence of SmvExtModule.
     // This list will be appended to the Scala output modules in appMods
-    val pyOutMods : Seq[SmvExtModule] = if (datasetRepositories.contains("Python")) {
+    val pyOutMods : Seq[SmvModule] = if (datasetRepositories.contains("Python")) {
       val pyRepo = datasetRepositories("Python")
 
       smvConfig.stageNames.flatMap(stage => pyRepo.outputModsForStage(stage))
-                          .map( modUrn => SmvExtModule(urn2fqn(modUrn)) )
+                          .map( modUrn => dsForName(urn2fqn(modUrn)).asInstanceOf[SmvModule] )
     } else {
-      Seq.empty[SmvExtModule]
+      Seq.empty[SmvModule]
     }
 
     val appMods = if (cmdline.runAllApp()) stages.allOutputModules ++ pyOutMods else Seq.empty[SmvModule]

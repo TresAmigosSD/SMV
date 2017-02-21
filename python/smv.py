@@ -374,6 +374,9 @@ class SmvPyDataSet(object):
         so that code and the data it produces can be tracked together."""
         return "0";
 
+    def isOutput(self):
+        return isinstance(self, SmvPyOutput)
+
     def datasetHash(self):
         cls = self.__class__
         try:

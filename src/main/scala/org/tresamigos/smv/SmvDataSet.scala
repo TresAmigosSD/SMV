@@ -597,6 +597,17 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
 /** Link to a external module from another stage */
 case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput)
 
+class SmvExtModulePython(target: ISmvModule) extends SmvModule(s"SmvPyModule ${target.fqn}") {
+  override val fqn = target.fqn
+  override val urn = mkModUrn(fqn)
+  override def isEphemeral = target.isEphemeral()
+  override def requiresDS = target.dependencies map (app.dsForName(_))
+  override def run(i: runParams) =
+    target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn, i(ds))}.toMap[String, DataFrame])
+  override def datasetHash = target.datasetHash()
+  override def createDsDqm = target.getDqm()
+}
+
 /**
  * a built-in SmvModule from schema string and data string
  *

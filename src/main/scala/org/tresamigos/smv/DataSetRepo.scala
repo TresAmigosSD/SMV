@@ -53,6 +53,6 @@ class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J) extends 
 
 // This class will be implemented as its own Java interface, but for short term testing purposes
 // we will shimmy it in
-class IDataSetRepoFactoryPy4J(repoFactoryMthd: () => IDataSetRepoPy4J) {
-  def createRepo(): IDataSetRepoPy4J = repoFactoryMthd()
+class IDataSetRepoFactoryPy4J() {
+  def createRepo(): IDataSetRepoPy4J = new IDataSetRepoPy4J
 }
