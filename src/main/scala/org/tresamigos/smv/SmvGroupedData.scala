@@ -106,11 +106,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
   }
 
-  private[smv] def smvMapGroup(cds: SmvCDS): SmvGroupedData = {
-    val gdo = new SmvCDSAsGDO(cds)
-    smvMapGroup(gdo)
-  }
-
   /**
    * smvPivot on SmvGroupedData is similar to smvPivot on DF with the keys being provided in the `smvGroupBy` method instead of to the method directly.
    * See [[org.tresamigos.smv.SmvDFHelper#smvPivot]] for details
