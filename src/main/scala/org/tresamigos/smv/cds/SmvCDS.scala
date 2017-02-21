@@ -142,25 +142,6 @@ private[smv] case class SmvSingleCDSAggs(cds: SmvCDS, aggExprs: Seq[NamedExpress
  * Provide functions shared by multiple agg operations
  **/
 private[smv] object SmvCDS {
-  /**
-   * The list of column agg/runAgg takes could be a mix of real aggregations or columns to be kept
-   * from the original record. Real aggregations should always be something like
-   *
-   *   sum(...) [from cds ] as name
-   **/
-  def findAggCols(cols: Seq[SmvCDSAggColumn]): Seq[SmvCDSAggColumn] =  cols.filter{_.isAgg()}
-
-  /** Anything other than real aggregations should be the columns to be kept from original rec */
-  def findKeptCols(cols: Seq[SmvCDSAggColumn]): Seq[NamedExpression] =
-    cols.filter{! _.isAgg()}.map{c => c.aggExpr.asInstanceOf[NamedExpression]}
-
-  /** Put all aggregations with the same CDS chain together */
-  def combineCDS(aggCols: Seq[SmvCDSAggColumn]): Seq[SmvSingleCDSAggs] = {
-    aggCols.groupBy(_.cds).
-      mapValues{vl => vl.map(_.aggExpr.asInstanceOf[NamedExpression])}.
-      toSeq.map{case (k,v) => SmvSingleCDSAggs(k, v)}
-  }
-
   def orderColsToOrdering(inSchema: StructType, orderCols: Seq[Expression]): Ordering[InternalRow] = {
     val keyOrderPair: Seq[(NamedExpression, SortDirection)] = orderCols.map{c => c match {
       case SortOrder(e: NamedExpression, direction, nullOrdering) => (e, direction)
@@ -192,86 +173,6 @@ private[smv] object SmvCDS {
     bpq.toList
   }
 }
-
-/**
- * SmvAggGDO
- *   shared code between SmvOneAggGDO and SmvRunAggGDO
- **/
-private[smv] abstract class SmvAggGDO(aggCols: Seq[SmvCDSAggColumn]) extends SmvGDO {
-  protected val keptCols = SmvCDS.findKeptCols(aggCols)
-  protected val cdsAggsList: Seq[SmvSingleCDSAggs] = SmvCDS.combineCDS(SmvCDS.findAggCols(aggCols))
-
-  def createCurrentSchema(crossSchema: StructType): StructType
-
-  override def inGroupKeys = Nil
-
-  override def createOutSchema(smvSchema: StructType) = {
-    val keptEntries = SmvLocalRelation(createCurrentSchema(smvSchema)).resolveExprs(keptCols)
-    val nes = cdsAggsList.flatMap{aggs => aggs.resolvedExprs(smvSchema)}
-    StructType((keptEntries ++ nes).map{expr =>
-      StructField(expr.asInstanceOf[NamedExpression].name, expr.dataType)})
-  }
-}
-
-/**
- * SmvOneAggGDO
- *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by agg operation on SmvGroupedData
- **/
-private[smv] class SmvOneAggGDO(orders: Seq[Expression], aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO(aggCols) {
-  def run(
-           executers: Seq[(InternalRow, Iterable[InternalRow]) => Seq[Any]],
-           getKept: InternalRow => Seq[Any]): Iterable[InternalRow] => Iterable[InternalRow] = {rSeq =>
-      val currentRow = rSeq.last
-      val kept = getKept(currentRow)
-      val out = executers.flatMap{ ex => ex(currentRow, rSeq) }
-      Seq(new GenericInternalRow((kept ++ out).toArray))
-  }
-
-  override def createInGroupMapping(smvSchema:StructType) = {
-    val executers = cdsAggsList.map{aggs => {(r: InternalRow, it: Iterable[InternalRow]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}
-    val keptExprs = SmvLocalRelation(smvSchema).bindExprs(keptCols).toList
-    val getKept: InternalRow => Seq[Any] = { r => keptExprs.map { e => e.eval(r) } }
-    val rowOrdering = SmvCDS.orderColsToOrdering(smvSchema, orders);
-
-    {rows => run(executers, getKept)(rows.toSeq.sorted(rowOrdering))}
-  }
-
-  override def createCurrentSchema(crossSchema: StructType) = crossSchema
-}
-
-/**
- * SmvRunAggGDO
- *   Create a SmvGDO on a group of SmvCDSAggColum, which can be applied by runAgg operation on SmvGroupedData
- **/
-private[smv] class SmvRunAggGDO(orders: Seq[Expression], aggCols: Seq[SmvCDSAggColumn]) extends SmvAggGDO(aggCols) {
-  private def runGeneral(
-                        executers: Seq[(InternalRow, Iterable[InternalRow]) => Seq[Any]],
-                        getKept: InternalRow => Seq[Any]
-                          ): Seq[InternalRow] => Iterable[InternalRow] = {rSeq =>
-      rSeq.zipWithIndex.map{case (currentRow, i) =>
-        val kept = getKept(currentRow)
-        val crossRows = rSeq.slice(0, i+1)
-        val out = executers.flatMap{ ex => ex(currentRow, crossRows) }
-        new GenericInternalRow((kept ++ out).toArray)
-      }
-  }
-
-  override def createInGroupMapping(smvSchema:StructType) = {
-    val executers = cdsAggsList.map{aggs => {(r: InternalRow, it: Iterable[InternalRow]) => aggs.createExecuter(smvSchema, smvSchema)(r, it)}}.toList
-    val keptExprs = SmvLocalRelation(smvSchema).bindExprs(keptCols).toList
-    val getKept: InternalRow => Seq[Any] = { r => keptExprs.map { e => e.eval(r) } }
-    val rowOrdering = SmvCDS.orderColsToOrdering(smvSchema, orders);
-
-    {rows => runGeneral(executers, getKept)(rows.toSeq.sorted(rowOrdering))}
-  }
-
-  override def createCurrentSchema(crossSchema: StructType) = crossSchema
-}
-
-/**
- * TODO: SmvCDSPanelAggGDO
- **/
-
 
 /*************** The code below is for CDS developer interface ******/
 
@@ -306,28 +207,6 @@ abstract class SmvSelfCompareCDS extends SmvCDS {
       ex.eval(InternalRow.fromSeq(currRow ++ r.toSeq(inSchema))).asInstanceOf[Boolean]
     )
 
-    CDSSubGroup(input.currentSchema, inSchema, input.currentRow, outIt)
-  }
-}
-
-/**
- * TODO: SmvPanelCompareCDS(condition: Expression) extends FullCompareCDS
- **/
-
-/**
- *  SmvTopNRecsCDS
- *  Returns the TopN records based on the order keys
- *  (which means it can also return botton N records)
- **/
-
-private[smv] case class SmvTopNRecsCDS(maxElems: Int, orderCols: Seq[Expression]) extends SmvCDS {
-  private val orderKeys = orderCols.map{o => o.asInstanceOf[SortOrder]}
-  private val keys = orderKeys.map{k => k.child.asInstanceOf[NamedExpression].name}
-
-  def filter(input: CDSSubGroup) = {
-    val inSchema = input.crossSchema
-    val rowOrdering = SmvCDS.orderColsToOrdering(inSchema, orderCols).reverse
-    val outIt = SmvCDS.topNfromRows(input.crossRows, maxElems, rowOrdering)
     CDSSubGroup(input.currentSchema, inSchema, input.currentRow, outIt)
   }
 }

@@ -81,9 +81,6 @@ package object smv {
   /** implicitly convert `SmvGroupedData` to `GroupedData` */
   implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.toGroupedData
 
-  /** implicitly convert `Column` to `SmvCDSAggColumn` */
-  implicit def makeSmvCDSAggColumn(col: Column) = cds.SmvCDSAggColumn(col.toExpr)
-
   /** implicitly convert `DataFrame` to `SmvDFWithKeys` */
   implicit def makeSmvDFWithKeys(df: DataFrame) = SmvDFWithKeys(df, Nil)
 
