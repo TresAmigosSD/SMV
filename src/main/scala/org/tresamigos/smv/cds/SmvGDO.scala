@@ -146,10 +146,34 @@ private[smv] class DedupWithOrderGDO(orders: Seq[Expression]) extends SmvGDO {
   override def createOutSchema(inSchema: StructType) = inSchema
 
   override def createInGroupMapping(inSchema: StructType) = {
-    val rowOrdering = SmvCDS.orderColsToOrdering(inSchema, orders);
+    val rowOrdering = orderColsToOrdering(inSchema, orders);
 
     { it: Iterable[InternalRow] =>
         List(it.toSeq.min(rowOrdering))
+    }
+  }
+
+  def orderColsToOrdering(inSchema: StructType, orderCols: Seq[Expression]): Ordering[InternalRow] = {
+    val keyOrderPair: Seq[(NamedExpression, SortDirection)] = orderCols.map{c => c match {
+      case SortOrder(e: NamedExpression, direction, nullOrdering) => (e, direction)
+      case e: NamedExpression => (e, Ascending)
+    }}
+
+    val ordinals = inSchema.getIndices(keyOrderPair.map{case (e, d) => e.name}: _*)
+    val ordering = keyOrderPair.map{case (e, d) =>
+      val normColOrdering = inSchema(e.name).ordering
+      if (d == Descending) normColOrdering.reverse else normColOrdering
+    }
+
+    new Ordering[InternalRow] {
+      override def compare(a:InternalRow, b:InternalRow) = {
+        val aElems = a.toSeq(inSchema)
+        val bElems = b.toSeq(inSchema)
+
+        (ordinals zip ordering).map{case (i, order) =>
+          order.compare(aElems(i),bElems(i)).signum
+        }.reduceLeft((s, i) => s * 2 + i)
+      }
     }
   }
 }
