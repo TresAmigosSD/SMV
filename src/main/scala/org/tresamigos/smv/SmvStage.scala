@@ -125,7 +125,7 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
 /**
  * A single configured stage consisting of a single package.
  */
-private[smv] class SmvStage(val name: String, val version: Option[String]) extends SmvPackageManager {
+private[smv] case class SmvStage(val name: String, val version: Option[String]) extends SmvPackageManager {
   override def toString = s"SmvStage<${name}>"
 
   override def getAllPackageNames() = Seq(name, name + ".input")
