@@ -18,7 +18,7 @@ import org.tresamigos.smv._, smvfuncs._
  * @param levelLogics a list of level match conditions (always weaker than exactMatchFilter), all of them will be tested
  */
 case class SmvEntityMatcher(leftId: String, rightId: String,
-                           exactMatchFilter:ExactMatchFilter,
+                           exactMatchFilter:ExactMatchPreFilter,
                            groupCondition:GroupCondition,
                            levelLogics: Seq[LevelLogic])
 {
@@ -47,8 +47,8 @@ case class SmvEntityMatcher(leftId: String, rightId: String,
     //  - fullMatched: fully matched records joined together
     //  - r1: df1's records which can't match under exactMatchFilter logic
     //  - r2: df2's records which can't match under exactMatchFilter logic
-    val ExactMatchFilterResult(r1, r2, fullMatched) =
-      if (null == exactMatchFilter) ExactMatchFilterResult(df1, df2, null)
+    val ExactMatchPreFilterResult(r1, r2, fullMatched) =
+      if (null == exactMatchFilter) ExactMatchPreFilterResult(df1, df2, null)
       else exactMatchFilter.extract(df1, df2, leftId, rightId)
 
     val rJoined = if (null == groupCondition) r1.join(r2) else groupCondition.join(r1, r2)
@@ -82,17 +82,17 @@ case class SmvEntityMatcher(leftId: String, rightId: String,
   }
 }
 
-private[smv] case class ExactMatchFilterResult(remainingDF1:DataFrame, remainingDF2:DataFrame, extracted:DataFrame)
+private[smv] case class ExactMatchPreFilterResult(remainingDF1:DataFrame, remainingDF2:DataFrame, extracted:DataFrame)
 
 /**
  * Specify the top-level exact match
  * @param colName level name used in the output DF
  * @param expr match logic condition Column
  **/
-case class ExactMatchFilter(val colName: String, expr:Column) {
+case class ExactMatchPreFilter(val colName: String, expr:Column) {
   require(colName != null && expr.toExpr.dataType == BooleanType)
 
-  private[smv] def extract(df1:DataFrame, df2:DataFrame, leftId: String, rightId: String):ExactMatchFilterResult = {
+  private[smv] def extract(df1:DataFrame, df2:DataFrame, leftId: String, rightId: String):ExactMatchPreFilterResult = {
     val joined = df1.join(df2, expr, "outer")
 
     val extracted = joined.where( joined(leftId).isNotNull && joined(rightId).isNotNull ).
@@ -101,7 +101,7 @@ case class ExactMatchFilter(val colName: String, expr:Column) {
     val resultDF1 = joined.where( joined(rightId).isNull ).select(df1("*"))
     val resultDF2 = joined.where( joined(leftId).isNull ).select(df2("*"))
 
-    ExactMatchFilterResult(resultDF1, resultDF2, extracted)
+    ExactMatchPreFilterResult(resultDF1, resultDF2, extracted)
   }
 }
 

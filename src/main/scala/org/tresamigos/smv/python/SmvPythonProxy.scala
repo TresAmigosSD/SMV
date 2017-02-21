@@ -105,7 +105,7 @@ object SmvPythonHelper {
 
   def createMatcher(
     leftId: String, rightId: String,
-    exactMatchFilter:ExactMatchFilter,
+    exactMatchFilter:ExactMatchPreFilter,
     groupCondition:GroupCondition,
     levelLogics: Array[LevelLogic]
   ): SmvEntityMatcher = {

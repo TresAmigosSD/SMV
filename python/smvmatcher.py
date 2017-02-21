@@ -14,8 +14,8 @@
 from smv import smvPy, smv_copy_array
 from pyspark.sql import HiveContext, DataFrame
 
-def ExactMatchFilter(colName, expr):
-    return smvPy._jvm.org.tresamigos.smv.matcher2.ExactMatchFilter(colName, expr._jc)
+def ExactMatchPreFilter(colName, expr):
+    return smvPy._jvm.org.tresamigos.smv.matcher2.ExactMatchPreFilter(colName, expr._jc)
 
 def GroupCondition(expr):
     return smvPy._jvm.org.tresamigos.smv.matcher2.GroupCondition(expr._jc)

@@ -33,7 +33,7 @@ class SmvEntityMatcherTest(SmvBaseTest):
         )
 
         res = SmvEntityMatcher("id", "_id",
-            ExactMatchFilter("Full_Name_Match", col("full_name") == col("_full_name")),
+            ExactMatchPreFilter("Full_Name_Match", col("full_name") == col("_full_name")),
             GroupCondition(soundex("first_name") == soundex("_first_name")),
             [
                 ExactLogic("First_Name_Match", col("first_name") == col("_first_name")),

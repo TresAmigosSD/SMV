@@ -44,7 +44,7 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
     import ssc.implicits._
 
     val resultDF = SmvEntityMatcher("id", "_id",
-      ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
+      ExactMatchPreFilter("Full_Name_Match", $"full_name" === $"_full_name"),
       GroupCondition(soundex($"first_name") === soundex($"_first_name")),
       List(
         ExactLogic("First_Name_Match", $"first_name" === $"_first_name"),
