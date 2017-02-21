@@ -122,7 +122,7 @@ case class EddResultFunctions(eddRes: DataFrame) {
     val cached = eddRes.cache
     val res = if (cached.columns.contains("groupKey")){
       val keys = cached.select($"groupKey".cast(StringType)).
-        distinct.collect.map{r => r(0).asInstanceOf[String]}.toSeq
+        distinct.collect.map{r => r(0).asInstanceOf[String]}.toSeq.sorted
 
       //TODO: implement indentation
       keys.map{k =>
