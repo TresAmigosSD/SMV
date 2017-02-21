@@ -48,7 +48,7 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       GroupCondition(soundex($"first_name") === soundex($"_first_name")),
       List(
         ExactLogic("First_Name_Match", $"first_name" === $"_first_name"),
-        FuzzyLogic("Levenshtein_City", null, normlevenshtein($"city",$"_city"), 0.9f)
+        FuzzyLogic("Levenshtein_City", lit(true), normlevenshtein($"city",$"_city"), 0.9f)
       )
     ).doMatch(createDF1, createDF2, false)
 
@@ -66,4 +66,24 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
 
       assert(e.getMessage === "Expression should be in left === right form")
   }
+
+  test("NoOpPreFilter test") {
+    val resultDF = SmvEntityMatcher("id", "_id",
+      NoOpPreFilter,
+      GroupCondition(soundex(col("first_name")) === soundex(col("_first_name"))),
+      List(
+        FuzzyLogic("Zip_And_Levenshtein_City", col("zip") === col("_zip"), normlevenshtein(col("city"), col("_city")), 0.9f),
+        ExactLogic("Zip_Not_Match", col("zip") !== col("_zip"))
+      )
+    ).doMatch(createDF1, createDF2, false)
+
+    assertSrddSchemaEqual(resultDF, "id: String;_id: String;Zip_And_Levenshtein_City: Boolean;Zip_Not_Match: Boolean;Zip_And_Levenshtein_City_Value: Float;MatchBitmap: String")
+    assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
+      "[1,3,false,true,1.0,01]",
+      "[2,1,true,false,1.0,10]",
+      "[3,3,false,true,0.0,01]"
+    ))
+  }
+
+  //TODO: NoOpGroupCondition test, and all python side interface
 }

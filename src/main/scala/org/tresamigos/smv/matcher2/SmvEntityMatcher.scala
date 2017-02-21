@@ -18,13 +18,13 @@ import org.tresamigos.smv._, smvfuncs._
  * @param levelLogics a list of level match conditions (always weaker than exactMatchFilter), all of them will be tested
  */
 case class SmvEntityMatcher(leftId: String, rightId: String,
-                           exactMatchFilter:ExactMatchPreFilter,
-                           groupCondition:GroupCondition,
+                           preFilter:PreFilter,
+                           groupCondition:AbstractGroupCondition,
                            levelLogics: Seq[LevelLogic])
 {
-  require(levelLogics != null && levelLogics.nonEmpty)
+  require(preFilter != null && groupCondition != null && levelLogics != null && levelLogics.nonEmpty)
 
-  private val allLevels = (if(exactMatchFilter == null) Nil else Seq(exactMatchFilter.colName)) ++
+  private val allLevels = (if(preFilter == NoOpPreFilter) Nil else Seq(preFilter.colName)) ++
       levelLogics.map{l => l.colName}
   private val allMatcherCols = allLevels ++
       levelLogics.collect{case l:FuzzyLogic => l.valueColName}
@@ -47,11 +47,9 @@ case class SmvEntityMatcher(leftId: String, rightId: String,
     //  - fullMatched: fully matched records joined together
     //  - r1: df1's records which can't match under exactMatchFilter logic
     //  - r2: df2's records which can't match under exactMatchFilter logic
-    val ExactMatchPreFilterResult(r1, r2, fullMatched) =
-      if (null == exactMatchFilter) ExactMatchPreFilterResult(df1, df2, null)
-      else exactMatchFilter.extract(df1, df2, leftId, rightId)
+    val PreFilterResult(r1, r2, fullMatched) = preFilter.extract(df1, df2, leftId, rightId)
 
-    val rJoined = if (null == groupCondition) r1.join(r2) else groupCondition.join(r1, r2)
+    val rJoined = groupCondition.join(r1, r2)
 
     // sequentially apply level logics to the join of unmatched data
     // remove rows with false for all the matcher columns
@@ -60,14 +58,10 @@ case class SmvEntityMatcher(leftId: String, rightId: String,
       where(levelLogics.map(l => col(l.colName)).reduce(_ || _))
 
     // Union fullMatched with levelMatched
-    val allMatched = {
-      if (null == fullMatched)
-        levelMatched
-      else
-        fullMatched.
-          smvUnion(levelMatched).
-          withColumn(exactMatchFilter.colName, coalesce(col(exactMatchFilter.colName), lit(false)))
-    }
+    val allMatched =
+      if(preFilter == NoOpPreFilter) levelMatched
+      else fullMatched.smvUnion(levelMatched).
+          withColumn(preFilter.colName, coalesce(col(preFilter.colName), lit(false)))
 
     //add MatchBitmap column
     val res = allMatched.smvSelectPlus(smvBoolsToBitmap(allLevels.head, allLevels.tail: _*).as("MatchBitmap"))
@@ -82,17 +76,21 @@ case class SmvEntityMatcher(leftId: String, rightId: String,
   }
 }
 
-private[smv] case class ExactMatchPreFilterResult(remainingDF1:DataFrame, remainingDF2:DataFrame, extracted:DataFrame)
+private[smv] case class PreFilterResult(remainingDF1:DataFrame, remainingDF2:DataFrame, extracted:DataFrame)
 
+private[smv] sealed abstract class PreFilter {
+  def colName: String
+  private[smv] def extract(df1:DataFrame, df2:DataFrame, leftId: String, rightId: String):PreFilterResult
+}
 /**
  * Specify the top-level exact match
  * @param colName level name used in the output DF
  * @param expr match logic condition Column
  **/
-case class ExactMatchPreFilter(val colName: String, expr:Column) {
+case class ExactMatchPreFilter(override val colName: String, expr:Column) extends PreFilter {
   require(colName != null && expr.toExpr.dataType == BooleanType)
 
-  private[smv] def extract(df1:DataFrame, df2:DataFrame, leftId: String, rightId: String):ExactMatchPreFilterResult = {
+  private[smv] override def extract(df1:DataFrame, df2:DataFrame, leftId: String, rightId: String):PreFilterResult = {
     val joined = df1.join(df2, expr, "outer")
 
     val extracted = joined.where( joined(leftId).isNotNull && joined(rightId).isNotNull ).
@@ -101,8 +99,21 @@ case class ExactMatchPreFilter(val colName: String, expr:Column) {
     val resultDF1 = joined.where( joined(rightId).isNull ).select(df1("*"))
     val resultDF2 = joined.where( joined(leftId).isNull ).select(df2("*"))
 
-    ExactMatchPreFilterResult(resultDF1, resultDF2, extracted)
+    PreFilterResult(resultDF1, resultDF2, extracted)
   }
+}
+
+case object NoOpPreFilter extends PreFilter {
+  override val colName = "NoOpPreFilter"
+  private[smv] override def extract(df1:DataFrame, df2:DataFrame, leftId: String, rightId: String):PreFilterResult = {
+    val sql = df1.sqlContext
+    val emptyDf = sql.createDataFrame(sql.sparkContext.emptyRDD[Row], StructType(List()))
+    PreFilterResult(df1, df2, emptyDf)
+  }
+}
+
+private[smv] sealed abstract class AbstractGroupCondition {
+  private[smv] def join(df1:DataFrame, df2:DataFrame):DataFrame
 }
 
 /**
@@ -111,12 +122,16 @@ case class ExactMatchPreFilter(val colName: String, expr:Column) {
  * @note `expr` should be in "left === right" form so that it can
  *              really help on optimize the process by reducing searching space
  **/
-case class GroupCondition(expr:Column) {
+case class GroupCondition(expr:Column) extends AbstractGroupCondition {
   expr.toExpr match {
     case EqualTo(_, _) => Unit
     case _ => throw new SmvUnsupportedType("Expression should be in left === right form")
   }
-  private[smv] def join(df1:DataFrame, df2:DataFrame):DataFrame = df1.join(df2, expr)
+  private[smv] override def join(df1:DataFrame, df2:DataFrame):DataFrame = df1.join(df2, expr)
+}
+
+case object NoOpGroupCondition extends AbstractGroupCondition {
+  private[smv] override def join(df1:DataFrame, df2:DataFrame):DataFrame = df1.join(df2)
 }
 
 private[smv] sealed abstract class LevelLogic {
@@ -149,17 +164,12 @@ case class FuzzyLogic(
                             val threshold: Float
                           ) extends LevelLogic {
 
-  require(null == predicate || predicate.toExpr.dataType == BooleanType, "The predicate parameter should be null or a boolean column")
+  require(predicate.toExpr.dataType == BooleanType, "The predicate parameter should be null or a boolean column")
 
   private[smv] val valueColName: String = colName + "_Value"
 
   private[smv] override def addCols(df: DataFrame): DataFrame = {
-    val cond: Column =
-      if (null == predicate)
-        valueExpr > threshold
-      else
-        predicate && (valueExpr > threshold)
-
+    val cond: Column = predicate && (valueExpr > threshold)
     df.smvSelectPlus(cond as colName).smvSelectPlus(valueExpr as valueColName)
   }
 }
