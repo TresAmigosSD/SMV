@@ -1,0 +1,14 @@
+# application name
+smv.appName = Example App
+
+# stage definitions
+smv.stages = _PROJ_CLASS_.stage1, \
+             _PROJ_CLASS_.stage2, \
+             _PROJ_CLASS_.test1, \
+             _PROJ_CLASS_.test2, \
+             _PROJ_CLASS_.test3, \
+             _PROJ_CLASS_.test3_1, \
+             _PROJ_CLASS_.test4, \
+             _PROJ_CLASS_.test4_1, \
+             _PROJ_CLASS_.test5, \
+             _PROJ_CLASS_.test6

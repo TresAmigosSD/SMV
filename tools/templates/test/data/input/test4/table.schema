@@ -1,0 +1,6 @@
+@has-header = false
+@delimiter = ,
+
+x: String
+y: String
+z: String

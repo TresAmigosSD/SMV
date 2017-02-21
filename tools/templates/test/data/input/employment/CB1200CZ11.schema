@@ -1,0 +1,26 @@
+@has-header = true
+@delimiter = |
+
+ST: String
+ZIPCODE: String
+GEO_ID: String
+GEO_TTL: String
+FOOTID_GEO: String
+NAICS2012: Integer
+NAICS2012_TTL: String
+FOOTID_NAICS: String
+YEAR: String
+ESTAB: Integer
+ESTAB_F: String
+EMP: Integer
+EMP_F: String
+EMP_N: Integer
+EMP_N_F: String
+PAYQTR1: Integer
+PAYQTR1_F: String
+PAYQTR1_N: Integer
+PAYQTR1_N_F: String
+PAYANN: Integer
+PAYANN_F: String
+PAYANN_N: Integer
+PAYANN_N_F: String

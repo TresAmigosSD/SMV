@@ -21,6 +21,7 @@ import py4j.GatewayServer
 import scala.collection.JavaConversions._
 import scala.util.Try
 import java.util.ArrayList
+import matcher2._
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
@@ -100,6 +101,20 @@ object SmvPythonHelper {
     val f = cl.getClass.getDeclaredField("port")
     f.setAccessible(true)
     f.setInt(cl, port)
+  }
+
+  def createMatcher(
+    leftId: String, rightId: String,
+    exactMatchFilter:ExactMatchFilter,
+    groupCondition:GroupCondition,
+    levelLogics: Array[LevelLogic]
+  ): SmvEntityMatcher = {
+    val lls = levelLogics.toSeq
+    SmvEntityMatcher(leftId, rightId,
+      exactMatchFilter,
+      groupCondition,
+      lls
+    )
   }
 }
 
@@ -186,6 +201,21 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   /** Publish the result of an SmvModule */
   def publishModule(modFqn: String): Unit =
     j_smvApp.publishModule(modFqn, publishVersion.get)
+
+  // TODO: The following method should be removed when Scala side can
+  // handle publish-hive SmvPyOutput tables
+  def moduleNames: java.util.List[String] = {
+    val cl = j_smvApp.smvConfig.cmdLine
+    val directMods: Seq[String] = cl.modsToRun()
+    /*
+    val stageMods: Seq[String] = cl.stagesToRun().flatMap(j_smvApp.outputModsForStage)
+    val appMods: Seq[String] =
+      if (cl.runAllApp()) j_smvApp.stages.stageNames.flatMap(j_smvApp.outputModsForStage) else Nil
+
+      (directMods ++ stageMods ++ appMods).filterNot(_.isEmpty)
+      */
+    directMods
+  }
 
   def register(id: String, repo: SmvDataSetRepository): Unit =
     j_smvApp.register(id, repo)

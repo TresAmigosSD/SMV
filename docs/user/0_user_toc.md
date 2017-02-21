@@ -1,5 +1,6 @@
 # SMV User Guide Table of Contents
 
+* [Why Smv](why_smv.md)
 * [Installation](smv_install.md)
 * [Getting Started](getting_started.md)
 * [Getting Started Python](getting_started_python.md) :new:
@@ -19,8 +20,9 @@
 * [Dynamic Class Loading](class_loader.md)
 * [Adding a new CSV input file (with schema discovery)](schema_discovery.md)
 * [Atom - A Small Editor Works Well with SMV](atom.md)
-* [Fuzzy matching between two datasets](smv_entity_matcher.md)
+* [Fuzzy matching between two datasets](smv_entity_matcher2.md)
 * [Work on data with hierarchies](smv_hier.md)
 * [Column level Description and Labels](smv_desc_label.md)
-* [Smv Python Progress Tracking](smv_python_progress.md) :new: 
+* [Smv Python functions](smv_python_funcs.md) :new:
+* [Smv Python Progress Tracking](smv_python_progress.md) :new:
 * [Smv Jupyter](smv_jupyter.md) :new:

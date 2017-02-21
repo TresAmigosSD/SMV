@@ -6,9 +6,38 @@ if [ "$1" = "-q" ]; then
     shift
 fi
 
+TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/templates"
+
+# PROJ_TYPE:
+#  - simple (default)
+#  - enterprise
+#  - test
+PROJ_TYPE="simple"
+
+if [ "$1" = "-s" ] || [ "$1" = "-simple" ]; then
+  PROJ_TYPE="simple"
+  shift
+fi
+
+if [ "$1" = "-e" ] || [ "$1" = "-enterprise" ]; then
+  PROJ_TYPE="enterprise"
+  shift
+fi
+
+if [ "$1" = "-t" ] || [ "$1" = "-test" ]; then
+  PROJ_TYPE="test"
+  shift
+fi
+
+TEMPLATE_DIR+="/$PROJ_TYPE"
+
 if [ $# -ne 2 ]; then
     echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q] project_name base_project_class"
+    echo "USAGE: $0 [-q] [-s|-e|-t] project_name base_project_class"
+    echo "project types:"
+    echo "  -s: simple (default)"
+    echo "  -e: enterprise"
+    echo "  -t: test (for developers only)"
     echo "example:"
     echo "  \$ $0 MyProject com.mycompany.myproj"
     echo ""
@@ -17,9 +46,12 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
-TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/template"
 PROJ_DIR="$1"
 PROJ_CLASS="$2"
+
+if [ "$PROJ_TYPE" = "simple" ]; then
+  PROJ_CLASS="org.tresamigos.myapp"
+fi
 
 function extract_group_artifact_ids()
 {
@@ -64,10 +96,13 @@ function copy_with_inject()
 
 function copy_conf_files()
 {
-    FILES="pom.xml build.sbt project/assembly.sbt project/build.properties README.md notebooks/Untitled.ipynb .gitignore log4j.properties conf/shell_init.scala conf/smv-app-conf.props conf/smv-user-conf.props"
+    FILES="pom.xml build.sbt project/assembly.sbt project/build.properties README.md notebooks/Untitled.ipynb .gitignore.template log4j.properties conf/shell_init.scala conf/smv-app-conf.props conf/smv-user-conf.props"
     for f in $FILES; do
         copy_with_inject "$TEMPLATE_DIR/$f" "$PROJ_DIR/$f"
     done
+
+    # .gitignore was postfixed with .template so it does not affect SMV's git repo
+    mv "$PROJ_DIR/.gitignore.template" "$PROJ_DIR/.gitignore"
 }
 
 function copy_data_files()
@@ -96,9 +131,15 @@ function copy_src_files()
 
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
 
-    for subdir in main/scala main/python; do
-        copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
-    done
+    if [ "$PROJ_TYPE" = "simple" ] || [ "$PROJ_TYPE" = "enterprise" ]; then
+      for subdir in main/python; do
+          copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
+      done
+    else
+      for subdir in main/scala main/python; do
+          copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
+      done
+    fi
 }
 
 function create_python_packages()
