@@ -1,4 +1,4 @@
-package _PROJ_CLASS_.test6
+package org.tresamigos.smvtest.test6
 
 import org.tresamigos.smv._
 

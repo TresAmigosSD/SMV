@@ -47,10 +47,10 @@ if [ $# -ne 2 ]; then
 fi
 
 PROJ_DIR="$1"
-PROJ_CLASS="$2"
+PROJ_CLASS=""
 
-if [ "$PROJ_TYPE" != "test" ]; then
-  PROJ_CLASS=""
+if [ "$PROJ_TYPE" = "test" ]; then
+  PROJ_CLASS="org.tresamigos.smvtest"
 fi
 
 function extract_group_artifact_ids()
