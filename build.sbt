@@ -33,9 +33,11 @@ parallelExecution in Test := false
 
 publishArtifact in Test := true
 
-val integrationTest = TaskKey[Unit]("itest", "Integration Test")
-integrationTest <<= compile in Compile map { x => "src/test/scripts/run-sample-app.sh" ! }
-
+// Create itestApp task that runs the sample application
+TaskKey[Unit]("itestApp", "Run Integration Test Sample App") := { "src/test/scripts/run-sample-app.sh" ! }
+// Create itest alias that locally publishes SMV before running the sample application
+addCommandAlias("itest", "; publish-local; itestApp")
+// Create alltest alias that runs the Scala unit tests and the integration test
 addCommandAlias("alltest", "; test; itest")
 
 mainClass in assembly := Some("org.tresamigos.smv.SmvApp")
