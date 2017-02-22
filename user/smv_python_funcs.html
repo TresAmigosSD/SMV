@@ -1,0 +1,505 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" type="text/css" href="github.css">
+</head>
+<body>
+<table class="nav-table">
+    <tr>
+        <td class="nav-left">&lArr;&nbsp;<a href="smv_desc_label.html">Column level Description and Labels</a></td>
+        <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
+        <td class="nav-right"><a href="smv_python_progress.html">Smv Python Progress Tracking</a>&nbsp;&rArr;</td>
+    </tr>
+</table>
+<hr>
+
+<article class="markdown-body">
+<h1 id="smv-python-functions">SMV Python Functions</h1>
+<p>SMV provides both the module framework and some additional helper functions. Users<br />
+and developers can pickup the framework just by following the template project (cretaed by <code>smv-init</code>)<br />
+code styles.</p>
+<p>For the helper functions, the full Python API documentation should be generated from code. However it will<br />
+take some time for us to determine which Python document framework we should take. In the mean time we do<br />
+need to have some API document to make sure users can use the powerful Python interface. This doc plays that role.</p>
+<h4 id="smvdedupbykey">smvDedupByKey</h4>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">smvDedupByKey(<span class="op">*</span>k):</code></pre></div>
+<p><code>smvDedupByKey</code> is a <code>DataFrame</code> helper function, which remove duplicate records from the<br />
+<code>DataFrame</code> by arbitrarily selecting the first record from a set of records with same primary<br />
+key or key combo.</p>
+<p>For example, given the following input DataFrame:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">product</th>
+<th align="left">Company</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">A</td>
+<td align="left">C1</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="left">C</td>
+<td align="left">C2</td>
+</tr>
+<tr class="odd">
+<td align="left">2</td>
+<td align="left">B</td>
+<td align="left">C3</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">B</td>
+<td align="left">C4</td>
+</tr>
+</tbody>
+</table>
+<p>and the following call:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df.smvDedupByKey(<span class="st">&quot;id&quot;</span>)</code></pre></div>
+<p>will yield the following <code>DataFrame</code>:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">product</th>
+<th align="left">Company</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">A</td>
+<td align="left">C1</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">B</td>
+<td align="left">C3</td>
+</tr>
+</tbody>
+</table>
+<p>while the following call:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df.smvDedupByKey(<span class="st">&quot;id&quot;</span>, <span class="st">&quot;product&quot;</span>)</code></pre></div>
+<p>will yield the following:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">product</th>
+<th align="left">Company</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">A</td>
+<td align="left">C1</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="left">C</td>
+<td align="left">C2</td>
+</tr>
+<tr class="odd">
+<td align="left">2</td>
+<td align="left">B</td>
+<td align="left">C3</td>
+</tr>
+</tbody>
+</table>
+<h4 id="smvdedupbykeywithorder">smvDedupByKeyWithOrder</h4>
+<pre><code>smvDedupByKeyWithOrder(*keys)(*orders)</code></pre>
+<p><code>smvDedupByKeyWithOrder</code> is similar to <code>smvDedupByKey</code>. It removes duplicated records by<br />
+selecting the first record regarding a given ordering.</p>
+<p>For example, given the following input DataFrame:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">product</th>
+<th align="left">Company</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">A</td>
+<td align="left">C1</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="left">C</td>
+<td align="left">C2</td>
+</tr>
+<tr class="odd">
+<td align="left">2</td>
+<td align="left">B</td>
+<td align="left">C3</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">B</td>
+<td align="left">C4</td>
+</tr>
+</tbody>
+</table>
+<p>and the following call:</p>
+<pre><code>df.smvDedupByKeyWithOrder(&quot;id&quot;)(col(&quot;product&quot;).desc())</code></pre>
+<p>will yield the following <code>DataFrame</code>:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">product</th>
+<th align="left">Company</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">C</td>
+<td align="left">C2</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">B</td>
+<td align="left">C3</td>
+</tr>
+</tbody>
+</table>
+<h4 id="smvjoinbykey">smvJoinByKey</h4>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">smvJoinByKey(otherPlan, keys, joinType)</code></pre></div>
+<p>The Spark <code>DataFrame</code> join operation does not handle duplicate key names. If both left and<br />
+right side of the join operation contain the same key, the result <code>DataFrame</code> is unusable.</p>
+<p>The <code>joinByKey</code> method will allow the user to join two <code>DataFrames</code> using the same join key.<br />
+Post join, only the left side keys will remain. In case of outer-join, the<br />
+<code>coalesce(leftkey, rightkey)</code> will replace the left key to be kept.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df1.smvJoinByKey(df2, Seq(<span class="st">&quot;k&quot;</span>), <span class="st">&quot;inner&quot;</span>)</code></pre></div>
+<p>If, in addition to the duplicate keys, both df1 and df2 have column with name &quot;v&quot;,<br />
+both will be kept in the result, but the df2 version will be prefix with &quot;_&quot;.</p>
+<h4 id="smvjoinmultiplebykey">smvJoinMultipleByKey</h4>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df.smvJoinMultipleByKey(keys, joinType
+  ).joinWith(df2, postfix2
+  ).joinWith(df3, postfix3
+  ).doJoin(drop_repeated_col)</code></pre></div>
+<p><code>smvJoinMultipleByKey</code> is a convenience way to join a sequence of DataFrames.</p>
+<p>Example:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df.smvJoinMultipleByKey([<span class="st">&quot;k1&quot;</span>, <span class="st">&quot;k2&quot;</span>], <span class="st">&quot;inner&quot;</span>
+  ).joinWith(df2, <span class="st">&quot;_df2&quot;</span>
+  ).joinWith(df3, <span class="st">&quot;_df3&quot;</span>, <span class="st">&quot;leftouter&quot;</span>
+  ).doJoin()</code></pre></div>
+<p>In above example, <code>df</code> will inner join with <code>df2</code> on <code>k1</code> and <code>k2</code>, then<br />
+left outer join with <code>df3</code> with the same keys.</p>
+<p>In the cases that there are columns with the same name, df2's column will be<br />
+renamed with postfix <code>_df2</code>, and, df3's column will be renamed with postfix<br />
+<code>_df3</code>.</p>
+<p><code>doJoin</code> takes a boolean type optional parameter, when it's true, renamed repeated<br />
+columns (<code>_df2</code> and <code>_df3</code> postfixed) will be droped.</p>
+<h4 id="smvgroupby">smvGroupBy</h4>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">smvGroupBy(<span class="op">*</span>columns)</code></pre></div>
+<p><code>smvGroupBy</code> is a <code>DataFrame</code> helper function. Similar to groupBy, instead of creating<br />
+GroupedData, it creates a SmvGroupedData object. There are a group of functions which defined on SmvGroupedData.</p>
+<p>Example:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df.smvGroupBy(col(<span class="st">&#39;k&#39;</span>))</code></pre></div>
+<h4 id="smvpivotsum">smvPivotSum</h4>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">smvPivotSum(pivotCols, valueCols, baseOutput):</code></pre></div>
+<p><code>smvPivotSum</code> is a SmvGroupedData function. It equivalents to SAS's proc transpose.</p>
+<ul>
+<li>param pivotCols: The sequence of column names whose values will be used as the output pivot column names.</li>
+<li>param valueCols: The columns whose values will be copied to the pivoted output columns.</li>
+<li>param baseOutput: The expected base output column names (without the value column prefix).</li>
+</ul>
+<p>User is required to supply the list of expected pivot column output names to avoid any extra action on the input<br />
+DataFrame just to extract the possible pivot columns.</p>
+<p>Example:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df.smvGroupBy(<span class="st">&quot;id&quot;</span>).smvPivotSum([[<span class="st">&quot;month&quot;</span>, <span class="st">&quot;product&quot;</span>]],[<span class="st">&quot;count&quot;</span>],[<span class="st">&quot;5_14_A&quot;</span>, <span class="st">&quot;5_14_B&quot;</span>, <span class="st">&quot;6_14_A&quot;</span>, <span class="st">&quot;6_14_B&quot;</span>])</code></pre></div>
+<p>Input:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">month</th>
+<th align="left">product</th>
+<th align="left">count</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">5/14</td>
+<td align="left">A</td>
+<td align="left">100</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="left">6/14</td>
+<td align="left">B</td>
+<td align="left">200</td>
+</tr>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">5/14</td>
+<td align="left">B</td>
+<td align="left">300</td>
+</tr>
+</tbody>
+</table>
+<p>Output:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">count_5_14_A</th>
+<th align="left">count_5_14_B</th>
+<th align="left">count_6_14_A</th>
+<th align="left">count_6_14_B</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">100</td>
+<td align="left">300</td>
+<td align="left">NULL</td>
+<td align="left">200</td>
+</tr>
+</tbody>
+</table>
+<h4 id="smvunion">smvUnion</h4>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">smvUnion(<span class="op">*</span>dfothers)</code></pre></div>
+<p><code>smvUnion</code> unions DataFrames with different numbers of columns by column name &amp; schema.<br />
+Spark unionAll ignores column names &amp; schema, and can only be performed on tables with the same number of columns.</p>
+<h4 id="smvfillnullwithprevvalue">smvFillNullWithPrevValue</h4>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">smvFillNullWithPrevValue(<span class="op">*</span>orders)(<span class="op">*</span>cols)</code></pre></div>
+<p>Fill in Null values with &quot;previous&quot; value according to an ordering</p>
+<p>Example:<br />
+Input:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">K</th>
+<th align="left">T</th>
+<th align="left">V</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a</td>
+<td align="left">1</td>
+<td align="left">null</td>
+</tr>
+<tr class="even">
+<td align="left">a</td>
+<td align="left">2</td>
+<td align="left">a</td>
+</tr>
+<tr class="odd">
+<td align="left">a</td>
+<td align="left">3</td>
+<td align="left">b</td>
+</tr>
+<tr class="even">
+<td align="left">a</td>
+<td align="left">4</td>
+<td align="left">null</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df.smvGroupBy(<span class="st">&quot;K&quot;</span>).smvFillNullWithPrevValue(col(<span class="st">&quot;T&quot;</span>).asc())(<span class="st">&quot;V&quot;</span>)</code></pre></div>
+<p>Output:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">K</th>
+<th align="left">T</th>
+<th align="left">V</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a</td>
+<td align="left">1</td>
+<td align="left">null</td>
+</tr>
+<tr class="even">
+<td align="left">a</td>
+<td align="left">2</td>
+<td align="left">a</td>
+</tr>
+<tr class="odd">
+<td align="left">a</td>
+<td align="left">3</td>
+<td align="left">b</td>
+</tr>
+<tr class="even">
+<td align="left">a</td>
+<td align="left">4</td>
+<td align="left">b</td>
+</tr>
+</tbody>
+</table>
+<p>This methods only fill forward, which means that at T=1, V is still<br />
+null as in above example. In case one need all the null filled and<br />
+allow fill backward at the beginning of the sequence, you can apply<br />
+this method again with reverse ordering:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df.smvGroupBy(<span class="st">&quot;K&quot;</span>).smvFillNullWithPrevValue(col(<span class="st">&quot;T&quot;</span>).asc())(<span class="st">&quot;V&quot;</span>).
+  smvGroupBy(<span class="st">&quot;K&quot;</span>).smvFillNullWithPrevValue(col(<span class="st">&quot;T&quot;</span>).desc())(<span class="st">&quot;V&quot;</span>)</code></pre></div>
+<p>Output:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">K</th>
+<th align="left">T</th>
+<th align="left">V</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a</td>
+<td align="left">1</td>
+<td align="left">a</td>
+</tr>
+<tr class="even">
+<td align="left">a</td>
+<td align="left">2</td>
+<td align="left">a</td>
+</tr>
+<tr class="odd">
+<td align="left">a</td>
+<td align="left">3</td>
+<td align="left">b</td>
+</tr>
+<tr class="even">
+<td align="left">a</td>
+<td align="left">4</td>
+<td align="left">b</td>
+</tr>
+</tbody>
+</table>
+<h4 id="smvunpivot">smvUnpivot</h4>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df.smvUnpivot(<span class="op">*</span>col)</code></pre></div>
+<p>Almost the opposite of the pivot operation.<br />
+Given a set of records with value columns, turns the value columns into value rows.<br />
+For example, Given the following input:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">X</th>
+<th align="left">Y</th>
+<th align="left">Z</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">A</td>
+<td align="left">B</td>
+<td align="left">C</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">D</td>
+<td align="left">E</td>
+<td align="left">F</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="left">G</td>
+<td align="left">H</td>
+<td align="left">I</td>
+</tr>
+</tbody>
+</table>
+<p>and the following command:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">df.smvUnpivot(<span class="st">&quot;X&quot;</span>, <span class="st">&quot;Y&quot;</span>, <span class="st">&quot;Z&quot;</span>)</code></pre></div>
+<p>will result in the following output:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">column</th>
+<th align="left">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">X</td>
+<td align="left">A</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="left">Y</td>
+<td align="left">B</td>
+</tr>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">Z</td>
+<td align="left">C</td>
+</tr>
+<tr class="even">
+<td align="left">... ... ...</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="left">Y</td>
+<td align="left">H</td>
+</tr>
+<tr class="even">
+<td align="left">3</td>
+<td align="left">Z</td>
+<td align="left">I</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> This only works for String columns for now</p>
+</article>
+</body>
+</html>

@@ -30,7 +30,9 @@
 <pre class="shell"><code>$ docker run -it -p 8888:8888 -v /path/to/proj:/proj smv-jupyter</code></pre>
 <p>Any arguments following smv-jupyter will be passed to jupyter notebook</p>
 <p>You can view your notebooks at localhost:8888.</p>
-<p>You could also install Jupyter on your host machine without docker. To run <code>smv-jupyter</code>, you need to change<br />directory to the project root, compile the project with <code>mvn package</code> or <code>sbt assembly</code>, then run <code>smv-jupyter</code>.<br />It will look for <code>nodebooks</code> directory under the project root for store notebooks.</p>
+<p>You could also install Jupyter on your host machine without docker. To run <code>smv-jupyter</code>, you need to change<br />
+directory to the project root, compile the project with <code>mvn package</code> or <code>sbt assembly</code>, then run <code>smv-jupyter</code>.<br />
+It will look for <code>nodebooks</code> directory under the project root for store notebooks.</p>
 <h1 id="jupyter-notebook-keyboard-shortcuts">Jupyter notebook keyboard shortcuts</h1>
 <pre><code>Command Mode (press Esc to enable)
 

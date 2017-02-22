@@ -11,9 +11,9 @@
 <body>
 <table class="nav-table">
     <tr>
-        <td class="nav-left">&lArr;&nbsp;<a href="_dummy_.html"></a></td>
+        <td class="nav-left">&lArr;&nbsp;<a href="why_smv.html">Why Smv</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
-        <td class="nav-right"><a href="getting_started.html">Getting Started</a>&nbsp;&rArr;</td>
+        <td class="nav-right"><a href="smv_intro.html">SMV Introduction</a>&nbsp;&rArr;</td>
     </tr>
 </table>
 <hr>
@@ -22,7 +22,8 @@
 <h1 id="smv-installation">SMV Installation</h1>
 <p>SMV is currently supported on Linux (ubuntu, centos, etc) and OSX.</p>
 <h1 id="install-jdk">Install JDK</h1>
-<p>SMV requires Sun Java JDK version 1.7 or 1.8. This has not been tested with OpenJDK.<br />Download Oracle JDK from <a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html">JDK</a></p>
+<p>SMV requires Sun Java JDK version 1.7 or 1.8. This has not been tested with OpenJDK.<br />
+Download Oracle JDK from <a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html">JDK</a></p>
 <p>For Ubuntu, please make sure to set the Sun java jdk as the default (See <a href="https://www.digitalocean.com/community/tutorials/how-to-install-java-on-ubuntu-with-apt-get">Install JDK on Ubuntu</a> for details)</p>
 <ul>
 <li><p>Ensure JAVA_HOME environment variable is set in user profile and added to PATH:</p>
@@ -42,15 +43,18 @@ $ java -version</code></pre></li>
 <p>Learn more about <a href="https://maven.apache.org/run.html">how to use mvn command</a></p></li>
 </ul>
 <h1 id="install-spark">Install Spark</h1>
-<p>Download the 1.5.2 version of <a href="http://spark.apache.org/downloads.html">Spark</a>.<br />There are two options to install Spark:</p>
+<p>Download the 1.5.2 version of <a href="http://spark.apache.org/downloads.html">Spark</a>.<br />
+There are two options to install Spark:</p>
 <ul>
 <li>&quot;Happy Option&quot;: Download the Spark prebuild binary</li>
 </ul>
-<p>For normal users who don't need to debug, it is recommended to download the Spark prebuild binary.<br />Please use version build for Hadoop 2.4 or 2.6 and later (Please do NOT use the version without hadoop as hadoop support is required by SMV). You just need to download, decompress, and finish the environment setting and verify steps below.</p>
+<p>For normal users who don't need to debug, it is recommended to download the Spark prebuild binary.<br />
+Please use version build for Hadoop 2.4 or 2.6 and later (Please do NOT use the version without hadoop as hadoop support is required by SMV). You just need to download, decompress, and finish the environment setting and verify steps below.</p>
 <ul>
 <li>&quot;Thorough Option&quot;: Build Spark from source code</li>
 </ul>
-<p>For developers who may need to debug, it is recommended to build Spark from source code.<br /><a href="http://www.scala-lang.org/download/2.10.4.html">Scala 2.10.4</a> is needed to build Spark 1.5.2.</p>
+<p>For developers who may need to debug, it is recommended to build Spark from source code.<br />
+<a href="http://www.scala-lang.org/download/2.10.4.html">Scala 2.10.4</a> is needed to build Spark 1.5.2.</p>
 <p>Please do NOT use scala version 2.11+, because Spark does not yet support its JDBC component for Scala 2.11, while Spark hive is needed by SMV.</p>
 <p>After Scala is downloaded and decompress, add it to PATH and verify Scala installation with</p>
 <pre class="shell"><code>$ scala -version</code></pre>

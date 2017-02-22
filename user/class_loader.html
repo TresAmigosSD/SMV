@@ -7,23 +7,41 @@
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
+div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
 table.sourceCode { width: 100%; line-height: 100%; }
 td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
 td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; }
-code > span.dt { color: #902000; }
-code > span.dv { color: #40a070; }
-code > span.bn { color: #40a070; }
-code > span.fl { color: #40a070; }
-code > span.ch { color: #4070a0; }
-code > span.st { color: #4070a0; }
-code > span.co { color: #60a0b0; font-style: italic; }
-code > span.ot { color: #007020; }
-code > span.al { color: #ff0000; font-weight: bold; }
-code > span.fu { color: #06287e; }
-code > span.er { color: #ff0000; font-weight: bold; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
   </style>
   <link rel="stylesheet" type="text/css" href="github.css">
 </head>
@@ -40,51 +58,70 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <article class="markdown-body">
 <h1 id="smv-class-loader-clientserver">SMV class loader client/server</h1>
 <h2 id="introduction">Introduction</h2>
-<p>When developing modules, it is currently too arduous to compile/jar/restart the shell/server to see the effect of the new module.<br />Ideally, we should be able to &quot;reload&quot; a newly created/modified SmvModule without having to restart the server, create a new context and re-cache the data.<br />The data cache issue can be taken care of by the Spark Server project which maintains a single spark context instance across invocations. However, that solution does not address the issue of module modification as usually occurs during development.<br />The SMV class loader allows for the serving of class data using a client/server architecture and utilizing a custom class loader on the client side (shell/server). This allows for dynamic reloading of client code (e.g. SmvModule/SmvFile/utility classes). This in turn reduces development cycle considerably.</p>
+<p>When developing modules, it is currently too arduous to compile/jar/restart the shell/server to see the effect of the new module.<br />
+Ideally, we should be able to &quot;reload&quot; a newly created/modified SmvModule without having to restart the server, create a new context and re-cache the data.<br />
+The data cache issue can be taken care of by the Spark Server project which maintains a single spark context instance across invocations. However, that solution does not address the issue of module modification as usually occurs during development.<br />
+The SMV class loader allows for the serving of class data using a client/server architecture and utilizing a custom class loader on the client side (shell/server). This allows for dynamic reloading of client code (e.g. SmvModule/SmvFile/utility classes). This in turn reduces development cycle considerably.</p>
 <h2 id="configuration">Configuration</h2>
 <p>The following parameters would be added to standard SmvApp config parameters.</p>
 <ul>
-<li><code>smv.class_server.host</code> : host name of class server. If this is specified, then the dynamic class loader server will not be utilized and SMV will look for module classes on the server<br /></li>
-<li><code>smv.class_server.port</code> : port number where class server will be listening for connections and where SmvApp will connect to. Defaults to 9900.<br /></li>
+<li><code>smv.class_server.host</code> : host name of class server. If this is specified, then the dynamic class loader server will not be utilized and SMV will look for module classes on the server</li>
+<li><code>smv.class_server.port</code> : port number where class server will be listening for connections and where SmvApp will connect to. Defaults to 9900.</li>
 <li><code>smv.class_server.class_dir</code> : directory where the class server would look for new class instances. If this is specified but host was not specified, then the dynamic class loader is run in standalone mode (that is, a server instance is not required and the new class files are looked up directly from this app). Default to &quot;./target/classes&quot;</li>
 </ul>
 <p>If neither <code>host</code>, nor <code>class_dir</code> are specified, then SMV will revert to standard CLASSPATH lookup (using <code>Class.forName()</code> method) on default class loader.</p>
-<p>Although SMV class loader designed to use client/server structure, in most cases, we don't need to start<br />the server at all. Since we typically run <code>smv-shell</code> command with <code>--master local[*]</code> mode or<br /><code>--master yarn-client</code> mode, in both cases the master node is the same as the machine you launch the job,<br />which means that the client and server of the SMV class loader are on the same machine. In this case<br />SMV will be smart enough to bypass the network communication and &quot;just works&quot;. From a user point of view,<br />as long as you run <code>smv-shell</code> on local or yar-client mode, you don't need to specify<br /><code>smv.class_server.host</code>, or <code>smv.class_server.port</code>. Also since the default value of<br /><code>smv.class_server.class_dir</code> is the default place Maven put the compiled classes, as long as you use Maven<br />to compile the project, you don't need to specify &quot;class_dir&quot; either.</p>
-<p>If you use SBT to compile the project, you need to specify the &quot;class_dir&quot;, typically need to add the<br />following to your <code>conf/smv-user-conf.props</code>.</p>
+<p>Although SMV class loader designed to use client/server structure, in most cases, we don't need to start<br />
+the server at all. Since we typically run <code>smv-shell</code> command with <code>--master local[*]</code> mode or<br />
+<code>--master yarn-client</code> mode, in both cases the master node is the same as the machine you launch the job,<br />
+which means that the client and server of the SMV class loader are on the same machine. In this case<br />
+SMV will be smart enough to bypass the network communication and &quot;just works&quot;. From a user point of view,<br />
+as long as you run <code>smv-shell</code> on local or yar-client mode, you don't need to specify<br />
+<code>smv.class_server.host</code>, or <code>smv.class_server.port</code>. Also since the default value of<br />
+<code>smv.class_server.class_dir</code> is the default place Maven put the compiled classes, as long as you use Maven<br />
+to compile the project, you don't need to specify &quot;class_dir&quot; either.</p>
+<p>If you use SBT to compile the project, you need to specify the &quot;class_dir&quot;, typically need to add the<br />
+following to your <code>conf/smv-user-conf.props</code>.</p>
 <pre><code>smv.class_server.class_dir = ./target/scala-2.10/classes</code></pre>
 <h2 id="running-from-shell">Running from shell</h2>
 <p>Once the SMV shell is launched through the standard method, it is possible to utilize the &quot;ddf&quot; function to reload and rerun a module. This can be done <strong>without</strong> exiting the shell first and rebuilding the app as usual. The example below uses an app directory created using the <code>smv-init</code> script.</p>
-<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> r = <span class="fu">ddf</span>(<span class="st">&quot;com.myapp.stage2.StageEmpCategory&quot;</span>)
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> r = <span class="fu">ddf</span>(<span class="st">&quot;com.myapp.stage2.StageEmpCategory&quot;</span>)
 r: org.<span class="fu">apache</span>.<span class="fu">spark</span>.<span class="fu">sql</span>.<span class="fu">DataFrame</span> = [ST: string, EMP: bigint, cat_high_emp: <span class="dt">boolean</span>]
 
 scala&gt; r.<span class="fu">collect</span>
-res2: Array[org.<span class="fu">apache</span>.<span class="fu">spark</span>.<span class="fu">sql</span>.<span class="fu">Row</span>] = Array([<span class="dv">50</span>,<span class="dv">245058</span>,<span class="kw">false</span>], ...)</code></pre>
+res2: Array[org.<span class="fu">apache</span>.<span class="fu">spark</span>.<span class="fu">sql</span>.<span class="fu">Row</span>] = Array([<span class="dv">50</span>,<span class="dv">245058</span>,<span class="kw">false</span>], ...)</code></pre></div>
 <p>In another window, the code for the <code>StageEmpCategory</code> module is modified and compiled (no need to rebuild the app fat jar, just recompile)</p>
 <pre class="shell"><code>$ mvn compile</code></pre>
 <p>This will generate a new class under the <code>target/classes</code> directory.</p>
 <p>In the same shell as before, rerun the ddf command:</p>
-<pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> r2 = <span class="fu">ddf</span>(<span class="st">&quot;com.myapp.stage2.StageEmpCategory&quot;</span>)
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">scala&gt; <span class="kw">val</span> r2 = <span class="fu">ddf</span>(<span class="st">&quot;com.myapp.stage2.StageEmpCategory&quot;</span>)
 r2: org.<span class="fu">apache</span>.<span class="fu">spark</span>.<span class="fu">sql</span>.<span class="fu">DataFrame</span> = [ST: string, EMP: bigint, cat_high_emp: <span class="dt">boolean</span>, cat_high_emp2: <span class="dt">boolean</span>]
 
 scala&gt; r2.<span class="fu">collect</span>
-res3: Array[org.<span class="fu">apache</span>.<span class="fu">spark</span>.<span class="fu">sql</span>.<span class="fu">Row</span>] = Array([<span class="dv">50</span>,<span class="dv">245058</span>,<span class="kw">false</span>,<span class="kw">true</span>], ...)</code></pre>
+res3: Array[org.<span class="fu">apache</span>.<span class="fu">spark</span>.<span class="fu">sql</span>.<span class="fu">Row</span>] = Array([<span class="dv">50</span>,<span class="dv">245058</span>,<span class="kw">false</span>,<span class="kw">true</span>], ...)</code></pre></div>
 <p>Note that the new result has the newly added column. Both results exist at the same time and can be compared against each other.</p>
 <h2 id="running-server">Running Server</h2>
 <p>In order to utilize the SMV class server in a cluster environment, the server instance must be started. A convenience script is provided in <code>SMV/tools</code> directory to launch the server. The server <strong>MUST</strong> be launched from the top level of an application directory.</p>
 <pre class="shell"><code>$ ${SMV_HOME}/tools/smv-class-server</code></pre>
 <p><strong>Note:</strong> the above is only needed if running on a cluster.</p>
 <h2 id="dynamic-module-loading-with-sbt-continuous-compile">Dynamic module loading with SBT continuous compile</h2>
-<p>SMV and projects created from <code>smv-init</code> command can be compiled using either Maven (the <code>mvn</code> command) or<br />SBT (the <code>sbt</code> command).</p>
-<p>One big advantage of SBT is that it support continuous compile. When you start the continuous compile<br />SBT will detect code changes and try to re-compile changed classes automatically. With the continuous<br />compile feature of SBT, the SMV class loader's dynamic module loading feature becomes more convenience!</p>
-<p>The only difference is the you need to specify <code>smv.class_server.class_dir</code> in the<br />smv-user-conf.props file, since SBT put the compiled class files in a different dir:</p>
+<p>SMV and projects created from <code>smv-init</code> command can be compiled using either Maven (the <code>mvn</code> command) or<br />
+SBT (the <code>sbt</code> command).</p>
+<p>One big advantage of SBT is that it support continuous compile. When you start the continuous compile<br />
+SBT will detect code changes and try to re-compile changed classes automatically. With the continuous<br />
+compile feature of SBT, the SMV class loader's dynamic module loading feature becomes more convenience!</p>
+<p>The only difference is the you need to specify <code>smv.class_server.class_dir</code> in the<br />
+smv-user-conf.props file, since SBT put the compiled class files in a different dir:</p>
 <pre><code>smv.class_server.class_dir = ./target/scala-2.10/classes</code></pre>
-<p>Basically as long as you make changes in the code and save the file, the new module can be resolved by<br /><code>ddf</code> command in the running smv-shell already. (Depend on the compile speed, typically in 1-5 seconds,<br />the new module will be ready to use in shell.)</p>
-<p>SBT command is slightly different from Maven commands, here is a very simple comparison, for details,<br />please look for some basic SBT document:</p>
+<p>Basically as long as you make changes in the code and save the file, the new module can be resolved by<br />
+<code>ddf</code> command in the running smv-shell already. (Depend on the compile speed, typically in 1-5 seconds,<br />
+the new module will be ready to use in shell.)</p>
+<p>SBT command is slightly different from Maven commands, here is a very simple comparison, for details,<br />
+please look for some basic SBT document:</p>
 <ul>
-<li>Package: <code>sbt package</code><br /></li>
-<li>Install: <code>sbt publish-local</code><br /></li>
-<li>Package app with the fat-jar: <code>sbt assembly</code><br /></li>
-<li>Compile: <code>sbt compile</code><br /></li>
+<li>Package: <code>sbt package</code></li>
+<li>Install: <code>sbt publish-local</code></li>
+<li>Package app with the fat-jar: <code>sbt assembly</code></li>
+<li>Compile: <code>sbt compile</code></li>
 <li>Continuous compile: <code>sbt '~ compile'</code></li>
 </ul>
 </article>

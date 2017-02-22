@@ -11,7 +11,7 @@
 <body>
 <table class="nav-table">
     <tr>
-        <td class="nav-left">&lArr;&nbsp;<a href="getting_started_python.html">Getting Started Python</a></td>
+        <td class="nav-left">&lArr;&nbsp;<a href="smv_install.html">Installation</a></td>
         <td class="nav-center"><a href="0_user_toc.html">Table Of Contents</a></td>
         <td class="nav-right"><a href="app_config.html">Application Configuration</a>&nbsp;&rArr;</td>
     </tr>
@@ -23,17 +23,20 @@
 <h2 id="introduction">Introduction</h2>
 <p>SMV is a very simple data application framework that enables the following:</p>
 <ul>
-<li>Ability to group DataFrame operations into modules and organize the modules and their dependency in a hierarchical manner.<br /></li>
-<li>No overhead of developers to use RDD and DataFrame to manipulate data and create new data set and variables<br /></li>
-<li>Ability to use the same framework to quickly create ad-hoc analysis and the ad-hoc queries should be able to easily transform to production package<br /></li>
-<li>Easy testing of module levels. Developer shouldn't have to create many repetitive and cumbersome scaffolding to test a module<br /></li>
-<li>Intermediate data persistence and versioning. Data versioning is critical for applying test driven development on data application development<br /></li>
-<li>Ability to test/run at the module level and at the application level. Developer should be able to test run modules they currently working on<br /></li>
-<li>Same framework should also allow the creation of execution graphs at the application level.<br /></li>
+<li>Ability to group DataFrame operations into modules and organize the modules and their dependency in a hierarchical manner.</li>
+<li>No overhead of developers to use RDD and DataFrame to manipulate data and create new data set and variables</li>
+<li>Ability to use the same framework to quickly create ad-hoc analysis and the ad-hoc queries should be able to easily transform to production package</li>
+<li>Easy testing of module levels. Developer shouldn't have to create many repetitive and cumbersome scaffolding to test a module</li>
+<li>Intermediate data persistence and versioning. Data versioning is critical for applying test driven development on data application development</li>
+<li>Ability to test/run at the module level and at the application level. Developer should be able to test run modules they currently working on</li>
+<li>Same framework should also allow the creation of execution graphs at the application level.</li>
 <li>Provides utility to managing the end to end dependency graph, persisted data meta info and execution logging</li>
 </ul>
 <h2 id="application-hierarchy">Application Hierarchy</h2>
-<p>A single SMV application may contain one or more stages. Each stage may contain one or more modules. A stage corresponds to a single scala package that contains the modules.<br />By convention, each stage should have a sub-package <code>input</code> to defined all the input <code>SmvDataSet</code>s<br />used in the given stage.<br />For example, given an app with 2 stages (stage1, stage2) we should have the following file layout</p>
+<p>A single SMV application may contain one or more stages. Each stage may contain one or more modules. A stage corresponds to a single scala package that contains the modules.<br />
+By convention, each stage should have a sub-package <code>input</code> to defined all the input <code>SmvDataSet</code>s<br />
+used in the given stage.<br />
+For example, given an app with 2 stages (stage1, stage2) we should have the following file layout</p>
 <pre><code>+-- src/main/scala/com/mycom/myproj
     +-- stage1
         +-- input
@@ -48,14 +51,22 @@
 <p>Within a stage, there are multiple <code>SmvDataSet</code>s.</p>
 <p>At the top level there are 2 types of <code>SmvDataSet</code></p>
 <ul>
-<li><code>SmvFile</code>, and<br /></li>
+<li><code>SmvFile</code>, and</li>
 <li><code>SmvModule</code></li>
 </ul>
-<p><code>SmvFile</code>s link to physical files stored in HDFS. Pleas see <a href="smv_file.html">SMV Files</a> for details.<br /><code>SmvModule</code>s are datasets created in by the code. They could depends on other <code>SmvDataSet</code>s.</p>
-<p><code>SmvModule</code> could be mixed with <code>SmvOutput</code>, which labeled it to be an output dataset of a stage.<br />Without the <code>SmvOutput</code> label, a <code>SmvModule</code> will be considered intermediate dataset.<br />Please see <a href="smv_module.html">SMV Modules</a> for more details.</p>
-<p>A special type of <code>SmvModule</code> is <code>SmvModuleLink</code>. It is a link to other <code>SmvModule</code>. For example,<br /><code>stage1</code> has <code>mod2</code> as a <code>SmvOutput</code>, and <code>stage2</code> uses it as input. Instead of refer <code>stage1.mod2</code><br />directly in <code>stage2</code>, a <code>SmvModuleLink</code> will be created in the <code>input</code> sub-package and link to<br /><code>stage1.mod2</code>. The pairs of <code>SmvOutput</code> and <code>SmvModuleLink</code> defines the interface between stages.<br />Please see <a href="smv_stages.html">SMV Stages</a> for more details.</p>
+<p><code>SmvFile</code>s link to physical files stored in HDFS. Pleas see <a href="smv_file.html">SMV Files</a> for details.<br />
+<code>SmvModule</code>s are datasets created in by the code. They could depends on other <code>SmvDataSet</code>s.</p>
+<p><code>SmvModule</code> could be mixed with <code>SmvOutput</code>, which labeled it to be an output dataset of a stage.<br />
+Without the <code>SmvOutput</code> label, a <code>SmvModule</code> will be considered intermediate dataset.<br />
+Please see <a href="smv_module.html">SMV Modules</a> for more details.</p>
+<p>A special type of <code>SmvModule</code> is <code>SmvModuleLink</code>. It is a link to other <code>SmvModule</code>. For example,<br />
+<code>stage1</code> has <code>mod2</code> as a <code>SmvOutput</code>, and <code>stage2</code> uses it as input. Instead of refer <code>stage1.mod2</code><br />
+directly in <code>stage2</code>, a <code>SmvModuleLink</code> will be created in the <code>input</code> sub-package and link to<br />
+<code>stage1.mod2</code>. The pairs of <code>SmvOutput</code> and <code>SmvModuleLink</code> defines the interface between stages.<br />
+Please see <a href="smv_stages.html">SMV Stages</a> for more details.</p>
 <h2 id="class-diagram">Class Diagram</h2>
-<p>The class diagram of the SMV App below is provided as an FYI and is not critical to productively using SMV.<br /><img src="https://rawgit.com/TresAmigosSD/SMV/master/docs/design/app_class.svg" alt="SMV App Class Diagram" /></p>
+<p>The class diagram of the SMV App below is provided as an FYI and is not critical to productively using SMV.<br />
+<img src="https://rawgit.com/TresAmigosSD/SMV/master/docs/design/app_class.svg" alt="SMV App Class Diagram" /></p>
 </article>
 </body>
 </html>

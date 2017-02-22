@@ -210,6 +210,23 @@
       </span>
       </h4>
       <p class="shortcomment cmt">Spark 1.</p><div class="fullcomment"><div class="comment cmt"><p>Spark 1.6 will have collect_set aggregation function.</p></div></div>
+    </li><li name="org.tresamigos.smv.smvfuncs#diceSorensen" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="diceSorensen(c1:org.apache.spark.sql.Column,c2:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="diceSorensen(Column,Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">diceSorensen</span><span class="params">(<span name="c1">c1: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="c2">c2: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Calculate Dice-Sorensen distance between 2 string typed columns
+Returns a float.</p><div class="fullcomment"><div class="comment cmt"><p>Calculate Dice-Sorensen distance between 2 string typed columns
+Returns a float. 0 is no match, and 1 is full match</p><p>Algorithm reference: https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
+Library reference: https://github.com/rockymadden/stringmetric
+</p></div></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -294,6 +311,57 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.smvfuncs#jaroWinkler" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="jaroWinkler(c1:org.apache.spark.sql.Column,c2:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="jaroWinkler(Column,Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">jaroWinkler</span><span class="params">(<span name="c1">c1: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="c2">c2: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Calculate Jaro–Winkler distance between 2 string typed columns
+Returns a float.</p><div class="fullcomment"><div class="comment cmt"><p>Calculate Jaro–Winkler distance between 2 string typed columns
+Returns a float. 0 is no match, and 1 is full match</p><p>Algorithm reference: https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance
+Library reference: https://github.com/rockymadden/stringmetric
+</p></div></div>
+    </li><li name="org.tresamigos.smv.smvfuncs#nGram2" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="nGram2(c1:org.apache.spark.sql.Column,c2:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="nGram2(Column,Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">nGram2</span><span class="params">(<span name="c1">c1: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="c2">c2: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Calculate N-gram (N=2) distance between 2 string typed columns
+Returns a float.</p><div class="fullcomment"><div class="comment cmt"><p>Calculate N-gram (N=2) distance between 2 string typed columns
+Returns a float. 0 is no match, and 1 is full match</p><p>Algorithm reference: https://en.wikipedia.org/wiki/N-gram
+Library reference: https://github.com/rockymadden/stringmetric
+</p></div></div>
+    </li><li name="org.tresamigos.smv.smvfuncs#nGram3" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="nGram3(c1:org.apache.spark.sql.Column,c2:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="nGram3(Column,Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">nGram3</span><span class="params">(<span name="c1">c1: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="c2">c2: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Calculate N-gram (N=3) distance between 2 string typed columns
+Returns a float.</p><div class="fullcomment"><div class="comment cmt"><p>Calculate N-gram (N=3) distance between 2 string typed columns
+Returns a float. 0 is no match, and 1 is full match</p><p>Algorithm reference: https://en.wikipedia.org/wiki/N-gram
+Library reference: https://github.com/rockymadden/stringmetric
+</p></div></div>
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -307,6 +375,23 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.smvfuncs#normlevenshtein" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="normlevenshtein(c1:org.apache.spark.sql.Column,c2:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="normlevenshtein(Column,Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">normlevenshtein</span><span class="params">(<span name="c1">c1: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="c2">c2: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Calculate Normalized Levenshtein distance between 2 string typed columns
+Returns a float.</p><div class="fullcomment"><div class="comment cmt"><p>Calculate Normalized Levenshtein distance between 2 string typed columns
+Returns a float. 0 is no match, and 1 is full match</p><p>Algorithm reference: https://en.wikipedia.org/wiki/Levenshtein_distance
+Library reference: https://github.com/rockymadden/stringmetric
+</p></div></div>
     </li><li name="scala.AnyRef#notify" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notify():Unit"></a>
       <a id="notify():Unit"></a>

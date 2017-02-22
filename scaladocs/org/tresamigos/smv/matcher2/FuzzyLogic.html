@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>SmvPyClient - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.python.SmvPyClient</title>
-          <meta name="description" content="SmvPyClient - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.python.SmvPyClient" />
-          <meta name="keywords" content="SmvPyClient Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.python.SmvPyClient" />
+          <title>FuzzyLogic - Spark Modularized View 1.5-SNAPSHOT API - org.tresamigos.smv.matcher2.FuzzyLogic</title>
+          <meta name="description" content="FuzzyLogic - Spark Modularized View 1.5 - SNAPSHOT API - org.tresamigos.smv.matcher2.FuzzyLogic" />
+          <meta name="keywords" content="FuzzyLogic Spark Modularized View 1.5 SNAPSHOT API org.tresamigos.smv.matcher2.FuzzyLogic" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -12,7 +12,7 @@
       <script type="text/javascript">
          if(top === self) {
             var url = '../../../../index.html';
-            var hash = 'org.tresamigos.smv.python.SmvPyClient';
+            var hash = 'org.tresamigos.smv.matcher2.FuzzyLogic';
             var anchor = window.location.hash;
             var anchor_opt = '';
             if (anchor.length >= 1)
@@ -25,24 +25,24 @@
         <body class="type">
       <div id="definition">
         <img src="../../../../lib/class_big.png" />
-        <p id="owner"><a href="../../../package.html" class="extype" name="org">org</a>.<a href="../../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="../package.html" class="extype" name="org.tresamigos.smv">smv</a>.<a href="package.html" class="extype" name="org.tresamigos.smv.python">python</a></p>
-        <h1>SmvPyClient</h1>
+        <p id="owner"><a href="../../../package.html" class="extype" name="org">org</a>.<a href="../../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="../package.html" class="extype" name="org.tresamigos.smv">smv</a>.<a href="package.html" class="extype" name="org.tresamigos.smv.matcher2">matcher2</a></p>
+        <h1>FuzzyLogic</h1>
       </div>
 
       <h4 id="signature" class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">class</span>
+        <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">SmvPyClient</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <span class="name">FuzzyLogic</span><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="predicate">predicate: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="valueExpr">valueExpr: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="threshold">threshold: <span class="extype" name="scala.Float">Float</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher2.LevelLogic">LevelLogic</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Provide app-level methods for use in Python.</p><p>The collection types should be accessible through the py4j gateway.
-</p></div><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Level match with fuzzy logic</p></div><dl class="paramcmts block"><dt class="param">colName</dt><dd class="cmt"><p>level name used in the output DF</p></dd><dt class="param">predicate</dt><dd class="cmt"><p>a condition column, no match if this condition evaluated as false</p></dd><dt class="param">valueExpr</dt><dd class="cmt"><p>a value column, which typically return a score, higher score means higher chance of matching</p></dd><dt class="param">threshold</dt><dd class="cmt"><p>No match if the evaluated <code>valueExpr</code> &lt; this value
+</p></dd></dl><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.Product">Product</span>, <span class="extype" name="scala.Equals">Equals</span>, <span class="extype" name="org.tresamigos.smv.matcher2.LevelLogic">LevelLogic</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -60,7 +60,7 @@
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="org.tresamigos.smv.python.SmvPyClient"><span>SmvPyClient</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="org.tresamigos.smv.matcher2.FuzzyLogic"><span>FuzzyLogic</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.Product"><span>Product</span></li><li class="in" name="scala.Equals"><span>Equals</span></li><li class="in" name="org.tresamigos.smv.matcher2.LevelLogic"><span>LevelLogic</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -80,19 +80,20 @@
         <div id="allMembers">
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
-              <ol><li name="org.tresamigos.smv.python.SmvPyClient#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(j_smvApp:org.tresamigos.smv.SmvApp):org.tresamigos.smv.python.SmvPyClient"></a>
-      <a id="&lt;init&gt;:SmvPyClient"></a>
+              <ol><li name="org.tresamigos.smv.matcher2.FuzzyLogic#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="&lt;init&gt;(colName:String,predicate:org.apache.spark.sql.Column,valueExpr:org.apache.spark.sql.Column,threshold:Float):org.tresamigos.smv.matcher2.FuzzyLogic"></a>
+      <a id="&lt;init&gt;:FuzzyLogic"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">SmvPyClient</span><span class="params">(<span name="j_smvApp">j_smvApp: <a href="../SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>)</span>
+        <span class="name">FuzzyLogic</span><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="predicate">predicate: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="valueExpr">valueExpr: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="threshold">threshold: <span class="extype" name="scala.Float">Float</span></span>)</span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt"></p><div class="fullcomment"><div class="comment cmt"></div><dl class="paramcmts block"><dt class="param">colName</dt><dd class="cmt"><p>level name used in the output DF</p></dd><dt class="param">predicate</dt><dd class="cmt"><p>a condition column, no match if this condition evaluated as false</p></dd><dt class="param">valueExpr</dt><dd class="cmt"><p>a value column, which typically return a score, higher score means higher chance of matching</p></dd><dt class="param">threshold</dt><dd class="cmt"><p>No match if the evaluated <code>valueExpr</code> &lt; this value
+</p></dd></dl></div>
     </li></ol>
             </div>
 
@@ -180,19 +181,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#callbackServerPort" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="callbackServerPort:Option[Int]"></a>
-      <a id="callbackServerPort:Option[Int]"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">callbackServerPort</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Int">Int</span>]</span>
-      </span>
-      </h4>
-      
     </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a>
       <a id="clone():AnyRef"></a>
@@ -212,32 +200,19 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#config" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="config:org.tresamigos.smv.SmvConfig"></a>
-      <a id="config:SmvConfig"></a>
+    </li><li name="org.tresamigos.smv.matcher2.FuzzyLogic#colName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="colName:String"></a>
+      <a id="colName:String"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">config</span><span class="result">: <a href="../SmvConfig.html" class="extype" name="org.tresamigos.smv.SmvConfig">SmvConfig</a></span>
+        <span class="name">colName</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#dfFrom" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="dfFrom(schema:String,data:String):org.apache.spark.sql.DataFrame"></a>
-      <a id="dfFrom(String,String):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">dfFrom</span><span class="params">(<span name="schema">schema: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="data">data: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Used to create small dataframes for testing</p>
+      <p class="shortcomment cmt">level name used in the output DF</p><div class="fullcomment"><div class="comment cmt"><p>level name used in the output DF</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.matcher2.FuzzyLogic">FuzzyLogic</a> → LevelLogic</dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -251,32 +226,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="scala.AnyRef#equals" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="equals(x$1:Any):Boolean"></a>
-      <a id="equals(Any):Boolean"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#exportDataFrameToHive" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="exportDataFrameToHive(dataframe:org.apache.spark.sql.DataFrame,tableName:String):Unit"></a>
-      <a id="exportDataFrameToHive(DataFrame,String):Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">exportDataFrameToHive</span><span class="params">(<span name="dataframe">dataframe: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="tableName">tableName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Export a dataframe as hive table</p>
     </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <a id="finalize():Unit"></a>
@@ -309,32 +258,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="scala.AnyRef#hashCode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="hashCode():Int"></a>
-      <a id="hashCode():Int"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#inferStageNameFromDsName" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="inferStageNameFromDsName(modFqn:String):Option[String]"></a>
-      <a id="inferStageNameFromDsName(String):Option[String]"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">inferStageNameFromDsName</span><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Infers the name of the stage to which a named module belongs</p>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -348,32 +271,6 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#j_smvApp" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="j_smvApp:org.tresamigos.smv.SmvApp"></a>
-      <a id="j_smvApp:SmvApp"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">j_smvApp</span><span class="result">: <a href="../SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#moduleNames" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="moduleNames:java.util.List[String]"></a>
-      <a id="moduleNames:List[String]"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">moduleNames</span><span class="result">: <span class="extype" name="java.util.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
-      </span>
-      </h4>
-      
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -413,136 +310,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#outputDir" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="outputDir:String"></a>
-      <a id="outputDir:String"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">outputDir</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Output directory for files</p>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#persist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="persist(dataframe:org.apache.spark.sql.DataFrame,path:String,generateEdd:Boolean):Unit"></a>
-      <a id="persist(DataFrame,String,Boolean):Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">persist</span><span class="params">(<span name="dataframe">dataframe: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="generateEdd">generateEdd: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Saves the dataframe to disk</p>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#publishHive" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="publishHive:Boolean"></a>
-      <a id="publishHive:Boolean"></a>
+    </li><li name="org.tresamigos.smv.matcher2.FuzzyLogic#predicate" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="predicate:org.apache.spark.sql.Column"></a>
+      <a id="predicate:Column"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">publishHive</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+        <span class="name">predicate</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#publishModule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="publishModule(modFqn:String):Unit"></a>
-      <a id="publishModule(String):Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">publishModule</span><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Publish the result of an SmvModule</p>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#publishVersion" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="publishVersion:Option[String]"></a>
-      <a id="publishVersion:Option[String]"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">publishVersion</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#readPublishedData" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="readPublishedData(modFqn:String):Option[org.apache.spark.sql.DataFrame]"></a>
-      <a id="readPublishedData(String):Option[DataFrame]"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">readPublishedData</span><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span>]</span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Reads the published data, if any, for a named SMV module</p>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#register" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="register(id:String,repo:org.tresamigos.smv.SmvDataSetRepository):Unit"></a>
-      <a id="register(String,SmvDataSetRepository):Unit"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">register</span><span class="params">(<span name="id">id: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="repo">repo: <a href="../SmvDataSetRepository.html" class="extype" name="org.tresamigos.smv.SmvDataSetRepository">SmvDataSetRepository</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#runDynamicModule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="runDynamicModule(modUrn:String):org.apache.spark.sql.DataFrame"></a>
-      <a id="runDynamicModule(String):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">runDynamicModule</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#runModule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="runModule(modUrn:String):org.apache.spark.sql.DataFrame"></a>
-      <a id="runModule(String):DataFrame"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">runModule</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Runs an SmvModule written in either Python or Scala</p>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#smvCsvFile" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smvCsvFile(moduleName:String,path:String,csvAttr:org.tresamigos.smv.CsvAttributes,pForceParserCheck:Boolean,pFailAtParsingError:Boolean):org.tresamigos.smv.SmvCsvFile"></a>
-      <a id="smvCsvFile(String,String,CsvAttributes,Boolean,Boolean):SmvCsvFile"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">smvCsvFile</span><span class="params">(<span name="moduleName">moduleName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="csvAttr">csvAttr: <a href="../CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a></span>, <span name="pForceParserCheck">pForceParserCheck: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="pFailAtParsingError">pFailAtParsingError: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <a href="../SmvCsvFile.html" class="extype" name="org.tresamigos.smv.SmvCsvFile">SmvCsvFile</a></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">Create a SmvCsvFile for use in Python</p>
+      <p class="shortcomment cmt">a condition column, no match if this condition evaluated as false</p>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>
@@ -556,32 +336,33 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="toString():String"></a>
-      <a id="toString():String"></a>
+    </li><li name="org.tresamigos.smv.matcher2.FuzzyLogic#threshold" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="threshold:Float"></a>
+      <a id="threshold:Float"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">def</span>
+        <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+        <span class="name">threshold</span><span class="result">: <span class="extype" name="scala.Float">Float</span></span>
       </span>
       </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.python.SmvPyClient#urn2fqn" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="urn2fqn(modUrn:String):String"></a>
-      <a id="urn2fqn(String):String"></a>
+      <p class="shortcomment cmt">No match if the evaluated <code>valueExpr</code> &lt; this value
+</p>
+    </li><li name="org.tresamigos.smv.matcher2.FuzzyLogic#valueExpr" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="valueExpr:org.apache.spark.sql.Column"></a>
+      <a id="valueExpr:Column"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">def</span>
+        <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">urn2fqn</span><span class="params">(<span name="modUrn">modUrn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+        <span class="name">valueExpr</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">a value column, which typically return a score, higher score means higher chance of matching</p>
     </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <a id="wait():Unit"></a>
@@ -648,7 +429,17 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
+        <div class="parent" name="scala.Serializable">
+              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="java.io.Serializable">
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="scala.Product">
+              <h3>Inherited from <span class="extype" name="scala.Product">Product</span></h3>
+            </div><div class="parent" name="scala.Equals">
+              <h3>Inherited from <span class="extype" name="scala.Equals">Equals</span></h3>
+            </div><div class="parent" name="org.tresamigos.smv.matcher2.LevelLogic">
+              <h3>Inherited from <span class="extype" name="org.tresamigos.smv.matcher2.LevelLogic">LevelLogic</span></h3>
+            </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
