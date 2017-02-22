@@ -49,7 +49,7 @@ fi
 PROJ_DIR="$1"
 PROJ_CLASS="$2"
 
-if [ "$PROJ_TYPE" = "simple" ]; then
+if [ "$PROJ_TYPE" != "test" ]; then
   PROJ_CLASS=""
 fi
 
@@ -150,7 +150,7 @@ function create_python_packages()
 }
 
 # --- MAIN ---
-if [ "$PROJ_TYPE" != "simple" ]; then
+if [ "$PROJ_TYPE" = "test" ] ; then
   extract_group_artifact_ids
 fi
 create_proj_dir
