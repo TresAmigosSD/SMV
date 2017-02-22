@@ -35,10 +35,12 @@ publishArtifact in Test := true
 
 // Create itestApp task that runs the sample application
 TaskKey[Unit]("itestApp", "Run Integration Test Sample App") := { "src/test/scripts/run-sample-app.sh" ! }
+// Create runPytest task that invokes tools/smv-pytest
+TaskKey[Unit]("pytest", "Run Python Unit Tests") <<= assembly map { x => "tools/smv-pytest" ! }
 // Create itest alias that locally publishes SMV before running the sample application
 addCommandAlias("itest", "; publish-local; itestApp")
 // Create alltest alias that runs the Scala unit tests and the integration test
-addCommandAlias("alltest", "; test; itest")
+addCommandAlias("alltest", "; test; itest; pytest")
 
 mainClass in assembly := Some("org.tresamigos.smv.SmvApp")
 
