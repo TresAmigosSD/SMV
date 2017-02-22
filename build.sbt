@@ -33,6 +33,11 @@ parallelExecution in Test := false
 
 publishArtifact in Test := true
 
+val integrationTest = TaskKey[Unit]("itest", "Integration Test")
+integrationTest <<= compile in Compile map { x => "src/test/scripts/run-sample-app.sh" ! }
+
+addCommandAlias("alltest", "; test; itest")
+
 mainClass in assembly := Some("org.tresamigos.smv.SmvApp")
 
 assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
