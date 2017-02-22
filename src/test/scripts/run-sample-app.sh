@@ -34,7 +34,7 @@ test6 \
 NEW_MODULE_STAGES="$NEW_PYTHON_MODULE_STAGES $NEW_SCALA_MODULE_STAGES"
 
 echo "--------- GENERATE SAMPLE APP -------------"
-../../tools/smv-init -test ${APP_NAME} org.tresamigos.smvtest
+../../tools/smv-init -test ${APP_NAME}
 
 echo "--------- BUILD SAMPLE APP -------------"
 cd ${APP_NAME}

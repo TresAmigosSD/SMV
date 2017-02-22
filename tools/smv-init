@@ -31,24 +31,22 @@ fi
 
 TEMPLATE_DIR+="/$PROJ_TYPE"
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 1 ]; then
     echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q] [-s|-e|-t] project_name base_project_class"
+    echo "USAGE: $0 [-q] [-s|-e|-t] project_name"
     echo "project types:"
     echo "  -s: simple (default)"
     echo "  -e: enterprise"
     echo "  -t: test (for developers only)"
     echo "example:"
-    echo "  \$ $0 MyProject com.mycompany.myproj"
-    echo ""
-    echo "In the above example, the group id of the project will be 'com.mycompany'"
-    echo "and the artifact id will be 'myproj'"
+    echo "  \$ $0 MyProject"
     exit 1
 fi
 
 PROJ_DIR="$1"
 PROJ_CLASS=""
 
+# proj class hardcoded for smv integration tests
 if [ "$PROJ_TYPE" = "test" ]; then
   PROJ_CLASS="org.tresamigos.smvtest"
 fi
@@ -150,6 +148,7 @@ function create_python_packages()
 }
 
 # --- MAIN ---
+# only test proj has PROJ_CLASS
 if [ "$PROJ_TYPE" = "test" ] ; then
   extract_group_artifact_ids
 fi
