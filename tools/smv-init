@@ -50,7 +50,7 @@ PROJ_DIR="$1"
 PROJ_CLASS="$2"
 
 if [ "$PROJ_TYPE" = "simple" ]; then
-  PROJ_CLASS="org.tresamigos.myapp"
+  PROJ_CLASS=""
 fi
 
 function extract_group_artifact_ids()
@@ -150,7 +150,9 @@ function create_python_packages()
 }
 
 # --- MAIN ---
-extract_group_artifact_ids
+if [ "$PROJ_TYPE" != "simple" ]; then
+  extract_group_artifact_ids
+fi
 create_proj_dir
 copy_conf_files
 copy_data_files
