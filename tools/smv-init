@@ -31,26 +31,24 @@ fi
 
 TEMPLATE_DIR+="/$PROJ_TYPE"
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 1 ]; then
     echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q] [-s|-e|-t] project_name base_project_class"
+    echo "USAGE: $0 [-q] [-s|-e|-t] project_name"
     echo "project types:"
     echo "  -s: simple (default)"
     echo "  -e: enterprise"
     echo "  -t: test (for developers only)"
     echo "example:"
-    echo "  \$ $0 MyProject com.mycompany.myproj"
-    echo ""
-    echo "In the above example, the group id of the project will be 'com.mycompany'"
-    echo "and the artifact id will be 'myproj'"
+    echo "  \$ $0 MyProject"
     exit 1
 fi
 
 PROJ_DIR="$1"
-PROJ_CLASS="$2"
+PROJ_CLASS=""
 
-if [ "$PROJ_TYPE" = "simple" ]; then
-  PROJ_CLASS="org.tresamigos.myapp"
+# proj class hardcoded for smv integration tests
+if [ "$PROJ_TYPE" = "test" ]; then
+  PROJ_CLASS="org.tresamigos.smvtest"
 fi
 
 function extract_group_artifact_ids()
@@ -96,10 +94,20 @@ function copy_with_inject()
 
 function copy_conf_files()
 {
-    FILES="pom.xml build.sbt project/assembly.sbt project/build.properties README.md notebooks/Untitled.ipynb .gitignore.template log4j.properties conf/shell_init.scala conf/smv-app-conf.props conf/smv-user-conf.props"
-    for f in $FILES; do
-        copy_with_inject "$TEMPLATE_DIR/$f" "$PROJ_DIR/$f"
-    done
+    # copy appropriate files based on project type
+    PYTHON_FILES="README.md notebooks/Untitled.ipynb .gitignore.template log4j.properties conf/smv-app-conf.props conf/smv-user-conf.props"
+    SCALA_FILES="$PYTHON_FILES pom.xml build.sbt project/assembly.sbt project/build.properties conf/shell_init.scala"
+
+    if [ "$PROJ_TYPE" = "test" ] ; then
+      for f in $SCALA_FILES; do
+          copy_with_inject "$TEMPLATE_DIR/$f" "$PROJ_DIR/$f"
+      done
+    else
+      for f in $PYTHON_FILES; do
+          copy_with_inject "$TEMPLATE_DIR/$f" "$PROJ_DIR/$f"
+      done
+    fi
+
 
     # .gitignore was postfixed with .template so it does not affect SMV's git repo
     mv "$PROJ_DIR/.gitignore.template" "$PROJ_DIR/.gitignore"
@@ -150,7 +158,10 @@ function create_python_packages()
 }
 
 # --- MAIN ---
-extract_group_artifact_ids
+# only test proj has PROJ_CLASS
+if [ "$PROJ_TYPE" = "test" ] ; then
+  extract_group_artifact_ids
+fi
 create_proj_dir
 copy_conf_files
 copy_data_files

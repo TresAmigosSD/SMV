@@ -1,4 +1,4 @@
-package _PROJ_CLASS_.stage2
+package org.tresamigos.smvtest.stage2
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
@@ -38,7 +38,7 @@ object StageEmpCategory2 extends SmvModule("Stage2 example: use link to external
 }
 
 object StageEmpCategory3 extends SmvModule("Stage2 example: depend on an external link") with SmvOutput {
-  val externalLink = SmvExtModuleLink("_PROJ_CLASS_.stage1.employment.PythonEmploymentByState")
+  val externalLink = SmvExtModuleLink("org.tresamigos.smvtest.stage1.employment.PythonEmploymentByState")
 
   override def requiresDS() = Seq(externalLink);
 

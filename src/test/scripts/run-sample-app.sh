@@ -34,7 +34,7 @@ test6 \
 NEW_MODULE_STAGES="$NEW_PYTHON_MODULE_STAGES $NEW_SCALA_MODULE_STAGES"
 
 echo "--------- GENERATE SAMPLE APP -------------"
-../../tools/smv-init -test ${APP_NAME} com.mycompany.${APP_NAME}
+../../tools/smv-init -test ${APP_NAME}
 
 echo "--------- BUILD SAMPLE APP -------------"
 cd ${APP_NAME}
@@ -48,7 +48,7 @@ echo "--------- RUN SAMPLE APP -------------"
     -- --master 'local[*]'
 
 echo "--------- VERIFY SAMPLE APP OUTPUT -------------"
-COUNT=$(cat data/output/com.mycompany.MyApp.stage2.StageEmpCategory_*.csv/part* | wc -l)
+COUNT=$(cat data/output/org.tresamigos.smvtest.stage2.StageEmpCategory_*.csv/part* | wc -l)
 if [ "$COUNT" -ne 52 ]; then
     echo "Expected 52 lines in output of stage2.StageEmpCategory but got $COUNT"
     exit 1
@@ -56,7 +56,7 @@ fi
 
 for stage in $NEW_SCALA_MODULE_STAGES; do
   TEST_INPUT=$(< data/input/$stage/table.csv)
-  TEST_OUTPUT=$(cat data/output/com.mycompany.MyApp.$stage.M2_*.csv/part*)
+  TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.M2_*.csv/part*)
   if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
     echo "Test failure: $stage"
     exit 1
@@ -65,7 +65,7 @@ done
 
 for stage in $NEW_PYTHON_MODULE_STAGES; do
   TEST_INPUT=$(< data/input/$stage/table.csv)
-  TEST_OUTPUT=$(cat data/output/com.mycompany.MyApp.$stage.modules.M2_*.csv/part*)
+  TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.modules.M2_*.csv/part*)
   if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
     echo "Test failure: $stage"
     echo "Expected output:"
