@@ -38,7 +38,7 @@ echo "--------- GENERATE SAMPLE APP -------------"
 
 echo "--------- BUILD SAMPLE APP -------------"
 cd ${APP_NAME}
-$MVN clean package
+sbt clean assembly
 
 echo "--------- RUN SAMPLE APP -------------"
 ../../../tools/smv-pyrun \
