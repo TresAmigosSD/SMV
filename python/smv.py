@@ -841,7 +841,6 @@ class PythonDataSetRepository(object):
         """Returns the instance of SmvPyDataSet by its fully qualified name.
         Returns None if the FQN is not a valid SmvPyDataSet name.
         """
-        print "looking for mod " + str(modUrn)
         if modUrn in self.pythonDataSets:
             return self.pythonDataSets[modUrn]
         else:
