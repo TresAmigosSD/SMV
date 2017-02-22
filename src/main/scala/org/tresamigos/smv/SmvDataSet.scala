@@ -635,6 +635,15 @@ class SmvExtModulePython(target: ISmvModule) extends SmvModule(s"SmvPyModule ${t
   override def createDsDqm = target.getDqm()
 }
 
+object SmvExtModulePython {
+  def apply(target: ISmvModule): SmvExtModulePython = {
+    if(target.isOutput)
+      new SmvExtModulePython(target) with SmvOutput
+    else
+      new SmvExtModulePython(target)
+  }
+}
+
 /**
  * a built-in SmvModule from schema string and data string
  *
