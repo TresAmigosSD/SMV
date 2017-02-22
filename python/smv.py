@@ -225,10 +225,10 @@ class SmvPy(object):
             lines = f.read()
         return lines
 
-    def runModule(self, fqn):
+    def runModule(self, urn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.j_smvPyClient.runModule(fqn)
+        jdf = self.j_smvPyClient.runModule(urn)
         return DataFrame(jdf, self.sqlContext)
 
     def runDynamicModule(self, fqn):

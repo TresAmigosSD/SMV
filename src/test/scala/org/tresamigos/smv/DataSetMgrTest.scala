@@ -26,7 +26,7 @@ class SmvDSMLoadScalaModTest extends SmvTestUtil {
   val dsm = new DataSetMgr
 
   test("test DataSetMgr loads Scala SmvDataSets by name"){
-    val loadedMod = dsm.load("org.tresamigos.smv.sampleMods.m1")
+    val loadedMod = dsm.load(ModURN("org.tresamigos.smv.sampleMods.m1"))
     assert( loadedMod === sampleMods.m1 )
   }
 }

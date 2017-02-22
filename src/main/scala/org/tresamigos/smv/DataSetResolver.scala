@@ -24,8 +24,12 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
       new SmvRuntimeException(s"SmvDataSet ${fqn} not found")
   }
 
-  def loadDataSet(fqn: String): SmvDataSet = {
-    findModInRepoList(fqn, repos)
+  def loadDataSet(urn: URN): SmvDataSet = {
+    val mod = findModInRepoList(urn.fqn, repos)
+    urn match {
+      case _: LinkURN => new SmvModuleLink(mod.asInstanceOf[SmvOutput])
+      case _ => mod
+    }
   }
 
   // Recursively search for ds in repos. Throw error if not found

@@ -30,6 +30,6 @@ class D1(SmvPyCsvStringData):
 class SmvFrameworkTest(SmvBaseTest):
     def test_SmvCsvStringData(self):
         fqn = self.__module__ + ".D1"
-        df = smvPy.runModule(fqn)
+        df = smvPy.runModule("mod:"+fqn)
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)

@@ -28,6 +28,34 @@ trait FilenamePart {
   def fnpart: String
 }
 
+abstract class URN {
+  def fqn: String
+}
+case class LinkURN(fqn: String) extends URN
+case class ModURN(fqn: String) extends URN
+
+/**
+  *
+  */
+object URN {
+  object errors {
+    def invalidURN(urn: String) = new SmvRuntimeException(s"Invalid urn: ${urn}")
+  }
+
+  def apply(urn: String): URN ={
+    val splitIdx = urn.lastIndexOf(':')
+    if(splitIdx < 0)
+      throw errors.invalidURN(urn)
+    val fqn = urn.substring(splitIdx+1)
+    val prefix = urn.substring(0, splitIdx)
+    prefix match {
+      case "mod" => ModURN(fqn)
+      case "link" => LinkURN(fqn)
+      case _ => throw errors.invalidURN(urn)
+    }
+  }
+}
+
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
@@ -186,7 +214,6 @@ abstract class SmvDataSet extends FilenamePart {
     SmvHDFS.deleteFile(eddPath)
     SmvHDFS.deleteFile(rejectPath)
   }
-
   /**
    * Returns current valid outputs produced by this module.
    */
@@ -587,7 +614,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
   override val fqn = modFqn
   override val urn = mkModUrn(modFqn)
   override def isEphemeral = target.isEphemeral()
-  override def requiresDS = target.dependencies map (app.dsForName(_))
+  override def requiresDS = target.dependencies map (urn => app.dsm.load(URN(urn)))
   override def run(i: runParams) =
     target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn, i(ds))}.toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()
@@ -601,7 +628,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvModule(s"SmvPyModule ${t
   override val fqn = target.fqn
   override val urn = mkModUrn(fqn)
   override def isEphemeral = target.isEphemeral()
-  override def requiresDS = target.dependencies map (app.dsForName(_))
+  override def requiresDS = target.dependencies map (urn => app.dsm.load(URN(urn)))
   override def run(i: runParams) =
     target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn, i(ds))}.toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()

@@ -33,10 +33,10 @@ class ModuleLinkTest(SmvBaseTest):
         self.smvPy.publishModule('fixture.stage1.output.A')
 
     def test_module_link_can_be_resolved(self):
-        a = smvPy.runModule('fixture.stage1.output.A')
-        l = smvPy.runModule('fixture.stage2.links.L')
+        a = smvPy.runModule('mod:fixture.stage1.output.A')
+        l = smvPy.runModule('mod:fixture.stage2.links.L')
         self.should_be_same(a, l) # link resolution
 
-        b = smvPy.runModule('fixture.stage2.links.B')
+        b = smvPy.runModule('mod:fixture.stage2.links.B')
         expected = self.createDF("k:String;v:Integer;v2:Integer", "a,,;b,2,3")
         self.should_be_same(expected, b) # link as dependency

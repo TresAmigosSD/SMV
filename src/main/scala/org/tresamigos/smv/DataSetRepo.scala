@@ -38,7 +38,13 @@ class DataSetRepoFactoryScala(smvConfig: SmvConfig = new SmvConfig(Seq())) exten
 }
 
 class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J) extends DataSetRepo {
-  def loadDataSet(fqn: String): SmvDataSet = new SmvExtModulePython( iDSRepo.loadDataSet(fqn) )
+  def loadDataSet(fqn: String): SmvDataSet = {
+    val iDS = iDSRepo.loadDataSet(fqn)
+    if(iDS.isOutput)
+      new SmvExtModulePython(iDS) with SmvOutput
+    else
+      new SmvExtModulePython(iDS)
+  }
 }
 
 class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J) extends DataSetRepoFactory {

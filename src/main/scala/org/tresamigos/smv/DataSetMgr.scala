@@ -24,8 +24,8 @@ class DataSetMgr {
     dsRepoFactories = dsRepoFactories :+ newRepoFactory
   }
 
-  def load(fqn: String): SmvDataSet = {
+  def load(urn: URN): SmvDataSet = {
     val resolver = new DataSetResolver(dsRepoFactories)
-    resolver.loadDataSet(fqn)
+    resolver.loadDataSet( urn )
   }
 }

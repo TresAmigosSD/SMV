@@ -58,7 +58,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     datasetRepositories = datasetRepositories + (id -> repo)
   private def repositories: Seq[SmvDataSetRepository] = datasetRepositories.values.toSeq
 
-  private val dsm = new DataSetMgr
+  // dsm should be private but will be temporarily public to accomodate outside invocations
+  val dsm = new DataSetMgr
   def registerRepoFactory(factory: DataSetRepoFactory): Unit =
     dsm.register(factory)
 
@@ -77,14 +78,14 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       s <- stages.stages
       r <- repositories
       ds <- r.dsUrnsForStage(s.name)
-    } yield dsForName(ds)
+    } yield dsm.load(URN(ds))
   }
 
   override lazy val allOutputModules =
     for {
       s <- stages.stages
-      urn <- outputModsForStage(s.name)
-    } yield dsForName(urn).asInstanceOf[SmvModule]
+      fqn <- outputModsForStage(s.name)
+    } yield dsm.load(URN("mod:"+fqn)).asInstanceOf[SmvModule]
 
   override lazy val predecessors =
     allDatasets.map {
@@ -121,7 +122,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /** The names of output modules in a given stage */
   def outputModsForStage(stageName: String): Seq[String] =
-    stages.findStage(stageName).allOutputModules.map(_.fqn) ++
+    stages.findStage(stageName).allOutputModules.map(_.urn) ++
   repositories.flatMap(_.outputModsForStage(stageName))
 
   /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
@@ -222,37 +223,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   def dynamicResolveRDD(fqn: String, parentClassLoader: ClassLoader) =
     resolveRDD(scalaDsForName(fqn, parentClassLoader))
-
-  /** Factory method to look up any SmvDataSet by its urn */
-  def dsForName(urn: String, parentClassLoader: ClassLoader = getClass.getClassLoader): SmvDataSet =
-    urn2ds.get(urn) match {
-      case Some(ds) => ds
-      case None =>
-        val ds = if (isLink(urn)) {
-          val targetUrn = link2mod(urn)
-          dsForName(targetUrn, parentClassLoader) match {
-            case x: SmvModule with SmvOutput => new SmvModuleLink(x)
-            case x => throw new SmvRuntimeException(s"Module [${targetUrn}] is not an SmvOutput module: ${x}")
-          }
-        } else {
-          val fqn = urn2fqn(urn)
-          Try(scalaDsForName(fqn, parentClassLoader)) match {
-            case Success(ds) => ds
-            case Failure(_) =>
-              findRepoWith(urn) match {
-                case Some(repo) =>
-                  val iDS = repo.getSmvModule(urn)
-                  if(iDS.isOutput)
-                    new SmvExtModulePython(iDS) with SmvOutput
-                  else
-                    new SmvExtModulePython(iDS)
-                case None => notfound(urn)
-              }
-          }
-        }
-        addDataSet(urn, ds)
-        ds
-    }
 
 
   /** Looks up an Scala SmvDataSet by its fully-qualified name */
@@ -388,7 +358,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     deleteOutputModules()
 
     modulesToRun foreach { module =>
-      val modResult = runModule(module.fqn)
+      val modResult = runModule(module.urn)
 
       // if module was ephemeral, then it was not saved during graph execution and we need
       // to persist it here explicitly.
@@ -422,7 +392,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     s"""${smvConfig.publishDir}/${version}/${name}.csv"""
 
   /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(modUrn: String): DataFrame = resolveRDD(dsm.load(modUrn))
+  def runModule(modUrn: String): DataFrame = resolveRDD(dsm.load(URN(modUrn)))
 
   private[smv] def findRepoWith(modUrn: String): Option[SmvDataSetRepository] =
     repositories.find(_.hasDataSet(modUrn))
@@ -484,7 +454,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
             val dqm = new DQMValidator(ds.getDqm)
             val hashval = hashOfHash(modUrn)
             val df = repo.rerun(modUrn, dqm,
-              mkRunParam(dsForName(modUrn)).map{case (ds, df) => (ds.urn, df)})
+              mkRunParam(dsm.load(URN(modUrn))).map{case (ds, df) => (ds.urn, df)})
             persist(repo, modUrn, hashval, dqm, df)
           }
 
@@ -496,7 +466,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   def publishModule(modFqn: String, version: String): Unit = {
     println(s"publishing module ${modFqn}")
-    val df = runModule(modFqn)
+    val df = runModule("mod:"+modFqn)
     val path = publishPath(modFqn, version)
     println(s"publish path is ${path}")
     SmvUtil.publish(sqlContext, df, path, genEdd)
@@ -538,7 +508,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
       // try each in turn as module object name
       // skip those that do not have an SmvModule defined
-      m <- Try(dsForName(candidate).asInstanceOf[SmvModule]).toOption
+      m <- Try(dsm.load(URN("mod:" + candidate)).asInstanceOf[SmvModule]).toOption
     }
     yield m).toSeq
 
@@ -547,9 +517,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   // lb: This method seems to be obsolete. For identification of module
   // (and other datasets) by name, SmvApp now delegates in most places to
-  // dsForName. resolveModuleByName is now used by 1) SparkR 2) modulesToRun.
+  // dsm.load. resolveModuleByName is now used by 1) SparkR 2) modulesToRun.
   // SparkR should should transition to running modules in the same way as
-  // PySpark. modulesToRun can switch to using dsForName
+  // PySpark. modulesToRun can switch to using dsm.load
   def resolveModuleByName(name: String): SmvModule = {
     val stageNames = smvConfig.stageNames
     val mods = for {
@@ -578,7 +548,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       for {
         s <- cmdline.stagesToRun.orElse(empty)()
         m <- outputModsForStage(s)
-      } yield dsForName(m).asInstanceOf[SmvModule]
+      } yield dsm.load(URN(m)).asInstanceOf[SmvModule]
 
     // discover python output modules
     // from the list of stage names, get the (flattened) list of output module URNs
@@ -588,7 +558,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       val pyRepo = datasetRepositories("Python")
 
       smvConfig.stageNames.flatMap(stage => pyRepo.outputModsForStage(stage))
-                          .map( modUrn => dsForName(urn2fqn(modUrn)).asInstanceOf[SmvModule] )
+                          .map( modUrn => dsm.load(URN(modUrn)).asInstanceOf[SmvModule] )
     } else {
       Seq.empty[SmvModule]
     }

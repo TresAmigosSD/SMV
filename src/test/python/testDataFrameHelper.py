@@ -123,7 +123,7 @@ class DfHelperTest(SmvBaseTest):
         def csvAttr(self): return self.defaultCsvWithHeader()
 """
         exec(code.format(path), globals())
-        res = smvPy.runModule(self.__module__ + ".T")
+        res = smvPy.runModule("mod:" + self.__module__ + ".T")
         self.should_be_same(df, res)
 
     def test_smvJoinByKey(self):
