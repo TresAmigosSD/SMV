@@ -313,7 +313,8 @@ object SchemaEntry {
    * "Hi, bye" --> "Hi_bye"
    */
   def valueToColumnName(value: Any) : String = {
-    "[^a-zA-Z0-9]+".r.replaceAllIn(value.toString, "_").stripPrefix("_").stripSuffix("_")
+    if (value == null) "null"
+    else "[^a-zA-Z0-9]+".r.replaceAllIn(value.toString, "_").stripPrefix("_").stripSuffix("_")
   }
 }
 

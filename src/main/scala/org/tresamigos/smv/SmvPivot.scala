@@ -156,8 +156,9 @@ private[smv] object SmvPivot {
   private[smv] def getBaseOutputColumnNames(df: DataFrame, pivotColsSets: Seq[Seq[String]]): Seq[String] = {
     // create set of distinct values.
     // this is a seq of array strings where each array is distinct values for a column.
+    val normStr = udf({s:String => SchemaEntry.valueToColumnName(s)})
     pivotColsSets.map{ pivotCols =>
-      val colNames = df.select(smvStrCat("_", pivotCols.map{s => df(s)}: _*)).
+      val colNames = df.select(smvStrCat("_", pivotCols.map{s => normStr(df(s).cast(StringType))}: _*)).
         distinct.collect.map{r => r(0).toString}
 
       // ensure result column name is made up of valid characters.

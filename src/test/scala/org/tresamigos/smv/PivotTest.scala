@@ -40,8 +40,8 @@ class SmvPivotTest extends SmvTestUtil {
     val res = SmvPivot.getBaseOutputColumnNames(df, Seq(Seq("p1", "p2", "p3")))
     assertUnorderedSeqEqual(res, Seq(
       "p1_1_p2_A_p3X",
-      "p1_1_p2_A",
-      "p2_B_p3X"))
+      "p1_1_p2_A_null",
+      "null_p2_B_p3X"))
   }
 
   test("Test creation of unique column names with 1 pivot column") {
@@ -72,6 +72,18 @@ class SmvPivotTest extends SmvTestUtil {
     assertSrddSchemaEqual(res, "id: Integer; count_5_14_A: Long; count_5_14_B: Long; count_6_14_A: Long; count_6_14_B: Long")
     assertSrddDataEqual(res,
       "1,100,300,0,200")
+  }
+
+  test("test smvPivotSum with null on pivot column") {
+    val df = createSchemaRdd("k:String; p:String; v:Integer", "1,A,3;1,B,4;2,A,5;,A,3")
+    val res = df.smvGroupBy("p").smvPivotSum(Seq("k"))("v")("1","2")
+
+    assertSrddSchemaEqual(res, "p: String;v_1: Long;v_2: Long")
+    assertSrddDataEqual(res, "A,3,5;B,4,0")
+
+    val res2 = df.smvGroupBy("p").smvPivotSum(Seq("k"))("v")()
+    assertSrddSchemaEqual(res2, "p: String;v_1: Long;v_2: Long;v_null: Long")
+    assertSrddDataEqual(res2, "A,3,5,3;B,4,0,0")
   }
 
   test("Test smvPivot with pivotColSets") {

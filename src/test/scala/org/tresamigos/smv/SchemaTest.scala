@@ -178,6 +178,7 @@ class SmvSchemaTest extends SmvTestUtil {
     assert(SchemaEntry.valueToColumnName(" X Y Z ") === "X_Y_Z")
     assert(SchemaEntry.valueToColumnName("x_5/10/14 no! ") === "x_5_10_14_no")
     assert(SchemaEntry.valueToColumnName(55) === "55")
+    assert(SchemaEntry.valueToColumnName(null) === "null")
     assert(SchemaEntry.valueToColumnName(List(1.0, 2, 3).mkString(",")) === "1_0_2_0_3_0")
   }
 
