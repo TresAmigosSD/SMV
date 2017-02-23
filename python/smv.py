@@ -384,7 +384,6 @@ class SmvPyDataSet(object):
         try:
             src = inspect.getsource(cls)
             src_no_comm = stripComments(src)
-            print src_no_comm
             # DO NOT use the compiled byte code for the hash computation as
             # it doesn't change when constant values are changed.  For example,
             # "a = 5" and "a = 6" compile to same byte code.
