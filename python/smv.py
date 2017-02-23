@@ -878,23 +878,31 @@ class PythonDataSetRepository(object):
         # t, v, tb = sys.exc_info()
         # print("type is {0}, value is {1}".format(t, v))
         buf = []
-        for loader, name, is_pkg in pkgutil.walk_packages(onerror=err):
-            if name.startswith(stageName) and not is_pkg:
-                try:
-                    pymod = __import__(name)
-                except:
-                    continue
-                else:
-                    for c in name.split('.')[1:]:
-                        pymod = getattr(pymod, c)
 
-                for n in dir(pymod):
-                    obj = getattr(pymod, n)
+        try:
+            # import the stage and only walk the packages in the path of that stage, recursively
+            stagemod = __import__(stageName)
+
+            for loader, name, is_pkg in pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=err):
+                if not is_pkg:
                     try:
-                        if fn(obj):
-                            buf.append(obj.urn())
-                    except AttributeError:
+                        pymod = __import__(name)
+                    except:
                         continue
+                    else:
+                        for c in name.split('.')[1:]:
+                            pymod = getattr(pymod, c)
+
+                    for n in dir(pymod):
+                        obj = getattr(pymod, n)
+                        try:
+                            if fn(obj):
+                                buf.append(obj.urn())
+                        except AttributeError:
+                            continue
+        except:
+            print "error importing stage modules for: " + str(stageName)
+
         return smv_copy_array(self.smvPy.sc, *buf)
 
     def outputModsForStage(self, stageName):
