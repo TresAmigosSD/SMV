@@ -85,5 +85,28 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
     ))
   }
 
+  test("NoOpGroupCondition test") {
+    val ssc = sqlContext
+    import ssc.implicits._
+
+    val resultDF = SmvEntityMatcher("id", "_id",
+      ExactMatchPreFilter("Full_Name_Match", $"full_name" === $"_full_name"),
+      NoOpGroupCondition,
+      Seq(
+        FuzzyLogic("Zip_And_Levenshtein_City", $"zip" === $"_zip", normlevenshtein($"city",$"_city"), 0.9f),
+        ExactLogic("Zip_Not_Match", $"zip" !== $"_zip")
+      )
+    ).doMatch(createDF1, createDF2, false)
+
+    assertSrddSchemaEqual(resultDF, "id: String;_id: String;Full_Name_Match: Boolean;Zip_And_Levenshtein_City: Boolean;Zip_Not_Match: Boolean;Zip_And_Levenshtein_City_Value: Float;MatchBitmap: String")
+    assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
+      "[2,1,true,null,null,null,100]",
+      "[3,3,false,false,true,0.0,001]",
+      "[3,2,false,false,true,0.100000024,001]",
+      "[1,3,false,false,true,1.0,001]",
+      "[1,2,false,false,true,0.3,001]"
+    ))
+
+  }
   //TODO: NoOpGroupCondition test, and all python side interface
 }

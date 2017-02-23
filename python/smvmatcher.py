@@ -17,14 +17,20 @@ from pyspark.sql import HiveContext, DataFrame
 def ExactMatchPreFilter(colName, expr):
     return smvPy._jvm.org.tresamigos.smv.matcher2.ExactMatchPreFilter(colName, expr._jc)
 
+def NoOpPreFilter():
+    return None
+
 def GroupCondition(expr):
     return smvPy._jvm.org.tresamigos.smv.matcher2.GroupCondition(expr._jc)
+
+def NoOpGroupCondition():
+    return None
 
 def ExactLogic(colName, expr):
     return smvPy._jvm.org.tresamigos.smv.matcher2.ExactLogic(colName, expr._jc)
 
 def FuzzyLogic(colName, predicate, valueExpr, threshold):
-    pjc = None if predicate is None else predicate._jc
+    pjc = predicate._jc
     return smvPy._jvm.org.tresamigos.smv.matcher2.FuzzyLogic(colName, pjc, valueExpr._jc, threshold)
 
 class SmvEntityMatcher(object):
