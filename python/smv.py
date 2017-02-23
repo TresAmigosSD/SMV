@@ -113,6 +113,11 @@ def smvhash(text):
     import binascii
     return binascii.crc32(text)
 
+def stripComments(code):
+    import re
+    code = str(code)
+    return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
+
 # common converters to pass to _to_seq and _to_list
 def _jcol(c): return c._jc
 def _jdf(df): return df._jdf
@@ -378,12 +383,14 @@ class SmvPyDataSet(object):
         cls = self.__class__
         try:
             src = inspect.getsource(cls)
+            src_no_comm = stripComments(src)
+            print src_no_comm
             # DO NOT use the compiled byte code for the hash computation as
             # it doesn't change when constant values are changed.  For example,
             # "a = 5" and "a = 6" compile to same byte code.
             # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
-            # TODO: may need to remove comments from src code above.
-            res = smvhash(src)
+            # TODO: may need to remove comments at the end of line from src code above.
+            res = smvhash(src_no_comm)
         except: # `inspect` will raise error for classes defined in the REPL
             res = smvhash(disassemble(cls))
 
