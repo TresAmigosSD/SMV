@@ -1,5 +1,5 @@
-package _PROJ_CLASS_.test3
+package org.tresamigos.smvtest.test3
 
 import org.tresamigos.smv._
 
-object M1Link extends SmvModuleLink(_PROJ_CLASS_.test3_1.M1)
+object M1Link extends SmvModuleLink(org.tresamigos.smvtest.test3_1.M1)

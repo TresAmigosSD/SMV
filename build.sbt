@@ -33,6 +33,16 @@ parallelExecution in Test := false
 
 publishArtifact in Test := true
 
+// Create itest task that runs integration tests
+val itest = TaskKey[Unit]("itest", "Run Integration Test")
+itest <<= publishLocal map { x => "src/test/scripts/run-sample-app.sh" ! }
+// Create pytest task that runs the Python unit tests
+val pytest = TaskKey[Unit]("pytest", "Run Python Unit Tests")
+pytest <<= assembly map { x => "tools/smv-pytest" ! }
+// Create alltest task that sequentially runs each test suite
+val allTest = TaskKey[Unit]("alltest", "Run All Test Suites")
+allTest <<= Def.sequential(test in Test, pytest, itest)
+
 mainClass in assembly := Some("org.tresamigos.smv.SmvApp")
 
 assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)

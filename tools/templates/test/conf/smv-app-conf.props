@@ -2,13 +2,13 @@
 smv.appName = Example App
 
 # stage definitions
-smv.stages = _PROJ_CLASS_.stage1, \
-             _PROJ_CLASS_.stage2, \
-             _PROJ_CLASS_.test1, \
-             _PROJ_CLASS_.test2, \
-             _PROJ_CLASS_.test3, \
-             _PROJ_CLASS_.test3_1, \
-             _PROJ_CLASS_.test4, \
-             _PROJ_CLASS_.test4_1, \
-             _PROJ_CLASS_.test5, \
-             _PROJ_CLASS_.test6
+smv.stages = org.tresamigos.smvtest.stage1, \
+             org.tresamigos.smvtest.stage2, \
+             org.tresamigos.smvtest.test1, \
+             org.tresamigos.smvtest.test2, \
+             org.tresamigos.smvtest.test3, \
+             org.tresamigos.smvtest.test3_1, \
+             org.tresamigos.smvtest.test4, \
+             org.tresamigos.smvtest.test4_1, \
+             org.tresamigos.smvtest.test5, \
+             org.tresamigos.smvtest.test6

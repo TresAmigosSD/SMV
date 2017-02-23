@@ -2,4 +2,4 @@
 smv.appName = Example App
 
 # stage definitions
-smv.stages = _PROJ_CLASS_.stage1
+smv.stages = stage1

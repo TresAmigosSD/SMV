@@ -1,7 +1,7 @@
 from smv import *
 from pyspark.sql.functions import col, sum, lit
 
-from _PROJ_CLASS_.stage1 import inputdata
+from org.tresamigos.smvtest.stage1 import inputdata
 
 __all__ = ['PythonEmploymentByState']
 
@@ -30,7 +30,7 @@ class PythonEmploymentByStateCategory2(SmvPyModule, SmvPyOutput):
     """Python ETL Example: depending on Scala module
     """
 
-    ScalaMod = SmvPyExtDataSet("_PROJ_CLASS_.stage1.EmploymentByState")
+    ScalaMod = SmvPyExtDataSet("org.tresamigos.smvtest.stage1.EmploymentByState")
 
     def requiresDS(self):
         return [self.ScalaMod]

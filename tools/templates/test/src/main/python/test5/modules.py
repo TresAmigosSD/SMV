@@ -1,6 +1,6 @@
 from smv import *
 
-from _PROJ_CLASS_.test5 import input
+from org.tresamigos.smvtest.test5 import input
 
 class M1(SmvPyModule, SmvPyOutput):
     def requiresDS(self):

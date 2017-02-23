@@ -17,11 +17,11 @@ RUN wget http://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     mvn install -DskipTests &&\
     sbt publish-local &&\
     cd /projects &&\
-    smv-init MyApp com.mycompany.myapp &&\
+    smv-init MyApp &&\
     cd /projects/MyApp &&\
     sbt assembly &&\
     rm -rf /home/smv/.ivy2/cache/* &&\
-    find /home/smv/.m2/repository -mindepth 1 \! -path '*tresamigos*' -exec rm -rf \{\} + &&\ 
+    find /home/smv/.m2/repository -mindepth 1 \! -path '*tresamigos*' -exec rm -rf \{\} + &&\
     rm -rf $SMV_HOME/target
 
 RUN sudo apt-get remove --purge -y python-dev &&\

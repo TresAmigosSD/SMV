@@ -1,7 +1,7 @@
 from smv import *
 from pyspark.sql.functions import col, sum, lit
 
-from _PROJ_CLASS_.stage1 import inputdata
+from stage1 import inputdata
 
 __all__ = ['EmploymentByState']
 

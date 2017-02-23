@@ -1,4 +1,4 @@
-package _PROJ_CLASS_.stage1
+package org.tresamigos.smvtest.stage1
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
@@ -23,7 +23,7 @@ object EmploymentByState extends SmvModule("ETL Example: Employment") with SmvOu
 }
 
 object EmploymentByState2 extends SmvModule("Example: using a Python module") with SmvOutput {
-  val dep = SmvExtModule("_PROJ_CLASS_.stage1.inputdata.PythonEmployment")
+  val dep = SmvExtModule("org.tresamigos.smvtest.stage1.inputdata.PythonEmployment")
 
   override val requiresDS = Seq(dep)
 

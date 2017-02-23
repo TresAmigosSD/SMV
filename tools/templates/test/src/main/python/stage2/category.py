@@ -1,7 +1,7 @@
 from smv import *
 from pyspark.sql.functions import col, sum, lit
 
-from _PROJ_CLASS_.stage2 import inputdata
+from org.tresamigos.smvtest.stage2 import inputdata
 
 __all__ = ['PythonEmploymentByStateCategory']
 

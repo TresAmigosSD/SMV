@@ -1,2 +1,2 @@
 
-import _PROJ_CLASS_._
+import org.tresamigos.smvtest._
