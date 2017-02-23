@@ -378,7 +378,12 @@ class SmvPyDataSet(object):
         cls = self.__class__
         try:
             src = inspect.getsource(cls)
-            res = smvhash(compile(src, inspect.getsourcefile(cls), 'exec').co_code)
+            # DO NOT use the compiled byte code for the hash computation as
+            # it doesn't change when constant values are changed.  For example,
+            # "a = 5" and "a = 6" compile to same byte code.
+            # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
+            # TODO: may need to remove comments from src code above.
+            res = smvhash(src)
         except: # `inspect` will raise error for classes defined in the REPL
             res = smvhash(disassemble(cls))
 
