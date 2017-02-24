@@ -15,14 +15,12 @@ RUN wget http://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     sudo mv SMV-master $SMV_HOME/ &&\
     cd $SMV_HOME &&\
     mvn install -DskipTests &&\
-    sbt publish-local &&\
+    sbt assembly publish-local &&\
     cd /projects &&\
     smv-init MyApp &&\
-    cd /projects/MyApp &&\
-    sbt assembly &&\
     rm -rf /home/smv/.ivy2/cache/* &&\
     find /home/smv/.m2/repository -mindepth 1 \! -path '*tresamigos*' -exec rm -rf \{\} + &&\
-    rm -rf $SMV_HOME/target
+    find $SMV_HOME/target/* -maxdepth 0 -not -path $SMV_HOME/target/scala-2.10 -exec rm -rf \{\} +
 
 RUN sudo apt-get remove --purge -y python-dev &&\
     sudo apt-get remove --purge -y python-pip &&\

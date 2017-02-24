@@ -113,6 +113,11 @@ def smvhash(text):
     import binascii
     return binascii.crc32(text)
 
+def stripComments(code):
+    import re
+    code = str(code)
+    return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
+
 # common converters to pass to _to_seq and _to_list
 def _jcol(c): return c._jc
 def _jdf(df): return df._jdf
@@ -382,7 +387,13 @@ class SmvPyDataSet(object):
         cls = self.__class__
         try:
             src = inspect.getsource(cls)
-            res = smvhash(compile(src, inspect.getsourcefile(cls), 'exec').co_code)
+            src_no_comm = stripComments(src)
+            # DO NOT use the compiled byte code for the hash computation as
+            # it doesn't change when constant values are changed.  For example,
+            # "a = 5" and "a = 6" compile to same byte code.
+            # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
+            # TODO: may need to remove comments at the end of line from src code above.
+            res = smvhash(src_no_comm)
         except: # `inspect` will raise error for classes defined in the REPL
             res = smvhash(disassemble(cls))
 
@@ -902,23 +913,32 @@ class PythonDataSetRepository(object):
         # t, v, tb = sys.exc_info()
         # print("type is {0}, value is {1}".format(t, v))
         buf = []
-        for loader, name, is_pkg in pkgutil.walk_packages(onerror=err):
-            if name.startswith(stageName) and not is_pkg:
-                try:
-                    pymod = __import__(name)
-                except:
-                    continue
-                else:
-                    for c in name.split('.')[1:]:
-                        pymod = getattr(pymod, c)
 
-                for n in dir(pymod):
-                    obj = getattr(pymod, n)
+        try:
+            # import the stage and only walk the packages in the path of that stage, recursively
+            stagemod = __import__(stageName)
+
+            for loader, name, is_pkg in pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=err):
+                if name.startswith(stageName) and not is_pkg:
                     try:
-                        if fn(obj):
-                            buf.append(obj.urn())
-                    except AttributeError:
+                        pymod = __import__(name)
+                    except:
                         continue
+                    else:
+                        for c in name.split('.')[1:]:
+                            pymod = getattr(pymod, c)
+
+                    for n in dir(pymod):
+                        obj = getattr(pymod, n)
+                        try:
+                            if fn(obj):
+                                buf.append(obj.urn())
+                        except AttributeError:
+                            continue
+        except:
+            # may be a scala-only stage
+            pass
+
         return smv_copy_array(self.smvPy.sc, *buf)
 
     def outputModsForStage(self, stageName):

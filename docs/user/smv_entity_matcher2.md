@@ -45,7 +45,7 @@ To reduce the complexity, we made the following assumptions,
 * All the matching levels could have a shared necessary condition so that we can split the `N * M` problem to a set of smaller `n * m` problems, where `n << N` and `m << M`
 
 To implement those optimization we introduced,
-* `ExactMatchFilter` - the "full" match condition for pre filter out the fully matched population
+* `ExactMatchPreFilter` - the "full" match condition for pre filter out the fully matched population
 * `GroupCondition` - the "necessary" condition of all level of match logics (except the pre-filtered full match)
 * `LevelLogic` - a list of multilevel matching logics   
 
@@ -73,7 +73,7 @@ DS1 and DS2's columns, they need to be named differently, so the example DS2 has
 column names prefixed with `_`
 
 The following is a piece of sample matching code which has
-* An `ExactMatchFilter` - if someone's full name matched exactly, we consider the 2 records are matched fully, and filtered from any level logics later  
+* An `ExactMatchPreFilter` - if someone's full name matched exactly, we consider the 2 records are matched fully, and filtered from any level logics later  
 * A `GroupCondition` - a necessary condition of all level matchers is the `soundex` of the 2 first names have to be the same
 * An `ExactLogic` - if the 2 records have the same first name, we call it a `First_Name_Match`
 * A `FuzzyLogic` - if the 2 records's city names' normalized Levenshtein similarity larger than `0.9`, we call it a `Levenshtein_City` match
@@ -81,7 +81,7 @@ The following is a piece of sample matching code which has
 #### Scala
 ```scala
 val resultDF = SmvEntityMatcher("id", "_id",
-  ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
+  ExactMatchPreFilter("Full_Name_Match", $"full_name" === $"_full_name"),
   GroupCondition(soundex($"first_name") === soundex($"_first_name"))),
   List(
     ExactLogic("First_Name_Match", $"first_name" === $"_first_name"),
@@ -93,7 +93,7 @@ val resultDF = SmvEntityMatcher("id", "_id",
 #### Python
 ```python
 resultDF = SmvEntityMatcher("id", "_id",
-  ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
+  ExactMatchPreFilter("Full_Name_Match", $"full_name" === $"_full_name"),
   GroupCondition(soundex($"first_name") === soundex($"_first_name"))),
   [  
     ExactLogic("First_Name_Match", $"first_name" === $"_first_name"),
@@ -116,7 +116,7 @@ id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value
 1|3|false|false|true|1.0|001
 
 Since we didn't keep the original columns, the output data only have matching related flags.
-All the 3 matching levels (including the `ExactMatchFilter`) have flags respectively.
+All the 3 matching levels (including the `ExactMatchPreFilter`) have flags respectively.
 
 The `FuzzyLogic` has an addition column which in this case is the normalized Levenshtein distance.
 We keep the distance measure itself is for potentially future combined matching logics or dedup
@@ -125,8 +125,8 @@ logics.
 The `MatchBitmap` column summarize the overall matching between the 2 records.
 
 The id pair
-`2, 1` has value `100`, which means those 2 records has the `ExactMatchFilter` matched.
-Since the records, which satisfied `ExactMatchFilter`, got filtered and no further matching
+`2, 1` has value `100`, which means those 2 records has the `ExactMatchPreFilter` matched.
+Since the records, which satisfied `ExactMatchPreFilter`, got filtered and no further matching
 were tested, the `MatchBitmap` can only be `1000..00`.  
 
 The id pair `1, 3` has value `001`, which means that only the `Levenshtein_City` logic matched
@@ -160,12 +160,12 @@ import org.tresamigos.smv.matcher2._
 from smvmatcher import *
 ```
 
-### ExactMatchFilter and GroupCondition are Optional
+### ExactMatchPreFilter and GroupCondition are Optional
 In Scala, both or either of them could be `null`.
 
 In Python, both or either of them could be `None`.
 
-When `ExactMatchFilter` is `null`, not `full` match is checked.
+When `ExactMatchPreFilter` is `null`, not `full` match is checked.
 When `GroupCondition` is `null`, there are no grouping optimization.
 
 Please try to avoid keeping them all `null` unless the datasets are both very small.
