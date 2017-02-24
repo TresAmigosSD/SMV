@@ -20,6 +20,7 @@ import scala.collection.mutable
 
 class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
   val repos = repoFactories.map( _.createRepo )
+  val resolved: mutable.Map[URN, SmvDataSet] = mutable.Map.empty
 
   object errors {
     def dsNotFound(fqn: String): SmvRuntimeException =
@@ -31,34 +32,40 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
   def loadDataSet(urns: URN*): Seq[SmvDataSet] = {
     urns map {
       urn =>
-
-        val ds = urn match {
-          case LinkURN(_) => new SmvModuleLink(findModInRepoList(urn.fqn, repos).asInstanceOf[SmvOutput])
-          case ModURN(_) => findModInRepoList(urn.fqn, repos)
-        }
-
-        val resolvedDs: SmvDataSet = Try(resolveDataSet(ds)) match {
+        Try(resolved(urn)) match {
           case Success(ds) => ds
-          case Failure(e) =>
-            println(e.getMessage)
-            throw e
+          case Failure(_) =>
+            val ds = urn match {
+              case LinkURN(_) => new SmvModuleLink(findModInRepoList(urn.fqn, repos).asInstanceOf[SmvOutput])
+              case ModURN(_) => findModInRepoList(urn.fqn, repos)
+            }
+            val resolvedDs: SmvDataSet = Try(resolveDataSet(ds)) match {
+              case Success(ds) => ds
+              case Failure(e) =>
+                println(e.getMessage)
+                throw e
+            }
+            resolvedDs
         }
-
-        resolvedDs
     }
   }
 
   val resolveStack: mutable.Stack[SmvDataSet] = mutable.Stack()
 
   def resolveDataSet(ds: SmvDataSet): SmvDataSet = {
-    if (resolveStack.contains(ds))  {
+    if (resolveStack.contains(ds))
       throw errors.dependencyCycle(ds, resolveStack)
-    }
-    else  {
-      resolveStack.push(ds)
-      val resolvedDs = ds.resolve(this)
-      resolveStack.pop()
-      resolvedDs
+    else {
+      val urn = URN(ds.urn)
+      Try(resolved(urn)) match {
+        case Success(resolvedDs) => resolvedDs
+        case Failure(_) =>
+          resolveStack.push(ds)
+          val resolvedDs = ds.resolve(this)
+          resolved += (urn -> resolvedDs)
+          resolveStack.pop()
+          resolvedDs
+      }
     }
   }
 
