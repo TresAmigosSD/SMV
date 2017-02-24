@@ -167,7 +167,11 @@ object ShellCmd {
   * @return result DataFrame
   **/
   def df(ds: SmvDataSet) = {
-    SmvApp.app.resolveRDD(ds)
+    val cl = getClass.getClassLoader
+    val message = hotdeployIfCapable(ds, cl)
+    println(message) // The message will not show in Pyshell
+
+    SmvApp.app.runModule(ds.urn)
   }
 
   /**
@@ -191,24 +195,4 @@ object ShellCmd {
 
     message
   }
-
-  /**
-   * Dynamically load modules
-   *
-   * @param fqn the fully qualified name of SmvDataSet
-   * @return result DataFrame
-   **/
-  def ddf(fqn: String) = {
-    val cl = getClass.getClassLoader
-    val ds = SmvApp.app.scalaDsForName(fqn, cl)
-    val message = hotdeployIfCapable(ds, cl)
-    println(message) // The message will not show in Pyshell
-
-    // lb: why does some of the "runDynamic/hotDeploy" logic live in the shell
-    // and some in SmvApp? particularly, why does removeDataSet arise from the
-    // shell implementation and not as a consequence - internal to SmvApp - of
-    // running the module dynamically
-    SmvApp.app.runDynamicModule(ds.fqn)
-  }
-
 }

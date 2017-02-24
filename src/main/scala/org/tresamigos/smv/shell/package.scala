@@ -121,16 +121,6 @@ package object shell {
    **/
   def df(ds: SmvDataSet) = ShellCmd.df(ds)
 
-
-  /**
-   * Dynamically load modules
-   *
-   * @param fqn the fully qualified name of SmvDataSet
-   * @return result DataFrame
-   **/
-  def ddf(fqn: String) = ShellCmd.ddf(fqn)
-  def ddf(ds: SmvDataSet) = ShellCmd.ddf(ds.fqn)
-
   /**
    * Try best to discover Schema from raw Csv file
    *

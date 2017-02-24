@@ -214,24 +214,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   def mkRunParam(ds: SmvDataSet): Map[SmvDataSet, DataFrame] =
     (ds.resolvedRequiresDS map (dep => (dep, resolveRDD(dep)))).toMap
 
-  // lb: This method seems to be obsolete due to obsolescence of resolveModuleByName.
-  // This method is only invoked by resolveModuleByName and resolveDynamicModuleByName.
-  /**
-   * dynamically resolve a module.
-   * The module and all its dependents are loaded into their own classloader so that we can have multiple
-   * instances of the same module loaded at different times.
-   */
-  def dynamicResolveRDD(fqn: String, parentClassLoader: ClassLoader) =
-    resolveRDD(scalaDsForName(fqn, parentClassLoader))
-
-
-  /** Looks up an Scala SmvDataSet by its fully-qualified name */
-  def scalaDsForName(fqn: String, parentClassLoader: ClassLoader) = {
-    val cl = SmvClassLoader(smvConfig, parentClassLoader)
-    val ref = new SmvReflection(cl)
-    ref.objectNameToInstance[SmvDataSet](fqn)
-  }
-
   lazy val packagesPrefix = {
     val m = allAppModules
     if (m.isEmpty) ""
@@ -399,68 +381,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   @inline private def notfound(modUrn: String) = throw new SmvRuntimeException(s"Cannot find module ${modUrn}")
 
-  def hashOfHash(modUrn: String): Int =
-    findRepoWith(modUrn) match {
-      case None => notfound(modUrn)
-      case Some(repo) =>
-        val ds = repo.getSmvModule(modUrn)
-        ds.dependencies.foldLeft(ds.datasetHash) { (acc, dep) =>
-          acc + hashOfHash(dep)
-        }.toInt
-    }
-
-  private def persist(repo: SmvDataSetRepository, modUrn: String, hashval: Int, dqm: DQMValidator, df: DataFrame): DataFrame = {
-    val fqn = urn2fqn(modUrn)
-    // modules defined in spark shell starts with '$'
-    val persistValidation = !fqn.startsWith("$")
-    val validator = new ValidationSet(Seq(dqm), persistValidation)
-    val ds = repo.getSmvModule(modUrn)
-    if (ds.isEphemeral) {
-      val r = dqm.attachTasks(df)
-      // no action before this  point
-      validator.validate(r, false, moduleValidPath(fqn, hashval))
-      r
-    } else {
-      // TODO: need to get fnpart for the module
-      val path = moduleCsvPath(fqn, hashval)
-      Try(SmvUtil.readFile(sqlContext, path)).recoverWith { case ex =>
-        val r = dqm.attachTasks(df)
-        SmvUtil.persist(sqlContext, r, path, genEdd)
-        // already had action from persist
-        validator.validate(r, true, moduleValidPath(fqn, hashval))
-        Try(SmvUtil.readFile(sqlContext, path))
-      }.get
-    }
-  }
-
-  /**
-   * Discard the cached result of the module, if any, and re-run.
-   *
-   * This is usually used in an interactive shell to re-run a module after it's been modified.
-   */
-  def runDynamicModule(modUrn: String): DataFrame =
-    if (modUrn.isEmpty)
-      return null
-    else if (!urn2ds.contains(modUrn))
-      runModule(modUrn)
-    else
-      findRepoWith(modUrn) match {
-        case None => notfound(modUrn)
-        case Some(repo) =>
-          val ds = repo.getSmvModule(modUrn)
-          ds.dependencies foreach runDynamicModule
-
-          val df = {
-            val dqm = new DQMValidator(ds.getDqm)
-            val hashval = hashOfHash(modUrn)
-            val df = repo.rerun(modUrn, dqm,
-              mkRunParam(dsm.load(URN(modUrn)).head).map{case (ds, df) => (ds.urn, df)})
-            persist(repo, modUrn, hashval, dqm, df)
-          }
-
-          df
-      }
-
   /**
    * Publish the result of an SmvModule
    */
@@ -472,9 +392,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     SmvUtil.publish(sqlContext, df, path, genEdd)
   }
 
-  // lb: Since runModuleByName and runDynamicModuleByName are used exclusively
-  // by SparkR it can be retired once SparkR is integrated into the external
-  // module API being developed for Python
   /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
    */
@@ -483,17 +400,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     resolveRDD(module)
   }
 
-  /**
-   * Dynamically load a module given FQN. This is mostly used by SparkR to dynamically
-   * resolve modules
-   **/
-  def runDynamicModuleByName(fqn: String): DataFrame = {
-    val cl = getClass.getClassLoader
-    dynamicResolveRDD(fqn: String, cl)
-  }
-
-  // lb: This method seems to be obsolete due to obsolescence of resolveModuleByName.
-  // This method is only invoked by resolveModuleByName
+  // Tries to infer the full name of the module by guessing until it finds an existing name
   def findModuleInStage(stage: String, name: String): Option[SmvModule] = {
     val candidates = (for {
       pkg <- stage.split('.').reverse.tails //  stage "a.b.c" -> ["c","b", "a"] ->
@@ -515,11 +422,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     candidates.headOption
   }
 
-  // lb: This method seems to be obsolete. For identification of module
-  // (and other datasets) by name, SmvApp now delegates in most places to
-  // dsm.load. resolveModuleByName is now used by 1) SparkR 2) modulesToRun.
-  // SparkR should should transition to running modules in the same way as
-  // PySpark. modulesToRun can switch to using dsm.load
+  // Looks for a module with this basename in every stage
   def resolveModuleByName(name: String): SmvModule = {
     val stageNames = smvConfig.stageNames
     val mods = for {

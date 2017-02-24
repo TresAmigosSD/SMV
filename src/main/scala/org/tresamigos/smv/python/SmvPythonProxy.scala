@@ -195,9 +195,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def runModule(modUrn: String): DataFrame =
     j_smvApp.runModule(modUrn)
 
-  def runDynamicModule(modUrn: String): DataFrame =
-    j_smvApp.runDynamicModule(modUrn)
-
   /** Publish the result of an SmvModule */
   def publishModule(modFqn: String): Unit =
     j_smvApp.publishModule(modFqn, publishVersion.get)
