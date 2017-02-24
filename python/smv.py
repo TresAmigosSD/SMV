@@ -890,7 +890,7 @@ class PythonDataSetRepository(object):
             stagemod = __import__(stageName)
 
             for loader, name, is_pkg in pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=err):
-                if not is_pkg:
+                if name.startswith(stageName) and not is_pkg:
                     try:
                         pymod = __import__(name)
                     except:
@@ -907,7 +907,8 @@ class PythonDataSetRepository(object):
                         except AttributeError:
                             continue
         except:
-            print "error importing stage modules for: " + str(stageName)
+            # may be a scala-only stage
+            pass
 
         return smv_copy_array(self.smvPy.sc, *buf)
 
