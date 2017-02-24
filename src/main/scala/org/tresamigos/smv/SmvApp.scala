@@ -78,14 +78,14 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       s <- stages.stages
       r <- repositories
       ds <- r.dsUrnsForStage(s.name)
-    } yield dsm.load(URN(ds))
+    } yield dsm.load(URN(ds)).head
   }
 
   override lazy val allOutputModules =
     for {
       s <- stages.stages
       fqn <- outputModsForStage(s.name)
-    } yield dsm.load(URN("mod:"+fqn)).asInstanceOf[SmvModule]
+    } yield dsm.load(URN("mod:"+fqn)).head.asInstanceOf[SmvModule]
 
   override lazy val predecessors =
     allDatasets.map {
@@ -392,7 +392,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     s"""${smvConfig.publishDir}/${version}/${name}.csv"""
 
   /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(modUrn: String): DataFrame = resolveRDD(dsm.load(URN(modUrn)))
+  def runModule(modUrn: String): DataFrame = resolveRDD(dsm.load(URN(modUrn)).head)
 
   private[smv] def findRepoWith(modUrn: String): Option[SmvDataSetRepository] =
     repositories.find(_.hasDataSet(modUrn))
@@ -454,7 +454,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
             val dqm = new DQMValidator(ds.getDqm)
             val hashval = hashOfHash(modUrn)
             val df = repo.rerun(modUrn, dqm,
-              mkRunParam(dsm.load(URN(modUrn))).map{case (ds, df) => (ds.urn, df)})
+              mkRunParam(dsm.load(URN(modUrn)).head).map{case (ds, df) => (ds.urn, df)})
             persist(repo, modUrn, hashval, dqm, df)
           }
 
@@ -508,7 +508,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
       // try each in turn as module object name
       // skip those that do not have an SmvModule defined
-      m <- Try(dsm.load(URN("mod:" + candidate)).asInstanceOf[SmvModule]).toOption
+      m <- Try(dsm.load(ModURN(candidate)).head.asInstanceOf[SmvModule]).toOption
     }
     yield m).toSeq
 
@@ -548,7 +548,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       for {
         s <- cmdline.stagesToRun.orElse(empty)()
         m <- outputModsForStage(s)
-      } yield dsm.load(URN(m)).asInstanceOf[SmvModule]
+      } yield dsm.load(URN(m)).head.asInstanceOf[SmvModule]
 
     // discover python output modules
     // from the list of stage names, get the (flattened) list of output module URNs
@@ -558,7 +558,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       val pyRepo = datasetRepositories("Python")
 
       smvConfig.stageNames.flatMap(stage => pyRepo.outputModsForStage(stage))
-                          .map( modUrn => dsm.load(URN(modUrn)).asInstanceOf[SmvModule] )
+                          .map( modUrn => dsm.load(URN(modUrn)).head.asInstanceOf[SmvModule] )
     } else {
       Seq.empty[SmvModule]
     }

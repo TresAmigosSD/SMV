@@ -25,7 +25,7 @@ Note that all changes are being devloped in the loaduni branch
   - [ ] SmvAppDynamicResolveTest
   - [ ] ModuleCrcConsistencyTest
   - [ ] SmvLinkFollowTest
-
+  - [ ] SmvExtModuleLinkTest
 
 - [ ] Add test cases for
   - [ ] SmvAncillary to ensure changes to requiresDS haven't broken anything

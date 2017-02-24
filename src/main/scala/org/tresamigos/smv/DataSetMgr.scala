@@ -24,8 +24,8 @@ class DataSetMgr {
     dsRepoFactories = dsRepoFactories :+ newRepoFactory
   }
 
-  def load(urn: URN): SmvDataSet = {
+  def load(urns: URN*): Seq[SmvDataSet] = {
     val resolver = new DataSetResolver(dsRepoFactories)
-    resolver.loadDataSet( urn )
+    resolver.loadDataSet(urns:_*)
   }
 }

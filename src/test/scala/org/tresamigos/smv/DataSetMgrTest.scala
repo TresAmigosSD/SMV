@@ -17,7 +17,7 @@ package org.tresamigos.smv
 
 package sampleMods {
   object m1 extends SmvModule("test mod") {
-    override def requiresDS() = null
+    override def requiresDS() = Seq()
     override def run(i: runParams) = null
   }
 }
@@ -26,7 +26,7 @@ class SmvDSMLoadScalaModTest extends SmvTestUtil {
   val dsm = new DataSetMgr
 
   test("test DataSetMgr loads Scala SmvDataSets by name"){
-    val loadedMod = dsm.load(ModURN("org.tresamigos.smv.sampleMods.m1"))
+    val loadedMod = dsm.load(ModURN("org.tresamigos.smv.sampleMods.m1")).head
     assert( loadedMod === sampleMods.m1 )
   }
 }

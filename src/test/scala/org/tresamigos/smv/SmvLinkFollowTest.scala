@@ -85,7 +85,8 @@ object L extends SmvModuleLink(org.tresamigos.smv.smvLinkTestPkg1.Y)
 object L2 extends SmvModuleLink(org.tresamigos.smv.smvLinkTestPkg1.Y2)
 
 object T extends SmvModule("T Module") {
-  override def requiresDS() = Seq(L)
+  resolvedRequiresDS = Seq(L)
+  override def requiresDS() = resolvedRequiresDS
   override def run(inputs: runParams) = inputs(L)
 }
 

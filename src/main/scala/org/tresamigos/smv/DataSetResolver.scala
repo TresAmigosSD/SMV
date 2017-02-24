@@ -15,6 +15,8 @@
 package org.tresamigos.smv
 
 import scala.util.{Try, Success, Failure}
+import scala.collection.mutable
+
 
 class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
   val repos = repoFactories.map( _.createRepo )
@@ -22,13 +24,41 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
   object errors {
     def dsNotFound(fqn: String): SmvRuntimeException =
       new SmvRuntimeException(s"SmvDataSet ${fqn} not found")
+    def dependencyCycle(ds: SmvDataSet, s: mutable.Stack[SmvDataSet]): IllegalStateException =
+      new IllegalStateException(s"cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}"))
   }
 
-  def loadDataSet(urn: URN): SmvDataSet = {
-    val mod = findModInRepoList(urn.fqn, repos)
-    urn match {
-      case _: LinkURN => new SmvModuleLink(mod.asInstanceOf[SmvOutput])
-      case _ => mod
+  def loadDataSet(urns: URN*): Seq[SmvDataSet] = {
+    urns map {
+      urn =>
+
+        val ds = urn match {
+          case LinkURN(_) => new SmvModuleLink(findModInRepoList(urn.fqn, repos).asInstanceOf[SmvOutput])
+          case ModURN(_) => findModInRepoList(urn.fqn, repos)
+        }
+
+        val resolvedDs: SmvDataSet = Try(resolveDataSet(ds)) match {
+          case Success(ds) => ds
+          case Failure(e) =>
+            println(e.getMessage)
+            throw e
+        }
+
+        resolvedDs
+    }
+  }
+
+  val resolveStack: mutable.Stack[SmvDataSet] = mutable.Stack()
+
+  def resolveDataSet(ds: SmvDataSet): SmvDataSet = {
+    if (resolveStack.contains(ds))  {
+      throw errors.dependencyCycle(ds, resolveStack)
+    }
+    else  {
+      resolveStack.push(ds)
+      val resolvedDs = ds.resolve(this)
+      resolveStack.pop()
+      resolvedDs
     }
   }
 
@@ -36,7 +66,10 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
   private def findModInRepoList(fqn: String, repoList: Seq[DataSetRepo]): SmvDataSet = {
     Try( repoList.head ) match {
       // If repoList is empty, dataset not found
-      case Failure(_) => throw errors.dsNotFound(fqn)
+      case Failure(_) =>
+        val e = errors.dsNotFound(fqn)
+        println(e.getMessage)
+        throw e
       case Success(repo) =>
         Try( repo.loadDataSet(fqn) ) match {
           // If dataset not found in repo, try next repo

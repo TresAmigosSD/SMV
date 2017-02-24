@@ -25,9 +25,9 @@ package org.tresamigos.smv {
 
   abstract class DependencyTestModule(deps: Seq[SmvDataSet] = Seq.empty) extends SmvModule("Dependency test") {
     final override lazy val parentStage = DependencyTests.findStageForDataSet(this).getOrElse(null)
-
-    final override val requiresDS = deps
+    final override def requiresDS = null
     final override def run(i: runParams) = null
+    resolvedRequiresDS = deps
   }
 
   abstract class DependencyTestModuleLink(output: SmvOutput) extends SmvModuleLink(output) {
