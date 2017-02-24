@@ -28,4 +28,9 @@ public interface IDataSetRepoPy4J {
 	 * Factory method for ISmvModule
 	 */
 	ISmvModule loadDataSet(String modUrn);
+
+	/**
+	 * Get names of all output modules in a given stage
+	 */
+	String[] outputModsForStage(String stageName);
 }

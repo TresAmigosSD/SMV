@@ -17,7 +17,10 @@ package org.tresamigos.smv
 import org.tresamigos.smv.class_loader.SmvClassLoader
 
 abstract class DataSetRepo {
-  def loadDataSet(urn: String): SmvDataSet
+  def loadDataSet(fqn: String): SmvDataSet
+  def hasDataSet(fqn: String): Boolean
+  def allOutputModules(): Seq[String]
+  def outputModsForStage(stageName: String): Seq[String]
 }
 
 abstract class DataSetRepoFactory {
@@ -26,22 +29,41 @@ abstract class DataSetRepoFactory {
 
 class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   val cl = SmvClassLoader(smvConfig, getClass.getClassLoader)
+  val stages = smvConfig.stages
 
   def loadDataSet(fqn: String): SmvDataSet = {
     val ref = new SmvReflection(cl)
     ref.objectNameToInstance[SmvDataSet](fqn)
   }
+
+  def hasDataSet(fqn: String): Boolean = {
+    stages.allDatasets map (_.fqn) contains(fqn)
+  }
+
+  def allOutputModules(): Seq[String] = {
+    stages.allOutputModules.map(_.urn)
+  }
+
+  def outputModsForStage(stageName: String): Seq[String] = {
+    stages.findStage(stageName).allOutputModules.map(_.urn)
+  }
 }
 
-class DataSetRepoFactoryScala(smvConfig: SmvConfig = new SmvConfig(Seq())) extends DataSetRepoFactory {
+class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {
   def createRepo(): DataSetRepoScala = new DataSetRepoScala(smvConfig)
 }
 
-class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J) extends DataSetRepo {
+class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo {
   def loadDataSet(fqn: String): SmvDataSet =
     SmvExtModulePython( iDSRepo.loadDataSet(fqn) )
+  def hasDataSet(fqn: String): Boolean =
+    iDSRepo.hasDataSet(fqn)
+  def allOutputModules(): Seq[String] =
+    smvConfig.stageNames.flatMap (outputModsForStage(_))
+  def outputModsForStage(stageName: String): Seq[String] =
+    iDSRepo.outputModsForStage(stageName)
 }
 
-class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J) extends DataSetRepoFactory {
-  def createRepo(): DataSetRepoPython = new DataSetRepoPython(iDSRepoFactory.createRepo())
+class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J, smvConfig: SmvConfig) extends DataSetRepoFactory {
+  def createRepo(): DataSetRepoPython = new DataSetRepoPython(iDSRepoFactory.createRepo(), smvConfig)
 }

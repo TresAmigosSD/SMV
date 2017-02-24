@@ -62,6 +62,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val dsm = new DataSetMgr
   def registerRepoFactory(factory: DataSetRepoFactory): Unit =
     dsm.register(factory)
+  registerRepoFactory(new DataSetRepoFactoryScala(smvConfig))
 
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
@@ -84,7 +85,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   override lazy val allOutputModules =
     for {
       s <- stages.stages
-      fqn <- outputModsForStage(s.name)
+      fqn <- dsm.outputModsForStage(s.name)
     } yield dsm.load(URN("mod:"+fqn)).head.asInstanceOf[SmvModule]
 
   override lazy val predecessors =
@@ -119,11 +120,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /** all modules known to this app. */
   private[smv] def allAppModules = stages.allModules
-
-  /** The names of output modules in a given stage */
-  def outputModsForStage(stageName: String): Seq[String] =
-    stages.findStage(stageName).allOutputModules.map(_.urn) ++
-  repositories.flatMap(_.outputModsForStage(stageName))
 
   /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
   private[smv] def validFilesInOutputDir() : Seq[String] = {
@@ -446,29 +442,18 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   private[smv] def modulesToRun() : Seq[SmvModule] = {
     val cmdline = smvConfig.cmdLine
     val empty = Some(Seq.empty[String])
-    val directMods = cmdline.modsToRun.orElse(empty)().map {resolveModuleByName }
-    val stageMods =
-      for {
-        s <- cmdline.stagesToRun.orElse(empty)()
-        m <- outputModsForStage(s)
-      } yield dsm.load(URN(m)).head.asInstanceOf[SmvModule]
 
-    // discover python output modules
-    // from the list of stage names, get the (flattened) list of output module URNs
-    // and convert them to a sequence of SmvExtModule.
-    // This list will be appended to the Scala output modules in appMods
-    val pyOutMods : Seq[SmvModule] = if (datasetRepositories.contains("Python")) {
-      val pyRepo = datasetRepositories("Python")
+    val directModURNs: Seq[URN] =
+      cmdline.modsToRun.orElse(empty)().map (partialName => URN(resolveModuleByName(partialName).urn))
 
-      smvConfig.stageNames.flatMap(stage => pyRepo.outputModsForStage(stage))
-                          .map( modUrn => dsm.load(URN(modUrn)).head.asInstanceOf[SmvModule] )
-    } else {
-      Seq.empty[SmvModule]
-    }
+    val stageModURNs =
+      cmdline.stagesToRun.orElse(empty)() flatMap {dsm.outputModsForStage}
 
-    val appMods = if (cmdline.runAllApp()) stages.allOutputModules ++ pyOutMods else Seq.empty[SmvModule]
+    val appModURNs = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[URN]
 
-    directMods ++ stageMods ++ appMods
+    val allURNs = (directModURNs ++ stageModURNs ++ appModURNs).distinct
+
+    dsm.load(allURNs:_*) map (_.asInstanceOf[SmvModule])
   }
 
   /**

@@ -17,8 +17,7 @@ package org.tresamigos.smv
 import scala.util.{Try, Success, Failure}
 
 class DataSetMgr {
-  private var dsRepoFactories: Seq[DataSetRepoFactory] =
-    Seq(new DataSetRepoFactoryScala)
+  private var dsRepoFactories: Seq[DataSetRepoFactory] = Seq.empty[DataSetRepoFactory]
 
   def register(newRepoFactory: DataSetRepoFactory): Unit = {
     dsRepoFactories = dsRepoFactories :+ newRepoFactory
@@ -28,4 +27,13 @@ class DataSetMgr {
     val resolver = new DataSetResolver(dsRepoFactories)
     resolver.loadDataSet(urns:_*)
   }
+
+  def hasDataSet(urn: URN): Boolean =
+    dsRepoFactories exists (_.createRepo.hasDataSet(urn.fqn))
+
+  def allOutputModules(): Seq[URN] =
+    dsRepoFactories flatMap (_.createRepo.allOutputModules) map (URN(_))
+
+  def outputModsForStage(stageName: String): Seq[URN] =
+    dsRepoFactories flatMap (_.createRepo.outputModsForStage(stageName)) map (URN(_))
 }

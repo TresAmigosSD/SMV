@@ -830,6 +830,9 @@ class DataSetRepo(object):
     def loadDataSet(self, modUrn):
         return self.oldRepo.dsForName(modUrn)
 
+    def outputModsForStage(self, stageName):
+        return self.oldRepo.outputModsForStage(stageName)
+
     class Java:
         implements = ['org.tresamigos.smv.IDataSetRepoPy4J']
 
