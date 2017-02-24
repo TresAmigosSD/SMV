@@ -36,14 +36,14 @@ $ smv-pyrun --run-app
 The output csv file and schema can be found in the `data/output` directory. Note that 'XXXXXXXX' here substitutes for a number which is like the version of the module.
 
 ```shell
-$ cat data/output/org.tresamigos.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
+$ cat data/output/stage1.employment.EmploymentByState_XXXXXXXX.csv/part-* | head -5
 "50",245058
 "51",2933665
 "53",2310426
 "54",531834
 "55",2325877
 
-$ cat data/output/org.tresamigos.myapp.stage1.EmploymentByState_XXXXXXXX.schema/part-*
+$ cat data/output/stage1.employment.EmploymentByState_XXXXXXXX.schema/part-*
 @delimiter = ,
 @has-header = false
 @quote-char = "
@@ -53,7 +53,7 @@ EMP: Long
 
 ## Edit Example App
 
-The `EmploymentByState` module is defined in `src/python/org/tresamigos/myapp/stage1/employment.py`:
+The `EmploymentByState` module is defined in `src/python/stage1/employment.py`:
 
 ```shell
 class EmploymentByState(SmvPyModule, SmvPyOutput):
@@ -88,14 +88,14 @@ smv-pyrun --purge-old-output --run-app
 Inspect the new output to see the changes.
 
 ```shell
-$ cat data/output/org.tresamigos.myapp.stage1.EmploymentByState_XXXXXXXX.csv/part-* | head -5
+$ cat data/output/stage1.employment.EmploymentByState_XXXXXXXX.csv/part-* | head -5
 "51",2933665
 "53",2310426
 "55",2325877
 "01",1501148
 "04",2027240
 
-$ cat data/output/org.tresamigos.myapp.stage1.employmenyt.EmploymentByState_XXXXXXXX.schema/part-*
+$ cat data/output/stage1.employment.EmploymentByState_XXXXXXXX.schema/part-*
 @delimiter = ,
 @has-header = false
 @quote-char = "
@@ -118,7 +118,7 @@ class EmploymentByState(SmvPyModule, SmvPyOutput):
 
 Then use
 ```bash
-$ smv-pyrun --publish-hive -m org.tresamigos.myapp.stage1.EmploymentByState
+$ smv-pyrun --publish-hive -m stage1.employment.EmploymentByState
 ```
 
 ## smv-pyshell
@@ -132,7 +132,7 @@ $ smv-pyshell
 To get the `DataFrame` of `EmploymentByState`,
 
 ```shell
->>> x = df('org.tresamigos.myapp.stage1.EmploymentByState')
+>>> x = df('stage1.employment.EmploymentByState')
 
 ```
 
