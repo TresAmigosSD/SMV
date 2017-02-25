@@ -129,7 +129,7 @@ private[smv] case class DateTypeFormat(override val format: String = "yyyy-MM-dd
 
   override def valToStr(v: Any) : String = {
     if (v==null) ""
-    else fmtObj.format(DateTimeUtils.toJavaDate(v.asInstanceOf[Int]))
+    else fmtObj.format(v)
   }
 
   override val typeName = "Date"
