@@ -75,17 +75,17 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
 
       //Handling the initial case where the current column schema entry is not set yet
       case null if canConvertToInt(valueStr) && canConvertToyyyyMMddDate(valueStr)
-                                             => TimestampTypeFormat("yyyyMMdd")
+                                             => DateTypeFormat("yyyyMMdd")
       case null if canConvertToInt(valueStr) => IntegerTypeFormat()
       case null if canConvertToLong(valueStr) => LongTypeFormat()
       case null if canConvertToFloat(valueStr) => FloatTypeFormat()
       case null if canConvertToDouble(valueStr) => DoubleTypeFormat()
       case null if canConvertToBoolean(valueStr) => BooleanTypeFormat()
-      case null if canConvertToDate(valueStr,"dd/MM/yyyy") => TimestampTypeFormat("dd/MM/yyyy")
-      case null if canConvertToDate(valueStr,"dd-MM-yyyy") => TimestampTypeFormat("dd-MM-yyyy")
-      case null if canConvertToDate(valueStr,"dd-MMM-yyyy") => TimestampTypeFormat("dd-MMM-yyyy")
-      case null if canConvertToDate(valueStr,"ddMMMyyyy") => TimestampTypeFormat("ddMMMyyyy")
-      case null if canConvertToDate(valueStr,"yyyy-MM-dd") => TimestampTypeFormat("yyyy-MM-dd")
+      case null if canConvertToDate(valueStr,"dd/MM/yyyy") => DateTypeFormat("dd/MM/yyyy")
+      case null if canConvertToDate(valueStr,"dd-MM-yyyy") => DateTypeFormat("dd-MM-yyyy")
+      case null if canConvertToDate(valueStr,"dd-MMM-yyyy") => DateTypeFormat("dd-MMM-yyyy")
+      case null if canConvertToDate(valueStr,"ddMMMyyyy") => DateTypeFormat("ddMMMyyyy")
+      case null if canConvertToDate(valueStr,"yyyy-MM-dd") => DateTypeFormat("yyyy-MM-dd")
       case null => StringTypeFormat()
 
       // Handling Integer type and its possible promotions
@@ -116,27 +116,27 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       //TODO: Need to find a better way to match dates to avoid repetition.
 
       //The date format should not change, if it did then we will treat the column as String
-      case TimestampTypeFormat("yyyyMMdd") if canConvertToyyyyMMddDate(valueStr) =>  curTypeFormat
-      case TimestampTypeFormat("yyyyMMdd") if canConvertToInt(valueStr) => IntegerTypeFormat()
-      case TimestampTypeFormat("yyyyMMdd") if canConvertToLong(valueStr) => LongTypeFormat()
-      case TimestampTypeFormat("yyyyMMdd") if canConvertToFloat(valueStr) => FloatTypeFormat()
-      case TimestampTypeFormat("yyyyMMdd") if canConvertToDouble(valueStr) => DoubleTypeFormat()
-      case TimestampTypeFormat("yyyyMMdd") => StringTypeFormat()
+      case DateTypeFormat("yyyyMMdd") if canConvertToyyyyMMddDate(valueStr) =>  curTypeFormat
+      case DateTypeFormat("yyyyMMdd") if canConvertToInt(valueStr) => IntegerTypeFormat()
+      case DateTypeFormat("yyyyMMdd") if canConvertToLong(valueStr) => LongTypeFormat()
+      case DateTypeFormat("yyyyMMdd") if canConvertToFloat(valueStr) => FloatTypeFormat()
+      case DateTypeFormat("yyyyMMdd") if canConvertToDouble(valueStr) => DoubleTypeFormat()
+      case DateTypeFormat("yyyyMMdd") => StringTypeFormat()
 
-      case TimestampTypeFormat("dd/MM/yyyy") if canConvertToDate(valueStr,"dd/MM/yyyy") => curTypeFormat
-      case TimestampTypeFormat("dd/MM/yyyy") => StringTypeFormat()
+      case DateTypeFormat("dd/MM/yyyy") if canConvertToDate(valueStr,"dd/MM/yyyy") => curTypeFormat
+      case DateTypeFormat("dd/MM/yyyy") => StringTypeFormat()
 
-      case TimestampTypeFormat("dd-MM-yyyy") if canConvertToDate(valueStr,"dd-MM-yyyy") => curTypeFormat
-      case TimestampTypeFormat("dd-MM-yyyy") => StringTypeFormat()
+      case DateTypeFormat("dd-MM-yyyy") if canConvertToDate(valueStr,"dd-MM-yyyy") => curTypeFormat
+      case DateTypeFormat("dd-MM-yyyy") => StringTypeFormat()
 
-      case TimestampTypeFormat("dd-MMM-yyyy") if canConvertToDate(valueStr,"dd-MMM-yyyy") => curTypeFormat
-      case TimestampTypeFormat("dd-MMM-yyyy") => StringTypeFormat()
+      case DateTypeFormat("dd-MMM-yyyy") if canConvertToDate(valueStr,"dd-MMM-yyyy") => curTypeFormat
+      case DateTypeFormat("dd-MMM-yyyy") => StringTypeFormat()
 
-      case TimestampTypeFormat("ddMMMyyyy") if canConvertToDate(valueStr,"ddMMMyyyy") => curTypeFormat
-      case TimestampTypeFormat("ddMMMyyyy") => StringTypeFormat()
+      case DateTypeFormat("ddMMMyyyy") if canConvertToDate(valueStr,"ddMMMyyyy") => curTypeFormat
+      case DateTypeFormat("ddMMMyyyy") => StringTypeFormat()
 
-      case TimestampTypeFormat("yyyy-MM-dd") if canConvertToDate(valueStr,"yyyy-MM-dd") => curTypeFormat
-      case TimestampTypeFormat("yyyy-MM-dd") => StringTypeFormat()
+      case DateTypeFormat("yyyy-MM-dd") if canConvertToDate(valueStr,"yyyy-MM-dd") => curTypeFormat
+      case DateTypeFormat("yyyy-MM-dd") => StringTypeFormat()
 
       case StringTypeFormat( _ , _ ) => curTypeFormat
 

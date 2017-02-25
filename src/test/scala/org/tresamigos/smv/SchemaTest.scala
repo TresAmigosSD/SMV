@@ -103,6 +103,14 @@ class SmvSchemaTest extends SmvTestUtil {
     assert(date_b === "2014-02-03 00:00:00.0") // 20140203
   }
 
+  test("Test Date Format") {
+    val s = SmvSchema.fromString("a:Date[yyyyMMdd]")
+    val a = s.entries(0)
+
+    val d = a.typeFormat.valToStr(a.typeFormat.strToVal("20161206"))
+    assert(d === "20161206")
+  }
+
   test("Test Serialize Map Values") {
     val s = SmvSchema.fromString("a:map[integer, string]")
     val a = s.entries(0)
@@ -178,6 +186,7 @@ class SmvSchemaTest extends SmvTestUtil {
     assert(SchemaEntry.valueToColumnName(" X Y Z ") === "X_Y_Z")
     assert(SchemaEntry.valueToColumnName("x_5/10/14 no! ") === "x_5_10_14_no")
     assert(SchemaEntry.valueToColumnName(55) === "55")
+    assert(SchemaEntry.valueToColumnName(null) === "null")
     assert(SchemaEntry.valueToColumnName(List(1.0, 2, 3).mkString(",")) === "1_0_2_0_3_0")
   }
 

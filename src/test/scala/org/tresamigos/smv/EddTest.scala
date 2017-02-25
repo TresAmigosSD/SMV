@@ -97,6 +97,7 @@ col_b                Average                21.7""")
 
 class EddTaskTest extends SmvTestUtil {
   var df: DataFrame = _
+  var dfDate: DataFrame = _
 
   override def beforeAll() = {
     super.beforeAll()
@@ -105,6 +106,8 @@ class EddTaskTest extends SmvTestUtil {
          z,2,a,1.4,20150402,true;
          z,5,b,2.2,20130930,true;
          a,1,a,0.3,20151204,false""")
+
+    dfDate = createSchemaRdd("d:Date[yyyyMMdd]", "19010701;20150402;20130930;20151204")
   }
 
   private def histJson(s: String) = {
@@ -204,6 +207,18 @@ key                      count      Pct    cumCount   cumPct
 2015                         2   50.00%           4  100.00%
 -------------------------------------------------"""
     )
+
+    val res2 = dfDate.agg(std.aggCol).select(std.resultCols: _*)
+
+    val rep2 = res2.toDF.collect.map{r => EddResult(r)}.head.toReport()
+    assert(rep2 === """Histogram of d: Year
+key                      count      Pct    cumCount   cumPct
+1901                         1   25.00%           1   25.00%
+2013                         1   25.00%           2   50.00%
+2015                         2   50.00%           4  100.00%
+-------------------------------------------------"""
+    )
+
   }
 
   test("test EddTask MonthHistogram") {
@@ -213,6 +228,17 @@ key                      count      Pct    cumCount   cumPct
 
     val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
     assert(rep === """Histogram of d: Month
+key                      count      Pct    cumCount   cumPct
+04                           1   25.00%           1   25.00%
+07                           1   25.00%           2   50.00%
+09                           1   25.00%           3   75.00%
+12                           1   25.00%           4  100.00%
+-------------------------------------------------""")
+
+    val res2 = dfDate.agg(std.aggCol).select(std.resultCols: _*)
+
+    val rep2 = res2.toDF.collect.map{r => EddResult(r)}.head.toReport()
+    assert(rep2 === """Histogram of d: Month
 key                      count      Pct    cumCount   cumPct
 04                           1   25.00%           1   25.00%
 07                           1   25.00%           2   50.00%
@@ -228,6 +254,16 @@ key                      count      Pct    cumCount   cumPct
     val res = df.agg(std.aggCol).select(std.resultCols: _*)
     val rep = res.toDF.collect.map{r => EddResult(r)}.head.toReport()
     assert(rep === """Histogram of d: Day of Week
+key                      count      Pct    cumCount   cumPct
+2                            2   50.00%           2   50.00%
+5                            1   25.00%           3   75.00%
+6                            1   25.00%           4  100.00%
+-------------------------------------------------""")
+
+    val res2 = dfDate.agg(std.aggCol).select(std.resultCols: _*)
+    val rep2 = res2.toDF.collect.map{r => EddResult(r)}.head.toReport()
+
+    assert(rep2 === """Histogram of d: Day of Week
 key                      count      Pct    cumCount   cumPct
 2                            2   50.00%           2   50.00%
 5                            1   25.00%           3   75.00%
