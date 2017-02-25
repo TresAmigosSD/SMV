@@ -37,9 +37,9 @@ class SchemaDiscoveryTest extends SmvTestUtil {
     assert(entries(5).field.name === "address")
     assert(entries(5).typeFormat.typeName === "String")
     assert(entries(6).field.name === "registration_date")
-    assert(entries(6).typeFormat.typeName === "Timestamp")
+    assert(entries(6).typeFormat.typeName === "Date")
     assert(entries(7).field.name === "last_active_date")
-    assert(entries(7).typeFormat.typeName === "Timestamp")
+    assert(entries(7).typeFormat.typeName === "Date")
   }
 
   test("Test schema discovery no header") {
