@@ -496,7 +496,9 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     // TODO turn on dependency check by uncomment the following line after test against projects
     // checkDependency()
-    run(new runParams(app.mkRunParam(this)))
+    val paramMap: Map[SmvDataSet, DataFrame] =
+      (resolvedRequiresDS map ( dep => (dep, app.resolveRDD(dep)) ) ).toMap
+    run( new runParams(paramMap) )
   }
 
   /** Use Bytecode analysis to figure out dependency and check against
