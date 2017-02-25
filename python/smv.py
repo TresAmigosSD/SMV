@@ -827,8 +827,12 @@ class DataSetRepo(object):
     def hasDataSet(self, modUrn):
         return self.oldRepo.hadDataSet(modUrn)
 
-    def loadDataSet(self, modUrn):
-        return self.oldRepo.dsForName(modUrn)
+    def loadDataSet(self, modFqn):
+        try:
+            mod = self.oldRepo.reloadDs(modFqn)
+        except:
+            mod = self.oldRepo.dsForName(modFqn)
+        return mod
 
     def outputModsForStage(self, stageName):
         return self.oldRepo.outputModsForStage(stageName)
@@ -853,7 +857,7 @@ class PythonDataSetRepository(object):
             try:
                 ret = for_name(fqn)(self.smvPy)
             except AttributeError: # module not found is anticipated
-                return None
+                traceback.print_exc()
             except ImportError as e:
                 return None
             except Exception as e: # other errors should be reported, such as syntax error
