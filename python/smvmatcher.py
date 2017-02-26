@@ -15,23 +15,23 @@ from smv import smvPy, smv_copy_array
 from pyspark.sql import HiveContext, DataFrame
 
 def ExactMatchPreFilter(colName, expr):
-    return smvPy._jvm.org.tresamigos.smv.matcher2.ExactMatchPreFilter(colName, expr._jc)
+    return smvPy._jvm.org.tresamigos.smv.matcher.ExactMatchPreFilter(colName, expr._jc)
 
 def NoOpPreFilter():
     return None
 
 def GroupCondition(expr):
-    return smvPy._jvm.org.tresamigos.smv.matcher2.GroupCondition(expr._jc)
+    return smvPy._jvm.org.tresamigos.smv.matcher.GroupCondition(expr._jc)
 
 def NoOpGroupCondition():
     return None
 
 def ExactLogic(colName, expr):
-    return smvPy._jvm.org.tresamigos.smv.matcher2.ExactLogic(colName, expr._jc)
+    return smvPy._jvm.org.tresamigos.smv.matcher.ExactLogic(colName, expr._jc)
 
 def FuzzyLogic(colName, predicate, valueExpr, threshold):
     pjc = predicate._jc
-    return smvPy._jvm.org.tresamigos.smv.matcher2.FuzzyLogic(colName, pjc, valueExpr._jc, threshold)
+    return smvPy._jvm.org.tresamigos.smv.matcher.FuzzyLogic(colName, pjc, valueExpr._jc, threshold)
 
 class SmvEntityMatcher(object):
     def __init__(self,
@@ -41,7 +41,7 @@ class SmvEntityMatcher(object):
         groupCondition,
         levelLogics
     ):
-        jlls = smvPy.sc._gateway.new_array(smvPy._jvm.org.tresamigos.smv.matcher2.LevelLogic, len(levelLogics))
+        jlls = smvPy.sc._gateway.new_array(smvPy._jvm.org.tresamigos.smv.matcher.LevelLogic, len(levelLogics))
         for i in range(0, len(jlls)):
             jlls[i] = levelLogics[i]
 

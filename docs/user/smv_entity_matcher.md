@@ -1,104 +1,204 @@
-# SMV  Entity Matcher
+# SMV Entity Matcher
 
-Part of the process of creating a master file during MDM from different data sources is mapping related records.  This can be accomplished with one or more algorithms, where each algorithm could map one record from one data source to multiple records in another.  A single relationship record is an output record containing an id from each of the two input data sources.  Thus a one to many match will result in multiple relationship records.  Each matching algorithm can also provide one or more metrics describing the likelyhood of a match.  Since multiple matching alogrithms can be applied to each relationship record, in adition to ids, each relationship record will have several results from the matching algorithms.  These can be used to determine which relationship records should go into the master table.
+It's a quite common task to "match" two or more datasets on some entities, such as people with
+name and address, or companies with doing-business-as names and address. Typically the task
+can be broken down to multiple of 2 datasets matching.
 
-## Sample Input
-These are the data frames we will use in the examples below
+Assume we have 2 datasets, DS1 and DS2, typically,
+* DS1 has an ID field, and a group of informational fields of the entity
+* DS2 has another ID field, and another group of informational fields
 
-### Data Frame 1
+It's not necessary that the entities within either DS1 or DS2 have no duplicates. However
+We can always make the IDs unique (as primary key) for each dataset.
+
+* Both ID fields in DS1 and DS2 are primary keys of each source
+
+`SmvEntityMatcher` library is a tool set to match 2 datasets. The matching between DS1 and DS2
+could be multiple to multiple. This library by itself will not address the dedup problem.
+
+## MultiLevel Matching Framework
+
+The term **MATCHING** here typically means that no perfect deterministic logic can be applied to
+**JOIN** DS1 and DS2. To handle the non-deterministic nature, we basically need
+to figure out a distance measure between any 2 records from the 2 datasets.
+
+However for different business problems and different use cases, the distance measure could be
+different. Also without trying out different possible measures, we may not be able to
+predetermine which measures or measure combinations should be better.
+
+To increase the flexibility, the `SmvEntityMatcher` provides a multilevel matching framework.
+In more mathematical term, it's a multi dimensional distance measure. For example,
+to match 2 records with people's name and address, we could have the following 2 distance measures,
+* Levenshtein distance between 2 people's normalized full name, and
+* When last name matched, the geo-distance between the 2 addresses
+
+Those different levels (dimensions) could be pretty much independent, or some how correlated. Anyhow
+they provide complementary information to the matching problem.
+
+As described above, this framework could be very costly. Assume DS1 has `N` records, and DS2 has
+`M` records, and we apply `L` levels matches, the overall complexity is `N * M * L`. Even with
+Spark, it's a very expensive task.
+
+To reduce the complexity, we made the following assumptions,
+* For each record in each datasets, there are a relatively small set of records in the other dataset it matches (if not zero)
+* There are cases a "Full" match can be applied first, and then filtered out all Fully matched records from both sides
+* All the matching levels could have a shared necessary condition so that we can split the `N * M` problem to a set of smaller `n * m` problems, where `n << N` and `m << M`
+
+To implement those optimization we introduced,
+* `ExactMatchPreFilter` - the "full" match condition for pre filter out the fully matched population
+* `GroupCondition` - the "necessary" condition of all level of match logics (except the pre-filtered full match)
+* `LevelLogic` - a list of multilevel matching logics   
+
+## SMV Entity Matcher Example
+Let's use the following DS1 and DS2 to demonstrate the library.
+
+#### Data Frame 1
 id|first_name|last_name|address|city|state|zip|full_name
 ---|----------|---------|-------|----|-----|---|---------|
 1|George|Jetson|100 Skyway Drive|Metropolis|CA|90210|George Jetson
 2|Fred|Flintsone|900 Rockaway Road|Pebbleton|CA|90210|Fred Flintstone
 3|George|Washington|1600 Pennsylvania Avenue|Washington|DC|20006|George Washington
 
-### Data Frame 2
-id|first_name|last_name|address|city|state|zip|full_name
+#### Data Frame 2
+_id|_first_name|_last_name|_address|_city|_state|_zip|_full_name
 ---|----------|---------|-------|----|-----|---|---------
 1|Fred|Flintsone|900 Rockaway Road|Pebbleton|CA|90210|Fred Flintstone
 2|Alice|Kramden|328 Chauncey Street|Brooklyn|NY|11233|Alice Kramden
 3|Georje|Jetson|101 Skyway Drive|Metropolis|CA|90120|Georje Jetson
 
+The data frames should have all the
+columns you are planning to use in the matching algorithms.  They must also have one id column
+that uniquely identifies each record. Since the matching algorithms need to refer to both
+DS1 and DS2's columns, they need to be named differently, so the example DS2 has all the
+column names prefixed with `_`
 
-## Simplest SMV  Entity Matcher
+The following is a piece of sample matching code which has
+* An `ExactMatchPreFilter` - if someone's full name matched exactly, we consider the 2 records are matched fully, and filtered from any level logics later  
+* A `GroupCondition` - a necessary condition of all level matchers is the `soundex` of the 2 first names have to be the same
+* An `ExactLogic` - if the 2 records have the same first name, we call it a `First_Name_Match`
+* A `FuzzyLogic` - if the 2 records's city names' normalized Levenshtein similarity larger than `0.9`, we call it a `Levenshtein_City` match
 
-The SMV  Entity Matcher takes two data frames as parameters.  The data frames should have all the columns you are planning to use in the matching algorithms.  They must also have one id column that uniquely identifies each record.   The name of this column must be "id"
-
+#### Scala
 ```scala
-/*** Input data frames ***/
-val df1 = ...
-val df2 = ...
-
-/*** Resulting MDM data frame ***/
-val resultDF = SmvEntityMatcher(
-  null,
-  null,
+val resultDF = SmvEntityMatcher("id", "_id",
+  ExactMatchPreFilter("Full_Name_Match", $"full_name" === $"_full_name"),
+  GroupCondition(soundex($"first_name") === soundex($"_first_name")),
   List(
-    ExactLevelMatcher("First_Name_Match", $"first_name" === $"_first_name"),
+    ExactLogic("First_Name_Match", $"first_name" === $"_first_name"),
+    FuzzyLogic("Levenshtein_City", null, normlevenshtein($"city",$"_city"), 0.9f)
   )
-).doMatch(df1, df2)
+).doMatch(df1, df2, false)
 ```
 
-This example may be unrealistically simplistic, but it's a good place to start to learn how SmvEntityMatcher works.  
-
-We first create the sample input data frames described above.  SmvEntityMatcher will match the records between these.  The output will be resultDF, which will have relationship records for each match with metrics describing the likelyhood of the match.  See output below.
-
-The first two parameters to SmvEntityMatcher are optional.  We'll describe what they are later.  For now we'll just pass nulls for them.  The third parameter is a list of level matchers.  In this example we are using only one - the ExactLevelMatcher.   
-
-Let's break down the name of this class.  It's a matcher because it has an expression to match records from one data frame to another.  The expression in this case compares first name from one to first name in the other.  If they are the same, it's a match.  It's an exact matcher, because the output is a boolean.  As opposed to other matchers, described below, where the output could be a fuzzy number.  The output relationship record will have ids from both data frames and a boolean that will be true if the first names are the same and false if not.  The word "level" is used because you may have different levels of expressions, where level 1 is more important than level 2.  The API takes a List of matchers.  Each of your matchers can describe an expression for its own level.   
-
-Also note that sample data df2 has a column called "first_name", whereas in the expression we used "$_first_name".  To disambiguate column names, all columns from the second datasource need to be prepended with an underscore.
-
-Note that all record relationships below are true.  If every matching expression returns false, then we can assume that these records don't match, and we remove these from the output.  In this simple exmaple we have only one matcher, so every expression result will be true.
-
-### Output
-id|\_id|First_Name_Match
----|---|---
-2|1|true
-
-
-## Introducing ExactMatchFilter and FuzzyLevelMatcher
-```scala
-val resultDF = SmvEntityMatcher(
-  ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
-  null,
-  List(
-    ExactLevelMatcher("First_Name_Match", $"first_name" === $"_first_name"),
-    FuzzyLevelMatcher("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f)
-  )
-).doMatch(df1, df2)
+#### Python
+```python
+resultDF = SmvEntityMatcher("id", "_id",
+  ExactMatchPreFilter("Full_Name_Match", col("full_name") == col("_full_name")),
+  GroupCondition(soundex(col("first_name")) == soundex(col("_first_name"))),
+  [  
+    ExactLogic("First_Name_Match", col("first_name") == col("_first_name")),
+    FuzzyLogic("Levenshtein_City", null, normlevenshtein(col("city"), col("_city")), 0.9)
+  ]
+).doMatch(df1, df2, False)
 ```
 
-As you add more level matchers, the number of records that match will increase as well as expression results for each record relationship.  The FuzzyLevelMatcher takes in an exact match parameter, similar to the one for the ExactLevelMatcher.  This is optional, so it's null in the example above.  It also takes a parameter that evaluates to a fuzzy number between 0 and 1.   The result of this expression will be returned as one of two outputs for the FuzzyLevelMatcher.  The other output is a boolean that's determined using this expression:
+We have to specify the ID fields of the 2 datasets, which are the first 2 parameters of `SmvEntityMatcher`s instruction
+method.
 
-**(** evaluate \<exact catalyst expression\> **)** **&&** **(** **(** evaluate \<normalized fuzzy catalyst expression\> **)** **\>** \<threshold\> **)**
+The `doMatch` method takes a 3rd parameter, which is `keepOriginalCols`. If it's set, all the original columns of
+DS1 and DS2 will be passed down to output, if not, the output will be only the matching flags and IDs. Default value
+of `keepOriginalCols` is `True`.
 
-Note: when using stringmetric fucntions, such as the one in previous example "levenshtein", be sure to normalize the case of the two columns first.
+#### Output
+id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value|MatchBitmap|
+---|---|---|---|---|---|---
+2|1|true|null|null|null|100
+1|3|false|false|true|1.0|001
 
-Once you start adding level matchers, you may find an ExactLevelMatcher expression that's more important than the rest.  So much so, that if the records match on it, you don't need to perform any other tests on the resulting record relationship.  In that case you can place this expression in an ExactMatchFilter and provide this as the first parameter to SmvEntityMatcher.  In the example above this expression matches full names of the input data frames.   The output can be seen as having two parts.  The first part will be for record relationships that we created be a matched ExactMatchFilter.  The output column for the filter will be true and the rest of the columns will be null, since they were not evaluated.   All remaining records from the input data frames will be matched as before, by all the list of level matchers.   Here the output column for the filter will always be false.
+Since we didn't keep the original columns, the output data only have matching related flags.
+All the 3 matching levels (including the `ExactMatchPreFilter`) have flags respectively.
 
-### Output
-id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value|
----|---|---|---|---|---
-2|1|true|null|null|null
-1|3|false|false|true|1.0
+The `FuzzyLogic` has an addition column which in this case is the normalized Levenshtein distance.
+We keep the distance measure itself for potentially future combined matching logics or dedup
+logics.
 
-## Introducing CommonLevelMatcherExpression
+The `MatchBitmap` column summarize the overall matching between the 2 records.
+
+The id pair
+`2, 1` has value `100`, which means those 2 records has the `ExactMatchPreFilter` matched.
+Since the records, which satisfied `ExactMatchPreFilter`, got filtered, so no further matching
+were performed and the `MatchBitmap` can only in the form of `10..0`.  
+
+The id pair `1, 3` has value `001`, which means that only the `Levenshtein_City` logic matched
+the 2 records.
+
+## String Distance Measures
+
+The [Stringmetric](https://github.com/rockymadden/stringmetric) library were use to implement
+a group of string distance measures as DataFrame UDFs. The following functions were implemented
+in `smvfuncs`,
+
+* nGram2
+* nGram3
+* diceSorensen
+* normlevenshtein
+* jaroWinkler
+
+All of them normalized from 0 to 1 (0 is no match, 1 is full match).
+
+## Library API Details
+
+### Import Library
+
+#### Scala
 ```scala
-val resultDF = SmvEntityMatcher(
-  ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
-  CommonLevelMatcherExpression(soundex($"first_name") === soundex($"_first_name"))),
-  List(
-    ExactLevelMatcher("First_Name_Match", $"first_name" === $"_first_name"),
-    FuzzyLevelMatcher("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f)
-  )
-).doMatch(df1, df2)
+import org.tresamigos.smv.matcher._
 ```
 
-The sample data frames used here are very small.  Real data frames are much larger and matching every record between them may take too long and in many cases not necessary. In most of the cases, there is always some "common denominator" as the `CommonLevelMatcher`. For example, the `soundex` of first name could be the common requirement of all the matchers. In that case you are able to factor out a common expression from all the expressions you are evaluating. In above example, after the exact match filter, we assume all other match levels have to have `soundex` of first name match. By specifying the `CommonLevelMatcherExpression`, internally the algorithm only need to look at records where the soundex are the same.  Meaning that you can reduce the input data frames to only have such records.  Using CommonLevelMatcherExpression will not change the output, but it can greatly speed up the processing time.
+#### Python
+```python
+from smvmatcher import *
+```
 
-### Output
-id|\_id|Full_Name_Match|First_Name_Match|Levenshtein_City|Levenshtein_City_Value|
----|---|---|---|---|---
-2|1|true|null|null|null
-1|3|false|false|true|1.0
+### NoOpPreFilter and NoOpGroupCondition
+Both or either of `PreFilter` and `GroupCondition` could be NoOp objects.
+
+When use `NoOpPreFilter` as the `PreFilter` of a `SmvEntityMatcher`, not `full` match is checked.
+When use `NoOpGroupCondition`, there are no grouping optimization.
+
+Please avoid using the 2 NoOp objects togethers unless the datasets are both very small.
+
+### GroupCondition Expression Parameter
+The expression parameter of `GroupCondition` has to be a `EqualTo` expression. Since
+we need to use it as a join condition, and join on `EqualTo` can be optimized by grouping.
+Other expression can't help.
+**Scala**
+```scala
+GroupCondition(soundex($"first_name") === soundex($"_first_name"))
+```
+**Python**
+```python
+GroupCondition(soundex(col("first_name")) == soundex(col("_first_name")))
+```
+
+### FuzzyLogic
+`FuzzyLogic` takes 4 parameters,
+* colName,
+* predicate,
+* valueExpr,
+* threshold
+
+The matching logic is
+```
+predicate AND (valueExpr > threshold)
+```
+
+For example,
+* predicate - `col("zip") == col("_zip")`
+* valueExpr - `normlevenshtein(col("address"), col("_address"))`
+* threshold - `0.6`
+
+The logic is:
+```
+In the same Zip code AND norm-Levenshtein similarity of the address fields are greater than 0.6
+```
