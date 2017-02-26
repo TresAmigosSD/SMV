@@ -82,7 +82,7 @@ The following is a piece of sample matching code which has
 ```scala
 val resultDF = SmvEntityMatcher("id", "_id",
   ExactMatchPreFilter("Full_Name_Match", $"full_name" === $"_full_name"),
-  GroupCondition(soundex($"first_name") === soundex($"_first_name"))),
+  GroupCondition(soundex($"first_name") === soundex($"_first_name")),
   List(
     ExactLogic("First_Name_Match", $"first_name" === $"_first_name"),
     FuzzyLogic("Levenshtein_City", null, normlevenshtein($"city",$"_city"), 0.9f)
@@ -93,11 +93,11 @@ val resultDF = SmvEntityMatcher("id", "_id",
 #### Python
 ```python
 resultDF = SmvEntityMatcher("id", "_id",
-  ExactMatchPreFilter("Full_Name_Match", $"full_name" === $"_full_name"),
-  GroupCondition(soundex($"first_name") === soundex($"_first_name"))),
+  ExactMatchPreFilter("Full_Name_Match", col("full_name") == col("_full_name")),
+  GroupCondition(soundex(col("first_name")) == soundex(col("_first_name"))),
   [  
-    ExactLogic("First_Name_Match", $"first_name" === $"_first_name"),
-    FuzzyLogic("Levenshtein_City", null, normlevenshtein($"city",$"_city"), 0.9)
+    ExactLogic("First_Name_Match", col("first_name") == col("_first_name")),
+    FuzzyLogic("Levenshtein_City", null, normlevenshtein(col("city"), col("_city")), 0.9)
   ]
 ).doMatch(df1, df2, False)
 ```
@@ -119,15 +119,15 @@ Since we didn't keep the original columns, the output data only have matching re
 All the 3 matching levels (including the `ExactMatchPreFilter`) have flags respectively.
 
 The `FuzzyLogic` has an addition column which in this case is the normalized Levenshtein distance.
-We keep the distance measure itself is for potentially future combined matching logics or dedup
+We keep the distance measure itself for potentially future combined matching logics or dedup
 logics.
 
 The `MatchBitmap` column summarize the overall matching between the 2 records.
 
 The id pair
 `2, 1` has value `100`, which means those 2 records has the `ExactMatchPreFilter` matched.
-Since the records, which satisfied `ExactMatchPreFilter`, got filtered and no further matching
-were tested, the `MatchBitmap` can only be `1000..00`.  
+Since the records, which satisfied `ExactMatchPreFilter`, got filtered, so no further matching
+were performed and the `MatchBitmap` can only in the form of `10..0`.  
 
 The id pair `1, 3` has value `001`, which means that only the `Levenshtein_City` logic matched
 the 2 records.
@@ -160,20 +160,26 @@ import org.tresamigos.smv.matcher2._
 from smvmatcher import *
 ```
 
-### ExactMatchPreFilter and GroupCondition are Optional
-In Scala, both or either of them could be `null`.
+### NoOpPreFilter and NoOpGroupCondition
+Both or either of `PreFilter` and `GroupCondition` could be NoOp objects.
 
-In Python, both or either of them could be `None`.
+When use `NoOpPreFilter` as the `PreFilter` of a `SmvEntityMatcher`, not `full` match is checked.
+When use `NoOpGroupCondition`, there are no grouping optimization.
 
-When `ExactMatchPreFilter` is `null`, not `full` match is checked.
-When `GroupCondition` is `null`, there are no grouping optimization.
-
-Please try to avoid keeping them all `null` unless the datasets are both very small.
+Please avoid using the 2 NoOp objects togethers unless the datasets are both very small.
 
 ### GroupCondition Expression Parameter
 The expression parameter of `GroupCondition` has to be a `EqualTo` expression. Since
 we need to use it as a join condition, and join on `EqualTo` can be optimized by grouping.
 Other expression can't help.
+**Scala**
+```scala
+GroupCondition(soundex($"first_name") === soundex($"_first_name"))
+```
+**Python**
+```python
+GroupCondition(soundex(col("first_name")) == soundex(col("_first_name")))
+```
 
 ### FuzzyLogic
 `FuzzyLogic` takes 4 parameters on instruction,
