@@ -29,6 +29,8 @@ public interface IDataSetRepoPy4J {
 	 */
 	ISmvModule loadDataSet(String modUrn);
 
+	String[] dataSetsForStage(String modUrn);
+
 	/**
 	 * Get names of all output modules in a given stage
 	 */

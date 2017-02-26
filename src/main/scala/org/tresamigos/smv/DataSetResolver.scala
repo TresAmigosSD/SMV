@@ -74,9 +74,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
     Try( repoList.head ) match {
       // If repoList is empty, dataset not found
       case Failure(_) =>
-        val e = errors.dsNotFound(fqn)
-        println(e.getMessage)
-        throw e
+        throw errors.dsNotFound(fqn)
       case Success(repo) =>
         Try( repo.loadDataSet(fqn) ) match {
           // If dataset not found in repo, try next repo

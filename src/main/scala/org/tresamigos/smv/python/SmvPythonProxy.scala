@@ -217,8 +217,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
     j_smvApp.registerRepoFactory( new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig) )
 
-  def register(id: String, repo: SmvDataSetRepository): Unit =
-    j_smvApp.register(id, repo)
 }
 
 /** Not a companion object because we need to access it from Python */

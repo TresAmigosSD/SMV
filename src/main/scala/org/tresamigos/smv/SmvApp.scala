@@ -53,11 +53,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   def removeDataSet(urn: String): Unit = urn2ds -= urn
   def addDataSet(urn: String, ds: SmvDataSet): Unit = urn2ds += urn->ds
 
-  private var datasetRepositories: Map[String, SmvDataSetRepository] = Map.empty
-  def register(id: String, repo: SmvDataSetRepository): Unit =
-    datasetRepositories = datasetRepositories + (id -> repo)
-  private def repositories: Seq[SmvDataSetRepository] = datasetRepositories.values.toSeq
-
   // dsm should be private but will be temporarily public to accomodate outside invocations
   val dsm = new DataSetMgr
   def registerRepoFactory(factory: DataSetRepoFactory): Unit =
@@ -74,13 +69,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val resolveStack: mutable.Stack[String] = mutable.Stack()
 
   override def getAllPackageNames = stages.stages flatMap (_.getAllPackageNames)
-  override lazy val allDatasets = stages.allDatasets ++ {
-    for {
-      s <- stages.stages
-      r <- repositories
-      ds <- r.dsUrnsForStage(s.name)
-    } yield dsm.load(URN(ds)).head
-  }
+  override lazy val allDatasets = dsm.load(dsm.allDataSets:_*)
 
   override lazy val allOutputModules =
     for {
@@ -362,9 +351,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /** Run a module by its fully qualified name in its respective language environment */
   def runModule(modUrn: String): DataFrame = resolveRDD(dsm.load(URN(modUrn)).head)
-
-  private[smv] def findRepoWith(modUrn: String): Option[SmvDataSetRepository] =
-    repositories.find(_.hasDataSet(modUrn))
 
   @inline private def notfound(modUrn: String) = throw new SmvRuntimeException(s"Cannot find module ${modUrn}")
 

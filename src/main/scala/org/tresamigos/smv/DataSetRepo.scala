@@ -20,6 +20,7 @@ abstract class DataSetRepo {
   def loadDataSet(fqn: String): SmvDataSet
   def hasDataSet(fqn: String): Boolean
   def allOutputModules(): Seq[String]
+  def allDataSets(): Seq[String]
   def outputModsForStage(stageName: String): Seq[String]
 }
 
@@ -40,6 +41,10 @@ class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
     stages.allDatasets map (_.fqn) contains(fqn)
   }
 
+  def allDataSets(): Seq[String] = {
+    stages.allDatasets.map(_.urn)
+  }
+
   def allOutputModules(): Seq[String] = {
     stages.allOutputModules.map(_.urn)
   }
@@ -58,6 +63,8 @@ class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extend
     SmvExtModulePython( iDSRepo.loadDataSet(fqn) )
   def hasDataSet(fqn: String): Boolean =
     iDSRepo.hasDataSet(fqn)
+  def allDataSets(): Seq[String] =
+    smvConfig.stageNames.flatMap (iDSRepo.dataSetsForStage(_))
   def allOutputModules(): Seq[String] =
     smvConfig.stageNames.flatMap (outputModsForStage(_))
   def outputModsForStage(stageName: String): Seq[String] =

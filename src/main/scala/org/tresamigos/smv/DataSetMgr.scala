@@ -31,6 +31,9 @@ class DataSetMgr {
   def hasDataSet(urn: URN): Boolean =
     dsRepoFactories exists (_.createRepo.hasDataSet(urn.fqn))
 
+  def allDataSets(): Seq[URN] =
+    dsRepoFactories flatMap (_.createRepo.allDataSets) map (URN(_))
+
   def allOutputModules(): Seq[URN] =
     dsRepoFactories flatMap (_.createRepo.allOutputModules) map (URN(_))
 

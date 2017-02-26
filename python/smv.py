@@ -206,8 +206,6 @@ class SmvPy(object):
             # update the port of CallbackClient with real port
             gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
 
-        self.repo = PythonDataSetRepository(self)
-        self.j_smvPyClient.register('Python', self.repo)
         self.j_smvPyClient.registerRepoFactory('Python', DataSetRepoFactory(self))
         return self
 
@@ -833,6 +831,9 @@ class DataSetRepo(object):
         except:
             mod = self.oldRepo.dsForName(modFqn)
         return mod
+
+    def dataSetsForStage(self, stageName):
+        return self.oldRepo.dsUrnsForStage(stageName)
 
     def outputModsForStage(self, stageName):
         return self.oldRepo.outputModsForStage(stageName)
