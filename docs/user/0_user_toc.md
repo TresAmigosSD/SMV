@@ -2,6 +2,7 @@
 
 * [Why Smv](why_smv.md)
 * [Installation](smv_install.md)
+* [Docker](docker.md)
 * [SMV Introduction](smv_intro.md)
 * [Application Configuration](app_config.md)
 * [Run Application](run_app.md)
