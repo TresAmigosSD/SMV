@@ -157,6 +157,7 @@ class SmvPy(object):
         sc.setLogLevel("ERROR")
 
         self.sc = sc
+        self.sqlContext = self.sparkSession._wrapped
         self._jvm = sc._jvm
 
         from py4j.java_gateway import java_import
@@ -178,21 +179,20 @@ class SmvPy(object):
         cbsp = self.j_smvPyClient.callbackServerPort()
         cbs_port = cbsp.get() if cbsp.isDefined() else gw._python_proxy_port
 
-        # this was a workaround for py4j 0.8.2.1, shipped with spark
-        # 1.5.x, to prevent the callback server from hanging the
-        # python, and hence the java, process
-        from pyspark.streaming.context import _daemonize_callback_server
-        _daemonize_callback_server()
-
         if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
             print("starting callback server on port {0}".format(cbs_port))
-            gw._shutdown_callback_server() # in case another has already started
-            gw._start_callback_server(cbs_port)
+            gw.callback_server_parameters.eager_load = True
+            gw.callback_server_parameters.daemonize = True
+            gw.callback_server_parameters.daemonize_connections = True
+            gw.callback_server_parameters.port = cbs_port
+            gw.start_callback_server(gw.callback_server_parameters)
+            gw._callback_server.port = cbs_port
+            # gateway with real port
             gw._python_proxy_port = gw._callback_server.port
             # get the GatewayServer object in JVM by ID
             jgws = JavaObject("GATEWAY_SERVER", gw._gateway_client)
             # update the port of CallbackClient with real port
-            gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
+            jgws.resetCallbackClient(jgws.getCallbackClient().getAddress(), gw._python_proxy_port)
 
         self.repo = PythonDataSetRepository(self)
         self.j_smvPyClient.register('Python', self.repo)
