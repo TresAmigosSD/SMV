@@ -49,10 +49,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val sc = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
 
-  private[smv] var urn2ds: Map[String, SmvDataSet] = Map.empty
-  def removeDataSet(urn: String): Unit = urn2ds -= urn
-  def addDataSet(urn: String, ds: SmvDataSet): Unit = urn2ds += urn->ds
-
   // dsm should be private but will be temporarily public to accomodate outside invocations
   val dsm = new DataSetMgr
   def registerRepoFactory(factory: DataSetRepoFactory): Unit =
