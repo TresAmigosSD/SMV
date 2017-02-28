@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import scala.util.{Try, Success, Failure}
 
-class DataSetMgr {
+class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   private var dsRepoFactories: Seq[DataSetRepoFactory] = Seq.empty[DataSetRepoFactory]
 
   def register(newRepoFactory: DataSetRepoFactory): Unit = {
@@ -24,7 +24,7 @@ class DataSetMgr {
   }
 
   def load(urns: URN*): Seq[SmvDataSet] = {
-    val resolver = new DataSetResolver(dsRepoFactories)
+    val resolver = new DataSetResolver(dsRepoFactories, smvConfig, depRules)
     resolver.loadDataSet(urns:_*)
   }
 

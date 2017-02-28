@@ -18,15 +18,23 @@ import scala.util.{Try, Success, Failure}
 import scala.collection.mutable
 
 
-class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
+class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   val repos = repoFactories.map( _.createRepo )
   val resolved: mutable.Map[URN, SmvDataSet] = mutable.Map.empty
 
-  object errors {
-    def dsNotFound(fqn: String): SmvRuntimeException =
-      new SmvRuntimeException(s"SmvDataSet ${fqn} not found")
-    def dependencyCycle(ds: SmvDataSet, s: mutable.Stack[SmvDataSet]): IllegalStateException =
-      new IllegalStateException(s"cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}"))
+  object msg {
+    def dsNotFound(fqn: String): String = s"SmvDataSet ${fqn} not found"
+    def listDepViolations(ds: SmvDataSet, vis: Seq[DependencyViolation]) = {
+      s"""Module ${ds.urn} violates dependency rules""" +
+      SmvApp.app.mkViolationString(vis, "..")
+    }
+    def nonfatalDepViolation: String =
+      "Continuing module resolution as the app is configured to permit dependency rule violation"
+    def fatalDepViolation: String =
+        s"Terminating module resolution when dependency rules are violated. To change this behavior, please run the app with option --${smvConfig.cmdLine.permitDependencyViolation.name}"
+    def dependencyCycle(ds: SmvDataSet, s: mutable.Stack[SmvDataSet]): String =
+      s"cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}")
+
   }
 
   def loadDataSet(urns: URN*): Seq[SmvDataSet] = {
@@ -54,7 +62,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
 
   def resolveDataSet(ds: SmvDataSet): SmvDataSet = {
     if (resolveStack.contains(ds))
-      throw errors.dependencyCycle(ds, resolveStack)
+      throw new IllegalStateException(msg.dependencyCycle(ds, resolveStack))
     else {
       val urn = URN(ds.urn)
       Try(resolved(urn)) match {
@@ -64,8 +72,20 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
           val resolvedDs = ds.resolve(this)
           resolved += (urn -> resolvedDs)
           resolveStack.pop()
+          validateDependencies(resolvedDs)
           resolvedDs
       }
+    }
+  }
+
+  def validateDependencies(ds: SmvDataSet): Unit = {
+    val depViolations = depRules flatMap (_.check(ds))
+    if(depViolations.size > 0) {
+      println(msg.listDepViolations(ds, depViolations))
+      if(smvConfig.permitDependencyViolation)
+        println(msg.nonfatalDepViolation)
+      else
+        throw new IllegalStateException(msg.fatalDepViolation)
     }
   }
 
@@ -74,7 +94,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory]) {
     Try( repoList.head ) match {
       // If repoList is empty, dataset not found
       case Failure(_) =>
-        throw errors.dsNotFound(fqn)
+        throw new SmvRuntimeException(msg.dsNotFound(fqn))
       case Success(repo) =>
         Try( repo.loadDataSet(fqn) ) match {
           // If dataset not found in repo, try next repo

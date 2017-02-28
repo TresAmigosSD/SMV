@@ -50,7 +50,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
 
   // dsm should be private but will be temporarily public to accomodate outside invocations
-  val dsm = new DataSetMgr
+  val dsm = new DataSetMgr(smvConfig, SmvApp.DependencyRules)
   def registerRepoFactory(factory: DataSetRepoFactory): Unit =
     dsm.register(factory)
   registerRepoFactory(new DataSetRepoFactoryScala(smvConfig))
@@ -145,42 +145,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * This method also checks for cycles in the module dependency graph.
    */
   def resolveRDD(ds: SmvDataSet): DataFrame = {
-    val dsUrn = ds.urn
-    if (resolveStack.contains(dsUrn))
-      throw new IllegalStateException(s"cycle found while resolving ${dsUrn}: " +
-        resolveStack.mkString(","))
-
-    resolveStack.push(dsUrn)
-
-    /* ds.rdd will trigger resolveRDD on all the DataSets current one depends on, which
-       will push them all to the stack.
-       In Spark shell, when ds.rdd fails, dsUrn is still in the stack, need to pop it
-       so that redefining the same ds will not cause a "cycle" error */
-    val resRdd = try {
-      val violations = checkDependencyRules(ds)
-      if (!violations.isEmpty) {
-        println(s"""Module ${ds.urn} violates dependency rules""")
-        println(mkViolationString(violations))
-
-        if (!smvConfig.permitDependencyViolation)
-          throw new IllegalStateException(s"Terminating module resolution when dependency rules are violated.  To change this behavior, please run the app with option --${smvConfig.cmdLine.permitDependencyViolation.name}")
-        else
-          println("Continuing module resolution as the app is to configured to permit dependency rule violation")
-      }
-
-      ds.rdd()
-    } catch {
-      case NonFatal(t) => {
-        resolveStack.pop()
-        throw t
-      }
-    }
-
-    val popRdd = resolveStack.pop()
-    if (popRdd != dsUrn)
-      throw new IllegalStateException(s"resolveStack corrupted.  Got ${popRdd}, expected ${dsUrn}")
-
-    resRdd
+    ds.rdd
   }
 
   lazy val packagesPrefix = {
@@ -398,19 +363,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       println("----------------------")
       println(mods.map(_.fqn).mkString("\n"))
       println("----------------------")
-
-      println()
-      println("..checking dependency rules for all modules")
-      val all = (mods ++ mods.flatMap(_.allDeps)).distinct
-      all.foreach { m =>
-        val violations = checkDependencyRules(m)
-        if (violations.isEmpty)
-          println(s"..module ${m.fqn} .... pass")
-        else {
-          println(s"..module ${m.fqn} violates dependency rules ... FAIL")
-          println(mkViolationString(violations, "...."))
-        }
-      }
     }
 
     purgeOldOutputFiles()
