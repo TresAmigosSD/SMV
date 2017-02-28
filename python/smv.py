@@ -150,7 +150,7 @@ class SmvPy(object):
 
     def init(self, arglist, _sparkSession = None):
         self.sparkSession = SparkSession.builder.\
-            appName(self.appName()).enableHiveSupport().\
+            enableHiveSupport().\
             getOrCreate() if _sparkSession is None else _sparkSession
 
         sc = self.sparkSession.sparkContext
