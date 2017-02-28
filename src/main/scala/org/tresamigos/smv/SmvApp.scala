@@ -68,10 +68,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   override lazy val allDatasets = dsm.load(dsm.allDataSets:_*)
 
   override lazy val allOutputModules =
-    for {
-      s <- stages.stages
-      fqn <- dsm.outputModsForStage(s.name)
-    } yield dsm.load(URN("mod:"+fqn)).head.asInstanceOf[SmvModule]
+    dsm.load(dsm.allOutputModules:_*) map (_.asInstanceOf[SmvModule])
 
   override lazy val predecessors =
     allDatasets.map {
