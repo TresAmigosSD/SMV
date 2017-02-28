@@ -812,15 +812,14 @@ class DataSetRepoFactory(object):
         self.smvPy = smvPy
 
     def createRepo(self):
-        return DataSetRepo(PythonDataSetRepository(self.smvPy), self.smvPy)
+        return DataSetRepo(self.smvPy)
 
     class Java:
         implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
 
 
 class DataSetRepo(object):
-    def __init__(self, oldRepo, smvPy):
-        self.oldRepo = oldRepo
+    def __init__(self, smvPy):
         self.smvPy = smvPy
 
     def hasDataSet(self, fqn):
@@ -829,7 +828,8 @@ class DataSetRepo(object):
     # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
     # from the most recent source
     def loadDataSet(self, fqn):
-        if sys.modules.has_key(fqn):
+        lastdot = fqn.rfind('.')
+        if sys.modules.has_key(fqn[:lastdot]):
             # reload the module if it has already been imported
             return self._reload(fqn)
         else:
@@ -852,6 +852,7 @@ class DataSetRepo(object):
     # Reload the module containing the dataset from the most recent source
     # and invalidate the linecache
     def _reload(self, fqn):
+        lastdot = fqn.rfind('.')
         pmod = reload(sys.modules[fqn[:lastdot]])
         klass = getattr(pmod, fqn[lastdot+1:])
         ds = klass(self.smvPy)
@@ -863,74 +864,10 @@ class DataSetRepo(object):
         return ds
 
     def dataSetsForStage(self, stageName):
-        return self.oldRepo.dsUrnsForStage(stageName)
+        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
 
     def outputModsForStage(self, stageName):
-        return self.oldRepo.outputModsForStage(stageName)
-
-    class Java:
-        implements = ['org.tresamigos.smv.IDataSetRepoPy4J']
-
-
-class PythonDataSetRepository(object):
-    def __init__(self, smvPy):
-        self.smvPy = smvPy
-        self.pythonDataSets = {} # SmvPyDataSet FQN -> instance
-
-    def dsForName(self, modUrn):
-        """Returns the instance of SmvPyDataSet by its fully qualified name.
-        Returns None if the FQN is not a valid SmvPyDataSet name.
-        """
-        if modUrn in self.pythonDataSets:
-            return self.pythonDataSets[modUrn]
-        else:
-            fqn = self.smvPy.urn2fqn(modUrn)
-            try:
-                ret = for_name(fqn)(self.smvPy)
-            except AttributeError: # module not found is anticipated
-                return None
-            except ImportError:
-                return None
-            except Exception as e: # other errors should be reported, such as syntax error
-                traceback.print_exc()
-                return None
-        self.pythonDataSets[modUrn] = ret
-        return ret
-
-    def getSmvModule(self, modUrn):
-        return self.dsForName(modUrn)
-
-    def reloadDs(self, modUrn):
-        """Reload the module by its fully qualified name, replace the old
-        instance with a new one from the new definnition.
-        """
-        lastdot = modUrn.rfind('.')
-        if (lastdot == -1):
-            klass = reload(modUrn)
-        else:
-            mod = reload(sys.modules[modUrn[:lastdot]])
-            klass = getattr(mod, modUrn[lastdot+1:])
-        ret = klass(self.smvPy)
-        self.pythonDataSets[modUrn] = ret
-
-        # Python issue https://bugs.python.org/issue1218234
-        # need to invalidate inspect.linecache to make dataset hash work
-        srcfile = inspect.getsourcefile(ret.__class__)
-        if srcfile:
-            inspect.linecache.checkcache(srcfile)
-
-        # issue #417
-        # recursively reload all dependent modules
-        for dep in ret.requiresDS():
-            self.reloadDs(dep.urn())
-
-        return ret
-
-    def hasDataSet(self, modUrn):
-        return self.dsForName(modUrn) is not None
-
-    def notFound(self, modUrn, msg):
-        raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))
+        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyModule and obj.IsSmvPyOutput)
 
     def moduleUrnsForStage(self, stageName, fn):
         # `walk_packages` can generate AttributeError if the system has
@@ -970,17 +907,8 @@ class PythonDataSetRepository(object):
 
         return smv_copy_array(self.smvPy.sc, *buf)
 
-    def outputModsForStage(self, stageName):
-        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyOutput and obj.IsSmvPyModule)
-
-    def dsUrnsForStage(self, stageName):
-        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
-
-    def rerun(self, modUrn, validator, known):
-        ds = self.reloadDs(modUrn)
-        if ds is None:
-            self.notFound(modUrn, "cannot rerun")
-        return ds.doRun(validator, known)._jdf
+    def notFound(self, modUrn, msg):
+        raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))
 
     class Java:
-        implements = ['org.tresamigos.smv.SmvDataSetRepository']
+        implements = ['org.tresamigos.smv.IDataSetRepoPy4J']
