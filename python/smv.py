@@ -812,25 +812,55 @@ class DataSetRepoFactory(object):
         self.smvPy = smvPy
 
     def createRepo(self):
-        return DataSetRepo(PythonDataSetRepository(self.smvPy))
+        return DataSetRepo(PythonDataSetRepository(self.smvPy), self.smvPy)
 
     class Java:
         implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
 
 
 class DataSetRepo(object):
-    def __init__(self, oldRepo):
+    def __init__(self, oldRepo, smvPy):
         self.oldRepo = oldRepo
+        self.smvPy = smvPy
 
-    def hasDataSet(self, modUrn):
-        return self.oldRepo.hadDataSet(modUrn)
+    def hasDataSet(self, fqn):
+        return self.loadDataSet(fqn) is not None
 
-    def loadDataSet(self, modFqn):
+    # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
+    # from the most recent source
+    def loadDataSet(self, fqn):
+        if sys.modules.has_key(fqn):
+            # reload the module if it has already been imported
+            return self._reload(fqn)
+        else:
+            # otherwise import the module
+            return self._load(fqn)
+
+    # Import the module (Python module, not SMV module) containing the dataset
+    # and return the dataset
+    def _load(self, fqn):
         try:
-            mod = self.oldRepo.reloadDs(modFqn)
-        except:
-            mod = self.oldRepo.dsForName(modFqn)
-        return mod
+            return for_name(fqn)(self.smvPy)
+        except AttributeError: # module not found is anticipated
+            return None
+        except ImportError:
+            return None
+        except Exception as e: # other errors should be reported, such as syntax error
+            traceback.print_exc()
+            return None
+
+    # Reload the module containing the dataset from the most recent source
+    # and invalidate the linecache
+    def _reload(self, fqn):
+        pmod = reload(sys.modules[fqn[:lastdot]])
+        klass = getattr(pmod, fqn[lastdot+1:])
+        ds = klass(self.smvPy)
+        # Python issue https://bugs.python.org/issue1218234
+        # need to invalidate inspect.linecache to make dataset hash work
+        srcfile = inspect.getsourcefile(ds.__class__)
+        if srcfile:
+            inspect.linecache.checkcache(srcfile)
+        return ds
 
     def dataSetsForStage(self, stageName):
         return self.oldRepo.dsUrnsForStage(stageName)
@@ -858,8 +888,8 @@ class PythonDataSetRepository(object):
             try:
                 ret = for_name(fqn)(self.smvPy)
             except AttributeError: # module not found is anticipated
-                traceback.print_exc()
-            except ImportError as e:
+                return None
+            except ImportError:
                 return None
             except Exception as e: # other errors should be reported, such as syntax error
                 traceback.print_exc()
@@ -944,7 +974,7 @@ class PythonDataSetRepository(object):
         return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyOutput and obj.IsSmvPyModule)
 
     def dsUrnsForStage(self, stageName):
-        return moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
+        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
 
     def rerun(self, modUrn, validator, known):
         ds = self.reloadDs(modUrn)
