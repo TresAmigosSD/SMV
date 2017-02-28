@@ -96,7 +96,7 @@ class SmvAppTest extends SmvTestUtil {
 
       val thrown = the [SmvRuntimeException] thrownBy SmvApp.app.modulesToRun()
       thrown.getMessage shouldBe
-      s"""Cannot find module named [${modname}] in any of the stages [${stageNames.mkString(", ")}]"""
+      s"""Cannot find module named [${modname}]"""
     }
 
     // #155
@@ -115,12 +115,7 @@ class SmvAppTest extends SmvTestUtil {
       config(modname)
       val thrown = the [java.lang.RuntimeException] thrownBy SmvApp.app.modulesToRun()
       thrown.getMessage shouldBe
-      s"""Module name [${modname}] is not specific enough, as it is found in multiple stages [${stageNames.mkString(", ")}]"""
-    }
-
-    test("should recursively search package namespace") {
-      config("obj4")
-      SmvApp.app.modulesToRun shouldBe Seq(org.tresamigos.smv.obj4)
+      s"""Module name [${modname}] is not specific enough, as it could refer to [org.tresamigos.smv.test1.obj3, org.tresamigos.smv.test2.obj3]"""
     }
 
     test("should resolve name ambiguity by prepending a containing package name") {

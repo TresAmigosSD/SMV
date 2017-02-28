@@ -39,4 +39,18 @@ class DataSetMgr {
 
   def outputModsForStage(stageName: String): Seq[URN] =
     dsRepoFactories flatMap (_.createRepo.outputModsForStage(stageName)) map (URN(_))
+
+  def inferURN(partialName: String): ModURN = {
+    val allModFQNs = allDataSets filter (_.isInstanceOf[ModURN]) map (_.fqn)
+    val candidates = allModFQNs filter (_.endsWith(partialName))
+    candidates.size match {
+      case 0 =>
+        println(allModFQNs.toString)
+        throw new SmvRuntimeException(
+        s"""Cannot find module named [${partialName}]""")
+      case 1 => ModURN(candidates.head)
+      case _ => throw new SmvRuntimeException(
+        s"Module name [${partialName}] is not specific enough, as it could refer to [${candidates.mkString(", ")}]")
+    }
+  }
 }

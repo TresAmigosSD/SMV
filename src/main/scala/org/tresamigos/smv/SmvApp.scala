@@ -362,47 +362,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
    */
   def runModuleByName(modName: String) : DataFrame = {
-    val module = resolveModuleByName(modName)
-    resolveRDD(module)
-  }
-
-  // Tries to infer the full name of the module by guessing until it finds an existing name
-  def findModuleInStage(stage: String, name: String): Option[SmvModule] = {
-    val candidates = (for {
-      pkg <- stage.split('.').reverse.tails //  stage "a.b.c" -> ["c","b", "a"] ->
-                                            //  [
-                                            //    ["c", "b", "a"],
-                                            //    ["b", "a"],
-                                            //    ["a"],
-                                            //    []
-                                            //  ]
-      candidate = (name +: pkg).reverse.mkString(".") //  "name" and ["c", "b", "a"] -> "a.b.c.name"
-                                                      //  "name" and ["b", "a"] -> "a.b.name"
-
-      // try each in turn as module object name
-      // skip those that do not have an SmvModule defined
-      m <- Try(dsm.load(ModURN(candidate)).head.asInstanceOf[SmvModule]).toOption
-    }
-    yield m).toSeq
-
-    candidates.headOption
-  }
-
-  // Looks for a module with this basename in every stage
-  def resolveModuleByName(name: String): SmvModule = {
-    val stageNames = smvConfig.stageNames
-    val mods = for {
-      stage <- stageNames.toSet[String]
-      m <- findModuleInStage(stage, name)
-    } yield m
-
-    mods.size match {
-      case 0 => throw new SmvRuntimeException(
-        s"""Cannot find module named [${name}] in any of the stages [${stageNames.mkString(", ")}]""")
-      case 1 => mods.head
-      case _ => throw new SmvRuntimeException(
-        s"Module name [${name}] is not specific enough, as it is found in multiple stages [${stageNames.mkString(", ")}]")
-    }
+    val mod = dsm.load(dsm.inferURN(modName)).asInstanceOf[SmvModule]
+    resolveRDD(mod)
   }
 
   /**
@@ -414,7 +375,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     val empty = Some(Seq.empty[String])
 
     val directModURNs: Seq[URN] =
-      cmdline.modsToRun.orElse(empty)().map (partialName => URN(resolveModuleByName(partialName).urn))
+      cmdline.modsToRun.orElse(empty)().map (dsm.inferURN(_))
 
     val stageModURNs =
       cmdline.stagesToRun.orElse(empty)() flatMap {dsm.outputModsForStage}
