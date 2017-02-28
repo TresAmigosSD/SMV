@@ -17,7 +17,7 @@ val commonsHttpclientVersion = "4.3.2"
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
   "org.apache.spark" %% "spark-hive" % sparkVersion % "provided",
-  "org.scalatest" %% "scalatest" % "2.2.0" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.6" % "test",
   "com.google.guava" % "guava" % "14.0.1",
   "org.rogach" %% "scallop" % "0.9.5",
   "org.eclipse.jetty" % "jetty-server" % jettyVersion,
