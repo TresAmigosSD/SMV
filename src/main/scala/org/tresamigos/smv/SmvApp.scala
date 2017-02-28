@@ -138,14 +138,20 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     ).mkString("\n")
 
   /**
-   * Get the RDD associated with data set.  The rdd plan (not data) is cached in the SmvDataSet
-   * to ensure only a single DataFrame exists for a given data set (file/module).
-   * The module can create a data cache itself and the cached data will be used by all
-   * other modules that depend on the required module.
-   * This method also checks for cycles in the module dependency graph.
+   * Get the DataFrame associated with data set. The DataFrame plan (not data) is cached in
+   * dfCache the to ensure only a single DataFrame exists for a given data set
+   * (file/module).
    */
+  val dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
   def resolveRDD(ds: SmvDataSet): DataFrame = {
-    ds.rdd
+    val vFqn = ds.versionedFqn
+    Try( dfCache(vFqn) ) match {
+      case Success(df) => df
+      case Failure(_) =>
+        val df = ds.rdd
+        dfCache += (vFqn -> df)
+        df
+    }
   }
 
   lazy val packagesPrefix = {

@@ -74,6 +74,7 @@ abstract class SmvDataSet extends FilenamePart {
    * override this to name the proxied FQN.
    */
   def fqn: String = this.getClass().getName().filterNot(_=='$')
+  def versionedFqn = s"${fqn}#${hashOfHash}"
 
   /** Names the persisted file for the result of this SmvDataSet */
   override def fnpart = fqn
