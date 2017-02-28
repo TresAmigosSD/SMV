@@ -88,50 +88,67 @@ As the project grows, it may become necessary to add additional stages.
 We will utilize the example app described in [Getting Started](getting_started.md) as the starting point.
 
 ```bash
-$ _SMV_HOME_/tools/bin/smv-init MyApp com.mycompany.myapp
+$ _SMV_HOME_/tools/bin/smv-init -s MyApp
 ```
 
-To review, the above will create a sample app `MyApp` with two stages `stage1` and `stage3`. We will add an additional `modeling` stage in this example.
+To review, the above will create a simple app `MyApp` with one stage `stage1`. We will add an additional `modeling` stage in this example.
 
 **1. add the stage to the app configuration file (`conf/smv-app-conf.props`).**
 
 ```
 ...
 # add modeling below
-smv.stages = com.mycompany.MyApp.stage1, com.mycompany.MyApp.stage2, com.mycompany.MyApp.modeling
+smv.stages = stage1, modeling
 ...
 ```
 
-**2. add the `input` sub-package to the source tree.**
+**2. add the `inputData.py` file to the `modeling` stage.**
 
-Create the file `src/main/scala/com/mycompany/myapp/modeling/input/InputFiles.scala` and add `SmvFile` and `SmvModuleLink` objects
-in the file as described in [Stage Input](#stage-input) section above.
+Create the file `src/main/python/modeling/inputData.py`
 
-```scala
-package com.mycompany.myapp.modeling.input
+```python
+from smv import SmvPyModuleLink, SmvPyExtDataSet
+from stage1 import employment as emp
 
-object weights extends SmvCsvFile("weights.csv")
-object Stage1EmploymentRaw extends SmvModuleLink(com.mycompany.myapp.stage1.EmploymentRaw)
+EmploymentByStateLink = SmvPyModuleLink(emp.EmploymentByState)
+
 ```
 
-**3. add the modules to the `modeling` stage package.**
+**3. add the modules to the `modeling` stage.**
 
-Create the file `src/main/scala/com/mycompany/myapp/modeling/AccountVars.scala` which defines the `AccountVars` module.
+Create the file `src/main/python/modeling/category.py` which defines the `EmploymentByStateCategory` module.
 
-```scala
-package com.mycompany.myapp.modeling
-import com.mycompany.myapp.modeling.input._
+```python
+from smv import *
+from pyspark.sql.functions import col, sum, lit
 
-object AccountVars extends SmvModule("add model variables to accounts") {
-  override def requiresDS() = Seq(Stage1EmploymentRaw) # Stage1EmploymentRaw is defined in modeling.input
+from modeling import inputdata
 
-  override def run(i: runParams) = {
-    val raw_employment = i(Stage1EmploymentRaw)
-    ...
-  }
-}
+class EmploymentByStateCategory(SmvPyModule, SmvPyOutput):
+
+    def requiresDS(self):
+        return [inputdata.EmploymentByStateLink]
+
+    def run(self, i):
+        df = i[inputdata.EmploymentByStateLink]
+        return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
 ```
 
-We can now run the `AccountVars` module by providing the module FQN `com.mycompany.myapp.modeling.AccountVars` to the `smv-run` command
-or by marking the module using the `SmvOutput` trait and running the entire stage ("-s modeling").
+**4. add the `__init__.py` file to let Python build the module structure.**
+
+In order to build the module structure, Python requires an `__init__.py` file inside each Python module subdirectory.  The file can remain empty.
+
+We can now run the `EmploymentByStateCategory` module by providing the module FQN to the `smv-pyrun` command:
+
+```bash
+$ _SMV_HOME_/tools/bin/smv-pyrun -m modeling.category.EmploymentByStateCategory
+```
+or by making the module extend `SmvPyOutput` and running the entire stage ("-s modeling").
 See [Smv Modules](smv_module.md) for details.
+
+# Create a multi-stage application
+A multi-stage sample application can be created by running the `smv-init` command with the `-e` (enterprise) flag:
+
+```bash
+$ _SMV_HOME_/tools/bin/smv-init -e MultiStageApp
+```
