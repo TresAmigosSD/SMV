@@ -344,7 +344,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * sequence of SmvModules to run based on the command line arguments.
    * Returns the union of -a/-m/-s command line flags.
    */
-  private[smv] def modulesToRun() : Seq[SmvModule] = {
+  lazy val modulesToRun: Seq[SmvModule] = {
     val cmdline = smvConfig.cmdLine
     val empty = Some(Seq.empty[String])
 

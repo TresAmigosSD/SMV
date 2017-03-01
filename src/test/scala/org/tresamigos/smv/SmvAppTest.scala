@@ -94,7 +94,7 @@ class SmvAppTest extends SmvTestUtil {
       val modname = "tooth-fary"
       config(modname)
 
-      val thrown = the [SmvRuntimeException] thrownBy SmvApp.app.modulesToRun()
+      val thrown = the [SmvRuntimeException] thrownBy SmvApp.app.modulesToRun
       thrown.getMessage shouldBe
       s"""Cannot find module named [${modname}]"""
     }
@@ -113,7 +113,7 @@ class SmvAppTest extends SmvTestUtil {
     test("should report ambiguous module names") {
       val modname = "obj3"
       config(modname)
-      val thrown = the [java.lang.RuntimeException] thrownBy SmvApp.app.modulesToRun()
+      val thrown = the [java.lang.RuntimeException] thrownBy SmvApp.app.modulesToRun
       thrown.getMessage shouldBe
       s"""Module name [${modname}] is not specific enough, as it could refer to [org.tresamigos.smv.test1.obj3, org.tresamigos.smv.test2.obj3]"""
     }
