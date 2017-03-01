@@ -42,15 +42,15 @@ class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   }
 
   def allDataSets(): Seq[String] = {
-    stages.allDatasets.map(_.urn)
+    stages.allDatasets.map(_.urn.toString)
   }
 
   def allOutputModules(): Seq[String] = {
-    stages.allOutputModules.map(_.urn)
+    stages.allOutputModules.map(_.urn.toString)
   }
 
   def outputModsForStage(stageName: String): Seq[String] = {
-    stages.findStage(stageName).allOutputModules.map(_.urn)
+    stages.findStage(stageName).allOutputModules.map(_.urn.toString)
   }
 }
 

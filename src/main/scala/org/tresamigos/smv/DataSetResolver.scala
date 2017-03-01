@@ -53,24 +53,24 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
     }
   }
 
+  // Note we no longer have to worry about corruption of resolve stack
+  // because a new stack is created per transaction
   val resolveStack: mutable.Stack[SmvDataSet] = mutable.Stack()
 
   def resolveDataSet(ds: SmvDataSet): SmvDataSet = {
     if (resolveStack.contains(ds))
       throw new IllegalStateException(msg.dependencyCycle(ds, resolveStack))
-    else {
-      val urn = URN(ds.urn)
-      Try(resolved(urn)) match {
+    else
+      Try(resolved(ds.urn)) match {
         case Success(resolvedDs) => resolvedDs
         case Failure(_) =>
           resolveStack.push(ds)
           val resolvedDs = ds.resolve(this)
-          resolved += (urn -> resolvedDs)
+          resolved += (ds.urn -> resolvedDs)
           resolveStack.pop()
           validateDependencies(resolvedDs)
           resolvedDs
       }
-    }
   }
 
   def validateDependencies(ds: SmvDataSet): Unit = {

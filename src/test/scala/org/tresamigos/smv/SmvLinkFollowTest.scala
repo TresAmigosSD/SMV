@@ -21,7 +21,7 @@ class SmvLinkFollowTest extends SmvTestUtil {
   )++ Seq("-m", "org.tresamigos.smv.smvLinkTestPkg2.T") ++ Seq("--data-dir", testcaseTempDir)
 
   test("Test SmvModuleLink follow link") {
-    val res = app.runModule(smvLinkTestPkg2.T.urn)
+    val res = app.runModule(smvLinkTestPkg2.T.urn.toString)
   }
 
   // While working on unification of SmvDataSet loading schemes we will be changing
@@ -50,7 +50,7 @@ class SmvLinkFollowWithVersionTest extends SmvTestUtil {
 
   test("Test SmvModuleLink follow link with version config") {
     intercept[org.apache.hadoop.mapred.InvalidInputException]{
-      val res = app.runModule(smvLinkTestPkg2.T2.urn)
+      val res = app.runModule(smvLinkTestPkg2.T2.urn.toString)
     }
   }
 

@@ -28,15 +28,21 @@ trait FilenamePart {
   def fnpart: String
 }
 
-abstract class URN {
+/*
+ * Every concrete subclass of URN should be a case class to ensure
+ * structural equality - this is important because we use the URN as a key
+ */
+abstract class URN(prefix: String) {
   def fqn: String
+  override def toString: String =  s"${prefix}:${fqn}"
 }
-case class LinkURN(fqn: String) extends URN
-case class ModURN(fqn: String) extends URN
+case class LinkURN(fqn: String) extends URN("link") {
+  override def toString: String = super.toString
+}
+case class ModURN(fqn: String) extends URN("mod") {
+  override def toString: String = super.toString
+}
 
-/**
-  *
-  */
 object URN {
   object errors {
     def invalidURN(urn: String) = new SmvRuntimeException(s"Invalid urn: ${urn}")
@@ -75,11 +81,11 @@ abstract class SmvDataSet extends FilenamePart {
    */
   def fqn: String = this.getClass().getName().filterNot(_=='$')
   def versionedFqn = s"${fqn}#${hashOfHash}"
+  def urn: URN = ModURN(fqn)
 
   /** Names the persisted file for the result of this SmvDataSet */
   override def fnpart = fqn
 
-  val urn: String = mkModUrn(fqn)
   def description(): String
 
   /** modules must override to provide set of datasets they depend on.
@@ -96,7 +102,7 @@ abstract class SmvDataSet extends FilenamePart {
       this
   }
   /** The dependency modules's urn's */
-  def dependencies: Seq[String] = resolvedRequiresDS map (_.urn)
+  def dependencies: Seq[String] = resolvedRequiresDS map (_.urn.toString)
 
   /** All dependencies with the dependency hierarchy flattened */
   def allDeps: Seq[SmvDataSet] =
@@ -563,7 +569,7 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
 
   private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
-  override val urn = mkLinkUrn(smvModule.fqn)
+  override def urn = LinkURN(smvModule.fqn)
 
   /**
    *  No need to check isEphemeral any more
@@ -619,11 +625,10 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
  */
 case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${modFqn}") {
   override val fqn = modFqn
-  override val urn = mkModUrn(fqn)
   override def requiresDS =
     throw new SmvRuntimeException("SmvExtModule requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvExtModulePython =
-    resolver.loadDataSet(URN(urn)).head.asInstanceOf[SmvExtModulePython]
+    resolver.loadDataSet(urn).head.asInstanceOf[SmvExtModulePython]
   override def run(i: RunParams) =
     throw new SmvRuntimeException("SmvExtModule run should never be called")
 }
@@ -633,7 +638,6 @@ case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModu
 
 class SmvExtModulePython(target: ISmvModule) extends SmvModule(s"SmvPyModule ${target.fqn}") {
   override val fqn = target.fqn
-  override val urn = mkModUrn(fqn)
   override def tableName = target.tableName()
   override def isEphemeral = target.isEphemeral()
   override def requiresDS =
@@ -643,7 +647,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvModule(s"SmvPyModule ${t
     this
   }
   override def run(i: runParams) =
-    target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn, i(ds))}.toMap[String, DataFrame])
+    target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn.toString, i(ds))}.toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()
   override def createDsDqm = target.getDqm()
 }

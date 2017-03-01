@@ -113,7 +113,7 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
     inferStageNameFromDsName(dsname).flatMap(findStage(_).version)
 
   def inferStageForDataSet(ds: SmvDataSet) : Option[SmvStage] =
-    inferStageNameFromDsName(urn2fqn(ds.urn)) map findStage
+    inferStageNameFromDsName(ds.urn.fqn) map findStage
 
   override lazy val predecessors: Map[SmvDataSet, Seq[SmvDataSet]] =
     allDatasets.map{

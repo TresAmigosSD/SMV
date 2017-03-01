@@ -171,7 +171,7 @@ object ShellCmd {
     val message = hotdeployIfCapable(ds, cl)
     println(message) // The message will not show in Pyshell
 
-    SmvApp.app.runModule(ds.urn)
+    SmvApp.app.runModule(ds.urn.toString)
   }
 
   /**

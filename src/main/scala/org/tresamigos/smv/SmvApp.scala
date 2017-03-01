@@ -271,7 +271,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     deleteOutputModules()
 
     modulesToRun foreach { module =>
-      val modResult = runModule(module.urn)
+      val modResult = runModule(module.urn.toString)
 
       // if module was ephemeral, then it was not saved during graph execution and we need
       // to persist it here explicitly.
