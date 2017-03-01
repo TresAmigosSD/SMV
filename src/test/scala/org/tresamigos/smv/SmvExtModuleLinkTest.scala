@@ -14,6 +14,6 @@ class SmvExtModuleLinkTest extends SmvTestUtil {
       //override def requiresDS = Seq(SmvExtModuleLink("s1.L"))
     }
 
-    app.checkDependencyRules(extMod) shouldBe 'Empty
+    // app.checkDependencyRules(extMod) shouldBe 'Empty
   }
 }
