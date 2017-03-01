@@ -246,17 +246,20 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   }
 
   /**
-   * if the publish to hive flag is set, the publish
+   * if the publish to hive flag is setn, the publish
    */
   def publishModulesToHive() : Boolean = {
-    false
-    // if (publishHive) {
-    //   // TODO: add call to publish a specific module.
-    //   //smvConfig.modulesToRun().foreach { module => module.publish() }
-    //   true
-    // } else {
-    //   false
-    // }
+    if(publishHive){
+      // filter out the outout modules and publish them
+      modulesToRun flatMap {
+        case m: SmvOutput => Some(m)
+        case _ => None
+      } foreach (
+        m => SmvUtil.exportDataFrameToHive(sqlContext, resolveRDD(m), m.tableName)
+      )
+    }
+
+    publishHive
   }
 
   /**

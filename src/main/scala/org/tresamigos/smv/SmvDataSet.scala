@@ -493,6 +493,9 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   type runParams = RunParams
   def run(inputs: runParams) : DataFrame
 
+  /** full name of hive output table if this module is published to hive. */
+  def tableName: String = throw new IllegalStateException("tableName not specified for ${fqn}")
+
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     // TODO turn on dependency check by uncomment the following line after test against projects
@@ -617,9 +620,12 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
 case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${modFqn}") {
   override val fqn = modFqn
   override val urn = mkModUrn(fqn)
-  override def requiresDS = throw new SmvRuntimeException("SmvExtModule requiresDS should never be called")
-  override def resolve(resolver: DataSetResolver): SmvExtModulePython = resolver.loadDataSet(URN(urn)).head.asInstanceOf[SmvExtModulePython]
-  override def run(i: RunParams) = throw new SmvRuntimeException("SmvExtModule run should never be called")
+  override def requiresDS =
+    throw new SmvRuntimeException("SmvExtModule requiresDS should never be called")
+  override def resolve(resolver: DataSetResolver): SmvExtModulePython =
+    resolver.loadDataSet(URN(urn)).head.asInstanceOf[SmvExtModulePython]
+  override def run(i: RunParams) =
+    throw new SmvRuntimeException("SmvExtModule run should never be called")
 }
 
 /** Link to a external module from another stage */
@@ -628,8 +634,10 @@ case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModu
 class SmvExtModulePython(target: ISmvModule) extends SmvModule(s"SmvPyModule ${target.fqn}") {
   override val fqn = target.fqn
   override val urn = mkModUrn(fqn)
+  override def tableName = target.tableName()
   override def isEphemeral = target.isEphemeral()
-  override def requiresDS = throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
+  override def requiresDS =
+   throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvExtModulePython = {
     resolvedRequiresDS = target.dependencies map ( urn => resolver.loadDataSet(URN(urn)).head )
     this
@@ -689,9 +697,6 @@ case class SmvCsvStringData(
  */
 trait SmvOutput {
   this : SmvDataSet =>
-
-  /** full name of hive output table if this module is published to hive. */
-  val tableName = null;
 }
 
 /** Base marker trait for run configuration objects */

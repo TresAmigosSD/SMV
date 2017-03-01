@@ -11,18 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
+from smv import smvPy, SmvPyModule, SmvPyOutput
 
-from pyspark import SparkContext
-from pyspark.sql import HiveContext
-from smv import smvPy
-
-if __name__ == "__main__":
-    import compileall
-    r = compileall.compile_dir('src/main/python', quiet=1)
-    if not r:
-        exit(-1)
-
-    # skip the first argument, which is this program
-    smvPy.init(sys.argv[1:])
-    smvPy.j_smvApp.run()
+class M(SmvPyModule, SmvPyOutput):
+    def requiresDS(self): return []
+    def tableName(self): return "M"
+    def run(self, i):
+        return self.smvPy.createDF("k:String;v:Integer", "a,;b,2")

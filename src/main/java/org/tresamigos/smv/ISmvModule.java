@@ -36,6 +36,8 @@ public interface ISmvModule {
 
 	boolean isOutput();
 
+	String tableName();
+
 	String fqn();
 
 	/**

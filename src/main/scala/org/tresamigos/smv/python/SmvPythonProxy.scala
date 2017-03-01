@@ -168,10 +168,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
     SmvUtil.persist(j_smvApp.sqlContext, dataframe, path, generateEdd)
 
-  /** Export a dataframe as hive table */
-  def exportDataFrameToHive(dataframe: DataFrame, tableName: String): Unit =
-    SmvUtil.exportDataFrameToHive(j_smvApp.sqlContext, dataframe, tableName)
-
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes,
     pForceParserCheck: Boolean, pFailAtParsingError: Boolean
