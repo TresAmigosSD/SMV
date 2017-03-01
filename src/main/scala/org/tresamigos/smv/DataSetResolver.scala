@@ -40,20 +40,15 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
   def loadDataSet(urns: URN*): Seq[SmvDataSet] = {
     urns map {
       urn =>
-        Try(resolved(urn)) match {
+        Try( resolved(urn) ) match {
           case Success(ds) => ds
           case Failure(_) =>
+            val dsFound = findDataSetInRepo(urn.fqn)
             val ds = urn match {
-              case LinkURN(_) => new SmvModuleLink(findModInRepoList(urn.fqn, repos).asInstanceOf[SmvOutput])
-              case ModURN(_) => findModInRepoList(urn.fqn, repos)
+              case LinkURN(_) => new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
+              case ModURN(_) => dsFound
             }
-            val resolvedDs: SmvDataSet = Try(resolveDataSet(ds)) match {
-              case Success(ds) => ds
-              case Failure(e) =>
-                println(e.getMessage)
-                throw e
-            }
-            resolvedDs
+          resolveDataSet(ds)
         }
     }
   }
@@ -89,18 +84,12 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
     }
   }
 
-  // Recursively search for ds in repos. Throw error if not found
-  private def findModInRepoList(fqn: String, repoList: Seq[DataSetRepo]): SmvDataSet = {
-    Try( repoList.head ) match {
-      // If repoList is empty, dataset not found
-      case Failure(_) =>
-        throw new SmvRuntimeException(msg.dsNotFound(fqn))
-      case Success(repo) =>
-        Try( repo.loadDataSet(fqn) ) match {
-          // If dataset not found in repo, try next repo
-          case Failure(_) => findModInRepoList( fqn, repoList.filterNot(repoInList => repo == repoInList) )
-          case Success(ds) => ds
-        }
+  private def findDataSetInRepo(fqn: String): SmvDataSet =
+    findRepoWith(fqn).loadDataSet(fqn)
+
+  private def findRepoWith(fqn: String): DataSetRepo =
+    Try(repos.find( _.hasDataSet(fqn) ).get) match {
+      case Success(repo) => repo
+      case Failure(_) => throw new SmvRuntimeException(msg.dsNotFound(fqn))
     }
-  }
 }

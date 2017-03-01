@@ -42,6 +42,7 @@ class SmvAppTest extends SmvTestUtil {
   override def appArgs = Seq("-m", "C",
     "--data-dir", testcaseTempDir,
     "--input-dir", testcaseTempDir,
+    "--smv-props", "smv.stages=org.tresamigos.fixture.smvapptest",
     "--permit-dependency-violation"
   )
 
