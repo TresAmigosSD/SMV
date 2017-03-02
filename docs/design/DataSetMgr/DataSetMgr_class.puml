@@ -8,18 +8,36 @@ package Scala {
   class SmvApp
   class DataSetMgr {
     registerRepoFactory(repoFactory: DataSetRepoFactory)
-    loadDataSetWithDep(urns: String*): Seq(SmvDataSet)
+    load(urns: URN*): Seq(SmvDataSet)
+    inferURN(partialName: String): SmvDataSet
+    dataSetsForStage(stageNames: String*): Seq[SmvDataSet]
+    outputsForStage(stageNames: String*): Seq[SmvDataSet]
+    allDataSets(): Seq[SmvDataSet]
+    allOutputs(): Seq[SmvDataSet]
   }
-  class DataSetResolver {
-    loadDataSet(urn: String): SmvDataSet
-    resolveDataSet(ds: SmvDataSet): SmvDataSet
+  together {
+    class DataSetResolver {
+      loadDataSet(urn: URN): SmvDataSet
+      resolveDataSet(ds: SmvDataSet): SmvDataSet
+    }
+    class DataSetRepoFactory <<abstract>> {
+      createRepo(): DataSetRepo
+    }
+
+  class DataSetRepoFactoryPython {
+    createRepo(): DataSetRepoPython
   }
-  class DataSetRepoFactory {
-    createRepo(): DataSetRepo
+  DataSetRepoFactoryPython -L|> DataSetRepoFactory
+  class DataSetRepoFactoryScala {
+    createRepo(): DataSetRepoScala
   }
-  class DataSetRepo {
+  DataSetRepoFactoryScala -L|> DataSetRepoFactory
+}
+
+  class DataSetRepoFactory
+  class DataSetRepo <<abstract>> {
     loadDataSet(fqn: String): SmvDataSet
-    outputModsForStage(fqn: String): Seq[String]
+    urnsForStage(stageName: String): Seq[URN]
   }
   together {
     class DataSetRepoScala extends DataSetRepo
@@ -27,10 +45,10 @@ package Scala {
   }
   class IDataSetRepoPy4J <<java>> {
     loadModule(fqn: String): ISmvModule
-    outputModsForStage(fqn: String): Seq[String]
+    urnsForStage(fqn: String): Seq[String]
   }
   together {
-    class SmvDataSet {
+    class SmvDataSet <<abstract>> {
       requireDS(): Seq[SmvDataSet]
       resolve(res: DataSetResolver): SmvDataSet
       run(i: runParams): DataFrame
@@ -40,7 +58,8 @@ package Scala {
     class SmvModule -L|> SmvDataSet
   }
   class SmvExtModule extends SmvModule
-  class SmvExtModuleLink extends SmvExtModule
+  class SmvModuleLink extends SmvModule
+  class SmvExtModuleLink extends SmvModuleLink
   class ISmvModulePy4J <<java>> {
     isOutput(): Boolean
   }
@@ -57,7 +76,7 @@ package Scala {
   DataSetRepoPython *-- IDataSetRepoPy4J
   DataSetRepoPython ..> "create " SmvExtModulePython
   IDataSetRepoPy4J ..> "create " ISmvModulePy4J
-
+  SmvExtModuleLink *-- SmvExtModule
 }
 
 package Python {
