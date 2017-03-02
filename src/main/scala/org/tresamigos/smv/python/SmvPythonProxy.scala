@@ -21,7 +21,7 @@ import py4j.GatewayServer
 import scala.collection.JavaConversions._
 import scala.util.Try
 import java.util.ArrayList
-import matcher2._
+import matcher._
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {

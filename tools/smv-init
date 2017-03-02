@@ -97,9 +97,14 @@ function copy_conf_files()
     # copy appropriate files based on project type
     PYTHON_FILES="README.md notebooks/Untitled.ipynb .gitignore.template log4j.properties conf/smv-app-conf.props conf/smv-user-conf.props"
     SCALA_FILES="$PYTHON_FILES pom.xml build.sbt project/assembly.sbt project/build.properties conf/shell_init.scala"
+    ENTERPRISE_FILES="$PYTHON_FILES conf/smv-user-conf.props.template"
 
     if [ "$PROJ_TYPE" = "test" ] ; then
       for f in $SCALA_FILES; do
+          copy_with_inject "$TEMPLATE_DIR/$f" "$PROJ_DIR/$f"
+      done
+    elif [ "$PROJ_TYPE" = "enterprise" ] ; then
+      for f in $ENTERPRISE_FILES; do
           copy_with_inject "$TEMPLATE_DIR/$f" "$PROJ_DIR/$f"
       done
     else

@@ -19,7 +19,7 @@
 * [Dynamic Class Loading](class_loader.md)
 * [Adding a new CSV input file (with schema discovery)](schema_discovery.md)
 * [Atom - A Small Editor Works Well with SMV](atom.md)
-* [Fuzzy matching between two datasets](smv_entity_matcher2.md)
+* [Fuzzy matching between two datasets](smv_entity_matcher.md)
 * [Work on data with hierarchies](smv_hier.md)
 * [Column level Description and Labels](smv_desc_label.md)
 * [Smv Python functions](smv_python_funcs.md) :new:

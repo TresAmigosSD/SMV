@@ -74,7 +74,7 @@ The `run` method of a module defines the operations needed to get the output bas
   def run(self, i):
       df = i[inputdata.Employment]
       df1 = df.groupBy(col("ST")).agg(sum(col("EMP")).alias("EMP"))
-      df2 = df1.filter((col("EMP") > lit(1000000))
+      df2 = df1.filter((col("EMP") > lit(1000000)))
       return df2
 ```
 

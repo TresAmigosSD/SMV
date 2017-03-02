@@ -1,6 +1,6 @@
 conf/smv-user-conf.props
 
-data/out
+data/output
 
 .idea
 smv.iml
@@ -17,6 +17,8 @@ metastore_db/
 
 *.class
 *.log
+*.pyc
+*.pyo
 
 # sbt specific
 .cache

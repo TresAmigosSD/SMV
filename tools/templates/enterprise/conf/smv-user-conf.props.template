@@ -1,0 +1,9 @@
+# this is a template for user config file. it allows users to specify where SMV will look for data files
+# rename this file to `smv-user-conf.props` and change dataDir below to point to where the data is located
+# when running SMV on a cluster, it is easier to specify this configuration under `~/.smv.smv-user-conf.props`
+
+# see the docs for more details:
+# https://github.com/TresAmigosSD/SMV/blob/master/docs/user/schema_discovery.md
+
+# data dir
+smv.dataDir = file://_PROJ_DIR_FULL_PATH_/data

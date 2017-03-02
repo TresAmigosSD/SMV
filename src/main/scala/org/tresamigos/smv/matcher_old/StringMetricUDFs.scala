@@ -1,4 +1,4 @@
-package org.tresamigos.smv.matcher
+package org.tresamigos.smv.matcher_old
 
 import com.rockymadden.stringmetric.similarity._
 import com.rockymadden.stringmetric.phonetic._
