@@ -238,11 +238,6 @@ class SmvPy(object):
         """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged"""
         return self.j_smvPyClient.urn2fqn(urnOrFqn)
 
-    def publishModule(self, fqn):
-        """Publish a Scala or a Python SmvModule by its FQN
-        """
-        self.j_smvPyClient.publishModule(fqn)
-
     def outputDir(self):
         return self.j_smvPyClient.outputDir()
 
@@ -847,10 +842,6 @@ class DataSetRepo(object):
         return ds
 
     def dataSetsForStage(self, stageName):
-        # The lambdas in this method and the one below are misleading. The reason they work seems
-        # to be because if the Is____ property is not set, it causes a NameError which is handled
-        # in moduleUrnsForStage. SmvPyDataSet should probably implement methods for each of these
-        # properties instead
         return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
 
 

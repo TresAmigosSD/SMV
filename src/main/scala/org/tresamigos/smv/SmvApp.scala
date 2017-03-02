@@ -308,17 +308,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   def runModule(urn: URN): DataFrame = resolveRDD(dsm.load(urn).head)
 
   /**
-   * Publish the result of an SmvModule
-   */
-  def publishModule(fqn: String, version: String): Unit = {
-    println(s"publishing module ${fqn}")
-    val df = runModule(ModURN(fqn))
-    val path = publishPath(fqn, version)
-    println(s"publish path is ${path}")
-    SmvUtil.publish(sqlContext, df, path, genEdd)
-  }
-
-  /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
    */
   def runModuleByName(modName: String) : DataFrame = {

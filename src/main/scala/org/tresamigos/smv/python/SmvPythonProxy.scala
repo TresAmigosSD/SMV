@@ -191,10 +191,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def runModule(urn: String): DataFrame =
     j_smvApp.runModule(URN(urn))
 
-  /** Publish the result of an SmvModule */
-  def publishModule(modFqn: String): Unit =
-    j_smvApp.publishModule(modFqn, publishVersion.get)
-
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvPyOutput tables
   def moduleNames: java.util.List[String] = {
