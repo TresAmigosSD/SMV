@@ -818,6 +818,7 @@ class DataSetRepo(object):
             # otherwise import the module
             return self._load(fqn)
 
+
     # Import the module (Python module, not SMV module) containing the dataset
     # and return the dataset
     def _load(self, fqn):
@@ -846,7 +847,12 @@ class DataSetRepo(object):
         return ds
 
     def dataSetsForStage(self, stageName):
+        # The lambdas in this method and the one below are misleading. The reason they work seems
+        # to be because if the Is____ property is not set, it causes a NameError which is handled
+        # in moduleUrnsForStage. SmvPyDataSet should probably implement methods for each of these
+        # properties instead
         return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
+
 
     def outputModsForStage(self, stageName):
         return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyModule and obj.IsSmvPyOutput)
@@ -879,7 +885,11 @@ class DataSetRepo(object):
                     for n in dir(pymod):
                         obj = getattr(pymod, n)
                         try:
-                            if fn(obj):
+                            # Class should have an fqn which begins with the stageName.
+                            # Each package will contain among other things all of
+                            # the modules that were imported into it, and we need
+                            # to exclude these (so that we only count each module once)
+                            if fn(obj) and obj.fqn().startswith(stageName):
                                 buf.append(obj.urn())
                         except AttributeError:
                             continue

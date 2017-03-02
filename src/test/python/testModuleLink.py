@@ -20,7 +20,7 @@ class ModuleLinkTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
         return ['--smv-props', 'smv.stages=fixture.stage1:fixture.stage2',
-                '-m', 'None', '--publish', cls.PublishDir]
+                '-m', 'output.A', '--publish', cls.PublishDir]
 
     @classmethod
     def tearDownClass(cls):
@@ -30,13 +30,13 @@ class ModuleLinkTest(SmvBaseTest):
 
     def setUp(self):
         super(ModuleLinkTest, self).setUp()
-        self.smvPy.publishModule('fixture.stage1.output.A')
 
     def test_module_link_can_be_resolved(self):
-        a = smvPy.runModule('mod:fixture.stage1.output.A')
-        l = smvPy.runModule('mod:fixture.stage2.links.L')
-        self.should_be_same(a, l) # link resolution
+        self.smvPy.j_smvApp.run()
+        l = self.smvPy.runModule('mod:fixture.stage2.links.L')
+        lExpected = self.createDF("k:String;v:Integer", "a,;b,2")
+        self.should_be_same(lExpected, l) # link resolution
 
-        b = smvPy.runModule('mod:fixture.stage2.links.B')
-        expected = self.createDF("k:String;v:Integer;v2:Integer", "a,,;b,2,3")
-        self.should_be_same(expected, b) # link as dependency
+        b = self.smvPy.runModule('mod:fixture.stage2.links.B')
+        bExpected = self.createDF("k:String;v:Integer;v2:Integer", "a,,;b,2,3")
+        self.should_be_same(bExpected, b) # link as dependency
