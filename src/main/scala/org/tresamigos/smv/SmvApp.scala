@@ -30,7 +30,7 @@ import scala.util.{Try, Success, Failure}
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) extends SmvPackageManager {
+class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) {
 
   val smvConfig = new SmvConfig(cmdLineArgs)
   val genEdd = smvConfig.cmdLine.genEdd()
@@ -61,21 +61,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
 
-  /** stack of items currently being resolved.  Used for cyclic checks. */
-  val resolveStack: mutable.Stack[String] = mutable.Stack()
-
-  override def getAllPackageNames = stages.stages flatMap (_.getAllPackageNames)
-  override lazy val allDatasets = dsm.load(dsm.allDataSets:_*)
-
-  override lazy val allOutputModules =
-    dsm.load(dsm.allOutputModules:_*) map (_.asInstanceOf[SmvModule])
-
-  override lazy val predecessors =
-    allDatasets.map {
-      case d: SmvModuleLink => (d, Seq(d.smvModule))
-      case d: SmvDataSet => (d, d.resolvedRequiresDS)
-    }.toMap
-
   // Issue # 349: look up stage by the dataset's name instead of the
   // object identity because after hot-deploy in shell via a new
   // classloader, the same datset no longer has the same object
@@ -100,12 +85,11 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     smvCF.rdd
   }
 
-  /** all modules known to this app. */
-  private[smv] def allAppModules = stages.allModules
+  lazy val allDataSets: Seq[SmvDataSet] = dsm.load(dsm.allDataSets:_*)
 
   /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
   private[smv] def validFilesInOutputDir() : Seq[String] = {
-    allAppModules.
+    allDataSets.
       flatMap(_.currentModuleOutputFiles).
       map(SmvHDFS.baseName(_))
   }
@@ -132,18 +116,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
         df
     }
   }
-
-  lazy val packagesPrefix = {
-    val m = allAppModules
-    if (m.isEmpty) ""
-    else m.map(_.fqn).reduce{(l,r) =>
-        (l.split('.') zip r.split('.')).
-          collect{ case (a, b) if (a==b) => a}.mkString(".")
-      } + "."
-  }
-
-  /** clean name in graph output */
-  private[smv] def moduleNameForPrint(ds: SmvDataSet) = ds.fqn.stripPrefix(packagesPrefix)
 
   private def genDotGraph(module: SmvModule) = {
     val pathName = s"${module.fqn}.dot"

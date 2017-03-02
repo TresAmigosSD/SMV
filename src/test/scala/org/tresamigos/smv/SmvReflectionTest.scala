@@ -24,9 +24,5 @@ class SmvReflectionTest extends SparkTestUtil {
       Seq(org.tresamigos.smv.smvAppTestPkg1.X, org.tresamigos.smv.smvAppTestPkg1.Y))(
         Ordering.by[SmvModule, String](_.fqn))
 
-
-    // TODO: CLEANUP: this doesn't belong here
-//    assert(testApp.moduleNameForPrint(org.tresamigos.smv.smvAppTestPkg1.X) === "X")
   }
-
 }
