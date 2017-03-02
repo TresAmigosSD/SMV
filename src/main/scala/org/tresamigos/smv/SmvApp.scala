@@ -116,15 +116,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       SmvHDFS.purgeDirectory(smvConfig.outputDir, validFilesInOutputDir())
   }
 
-  /** Textual representation for output to console */
-  def mkViolationString(violations: Seq[DependencyViolation], indent: String = ".."): String =
-    (for {
-      v <- violations
-      header = s"${indent} ${v.description}"
-    } yield
-      (header +: v.components.map(m => s"${indent}${indent} ${m.urn}")).mkString("\n")
-    ).mkString("\n")
-
   /**
    * Get the DataFrame associated with data set. The DataFrame plan (not data) is cached in
    * dfCache the to ensure only a single DataFrame exists for a given data set

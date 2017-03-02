@@ -24,10 +24,8 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
 
   object msg {
     def dsNotFound(urn: URN): String = s"SmvDataSet ${urn} not found"
-    def listDepViolations(ds: SmvDataSet, vis: Seq[DependencyViolation]) = {
-      s"""Module ${ds.urn} violates dependency rules""" +
-      SmvApp.app.mkViolationString(vis, "..")
-    }
+    def listDepViolations(ds: SmvDataSet, vis: Seq[DependencyViolation]) =
+      s"Module ${ds.urn} violates dependency rules" + mkViolationString(vis)
     def nonfatalDepViolation: String =
       "Continuing module resolution as the app is configured to permit dependency rule violation"
     def fatalDepViolation: String =
@@ -83,6 +81,14 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
         throw new IllegalStateException(msg.fatalDepViolation)
     }
   }
+
+  private def mkViolationString(violations: Seq[DependencyViolation]): String =
+    (for {
+      v <- violations
+      header = s".. ${v.description}"
+    } yield
+      (header +: v.components.map(m => s".... ${m.urn}")).mkString("\n")
+    ).mkString("\n")
 
   private def findDataSetInRepo(urn: URN): SmvDataSet =
     findRepoWith(urn).loadDataSet(urn)
