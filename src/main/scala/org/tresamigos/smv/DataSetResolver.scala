@@ -23,7 +23,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
   val resolved: mutable.Map[URN, SmvDataSet] = mutable.Map.empty
 
   object msg {
-    def dsNotFound(fqn: String): String = s"SmvDataSet ${fqn} not found"
+    def dsNotFound(urn: URN): String = s"SmvDataSet ${urn} not found"
     def listDepViolations(ds: SmvDataSet, vis: Seq[DependencyViolation]) = {
       s"""Module ${ds.urn} violates dependency rules""" +
       SmvApp.app.mkViolationString(vis, "..")
@@ -43,7 +43,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
         Try( resolved(urn) ) match {
           case Success(ds) => ds
           case Failure(_) =>
-            val dsFound = findDataSetInRepo(urn.fqn)
+            val dsFound = findDataSetInRepo(urn)
             val ds = urn match {
               case LinkURN(_) => new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
               case ModURN(_) => dsFound
@@ -84,12 +84,12 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
     }
   }
 
-  private def findDataSetInRepo(fqn: String): SmvDataSet =
-    findRepoWith(fqn).loadDataSet(fqn)
+  private def findDataSetInRepo(urn: URN): SmvDataSet =
+    findRepoWith(urn).loadDataSet(urn)
 
-  private def findRepoWith(fqn: String): DataSetRepo =
-    Try(repos.find( _.hasDataSet(fqn) ).get) match {
+  private def findRepoWith(urn: URN): DataSetRepo =
+    Try(repos.find( _.hasDataSet(urn) ).get) match {
       case Success(repo) => repo
-      case Failure(_) => throw new SmvRuntimeException(msg.dsNotFound(fqn))
+      case Failure(_) => throw new SmvRuntimeException(msg.dsNotFound(urn))
     }
 }

@@ -29,16 +29,16 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   }
 
   def hasDataSet(urn: URN): Boolean =
-    dsRepoFactories exists (_.createRepo.hasDataSet(urn.fqn))
+    dsRepoFactories exists (_.createRepo.hasDataSet(urn))
 
   def allDataSets(): Seq[URN] =
-    dsRepoFactories flatMap (_.createRepo.allDataSets) map (URN(_))
+    dsRepoFactories flatMap (_.createRepo.allDataSets)
 
   def allOutputModules(): Seq[URN] =
-    dsRepoFactories flatMap (_.createRepo.allOutputModules) map (URN(_))
+    dsRepoFactories flatMap (_.createRepo.allOutputModules)
 
   def outputModsForStage(stageName: String): Seq[URN] =
-    dsRepoFactories flatMap (_.createRepo.outputModsForStage(stageName)) map (URN(_))
+    dsRepoFactories flatMap (_.createRepo.outputModsForStage(stageName))
 
   def inferURN(partialName: String): ModURN = {
     val allModFQNs = allDataSets filter (_.isInstanceOf[ModURN]) map (_.fqn)

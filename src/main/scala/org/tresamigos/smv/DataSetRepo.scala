@@ -17,11 +17,11 @@ package org.tresamigos.smv
 import org.tresamigos.smv.class_loader.SmvClassLoader
 
 abstract class DataSetRepo {
-  def loadDataSet(fqn: String): SmvDataSet
-  def hasDataSet(fqn: String): Boolean
-  def allOutputModules(): Seq[String]
-  def allDataSets(): Seq[String]
-  def outputModsForStage(stageName: String): Seq[String]
+  def loadDataSet(urn: URN): SmvDataSet
+  def hasDataSet(urn: URN): Boolean
+  def allOutputModules(): Seq[URN]
+  def allDataSets(): Seq[URN]
+  def outputModsForStage(stageName: String): Seq[URN]
 }
 
 abstract class DataSetRepoFactory {
@@ -32,25 +32,25 @@ class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   val cl = SmvClassLoader(smvConfig, getClass.getClassLoader)
   val stages = smvConfig.stages
 
-  def loadDataSet(fqn: String): SmvDataSet = {
+  def loadDataSet(urn: URN): SmvDataSet = {
     val ref = new SmvReflection(cl)
-    ref.objectNameToInstance[SmvDataSet](fqn)
+    ref.objectNameToInstance[SmvDataSet](urn.fqn)
   }
 
-  def hasDataSet(fqn: String): Boolean = {
-    stages.allDatasets map (_.fqn) contains(fqn)
+  def hasDataSet(urn: URN): Boolean = {
+    stages.allDatasets map (_.fqn) contains(urn.fqn)
   }
 
-  def allDataSets(): Seq[String] = {
-    stages.allDatasets.map(_.urn.toString)
+  def allDataSets(): Seq[URN] = {
+    stages.allDatasets.map(_.urn)
   }
 
-  def allOutputModules(): Seq[String] = {
-    stages.allOutputModules.map(_.urn.toString)
+  def allOutputModules(): Seq[URN] = {
+    stages.allOutputModules.map(_.urn)
   }
 
-  def outputModsForStage(stageName: String): Seq[String] = {
-    stages.findStage(stageName).allOutputModules.map(_.urn.toString)
+  def outputModsForStage(stageName: String): Seq[URN] = {
+    stages.findStage(stageName).allOutputModules.map(_.urn)
   }
 }
 
@@ -59,16 +59,16 @@ class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {
 }
 
 class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo {
-  def loadDataSet(fqn: String): SmvDataSet =
-    SmvExtModulePython( iDSRepo.loadDataSet(fqn) )
-  def hasDataSet(fqn: String): Boolean =
-    iDSRepo.hasDataSet(fqn)
-  def allDataSets(): Seq[String] =
-    smvConfig.stageNames.flatMap (iDSRepo.dataSetsForStage(_))
-  def allOutputModules(): Seq[String] =
-    smvConfig.stageNames.flatMap (outputModsForStage(_))
-  def outputModsForStage(stageName: String): Seq[String] =
-    iDSRepo.outputModsForStage(stageName)
+  def loadDataSet(urn: URN): SmvDataSet =
+    SmvExtModulePython( iDSRepo.loadDataSet(urn.fqn) )
+  def hasDataSet(urn: URN): Boolean =
+    iDSRepo.hasDataSet(urn.fqn)
+  def outputModsForStage(stageName: String): Seq[URN] =
+    iDSRepo.outputModsForStage(stageName) map (URN(_))
+  def allDataSets(): Seq[URN] =
+    smvConfig.stageNames flatMap (iDSRepo.dataSetsForStage(_)) map (URN(_))
+  def allOutputModules(): Seq[URN] =
+    smvConfig.stageNames flatMap (outputModsForStage(_))
 }
 
 class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J, smvConfig: SmvConfig) extends DataSetRepoFactory {
