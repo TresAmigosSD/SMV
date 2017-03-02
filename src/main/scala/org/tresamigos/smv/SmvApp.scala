@@ -307,8 +307,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /** Run a module by its fully qualified name in its respective language environment */
   def runModule(urn: URN): DataFrame = resolveRDD(dsm.load(urn).head)
 
-  @inline private def notfound(modUrn: String) = throw new SmvRuntimeException(s"Cannot find module ${modUrn}")
-
   /**
    * Publish the result of an SmvModule
    */
