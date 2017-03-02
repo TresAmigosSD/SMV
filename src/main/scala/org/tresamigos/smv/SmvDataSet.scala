@@ -101,8 +101,6 @@ abstract class SmvDataSet extends FilenamePart {
       resolvedRequiresDS = requiresDS map ( resolver.resolveDataSet(_) )
       this
   }
-  /** The dependency modules's urn's */
-  def dependencies: Seq[String] = resolvedRequiresDS map (_.urn.toString)
 
   /** All dependencies with the dependency hierarchy flattened */
   def allDeps: Seq[SmvDataSet] =

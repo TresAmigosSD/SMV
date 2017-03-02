@@ -167,31 +167,23 @@ object ShellCmd {
   * @return result DataFrame
   **/
   def df(ds: SmvDataSet) = {
-    val cl = getClass.getClassLoader
-    val message = hotdeployIfCapable(ds, cl)
-    println(message) // The message will not show in Pyshell
-
+    hotdeployIfCapable(ds, getClass.getClassLoader)
     SmvApp.app.runModule(ds.urn.toString)
   }
 
   /**
    * Reload modules using custom class loader
    **/
-  private[smv] def hotdeployIfCapable(ds: SmvDataSet, cl: ClassLoader = getClass.getClassLoader): String = {
+  private[smv] def hotdeployIfCapable(ds: SmvDataSet, cl: ClassLoader = getClass.getClassLoader): Unit = {
     import scala.reflect.runtime.universe
 
     val mir = universe.runtimeMirror(cl).reflect(SmvApp.app.sc)
     val meth = mir.symbol.typeSignature.member(universe.newTermName("hotdeploy"))
 
-    val message = if (meth.isMethod) {
+    if (meth.isMethod) {
       mir.reflectMethod(meth.asMethod)()
-
-      "The following dependent SmvDataSets will be reloaded:\n" +
-        ds.dependencies.map(_.getClass.getName).mkString("\n")
     } else {
-      "hotdeploy is not available in the current SparkContext"
+      println("hotdeploy is not available in the current SparkContext")
     }
-
-    message
   }
 }
