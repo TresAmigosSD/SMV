@@ -271,7 +271,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     deleteOutputModules()
 
     modulesToRun foreach { module =>
-      val modResult = runModule(module.urn.toString)
+      val modResult = runModule(module.urn)
 
       // if module was ephemeral, then it was not saved during graph execution and we need
       // to persist it here explicitly.
@@ -305,17 +305,17 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     s"""${smvConfig.publishDir}/${version}/${name}.csv"""
 
   /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(modUrn: String): DataFrame = resolveRDD(dsm.load(URN(modUrn)).head)
+  def runModule(urn: URN): DataFrame = resolveRDD(dsm.load(urn).head)
 
   @inline private def notfound(modUrn: String) = throw new SmvRuntimeException(s"Cannot find module ${modUrn}")
 
   /**
    * Publish the result of an SmvModule
    */
-  def publishModule(modFqn: String, version: String): Unit = {
-    println(s"publishing module ${modFqn}")
-    val df = runModule("mod:"+modFqn)
-    val path = publishPath(modFqn, version)
+  def publishModule(fqn: String, version: String): Unit = {
+    println(s"publishing module ${fqn}")
+    val df = runModule(ModURN(fqn))
+    val path = publishPath(fqn, version)
     println(s"publish path is ${path}")
     SmvUtil.publish(sqlContext, df, path, genEdd)
   }

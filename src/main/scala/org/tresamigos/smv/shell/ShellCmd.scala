@@ -168,7 +168,7 @@ object ShellCmd {
   **/
   def df(ds: SmvDataSet) = {
     hotdeployIfCapable(ds, getClass.getClassLoader)
-    SmvApp.app.runModule(ds.urn.toString)
+    SmvApp.app.runModule(ds.urn)
   }
 
   /**

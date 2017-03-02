@@ -50,14 +50,14 @@ class SmvAppTest extends SmvTestUtil {
     import org.tresamigos.fixture.smvapptest._
     resetTestcaseTempDir()
 
-    val res = app.runModule(C.urn.toString)
+    val res = app.runModule(C.urn)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
 
     // even though both B and C depended on A, A should have only run once!
     assert(A.moduleRunCount === 1)
 
     //Resolve the same module, it should read the persisted file and not run the module again
-    val res2 = app.runModule(C.urn.toString)
+    val res2 = app.runModule(C.urn)
     assertSrddDataEqual(res2, "1,2,3;2,3,4;3,4,5")
     assert(A.moduleRunCount === 1)
   }
@@ -65,7 +65,7 @@ class SmvAppTest extends SmvTestUtil {
   test("Test cycle dependency execution") {
     import org.tresamigos.fixture.smvapptest.B_cycle
     intercept[IllegalStateException] {
-      app.runModule(B_cycle.urn.toString)
+      app.runModule(B_cycle.urn)
     }
   }
 
