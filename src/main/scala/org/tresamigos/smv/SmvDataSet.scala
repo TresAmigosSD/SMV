@@ -80,7 +80,6 @@ abstract class SmvDataSet extends FilenamePart {
    * override this to name the proxied FQN.
    */
   def fqn: String = this.getClass().getName().filterNot(_=='$')
-  def versionedFqn = s"${fqn}#${hashOfHash}"
   def urn: URN = ModURN(fqn)
 
   /** Names the persisted file for the result of this SmvDataSet */
@@ -184,10 +183,12 @@ abstract class SmvDataSet extends FilenamePart {
     rddCache
   }
 
+  private def verHex = f"${hashOfHash}%08x"
+  def versionedFqn = s"${fqn}_${verHex}"
+
   /** The "versioned" module file base name. */
   private def versionedBasePath(prefix: String): String = {
-    val verHex = f"${hashOfHash}%08x"
-    s"""${app.smvConfig.outputDir}/${prefix}${fqn}_${verHex}"""
+    s"""${app.smvConfig.outputDir}/${prefix}${versionedFqn}"""
   }
 
   /** Returns the path for the module's csv output */
