@@ -243,24 +243,6 @@ class SmvPy(object):
         """
         self.j_smvPyClient.publishModule(fqn)
 
-    def publishHiveModule(self, fqn):
-        """Publish a python SmvModule (by FQN) to a hive table.
-           This currently only works with python modules as the repo concept needs to be revisited.
-        """
-        ds = smvPy.repo.dsForName(fqn)
-        if ds == None:
-            raise ValueError("Can not load python module {0} to publish".format(fqn))
-        tableName = None
-        isOutputModule = None
-        try:
-            tableName = ds.tableName()
-            isOutputModule = ds.IsSmvPyOutput
-        except: pass
-        if not tableName or not isOutputModule:
-            raise ValueError("module {0} must be an python output module and define a tablename to be exported to hive".format(fqn))
-        jdf = self.runModule(fqn)._jdf
-        self.j_smvPyClient.exportDataFrameToHive(jdf, tableName)
-
     def outputDir(self):
         return self.j_smvPyClient.outputDir()
 
