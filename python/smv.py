@@ -533,6 +533,19 @@ class SmvPyModule(SmvPyDataSet):
 
     IsSmvPyModule = True
 
+    # need to simulate map from ds to df where the same object can be keyed
+    # by different datasets with the same urn. usecase example
+    # class X(SmvPyModule):
+    #  def requiresDS(self): return [SmvPyModuleLink("foo")]
+    #  def run(self, i): return i[SmvPyModuleLink("foo")]
+    class RunParams(object):
+        # urn2df should be a map from the urn to the df of the corresponding ds
+        def __init__(self, urn2df):
+            self.urn2df = urn2df
+        # __getitem__ is called by [] operator
+        def __getitem__(self, ds):
+            return self.urn2df[ds.urn()]
+
     def __init__(self, smvPy):
         super(SmvPyModule, self).__init__(smvPy)
 
@@ -541,9 +554,10 @@ class SmvPyModule(SmvPyDataSet):
         """This defines the real work done by this module"""
 
     def doRun(self, validator, known):
-        i = {}
+        urn2df = {}
         for dep in self.requiresDS():
-            i[dep] = DataFrame(known[dep.urn()], self.smvPy.sqlContext)
+            urn2df[dep.urn()] = DataFrame(known[dep.urn()], self.smvPy.sqlContext)
+        i = self.RunParams(urn2df)
         return self.run(i)
 
 class SmvPyModuleLinkTemplate(SmvPyModule):
@@ -594,6 +608,9 @@ def SmvPyModuleLink(target):
     cls = type("SmvPyModuleLink", (SmvPyModuleLinkTemplate,), {})
     cls.target = classmethod(lambda klass: target)
     return cls
+
+def SmvPyExtModuleLink(refname):
+    return SmvPyModuleLink(SmvPyExtDataSet(refname))
 
 class SmvGroupedData(object):
     """Wrapper around the Scala SmvGroupedData"""
