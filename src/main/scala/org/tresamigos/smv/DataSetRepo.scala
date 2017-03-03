@@ -31,7 +31,7 @@ class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   def loadDataSet(urn: URN): SmvDataSet =
     (new SmvReflection(cl)).objectNameToInstance[SmvDataSet](urn.fqn)
   def urnsForStage(stageName: String): Seq[URN] =
-    stages.findStage(stageName).allDatasets.map(_.urn)
+    stages.findStage(stageName).allDatasets.map(_.urn).filterNot(_.isInstanceOf[LinkURN])
 }
 
 class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {
