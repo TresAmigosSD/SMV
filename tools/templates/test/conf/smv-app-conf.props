@@ -14,3 +14,5 @@ smv.stages = org.tresamigos.smvtest.stage1, \
              org.tresamigos.smvtest.test6, \
              org.tresamigos.smvtest.test7, \
              org.tresamigos.smvtest.test7_1, \
+             org.tresamigos.smvtest.test8, \
+             org.tresamigos.smvtest.test8_1, \
