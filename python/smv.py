@@ -845,7 +845,6 @@ class DataSetRepo(object):
     def dataSetsForStage(self, stageName):
         return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
 
-
     def outputModsForStage(self, stageName):
         return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyModule and obj.IsSmvPyOutput)
 
@@ -881,7 +880,7 @@ class DataSetRepo(object):
                             # Each package will contain among other things all of
                             # the modules that were imported into it, and we need
                             # to exclude these (so that we only count each module once)
-                            if fn(obj) and obj.fqn().startswith(stageName):
+                            if fn(obj) and obj.fqn().startswith(name):
                                 buf.append(obj.urn())
                         except AttributeError:
                             continue
