@@ -22,19 +22,6 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
   val repos = repoFactories.map( _.createRepo )
   val resolved: mutable.Map[URN, SmvDataSet] = mutable.Map.empty
 
-  object msg {
-    def dsNotFound(urn: URN): String = s"SmvDataSet ${urn} not found"
-    def listDepViolations(ds: SmvDataSet, vis: Seq[DependencyViolation]) =
-      s"Module ${ds.urn} violates dependency rules" + mkViolationString(vis)
-    def nonfatalDepViolation: String =
-      "Continuing module resolution as the app is configured to permit dependency rule violation"
-    def fatalDepViolation: String =
-        s"Terminating module resolution when dependency rules are violated. To change this behavior, please run the app with option --${smvConfig.cmdLine.permitDependencyViolation.name}"
-    def dependencyCycle(ds: SmvDataSet, s: mutable.Stack[SmvDataSet]): String =
-      s"cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}")
-
-  }
-
   def loadDataSet(urns: URN*): Seq[SmvDataSet] = {
     urns map {
       urn =>
@@ -51,7 +38,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
     }
   }
 
-  // Note we no longer have to worry about corruption of resolve stack
+  // Note: we no longer have to worry about corruption of resolve stack
   // because a new stack is created per transaction
   val resolveStack: mutable.Stack[SmvDataSet] = mutable.Stack()
 
@@ -82,20 +69,32 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
     }
   }
 
-  private def mkViolationString(violations: Seq[DependencyViolation]): String =
-    (for {
-      v <- violations
-      header = s".. ${v.description}"
-    } yield
-      (header +: v.components.map(m => s".... ${m.urn}")).mkString("\n")
-    ).mkString("\n")
-
-  private def findDataSetInRepo(urn: URN): SmvDataSet =
-    findRepoWith(urn).loadDataSet(urn)
-
-  private def findRepoWith(urn: URN): DataSetRepo =
-    Try(repos.find( _.hasDataSet(urn) ).get) match {
-      case Success(repo) => repo
+  private def findDataSetInRepo(urn: URN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet =
+    Try(reposToTry.head) match {
       case Failure(_) => throw new SmvRuntimeException(msg.dsNotFound(urn))
+      case Success(repo) =>
+        Try(repo.loadDataSet(urn)) match {
+          case Failure(_) => findDataSetInRepo(urn, reposToTry.tail)
+          case Success(ds) => ds
+        }
     }
+
+  object msg {
+    def dsNotFound(urn: URN): String = s"SmvDataSet ${urn} not found"
+    def nonfatalDepViolation: String =
+      "Continuing module resolution as the app is configured to permit dependency rule violation"
+    def fatalDepViolation: String =
+        s"Terminating module resolution when dependency rules are violated. To change this behavior, please run the app with option --${smvConfig.cmdLine.permitDependencyViolation.name}"
+    def dependencyCycle(ds: SmvDataSet, s: mutable.Stack[SmvDataSet]): String =
+      s"cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}")
+    def listDepViolations(ds: SmvDataSet, vis: Seq[DependencyViolation]) =
+      s"Module ${ds.urn} violates dependency rules" + mkViolationString(vis)
+    private def mkViolationString(violations: Seq[DependencyViolation]): String =
+      (for {
+        v <- violations
+        header = s".. ${v.description}"
+      } yield
+        (header +: v.components.map(m => s".... ${m.urn}")).mkString("\n")
+      ).mkString("\n")
+  }
 }

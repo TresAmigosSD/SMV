@@ -18,6 +18,7 @@ import scala.util.{Try, Success, Failure}
 
 class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   private var dsRepoFactories: Seq[DataSetRepoFactory] = Seq.empty[DataSetRepoFactory]
+  private var stageNames = smvConfig.stageNames
 
   def register(newRepoFactory: DataSetRepoFactory): Unit = {
     dsRepoFactories = dsRepoFactories :+ newRepoFactory
@@ -28,29 +29,37 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
     resolver.loadDataSet(urns:_*)
   }
 
-  def hasDataSet(urn: URN): Boolean =
-    dsRepoFactories exists (_.createRepo.hasDataSet(urn))
+  def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] = {
+    val urns = createRepos flatMap (repo => stageNames flatMap (repo.urnsForStage(_)))
+    load(urns:_*)
+  }
 
-  def allDataSets(): Seq[URN] =
-    dsRepoFactories flatMap (_.createRepo.allDataSets)
+  def outputModulesForStage(stageName: String*): Seq[SmvModule] =
+    filterOutput(dataSetsForStage(stageName:_*))
 
-  def allOutputModules(): Seq[URN] =
-    dsRepoFactories flatMap (_.createRepo.allOutputModules)
+  def allDataSets(): Seq[SmvDataSet] =
+    dataSetsForStage(stageNames:_*)
 
-  def outputModsForStage(stageName: String): Seq[URN] =
-    dsRepoFactories flatMap (_.createRepo.outputModsForStage(stageName))
+  def allOutputModules(): Seq[SmvModule] =
+    filterOutput(allDataSets)
 
-  def inferURN(partialName: String): ModURN = {
-    val allModFQNs = allDataSets filter (_.isInstanceOf[ModURN]) map (_.fqn)
-    val candidates = allModFQNs filter (_.endsWith(partialName))
-    candidates.size match {
-      case 0 =>
-        println(allModFQNs.toString)
-        throw new SmvRuntimeException(
-        s"""Cannot find module named [${partialName}]""")
-      case 1 => ModURN(candidates.head)
-      case _ => throw new SmvRuntimeException(
-        s"Module name [${partialName}] is not specific enough, as it could refer to [${candidates.mkString(", ")}]")
+  def inferDS(partialNames: String*): Seq[SmvDataSet] = {
+    val allDs = allDataSets
+    partialNames map {
+      pName =>
+        val candidates = allDataSets filter (_.fqn.endsWith(pName))
+        candidates.size match {
+          case 0 =>
+            throw new SmvRuntimeException(
+            s"""Cannot find module named [${pName}]""")
+          case 1 => candidates.head
+          case _ => throw new SmvRuntimeException(
+            s"Module name [${pName}] is not specific enough, as it could refer to [${(candidates.map(_.fqn)).mkString(", ")}]")
+        }
     }
   }
+
+  private def createRepos: Seq[DataSetRepo] = dsRepoFactories map (_.createRepo)
+  private def filterOutput(dataSets: Seq[SmvDataSet]): Seq[SmvModule] =
+    dataSets filter (ds => ds.isInstanceOf[SmvOutput]) map (_.asInstanceOf[SmvModule])
 }

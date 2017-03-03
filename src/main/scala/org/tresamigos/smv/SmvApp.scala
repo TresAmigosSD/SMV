@@ -85,14 +85,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     smvCF.rdd
   }
 
-  lazy val allDataSets: Seq[SmvDataSet] = dsm.load(dsm.allDataSets:_*)
+  lazy val allDataSets = dsm.allDataSets
 
   /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
-  private[smv] def validFilesInOutputDir() : Seq[String] = {
+  private[smv] def validFilesInOutputDir() : Seq[String] =
     allDataSets.
       flatMap(_.currentModuleOutputFiles).
       map(SmvHDFS.baseName(_))
-  }
 
   /** remove all non-current files in the output directory */
   private[smv] def purgeOldOutputFiles() = {
@@ -273,10 +272,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
    */
-  def runModuleByName(modName: String) : DataFrame = {
-    val mod = dsm.load(dsm.inferURN(modName)).asInstanceOf[SmvModule]
-    resolveRDD(mod)
-  }
+  def runModuleByName(modName: String) : DataFrame = resolveRDD(dsm.inferDS(modName).head)
 
   /**
    * sequence of SmvModules to run based on the command line arguments.
@@ -286,17 +282,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     val cmdline = smvConfig.cmdLine
     val empty = Some(Seq.empty[String])
 
-    val directModURNs: Seq[URN] =
-      cmdline.modsToRun.orElse(empty)().map (dsm.inferURN(_))
+    val modPartialNames = cmdline.modsToRun.orElse(empty)()
+    val directMods = dsm.inferDS(modPartialNames:_*) map (_.asInstanceOf[SmvModule])
 
-    val stageModURNs =
-      cmdline.stagesToRun.orElse(empty)() flatMap {dsm.outputModsForStage}
+    val stageNames = cmdline.stagesToRun.orElse(empty)()
+    val stageMods = dsm.outputModulesForStage(stageNames:_*)
 
-    val appModURNs = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[URN]
+    val appMods = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[SmvModule]
 
-    val allURNs = (directModURNs ++ stageModURNs ++ appModURNs).distinct
-
-    dsm.load(allURNs:_*) map (_.asInstanceOf[SmvModule])
+    (directMods ++ stageMods ++ appMods).distinct
   }
 
   /**

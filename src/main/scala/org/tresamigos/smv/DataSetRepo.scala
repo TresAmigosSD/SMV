@@ -18,10 +18,7 @@ import org.tresamigos.smv.class_loader.SmvClassLoader
 
 abstract class DataSetRepo {
   def loadDataSet(urn: URN): SmvDataSet
-  def hasDataSet(urn: URN): Boolean
-  def allOutputModules(): Seq[URN]
-  def allDataSets(): Seq[URN]
-  def outputModsForStage(stageName: String): Seq[URN]
+  def urnsForStage(stageName: String): Seq[URN]
 }
 
 abstract class DataSetRepoFactory {
@@ -31,27 +28,10 @@ abstract class DataSetRepoFactory {
 class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   val cl = SmvClassLoader(smvConfig, getClass.getClassLoader)
   val stages = smvConfig.stages
-
-  def loadDataSet(urn: URN): SmvDataSet = {
-    val ref = new SmvReflection(cl)
-    ref.objectNameToInstance[SmvDataSet](urn.fqn)
-  }
-
-  def hasDataSet(urn: URN): Boolean = {
-    stages.allDatasets map (_.fqn) contains(urn.fqn)
-  }
-
-  def allDataSets(): Seq[URN] = {
-    stages.allDatasets.map(_.urn)
-  }
-
-  def allOutputModules(): Seq[URN] = {
-    stages.allOutputModules.map(_.urn)
-  }
-
-  def outputModsForStage(stageName: String): Seq[URN] = {
-    stages.findStage(stageName).allOutputModules.map(_.urn)
-  }
+  def loadDataSet(urn: URN): SmvDataSet =
+    (new SmvReflection(cl)).objectNameToInstance[SmvDataSet](urn.fqn)
+  def urnsForStage(stageName: String): Seq[URN] =
+    stages.findStage(stageName).allDatasets.map(_.urn)
 }
 
 class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {
@@ -61,14 +41,8 @@ class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {
 class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo {
   def loadDataSet(urn: URN): SmvDataSet =
     SmvExtModulePython( iDSRepo.loadDataSet(urn.fqn) )
-  def hasDataSet(urn: URN): Boolean =
-    iDSRepo.hasDataSet(urn.fqn)
-  def outputModsForStage(stageName: String): Seq[URN] =
-    iDSRepo.outputModsForStage(stageName) map (URN(_))
-  def allDataSets(): Seq[URN] =
-    smvConfig.stageNames flatMap (iDSRepo.dataSetsForStage(_)) map (URN(_))
-  def allOutputModules(): Seq[URN] =
-    smvConfig.stageNames flatMap (outputModsForStage(_))
+  def urnsForStage(stageName: String): Seq[URN] =
+    iDSRepo.dataSetsForStage(stageName) map (URN(_))
 }
 
 class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J, smvConfig: SmvConfig) extends DataSetRepoFactory {
