@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import org.tresamigos.smv.class_loader.SmvClassLoader
 
 abstract class DataSetRepo {
-  def loadDataSet(urn: URN): SmvDataSet
+  def loadDataSet(urn: ModURN): SmvDataSet
   def urnsForStage(stageName: String): Seq[URN]
 }
 
@@ -28,7 +28,7 @@ abstract class DataSetRepoFactory {
 class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   val cl = SmvClassLoader(smvConfig, getClass.getClassLoader)
   val stages = smvConfig.stages
-  def loadDataSet(urn: URN): SmvDataSet =
+  def loadDataSet(urn: ModURN): SmvDataSet =
     (new SmvReflection(cl)).objectNameToInstance[SmvDataSet](urn.fqn)
   def urnsForStage(stageName: String): Seq[URN] =
     stages.findStage(stageName).allDatasets.map(_.urn).filterNot(_.isInstanceOf[LinkURN])
@@ -39,7 +39,7 @@ class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {
 }
 
 class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo {
-  def loadDataSet(urn: URN): SmvDataSet =
+  def loadDataSet(urn: ModURN): SmvDataSet =
     SmvExtModulePython( iDSRepo.loadDataSet(urn.fqn) )
   def urnsForStage(stageName: String): Seq[URN] =
     iDSRepo.dataSetsForStage(stageName) map (URN(_))

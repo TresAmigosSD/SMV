@@ -22,21 +22,22 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
   val repos = repoFactories.map( _.createRepo )
   val resolved: mutable.Map[URN, SmvDataSet] = mutable.Map.empty
 
-  def loadDataSet(urns: URN*): Seq[SmvDataSet] = {
+  def loadDataSet(urns: URN*): Seq[SmvDataSet] =
     urns map {
       urn =>
         Try( resolved(urn) ) match {
           case Success(ds) => ds
           case Failure(_) =>
-            val dsFound = findDataSetInRepo(urn)
             val ds = urn match {
-              case LinkURN(_) => new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
-              case ModURN(_) => dsFound
+              case lUrn: LinkURN =>
+                val dsFound = findDataSetInRepo(lUrn.toModURN)
+                new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
+              case mUrn: ModURN =>
+                findDataSetInRepo(mUrn)
             }
-          resolveDataSet(ds)
+            resolveDataSet(ds)
         }
     }
-  }
 
   // Note: we no longer have to worry about corruption of resolve stack
   // because a new stack is created per transaction
@@ -69,7 +70,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
     }
   }
 
-  private def findDataSetInRepo(urn: URN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet =
+  private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet =
     Try(reposToTry.head) match {
       case Failure(_) => throw new SmvRuntimeException(msg.dsNotFound(urn))
       case Success(repo) =>
