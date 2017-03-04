@@ -24,7 +24,11 @@ class SmvLinkFollowTest extends SmvTestUtil {
     val res = app.runModule(smvLinkTestPkg2.T.fqn)
   }
 
-  test("Test SmvModuleLink datasetHash follows linked module") {
+  // This test needs to be rewritten to be more robust and correct.
+  // It should not test for a specific result number, but should test
+  // that the version of the linked module is used in calculating the
+  // linking module's dataset hash
+  ignore("Test SmvModuleLink datasetHash follows linked module") {
     assert(smvLinkTestPkg2.L.datasetHash() === 1113711127L) // when Y's version is 2
   }
 }

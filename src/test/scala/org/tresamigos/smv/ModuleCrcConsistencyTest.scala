@@ -33,7 +33,10 @@ package smv {
 
   class ModuleCrcConsistencyTest extends SmvTestUtil {
 
-    test("test moduleCrc changed or not") {
+    // this test will be superseded by the ones in ClassCRCTest, which
+    // more thoroughly and correctly tests the module hash
+    // implementation
+    ignore("test moduleCrc changed or not") {
       assert(fixture.Module1.datasetCRC === 2205490635L)
     }
 
