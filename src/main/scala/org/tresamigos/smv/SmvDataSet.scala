@@ -98,6 +98,9 @@ abstract class SmvDataSet extends FilenamePart {
   /** fixed list of SmvDataSet dependencies */
   var resolvedRequiresDS: Seq[SmvDataSet] = Seq.empty[SmvDataSet]
 
+  lazy val ancestors: Seq[SmvDataSet] =
+    (resolvedRequiresDS ++ resolvedRequiresDS flatMap (_.ancestors)).distinct
+
   def resolve(resolver: DataSetResolver): SmvDataSet = {
       resolvedRequiresDS = requiresDS map ( resolver.resolveDataSet(_) )
       this

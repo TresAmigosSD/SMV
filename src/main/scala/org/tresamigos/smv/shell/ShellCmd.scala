@@ -115,7 +115,7 @@ object ShellCmd {
   def _graph() = appGU.createStageAsciiGraph()
 
   /** take a DS, print in-stage dependency of that DS */
-  def _graph(ds: SmvDataSet) = appGU.createDSAsciiGraph(Seq(ds))
+  def _graph(ds: SmvDataSet) = appGU.createDSAsciiGraph(Seq(SmvApp.app.dsm.load(ds.urn)).head)
 
   /**
    * list all `ancestors` of a dataset

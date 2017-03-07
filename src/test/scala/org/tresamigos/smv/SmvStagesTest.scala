@@ -89,15 +89,18 @@ class SmvMultiStageTest extends SmvTestUtil {
   }
 
   // Responsibility for ancestors should be delegated to the module
-  ignore("test ancestors/descendants method of stage") {
+  test("test ancestors/descendants method of stage") {
     val testApp = app
 
     val s1 = testApp.stages.findStage("smvAppTestPkg1")
 
-    val res1 = s1.ancestors(org.tresamigos.smv.smvAppTestPkg1.X).map{d => s1.datasetBaseName(d)}
-    val res2 = s1.ancestors(org.tresamigos.smv.smvAppTestPkg1.Y).map{d => s1.datasetBaseName(d)}
-    val res3 = s1.descendants(org.tresamigos.smv.smvAppTestPkg1.X).map{d => s1.datasetBaseName(d)}
-    val res4 = s1.descendants(org.tresamigos.smv.smvAppTestPkg1.Y).map{d => s1.datasetBaseName(d)}
+    val X = app.dsm.load(org.tresamigos.smv.smvAppTestPkg1.X.urn).head
+    val Y = app.dsm.load(org.tresamigos.smv.smvAppTestPkg1.Y.urn).head
+
+    val res1 = s1.ancestors(X).map{d => s1.datasetBaseName(d)}
+    val res2 = s1.ancestors(Y).map{d => s1.datasetBaseName(d)}
+    val res3 = s1.descendants(X).map{d => s1.datasetBaseName(d)}
+    val res4 = s1.descendants(Y).map{d => s1.datasetBaseName(d)}
 
     assertUnorderedSeqEqual(res1, Nil)
     assertUnorderedSeqEqual(res2, Seq("X"))

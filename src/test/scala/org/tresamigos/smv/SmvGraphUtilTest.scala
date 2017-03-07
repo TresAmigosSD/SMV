@@ -67,7 +67,7 @@ org.tresamigos.smv.smvAppTestPkg3:
     //println(graphString)
   }
 
-  ignore("Test createDSAsciiGraph") {
+  test("Test createDSAsciiGraph") {
     val graphString = new graph.SmvGraphUtil(app).createDSAsciiGraph()
     //println(graphString)
     assertStrIgnoreSpace(graphString, """               ┌────────────┐
