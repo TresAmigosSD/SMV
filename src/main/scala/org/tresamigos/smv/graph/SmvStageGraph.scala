@@ -31,8 +31,8 @@ private[smv] class SmvDSGraph(app: SmvApp, pstages: SmvStages = null, targetDSs:
   val stages = if (null == pstages) app.stages else pstages
   private val seeds = if(targetDSs.isEmpty) app.dsm.allDataSets else targetDSs
 
-  val nodes: Seq[SmvDataSet]= (seeds.flatMap{ds => ds.ancestors} ++ seeds).distinct.filterNot{
-    ds => ds.isInstanceOf[SmvModuleLink]
+  val nodes: Seq[SmvDataSet]= (seeds.flatMap(_.ancestors) ++ seeds).distinct.filterNot{
+    ds => ds.isInstanceOf[SmvModuleLink] || stages.stageNames.forall (!ds.fqn.startsWith(_))
   }
 
   val edges: Seq[(SmvDataSet, SmvDataSet)] = nodes.flatMap{ds =>
