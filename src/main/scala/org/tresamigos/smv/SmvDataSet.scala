@@ -505,8 +505,6 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
 
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
-    // TODO turn on dependency check by uncomment the following line after test against projects
-    // checkDependency()
     val paramMap: Map[SmvDataSet, DataFrame] =
       (resolvedRequiresDS map ( dep => (dep, app.resolveRDD(dep)) ) ).toMap
     run( new runParams(paramMap) )
@@ -628,8 +626,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
   override val fqn = modFqn
   override def requiresDS =
     throw new SmvRuntimeException("SmvExtModule requiresDS should never be called")
-    // return plain smvdataset
-  override def resolve(resolver: DataSetResolver): SmvExtModulePython =
+  override def resolve(resolver: DataSetResolver): SmvDataSet =
     resolver.loadDataSet(urn).head.asInstanceOf[SmvExtModulePython]
   override def run(i: RunParams) =
     throw new SmvRuntimeException("SmvExtModule run should never be called")
@@ -644,7 +641,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvModule(s"SmvPyModule ${t
   override def isEphemeral = target.isEphemeral()
   override def requiresDS =
    throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
-  override def resolve(resolver: DataSetResolver): SmvExtModulePython = {
+  override def resolve(resolver: DataSetResolver): SmvDataSet = {
     resolvedRequiresDS = target.dependencies map ( urn => resolver.loadDataSet(URN(urn)).head )
     this
   }

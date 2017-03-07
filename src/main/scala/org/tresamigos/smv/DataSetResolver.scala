@@ -21,43 +21,38 @@ import scala.collection.mutable
 class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   val repos = repoFactories.map( _.createRepo )
   // rename this and make it immutable
-  val resolved: mutable.Map[URN, SmvDataSet] = mutable.Map.empty
+  var urn2res: Map[URN, SmvDataSet] = Map.empty
 
   def loadDataSet(urns: URN*): Seq[SmvDataSet] =
     urns map {
       urn =>
-        // getOrElse here
-        Try( resolved(urn) ) match {
-          case Success(ds) => ds
-          case Failure(_) =>
-            val ds = urn match {
-              case lUrn: LinkURN =>
-                val dsFound = findDataSetInRepo(lUrn.toModURN)
-                new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
-              case mUrn: ModURN =>
-                findDataSetInRepo(mUrn)
-            }
-            resolveDataSet(ds)
+        urn2res.get(urn).getOrElse {
+          val ds = urn match {
+            case lUrn: LinkURN =>
+              val dsFound = findDataSetInRepo(lUrn.toModURN)
+              new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
+            case mUrn: ModURN =>
+              findDataSetInRepo(mUrn)
+          }
+          resolveDataSet(ds)
         }
     }
 
   // Note: we no longer have to worry about corruption of resolve stack
   // because a new stack is created per transaction
-  val resolveStack: mutable.Stack[SmvDataSet] = mutable.Stack()
+  var resolveStack: Seq[SmvDataSet] = Seq.empty
 
   def resolveDataSet(ds: SmvDataSet): SmvDataSet = {
     if (resolveStack.contains(ds))
       throw new IllegalStateException(msg.dependencyCycle(ds, resolveStack))
     else
-      Try(resolved(ds.urn)) match {
-        case Success(resolvedDs) => resolvedDs
-        case Failure(_) =>
-          resolveStack.push(ds)
-          val resolvedDs = ds.resolve(this)
-          resolved += (ds.urn -> resolvedDs)
-          resolveStack.pop()
-          validateDependencies(resolvedDs)
-          resolvedDs
+      urn2res.get(ds.urn).getOrElse {
+        resolveStack = ds +: resolveStack
+        val resolvedDs = ds.resolve(this)
+        urn2res = urn2res + (ds.urn -> resolvedDs)
+        resolveStack = resolveStack.tail
+        validateDependencies(resolvedDs)
+        resolvedDs
       }
   }
 
@@ -72,24 +67,23 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
     }
   }
 
-  // TODO: if/else instead of try
-  private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet =
-    Try(reposToTry.head) match {
-      case Failure(_) => throw new SmvRuntimeException(msg.dsNotFound(urn))
-      case Success(repo) =>
-        Try(repo.loadDataSet(urn)) match {
-          case Failure(_) => findDataSetInRepo(urn, reposToTry.tail)
-          case Success(ds) => ds
-        }
-    }
+  private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet = {
+    if(reposToTry.isEmpty)
+      throw new SmvRuntimeException(msg.dsNotFound(urn))
+    else
+      Try(reposToTry.head.loadDataSet(urn)) match {
+        case Failure(_) => findDataSetInRepo(urn, reposToTry.tail)
+        case Success(ds) => ds
+      }
+  }
 
-  object msg {
+object msg {
     def dsNotFound(urn: URN): String = s"SmvDataSet ${urn} not found"
     def nonfatalDepViolation: String =
       "Continuing module resolution as the app is configured to permit dependency rule violation"
     def fatalDepViolation: String =
         s"Terminating module resolution when dependency rules are violated. To change this behavior, please run the app with option --${smvConfig.cmdLine.permitDependencyViolation.name}"
-    def dependencyCycle(ds: SmvDataSet, s: mutable.Stack[SmvDataSet]): String =
+    def dependencyCycle(ds: SmvDataSet, s: Seq[SmvDataSet]): String =
       s"cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}")
     def listDepViolations(ds: SmvDataSet, vis: Seq[DependencyViolation]) =
       s"Module ${ds.urn} violates dependency rules" + mkViolationString(vis)
