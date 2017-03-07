@@ -628,6 +628,7 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
   override val fqn = modFqn
   override def requiresDS =
     throw new SmvRuntimeException("SmvExtModule requiresDS should never be called")
+    // return plain smvdataset
   override def resolve(resolver: DataSetResolver): SmvExtModulePython =
     resolver.loadDataSet(urn).head.asInstanceOf[SmvExtModulePython]
   override def run(i: RunParams) =

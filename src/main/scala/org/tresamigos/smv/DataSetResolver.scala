@@ -20,11 +20,13 @@ import scala.collection.mutable
 
 class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   val repos = repoFactories.map( _.createRepo )
+  // rename this and make it immutable
   val resolved: mutable.Map[URN, SmvDataSet] = mutable.Map.empty
 
   def loadDataSet(urns: URN*): Seq[SmvDataSet] =
     urns map {
       urn =>
+        // getOrElse here
         Try( resolved(urn) ) match {
           case Success(ds) => ds
           case Failure(_) =>
@@ -70,6 +72,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
     }
   }
 
+  // TODO: if/else instead of try
   private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet =
     Try(reposToTry.head) match {
       case Failure(_) => throw new SmvRuntimeException(msg.dsNotFound(urn))

@@ -233,7 +233,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     deleteOutputModules()
 
     modulesToRun foreach { module =>
-      val modResult = runModule(module.urn)
+      val modResult = resolveRDD(module)
 
       // if module was ephemeral, then it was not saved during graph execution and we need
       // to persist it here explicitly.
@@ -284,12 +284,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
     val modPartialNames = cmdline.modsToRun.orElse(empty)()
     val directMods = dsm.inferDS(modPartialNames:_*) map (_.asInstanceOf[SmvModule])
-
     val stageNames = cmdline.stagesToRun.orElse(empty)()
     val stageMods = dsm.outputModulesForStage(stageNames:_*)
-
     val appMods = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[SmvModule]
-
     (directMods ++ stageMods ++ appMods).distinct
   }
 
@@ -299,6 +296,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   def run() = {
     val mods = modulesToRun
+
     if (mods.nonEmpty) {
       println("Modules to run/publish")
       println("----------------------")
