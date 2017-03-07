@@ -13,6 +13,7 @@
  */
 
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.types._
 
 package org.tresamigos.smv {
 
@@ -81,6 +82,16 @@ class SmvAppTest extends SmvTestUtil {
     createTempFile("F1.schema")
 
     assert(f1.datasetHash() !== f3.datasetHash())
+  }
+
+  test("SmvApp.createDF should be able to create an empty dataframe with schema") {
+    val r1 = app.createDF("k:String")
+    r1.count() shouldBe 0
+    r1.schema shouldBe StructType(Seq(StructField("k", StringType, true)))
+
+    val r2 = app.createDF("k:String")
+    r2.count() shouldBe 0
+    r2.schema shouldBe StructType(Seq(StructField("k", StringType, true)))
   }
 }
 
