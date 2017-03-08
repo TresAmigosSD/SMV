@@ -41,6 +41,9 @@ def lsLeaf(stageName = None):
     else:
         print(jvmShellCmd.lsLeaf(stageName))
 
+def descendants(urn):
+    print(jvmShellCmd.descendants("mod:"+urn))
+
 def graph(stageName = None):
     if(stageName is None):
         print(jvmShellCmd._graph())

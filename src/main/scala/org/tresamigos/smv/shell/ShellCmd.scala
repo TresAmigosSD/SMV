@@ -129,8 +129,15 @@ object ShellCmd {
    * `descendants` are datasets which depend on the current dataset directly or in-directly,
    * even include datasets from other stages
    **/
-  def descendants(ds: SmvDataSet) = appGU.createDescendantDSList(ds)
-
+  def descendants(ds: SmvDataSet): Seq[SmvDataSet] = descendants(ds.urn)
+  def descendants(urn: String): Seq[SmvDataSet] = descendants(URN(urn))
+  def descendants(urn: URN): Seq[SmvDataSet] = {
+    val allDs = SmvApp.app.dsm.allDataSets
+    if(allDs.filter(_.urn == urn).isEmpty)
+      throw new SmvRuntimeException(s"SmvDataSet ${urn} not found")
+    else
+      allDs flatMap (_.ancestors filter (_.urn == urn))
+  }
   /**
    * Print current time
    **/

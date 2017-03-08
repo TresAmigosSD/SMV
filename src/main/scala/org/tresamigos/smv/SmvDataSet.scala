@@ -83,6 +83,7 @@ abstract class SmvDataSet extends FilenamePart {
    */
   def fqn: String = this.getClass().getName().filterNot(_=='$')
   def urn: URN = ModURN(fqn)
+  override def toString = urn.toString
 
   /** Names the persisted file for the result of this SmvDataSet */
   override def fnpart = fqn
@@ -99,7 +100,7 @@ abstract class SmvDataSet extends FilenamePart {
   var resolvedRequiresDS: Seq[SmvDataSet] = Seq.empty[SmvDataSet]
 
   lazy val ancestors: Seq[SmvDataSet] =
-    (resolvedRequiresDS ++ resolvedRequiresDS flatMap (_.ancestors)).distinct
+    (resolvedRequiresDS ++ resolvedRequiresDS.flatMap(_.ancestors)).distinct
 
   def resolve(resolver: DataSetResolver): SmvDataSet = {
       resolvedRequiresDS = requiresDS map ( resolver.resolveDataSet(_) )
@@ -572,6 +573,8 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
   private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
   override def urn = LinkURN(smvModule.fqn)
+
+  override lazy val ancestors = smvModule.ancestors
 
   /**
    *  No need to check isEphemeral any more
