@@ -29,6 +29,11 @@ if [ "$1" = "-t" ] || [ "$1" = "-test" ]; then
   shift
 fi
 
+if [ "$1" = "-b" ] || [ "$1" = "-big" ]; then
+  PROJ_TYPE="big"
+  shift
+fi
+
 TEMPLATE_DIR+="/$PROJ_TYPE"
 
 if [ $# -ne 1 ]; then
@@ -144,7 +149,7 @@ function copy_src_files()
 
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
 
-    if [ "$PROJ_TYPE" = "simple" ] || [ "$PROJ_TYPE" = "enterprise" ]; then
+    if [ "$PROJ_TYPE" = "simple" ] || [ "$PROJ_TYPE" = "enterprise" ] || [ "$PROJ_TYPE" = "big" ]; then
       for subdir in main/python; do
           copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
       done
@@ -167,8 +172,14 @@ function create_python_packages()
 if [ "$PROJ_TYPE" = "test" ] ; then
   extract_group_artifact_ids
 fi
+
 create_proj_dir
 copy_conf_files
 copy_data_files
 copy_src_files
 create_python_packages
+
+if [ "$PROJ_TYPE" = "big" ] ; then
+  $TEMPLATE_DIR/dupMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ 1000
+  rm $PROJ_DIR/src/main/python/stage1/employment.py
+fi
