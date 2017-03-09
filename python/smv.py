@@ -361,8 +361,11 @@ class SmvPyDataSet(object):
             # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
             # TODO: may need to remove comments at the end of line from src code above.
             res = smvhash(src_no_comm)
-        except: # `inspect` will raise error for classes defined in the REPL
-            res = smvhash(disassemble(cls))
+        except Exception as err: # `inspect` will raise error for classes defined in the REPL
+            # Instead of handle the case that module defined in REPL, just raise Exception here
+            # res = smvhash(disassemble(cls))
+            message = "{0}({1!r})".format(type(err).__name__, err.args)
+            raise Exception(message + "\n" + "SmvDataSet defined in shell can't be persisted")
 
         # include datasetHash of parent classes
         for m in inspect.getmro(cls):
