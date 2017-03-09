@@ -44,19 +44,23 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
     filterOutput(allDataSets)
 
   def inferDS(partialNames: String*): Seq[SmvDataSet] = {
-    val allDs = allDataSets
-    partialNames map {
-      pName =>
-        val candidates = allDataSets filter (_.fqn.endsWith(pName))
-        candidates.size match {
-          case 0 =>
-            throw new SmvRuntimeException(
-            s"""Cannot find module named [${pName}]""")
-          case 1 => candidates.head
-          case _ => throw new SmvRuntimeException(
-            s"Module name [${pName}] is not specific enough, as it could refer to [${(candidates.map(_.fqn)).mkString(", ")}]")
+    if(partialNames.isEmpty)
+      Seq.empty
+    else {
+        val allDs = allDataSets
+        partialNames map {
+          pName =>
+            val candidates = allDataSets filter (_.fqn.endsWith(pName))
+            candidates.size match {
+              case 0 =>
+                throw new SmvRuntimeException(
+                s"""Cannot find module named [${pName}]""")
+              case 1 => candidates.head
+              case _ => throw new SmvRuntimeException(
+                s"Module name [${pName}] is not specific enough, as it could refer to [${(candidates.map(_.fqn)).mkString(", ")}]")
+            }
         }
-    }
+      }
   }
 
   private def createRepos: Seq[DataSetRepo] = dsRepoFactories map (_.createRepo)
