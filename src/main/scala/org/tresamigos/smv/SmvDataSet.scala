@@ -693,7 +693,7 @@ case class SmvCsvStringData(
 
   override def doRun(dsDqm: DQMValidator): DataFrame = {
     val schema = SmvSchema.fromString(schemaStr)
-    val dataArray = data.split(";").map(_.trim)
+    val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
 
     val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)

@@ -246,7 +246,7 @@ class SmvPy(object):
         """Returns a Scala Option containing the value"""
         return self._jvm.scala.Option.apply(val)
 
-    def createDF(self, schema, data):
+    def createDF(self, schema, data = None):
         return DataFrame(self.j_smvPyClient.dfFrom(schema, data), self.sqlContext)
 
     def _mkCsvAttr(self, delimiter=',', quotechar='""', hasHeader=False):
