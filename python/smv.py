@@ -885,13 +885,9 @@ class DataSetRepo(object):
 
             for loader, name, is_pkg in pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=err):
                 if name.startswith(stageName) and not is_pkg:
-                    try:
-                        pymod = __import__(name)
-                    except:
-                        continue
-                    else:
-                        for c in name.split('.')[1:]:
-                            pymod = getattr(pymod, c)
+                    pymod = __import__(name)
+                    for c in name.split('.')[1:]:
+                        pymod = getattr(pymod, c)
 
                     for n in dir(pymod):
                         obj = getattr(pymod, n)
