@@ -115,7 +115,7 @@ object ShellCmd {
   def _graph() = appGU.createStageAsciiGraph()
 
   /** take a DS, print in-stage dependency of that DS */
-  def _graph(ds: SmvDataSet) = appGU.createDSAsciiGraph(Seq(ds))
+  def _graph(ds: SmvDataSet) = appGU.createDSAsciiGraph(Seq(SmvApp.app.dsm.load(ds.urn)).head)
 
   /**
    * list all `ancestors` of a dataset
@@ -129,8 +129,15 @@ object ShellCmd {
    * `descendants` are datasets which depend on the current dataset directly or in-directly,
    * even include datasets from other stages
    **/
-  def descendants(ds: SmvDataSet) = appGU.createDescendantDSList(ds)
-
+  def descendants(ds: SmvDataSet): Seq[SmvDataSet] = descendants(ds.urn)
+  def descendants(urn: String): Seq[SmvDataSet] = descendants(URN(urn))
+  def descendants(urn: URN): Seq[SmvDataSet] = {
+    val allDs = SmvApp.app.dsm.allDataSets
+    if(allDs.filter(_.urn == urn).isEmpty)
+      throw new SmvRuntimeException(s"SmvDataSet ${urn} not found")
+    else
+      allDs flatMap (_.ancestors filter (_.urn == urn))
+  }
   /**
    * Print current time
    **/
@@ -167,48 +174,23 @@ object ShellCmd {
   * @return result DataFrame
   **/
   def df(ds: SmvDataSet) = {
-    SmvApp.app.resolveRDD(ds)
+    hotdeployIfCapable(ds, getClass.getClassLoader)
+    SmvApp.app.runModule(ds.urn)
   }
 
   /**
    * Reload modules using custom class loader
    **/
-  private[smv] def hotdeployIfCapable(ds: SmvDataSet, cl: ClassLoader = getClass.getClassLoader): String = {
+  private[smv] def hotdeployIfCapable(ds: SmvDataSet, cl: ClassLoader = getClass.getClassLoader): Unit = {
     import scala.reflect.runtime.universe
 
     val mir = universe.runtimeMirror(cl).reflect(SmvApp.app.sc)
     val meth = mir.symbol.typeSignature.member(universe.newTermName("hotdeploy"))
 
-    val message = if (meth.isMethod) {
+    if (meth.isMethod) {
       mir.reflectMethod(meth.asMethod)()
-      SmvApp.app.removeDataSet(ds.urn)
-
-      "The following dependent SmvDataSets will be reloaded:\n" +
-        ds.dependencies.map(_.getClass.getName).mkString("\n")
     } else {
-      "hotdeploy is not available in the current SparkContext"
+      println("hotdeploy is not available in the current SparkContext")
     }
-
-    message
   }
-
-  /**
-   * Dynamically load modules
-   *
-   * @param fqn the fully qualified name of SmvDataSet
-   * @return result DataFrame
-   **/
-  def ddf(fqn: String) = {
-    val cl = getClass.getClassLoader
-    val ds = SmvApp.app.scalaDsForName(fqn, cl)
-    val message = hotdeployIfCapable(ds, cl)
-    println(message) // The message will not show in Pyshell
-
-    // lb: why does some of the "runDynamic/hotDeploy" logic live in the shell
-    // and some in SmvApp? particularly, why does removeDataSet arise from the
-    // shell implementation and not as a consequence - internal to SmvApp - of
-    // running the module dynamically
-    SmvApp.app.runDynamicModule(ds.fqn)
-  }
-
 }

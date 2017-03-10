@@ -206,8 +206,7 @@ class SmvPy(object):
             # update the port of CallbackClient with real port
             gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
 
-        self.repo = PythonDataSetRepository(self)
-        self.j_smvPyClient.register('Python', self.repo)
+        self.j_smvPyClient.registerRepoFactory('Python', DataSetRepoFactory(self))
         return self
 
     def appName(self):
@@ -230,47 +229,15 @@ class SmvPy(object):
             lines = f.read()
         return lines
 
-    def runModule(self, fqn):
+    def runModule(self, urn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.j_smvPyClient.runModule(fqn)
+        jdf = self.j_smvPyClient.runModule(urn)
         return DataFrame(jdf, self.sqlContext)
-
-    def runDynamicModule(self, fqn):
-        """Re-run a Scala or Python module by its fqn"""
-        # lb: why should this logic be in python and not scala?
-        # runDynamicModule distinguishes between scala modules and externals and
-        # already looks up the repo so this logic could be extracted
-        if self.repo.hasDataSet(fqn):
-            self.repo.reloadDs(fqn)
-        return DataFrame(self.j_smvPyClient.runDynamicModule(fqn), self.sqlContext)
 
     def urn2fqn(self, urnOrFqn):
         """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged"""
         return self.j_smvPyClient.urn2fqn(urnOrFqn)
-
-    def publishModule(self, fqn):
-        """Publish a Scala or a Python SmvModule by its FQN
-        """
-        self.j_smvPyClient.publishModule(fqn)
-
-    def publishHiveModule(self, fqn):
-        """Publish a python SmvModule (by FQN) to a hive table.
-           This currently only works with python modules as the repo concept needs to be revisited.
-        """
-        ds = smvPy.repo.dsForName(fqn)
-        if ds == None:
-            raise ValueError("Can not load python module {0} to publish".format(fqn))
-        tableName = None
-        isOutputModule = None
-        try:
-            tableName = ds.tableName()
-            isOutputModule = ds.IsSmvPyOutput
-        except: pass
-        if not tableName or not isOutputModule:
-            raise ValueError("module {0} must be an python output module and define a tablename to be exported to hive".format(fqn))
-        jdf = self.runModule(fqn)._jdf
-        self.j_smvPyClient.exportDataFrameToHive(jdf, tableName)
 
     def outputDir(self):
         return self.j_smvPyClient.outputDir()
@@ -380,6 +347,9 @@ class SmvPyDataSet(object):
         so that code and the data it produces can be tracked together."""
         return "0";
 
+    def isOutput(self):
+        return isinstance(self, SmvPyOutput)
+
     def datasetHash(self):
         cls = self.__class__
         try:
@@ -391,8 +361,11 @@ class SmvPyDataSet(object):
             # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
             # TODO: may need to remove comments at the end of line from src code above.
             res = smvhash(src_no_comm)
-        except: # `inspect` will raise error for classes defined in the REPL
-            res = smvhash(disassemble(cls))
+        except Exception as err: # `inspect` will raise error for classes defined in the REPL
+            # Instead of handle the case that module defined in REPL, just raise Exception here
+            # res = smvhash(disassemble(cls))
+            message = "{0}({1!r})".format(type(err).__name__, err.args)
+            raise Exception(message + "\n" + "SmvDataSet defined in shell can't be persisted")
 
         # include datasetHash of parent classes
         for m in inspect.getmro(cls):
@@ -563,6 +536,19 @@ class SmvPyModule(SmvPyDataSet):
 
     IsSmvPyModule = True
 
+    # need to simulate map from ds to df where the same object can be keyed
+    # by different datasets with the same urn. usecase example
+    # class X(SmvPyModule):
+    #  def requiresDS(self): return [SmvPyModuleLink("foo")]
+    #  def run(self, i): return i[SmvPyModuleLink("foo")]
+    class RunParams(object):
+        # urn2df should be a map from the urn to the df of the corresponding ds
+        def __init__(self, urn2df):
+            self.urn2df = urn2df
+        # __getitem__ is called by [] operator
+        def __getitem__(self, ds):
+            return self.urn2df[ds.urn()]
+
     def __init__(self, smvPy):
         super(SmvPyModule, self).__init__(smvPy)
 
@@ -571,9 +557,10 @@ class SmvPyModule(SmvPyDataSet):
         """This defines the real work done by this module"""
 
     def doRun(self, validator, known):
-        i = {}
+        urn2df = {}
         for dep in self.requiresDS():
-            i[dep] = DataFrame(known[dep.urn()], self.smvPy.sqlContext)
+            urn2df[dep.urn()] = DataFrame(known[dep.urn()], self.smvPy.sqlContext)
+        i = self.RunParams(urn2df)
         return self.run(i)
 
 class SmvPyModuleLinkTemplate(SmvPyModule):
@@ -624,6 +611,9 @@ def SmvPyModuleLink(target):
     cls = type("SmvPyModuleLink", (SmvPyModuleLinkTemplate,), {})
     cls.target = classmethod(lambda klass: target)
     return cls
+
+def SmvPyExtModuleLink(refname):
+    return SmvPyModuleLink(SmvPyExtDataSet(refname))
 
 class SmvGroupedData(object):
     """Wrapper around the Scala SmvGroupedData"""
@@ -815,65 +805,68 @@ Column.smvMonth70 = lambda c: Column(colhelper(c).smvMonth70())
 Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
 
 
-class PythonDataSetRepository(object):
+class DataSetRepoFactory(object):
     def __init__(self, smvPy):
         self.smvPy = smvPy
-        self.pythonDataSets = {} # SmvPyDataSet FQN -> instance
 
-    def dsForName(self, modUrn):
-        """Returns the instance of SmvPyDataSet by its fully qualified name.
-        Returns None if the FQN is not a valid SmvPyDataSet name.
-        """
-        if modUrn in self.pythonDataSets:
-            return self.pythonDataSets[modUrn]
+    def createRepo(self):
+        return DataSetRepo(self.smvPy)
+
+    class Java:
+        implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
+
+
+class DataSetRepo(object):
+    def __init__(self, smvPy):
+        self.smvPy = smvPy
+
+    def hasDataSet(self, fqn):
+        return self.loadDataSet(fqn) is not None
+
+    # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
+    # from the most recent source
+    def loadDataSet(self, fqn):
+        lastdot = fqn.rfind('.')
+        if sys.modules.has_key(fqn[:lastdot]):
+            # reload the module if it has already been imported
+            return self._reload(fqn)
         else:
-            fqn = self.smvPy.urn2fqn(modUrn)
-            try:
-                ret = for_name(fqn)(self.smvPy)
-            except AttributeError: # module not found is anticipated
-                return None
-            except ImportError as e:
-                return None
-            except Exception as e: # other errors should be reported, such as syntax error
-                traceback.print_exc()
-                return None
-        self.pythonDataSets[modUrn] = ret
-        return ret
+            # otherwise import the module
+            return self._load(fqn)
 
-    def getSmvModule(self, modUrn):
-        return self.dsForName(modUrn)
 
-    def reloadDs(self, modUrn):
-        """Reload the module by its fully qualified name, replace the old
-        instance with a new one from the new definnition.
-        """
-        lastdot = modUrn.rfind('.')
-        if (lastdot == -1):
-            klass = reload(modUrn)
-        else:
-            mod = reload(sys.modules[modUrn[:lastdot]])
-            klass = getattr(mod, modUrn[lastdot+1:])
-        ret = klass(self.smvPy)
-        self.pythonDataSets[modUrn] = ret
+    # Import the module (Python module, not SMV module) containing the dataset
+    # and return the dataset
+    def _load(self, fqn):
+        try:
+            return for_name(fqn)(self.smvPy)
+        except AttributeError: # module not found is anticipated
+            return None
+        except ImportError:
+            return None
+        except Exception as e: # other errors should be reported, such as syntax error
+            traceback.print_exc()
+            return None
 
+    # Reload the module containing the dataset from the most recent source
+    # and invalidate the linecache
+    def _reload(self, fqn):
+        lastdot = fqn.rfind('.')
+        pmod = reload(sys.modules[fqn[:lastdot]])
+        klass = getattr(pmod, fqn[lastdot+1:])
+        ds = klass(self.smvPy)
         # Python issue https://bugs.python.org/issue1218234
         # need to invalidate inspect.linecache to make dataset hash work
-        srcfile = inspect.getsourcefile(ret.__class__)
+        srcfile = inspect.getsourcefile(ds.__class__)
         if srcfile:
             inspect.linecache.checkcache(srcfile)
+        return ds
 
-        # issue #417
-        # recursively reload all dependent modules
-        for dep in ret.requiresDS():
-            self.reloadDs(dep.urn())
+    def dataSetsForStage(self, stageName):
+        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
 
-        return ret
-
-    def hasDataSet(self, modUrn):
-        return self.dsForName(modUrn) is not None
-
-    def notFound(self, modUrn, msg):
-        raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))
+    def outputModsForStage(self, stageName):
+        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyModule and obj.IsSmvPyOutput)
 
     def moduleUrnsForStage(self, stageName, fn):
         # `walk_packages` can generate AttributeError if the system has
@@ -892,18 +885,18 @@ class PythonDataSetRepository(object):
 
             for loader, name, is_pkg in pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=err):
                 if name.startswith(stageName) and not is_pkg:
-                    try:
-                        pymod = __import__(name)
-                    except:
-                        continue
-                    else:
-                        for c in name.split('.')[1:]:
-                            pymod = getattr(pymod, c)
+                    pymod = __import__(name)
+                    for c in name.split('.')[1:]:
+                        pymod = getattr(pymod, c)
 
                     for n in dir(pymod):
                         obj = getattr(pymod, n)
                         try:
-                            if fn(obj):
+                            # Class should have an fqn which begins with the stageName.
+                            # Each package will contain among other things all of
+                            # the modules that were imported into it, and we need
+                            # to exclude these (so that we only count each module once)
+                            if fn(obj) and obj.fqn().startswith(name):
                                 buf.append(obj.urn())
                         except AttributeError:
                             continue
@@ -913,17 +906,8 @@ class PythonDataSetRepository(object):
 
         return smv_copy_array(self.smvPy.sc, *buf)
 
-    def outputModsForStage(self, stageName):
-        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyOutput and obj.IsSmvPyModule)
-
-    def dsUrnsForStage(self, stageName):
-        return moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
-
-    def rerun(self, modUrn, validator, known):
-        ds = self.reloadDs(modUrn)
-        if ds is None:
-            self.notFound(modUrn, "cannot rerun")
-        return ds.doRun(validator, known)._jdf
+    def notFound(self, modUrn, msg):
+        raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))
 
     class Java:
-        implements = ['org.tresamigos.smv.SmvDataSetRepository']
+        implements = ['org.tresamigos.smv.IDataSetRepoPy4J']

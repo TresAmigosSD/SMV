@@ -43,6 +43,7 @@ class SmvAppTest extends SmvTestUtil {
   override def appArgs = Seq("-m", "C",
     "--data-dir", testcaseTempDir,
     "--input-dir", testcaseTempDir,
+    "--smv-props", "smv.stages=org.tresamigos.fixture.smvapptest",
     "--permit-dependency-violation"
   )
 
@@ -50,14 +51,14 @@ class SmvAppTest extends SmvTestUtil {
     import org.tresamigos.fixture.smvapptest._
     resetTestcaseTempDir()
 
-    val res = app.runModule(C.fqn)
+    val res = app.runModule(C.urn)
     assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
 
     // even though both B and C depended on A, A should have only run once!
     assert(A.moduleRunCount === 1)
 
     //Resolve the same module, it should read the persisted file and not run the module again
-    val res2 = app.runModule(C.fqn)
+    val res2 = app.runModule(C.urn)
     assertSrddDataEqual(res2, "1,2,3;2,3,4;3,4,5")
     assert(A.moduleRunCount === 1)
   }
@@ -65,7 +66,7 @@ class SmvAppTest extends SmvTestUtil {
   test("Test cycle dependency execution") {
     import org.tresamigos.fixture.smvapptest.B_cycle
     intercept[IllegalStateException] {
-      app.runModule(B_cycle.fqn)
+      app.runModule(B_cycle.urn)
     }
   }
 
@@ -105,9 +106,9 @@ class SmvAppTest extends SmvTestUtil {
       val modname = "tooth-fary"
       config(modname)
 
-      val thrown = the [SmvRuntimeException] thrownBy SmvApp.app.modulesToRun()
+      val thrown = the [SmvRuntimeException] thrownBy SmvApp.app.modulesToRun
       thrown.getMessage shouldBe
-      s"""Cannot find module named [${modname}] in any of the stages [${stageNames.mkString(", ")}]"""
+      s"""Cannot find module named [${modname}]"""
     }
 
     // #155
@@ -124,14 +125,9 @@ class SmvAppTest extends SmvTestUtil {
     test("should report ambiguous module names") {
       val modname = "obj3"
       config(modname)
-      val thrown = the [java.lang.RuntimeException] thrownBy SmvApp.app.modulesToRun()
+      val thrown = the [java.lang.RuntimeException] thrownBy SmvApp.app.modulesToRun
       thrown.getMessage shouldBe
-      s"""Module name [${modname}] is not specific enough, as it is found in multiple stages [${stageNames.mkString(", ")}]"""
-    }
-
-    test("should recursively search package namespace") {
-      config("obj4")
-      SmvApp.app.modulesToRun shouldBe Seq(org.tresamigos.smv.obj4)
+      s"""Module name [${modname}] is not specific enough, as it could refer to [org.tresamigos.smv.test1.obj3, org.tresamigos.smv.test2.obj3]"""
     }
 
     test("should resolve name ambiguity by prepending a containing package name") {
@@ -153,7 +149,7 @@ class SmvAppPurgeTest extends SparkTestUtil {
 
     object testApp extends SmvApp(
       Seq("--purge-old-output", "--output-dir", testcaseTempDir), Option(sc), Option(sqlContext)) {
-      override def allAppModules = Seq(m)
+      override lazy val allDataSets = Seq(m)
     }
     SmvApp.app = testApp
 

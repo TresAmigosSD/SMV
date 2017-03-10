@@ -168,10 +168,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
     SmvUtil.persist(j_smvApp.sqlContext, dataframe, path, generateEdd)
 
-  /** Export a dataframe as hive table */
-  def exportDataFrameToHive(dataframe: DataFrame, tableName: String): Unit =
-    SmvUtil.exportDataFrameToHive(j_smvApp.sqlContext, dataframe, tableName)
-
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes,
     pForceParserCheck: Boolean, pFailAtParsingError: Boolean
@@ -192,15 +188,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(modUrn: String): DataFrame =
-    j_smvApp.runModule(modUrn)
-
-  def runDynamicModule(modUrn: String): DataFrame =
-    j_smvApp.runDynamicModule(modUrn)
-
-  /** Publish the result of an SmvModule */
-  def publishModule(modFqn: String): Unit =
-    j_smvApp.publishModule(modFqn, publishVersion.get)
+  def runModule(urn: String): DataFrame =
+    j_smvApp.runModule(URN(urn))
 
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvPyOutput tables
@@ -217,8 +206,9 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     directMods
   }
 
-  def register(id: String, repo: SmvDataSetRepository): Unit =
-    j_smvApp.register(id, repo)
+  def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
+    j_smvApp.registerRepoFactory( new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig) )
+
 }
 
 /** Not a companion object because we need to access it from Python */

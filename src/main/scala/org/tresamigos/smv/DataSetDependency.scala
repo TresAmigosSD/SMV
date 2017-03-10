@@ -52,7 +52,7 @@ case class DataSetDependency(className: String) {
     extends ClassVisitor(api, cv) {
 
     override def visitMethod(access: Int, name: String, desc: String, signature: String, exceptions: Array[String]) = {
-      if (Seq("requiresDS", "requiresAnc", "version").contains(name)) null
+      if (Seq("resolvedRequiresDS", "requiresAnc", "version").contains(name)) null
       else new RunVisitor(api, null, ds, anc)
     }
   }
@@ -123,7 +123,7 @@ object SameStageDependency extends DependencyRule {
 
   override def check(ds: SmvDataSet) = {
     val diff = for {
-      dep <- ds.requiresDS
+      dep <- ds.resolvedRequiresDS
       // External module links have their stage inferred from the
       // target link fqn.  The name for the link module itself is not
       // included in the urn.  So we won't be able to infer the stage
@@ -140,7 +140,7 @@ object LinkFromDiffStage extends DependencyRule {
 
   override def check(ds: SmvDataSet) = {
     val links = for {
-      dep <- ds.requiresDS
+      dep <- ds.resolvedRequiresDS
       if dep.isInstanceOf[SmvModuleLink] &&
       dep.asInstanceOf[SmvModuleLink].smvModule.parentStage == ds.parentStage
     } yield dep

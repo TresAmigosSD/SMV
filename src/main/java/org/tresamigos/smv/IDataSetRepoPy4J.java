@@ -14,17 +14,11 @@
 
 package org.tresamigos.smv;
 
-import java.util.List;
-import java.util.Map;
-import org.apache.spark.sql.DataFrame;
-import org.tresamigos.smv.dqm.SmvDQM;
-import org.tresamigos.smv.dqm.DQMValidator;
-
 /**
  * Repository methods used to query and instantiate modules
  * implemented in languages other than Scala.
  */
-public interface SmvDataSetRepository {
+public interface IDataSetRepoPy4J {
 	/**
 	 * Does the named data set exist?
 	 */
@@ -33,20 +27,12 @@ public interface SmvDataSetRepository {
 	/**
 	 * Factory method for ISmvModule
 	 */
-	ISmvModule getSmvModule(String modUrn);
+	ISmvModule loadDataSet(String modUrn);
+
+	String[] dataSetsForStage(String modUrn);
 
 	/**
-	 * Urns of output module for a stage in this repository
+	 * Get names of all output modules in a given stage
 	 */
 	String[] outputModsForStage(String stageName);
-
-	/**
-	 * Urns of SmvModules for a stage in this repository
-	 */
-	String[] dsUrnsForStage(String stageName);
-
-	/**
-	 * Re-run the named module after code change.
-	 */
-	DataFrame rerun(String modUrn, DQMValidator validator, Map<String, DataFrame> known);
 }

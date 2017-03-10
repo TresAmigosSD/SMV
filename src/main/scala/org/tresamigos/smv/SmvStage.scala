@@ -113,12 +113,12 @@ private[smv] class SmvStages(val stages: Seq[SmvStage]) extends SmvPackageManage
     inferStageNameFromDsName(dsname).flatMap(findStage(_).version)
 
   def inferStageForDataSet(ds: SmvDataSet) : Option[SmvStage] =
-    inferStageNameFromDsName(urn2fqn(ds.urn)) map findStage
+    inferStageNameFromDsName(ds.urn.fqn) map findStage
 
   override lazy val predecessors: Map[SmvDataSet, Seq[SmvDataSet]] =
     allDatasets.map{
       case d: SmvModuleLink => (d, Seq(d.smvModule))
-      case d: SmvDataSet => (d, d.requiresDS)
+      case d: SmvDataSet => (d, d.resolvedRequiresDS)
     }.toMap
 }
 
@@ -131,7 +131,7 @@ private[smv] class SmvStage(val name: String, val version: Option[String]) exten
   override def getAllPackageNames() = Seq(name, name + ".input")
 
   override lazy val predecessors: Map[SmvDataSet, Seq[SmvDataSet]] =
-    allDatasets.map{d => (d, d.requiresDS)}.toMap
+    allDatasets.map{d => (d, d.resolvedRequiresDS)}.toMap
 }
 
 private[smv] object FQN {

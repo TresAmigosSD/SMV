@@ -29,17 +29,17 @@ import org.apache.spark.annotation._
  **/
 private[smv] class SmvDSGraph(app: SmvApp, pstages: SmvStages = null, targetDSs: Seq[SmvDataSet] = Nil) {
   val stages = if (null == pstages) app.stages else pstages
-  private val seeds = if(targetDSs.isEmpty) stages.allModules else targetDSs
+  private val seeds = if(targetDSs.isEmpty) app.dsm.allDataSets else targetDSs
 
-  val nodes: Seq[SmvDataSet]= (seeds.flatMap{ds => stages.ancestors(ds)} ++ seeds).distinct.filterNot{
-    ds => ds.isInstanceOf[SmvModuleLink]
+  val nodes: Seq[SmvDataSet]= (seeds.flatMap(_.ancestors) ++ seeds).distinct.filterNot{
+    ds => ds.isInstanceOf[SmvModuleLink] || stages.stageNames.forall (!ds.fqn.startsWith(_))
   }
 
   val edges: Seq[(SmvDataSet, SmvDataSet)] = nodes.flatMap{ds =>
-    val fromDSs = stages.predecessors.getOrElse(ds, Nil)
+    val fromDSs = ds.resolvedRequiresDS
     fromDSs.map{fds =>
       val _fds = if(fds.isInstanceOf[SmvModuleLink])
-        stages.predecessors.getOrElse(fds, throw new SmvRuntimeException(s"SmvModuleLink ${fds} has no predecessors")).head
+        fds.asInstanceOf[SmvModuleLink].smvModule
         else fds
       _fds -> ds
     }
@@ -123,6 +123,9 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
 
     val vertices = g.nodeString(toPrint, toPrint).toSet
     val edges = g.edges.map{case (f, t) => toPrint(f) -> toPrint(t)}.toList
+
+    // NOTE: "IllegalArgumentException: requirements" failed may mean that
+    // an edges includes a vertex which is not listed in vertices
 
     val graphObj = AsciiGraph(vertices, edges)
 

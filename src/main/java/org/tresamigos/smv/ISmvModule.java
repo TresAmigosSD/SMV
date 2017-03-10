@@ -34,6 +34,12 @@ public interface ISmvModule {
 	 */
 	boolean isEphemeral();
 
+	boolean isOutput();
+
+	String tableName();
+
+	String fqn();
+
 	/**
 	 * The attached DQM policy.
 	 */

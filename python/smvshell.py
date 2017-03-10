@@ -16,8 +16,12 @@ from pyspark.sql import DataFrame
 
 jvmShellCmd = smvPy._jvm.org.tresamigos.smv.shell.ShellCmd
 
-pdf = lambda fqn: smvPy.runModule(fqn)
-ddf = lambda fqn: smvPy.runDynamicModule(fqn)
+df = lambda fqn: smvPy.runModule("mod:" + fqn)
+def ddf(fqn):
+    print "ddf has been removed. df now runs modules dynamically. Use df instead of ddf."
+def pdf(fqn):
+    print "pdf has been removed. Run modules dynamically with df instead."
+
 openHive = lambda tableName: DataFrame(jvmShellCmd.openHive(tableName), smvPy.sqlContext)
 openCsv = lambda path: DataFrame(jvmShellCmd.openCsv(path), smvPy.sqlContext)
 
@@ -41,6 +45,9 @@ def lsLeaf(stageName = None):
         print(jvmShellCmd.lsLeaf())
     else:
         print(jvmShellCmd.lsLeaf(stageName))
+
+def descendants(urn):
+    print(jvmShellCmd.descendants("mod:"+urn))
 
 def graph(stageName = None):
     if(stageName is None):
