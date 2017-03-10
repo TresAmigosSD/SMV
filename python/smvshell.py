@@ -17,6 +17,11 @@ from pyspark.sql import DataFrame
 jvmShellCmd = smvPy._jvm.org.tresamigos.smv.shell.ShellCmd
 
 df = lambda fqn: smvPy.runModule("mod:" + fqn)
+def ddf(fqn):
+    print "ddf has been removed. df now runs modules dynamically. Use df instead of ddf."
+def pdf(fqn):
+    print "pdf has been removed. Run modules dynamically with df instead."
+
 openHive = lambda tableName: DataFrame(jvmShellCmd.openHive(tableName), smvPy.sqlContext)
 openCsv = lambda path: DataFrame(jvmShellCmd.openCsv(path), smvPy.sqlContext)
 

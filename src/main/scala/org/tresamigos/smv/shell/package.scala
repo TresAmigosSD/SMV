@@ -120,7 +120,10 @@ package object shell {
    * @return result DataFrame
    **/
   def df(ds: SmvDataSet) = ShellCmd.df(ds)
-
+  def ddf(ds: SmvDataSet) =
+    println("ddf has been removed. df now runs modules dynamically. Use df instead of ddf.")
+  def ddf(fqn: String) =
+    println("ddf has been removed. df now runs modules dynamically. Use df instead of ddf.")
   /**
    * Try best to discover Schema from raw Csv file
    *
