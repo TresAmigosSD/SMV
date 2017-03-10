@@ -15,11 +15,8 @@ from py4j.java_gateway import java_import, JavaObject
 
 from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
-from pyspark.sql.column import Column
-from pyspark.sql.functions import col
 from utils import for_name, smv_copy_array
 
-import abc
 
 import inspect
 import pkgutil

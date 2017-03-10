@@ -11,21 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from py4j.java_gateway import java_import, JavaObject
-
-from pyspark import SparkContext
-from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
-from pyspark.sql.functions import col
-
-import abc
-
-import inspect
-import pkgutil
-import os
-import re
-import sys
-import traceback
+from pyspark.sql import DataFrame
 
 def for_name(name):
     """Dynamically load a class by its name.

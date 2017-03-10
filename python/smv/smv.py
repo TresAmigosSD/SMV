@@ -11,8 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from py4j.java_gateway import java_import, JavaObject
-
 from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
@@ -22,9 +20,6 @@ from utils import smv_copy_array
 import abc
 
 import inspect
-import pkgutil
-import os
-import re
 import sys
 import traceback
 
