@@ -246,7 +246,7 @@ class DfHelperTest(SmvBaseTest):
 
 class ShellDfHelperTest(SmvBaseTest):
     def test_smvEdd(self):
-        import smv.smv as smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
         res = smv._smvEdd(df)
         self.assertEqual(res, """k                    Non-Null Count         2
@@ -262,7 +262,7 @@ v                    Min                    1.0
 v                    Max                    2.0""")
 
     def test_smvHist(self):
-        import smv.smv as smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
         res = smv._smvHist(df, "k")
         self.assertEqual(res, """Histogram of k: String sort by Key
@@ -272,7 +272,7 @@ b                            1   50.00%           2  100.00%
 -------------------------------------------------""")
 
     def test_smvConcatHist(self):
-        import smv.smv as smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:String", "a,1;b,2")
         res = smv._smvConcatHist(df, ["k", "v"])
         self.assertEqual(res, """Histogram of k_v: String sort by Key
@@ -282,7 +282,7 @@ b_2                          1   50.00%           2  100.00%
 -------------------------------------------------""")
 
     def test_smvFreqHist(self):
-        import smv.smv as smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:String", "a,1;b,2;a,3")
         res = smv._smvFreqHist(df, "k")
         self.assertEqual(res, """Histogram of k: String sorted by Frequency
@@ -292,7 +292,7 @@ b                            1   33.33%           3  100.00%
 -------------------------------------------------""")
 
     def test_smvCountHist(self):
-        import smv.smv as smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:String", "a,1;b,2;a,3")
         res = smv._smvCountHist(df, ["k"], 1)
         self.assertEqual(res, """Histogram of N_k: with BIN size 1.0
@@ -302,7 +302,7 @@ key                      count      Pct    cumCount   cumPct
 -------------------------------------------------""")
 
     def test_smvBinHist(self):
-        import smv.smv as smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:Integer", "a,10;b,200;a,30")
         res = smv._smvBinHist(df, ("v", 100))
         self.assertEqual(res, """Histogram of v: with BIN size 100.0

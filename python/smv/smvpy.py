@@ -146,6 +146,9 @@ class SmvPy(object):
     def defaultTsvWithHeader(self):
         return self._mkCsvAttr(delimier='\t', hasHeader=True)
 
+# Create the SmvPy "Singleton"
+smvPy = SmvPy()
+
 class DataSetRepoFactory(object):
     def __init__(self, smvPy):
         self.smvPy = smvPy

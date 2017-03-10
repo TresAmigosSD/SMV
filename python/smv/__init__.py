@@ -1,4 +1,3 @@
 from smv import *
-
-# smvpy.py is "private"
-#from smvpy import *
+from helpers import *
+from smvpy import smvPy
