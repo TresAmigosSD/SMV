@@ -100,7 +100,7 @@ object Budget extends SmvModule("Projects cost of film production") with Using[B
 }
 ```
 
-Here the run configuration is defined with the `BaseStudio` trait, which extends `SmvRunConfig`.  It contains two pieces of information: lists of available actors and directors.  There are two specific configurations specified by `Hollywood` and `Bollywood`, each with its own list of available actors and directors.  And the module `Budget` declares that it needs the information from a `BaseStudio` by mixing in the trait `Using[BaseStudio]`, which provides the actual configuration through the `runConfig` object.  To specify the use of `Hollywood`, one invokes `smv-run --smv-props runConfObj=Hollywood`; to use `Bollywood`, one invokes `smv-run --run-conf-obj Bollywood`.  Both ways of specifying a configuration object on the commandline work with smv-run.  However, because smv-shell does not directly run the main program in SmvApp -- and therefore will not pass any commandline arguments to SmvApp -- the only way to specify a `runConfig` object, when you are running an interactive shell, is through the use of an SMV configuration file.
+Here the run configuration is defined with the `BaseStudio` trait, which extends `SmvRunConfig`.  It contains two pieces of information: lists of available actors and directors.  There are two specific configurations specified by `Hollywood` and `Bollywood`, each with its own list of available actors and directors.  And the module `Budget` declares that it needs the information from a `BaseStudio` by mixing in the trait `Using[BaseStudio]`, which provides the actual configuration through the `runConfig` object.  To specify the use of `Hollywood`, one invokes `smv-pyrun --smv-props runConfObj=Hollywood`; to use `Bollywood`, one invokes `smv-pyrun --run-conf-obj Bollywood`.  Both ways of specifying a configuration object on the commandline work with smv-pyrun.  However, because smv-shell does not directly run the main program in SmvApp -- and therefore will not pass any commandline arguments to SmvApp -- the only way to specify a `runConfig` object, when you are running an interactive shell, is through the use of an SMV configuration file.
 
 `SmvRunConfig` can contain arbitrary information, including `SmvDataSet`s.  For example, the first stage of processing often involves concatenating data sets from different sources, with some preliminary processing such as null-sanitization.  The data source may be CSV files or Hive tables.  The following code shows how to use `SmvRunConfig` in this situation:
 
@@ -150,7 +150,7 @@ The set of `SmvOutput` output modules in a stage define the data *interface/api*
 
 In addition to the above, the ability to mark certain modules as output has the following benefits:
 
-* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-run`)
+* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-pyrun`)
 * A future option might be added to allow for listing of "dead" modules.  That is, any module in a stage that does not contribute to any output module either directly or indirectly.
 * We may add a future option to `SmvApp` that allows the user to display a "catalog" of output modules and their description.
 

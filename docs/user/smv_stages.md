@@ -58,7 +58,7 @@ To avoid having to "re-run" `rawAccounts` continuously, the user may choose to "
 **1. Publish ETL stage**
 
 ```shell
-$ _SMV_HOME_/tools/smv-run --publish V1 -s etl
+$ _SMV_HOME_/tools/smv-pyrun --publish V1 -s etl
 ```
 
 **2. Pin `model` stage to use published ETL output**
