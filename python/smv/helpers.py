@@ -10,6 +10,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""SMV DataFrame Helpers and Column Helpers
+
+This module provides the helper functions on DataFrame objects and Column objects
+"""
 
 from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame

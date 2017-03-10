@@ -11,6 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""SmvPy entry class and ``singleton`` smvPy
+
+This module provides the main SMV Python entry point ``SmvPy`` class and a singleton ``smvPy``.
+It is equivalent to ``SmvApp`` on Scala side
+"""
+
 from py4j.java_gateway import java_import, JavaObject
 
 from pyspark import SparkContext
