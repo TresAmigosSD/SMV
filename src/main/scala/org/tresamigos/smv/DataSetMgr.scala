@@ -34,13 +34,13 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
     load(urns:_*)
   }
 
-  def outputModulesForStage(stageName: String*): Seq[SmvModule] =
+  def outputModulesForStage(stageName: String*): Seq[SmvDataSet] =
     filterOutput(dataSetsForStage(stageName:_*))
 
   def allDataSets(): Seq[SmvDataSet] =
     dataSetsForStage(stageNames:_*)
 
-  def allOutputModules(): Seq[SmvModule] =
+  def allOutputModules(): Seq[SmvDataSet] =
     filterOutput(allDataSets)
 
   def inferDS(partialNames: String*): Seq[SmvDataSet] = {
@@ -64,6 +64,6 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   }
 
   private def createRepos: Seq[DataSetRepo] = dsRepoFactories map (_.createRepo)
-  private def filterOutput(dataSets: Seq[SmvDataSet]): Seq[SmvModule] =
-    dataSets filter (ds => ds.isInstanceOf[SmvOutput]) map (_.asInstanceOf[SmvModule])
+  private def filterOutput(dataSets: Seq[SmvDataSet]): Seq[SmvDataSet] =
+    dataSets filter (ds => ds.isInstanceOf[SmvOutput]) map (_.asInstanceOf[SmvDataSet])
 }
