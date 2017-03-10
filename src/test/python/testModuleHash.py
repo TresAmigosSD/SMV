@@ -12,7 +12,8 @@
 # limitations under the License.
 
 from smvbasetest import SmvBaseTest
-from smv import SmvPyDataSet, smvPy, for_name
+from smv import SmvPyDataSet, smvPy
+from smv.utils import for_name
 
 import imp
 import sys

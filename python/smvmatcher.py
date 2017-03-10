@@ -11,7 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import smvPy, smv_copy_array
+from smv import smvPy
+from smv.utils import smv_copy_array
+
 from pyspark.sql import HiveContext, DataFrame
 
 def ExactMatchPreFilter(colName, expr):
