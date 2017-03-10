@@ -1,5 +1,5 @@
 # Smv DataSet Framework
-from smv import *
+from smvpydataset import *
 
 # Smv DataFrame and Column helpers
 from helpers import *
