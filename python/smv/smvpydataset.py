@@ -399,6 +399,9 @@ class SmvPyModuleLinkTemplate(SmvPyModule):
         return res.get() if res.isDefined() else self.smvPy.runModule(self.target().urn())
 
 PyExtDataSetCache = {}
+
+from smvpy import smvPy
+
 def SmvPyExtDataSet(refname):
     if refname in PyExtDataSetCache:
         return PyExtDataSetCache[refname]
