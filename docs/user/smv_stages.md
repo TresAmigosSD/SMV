@@ -28,7 +28,7 @@ Instead, a special input dataset (`SmvPyModuleLink`) needs to be defined in stag
 
 ```python
 # this is defined in inputdata.py file of stage 2.
-rom smv import SmvPyModuleLink, SmvPyExtDataSet
+from smv import SmvPyModuleLink, SmvPyExtDataSet
 from stage1 import employment as emp
 
 EmploymentByStateLink = SmvPyModuleLink(emp.EmploymentByState)
@@ -83,7 +83,7 @@ As the project grows, it may become necessary to add additional stages.
 We will utilize the example app described in [Getting Started](getting_started.md) as the starting point.
 
 ```bash
-$ _SMV_HOME_/tools/bin/smv-init -s MyApp
+$ smv-init -s MyApp
 ```
 
 To review, the above will create a simple app `MyApp` with one stage `stage1`. We will add an additional `modeling` stage in this example.
@@ -97,7 +97,7 @@ smv.stages = stage1, modeling
 ...
 ```
 
-**2. add the `inputData.py` file to the `modeling` stage.**
+**2. add the `inputdata.py` file to the `modeling` stage.**
 
 Create the file `src/main/python/modeling/inputdata.py`
 
