@@ -225,28 +225,22 @@ class SmvPyDataSet(object):
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
 
-class SmvPyCsvFile(SmvPyDataSet):
-    """Raw input file in CSV format
-    """
+class SmvPyInput(SmvPyDataSet):
+    """Input DataSet, requiredDS is empty and isEphemeral is true"""
+    def isEphemeral(self):
+        return True
 
-    def __init__(self, smvPy):
-        super(SmvPyCsvFile, self).__init__(smvPy)
-        self._smvCsvFile = smvPy.j_smvPyClient.smvCsvFile(
-            self.fqn(), self.path(), self.csvAttr(),
-            self.forceParserCheck(), self.failAtParsingError())
+    def requiresDS(self):
+        return []
 
-    def description(self):
-        return "Input file: @" + self.path()
+class WithParser(object):
+    """shared parser funcs"""
 
     def forceParserCheck(self):
         return True
 
     def failAtParsingError(self):
         return True
-
-    @abc.abstractproperty
-    def path(self):
-        """The path to the csv input file"""
 
     def defaultCsvWithHeader(self):
         return self.smvPy.defaultCsvWithHeader()
@@ -262,14 +256,49 @@ class SmvPyCsvFile(SmvPyDataSet):
         """
         return None
 
-    def isEphemeral(self):
-        return True
+class SmvPyCsvFile(SmvPyInput, WithParser):
+    """Raw input file in CSV format
+    """
 
-    def requiresDS(self):
-        return []
+    def __init__(self, smvPy):
+        super(SmvPyCsvFile, self).__init__(smvPy)
+        self._smvCsvFile = smvPy.j_smvPyClient.smvCsvFile(
+            self.fqn(), self.path(), self.csvAttr(),
+            self.forceParserCheck(), self.failAtParsingError())
+
+    def description(self):
+        return "Input file: @" + self.path()
+
+    @abc.abstractproperty
+    def path(self):
+        """The path to the csv input file"""
 
     def doRun(self, validator, known):
         jdf = self._smvCsvFile.doRun(validator)
+        return DataFrame(jdf, self.smvPy.sqlContext)
+
+class SmvPyMultiCsvFiles(SmvPyInput, WithParser):
+    """Instead of a single input file, specify a data dir with files which has
+       the same schema and CsvAttributes.
+    """
+
+    def __init__(self, smvPy):
+        super(SmvPyMultiCsvFiles, self).__init__(smvPy)
+        self._smvMultiCsvFiles = smvPy._jvm.org.tresamigos.smv.SmvMultiCsvFiles(
+            self.dir(),
+            self.csvAttr(),
+            None
+        )
+
+    def description(self):
+        return "Input dir: @" + self.dir()
+
+    @abc.abstractproperty
+    def dir(self):
+        """The path to the csv input dir"""
+
+    def doRun(self, validator, known):
+        jdf = self._smvMultiCsvFiles.doRun(validator)
         return DataFrame(jdf, self.smvPy.sqlContext)
 
 class SmvPyCsvStringData(SmvPyDataSet):

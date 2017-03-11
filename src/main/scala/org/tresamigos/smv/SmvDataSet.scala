@@ -441,6 +441,9 @@ class SmvMultiCsvFiles(
 
     val filesInDir = SmvHDFS.dirList(fullPath).map{n => s"${fullPath}/${n}"}
 
+    if (filesInDir.isEmpty)
+        throw new SmvRuntimeException(s"There are no data files in ${fullPath}")
+
     val df = filesInDir.map{s =>
       val handler = new FileIOHandler(app.sqlContext, s, fullSchemaPath, parserValidator)
       handler.csvFileWithSchema(csvAttributes)
