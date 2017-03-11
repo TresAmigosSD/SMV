@@ -28,3 +28,6 @@ def normlevenshtein(c1, c2):
 
 def jaroWinkler(c1, c2):
     return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.jaroWinkler(c1._jc, c2._jc))
+
+def smvFirst(c, nonNull = False):
+    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.smvFirst(c._jc, nonNull))
