@@ -5,36 +5,36 @@ SMV Stages accomplishes this by not only organizing the modules into separate ma
 but by also controlling the dependency between modules in different stages.
 
 # Stage input
-Each stage should have an `input` sub-package where all the input `SmvFile` instances are defined.
-By convention, all inputs used by any module in a given stage should reference an `SmvFile` instance in the input sub-package.
+By convention, each stage should have an `inputdata.py` module where all the input files (e.g. `SmvPyCsvFile` and `SmvPyHiveTable`) and stage links (e.g. `SmvPyModuleLink`) are defined.  All inputs used by any module in a given stage should reference an `SmvPy*File` instance in the `inputdata.py` module.
 
 ## Raw input files
-Raw input files (e.g. CSV files) should be defined as `SmvFile` instances in the input package.
+Raw input files (e.g. CSV files) should be defined as `SmvPy*File` instances in the input package.  For example:
 
-```scala
-package com/mycom/myproj.stage1.input
-
-object file1 extends SmvCsvFile("file1_v2.csv")
-object file2 extends SmvCsvFile("file2.csv.gz")
+```python
+# This is defined in inputdata.py file of the stage.
+class Employment(SmvPyCsvFile):
+    def path(self):
+        return "input/employment/CB1200CZ11.csv"
 ...
 ```
 
-Modules within this stage can refer to the files using their object names (e.g. `file1`) which would produce a compile time error on a typo.
+SMV Modules within this stage can refer to the files using their object names (e.g. `Employment`) which would produce a compile time error on a typo.
 See [SmvModule](smv_module.md) for details on how to specify dependent files.
 
 ## Linking to external modules.
 
 If a module in stage Y depends on a module in stage X, it should not refer to the dependent module directly.
-Instead, a special input dataset (`SmvModuleLink`) needs to be defined in stage Y input package to link to the module in stage X.
+Instead, a special input dataset (`SmvPyModuleLink`) needs to be defined in stage Y `inputdata.py` to link to the module in stage X.
 
-```scala
-// this is the input in stage Y
-package com.mycompany.myproj.stageY.input
+```python
+# this is defined in inputdata.py file of stage 2.
+rom smv import SmvPyModuleLink, SmvPyExtDataSet
+from stage1 import employment as emp
 
-object accountsY extends SmvModuleLink(com.mycompany.myproj.stageX.accountsX)
+EmploymentByStateLink = SmvPyModuleLink(emp.EmploymentByState)
 ```
 
-In the above example, `accountsY` is defined as an input in stage Y. Modules in stage Y can depend on `accountsY` directly. `accountsY` is linked to the **output file** of `accountsX` module and **not** to the module code. Therefore, stage X needs to be run first before Stage Y can run (so that `accountsX` output is there when stage Y is run)
+In the above example, `EmploymentByStateLink` is defined as an input in stage 2. Modules in stage 2 can depend on `EmploymentByStateLink` directly. `EmploymentByStateLink` is linked to the **output file** of `EmploymentByState` module and **not** to the module code. Therefore, stage 1 needs to be run first before Stage 2 can run (so that `EmploymentByState` output is there when stage Y is run)
 
 See "Publishing Stage Output" section below for details on how to pin dependency to a specific published version
 
@@ -47,9 +47,9 @@ One way to accomplish that is to "publish" the etl stage output and have the mod
 
 In the above example, the `model` stage may depend on the output of `etl` stage as follows:
 
-```scala
-package com.mycompany.myproj.model.input
-object modelAccts extends SmvModuleLink(com.mycompany.myproj.etl.rawAccounts)
+```python
+# this is defined in inputdata.py file of stage model.
+modelAccts = SmvPyModuleLink(etl.rawAccounts)
 ```
 
 As described above, `modelAccts` will depend on the **output** of `rawAccounts`.  Normally, this would read the versioned output that is persisted in the output directory.
@@ -58,7 +58,7 @@ To avoid having to "re-run" `rawAccounts` continuously, the user may choose to "
 **1. Publish ETL stage**
 
 ```shell
-$ _SMV_HOME_/tools/smv-pyrun --publish V1 -s etl
+$ smv-pyrun --publish V1 -s etl
 ```
 
 **2. Pin `model` stage to use published ETL output**
@@ -67,11 +67,6 @@ Modify the user configuration file (`conf/smv-user-conf.props`) to specify the e
 ```
 # specify version of etl package to use.  If no ambiguity, stage basename can be used here
 smv.stages.etl.version = V1
-```
-Or
-```
-# Use FQN of the stage is always recommended
-smv.stages.com.mycompany.myproj.etl.version = V1
 ```
 
 When `modelAccts` re-runs it will use the published output of `rawAccounts` rather than rerun `rawAccounts`.
@@ -104,7 +99,7 @@ smv.stages = stage1, modeling
 
 **2. add the `inputData.py` file to the `modeling` stage.**
 
-Create the file `src/main/python/modeling/inputData.py`
+Create the file `src/main/python/modeling/inputdata.py`
 
 ```python
 from smv import SmvPyModuleLink, SmvPyExtDataSet
@@ -141,7 +136,7 @@ In order to build the module structure, Python requires an `__init__.py` file in
 We can now run the `EmploymentByStateCategory` module by providing the module FQN to the `smv-pyrun` command:
 
 ```bash
-$ _SMV_HOME_/tools/bin/smv-pyrun -m modeling.category.EmploymentByStateCategory
+$ smv-pyrun -m modeling.category.EmploymentByStateCategory
 ```
 or by making the module extend `SmvPyOutput` and running the entire stage ("-s modeling").
 See [Smv Modules](smv_module.md) for details.
@@ -150,5 +145,5 @@ See [Smv Modules](smv_module.md) for details.
 A multi-stage sample application can be created by running the `smv-init` command with the `-e` (enterprise) flag:
 
 ```bash
-$ _SMV_HOME_/tools/bin/smv-init -e MultiStageApp
+$ smv-init -e MultiStageApp
 ```
