@@ -122,6 +122,9 @@ abstract class SmvDataSet extends FilenamePart {
   /** user tagged code "version".  Derived classes should update the value when code or data */
   def version() : Int = 0
 
+  /** full name of hive output table if this module is published to hive. */
+  def tableName: String = throw new IllegalStateException("tableName not specified for ${fqn}")
+
 
   /** Objects defined in Spark Shell has class name start with $ **/
   val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
@@ -323,7 +326,7 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
 /**
  * SMV Dataset Wrapper around a hive table.
  */
-case class SmvHiveTable(val tableName: String) extends SmvInputDataSet {
+case class SmvHiveTable(override val tableName: String) extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
 
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
@@ -504,9 +507,6 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   type runParams = RunParams
   def run(inputs: runParams) : DataFrame
 
-  /** full name of hive output table if this module is published to hive. */
-  def tableName: String = throw new IllegalStateException("tableName not specified for ${fqn}")
-
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val paramMap: Map[SmvDataSet, DataFrame] =
@@ -641,7 +641,8 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
 /** Link to a external module from another stage */
 case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput)
 
-class SmvExtModulePython(target: ISmvModule) extends SmvModule(s"SmvPyModule ${target.fqn}") {
+class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
+  override val description = s"SmvPyModule ${target.fqn}"
   override val fqn = target.fqn
   override def tableName = target.tableName()
   override def isEphemeral = target.isEphemeral()
@@ -651,8 +652,8 @@ class SmvExtModulePython(target: ISmvModule) extends SmvModule(s"SmvPyModule ${t
     resolvedRequiresDS = target.dependencies map ( urn => resolver.loadDataSet(URN(urn)).head )
     this
   }
-  override def run(i: runParams) =
-    target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn.toString, i(ds))}.toMap[String, DataFrame])
+  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame =
+    target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn.toString, app.resolveRDD(ds))}.toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()
   override def createDsDqm = target.getDqm()
 }
