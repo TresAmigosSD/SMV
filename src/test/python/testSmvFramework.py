@@ -14,7 +14,7 @@
 import unittest
 
 from smvbasetest import SmvBaseTest
-from smv import smvPy, SmvPyCsvStringData
+from smv import *
 
 import pyspark
 from pyspark.context import SparkContext
@@ -27,9 +27,25 @@ class D1(SmvPyCsvStringData):
     def dataStr(self):
         return "x,10;y,1"
 
+class D2(SmvPyMultiCsvFiles):
+    def dir(self):
+        return "test3"
+
 class SmvFrameworkTest(SmvBaseTest):
     def test_SmvCsvStringData(self):
         fqn = self.__module__ + ".D1"
-        df = smvPy.runModule("mod:"+fqn)
+        df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
+
+    def test_SmvPyMultiCsvFiles(self):
+        self.createTempFile("input/test3/f1", "col1\na\n")
+        self.createTempFile("input/test3/f2", "col1\nb\n")
+        self.createTempFile("input/test3.schema", "col1: String\n")
+
+        fqn = self.__module__ + ".D2"
+        df = self.df(fqn)
+        exp = self.createDF("col1: String", "a;b")
+        self.should_be_same(df, exp)
+
+    #TODO: add other SmvPyDataSet unittests

@@ -59,8 +59,24 @@ class SmvBaseTest(unittest.TestCase):
     def createDF(cls, schema, data):
         return cls.smvPy.createDF(schema, data)
 
+    @classmethod
+    def df(cls, fqn):
+        return cls.smvPy.runModule("mod:" + fqn)
+
     def should_be_same(self, expected, result):
         """Returns true if the two dataframes contain the same data, regardless of order
         """
         self.assertEqual(expected.columns, result.columns)
         self.assertEqual(expected.collect().sort(), result.collect().sort())
+
+    def createTempFile(self, baseName, fileContents = "xxx"):
+        """create a temp file in the data dir with the given contents"""
+        import os
+        fullPath = self.DataDir + "/" + baseName
+        directory = os.path.dirname(fullPath)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        f = open(fullPath, "w")
+        f.write(fileContents)
+        f.close()
