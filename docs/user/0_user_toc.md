@@ -30,6 +30,9 @@
   * [Work on data with hierarchies](smv_hier.md)
   * [Column level Description and Labels](smv_desc_label.md)
   * [Dynamic Class Loading](class_loader.md)
-  
+
 #### Smv Best Practice
   * [Atom - A Small Editor Works Well with SMV](atom.md)
+
+#### Known Issues
+  * [Known issues with current SMV version](known_issues.md)
