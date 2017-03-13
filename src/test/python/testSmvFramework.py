@@ -15,11 +15,14 @@ import unittest
 
 from smvbasetest import SmvBaseTest
 from smv import *
+from smv.dqm import *
 
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
-from pyspark.sql.functions import col, struct
+from pyspark.sql.functions import col, lit
+from py4j.protocol import Py4JJavaError
+
 
 class D1(SmvPyCsvStringData):
     def schemaStr(self):
@@ -31,7 +34,23 @@ class D2(SmvPyMultiCsvFiles):
     def dir(self):
         return "test3"
 
+class D3(SmvPyCsvStringData):
+    def schemaStr(self):
+        return "a:Integer;b:Double"
+    def dataStr(self):
+        return "1,0.3;0,0.2;3,0.5"
+    def dqm(self):
+        return SmvDQM().add(
+            DQMRule(col("b") < 0.4 , "b_lt_03")).add(
+            DQMFix(col("a") < 1, lit(1).alias("a"), "a_lt_1_fix")).add(
+            FailTotalRuleCountPolicy(2)).add(
+            FailTotalFixCountPolicy(1))
+
 class SmvFrameworkTest(SmvBaseTest):
+    def _escapeRegex(self, s):
+        import re
+        return re.sub(r"([\[\]\(\)])", r"\\\1", s)
+
     def test_SmvCsvStringData(self):
         fqn = self.__module__ + ".D1"
         df = self.df(fqn)
@@ -47,5 +66,25 @@ class SmvFrameworkTest(SmvBaseTest):
         df = self.df(fqn)
         exp = self.createDF("col1: String", "a;b")
         self.should_be_same(df, exp)
+
+    def test_SmvDQM(self):
+        fqn = self.__module__ + ".D3"
+
+        msg =""": org.tresamigos.smv.SmvDqmValidationError: {
+  "passed":false,
+  "errorMessages": [
+    {"FailTotalRuleCountPolicy(2)":"true"},
+    {"FailTotalFixCountPolicy(1)":"false"}
+  ],
+  "checkLog": [
+    "Rule: b_lt_03, total count: 1",
+    "org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5",
+    "Fix: a_lt_1_fix, total count: 1"
+  ]
+}"""
+
+        with self.assertRaisesRegexp(Py4JJavaError, self._escapeRegex(msg)):
+            df = self.df(fqn)
+            df.smvDumpDF()
 
     #TODO: add other SmvPyDataSet unittests

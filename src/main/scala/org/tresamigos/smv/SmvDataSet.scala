@@ -344,7 +344,7 @@ trait SmvDSWithParser extends SmvDataSet {
   val failAtParsingError = true
 
   override def createDsDqm() =
-    if (failAtParsingError) dqm().add(FailParserCountPolicy(1), Option(true))
+    if (failAtParsingError) dqm().add(FailParserCountPolicy(1)).addAction()
     else if (forceParserCheck) dqm().addAction()
     else dqm()
 }

@@ -27,6 +27,8 @@ import inspect
 import sys
 import traceback
 
+from dqm import SmvDQM
+
 if sys.version >= '3':
     basestring = unicode = str
     long = int
@@ -97,50 +99,9 @@ class SmvPyDataSet(object):
     def requiresDS(self):
         """The list of dataset dependencies"""
 
-    def smvDQM(self):
-        """Factory method for Scala SmvDQM"""
-        return self.smvPy._jvm.SmvDQM.apply()
-
-    # Factory methods for DQM policies
-    def FailParserCountPolicy(self, threshold):
-        return self.smvPy._jvm.FailParserCountPolicy(threshold)
-
-    def FailTotalRuleCountPolicy(self, threshold):
-        return self.smvPy._jvm.FailTotalRuleCountPolicy(threshold)
-
-    def FailTotalFixCountPolicy(self, threshold):
-        return self.smvPy._jvm.FailTotalFixCountPolicy(threshold)
-
-    def FailTotalRulePercentPolicy(self, threshold):
-        return self.smvPy._jvm.FailTotalRulePercentPolicy(threshold * 1.0)
-
-    def FailTotalFixPercentPolicy(self, threshold):
-        return self.smvPy._jvm.FailTotalFixPercentPolicy(threshold * 1.0)
-
-    # DQM task policies
-    def FailNone(self):
-        return self.smvPy._jvm.DqmTaskPolicies.failNone()
-
-    def FailAny(self):
-        return self.smvPy._jvm.DqmTaskPolicies.failAny()
-
-    def FailCount(self, threshold):
-        return self.smvPy._jvm.FailCount(threshold)
-
-    def FailPercent(self, threshold):
-        return self.smvPy._jvm.FailPercent(threshold * 1.0)
-
-    def DQMRule(self, rule, name = None, taskPolicy = None):
-        task = taskPolicy or self.FailNone()
-        return self.smvPy._jvm.DQMRule(rule._jc, name, task)
-
-    def DQMFix(self, condition, fix, name = None, taskPolicy = None):
-        task = taskPolicy or self.FailNone()
-        return self.smvPy._jvm.DQMFix(condition._jc, fix._jc, name, task)
-
     def dqm(self):
         """Subclasses with a non-default DQM policy should override this method"""
-        return self.smvDQM()
+        return SmvDQM()
 
     @abc.abstractmethod
     def doRun(self, validator, known):
@@ -196,7 +157,13 @@ class SmvPyDataSet(object):
         return False
 
     def getDqm(self):
-        return self.dqm()
+        try:
+            res = self.dqm()
+        except BaseException as err:
+            traceback.print_exc()
+            raise err
+
+        return res
 
     def dependencies(self):
         # Try/except block is a short-term solution (read: hack) to ensure that

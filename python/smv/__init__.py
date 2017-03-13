@@ -6,3 +6,5 @@ from helpers import *
 
 # The smvPy singleton
 from smvpy import smvPy
+
+import dqm

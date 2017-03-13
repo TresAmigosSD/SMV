@@ -1,4 +1,5 @@
 from smv import *
+from smv.dqm import *
 
 class PythonEmployment(SmvPyCsvFile):
     def path(self):
@@ -9,4 +10,4 @@ class PythonEmployment(SmvPyCsvFile):
 
     def dqm(self):
         """An example DQM policy"""
-        return self.smvDQM().add(self.FailParserCountPolicy(10), self.smvPy.scalaOption(True))
+        return SmvDQM().add(FailParserCountPolicy(10))
