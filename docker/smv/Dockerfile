@@ -16,8 +16,6 @@ RUN wget http://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     cd $SMV_HOME &&\
     mvn install -DskipTests &&\
     sbt assembly publish-local &&\
-    cd /projects &&\
-    smv-init MyApp &&\
     rm -rf /home/smv/.ivy2/cache/* &&\
     find /home/smv/.m2/repository -mindepth 1 \! -path '*tresamigos*' -exec rm -rf \{\} + &&\
     find $SMV_HOME/target/* -maxdepth 0 -not -path $SMV_HOME/target/scala-2.10 -exec rm -rf \{\} +
