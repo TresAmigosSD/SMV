@@ -28,42 +28,6 @@ trait FilenamePart {
   def fnpart: String
 }
 
-/*
- * Every concrete subclass of URN should be a case class to ensure
- * structural equality - this is important because we use the URN as a key
- */
-abstract class URN(prefix: String) {
-  def fqn: String
-  override def toString: String =  s"${prefix}:${fqn}"
-}
-case class LinkURN(fqn: String) extends URN("link") {
-  override def toString: String = super.toString
-  def toModURN: ModURN = ModURN(fqn)
-}
-case class ModURN(fqn: String) extends URN("mod") {
-  override def toString: String = super.toString
-  def toLinkURN: LinkURN = LinkURN(fqn)
-}
-
-object URN {
-  object errors {
-    def invalidURN(urn: String) = new SmvRuntimeException(s"Invalid urn: ${urn}")
-  }
-
-  def apply(urn: String): URN ={
-    val splitIdx = urn.lastIndexOf(':')
-    if(splitIdx < 0)
-      throw errors.invalidURN(urn)
-    val fqn = urn.substring(splitIdx+1)
-    val prefix = urn.substring(0, splitIdx)
-    prefix match {
-      case "mod" => ModURN(fqn)
-      case "link" => LinkURN(fqn)
-      case _ => throw errors.invalidURN(urn)
-    }
-  }
-}
-
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
