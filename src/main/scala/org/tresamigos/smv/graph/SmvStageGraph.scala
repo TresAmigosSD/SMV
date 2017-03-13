@@ -98,6 +98,7 @@ private[smv] class SmvStageGraph(app: SmvApp, pstages: SmvStages = null) {
  **/
 private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
   val stages = if (null == pstages) app.stages else pstages
+  val dsm = app.dsm
   // max string length per line in an ascii Box
   private val asciiBoxWidth = 12
 
@@ -247,7 +248,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
     dss.map{ds => prefix + baseNameWithFlag(ds)}
   }
 
-  private def _listAll(s:SmvStage, f: SmvPackageManager => Seq[SmvDataSet]): String = {
+  private def _listAll(s:SmvStage, f: SmvStage => Seq[SmvDataSet]): String = {
     if (s == null) {
       /* list all in the app (the stages) */
       stages.stages.flatMap{s =>
@@ -260,7 +261,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
   }
 
   /** list all datasets */
-  def createDSList(s: SmvStage = null): String = _listAll(s, {s => s.allDatasets})
+  def createDSList(s: SmvStage = null): String = _listAll(s, {s => dsm.dataSetsForStage(s.name)})
 
   /** list `dead` datasets */
   def createDeadDSList(s: SmvStage = null): String = _listAll(s, {s => s.deadDataSets})
