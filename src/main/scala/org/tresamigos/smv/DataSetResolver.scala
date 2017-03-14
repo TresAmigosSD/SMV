@@ -42,7 +42,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
         urn2res.get(urn).getOrElse {
           val ds = urn match {
             case lUrn: LinkURN =>
-              val dsFound = findDataSetInRepo(lUrn.toModURN)
+              val dsFound = loadDataSet(lUrn.toModURN).head
               new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
             case mUrn: ModURN =>
               findDataSetInRepo(mUrn)
@@ -77,7 +77,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
   }
 
   /**
-   * Cßheck dependency rules and report all violations. If there are violations
+   * Check dependency rules and report all violations. If there are violations
    * and SMV isn't configured to ignore dependency violations, throw exception.
    */
   def validateDependencies(ds: SmvDataSet): Unit = {
