@@ -105,13 +105,11 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
   private def wrapStr(str: String) = str.grouped(asciiBoxWidth).mkString("\n")
   private def baseName(ds: SmvDataSet) = stages.datasetBaseName(ds)
 
-  private def baseNameWithFlag(ds: SmvDataSet) = ds match {
-    case d: SmvOutput     => "(O) " + baseName(d)
-    case d: SmvModuleLink => "(L) " + baseName(d)
-    case d: SmvFile       => "(F) " + baseName(d)
-    case d: SmvModule     => "(M) " + baseName(d)
-    case d: SmvHiveTable  => "(H) " + baseName(d)
-    case d => "(*) " + baseName(d)
+  private def baseNameWithFlag(ds: SmvDataSet) = ds.dsType() match {
+    case "Output"     => "(O) " + baseName(ds)
+    case "Link"       => "(L) " + baseName(ds)
+    case "Input"      => "(I) " + baseName(ds)
+    case "Module"     => "(M) " + baseName(ds)
   }
 
   /**

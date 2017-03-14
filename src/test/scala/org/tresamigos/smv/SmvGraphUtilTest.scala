@@ -166,11 +166,9 @@ class SmvGraphUtilWithStrTest extends SmvTestUtil {
     val gu = new graph.SmvGraphUtil(app)
     val dsL = gu.createDSList()
 
-    println(dsL)
-
     assert(dsL ===  """
 org.tresamigos.smv.smvAppTestPkgStr:
-  (*) StrData""")
+  (I) StrData""")
   }
 }
 } // package: org.tresamigos.smv

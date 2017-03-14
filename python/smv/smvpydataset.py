@@ -156,6 +156,10 @@ class SmvPyDataSet(object):
         """
         return False
 
+    @abc.abstractmethod
+    def dsType(self):
+        """Return SmvPyDataSet's type"""
+
     def getDqm(self):
         try:
             res = self.dqm()
@@ -196,6 +200,9 @@ class SmvPyInput(SmvPyDataSet):
     """Input DataSet, requiredDS is empty and isEphemeral is true"""
     def isEphemeral(self):
         return True
+
+    def dsType(self):
+        return "Input"
 
     def requiresDS(self):
         return []
@@ -268,7 +275,7 @@ class SmvPyMultiCsvFiles(SmvPyInput, WithParser):
         jdf = self._smvMultiCsvFiles.doRun(validator)
         return DataFrame(jdf, self.smvPy.sqlContext)
 
-class SmvPyCsvStringData(SmvPyDataSet):
+class SmvPyCsvStringData(SmvPyInput):
     """Input data from a Schema String and Data String
     """
 
@@ -280,9 +287,6 @@ class SmvPyCsvStringData(SmvPyDataSet):
             False
         )
 
-    def isEphemeral(self):
-        return True
-
     @abc.abstractproperty
     def schemaStr(self):
         """Smv Schema string. E.g. "id:String; dt:Timestamp"
@@ -293,15 +297,12 @@ class SmvPyCsvStringData(SmvPyDataSet):
         """Smv data string. E.g. "212,2016-10-03;119,2015-01-07"
         """
 
-    def requiresDS(self):
-        return []
-
     def doRun(self, validator, known):
         jdf = self._smvCsvStringData.doRun(validator)
         return DataFrame(jdf, self.smvPy.sqlContext)
 
 
-class SmvPyHiveTable(SmvPyDataSet):
+class SmvPyHiveTable(SmvPyInput):
     """Input data source from a Hive table
     """
 
@@ -316,12 +317,6 @@ class SmvPyHiveTable(SmvPyDataSet):
     def tableName(self):
         """The qualified Hive table name"""
 
-    def isEphemeral(self):
-        return True
-
-    def requiresDS(self):
-        return []
-
     def run(self, df):
         """This can be override by concrete SmvPyHiveTable"""
         return df
@@ -334,6 +329,10 @@ class SmvPyModule(SmvPyDataSet):
     """
 
     IsSmvPyModule = True
+
+
+    def dsType(self):
+        return "Module"
 
     # need to simulate map from ds to df where the same object can be keyed
     # by different datasets with the same urn. usecase example
@@ -374,6 +373,9 @@ class SmvPyModuleLinkTemplate(SmvPyModule):
 
     def isEphemeral(self):
         return True
+
+    def dsType(self):
+        return "Link"
 
     def requiresDS(self):
         return []

@@ -90,6 +90,9 @@ abstract class SmvDataSet extends FilenamePart {
 
   def description(): String
 
+  /** DataSet type: could be 4 values, Input, Link, Module, Output */
+  def dsType(): String
+
   /** modules must override to provide set of datasets they depend on.
    * This is no longer the canonical list of dependencies. Internally
    * we should query resolvedRequiresDS for dependencies.
@@ -315,6 +318,7 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
 
+  override def dsType() = "Input"
   /**
    * Method to run/pre-process the input file.
    * Users can override this method to perform file level
@@ -507,6 +511,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    */
   override def isEphemeral = false
 
+  override def dsType() = "Module"
+
   type runParams = RunParams
   def run(inputs: runParams) : DataFrame
 
@@ -590,6 +596,8 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
 
   override val isEphemeral = true
 
+  override def dsType() = "Link"
+
   /**
    * override the module run/requireDS methods to be a no-op as it will never be called (we overwrite doRun as well.)
    */
@@ -633,6 +641,8 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
  */
 case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${modFqn}") {
   override val fqn = modFqn
+  override def dsType(): String =
+    throw new SmvRuntimeException("SmvExtModule dsType should never be called")
   override def requiresDS =
     throw new SmvRuntimeException("SmvExtModule requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet =
@@ -649,6 +659,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
   override val fqn = target.fqn
   override def tableName = target.tableName()
   override def isEphemeral = target.isEphemeral()
+  override def dsType = target.dsType()
   override def requiresDS =
    throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
@@ -683,11 +694,9 @@ case class SmvCsvStringData(
     schemaStr: String,
     data: String,
     override val isPersistValidateResult: Boolean = false
-  ) extends SmvDataSet with SmvDSWithParser {
+  ) extends SmvInputDataSet with SmvDSWithParser {
 
   override def description() = s"Dummy module to create DF from strings"
-  override def requiresDS() = Seq.empty
-  override val isEphemeral = true
 
   override def datasetHash() = {
     val crc = new java.util.zip.CRC32
@@ -710,6 +719,7 @@ case class SmvCsvStringData(
  */
 trait SmvOutput {
   this : SmvDataSet =>
+  override def dsType(): String = "Output"
 }
 
 /** Base marker trait for run configuration objects */
