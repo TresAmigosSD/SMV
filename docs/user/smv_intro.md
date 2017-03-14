@@ -50,7 +50,3 @@ A special type of `SmvModule` is `SmvModuleLink`. It is a link to other `SmvModu
 directly in `stage2`, a `SmvModuleLink` will be created in the `input` sub-package and link to
 `stage1.mod2`. The pairs of `SmvOutput` and `SmvModuleLink` defines the interface between stages.
 Please see [SMV Stages](smv_stages.md) for more details.
-
-## Class Diagram
-The class diagram of the SMV App below is provided as an FYI and is not critical to productively using SMV.
-![SMV App Class Diagram](https://rawgit.com/TresAmigosSD/SMV/master/docs/design/app_class.svg)
