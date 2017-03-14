@@ -28,42 +28,6 @@ trait FilenamePart {
   def fnpart: String
 }
 
-/*
- * Every concrete subclass of URN should be a case class to ensure
- * structural equality - this is important because we use the URN as a key
- */
-abstract class URN(prefix: String) {
-  def fqn: String
-  override def toString: String =  s"${prefix}:${fqn}"
-}
-case class LinkURN(fqn: String) extends URN("link") {
-  override def toString: String = super.toString
-  def toModURN: ModURN = ModURN(fqn)
-}
-case class ModURN(fqn: String) extends URN("mod") {
-  override def toString: String = super.toString
-  def toLinkURN: LinkURN = LinkURN(fqn)
-}
-
-object URN {
-  object errors {
-    def invalidURN(urn: String) = new SmvRuntimeException(s"Invalid urn: ${urn}")
-  }
-
-  def apply(urn: String): URN ={
-    val splitIdx = urn.lastIndexOf(':')
-    if(splitIdx < 0)
-      throw errors.invalidURN(urn)
-    val fqn = urn.substring(splitIdx+1)
-    val prefix = urn.substring(0, splitIdx)
-    prefix match {
-      case "mod" => ModURN(fqn)
-      case "link" => LinkURN(fqn)
-      case _ => throw errors.invalidURN(urn)
-    }
-  }
-}
-
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
@@ -603,7 +567,12 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
    */
   override def requiresDS() = Seq.empty[SmvDataSet]
   override def run(inputs: runParams) = null
+
+  /**
+   * Resolve the target SmvModule and wrap it in a new SmvModuleLink
+   */
   override def resolve(resolver: DataSetResolver): SmvDataSet = new SmvModuleLink(resolver.resolveDataSet(smvModule).asInstanceOf[SmvOutput])
+
   /**
    * If the depended smvModule has a published version, SmvModuleLink's datasetHash
    * depends on the version string. Otherwise, depends on the smvModule's hashOfHash
@@ -637,7 +606,8 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
 }
 
 /**
- * Represents an external module written in another language.
+ * Class for declaring datasets defined in another language. Resolves to an
+ * instance of SmvExtModulePython.
  */
 case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${modFqn}") {
   override val fqn = modFqn
@@ -651,9 +621,16 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
     throw new SmvRuntimeException("SmvExtModule run should never be called")
 }
 
-/** Link to a external module from another stage */
+/**
+ * Declarative class for links to datasets defined in another language. Resolves
+ * to a link to an SmvExtModulePython.
+ */
 case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput)
 
+/**
+ * Concrete SmvDataSet representation of modules defined in Python. Created
+ * exclusively by DataSetRepoPython. Wraps an ISmvModule.
+ */
 class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
   override val description = s"SmvPyModule ${target.fqn}"
   override val fqn = target.fqn
@@ -672,6 +649,10 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
   override def createDsDqm = target.getDqm()
 }
 
+/**
+ * Factory for SmvExtModulePython. Creates an SmvExtModulePython with SmvOuptut
+ * if the Python dataset is SmvPyOutput
+ */
 object SmvExtModulePython {
   def apply(target: ISmvModule): SmvExtModulePython = {
     if(target.isOutput)

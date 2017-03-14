@@ -17,19 +17,32 @@ package org.tresamigos.smv
 import scala.util.{Try, Success, Failure}
 import scala.collection.mutable
 
+/**
+ * DataSetResolver (DSR) is the entrypoint through which the DataSetMgr acquires
+ * SmvDataSets. A DSR object represent a single transaction. Each DSR creates a
+ * set of DataSetRepos at instantiation. When asked for an SmvDataSet, DSR queries
+ * the repos for that SmvDataSet and resolves it. The SmvDataSet is responsible for
+ * resolving itself, given access to the DSR to load/resolve the SmvDataSet's
+ * dependencies. DSR caches the SmvDataSets it has already resolved to ensure that
+ * any SmvDataSet is only resolved once.
+ */
 
 class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   val repos = repoFactories.map( _.createRepo )
-  // rename this and make it immutable
+  // URN to resolved SmvDataSet
   var urn2res: Map[URN, SmvDataSet] = Map.empty
 
+  /**
+   * Given URN, return cached resolved version SmvDataSet if it exists, or
+   * otherwise load unresolved version from source and resolve it.
+   */
   def loadDataSet(urns: URN*): Seq[SmvDataSet] =
     urns map {
       urn =>
         urn2res.get(urn).getOrElse {
           val ds = urn match {
             case lUrn: LinkURN =>
-              val dsFound = findDataSetInRepo(lUrn.toModURN)
+              val dsFound = loadDataSet(lUrn.toModURN).head
               new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
             case mUrn: ModURN =>
               findDataSetInRepo(mUrn)
@@ -38,10 +51,17 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
         }
     }
 
-  // Note: we no longer have to worry about corruption of resolve stack
-  // because a new stack is created per transaction
+  /*
+   * Track which SmvDataSets is currently being resolved. Used to check for
+   * dependency cycles. Note: we no longer have to worry about corruption of
+   * resolve stack because a new stack is created per transaction.
+   */
   var resolveStack: Seq[SmvDataSet] = Seq.empty
 
+  /**
+   * Return cached resolved version of given SmvDataSet if it exists, or resolve
+   * it otherwise.
+   */
   def resolveDataSet(ds: SmvDataSet): SmvDataSet = {
     if (resolveStack.contains(ds))
       throw new IllegalStateException(msg.dependencyCycle(ds, resolveStack))
@@ -56,6 +76,10 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
       }
   }
 
+  /**
+   * Check dependency rules and report all violations. If there are violations
+   * and SMV isn't configured to ignore dependency violations, throw exception.
+   */
   def validateDependencies(ds: SmvDataSet): Unit = {
     val depViolations = depRules flatMap (_.check(ds))
     if(depViolations.size > 0) {
@@ -67,6 +91,12 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
     }
   }
 
+  /**
+   * Given a URN, findDataSetInRepo recursively searches for an unresolved SmvDataSet
+   * in each repo via a head/tail algorithm. Checking if a repo has an SmvDataSet
+   * before loading it would incur the same cost twice, so we simply Try loading
+   * the SmvDataSet from each repo and move on to the next repo if it fails.
+   */
   private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet = {
     if(reposToTry.isEmpty)
       throw new SmvRuntimeException(msg.dsNotFound(urn))
@@ -77,7 +107,11 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
       }
   }
 
-object msg {
+  /**
+   * msg encapsulates the messages which will be thrown as errors or printed as
+   * warnings for the user.
+   */
+  object msg {
     def dsNotFound(urn: URN): String = s"SmvDataSet ${urn} not found"
     def nonfatalDepViolation: String =
       "Continuing module resolution as the app is configured to permit dependency rule violation"
