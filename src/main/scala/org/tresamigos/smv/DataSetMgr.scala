@@ -20,9 +20,10 @@ import scala.util.{Try, Success, Failure}
  * DataSetMgr (DSM) is the entrypoint for SmvApp to load the SmvDataSets in a project.
  * Every DSM method to load SmvDataSets creates a new transaction within which
  * all of the indicated SmvDataSets are loaded from the most recent source and
- * resolved. DSM delegates to DataSetRepo to discover SmvDataSets to DataSetResolver
- * to load and resolve SmvDataSets. DSM methods like load which look up SmvDataSets
- * by name accept an arbitrary number of names so that all the target SmvDataSets
+ * resolved. All SmvDataSets provided by DSM are resolved. DSM delegates to
+ * DataSetRepo to discover SmvDataSets to DataSetResolver to load and resolve
+ * SmvDataSets. DSM methods like load which look up SmvDataSets by name accept an
+ * arbitrary number of names so that all the target SmvDataSets
  * are loaded within the same transaction (which is much faster).
  */
 
