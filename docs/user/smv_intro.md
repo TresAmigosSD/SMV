@@ -13,13 +13,10 @@ SMV is a very simple data application framework that enables the following:
 * Provides utility to managing the end to end dependency graph, persisted data meta info and execution logging
 
 ## Application Hierarchy
-A single SMV application may contain one or more stages.  Each stage may contain one or more modules.  A stage corresponds to a single scala package that contains the modules.
-By convention, each stage should have a sub-package `input` to defined all the input `SmvDataSet`s
-used in the given stage.
-For example, given an app with 2 stages (stage1, stage2) we should have the following file layout
+A single SMV application contains one or more stages. A stage is a user-specified package name which exists in the user's code. Each stage contains one or more modules. Each module must belong to a stage to be discovered by the application. By convention, the input datasets for each stage should reside in a sub-package called `input`. For example, given an app with 2 stages (stage1, stage2) we should have the following file layout
 
 ```
-+-- src/main/scala/com/mycom/myproj
++-- src/main/python
     +-- stage1
         +-- input
             +-- package.scala
