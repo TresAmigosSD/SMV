@@ -16,6 +16,10 @@ package org.tresamigos.smv
 
 import org.tresamigos.smv.class_loader.SmvClassLoader
 
+/**
+ * DataSetRepo is the entity responsible for discovering and loading the datasets
+ * in a given language. A new repo is created for each new transaction.
+ */
 abstract class DataSetRepo {
   def loadDataSet(urn: ModURN): SmvDataSet
   def urnsForStage(stageName: String): Seq[URN]
@@ -37,6 +41,7 @@ class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
 class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {
   def createRepo(): DataSetRepoScala = new DataSetRepoScala(smvConfig)
 }
+
 
 class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo {
   def loadDataSet(urn: ModURN): SmvDataSet =
