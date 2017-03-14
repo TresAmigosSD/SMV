@@ -9,8 +9,13 @@ EDD stands for **Extended Data Dictionary**, which run against a `DataFrame` and
 ## EDD Summary
 
 One can quickly investigate all the columns of a `DataFrame` in Spark shell
+### Scala
 ```scala
 scala> df.edd.summary().eddShow
+```
+### Python
+```python
+>>> df.smvEdd()
 ```
 
 For some data like the following
@@ -75,8 +80,13 @@ true                         2   66.67%           3  100.00%
 ```
 
 One can also specify a group of column names to just calculate summary on them
+### Scala
 ```scala
-df.edd.summary("k", "v", "d").eddShow
+scala> df.edd.summary("k", "v", "d").eddShow
+```
+### Python
+```python
+>>> df.smvEdd("k","v","d")
 ```
 
 Please note that we are using `String` to specify the columns. Current version of
@@ -93,8 +103,13 @@ The file is saved as `RDD[String]`, where the string is a JSON string.
 
 Another EDD investigation tool is `histogram`.
 
+### Scala
 ```scala
 scala> df.edd.histogram("population", "age_grp").eddShow
+```
+### Python
+```python
+>>> df.smvHist("population", "age_grp")
 ```
 
 By default numeric columns will be binned by `binSize` 100.0, and each bin labeled by
@@ -102,20 +117,25 @@ the lower bound of the bin.
 
 All histogram by default sorted by the value of the key, or label.
 
-To change the default behavior, one need to define `Hist` for each column:
+To change the default behavior, one need to define `Hist` for each column*:
+## Scala
 ```scala
 scala > import org.tresamigos.smv.edd._
 scala > df.edd.histogram(Hist("population", binSize = 100000), Hist("age_grp", sortByFreq = true))
 ```
+
 In above example, `population` will be binned by `100000`, and `age_grp` histogram will
 be sorted by frequency, so the most frequently shown `age_grp` will be on the top of the
 histogram report.
 
-For some dollar amount fields, since the distributions is un-even, we pre-defined a binning logic
-to show the distributions
+For some dollar amount fields, since the distributions are un-even, we pre-defined a binning logic
+to show the distributions*:
+### Scala
 ```scala
 scala > import org.tresamigos.smv.edd._
 scala > df.edd.histogram(AmtHist("price")).eddShow
 ```
 
 Please check `AmtHist` API document for details of the binning logic.
+
+*=This feature is currently only available in the Scala smv-shell.
