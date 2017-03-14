@@ -12,14 +12,14 @@
 # limitations under the License.
 
 from smvbasetest import SmvBaseTest
-from smv import SmvPyDataSet, smvPy
+from smv import SmvPyModule, smvPy
 from smv.utils import for_name
 
 import imp
 import sys
 import unittest
 
-class BaseModule(SmvPyDataSet):
+class BaseModule(SmvPyModule):
     """Base class for modules written for testing"""
     def requiresDS(self):
         return []
