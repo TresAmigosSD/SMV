@@ -118,7 +118,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
   }
 
-  private def genDotGraph(module: SmvModule) = {
+  private def genDotGraph(module: SmvDataSet) = {
     val pathName = s"${module.fqn}.dot"
     val graphString = new graph.SmvGraphUtil(this, stages).createGraphvisCode(Seq(module))
     SmvReportIO.saveLocalReport(graphString, pathName)
@@ -280,15 +280,15 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * sequence of SmvModules to run based on the command line arguments.
    * Returns the union of -a/-m/-s command line flags.
    */
-  lazy val modulesToRun: Seq[SmvModule] = {
+  lazy val modulesToRun: Seq[SmvDataSet] = {
     val cmdline = smvConfig.cmdLine
     val empty = Some(Seq.empty[String])
 
     val modPartialNames = cmdline.modsToRun.orElse(empty)()
-    val directMods = dsm.inferDS(modPartialNames:_*) map (_.asInstanceOf[SmvModule])
+    val directMods = dsm.inferDS(modPartialNames:_*) map (_.asInstanceOf[SmvDataSet])
     val stageNames = cmdline.stagesToRun.orElse(empty)()
     val stageMods = dsm.outputModulesForStage(stageNames:_*)
-    val appMods = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[SmvModule]
+    val appMods = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[SmvDataSet]
     (directMods ++ stageMods ++ appMods).distinct
   }
 

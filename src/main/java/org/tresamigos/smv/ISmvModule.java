@@ -34,6 +34,9 @@ public interface ISmvModule {
 	 */
 	boolean isEphemeral();
 
+  /** DataSet type: could be 3 values, Input, Link, Module */
+	String dsType();
+
 	boolean isOutput();
 
 	String tableName();

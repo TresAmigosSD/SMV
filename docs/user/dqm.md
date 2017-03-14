@@ -56,10 +56,20 @@ By default, any parser error will cause validation fail (`passed: false`). This 
 by the `failAtParsingError` attribute of `SmvFile`. The default value is `true`. To change that we
 can override it
 
+**Scala**
 ```scala
 object myfile extends SmvCsvFile("accounts/acct_demo.csv") {
   override val failAtParsingError = false
 }
+```
+
+**Python**
+```python
+class Myfile(SmvPyCsvFile):
+    def path(self):
+        return "accounts/acct_demo.csv"
+    def failAtParsingError(self):
+        return False
 ```
 
 With above setting, the `SmvFile` will simply persist the validation result and keep moving.
@@ -70,11 +80,27 @@ console and persisted in the `SmvModule` persisted data path with postfix `.vali
 Sometimes we need more flexibility on specifying the terminate criterial. For example, I can tolerate
 less than 10 parser errors, if more than that, terminate. Here is an example of how to specify that,
 
+**Scala**
 ```scala
+import org.tresamigos.smv.dqm._
+...
 object myfile extends SmvCsvFile("accounts/acct_demo.csv") {
   override val failAtParsingError = false
   override def dqm() = SmvDQM().add(FailParserCountPolicy(10))
 }
+```
+
+**Python**
+```python
+from smv.dqm import *
+...
+class Myfile(SmvPyCsvFile):
+    def path(self):
+        return "accounts/acct_demo.csv"
+    def failAtParsingError(self):
+        return False
+    def dqm(self):
+        return SmvDQM().add(FailParserCountPolicy(10))
 ```
 
 Please refer the `DQMPolicy` session below.
@@ -94,13 +120,20 @@ The `SmvDQM` framework provides `Rule`s and `Fix`es to address them.
 ### DQMRule & DQMFix
 
 Since `dqm` is a sub-package, to use it one need to
+**Scala**
 ```scala
 import org.tresamigos.smv.dqm._
+```
+
+**Python**
+```python
+from smv.dqm import *
 ```
 
 Since both `SmvFile` and `SmvModule` provide a `dqm` method to define the rules, one can override
 it to add rules.
 
+**Scala**
 ```scala
 object MyModule extends SmvModule("example module with dqm") {
   ...
@@ -109,6 +142,20 @@ object MyModule extends SmvModule("example module with dqm") {
       add(DQMRule($"Price" < 1000000.0, "rule1", FailAny)).
       add(DQMFix($"age" > 120, lit(120) as "age", "fix1"))
 }
+```
+
+**Python**
+```python
+class MyModule(SmvPyModule):
+    """example module with dqm"""
+    ...
+    def run(self, i):
+      ...
+    def dqm(self) = SmvDQM().add(
+        DQMRule(col("Price") < 1000000.0, "rule1", FailAny())
+    ).add(
+        DQMFix(col("age") > 120, lit(120) as "age", "fix1")
+    )
 ```
 
 Each `DQMRule` or `DQMFix` takes a `name` and `DQMTaskPolicy` parameter in addition to the logic. The following
@@ -137,12 +184,22 @@ The rules and fixes defined in the `dqm` method will be applied to the result `D
 A `DQMPolicy` defines a requirement on the entire `DataFrame`. As in above example we can add
 a policy
 
+**Scala**
 ```scala
 override def dqm() = SmvDQM().
     add(DQMRule($"Price" < 1000000.0, "rule1")).
     add(DQMRule($"Price" > 0.0, "rule2")).
     add(DQMFix($"age" > 120, lit(120) as "age", "fix1")).
     add(FailTotalRuleCountPolicy(100))
+```
+
+**Python**
+```python
+def dqm() = SmvDQM().add(
+    DQMRule(col("Price") < 1000000.0, "rule1")).add(
+    DQMRule(col("Price") > 0.0, "rule2")).add(
+    DQMFix(col("age") > 120, lit(120) as "age", "fix1")).add(
+    FailTotalRuleCountPolicy(100))
 ```
 
 Here `FailTotalRuleCountPolicy(...)` is a predefined `DQMPolicy`, which check the total count of
@@ -157,6 +214,8 @@ There are 5 build-in `DQMPolicy`s
 * `FailTotalFixPercentPolicy(r)` - fail when total fix count >= total records * r, r in (0, 1)
 
 One can also create user defined policies.
+
+**Scala**
 ```scala
 val policy: (DataFrame, DQMState) => Boolean = {(df, state) =>
   state.getRuleCount("rule1") + state.getFixCount("fix1") < 1000
@@ -166,6 +225,11 @@ override def dqm() = SmvDQM().
     add(DQMRule($"Price" > 0.0, "rule2")).
     add(DQMFix($"age" > 120, lit(120) as "age", "fix1")).
     add(policy, "my_udp1")
+```
+
+**Python**
+```python
+Not implemented yet
 ```
 
 Please note that the user defined policy function has access to both `DataFrame` and `DQMState`.

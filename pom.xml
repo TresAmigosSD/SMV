@@ -99,6 +99,11 @@
       <artifactId>stringmetric-core_${scala.binary.version}</artifactId>
       <version>0.27.2</version>
     </dependency>
+    <dependency> <!-- for graphviz dot file rendering -->
+      <groupId>guru.nidi</groupId>
+      <artifactId>graphviz-java</artifactId>
+      <version>0.1.0</version>
+    </dependency>
     <dependency> <!-- for ascii dependency graph -->
       <groupId>com.github.mdr</groupId>
       <artifactId>ascii-graphs_${scala.binary.version}</artifactId>

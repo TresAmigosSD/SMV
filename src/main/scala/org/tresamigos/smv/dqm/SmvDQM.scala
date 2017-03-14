@@ -80,9 +80,9 @@ class SmvDQM (
     new SmvDQM(rules, newFixes, policies, true)
   }
 
-  def add(policy: DQMPolicy, _needAction: Option[Boolean] = None): SmvDQM = {
+  def add(policy: DQMPolicy): SmvDQM = {
     val newPolicies = policies :+ policy
-    new SmvDQM(rules, fixes, newPolicies, _needAction.getOrElse(needAction))
+    new SmvDQM(rules, fixes, newPolicies, needAction)
   }
 
   def addAction(): SmvDQM = {

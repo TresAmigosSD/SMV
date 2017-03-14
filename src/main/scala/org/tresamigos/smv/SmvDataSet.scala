@@ -28,42 +28,6 @@ trait FilenamePart {
   def fnpart: String
 }
 
-/*
- * Every concrete subclass of URN should be a case class to ensure
- * structural equality - this is important because we use the URN as a key
- */
-abstract class URN(prefix: String) {
-  def fqn: String
-  override def toString: String =  s"${prefix}:${fqn}"
-}
-case class LinkURN(fqn: String) extends URN("link") {
-  override def toString: String = super.toString
-  def toModURN: ModURN = ModURN(fqn)
-}
-case class ModURN(fqn: String) extends URN("mod") {
-  override def toString: String = super.toString
-  def toLinkURN: LinkURN = LinkURN(fqn)
-}
-
-object URN {
-  object errors {
-    def invalidURN(urn: String) = new SmvRuntimeException(s"Invalid urn: ${urn}")
-  }
-
-  def apply(urn: String): URN ={
-    val splitIdx = urn.lastIndexOf(':')
-    if(splitIdx < 0)
-      throw errors.invalidURN(urn)
-    val fqn = urn.substring(splitIdx+1)
-    val prefix = urn.substring(0, splitIdx)
-    prefix match {
-      case "mod" => ModURN(fqn)
-      case "link" => LinkURN(fqn)
-      case _ => throw errors.invalidURN(urn)
-    }
-  }
-}
-
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
@@ -89,6 +53,9 @@ abstract class SmvDataSet extends FilenamePart {
   override def fnpart = fqn
 
   def description(): String
+
+  /** DataSet type: could be 4 values, Input, Link, Module, Output */
+  def dsType(): String
 
   /** modules must override to provide set of datasets they depend on.
    * This is no longer the canonical list of dependencies. Internally
@@ -121,6 +88,9 @@ abstract class SmvDataSet extends FilenamePart {
 
   /** user tagged code "version".  Derived classes should update the value when code or data */
   def version() : Int = 0
+
+  /** full name of hive output table if this module is published to hive. */
+  def tableName: String = throw new IllegalStateException("tableName not specified for ${fqn}")
 
 
   /** Objects defined in Spark Shell has class name start with $ **/
@@ -312,6 +282,7 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
   override def requiresDS() = Seq.empty
   override val isEphemeral = true
 
+  override def dsType() = "Input"
   /**
    * Method to run/pre-process the input file.
    * Users can override this method to perform file level
@@ -323,7 +294,7 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
 /**
  * SMV Dataset Wrapper around a hive table.
  */
-case class SmvHiveTable(val tableName: String) extends SmvInputDataSet {
+case class SmvHiveTable(override val tableName: String) extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
 
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
@@ -341,7 +312,7 @@ trait SmvDSWithParser extends SmvDataSet {
   val failAtParsingError = true
 
   override def createDsDqm() =
-    if (failAtParsingError) dqm().add(FailParserCountPolicy(1), Option(true))
+    if (failAtParsingError) dqm().add(FailParserCountPolicy(1)).addAction()
     else if (forceParserCheck) dqm().addAction()
     else dqm()
 }
@@ -438,6 +409,9 @@ class SmvMultiCsvFiles(
 
     val filesInDir = SmvHDFS.dirList(fullPath).map{n => s"${fullPath}/${n}"}
 
+    if (filesInDir.isEmpty)
+        throw new SmvRuntimeException(s"There are no data files in ${fullPath}")
+
     val df = filesInDir.map{s =>
       val handler = new FileIOHandler(app.sqlContext, s, fullSchemaPath, parserValidator)
       handler.csvFileWithSchema(csvAttributes)
@@ -501,11 +475,10 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    */
   override def isEphemeral = false
 
+  override def dsType() = "Module"
+
   type runParams = RunParams
   def run(inputs: runParams) : DataFrame
-
-  /** full name of hive output table if this module is published to hive. */
-  def tableName: String = throw new IllegalStateException("tableName not specified for ${fqn}")
 
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
@@ -587,12 +560,19 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
 
   override val isEphemeral = true
 
+  override def dsType() = "Link"
+
   /**
    * override the module run/requireDS methods to be a no-op as it will never be called (we overwrite doRun as well.)
    */
   override def requiresDS() = Seq.empty[SmvDataSet]
   override def run(inputs: runParams) = null
+
+  /**
+   * Resolve the target SmvModule and wrap it in a new SmvModuleLink
+   */
   override def resolve(resolver: DataSetResolver): SmvDataSet = new SmvModuleLink(resolver.resolveDataSet(smvModule).asInstanceOf[SmvOutput])
+
   /**
    * If the depended smvModule has a published version, SmvModuleLink's datasetHash
    * depends on the version string. Otherwise, depends on the smvModule's hashOfHash
@@ -626,10 +606,13 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
 }
 
 /**
- * Represents an external module written in another language.
+ * Class for declaring datasets defined in another language. Resolves to an
+ * instance of SmvExtModulePython.
  */
 case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${modFqn}") {
   override val fqn = modFqn
+  override def dsType(): String =
+    throw new SmvRuntimeException("SmvExtModule dsType should never be called")
   override def requiresDS =
     throw new SmvRuntimeException("SmvExtModule requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet =
@@ -638,25 +621,38 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
     throw new SmvRuntimeException("SmvExtModule run should never be called")
 }
 
-/** Link to a external module from another stage */
+/**
+ * Declarative class for links to datasets defined in another language. Resolves
+ * to a link to an SmvExtModulePython.
+ */
 case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput)
 
-class SmvExtModulePython(target: ISmvModule) extends SmvModule(s"SmvPyModule ${target.fqn}") {
+/**
+ * Concrete SmvDataSet representation of modules defined in Python. Created
+ * exclusively by DataSetRepoPython. Wraps an ISmvModule.
+ */
+class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
+  override val description = s"SmvPyModule ${target.fqn}"
   override val fqn = target.fqn
   override def tableName = target.tableName()
   override def isEphemeral = target.isEphemeral()
+  override def dsType = target.dsType()
   override def requiresDS =
    throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
     resolvedRequiresDS = target.dependencies map ( urn => resolver.loadDataSet(URN(urn)).head )
     this
   }
-  override def run(i: runParams) =
-    target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn.toString, i(ds))}.toMap[String, DataFrame])
+  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame =
+    target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn.toString, app.resolveRDD(ds))}.toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()
   override def createDsDqm = target.getDqm()
 }
 
+/**
+ * Factory for SmvExtModulePython. Creates an SmvExtModulePython with SmvOuptut
+ * if the Python dataset is SmvPyOutput
+ */
 object SmvExtModulePython {
   def apply(target: ISmvModule): SmvExtModulePython = {
     if(target.isOutput)
@@ -679,11 +675,9 @@ case class SmvCsvStringData(
     schemaStr: String,
     data: String,
     override val isPersistValidateResult: Boolean = false
-  ) extends SmvDataSet with SmvDSWithParser {
+  ) extends SmvInputDataSet with SmvDSWithParser {
 
   override def description() = s"Dummy module to create DF from strings"
-  override def requiresDS() = Seq.empty
-  override val isEphemeral = true
 
   override def datasetHash() = {
     val crc = new java.util.zip.CRC32
@@ -706,6 +700,7 @@ case class SmvCsvStringData(
  */
 trait SmvOutput {
   this : SmvDataSet =>
+  override def dsType(): String = "Output"
 }
 
 /** Base marker trait for run configuration objects */
