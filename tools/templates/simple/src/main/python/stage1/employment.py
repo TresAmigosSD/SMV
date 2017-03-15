@@ -9,10 +9,7 @@ class Employment(SmvPyCsvFile):
 
     def failAtParsingError(self):
         return False
-
-    def dqm(self):
-        """An example DQM policy"""
-        return self.smvDQM().add(self.FailParserCountPolicy(10), self.smvPy.scalaOption(True))
+        
 
 
 class EmploymentByState(SmvPyModule, SmvPyOutput):
