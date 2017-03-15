@@ -1,29 +1,41 @@
 # SmvModule
 
-An SMV Module is a collection of transformation operations and validation rules.  Each module depends on one or more `SmvDataSet`s (`SmvFile` or `SmvModule`) and defines a set of transformation on its inputs that define the module output.
+An SMV Module is a collection of transformation operations and validation rules.  Each module depends on one or more `SmvDataSet`s and defines a set of transformation on its inputs that define the module output.
 
 ## Module Dependency Definition
-Each module **must** define its input dependency by overriding the `requireDS` method. The `requireDS` method should return a sequence of required datasets for the running of this module.
-The dependent datasets **must** be defined in the same stage as this module.  External dependencies should use the `SmvModuleLink` class as described in [SmvStage](smv_stages.md).
+Each module **must** define its input dependency by overriding the `requiresDS` method. The `requiresDS` method should return a sequence of `SmvDataSet`s required as input for this module.
+The dependent datasets **must** be defined in the same stage as this module. Dependencies in other stages should use the `SmvModuleLink` class as described in [SmvStage](smv_stages.md).
 
+### Scala
 ```scala
 object MyModule extends SmvModule("mod description") {
- override def requireDS() = Seq(Mod1, Mod2)
+ override def requiresDS() = Seq(Mod1, Mod2)
  ...
 ```
+### Python
+```Python
+class MyModule(SmvModule):
+  def requiresDS(self): return [Mod1,Mod2]
+```
 
-Note that `requireDS` returns a sequence of the actual `SmvDataSet` objects that the module depends on, **not** the name.  This makes typos visible at compile time rather than run time.
-The dependency can be on any combination of files/modules.  It is not limited to other `SmvModules`.
+Note that `requiresDS` returns a sequence of the actual `SmvDataSet` objects that the module depends on, **not** the name. The dependency can be on any combination of `SmvDataSet`s which may be files, Hive tables, modules, etc. It is not limited to other `SmvModules`.
+
+### Scala
 ```scala
 object MyModule extends SmvModule("mod description") {
  override def requireDS() = Seq(File1, File2, Mod1)
  ...
 ```
-`File1`, `File2` are instances of `SmvFile` and `Mod1` is an instance of `SmvModule`.  From the perspective of `MyModule`, the type of the dependent dataset is irrelevant.
+### Python
+```python
+class MyModule(SmvModule):
+  def requiresDS(self): return [File1,Hive2,Mod3]
+```
 
 ## Module Transformation Definition (run)
 The module **must** also provide a `run()` method that performs the transformations on the inputs to produce the module output.  The `run` method will be provided with the results (DataFrame) of running the dependent input modules as a map keyed by the dependent module.
 
+### Scala
 ```scala
 object MyModule extends SmvModule("mod description") {
  override def requireDS() = Seq(Mod1, Mod2)
@@ -35,16 +47,20 @@ object MyModule extends SmvModule("mod description") {
    M1df.join(M2df, ...)
        .select("col1", "col2", ...)
  }
-
+```
+### Python
+```Python
+class MyModule(SmvModule):
+  def requiresDS(self): return [Mod1,Mod2]
+  def run(self, i):
+    m1df = i[Mod1]
+    m2df = i[Mod2]
+    return M1df.join(M2df, ...).select("col1", "col2", ...)
 ```
 
 The `run` method should return the result of the transformations on the input as a `DataFrame`.
 
-The parameter of the `run` method has type `runParams`, which is just an alias to type
-`Map[SmvDataSet, DataFrame]`. The driver program (Smv framework itself) will provide
-the lookup map, "inputs: runParams", to map all the required modules to their
-output `DataFrame`. As in above example, `val M1df = inputs(Mod1)` provides the `run`
-method the access to the result `DataFrame` of module `Mod1`.
+The parameter `i` of the `run` method maps `SmvDataSet` to its resulting `DataFrame`. The driver (Smv Framework) will run the dependencies of the `SmvDataSet` to provide this map.
 
 ## Module Validation Rules
 Each module may also define its own set of [DQM validation rules](dqm.md).  By default, if the user does not override the `dqm` method, the module will have an empty set of rules.
@@ -56,6 +72,7 @@ On a large development team, this makes it very easy to "pull" the latest code c
 
 However, for trivial modules (e.g. filter), it might be too expensive to persist/read the module output.  In these cases, the module may override the default persist behaviour by setting the `isEphemeral` flag to true.  In that case, the module output will not be persisted (unless the module was run explicitly).
 
+### Scala
 ```scala
 object MyModule extends SmvModule("mod description") {
   override val isEphemeral = true
@@ -63,6 +80,12 @@ object MyModule extends SmvModule("mod description") {
      inputs(Mod1).where($"a" > 100)
   }
 }
+```
+### Python
+```python
+class MyModule(SmvModule):
+  def isEphemeral(self): return False
+  ....    
 ```
 
 ## Configurable Modules
@@ -133,17 +156,29 @@ object ConcatInput extends SmvModule("Concatenate input data sets") with Using[B
 # Output Modules
 As the number of modules in a given SMV stage grows, it becomes more difficult to track which
 modules are the "leaf"/output modules within the stage.
-Any module or SmvDataSet within the stage can be marked as an output module by mixing-in the `SmvOutput` trait.
+Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait.
 For example:
 
+### Scala
 ```scala
 object MyModule extends SmvModule("this is my module") with SmvOutput {
 ...
 }
 ```
+### Python
+```python
+class MyModule(SmvModule, SmvOutput):
+  ...
+```
 
+### Scala
 ```scala
 object MyData extends SmvCsvFile("path/to/file/data.csv", CA.ca) with SmvOutput
+```
+### Python
+```python
+class MyModule(SmvCsvFile, SmvOutput):
+  ...
 ```
 
 The set of `SmvOutput` output modules in a stage define the data *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
