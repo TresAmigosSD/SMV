@@ -36,10 +36,20 @@ publishArtifact in Test := true
 
 // Create itest task that runs integration tests
 val itest = TaskKey[Unit]("itest", "Run Integration Test")
-itest <<= publishLocal map { x => "src/test/scripts/run-sample-app.sh" ! }
+itest <<= publishLocal map {
+  x =>
+    val res = ("src/test/scripts/run-sample-app.sh" !)
+    if(res > 0) throw new IllegalStateException("integration test failed")
+}
+
 // Create pytest task that runs the Python unit tests
 val pytest = TaskKey[Unit]("pytest", "Run Python Unit Tests")
-pytest <<= assembly map { x => "tools/smv-pytest" ! }
+pytest <<= assembly map {
+  x =>
+    val res = ("tools/smv-pytest" !)
+    if(res > 0) throw new IllegalStateException("pytest failed")
+}
+
 // Create alltest task that sequentially runs each test suite
 val allTest = TaskKey[Unit]("alltest", "Run All Test Suites")
 allTest <<= Def.sequential(test in Test, pytest, itest)
