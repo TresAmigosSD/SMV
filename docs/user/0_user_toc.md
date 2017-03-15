@@ -22,6 +22,7 @@
   * [Run Spark R Shell](smv_r.md)
   * [Extended Data Dictionary (EDD)](edd.md)
   * [Adding a new CSV input file (with schema discovery)](schema_discovery.md)
+  * [Runtime Configuration](run_config.md)
 
 #### Smv Helper Functions and Libraries
   * [SMV Functions](functions.md)
