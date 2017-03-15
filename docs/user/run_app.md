@@ -1,7 +1,7 @@
 # Running SMV Application
 
-While an SMV application can be run using the standard "spark-submit" command,
-a convenient script `smv-pyrun` is provided to make it easy to run an application built using maven.
+While an SMV application can be built and run using the standard "spark-submit" command,
+a convenient script `smv-pyrun` is provided to make it easier to make running an application. No build is necessary if project is purely in Python.
 
 ### Synopsis
 ```shell
