@@ -34,22 +34,3 @@ and a similar Python project would be structured like
         +-- module.py
     ...
 ```
-
-Within a stage, there are multiple `SmvDataSet`s.
-
-At the top level there are 2 types of `SmvDataSet`
-* `SmvFile`, and
-* `SmvModule`
-
-`SmvFile`s link to physical files stored in HDFS. Pleas see [SMV Files](smv_file.md) for details.
-`SmvModule`s are datasets created in by the code. They could depends on other `SmvDataSet`s.
-
-`SmvModule` could be mixed with `SmvOutput`, which labeled it to be an output dataset of a stage.
-Without the `SmvOutput` label, a `SmvModule` will be considered intermediate dataset.
-Please see [SMV Modules](smv_module.md) for more details.
-
-A special type of `SmvModule` is `SmvModuleLink`. It is a link to other `SmvModule`. For example,
-`stage1` has `mod2` as a `SmvOutput`, and `stage2` uses it as input. Instead of refer `stage1.mod2`
-directly in `stage2`, a `SmvModuleLink` will be created in the `input` sub-package and link to
-`stage1.mod2`. The pairs of `SmvOutput` and `SmvModuleLink` defines the interface between stages.
-Please see [SMV Stages](smv_stages.md) for more details.
