@@ -206,6 +206,10 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     directMods
   }
 
+  // ---- User Run Configuration Parameters proxy funcs.
+  def getRunConfig(key: String): String = j_smvApp.smvConfig.getRunConfig(key)
+  def getRunConfigHash() = j_smvApp.smvConfig.getRunConfigHash()
+
   def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
     j_smvApp.registerRepoFactory( new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig) )
 

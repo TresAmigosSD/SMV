@@ -133,6 +133,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private val defaultProps = Map(
     "smv.appName" -> "Smv Application",
     "smv.stages" -> "",
+    "smv.config.keys" -> "",
     "smv.class_server.host" -> "",
     "smv.class_server.port" -> "9900",
     "smv.class_server.class_dir" -> "./target/classes"
@@ -158,6 +159,13 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
+
+  // ---------- User Run Config Parameters key/values ----------
+  val runConfigKeys: Seq[String] = splitProp("smv.config.keys")
+  /** Get user run config parameter as a string. */
+  def getRunConfig(key: String): String = mergedProps("smv.config." + key).trim
+  /** compute hash of all key values defined in the app. */
+  def getRunConfigHash(): Int = runConfigKeys.map(getRunConfig(_)).mkString(":").hashCode()
 
   // ---------- hierarchy of data / input / output directories
 
