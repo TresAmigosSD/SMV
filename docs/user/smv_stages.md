@@ -1,37 +1,44 @@
 # SMV Stages
 
 As a project grows in size, the ability to divide up the project into manageable chunks becomes paramount.
-SMV Stages accomplishes this by not only organizing the modules into separate managed groups,
-but by also controlling the dependency between modules in different stages.
+SMV Stages accomplishes this by not only organizing the modules into separate managed groups and by controlling the dependency between modules in different stages.
 
 # Stage input
-By convention, each stage should have an `inputdata.py` module where all the input files (e.g. `SmvPyCsvFile` and `SmvPyHiveTable`) and stage links (e.g. `SmvPyModuleLink`) are defined.  All inputs used by any module in a given stage should reference an `SmvPy*File` instance in the `inputdata.py` module.
+By convention, each stage should have an `inputdata.py` module where all the input files (e.g. `SmvCsvFile` and `SmvHiveTable`) and stage links (e.g. `SmvModuleLink`) are defined.  All inputs used by any module in a given stage should reference an `Smv*File` instance in the `inputdata.py` module.
 
 ## Raw input files
-Raw input files (e.g. CSV files) should be defined as `SmvPy*File` instances in the input package.  For example:
-
+Raw input files (e.g. CSV files) should be defined as `Smv*File` instances in the input package.  For example:
+```Scala
+package com.foo.bar.stage1.input
+object Employment extends SmvCsvFile("input/employment/CB1200CZ11.csv")
+```
 ```python
-# This is defined in inputdata.py file of the stage.
-class Employment(SmvPyCsvFile):
+# In src/main/python/stage1/inputdata.py
+class Employment(SmvCsvFile):
     def path(self):
         return "input/employment/CB1200CZ11.csv"
 ...
 ```
-
-SMV Modules within this stage can refer to the files using their object names (e.g. `Employment`) which would produce a compile time error on a typo.
 See [SmvModule](smv_module.md) for details on how to specify dependent files.
 
-## Linking to external modules.
+## Linking to modules across stages
 
 If a module in stage Y depends on a module in stage X, it should not refer to the dependent module directly.
-Instead, a special input dataset (`SmvPyModuleLink`) needs to be defined in stage Y `inputdata.py` to link to the module in stage X.
+Instead, a special input dataset (`SmvModuleLink`) needs to be defined in stage Y to link to the module in stage X.
 
+### Scala
+```scala
+import org.tresamigos.smv.SmvModuleLink
+package com.foo.bar.stage2.input
+val EmploymentByStateLink = SmvModuleLink(com.foo.bar.stage1.EmploymentByState)
+```
+### Python
 ```python
-# this is defined in inputdata.py file of stage 2.
-from smv import SmvPyModuleLink, SmvPyExtDataSet
+# In src/main/python/stage2/inputdata.py
+from smv import SmvModuleLink
 from stage1 import employment as emp
 
-EmploymentByStateLink = SmvPyModuleLink(emp.EmploymentByState)
+EmploymentByStateLink = SmvModuleLink(emp.EmploymentByState)
 ```
 
 In the above example, `EmploymentByStateLink` is defined as an input in stage 2. Modules in stage 2 can depend on `EmploymentByStateLink` directly. `EmploymentByStateLink` is linked to the **output file** of `EmploymentByState` module and **not** to the module code. Therefore, stage 1 needs to be run first before Stage 2 can run (so that `EmploymentByState` output is there when stage Y is run)
@@ -48,7 +55,7 @@ One way to accomplish that is to "publish" the etl stage output and have the mod
 In the above example, the `model` stage may depend on the output of `etl` stage as follows:
 
 ```python
-# this is defined in inputdata.py file of stage model.
+# In src/main/python/model/inputdata.py
 modelAccts = SmvPyModuleLink(etl.rawAccounts)
 ```
 
@@ -73,10 +80,6 @@ When `modelAccts` re-runs it will use the published output of `rawAccounts` rath
 
 Since we already setup the version control to ignore `conf/smv-user-conf.props`,
 this provides isolation for the model authors from changes in the ETL code.  Once ETL stage is stabilized, it can either be republished with a new version or the config version can be removed to get the latest and greatest ETL output as before.
-
-## Publish entire app
-
-TODO: show how to publish all stages in app.
 
 # Adding a stage
 As the project grows, it may become necessary to add additional stages.
