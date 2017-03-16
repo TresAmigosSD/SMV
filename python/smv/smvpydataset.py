@@ -389,13 +389,6 @@ class SmvModuleLinkTemplate(SmvModule):
         """Returns the target SmvModule class from another stage to which this link points"""
         raise ValueError('Expect to be implemented by subclass')
 
-    def datasetHash(self):
-        stage = self.smvPy.j_smvPyClient.inferStageNameFromDsName(self.target().fqn())
-        #TODO: need to review whether _smvhash(stage.get()) will be good enough
-        dephash = _smvhash(stage.get()) if stage.isDefined() else self.target()(self.smvPy).datasetHash()
-        # ensure python's numeric type can fit in a java.lang.Integer
-        return (dephash + super(SmvModuleLinkTemplate, self).datasetHash()) & 0x7fffffff
-
     def run(self, i):
         res = self.smvPy.j_smvPyClient.readPublishedData(self.target().fqn())
         return res.get() if res.isDefined() else self.smvPy.runModule(self.target().urn())
