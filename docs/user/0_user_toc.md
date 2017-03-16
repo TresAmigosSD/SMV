@@ -7,9 +7,8 @@
 
 #### Smv Framework
   * [SMV Introduction](smv_intro.md)
-  * [SMV Files](smv_file.md)
+  * [SMV Input (Files/Tables)](smv_input.md) 
   * [SMV Modules](smv_module.md)
-  * [SMV Hive Tables](smv_hive.md)
   * [SMV Stages](smv_stages.md)
   * [Validation & Data Quality Management (DQM)](dqm.md)
 
