@@ -273,9 +273,26 @@ scala> discoverSchema("/path/to/file.csv")
 
 The schema file will be created in the current running dir.
 
-# SMV Hive Table support
+# SmvCsvStringData
 
-SMV supports reading from and writing to tables in Hive meta store (which can be native hive, parquet, impala, etc).
+Sometimes people need to create some small data in the code and use as input data. `SmvCsvStringData`
+allow using to specify the data schema and content as strings.
+
+### Scala
+```scala
+object MyTmpDS extends SmvCsvStringData("a:String;b:Double;c:String", "aa,1.0,cc;aa2,3.5,CC")
+```
+### Python
+```python
+class MyTmpDS(SmvPyCsvStringData):
+    def schemaStr(self): return "a:String;b:Double;c:String"
+    def dataStr(self):
+        return "aa,1.0,cc;aa2,3.5,CC"
+```
+
+# Hive Table input
+
+SMV supports reading from tables in Hive meta store (which can be native hive, parquet, impala, etc).
 
 ## Reading from Hive Tables
 
@@ -292,38 +309,5 @@ class FooHiveTable(SmvHiveTable):
     return "foo"
 ```
 
-## Write to Hive Tables
-
-Write to Hive tables from shell can using standard the spark command:
-### Scala
-```scala
-scala> df.write.mode("append").saveAsTable("_hive_table_name_")
-```
-### Python
-```Python
->>> df.write.mode("append").saveAsTable("_hive_table_name_")
-```
-
-You can also publish a module to a Hive table from the command line by giving the module a table name
-### Scala
-```Scala
-object FooMod extends SmvModule("foo"){
-  ...
-  def tableName = "fooMod"
-  ..
-}
-```
-### Python
-```Python
-class FooMod(SmvModule):
-  ...
-  def tableName(self): return "fooMod"
-  ...
-}
-```
-and running the following in the shell
-```shell
-$ smv-pyrun --publish-hive -m FooMod
-```
 
 *=This feature currently only available in Scala smv-shell

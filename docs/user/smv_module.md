@@ -90,29 +90,23 @@ class MyModule(SmvModule):
 
 # Output Modules
 As the number of modules in a given SMV stage grows, it becomes more difficult to track which
-modules are the "leaf"/output modules within the stage.
-Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait.
+modules are the "leaf"/output modules within the stage. Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait. If you would like to publush the module to a Hive table, include a `tableName`
 For example:
 
 ### Scala
 ```scala
 object MyModule extends SmvModule("this is my module") with SmvOutput {
+  def tableName = "hiveschema.hivetable"
 ...
 }
+object MyFile extends SmvCsvFile("path/to/file/data.csv", CA.ca) with SmvOutput
 ```
 ### Python
 ```python
 class MyModule(SmvModule, SmvOutput):
+  def tableName(self): return "hiveschema.hivetable"
   ...
-```
-
-### Scala
-```scala
-object MyData extends SmvCsvFile("path/to/file/data.csv", CA.ca) with SmvOutput
-```
-### Python
-```python
-class MyModule(SmvCsvFile, SmvOutput):
+class MyFile(SmvCsvFile, SmvOutput):
   ...
 ```
 
@@ -120,7 +114,7 @@ The set of `SmvOutput` output modules in a stage define the data *interface/api*
 
 In addition to the above, the ability to mark certain modules as output has the following benefits:
 
-* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-pyrun`)
+* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-pyrun`). Depending on the options specified, they can then be published to CSV or to Hive.
 * A future option might be added to allow for listing of "dead" modules.  That is, any module in a stage that does not contribute to any output module either directly or indirectly.
 * We may add a future option to `SmvApp` that allows the user to display a "catalog" of output modules and their description.
 
