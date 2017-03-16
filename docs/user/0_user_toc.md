@@ -1,6 +1,5 @@
 # SMV User Guide Table of Contents
 
-#### [Why Smv](why_smv.md)
 #### Installation & Setup
   * [Installation](smv_install.md)
   * [Docker](docker.md)

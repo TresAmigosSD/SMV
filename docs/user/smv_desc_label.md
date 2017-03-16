@@ -1,10 +1,10 @@
 # SmvDesc and SmvLabel
 
+**These features are currently only available in Scala SMV**
+
 Both `SmvDesc` and `SmvLabel` are `metadata` components of `DataFrame`'s schema and with a
 group of helper methods for user convenience. However they are designed to support different
 use cases.
-
-Note that these are currently only available for Scala SMV.
 
 ## SmvDesc - Column Description
 

@@ -1,9 +1,9 @@
-# Run SMV App using smv-pyshell
+# Run SMV App using Python smv-pyshell
 
 ### Synopsis
 Start the shell with
 ```shell
-$ _SMV_HOME_/tools/smv-pyshell [smv-options] -- [standard spark-shell-options]
+$ smv-pyshell [smv-options] -- [standard spark-shell-options]
 ```
 **Note:**  The above command should be run from the project top level directory.
 
@@ -147,7 +147,7 @@ Please see [SMV Introduction](smv_intro.md) for details of the 4 types.
 
 ### Synopsis
 ```shell
-$ _SMV_HOME_/tools/smv-shell [smv-options] -- [standard spark-shell-options]
+$ smv-shell [smv-options] -- [standard spark-shell-options]
 ```
 
 **Note:**  The above command should be run from the project top level directory.
@@ -157,7 +157,7 @@ By default, the `smv-shell` command will use the latest "fat" jar in the target 
 The user can provide `--jar` option to override the default.  See [Run Application](run_app.md) for details about this flag.
 
 ## Shell init
-When `smv-shell` is launched, it will source the file `_SMV_HOME_/tools/conf/smv_shell_init.scala` to provide some
+When `smv-shell` is launched, it will source the file `conf/smv_shell_init.scala` to provide some
 helper functions and create a default SMV dummy application (`app`)
 
 * `df(data_set)` :  Load/Run the given dataset and return the resulting `DataFrame`
