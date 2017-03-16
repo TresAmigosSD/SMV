@@ -16,6 +16,10 @@ $ _SMV_HOME_/tools/smv-pyshell [smv-options] -- [standard spark-shell-options]
 * `graph`: print dependency graph of stages and inter-stage links
 * `descendants(dataset_name)`: list all `descendants` of a dataset
 
+In the future we will also implement
+* `discoverSchema(path, n, csvAttr)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix
+ ".schema.toBeReviewed"
+
 ## Examples
 
 ### Create temporary DataFrame for testing

@@ -8,6 +8,8 @@ However, when we just download the data from it's original source, there is no S
 data usable for SMV and Spark, we need to create the Schema file. SMV has a Schema discovery tool to
 help user quickly create it.
 
+Note that this feature is currently only available in the Scala `smv-shell`, but will be implemented in the `smv-pyshell` in the future.
+
 ## Where to put the Csv files
 
 SMV will look for `smv.dataDir` when it load the configuration(see [Application Configuration](app_config.md) for deatails). If multiple places defined the parameter, the order of
