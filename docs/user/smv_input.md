@@ -30,13 +30,13 @@ SMV also provides a tool to [discover schema](schema_discovery.md) from raw CSV 
 The most common way to utilize SMV files is to define objects in the input package of a given stage.
 For example:
 
-## Scala
+### Scala
 ```scala
 package com.mycom.myproj.stage1.input
 
 object acct_demo extends SmvCsvFile("accounts/acct_demo.csv")
 ```
-##Python
+### Python
 ```Python
 # In file src/main/python/stage1/inputdata.py
 class acct_demo(SmvCsvFile):
