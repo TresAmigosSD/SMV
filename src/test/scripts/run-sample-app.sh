@@ -8,8 +8,9 @@ if [ ! -d "src/test/scripts" ]; then
 fi
 
 TEST_DIR=target/test-sample
-APP_NAME=MyApp
-APP_DIR=${TEST_DIR}/${APP_NAME}
+I_APP_NAME=IntegrationApp
+S_APP_NAME=SimpleApp
+E_APP_NAME=EnterpriseApp
 MVN=$(type -P mvn || type -P mvn3)
 
 rm -rf ${TEST_DIR}
@@ -33,21 +34,22 @@ test6 \
 
 NEW_MODULE_STAGES="$NEW_PYTHON_MODULE_STAGES $NEW_SCALA_MODULE_STAGES"
 
-echo "--------- GENERATE SAMPLE APP -------------"
-../../tools/smv-init -test ${APP_NAME}
+echo "--------- GENERATE INTEGRATION APP -------------"
+../../tools/smv-init -test ${I_APP_NAME}
 
-echo "--------- BUILD SAMPLE APP -------------"
-cd ${APP_NAME}
+(
+cd ${I_APP_NAME}
+echo "--------- BUILD INTEGRATION APP -------------"
 sbt clean assembly
 
-echo "--------- RUN SAMPLE APP -------------"
+echo "--------- RUN INTEGRATION APP -------------"
 ../../../tools/smv-pyrun \
     --smv-props \
     smv.inputDir="file://$(pwd)/data/input" \
     smv.outputDir="file://$(pwd)/data/output" --run-app \
     -- --master 'local[*]'
 
-echo "--------- VERIFY SAMPLE APP OUTPUT -------------"
+echo "--------- VERIFY INTEGRATION APP OUTPUT -------------"
 COUNT=$(cat data/output/org.tresamigos.smvtest.stage2.StageEmpCategory_*.csv/part* | wc -l)
 if [ "$COUNT" -ne 52 ]; then
     echo "Expected 52 lines in output of stage2.StageEmpCategory but got $COUNT"
@@ -75,5 +77,24 @@ for stage in $NEW_PYTHON_MODULE_STAGES; do
     exit 1
   fi
 done
+)
+
+echo "--------- GENERATE SIMPLE APP -------------"
+smv-init -s $S_APP_NAME
+
+(
+cd $S_APP_NAME
+echo "--------- RUN SIMPLE APP -------------"
+smv-pyrun --run-app
+)
+
+echo "--------- GENERATE ENTERPRISE APP APP -------------"
+smv-init -s $E_APP_NAME
+
+(
+cd $E_APP_NAME
+echo "--------- RUN ENTERPRISE APP -------------"
+smv-pyrun --run-app
+)
 
 echo "--------- TEST COMPLETE -------------"
