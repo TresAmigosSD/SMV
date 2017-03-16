@@ -8,8 +8,7 @@
 #### Smv Framework
   * [SMV Introduction](smv_intro.md)
   * [SMV Files](smv_file.md)
-  * [SMV Scala Modules](smv_module.md)
-  * [SMV Python Modules](smv_module_python.md) :new:
+  * [SMV Modules](smv_module.md)
   * [SMV Hive Tables](smv_hive.md)
   * [SMV Stages](smv_stages.md)
   * [Validation & Data Quality Management (DQM)](dqm.md)

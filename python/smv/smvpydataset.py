@@ -211,6 +211,10 @@ class SmvPyInput(SmvPyDataSet):
     def requiresDS(self):
         return []
 
+    def run(self, df):
+        """This can be override by concrete SmvPyInput"""
+        return df
+
 class WithParser(object):
     """shared parser funcs"""
 
@@ -253,7 +257,7 @@ class SmvCsvFile(SmvPyInput, WithParser):
 
     def doRun(self, validator, known):
         jdf = self._smvCsvFile.doRun(validator)
-        return DataFrame(jdf, self.smvPy.sqlContext)
+        return self.run(DataFrame(jdf, self.smvPy.sqlContext))
 
 class SmvMultiCsvFiles(SmvPyInput, WithParser):
     """Instead of a single input file, specify a data dir with files which has
@@ -277,7 +281,7 @@ class SmvMultiCsvFiles(SmvPyInput, WithParser):
 
     def doRun(self, validator, known):
         jdf = self._smvMultiCsvFiles.doRun(validator)
-        return DataFrame(jdf, self.smvPy.sqlContext)
+        return self.run(DataFrame(jdf, self.smvPy.sqlContext))
 
 class SmvCsvStringData(SmvPyInput):
     """Input data from a Schema String and Data String
@@ -303,7 +307,7 @@ class SmvCsvStringData(SmvPyInput):
 
     def doRun(self, validator, known):
         jdf = self._smvCsvStringData.doRun(validator)
-        return DataFrame(jdf, self.smvPy.sqlContext)
+        return self.run(DataFrame(jdf, self.smvPy.sqlContext))
 
 
 class SmvHiveTable(SmvPyInput):
@@ -320,10 +324,6 @@ class SmvHiveTable(SmvPyInput):
     @abc.abstractproperty
     def tableName(self):
         """The qualified Hive table name"""
-
-    def run(self, df):
-        """This can be override by concrete SmvHiveTable"""
-        return df
 
     def doRun(self, validator, known):
         return self.run(DataFrame(self._smvHiveTable.rdd(), self.smvPy.sqlContext))
