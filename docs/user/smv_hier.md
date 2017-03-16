@@ -1,5 +1,7 @@
 # SmvAncillary
 
+**This feature is only available in Scala SMV**
+
 An SMV Ancillary is a collection of data plus methods. Each Ancillary depends on one or more `SmvModuleLink`s.
 
 ## SmvHierarchies
