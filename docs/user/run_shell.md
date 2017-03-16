@@ -1,4 +1,4 @@
-# Run SMV App using smv-pyshell
+# Run SMV App using Python smv-pyshell
 
 ### Synopsis
 Start the shell with
