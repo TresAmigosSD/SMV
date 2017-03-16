@@ -80,6 +80,8 @@ class acct_demo(SmvModule):
     return "accounts/acct_demo"
 ```
 
+Note that there should be not trailing '/' at the end of the path ("accounts/acct_demo" NOT "accounts/acct_demo/").
+
 By default use the CSV attributes defined in the schema file. If no CSV attributes in the schema file,
 use comma as the delimiter with header.
 
