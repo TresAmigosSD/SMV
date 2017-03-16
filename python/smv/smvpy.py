@@ -170,9 +170,6 @@ class DataSetRepo(object):
     def __init__(self, smvPy):
         self.smvPy = smvPy
 
-    def hasDataSet(self, fqn):
-        return self.loadDataSet(fqn) is not None
-
     # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
     # from the most recent source
     def loadDataSet(self, fqn):
