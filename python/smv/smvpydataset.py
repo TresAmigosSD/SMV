@@ -28,6 +28,7 @@ import sys
 import traceback
 
 from dqm import SmvDQM
+from error import SmvRuntimeError
 
 if sys.version >= '3':
     basestring = unicode = str
@@ -190,12 +191,16 @@ class SmvPyDataSet(object):
         # the user gets a full stack trace when SmvPyDataSet user-defined methods
         # causes errors
         try:
-            df = self.doRun(validator, known)._jdf
+            df = self.doRun(validator, known)
+            if not isinstance(df, DataFrame):
+                raise SmvRuntimeError(self.fqn() + " produced " + type(df).__name__ + " in place of a DataFrame")
+            else:
+                jdf = df._jdf
         except BaseException as err:
             traceback.print_exc()
             raise err
 
-        return df
+        return jdf
 
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
@@ -257,7 +262,7 @@ class SmvCsvFile(SmvPyInput, WithParser):
 
     def doRun(self, validator, known):
         jdf = self._smvCsvFile.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvPy.sqlContext))
+        df = self.run(DataFrame(jdf, self.smvPy.sqlContext))
 
 class SmvMultiCsvFiles(SmvPyInput, WithParser):
     """Instead of a single input file, specify a data dir with files which has
