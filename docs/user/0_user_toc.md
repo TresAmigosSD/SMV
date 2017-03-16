@@ -7,7 +7,7 @@
 
 #### Smv Framework
   * [SMV Introduction](smv_intro.md)
-  * [SMV Input (Files/Tables)](smv_input.md) 
+  * [SMV Input (Files/Tables)](smv_input.md)
   * [SMV Modules](smv_module.md)
   * [SMV Stages](smv_stages.md)
   * [Validation & Data Quality Management (DQM)](dqm.md)
@@ -16,7 +16,7 @@
   * [Application Configuration](app_config.md)
   * [Run Application](run_app.md)
   * [Run Spark Shell](run_shell.md)
-  * [Smv Jupyter](smv_jupyter.md) :new:
+  * [Smv Jupyter](smv_jupyter.md)
   * [Extended Data Dictionary (EDD)](edd.md)
   * [Adding a new CSV input file (with schema discovery)](schema_discovery.md)
   * [Runtime Configuration](run_config.md)
