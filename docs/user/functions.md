@@ -1,4 +1,4 @@
-# SMV Helper Functions
+# SMV Scala Helper Functions
 
 SMV provides a variety of functions to aid in the development of applications.
 The provided functions come in one of three flavors.
@@ -6,6 +6,9 @@ The provided functions come in one of three flavors.
 * `Column` helper functions
 * `DataFrame` helper functions
 * Grouped `DataFrame` helper functions
+
+Note: this document discusses Scala helper functions. For helper functions available
+in Python SMV, go [here](smv_python_funcs.md).
 
 ## Column Helper Functions
 This set of functions can be applied to a column inside a projection.
