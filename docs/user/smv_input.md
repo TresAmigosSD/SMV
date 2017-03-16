@@ -300,13 +300,13 @@ Reading from Hive tables is accomplished by wrapping the Hive table in an `SmvHi
 
 ### Scala
 ```scala
-object FooHiveTable extends SmvHiveTable("foo")
+object FooHiveTable extends SmvHiveTable("hiveschema.foo")
 ```
 ### Python
 ```Python
 class FooHiveTable(SmvHiveTable):
   def tableName(self):
-    return "foo"
+    return "hiveschema.foo"
 ```
 
 
