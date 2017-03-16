@@ -1,6 +1,6 @@
-from smv import SmvPyModuleLink, SmvPyExtDataSet
+from smv import SmvModuleLink, SmvPyExtDataSet
 from org.tresamigos.smvtest.stage1 import employment as emp
 
-EmploymentByStateLink = SmvPyModuleLink(emp.PythonEmploymentByState)
+EmploymentByStateLink = SmvModuleLink(emp.PythonEmploymentByState)
 
-EmploymentByStateLink2 = SmvPyModuleLink(SmvPyExtDataSet("org.tresamigos.smvtest.stage1.EmploymentByState"))
+EmploymentByStateLink2 = SmvModuleLink(SmvPyExtDataSet("org.tresamigos.smvtest.stage1.EmploymentByState"))

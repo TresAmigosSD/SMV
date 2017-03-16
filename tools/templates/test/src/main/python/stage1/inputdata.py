@@ -1,7 +1,7 @@
 from smv import *
 from smv.dqm import *
 
-class PythonEmployment(SmvPyCsvFile):
+class PythonEmployment(SmvCsvFile):
     def path(self):
         return "input/employment/CB1200CZ11.csv"
 

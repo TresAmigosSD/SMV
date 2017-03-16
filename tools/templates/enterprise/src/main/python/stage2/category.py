@@ -5,7 +5,7 @@ from stage2 import inputdata
 
 __all__ = ['EmploymentByStateCategory']
 
-class EmploymentByStateCategory(SmvPyModule, SmvPyOutput):
+class EmploymentByStateCategory(SmvModule, SmvOutput):
     """Python ETL Example: employment by state with category"""
 
     def requiresDS(self):

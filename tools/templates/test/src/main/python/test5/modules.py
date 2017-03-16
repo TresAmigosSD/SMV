@@ -2,7 +2,7 @@ from smv import *
 
 from org.tresamigos.smvtest.test5 import input
 
-class M1(SmvPyModule, SmvPyOutput):
+class M1(SmvModule, SmvOutput):
     def requiresDS(self):
         return [input.table]
 

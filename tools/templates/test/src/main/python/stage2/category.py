@@ -5,7 +5,7 @@ from org.tresamigos.smvtest.stage2 import inputdata
 
 __all__ = ['PythonEmploymentByStateCategory']
 
-class PythonEmploymentByStateCategory(SmvPyModule, SmvPyOutput):
+class PythonEmploymentByStateCategory(SmvModule, SmvOutput):
     """Python ETL Example: employment by state with category"""
 
     def requiresDS(self):
@@ -15,7 +15,7 @@ class PythonEmploymentByStateCategory(SmvPyModule, SmvPyOutput):
         df = i[inputdata.EmploymentByStateLink]
         return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
 
-class PythonEmploymentByStateCategory2(SmvPyModule, SmvPyOutput):
+class PythonEmploymentByStateCategory2(SmvModule, SmvOutput):
     """Python ETL Example: link to a Scala module"""
 
     def requiresDS(self):

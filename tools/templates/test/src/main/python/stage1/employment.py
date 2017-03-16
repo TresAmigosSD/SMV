@@ -5,7 +5,7 @@ from org.tresamigos.smvtest.stage1 import inputdata
 
 __all__ = ['PythonEmploymentByState']
 
-class PythonEmploymentByState(SmvPyModule, SmvPyOutput):
+class PythonEmploymentByState(SmvModule, SmvOutput):
     """Python ETL Example: employ by state"""
 
     def requiresDS(self):
@@ -16,7 +16,7 @@ class PythonEmploymentByState(SmvPyModule, SmvPyOutput):
         return df.groupBy(col("ST")).agg(sum(col("EMP")).alias("EMP"))
 
 
-class PythonEmploymentByStateCategory(SmvPyModule, SmvPyOutput):
+class PythonEmploymentByStateCategory(SmvModule, SmvOutput):
     """Python ETL Example: employment by state with category"""
 
     def requiresDS(self):
@@ -26,7 +26,7 @@ class PythonEmploymentByStateCategory(SmvPyModule, SmvPyOutput):
         df = i[PythonEmploymentByState]
         return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
 
-class PythonEmploymentByStateCategory2(SmvPyModule, SmvPyOutput):
+class PythonEmploymentByStateCategory2(SmvModule, SmvOutput):
     """Python ETL Example: depending on Scala module
     """
 

@@ -3,7 +3,7 @@ from pyspark.sql.functions import col, sum, lit
 
 __all__ = ['EmploymentByState']
 
-class Employment(SmvPyCsvFile):
+class Employment(SmvCsvFile):
     def path(self):
         return "input/employment/CB1200CZ11.csv"
 
@@ -12,7 +12,7 @@ class Employment(SmvPyCsvFile):
         
 
 
-class EmploymentByState(SmvPyModule, SmvPyOutput):
+class EmploymentByState(SmvModule, SmvOutput):
     """Python ETL Example: employ by state"""
 
     def requiresDS(self):

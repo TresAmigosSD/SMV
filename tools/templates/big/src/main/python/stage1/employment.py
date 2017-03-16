@@ -5,7 +5,7 @@ __all__ = ['EmploymentByState']
 
 from _PKG_NAME_ import _DEP_NAME_
 
-class _MOD_NAME_(SmvPyModule, SmvPyOutput):
+class _MOD_NAME_(SmvModule, SmvOutput):
     """Python ETL Example: employ by state"""
 
     def requiresDS(self):
