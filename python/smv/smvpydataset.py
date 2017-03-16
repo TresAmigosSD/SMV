@@ -262,7 +262,7 @@ class SmvCsvFile(SmvPyInput, WithParser):
 
     def doRun(self, validator, known):
         jdf = self._smvCsvFile.doRun(validator)
-        df = self.run(DataFrame(jdf, self.smvPy.sqlContext))
+        return self.run(DataFrame(jdf, self.smvPy.sqlContext))
 
 class SmvMultiCsvFiles(SmvPyInput, WithParser):
     """Instead of a single input file, specify a data dir with files which has
