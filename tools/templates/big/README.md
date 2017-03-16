@@ -3,10 +3,10 @@ Full details on how to build/run/use this application can be found in the [Getti
 
 # Run App in batch
 ```shell
-$ _SMV_HOME_/tools/smv-pyrun --run-app
+$ smv-pyrun --run-app
 ```
 
 # Run App in Spark Shell
 ```shell
-$ _SMV_HOME_/tools/smv-pyshell
+$ smv-pyshell
 ```

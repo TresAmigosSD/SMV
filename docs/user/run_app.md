@@ -5,7 +5,7 @@ a convenient script `smv-pyrun` is provided to make it easier to make running an
 
 ### Synopsis
 ```shell
-$ _SMV_HOME_/tools/smv-pyrun [smv-options] [what-to-run] -- [standard spark-submit-options]
+$ smv-pyrun [smv-options] [what-to-run] -- [standard spark-submit-options]
 ```
 
 **Note:**  The above command should be run from the project top level directory.
@@ -164,30 +164,30 @@ One of the options below must be specified.
 ### Examples
 Run modules `M1` and `M2` and all its dependencies.  Note the use of the module FQN.
 ```shell
-$ _SMV_HOME_/tools/smv-pyrun -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
+$ smv-pyrun -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
 ```
 
 Run all modules in application and generate edd report for all modules that needed to run (including dependencies)
 ```shell
-$ _SMV_HOME_/tools/smv-pyrun --edd --run-app
+$ smv-pyrun --edd --run-app
 ```
 
 Generate a dependency graph for module M1.
 ```shell
-$ _SMV_HOME_/tools/smv-pyrun -g -m com.mycom.myproj.stage1.M1
+$ smv-pyrun -g -m com.mycom.myproj.stage1.M1
 ```
 
 Clean up the output directory
 ```shell
-$ _SMV_HOME_/tools/smv-pyrun --purge-old-output
+$ smv-pyrun --purge-old-output
 ```
 
 Publish the output modules in stage "s1" as version "xyz".  The modules will be output to `/tmp/publish/xyz` dir.
 ```shell
-$ _SMV_HOME_/tools/smv-pyrun --publish xyz --publish-dir /tmp/publish -s s1
+$ smv-pyrun --publish xyz --publish-dir /tmp/publish -s s1
 ```
 
 Provide spark specific arguments
 ```shell
-$ _SMV_HOME_/tools/smv-pyrun -m com.mycom.myproj.stage1.M1 -- --executor-memory=2G --driver-memory=1G --master yarn-client
+$ smv-pyrun -m com.mycom.myproj.stage1.M1 -- --executor-memory=2G --driver-memory=1G --master yarn-client
 ```
