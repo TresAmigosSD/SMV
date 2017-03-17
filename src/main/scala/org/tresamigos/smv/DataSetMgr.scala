@@ -29,7 +29,7 @@ import scala.util.{Try, Success, Failure}
 
 class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   private var dsRepoFactories: Seq[DataSetRepoFactory] = Seq.empty[DataSetRepoFactory]
-  private var stageNames = smvConfig.stageNames
+  private var allStageNames = smvConfig.stageNames
 
   def register(newRepoFactory: DataSetRepoFactory): Unit = {
     dsRepoFactories = dsRepoFactories :+ newRepoFactory
@@ -40,16 +40,20 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
     resolver.loadDataSet(urns:_*)
   }
 
-  def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] = {
-    val urns = createRepos flatMap (repo => stageNames flatMap (repo.urnsForStage(_)))
-    load(urns:_*)
-  }
+  def urnsForStage(stageNames: String*): Seq[URN] =
+    createRepos flatMap (repo => stageNames flatMap (repo.urnsForStage(_)))
 
-  def outputModulesForStage(stageName: String*): Seq[SmvDataSet] =
-    filterOutput(dataSetsForStage(stageName:_*))
+  def allUrns(): Seq[URN] =
+    urnsForStage(allStageNames:_*)
+
+  def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] =
+    load(urnsForStage(stageNames:_*):_*)
+
+  def outputModulesForStage(stageNames: String*): Seq[SmvDataSet] =
+    filterOutput(dataSetsForStage(stageNames:_*))
 
   def allDataSets(): Seq[SmvDataSet] =
-    dataSetsForStage(stageNames:_*)
+    load(allUrns:_*)
 
   def allOutputModules(): Seq[SmvDataSet] =
     filterOutput(allDataSets)
