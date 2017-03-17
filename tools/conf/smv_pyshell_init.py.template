@@ -23,6 +23,9 @@ import os
 import readline
 import rlcompleter
 
+from smv import SmvApp as app
+app.add_source("src/main/python")
+
 historyPath = os.path.expanduser("~/.pysparkhistory")
 
 def save_history(historyPath=historyPath):

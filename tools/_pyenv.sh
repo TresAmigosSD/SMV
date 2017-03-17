@@ -3,7 +3,6 @@
 # Set up common python environment used by smv-pyrun, smv-pytest scripts
 #
 
-export PYTHONPATH="$PYTHONPATH:${SMV_TOOLS}/../python:src/main/python"
 export SPARK_PRINT_LAUNCH_COMMAND=1
 
 function run_pyspark_with () {
