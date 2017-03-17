@@ -14,6 +14,8 @@
 from smvbasetest import SmvBaseTest
 from smv import smvPy
 
+from fixture.stage2.links import L,B
+
 import unittest
 
 class ModuleLinkTest(SmvBaseTest):
@@ -33,13 +35,12 @@ class ModuleLinkTest(SmvBaseTest):
     def setUp(self):
         super(ModuleLinkTest, self).setUp()
 
-    @unittest.skip("temporarily ignore due to datasethash problem")
     def test_module_link_can_be_resolved(self):
         self.smvPy.j_smvApp.run()
-        l = self.smvPy.runModule('mod:fixture.stage2.links.L')
+        l = self.smvPy.runModule(L.urn())
         lExpected = self.createDF("k:String;v:Integer", "a,;b,2")
         self.should_be_same(lExpected, l) # link resolution
 
-        b = self.smvPy.runModule('mod:fixture.stage2.links.B')
+        b = self.smvPy.runModule(B.urn())
         bExpected = self.createDF("k:String;v:Integer;v2:Integer", "a,,;b,2,3")
         self.should_be_same(bExpected, b) # link as dependency
