@@ -35,7 +35,21 @@ class BaseModule(SmvPyModule):
     def hashsource(cls, src, fname='inline'):
         return hash(compile(src, fname, 'exec'))
 
+
 class ModuleHashTest(SmvBaseTest):
+
+    class DataSetResource(object):
+        def __init__(self,smvPy,path,*fqns):
+            self.dsr = DataSetRepo(smvPy)
+            self.path = path
+            self.fqns = fqns
+
+        def __enter__(self):
+            sys.path.insert(1,self.path)
+            return {fqn: self.dsr.loadDataSet(fqn) for fqn in self.fqns}
+
+        def __exit__(self,type,value,traceback):
+            sys.path.remove(self.path)
 
     def test_add_comment_should_not_change_hash(self):
         a = """
@@ -52,17 +66,15 @@ class A(BaseModule):
         self.assertEquals(BaseModule.hashsource(a), BaseModule.hashsource(b))
 
     def test_change_code_should_change_hash(self):
-        dsh1 = os.path.abspath('src/test/python/dsh1')
-        sys.path.insert(1,dsh1)
-        import modules
-        hash1 = modules.A(self.smvPy).datasetHash()
-        sys.path.remove(dsh1)
+        fqn = "modules.A"
+        path1 = 'src/test/python/dsh1'
+        path2 = 'src/test/python/dsh2'
 
-        dsh2 = os.path.abspath('src/test/python/dsh2')
-        sys.path.insert(1,dsh2)
-        reload(modules)
-        hash2 = modules.A(self.smvPy).datasetHash()
-        sys.path.remove(dsh2)
+        with self.DataSetResource(smvPy,path1,fqn) as dsrc:
+            hash1 = dsrc[fqn].datasetHash()
+
+        with self.DataSetResource(smvPy,path2,fqn) as dsrc:
+            hash2 = dsrc[fqn].datasetHash()
 
         self.assertFalse(hash1 == hash2)
 
