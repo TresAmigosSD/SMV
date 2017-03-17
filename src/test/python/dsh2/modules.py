@@ -12,7 +12,41 @@
 # limitations under the License.
 from smv import smvPy, SmvModule
 
-class A(SmvModule):
+class ChangeCode(SmvModule):
     def requiresDS(self): return []
     def run(self, i):
         return self.smvPy.createDF("k:String;v:Integer", "a,;b,3")
+
+class AddComment(SmvModule):
+    # I ADDED A COMMENT, POP!
+    def requiresDS(Self): return[]
+    def run(self,i):
+        return self.smvPy.createDF("k:String;v:Integer", "a,;b,5")
+
+class DependencyB(SmvModule):
+    def requiresDS(Self): return[]
+    def run(self,i):
+        return self.smvPy.createDF("k:String;v:Integer", "a,;b,215")
+
+class Dependent(DependencyB):
+    def requiresDS(Self): return[]
+    def run(self,i):
+        return self.smvPy.createDF("k:String;v:Integer", "a,;b,7")
+
+class Upstream(SmvModule):
+    def requiresDS(Self): return[]
+    def run(self,i):
+        return self.smvPy.createDF("k:String;v:Integer", "a,;b,46")
+
+class Downstream(SmvModule):
+    def requiresDS(Self): return[Upstream]
+    def run(self,i):
+        return self.smvPy.createDF("k:String;v:Integer", "a,;b,30")
+
+class Parent(SmvModule):
+    def requiresDS(Self): return[Upstream]
+    def run(self,i):
+        return self.smvPy.createDF("k:String;v:Integer", "a,;b,31")
+
+class Child(Parent):
+    pass
