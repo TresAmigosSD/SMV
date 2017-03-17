@@ -12,29 +12,10 @@
 # limitations under the License.
 
 from smvbasetest import SmvBaseTest
-from smv import SmvPyModule, smvPy
+from smv import smvPy
 from smv.smvpy import DataSetRepo
-from smv.utils import for_name
 
-import imp
 import sys
-import os
-import unittest
-
-class BaseModule(SmvPyModule):
-    """Base class for modules written for testing"""
-    def requiresDS(self):
-        return []
-    def run(self, i):
-        sqlcontext = self.smvPy.sqlContext
-        from pyspark.sql.types import StructType
-        return sqlContext.createDataFrame(sqlContext._sc.emptyRDD(), StructType([]))
-    def doRun(self, validator, known):
-        return self.run(known)
-    @classmethod
-    def hashsource(cls, src, fname='inline'):
-        return hash(compile(src, fname, 'exec'))
-
 
 class ModuleHashTest(SmvBaseTest):
     ResourcePath1 = 'src/test/python/dsh1'
