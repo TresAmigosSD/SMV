@@ -117,34 +117,38 @@ class SmvPyDataSet(object):
         return isinstance(self, SmvOutput)
 
     def datasetHash(self):
-        cls = self.__class__
         try:
-            src = inspect.getsource(cls)
-            src_no_comm = _stripComments(src)
-            # DO NOT use the compiled byte code for the hash computation as
-            # it doesn't change when constant values are changed.  For example,
-            # "a = 5" and "a = 6" compile to same byte code.
-            # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
-            res = _smvhash(src_no_comm)
-        except Exception as err: # `inspect` will raise error for classes defined in the REPL
-            # Instead of handle the case that module defined in REPL, just raise Exception here
-            # res = _smvhash(_disassemble(cls))
-            message = "{0}({1!r})".format(type(err).__name__, err.args)
-            raise Exception(message + "\n" + "SmvDataSet defined in shell can't be persisted")
-
-        # include datasetHash of parent classes
-        for m in inspect.getmro(cls):
+            cls = self.__class__
             try:
-                if m.IsSmvPyDataSet and m != cls and not m.fqn().startswith("smv."):
-                    res += m(self.smvPy).datasetHash()
-            except: pass
+                src = inspect.getsource(cls)
+                src_no_comm = _stripComments(src)
+                # DO NOT use the compiled byte code for the hash computation as
+                # it doesn't change when constant values are changed.  For example,
+                # "a = 5" and "a = 6" compile to same byte code.
+                # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
+                res = _smvhash(src_no_comm)
+            except Exception as err: # `inspect` will raise error for classes defined in the REPL
+                # Instead of handle the case that module defined in REPL, just raise Exception here
+                # res = _smvhash(_disassemble(cls))
+                message = "{0}({1!r})".format(type(err).__name__, err.args)
+                raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
 
-        # if module inherits from SmvRunConfig, then add hash of all config values to module hash
-        if hasattr(self, "getRunConfigHash"):
-            res += self.getRunConfigHash()
+            # include datasetHash of parent classes
+            for m in inspect.getmro(cls):
+                try:
+                    if m.IsSmvPyDataSet and m != cls and not m.fqn().startswith("smv."):
+                        res += m(self.smvPy).datasetHash()
+                except: pass
 
-        # ensure python's numeric type can fit in a java.lang.Integer
-        return res & 0x7fffffff
+            # if module inherits from SmvRunConfig, then add hash of all config values to module hash
+            if hasattr(self, "getRunConfigHash"):
+                res += self.getRunConfigHash()
+
+            # ensure python's numeric type can fit in a java.lang.Integer
+            return res & 0x7fffffff
+        except BaseException as e:
+            traceback.print_exc()
+            raise e
 
     @classmethod
     def fqn(cls):
