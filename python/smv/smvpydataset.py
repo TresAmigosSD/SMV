@@ -28,6 +28,7 @@ import sys
 import traceback
 
 from dqm import SmvDQM
+from error import SmvRuntimeError
 
 if sys.version >= '3':
     basestring = unicode = str
@@ -190,12 +191,16 @@ class SmvPyDataSet(object):
         # the user gets a full stack trace when SmvPyDataSet user-defined methods
         # causes errors
         try:
-            df = self.doRun(validator, known)._jdf
+            df = self.doRun(validator, known)
+            if not isinstance(df, DataFrame):
+                raise SmvRuntimeError(self.fqn() + " produced " + type(df).__name__ + " in place of a DataFrame")
+            else:
+                jdf = df._jdf
         except BaseException as err:
             traceback.print_exc()
             raise err
 
-        return df
+        return jdf
 
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
@@ -388,13 +393,6 @@ class SmvModuleLinkTemplate(SmvModule):
     def target(cls):
         """Returns the target SmvModule class from another stage to which this link points"""
         raise ValueError('Expect to be implemented by subclass')
-
-    def datasetHash(self):
-        stage = self.smvPy.j_smvPyClient.inferStageNameFromDsName(self.target().fqn())
-        #TODO: need to review whether _smvhash(stage.get()) will be good enough
-        dephash = _smvhash(stage.get()) if stage.isDefined() else self.target()(self.smvPy).datasetHash()
-        # ensure python's numeric type can fit in a java.lang.Integer
-        return (dephash + super(SmvModuleLinkTemplate, self).datasetHash()) & 0x7fffffff
 
     def run(self, i):
         res = self.smvPy.j_smvPyClient.readPublishedData(self.target().fqn())

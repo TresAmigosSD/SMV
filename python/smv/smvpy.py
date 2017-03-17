@@ -160,7 +160,11 @@ class DataSetRepoFactory(object):
         self.smvPy = smvPy
 
     def createRepo(self):
-        return DataSetRepo(self.smvPy)
+        try:
+            return DataSetRepo(self.smvPy)
+        except BaseException as e:
+            traceback.print_exc()
+            raise e
 
     class Java:
         implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
@@ -170,33 +174,27 @@ class DataSetRepo(object):
     def __init__(self, smvPy):
         self.smvPy = smvPy
 
-    def hasDataSet(self, fqn):
-        return self.loadDataSet(fqn) is not None
-
     # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
     # from the most recent source
     def loadDataSet(self, fqn):
         lastdot = fqn.rfind('.')
-        if sys.modules.has_key(fqn[:lastdot]):
-            # reload the module if it has already been imported
-            return self._reload(fqn)
-        else:
-            # otherwise import the module
-            return self._load(fqn)
+        try:
+            if sys.modules.has_key(fqn[:lastdot]):
+                # reload the module if it has already been imported
+                return self._reload(fqn)
+            else:
+                # otherwise import the module
+                return self._load(fqn)
+        except BaseException as e:
+            traceback.print_exc()
+            raise e
+
 
 
     # Import the module (Python module, not SMV module) containing the dataset
     # and return the dataset
     def _load(self, fqn):
-        try:
-            return for_name(fqn)(self.smvPy)
-        except AttributeError: # module not found is anticipated
-            return None
-        except ImportError:
-            return None
-        except Exception as e: # other errors should be reported, such as syntax error
-            traceback.print_exc()
-            return None
+        return for_name(fqn)(self.smvPy)
 
     # Reload the module containing the dataset from the most recent source
     # and invalidate the linecache
@@ -213,12 +211,16 @@ class DataSetRepo(object):
         return ds
 
     def dataSetsForStage(self, stageName):
-        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
+        try:
+            return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
+        except BaseException as e:
+            traceback.print_exc()
+            raise e
 
     def outputModsForStage(self, stageName):
         return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyModule and obj.IsSmvPyOutput)
 
-    def moduleUrnsForStage(self, stageName, fn):
+    def _moduleUrnsForStage(self, stageName, fn):
         # `walk_packages` can generate AttributeError if the system has
         # Gtk modules, which are not designed to use with reflection or
         # introspection. Best action to take in this situation is probably
@@ -228,11 +230,13 @@ class DataSetRepo(object):
         # t, v, tb = sys.exc_info()
         # print("type is {0}, value is {1}".format(t, v))
         buf = []
-
+        # import the stage and only walk the packages in the path of that stage, recursively
         try:
-            # import the stage and only walk the packages in the path of that stage, recursively
             stagemod = __import__(stageName)
-
+        except:
+            # may be a scala-only stage
+            pass
+        else:
             for loader, name, is_pkg in pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=err):
                 if name.startswith(stageName) and not is_pkg:
                     pymod = __import__(name)
@@ -250,9 +254,6 @@ class DataSetRepo(object):
                                 buf.append(obj.urn())
                         except AttributeError:
                             continue
-        except:
-            # may be a scala-only stage
-            pass
 
         return smv_copy_array(self.smvPy.sc, *buf)
 
