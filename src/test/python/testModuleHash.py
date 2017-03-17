@@ -13,10 +13,12 @@
 
 from smvbasetest import SmvBaseTest
 from smv import SmvPyModule, smvPy
+from smv.smvpy import DataSetRepo
 from smv.utils import for_name
 
 import imp
 import sys
+import os
 import unittest
 
 class BaseModule(SmvPyModule):
@@ -34,6 +36,7 @@ class BaseModule(SmvPyModule):
         return hash(compile(src, fname, 'exec'))
 
 class ModuleHashTest(SmvBaseTest):
+
     def test_add_comment_should_not_change_hash(self):
         a = """
 class A(BaseModule):
@@ -49,17 +52,19 @@ class A(BaseModule):
         self.assertEquals(BaseModule.hashsource(a), BaseModule.hashsource(b))
 
     def test_change_code_should_change_hash(self):
-        a = """
-class A(BaseModule):
-    def add(this, a, b):
-        return a+b
-"""
-        b = """
-class A(BaseModule):
-    def add(this, a, b, c=1):
-        return a+b+c
-"""
-        self.assertFalse(BaseModule.hashsource(a) == BaseModule.hashsource(b))
+        dsh1 = os.path.abspath('src/test/python/dsh1')
+        sys.path.insert(1,dsh1)
+        import modules
+        hash1 = modules.A(self.smvPy).datasetHash()
+        sys.path.remove(dsh1)
+
+        dsh2 = os.path.abspath('src/test/python/dsh2')
+        sys.path.insert(1,dsh2)
+        reload(modules)
+        hash2 = modules.A(self.smvPy).datasetHash()
+        sys.path.remove(dsh2)
+
+        self.assertFalse(hash1 == hash2)
 
     @unittest.skip("inline definitions of modules no longer work")
     def test_change_dependency_should_change_hash(self):
