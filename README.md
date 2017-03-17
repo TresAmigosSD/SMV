@@ -145,4 +145,4 @@ EMP:Long             = 245058
 cat_high_emp:Boolean = false
 ```
 
-See the [user guide](docs/0_user_toc.md) for further examples and documentation.
+See the [user guide](docs/user/0_user_toc.md) for further examples and documentation.
