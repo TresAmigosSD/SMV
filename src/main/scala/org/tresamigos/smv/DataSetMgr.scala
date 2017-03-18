@@ -63,13 +63,13 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
    * modules specified via smv-pyrun -m.
    */
   def inferDS(partialNames: String*): Seq[SmvDataSet] = {
-    if(partialNames.isEmpty)
-      Seq.empty
-    else {
-        val allDs = allDataSets
-        partialNames map {
+      if(partialNames.isEmpty)
+        Seq.empty
+      else {
+        val allUrnsVal = allUrns
+        val foundUrns = partialNames map {
           pName =>
-            val candidates = allDataSets filter (_.fqn.endsWith(pName))
+            val candidates = allUrnsVal filter (_.fqn.endsWith(pName))
             candidates.size match {
               case 0 =>
                 throw new SmvRuntimeException(
@@ -79,6 +79,7 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
                 s"Module name [${pName}] is not specific enough, as it could refer to [${(candidates.map(_.fqn)).mkString(", ")}]")
             }
         }
+        load(foundUrns:_*)
       }
   }
 
