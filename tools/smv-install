@@ -18,6 +18,7 @@ fi
 SMV_VERSION="1.5.2.2"
 SMV_DIR="SMV_${SMV_VERSION}"
 SPARK_DIR="spark-1.5.2-bin-2.7.2"
+SMV_PROFILE="${HOME}/.smv/smv-profile.sh"
 
 # downloads and extracts the contents of a remote tar ball into current directory.
 # System must have
@@ -94,6 +95,16 @@ python_installation_validation() {
   fi
 }
 
+generate_profile_file() {
+  mkdir -p $(dirname ${SMV_PROFILE})
+  local install_dir=`pwd`
+  echo 'export PATH="'${install_dir}/${SMV_DIR}/tools':${PATH}"' > ${SMV_PROFILE}
+  if [ $DO_INSTALL_SPARK -eq 1 ]; then
+    echo 'export PATH="'${install_dir}/${SPARK_DIR}/bin':${PATH}"' >> ${SMV_PROFILE}
+  fi
+  echo "[INFO] created ${SMV_PROFILE}"
+}
+
 ###############################################################################
 # --- MAIN ---
 ###############################################################################
@@ -102,3 +113,4 @@ jre_installtion_validation
 python_installation_validation
 download_smv
 [ $DO_INSTALL_SPARK -eq 1 ] && download_spark
+generate_profile_file
