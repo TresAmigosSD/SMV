@@ -125,6 +125,10 @@ class SmvPy(object):
         jdf = self.j_smvPyClient.runModule(urn)
         return DataFrame(jdf, self.sqlContext)
 
+    def runModuleByName(self, name):
+        jdf = smvPy.j_smvApp.runModuleByName(name)
+        return DataFrame(jdf, self.sqlContext)
+
     def urn2fqn(self, urnOrFqn):
         """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged"""
         return self.j_smvPyClient.urn2fqn(urnOrFqn)

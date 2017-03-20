@@ -16,7 +16,7 @@ from pyspark.sql import DataFrame
 
 jvmShellCmd = smvPy._jvm.org.tresamigos.smv.shell.ShellCmd
 
-df = lambda fqn: smvPy.runModule("mod:" + fqn)
+df = lambda name: smvPy.runModuleByName(name)
 def ddf(fqn):
     print "ddf has been removed. df now runs modules dynamically. Use df instead of ddf."
 def pdf(fqn):
