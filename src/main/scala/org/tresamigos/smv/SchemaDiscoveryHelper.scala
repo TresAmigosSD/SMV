@@ -195,7 +195,9 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       }
     }
 
-    new SmvSchema(columns.zip(typeFmts).map{case (n, t) => SchemaEntry(n, t)}, Map.empty)
+    val res = new SmvSchema(columns.zip(typeFmts).map{case (n, t) => SchemaEntry(n, t)}, Map.empty)
+
+    res.addCsvAttributes(ca)
   }
 
   /**

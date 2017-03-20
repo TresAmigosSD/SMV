@@ -14,6 +14,8 @@
 from smv import smvPy
 from pyspark.sql import DataFrame
 
+from smv import CsvAttributes
+
 jvmShellCmd = smvPy._jvm.org.tresamigos.smv.shell.ShellCmd
 
 df = lambda fqn: smvPy.runModule("mod:" + fqn)
@@ -57,3 +59,6 @@ def graph(stageName = None):
 
 def now():
     print(jvmShellCmd.now())
+
+def discoverSchema(path, n=100000, ca=smvPy.defaultCsvWithHeader()):
+    smvPy._jvm.SmvPythonHelper.discoverSchema(path, n, ca)

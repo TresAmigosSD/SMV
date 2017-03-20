@@ -8,5 +8,6 @@ from helpers import *
 from smvpy import smvPy
 
 from runconfig import SmvRunConfig
+from csv_attributes import CsvAttributes
 
 import dqm
