@@ -232,10 +232,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * @return true if modules were generated, otherwise false.
    */
   private def generateOutputModules() : Boolean = {
-    deleteOutputModules()
-
     modulesToRun foreach (resolveRDD(_))
-
     modulesToRun.nonEmpty
   }
 
