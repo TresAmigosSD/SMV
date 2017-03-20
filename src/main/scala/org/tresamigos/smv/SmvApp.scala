@@ -234,14 +234,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   private def generateOutputModules() : Boolean = {
     deleteOutputModules()
 
-    modulesToRun foreach { module =>
-      val modResult = resolveRDD(module)
-
-      // if module was ephemeral, then it was not saved during graph execution and we need
-      // to persist it here explicitly.
-      if (module.isEphemeral)
-        module.persist(modResult)
-    }
+    modulesToRun foreach (resolveRDD(_))
 
     modulesToRun.nonEmpty
   }
