@@ -47,7 +47,7 @@ class acct_demo(SmvCsvFile):
 Please note that we only specified the file name of the data file, the assumption is
 that the schema file is in the same place with postfix `schema`.
 
-The file path `accounts/acct_demo.csv` is relative to `smv.dataDir` in the configuration, please
+The file path `accounts/acct_demo.csv` is relative to `smv.inputDir` in the configuration, please
 check [Application Configuration](app_config.md) for details.
 
 Given the above definition, any module in `stage1` will be able to add a dependency to `acct_demo` by using it in `requiresDS`:
