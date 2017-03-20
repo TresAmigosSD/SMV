@@ -114,7 +114,7 @@ Can be overridden using <code>--data-dir</code> command line option</td>
 <td>smv.inputDir</td>
 <td>dataDir<code>/input</code></td>
 <td>Optional</td>
-<td>Data input directory (not currently used)
+<td>Data input directory 
 Can be overridden using <code>--input-dir</code> command line option</td>
 </tr>
 

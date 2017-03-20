@@ -18,7 +18,7 @@ Modules that need to access a configuration parameter must inherit from the mix-
 ```python
 class MyModule(SmvModule, SmvRunConfig):
   def run():
-    if smvGetRunConfig("sample") == "1pct":
+    if self.smvGetRunConfig("sample") == "1pct":
       df = df.sample(0.01)
     return df
 ```
@@ -47,7 +47,7 @@ import * from inputdata
 
 class Employment(SmvPyModule, SmvRunConfig):
   def requireDS(self):
-    if smvGetRunConfig("filetype") == "hive":
+    if self.smvGetRunConfig("filetype") == "hive":
       return [ EmpHive ]
     else:
       return [ EmvCsv ]

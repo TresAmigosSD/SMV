@@ -143,7 +143,7 @@ class SmvPy(object):
     def createDF(self, schema, data = None):
         return DataFrame(self.j_smvPyClient.dfFrom(schema, data), self.sqlContext)
 
-    def _mkCsvAttr(self, delimiter=',', quotechar='""', hasHeader=False):
+    def _mkCsvAttr(self, delimiter=',', quotechar='"', hasHeader=False):
         """Factory method for creating instances of Scala case class CsvAttributes"""
         return self._jvm.org.tresamigos.smv.CsvAttributes(delimiter, quotechar, hasHeader)
 

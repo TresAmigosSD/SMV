@@ -96,6 +96,12 @@ graphvis must be used to convert the ".dot" file to an image or doc.  For exampl
 </tr>
 
 <tr>
+<td>--publish-hive</td>
+<td>off</td>
+<td>publish the specified modules to specified Hive tables</td>
+</tr>
+
+<tr>
 <th colspan="3">What To Run/Publish
 <br>
 One of the options below must be specified.
@@ -165,6 +171,12 @@ One of the options below must be specified.
 Run modules `M1` and `M2` and all its dependencies.  Note the use of the module FQN.
 ```shell
 $ smv-pyrun -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
+```
+
+Run modules `M1` and `M2` and all its dependencies. Publish to the Hive tables as specified
+by the `tableName` method of `M1` and `M2`.
+```shell
+$ smv-pyrun --publish-hive -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
 ```
 
 Run all modules in application and generate edd report for all modules that needed to run (including dependencies)

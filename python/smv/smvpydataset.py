@@ -141,8 +141,8 @@ class SmvPyDataSet(object):
                 except: pass
 
             # if module inherits from SmvRunConfig, then add hash of all config values to module hash
-            if hasattr(self, "getRunConfigHash"):
-                res += self.getRunConfigHash()
+            if hasattr(self, "_smvGetRunConfigHash"):
+                res += self._smvGetRunConfigHash()
 
             # ensure python's numeric type can fit in a java.lang.Integer
             return res & 0x7fffffff

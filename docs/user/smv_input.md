@@ -47,7 +47,7 @@ class acct_demo(SmvCsvFile):
 Please note that we only specified the file name of the data file, the assumption is
 that the schema file is in the same place with postfix `schema`.
 
-The file path `accounts/acct_demo.csv` is relative to `smv.dataDir` in the configuration, please
+The file path `accounts/acct_demo.csv` is relative to `smv.inputDir` in the configuration, please
 check [Application Configuration](app_config.md) for details.
 
 Given the above definition, any module in `stage1` will be able to add a dependency to `acct_demo` by using it in `requiresDS`:
@@ -191,10 +191,19 @@ other: Decimal[10];
 The `Timestamp` type can be used to hold a date/timestamp field value.
 An optional format string can be used when defining a field of type `timestamp`.
 The field format is the standard java `java.sql.Timestamp` format string.
-If a format string is not specified, it defaults to `"yyyyMMdd"`.
+If a format string is not specified, it defaults to `"yyyy-MM-dd hh:mm:ss.S"`.
 ```scala
 std_date: Timestamp;
 evt_time: Timestamp[yyyy-MM-dd HH:mm:ss];
+```
+
+### Date type
+The `Date` type is similar to `Timestamp` without the time part.
+An optional format string can be used.
+If a format string is not specified, it defaults to `"yyyy-MM-dd"`
+```scala
+std_date: Date
+evt_date: Date[yyyyMMdd]
 ```
 
 ### Map type

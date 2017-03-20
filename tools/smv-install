@@ -18,6 +18,7 @@ fi
 SMV_VERSION="1.5.2.2"
 SMV_DIR="SMV_${SMV_VERSION}"
 SPARK_DIR="spark-1.5.2-bin-2.7.2"
+SMV_PROFILE="${HOME}/.smv/smv-profile.sh"
 
 # downloads and extracts the contents of a remote tar ball into current directory.
 # System must have
@@ -94,6 +95,42 @@ python_installation_validation() {
   fi
 }
 
+generate_profile_file() {
+  mkdir -p $(dirname ${SMV_PROFILE})
+  local install_dir=`pwd`
+  echo 'export PATH="'${install_dir}/${SMV_DIR}/tools':${PATH}"' > ${SMV_PROFILE}
+  if [ $DO_INSTALL_SPARK -eq 1 ]; then
+    echo 'export PATH="'${install_dir}/${SPARK_DIR}/bin':${PATH}"' >> ${SMV_PROFILE}
+  fi
+  echo "[INFO] created ${SMV_PROFILE}"
+}
+
+# add a call in users "profile" file to source the generated SMV profile file
+source_profile_file() {
+  local user_profiles=".bash_profile .bash_login .profile .bashrc"
+  local found_profile=""
+  for up in $user_profiles; do
+    if [ -f "${HOME}/${up}" ]; then
+      found_profile="${HOME}/${up}"
+      break
+    fi
+  done
+
+  if [ -z "$found_profile" ]; then
+    echo "[ERROR]: could not find any profile file: $user_profiles"
+    exit 1
+  fi
+
+  if grep -q -- "---SMV PROFILE----" $found_profile; then
+    echo "[INFO] SMV profile alredy sourced in $found_profile"
+  else
+    echo >> $found_profile
+    echo "#---SMV PROFILE----" >> $found_profile
+    echo "source ${SMV_PROFILE}" >> $found_profile
+    echo "[INFO] sourced SMV profile in $found_profile"
+  fi
+}
+
 ###############################################################################
 # --- MAIN ---
 ###############################################################################
@@ -102,3 +139,5 @@ jre_installtion_validation
 python_installation_validation
 download_smv
 [ $DO_INSTALL_SPARK -eq 1 ] && download_spark
+generate_profile_file
+source_profile_file

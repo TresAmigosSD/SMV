@@ -9,4 +9,7 @@ from smvpy import smvPy
 
 from smvapp import SmvApp
 
+from runconfig import SmvRunConfig
+from csv_attributes import CsvAttributes
+
 import dqm

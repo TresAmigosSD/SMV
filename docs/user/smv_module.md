@@ -90,7 +90,9 @@ class MyModule(SmvModule):
 
 # Output Modules
 As the number of modules in a given SMV stage grows, it becomes more difficult to track which
-modules are the "leaf"/output modules within the stage. Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait. If you would like to publush the module to a Hive table, include a `tableName`
+modules are the "leaf"/output modules within the stage. Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait. If you would like to publish the module to a Hive table, include a `tableName`, and use `--publish-hive` command line parameter to
+publish/export the output to the specified Hive table.
+
 For example:
 
 ### Scala

@@ -88,3 +88,38 @@ class SmvFrameworkTest(SmvBaseTest):
             df.smvDumpDF()
 
     #TODO: add other SmvPyDataSet unittests
+
+class D4(SmvPyCsvStringData, SmvRunConfig):
+    def schemaStr(self):
+        return "a:String;b:Integer"
+    def dataStr(self):
+        if(self.smvGetRunConfig('s') == "s1"):
+            return "a,10;b,1"
+        else:
+            return "X,100;Y,200;"
+
+class SmvRunConfigTest1(SmvBaseTest):
+
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.config.s=s1',
+                '-m', "None"]
+
+    def test_SmvCsvStringData_with_SmvRunConfig(self):
+        fqn = self.__module__ + ".D4"
+        df = self.df(fqn)
+        expect = self.createDF("a:String;b:Integer", "a,10;b,1")
+        self.should_be_same(expect, df)
+
+class SmvRunConfigTest2(SmvBaseTest):
+
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.config.s=s2',
+                '-m', "None"]
+
+    def test_SmvCsvStringData_with_SmvRunConfig(self):
+        fqn = self.__module__ + ".D4"
+        df = self.df(fqn)
+        expect = self.createDF("a:String;b:Integer", "X,100;Y,200")
+        self.should_be_same(expect, df)
