@@ -246,28 +246,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     modulesToRun.nonEmpty
   }
 
-  /** The "versioned" module file base name. */
-  private def versionedPath(suffix: String, prefix: String = "")(name: String, hash: Int): String = {
-    val verHex = f"${hash}%08x"
-    s"""${smvConfig.outputDir}/${prefix}${name}_${verHex}.${suffix}"""
-  }
-
-  /** Returns the path for the module's csv output */
-  val moduleCsvPath = versionedPath("csv") _
-
-  /** Returns the path for the module's schema file */
-  private[smv] val moduleSchemaPath = versionedPath("schema") _
-
-  /** Returns the path for the module's edd report output */
-  private[smv] val moduleEddPath = versionedPath("edd") _
-
-  /** Returns the path for the module's reject report output */
-  private[smv] val moduleValidPath = versionedPath("valid") _
-
-  /** Path for published module of a specified version */
-  private[smv] def publishPath(name: String, version: String) =
-    s"""${smvConfig.publishDir}/${version}/${name}.csv"""
-
   /** Run a module by its fully qualified name in its respective language environment */
   def runModule(urn: URN): DataFrame = resolveRDD(dsm.load(urn).head)
 

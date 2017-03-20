@@ -158,12 +158,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def inferStageNameFromDsName(modFqn: String): Option[String] =
     j_smvApp.stages.inferStageNameFromDsName(modFqn)
 
-  /** Reads the published data, if any, for a named SMV module */
-  def readPublishedData(modFqn: String): Option[DataFrame] =
-    j_smvApp.stages.stageVersionFor(modFqn) flatMap (ver =>
-      Try(SmvUtil.readFile(j_smvApp.sqlContext, j_smvApp.publishPath(modFqn, ver))).toOption
-    )
-
   /** Saves the dataframe to disk */
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
     SmvUtil.persist(j_smvApp.sqlContext, dataframe, path, generateEdd)

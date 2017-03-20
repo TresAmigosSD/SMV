@@ -398,10 +398,6 @@ class SmvModuleLinkTemplate(SmvModule):
         """Returns the target SmvModule class from another stage to which this link points"""
         raise ValueError('Expect to be implemented by subclass')
 
-    def run(self, i):
-        res = self.smvPy.j_smvPyClient.readPublishedData(self.target().fqn())
-        return res.get() if res.isDefined() else self.smvPy.runModule(self.target().urn())
-
 PyExtDataSetCache = {}
 
 from smvpy import smvPy
