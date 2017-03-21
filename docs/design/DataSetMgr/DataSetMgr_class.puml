@@ -9,11 +9,11 @@ package Scala {
   class DataSetMgr {
     registerRepoFactory(repoFactory: DataSetRepoFactory)
     load(urns: URN*): Seq(SmvDataSet)
-    inferURN(partialName: String): SmvDataSet
+    inferDS(partialName: String): SmvDataSet
     dataSetsForStage(stageNames: String*): Seq[SmvDataSet]
-    outputsForStage(stageNames: String*): Seq[SmvDataSet]
+    outputModulesForStage(stageNames: String*): Seq[SmvDataSet]
     allDataSets(): Seq[SmvDataSet]
-    allOutputs(): Seq[SmvDataSet]
+    allOutputModules(): Seq[SmvDataSet]
   }
   together {
     class DataSetResolver {
@@ -36,7 +36,7 @@ package Scala {
 
   class DataSetRepoFactory
   class DataSetRepo <<abstract>> {
-    loadDataSet(fqn: String): SmvDataSet
+    loadDataSet(urn: ModURN): SmvDataSet
     urnsForStage(stageName: String): Seq[URN]
   }
   together {
