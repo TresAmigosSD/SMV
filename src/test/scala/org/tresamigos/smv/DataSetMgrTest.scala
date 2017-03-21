@@ -30,6 +30,15 @@ package org.tresamigos.smv {
       val a = app.dsm.load(A.urn).head
       assert(Seq(B,C) == a.resolvedRequiresDS)
     }
+
+    test("Test DataSetMgr resolve all dependencies on same module to same module singleton") {
+      val ac = app.dsm.load(A.urn, C.urn)
+      val a = ac(0)
+      val c = ac(1)
+      val b1 = a.resolvedRequiresDS.head
+      val b2 = c.resolvedRequiresDS.head
+      assert(b1 == b2)
+    }
   }
 }
 
