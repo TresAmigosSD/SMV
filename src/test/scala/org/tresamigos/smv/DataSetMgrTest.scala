@@ -14,25 +14,26 @@
 
 package org.tresamigos.smv {
   class DataSetMgrTest extends SmvTestUtil {
-    import DataSetMgrTestMods._
+    import DSMTestMods._
+
     override def appArgs = Seq(
       "--smv-props",
-      "smv.stages=org.tresamigos.smv.DataSetMgrTestMods",
+      "smv.stages=org.tresamigos.smv.DSMTestMods.stage1:org.tresamigos.smv.DSMTestMods.stage2",
       "-m", "None",
       "--data-dir", testcaseTempDir
     )
 
     test("Test DataSetMgr can load SmvModule") {
-      app.dsm.load(B.urn)
+      app.dsm.load(stage1.B.urn)
     }
 
     test("Test DataSetMgr resolves dependencies when loading modules") {
-      val a = app.dsm.load(A.urn).head
-      assert(Seq(B,C) == a.resolvedRequiresDS)
+      val a = app.dsm.load(stage1.A.urn).head
+      assert(Seq(stage1.B, stage1.C) == a.resolvedRequiresDS)
     }
 
     test("Test DataSetMgr resolves all dependencies on same module to same module singleton") {
-      val ac = app.dsm.load(A.urn, C.urn)
+      val ac = app.dsm.load(stage1.A.urn, stage1.C.urn)
       val a = ac(0)
       val c = ac(1)
       val b1 = a.resolvedRequiresDS.head
@@ -40,29 +41,39 @@ package org.tresamigos.smv {
       assert(b1 == b2)
     }
 
-    test("Test DataSetMgr dataSetsForStage finds all datasets in a stage") {
-      val dsForStage = app.dsm.dataSetsForStage("org.tresamigos.smv.DataSetMgrTestMods")
-      val dsForStageSet = Set(dsForStage:_*)
-      assert(dsForStageSet == Set(A,B,C))
+    test("Test DataSetMgr dataSetsForStage finds all non-link SmvDataSets in a stage") {
+      val dsForStage = app.dsm.dataSetsForStage("org.tresamigos.smv.DSMTestMods.stage1")
+      assert(Set(dsForStage:_*) == Set(stage1.A, stage1.B, stage1.C))
+    }
+
+    test("Test DataSetMgr dataSetsForStage does not find links in a stage") {
+      val dsForStage = app.dsm.dataSetsForStage("org.tresamigos.smv.DSMTestMods.stage2")
+      assert(Set(dsForStage:_*) == Set())
     }
   }
 }
 
-package org.tresamigos.smv.DataSetMgrTestMods {
-  import org.tresamigos.smv.SmvModule
+package org.tresamigos.smv.DSMTestMods {
+  import org.tresamigos.smv.{SmvModule, SmvOutput, SmvModuleLink}
 
-  object A extends SmvModule("") {
-    def requiresDS = Seq(B,C)
-    def run(i: runParams) = i(B).join(i(C))
+  package stage1 {
+    object A extends SmvModule("") with SmvOutput {
+      def requiresDS = Seq(B,C)
+      def run(i: runParams) = i(B).join(i(C))
+    }
+
+    object B extends SmvModule("") {
+      def requiresDS = Seq()
+      def run(i: runParams) = app.createDF("s:String", "a;b;b")
+    }
+
+    object C extends SmvModule("") {
+      def requiresDS = Seq(B)
+      def run(i: runParams) = i(B)
+    }
   }
 
-  object B extends SmvModule("") {
-    def requiresDS = Seq()
-    def run(i: runParams) = app.createDF("s:String", "a;b;b")
-  }
-
-  object C extends SmvModule("") {
-    def requiresDS = Seq(B)
-    def run(i: runParams) = i(B)
+  package stage2 {
+    object L extends SmvModuleLink(stage1.A)
   }
 }
