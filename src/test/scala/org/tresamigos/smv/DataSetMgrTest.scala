@@ -17,7 +17,7 @@ package org.tresamigos.smv {
     import DataSetMgrTestMods._
     override def appArgs = Seq(
       "--smv-props",
-      "smv.stages=org.tresamigos.DataSetMgrTestMods",
+      "smv.stages=org.tresamigos.smv.DataSetMgrTestMods",
       "-m", "None",
       "--data-dir", testcaseTempDir
     )
@@ -31,13 +31,19 @@ package org.tresamigos.smv {
       assert(Seq(B,C) == a.resolvedRequiresDS)
     }
 
-    test("Test DataSetMgr resolve all dependencies on same module to same module singleton") {
+    test("Test DataSetMgr resolves all dependencies on same module to same module singleton") {
       val ac = app.dsm.load(A.urn, C.urn)
       val a = ac(0)
       val c = ac(1)
       val b1 = a.resolvedRequiresDS.head
       val b2 = c.resolvedRequiresDS.head
       assert(b1 == b2)
+    }
+
+    test("Test DataSetMgr dataSetsForStage finds all datasets in a stage") {
+      val dsForStage = app.dsm.dataSetsForStage("org.tresamigos.smv.DataSetMgrTestMods")
+      val dsForStageSet = Set(dsForStage:_*)
+      assert(dsForStageSet == Set(A,B,C))
     }
   }
 }
