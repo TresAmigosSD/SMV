@@ -49,13 +49,6 @@ echo "--------- RUN INTEGRATION APP -------------"
     smv.outputDir="file://$(pwd)/data/output" --run-app \
     -- --master 'local[*]'
 
-echo "--------- VERIFY INTEGRATION APP OUTPUT -------------"
-COUNT=$(cat data/output/org.tresamigos.smvtest.stage2.StageEmpCategory_*.csv/part* | wc -l)
-if [ "$COUNT" -ne 52 ]; then
-    echo "Expected 52 lines in output of stage2.StageEmpCategory but got $COUNT"
-    exit 1
-fi
-
 for stage in $NEW_SCALA_MODULE_STAGES; do
   TEST_INPUT=$(< data/input/$stage/table.csv)
   TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.M2_*.csv/part*)
@@ -79,21 +72,21 @@ for stage in $NEW_PYTHON_MODULE_STAGES; do
 done
 )
 
+echo "--------- GENERATE ENTERPRISE APP APP -------------"
+smv-init -e $E_APP_NAME
+
+(
+cd $E_APP_NAME
+echo "--------- RUN ENTERPRISE APP -------------"
+smv-pyrun --run-app
+)
+
 echo "--------- GENERATE SIMPLE APP -------------"
 smv-init -s $S_APP_NAME
 
 (
 cd $S_APP_NAME
 echo "--------- RUN SIMPLE APP -------------"
-smv-pyrun --run-app
-)
-
-echo "--------- GENERATE ENTERPRISE APP APP -------------"
-smv-init -s $E_APP_NAME
-
-(
-cd $E_APP_NAME
-echo "--------- RUN ENTERPRISE APP -------------"
 smv-pyrun --run-app
 )
 
