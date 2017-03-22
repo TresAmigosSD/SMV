@@ -28,3 +28,25 @@ class PublishModuleToHiveTest(SmvBaseTest):
         expected = self.createDF("k:String;v:Integer", "a,;b,2")
         MdfHive = self.smvPy.sqlContext.sql("select * from " + "M")
         self.should_be_same(Mdf, MdfHive)
+
+class ReadHiveTableTest(SmvBaseTest):
+
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=fixture.hive', '--publish-hive',
+                '-m', 'fixture.hive.modules.M']
+
+    def setUp(self):
+        super(ReadHiveTableTest,self).setUp()
+        self.smvPy.sqlContext.setConf("hive.metastore.warehouse.dir", "file:///tmp/Z")
+        self.smvPy.j_smvApp.run()
+
+    def test_smv_hive_table_can_read_hive_table(self):
+        Mdf = self.smvPy.runModule("mod:fixture.hive.modules.M")
+        HiveDf = self.smvPy.runModule("mod:fixture.hive.modules.MyHive")
+        self.should_be_same(Mdf,HiveDf)
+
+    def test_smv_hive_table_can_use_custom_query(self):
+        Mdf = self.smvPy.runModule("mod:fixture.hive.modules.M").select("k")
+        HiveDf = self.smvPy.runModule("mod:fixture.hive.modules.MyHiveWithQuery")
+        self.should_be_same(Mdf,HiveDf)
