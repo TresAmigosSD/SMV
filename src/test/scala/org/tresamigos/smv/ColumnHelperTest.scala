@@ -56,6 +56,14 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
   }
 
+  test("test DateType's smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek"){
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("k:Date[yyyyMMdd]; v:String;", "20190101,a;,b")
+    val res = df.select($"k".smvYear, $"k".smvMonth, $"k".smvQuarter, $"k".smvDayOfMonth, $"k".smvDayOfWeek, $"k".smvHour)
+    assertSrddSchemaEqual(res, "SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer")
+    assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
+  }
+
   test("test smvAmtBin, smvNumericBin, smvCoarseGrain"){
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:Timestamp[yyyyMMdd]; v:Double;", "20190101,1213.3;,31312.9")
@@ -109,6 +117,21 @@ class ColumnHelperTest extends SmvTestUtil {
   test("test smvDay70/smvMonth70") {
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120229")
+
+    val res = df.select($"t".smvDay70)
+    assertSrddDataEqual(res,
+      "2221;" +
+      "15399")
+
+    val res2 = df.select($"t".smvMonth70)
+    assertSrddDataEqual(res2,
+      "72;" +
+      "505")
+  }
+
+  test("test DateType smvDay70/smvMonth70") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df = createSchemaRdd("t:Date[yyyyMMdd]", "19760131;20120229")
 
     val res = df.select($"t".smvDay70)
     assertSrddDataEqual(res,

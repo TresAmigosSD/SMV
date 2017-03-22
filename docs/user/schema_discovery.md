@@ -8,9 +8,11 @@ However, when we just download the data from it's original source, there is no S
 data usable for SMV and Spark, we need to create the Schema file. SMV has a Schema discovery tool to
 help user quickly create it.
 
+Note that this feature is currently only available in the Scala `smv-shell`, but will be implemented in the `smv-pyshell` in the future.
+
 ## Where to put the Csv files
 
-SMV will look for `smv.dataDir` when it load the configuration(see [Application Configuration](app_config.md) for deatails). If multiple places defined the parameter, the order of
+SMV will look for `smv.inputDir` when it load the configuration(see [Application Configuration](app_config.md) for deatails). If multiple places defined the parameter, the order of
 priority from high to low is,
 
 * command line options
@@ -18,16 +20,10 @@ priority from high to low is,
 * global user level config file (~/.smv/smv-user-conf.props)
 * app level config file (default: conf/smv-app-conf.props)  
 
-In the future, we will implement the `smv.inputDir` also. For now, only `smv.dataDir` is in use, and
-the `path` parameters in the `SmvCsvFile` definitions in the project are relative to `smv.dataDir`.
+If `smv.inputDir` is not specified, the default value will be a sub-dir of `smv.dataDir` with name `input`.
+`smv.dataDir` must be specified for each Smv application.
 
-For best practice, we typically put all the input data of a project into the `input` sub-folder under the dataDir.
-
-Data specific sub-folder could be created under `input`, and the Csv file should be put in there.
-Typically, one could also put some info file within the same folder to capture some basic info of the
-source of the data.
-
-Please note that in a cluster environment, the `dataDir` might be on `HDSF`, hdfs command might be
+Please note that in a cluster environment, the `smv.inputDir` and `smv.dataDir` might be on `HDSF`, hdfs command might be
 needed to setup the directory structures.
 
 ## Discover Schema from Shell
@@ -35,8 +31,14 @@ needed to setup the directory structures.
 Within the SMV Spark shell environment (see [Run Spark Shell](run_shell.md) for details), a
 `discoverSchema` command is provided.
 
+**Scala**
 ```scala
 scala> discoverSchema("/path/to/file.csv")
+```
+
+**Python**
+```python
+> discoverSchema("/path/to/file.csv")
 ```
 
 For above case, the Csv file is assumed to be
@@ -45,11 +47,17 @@ For above case, the Csv file is assumed to be
 
 You can specify the appropriate CsvAttributes for your file
 
+**Scala**
 ```scala
 scala> discoverSchema("/path/to/file.csv", ca = new CsvAttributes(delimiter = '|', hasHeader = true))
 ```
 
-Please see [SMV Files](smv_file.md) for more CsvAttributes details.
+**python**
+```python
+> discoverSchema("/path/to/file.csv", ca = CsvAttributes(delimiter = '|', hasHeader = True))
+```
+
+Please see [SMV File](smv_input.md) for more CsvAttributes details.
 
 **Note** SMV currently can't handle Csv files with multiple lines of header. Other tools might be needed
 to remove extra header lines before try to discover schema.
@@ -58,6 +66,8 @@ The shell `discoverSchema` method will create a schema file on the local running
 hinted by the file name, human need to review the schema file.
 
 Using the `CB1200CZ11.csv` file as an example,
+
+**Scala**
 ```scala
 scala> discoverSchema("data/input/employment/CB1200CZ11.csv", ca = new CsvAttributes(delimiter = '|', hasHeader = true))
 ```
@@ -65,6 +75,9 @@ The path here is relative to the project root dir, where I started the `smv-shel
 
 A `CB1200CZ11.schema.toBeReviewed` file is generated. The first a couple of lines are
 ```
+@delimiter = ,
+@has-header = true
+@quote-char = "
 ST: Integer
 ZIPCODE: Integer
 GEO_ID: String

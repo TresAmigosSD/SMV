@@ -109,6 +109,13 @@ private[smv] class EddSummary(
         DoWHistogram(s),
         HourHistogram(s)
       )
+      case DateType => Seq(
+        TimeMinTask(s),
+        TimeMaxTask(s),
+        YearHistogram(s),
+        MonthHistogram(s),
+        DoWHistogram(s)
+      )
       case StringType => Seq(
         CntTask(s),
         NulCntTask(s),

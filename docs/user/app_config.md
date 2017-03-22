@@ -11,13 +11,13 @@ to override any of the options using the command line interface.
 For any given option X, the user may override the value specified in any of the configuration files as follows:
 
 ```
-_SMV_HOME_/tools/smv-run --smv-props X=55 ... -m module_to_run
+smv-pyrun --smv-props X=55 ... -m module_to_run
 ```
 
 multiple properties may be specified at the same time:
 
 ```
-_SMV_HOME_/tools/smv-run --smv-props smv.appName="myApp" smv.stages="s1,s2" ... -m module_to_run
+smv-pyrun --smv-props smv.appName="myApp" smv.stages="s1,s2" ... -m module_to_run
 ```
 
 Some configuration parameters have a shorthand direct command line override (e.g. --data-dir)
@@ -114,7 +114,7 @@ Can be overridden using <code>--data-dir</code> command line option</td>
 <td>smv.inputDir</td>
 <td>dataDir<code>/input</code></td>
 <td>Optional</td>
-<td>Data input directory (not currently used)
+<td>Data input directory 
 Can be overridden using <code>--input-dir</code> command line option</td>
 </tr>
 

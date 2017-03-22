@@ -38,17 +38,6 @@ runSmvModuleRdd <- function(moduleName) {
     df
 }
 
-#' Dynamically load and Run a specified smv model and return the Spark Dataframe.
-#' @param moudleName The module name to run (must be FQN of module)
-#' @export
-
-dynSmvModuleRdd <- function(moduleName) {
-    app <- get(".smvApp", envir = .smvREnv)
-    rdd <- SparkR:::callJMethod(smvApp, "runDynamicModuleByName", moduleName)
-    df <- SparkR:::dataFrame(rdd)
-    df
-}
-
 #' Run the specified smv module and return an R dataframe of the result.
 #' @param moudleName The module name to run (can be FQN of module or just the base name)
 #' @export

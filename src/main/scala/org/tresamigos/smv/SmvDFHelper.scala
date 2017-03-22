@@ -541,7 +541,7 @@ class SmvDFHelper(df: DataFrame) {
 
     df.sqlContext.createDataFrame(res, newSchema)
   }
-   /** Union two data frames that have shared columns, kept columns on both side*/
+   /** Union two data frames that have shared columns, kept columns on both side */
   private[smv] def RowBind(
     dfother: DataFrame): DataFrame = {
     import df.sqlContext.implicits._
@@ -555,23 +555,26 @@ class SmvDFHelper(df: DataFrame) {
     val rightFull = dfother.smvSelectPlus((rightStruct map (sf => lit(null).cast(sf.dataType) as sf.name)):_*)
 
     val overlap = df.columns intersect dfother.columns
-    val overlapLeftStruct = overlap map {colName => 
-      val sturct = df.schema.filter(_.name == colName)(0)
-      val structStripMeta = StructField(sturct.name, sturct.dataType, sturct.nullable)
+    val overlapLeftStruct = overlap map {colName =>
+      val struct = df.schema.filter(_.name == colName)(0)
+      // only compare the name and type, to match Spark's implementation of unionAll
+      val structStripMeta = StructField(struct.name, struct.dataType)
       structStripMeta
     }
-    val overlapRightStruct = overlap map {colName => 
-      val sturct = dfother.schema.filter(_.name == colName)(0)
-      val structStripMeta = StructField(sturct.name, sturct.dataType, sturct.nullable)
+    val overlapRightStruct = overlap map {colName =>
+      val struct = dfother.schema.filter(_.name == colName)(0)
+      // only compare the name and type
+      val structStripMeta = StructField(struct.name, struct.dataType)
       structStripMeta
     }
     val diffColumns = overlapLeftStruct diff overlapRightStruct
     if (diffColumns.isEmpty) {
-      leftFull.unionAll(rightFull.select(leftFull.columns.head, leftFull.columns.tail:_*))}
-      else {
-        val diffNames = diffColumns.map{col => col.name}.mkString(",")
-        throw new IllegalStateException(s"fail to union columns with same name but different StructTypes: ${diffNames}")
-      }
+      leftFull.unionAll(rightFull.select(leftFull.columns.head, leftFull.columns.tail:_*))
+    }
+    else {
+      val diffNames = diffColumns.map{col => col.name}.mkString(",")
+      throw new IllegalStateException(s"fail to union columns with same name but different StructTypes: ${diffNames}")
+    }
   }
 
   /**

@@ -13,7 +13,7 @@
  */
 
 package org.tresamigos.smv
-package matcher
+package matcher_old
 
 import org.scalatest._
 

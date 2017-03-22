@@ -29,17 +29,17 @@ import org.apache.spark.annotation._
  **/
 private[smv] class SmvDSGraph(app: SmvApp, pstages: SmvStages = null, targetDSs: Seq[SmvDataSet] = Nil) {
   val stages = if (null == pstages) app.stages else pstages
-  private val seeds = if(targetDSs.isEmpty) stages.allModules else targetDSs
+  private val seeds = if(targetDSs.isEmpty) app.dsm.allDataSets else targetDSs
 
-  val nodes: Seq[SmvDataSet]= (seeds.flatMap{ds => stages.ancestors(ds)} ++ seeds).distinct.filterNot{
-    ds => ds.isInstanceOf[SmvModuleLink]
+  val nodes: Seq[SmvDataSet]= (seeds.flatMap(_.ancestors) ++ seeds).distinct.filterNot{
+    ds => ds.isInstanceOf[SmvModuleLink] || stages.stageNames.forall (!ds.fqn.startsWith(_))
   }
 
   val edges: Seq[(SmvDataSet, SmvDataSet)] = nodes.flatMap{ds =>
-    val fromDSs = stages.predecessors.getOrElse(ds, Nil)
+    val fromDSs = ds.resolvedRequiresDS
     fromDSs.map{fds =>
       val _fds = if(fds.isInstanceOf[SmvModuleLink])
-        stages.predecessors.getOrElse(fds, throw new SmvRuntimeException(s"SmvModuleLink ${fds} has no predecessors")).head
+        fds.asInstanceOf[SmvModuleLink].smvModule
         else fds
       _fds -> ds
     }
@@ -98,19 +98,18 @@ private[smv] class SmvStageGraph(app: SmvApp, pstages: SmvStages = null) {
  **/
 private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
   val stages = if (null == pstages) app.stages else pstages
+  val dsm = app.dsm
   // max string length per line in an ascii Box
   private val asciiBoxWidth = 12
 
   private def wrapStr(str: String) = str.grouped(asciiBoxWidth).mkString("\n")
   private def baseName(ds: SmvDataSet) = stages.datasetBaseName(ds)
 
-  private def baseNameWithFlag(ds: SmvDataSet) = ds match {
-    case d: SmvOutput     => "(O) " + baseName(d)
-    case d: SmvModuleLink => "(L) " + baseName(d)
-    case d: SmvFile       => "(F) " + baseName(d)
-    case d: SmvModule     => "(M) " + baseName(d)
-    case d: SmvHiveTable  => "(H) " + baseName(d)
-    case d => "(*) " + baseName(d)
+  private def baseNameWithFlag(ds: SmvDataSet) = ds.dsType() match {
+    case "Output"     => "(O) " + baseName(ds)
+    case "Link"       => "(L) " + baseName(ds)
+    case "Input"      => "(I) " + baseName(ds)
+    case "Module"     => "(M) " + baseName(ds)
   }
 
   /**
@@ -246,7 +245,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
     dss.map{ds => prefix + baseNameWithFlag(ds)}
   }
 
-  private def _listAll(s:SmvStage, f: SmvPackageManager => Seq[SmvDataSet]): String = {
+  private def _listAll(s:SmvStage, f: SmvStage => Seq[SmvDataSet]): String = {
     if (s == null) {
       /* list all in the app (the stages) */
       stages.stages.flatMap{s =>
@@ -259,7 +258,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
   }
 
   /** list all datasets */
-  def createDSList(s: SmvStage = null): String = _listAll(s, {s => s.allDatasets})
+  def createDSList(s: SmvStage = null): String = _listAll(s, {s => dsm.dataSetsForStage(s.name)})
 
   /** list `dead` datasets */
   def createDeadDSList(s: SmvStage = null): String = _listAll(s, {s => s.deadDataSets})

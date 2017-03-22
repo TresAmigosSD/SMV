@@ -21,6 +21,13 @@ from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, struct
 
+class T(SmvPyCsvFile):
+    @classmethod
+    def path(cls):
+        return "./target/python-test-export-csv.csv"
+    def csvAttr(self):
+        return self.defaultCsvWithHeader()
+
 class DfHelperTest(SmvBaseTest):
     def test_smvGroupBy(self):
         return "TODO implement"
@@ -115,15 +122,9 @@ class DfHelperTest(SmvBaseTest):
 
     def test_smvExportCsv(self):
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
-        path = "./target/python-test-export-csv.csv"
-        df.smvExportCsv(path)
+        df.smvExportCsv(T.path())
 
-        code = """class T(SmvPyCsvFile):
-        def path(self):    return "{}"
-        def csvAttr(self): return self.defaultCsvWithHeader()
-"""
-        exec(code.format(path), globals())
-        res = smvPy.runModule(self.__module__ + ".T")
+        res = smvPy.runModule("mod:" + self.__module__ + ".T")
         self.should_be_same(df, res)
 
     def test_smvJoinByKey(self):
@@ -243,8 +244,9 @@ class DfHelperTest(SmvBaseTest):
         expect = self.createDF("k:String;v:Integer;v2:Integer", "a,1,2;b,2,3")
         self.should_be_same(expect, r1)
 
+class ShellDfHelperTest(SmvBaseTest):
     def test_smvEdd(self):
-        import smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
         res = smv._smvEdd(df)
         self.assertEqual(res, """k                    Non-Null Count         2
@@ -260,7 +262,7 @@ v                    Min                    1.0
 v                    Max                    2.0""")
 
     def test_smvHist(self):
-        import smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
         res = smv._smvHist(df, "k")
         self.assertEqual(res, """Histogram of k: String sort by Key
@@ -270,7 +272,7 @@ b                            1   50.00%           2  100.00%
 -------------------------------------------------""")
 
     def test_smvConcatHist(self):
-        import smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:String", "a,1;b,2")
         res = smv._smvConcatHist(df, ["k", "v"])
         self.assertEqual(res, """Histogram of k_v: String sort by Key
@@ -280,7 +282,7 @@ b_2                          1   50.00%           2  100.00%
 -------------------------------------------------""")
 
     def test_smvFreqHist(self):
-        import smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:String", "a,1;b,2;a,3")
         res = smv._smvFreqHist(df, "k")
         self.assertEqual(res, """Histogram of k: String sorted by Frequency
@@ -290,7 +292,7 @@ b                            1   33.33%           3  100.00%
 -------------------------------------------------""")
 
     def test_smvCountHist(self):
-        import smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:String", "a,1;b,2;a,3")
         res = smv._smvCountHist(df, ["k"], 1)
         self.assertEqual(res, """Histogram of N_k: with BIN size 1.0
@@ -300,7 +302,7 @@ key                      count      Pct    cumCount   cumPct
 -------------------------------------------------""")
 
     def test_smvBinHist(self):
-        import smv
+        import smv.helpers as smv
         df = self.createDF("k:String;v:Integer", "a,10;b,200;a,30")
         res = smv._smvBinHist(df, ("v", 100))
         self.assertEqual(res, """Histogram of v: with BIN size 100.0

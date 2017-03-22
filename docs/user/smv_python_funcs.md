@@ -246,11 +246,11 @@ Almost the opposite of the pivot operation.
 Given a set of records with value columns, turns the value columns into value rows.
 For example, Given the following input:
 
-| id | X | Y | Z |
-| -- | - | - | - |
-| 1  | A | B | C |
-| 2  | D | E | F |
-| 3  | G | H | I |
+ id | X | Y | Z
+ --- | --- | --- | ---
+ 1  | A | B | C
+ 2  | D | E | F
+ 3  | G | H | I
 
 and the following command:
 
@@ -260,13 +260,13 @@ df.smvUnpivot("X", "Y", "Z")
 
 will result in the following output:
 
-| id | column | value |
-| -- | ------ | ----- |
-|  1 |   X    |   A   |
-|  1 |   Y    |   B   |
-|  1 |   Z    |   C   |
-| ...   ...      ...  |
-|  3 |   Y    |   H   |
-|  3 |   Z    |   I   |
+ id | column | value
+ --- | ------ | -----
+  1 |   X    |   A   
+  1 |   Y    |   B   
+  1 |   Z    |   C   
+ ...  | ...  |    ...  
+  3 |   Y    |   H   
+  3 |   Z    |   I   
 
 **Note:** This only works for String columns for now

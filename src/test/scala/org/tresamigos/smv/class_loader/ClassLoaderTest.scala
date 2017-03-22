@@ -57,6 +57,8 @@ trait ClassLoaderTestHelper {
   }
 }
 
+// This test should be removed entirely because dynamicResolveRDD is deprecated
+/*
 class SmvAppDynamicResolveTest extends SmvTestUtil with ClassLoaderTestHelper {
   // override smvApp args to create an app with local class loader.
   override def appArgs: Seq[String] = cmdLineArgs("", 0, classLoaderTestDir)
@@ -71,6 +73,7 @@ class SmvAppDynamicResolveTest extends SmvTestUtil with ClassLoaderTestHelper {
     assertSrddDataEqual(df, "1;2;3")
   }
 }
+*/
 
 class RemoteClassLoaderTest extends SparkTestUtil with ClassLoaderTestHelper {
   var server : Server = _

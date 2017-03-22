@@ -143,8 +143,9 @@ package object smv {
    * @param nonNull  switches whether the function will try to find the first non-null value
    *
    * @group agg
+   * @deprecated("use the one in smvfuncs package instead", "1.6")
    **/
-  def smvFirst(c: Column, nonNull: Boolean = false) = first(c, nonNull)
+  def smvFirst(c: Column, nonNull: Boolean = false) = smvfuncs.smvFirst(c, nonNull)
 
   /**
    * Simple column functions to apply If-Else

@@ -17,9 +17,10 @@ import org.apache.spark.sql.DataFrame
 
 abstract class SmvAncillary {
   def requiresDS(): Seq[SmvModuleLink]
+  lazy val resolvedRequiresDS = requiresDS()
 
   protected def getDF(ds: SmvModuleLink) : DataFrame= {
-    if (requiresDS.contains(ds)) SmvApp.app.resolveRDD(ds)
+    if (resolvedRequiresDS.contains(ds)) SmvApp.app.resolveRDD(ds)
     else throw new SmvRuntimeException(s"${ds} does not defined in requiresDS")
   }
 }

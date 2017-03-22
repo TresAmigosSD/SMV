@@ -8,30 +8,93 @@ if [ ! -d "src/test/scripts" ]; then
 fi
 
 TEST_DIR=target/test-sample
-APP_NAME=MyApp
-APP_DIR=${TEST_DIR}/${APP_NAME}
+I_APP_NAME=IntegrationApp
+S_APP_NAME=SimpleApp
+E_APP_NAME=EnterpriseApp
 MVN=$(type -P mvn || type -P mvn3)
 
 rm -rf ${TEST_DIR}
 mkdir -p ${TEST_DIR}
 cd ${TEST_DIR}
 
-echo "--------- GENERATE SAMPLE APP -------------"
-../../tools/smv-init ${APP_NAME} com.mycompany.${APP_NAME}
 
-echo "--------- BUILD SAMPLE APP -------------"
-cd ${APP_NAME}
-$MVN clean package
+# Test stages containing a dependency scenario with a Scala output module
+NEW_SCALA_MODULE_STAGES="\
+test1 \
+test3 \
+test5 \
+"
 
-echo "--------- RUN SAMPLE APP -------------"
-../../../tools/smv-pyrun --smv-props \
+# Test stages containing a dependency scenario with a Python output module
+NEW_PYTHON_MODULE_STAGES="\
+test2 \
+test4 \
+test6 \
+"
+
+NEW_MODULE_STAGES="$NEW_PYTHON_MODULE_STAGES $NEW_SCALA_MODULE_STAGES"
+
+echo "--------- GENERATE INTEGRATION APP -------------"
+../../tools/smv-init -test ${I_APP_NAME}
+
+(
+cd ${I_APP_NAME}
+echo "--------- BUILD INTEGRATION APP -------------"
+sbt clean assembly
+
+echo "--------- RUN INTEGRATION APP -------------"
+../../../tools/smv-pyrun \
+    --smv-props \
     smv.inputDir="file://$(pwd)/data/input" \
     smv.outputDir="file://$(pwd)/data/output" --run-app \
     -- --master 'local[*]'
 
-echo "--------- VERIFY SAMPLE APP OUTPUT -------------"
-COUNT=$(cat data/output/com.mycompany.MyApp.stage2.StageEmpCategory_*.csv/part* | wc -l)
+echo "--------- VERIFY INTEGRATION APP OUTPUT -------------"
+COUNT=$(cat data/output/org.tresamigos.smvtest.stage2.StageEmpCategory_*.csv/part* | wc -l)
 if [ "$COUNT" -ne 52 ]; then
-    echo "Expected 52 lines in output but got $COUNT"
+    echo "Expected 52 lines in output of stage2.StageEmpCategory but got $COUNT"
     exit 1
 fi
+
+for stage in $NEW_SCALA_MODULE_STAGES; do
+  TEST_INPUT=$(< data/input/$stage/table.csv)
+  TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.M2_*.csv/part*)
+  if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
+    echo "Test failure: $stage"
+    exit 1
+  fi
+done
+
+for stage in $NEW_PYTHON_MODULE_STAGES; do
+  TEST_INPUT=$(< data/input/$stage/table.csv)
+  TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.modules.M2_*.csv/part*)
+  if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
+    echo "Test failure: $stage"
+    echo "Expected output:"
+    echo $TEST_OUTPUT
+    echo "Got:"
+    echo $TEST_INPUT
+    exit 1
+  fi
+done
+)
+
+echo "--------- GENERATE SIMPLE APP -------------"
+smv-init -s $S_APP_NAME
+
+(
+cd $S_APP_NAME
+echo "--------- RUN SIMPLE APP -------------"
+smv-pyrun --run-app
+)
+
+echo "--------- GENERATE ENTERPRISE APP APP -------------"
+smv-init -s $E_APP_NAME
+
+(
+cd $E_APP_NAME
+echo "--------- RUN ENTERPRISE APP -------------"
+smv-pyrun --run-app
+)
+
+echo "--------- TEST COMPLETE -------------"

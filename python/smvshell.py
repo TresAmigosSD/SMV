@@ -14,10 +14,16 @@
 from smv import smvPy
 from pyspark.sql import DataFrame
 
+from smv import CsvAttributes
+
 jvmShellCmd = smvPy._jvm.org.tresamigos.smv.shell.ShellCmd
 
-pdf = lambda fqn: smvPy.runModule(fqn)
-ddf = lambda fqn: smvPy.runDynamicModule(fqn)
+df = lambda name: smvPy.runModuleByName(name)
+def ddf(fqn):
+    print "ddf has been removed. df now runs modules dynamically. Use df instead of ddf."
+def pdf(fqn):
+    print "pdf has been removed. Run modules dynamically with df instead."
+
 openHive = lambda tableName: DataFrame(jvmShellCmd.openHive(tableName), smvPy.sqlContext)
 openCsv = lambda path: DataFrame(jvmShellCmd.openCsv(path), smvPy.sqlContext)
 
@@ -42,6 +48,9 @@ def lsLeaf(stageName = None):
     else:
         print(jvmShellCmd.lsLeaf(stageName))
 
+def descendants(urn):
+    print(jvmShellCmd.descendants("mod:"+urn))
+
 def graph(stageName = None):
     if(stageName is None):
         print(jvmShellCmd._graph())
@@ -50,3 +59,6 @@ def graph(stageName = None):
 
 def now():
     print(jvmShellCmd.now())
+
+def discoverSchema(path, n=100000, ca=smvPy.defaultCsvWithHeader()):
+    smvPy._jvm.SmvPythonHelper.discoverSchema(path, n, ca)

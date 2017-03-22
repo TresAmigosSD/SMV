@@ -15,11 +15,10 @@ from smv import SmvPyModule, SmvPyModuleLink
 from fixture.stage1.output import A
 from pyspark.sql.functions import col, lit
 
-class L(SmvPyModuleLink):
-    @classmethod
-    def target(self): return A
+L = SmvPyModuleLink(A)
 
 class B(SmvPyModule):
+
     def requiresDS(self): return [L]
     def run(self, i):
         df = i[L]

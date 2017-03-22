@@ -2,7 +2,7 @@
 
 ## Synopsis
 ```shell
-$ _SMV_HOME_/tools/smv-r [smv-options]
+$ smv-r [smv-options]
 ```
 
 **Note:**  The above command should be run from the project top level directory.

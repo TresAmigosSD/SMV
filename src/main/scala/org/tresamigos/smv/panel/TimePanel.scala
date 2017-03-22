@@ -15,7 +15,7 @@
 package org.tresamigos.smv.panel
 
 import org.joda.time._
-import java.sql.Timestamp
+import java.sql.{Timestamp, Date}
 import org.apache.spark.annotation._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame}
@@ -102,6 +102,11 @@ object Month {
     apply(dt)
   }
 
+  def apply(date: Date): Month = {
+    val dt = new DateTime(date.getTime())
+    apply(dt)
+  }
+
   def apply(timeIndex: Int): Month = {
     val year = timeIndex / 12 + 1970
     val month = timeIndex % 12 + 1
@@ -145,6 +150,11 @@ object Day {
 
   def apply(timestamp: Timestamp): Day = {
     val dt = new DateTime(timestamp.getTime())
+    apply(dt)
+  }
+
+  def apply(date: Date): Day = {
+    val dt = new DateTime(date.getTime())
     apply(dt)
   }
 }

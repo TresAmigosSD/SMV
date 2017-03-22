@@ -21,6 +21,7 @@ import py4j.GatewayServer
 import scala.collection.JavaConversions._
 import scala.util.Try
 import java.util.ArrayList
+import matcher._
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
@@ -101,6 +102,20 @@ object SmvPythonHelper {
     f.setAccessible(true)
     f.setInt(cl, port)
   }
+
+  def createMatcher(
+    leftId: String, rightId: String,
+    exactMatchFilter:PreFilter,
+    groupCondition:AbstractGroupCondition,
+    levelLogics: Array[LevelLogic]
+  ): SmvEntityMatcher = {
+    val lls = levelLogics.toSeq
+    SmvEntityMatcher(leftId, rightId,
+      if(exactMatchFilter == null) NoOpPreFilter else exactMatchFilter,
+      if(groupCondition == null) NoOpGroupCondition else groupCondition,
+      lls
+    )
+  }
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
@@ -153,10 +168,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
     SmvUtil.persist(j_smvApp.sparkSession, dataframe, path, generateEdd)
 
-  /** Export a dataframe as hive table */
-  def exportDataFrameToHive(dataframe: DataFrame, tableName: String): Unit =
-    SmvUtil.exportDataFrameToHive(j_smvApp.sqlContext, dataframe, tableName)
-
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes,
     pForceParserCheck: Boolean, pFailAtParsingError: Boolean
@@ -177,18 +188,77 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(modUrn: String): DataFrame =
-    j_smvApp.runModule(modUrn)
+  def runModule(urn: String): DataFrame =
+    j_smvApp.runModule(URN(urn))
 
-  def runDynamicModule(modUrn: String): DataFrame =
-    j_smvApp.runDynamicModule(modUrn)
+  // TODO: The following method should be removed when Scala side can
+  // handle publish-hive SmvPyOutput tables
+  def moduleNames: java.util.List[String] = {
+    val cl = j_smvApp.smvConfig.cmdLine
+    val directMods: Seq[String] = cl.modsToRun()
+    /*
+    val stageMods: Seq[String] = cl.stagesToRun().flatMap(j_smvApp.outputModsForStage)
+    val appMods: Seq[String] =
+      if (cl.runAllApp()) j_smvApp.stages.stageNames.flatMap(j_smvApp.outputModsForStage) else Nil
 
-  /** Publish the result of an SmvModule */
-  def publishModule(modFqn: String): Unit =
-    j_smvApp.publishModule(modFqn, publishVersion.get)
+      (directMods ++ stageMods ++ appMods).filterNot(_.isEmpty)
+      */
+    directMods
+  }
 
-  def register(id: String, repo: SmvDataSetRepository): Unit =
-    j_smvApp.register(id, repo)
+  // ---- User Run Configuration Parameters proxy funcs.
+  def getRunConfig(key: String): String = j_smvApp.smvConfig.getRunConfig(key)
+  def getRunConfigHash() = j_smvApp.smvConfig.getRunConfigHash()
+
+  def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
+    j_smvApp.registerRepoFactory( new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig) )
+
+  import java.io._
+  import java.awt._
+  import java.awt.image.BufferedImage
+  import javax.imageio.ImageIO
+
+  /**
+   * Returns the image byte-array specified by the input string, which
+   * is in the dot file format used by graphviz.
+   *
+   * An example use of this is in Jupyter:
+   *
+   * <pre>
+import IPython.display
+from IPython.display import Image
+
+IPython.display.display(Image(bytes(smvPy.j_smvPyClient.graph("""
+graph {
+    { rank=same; white}
+    { rank=same; cyan; yellow; pink}
+    { rank=same; red; green; blue}
+    { rank=same; black}
+
+    white -- cyan -- blue
+    white -- yellow -- green
+    white -- pink -- red
+
+    cyan -- green -- black
+    yellow -- red -- black
+    pink -- blue -- black
+}
+"""))))
+   * </pre>
+   */
+  def graph(str: String, fmt: String = "png"): Array[Byte] = {
+    import guru.nidi.graphviz.engine.Graphviz
+
+    val image = new BufferedImage(600, 800, BufferedImage.TYPE_INT_ARGB)
+    val g = image.createGraphics
+
+    Graphviz.fromString(str).renderToGraphics(g)
+
+    val out = new java.io.ByteArrayOutputStream
+    ImageIO.write(image, fmt, out)
+    out.close
+    out.toByteArray
+  }
 }
 
 /** Not a companion object because we need to access it from Python */

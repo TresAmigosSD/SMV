@@ -107,7 +107,14 @@ Each transaction will need to create a new class loader, and will need to use th
 
 Creating a new `DataSetRepoScala` is trivial. To create a new `DataSetRepoPython`, we will need for the Python proxy to provide a factory for `IDataSetRepoPy4J`. Rather than registering a repo, the proxy will register a factory with the `SmvApp`.
 
+We will create a new class hierarchy for repo factories. `DataSetRepoFactory` will be the generic repo factory interface. It will be implemented by `DataSetRepoPython` and `DataSetRepoScala`.
+
 
 # runParams
 
 Since `SmvExtModule`s for the same dataset will not be unique, `runParams` cannot be a simple map from `SmvDataSet` to `DataFrame` (the `SmvExtModule` used as a key by the user will not be the same created by `requireDS()`). `runParams` will internally map `SmvDataSet` to `DataFrame` by name.
+
+
+# Module links
+
+Though we should never need to invoke `DataSetMgr.load` on a module link, we will encounter links when resolving the dependencies of modules. Pushing the linking logic into the repos would overcomplicate repos and risk loading the same module multiple times, so we will implement the linking logic in the `DataSetResolver`. In fact, we can carry it out similarly to how we do with `SmvExtModule`s. An `SmvModuleLink` should resolve to itself after resolving the module it links to. An `SmvExtModuleLink` will be a declarative sugar like `SmvExtModule`, resolving to a link to an `SmvExtModulePython` after loading the `SmvExtModulePython`. `SmvExtModulePython` is the only type of module that must resolve its dependencies from a list of URNs, so it will encapsulate the logic of differentiating between a link dependency and a direct dependency by parsing the URN. Finally, in order to link to a `SmvExtModulePython`, that `SmvExtModulePython` must be an output. The repo must specifically create an `SmvExtModulePython with SmvOutput` when `ISmvModulePy4J`'s `isOutput` is true.

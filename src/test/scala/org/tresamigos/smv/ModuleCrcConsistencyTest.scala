@@ -32,6 +32,9 @@ package fixture {
 package smv {
 
   class ModuleCrcConsistencyTest extends SmvTestUtil {
+    // While working on unification of SmvDataSet loading schemes we will be changing
+    // SmvDataSet implementation several times, causing CRCs to change. Ignore CRC
+    // and datasetHash tests until this process is complete.
 
     // this test will be superseded by the ones in ClassCRCTest, which
     // more thoroughly and correctly tests the module hash
@@ -40,7 +43,7 @@ package smv {
       assert(fixture.Module1.datasetCRC === 2205490635L)
     }
 
-    test("test moduleCrc on SmvFile"){
+    ignore("test moduleCrc on SmvFile"){
       assert(fixture.file.datasetCRC === 3868808112L)
     }
   }

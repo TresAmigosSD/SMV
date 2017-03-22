@@ -1,5 +1,7 @@
 # SmvDesc and SmvLabel
 
+**These features are currently only available in Scala SMV**
+
 Both `SmvDesc` and `SmvLabel` are `metadata` components of `DataFrame`'s schema and with a
 group of helper methods for user convenience. However they are designed to support different
 use cases.
@@ -39,9 +41,9 @@ scala> descriptionDF.show
 +---------+---------------------+
 scala> val res2 = df.smvDescFromDF(descriptionDF)
 scala> res2.printDesc
-a     : 
-b     : 
-c     : 
+a     :
+b     :
+c     :
 phy_id: Physician ID from CMS
 ```
 
@@ -106,4 +108,3 @@ As you can see, rename will persist the metadata when you referring the original
 column as `df(colname)` instead of `$"colname"`.
 
 Regular projections without re-calculation will preserve metadata.
- 

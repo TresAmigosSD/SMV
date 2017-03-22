@@ -16,6 +16,8 @@ from unittest import *
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
+from smv import SmvApp as app
+
 import sys
 
 # shared spark and sql context
@@ -34,6 +36,9 @@ if __name__ == "__main__":
     print("Testing with Python " + sys.version)
 
     TestPath = "./src/test/python"
+    SrcPath = "./src/main/python"
+
+    app.add_source(SrcPath)
 
     loader = TestLoader()
 

@@ -12,111 +12,60 @@
 # limitations under the License.
 
 from smvbasetest import SmvBaseTest
-from smv import SmvPyDataSet, smvPy, for_name
+from smv import smvPy
+from smv.smvpy import DataSetRepo
 
-import imp
 import sys
 
-class BaseModule(SmvPyDataSet):
-    """Base class for modules written for testing"""
-    def requiresDS(self):
-        return []
-    def run(self, i):
-        sqlcontext = self.smvPy.sqlContext
-        from pyspark.sql.types import StructType
-        return sqlContext.createDataFrame(sqlContext._sc.emptyRDD(), StructType([]))
-    def doRun(self, validator, known):
-        return self.run(known)
-    @classmethod
-    def hashsource(cls, src, fname='inline'):
-        return hash(compile(src, fname, 'exec'))
-
 class ModuleHashTest(SmvBaseTest):
+    ResourcePath1 = 'src/test/python/dsh1'
+    ResourcePath2 = 'src/test/python/dsh2'
+
+    class Resource(object):
+        def __init__(self,smvPy,path,fqn):
+            self.dsr = DataSetRepo(smvPy)
+            self.path = path
+            self.fqn = fqn
+
+        def __enter__(self):
+            sys.path.insert(1,self.path)
+            return self.dsr.loadDataSet(self.fqn)
+
+        def __exit__(self,type,value,traceback):
+            sys.path.remove(self.path)
+
+    def compare_resource_hash(self,fqn,assertion):
+        with self.Resource(self.smvPy,self.ResourcePath1,fqn) as ds:
+            hash1 = ds.datasetHash()
+
+        with self.Resource(self.smvPy,self.ResourcePath2,fqn) as ds:
+            hash2 = ds.datasetHash()
+
+        assertion(hash1, hash2)
+
+
+    def assert_hash_should_change(self,fqn):
+        self.compare_resource_hash(fqn,self.assertNotEqual)
+
+    def assert_hash_should_not_change(self,fqn):
+        self.compare_resource_hash(fqn,self.assertEqual)
+
     def test_add_comment_should_not_change_hash(self):
-        a = """
-class A(BaseModule):
-    def add(this, a, b):
-        return a+b
-"""
-        b = """
-class A(BaseModule):
-    # comments should not change hash
-    def add(this, a, b):
-        return a+b
-"""
-        self.assertEquals(BaseModule.hashsource(a), BaseModule.hashsource(b))
+        """hash will not change if we add a comment to its code"""
+        self.assert_hash_should_not_change("modules.AddComment")
 
     def test_change_code_should_change_hash(self):
-        a = """
-class A(BaseModule):
-    def add(this, a, b):
-        return a+b
-"""
-        b = """
-class A(BaseModule):
-    def add(this, a, b, c=1):
-        return a+b+c
-"""
-        self.assertFalse(BaseModule.hashsource(a) == BaseModule.hashsource(b))
+        """hash will change if we change module's code"""
+        self.assert_hash_should_change("modules.ChangeCode")
 
     def test_change_dependency_should_change_hash(self):
-        a = """class A(BaseModule):
-        pass
-"""
-        b = """class B(BaseModule):
-        pass
-"""
-        c1 = """class C(BaseModule):
-        def requiresDS(self): return [A]
-"""
-        c2 = """class C(BaseModule):
-        def requiresDS(self): return [B]
-"""
-
-        exec(a+b+c1, globals())
-        h1 = for_name(self.__module__ + ".C")(smvPy).datasetHash()
-
-        exec(a+b+c2, globals())
-        h2 = for_name(self.__module__ + ".C")(smvPy).datasetHash()
-
-        self.assertFalse(h1 == h2)
+        """hash will change if we change module's requiresDS"""
+        self.assert_hash_should_change("modules.Dependent")
 
     def test_change_baseclass_should_change_hash(self):
-        p1 = """class Parent(BaseModule):
-    def test(self):
-        return True
-"""
-        p2 = """class Parent(BaseModule):
-    def test(self):
-        return False
-"""
-        a = """class A(Parent):
-    def m(self,a):
-        return a
-"""
-        exec(p1 + a, globals())
-        h1 = for_name(self.__module__ + ".A")(smvPy).datasetHash()
-
-        exec(p2 + a, globals())
-        h2 = for_name(self.__module__ + ".A")(smvPy).datasetHash()
-
-        self.assertFalse(h1 == h2)
+        """hash will change if we change code for class that module inherits from"""
+        self.assert_hash_should_change("modules.Child")
 
     def test_change_upstream_module_should_not_change_datasethash(self):
-        p1 = """class Upstream(BaseModule):
-    def f(self): return True
-"""
-        p2 = """class Upstream(BaseModule):
-    def f(self): return False
-"""
-        a = """class A(BaseModule):
-    def requiresDS(self): return [Upstream]
-    def m(self, a): return a
-"""
-        exec(p1 + a, globals())
-        d1 = for_name(self.__module__ + ".A")(smvPy).datasetHash()
-
-        exec(p2 + a, globals())
-        d2 = for_name(self.__module__ + ".A")(smvPy).datasetHash()
-
-        self.assertTrue(d1 == d2, "datasetHash should be the same")
+        """hash will not change if we change module that is listed in module's requiresDS"""
+        self.assert_hash_should_not_change("modules.Downstream")

@@ -1,29 +1,41 @@
 # SmvModule
 
-An SMV Module is a collection of transformation operations and validation rules.  Each module depends on one or more `SmvDataSet`s (`SmvFile` or `SmvModule`) and defines a set of transformation on its inputs that define the module output.
+An SMV Module is a collection of transformation operations and validation rules.  Each module depends on one or more `SmvDataSet`s and defines a set of transformation on its inputs that define the module output.
 
 ## Module Dependency Definition
-Each module **must** define its input dependency by overriding the `requireDS` method. The `requireDS` method should return a sequence of required datasets for the running of this module.
-The dependent datasets **must** be defined in the same stage as this module.  External dependencies should use the `SmvModuleLink` class as described in [SmvStage](smv_stages.md).
+Each module **must** define its input dependency by overriding the `requiresDS` method. The `requiresDS` method should return a sequence of `SmvDataSet`s required as input for this module.
+The dependent datasets **must** be defined in the same stage as this module. Dependencies in other stages should use the `SmvModuleLink` class as described in [SmvStage](smv_stages.md).
 
+### Scala
 ```scala
 object MyModule extends SmvModule("mod description") {
- override def requireDS() = Seq(Mod1, Mod2)
+ override def requiresDS() = Seq(Mod1, Mod2)
  ...
 ```
+### Python
+```Python
+class MyModule(SmvModule):
+  def requiresDS(self): return [Mod1,Mod2]
+```
 
-Note that `requireDS` returns a sequence of the actual `SmvDataSet` objects that the module depends on, **not** the name.  This makes typos visible at compile time rather than run time.
-The dependency can be on any combination of files/modules.  It is not limited to other `SmvModules`.
+Note that `requiresDS` returns a sequence of the actual `SmvDataSet` objects that the module depends on, **not** the name. The dependency can be on any combination of `SmvDataSet`s which may be files, Hive tables, modules, etc. It is not limited to other `SmvModules`.
+
+### Scala
 ```scala
 object MyModule extends SmvModule("mod description") {
  override def requireDS() = Seq(File1, File2, Mod1)
  ...
 ```
-`File1`, `File2` are instances of `SmvFile` and `Mod1` is an instance of `SmvModule`.  From the perspective of `MyModule`, the type of the dependent dataset is irrelevant.
+### Python
+```python
+class MyModule(SmvModule):
+  def requiresDS(self): return [File1,Hive2,Mod3]
+```
 
 ## Module Transformation Definition (run)
 The module **must** also provide a `run()` method that performs the transformations on the inputs to produce the module output.  The `run` method will be provided with the results (DataFrame) of running the dependent input modules as a map keyed by the dependent module.
 
+### Scala
 ```scala
 object MyModule extends SmvModule("mod description") {
  override def requireDS() = Seq(Mod1, Mod2)
@@ -35,16 +47,20 @@ object MyModule extends SmvModule("mod description") {
    M1df.join(M2df, ...)
        .select("col1", "col2", ...)
  }
-
+```
+### Python
+```Python
+class MyModule(SmvModule):
+  def requiresDS(self): return [Mod1,Mod2]
+  def run(self, i):
+    m1df = i[Mod1]
+    m2df = i[Mod2]
+    return M1df.join(M2df, ...).select("col1", "col2", ...)
 ```
 
 The `run` method should return the result of the transformations on the input as a `DataFrame`.
 
-The parameter of the `run` method has type `runParams`, which is just an alias to type
-`Map[SmvDataSet, DataFrame]`. The driver program (Smv framework itself) will provide
-the lookup map, "inputs: runParams", to map all the required modules to their
-output `DataFrame`. As in above example, `val M1df = inputs(Mod1)` provides the `run`
-method the access to the result `DataFrame` of module `Mod1`.
+The parameter `i` of the `run` method maps `SmvDataSet` to its resulting `DataFrame`. The driver (Smv Framework) will run the dependencies of the `SmvDataSet` to provide this map.
 
 ## Module Validation Rules
 Each module may also define its own set of [DQM validation rules](dqm.md).  By default, if the user does not override the `dqm` method, the module will have an empty set of rules.
@@ -56,6 +72,7 @@ On a large development team, this makes it very easy to "pull" the latest code c
 
 However, for trivial modules (e.g. filter), it might be too expensive to persist/read the module output.  In these cases, the module may override the default persist behaviour by setting the `isEphemeral` flag to true.  In that case, the module output will not be persisted (unless the module was run explicitly).
 
+### Scala
 ```scala
 object MyModule extends SmvModule("mod description") {
   override val isEphemeral = true
@@ -64,93 +81,42 @@ object MyModule extends SmvModule("mod description") {
   }
 }
 ```
-
-## Configurable Modules
-In some situations, such as building subsets by filtering, different sets `DataFrame`s are genereated from the same input with almost the same _logic_.  Using a _configurable_ module enables code reuse while minizing boilerplate.
-
-In addition to input modules specified with the `requireDS()` method, a _configurable_ module depends on a specific configuration object, that must be a subclass of the `SmvRunConfig` trait, to produce its desired output.  Which configuration object to use is specified by the value of `smv.runConfObj`, either in the application's <a href="app_config.md">configuration</a> file, or on the command line with `--run-conf-obj <name>` option or with `--smv-props smv.runConfObj=<name>`.
-
-By default, the name of the configuration object is the fully qualified class name (FQN) of the implementing object.  However, one could override `runConfig` in trait `Using[T]` to change the way the configuration object is obtained.
-
-Below is an example of how to use a configurable module:
-
-```scala
-trait BaseStudio extends SmvRunConfig {
-  def actors: Seq[String]
-  def directors: Seq[String]
-}
-
-object Hollywood extends BaseStudio {
-  override val actors = Seq("Hillary Clinton", "Bernie Sanders")
-  override val directors = Seq("George Soros")
-}
-
-object Bollywood extends BaseStudio {
-  override val actors = Seq()
-  override val directors = Seq()
-}
-
-object Budget extends SmvModule("Projects cost of film production") with Using[BaseStudio] {
-  ...
-  override def run (i: runParams) = {
-    // Access to the actual configuration is provided by the runConfig object
-    val available = df.where(df("name").isin(runConfig.actors))
-    ....
-  }
-}
-```
-
-Here the run configuration is defined with the `BaseStudio` trait, which extends `SmvRunConfig`.  It contains two pieces of information: lists of available actors and directors.  There are two specific configurations specified by `Hollywood` and `Bollywood`, each with its own list of available actors and directors.  And the module `Budget` declares that it needs the information from a `BaseStudio` by mixing in the trait `Using[BaseStudio]`, which provides the actual configuration through the `runConfig` object.  To specify the use of `Hollywood`, one invokes `smv-run --smv-props runConfObj=Hollywood`; to use `Bollywood`, one invokes `smv-run --run-conf-obj Bollywood`.  Both ways of specifying a configuration object on the commandline work with smv-run.  However, because smv-shell does not directly run the main program in SmvApp -- and therefore will not pass any commandline arguments to SmvApp -- the only way to specify a `runConfig` object, when you are running an interactive shell, is through the use of an SMV configuration file.
-
-`SmvRunConfig` can contain arbitrary information, including `SmvDataSet`s.  For example, the first stage of processing often involves concatenating data sets from different sources, with some preliminary processing such as null-sanitization.  The data source may be CSV files or Hive tables.  The following code shows how to use `SmvRunConfig` in this situation:
-
-```scala
-trait BaseAppInput extends SmvRunConfig {
-  def in_01: SmvDataSet
-  def in_02: SmvDataSet
-}
-
-object CsvAppInput extends BaseAppInput {
-  override val in_01 = SmvCsvFile("some/file.csv")
-  override val in_02 = SmvCsvFile("some/other/file.csv")
-}
-
-object HiveAppInput extends BaseAppInput {
-  override val in_01 = SmvHiveTable("some_table")
-  override val in_02 = SmvHiveTable("some_other_table")
-}
-
-object ConcatInput extends SmvModule("Concatenate input data sets") with Using[BaseAppInput] {
-  override def reuqiresDS = Seq(runConfig.in_01, runConfig.in_02)
-  override def run (i: runParams) = {
-    // load the first input data set, specified with a runtime configuration
-    val df1 = i(runConfig.in_01)
-    ...
-  }
-}
+### Python
+```python
+class MyModule(SmvModule):
+  def isEphemeral(self): return False
+  ....    
 ```
 
 # Output Modules
 As the number of modules in a given SMV stage grows, it becomes more difficult to track which
-modules are the "leaf"/output modules within the stage.
-Any module or SmvDataSet within the stage can be marked as an output module by mixing-in the `SmvOutput` trait.
+modules are the "leaf"/output modules within the stage. Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait. If you would like to publish the module to a Hive table, include a `tableName`, and use `--publish-hive` command line parameter to
+publish/export the output to the specified Hive table.
+
 For example:
 
+### Scala
 ```scala
 object MyModule extends SmvModule("this is my module") with SmvOutput {
+  def tableName = "hiveschema.hivetable"
 ...
 }
+object MyFile extends SmvCsvFile("path/to/file/data.csv", CA.ca) with SmvOutput
 ```
-
-```scala
-object MyData extends SmvCsvFile("path/to/file/data.csv", CA.ca) with SmvOutput
+### Python
+```python
+class MyModule(SmvModule, SmvOutput):
+  def tableName(self): return "hiveschema.hivetable"
+  ...
+class MyFile(SmvCsvFile, SmvOutput):
+  ...
 ```
 
 The set of `SmvOutput` output modules in a stage define the data *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
 
 In addition to the above, the ability to mark certain modules as output has the following benefits:
 
-* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-run`)
+* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-pyrun`). Depending on the options specified, they can then be published to CSV or to Hive.
 * A future option might be added to allow for listing of "dead" modules.  That is, any module in a stage that does not contribute to any output module either directly or indirectly.
 * We may add a future option to `SmvApp` that allows the user to display a "catalog" of output modules and their description.
 

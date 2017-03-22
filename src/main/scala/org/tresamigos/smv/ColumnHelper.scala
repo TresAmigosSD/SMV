@@ -24,7 +24,7 @@ import org.apache.spark.sql.types._
 import cds._
 
 import java.util.Calendar
-import java.sql.Timestamp
+import java.sql.{Timestamp, Date}
 import com.rockymadden.stringmetric.phonetic.{MetaphoneAlgorithm, SoundexAlgorithm}
 import org.joda.time._
 import org.apache.spark.annotation._
@@ -148,15 +148,7 @@ class ColumnHelper(column: Column) {
    */
   def smvYear = {
     val name = s"SmvYear($column)"
-    val cal : Calendar = Calendar.getInstance()
-    val f = (ts:Timestamp) =>
-      if(ts == null) null
-      else {
-        cal.setTimeInMillis(ts.getTime())
-        cal.get(Calendar.YEAR)
-      }
-
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
+    year(column).alias(name)
   }
 
   /**
@@ -170,15 +162,7 @@ class ColumnHelper(column: Column) {
    */
   def smvMonth = {
     val name = s"SmvMonth($column)"
-    val cal : Calendar = Calendar.getInstance()
-    val f = (ts:Timestamp) =>
-      if(ts == null) null
-      else {
-        cal.setTimeInMillis(ts.getTime())
-        cal.get(Calendar.MONTH) + 1
-      }
-
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
+    month(column).alias(name)
   }
 
   /**
@@ -192,13 +176,14 @@ class ColumnHelper(column: Column) {
    */
   def smvMonth70 = {
     val name = s"SmvMonth70($column)"
-    val cal : Calendar = Calendar.getInstance()
-    val f = (ts: Timestamp) => {
-      if(ts == null) null
-      else {
+    val f = {ts:Any => ts match {
+      case null => null
+      case ts:Timestamp =>
         panel.Month(ts).timeIndex
-      }
-    }
+      case ts:Date =>
+        panel.Month(ts).timeIndex
+      case _ => throw new SmvUnsupportedType("unsupported type")
+    }}
 
     new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
   }
@@ -214,15 +199,7 @@ class ColumnHelper(column: Column) {
    */
   def smvQuarter = {
     val name = s"SmvQuarter($column)"
-    val cal : Calendar = Calendar.getInstance()
-    val f = (ts:Timestamp) =>
-      if(ts == null) null
-      else {
-        cal.setTimeInMillis(ts.getTime())
-        cal.get(Calendar.MONTH)/3 + 1
-      }
-
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
+    quarter(column).alias(name)
   }
 
   /**
@@ -236,15 +213,7 @@ class ColumnHelper(column: Column) {
    */
   def smvDayOfMonth = {
     val name = s"SmvDayOfMonth($column)"
-    val cal : Calendar = Calendar.getInstance()
-    val f = (ts:Timestamp) =>
-      if(ts == null) null
-      else {
-        cal.setTimeInMillis(ts.getTime())
-        cal.get(Calendar.DAY_OF_MONTH)
-      }
-
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
+    dayofmonth(column).alias(name)
   }
 
   /**
@@ -259,12 +228,16 @@ class ColumnHelper(column: Column) {
   def smvDayOfWeek = {
     val name = s"SmvDayOfWeek($column)"
     val cal : Calendar = Calendar.getInstance()
-    val f = (ts:Timestamp) =>
-      if(ts == null) null
-      else {
+    val f = {ts:Any => ts match {
+      case null => null
+      case ts:Timestamp =>
         cal.setTimeInMillis(ts.getTime())
         cal.get(Calendar.DAY_OF_WEEK)
-      }
+      case ts:Date =>
+        cal.setTimeInMillis(ts.getTime())
+        cal.get(Calendar.DAY_OF_WEEK)
+      case _ => throw new SmvUnsupportedType("unsupported type")
+    }}
 
     new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
   }
@@ -280,13 +253,14 @@ class ColumnHelper(column: Column) {
    */
   def smvDay70 = {
     val name = s"SmvDay70($column)"
-    val cal : Calendar = Calendar.getInstance()
-    val f = (ts: Timestamp) => {
-      if(ts == null) null
-      else {
+    val f = {ts:Any => ts match {
+      case null => null
+      case ts:Timestamp =>
         panel.Day(ts).timeIndex
-      }
-    }
+      case ts:Date =>
+        panel.Day(ts).timeIndex
+      case _ => throw new SmvUnsupportedType("unsupported type")
+    }}
 
     new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
   }
@@ -301,12 +275,7 @@ class ColumnHelper(column: Column) {
    */
   def smvHour = {
     val name = s"SmvHour($column)"
-    val fmtObj=new java.text.SimpleDateFormat("HH")
-    val f = (ts:Timestamp) =>
-      if(ts == null) null
-      else fmtObj.format(ts).toInt
-
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
+    hour(column).alias(name)
   }
 
   /**
@@ -518,7 +487,7 @@ class ColumnHelper(column: Column) {
     val f = (t:Timestamp, days: Integer) =>
       if(t == null) null
       else new Timestamp((new DateTime(t)).plusDays(days).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr, col.toExpr)), name)() )
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
   }
 
   /**

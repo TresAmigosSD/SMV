@@ -21,8 +21,12 @@ class SmvLinkFollowTest extends SmvTestUtil {
   )++ Seq("-m", "org.tresamigos.smv.smvLinkTestPkg2.T") ++ Seq("--data-dir", testcaseTempDir)
 
   test("Test SmvModuleLink follow link") {
-    val res = app.runModule(smvLinkTestPkg2.T.fqn)
+    val res = app.runModule(smvLinkTestPkg2.T.urn)
   }
+
+  // While working on unification of SmvDataSet loading schemes we will be changing
+  // SmvDataSet implementation several times, causing CRCs to change. Ignore CRC
+  // and datasetHash tests until this process is complete.
 
   // This test needs to be rewritten to be more robust and correct.
   // It should not test for a specific result number, but should test
@@ -51,7 +55,7 @@ class SmvLinkFollowWithVersionTest extends SmvTestUtil {
 
   test("Test SmvModuleLink follow link with version config") {
     intercept[org.apache.hadoop.mapred.InvalidInputException]{
-      val res = app.runModule(smvLinkTestPkg2.T2.fqn)
+      val res = app.runModule(smvLinkTestPkg2.T2.urn)
     }
   }
 
@@ -86,7 +90,8 @@ object L extends SmvModuleLink(org.tresamigos.smv.smvLinkTestPkg1.Y)
 object L2 extends SmvModuleLink(org.tresamigos.smv.smvLinkTestPkg1.Y2)
 
 object T extends SmvModule("T Module") {
-  override def requiresDS() = Seq(L)
+  resolvedRequiresDS = Seq(L)
+  override def requiresDS() = resolvedRequiresDS
   override def run(inputs: runParams) = inputs(L)
 }
 
