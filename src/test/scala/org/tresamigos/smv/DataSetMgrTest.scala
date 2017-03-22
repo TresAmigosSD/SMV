@@ -18,7 +18,7 @@ package org.tresamigos.smv {
 
     override def appArgs = Seq(
       "--smv-props",
-      "smv.stages=org.tresamigos.smv.DSMTestMods.stage1:org.tresamigos.smv.DSMTestMods.stage2",
+      "smv.stages=org.tresamigos.smv.DSMTestMods.stage1:org.tresamigos.smv.DSMTestMods.stage2:org.tresamigos.smv.DSMTestMods.stage3:org.tresamigos.smv.DSMTestMods.stage4",
       "-m", "None",
       "--data-dir", testcaseTempDir
     )
@@ -47,8 +47,15 @@ package org.tresamigos.smv {
     }
 
     test("Test DataSetMgr dataSetsForStage does not find links in a stage") {
-      val dsForStage = app.dsm.dataSetsForStage("org.tresamigos.smv.DSMTestMods.stage2")
+      val dsForStage = app.dsm.dataSetsForStage("org.tresamigos.smv.DSMTestMods.stage4")
       assert(Set(dsForStage:_*) == Set())
+    }
+
+    test("Test resolved link does not duplicate singleton it links to") {
+      val xy = app.dsm.load(stage2.X.urn, stage3.Y.urn)
+      val z1 = xy(0).resolvedRequiresDS(0)
+      val z2 = xy(1).resolvedRequiresDS(0).asInstanceOf[SmvModuleLink].smvModule
+      assert(z1 == z2)
     }
   }
 }
@@ -74,6 +81,29 @@ package org.tresamigos.smv.DSMTestMods {
   }
 
   package stage2 {
+    object L extends SmvModuleLink(stage3.Y)
+
+    object X extends SmvModule("") {
+      def requiresDS = Seq(Z,L)
+      def run(i: runParams) = i(L).join(i(Z))
+    }
+
+    object Z extends SmvModule("") with SmvOutput {
+      def requiresDS = Seq()
+      def run(i: runParams) = app.createDF("s:String", "a;b;b")
+    }
+  }
+
+  package stage3 {
+    object L extends SmvModuleLink(stage2.Z)
+
+    object Y extends SmvModule("") with SmvOutput {
+      def requiresDS = Seq(L)
+      def run(i: runParams) = i(L)
+    }
+  }
+
+  package stage4 {
     object L extends SmvModuleLink(stage1.A)
   }
 }
