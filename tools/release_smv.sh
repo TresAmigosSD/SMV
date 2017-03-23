@@ -4,6 +4,7 @@
 
 # TODO: make sure current repo doesn't have any checkout.
 # TODO: add automatic taging of source
+# TODO: add a -remove flag to remove an old version (tags and github release)
 
 
 set -e
