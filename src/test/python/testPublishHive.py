@@ -25,7 +25,6 @@ class PublishModuleToHiveTest(SmvBaseTest):
         self.smvPy.sqlContext.setConf("hive.metastore.warehouse.dir", "file:///tmp/Z")
         self.smvPy.j_smvApp.run()
         Mdf = self.smvPy.runModule(self.urn)
-        expected = self.createDF("k:String;v:Integer", "a,;b,2")
         MdfHive = self.smvPy.sqlContext.sql("select * from " + "M")
         self.should_be_same(Mdf, MdfHive)
 
