@@ -748,6 +748,30 @@ class SmvDFHelper(df: DataFrame) {
   def smvUnpivot(valueCols: String*): DataFrame =
     smvUnpivot(valueCols, s => ("value", s), Some("column"))
 
+
+  /**
+   * a variation of the smvUnpivot function that takes a regex instead of a function.
+   * this is due to the following reasons:
+   *  - it is not possible to convert any general purpose function from Python smv to Scala, so we resort to using regex instead.
+   *  - the python smvUnpivotRegex function takes variable number of arguments. we cannot use default values
+   *
+   * The function name is different to keep consistency between Python and Scala
+   * The order of params is different between Scala and Python, because in Python, the valueCols* should be the last parameter
+   *
+   */
+  def smvUnpivotRegex(valueCols: Seq[String], colNameFn: String, indexColName: String = "Index"): DataFrame = {
+    val pattern = colNameFn.r
+
+    val fn = (s: String) => {
+      s match {
+        case pattern(x, y) => (x, y)
+        case _ => throw new IllegalArgumentException("smvUnpivotRegex: unable to use specified regex");
+      }
+    }
+
+    smvUnpivot(valueCols, fn, Some(indexColName))
+  }
+
   /** same as `smvUnpivot(String*)` but uses `Symbol` to specify the value columns. */
   @deprecated("use String instead of Symbol", "1.5")
   def smvUnpivot(valueCol: Symbol, others: Symbol*): DataFrame =

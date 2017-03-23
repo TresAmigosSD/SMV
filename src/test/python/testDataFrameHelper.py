@@ -224,6 +224,21 @@ class DfHelperTest(SmvBaseTest):
             2,Z,F""")
         self.should_be_same(expect, res)
 
+    def test_smvUnpivotRegex(self):
+        df = self.createDF("id:Integer; A_1:String; A_2:String; B_1:String; B_2:String",
+                """1,1_a_1, 1_a_2, 1_b_1, 1_b_2;
+                   2,2_a_1, 2_a_2, 2_b_1, 2_b_2
+                """)
+        res = df.smvUnpivotRegex( "(.*)_(.*)", "index",  "A_1", "A_2", "B_1", "B_2" )
+        expect = self.createDF("id: Integer; index:String; A:String; B:String",
+                """1,1,1_a_1,1_b_1;
+                   1,2,1_a_2,a_b_2;
+                   2,1,2_a_1,2_b_1;
+                   2,2,2_a_2,2_b_2
+                """)
+        self.should_be_same(expect, res)
+
+
     def test_smvSelectMinus_with_string(self):
         schema = "k:String;v1:Integer;v2:Integer"
         df = self.createDF(schema, "a,1,2;b,2,3")
