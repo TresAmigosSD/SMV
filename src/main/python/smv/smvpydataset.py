@@ -325,7 +325,7 @@ class SmvHiveTable(SmvPyInput):
 
     def __init__(self, smvPy):
         super(SmvHiveTable, self).__init__(smvPy)
-        self._smvHiveTable = self.smvPy._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName())
+        self._smvHiveTable = self.smvPy._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName(), self.tableQuery())
 
     def description(self):
         return "Hive Table: @" + self.tableName()
@@ -333,6 +333,10 @@ class SmvHiveTable(SmvPyInput):
     @abc.abstractproperty
     def tableName(self):
         """The qualified Hive table name"""
+
+    def tableQuery(self):
+        """Optional query. Default is equivalent to 'select * from ' + tableName()"""
+        return None
 
     def doRun(self, validator, known):
         return self.run(DataFrame(self._smvHiveTable.rdd(), self.smvPy.sqlContext))
