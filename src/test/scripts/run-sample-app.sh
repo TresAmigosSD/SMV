@@ -22,6 +22,7 @@ NEW_SCALA_MODULE_STAGES="\
 test1 \
 test3 \
 test5 \
+test8 \
 "
 
 # Test stages containing a dependency scenario with a Python output module
@@ -29,6 +30,7 @@ NEW_PYTHON_MODULE_STAGES="\
 test2 \
 test4 \
 test6 \
+test7 \
 "
 
 NEW_MODULE_STAGES="$NEW_PYTHON_MODULE_STAGES $NEW_SCALA_MODULE_STAGES"
