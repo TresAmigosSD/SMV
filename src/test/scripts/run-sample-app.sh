@@ -17,7 +17,6 @@ rm -rf ${TEST_DIR}
 mkdir -p ${TEST_DIR}
 cd ${TEST_DIR}
 
-
 # Test stages containing a dependency scenario with a Scala output module
 NEW_SCALA_MODULE_STAGES="\
 test1 \
@@ -49,6 +48,7 @@ echo "--------- RUN INTEGRATION APP -------------"
     smv.outputDir="file://$(pwd)/data/output" --run-app \
     -- --master 'local[*]'
 
+echo "--------- CHECK INTEGRATION APP OUTPUT -------------"
 for stage in $NEW_SCALA_MODULE_STAGES; do
   TEST_INPUT=$(< data/input/$stage/table.csv)
   TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.M2_*.csv/part*)
@@ -70,7 +70,36 @@ for stage in $NEW_PYTHON_MODULE_STAGES; do
     exit 1
   fi
 done
+
+
+echo "--------- RUN HASH TEST MODULE -------------"
+rm -rf data/output/*
+smv-pyrun -m hashtest.modules.M
+
+echo "--------- RERUN UNCHANGED TEST MODULE -------------"
+smv-pyrun -m hashtest.modules.M
+
+echo "--------- VERIFY HASH UNCHANGED -------------"
+NUM_OUTPUT=$(wc -l <<< "$(ls -d data/output/*.csv)")
+if [ $NUM_OUTPUT != 1 ]; then
+  echo "Unchanged module's hashOfHash changed"
+  exit 1
+fi
+
+echo "--------- CHANGE MODULE -------------"
+sed -i "" "s/table1/table2/" src/main/python/org/tresamigos/smvtest/hashtest/modules.py
+
+echo "--------- RUN CHANGED MODULE -------------"
+smv-pyrun -m hashtest.modules.M
+
+echo "--------- VERIFY HASH CHANGED -------------"
+NUM_OUTPUT=$(wc -l <<< "$(ls -d data/output/*.csv)")
+if [ $NUM_OUTPUT != 2 ]; then
+  echo "Changed module's hashOfHash didn't change"
+  exit 1
+fi
 )
+
 
 echo "--------- GENERATE ENTERPRISE APP APP -------------"
 smv-init -e $E_APP_NAME
