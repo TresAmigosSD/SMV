@@ -140,8 +140,9 @@ private[smv] class FileIOHandler(
       if (csvAttributes.hasHeader) csvHeaderRDD.union(csvBodyRDD)
       else csvBodyRDD
 
-    schemaWithAttributes.saveToFile(df.sqlContext.sparkContext, fullSchemaPath)
+    //Need to save schema last, because the schema file is treated as a success marker
     csvRDD.saveAsTextFile(dataPath)
+    schemaWithAttributes.saveToFile(df.sqlContext.sparkContext, fullSchemaPath)
   }
 
 }

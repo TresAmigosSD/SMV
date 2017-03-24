@@ -224,6 +224,8 @@ abstract class SmvDataSet extends FilenamePart {
     } else {
       readPersistedFile().recoverWith {case e =>
         val df = dsDqm.attachTasks(doRun(dsDqm))
+        // Delete outputs in case data was partially written previously
+        deleteOutputs
         persist(df)
         validator.validate(df, true, moduleValidPath()) // has already had action (from persist)
         readPersistedFile()
