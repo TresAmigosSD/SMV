@@ -21,8 +21,8 @@ from py4j.java_gateway import java_import, JavaObject
 
 from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
-from utils import for_name, smv_copy_array
-
+from utils import for_name, smv_copy_array, check_socket
+from error import SmvRuntimeError
 
 import inspect
 import pkgutil
@@ -80,6 +80,15 @@ class SmvPy(object):
         cbsp = self.j_smvPyClient.callbackServerPort()
         cbs_port = cbsp.get() if cbsp.isDefined() else gw._python_proxy_port
 
+        # check wither the port is in-use or not. Try 10 times, if all fail, error out
+        check_counter = 0
+        while(not check_socket(cbs_port) and check_counter < 10):
+            cbs_port += 1
+            check_counter += 1
+
+        if (not check_socket(cbs_port)):
+            raise SmvRuntimeError("Start Python callback server failed. Port {0}-{1} are all in use".format(cbs_port - check_counter, cbs_port))
+
         # this was a workaround for py4j 0.8.2.1, shipped with spark
         # 1.5.x, to prevent the callback server from hanging the
         # python, and hence the java, process
@@ -87,7 +96,7 @@ class SmvPy(object):
         _daemonize_callback_server()
 
         if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
-            print("starting callback server on port {0}".format(cbs_port))
+            print("Starting Py4j callback server on port {0}".format(cbs_port))
             gw._shutdown_callback_server() # in case another has already started
             gw._start_callback_server(cbs_port)
             gw._python_proxy_port = gw._callback_server.port

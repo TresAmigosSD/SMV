@@ -65,3 +65,20 @@ def smv_copy_array(sc, *cols):
         raise RuntimeError("Cannot copy array of type", type(elem))
 
     return jcols
+
+def check_socket(port):
+    """Check whether the given port is open to bind"""
+    import socket
+    from contextlib import closing
+
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        try:
+            sock.bind(('', port))
+        except:
+            #Port is not open
+            res = False
+        else:
+            #Port is open
+            res = True
+
+    return res
