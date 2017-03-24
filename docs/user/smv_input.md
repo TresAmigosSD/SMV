@@ -307,17 +307,25 @@ SMV supports reading from tables in Hive meta store (which can be native hive, p
 
 ## Reading from Hive Tables
 
-Reading from Hive tables is accomplished by wrapping the Hive table in an `SmvHiveTable` object.  The `SmvHiveTable` instance can then be used as a required dataset in another dataset downstream.  The use of `SmvHiveTable` is similar to current use of `SmvCsvFile` and can be considered as just another input file.
+Reading from Hive tables is accomplished by wrapping the Hive table in an `SmvHiveTable` object.  The `SmvHiveTable` instance can then be used as a required dataset in another dataset downstream.  The use of `SmvHiveTable` is similar to current use of `SmvCsvFile` and can be considered as just another input file. By default, `SmvHiveTable` simply select all the columns from the table (`SELECT * FROM tableName`), but you may also specify your own query.
 
 ### Scala
 ```scala
 object FooHiveTable extends SmvHiveTable("hiveschema.foo")
+
+object FooHiveTablWithQuery extends SmvHiveTable("hiveschema.foo", "SELECT mycol FROM hiveschema.foo")
 ```
 ### Python
 ```Python
 class FooHiveTable(SmvHiveTable):
   def tableName(self):
     return "hiveschema.foo"
+
+class FooHiveTableWithQuery(SmvHiveTable):
+  def tableName(self):
+    return "hiveschema.foo"
+  def tableQuery(self):
+    return "SELECT mycol FROM " + tableName
 ```
 
 
