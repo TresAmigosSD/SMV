@@ -1,11 +1,4 @@
 #!/bin/bash
-#
-# One command to download and install all:
-# curl -O https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install;chmod +x smv-install;./smv-install
-#
-
-# TODO: add above command to install instructions
-# TODO: add wget/curl req to install doc.
 
 set -e
 PROG_NAME=$(basename "$0")
