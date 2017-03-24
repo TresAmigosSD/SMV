@@ -12,29 +12,35 @@ It is also desirable that `SmvApp` itself be agnostic of how `SmvDataSet`s are d
 
 # Module loading
 
-We define the term 'load' in this document as follows: to load a module is to create a class for that object _from the most recent source_ and subsequently instantiate a single object of that class.
+We define the term 'load' in this document as follows: to load a module is to create a class for that module _from the most recent source_ and subsequently instantiate a single object of that class.
+
+# URN
+
+We use Universal Resource Names (URN) to uniquely identify `SmvDataSets`. A URN in SMV takes the form "type:fqn", where fqn is the Fully Qualified Name (FQN) of an `SmvDataSet` that is *not a SmvModuleLink*. type can be "link", indicating an `SmvModuleLink` to the `SmvDataSet` with that fqn (specifically, the one that is not an SmvModuleLink).
+
+Up to this point we have represented URNs and FQNs both as strings. Moving forward, URN will be represented by the abstract class `URN` implemented by `ModURN` and `LinkURN`. This enforces the expectation that an argument is a URN and not an FQN and also enables pattern matching.
 
 
 # DataSetMgr interface
 
-At the level of `SmvApp`, all requests to load `SmvDataSet`s will be delegated to `DataSetMgr`. `DataSetMgr` will provide a method `loadDataSetWithDep(fqn: String)` to load an `SmvDataSet` and its dependencies by name. This method will always load the `SmvDataSet` as defined in the most recent source.
+At the level of `SmvApp`, all requests to load `SmvDataSet`s will be delegated to `DataSetMgr`. `DataSetMgr` will provide a method `load(fqn: *String)` to load an `SmvDataSet` and its dependencies by name. This method will always load the `SmvDataSet` as defined in the most recent source. `DataSetMgr` will also provide methods for discovery of `SmvDataSets` (e.g. `allOutputModules`) and a method `inferDS(partialName: *String)` for inference of which `SmvDataSet` is indicated by a partial name. This unifies tools for finding `SmvDataSets` which are currently dispersed throughout SMV.
 
 
 # Repositories
 
-Presently, the Scala `SmvApp` queries for Python modules through the `SmvDataSetRepository` Java interface. Rather than create a Scala module repository which implements this interface (which would be circular), we will create generic dataset repository class called `DataSetRepo` from which a Scala repository called `DataSetRepoScala` and a Python repository called `DataSetRepoPython` will inherit.  `DataSetRepoPython` will wrap the Java interface, which will be renamed `IDataSetRepoPy4J`. `DataSetRepoPython` will also return an `SmvExtModulePython` - more on this later. These classes each must implement a method `loadDataSet(fqn: String)`. The `DataSetMgr` will resolve an `SmvDataSet` by name by asking its containing repo to load it, then recursively doing the same for each of the `SmvDataSet`s specified in the resolved `SmvDataSet`'s dependency list. To prevent loading the same `SmvDataSet` twice, each transaction should track the `SmvDataSet`s already loaded within this invocation of `DataSetMgr.loadDataSetWithDep`
+Presently, the Scala `SmvApp` queries for Python modules through the `SmvDataSetRepository` Java interface. Rather than create a Scala module repository which implements this interface, we will create generic dataset repository class called `DataSetRepo` from which a Scala repository called `DataSetRepoScala` and a Python repository called `DataSetRepoPython` will inherit.  `DataSetRepoPython` will wrap the Java interface, which will be renamed `IDataSetRepoPy4J`. `DataSetRepoPython` will also return an `SmvExtModulePython` - more on this later. These classes each must implement a method `loadDataSet(urn: ModURN)` and a method `urnsForStage(stageName: String)`. The `DataSetMgr` will resolve an `SmvDataSet` by name by asking its containing repo to load it, then recursively doing the same for each of the `SmvDataSet`s specified in the resolved `SmvDataSet's` dependency list.
 
 
 # DataFrame Caching
 
 SMV and Spark perform various types of caching to minimize calculations and also for resiliency in case of failure. One cache kept by SMV is of the `DataFrame` (or RDD) that each `SmvDataSet` resolves to. Without this cache, an `SmvDataSet`'s DAG would be recalculated every time it is resolved to an RDD.
 
-Currently, the DataFrame cache for each `SmvDataSet` is internal to the `SmvDataSet`. This means that we lose its cache _each time it's reloaded_. This is acceptable under the assumption that the user reloads the `SmvDataSet` (by running the module dynamically) only when they have made changes and want to see the result. However, if the `SmvDataSet` will be reloaded every time it is resolved by name we will need to move the cache somewhere that is persistent when the `SmvDataSet` reloads so that the `DataFrame` can be reused if no changes have been made. The cache can be keyed using a dataset `version`, which combines the FQN and `hashOfHash` of the `SmvDataSet`.
+Currently, the DataFrame cache for each `SmvDataSet` is internal to the `SmvDataSet`. This means that we lose its cache _each time it's reloaded_. This is acceptable under the assumption that the user reloads the `SmvDataSet` (by running the module dynamically) only when they have made changes and want to see the result. However, if the `SmvDataSet` will be reloaded every time it is resolved by name we will need to move the cache somewhere that is persistent when the `SmvDataSet` reloads so that the `DataFrame` can be reused if no changes have been made. The cache can be keyed using `SmvDataSet's` `versionedFqn`, which combines the FQN and `hashOfHash` of the `SmvDataSet`.
 
 
 # External Dependencies and requireDS()
 
-Dependencies for an `SmvModule` are specified by the user through the module's `requireDS()`. This method is then called internally e.g. in the `SmvModule`'s `doRun()`. If the user lists an `SmvExtModule` as a dependency, e.g. `requireDS = Seq(SmvExtModule('a.b.c'))`, a new `SmvExtModule` is instantiated _every time_ `requireDS()` is invoked - note that the user is in fact supplying a function, not a static value. This presents problems for our design:
+Dependencies for an `SmvModule` are specified by the user through the module's `requiresDS()`. This method is then called internally e.g. in the `SmvModule`'s `doRun()`. If the user lists an `SmvExtModule` as a dependency, e.g. `requireDS = Seq(SmvExtModule('a.b.c'))`, a new `SmvExtModule` is instantiated _every time_ `requireDS()` is invoked - note that the user is in fact supplying a function, not a static value. This presents problems for our design:
 
 ### Problem 1:
 
@@ -83,14 +89,14 @@ y(p)  z(s)
 ```
 where `x` and `z` are both Scala modules and `y` is a Python module.
 
-When `DataSetMgr` loads `x`, it must ensure that the classes of `x`'s dependencies `y` and `z` are also loaded. Because of the way the Java `Classloader`s work, when the `Classloader` loads the class of `x` it will also load the class of `x`'s Scala (but not Python) dependencies, and if `DataSetMgr` invokes `x.requireDS()` it will create an instance of `z` and an instance of `SmvExtModule`; however, it will not create an instance of `y` on the Python side. Thus, we must ensure that `y` is loaded now, but `z` is not loaded a second time.
+When `DataSetMgr` loads `x`, it must ensure that the classes of `x`'s dependencies `y` and `z` are also loaded. Because of the way the Java `Classloader` work, when a `Classloader` loads the class of `x` it will also load the class of `x`'s Scala (but not Python) dependencies, and if `DataSetMgr` invokes `x.requireDS()` it will create an instance of `z` and an instance of `SmvExtModule`; however, it will not create an instance of `y` on the Python side. Thus, we must ensure that `y` is loaded now, but `z` is not loaded a second time.
 
 ### Problem 2
 `DataSetMgr` must facilitate `SmvModule` in loading its Python dependencies and resolving them as `SmvExtModulePython`s, but it is desirable that `SmvModule` know nothing about the `DataSetRepo`s or the `DataSetMgr`.
 
-These 2 problems motivate the distinction of a new responsibility which we will term resolution of `SmvDataSet`s. Within a single `DataSetMgr.loadDataSetWithDep`, to resolve an `SmvDataSet` is to
+These 2 problems motivate the distinction of a new responsibility which we will term resolution of `SmvDataSet`s. Within a single `DataSetMgr.load`, to resolve an `SmvDataSet` is to
 
-* Load its canonical class if it has not already been loaded (in this transaction)
+* Load its canonical class if it has not already been loaded in this transaction
 * Resolve its dependencies and populate `resolvedRequireDS`
 * Return its canonical instance
 

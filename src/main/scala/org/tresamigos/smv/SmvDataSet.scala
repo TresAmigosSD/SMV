@@ -224,6 +224,8 @@ abstract class SmvDataSet extends FilenamePart {
     } else {
       readPersistedFile().recoverWith {case e =>
         val df = dsDqm.attachTasks(doRun(dsDqm))
+        // Delete outputs in case data was partially written previously
+        deleteOutputs
         persist(df)
         validator.validate(df, true, moduleValidPath()) // has already had action (from persist)
         readPersistedFile()
@@ -294,11 +296,18 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
 /**
  * SMV Dataset Wrapper around a hive table.
  */
-case class SmvHiveTable(override val tableName: String) extends SmvInputDataSet {
+case class SmvHiveTable(override val tableName: String, val userQuery: String = null) extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
 
+  val query = {
+    if(userQuery == null)
+      "select * from " + tableName
+    else
+      userQuery
+  }
+
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
-    val df = app.sqlContext.sql("select * from " + tableName)
+    val df = app.sqlContext.sql(query)
     run(df)
   }
 }
