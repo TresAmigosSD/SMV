@@ -6,8 +6,6 @@
 
 # TODO: add above command to install instructions
 # TODO: add wget/curl req to install doc.
-# TODO: add PATH update to .bashrc/.profile/.bash_profile
-# TODO: make the smv version a parameter and check for validity.
 
 set -e
 PROG_NAME=$(basename "$0")
@@ -60,10 +58,10 @@ install_app() {
   local curl_opts="-L"
   local wget_opts=""
   if [ -n "$AMPLAB_JENKINS" ]; then
-    curl_opts="-s ${curl_opts}"
+    curl_opts="-s --fail ${curl_opts}"
     wget_opts="--quiet ${wget_opts}"
   else
-    curl_opts="--progress-bar ${curl_opts}"
+    curl_opts="--progress-bar --fail ${curl_opts}"
     wget_opts="--progress=bar:force ${wget_opts}"
   fi
 
