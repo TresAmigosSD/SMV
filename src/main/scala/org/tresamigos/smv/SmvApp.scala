@@ -61,21 +61,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
 
-  // Issue # 349: look up stage by the dataset's name instead of the
-  // object identity because after hot-deploy in shell via a new
-  // classloader, the same datset no longer has the same object
-  // instance.
-  lazy val dsname2stage: Map[String, SmvStage] =
-    (for {
-      st <- stages.stages
-      ds <- st.allDatasets
-    } yield (ds.fqn, st)).toMap
-
-  /**
-   * Find the stage that a given dataset belongs to.
-   */
-  def findStageForDataSet(ds: SmvDataSet) : Option[SmvStage] = dsname2stage.get(ds.fqn)
-
   /**
    * Create a DataFrame from string for temporary use (in test or shell)
    * By default, don't persist validation result

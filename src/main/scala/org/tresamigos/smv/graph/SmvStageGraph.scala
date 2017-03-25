@@ -73,9 +73,9 @@ private[smv] class SmvStageGraph(app: SmvApp, pstages: SmvStages = null) {
   val stages = if (null == pstages) app.stages else pstages
   val stageNodes: Seq[SmvStage] = stages.stages
   val interfaceNodes: Seq[SmvStageInterface] = stageNodes.flatMap{s =>
-    s.allLinks.groupBy(l => app.findStageForDataSet(l.smvModule).getOrElse(null)).filter{
+    s.allLinks.groupBy(l => l.smvModule.parentStage.getOrElse(null)).filter{
       case (upStage, links) => upStage != null
-    }.map{case (upStage, links) => SmvStageInterface(upStage, s, links)}
+    }.map{case (upStage, links) => SmvStageInterface(stages.findStage(upStage), s, links)}
   }
 
   def nodeString(

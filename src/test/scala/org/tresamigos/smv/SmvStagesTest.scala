@@ -123,7 +123,7 @@ class SmvMultiStageTest extends SmvTestUtil {
 /**
  * Test the searching for the stage for a given module.
  */
-  test("Test findStageForDataSet") {
+  test("test find parentStage") {
     val tStage = org.tresamigos.smv.smvAppTestPkg3.T.parentStage
     assert(tStage === Option("org.tresamigos.smv.smvAppTestPkg3"))
 
