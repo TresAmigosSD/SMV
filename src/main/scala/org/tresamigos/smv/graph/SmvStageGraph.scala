@@ -184,7 +184,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
 
     val graphvisCode = {
       "digraph G {\n" +
-      "  rankdir=\"TD\";\n" +
+      "  rankdir=\"LR\";\n" +
       "  node [style=filled,color=\"lightblue\"]\n" +
       (nodeString ++ clusterString ++ linkString).mkString("\n") + "\n" +
       "}"

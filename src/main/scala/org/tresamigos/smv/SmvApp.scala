@@ -118,12 +118,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
   }
 
-  private def genDotGraph(module: SmvDataSet) = {
-    val pathName = s"${module.fqn}.dot"
-    val graphString = new graph.SmvGraphUtil(this, stages).createGraphvisCode(Seq(module))
-    SmvReportIO.saveLocalReport(graphString, pathName)
-  }
-
   def genJSON(packages: Seq[String] = Seq()) = {
     val pathName = s"${smvConfig.appName}.json"
 
@@ -157,10 +151,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   private def generateDependencyGraphs() : Boolean = {
     if (smvConfig.cmdLine.graph()) {
-      modulesToRun foreach { module =>
-        // TODO: need to combine the modules for graphs into a single graph.
-        genDotGraph(module)
-      }
+      val pathName = s"${smvConfig.appName}.dot"
+      val graphString = new graph.SmvGraphUtil(this, stages).createGraphvisCode(modulesToRun)
+      SmvReportIO.saveLocalReport(graphString, pathName)
       true
     } else {
       false

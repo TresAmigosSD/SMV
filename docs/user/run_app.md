@@ -72,14 +72,8 @@ User must supply two edd files to compare
 <td>off</td>
 <td>Generate a dependency graph ".dot" file instead of running the given modules.<br>
 graphvis must be used to convert the ".dot" file to an image or doc.  For example:<br>
-<code>$ dot -Tpng com.foo.mod.dot -o graph.png</code>
+<code>$ dot -Tpng MyApp.dot -o graph.png</code>
 </td>
-</tr>
-
-<tr>
-<td>--json</td>
-<td>off</td>
-<td>Generate a json file of the provided modules and their dependencies.</td>
 </tr>
 
 <tr>
@@ -184,9 +178,9 @@ Run all modules in application and generate edd report for all modules that need
 $ smv-pyrun --edd --run-app
 ```
 
-Generate a dependency graph for module M1.
+Generate a dependency graph for all modules that needed to run.
 ```shell
-$ smv-pyrun -g -m com.mycom.myproj.stage1.M1
+$ smv-pyrun -g --run-app
 ```
 
 Clean up the output directory
