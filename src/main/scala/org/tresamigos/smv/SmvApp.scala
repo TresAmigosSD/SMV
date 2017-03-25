@@ -35,7 +35,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   val smvConfig = new SmvConfig(cmdLineArgs)
   val genEdd = smvConfig.cmdLine.genEdd()
   val publishHive = smvConfig.cmdLine.publishHive()
-  val stages = smvConfig.stages
+  val stages = smvConfig.stageNames
   val sparkConf = new SparkConf().setAppName(smvConfig.appName)
 
   /** Register Kryo Classes
@@ -103,11 +103,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
   }
 
-  def genJSON(packages: Seq[String] = Seq()) = {
+  def genJSON(stageNames: Seq[String] = Seq()) = {
     val pathName = s"${smvConfig.appName}.json"
 
-    val stagesToGraph = packages.map{stages.findStage(_)}
-    val graphString = new graph.SmvGraphUtil(this, new SmvStages(stagesToGraph)).createGraphJSON()
+    val graphString = new graph.SmvGraphUtil(this, stageNames).createGraphJSON()
 
     SmvReportIO.saveLocalReport(graphString, pathName)
   }
@@ -164,15 +163,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }.orElse(Some(false))()
   }
 
-  private def generateGraphJSON(): Boolean = {
-    smvConfig.cmdLine.json.map { stageList =>
-      genJSON(stageList)
-      true
-    }.orElse(Some(false))()
-  }
-
   def generateAllGraphJSON() = {
-    genJSON(stages.stageNames)
+    genJSON(stages)
   }
 
   /**
@@ -255,7 +247,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    compareEddResults() || generateGraphJSON() || generateDependencyGraphs() || publishModulesToHive() ||  publishOutputModules() || generateOutputModules()
+    compareEddResults() || generateDependencyGraphs() || publishModulesToHive() ||  publishOutputModules() || generateOutputModules()
   }
 }
 

@@ -144,14 +144,11 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // --- config params.  App should access configs through vals below rather than from props maps
   val appName = mergedProps("smv.appName")
-  val stageNames = splitProp("smv.stages")
+  val stageNames = splitProp("smv.stages").toSeq
 
   val classServerHost = mergedProps("smv.class_server.host")
   val classServerPort = getPropAsInt("smv.class_server.port").get
   val classServerClassDir = mergedProps("smv.class_server.class_dir")
-
-  private val stagesList = stageNames map {SmvStage(_, this)}
-  val stages = new SmvStages(stagesList.toSeq)
 
   def stageVersions = stageNames.map{sn:String => {
     val baseName = FQN.extractBaseName(sn)

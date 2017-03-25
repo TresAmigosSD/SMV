@@ -54,25 +54,25 @@ package object shell {
    * `dead` dataset is defined as "no contribution to the Output modules of the stage"
    * @param stageName could be the FQN or the basename
    **/
-  def lsDead(stageName: String) = println(ShellCmd.lsDead(stageName))
-
-  /**
-   * list `dead` datasets in the entire project
-   **/
-  def lsDead = println(ShellCmd.lsDead)
-
-  /**
-   * list `leaf` datasets in a stage
-   * `leaf` dataset is defined as "no modules in the stage depend on it, excluding Output modules"
-   * Note: a `leaf` dataset must be `dead`, but some `dead` datasets are Not `leaf`s
-   * @param stageName could be the FQN or the basename
-   */
-  def lsLeaf(stageName: String) = println(ShellCmd.lsLeaf(stageName))
-
-  /**
-   * list `leaf` datasets in the entire project
-   **/
-  def lsLeaf = println(ShellCmd.lsLeaf)
+//  def lsDead(stageName: String) = println(ShellCmd.lsDead(stageName))
+//
+//  /**
+//   * list `dead` datasets in the entire project
+//   **/
+//  def lsDead = println(ShellCmd.lsDead)
+//
+//  /**
+//   * list `leaf` datasets in a stage
+//   * `leaf` dataset is defined as "no modules in the stage depend on it, excluding Output modules"
+//   * Note: a `leaf` dataset must be `dead`, but some `dead` datasets are Not `leaf`s
+//   * @param stageName could be the FQN or the basename
+//   */
+//  def lsLeaf(stageName: String) = println(ShellCmd.lsLeaf(stageName))
+//
+//  /**
+//   * list `leaf` datasets in the entire project
+//   **/
+//  def lsLeaf = println(ShellCmd.lsLeaf)
 
   /** take a stage name and print all DS in this stage, without unused input DS */
   def graph(stageName: String) = println(ShellCmd._graph(stageName))
@@ -88,14 +88,14 @@ package object shell {
    * `ancestors` are datasets current dataset depends on, directly or in-directly,
    * even include datasets from other stages
    **/
-  def ancestors(ds: SmvDataSet) = println(ShellCmd.ancestors(ds))
-
-  /**
-   * list all `descendants` of a dataset
-   * `descendants` are datasets which depend on the current dataset directly or in-directly,
-   * even include datasets from other stages
-   **/
-  def descendants(ds: SmvDataSet) = println(ShellCmd.descendants(ds))
+//  def ancestors(ds: SmvDataSet) = println(ShellCmd.ancestors(ds))
+//
+//  /**
+//   * list all `descendants` of a dataset
+//   * `descendants` are datasets which depend on the current dataset directly or in-directly,
+//   * even include datasets from other stages
+//   **/
+//  def descendants(ds: SmvDataSet) = println(ShellCmd.descendants(ds))
 
   /**
    * Print current time

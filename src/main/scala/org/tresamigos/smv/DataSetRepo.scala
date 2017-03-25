@@ -34,11 +34,12 @@ class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   def loadDataSet(urn: ModURN): SmvDataSet =
     (new SmvReflection(cl)).objectNameToInstance[SmvDataSet](urn.fqn)
 
-  //val stages = smvConfig.stages
   def urnsForStage(stageName: String): Seq[URN] = {
     val packages = Seq(stageName, stageName + ".input")
     val allDatasets = packages.flatMap{ p => SmvReflection.objectsInPackage[SmvDataSet](p) }
-    allDatasets.map(_.urn).filterNot(_.isInstanceOf[LinkURN])
+    // Should return LinkURN also, otherwise there is no way to access the links from DSM
+    // allDatasets.map(_.urn).filterNot(_.isInstanceOf[LinkURN])
+    allDatasets.map(_.urn)
   }
 }
 

@@ -37,88 +37,27 @@ class SmvStagesTest extends SmvTestUtil {
     "smv.stages.s2.version=publishedS2",
     "-m", "None")
 
-  test("Test getAllPackageNames method.") {
-    val testApp = app
-
-    val expPkgs = Seq(
-      "com.myproj.s1", "com.myproj.s1.input",
-      "com.myproj.s2", "com.myproj.s2.input",
-      "com.myproj2.s1", "com.myproj2.s1.input"
-    )
-    assert(testApp.stages.getAllPackageNames() === expPkgs)
-  }
-
   test("Stage version should work with smv.stage.basename.version") {
-    val s2 = app.stages.findStage("s2")
-    assert(s2.version.getOrElse("") === "publishedS2")
+    val s2v = app.smvConfig.stageVersions.get(app.smvConfig.getStageFullName("s2"))
+    assert(s2v.getOrElse("") === "publishedS2")
   }
 
-  test("findStage should fail if stage name is ambiguous") {
+  test("getStageFullName should fail if stage name is ambiguous") {
     val e = intercept[SmvRuntimeException] {
-      val s1 = app.stages.findStage("s1")
+      val s1 = app.smvConfig.getStageFullName("s1")
     }
 
     assert(e.getMessage === "Stage name s1 is ambiguous")
   }
 
   test("Stage version should work with smv.stage.FQN.version") {
-    val s1 = app.stages.findStage("com.myproj.s1")
-    assert(s1.version.getOrElse("") === "publishedS1")
+    val s1v = app.smvConfig.stageVersions.get(app.smvConfig.getStageFullName("com.myproj.s1"))
+    assert(s1v.getOrElse("") === "publishedS1")
   }
 }
 
 class SmvMultiStageTest extends SmvTestUtil {
   override def appArgs = testAppArgs.multiStage ++ Seq("-m", "None")
-
-  test("Test modules in stage.") {
-    val testApp = app
-
-    val s1mods = testApp.stages.findStage("smvAppTestPkg1").allModules.map(m => m.fqn)
-    val s1out =  testApp.stages.findStage("smvAppTestPkg1").allOutputModules.map(m => m.fqn)
-    val s2mods = testApp.stages.findStage("org.tresamigos.smv.smvAppTestPkg3").allModules.map(m => m.fqn)
-
-    assertUnorderedSeqEqual(s1mods, Seq(
-      "org.tresamigos.smv.smvAppTestPkg1.X",
-      "org.tresamigos.smv.smvAppTestPkg1.Y"))
-    assertUnorderedSeqEqual(s1out, Seq(
-      "org.tresamigos.smv.smvAppTestPkg1.Y"))
-    assertUnorderedSeqEqual(s2mods, Seq(
-      "org.tresamigos.smv.smvAppTestPkg3.L",
-      "org.tresamigos.smv.smvAppTestPkg3.T",
-      "org.tresamigos.smv.smvAppTestPkg3.U"))
-  }
-
-  // Responsibility for ancestors should be delegated to the module
-  test("test ancestors/descendants method of stage") {
-    val testApp = app
-
-    val s1 = testApp.stages.findStage("smvAppTestPkg1")
-
-    val X = app.dsm.load(org.tresamigos.smv.smvAppTestPkg1.X.urn).head
-    val Y = app.dsm.load(org.tresamigos.smv.smvAppTestPkg1.Y.urn).head
-
-    val res1 = s1.ancestors(X).map{d => s1.datasetBaseName(d)}
-    val res2 = s1.ancestors(Y).map{d => s1.datasetBaseName(d)}
-    val res3 = s1.descendants(X).map{d => s1.datasetBaseName(d)}
-    val res4 = s1.descendants(Y).map{d => s1.datasetBaseName(d)}
-
-    assertUnorderedSeqEqual(res1, Nil)
-    assertUnorderedSeqEqual(res2, Seq("X"))
-    assertUnorderedSeqEqual(res3, Seq("Y"))
-    assertUnorderedSeqEqual(res4, Nil)
-  }
-
-  // Will be fixed after ancestors is reimplemented
-  ignore("test deadDataSets/leafDataSets") {
-    val testApp = app
-
-    val s3 = testApp.stages.findStage("smvAppTestPkg3")
-    val res1 = s3.deadDataSets.map{d => s3.datasetBaseName(d)}
-    val res2 = s3.leafDataSets.map{d => s3.datasetBaseName(d)}
-
-    assertUnorderedSeqEqual(res1, Seq("T"))
-    assertUnorderedSeqEqual(res2, Seq("T"))
-  }
 
 /**
  * Test the searching for the stage for a given module.
