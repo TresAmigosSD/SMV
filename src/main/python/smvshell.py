@@ -27,6 +27,26 @@ def pdf(fqn):
 openHive = lambda tableName: DataFrame(jvmShellCmd.openHive(tableName), smvPy.sqlContext)
 openCsv = lambda path: DataFrame(jvmShellCmd.openCsv(path), smvPy.sqlContext)
 
+def help():
+    import re
+    strip_margin = lambda text: re.sub('\n[ \t]*\|', '\n', text)
+
+    print strip_margin(
+     """Here is a list of SMV-shell command
+       |
+       |Please refer to the API doc for details:
+       |https://github.com/TresAmigosSD/SMV/blob/master/docs/user/run_shell.md
+       |
+       |  * lsStage()
+       |  * ls()
+       |  * ls(stageName)
+       |  * graph()
+       |  * graph(stageName)
+       |  * now()
+       |  * discoverSchema(filePath)
+       """
+   )
+
 def lsStage():
     print(jvmShellCmd.lsStage())
 
@@ -36,20 +56,20 @@ def ls(stageName = None):
     else:
         print(jvmShellCmd.ls(stageName))
 
-def lsDead(stageName = None):
-    if(stageName is None):
-        print(jvmShellCmd.lsDead())
-    else:
-        print(jvmShellCmd.lsDead(stageName))
-
-def lsLeaf(stageName = None):
-    if(stageName is None):
-        print(jvmShellCmd.lsLeaf())
-    else:
-        print(jvmShellCmd.lsLeaf(stageName))
-
-def descendants(urn):
-    print(jvmShellCmd.descendants("mod:"+urn))
+#def lsDead(stageName = None):
+#    if(stageName is None):
+#        print(jvmShellCmd.lsDead())
+#    else:
+#        print(jvmShellCmd.lsDead(stageName))
+#
+#def lsLeaf(stageName = None):
+#    if(stageName is None):
+#        print(jvmShellCmd.lsLeaf())
+#    else:
+#        print(jvmShellCmd.lsLeaf(stageName))
+#
+#def descendants(urn):
+#    print(jvmShellCmd.descendants("mod:"+urn))
 
 def graph(stageName = None):
     if(stageName is None):

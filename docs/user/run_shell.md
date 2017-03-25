@@ -8,13 +8,13 @@ $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 **Note:**  The above command should be run from the project top level directory.
 
 ## Utility methods
+* `help()`: List the following shell commands
 * `df(dataset_name)` :  Load/Run the given dataset and return the resulting `DataFrame`
 * `lsStage` : list all the stages of the project
 * `ls(stageName)`: list SmvDataSet in the given stage
 * `ls`: list all the SmvDataSet in the project, organized by stages
 * `graph(stageName)`: print dependency graph of all DS in this stage, without unused input DS
 * `graph`: print dependency graph of stages and inter-stage links
-* `descendants(dataset_name)`: list all `descendants` of a dataset
 
 In the future we will also implement
 * `discoverSchema(path, n, csvAttr)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix
@@ -76,7 +76,7 @@ true                        32   61.54%          52  100.00%
 
 com.mycompany.MyApp.stage1:
   (O) EmploymentByState
-  (F) input.employment_CB1200CZ11
+  (I) input.employment_CB1200CZ11
 
 com.mycompany.MyApp.stage2:
   (O) StageEmpCategory
@@ -85,9 +85,8 @@ com.mycompany.MyApp.stage2:
 There are 5 values of the leading label
 * "O" - SmvOutput
 * "L" - SmvModuleLink
-* "F" - SmvFile
+* "I" - SmvInput (including SmvCsvFile, SmvHiveTable, etc.)
 * "M" - SmvModule (but neither SmvOutput nor SmvModuleLink)
-* "H" - Hive Table
 
 Please see [SMV Introduction](smv_intro.md) for details of the 4 types.
 
@@ -95,7 +94,7 @@ Please see [SMV Introduction](smv_intro.md) for details of the 4 types.
 ```python
 >>> ls("stage1")
 (O) EmploymentByState
-(F) input.employment_CB1200CZ11
+(I) input.employment_CB1200CZ11
 ```
 
 ### List descendants of a given DataSet
