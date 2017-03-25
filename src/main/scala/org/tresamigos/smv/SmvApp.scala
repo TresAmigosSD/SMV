@@ -247,7 +247,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
     val modPartialNames = cmdline.modsToRun.orElse(empty)()
     val directMods = dsm.inferDS(modPartialNames:_*) map (_.asInstanceOf[SmvDataSet])
-    val stageNames = cmdline.stagesToRun.orElse(empty)()
+    val stageNames = cmdline.stagesToRun.orElse(empty)() map (smvConfig.getStageFullName(_))
     val stageMods = dsm.outputModulesForStage(stageNames:_*)
     val appMods = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[SmvDataSet]
     (directMods ++ stageMods ++ appMods).distinct

@@ -45,8 +45,8 @@ private[smv] class SmvDSGraph(app: SmvApp, pstages: SmvStages = null, targetDSs:
     }
   }
 
-  val clusters: Seq[(SmvStage, Seq[SmvDataSet])] =
-    nodes.filter(_.parentStage != null).groupBy(_.parentStage).toList
+  val clusters: Seq[(String, Seq[SmvDataSet])] =
+    nodes.map(n => (n, n.parentStage)).collect{case (n, Some(x)) => n}.groupBy(_.parentStage.getOrElse(null)).toList
   val hasMultiClusters = clusters.size > 1
 
   def nodeString(
@@ -175,7 +175,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
     val clusterString = if(g.hasMultiClusters) Seq(
       g.clusters.zipWithIndex.map{case ((stg, nodes), i) =>
         "  subgraph cluster_" + i + " {\n" +
-        "    label=\"" + stg.name + "\"\n" +
+        "    label=\"" + stg + "\"\n" +
         "    color=\"#e0e0e0\"\n" +
         "    " + nodes.map(toName).mkString("; ") + "\n" +
         "  }"
@@ -217,7 +217,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: SmvStages = null) {
     val clusterString = if(g.hasMultiClusters) Seq(
       s""""clusters": {""" + "\n" +
       g.clusters.map{case (stg, nodes) =>
-        s"""  "${stg.name}": [""" + "\n" +
+        s"""  "${stg}": [""" + "\n" +
         s"""    """ + nodes.map(toName).mkString(", ") + "\n" +
         s"""  ]"""
       }.mkString(",\n") + "\n" +

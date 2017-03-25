@@ -253,17 +253,8 @@ abstract class SmvDataSet extends FilenamePart {
       df.edd.persistBesideData(publishPath(version))
   }
 
-  /**
-   * the stage associated with this dataset.  Only valid for modules/files defined in a stage package.
-   * Adhoc files/modules will have a null for the stage.
-   */
-  private[smv] lazy val parentStage : SmvStage = app.findStageForDataSet(this).orElse(
-    app.stages.inferStageForDataSet(this)
-  ).getOrElse(
-    null
-  )
-
-  private[smv] def stageVersion() = if (parentStage != null) parentStage.version else None
+  private[smv] lazy val parentStage: Option[String] = app.dsm.stageForUrn(urn)
+  private[smv] def stageVersion() = parentStage flatMap {app.smvConfig.stageVersions.get(_)}
 
   /**
    * Read the published data of this module if the parent stage has specified a version.

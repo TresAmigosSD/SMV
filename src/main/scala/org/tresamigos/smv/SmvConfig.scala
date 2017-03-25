@@ -153,6 +153,19 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private val stagesList = stageNames map {SmvStage(_, this)}
   val stages = new SmvStages(stagesList.toSeq)
 
+  def stageVersions = stageNames.map{sn:String => {
+    val baseName = FQN.extractBaseName(sn)
+    val stageBasePropPrefix = s"smv.stages.${baseName}"
+    val stageFQNPropPrefix = s"smv.stages.${sn}"
+
+    // get stage version (if any)
+    val version = getProp(stageBasePropPrefix + ".version").orElse(
+      getProp(stageFQNPropPrefix + ".version")
+    )
+
+    (sn, version)}
+  }.collect{case (x, Some(y)) => (x, y)}.toMap
+
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
 
   val permitDependencyViolation: Boolean = cmdLine.permitDependencyViolation()
@@ -194,6 +207,20 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     cmdLine.publishDir.get.
       orElse(mergedProps.get("smv.publishDir")).
       getOrElse(dataDir + "/publish")
+  }
+
+  def getStageFullName(stageName: String) : String = {
+    val ambiguous = stageNames.map{s => FQN.extractBaseName(s)}.
+      groupBy(a => a).filter{case (k, v) => v.size > 1}.map{_._1}.toSeq
+
+    if (ambiguous.contains(stageName))
+      throw new SmvRuntimeException(s"Stage name ${stageName} is ambiguous")
+
+    stageNames.find { s =>
+      stageName == s || stageName == FQN.extractBaseName(s)
+    }.getOrElse(
+      throw new SmvRuntimeException(s"Can't find stage ${stageName}")
+    )
   }
 
   /**

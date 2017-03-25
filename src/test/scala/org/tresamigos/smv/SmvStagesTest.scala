@@ -125,10 +125,10 @@ class SmvMultiStageTest extends SmvTestUtil {
  */
   test("Test findStageForDataSet") {
     val tStage = org.tresamigos.smv.smvAppTestPkg3.T.parentStage
-    assert(tStage.name === "org.tresamigos.smv.smvAppTestPkg3")
+    assert(tStage === Option("org.tresamigos.smv.smvAppTestPkg3"))
 
     val noStage = org.tresamigos.smv.smvAppTestPkgX.NoStageModule.parentStage
-    assert(noStage === null)
+    assert(noStage === None)
   }
 }
 

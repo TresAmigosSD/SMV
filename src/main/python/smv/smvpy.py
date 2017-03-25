@@ -251,7 +251,8 @@ class DataSetRepo(object):
             pass
         else:
             for loader, name, is_pkg in pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=err):
-                if name.startswith(stageName) and not is_pkg:
+                # The additional "." is necessary to prevent false positive, e.g. stage_2.M1 matches stage
+                if name.startswith(stageName + ".") and not is_pkg:
                     pymod = __import__(name)
                     for c in name.split('.')[1:]:
                         pymod = getattr(pymod, c)

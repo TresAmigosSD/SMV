@@ -24,14 +24,14 @@ package org.tresamigos.smv {
   }
 
   abstract class DependencyTestModule(deps: Seq[SmvDataSet] = Seq.empty) extends SmvModule("Dependency test") {
-    final override lazy val parentStage = DependencyTests.findStageForDataSet(this).getOrElse(null)
+    final override lazy val parentStage = DependencyTests.findStageForDataSet(this).map{_.name}
     final override def requiresDS = null
     final override def run(i: runParams) = null
     resolvedRequiresDS = deps
   }
 
   abstract class DependencyTestModuleLink(output: SmvOutput) extends SmvModuleLink(output) {
-    final override lazy val parentStage = DependencyTests.findStageForDataSet(this).getOrElse(null)
+    final override lazy val parentStage = DependencyTests.findStageForDataSet(this).map{_.name}
   }
 
   class SameStageDependencyTest extends FlatSpec with Matchers {
