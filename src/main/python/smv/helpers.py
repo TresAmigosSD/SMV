@@ -165,6 +165,11 @@ DataFrame.smvUnpivotRegex = lambda df, colNameFn, indexColName, *cols: DataFrame
 
 DataFrame.smvExportCsv = lambda df, path, n=None: dfhelper(df).smvExportCsv(path, n)
 
+def __smvOverlapCheck(df, keyColName):
+    def _check(*dfothers):
+        return DataFrame(helper(df).smvOverlapCheck(df._jdf, keyColName, smv_copy_array(df._sc, *dfothers)), df.sql_ctx)
+    return _check
+DataFrame.smvOverlapCheck = __smvOverlapCheck
 
 #############################################
 # DfHelpers which print to STDOUT

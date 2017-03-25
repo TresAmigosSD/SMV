@@ -325,3 +325,12 @@ key                      count      Pct    cumCount   cumPct
 0.0                          2   66.67%           2   66.67%
 200.0                        1   33.33%           3  100.00%
 -------------------------------------------------""")
+
+    def test_smvOverlapCheck(self):
+        s1 = self.createDF("k: String", "a;b;c")
+        s2 = self.createDF("k: String", "a;b;c;d")
+        s3 = self.createDF("k: String", "c;d")
+
+        res = s1.smvOverlapCheck("k")(s2, s3)
+        exp = self.createDF("k: String;flag: String", "a,110;b,110;c,111;d,011")
+        self.should_be_same(res, exp)

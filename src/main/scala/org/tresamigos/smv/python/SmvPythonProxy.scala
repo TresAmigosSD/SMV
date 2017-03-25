@@ -116,6 +116,9 @@ object SmvPythonHelper {
       lls
     )
   }
+
+  def smvOverlapCheck(df: DataFrame, key: String, otherDf: Array[DataFrame]): DataFrame =
+    df.smvOverlapCheck(key)(otherDf:_*)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

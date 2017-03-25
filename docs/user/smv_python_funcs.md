@@ -270,3 +270,23 @@ will result in the following output:
   3 |   Z    |   I   
 
 **Note:** This only works for String columns for now
+
+#### smvOverlapCheck
+For a set of DFs, which share the same key column, check the overlap across them.
+
+```python
+df1.smvOverlapCheck("key")(df2, df3, df4)
+```
+
+The output is another DF with 2 columns:
+```
+key, flag
+```
+where `flag` is a bit string, e.g. `0110`. Each bit represent whether the original DF has
+this key.
+
+It can be used with `smvHist` to summarize on the flag:
+
+```python
+df1.smvOverlapCheck("key")(df2, df3).smvHist("flag")
+```

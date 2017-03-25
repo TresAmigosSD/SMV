@@ -925,7 +925,7 @@ class SmvDFHelper(df: DataFrame) {
    * It can be used with EDD to summarize on the flag:
    *
    * {{{
-   *   df1.smvOverlapCheck("key")(df2, df3).edd.addHistogramTasks("flag")().dump
+   *   df1.smvOverlapCheck("key")(df2, df3).smvHist("flag")
    * }}}
    **/
   def smvOverlapCheck(key: String, partition: Int = 4)(dfother: DataFrame*) = {
