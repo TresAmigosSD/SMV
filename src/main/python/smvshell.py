@@ -56,12 +56,12 @@ def ls(stageName = None):
     else:
         print(jvmShellCmd.ls(stageName))
 
-#def lsDead(stageName = None):
-#    if(stageName is None):
-#        print(jvmShellCmd.lsDead())
-#    else:
-#        print(jvmShellCmd.lsDead(stageName))
-#
+def lsDead(stageName = None):
+    if(stageName is None):
+        print(jvmShellCmd.lsDead())
+    else:
+        print(jvmShellCmd.lsDead(stageName))
+
 #def lsLeaf(stageName = None):
 #    if(stageName is None):
 #        print(jvmShellCmd.lsLeaf())

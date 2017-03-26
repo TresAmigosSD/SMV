@@ -85,12 +85,12 @@ object ShellCmd {
    * `dead` dataset is defined as "no contribution to the Output modules of the stage"
    * @param stageName could be the FQN or the basename
    **/
-//  def lsDead(stageName: String) = appGU.createDeadDSList(SmvApp.app.stages.findStage(stageName))
+  def lsDead(stageName: String) = appGU.createDeadDSList(stageName)
 
   /**
    * list `dead` datasets in the entire project
    **/
-//  def lsDead = appGU.createDeadDSList()
+  def lsDead = appGU.createDeadDSList()
 
   /**
    * list `leaf` datasets in a stage
@@ -122,7 +122,7 @@ object ShellCmd {
    * `ancestors` are datasets current dataset depends on, directly or in-directly,
    * even include datasets from other stages
    **/
-//  def ancestors(ds: SmvDataSet) = appGU.createAncestorDSList(ds)
+  def ancestors(ds: SmvDataSet) = appGU.createAncestorDSList(ds)
 
   /**
    * list all `descendants` of a dataset

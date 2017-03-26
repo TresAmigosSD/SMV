@@ -41,18 +41,18 @@ org.tresamigos.smv.smvAppTestPkg3:
   (M) smvAppTestPkg3.T
   (O) smvAppTestPkg3.U""")
 
-//    val deadL = gu.createDeadDSList()
-//    assert(deadL === """
-//org.tresamigos.smv.smvAppTestPkg1:
-//
-//org.tresamigos.smv.smvAppTestPkg2:
-//
-//org.tresamigos.smv.smvAppTestPkg3:
-//  (M) smvAppTestPkg3.T""")
-//
-//    val aL = gu.createAncestorDSList(smvAppTestPkg3.L)
-//    assert(aL === """(O) smvAppTestPkg1.Y
-//(M) smvAppTestPkg1.X""")
+    val deadL = gu.createDeadDSList()
+    assert(deadL === """
+org.tresamigos.smv.smvAppTestPkg1:
+
+org.tresamigos.smv.smvAppTestPkg2:
+
+org.tresamigos.smv.smvAppTestPkg3:
+  (M) smvAppTestPkg3.T""")
+
+    val aL = gu.createAncestorDSList(smvAppTestPkg3.U)
+    assert(aL === """(L) smvAppTestPkg1.Y
+(M) smvAppTestPkg1.X""")
   }
 
   test("Test createGraphvisCode") {

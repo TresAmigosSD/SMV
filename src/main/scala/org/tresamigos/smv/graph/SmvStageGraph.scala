@@ -244,7 +244,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
   }
 
   private def _listInStage(d: Seq[SmvDataSet], prefix: String = ""): Seq[String] = {
-    val dss = d.sortBy(_.fqn)
+    val dss = d.sortBy(_.urn.fqn)
     dss.map{ds => prefix + baseNameWithFlag(ds)}
   }
 
@@ -263,16 +263,19 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
   /** list all datasets */
   def createDSList(s: String = null): String = _listAll(s, {s => dsm.dataSetsForStage(s)})
 
-//  /** list `dead` datasets */
-//  def createDeadDSList(s: String = null): String = _listAll(s, {s => s.deadDataSets})
+  /** list `dead` datasets */
+  def createDeadDSList(s: String = null): String = _listAll(s, {s => {
+    val inFlow = dsm.outputModulesForStage(s).flatMap(d => d.ancestors :+ d).distinct
+    dsm.dataSetsForStage(s).filterNot(ds => inFlow.map(_.urn).contains(ds.urn))
+  }})
 //
 //  /** list `leaf` datasets */
 //  def createLeafDSList(s: String = null): String = _listAll(s, {s => s.leafDataSets})
 //
-//  /** list ancestors of a dataset */
-//  def createAncestorDSList(ds: SmvDataSet): String = {
-//    stages.ancestors(ds).map{d => baseNameWithFlag(d)}.mkString("\n")
-//  }
+  /** list ancestors of a dataset */
+  def createAncestorDSList(ds: SmvDataSet): String = {
+    ds.ancestors.map{d => baseNameWithFlag(d)}.mkString("\n")
+  }
 //
 //  /** list descendants of a dataset */
 //  def createDescendantDSList(ds: SmvDataSet): String = {

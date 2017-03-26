@@ -50,7 +50,7 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
     load(urnsForStage(stageNames:_*):_*)
 
   def stageForUrn(urn: URN): Option[String] =
-    allStageNames.find{stageName => urnsForStage(stageName) contains urn}
+    allStageNames.find{stageName => urn.fqn.startsWith(stageName + ".")}
 
   def outputModulesForStage(stageNames: String*): Seq[SmvDataSet] =
     filterOutput(dataSetsForStage(stageNames:_*))
