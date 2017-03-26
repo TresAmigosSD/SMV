@@ -50,6 +50,15 @@ org.tresamigos.smv.smvAppTestPkg2:
 org.tresamigos.smv.smvAppTestPkg3:
   (M) smvAppTestPkg3.T""")
 
+    val deadLeafL = gu.createDeadLeafDSList()
+    assert(deadLeafL === """
+org.tresamigos.smv.smvAppTestPkg1:
+
+org.tresamigos.smv.smvAppTestPkg2:
+
+org.tresamigos.smv.smvAppTestPkg3:
+  (M) smvAppTestPkg3.T""")
+
     val aL = gu.createAncestorDSList(smvAppTestPkg3.U)
     assert(aL === """(L) smvAppTestPkg1.Y
 (M) smvAppTestPkg1.X""")

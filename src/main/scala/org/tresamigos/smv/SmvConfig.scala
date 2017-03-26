@@ -206,20 +206,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       getOrElse(dataDir + "/publish")
   }
 
-  def getStageFullName(stageName: String) : String = {
-    val ambiguous = stageNames.map{s => FQN.extractBaseName(s)}.
-      groupBy(a => a).filter{case (k, v) => v.size > 1}.map{_._1}.toSeq
-
-    if (ambiguous.contains(stageName))
-      throw new SmvRuntimeException(s"Stage name ${stageName} is ambiguous")
-
-    stageNames.find { s =>
-      stageName == s || stageName == FQN.extractBaseName(s)
-    }.getOrElse(
-      throw new SmvRuntimeException(s"Can't find stage ${stageName}")
-    )
-  }
-
   /**
    * load the given properties file and return the resulting props as a scala Map.
    * Note: if the provided file does not exit, this will just silently return an empty map.

@@ -61,18 +61,18 @@ package object shell {
    **/
   def lsDead = println(ShellCmd.lsDead)
 
-//  /**
-//   * list `leaf` datasets in a stage
-//   * `leaf` dataset is defined as "no modules in the stage depend on it, excluding Output modules"
-//   * Note: a `leaf` dataset must be `dead`, but some `dead` datasets are Not `leaf`s
-//   * @param stageName could be the FQN or the basename
-//   */
-//  def lsLeaf(stageName: String) = println(ShellCmd.lsLeaf(stageName))
-//
-//  /**
-//   * list `leaf` datasets in the entire project
-//   **/
-//  def lsLeaf = println(ShellCmd.lsLeaf)
+  /**
+   * list `deadLeaf` datasets in a stage
+   * `deadLeaf` dataset is defined as "no modules in the stage depend on it, excluding Output modules"
+   * Note: a `deadLeaf` dataset must be `dead`, but some `dead` datasets are Not `deadLeaf`s
+   * @param stageName could be the FQN or the basename
+   */
+  def lsDeadLeaf(stageName: String) = println(ShellCmd.lsDeadLeaf(stageName))
+
+  /**
+   * list `deadLeaf` datasets in the entire project
+   **/
+  def lsDeadLeaf = println(ShellCmd.lsDeadLeaf)
 
   /** take a stage name and print all DS in this stage, without unused input DS */
   def graph(stageName: String) = println(ShellCmd._graph(stageName))

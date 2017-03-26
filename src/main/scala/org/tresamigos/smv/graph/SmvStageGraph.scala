@@ -28,7 +28,7 @@ import org.apache.spark.annotation._
  * @param targetDSs the collection of targeted DSs, if empty, all Modules are targets
  **/
 private[smv] class SmvDSGraph(app: SmvApp, pstages: Seq[String] = Nil, targetDSs: Seq[SmvDataSet] = Nil) {
-  val stages = if (pstages.isEmpty) app.smvConfig.stageNames.toSeq else pstages
+  val stages = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
   private val seeds = if(targetDSs.isEmpty) app.dsm.allDataSets else targetDSs
 
   val nodes: Seq[SmvDataSet]= (seeds.flatMap(_.ancestors) ++ seeds).distinct.filterNot{
@@ -70,7 +70,7 @@ private[smv] case class SmvStageInterface(fromStage: String, toStage: String, li
  * Edges are stage dependency
  **/
 private[smv] class SmvStageGraph(app: SmvApp, pstages: Seq[String] = Nil) {
-  val stages = if (pstages.isEmpty) app.smvConfig.stageNames.toSeq else pstages
+  val stages = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
   val stageNodes: Seq[String] = stages
   val interfaceNodes: Seq[SmvStageInterface] = stageNodes.flatMap{s =>
     val allLinks = app.dsm.dataSetsForStage(s).filter(_.isInstanceOf[SmvModuleLink])
@@ -98,7 +98,7 @@ private[smv] class SmvStageGraph(app: SmvApp, pstages: Seq[String] = Nil) {
  * Collection of method to actually "plot" the graph
  **/
 private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
-  val stages = if (pstages.isEmpty) app.smvConfig.stageNames.toSeq else pstages
+  val stages = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
   val dsm = app.dsm
   // max string length per line in an ascii Box
   private val asciiBoxWidth = 12
@@ -263,15 +263,27 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
   /** list all datasets */
   def createDSList(s: String = null): String = _listAll(s, {s => dsm.dataSetsForStage(s)})
 
-  /** list `dead` datasets */
-  def createDeadDSList(s: String = null): String = _listAll(s, {s => {
+  private def deadDS(s: String): Seq[SmvDataSet] = {
     val inFlow = dsm.outputModulesForStage(s).flatMap(d => d.ancestors :+ d).distinct
     dsm.dataSetsForStage(s).filterNot(ds => inFlow.map(_.urn).contains(ds.urn))
-  }})
-//
-//  /** list `leaf` datasets */
-//  def createLeafDSList(s: String = null): String = _listAll(s, {s => s.leafDataSets})
-//
+  }
+
+  private def descendantsDS(ds: SmvDataSet): Seq[SmvDataSet] = {
+    dsm.dataSetsForStage(stages:_*).filter(
+      that => that.ancestors.map(_.urn).contains(ds.urn)
+    )
+  }
+
+  private def deadLeafDS(s: String): Seq[SmvDataSet] = {
+    deadDS(s).filter(descendantsDS(_).isEmpty)
+  }
+
+  /** list `dead` datasets */
+  def createDeadDSList(s: String = null): String = _listAll(s, {s => deadDS(s)})
+
+  /** list `leaf` datasets */
+  def createDeadLeafDSList(s: String = null): String = _listAll(s, {s => deadLeafDS(s)})
+
   /** list ancestors of a dataset */
   def createAncestorDSList(ds: SmvDataSet): String = {
     ds.ancestors.map{d => baseNameWithFlag(d)}.mkString("\n")
@@ -279,9 +291,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
 
   /** list descendants of a dataset */
   def createDescendantDSList(ds: SmvDataSet): String = {
-    dsm.dataSetsForStage(stages:_*).filter(
-      that => that.ancestors.map(_.urn).contains(ds.urn)
-    ).sortBy(ds => ds.urn.fqn).map{d => baseNameWithFlag(d)}.mkString("\n")
+    descendantsDS(ds).sortBy(ds => ds.urn.fqn).map{d => baseNameWithFlag(d)}.mkString("\n")
   }
 
 }

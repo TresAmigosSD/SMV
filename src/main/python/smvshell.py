@@ -40,8 +40,14 @@ def help():
        |  * lsStage()
        |  * ls()
        |  * ls(stageName)
+       |  * lsDead()
+       |  * lsDead(stageName)
+       |  * lsDeadLead()
+       |  * lsDeadLead(stageName)
        |  * graph()
        |  * graph(stageName)
+       |  * ancestors(datasetName)
+       |  * descendants(datasetName)
        |  * now()
        |  * discoverSchema(filePath)
        """
@@ -62,12 +68,11 @@ def lsDead(stageName = None):
     else:
         print(jvmShellCmd.lsDead(stageName))
 
-#def lsLeaf(stageName = None):
-#    if(stageName is None):
-#        print(jvmShellCmd.lsLeaf())
-#    else:
-#        print(jvmShellCmd.lsLeaf(stageName))
-#
+def lsDeadLeaf(stageName = None):
+    if(stageName is None):
+        print(jvmShellCmd.lsDeadLeaf())
+    else:
+        print(jvmShellCmd.lsDeadLeaf(stageName))
 
 def ancestors(dsname):
     print(jvmShellCmd.ancestors(dsname))

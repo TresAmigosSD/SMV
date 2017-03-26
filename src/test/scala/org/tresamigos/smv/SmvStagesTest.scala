@@ -38,20 +38,20 @@ class SmvStagesTest extends SmvTestUtil {
     "-m", "None")
 
   test("Stage version should work with smv.stage.basename.version") {
-    val s2v = app.smvConfig.stageVersions.get(app.smvConfig.getStageFullName("s2"))
+    val s2v = app.smvConfig.stageVersions.get(app.dsm.inferStageFullName("s2"))
     assert(s2v.getOrElse("") === "publishedS2")
   }
 
-  test("getStageFullName should fail if stage name is ambiguous") {
+  test("inferStageFullName should fail if stage name is ambiguous") {
     val e = intercept[SmvRuntimeException] {
-      val s1 = app.smvConfig.getStageFullName("s1")
+      val s1 = app.dsm.inferStageFullName("s1")
     }
 
     assert(e.getMessage === "Stage name s1 is ambiguous")
   }
 
   test("Stage version should work with smv.stage.FQN.version") {
-    val s1v = app.smvConfig.stageVersions.get(app.smvConfig.getStageFullName("com.myproj.s1"))
+    val s1v = app.smvConfig.stageVersions.get(app.dsm.inferStageFullName("com.myproj.s1"))
     assert(s1v.getOrElse("") === "publishedS1")
   }
 }
