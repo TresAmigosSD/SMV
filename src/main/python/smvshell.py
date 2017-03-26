@@ -69,11 +69,11 @@ def lsDead(stageName = None):
 #        print(jvmShellCmd.lsLeaf(stageName))
 #
 
-def ancestors(sdname):
-    print(jvmShellCmd.ancestors(sdname))
+def ancestors(dsname):
+    print(jvmShellCmd.ancestors(dsname))
 
-#def descendants(urn):
-#    print(jvmShellCmd.descendants("mod:"+urn))
+def descendants(dsname):
+    print(jvmShellCmd.descendants(dsname))
 
 def graph(stageName = None):
     if(stageName is None):

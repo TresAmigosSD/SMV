@@ -276,10 +276,12 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
   def createAncestorDSList(ds: SmvDataSet): String = {
     ds.ancestors.map{d => baseNameWithFlag(d)}.mkString("\n")
   }
-//
-//  /** list descendants of a dataset */
-//  def createDescendantDSList(ds: SmvDataSet): String = {
-//    stages.descendants(ds).map{d => baseNameWithFlag(d)}.mkString("\n")
-//  }
+
+  /** list descendants of a dataset */
+  def createDescendantDSList(ds: SmvDataSet): String = {
+    dsm.dataSetsForStage(stages:_*).filter(
+      that => that.ancestors.map(_.urn).contains(ds.urn)
+    ).sortBy(ds => ds.urn.fqn).map{d => baseNameWithFlag(d)}.mkString("\n")
+  }
 
 }

@@ -96,7 +96,8 @@ package object shell {
 //   * `descendants` are datasets which depend on the current dataset directly or in-directly,
 //   * even include datasets from other stages
 //   **/
-//  def descendants(ds: SmvDataSet) = println(ShellCmd.descendants(ds))
+  def descendants(ds: SmvDataSet) = println(ShellCmd.descendants(ds))
+  def descendants(dsName: String) = println(ShellCmd.descendants(dsName))
 
   /**
    * Print current time

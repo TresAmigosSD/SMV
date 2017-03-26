@@ -53,6 +53,12 @@ org.tresamigos.smv.smvAppTestPkg3:
     val aL = gu.createAncestorDSList(smvAppTestPkg3.U)
     assert(aL === """(L) smvAppTestPkg1.Y
 (M) smvAppTestPkg1.X""")
+
+    val dL = gu.createDescendantDSList(smvAppTestPkg1.X)
+    assert(dL == """(O) smvAppTestPkg1.Y
+(L) smvAppTestPkg1.Y
+(M) smvAppTestPkg3.T
+(O) smvAppTestPkg3.U""")
   }
 
   test("Test createGraphvisCode") {
