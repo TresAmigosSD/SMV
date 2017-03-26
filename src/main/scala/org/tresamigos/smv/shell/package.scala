@@ -54,13 +54,13 @@ package object shell {
    * `dead` dataset is defined as "no contribution to the Output modules of the stage"
    * @param stageName could be the FQN or the basename
    **/
-//  def lsDead(stageName: String) = println(ShellCmd.lsDead(stageName))
-//
-//  /**
-//   * list `dead` datasets in the entire project
-//   **/
-//  def lsDead = println(ShellCmd.lsDead)
-//
+  def lsDead(stageName: String) = println(ShellCmd.lsDead(stageName))
+
+  /**
+   * list `dead` datasets in the entire project
+   **/
+  def lsDead = println(ShellCmd.lsDead)
+
 //  /**
 //   * list `leaf` datasets in a stage
 //   * `leaf` dataset is defined as "no modules in the stage depend on it, excluding Output modules"
@@ -88,8 +88,9 @@ package object shell {
    * `ancestors` are datasets current dataset depends on, directly or in-directly,
    * even include datasets from other stages
    **/
-//  def ancestors(ds: SmvDataSet) = println(ShellCmd.ancestors(ds))
-//
+   def ancestors(ds: SmvDataSet) = println(ShellCmd.ancestors(ds))
+   def ancestors(dsName: String) = println(ShellCmd.ancestors(dsName))
+
 //  /**
 //   * list all `descendants` of a dataset
 //   * `descendants` are datasets which depend on the current dataset directly or in-directly,

@@ -123,6 +123,7 @@ object ShellCmd {
    * even include datasets from other stages
    **/
   def ancestors(ds: SmvDataSet) = appGU.createAncestorDSList(ds)
+  def ancestors(dsName: String) = appGU.createAncestorDSList(SmvApp.app.dsm.inferDS(dsName).head)
 
   /**
    * list all `descendants` of a dataset

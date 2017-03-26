@@ -68,6 +68,10 @@ def lsDead(stageName = None):
 #    else:
 #        print(jvmShellCmd.lsLeaf(stageName))
 #
+
+def ancestors(sdname):
+    print(jvmShellCmd.ancestors(sdname))
+
 #def descendants(urn):
 #    print(jvmShellCmd.descendants("mod:"+urn))
 
