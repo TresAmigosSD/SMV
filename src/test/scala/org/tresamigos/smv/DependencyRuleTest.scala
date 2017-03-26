@@ -18,20 +18,24 @@ import org.tresamigos.smv._
 package org.tresamigos.smv {
   /** A shortcut to save full SmvApp set-up during test.  Remove if it makes the tests too brittle */
   object DependencyTests {
-    def stages(names: String*): SmvStages = new SmvStages(names.map(new SmvStage(_, None)))
-    val TestStages = stages((1 to 4).map("org.tresamigos.smv.deptest%02d".format(_)):_*)
-    def findStageForDataSet(ds: SmvDataSet): Option[SmvStage] = TestStages.stages.find(_.allDatasets contains ds)
+    val TestStages = (1 to 4).map("org.tresamigos.smv.deptest%02d".format(_))
+    val smvConfig = new SmvConfig(Seq("-m", "None", "--smv-props", "smv.stages=" + TestStages.mkString(":")))
+    val dsm = new DataSetMgr(smvConfig, SmvApp.DependencyRules)
+    def registerRepoFactory(factory: DataSetRepoFactory): Unit =
+        dsm.register(factory)
+    registerRepoFactory(new DataSetRepoFactoryScala(smvConfig))
+    def findStageForDataSet(ds: SmvDataSet): Option[String] = dsm.stageForUrn(ds.urn)
   }
 
   abstract class DependencyTestModule(deps: Seq[SmvDataSet] = Seq.empty) extends SmvModule("Dependency test") {
-    final override lazy val parentStage = DependencyTests.findStageForDataSet(this).map{_.name}
+    final override lazy val parentStage = DependencyTests.findStageForDataSet(this)
     final override def requiresDS = null
     final override def run(i: runParams) = null
     resolvedRequiresDS = deps
   }
 
   abstract class DependencyTestModuleLink(output: SmvOutput) extends SmvModuleLink(output) {
-    final override lazy val parentStage = DependencyTests.findStageForDataSet(this).map{_.name}
+    final override lazy val parentStage = DependencyTests.findStageForDataSet(this)
   }
 
   class SameStageDependencyTest extends FlatSpec with Matchers {
