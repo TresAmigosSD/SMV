@@ -31,7 +31,7 @@ $ sudo apt-get install python
 ```
 
 # Install SMV
-SMV installing requires either curl or wget to be available.
+SMV installing requires either curl or wget to be available.  **Note:** The instructions below will also locally install the appropriate version of Apache Spark.  If Spark is already installed, then the `-spark` flag should be removed to skip the Spark installation.  If the Spark installation is skipped, then the current existing version of Spark **MUST** have been built with Hive support.
 
 ## Install SMV using curl
 ```bash
@@ -42,9 +42,6 @@ $ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-insta
 ```bash
 $ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.4
 ```
-
-## Spark installation
-The above `curl`/`wget` commands will also install a local version of spark.  If SMV is being installed on a cluster gateway or local machine that already has the correct spark version, then the `-spark` flag should be removed to skip the Spark installation.
 
 ## Updating paths.
 The install script above will automatically update the user `.profile`, `.bash_profile`, or `.bashrc` files.  For the paths to take effect, user should log out, then log back in to update the paths in the shell.
