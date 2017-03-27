@@ -46,8 +46,7 @@ package org.tresamigos.smv {
       assert(Set(dsForStage:_*) == Set(stage1.A, stage1.B, stage1.C))
     }
 
-    ignore("Test DataSetMgr dataSetsForStage does not find links in a stage") {
-      //Actually dataSetsForStage should find links in a stage
+    test("Test DataSetMgr dataSetsForStage does not find links in a stage") {
       val dsForStage = app.dsm.dataSetsForStage("org.tresamigos.smv.DSMTestMods.stage4")
       assert(Set(dsForStage:_*) == Set())
     }

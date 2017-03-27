@@ -37,9 +37,7 @@ class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   def urnsForStage(stageName: String): Seq[URN] = {
     val packages = Seq(stageName, stageName + ".input")
     val allDatasets = packages.flatMap{ p => SmvReflection.objectsInPackage[SmvDataSet](p) }
-    // Should return LinkURN also, otherwise there is no way to access the links from DSM
-    // allDatasets.map(_.urn).filterNot(_.isInstanceOf[LinkURN])
-    allDatasets.map(_.urn)
+    allDatasets.map(_.urn).filterNot(_.isInstanceOf[LinkURN])
   }
 }
 

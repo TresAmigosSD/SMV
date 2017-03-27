@@ -65,7 +65,6 @@ org.tresamigos.smv.smvAppTestPkg3:
 
     val dL = gu.createDescendantDSList(smvAppTestPkg1.X)
     assert(dL == """(O) smvAppTestPkg1.Y
-(L) smvAppTestPkg1.Y
 (M) smvAppTestPkg3.T
 (O) smvAppTestPkg3.U""")
   }

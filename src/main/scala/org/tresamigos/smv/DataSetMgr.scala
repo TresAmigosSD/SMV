@@ -49,6 +49,9 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] =
     load(urnsForStage(stageNames:_*):_*)
 
+  def dataSetsForStageWithLink(stageNames: String*): Seq[SmvDataSet] =
+    dataSetsForStage(stageNames:_*).flatMap{ds => ds.resolvedRequiresDS :+ ds}.distinct
+
   def stageForUrn(urn: URN): Option[String] =
     allStageNames.find{stageName => urn.fqn.startsWith(stageName + ".")}
 

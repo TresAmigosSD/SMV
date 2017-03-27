@@ -29,20 +29,19 @@ import org.apache.spark.annotation._
  **/
 private[smv] class SmvDSGraph(app: SmvApp, pstages: Seq[String] = Nil, targetDSs: Seq[SmvDataSet] = Nil) {
   val stages = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
-  private val seeds = if(targetDSs.isEmpty) app.dsm.allDataSets else targetDSs
+  private val _nodes = if(targetDSs.isEmpty) app.dsm.dataSetsForStageWithLink(stages:_*) else
+    (targetDSs.flatMap(_.ancestors) ++ targetDSs).distinct
 
-  val nodes: Seq[SmvDataSet]= (seeds.flatMap(_.ancestors) ++ seeds).distinct.filterNot{
-    ds => ds.isInstanceOf[SmvModuleLink] || stages.forall (s => !ds.fqn.startsWith(s + "."))
+  private def followLink(ds: SmvDataSet) = ds match {
+    case _ds: SmvModuleLink => _ds.smvModule
+    case _ => ds
   }
+
+  val nodes: Seq[SmvDataSet] = _nodes map {followLink} distinct
 
   val edges: Seq[(SmvDataSet, SmvDataSet)] = nodes.flatMap{ds =>
     val fromDSs = ds.resolvedRequiresDS
-    fromDSs.map{fds =>
-      val _fds = if(fds.isInstanceOf[SmvModuleLink])
-        fds.asInstanceOf[SmvModuleLink].smvModule
-        else fds
-      _fds -> ds
-    }
+    fromDSs.map{followLink}.filter{nodes contains _}.map{_ -> ds}
   }
 
   val clusters: Seq[(String, Seq[SmvDataSet])] =
@@ -73,7 +72,7 @@ private[smv] class SmvStageGraph(app: SmvApp, pstages: Seq[String] = Nil) {
   val stages = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
   val stageNodes: Seq[String] = stages
   val interfaceNodes: Seq[SmvStageInterface] = stageNodes.flatMap{s =>
-    val allLinks = app.dsm.dataSetsForStage(s).filter(_.isInstanceOf[SmvModuleLink])
+    val allLinks = app.dsm.dataSetsForStageWithLink(s).filter(_.isInstanceOf[SmvModuleLink])
     allLinks.map(_.asInstanceOf[SmvModuleLink]).groupBy(l => l.smvModule.parentStage).collect{
       case (Some(upStage), links) => SmvStageInterface(upStage, s, links)
     }
@@ -261,11 +260,11 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
   }
 
   /** list all datasets */
-  def createDSList(s: String = null): String = _listAll(s, {s => dsm.dataSetsForStage(s)})
+  def createDSList(s: String = null): String = _listAll(s, {s => dsm.dataSetsForStageWithLink(s)})
 
   private def deadDS(s: String): Seq[SmvDataSet] = {
     val inFlow = dsm.outputModulesForStage(s).flatMap(d => d.ancestors :+ d).distinct
-    dsm.dataSetsForStage(s).filterNot(ds => inFlow.map(_.urn).contains(ds.urn))
+    dsm.dataSetsForStageWithLink(s).filterNot(ds => inFlow.map(_.urn).contains(ds.urn))
   }
 
   private def descendantsDS(ds: SmvDataSet): Seq[SmvDataSet] = {
