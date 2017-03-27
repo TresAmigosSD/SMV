@@ -233,8 +233,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       } else {
         // get unique col name for in-group ranking
         val pcol = mkUniq(df.columns, "pivot")
-        val r1 = runAgg(valueCols map (c => $"$c".asc) :_*)(
-          (keys ++ valueCols map (c => $"$c")) :+ (count(lit(1)) as pcol) map makeSmvCDSAggColumn :_*)
+        val orders = valueCols map (c => $"$c".asc)
+        val w = Window.partitionBy(keys map {c => $"$c"}: _*).orderBy(orders: _*)
+        val r1 = df.select((keys ++ valueCols map (c => $"$c")) :+ (rowNumber() over w as pcol) :_*)
         // in-group ranking starting value is 0
         val r2 = r1.selectWithReplace(r1(pcol) - 1 as pcol)
         (r2, Seq(Seq(pcol)))
