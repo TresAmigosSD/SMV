@@ -86,6 +86,9 @@ def graph(stageName = None):
     else:
         print(jvmShellCmd._graph(stageName))
 
+def graphStage():
+    print(jvmShellCmd._graphStage())
+
 def now():
     print(jvmShellCmd.now())
 

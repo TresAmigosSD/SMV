@@ -74,6 +74,8 @@ package object shell {
    **/
   def lsDeadLeaf = println(ShellCmd.lsDeadLeaf)
 
+  def graphStage = println(ShellCmd._graphStage)
+
   /** take a stage name and print all DS in this stage, without unused input DS */
   def graph(stageName: String) = println(ShellCmd._graph(stageName))
 
