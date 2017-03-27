@@ -1,4 +1,4 @@
-FROM tresamigos/smv-core
+FROM tresamigos/smv-core:core_jdk7_py27
 
 ENV SMV_HOME=/usr/lib/SMV \
     PATH=$PATH:/usr/lib/SMV/tools
