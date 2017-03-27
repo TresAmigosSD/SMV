@@ -821,15 +821,8 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   def smvFillNullWithPrevValue(orders: Column*)(values: String*): DataFrame = {
-    val renamed = values.map{n => mkUniq(df.columns, s"_${n}")}
-
-    /* We are using the `last` aggregate function's feature that it's actually
-     * Non-null last */
-    val aggExprs = values.zip(renamed).map{case (v, nv) => last(v) as nv}.map{makeSmvCDSAggColumn}
-    runAggPlus(orders: _*)(aggExprs: _*).
-      smvSelectMinus(values.head, values.tail: _*).
-      renameField(renamed.zip(values): _*).
-      select(df.columns.head, df.columns.tail: _*)
+    val gdo = new cds.FillNullWithPrev(orders.map{o => o.toExpr}.toList, values)
+    smvMapGroup(gdo).toDF
   }
 
   private[smv] def smvRePartition(partitioner: Partitioner): SmvGroupedData = {
