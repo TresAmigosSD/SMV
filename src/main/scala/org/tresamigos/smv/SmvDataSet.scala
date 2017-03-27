@@ -224,6 +224,8 @@ abstract class SmvDataSet extends FilenamePart {
     } else {
       readPersistedFile().recoverWith {case e =>
         val df = dsDqm.attachTasks(doRun(dsDqm))
+        // Delete outputs in case data was partially written previously
+        deleteOutputs
         persist(df)
         validator.validate(df, true, moduleValidPath()) // has already had action (from persist)
         readPersistedFile()
@@ -251,17 +253,8 @@ abstract class SmvDataSet extends FilenamePart {
       df.edd.persistBesideData(publishPath(version))
   }
 
-  /**
-   * the stage associated with this dataset.  Only valid for modules/files defined in a stage package.
-   * Adhoc files/modules will have a null for the stage.
-   */
-  private[smv] lazy val parentStage : SmvStage = app.findStageForDataSet(this).orElse(
-    app.stages.inferStageForDataSet(this)
-  ).getOrElse(
-    null
-  )
-
-  private[smv] def stageVersion() = if (parentStage != null) parentStage.version else None
+  private[smv] lazy val parentStage: Option[String] = app.dsm.stageForUrn(urn)
+  private[smv] def stageVersion() = parentStage flatMap {app.smvConfig.stageVersions.get(_)}
 
   /**
    * Read the published data of this module if the parent stage has specified a version.
@@ -294,11 +287,18 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
 /**
  * SMV Dataset Wrapper around a hive table.
  */
-case class SmvHiveTable(override val tableName: String) extends SmvInputDataSet {
+case class SmvHiveTable(override val tableName: String, val userQuery: String = null) extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
 
+  val query = {
+    if(userQuery == null)
+      "select * from " + tableName
+    else
+      userQuery
+  }
+
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
-    val df = app.sparkSession.sql("select * from " + tableName)
+    val df = app.sparkSession.sql(query)
     run(df)
   }
 }

@@ -34,7 +34,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
   val smvConfig = new SmvConfig(cmdLineArgs)
   val genEdd = smvConfig.cmdLine.genEdd()
   val publishHive = smvConfig.cmdLine.publishHive()
-  val stages = smvConfig.stages
+  val stages = smvConfig.stageNames
   val sparkConf = new SparkConf().setAppName(smvConfig.appName)
 
   /** Register Kryo Classes
@@ -63,21 +63,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
-
-  // Issue # 349: look up stage by the dataset's name instead of the
-  // object identity because after hot-deploy in shell via a new
-  // classloader, the same datset no longer has the same object
-  // instance.
-  lazy val dsname2stage: Map[String, SmvStage] =
-    (for {
-      st <- stages.stages
-      ds <- st.allDatasets
-    } yield (ds.fqn, st)).toMap
-
-  /**
-   * Find the stage that a given dataset belongs to.
-   */
-  def findStageForDataSet(ds: SmvDataSet) : Option[SmvStage] = dsname2stage.get(ds.fqn)
 
   /**
    * Create a DataFrame from string for temporary use (in test or shell)
@@ -121,17 +106,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
     }
   }
 
-  private def genDotGraph(module: SmvDataSet) = {
-    val pathName = s"${module.fqn}.dot"
-    val graphString = new graph.SmvGraphUtil(this, stages).createGraphvisCode(Seq(module))
-    SmvReportIO.saveLocalReport(graphString, pathName)
-  }
-
-  def genJSON(packages: Seq[String] = Seq()) = {
+  def genJSON(stageNames: Seq[String] = Seq()) = {
     val pathName = s"${smvConfig.appName}.json"
 
-    val stagesToGraph = packages.map{stages.findStage(_)}
-    val graphString = new graph.SmvGraphUtil(this, new SmvStages(stagesToGraph)).createGraphJSON()
+    val graphString = new graph.SmvGraphUtil(this, stageNames).createGraphJSON()
 
     SmvReportIO.saveLocalReport(graphString, pathName)
   }
@@ -160,10 +138,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
    */
   private def generateDependencyGraphs() : Boolean = {
     if (smvConfig.cmdLine.graph()) {
-      modulesToRun foreach { module =>
-        // TODO: need to combine the modules for graphs into a single graph.
-        genDotGraph(module)
-      }
+      val pathName = s"${smvConfig.appName}.dot"
+      val graphString = new graph.SmvGraphUtil(this, stages).createGraphvisCode(modulesToRun)
+      SmvReportIO.saveLocalReport(graphString, pathName)
       true
     } else {
       false
@@ -189,15 +166,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
     }.orElse(Some(false))()
   }
 
-  private def generateGraphJSON(): Boolean = {
-    smvConfig.cmdLine.json.map { stageList =>
-      genJSON(stageList)
-      true
-    }.orElse(Some(false))()
-  }
-
   def generateAllGraphJSON() = {
-    genJSON(stages.stageNames)
+    genJSON(stages)
   }
 
   /**
@@ -235,41 +205,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
    * @return true if modules were generated, otherwise false.
    */
   private def generateOutputModules() : Boolean = {
-    deleteOutputModules()
-
-    modulesToRun foreach { module =>
-      val modResult = resolveRDD(module)
-
-      // if module was ephemeral, then it was not saved during graph execution and we need
-      // to persist it here explicitly.
-      if (module.isEphemeral)
-        module.persist(modResult)
-    }
-
+    modulesToRun foreach (resolveRDD(_))
     modulesToRun.nonEmpty
   }
-
-  /** The "versioned" module file base name. */
-  private def versionedPath(suffix: String, prefix: String = "")(name: String, hash: Int): String = {
-    val verHex = f"${hash}%08x"
-    s"""${smvConfig.outputDir}/${prefix}${name}_${verHex}.${suffix}"""
-  }
-
-  /** Returns the path for the module's csv output */
-  val moduleCsvPath = versionedPath("csv") _
-
-  /** Returns the path for the module's schema file */
-  private[smv] val moduleSchemaPath = versionedPath("schema") _
-
-  /** Returns the path for the module's edd report output */
-  private[smv] val moduleEddPath = versionedPath("edd") _
-
-  /** Returns the path for the module's reject report output */
-  private[smv] val moduleValidPath = versionedPath("valid") _
-
-  /** Path for published module of a specified version */
-  private[smv] def publishPath(name: String, version: String) =
-    s"""${smvConfig.publishDir}/${version}/${name}.csv"""
 
   /** Run a module by its fully qualified name in its respective language environment */
   def runModule(urn: URN): DataFrame = resolveRDD(dsm.load(urn).head)
@@ -289,7 +227,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
 
     val modPartialNames = cmdline.modsToRun.orElse(empty)()
     val directMods = dsm.inferDS(modPartialNames:_*) map (_.asInstanceOf[SmvDataSet])
-    val stageNames = cmdline.stagesToRun.orElse(empty)()
+    val stageNames = cmdline.stagesToRun.orElse(empty)() map (dsm.inferStageFullName(_))
     val stageMods = dsm.outputModulesForStage(stageNames:_*)
     val appMods = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[SmvDataSet]
     (directMods ++ stageMods ++ appMods).distinct
@@ -312,7 +250,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _spark: Option[SparkSession]
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    compareEddResults() || generateGraphJSON() || generateDependencyGraphs() || publishModulesToHive() ||  publishOutputModules() || generateOutputModules()
+    compareEddResults() || generateDependencyGraphs() || publishModulesToHive() ||  publishOutputModules() || generateOutputModules()
   }
 }
 

@@ -36,8 +36,8 @@ publishArtifact in Test := true
 
 // Create itest task that runs integration tests
 val itest = TaskKey[Unit]("itest", "Run Integration Test")
-itest <<= publishLocal map {
-  x =>
+itest <<= (assembly, publishLocal) map {
+  (x,y) =>
     val res = ("src/test/scripts/run-sample-app.sh" !)
     if(res > 0) throw new IllegalStateException("integration test failed")
 }

@@ -24,7 +24,7 @@ class SmvGraphUtilTest extends SmvTestUtil {
   override def appArgs = testAppArgs.multiStage ++ Seq("-m", "None")
 
   // ignore faling graph util tests until ancestors/descendant is reimplemented
-  ignore("Test list modules") {
+  test("Test list modules") {
     val gu = new graph.SmvGraphUtil(app)
     val dsL = gu.createDSList()
 
@@ -37,7 +37,7 @@ org.tresamigos.smv.smvAppTestPkg2:
   (O) smvAppTestPkg2.Z
 
 org.tresamigos.smv.smvAppTestPkg3:
-  (L) smvAppTestPkg3.L
+  (L) smvAppTestPkg1.Y
   (M) smvAppTestPkg3.T
   (O) smvAppTestPkg3.U""")
 
@@ -50,21 +50,32 @@ org.tresamigos.smv.smvAppTestPkg2:
 org.tresamigos.smv.smvAppTestPkg3:
   (M) smvAppTestPkg3.T""")
 
-    val aL = gu.createAncestorDSList(smvAppTestPkg3.L)
-    assert(aL === """(O) smvAppTestPkg1.Y
+    val deadLeafL = gu.createDeadLeafDSList()
+    assert(deadLeafL === """
+org.tresamigos.smv.smvAppTestPkg1:
+
+org.tresamigos.smv.smvAppTestPkg2:
+
+org.tresamigos.smv.smvAppTestPkg3:
+  (M) smvAppTestPkg3.T""")
+
+    val aL = gu.createAncestorDSList(smvAppTestPkg3.U)
+    assert(aL === """(L) smvAppTestPkg1.Y
 (M) smvAppTestPkg1.X""")
+
+    val dL = gu.createDescendantDSList(smvAppTestPkg1.X)
+    assert(dL == """(O) smvAppTestPkg1.Y
+(M) smvAppTestPkg3.T
+(O) smvAppTestPkg3.U""")
   }
 
-  ignore("Test createGraphvisCode") {
+  test("Test createGraphvisCode") {
     val graphString = new graph.SmvGraphUtil(app).createGraphvisCode(Seq(smvAppTestPkg3.U))
-    val expectPart = """  subgraph cluster_0 {
-    label="org.tresamigos.smv.smvAppTestPkg3"
+    val expectPart = """    label="org.tresamigos.smv.smvAppTestPkg3"
     color="#e0e0e0"
-    "smvAppTestPkg3.U"
-  }"""
+    "smvAppTestPkg3.U""""
 
     assertTextContains(graphString, expectPart)
-    //println(graphString)
   }
 
   ignore("Test createDSAsciiGraph") {
@@ -92,21 +103,19 @@ org.tresamigos.smv.smvAppTestPkg3:
 
   ignore("Test createStageAsciiGraph") {
     val graphString = new graph.SmvGraphUtil(app).createStageAsciiGraph()
-    assertStrIgnoreSpace(graphString, """        ┌────────────┐
-        │smvAppTestPk│
-        │     g1     │
-        └──────┬─────┘
-               │
-               v
-      ┌────────────────┐
-      │smvAppTestPkg3.L│
-      └─┬──────────────┘
-        │
-        v
- ┌────────────┐ ┌────────────┐
- │smvAppTestPk│ │smvAppTestPk│
- │     g3     │ │     g2     │
- └────────────┘ └────────────┘""")
+    assertStrIgnoreSpace(graphString, """         ┌──────────────┐
+         │smvAppTestPkg1│
+         └───────┬──────┘
+                 │
+                 v
+      ┌────────────────────┐
+      │(L) smvAppTestPkg1.Y│
+      └──┬─────────────────┘
+         │
+         v
+ ┌──────────────┐ ┌──────────────┐
+ │smvAppTestPkg3│ │smvAppTestPkg2│
+ └──────────────┘ └──────────────┘""")
   }
 
   // Ignore createGraphJSON test until bug that causes false failure in SBT is fixed

@@ -9,16 +9,21 @@ $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 
 ## Utility methods
 * `df(dataset_name)` :  Load/Run the given dataset and return the resulting `DataFrame`
-* `lsStage` : list all the stages of the project
-* `ls(stageName)`: list SmvDataSet in the given stage
-* `ls`: list all the SmvDataSet in the project, organized by stages
-* `graph(stageName)`: print dependency graph of all DS in this stage, without unused input DS
-* `graph`: print dependency graph of stages and inter-stage links
-* `descendants(dataset_name)`: list all `descendants` of a dataset
-
-In the future we will also implement
-* `discoverSchema(path, n, csvAttr)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix
- ".schema.toBeReviewed"
+* `help()`: List the following shell commands
+* `lsStage()` : list all the stages of the project
+* `ls(stage_name)`: list SmvDataSet in the given stage
+* `ls()`: list all the SmvDataSet in the project, organized by stages
+* `lsDead()`: list `dead` datasets in the project, `dead` dataset is defined as "no contribution to any Output module"
+* `lsDead(stage_name)`: list `dead` datasets in the stage
+* `lsDeadLead()`: list `dead leaf` datasets in the project, `dead leaf` is `dead` dataset with no module depends on it
+* `lsDeadLead(stage_name)`: list `dead leaf` datasets in the stage
+* `ancestors(dataset_name)`: list `ancestors` of the dataset, `ancestors` are all the datasets current dataset depends
+* `descendants(datasetName)`: list `descendants` of the dataset, `descendants` are all the datasets depend on the current dataset
+* `graphStage()`: print dependency graph of stages and inter-stage links
+* `graph(stage_name)`: print dependency graph of all DS in this stage
+* `graph()`: print dependency graph of all DS in the app
+* `now()`: current system time
+* `discoverSchema(path, n, csvAttr)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix ".schema.toBeReviewed"
 
 ## Examples
 
@@ -70,78 +75,115 @@ true                        32   61.54%          52  100.00%
 -------------------------------------------------
 ```
 
+### List all the stages
+```python
+>>> lsStage()
+stage1
+stage2
+```
+
 ### List all DataSets
 ```python
 >>> ls()
+stage1:
+  (O) stage1.employment.EmploymentByState
+  (I) stage1.inputdata.Employment
 
-com.mycompany.MyApp.stage1:
-  (O) EmploymentByState
-  (F) input.employment_CB1200CZ11
+stage2:
+  (L) stage1.employment.EmploymentByState
+  (O) stage2.category.EmploymentByStateCategory
 
-com.mycompany.MyApp.stage2:
-  (O) StageEmpCategory
-  (L) input.EmploymentStateLink
 ```
-There are 5 values of the leading label
+There are 4 values of the leading label
 * "O" - SmvOutput
 * "L" - SmvModuleLink
-* "F" - SmvFile
+* "I" - SmvInput (including SmvCsvFile, SmvHiveTable, etc.)
 * "M" - SmvModule (but neither SmvOutput nor SmvModuleLink)
-* "H" - Hive Table
 
 Please see [SMV Introduction](smv_intro.md) for details of the 4 types.
 
 ### List DataSets in a Stage
 ```python
 >>> ls("stage1")
-(O) EmploymentByState
-(F) input.employment_CB1200CZ11
+(O) stage1.employment.EmploymentByState
+(I) stage1.inputdata.Employment
 ```
 
 ### List descendants of a given DataSet
 ```python
->>> descendants(EmploymentByState)
-(L) stage2.input.EmploymentStateLink
-(O) stage2.StageEmpCategory
+>>> descendants("Employment")
+(O) stage1.employment.EmploymentByState
+(O) stage2.category.EmploymentByStateCategory
+```
+
+### List ancestors of a given DataSet
+```python
+>>> ancestors("EmploymentByState")
+(I) stage1.inputdata.Employment
 ```
 
 ### Plot stage level dependency graph
 ```python
->>> graph()
-                     ┌──────┐
-                     │stage1│
-                     └────┬─┘
-                          │
-                          v
- ┌────────────────────────────────────────────────┐
- │(O) com.mycompany.MyApp.stage1.EmploymentByState│
- │         (L) input.EmploymentStateLink          │
- └───────────────────────┬────────────────────────┘
-                         │
-                         v
-                     ┌──────┐
-                     │stage2│
-                     └──────┘
+>>> graphStage()
+                 ┌──────┐
+                 │stage1│
+                 └───┬──┘
+                     │
+                     v
+ ┌───────────────────────────────────────┐
+ │(L) stage1.employment.EmploymentByState│
+ └───────────────────┬───────────────────┘
+                     │
+                     v
+                 ┌──────┐
+                 │stage2│
+                 └──────┘
 ```
 
 ### Plot DataSets dependency graph in a stage
 ```python
 >>> graph("stage2")
  ┌────────────┐
- │(L) input.Em│
- │ploymentStat│
- │   eLink    │
+ │(O) stage1.e│
+ │mployment.Em│
+ │ploymentBySt│
+ │    ate     │
  └──────┬─────┘
         │
         v
  ┌────────────┐
- │(O) StageEmp│
- │  Category  │
+ │(O) category│
+ │.EmploymentB│
+ │yStateCatego│
+ │     ry     │
  └────────────┘
 ```
 
-
-
+### Plot DataSets dependency graph of the project
+```python
+>>> graph()
+ ┌────────────┐
+ │(I) stage1.i│
+ │nputdata.Emp│
+ │  loyment   │
+ └──────┬─────┘
+        │
+        v
+ ┌────────────┐
+ │(O) stage1.e│
+ │mployment.Em│
+ │ploymentBySt│
+ │    ate     │
+ └──────┬─────┘
+        │
+        v
+ ┌────────────┐
+ │(O) stage2.c│
+ │ategory.Empl│
+ │oymentByStat│
+ │ eCategory  │
+ └────────────┘
+```
 
 # Run SMV App using Scala smv-shell
 
@@ -258,7 +300,7 @@ scala> ls
 
 com.mycompany.MyApp.stage1:
   (O) EmploymentByState
-  (F) input.employment_CB1200CZ11
+  (I) input.employment_CB1200CZ11
 
 com.mycompany.MyApp.stage2:
   (O) StageEmpCategory
@@ -267,9 +309,8 @@ com.mycompany.MyApp.stage2:
 There are 4 values of the leading label
 * "O" - SmvOutput
 * "L" - SmvModuleLink
-* "F" - SmvFile
+* "I" - SmvInput
 * "M" - SmvModule (but neither SmvOutput nor SmvModuleLink)
-* "H" - Hive Table
 
 Please see [SMV Introduction](smv_intro.md) for details of the 4 types.
 
@@ -277,7 +318,7 @@ Please see [SMV Introduction](smv_intro.md) for details of the 4 types.
 ```scala
 scala> ls("stage1")
 (O) EmploymentByState
-(F) input.employment_CB1200CZ11
+(I) input.employment_CB1200CZ11
 ```
 
 ### List ancestors of a given DataSet
@@ -285,7 +326,7 @@ scala> ls("stage1")
 scala> ancestors(StageEmpCategory)
 (L) stage2.input.EmploymentStateLink
 (O) stage1.EmploymentByState
-(F) stage1.input.employment_CB1200CZ11
+(I) stage1.input.employment_CB1200CZ11
 ```
 
 ### List descendants of a given DataSet

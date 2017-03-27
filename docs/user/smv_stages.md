@@ -1,7 +1,11 @@
 # SMV Stages
 
 As a project grows in size, the ability to divide up the project into manageable chunks becomes paramount.
-SMV Stages accomplishes this by not only organizing the modules into separate managed groups and by controlling the dependency between modules in different stages.
+SMV Stages accomplishes this by not only organizing the modules into separate managed packages and by controlling the dependency between modules in different stages.
+
+# Stage Names
+
+A stage can be the fully qualified name of any package in an SMV application, with the exception that a stage cannot be the name of a Python file. E.g., given a project with a file src/main/python/etl/modules.py, etl is a valid stage but etl.modules is not.
 
 # Stage input
 By convention, each stage should have an `inputdata.py` module where all the input files (e.g. `SmvCsvFile` and `SmvHiveTable`) and stage links (e.g. `SmvModuleLink`) are defined.  All inputs used by any module in a given stage should reference an `Smv*File` instance in the `inputdata.py` module.

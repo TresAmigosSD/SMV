@@ -116,6 +116,9 @@ object SmvPythonHelper {
       lls
     )
   }
+
+  def smvOverlapCheck(df: DataFrame, key: String, otherDf: Array[DataFrame]): DataFrame =
+    df.smvOverlapCheck(key)(otherDf:_*)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
@@ -154,16 +157,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def publishVersion: Option[String] = config.cmdLine.publish.get
 
-  /** Infers the name of the stage to which a named module belongs */
-  def inferStageNameFromDsName(modFqn: String): Option[String] =
-    j_smvApp.stages.inferStageNameFromDsName(modFqn)
-
-  /** Reads the published data, if any, for a named SMV module */
-  def readPublishedData(modFqn: String): Option[DataFrame] =
-    j_smvApp.stages.stageVersionFor(modFqn) flatMap (ver =>
-      Try(SmvUtil.readFile(j_smvApp.sparkSession, j_smvApp.publishPath(modFqn, ver))).toOption
-    )
-
   /** Saves the dataframe to disk */
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
     SmvUtil.persist(j_smvApp.sparkSession, dataframe, path, generateEdd)
@@ -196,13 +189,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def moduleNames: java.util.List[String] = {
     val cl = j_smvApp.smvConfig.cmdLine
     val directMods: Seq[String] = cl.modsToRun()
-    /*
-    val stageMods: Seq[String] = cl.stagesToRun().flatMap(j_smvApp.outputModsForStage)
-    val appMods: Seq[String] =
-      if (cl.runAllApp()) j_smvApp.stages.stageNames.flatMap(j_smvApp.outputModsForStage) else Nil
-
-      (directMods ++ stageMods ++ appMods).filterNot(_.isEmpty)
-      */
     directMods
   }
 

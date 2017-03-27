@@ -11,18 +11,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
 from smvbasetest import SmvBaseTest
 from smv import smvPy
 from smv.smvpy import DataSetRepo
-
-import sys
 
 class ModuleHashTest(SmvBaseTest):
     ResourcePath1 = 'src/test/python/dsh1'
     ResourcePath2 = 'src/test/python/dsh2'
 
     class Resource(object):
-        def __init__(self,smvPy,path,fqn):
+        def __init__(self, smvPy, path, fqn):
             self.dsr = DataSetRepo(smvPy)
             self.path = path
             self.fqn = fqn
@@ -31,23 +31,20 @@ class ModuleHashTest(SmvBaseTest):
             sys.path.insert(1,self.path)
             return self.dsr.loadDataSet(self.fqn)
 
-        def __exit__(self,type,value,traceback):
+        def __exit__(self, type, value, traceback):
             sys.path.remove(self.path)
 
-    def compare_resource_hash(self,fqn,assertion):
+    def compare_resource_hash(self, fqn, assertion):
         with self.Resource(self.smvPy,self.ResourcePath1,fqn) as ds:
             hash1 = ds.datasetHash()
-
         with self.Resource(self.smvPy,self.ResourcePath2,fqn) as ds:
             hash2 = ds.datasetHash()
-
         assertion(hash1, hash2)
 
-
-    def assert_hash_should_change(self,fqn):
+    def assert_hash_should_change(self, fqn):
         self.compare_resource_hash(fqn,self.assertNotEqual)
 
-    def assert_hash_should_not_change(self,fqn):
+    def assert_hash_should_not_change(self, fqn):
         self.compare_resource_hash(fqn,self.assertEqual)
 
     def test_add_comment_should_not_change_hash(self):

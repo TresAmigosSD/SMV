@@ -14,9 +14,9 @@ TBD
 
 ## 3. create the release image
 ```
-$ mkdir release_dir
-$ docker run --rm -it -v release_dir:/projects/release tresamigos/smv /usr/lib/SMV/tools/release_smv.sh 1.2.3.4
+$ release_smv.sh 1.2.3.4
 ```
+Substitute the real release version for "1.2.3.4"
 
 ## 4. Create github release
 * click on "draft a new release" on https://github.com/TresAmigosSD/SMV/releases

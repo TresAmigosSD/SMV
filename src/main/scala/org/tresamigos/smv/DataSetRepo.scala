@@ -31,11 +31,14 @@ abstract class DataSetRepoFactory {
 
 class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   val cl = SmvClassLoader(smvConfig, getClass.getClassLoader)
-  val stages = smvConfig.stages
   def loadDataSet(urn: ModURN): SmvDataSet =
     (new SmvReflection(cl)).objectNameToInstance[SmvDataSet](urn.fqn)
-  def urnsForStage(stageName: String): Seq[URN] =
-    stages.findStage(stageName).allDatasets.map(_.urn).filterNot(_.isInstanceOf[LinkURN])
+
+  def urnsForStage(stageName: String): Seq[URN] = {
+    val packages = Seq(stageName, stageName + ".input")
+    val allDatasets = packages.flatMap{ p => SmvReflection.objectsInPackage[SmvDataSet](p) }
+    allDatasets.map(_.urn).filterNot(_.isInstanceOf[LinkURN])
+  }
 }
 
 class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {

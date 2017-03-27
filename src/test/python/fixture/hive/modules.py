@@ -11,10 +11,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import smvPy, SmvPyModule, SmvPyOutput
+from smv import smvPy, SmvPyModule, SmvPyOutput, SmvHiveTable
 
 class M(SmvPyModule, SmvPyOutput):
     def requiresDS(self): return []
     def tableName(self): return "M"
     def run(self, i):
         return self.smvPy.createDF("k:String;v:Integer", "a,;b,2")
+
+class MyHive(SmvHiveTable):
+    def tableName(self): return "M"
+
+class MyHiveWithQuery(SmvHiveTable):
+    def tableName(self): return "M"
+    def tableQuery(self): return "from M select k"

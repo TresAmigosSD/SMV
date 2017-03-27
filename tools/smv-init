@@ -7,6 +7,7 @@ if [ "$1" = "-q" ]; then
 fi
 
 TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/templates"
+TEMPLATE_DATA_DIR="$TEMPLATE_DIR/data"
 
 # PROJ_TYPE:
 #  - simple (default)
@@ -101,7 +102,7 @@ function copy_conf_files()
 {
     # copy appropriate files based on project type
     PYTHON_FILES="README.md notebooks/Untitled.ipynb .gitignore.template log4j.properties conf/smv-app-conf.props conf/smv-user-conf.props"
-    SCALA_FILES="$PYTHON_FILES pom.xml build.sbt project/assembly.sbt project/build.properties conf/shell_init.scala"
+    SCALA_FILES="$PYTHON_FILES build.sbt project/assembly.sbt project/build.properties"
     ENTERPRISE_FILES="$PYTHON_FILES conf/smv-user-conf.props.template"
 
     if [ "$PROJ_TYPE" = "test" ] ; then
@@ -125,9 +126,11 @@ function copy_conf_files()
 
 function copy_data_files()
 {
+    data_dir=$1
+
     echo "-- copying data files"
 
-    cp -R "${TEMPLATE_DIR}/data" "$PROJ_DIR"
+    cp -R "$data_dir" "$PROJ_DIR"
 }
 
 function copy_src_dir()
@@ -175,7 +178,13 @@ fi
 
 create_proj_dir
 copy_conf_files
-copy_data_files
+
+if [ "$PROJ_TYPE" = "test" ]; then
+  copy_data_files "$TEMPLATE_DIR/data"
+else
+  copy_data_files $TEMPLATE_DATA_DIR
+fi
+
 copy_src_files
 create_python_packages
 

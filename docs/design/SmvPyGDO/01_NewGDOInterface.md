@@ -63,17 +63,20 @@ In the cases we may need to have other `SmvGroupedData` operation following, we 
 ### New Design
 We also will simplify the interface methods name in the new design. Here is the proposed
 interface and client code
+
+**Scala**
 ```scala
 abstract class SmvGDO {
-  def inGroupOp(inSchema: StructType): Iterable[Row] => Iterable[Row]
+  def inGroupOp(rows: Iterable[Row], inSchema: StructType): Iterable[Row]
   def outSchema(inSchema: StructType): SmvSchema
 }
 ```
 
+**Python**
 ```python
 class SmvGDO(object):
-  def inGroupOp(self, inSchema):
-    """In group operations"""
+  def inGroupOp(self, rows, inSchema = None):
+    """In group operations, returns a iterator of row"""
   def outSchema(self, inSchema):
     """Output Schema"""
 ```
@@ -82,3 +85,8 @@ Supported client code:
 ```scala
 val res = df.smvGroupBy('k).smvMapGroup(gdo)
 ```
+
+The `inSchema` parameter for `outSchema` method is necessary both `Scala` and `Python`, because the output schema
+likely depends on the input schema. However the `inSchema` parameter for `inGroupOp` method for Python may not be
+needed.
+ 

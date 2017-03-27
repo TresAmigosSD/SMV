@@ -62,17 +62,19 @@ package object shell {
   def lsDead = println(ShellCmd.lsDead)
 
   /**
-   * list `leaf` datasets in a stage
-   * `leaf` dataset is defined as "no modules in the stage depend on it, excluding Output modules"
-   * Note: a `leaf` dataset must be `dead`, but some `dead` datasets are Not `leaf`s
+   * list `deadLeaf` datasets in a stage
+   * `deadLeaf` dataset is defined as "no modules in the stage depend on it, excluding Output modules"
+   * Note: a `deadLeaf` dataset must be `dead`, but some `dead` datasets are Not `deadLeaf`s
    * @param stageName could be the FQN or the basename
    */
-  def lsLeaf(stageName: String) = println(ShellCmd.lsLeaf(stageName))
+  def lsDeadLeaf(stageName: String) = println(ShellCmd.lsDeadLeaf(stageName))
 
   /**
-   * list `leaf` datasets in the entire project
+   * list `deadLeaf` datasets in the entire project
    **/
-  def lsLeaf = println(ShellCmd.lsLeaf)
+  def lsDeadLeaf = println(ShellCmd.lsDeadLeaf)
+
+  def graphStage = println(ShellCmd._graphStage)
 
   /** take a stage name and print all DS in this stage, without unused input DS */
   def graph(stageName: String) = println(ShellCmd._graph(stageName))
@@ -88,14 +90,16 @@ package object shell {
    * `ancestors` are datasets current dataset depends on, directly or in-directly,
    * even include datasets from other stages
    **/
-  def ancestors(ds: SmvDataSet) = println(ShellCmd.ancestors(ds))
+   def ancestors(ds: SmvDataSet) = println(ShellCmd.ancestors(ds))
+   def ancestors(dsName: String) = println(ShellCmd.ancestors(dsName))
 
-  /**
-   * list all `descendants` of a dataset
-   * `descendants` are datasets which depend on the current dataset directly or in-directly,
-   * even include datasets from other stages
-   **/
+//  /**
+//   * list all `descendants` of a dataset
+//   * `descendants` are datasets which depend on the current dataset directly or in-directly,
+//   * even include datasets from other stages
+//   **/
   def descendants(ds: SmvDataSet) = println(ShellCmd.descendants(ds))
+  def descendants(dsName: String) = println(ShellCmd.descendants(dsName))
 
   /**
    * Print current time

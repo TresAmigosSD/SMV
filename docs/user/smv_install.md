@@ -30,38 +30,28 @@ The correct version of python should already be present on Mac OSX.  For Ubuntu 
 $ sudo apt-get install python
 ```
 
-# Install Spark
-SMV requires an Apache Spark version built with Hive support.  A prebuilt spark 1.5.2 version with Hive support can be found [here](https://github.com/TresAmigosSD/spark/releases/tag/1.5.2_hd).  Download the `spark-1.5.2-bin-2.7.2.tgz` bundle and extract it.
-```
-$ tar xvf spark-1.5.2-bin-2.7.2.tgz
-```
-
-You must add the spark bin directory to your user `PATH` environment variable.  This is best done in `.profile` or `.bashrc` file.
-```shell
-export SPARK_HOME=Spark-install-dir
-export PATH=$PATH:$SPARK_HOME/bin
-```
-
-To verify that Spark was installed correctly, run the following command:
-```shell
-$ spark-submit --version
-```
-
 # Install SMV
+SMV installing requires either curl or wget to be available.
 
-A prebuilt SMV version can be found [here](https://github.com/TresAmigosSD/SMV/releases/tag/v1.5.2.2). Download the `smv_1.5.2.2.tgz` file and extract as follows:
-```
-$ tar xvf smv_1.5.2.2.tgz
-```
-
-You must add the SMV bin directory to your user `PATH` environment variable.  This is best done in `.profile` or `.bashrc` file.
-```shell
-export SMV_HOME=SMV-install-dir
-export PATH=$PATH:$SMV_HOME/tools
+## Install SMV using curl
+```bash
+$ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.3
 ```
 
+## Install SMV using wget
+```bash
+$ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.3
+```
+
+## Spark installation
+The above `curl`/`wget` commands will also install a local version of spark.  If SMV is being installed on a cluster gateway or local machine that already has the correct spark version, then the `-spark` flag should be removed to skip the Spark installation.
+
+## Updating paths.
+The install script above will automatically update the user `.profile`, `.bash_profile`, or `.bashrc` files.  For the paths to take effect, user should log out, then log back in to update the paths in the shell.
+
+## Verify SMV installation
 To verify that SMV was installed correctly, run the following command:
 ```shell
 $ type smv-pyrun
 ```
-The above should point to the `smv-pyrun` script in the SMV tools directory
+The above should point to the `smv-pyrun` script in the SMV tools directory.  If it can not find `smv-pyrun` ensure that the profile rc file was sourced by either logging out / logging in or sourcing the appropriate profile file.
