@@ -86,6 +86,7 @@ function update_docs_version()
   find docs/user -name '*.md' \
     -exec perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" \{\} +
   git commit -a -m "updated user docs to version $SMV_VERSION"
+  git push origin
 }
 
 function tag_release()
@@ -118,7 +119,7 @@ function create_tar()
 parse_args "$@"
 find_gnu_tar
 check_git_repo
+build_smv
 update_docs_version
 tag_release
-build_smv
 create_tar
