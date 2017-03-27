@@ -271,6 +271,22 @@ will result in the following output:
 
 **Note:** This only works for String columns for now
 
+#### smvHashSample
+Sample the df according to the hash of a column.
+MurmurHash3 algorithm is used for generating the hash.
+
+```python
+df.smvHashSample(df.key, rate=0.1, seed=123)
+```
+or
+```python
+df.smvHashSample("key", rate=0.1, seed=123)
+```
+
+* `key`: key column to sample on.
+* `rate`: sample rate in range (0, 1] with a default of 0.01 (1%)
+* `seed`: random generator integer seed with a default of 23.
+
 #### smvOverlapCheck
 For a set of DFs, which share the same key column, check the overlap across them.
 
