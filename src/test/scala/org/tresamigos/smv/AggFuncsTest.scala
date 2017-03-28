@@ -24,7 +24,7 @@ class AggFuncsTest extends SmvTestUtil {
   test("test OnlineStdDev") {
     val ssc = sqlContext; import ssc.implicits._
     val df = open(testDataDir +  "AggTest/test1.csv")
-    val std = df.agg(stddev('a), stddev('b))
+    val std = df.agg(smvStddev('a), smvStddev('b))
     assertDoubleSeqEqual(std.collect()(0).toSeq, List(1.0, 10.0))
   }
 
