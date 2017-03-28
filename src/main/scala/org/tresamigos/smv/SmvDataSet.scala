@@ -501,7 +501,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    * This is useful for debugging a long SmvModule by creating snapshots along the way.
    * {{{
    * object MyMod extends SmvModule("...") {
-   *   override def requireDS = Seq(...)
+   *   override def requiresDS = Seq(...)
    *   override def run(...) = {
    *      val s1 = ...
    *      snapshot(s1, "s1")
@@ -552,7 +552,7 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
   override def dsType() = "Link"
 
   /**
-   * override the module run/requireDS methods to be a no-op as it will never be called (we overwrite doRun as well.)
+   * override the module run/requiresDS methods to be a no-op as it will never be called (we overwrite doRun as well.)
    */
   override def requiresDS() = Seq.empty[SmvDataSet]
   override def run(inputs: runParams) = null

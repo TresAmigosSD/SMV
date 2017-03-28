@@ -49,7 +49,7 @@ package Scala {
   }
   together {
     class SmvDataSet <<abstract>> {
-      requireDS(): Seq[SmvDataSet]
+      requiresDS(): Seq[SmvDataSet]
       resolve(res: DataSetResolver): SmvDataSet
       run(i: runParams): DataFrame
       resolvedRequiresDS: Seq[SmvDataSet]
