@@ -756,8 +756,6 @@ class SmvDFHelper(df: DataFrame) {
    *  - the python smvUnpivotRegex function takes variable number of arguments. we cannot use default values
    *
    * The function name is different to keep consistency between Python and Scala
-   * The order of params is different between Scala and Python, because in Python, the valueCols* should be the last parameter
-   *
    */
   def smvUnpivotRegex(valueCols: Seq[String], colNameFn: String, indexColName: String = "Index"): DataFrame = {
     val pattern = colNameFn.r
