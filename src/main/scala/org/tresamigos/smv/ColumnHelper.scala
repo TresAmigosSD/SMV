@@ -569,10 +569,10 @@ class ColumnHelper(column: Column) {
    * }}}
    *
    * @return The previous value of the column in the group.
-   **/
   def smvLag(n: Int) = {
     smvFirst(column).from(InLastNWithNull(n + 1))
   }
+   **/
 
   /**
    * Convert values to String by applying "printf" type format

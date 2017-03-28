@@ -445,10 +445,7 @@ class SmvDFHelper(df: DataFrame) {
     /* Should call dropDuplicates, but that method has bug as if the first record has null
     df.dropDuplicates(keys)*/
 
-    val selectExpressions = df.columns.diff(keys).map {
-      //using smvFirst instead of first, since `first` return the first non-null of each field
-      fn => smvFirst($"$fn") as fn
-    }
+    val selectExpressions = df.columns.diff(keys)
 
     if (selectExpressions.isEmpty) {
       df.select(k1, krest: _*).distinct()
