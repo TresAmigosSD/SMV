@@ -14,8 +14,7 @@
 
 package org.tresamigos.smv
 
-import scala.util.{Try, Success, Failure}
-import scala.collection.mutable
+import scala.annotation.tailrec
 
 /**
  * DataSetResolver (DSR) is the entrypoint through which the DataSetMgr acquires
@@ -97,15 +96,17 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
    * before loading it would incur the same cost twice, so we simply Try loading
    * the SmvDataSet from each repo and move on to the next repo if it fails.
    */
-  private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet = {
-    if(reposToTry.isEmpty)
-      throw new SmvRuntimeException(msg.dsNotFound(urn))
-    else
-      Try(reposToTry.head.loadDataSet(urn)) match {
-        case Failure(_) => findDataSetInRepo(urn, reposToTry.tail)
-        case Success(ds) => ds
-      }
-  }
+  @tailrec
+  private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet =
+    reposToTry match {
+      case head :: rest =>
+        head.loadDataSet(urn) match {
+          case Some(ds) => ds
+          case _        => findDataSetInRepo(urn, rest)
+        }
+      case _            =>
+        throw new SmvRuntimeException(msg.dsNotFound(urn))
+    }
 
   /**
    * msg encapsulates the messages which will be thrown as errors or printed as
