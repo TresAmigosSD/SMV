@@ -98,7 +98,7 @@ object mfvStr extends MostFrequentValue(StringType)
 
 object mfvInt extends MostFrequentValue(IntegerType)
 
-private[smv] object stddev extends UserDefinedAggregateFunction {
+private[smv] object smvStddev extends UserDefinedAggregateFunction {
   // Schema you get as an input
   def inputSchema = new StructType().add("v", DoubleType)
 
