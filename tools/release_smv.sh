@@ -3,6 +3,10 @@
 # docker container to maintain release consistency
 
 # TODO: create github release automatically.
+# TODO: use .smv_version file to get current version
+# TODO: create /tmp/vx.x.x.x dir for logs and assets
+# TODO: add "info" func to put message to stdout and logs
+# TODO: redirect output of intermediate results to logs instead of stdout.
 
 set -e
 PROG_NAME=$(basename "$0")
@@ -12,6 +16,17 @@ SMV_DIR="$(dirname "$SMV_TOOLS")"
 SMV_DIR_BASE="$(basename $SMV_DIR)"
 DOCKER_SMV_DIR="/projects/${SMV_DIR_BASE}"
 PROJ_DIR="$(dirname "$SMV_DIR")" # assume parent of SMV directory is the projects dir.
+
+function info()
+{
+  echo "$@"
+}
+
+function error()
+{
+  echo "ERROR: $@"
+  exit 1
+}
 
 function usage()
 {
@@ -69,13 +84,23 @@ function find_gnu_tar()
   fi
 }
 
+# find the release message in /releases dir.
+function find_release_msg_file()
+{
+  info "---- finding release message file"
+  RELEASE_MSG_FILE="releases/v${SMV_VERSION}.md"
+  cd "${SMV_DIR}"
+  if [ ! -r "${RELEASE_MSG_FILE}" ]; then
+    error "Unable to find release message file: ${RELEASE_MSG_FILE}"
+  fi
+}
+
 function check_git_repo()
 {
   echo "--- checking repo for modified files"
   cd "${SMV_DIR}"
   if ! git diff-index --quiet HEAD --; then
-    echo "ERROR: SMV git repo has locally modified files"
-    exit 1
+    error "SMV git repo has locally modified files"
   fi
 }
 
@@ -83,6 +108,7 @@ function update_docs_version()
 {
   echo "---- updating docs to version $SMV_VERSION"
   cd "${SMV_DIR}"
+  git pull # update to latest before making any changes.
   find docs/user -name '*.md' \
     -exec perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" \{\} +
   git commit -a -m "updated user docs to version $SMV_VERSION"
@@ -118,6 +144,7 @@ function create_tar()
 # ---- MAIN ----
 parse_args "$@"
 find_gnu_tar
+find_release_msg_file
 check_git_repo
 build_smv
 update_docs_version
