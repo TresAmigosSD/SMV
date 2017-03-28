@@ -21,9 +21,15 @@ object smvfuncs {
    *
    * @group agg
    **/
-  def smvFirst(c: Column, nonNull: Boolean = false) = {
-    if (nonNull) first(c) // delegate to Spark's first for its non-null implementation (as of 1.5)
-    else new Column(SmvFirst(c.toExpr))
+  def smvFirst(c: Column, ignoreNulls: Boolean = false) = {
+    //START of Spark 1.5.x Implementation
+    /** Spark 1.5.x Implemented SmvFirst with assumption that user will pass in the
+     *  column in the form or `df(colName)`, so that we can figure out the dataType of it
+     **/
+    val dt = c.toExpr.dataType
+    val sf = new SmvFirst(dt)
+    sf.apply(c, lit(ignoreNulls))
+    //END of Spark 1.5.x Implementation
   }
 
   /**

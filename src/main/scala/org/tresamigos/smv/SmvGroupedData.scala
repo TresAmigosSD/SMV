@@ -239,11 +239,12 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     // TODO: remove duplicate code in smvPivot, smvPivotSum, and here
     val output = ensureBaseOutput(baseOutput, pcols, dfp)
     val pivot= SmvPivot(pcols, valueCols.map{v => (v, v)}, output)
-    val pivotRes = SmvGroupedData(pivot.createSrdd(dfp, keys), keys)
+    val resDf = pivot.createSrdd(dfp, keys)
+    //val pivotRes = SmvGroupedData(pivot.createSrdd(dfp, keys), keys)
 
     // collapse each group into 1 row
-    val cols = pivot.outCols map (n => smvFirst($"$n", true) as n)
-    pivotRes.agg(cols(0), cols.tail:_*)
+    val cols = pivot.outCols map (n => smvFirst(resDf(n), true) as n)
+    resDf.groupBy(keys.head, keys.tail:_*).agg(cols.head, cols.tail:_*)
   }
 
   /**

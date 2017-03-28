@@ -174,31 +174,37 @@ private[smv] object smvStddev extends UserDefinedAggregateFunction {
   }
 }
 
+private[smv] class SmvFirst(inputDT: DataType) extends UserDefinedAggregateFunction {
+  def inputSchema = new StructType().add("v", inputDT).add("ignoreNulls", BooleanType)
 
-private[smv] case class SmvFirst(child: Expression) extends UnaryExpression with AggregateExpression1 {
-  def this() = this(null)
+  def bufferSchema = new StructType().add("first", inputDT).add("valueSet", BooleanType)
 
-  override def nullable: Boolean = true
-  override def dataType: DataType = child.dataType
-  override def toString: String = s"SmvFirst($child)"
-  override def newInstance(): SmvFirstFunction =
-    new SmvFirstFunction(child, this)
-}
+  def dataType = inputDT
 
-private[smv] case class SmvFirstFunction(expr: Expression, base: AggregateExpression1) extends AggregateFunction1 {
-  def this() = this(null, null)
+  def deterministic = true
 
-  var calculated = false
-  var result: Any = null
+  def initialize(buffer: MutableAggregationBuffer) = {
+    buffer.update(0, null)
+    buffer.update(1, false)
+  }
 
-  override def update(input: InternalRow): Unit = {
-    if(! calculated){
-      result = expr.eval(input)
-      calculated = true
+  def update(buffer: MutableAggregationBuffer, input: Row) = {
+    val ignoreNulls: Boolean = input.getBoolean(1)
+    if(ignoreNulls) {
+      buffer.update(0, if(buffer.getBoolean(1) || input.get(0) == null) buffer.get(0) else input.get(0))
+      buffer.update(1, buffer.getBoolean(1) || input.get(0) != null)
+    }else{
+      buffer.update(0, if(buffer.getBoolean(1)) buffer.get(0) else input.get(0))
+      buffer.update(1, true)
     }
   }
 
-  override def eval(input: InternalRow): Any = result
+  def merge(buffer1: MutableAggregationBuffer, buffer2: Row) = {
+    buffer1.update(0, if(buffer1.getBoolean(1)) buffer1.get(0) else buffer2.get(0))
+    buffer1.update(1, buffer1.getBoolean(1) || buffer2.getBoolean(1))
+  }
+
+  def evaluate(buffer: Row) = OldVersionHelper.dataCV150(buffer.get(0), dataType)
 }
 
 /**

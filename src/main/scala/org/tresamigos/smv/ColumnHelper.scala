@@ -547,34 +547,6 @@ class ColumnHelper(column: Column) {
   }
 
   /**
-   * Running Aggregate Lag function.
-   * This method should only be used in the context of `smvGroupBy(...).runAgg()`.
-   *
-   * {{{
-   * val res = df.smvGroupBy("k").runAgg("t")(
-   *   $"k",
-   *   $"t",
-   *   $"v",
-   *   $"v".smvLag(1) as "v_lag"
-   * )
-   * }}}
-   *
-   * Since runAgg can't perform expressions on columns with SmvCDS, you need to do additional
-   * calculation in a separate `smvSelectPlus`.
-   * For example, to calculate the difference between "v" and "v_lag",
-   * you need to and another step
-   *
-   * {{{
-   * val resWithDiff = res.smvSelectPlus($"v" - $"v_lag" as "v_increase")
-   * }}}
-   *
-   * @return The previous value of the column in the group.
-  def smvLag(n: Int) = {
-    smvFirst(column).from(InLastNWithNull(n + 1))
-  }
-   **/
-
-  /**
    * Convert values to String by applying "printf" type format
    *
    * {{{
