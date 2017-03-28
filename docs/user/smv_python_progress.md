@@ -6,6 +6,7 @@
   * [x] SmvPyModule
   * [x] SmvPyOutput
   * [ ] SmvPyModuleLink
+  * [ ] SmvPyMultiCsvFile
 
 ## DataFrame Helpers
   * [x] `smvSelectPlus((col("a") + 1).alias("b"))`

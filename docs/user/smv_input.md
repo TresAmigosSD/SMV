@@ -39,7 +39,7 @@ object acct_demo extends SmvCsvFile("accounts/acct_demo.csv")
 ### Python
 ```Python
 # In file src/main/python/stage1/inputdata.py
-class acct_demo(SmvCsvFile):
+class acct_demo(PySmvCsvFile):
   def path(self):
     return "accounts/acct_demo.csv"
 ```

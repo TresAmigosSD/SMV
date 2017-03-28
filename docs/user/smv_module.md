@@ -84,7 +84,7 @@ object MyModule extends SmvModule("mod description") {
 ### Python
 ```python
 class MyModule(SmvModule):
-  def isEphemeral(self): return False
+  def isEphemeral(self): return True
   ....    
 ```
 
