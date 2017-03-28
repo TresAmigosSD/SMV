@@ -97,7 +97,7 @@ private[smv] case class AvgTask(override val col: Column) extends EddStatTask {
 private[smv] case class StdDevTask(override val col: Column) extends EddStatTask {
   override val taskName = "std"
   override val taskDesc = "Standard Deviation"
-  override val statOp = stddev(col)
+  override val statOp = smvStddev(col)
 }
 
 private[smv] case class CntTask(override val col: Column) extends EddStatTask {
