@@ -22,14 +22,18 @@ object smvfuncs {
    * @group agg
    **/
   def smvFirst(c: Column, ignoreNulls: Boolean = false) = {
-    //START of Spark 1.5.x Implementation
-    /** Spark 1.5.x Implemented SmvFirst with assumption that user will pass in the
-     *  column in the form or `df(colName)`, so that we can figure out the dataType of it
-     **/
+    //Spark 1.5.x Implemented SmvFirst with assumption that user will pass in the
+    //column in the form or `df(colName)`, so that we can figure out the dataType of it
     val dt = c.toExpr.dataType
     val sf = new SmvFirst(dt)
     sf.apply(c, lit(ignoreNulls))
-    //END of Spark 1.5.x Implementation
+
+    //TODO: Moving to 1.6, should use the logic below, and remove the SmvFirst UDAF
+    //although above will still work
+
+    //Spark 1.6.x should use the following
+    //import org.apache.spark.sql.catalyst.expressions.aggregate.First
+    //new Column(First(c.toExpr, lit(ignoreNulls).toExpr).toAggregateExpression(false))
   }
 
   /**
