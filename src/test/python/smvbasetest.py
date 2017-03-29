@@ -67,7 +67,7 @@ class SmvBaseTest(unittest.TestCase):
         """Returns true if the two dataframes contain the same data, regardless of order
         """
         self.assertEqual(expected.columns, result.columns)
-        self.assertEqual(expected.collect().sort(), result.collect().sort())
+        self.assertEqual(sorted(expected.collect()), sorted(result.collect()))
 
     def createTempFile(self, baseName, fileContents = "xxx"):
         """create a temp file in the data dir with the given contents"""
