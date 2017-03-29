@@ -95,7 +95,7 @@ case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: C
 private[smv]
 object SmvClassLoader {
   def apply(smvConfig: SmvConfig, parentClassLoader: ClassLoader = getClass.getClassLoader) : ClassLoader = {
-    val classDir = smvConfig.classServerClassDir
+    val classDir = smvConfig.classDir
     if (! classDir.isEmpty) {
       // network class loader with local client connection
       new SmvClassLoader(ClassFinder(classDir), parentClassLoader)
