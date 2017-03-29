@@ -95,10 +95,10 @@ function verify_hash_changed() {
 
 echo "--------- RUN HASH TEST MODULE -------------"
 rm -rf data/output/*
-smv-pyrun -m $HASH_TEST_MOD
+../../../tools/smv-pyrun -m $HASH_TEST_MOD
 
 echo "--------- RERUN UNCHANGED TEST MODULE -------------"
-smv-pyrun -m $HASH_TEST_MOD
+../../../tools/smv-pyrun -m $HASH_TEST_MOD
 
 echo "--------- VERIFY HASH UNCHANGED -------------"
 verify_hash_unchanged
@@ -109,7 +109,7 @@ HASH_TEST_MOD_FILE="src/main/python/$(sed -e "s/\./\//g" <<< "$HASH_TEST_PKG").p
 sed -i "" "s/table1/table2/" $HASH_TEST_MOD_FILE
 
 echo "--------- RUN CHANGED MODULE -------------"
-smv-pyrun -m hashtest.modules.M
+../../../tools/smv-pyrun -m hashtest.modules.M
 
 echo "--------- VERIFY HASH CHANGED -------------"
 verify_hash_changed
@@ -122,7 +122,7 @@ smv-init -e $E_APP_NAME
 (
 cd $E_APP_NAME
 echo "--------- RUN ENTERPRISE APP -------------"
-smv-pyrun --run-app
+../../../tools/smv-pyrun --run-app
 )
 
 echo "--------- GENERATE SIMPLE APP -------------"
@@ -131,7 +131,7 @@ smv-init -s $S_APP_NAME
 (
 cd $S_APP_NAME
 echo "--------- RUN SIMPLE APP -------------"
-smv-pyrun --run-app
+../../../tools/smv-pyrun --run-app
 )
 
 echo "--------- TEST COMPLETE -------------"

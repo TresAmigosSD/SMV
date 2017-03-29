@@ -18,33 +18,19 @@ import java.io.{ByteArrayInputStream, InputStream}
 
 import org.tresamigos.smv.SmvConfig
 
+import scala.util.{Try, Success, Failure}
 
 /**
- * Custom "network" class loader that will load classes from remote class loader server (or local).
- * This will enable the loading of modified class files without the need to rebuild the app.
+ * Custom "network" class loader that enable the loading of modified class files
+ * without the need to rebuild the app.
  */
 private[smv]
-class SmvClassLoader(val client: ClassLoaderClientInterface, val parentClassLoader: ClassLoader)
+case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: ClassLoader)
   extends ClassLoader(parentClassLoader) {
-
   /**
-   * Override the default findClass in ClassLoader to load the class using the class loader client.
-   * Depending on which client we have (remote/local), this may connect to server or just search local dir.
-   */
-  override def findClass(classFQN: String) : Class[_] = {
-//    println("CL: findClass: " + classFQN)
-    val klassBytes = client.getClassBytes(classFQN)
-    val klass = defineClass(classFQN, klassBytes, 0, klassBytes.length)
-    klass
-  }
-
-  /**
-   * Override the default loadClass behaviour to check against server first rather than parent class loader.
-   * We can't check parent first because spark is usually run with the app fat jar which will have all the
-   * modules defined in it so we will never hit the server.
-   * However, this may cause too many requests to server for non-app classes.
-   * That is why the loadFromParentOnly method is used to white-list some common classes that
-   * we know will not be on the server.
+   * Override the default loadClass behaviour to check the local class directory
+   * first. We can't check parent first because spark is usually run with the app
+   * fat jar which will have all the modules defined in it.
    */
   override def loadClass(classFQN: String) : Class[_] = {
     var c : Class[_] = null
@@ -52,19 +38,16 @@ class SmvClassLoader(val client: ClassLoaderClientInterface, val parentClassLoad
     getClassLoadingLock(classFQN).synchronized {
       // see if we have a cached copy in the JVM
       c = findLoadedClass(classFQN)
-      if (c == null) {
-        try {
-            if (! loadFromParentOnly(classFQN))
-              c = findClass(classFQN)
-        } catch {
-          case e: ClassNotFoundException => {/* ignore class not found on server */}
-        }
 
-        // if not found on server, try parent
-        if (c == null) {
-//          println("CL: parent.loadClass: " + classFQN)
-          c = getParent.loadClass(classFQN)
+      if (c == null) {
+        c = Try( findClass(classFQN) ) match {
+          case Success(cl: Class[_]) => cl
+          case Failure(e: ClassNotFoundException) => null
         }
+      }
+
+      if (c == null) {
+        c = getParent.loadClass(classFQN)
       }
     }
 
@@ -72,50 +55,44 @@ class SmvClassLoader(val client: ClassLoaderClientInterface, val parentClassLoad
   }
 
   /**
-   * Get resource from server as a byte input stream.
-   * This ignores the standard search recommendation by looking at the parent and just gets the resource from the server.
-   * We also don't bother to go to parent AFTER the server as this is only called to load resources we know are on the server.
+   * Override the default findClass in ClassLoader to load the class using the class loader client.
    */
-  override def getResourceAsStream (name: String) : InputStream = {
-    val bytes = client.getResourceBytes(name)
-    new ByteArrayInputStream(bytes)
+  override def findClass(classFQN: String) : Class[_] = {
+    val klassBytes = getClassBytes(classFQN)
+    val klass = defineClass(classFQN, klassBytes, 0, klassBytes.length)
+    klass
+  }
+
+  private def getClassBytes(classFQN: String) : Array[Byte] = {
+    val b = classFinder.getClassBytes(classFQN)
+    if (b == null)
+      throw new ClassNotFoundException("SmvClassLoader class not found: " + classFQN)
+    b
   }
 
   /**
-   * Determine if the given class should be loaded from parent class loader only.
-   * This is purely an optimization to skip the round trip to class server that will surely fail.
-   * This list doesn't have to be exhaustive as a missed class only incurs a round trip to class loader server.
+   * Get resource as a byte input stream.
    */
-  private def loadFromParentOnly(classFQN: String) : Boolean = {
-    classFQN.startsWith("java.") ||
-      classFQN.startsWith("javax.") ||
-      classFQN.startsWith("scala.") ||
-      classFQN.startsWith("<root>") ||
-      classFQN.startsWith("org.tresamigos.smv.") ||
-      classFQN.startsWith("org.apache.commons") ||
-      classFQN.startsWith("org.apache.http") ||
-      classFQN.startsWith("org.eclipse.jetty") ||
-      classFQN.startsWith("org.joda")
+  override def getResourceAsStream (name: String) : InputStream = {
+    val bytes = getResourceBytes(name)
+    new ByteArrayInputStream(bytes)
+  }
+
+  private def getResourceBytes(resourcePath: String) : Array[Byte] = {
+    val b = classFinder.getResourceBytes(resourcePath)
+    if (b == null)
+      throw new ClassNotFoundException("SmvClassLoader resource not found: " + resourcePath)
+    b
   }
 }
 
 private[smv]
 object SmvClassLoader {
-  /**
-   * Creates the appropriate class loader depending on config.  Can be one of:
-   * * Default class loader (if there is not host/dir config)
-   * * SmvClassLoader with a remote client connection (if host is specified)
-   * * SmvClassLoader with a local client connection (if host is not specified, but class dir is)
-   */
   def apply(smvConfig: SmvConfig, parentClassLoader: ClassLoader = getClass.getClassLoader) : ClassLoader = {
-    val clConfig = new ClassLoaderConfig(smvConfig)
-
-    if (! clConfig.host.isEmpty) {
-      // network class loader with remote client connection
-      new SmvClassLoader(new ClassLoaderClient(clConfig), parentClassLoader)
-    } else if (! clConfig.classDir.isEmpty) {
+    val classDir = smvConfig.classDir
+    if (! classDir.isEmpty) {
       // network class loader with local client connection
-      new SmvClassLoader(new LocalClassLoaderClient(clConfig), parentClassLoader)
+      new SmvClassLoader(ClassFinder(classDir), parentClassLoader)
     } else {
       // default jar class loader
       parentClassLoader
