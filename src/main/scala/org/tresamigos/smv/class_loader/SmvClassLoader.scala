@@ -25,11 +25,8 @@ import scala.util.{Try, Success, Failure}
  * This will enable the loading of modified class files without the need to rebuild the app.
  */
 private[smv]
-case class SmvClassLoader(val config: ClassLoaderConfig, val parentClassLoader: ClassLoader)
+case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: ClassLoader)
   extends ClassLoader(parentClassLoader) {
-
-  val classFinder = new ClassFinder(config.classDir)
-
   /**
    * Override the default loadClass behaviour to check against server first rather than parent class loader.
    * We can't check parent first because spark is usually run with the app fat jar which will have all the
@@ -98,11 +95,10 @@ case class SmvClassLoader(val config: ClassLoaderConfig, val parentClassLoader: 
 private[smv]
 object SmvClassLoader {
   def apply(smvConfig: SmvConfig, parentClassLoader: ClassLoader = getClass.getClassLoader) : ClassLoader = {
-    val clConfig = new ClassLoaderConfig(smvConfig)
-
-    if (! clConfig.classDir.isEmpty) {
+    val classDir = smvConfig.classServerClassDir
+    if (! classDir.isEmpty) {
       // network class loader with local client connection
-      new SmvClassLoader(clConfig, parentClassLoader)
+      new SmvClassLoader(ClassFinder(classDir), parentClassLoader)
     } else {
       // default jar class loader
       parentClassLoader
