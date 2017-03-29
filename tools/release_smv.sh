@@ -3,7 +3,6 @@
 # docker container to maintain release consistency.
 
 # TODO: create github release automatically.
-# TODO: use .smv_version file to get current version
 # TODO: create /tmp/vx.x.x.x dir for logs and assets
 # TODO: add "info" func to put message to stdout and logs
 # TODO: redirect output of intermediate results to logs instead of stdout.
@@ -11,7 +10,6 @@
 
 set -e
 PROG_NAME=$(basename "$0")
-ORIG_DIR=$(pwd)
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 SMV_DIR="$(dirname "$SMV_TOOLS")"
 SMV_DIR_BASE="$(basename $SMV_DIR)"
@@ -21,11 +19,14 @@ PROJ_DIR="$(dirname "$SMV_DIR")" # assume parent of SMV directory is the project
 function info()
 {
   echo "---- $@"
+  echo "---- $@" >> ${LOGFILE}
 }
 
 function error()
 {
   echo "ERROR: $@"
+  echo "ERROR: $@" >> ${LOGFILE}
+  echo "(See ${LOGDIR} for error logs/assets)"
   exit 1
 }
 
@@ -33,6 +34,20 @@ function usage()
 {
   echo "USAGE: ${PROG_NAME} smv_version_to_release(a.b.c.d)"
   exit $1
+}
+
+function create_logdir()
+{
+  LOGDIR="/tmp/smv_release_$(date +%Y%m%d_%s)"
+  LOGFILE="${LOGDIR}/${PROG_NAME}.log"
+  mkdir -p "${LOGDIR}"
+  info "logs/assets can be found in: ${LOGDIR}"
+}
+
+function clean_logdir()
+{
+  info "cleaning log directory"
+  rm -rf "${LOGDIR}"
 }
 
 function parse_args()
@@ -65,10 +80,11 @@ function validate_version()
 
 function build_smv()
 {
-  echo "--- Building SMV"
+  info "Building SMV"
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
   docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:latest \
-    sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 clean assembly"
+    sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 clean assembly" \
+    >> ${LOGFILE} 2>&1 || error "SMV build failed"
 }
 
 # find the gnu tar on this system.
@@ -111,14 +127,20 @@ function check_git_repo()
   fi
 }
 
-function update_docs_version()
+function update_version()
 {
-  info "updating docs to version $SMV_VERSION"
+  info "updating version to $SMV_VERSION"
   cd "${SMV_DIR}"
   git pull # update to latest before making any changes.
+
+  # update version in user docs.
   find docs/user -name '*.md' \
     -exec perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" \{\} +
-  git commit -a -m "updated user docs to version $SMV_VERSION"
+
+  # add the smv version to the SMV directory.
+  echo ${SMV_VERSION} > "${SMV_DIR}/.smv_version"
+
+  git commit -a -m "updated version to $SMV_VERSION"
   git push origin
 }
 
@@ -133,28 +155,29 @@ function tag_release()
 
 function create_tar()
 {
-  echo "--- create tar image: "
-  cd "$ORIG_DIR"
+  info "create tar image"
 
   # cleanup some unneeded binary files.
   rm -rf "${SMV_DIR}/project/target" "${SMV_DIR}/project/project"
   rm -rf "${SMV_DIR}/target/resolution-cache" "${SMV_DIR}/target/streams"
   find "${SMV_DIR}/target" -name '*with-dependencies.jar' -prune -o -type f -exec rm -f \{\} +
 
-  # add the smv version to the SMV directory.
-  echo ${SMV_VERSION} > "${SMV_DIR}/.smv_version"
-
   # create the tar image
-  ${TAR} zcf ./smv_${SMV_VERSION}.tgz -C "${PROJ_DIR}" --exclude=.git --transform "s/^${SMV_DIR_BASE}/SMV_${SMV_VERSION}/" ${SMV_DIR_BASE}
+  ${TAR} zcvf "${LOGDIR}/smv_${SMV_VERSION}.tgz" \
+    -C "${PROJ_DIR}" --exclude=.git \
+    --transform "s/^${SMV_DIR_BASE}/SMV_${SMV_VERSION}/" \
+    ${SMV_DIR_BASE} >> ${LOGFILE} 2>&1 || error "tar creation failed"
 }
 
 # ---- MAIN ----
+create_logdir
 parse_args "$@"
 get_prev_smv_version
 find_gnu_tar
 find_release_msg_file
-# check_git_repo
-# build_smv
-# update_docs_version
-# tag_release
-# create_tar
+check_git_repo
+build_smv
+update_version
+tag_release
+create_tar
+clean_logdir
