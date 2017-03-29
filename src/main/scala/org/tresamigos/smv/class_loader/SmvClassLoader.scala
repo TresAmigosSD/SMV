@@ -54,8 +54,7 @@ case class SmvClassLoader(val config: ClassLoaderConfig, val parentClassLoader: 
       c = findLoadedClass(classFQN)
       if (c == null) {
         try {
-            if (! loadFromParentOnly(classFQN))
-              c = findClass(classFQN)
+          c = findClass(classFQN)
         } catch {
           case e: ClassNotFoundException => {/* ignore class not found on server */}
         }
@@ -80,24 +79,6 @@ case class SmvClassLoader(val config: ClassLoaderConfig, val parentClassLoader: 
     val bytes = getResourceBytes(name)
     new ByteArrayInputStream(bytes)
   }
-
-  /**
-   * Determine if the given class should be loaded from parent class loader only.
-   * This is purely an optimization to skip the round trip to class server that will surely fail.
-   * This list doesn't have to be exhaustive as a missed class only incurs a round trip to class loader server.
-   */
-  private def loadFromParentOnly(classFQN: String) : Boolean = {
-    classFQN.startsWith("java.") ||
-      classFQN.startsWith("javax.") ||
-      classFQN.startsWith("scala.") ||
-      classFQN.startsWith("<root>") ||
-      classFQN.startsWith("org.tresamigos.smv.") ||
-      classFQN.startsWith("org.apache.commons") ||
-      classFQN.startsWith("org.apache.http") ||
-      classFQN.startsWith("org.eclipse.jetty") ||
-      classFQN.startsWith("org.joda")
-  }
-
 
   val classFinder = new ClassFinder(config.classDir)
 
