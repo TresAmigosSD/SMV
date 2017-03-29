@@ -24,7 +24,7 @@ import org.tresamigos.smv.SmvConfig
  * This will enable the loading of modified class files without the need to rebuild the app.
  */
 private[smv]
-class SmvClassLoader(val client: ClassLoaderClientInterface, val parentClassLoader: ClassLoader)
+case class SmvClassLoader(val config: ClassLoaderConfig, val parentClassLoader: ClassLoader)
   extends ClassLoader(parentClassLoader) {
 
   /**
@@ -33,7 +33,7 @@ class SmvClassLoader(val client: ClassLoaderClientInterface, val parentClassLoad
    */
   override def findClass(classFQN: String) : Class[_] = {
 //    println("CL: findClass: " + classFQN)
-    val klassBytes = client.getClassBytes(classFQN)
+    val klassBytes = getClassBytes(classFQN)
     val klass = defineClass(classFQN, klassBytes, 0, klassBytes.length)
     klass
   }
@@ -77,7 +77,7 @@ class SmvClassLoader(val client: ClassLoaderClientInterface, val parentClassLoad
    * We also don't bother to go to parent AFTER the server as this is only called to load resources we know are on the server.
    */
   override def getResourceAsStream (name: String) : InputStream = {
-    val bytes = client.getResourceBytes(name)
+    val bytes = getResourceBytes(name)
     new ByteArrayInputStream(bytes)
   }
 
@@ -97,6 +97,23 @@ class SmvClassLoader(val client: ClassLoaderClientInterface, val parentClassLoad
       classFQN.startsWith("org.eclipse.jetty") ||
       classFQN.startsWith("org.joda")
   }
+
+
+  val classFinder = new ClassFinder(config.classDir)
+
+  def getClassBytes(classFQN: String) : Array[Byte] = {
+    val b = classFinder.getClassBytes(classFQN)
+    if (b == null)
+      throw new ClassNotFoundException("LocalClassLoaderClient class not found: " + classFQN)
+    b
+  }
+
+  def getResourceBytes(resourcePath: String) : Array[Byte] = {
+    val b = classFinder.getResourceBytes(resourcePath)
+    if (b == null)
+      throw new ClassNotFoundException("LocalClassLoaderClient resource not found: " + resourcePath)
+    b
+  }
 }
 
 private[smv]
@@ -112,7 +129,7 @@ object SmvClassLoader {
 
     if (! clConfig.classDir.isEmpty) {
       // network class loader with local client connection
-      new SmvClassLoader(new LocalClassLoaderClient(clConfig), parentClassLoader)
+      new SmvClassLoader(clConfig, parentClassLoader)
     } else {
       // default jar class loader
       parentClassLoader
