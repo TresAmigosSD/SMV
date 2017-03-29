@@ -25,8 +25,6 @@ trait ClassLoaderTestHelper {
 
   def cmdLineArgs(host: String, port: Integer, classDir: String) = {
     Seq("--smv-props",
-      s"smv.class_server.host=${host}",
-      s"smv.class_server.port=${port}",
       s"smv.class_dir=${classDir}",
       "smv.stages=com.smv",
       "smv.dataDir=.",
