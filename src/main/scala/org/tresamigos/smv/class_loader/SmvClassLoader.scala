@@ -18,6 +18,7 @@ import java.io.{ByteArrayInputStream, InputStream}
 
 import org.tresamigos.smv.SmvConfig
 
+import scala.util.{Try, Success, Failure}
 
 /**
  * Custom "network" class loader that will load classes from remote class loader server (or local).
@@ -27,16 +28,7 @@ private[smv]
 case class SmvClassLoader(val config: ClassLoaderConfig, val parentClassLoader: ClassLoader)
   extends ClassLoader(parentClassLoader) {
 
-  /**
-   * Override the default findClass in ClassLoader to load the class using the class loader client.
-   * Depending on which client we have (remote/local), this may connect to server or just search local dir.
-   */
-  override def findClass(classFQN: String) : Class[_] = {
-//    println("CL: findClass: " + classFQN)
-    val klassBytes = getClassBytes(classFQN)
-    val klass = defineClass(classFQN, klassBytes, 0, klassBytes.length)
-    klass
-  }
+  val classFinder = new ClassFinder(config.classDir)
 
   /**
    * Override the default loadClass behaviour to check against server first rather than parent class loader.
@@ -52,22 +44,37 @@ case class SmvClassLoader(val config: ClassLoaderConfig, val parentClassLoader: 
     getClassLoadingLock(classFQN).synchronized {
       // see if we have a cached copy in the JVM
       c = findLoadedClass(classFQN)
-      if (c == null) {
-        try {
-          c = findClass(classFQN)
-        } catch {
-          case e: ClassNotFoundException => {/* ignore class not found on server */}
-        }
 
-        // if not found on server, try parent
-        if (c == null) {
-//          println("CL: parent.loadClass: " + classFQN)
-          c = getParent.loadClass(classFQN)
+      if (c == null) {
+        c = Try( findClass(classFQN) ) match {
+          case Success(cl: Class[_]) => cl
+          case Failure(e: ClassNotFoundException) => null
         }
+      }
+
+      if (c == null) {
+        c = getParent.loadClass(classFQN)
       }
     }
 
     c
+  }
+
+  /**
+   * Override the default findClass in ClassLoader to load the class using the class loader client.
+   * Depending on which client we have (remote/local), this may connect to server or just search local dir.
+   */
+  override def findClass(classFQN: String) : Class[_] = {
+    val klassBytes = getClassBytes(classFQN)
+    val klass = defineClass(classFQN, klassBytes, 0, klassBytes.length)
+    klass
+  }
+
+  private def getClassBytes(classFQN: String) : Array[Byte] = {
+    val b = classFinder.getClassBytes(classFQN)
+    if (b == null)
+      throw new ClassNotFoundException("LocalClassLoaderClient class not found: " + classFQN)
+    b
   }
 
   /**
@@ -80,16 +87,7 @@ case class SmvClassLoader(val config: ClassLoaderConfig, val parentClassLoader: 
     new ByteArrayInputStream(bytes)
   }
 
-  val classFinder = new ClassFinder(config.classDir)
-
-  def getClassBytes(classFQN: String) : Array[Byte] = {
-    val b = classFinder.getClassBytes(classFQN)
-    if (b == null)
-      throw new ClassNotFoundException("LocalClassLoaderClient class not found: " + classFQN)
-    b
-  }
-
-  def getResourceBytes(resourcePath: String) : Array[Byte] = {
+  private def getResourceBytes(resourcePath: String) : Array[Byte] = {
     val b = classFinder.getResourceBytes(resourcePath)
     if (b == null)
       throw new ClassNotFoundException("LocalClassLoaderClient resource not found: " + resourcePath)
@@ -99,12 +97,6 @@ case class SmvClassLoader(val config: ClassLoaderConfig, val parentClassLoader: 
 
 private[smv]
 object SmvClassLoader {
-  /**
-   * Creates the appropriate class loader depending on config.  Can be one of:
-   * * Default class loader (if there is not host/dir config)
-   * * SmvClassLoader with a remote client connection (if host is specified)
-   * * SmvClassLoader with a local client connection (if host is not specified, but class dir is)
-   */
   def apply(smvConfig: SmvConfig, parentClassLoader: ClassLoader = getClass.getClassLoader) : ClassLoader = {
     val clConfig = new ClassLoaderConfig(smvConfig)
 
