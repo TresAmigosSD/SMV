@@ -26,8 +26,5 @@ class ClassLoaderConfig(private val smvConfig: SmvConfig) {
     this(new SmvConfig(cmdLineArgs))
   }
 
-  val host = smvConfig.classServerHost
-  val port = smvConfig.classServerPort
   val classDir = smvConfig.classServerClassDir
 }
-
