@@ -61,6 +61,9 @@ function parse_args()
   GITHUB_USER_TOKEN="$2"
   SMV_VERSION="$3"
   validate_version "$SMV_VERSION"
+
+  # version specific vars
+  TGZ_IMAGE="${LOGDIR}/smv_${SMV_VERSION}.tgz"
 }
 
 function get_prev_smv_version()
@@ -166,8 +169,7 @@ function create_tar()
   find "${SMV_DIR}/target" -name '*with-dependencies.jar' -prune -o -type f -exec rm -f \{\} +
 
   # create the tar image
-  ${TAR} zcvf "${LOGDIR}/smv_${SMV_VERSION}.tgz" \
-    -C "${PROJ_DIR}" --exclude=.git \
+  ${TAR} zcvf "${TGZ_IMAGE}" -C "${PROJ_DIR}" --exclude=.git \
     --transform "s/^${SMV_DIR_BASE}/SMV_${SMV_VERSION}/" \
     ${SMV_DIR_BASE} >> ${LOGFILE} 2>&1 || error "tar creation failed"
 }
@@ -196,6 +198,27 @@ function create_github_release()
     > ${res_file} 2>&1
 
   grep -q "^HTTP/1.1 201 Created" ${res_file} || error "Unable to create github release: see ${res_file}"
+
+  # extract the upload_url from the server response.  Need url to upload assets.
+  UPLOAD_URL="$(sed -n -e 's/^[ ]*"upload_url":[ ]*"\(https:.*assets\).*/\1/gp' ${res_file})"
+  echo "Using UPLOAD_URL: ${UPLOAD_URL}" >> ${LOGFILE}
+}
+
+function attach_tar_to_github_release()
+{
+  info "attach tar image to github release"
+  local res_file="${LOGDIR}/res2.json"
+  local tgz_basename="$(basename ${TGZ_IMAGE})"
+
+  curl -i -u "${GITHUB_USER_TOKEN}" \
+    -H "Content-Type: application/gzip" \
+    -X POST \
+    --data-binary "@${TGZ_IMAGE}" \
+    "${UPLOAD_URL}?name=${tgz_basename}" \
+    > ${res_file} 2>&1
+
+  grep -q "^HTTP/1.1 201 Created" ${res_file} || error "Unable to upload tgz image to github: see ${res_file}"
+
 }
 
 
@@ -211,4 +234,5 @@ update_version
 tag_release
 create_tar
 create_github_release
+attach_tar_to_github_release
 clean_logdir
