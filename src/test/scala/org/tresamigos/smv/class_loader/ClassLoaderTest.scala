@@ -82,7 +82,7 @@ class ClassLoaderFactoryTest extends SparkTestUtil with ClassLoaderTestHelper {
     val clLocal = SmvClassLoader(clLocalConfig).asInstanceOf[SmvClassLoader]
 
     // we better have created a local client connection.
-    assert(clLocal.client.isInstanceOf[LocalClassLoaderClient])
+    assert(clLocal.isInstanceOf[SmvClassLoader])
   }
 
   test("test SmvClassLoader client factory for default config") {
