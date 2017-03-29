@@ -110,10 +110,7 @@ object SmvClassLoader {
   def apply(smvConfig: SmvConfig, parentClassLoader: ClassLoader = getClass.getClassLoader) : ClassLoader = {
     val clConfig = new ClassLoaderConfig(smvConfig)
 
-    if (! clConfig.host.isEmpty) {
-      // network class loader with remote client connection
-      new SmvClassLoader(new ClassLoaderClient(clConfig), parentClassLoader)
-    } else if (! clConfig.classDir.isEmpty) {
+    if (! clConfig.classDir.isEmpty) {
       // network class loader with local client connection
       new SmvClassLoader(new LocalClassLoaderClient(clConfig), parentClassLoader)
     } else {
