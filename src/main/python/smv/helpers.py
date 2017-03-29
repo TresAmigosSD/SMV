@@ -161,7 +161,7 @@ DataFrame.smvRenameField = lambda df, *namePairs: DataFrame(helper(df).smvRename
 
 DataFrame.smvUnpivot = lambda df, *cols: DataFrame(dfhelper(df).smvUnpivot(_to_seq(cols)), df.sql_ctx)
 
-DataFrame.smvUnpivotRegex = lambda df, colNameFn, indexColName, *cols: DataFrame(dfhelper(df).smvUnpivotRegex(_to_seq(cols), colNameFn, indexColName), df.sql_ctx)
+DataFrame.smvUnpivotRegex = lambda df, cols, colNameFn, indexColName: DataFrame(dfhelper(df).smvUnpivotRegex(_to_seq(cols), colNameFn, indexColName), df.sql_ctx)
 
 DataFrame.smvExportCsv = lambda df, path, n=None: dfhelper(df).smvExportCsv(path, n)
 

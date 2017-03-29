@@ -43,6 +43,32 @@ abstract class SmvGDO extends Serializable {
   def createOutSchema(inSchema: StructType): StructType
 }
 
+object SmvGDO {
+  def orderColsToOrdering(inSchema: StructType, orderCols: Seq[Expression]): Ordering[InternalRow] = {
+    val keyOrderPair: Seq[(NamedExpression, SortDirection)] = orderCols.map{c => c match {
+      case SortOrder(e: NamedExpression, direction, nullOrdering) => (e, direction)
+      case e: NamedExpression => (e, Ascending)
+    }}
+
+    val ordinals = inSchema.getIndices(keyOrderPair.map{case (e, d) => e.name}: _*)
+    val ordering = keyOrderPair.map{case (e, d) =>
+      val normColOrdering = inSchema(e.name).ordering
+      if (d == Descending) normColOrdering.reverse else normColOrdering
+    }
+
+    new Ordering[InternalRow] {
+      override def compare(a:InternalRow, b:InternalRow) = {
+        val aElems = a.toSeq(inSchema)
+        val bElems = b.toSeq(inSchema)
+
+        (ordinals zip ordering).map{case (i, order) =>
+          order.compare(aElems(i),bElems(i)).signum
+        }.reduceLeft((s, i) => s * 2 + i)
+      }
+    }
+  }
+}
+
 /**
  * Compute the quantile bin number within a group in a given DataFrame.
  * The algorithm assumes there are three columns in the input.
@@ -146,33 +172,41 @@ private[smv] class DedupWithOrderGDO(orders: Seq[Expression]) extends SmvGDO {
   override def createOutSchema(inSchema: StructType) = inSchema
 
   override def createInGroupMapping(inSchema: StructType) = {
-    val rowOrdering = orderColsToOrdering(inSchema, orders);
+    val rowOrdering = SmvGDO.orderColsToOrdering(inSchema, orders);
 
     { it: Iterable[InternalRow] =>
         List(it.toSeq.min(rowOrdering))
     }
   }
+}
 
-  def orderColsToOrdering(inSchema: StructType, orderCols: Seq[Expression]): Ordering[InternalRow] = {
-    val keyOrderPair: Seq[(NamedExpression, SortDirection)] = orderCols.map{c => c match {
-      case SortOrder(e: NamedExpression, direction, nullOrdering) => (e, direction)
-      case e: NamedExpression => (e, Ascending)
-    }}
+/* For smvFillNullWithPrevValue method */
+private[smv] class FillNullWithPrev(orders: Seq[Expression], values: Seq[String]) extends SmvGDO {
+  override val inGroupKeys = Nil
+  override def createOutSchema(inSchema: StructType) = inSchema
 
-    val ordinals = inSchema.getIndices(keyOrderPair.map{case (e, d) => e.name}: _*)
-    val ordering = keyOrderPair.map{case (e, d) =>
-      val normColOrdering = inSchema(e.name).ordering
-      if (d == Descending) normColOrdering.reverse else normColOrdering
-    }
+  override def createInGroupMapping(inSchema: StructType) = {
+    val rowOrdering = SmvGDO.orderColsToOrdering(inSchema, orders)
+    val vOrdinals = inSchema.getIndices(values: _*)
+    val vbuff: Array[Any] = new Array(values.size)
 
-    new Ordering[InternalRow] {
-      override def compare(a:InternalRow, b:InternalRow) = {
-        val aElems = a.toSeq(inSchema)
-        val bElems = b.toSeq(inSchema)
-
-        (ordinals zip ordering).map{case (i, order) =>
-          order.compare(aElems(i),bElems(i)).signum
-        }.reduceLeft((s, i) => s * 2 + i)
+    {it: Iterable[InternalRow] => {
+        var isFirst = true
+        it.toSeq.sorted(rowOrdering).map{r: InternalRow =>
+          val rbuff = r.toSeq(inSchema).toArray
+          if (isFirst) {
+            vOrdinals.zipWithIndex.foreach{case (vi, i) =>
+              vbuff(i) = rbuff(vi)
+            }
+            isFirst = false
+          } else {
+            vOrdinals.zipWithIndex.foreach{case (vi, i) =>
+              if (rbuff(vi) == null) rbuff(vi) = vbuff(i)
+              else vbuff(i) = rbuff(vi)
+            }
+          }
+          InternalRow.fromSeq(rbuff.toSeq)
+        }.toList
       }
     }
   }

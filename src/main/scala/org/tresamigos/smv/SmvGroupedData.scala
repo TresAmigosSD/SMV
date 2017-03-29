@@ -229,8 +229,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       } else {
         // get unique col name for in-group ranking
         val pcol = mkUniq(df.columns, "pivot")
-        val r1 = runAgg(valueCols map (c => $"$c".asc) :_*)(
-          (keys ++ valueCols map (c => $"$c")) :+ (count(lit(1)) as pcol) :_*)
+        val orders = valueCols map (c => $"$c".asc)
+        val w = Window.partitionBy(keys map {c => $"$c"}: _*).orderBy(orders: _*)
+        val r1 = df.select((keys ++ valueCols map (c => $"$c")) :+ (row_number() over w as pcol) :_*)
         // in-group ranking starting value is 0
         val r2 = r1.selectWithReplace(r1(pcol) - 1 as pcol)
         (r2, Seq(Seq(pcol)))
@@ -782,15 +783,8 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   def smvFillNullWithPrevValue(orders: Column*)(values: String*): DataFrame = {
-    val renamed = values.map{n => mkUniq(df.columns, s"_${n}")}
-
-    /* We are using the `last` aggregate function's feature that it's actually
-     * Non-null last */
-    val aggExprs = values.zip(renamed).map{case (v, nv) => last(v, true) as nv}
-    runAggPlus(orders: _*)(aggExprs: _*).
-      smvSelectMinus(values.head, values.tail: _*).
-      smvRenameField(renamed.zip(values): _*).
-      select(df.columns.head, df.columns.tail: _*)
+    val gdo = new cds.FillNullWithPrev(orders.map{o => o.toExpr}.toList, values)
+    smvMapGroup(gdo).toDF
   }
 
   private[smv] def smvRePartition(partitioner: Partitioner): SmvGroupedData = {

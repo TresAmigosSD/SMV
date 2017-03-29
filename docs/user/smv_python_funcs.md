@@ -271,6 +271,36 @@ will result in the following output:
 
 **Note:** This only works for String columns for now
 
+#### smvUnpivotRegex
+```python
+df.smvUnpivotRegex(cols, regex, indexColName)
+```
+
+
+Similar to the standard `smvUnpivot` function, but also takes a regex to describe the mapping function, and the index column name.
+For example, Given the following input:
+
+ id | A_1 | A_2 | B_1 | B_2
+ --- | --- | --- | --- | ---
+ 1  | 1_a_1 | 1_a_2 | 1_b_1 | 1_b_2
+ 2  | 2_a_1 | 2_a_2 | 2_b_1 | 2_b_2
+
+and the following command:
+
+```python
+df.smvUnpivotRegex(["A_1", "A_2", "B_1", "B_2"], "(.*)_(.*)", "index" )
+```
+
+will result in the following output:
+
+ id | index | A | B
+ --- | ------ | ----- | ---
+  1 |   1    |   1_a_1 | 1_b_1
+  1 |   2    |   1_a_2 | 1_b_2
+  2 |   1    |   2_a_1 | 2_b_1
+  2 |   2    |   2_a_2 | 2_b_2
+
+
 #### smvHashSample
 Sample the df according to the hash of a column.
 MurmurHash3 algorithm is used for generating the hash.
