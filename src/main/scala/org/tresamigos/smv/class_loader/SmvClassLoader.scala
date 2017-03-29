@@ -21,8 +21,8 @@ import org.tresamigos.smv.SmvConfig
 import scala.util.{Try, Success, Failure}
 
 /**
- * Custom "network" class loader that will load classes from remote class loader server (or local).
- * This will enable the loading of modified class files without the need to rebuild the app.
+ * Custom "network" class loader that enable the loading of modified class files
+ * without the need to rebuild the app.
  */
 private[smv]
 case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: ClassLoader)
@@ -30,10 +30,7 @@ case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: C
   /**
    * Override the default loadClass behaviour to check against server first rather than parent class loader.
    * We can't check parent first because spark is usually run with the app fat jar which will have all the
-   * modules defined in it so we will never hit the server.
-   * However, this may cause too many requests to server for non-app classes.
-   * That is why the loadFromParentOnly method is used to white-list some common classes that
-   * we know will not be on the server.
+   * modules defined in it.
    */
   override def loadClass(classFQN: String) : Class[_] = {
     var c : Class[_] = null
@@ -70,7 +67,7 @@ case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: C
   private def getClassBytes(classFQN: String) : Array[Byte] = {
     val b = classFinder.getClassBytes(classFQN)
     if (b == null)
-      throw new ClassNotFoundException("LocalClassLoaderClient class not found: " + classFQN)
+      throw new ClassNotFoundException("SmvClassLoader class not found: " + classFQN)
     b
   }
 
@@ -87,7 +84,7 @@ case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: C
   private def getResourceBytes(resourcePath: String) : Array[Byte] = {
     val b = classFinder.getResourceBytes(resourcePath)
     if (b == null)
-      throw new ClassNotFoundException("LocalClassLoaderClient resource not found: " + resourcePath)
+      throw new ClassNotFoundException("SmvClassLoader resource not found: " + resourcePath)
     b
   }
 }
