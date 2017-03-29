@@ -64,62 +64,6 @@ class ColumnHelper(column: Column) {
   }
 
   /**
-   * Substitute a known literal value if the column value is null.
-   * Use the provided substitution value if the `Column` value is null,
-   * otherwise use the actual `Column` value.
-   *
-   * '''Note:''' Should consider using coalesce(c1, c2) function going forward.
-   *
-   * {{{
-   * df.select($"v".smvNullSub(0)) as "newv")
-   * df.select($"v".smvNullSub($"defaultv") as "newv2")
-   * }}}
-   *
-   * @param newv The constant to substitue if column is null. Must be same type is column.
-   **/
-  def smvNullSub[T](newv: T) = {
-    coalesce(column, lit(newv))
-  }
-
-  /**
-   * Substitute another column value if the current column is null.
-   * Same as `smvNullSub` but uses another column value as the substitution value.
-   */
-  def smvNullSub(that: Column) = {
-    coalesce(column, that)
-  }
-
-  /**
-   * Determine if the given column value is an NaN (not a number)
-   *
-   * {{{
-   *   df.smvSelectPlus($"v".smvIsNan as 'v_is_nan)
-   * }}}
-   */
-  @deprecated("should use Column.isNan instead", "1.5")
-  def smvIsNaN: Column =
-    new Column(Alias(ScalaUDF(IsNaNFunc, BooleanType, Seq(expr)), s"SmvIsNaN($column)")())
-
-  private val IsNaNFunc: Double => Boolean = x => x.isNaN()
-
-  /**
-   * Computes the string length (in characters, not bytes) of the given column.
-   * Must only be applied to `String` columns.
-   *
-   * {{{
-   * df.select($"name".smvLength as "namelen")
-   * }}}
-   *
-   * @return The string length or null if string is null
-   */
-  @deprecated("should use Spark strlen() function", "1.5")
-  def smvLength = {
-    val name = s"SmvLength($column)"
-    val f: String => Integer = (s:String) => if(s == null) null else s.size
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)())
-  }
-
-  /**
    * Build a timestamp from a string.  The format is the same as the Java `Date` format.
    *
    * {{{
@@ -398,20 +342,6 @@ class ColumnHelper(column: Column) {
   }
 
   /**
-   * Map a string to it's Soundex
-   *
-   * See [[http://en.wikipedia.org/wiki/Soundex]] for details
-   */
-  @deprecated("should use Spark soundex() function", "1.5")
-  def smvSoundex = {
-    val name = s"SmvSoundex($column)"
-    val f = (s:String) =>
-      if(s == null) null
-      else SoundexAlgorithm.compute(s.replaceAll("""[^a-zA-Z]""", "")).getOrElse(null)
-    new Column(Alias(ScalaUDF(f, StringType, Seq(expr)), name)() )
-  }
-
-  /**
    * Map a string to it's Metaphone
    */
   def smvMetaphone = {
@@ -440,14 +370,10 @@ class ColumnHelper(column: Column) {
     val denDouble = denom.cast(DoubleType)
     val defDouble = defaultValue.cast(DoubleType)
 
-    // TODO: use "when".."otherwise" when we port to Spark 1.4
-    columnIf(column.isNull || denom.isNull, lit(null).cast(DoubleType),
-      columnIf(numDouble === lit(0.0), 0.0,
-        columnIf(denDouble === lit(0.0), defDouble,
-          numDouble / denDouble
-        )
-      )
-    )
+    when(column.isNull || denom.isNull, lit(null).cast(DoubleType)
+      ).when(numDouble === lit(0.0), 0.0
+      ).when(denDouble === lit(0.0), defDouble
+      ).otherwise(numDouble / denDouble)
   }
 
   /**
@@ -544,55 +470,6 @@ class ColumnHelper(column: Column) {
       if(t == null) null
       else new Timestamp((new DateTime(t)).plusYears(n).getMillis())
     new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
-  }
-
-  /**
-   * Convert values to String by applying "printf" type format
-   *
-   * {{{
-   * df.select($"zipAsNumber".smvPrintToStr("%05d") as "zip")
-   * }}}
-   **/
-  @deprecated("should use Spark printf() function", "1.5")
-  def smvPrintToStr(fmt: String) = {
-    val name = s"SmvPrintToStr($column, $fmt)"
-    val f = udf({(v: Any) => fmt.format(v)})
-    f(column).as(name)
-  }
-
-  /**
-   * Trim leading/trailing space from `String` column.
-   *
-   * {{{
-   * df.smvSelectPlus($"sWithBlank".smvStrTrim() as "sTrimmed")
-   * }}}
-   **/
-  @deprecated("should use Spark trim() function", "1.5")
-  def smvStrTrim() = {
-    val name = s"SmvStrTrim($column)"
-    val f = udf({v: String => if (null == v) null else v.trim()})
-    f(column).as(name)
-  }
-
-  /**
-   * Add description as metadata to a column
-   * e.g.
-   * {{{
-   * df.select($"amt" as "amount" withDesc "Dollar amount spend")
-   * }}}
-   *
-   * Since on Column level (before resolved on a DF), we can't access to existing meta
-   * data (stored in the schema), there is no way to preserve the existing meta data.
-   * Another DF level method is provided to add the description with preserving existing
-   * metadata:
-   * e.g.
-   * {{{
-   * df.smvDesc("amt" -> "Dollar amount spend", "o" -> "some other field")
-   * }}}
-   **/
-  @deprecated("should use smvDesc instead", "1.5")
-  def withDesc(desc: String) = {
-    (new ColumnMetaOps(column)).addDesc(desc)
   }
 
   /**
@@ -700,9 +577,6 @@ class ColumnHelper(column: Column) {
      udf(f).apply(column) as name
    }
 
-  @deprecated("1.5", "use smvIsAnyIn instead")
-  def isAnyIn[T](candidates: T*)(implicit tt: ClassTag[T]) = smvIsAnyIn(candidates)
-
   /**
    * A boolean, which is true if ALL of the Array column's elements are in the given
    * paraneter sequence
@@ -719,9 +593,6 @@ class ColumnHelper(column: Column) {
      }
      udf(f).apply(column) as name
    }
-
-  @deprecated("1.5", "use smvIsAllIn instead")
-  def isAllIn[T](candidates: T*)(implicit tt: ClassTag[T]) = smvIsAllIn(candidates:_*)
 
   /**
    * A boolean, which is true if ALL of the given parameters are contained in the

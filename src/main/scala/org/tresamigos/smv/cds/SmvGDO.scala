@@ -128,7 +128,6 @@ private[smv] class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
  * User defined "chuck" mapping function
  * see the `chunkBy` and `chunkByPlus` method of [[org.tresamigos.smv.SmvDFHelper]] for details
  **/
-@deprecated("will remove after 1.3", "1.3")
 case class SmvChunkUDF(
   para: Seq[Symbol],
   outSchema: StructType,

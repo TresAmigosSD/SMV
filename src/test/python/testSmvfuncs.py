@@ -44,7 +44,7 @@ class SmvfuncsTest(SmvBaseTest):
             "asdfghj,asdfhgj"
         )
 
-        trunc = lambda c: (c * 100).cast("integer") / 100.0
+        trunc = lambda c: pyspark.sql.functions.round(c,2)
         res = df.select(
             df.s1, df.s2,
             trunc(nGram2(df.s1, df.s2)).alias("nGram2"),

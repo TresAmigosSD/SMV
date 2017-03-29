@@ -80,24 +80,6 @@ class Edd(val df: DataFrame, val keys: Seq[String] = Seq()) {
     EddResultFunctions(res)
   }
 
-  /** alias to summary **/
-  @deprecated("Should use summary method", "1.5")
-  def addBaseTasks(colNames: String*) = summary(colNames: _*)
-
-  /** alias to histogram **/
-  @deprecated("Should use histogram method", "1.5")
-  def addHistogramTasks(colNames: String*)(byFreq: Boolean = false, binSize: Double = 100.0) = {
-    val histCols = colNames.map{n => edd.Hist(n, binSize, byFreq)}
-    histogram(histCols: _*)
-  }
-
-  /** alias to histogram **/
-  @deprecated("Should use histogram method", "1.5")
-  def addAmountHistogramTasks(colNames: String*) = {
-    val histCols = colNames.map{n => edd.AmtHist(n)}
-    histogram(histCols: _*)
-  }
-
   def persistBesideData(dataPath: String): Unit = {
     summary().saveReport(Edd.dataPathToEddPath(dataPath))
   }
@@ -157,10 +139,6 @@ case class EddResultFunctions(eddRes: DataFrame) {
   def saveReport(path: String): Unit = {
     eddRes.write.json(path)
   }
-
-  /** Dump Edd report on screen */
-  @deprecated("Should use eddShow Method", "1.5")
-  def dump: Unit = eddShow()
 
   /** edd result df **/
   def toDF = eddRes

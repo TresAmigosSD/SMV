@@ -20,12 +20,12 @@ import org.apache.spark.sql.functions._
 
 class EddTest extends SmvTestUtil {
   test("test EddResult Report") {
-    val df1 = createSchemaRdd("a:String;b:String;c:String;d:String;f:String",
+    val df1 = dfFrom("a:String;b:String;c:String;d:String;f:String",
       "col_a,stat,avg,Average,13.75")
     val row1 = df1.rdd.first
     assert(EddResult(row1).toReport === "col_a                Average                13.75")
 
-    val df2 = createSchemaRdd("a:String;b:String;c:String;d:String",
+    val df2 = dfFrom("a:String;b:String;c:String;d:String",
       """col_a,hist,key,by Key""").smvSelectPlus(lit("""{"histSortByFreq":false,"hist":{"\"2\"":1,"\"5\"":1,"\"1\"":2}}""") as "f")
 
     assert(EddResult(df2.rdd.first).toReport === """Histogram of col_a: by Key
@@ -51,7 +51,7 @@ col_b                Average                21.7""")
   }
 
   test("test EddResult equals") {
-    val df1 = createSchemaRdd("a:String;b:String;c:String;d:String;f:String",
+    val df1 = dfFrom("a:String;b:String;c:String;d:String;f:String",
       "col_a,stat,avg,Average,13.75;col_a,stat,avg,Average,13.7501")
     val rows = df1.rdd.collect
     assert(EddResult(rows(0)) === EddResult(rows(1)))
@@ -101,13 +101,13 @@ class EddTaskTest extends SmvTestUtil {
 
   override def beforeAll() = {
     super.beforeAll()
-    df = createSchemaRdd("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
+    df = dfFrom("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
       """z,1,a,0.2,19010701,;
          z,2,a,1.4,20150402,true;
          z,5,b,2.2,20130930,true;
          a,1,a,0.3,20151204,false""")
 
-    dfDate = createSchemaRdd("d:Date[yyyyMMdd]", "19010701;20150402;20130930;20151204")
+    dfDate = dfFrom("d:Date[yyyyMMdd]", "19010701;20150402;20130930;20151204")
   }
 
   private def histJson(s: String) = {
@@ -398,7 +398,7 @@ t                    Max                    5.0""")
   }
 
   test("test edd summary with decimal"){
-    val df2 = createSchemaRdd("v:decimal[8, 3]", "12.455;123.134;122.5;5")
+    val df2 = dfFrom("v:decimal[8, 3]", "12.455;123.134;122.5;5")
     val res = df2.edd.summary()
 
     assert(res.createReport() === """v                    Non-Null Count         4
@@ -411,7 +411,7 @@ v                    Max                    123.134"""
   }
 
   test("test EddResult DF compare") {
-    val df2 = createSchemaRdd("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
+    val df2 = dfFrom("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
       """z,1,a,0.2000001,19010701,;
       z,2,a,1.4,20150402,true;
       z,5,b,2.2,20130930,true;
@@ -441,7 +441,7 @@ b                            1   33.33%           3  100.00%
   }
 
   test("test null handling in histogram") {
-    val df2 = createSchemaRdd("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
+    val df2 = dfFrom("k:String; t:Integer; p: String; v:Double; d:Timestamp[yyyyMMdd]; b:Boolean",
       """z,,a,0.2000001,19010701,;
       ,2,a,1.4,20150402,true;
       z,5,,2.2,,true;

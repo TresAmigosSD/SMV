@@ -27,7 +27,7 @@ class SmvQuantileTest extends SmvTestUtil {
     val testData_1to20_str = Random.shuffle(testData_1to20).mkString(";")
 
     // create the input df with 22 rows.
-    val df = createSchemaRdd("g:String; g2:Integer; k:String; junk:String; v:Integer",
+    val df = dfFrom("g:String; g2:Integer; k:String; junk:String; v:Integer",
       testData_1to20_str + """;G2,0,x,J,10;G2,0,y,JJ,30""" + ";g3,0,w1,j,1;g3,0,w2,j,1;g3,0,w3,j,3")
 
     val res = df.smvGroupBy("g", "g2").smvDecile("v")

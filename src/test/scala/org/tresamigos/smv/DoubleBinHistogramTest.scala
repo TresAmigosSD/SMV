@@ -20,7 +20,7 @@ class DoubleBinHistogramTest extends SmvTestUtil {
 
   test("Test the smvDoubleBinHistogram function with single key, single value") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("id:Integer; v:Double;",
+    val df = dfFrom("id:Integer; v:Double;",
       """1,0.0; 1,100.0;1,25.0;1,60.5""")
 
     val df_with_bins = df.smvDoubleBinHistogram("id", "v", 2)
@@ -35,7 +35,7 @@ class DoubleBinHistogramTest extends SmvTestUtil {
 
   test("Test the smvDoubleBinHistogram function with multi-keys, multi-values") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("id1:Integer; id2:Integer; v1:Double; v2:Double;",
+    val df = dfFrom("id1:Integer; id2:Integer; v1:Double; v2:Double;",
       """1,10,0.0,1000.0; 1,10,100.0,20.0;1,10,25.0,0.0;1,10,60.5,500.0""")
 
     val df_with_bins = df.smvDoubleBinHistogram(Seq("id1","id2"), Seq("v1","v2"), Seq(2,2))
@@ -57,7 +57,7 @@ class DoubleBinHistogramTest extends SmvTestUtil {
 
   test("Test the smvDoubleBinHistogram function with multi-keys, multi-values using default num of bins") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("id1:Integer; id2:Integer; v1:Double; v2:Double;",
+    val df = dfFrom("id1:Integer; id2:Integer; v1:Double; v2:Double;",
       """1,10,0.0,1000.0; 1,10,100.0,20.0;1,10,25.0,0.0;1,10,60.5,500.0""")
 
     val df_with_bins = df.smvDoubleBinHistogram(Seq("id1","id2"), Seq("v1","v2"), Seq(2))
@@ -79,7 +79,7 @@ class DoubleBinHistogramTest extends SmvTestUtil {
 
   test("Test the smvDoubleBinHistogram column post fix" ) {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("id:Integer; v:Double;",
+    val df = dfFrom("id:Integer; v:Double;",
       """1,0.0; 1,100.0;1,25.0;1,60.5""")
 
     val df_with_bins = df.smvDoubleBinHistogram("id", "v", 2, "_xyz")

@@ -30,7 +30,6 @@ import org.apache.spark.sql.types.StringType
 
 /**
  * The result of running `smvGroupBy` on a DataFrame.
- * This will be deprecated shortly and we will utilize the Spark `GroupedData` directly.
  */
 @Experimental
 private[smv] case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
@@ -460,15 +459,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val rownum = mkUniq(df.columns, "rownum")
     val r1 = df.smvSelectPlus(rank() over w as rankcol, row_number() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
-  }
-
-  /**
-   * Same as agg, but automatically propagate the keys to the output.
-   **/
-  @deprecated("Normal Spark agg now preserves the keys", "1.4")
-  def aggWithKeys(cols: Column*) = {
-    val allCols = keys.map{k => new ColumnName(k)} ++ cols
-    smvGD.toGroupedData.agg(allCols(0), allCols.tail: _*)
   }
 
   /**

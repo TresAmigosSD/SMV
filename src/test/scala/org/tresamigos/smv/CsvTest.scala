@@ -16,7 +16,7 @@ class CsvTest extends SmvTestUtil {
   }
 
   test("Test column with pure blanks converts to null as Integer or Double") {
-    val df = createSchemaRdd("a:Integer;b:Double", "1 , 0.2 ; 2, 1 ;3, ; , ;5, 3.")
+    val df = dfFrom("a:Integer;b:Double", "1 , 0.2 ; 2, 1 ;3, ; , ;5, 3.")
     assertSrddDataEqual(df,
       "1,0.2;" +
       "2,1.0;" +
@@ -49,7 +49,7 @@ class CsvTest extends SmvTestUtil {
   }
 
   test("Test writing CSV file with attributes in schema file.") {
-    val df = createSchemaRdd("f1:String;f2:String", "x,y;a,b").repartition(1)
+    val df = dfFrom("f1:String;f2:String", "x,y;a,b").repartition(1)
     val ca = CsvAttributes('|', '^', true)
     val csvPath = testcaseTempDir + "/test_attr.csv"
     val schemaPath = testcaseTempDir + "/test_attr.schema"
@@ -99,7 +99,7 @@ class CsvTest extends SmvTestUtil {
   test("Test escaping quotes in strings") {
 
     /** Test for CSV Excel format  **/
-    var df = createSchemaRdd("f1:String;f2:String", "\"left\"\"right comma,\",\"escape char \\\";\"a\",\"b\"").repartition(1)
+    var df = dfFrom("f1:String;f2:String", "\"left\"\"right comma,\",\"escape char \\\";\"a\",\"b\"").repartition(1)
     var ca = CsvAttributes()
     val csvPath = testcaseTempDir + "/test_escape_quotes.csv"
 
@@ -121,7 +121,7 @@ class CsvTest extends SmvTestUtil {
 
 
     /** Test for other formats.  This one uses ^ as a quote char and \ as an escape char **/
-    df = createSchemaRdd("@delimiter = ,;@has-header = false;@quote-char = ^;f1:String;f2:String", "^left\\^right quote\\\" comma\\, ^,^escape char\\\\^;a,b").repartition(1)
+    df = dfFrom("@delimiter = ,;@has-header = false;@quote-char = ^;f1:String;f2:String", "^left\\^right quote\\\" comma\\, ^,^escape char\\\\^;a,b").repartition(1)
     ca = CsvAttributes(',','^',false)
     val csvPathCaret = testcaseTempDir + "/test_escape_caret.csv"
 
@@ -133,7 +133,7 @@ class CsvTest extends SmvTestUtil {
 
 
     /** Test for arrays **/
-    df = createSchemaRdd("a:String;b:Array[String]",""" "a1", "b""1|b2" """).repartition(1)
+    df = dfFrom("a:String;b:Array[String]",""" "a1", "b""1|b2" """).repartition(1)
     ca = CsvAttributes()
     val csvPathArray = testcaseTempDir + "/test_escape_array.csv"
 

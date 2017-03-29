@@ -35,18 +35,6 @@ class NonAggFuncsTest extends SmvTestUtil {
     assertSrddDataEqual(res, "a-1;-2;null")
   }
 
-  test("test smvAsArray") {
-    val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("k:String; v:String;", "1,a;2,")
-    val res = df.select(smvAsArray($"v".smvNullSub("test"), $"k") as "myArray")
-
-    /** `getItem` method has bugs in 1.5.1, use the following workaround */
-    val schema = SmvSchema.fromDataFrame(res)
-    val res2 = res.map(schema.rowToCsvString(_, CsvAttributes.defaultCsv)).collect
-
-    assertUnorderedSeqEqual(res2, Seq("\"a|1\"", "\"test|2\""))
-  }
-
   test("test smvCreateLookUp") {
     val ssc = sqlContext; import ssc.implicits._
     val df = dfFrom("first:String;last:String", "John, Brown;TestFirst, ")
