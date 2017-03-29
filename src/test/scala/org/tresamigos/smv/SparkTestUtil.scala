@@ -231,14 +231,6 @@ trait SmvTestUtil extends SparkTestUtil {
     file.rdd
   }
 
-  /**
-   * df creater is in SmvApp now. This is just a wrapper
-   */
-  @deprecated("Use dfFrom instead", "1.5.0")
-  def createSchemaRdd(schemaStr: String, data: String) = {
-    app.createDF(schemaStr, data)
-  }
-
   def dfFrom(schemaStr: String, data: String): DataFrame = app.createDF(schemaStr, data)
 }
 

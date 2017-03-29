@@ -21,7 +21,7 @@ class UnpivotTest extends SmvTestUtil {
   }
 
   test("Test simple unpivot op") {
-    val df = createSchemaRdd("id:String; X:String; Y:String; Z:String",
+    val df = dfFrom("id:String; X:String; Y:String; Z:String",
       """1,A,B,C; 2,D,E,F""")
 
     val res = df.smvUnpivot("X", "Y", "Z")
@@ -32,7 +32,7 @@ class UnpivotTest extends SmvTestUtil {
   }
 
   test("unpivot with column description") {
-    val df = createSchemaRdd("id:String; X:String; Y:String; Z:String",
+    val df = dfFrom("id:String; X:String; Y:String; Z:String",
       """1,A,B,C; 2,D,E,F""").smvDesc("X" -> "Desc of X")
 
     val res = df.smvUnpivot("X", "Y")
@@ -44,7 +44,7 @@ class UnpivotTest extends SmvTestUtil {
   }
 
   test("multi-column unpivot should be the inverse of pivot") {
-    val df = createSchemaRdd("id:String;A_1:String;A_2:String;B_1:String;B_2:String",
+    val df = dfFrom("id:String;A_1:String;A_2:String;B_1:String;B_2:String",
       "1,1a1,1a2,1b1,1b2;2,2a1,2a2,2b1,2b2")
 
     val res = df.smvUnpivot(Seq("A_1", "A_2", "B_1", "B_2"), colNameFn)
@@ -57,7 +57,7 @@ class UnpivotTest extends SmvTestUtil {
   }
 
   test("multi-column unpivot should preserve and padd with null") {
-    val df = createSchemaRdd("id:String;A_1:String;A_2:String;B_1:String",
+    val df = dfFrom("id:String;A_1:String;A_2:String;B_1:String",
       "1,1a1,1a2,1b1;2,2a1,2a2,2b1")
 
     val res = df.smvUnpivot(Seq("A_1", "A_2", "B_1"), colNameFn)
@@ -70,7 +70,7 @@ class UnpivotTest extends SmvTestUtil {
   }
 
   test("unpivoted dataframe should not have an index column if user specifies to skip") {
-    val df = createSchemaRdd("id:String;A_1:String;A_2:String;B_1:String;B_2:String",
+    val df = dfFrom("id:String;A_1:String;A_2:String;B_1:String;B_2:String",
       "1,1a1,1a2,1b1,1b2;2,2a1,2a2,2b1,2b2")
 
     val res = df.smvUnpivot(Seq("A_1", "A_2", "B_1", "B_2"), colNameFn, None)
@@ -87,7 +87,7 @@ class UnpivotTest extends SmvTestUtil {
     val schema = ("Id:String;" +: columns.map(_ + ":String")) mkString ";"
 
     val data = Stream.from(1).take(61) mkString ","
-    val df = createSchemaRdd(schema, data)
+    val df = dfFrom(schema, data)
 
     val res = df.smvUnpivot(columns, colNameFn)
     assertSrddSchemaEqual(res, "Id:String;Index:String;A:String;B:String;C:String")

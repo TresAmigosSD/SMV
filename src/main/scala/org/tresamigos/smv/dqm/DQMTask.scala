@@ -125,6 +125,6 @@ case class DQMFix(
       if(c) dqmState.addFixRec(_name)
       c
     })
-    columnIf(checkUdf(condition),  new Column(fixExpr), new Column(toBeFixed)) as toBeFixed
+    when(checkUdf(condition),  new Column(fixExpr)).otherwise(new Column(toBeFixed)) as toBeFixed
   }
 }

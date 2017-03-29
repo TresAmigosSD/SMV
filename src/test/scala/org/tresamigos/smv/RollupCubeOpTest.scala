@@ -30,12 +30,12 @@ class RollupCubeOpTest extends SmvTestUtil {
   }
 
   test("Test getNonRollupCols") {
-    val df = createSchemaRdd("a:String; b:String; c:String; d:String", "a,b,c,d")
+    val df = dfFrom("a:String; b:String; c:String; d:String", "a,b,c,d")
     assert(new RollupCubeOp(df, Nil, Seq("b","c")).getNonRollupCols() === Seq("a", "d"))
   }
 
   test("Test createSRDDWithSentinel") {
-    val df = createSchemaRdd("a:String; b:String; c:String; d:Integer",
+    val df = dfFrom("a:String; b:String; c:String; d:Integer",
       "a,b,c,1;x,y,z,2")
     val op = new RollupCubeOp(df, Nil, Seq("b","c"))
 
@@ -49,7 +49,7 @@ class RollupCubeOpTest extends SmvTestUtil {
   }
 
   test("Test duplicateSRDDByBitmasks") {
-    val df = createSchemaRdd("a:String; b:String; c:String; d:Integer", "a,b,c,1")
+    val df = dfFrom("a:String; b:String; c:String; d:Integer", "a,b,c,1")
     val op = new RollupCubeOp(df, Nil, Seq("a","b"), null)
 
     val res = op.duplicateSRDDByBitmasks(Seq(0,1,2))
@@ -58,7 +58,7 @@ class RollupCubeOpTest extends SmvTestUtil {
   }
 
   test("Test cube") {
-    val df = createSchemaRdd("a:String; b:String; f:String; d:Integer",
+    val df = dfFrom("a:String; b:String; f:String; d:Integer",
       """a1,b1,F,10;
          a1,b1,F,20;
          a2,b2,G,30;
@@ -100,7 +100,7 @@ class RollupCubeOpTest extends SmvTestUtil {
   }
 
   test("Test rollup") {
-    val df = createSchemaRdd("a:String; b:String; c:String; d:Integer",
+    val df = dfFrom("a:String; b:String; c:String; d:Integer",
       """a1,b1,c1,10;
          a1,b1,c1,20;
          a1,b2,c2,30;

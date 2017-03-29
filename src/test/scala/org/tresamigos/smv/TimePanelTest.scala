@@ -21,7 +21,7 @@ class TimePanelTest extends SmvTestUtil {
 
   test("test addToDF"){
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:Integer; ts:String; v:Double",
+    val df = dfFrom("k:Integer; ts:String; v:Double",
       "1,20120101,1.5;" +
       "1,20120501,2.45;" +
       "2,20120201,3.3"
@@ -44,7 +44,7 @@ class TimePanelTest extends SmvTestUtil {
 
   test("test addTimePanels DF helper") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:Integer; ts:String; v:Double",
+    val df = dfFrom("k:Integer; ts:String; v:Double",
       "1,20120101,1.5;" +
       "1,20120701,7.5;" +
       "1,20120501,2.45"
@@ -68,7 +68,7 @@ class TimePanelTest extends SmvTestUtil {
 
   test("test timePanelValueFill DF helper") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:Integer; ts:String; v:Double",
+    val df = dfFrom("k:Integer; ts:String; v:Double",
       "1,20120201,1.5;" +
       "1,20120701,7.5;" +
       "1,20120501,2.45"
@@ -88,7 +88,7 @@ class TimePanelTest extends SmvTestUtil {
 
   test("test addTimePanelsWithValueFill DF helper") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:Integer; ts:String; v:Double",
+    val df = dfFrom("k:Integer; ts:String; v:Double",
       "1,20120201,1.5;" +
       "1,20120701,7.5;" +
       "1,20120501,2.45"

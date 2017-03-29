@@ -50,7 +50,7 @@ class DQMTest extends SmvTestUtil {
   }
 
   test("test DQMRule") {
-    val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2")
+    val df = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2")
     val state = new DQMState(sc, Seq("rule1"), Nil)
     val dqmRule1 = DQMRule((new Column("a")) + (new Column("b")) > 0.3, "rule1")
     val (c1, c2, c3) = dqmRule1.createCheckCol(state)
@@ -66,7 +66,7 @@ class DQMTest extends SmvTestUtil {
 
   test("test DQMFix") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2")
+    val df = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2")
     val state = new DQMState(sc, Nil, Seq("fix1"))
     val dqmFix = DQMFix($"a" > 0, lit(0) as "a", "fix1")
     val c = dqmFix.createFixCol(state)
@@ -77,7 +77,7 @@ class DQMTest extends SmvTestUtil {
 
   test("test SmvDQM with FailAny (so FailCount)") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2")
+    val df = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2")
 
     val dqm = new DQMValidator(SmvDQM().add(DQMRule($"a" <= 0, "a_le_0", FailAny)))
 
@@ -99,7 +99,7 @@ class DQMTest extends SmvTestUtil {
 
   test("test FailPercent") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
+    val df = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
 
     val dqm = new DQMValidator(SmvDQM().
       add(DQMRule($"b" < 0.4 , "b_lt_03", FailPercent(0.5))).
@@ -125,7 +125,7 @@ class DQMTest extends SmvTestUtil {
 
   test("test Total Policies") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
+    val df = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
 
     val dqm = new DQMValidator(SmvDQM().
       add(DQMRule($"b" < 0.4 , "b_lt_03")).

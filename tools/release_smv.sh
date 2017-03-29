@@ -32,7 +32,8 @@ function error()
 
 function usage()
 {
-  echo "USAGE: ${PROG_NAME} smv_version_to_release(a.b.c.d)"
+  echo "USAGE: ${PROG_NAME} -u github_user:github_token smv_version_to_release(a.b.c.d)"
+  echo "See (https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) for auth tokens"
   exit $1
 }
 
@@ -54,9 +55,11 @@ function parse_args()
 {
   info "parsing command line args"
   [ "$1" = "-h" ] && usage 0
-  [ $# -ne 1 ] && echo "ERROR: invalid number of arguments" && usage 1
+  [ $# -ne 3 ] && echo "ERROR: invalid number of arguments" && usage 1
+  [ "$1" != "-u" ] && echo "ERROR: must supply github user name/token" && usage 1
 
-  SMV_VERSION="$1"
+  GITHUB_USER_TOKEN="$2"
+  SMV_VERSION="$3"
   validate_version "$SMV_VERSION"
 }
 
@@ -169,6 +172,33 @@ function create_tar()
     ${SMV_DIR_BASE} >> ${LOGFILE} 2>&1 || error "tar creation failed"
 }
 
+# This only creates the release and does NOT attach the zip asset to it.
+function create_github_release()
+{
+  info "Create github release"
+  local body_file="${LOGDIR}/req1.body.json"
+  local res_file="${LOGDIR}/res1.json"
+  local rel_doc_url="https://github.com/TresAmigosSD/SMV/blob/master/releases/v${SMV_VERSION}.md"
+
+  # create POST request body for creating the repo.
+  # See https://developer.github.com/v3/repos/releases/ for details.
+  echo "{" > $body_file
+  echo "  \"tag_name\": \"v${SMV_VERSION}\"," >> $body_file
+  echo "  \"name\": \"SMV v${SMV_VERSION} release $(date +%m/%d/%Y)\"," >> $body_file
+  echo "  \"body\": \"See ${rel_doc_url} for release doc\"" >> $body_file
+  echo "}" >> $body_file
+
+  curl -i -u "${GITHUB_USER_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -X POST \
+    -d @${body_file} \
+    https://api.github.com/repos/tresamigossd/SMV/releases \
+    > ${res_file} 2>&1
+
+  grep -q "^HTTP/1.1 201 Created" ${res_file} || error "Unable to create github release: see ${res_file}"
+}
+
+
 # ---- MAIN ----
 create_logdir
 parse_args "$@"
@@ -180,4 +210,5 @@ build_smv
 update_version
 tag_release
 create_tar
+create_github_release
 clean_logdir
