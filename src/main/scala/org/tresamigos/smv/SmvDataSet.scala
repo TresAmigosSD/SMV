@@ -437,17 +437,6 @@ case class SmvFrlFile(
 }
 
 /**
- * Keep this interface for existing application code, will be removed when application code cleaned up
- */
-@deprecated("for existing application code", "1.5")
-object SmvFile {
-  def apply(path: String, csvAttributes: CsvAttributes) =
-    new SmvCsvFile(path, csvAttributes)
-  def apply(name: String, path: String, csvAttributes: CsvAttributes) =
-    new SmvCsvFile(path, csvAttributes)
-}
-
-/**
  * Maps SmvDataSet to DataFrame by FQN. This is the type of the parameter expected
  * by SmvModule's run method.
  */
