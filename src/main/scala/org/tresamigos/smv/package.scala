@@ -149,32 +149,6 @@ package object smv {
    **/
   def smvFirst(c: Column, nonNull: Boolean = false) = smvfuncs.smvFirst(c, nonNull)
 
-  /**
-   * Simple column functions to apply If-Else
-   *
-   * If (cond) l else r
-   *
-   * Will be deprecated when migrate to 1.5 and use `when`
-   **/
-  def columnIf(cond: Column, l: Column, r: Column): Column = {
-    new Column(If(cond.toExpr, l.toExpr, r.toExpr))
-  }
-
-  /**
-   * A variation of columnIf: both values Scala values
-   */
-  def columnIf[T](cond: Column, l: T, r: T): Column = columnIf(cond, lit(l), lit(r))
-
-  /**
-   * A variation of columnIf: left value is Scala value
-   */
-  def columnIf[T](cond: Column, l: T, r: Column): Column = columnIf(cond, lit(l), r)
-
-  /**
-   * A variation of columnIf: right value is Scala value
-   */
-  def columnIf[T](cond: Column, l: Column, r: T): Column = columnIf(cond, l, lit(r))
-
   /** True if any of the columns is not null */
   def hasNonNull(columns: Column*) = columns.foldRight(lit(false))((c, acc) => acc || c.isNotNull)
 
@@ -190,11 +164,6 @@ package object smv {
     when(hasNonNull(columns:_*),
       concat_ws(sep, columns.map(c => coalesce(c, lit(""))):_*)).
       otherwise(lit(null))
-
-  /**
-   * Put a group of columns in an Array field
-   **/
-  def smvAsArray(columns: Column*) = array(columns: _*)
 
   /**
    * create a UDF from a map

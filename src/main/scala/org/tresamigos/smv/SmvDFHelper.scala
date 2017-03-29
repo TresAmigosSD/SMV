@@ -52,12 +52,9 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Dump the schema and data of given df to screen for debugging purposes.
    * Similar to `show()` method of DF from Spark 1.3, although the format is slightly different.
-   * This function's format is more convenient for us and hence has remained un-deprecated.
+   * This function's format is more convenient for us and hence has remaint.
    */
   def smvDumpDF() = println(_smvDumpDF())
-
-  @deprecated("Use smvDumpDF instead", "1.5")
-  def dumpSRDD = println(_smvDumpDF())
 
   /**
    * checkNames: Require all the list of strings are real column names
@@ -134,9 +131,6 @@ class SmvDFHelper(df: DataFrame) {
     df.select( all ++ exprs : _* )
   }
 
-  @deprecated("use smvSelectPlus instead", "1.5")
-  def selectPlus(exprs: Column*): DataFrame = smvSelectPlus(exprs:_*)
-
   /**
    * Same as selectPlus but the new columns are prepended to result.
    * {{{
@@ -163,9 +157,6 @@ class SmvDFHelper(df: DataFrame) {
     df.select(all.map{l=>df(l)} : _* )
   }
 
-  @deprecated("use smvSelectMinus instead", "1.5")
-  def selectMinus(s: String, others: String*): DataFrame = smvSelectMinus(s, others:_*)
-
   /**
    * Remove one or more columns from current DataFrame.
    * Column names are specified as `Column`
@@ -177,20 +168,6 @@ class SmvDFHelper(df: DataFrame) {
     val names = cols.map(_.getName)
     smvSelectMinus(names(0), names.tail: _*)
   }
-
-  @deprecated("use smvSelectMinus instead", "1.5")
-  def selectMinus(cols: Column*): DataFrame = smvSelectMinus(cols:_*)
-
-  /**
-   * Remove one or more columns from current DataFrame.
-   * Column names are specified as `Column`
-   * {{{
-   *   df.smvSelectMinus('col1, 'col2)
-   * }}}
-   */
-  @deprecated("use String instead of Symbol", "1.3")
-  def smvSelectMinus(s1: Symbol, sleft: Symbol*): DataFrame =
-    smvSelectMinus(s1.name, sleft.map{l=>l.name}: _*)
 
   /**
    * Rename one or more fields of a `DataFrame`.
@@ -217,20 +194,6 @@ class SmvDFHelper(df: DataFrame) {
     }
     df.select(renamedFields: _*)
   }
-
-  @deprecated("use smvRenameField", "1.5")
-  def renameField(namePairs: (String, String)*): DataFrame = smvRenameField(namePairs: _*)
-
-  /**
-   * Rename one or more fields of a `DataFrame`.
-   * The old/new names are given as symbol pairs.
-   * {{{
-   *   df.renameField( 'a -> 'aa, 'b -> 'bb )
-   * }}}
-   */
-  @deprecated("use String instead of Symbol", "1.3")
-  def renameField(n1: (Symbol, Symbol), nleft: (Symbol, Symbol)*): DataFrame =
-    renameField((n1 +: nleft).map{case(l, r) => (l.name, r.name)}: _*)
 
   /**
    * Apply a prefix to all column names in the given `DataFrame`.
@@ -291,9 +254,6 @@ class SmvDFHelper(df: DataFrame) {
 
     df.smvSelectPlus(exprs: _*).smvSelectMinus(colNames.head, colNames.tail: _*)
   }
-
-  @deprecated("use smvExpandStruct instead", "1.5")
-  def selectExpandStruct(colNames: String*): DataFrame = smvExpandStruct(colNames: _*)
 
   /**
    * Perform a join of the left/right `DataFrames` and rename duplicated column names by
@@ -362,15 +322,6 @@ class SmvDFHelper(df: DataFrame) {
     dfCoalescedKeys.smvSelectMinus(rightKeys(0), rightKeys.tail: _*)
   }
 
-  @deprecated("use smvJoinByKey instead", "1.5")
-  def joinByKey(
-    otherPlan: DataFrame,
-    keys: Seq[String],
-    joinType: String,
-    postfix: String = null,
-    dropRightKey: Boolean = true
-  ) = smvJoinByKey(otherPlan, keys, joinType, postfix, dropRightKey)
-
   /**
    * Create multiple DF join builder: `SmvMultiJoin`.
    *
@@ -396,9 +347,6 @@ class SmvDFHelper(df: DataFrame) {
   def smvJoinMultipleByKey(keys: Seq[String], defaultJoinType: String) = {
     new SmvMultiJoin(Nil, SmvMultiJoinConf(df, keys, defaultJoinType))
   }
-
-  @deprecated("use smvJoinMultipleByKey instead", "1.5")
-  def joinMultipleByKey(keys: Seq[String], defaultJoinType: String) = smvJoinMultipleByKey(keys, defaultJoinType)
 
   /**
    * Remove duplicate records from the `DataFrame` by arbitrarly selecting the first record
@@ -472,11 +420,6 @@ class SmvDFHelper(df: DataFrame) {
     val names = cols.map(_.getName)
     dedupByKey(names(0), names.tail: _*)
   }
-
-  /** Same as `dedupByKey(String*)` but uses `Symbol` to specify the key columns */
-  @deprecated("use String instead of Symbol", "1.3")
-  def dedupByKey(k1: Symbol, kleft: Symbol*): DataFrame =
-    dedupByKey(k1.name, kleft.map{l=>l.name}: _*)
 
   /**
    * Remove duplicated records by selecting the first record regarding a given ordering
@@ -770,11 +713,6 @@ class SmvDFHelper(df: DataFrame) {
     smvUnpivot(valueCols, fn, Some(indexColName))
   }
 
-  /** same as `smvUnpivot(String*)` but uses `Symbol` to specify the value columns. */
-  @deprecated("use String instead of Symbol", "1.5")
-  def smvUnpivot(valueCol: Symbol, others: Symbol*): DataFrame =
-    smvUnpivot((valueCol +: others).map{s => s.name}: _*)
-
   /**
    * Similar to the `cube` Spark DF method, but using "*" instead of null to represent "Any"
    *
@@ -945,7 +883,7 @@ class SmvDFHelper(df: DataFrame) {
 
     val hasCols = Range(0, otherSimple.size + 1).map{i =>
       val newkey = s"${key}_${i}"
-      columnIf($"${newkey}".isNull, "0", "1")
+      when($"${newkey}".isNull, "0").otherwise("1")
     }
 
     joined.select($"${key}", smvStrCat(hasCols: _*) as "flag")
@@ -970,14 +908,6 @@ class SmvDFHelper(df: DataFrame) {
     val getHash = {s: Any => MH3.stringHash(s.toString, seed) & Int.MaxValue}
     val hashUdf = udf(getHash)
     df.where(hashUdf(key) < lit(cutoff))
-  }
-
-  /**
-   * DF level coalesce, for Spark 1.3 only. Should be removed and use DF method coalesce in 1.4
-   **/
-  @deprecated("should use spark df coalesce after 1.3", "1.5")
-  def smvCoalesce(n: Int) = {
-    df.sqlContext.createDataFrame(df.rdd.coalesce(n).map{r => Row.fromSeq(r.toSeq)}, df.schema)
   }
 
   /**
@@ -1194,15 +1124,6 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /**
-   * Show histograms within groups (Issue #330)
-   */
-  @deprecated("""use df.smvGroupBy("k").smvConcatHist(Seq("c1", "c2")) instead""", "1.5")
-  def showHist(groupBy1: String, rest: String*)(colA: Column, more: Column*): Unit = {
-    import df.sqlContext.implicits._
-    df.smvGroupBy(groupBy1, rest:_*).smvConcatHist((colA +: more).map{_.getName})
-  }
-
-  /**
    * Find column combinations which uniquely identify a row from the data
    *
    * @param n number of rows the PK discovery algorithm will run on.
@@ -1250,9 +1171,6 @@ class SmvDFHelper(df: DataFrame) {
 
     SmvReportIO.saveLocalReport(headerStr + "\n" + bodyStr + "\n", path)
   }
-
-  @deprecated("use smvExportCsv instead", "1.5")
-  def exportCsv(path: String, n: Integer = null) = smvExportCsv(path, n)
 
   /**
    * Add a set of DoubleBinHistogram columns to a DataFrame.

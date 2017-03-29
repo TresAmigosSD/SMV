@@ -17,28 +17,6 @@ package org.tresamigos.smv
 import org.apache.spark.sql.functions._
 
 class ColumnHelperTest extends SmvTestUtil {
-  test("test smvNullSub") {
-    val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
-    val res = df.select($"v".smvNullSub("test"))
-    assertSrddDataEqual(res,
-      "a;" +
-      "test")
-    val res2 = df.select($"v".smvNullSub($"k"))
-    assertSrddDataEqual(res2,
-      "a;" +
-      "2")
-  }
-
-  test("test smvLength"){
-    val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:String; v:String;", "1,a;2,")
-    val res = df.select($"v".smvLength)
-    assertSrddDataEqual(res,
-      "1;" +
-      "null")
-  }
-
   test("test smvStrToTimestamp"){
     val ssc = sqlContext; import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "20190101,a;,b")
@@ -70,13 +48,6 @@ class ColumnHelperTest extends SmvTestUtil {
     val res = df.select($"v".smvAmtBin, $"v".smvNumericBin(40000,0,4), $"v".smvCoarseGrain(1000))
     assertSrddSchemaEqual(res, "SmvAmtBin(v): Double; SmvNumericBin(v,40000.0,0.0,4): Double; SmvCoarseGrain(v,1000.0): Double")
     assertSrddDataEqual(res, "1000.0,10000.0,1000.0;" + "30000.0,40000.0,31000.0")
-  }
-
-  test("test SmvSoundex function") {
-    val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:String", "Smith;Liu;Brown;  Funny ;Obama;0Obama")
-    val res = df.select($"a".smvSoundex)
-    assertSrddDataEqual(res, "s530;l000;b650;f500;o150;o150")
   }
 
   test("test SmvMetaphone function") {
@@ -144,14 +115,6 @@ class ColumnHelperTest extends SmvTestUtil {
       "505")
   }
 
-  test("test withDesc") {
-    val ssc =sqlContext;
-    import ssc.implicits._
-    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
-    val res = df.selectWithReplace($"t" withDesc "the time sequence")
-    assertUnorderedSeqEqual(res.smvGetDesc(), Seq(("k",""), ("t","the time sequence"), ("v","")))
-  }
-
   test("test Percentile of DoubleBinHistogram") {
     val ssc = sqlContext;
     import ssc.implicits._
@@ -202,7 +165,7 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddDataEqual(res, "true;false;false")
   }
 
-  test("test isAllIn"){
+  test("test smvIsAllIn"){
     val ssc = sqlContext;
     import ssc.implicits._
     val df = createSchemaRdd("k:String; v:String;", "a,b;c,d;,").select(array($"k", $"v") as "arr")
@@ -231,35 +194,6 @@ class ColumnHelperTest extends SmvTestUtil {
       "quarter,172,2013-Q1;" +
       "month,551,2015-12;" +
       "day,16405,2014-12-01"
-    )
-  }
-}
-
-class SmvPrintToStrTest extends SmvTestUtil {
-  test("test smvPrintToStr") {
-    val ssc =sqlContext;
-    import ssc.implicits._
-    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
-    val res = df.select($"t".smvPrintToStr("%03d") as "tstr", $"v".smvPrintToStr("%.3e") as "vstr")
-    assertSrddDataEqual(res,
-      "001,2.000e-01;" +
-      "002,1.400e+00;" +
-      "005,2.200e+00;" +
-      "001,3.000e-01"
-    )
-  }
-}
-
-class SmvStrTrimTest extends SmvTestUtil {
-  test("test smvStrTrim") {
-    val ssc =sqlContext;
-    import ssc.implicits._
-    val df = createSchemaRdd("k:String", "z ; 1; 3 ;")
-    val res = df.select($"k".smvStrTrim)
-    assertSrddDataEqual(res,
-      "z;" +
-      "1;" +
-      "3"
     )
   }
 }

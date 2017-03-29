@@ -88,12 +88,12 @@ class SelectPlusMinusTest extends SmvTestUtil {
   }
 }
 
-class renameFieldTest extends SmvTestUtil {
+class smvRenameFieldTest extends SmvTestUtil {
   test("test rename fields") {
     val df = createSchemaRdd("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
-    val result = df.renameField("a" -> "aa", "c" -> "cc")
+    val result = df.smvRenameField("a" -> "aa", "c" -> "cc")
 
     val fieldNames = result.schema.fieldNames
     assert(fieldNames === Seq("aa", "b", "cc"))
@@ -105,7 +105,7 @@ class renameFieldTest extends SmvTestUtil {
       "1,2.0,hello")
 
     val e = intercept[SmvRuntimeException] {
-      val result = df.renameField("a" -> "c")
+      val result = df.smvRenameField("a" -> "c")
     }
     assert(e.getMessage === "Rename to existing fields: c")
   }
@@ -135,20 +135,20 @@ class renameFieldTest extends SmvTestUtil {
   test("rename field should preserve metadata in renamed fields") {
     val df = createSchemaRdd("a:Integer; b:String", "1,abc;1,def;2,ghij")
     val desc = "c description"
-    val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) withDesc desc as "c")
+    val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) as "c").smvDesc("c" -> desc)
     res1.smvGetDesc() shouldBe Seq(("a" -> ""), ("c" -> desc))
 
-    val res2 = res1.renameField("c" -> "d")
+    val res2 = res1.smvRenameField("c" -> "d")
     res2.smvGetDesc() shouldBe Seq(("a" -> ""), ("d" -> desc))
   }
 
   test("rename field should preserve metadata for unrenamed fields") {
     val df = createSchemaRdd("a:Integer; b:String", "1,abc;1,def;2,ghij")
     val desc = "c description"
-    val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) withDesc desc as "c")
+    val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) as "c").smvDesc("c" -> desc)
     res1.smvGetDesc() shouldBe Seq(("a" -> ""), ("c" -> desc))
 
-    val res2 = res1.renameField("a" -> "d")
+    val res2 = res1.smvRenameField("a" -> "d")
     res2.smvGetDesc() shouldBe Seq(("d" -> ""), ("c" -> desc))
   }
 }
