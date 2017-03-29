@@ -28,9 +28,9 @@ private[smv]
 case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: ClassLoader)
   extends ClassLoader(parentClassLoader) {
   /**
-   * Override the default loadClass behaviour to check against server first rather than parent class loader.
-   * We can't check parent first because spark is usually run with the app fat jar which will have all the
-   * modules defined in it.
+   * Override the default loadClass behaviour to check the local class directory
+   * first. We can't check parent first because spark is usually run with the app
+   * fat jar which will have all the modules defined in it.
    */
   override def loadClass(classFQN: String) : Class[_] = {
     var c : Class[_] = null
@@ -56,7 +56,6 @@ case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: C
 
   /**
    * Override the default findClass in ClassLoader to load the class using the class loader client.
-   * Depending on which client we have (remote/local), this may connect to server or just search local dir.
    */
   override def findClass(classFQN: String) : Class[_] = {
     val klassBytes = getClassBytes(classFQN)
@@ -72,9 +71,7 @@ case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: C
   }
 
   /**
-   * Get resource from server as a byte input stream.
-   * This ignores the standard search recommendation by looking at the parent and just gets the resource from the server.
-   * We also don't bother to go to parent AFTER the server as this is only called to load resources we know are on the server.
+   * Get resource as a byte input stream.
    */
   override def getResourceAsStream (name: String) : InputStream = {
     val bytes = getResourceBytes(name)
