@@ -41,4 +41,4 @@ class RunStageFromCmdLineTest(SmvBaseTest):
         a = smvPy.runModule("mod:" + self.stageName + ".modules.A")
         self.should_be_same(a, self.createDF("k:String;v:Integer", "a,;b,2"))
         b = smvPy.runModule("mod:" + self.stageName + ".modules.B")
-        self.should_be_same(a, self.createDF("k:String;v:Integer", "c,3;d,4"))
+        self.should_be_same(b, self.createDF("k:String;v:Integer", "c,3;d,4"))

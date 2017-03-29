@@ -226,8 +226,8 @@ class DfHelperTest(SmvBaseTest):
 
     def test_smvUnpivotRegex(self):
         df = self.createDF("id:Integer; A_1:String; A_2:String; B_1:String; B_2:String",
-                """1,1_a_1, 1_a_2, 1_b_1, 1_b_2;
-                   2,2_a_1, 2_a_2, 2_b_1, 2_b_2
+                """1,1_a_1,1_a_2,1_b_1,1_b_2;
+                   2,2_a_1,2_a_2,2_b_1,2_b_2
                 """)
         res = df.smvUnpivotRegex( ["A_1", "A_2", "B_1", "B_2"], "(.*)_(.*)", "index" )
         expect = self.createDF("id: Integer; index:String; A:String; B:String",
