@@ -60,7 +60,7 @@ class AggFuncsTest extends SmvTestUtil {
 
   test("test SmvFirst") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val df = dfFrom("k:String; t:Integer; v:Double", "z,1,;z,2,1.4;z,5,2.2;a,1,0.3;")
 
     val res = df.groupBy("k").agg(
       smvFirst($"t", true), // use smvFirst instead of Spark's first to test the alternative form also
@@ -75,7 +75,7 @@ class AggFuncsTest extends SmvTestUtil {
 
   test("test smvSum0") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:String; v1:Integer; v2:Double", "X,,;X,,")
+    val df = dfFrom("k:String; v1:Integer; v2:Double", "X,,;X,,")
     val res = df.groupBy("k").agg(
       sum("v1") as "v1_null",
       sum("v2") as "v2_null",
@@ -88,7 +88,7 @@ class AggFuncsTest extends SmvTestUtil {
 
   test("test smvIsAny") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("v1:Boolean; v2:Boolean; v3: Boolean", "true,,;false,false,;,false,")
+    val df = dfFrom("v1:Boolean; v2:Boolean; v3: Boolean", "true,,;false,false,;,false,")
     val res = df.agg(smvIsAny($"v1") as "v1", smvIsAny($"v2") as "v2", smvIsAny($"v3") as "v3")
     assertSrddDataEqual(res, "true,false,false")
   }

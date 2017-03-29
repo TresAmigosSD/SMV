@@ -17,7 +17,7 @@ package org.tresamigos.smv
 class SmvGroupedDataTest extends SmvTestUtil {
   test("Test the Scale function") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:String; v:Integer;",
+    val df = dfFrom("k:String; v:Integer;",
       """a,0; a,3; a,10; a,20; b,-2; b,30; b,10""")
 
     val res = df.smvGroupBy("k").smvScale($"v" -> ((0.0, 100.0)))()
@@ -34,7 +34,7 @@ class SmvGroupedDataTest extends SmvTestUtil {
 
   test("Test the SmvScale with withZeroPivot set") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:String; v:Integer;",
+    val df = dfFrom("k:String; v:Integer;",
       """a,0; a,3; a,10; a,20; b,-2; b,30; b,10""")
 
     val res = df.smvGroupBy("k").smvScale($"v" -> ((0.0, 100.0)))(withZeroPivot = true, doDropRange = false)
@@ -52,7 +52,7 @@ class SmvGroupedDataTest extends SmvTestUtil {
   test("Test smvRePartition function") {
     val ssc = sqlContext; import ssc.implicits._
 
-    val df = createSchemaRdd("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val df = dfFrom("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
     val res = df.smvGroupBy("k").smvRePartition(2).toDF
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a,1,0.3]",
@@ -64,7 +64,7 @@ class SmvGroupedDataTest extends SmvTestUtil {
   }
 
   test("test fillExpectedWithNull") {
-    val df = createSchemaRdd("k:String; v:String; t:Integer", "1,a,1;1,b,2;1,a,3;1,d,1")
+    val df = dfFrom("k:String; v:String; t:Integer", "1,a,1;1,b,2;1,a,3;1,d,1")
     val res = df.smvGroupBy("k").fillExpectedWithNull("v", Set("a", "b", "c"), true)
 
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
@@ -77,7 +77,7 @@ class SmvGroupedDataTest extends SmvTestUtil {
 
   test("test smvFillNullWithPrevValue") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:String; t:Integer; v:String", "a,1,;a,2,a;a,3,b;a,4,")
+    val df = dfFrom("k:String; t:Integer; v:String", "a,1,;a,2,a;a,3,b;a,4,")
     val res = df.smvGroupBy("k").smvFillNullWithPrevValue($"t".asc)("v")
 
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(

@@ -18,7 +18,7 @@ class RankTest extends SmvTestUtil {
 
   test("Test the SmvRank function") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:Integer; v:String;",
+    val df = dfFrom("k:Integer; v:String;",
       """1,B; 2,C; 3,E; 4,D; 5,A""")
 
     val res = df.orderBy('v.asc).smvRank("rank", 100)

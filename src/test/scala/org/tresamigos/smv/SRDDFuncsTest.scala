@@ -22,7 +22,7 @@ class SelectWithReplaceTest extends SmvTestUtil {
   val data = Seq("Adam,1", "Beth,2", "Caleb,3", "David,4")
 
   def testDf(sqlContext: SQLContext): DataFrame =
-    createSchemaRdd(schema, data.mkString(";"))
+    dfFrom(schema, data.mkString(";"))
 
   test("should add new columns without modification") {
     val input = testDf(sqlContext)
@@ -51,7 +51,7 @@ class SelectWithReplaceTest extends SmvTestUtil {
 class SelectPlusMinusTest extends SmvTestUtil {
   test("test SelectPlus") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
+    val df = dfFrom("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
     val res = df.smvSelectPlus('b + 2.0 as 'bplus2)
     assertSrddDataEqual(res,
       "1.0,10.0,12.0;" +
@@ -61,7 +61,7 @@ class SelectPlusMinusTest extends SmvTestUtil {
 
   test("test SelectPlusPrefix") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
+    val df = dfFrom("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
     val res = df.selectPlusPrefix('b + 2.0 as 'bplus2)
     assertSrddDataEqual(res,
       "12.0,1.0,10.0;" +
@@ -71,7 +71,7 @@ class SelectPlusMinusTest extends SmvTestUtil {
 
   test("test SelectMinus") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
+    val df = dfFrom("a:Double;b:Double", "1.0,10.0;2.0,20.0;3.0,30.0")
     val res = df.smvSelectMinus("b")
     assertSrddDataEqual(res,
       "1.0;" +
@@ -81,7 +81,7 @@ class SelectPlusMinusTest extends SmvTestUtil {
 
   test("test smvExpandStruct") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("id:String;a:Double;b:Double", "a,1.0,10.0;a,2.0,20.0;b,3.0,30.0")
+    val df = dfFrom("id:String;a:Double;b:Double", "a,1.0,10.0;a,2.0,20.0;b,3.0,30.0")
     val dfStruct = df.select($"id", struct("a", "b") as "c")
     val res = dfStruct.smvExpandStruct("c")
     assertSrddDataEqual(res, "a,1.0,10.0;a,2.0,20.0;b,3.0,30.0")
@@ -90,7 +90,7 @@ class SelectPlusMinusTest extends SmvTestUtil {
 
 class smvRenameFieldTest extends SmvTestUtil {
   test("test rename fields") {
-    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = dfFrom("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
     val result = df.smvRenameField("a" -> "aa", "c" -> "cc")
@@ -101,7 +101,7 @@ class smvRenameFieldTest extends SmvTestUtil {
   }
 
   test("test rename to existing field") {
-    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = dfFrom("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
     val e = intercept[SmvRuntimeException] {
@@ -111,7 +111,7 @@ class smvRenameFieldTest extends SmvTestUtil {
   }
 
   test("test prefixing field names") {
-    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = dfFrom("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
     val result = df.prefixFieldNames("xx_")
@@ -122,7 +122,7 @@ class smvRenameFieldTest extends SmvTestUtil {
   }
 
   test("test postfixing field names") {
-    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = dfFrom("a:Integer; b:Double; c:String",
       "1,2.0,hello")
 
     val result = df.postfixFieldNames("_xx")
@@ -133,7 +133,7 @@ class smvRenameFieldTest extends SmvTestUtil {
   }
 
   test("rename field should preserve metadata in renamed fields") {
-    val df = createSchemaRdd("a:Integer; b:String", "1,abc;1,def;2,ghij")
+    val df = dfFrom("a:Integer; b:String", "1,abc;1,def;2,ghij")
     val desc = "c description"
     val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) as "c").smvDesc("c" -> desc)
     res1.smvGetDesc() shouldBe Seq(("a" -> ""), ("c" -> desc))
@@ -143,7 +143,7 @@ class smvRenameFieldTest extends SmvTestUtil {
   }
 
   test("rename field should preserve metadata for unrenamed fields") {
-    val df = createSchemaRdd("a:Integer; b:String", "1,abc;1,def;2,ghij")
+    val df = dfFrom("a:Integer; b:String", "1,abc;1,def;2,ghij")
     val desc = "c description"
     val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) as "c").smvDesc("c" -> desc)
     res1.smvGetDesc() shouldBe Seq(("a" -> ""), ("c" -> desc))
@@ -156,14 +156,14 @@ class smvRenameFieldTest extends SmvTestUtil {
 class JoinHelperTest extends SmvTestUtil {
   test("test joinUniqFieldNames") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd1 = createSchemaRdd("a:Integer; b:Double; c:String",
+    val srdd1 = dfFrom("a:Integer; b:Double; c:String",
       """1,2.0,hello;
          1,3.0,hello;
          2,10.0,hello2;
          2,11.0,hello3"""
     )
 
-    val srdd2 = createSchemaRdd("a2:Integer; c:String",
+    val srdd2 = dfFrom("a2:Integer; c:String",
       """1,asdf;
          2,asdfg"""
     )
@@ -180,12 +180,12 @@ class JoinHelperTest extends SmvTestUtil {
 
   test("test joinUniqFieldNames with ignore case") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd1 = createSchemaRdd("a:Integer; b:Double; C:String",
+    val srdd1 = dfFrom("a:Integer; b:Double; C:String",
       """1,2.0,hello;
       2,11.0,hello3"""
     )
 
-    val srdd2 = createSchemaRdd("a2:Integer; c:String",
+    val srdd2 = dfFrom("a2:Integer; c:String",
       """1,asdf;
       2,asdfg"""
     )
@@ -196,14 +196,14 @@ class JoinHelperTest extends SmvTestUtil {
 
   test("test smvJoinByKey") {
     val ssc = sqlContext; import ssc.implicits._
-    val srdd1 = createSchemaRdd("a:Integer; b:Double; c:String",
+    val srdd1 = dfFrom("a:Integer; b:Double; c:String",
       """1,2.0,hello;
          1,3.0,hello;
          2,10.0,hello2;
          2,11.0,hello3"""
     )
 
-    val srdd2 = createSchemaRdd("a:Integer; c:String",
+    val srdd2 = dfFrom("a:Integer; c:String",
       """1,asdf;
          2,asdfg"""
     )
@@ -219,8 +219,8 @@ class JoinHelperTest extends SmvTestUtil {
   }
 
   test("outer smvJoinByKey with single key column") {
-    val df1 = createSchemaRdd("a:Integer;b:String", """1,x1;2,y1;3,z1""")
-    val df2 = createSchemaRdd("a:Integer;b:String", """1,x2;4,w2;""")
+    val df1 = dfFrom("a:Integer;b:String", """1,x1;2,y1;3,z1""")
+    val df2 = dfFrom("a:Integer;b:String", """1,x2;4,w2;""")
     val res = df1.smvJoinByKey(df2, Seq("a"), SmvJoinType.Outer)
     assert(res.columns === Seq("a", "b", "_b"))
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
@@ -231,8 +231,8 @@ class JoinHelperTest extends SmvTestUtil {
   }
 
   test("outer smvJoinByKey with multiple key columns") {
-    val df1 = createSchemaRdd("k1:Integer;k2:Integer;a:String", "1,1,x1;1,2,x2;2,1,x3;2,2,x4")
-    val df2 = createSchemaRdd("k1:Integer;k2:Integer;b:String", "1,1,y1;1,3,y2;3,1,y3;3,3,y4")
+    val df1 = dfFrom("k1:Integer;k2:Integer;a:String", "1,1,x1;1,2,x2;2,1,x3;2,2,x4")
+    val df2 = dfFrom("k1:Integer;k2:Integer;b:String", "1,1,y1;1,3,y2;3,1,y3;3,3,y4")
     val res = df1.smvJoinByKey(df2, Seq("k1", "k2"), SmvJoinType.Outer)
     assert(res.columns === Seq("k1", "k2", "a", "b"))
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
@@ -258,9 +258,9 @@ class JoinHelperTest extends SmvTestUtil {
   }
 
   test("joinMultipleByKey") {
-    val df1 = createSchemaRdd("a:Integer;b:String", """1,x1;2,y1;3,z1""")
-    val df2 = createSchemaRdd("a:Integer;b:String", """1,x1;4,w2;""")
-    val df3 = createSchemaRdd("a:Integer;b:String", """1,x3;5,w3;""")
+    val df1 = dfFrom("a:Integer;b:String", """1,x1;2,y1;3,z1""")
+    val df2 = dfFrom("a:Integer;b:String", """1,x1;4,w2;""")
+    val df3 = dfFrom("a:Integer;b:String", """1,x3;5,w3;""")
 
     val mtjoin = df1.smvJoinMultipleByKey(Seq("a"), SmvJoinType.Inner).
       joinWith(df2, "_df2").
@@ -284,11 +284,11 @@ class JoinHelperTest extends SmvTestUtil {
 
 class smvUionTest extends SmvTestUtil {
   test("test smvUion") {
-    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = dfFrom("a:Integer; b:Double; c:String",
       """1,2.0,hello;
          2,3.0,hello2"""
     )
-    val df2 = createSchemaRdd("c:String; a:Integer; d:Double",
+    val df2 = dfFrom("c:String; a:Integer; d:Double",
       """hello5,5,21.0;
          hello6,6,22.0"""
     )
@@ -304,7 +304,7 @@ class smvUionTest extends SmvTestUtil {
 
 class dedupByKeyTest extends SmvTestUtil {
   test("test dedupByKey") {
-    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = dfFrom("a:Integer; b:Double; c:String",
       """1,2.0,hello;
          1,3.0,hello;
          2,10.0,hello2;
@@ -331,7 +331,7 @@ class dedupByKeyTest extends SmvTestUtil {
   }
 
   test("test dedupByKey with nulls") {
-    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = dfFrom("a:Integer; b:Double; c:String",
       """1,,hello;
          1,3.0,hello1;
          2,10.0,;
@@ -346,7 +346,7 @@ class dedupByKeyTest extends SmvTestUtil {
 
   test("test dedupByKeyWithOrder") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:Integer; b:Double; c:String",
+    val df = dfFrom("a:Integer; b:Double; c:String",
       """1,,hello;
          1,3.0,hello1;
          2,11.0,;
@@ -361,7 +361,7 @@ class dedupByKeyTest extends SmvTestUtil {
 
   test("test dedupByKeyWithOrder with timestamp") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:Integer; b:Timestamp[yyyyMMdd]",
+    val df = dfFrom("a:Integer; b:Timestamp[yyyyMMdd]",
       """1,20150102;
          1,20140108;
          2,20130712;
@@ -378,9 +378,9 @@ class dedupByKeyTest extends SmvTestUtil {
 
 class smvOverlapCheckTest extends SmvTestUtil {
   test("test smvOverlapCheck") {
-    val s1 = createSchemaRdd("k: String", "a;b;c")
-    val s2 = createSchemaRdd("k: String", "a;b;c;d")
-    val s3 = createSchemaRdd("k: String", "c;d")
+    val s1 = dfFrom("k: String", "a;b;c")
+    val s2 = dfFrom("k: String", "a;b;c;d")
+    val s3 = dfFrom("k: String", "c;d")
 
     val res = s1.smvOverlapCheck("k")(s2, s3)
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
@@ -395,7 +395,7 @@ class smvOverlapCheckTest extends SmvTestUtil {
 class smvHashSampleTest extends SmvTestUtil {
   test("test smvHashSample") {
     val ssc = sqlContext; import ssc.implicits._
-    val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
+    val a = dfFrom("key:String", "a;b;c;d;e;f;g;h;i;j;k")
     val res = a.unionAll(a).smvHashSample($"key", 0.3)
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a]",
@@ -410,7 +410,7 @@ class smvHashSampleTest extends SmvTestUtil {
 class smvCoalesceTest extends SmvTestUtil {
   test("Test smvCoalesce") {
     val ssc = sqlContext; import ssc.implicits._
-    val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
+    val a = dfFrom("key:String", "a;b;c;d;e;f;g;h;i;j;k")
     val res = a.coalesce(1)
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a]",
@@ -432,7 +432,7 @@ class smvCoalesceTest extends SmvTestUtil {
 class smvPipeCount extends SmvTestUtil {
   test("Test smvPipeCount") {
     val ssc = sqlContext; import ssc.implicits._
-    val a = createSchemaRdd("key:String", "a;b;c;d;e;f;g;h;i;j;k")
+    val a = dfFrom("key:String", "a;b;c;d;e;f;g;h;i;j;k")
     val counter = sc.accumulator(0l)
 
     val n1 = a.smvPipeCount(counter).count
@@ -500,7 +500,7 @@ not equal: v, stat, max, Max""")
 
 class OtherDFHelperTest extends SmvTestUtil {
   test("Test smvDiscoverPK") {
-    val a = createSchemaRdd("a:String; b:String; c:String",
+    val a = dfFrom("a:String; b:String; c:String",
       """1,2,1;
          1,1,2;
          2,1,2;

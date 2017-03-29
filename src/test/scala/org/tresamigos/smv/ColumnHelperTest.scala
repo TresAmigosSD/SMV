@@ -19,7 +19,7 @@ import org.apache.spark.sql.functions._
 class ColumnHelperTest extends SmvTestUtil {
   test("test smvStrToTimestamp"){
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:String; v:String;", "20190101,a;,b")
+    val df = dfFrom("k:String; v:String;", "20190101,a;,b")
     val res = df.select($"k".smvStrToTimestamp("yyyyMMdd"))
     assertSrddDataEqual(res,
       "2019-01-01 00:00:00.0;" +
@@ -28,7 +28,7 @@ class ColumnHelperTest extends SmvTestUtil {
 
   test("test smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek"){
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:Timestamp[yyyyMMdd]; v:String;", "20190101,a;,b")
+    val df = dfFrom("k:Timestamp[yyyyMMdd]; v:String;", "20190101,a;,b")
     val res = df.select($"k".smvYear, $"k".smvMonth, $"k".smvQuarter, $"k".smvDayOfMonth, $"k".smvDayOfWeek, $"k".smvHour)
     assertSrddSchemaEqual(res, "SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer")
     assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
@@ -36,7 +36,7 @@ class ColumnHelperTest extends SmvTestUtil {
 
   test("test DateType's smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek"){
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:Date[yyyyMMdd]; v:String;", "20190101,a;,b")
+    val df = dfFrom("k:Date[yyyyMMdd]; v:String;", "20190101,a;,b")
     val res = df.select($"k".smvYear, $"k".smvMonth, $"k".smvQuarter, $"k".smvDayOfMonth, $"k".smvDayOfWeek, $"k".smvHour)
     assertSrddSchemaEqual(res, "SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer")
     assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
@@ -44,7 +44,7 @@ class ColumnHelperTest extends SmvTestUtil {
 
   test("test smvAmtBin, smvNumericBin, smvCoarseGrain"){
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k:Timestamp[yyyyMMdd]; v:Double;", "20190101,1213.3;,31312.9")
+    val df = dfFrom("k:Timestamp[yyyyMMdd]; v:Double;", "20190101,1213.3;,31312.9")
     val res = df.select($"v".smvAmtBin, $"v".smvNumericBin(40000,0,4), $"v".smvCoarseGrain(1000))
     assertSrddSchemaEqual(res, "SmvAmtBin(v): Double; SmvNumericBin(v,40000.0,0.0,4): Double; SmvCoarseGrain(v,1000.0): Double")
     assertSrddDataEqual(res, "1000.0,10000.0,1000.0;" + "30000.0,40000.0,31000.0")
@@ -52,7 +52,7 @@ class ColumnHelperTest extends SmvTestUtil {
 
   test("test SmvMetaphone function") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("a:String", "Smith;Liu;Brown;  Funny ;Obama;0Obama")
+    val df = dfFrom("a:String", "Smith;Liu;Brown;  Funny ;Obama;0Obama")
     val res = df.select($"a".smvMetaphone)
     assertSrddDataEqual(res, "sm0;l;brn;fn;obm;obm")
   }
@@ -60,7 +60,7 @@ class ColumnHelperTest extends SmvTestUtil {
   test("test smvPlusDays/smvPlusMonths/smvPlusWeeks/smvPlusYears") {
     import org.apache.spark.sql.functions._
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120229")
+    val df = dfFrom("t:Timestamp[yyyyMMdd]", "19760131;20120229")
     val res1 = df.select($"t".smvPlusDays(-10))
     val res2 = df.select($"t".smvPlusMonths(1))
     val res3 = df.select($"t".smvPlusWeeks(3))
@@ -87,7 +87,7 @@ class ColumnHelperTest extends SmvTestUtil {
 
   test("test smvDay70/smvMonth70") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("t:Timestamp[yyyyMMdd]", "19760131;20120229")
+    val df = dfFrom("t:Timestamp[yyyyMMdd]", "19760131;20120229")
 
     val res = df.select($"t".smvDay70)
     assertSrddDataEqual(res,
@@ -102,7 +102,7 @@ class ColumnHelperTest extends SmvTestUtil {
 
   test("test DateType smvDay70/smvMonth70") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("t:Date[yyyyMMdd]", "19760131;20120229")
+    val df = dfFrom("t:Date[yyyyMMdd]", "19760131;20120229")
 
     val res = df.select($"t".smvDay70)
     assertSrddDataEqual(res,
@@ -138,7 +138,7 @@ class ColumnHelperTest extends SmvTestUtil {
   test("test Mode of DoubleBinHistogram: equal mode values") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val df = createSchemaRdd("k:Integer; v:Double;", "1,0.0;1,100.0;1,34.0;1,65.0")
+    val df = dfFrom("k:Integer; v:Double;", "1,0.0;1,100.0;1,34.0;1,65.0")
 
     val df_with_double_histogram_bin = df.agg(DoubleBinHistogram('v, lit(0.0), lit(100.0), lit(2)) as 'bin_histogram)
 
@@ -149,7 +149,7 @@ class ColumnHelperTest extends SmvTestUtil {
   test("test Mode of DoubleBinHistogram: different mode values") {
     val ssc = sqlContext;
     import ssc.implicits._
-    val df = createSchemaRdd("k:Integer; v:Double;", "1,0.0;1,100.0;1,34.0;1,65.0;1,83.0")
+    val df = dfFrom("k:Integer; v:Double;", "1,0.0;1,100.0;1,34.0;1,65.0;1,83.0")
     val df_with_double_histogram_bin = df.agg(DoubleBinHistogram('v, lit(0.0), lit(100.0), lit(2)) as 'bin_histogram)
 
     val res0 = df_with_double_histogram_bin.select('bin_histogram.smvBinMode())
@@ -159,7 +159,7 @@ class ColumnHelperTest extends SmvTestUtil {
   test("test smvIsAnyIn"){
     val ssc = sqlContext;
     import ssc.implicits._
-    val df = createSchemaRdd("k:String; v:String;", "a,b;c,d;,").select(array($"k", $"v") as "arr")
+    val df = dfFrom("k:String; v:String;", "a,b;c,d;,").select(array($"k", $"v") as "arr")
 
     val res = df.select($"arr".smvIsAnyIn("a", "z") as "isFound")
     assertSrddDataEqual(res, "true;false;false")
@@ -168,7 +168,7 @@ class ColumnHelperTest extends SmvTestUtil {
   test("test smvIsAllIn"){
     val ssc = sqlContext;
     import ssc.implicits._
-    val df = createSchemaRdd("k:String; v:String;", "a,b;c,d;,").select(array($"k", $"v") as "arr")
+    val df = dfFrom("k:String; v:String;", "a,b;c,d;,").select(array($"k", $"v") as "arr")
 
     val res = df.select($"arr".smvIsAllIn("a", "b", "c") as "isFound")
     assertSrddDataEqual(res, "true;false;false")
@@ -177,7 +177,7 @@ class ColumnHelperTest extends SmvTestUtil {
   test("test containsAll"){
     val ssc = sqlContext;
     import ssc.implicits._
-    val df = createSchemaRdd("k:String; v:String;", "a,b;c,d;,").select(array($"k", $"v") as "arr")
+    val df = dfFrom("k:String; v:String;", "a,b;c,d;,").select(array($"k", $"v") as "arr")
 
     val res = df.select($"arr".containsAll("a", "b") as "isFound")
     assertSrddDataEqual(res, "true;false;false")
@@ -187,7 +187,7 @@ class ColumnHelperTest extends SmvTestUtil {
     val ssc = sqlContext;
     import ssc.implicits._
 
-    val df = createSchemaRdd("st:String", "Q201301;M201512;D20141201")
+    val df = dfFrom("st:String", "Q201301;M201512;D20141201")
     val res = df.select($"st".smvTimeToType, $"st".smvTimeToIndex, $"st".smvTimeToLabel)
 
     assertSrddDataEqual(res,
@@ -204,7 +204,7 @@ class SmvSafeDivTest extends SmvTestUtil {
     import org.apache.spark.sql.functions._
     val ssc = sqlContext;
     import ssc.implicits._
-    val df = createSchemaRdd("a:Double;b:Integer", "0.4,5;0,0;,")
+    val df = dfFrom("a:Double;b:Integer", "0.4,5;0,0;,")
     val res = df.select(
       lit(10.0).smvSafeDiv($"a", 100),
       lit(10.0).smvSafeDiv($"b",200),

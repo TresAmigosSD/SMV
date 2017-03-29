@@ -19,7 +19,7 @@ import org.apache.spark.sql.functions._
 
 class SmvPivotTest extends SmvTestUtil {
   test("Test creation of unique column names") {
-    val df = createSchemaRdd("k:String; p1:String; p2:String; p3:String; v:String; v2:Float",
+    val df = dfFrom("k:String; p1:String; p2:String; p3:String; v:String; v2:Float",
       """x,p1_1,p2A,p3X,5,8;
          x,p1_2,p2A,p3X,6,9;
          x,p1_1,p2B,p3X,7,10""")
@@ -32,7 +32,7 @@ class SmvPivotTest extends SmvTestUtil {
   }
 
   test("Test creation of unique column names with missing/non-id data") {
-    val df = createSchemaRdd("p1:String; p2:String; p3:String; v:String",
+    val df = dfFrom("p1:String; p2:String; p3:String; v:String",
       """p1_1,p2/A,,5;
          p1_1,p2/A,p3X,6;
          ,p2/B,p3X,7""")
@@ -45,7 +45,7 @@ class SmvPivotTest extends SmvTestUtil {
   }
 
   test("Test creation of unique column names with 1 pivot column") {
-    val df = createSchemaRdd("p1:String; v:String","p1_1,5; p1_2, 6")
+    val df = dfFrom("p1:String; v:String","p1_1,5; p1_2, 6")
 
     val res = SmvPivot.getBaseOutputColumnNames(df, Seq(Seq("p1")))
     assertUnorderedSeqEqual(res, Seq(
@@ -55,7 +55,7 @@ class SmvPivotTest extends SmvTestUtil {
 
   test("test smvPivot on DF") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("id:Integer;month:String;product:String;count:Integer",
+    val df = dfFrom("id:Integer;month:String;product:String;count:Integer",
       "1,5_14,A,100;1,6_14,B,200;1,5_14,B,300")
     val res = df.smvPivot(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
     assertSrddDataEqual(res,
@@ -66,7 +66,7 @@ class SmvPivotTest extends SmvTestUtil {
 
   test("test smvPivotSum on GD") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("id:Integer;month:String;product:String;count:Integer",
+    val df = dfFrom("id:Integer;month:String;product:String;count:Integer",
       "1,5_14,A,100;1,6_14,B,200;1,5_14,B,300")
     val res = df.smvGroupBy('id).smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
     assertSrddSchemaEqual(res, "id: Integer; count_5_14_A: Long; count_5_14_B: Long; count_6_14_A: Long; count_6_14_B: Long")
@@ -75,7 +75,7 @@ class SmvPivotTest extends SmvTestUtil {
   }
 
   test("test smvPivotSum with null on pivot column") {
-    val df = createSchemaRdd("k:String; p:String; v:Integer", "1,A,3;1,B,4;2,A,5;,A,3")
+    val df = dfFrom("k:String; p:String; v:Integer", "1,A,3;1,B,4;2,A,5;,A,3")
     val res = df.smvGroupBy("p").smvPivotSum(Seq("k"))("v")("1","2")
 
     assertSrddSchemaEqual(res, "p: String;v_1: Long;v_2: Long")
@@ -88,7 +88,7 @@ class SmvPivotTest extends SmvTestUtil {
 
   test("Test smvPivot with pivotColSets") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = createSchemaRdd("k1:String; k2:String; p:String; v1:Integer; v2:Float",
+    val df = dfFrom("k1:String; k2:String; p:String; v1:Integer; v2:Float",
       "1,x,A,10,100.5;" +
       "1,y,A,10,100.5;" +
       "1,x,A,20,200.5;" +
@@ -115,7 +115,7 @@ class SmvPivotTest extends SmvTestUtil {
   }
 
   test("Test pivot_sum function") {
-    val df = createSchemaRdd("k:String; p1:String; p2:String; v:Integer",
+    val df = dfFrom("k:String; p1:String; p2:String; v:Integer",
       "1,p1/a,p2a,100;" +
       "1,p1!b,p2b,200;" +
       "1,p1/a,p2b,300;" +
@@ -135,7 +135,7 @@ class SmvPivotTest extends SmvTestUtil {
   }
 
   test("Test pivot_sum function with float value") {
-    val df = createSchemaRdd("k:String; p:String; v1:Integer; v2:Float",
+    val df = dfFrom("k:String; p:String; v1:Integer; v2:Float",
       "1,A,10,100.5;" +
       "1,A,20,200.5;" +
       "1,B,50,200.5;" +
@@ -155,7 +155,7 @@ class SmvPivotTest extends SmvTestUtil {
 
 class SmvPivotCoalesceTest extends SmvTestUtil {
   test("SmvPivotCoalesce should coalesce pivoted columns") {
-    val df = createSchemaRdd("k:String; p:String; v:String",
+    val df = dfFrom("k:String; p:String; v:String",
       "1,A,X;1,B,Y;2,A,Z")
     val res = df.smvGroupBy("k").smvPivotCoalesce(Seq("p"))("v")("A", "B")
     assertSrddSchemaEqual(res, "k:String;v_A:String;v_B:String")
@@ -163,7 +163,7 @@ class SmvPivotCoalesceTest extends SmvTestUtil {
   }
 
   test("SmvPivotCoalesce should ignore values not included in specified baseOutput") {
-    val df = createSchemaRdd("k:String; p:String; v:String",
+    val df = dfFrom("k:String; p:String; v:String",
       "1,A,X;1,B,Y;2,A,Z;2,C,!!!")
     val res = df.smvGroupBy("k").smvPivotCoalesce(Seq("p"))("v")("A", "B")
     assertSrddSchemaEqual(res, "k:String;v_A:String;v_B:String")
@@ -171,7 +171,7 @@ class SmvPivotCoalesceTest extends SmvTestUtil {
   }
 
   test("SmvPivotCoalesce should use in-group rank as the pivot column if pivot columns are unspecified") {
-    val df = createSchemaRdd("k:String; v:String",
+    val df = dfFrom("k:String; v:String",
       "1,X;1,Y;2,Z")
     val res = df.smvGroupBy("k").smvPivotCoalesce()("v")("0", "1")
     assertSrddSchemaEqual(res, "k:String;v_0:String;v_1:String")
@@ -179,7 +179,7 @@ class SmvPivotCoalesceTest extends SmvTestUtil {
   }
 
   test("The starting value for in-group ranking should be 0 ") {
-    val df = createSchemaRdd("k:String; v:String",
+    val df = dfFrom("k:String; v:String",
       "1,X;1,Y;2,Z")
     val res = df.smvGroupBy("k").smvPivotCoalesce()("v")()
     assertSrddSchemaEqual(res, "k:String;v_0:String;v_1:String")
@@ -187,7 +187,7 @@ class SmvPivotCoalesceTest extends SmvTestUtil {
   }
 
   test("SmvPivotCoalesce should derive baseOutput from the distinct values in value columns if baseOutput is unspecified") {
-    val df = createSchemaRdd("k:String; p:String; v:String",
+    val df = dfFrom("k:String; p:String; v:String",
       "1,A,X;1,B,Y;2,A,Z;2,C,!!!")
     val res = df.smvGroupBy("k").smvPivotCoalesce(Seq("p"))("v")()
     assertSrddSchemaEqual(res, "k:String;v_A:String;v_B:String;v_C:String")
