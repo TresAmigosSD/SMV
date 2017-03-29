@@ -64,7 +64,7 @@ class SmvBaseTest(unittest.TestCase):
         return cls.smvPy.runModule("mod:" + fqn)
 
     def should_be_same(self, expected, result):
-        """Returns true if the two dataframes contain the same data, regardless of order
+        """Asserts that the two dataframes contain the same data, ignoring order
         """
         self.assertEqual(expected.columns, result.columns)
         self.assertEqual(sorted(expected.collect()), sorted(result.collect()))
