@@ -32,7 +32,7 @@ object testAppArgs {
 class SmvStagesTest extends SmvTestUtil {
   override def appArgs = Seq(
     "--smv-props",
-    "smv.stages=com.myproj.s1:com.myproj.s2:com.myproj2.s1",
+    "smv.stages=com.myproj.s1:com.myproj.stages.s2:com.myproj.stages.s3:com.myproj2.s1:com.myproj2.stages.s3",
     "smv.stages.com.myproj.s1.version=publishedS1",
     "smv.stages.s2.version=publishedS2",
     "-m", "None")
@@ -43,16 +43,41 @@ class SmvStagesTest extends SmvTestUtil {
   }
 
   test("inferStageFullName should fail if stage name is ambiguous") {
-    val e = intercept[SmvRuntimeException] {
+    val e1 = intercept[SmvRuntimeException] {
       val s1 = app.dsm.inferStageFullName("s1")
     }
 
-    assert(e.getMessage === "Stage name s1 is ambiguous")
+    val e2 = intercept[SmvRuntimeException] {
+      val s2 = app.dsm.inferStageFullName("stages.s3")
+    }
+
+    assert(e1.getMessage === "Stage name s1 is ambiguous")
+    assert(e2.getMessage === "Stage name stages.s3 is ambiguous")
+  }
+
+  test("inferStageFullName should find any stage by its unambiguous suffix") {
+    val s1 = app.dsm.inferStageFullName("2.stages.s3")
+    assert(s1 === "com.myproj2.stages.s3")
   }
 
   test("Stage version should work with smv.stage.FQN.version") {
     val s1v = app.smvConfig.stageVersions.get(app.dsm.inferStageFullName("com.myproj.s1"))
     assert(s1v.getOrElse("") === "publishedS1")
+  }
+}
+
+class InvalidStageTest extends SmvTestUtil {
+  override def appArgs = Seq(
+    "--smv-props",
+    "smv.stages=com.myproj.s1"
+  )
+
+  test("Running a stage which is not listed in the config should fail") {
+    val e = intercept[SmvRuntimeException] {
+      app.dsm.inferStageFullName("2.stages.s3")
+    }
+
+    assert(e.getMessage === "Can't find stage 2.stages.s3")
   }
 }
 

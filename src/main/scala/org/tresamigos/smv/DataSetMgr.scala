@@ -93,17 +93,15 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
    * Infer full stageName from a partial name
    */
   def inferStageFullName(partialStageName: String) : String = {
-    val ambiguous = allStageNames.map{s => FQN.extractBaseName(s)}.
-      groupBy(a => a).filter{case (k, v) => v.size > 1}.map{_._1}.toSeq
+    val candidates = allStageNames filter (_.endsWith(partialStageName))
 
-    if (ambiguous.contains(partialStageName))
-      throw new SmvRuntimeException(s"Stage name ${partialStageName} is ambiguous")
+    val fullName = candidates.size match {
+      case 0 => throw new SmvRuntimeException(s"Can't find stage ${partialStageName}")
+      case 1 => candidates.head
+      case _ =>throw new SmvRuntimeException(s"Stage name ${partialStageName} is ambiguous")
+    }
 
-    allStageNames.find { s =>
-      partialStageName == s || partialStageName == FQN.extractBaseName(s)
-    }.getOrElse(
-      throw new SmvRuntimeException(s"Can't find stage ${partialStageName}")
-    )
+    fullName
   }
 
   private def createRepos: Seq[DataSetRepo] = dsRepoFactories map (_.createRepo)

@@ -23,4 +23,3 @@ metastore_db/
 .sync-config.cson
 *.pyc
 
-.smv_version

@@ -1,33 +1,70 @@
 #/bin/bash
-# Release the current version of SMV.  This must be run from within the tresamigos:smv
-# docker container to maintain release consistency
+# Release the current version of SMV.  This will use the tresamigos:smv
+# docker container to maintain release consistency.
 
 # TODO: create github release automatically.
+# TODO: create /tmp/vx.x.x.x dir for logs and assets
+# TODO: add "info" func to put message to stdout and logs
+# TODO: redirect output of intermediate results to logs instead of stdout.
+# TODO: verify that a current tag for the version does not alrady exist.
 
 set -e
 PROG_NAME=$(basename "$0")
-ORIG_DIR=$(pwd)
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 SMV_DIR="$(dirname "$SMV_TOOLS")"
 SMV_DIR_BASE="$(basename $SMV_DIR)"
-DOCKER_SMV_DIR="/projects/${SMV_DIR_BASE}"
+DOCKER_SMV_DIR="/projects/${SMV_DIR_BASE}" # SMV dir inside the docker image.
 PROJ_DIR="$(dirname "$SMV_DIR")" # assume parent of SMV directory is the projects dir.
+
+function info()
+{
+  echo "---- $@"
+  echo "---- $@" >> ${LOGFILE}
+}
+
+function error()
+{
+  echo "ERROR: $@"
+  echo "ERROR: $@" >> ${LOGFILE}
+  echo "(See ${LOGDIR} for error logs/assets)"
+  exit 1
+}
 
 function usage()
 {
-  echo "USAGE: ${PROG_NAME} prev_smv_version new_smv_version_to_release(n.n.n.n)"
+  echo "USAGE: ${PROG_NAME} smv_version_to_release(a.b.c.d)"
   exit $1
+}
+
+function create_logdir()
+{
+  LOGDIR="/tmp/smv_release_$(date +%Y%m%d_%s)"
+  LOGFILE="${LOGDIR}/${PROG_NAME}.log"
+  mkdir -p "${LOGDIR}"
+  info "logs/assets can be found in: ${LOGDIR}"
+}
+
+function clean_logdir()
+{
+  info "cleaning log directory"
+  rm -rf "${LOGDIR}"
 }
 
 function parse_args()
 {
+  info "parsing command line args"
   [ "$1" = "-h" ] && usage 0
-  [ $# -ne 2 ] && echo "ERROR: invalid number of arguments" && usage 1
+  [ $# -ne 1 ] && echo "ERROR: invalid number of arguments" && usage 1
 
-  PREV_SMV_VERSION="$1"
-  SMV_VERSION="$2"
-  validate_version "$PREV_SMV_VERSION"
+  SMV_VERSION="$1"
   validate_version "$SMV_VERSION"
+}
+
+function get_prev_smv_version()
+{
+  PREV_SMV_VERSION=$(cat "${SMV_DIR}/.smv_version")
+  info "previous SMV version: $PREV_SMV_VERSION"
+  validate_version "$PREV_SMV_VERSION"
 }
 
 # make sure version is of the format a.b.c.d where a,b,c,d are all numbers.
@@ -43,16 +80,17 @@ function validate_version()
 
 function build_smv()
 {
-  echo "--- Building SMV"
+  info "Building SMV"
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
   docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:latest \
-    sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 clean assembly"
+    sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 clean assembly alltest" \
+    >> ${LOGFILE} 2>&1 || error "SMV build failed"
 }
 
 # find the gnu tar on this system.
 function find_gnu_tar()
 {
-  echo "---- find gnu tar"
+  info "find gnu tar"
   local tars="gtar gnutar tar"
   TAR=""
   for t in $tars; do
@@ -69,30 +107,47 @@ function find_gnu_tar()
   fi
 }
 
+# find the release message in /releases dir.
+function find_release_msg_file()
+{
+  info "finding release message file"
+  RELEASE_MSG_FILE="releases/v${SMV_VERSION}.md"
+  cd "${SMV_DIR}"
+  if [ ! -r "${RELEASE_MSG_FILE}" ]; then
+    error "Unable to find release message file: ${RELEASE_MSG_FILE}"
+  fi
+}
+
 function check_git_repo()
 {
   echo "--- checking repo for modified files"
   cd "${SMV_DIR}"
   if ! git diff-index --quiet HEAD --; then
-    echo "ERROR: SMV git repo has locally modified files"
-    exit 1
+    error "SMV git repo has locally modified files"
   fi
 }
 
-function update_docs_version()
+function update_version()
 {
-  echo "---- updating docs to version $SMV_VERSION"
+  info "updating version to $SMV_VERSION"
   cd "${SMV_DIR}"
+  git pull # update to latest before making any changes.
+
+  # update version in user docs.
   find docs/user -name '*.md' \
     -exec perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" \{\} +
-  git commit -a -m "updated user docs to version $SMV_VERSION"
+
+  # add the smv version to the SMV directory.
+  echo ${SMV_VERSION} > "${SMV_DIR}/.smv_version"
+
+  git commit -a -m "updated version to $SMV_VERSION"
   git push origin
 }
 
 function tag_release()
 {
   local tag=v"$SMV_VERSION"
-  echo "---- tagging release as $tag"
+  info "tagging release as $tag"
   cd "${SMV_DIR}"
   git tag -a $tag -m "SMV Release $SMV_VERSION on `date +%m/%d/%Y`"
   git push origin $tag
@@ -100,26 +155,29 @@ function tag_release()
 
 function create_tar()
 {
-  echo "--- create tar image: "
-  cd "$ORIG_DIR"
+  info "create tar image"
 
   # cleanup some unneeded binary files.
   rm -rf "${SMV_DIR}/project/target" "${SMV_DIR}/project/project"
   rm -rf "${SMV_DIR}/target/resolution-cache" "${SMV_DIR}/target/streams"
   find "${SMV_DIR}/target" -name '*with-dependencies.jar' -prune -o -type f -exec rm -f \{\} +
 
-  # add the smv version to the SMV directory.
-  echo ${SMV_VERSION} > "${SMV_DIR}/.smv_version"
-
   # create the tar image
-  ${TAR} zcf ./smv_${SMV_VERSION}.tgz -C "${PROJ_DIR}" --exclude=.git --transform "s/^${SMV_DIR_BASE}/SMV_${SMV_VERSION}/" ${SMV_DIR_BASE}
+  ${TAR} zcvf "${LOGDIR}/smv_${SMV_VERSION}.tgz" \
+    -C "${PROJ_DIR}" --exclude=.git \
+    --transform "s/^${SMV_DIR_BASE}/SMV_${SMV_VERSION}/" \
+    ${SMV_DIR_BASE} >> ${LOGFILE} 2>&1 || error "tar creation failed"
 }
 
 # ---- MAIN ----
+create_logdir
 parse_args "$@"
+get_prev_smv_version
 find_gnu_tar
+find_release_msg_file
 check_git_repo
 build_smv
-update_docs_version
+update_version
 tag_release
 create_tar
+clean_logdir
