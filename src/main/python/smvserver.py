@@ -326,9 +326,13 @@ def craete_module():
     return jsonify(res=res)
 
 
-
 if __name__ == "__main__":
+    # TODO: should be done by SmvApp (python) automatically.
+    codePath = os.path.abspath("src/main/python")
+    sys.path.insert(1, codePath)
+
     # init Smv context
+    # TODO: should instantiate SmvApp here instead of callint init directly.
     smvPy.init([])
     module_file_map = {}
 

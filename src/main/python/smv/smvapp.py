@@ -19,6 +19,9 @@ from smv import smvPy
 from smv.error import SmvRuntimeError
 import compileall
 
+# TODO: need to decouple the smvPy.init from the .run() method.  smv server only needs to do init.
+# TODO: add_source/run should be instance methods.  Now, they are just global functions.
+# TODO: should add src/main/python by default in the consturctor of SmvApp.
 class SmvApp(object):
     @classmethod
     def add_source(cls,d):
