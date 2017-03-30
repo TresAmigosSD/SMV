@@ -425,17 +425,31 @@ class SmvModule(SmvPyDataSet):
     def dsType(self):
         return "Module"
 
-    # need to simulate map from ds to df where the same object can be keyed
-    # by different datasets with the same urn. usecase example
-    # class X(SmvModule):
-    #  def requiresDS(self): return [SmvModuleLink("foo")]
-    #  def run(self, i): return i[SmvModuleLink("foo")]
+
     class RunParams(object):
-        # urn2df should be a map from the urn to the df of the corresponding ds
+        """Map from SmvDataSet to resulting DataFrame
+
+            We need to simulate a dict from ds to df where the same object can be
+            keyed by different datasets with the same urn. For example, in the
+            module
+
+            class X(SmvModule):
+                def requiresDS(self): return [SmvModuleLink("foo")]
+                def run(self, i): return i[SmvModuleLink("foo")]
+
+            the i argument of the run method should map SmvModuleLink("foo") to
+            the correct DataFrame.
+
+            Args:
+                (dict): a map from urn to DataFrame
+        """
+
         def __init__(self, urn2df):
             self.urn2df = urn2df
-        # __getitem__ is called by [] operator
+
         def __getitem__(self, ds):
+            """Called by the '[]' operator
+            """
             return self.urn2df[ds.urn()]
 
     def __init__(self, smvPy):
@@ -443,7 +457,24 @@ class SmvModule(SmvPyDataSet):
 
     @abc.abstractmethod
     def run(self, i):
-        """This defines the real work done by this module"""
+        """User-specified definition of the operations of this SmvModule
+
+            Override this method to define the output of this module, given a map
+            'i' from inputSmvDataSet to resulting DataFrame. 'i' will have a
+            mapping for each SmvDataSet listed in requiresDS. E.g.
+
+            def requiresDS(self):
+                return [MyDependency]
+
+            def run(self, i):
+                return i[MyDependency].select("importantColumn")
+
+            Args:
+                (RunParams): mapping from input SmvDataSet to DataFrame
+
+            Returns:
+                (DataFrame): ouput of this SmvModule
+        """
 
     def doRun(self, validator, known):
         urn2df = {}
