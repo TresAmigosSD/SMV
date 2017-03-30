@@ -70,15 +70,24 @@ def _stripComments(code):
     return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
 
 class SmvOutput(object):
-    """Marks an SmvModule as one of the output of its stage"""
+    """Mixin which marks an SmvModule as one of the output of its stage
+
+        SmvOutputs are distinct from other SmvDataSets in that
+            * SmvModuleLinks can *only* link to SmvOutputs
+            * The -s and --run-app options of smv-pyrun only run SmvOutputs and their dependencies.
+    """
     IsSmvOutput = True
 
     def tableName(self):
-        """The table name this SmvOutput will export to"""
+        """The user-specified table name used when exporting data to Hive (optional)
+
+            Returns:
+                (string)
+        """
         return None
 
 class SmvPyDataSet(object):
-    """Base class for all SmvDataSets written in Python
+    """Abstract base class for all SmvDataSets
     """
 
     # Python's issubclass() check does not work well with dynamically
@@ -98,10 +107,23 @@ class SmvPyDataSet(object):
 
     @abc.abstractmethod
     def requiresDS(self):
-        """The list of dataset dependencies"""
+        """User-specified list of dependencies
+
+            Override this method to specify the SmvDataSets needed as inputs.
+
+            Returns:
+                (list(SmvDataSet)): a list of dependencies
+        """
 
     def dqm(self):
-        """Subclasses with a non-default DQM policy should override this method"""
+        """DQM policy
+
+            Override this method to define your own DQM policy (optional).
+            Default is an empty policy.
+
+            Returns:
+                (SmvDQM): a DQM policy
+        """
         return SmvDQM()
 
     @abc.abstractmethod
@@ -109,8 +131,14 @@ class SmvPyDataSet(object):
         """Comput this dataset, and return the dataframe"""
 
     def version(self):
-        """All datasets are versioned, with a string,
-        so that code and the data it produces can be tracked together."""
+        """Version number
+
+            Each SmvDataSet is versioned with a numeric string, so it and its result
+            can be tracked together.
+
+            Returns:
+                (str): version number of this SmvDataSet
+        """
         return "0";
 
     def isOutput(self):
@@ -161,7 +189,10 @@ class SmvPyDataSet(object):
         return "mod:" + cls.fqn()
 
     def isEphemeral(self):
-        """If set to true, the run result of this dataset will not be persisted
+        """Should this SmvDataSet skip persisting its data?
+
+            Returns:
+                (bool): True if this SmvDataSet should not persist its data, false otherwise
         """
         return False
 
