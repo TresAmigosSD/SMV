@@ -287,7 +287,7 @@ class WithParser(object):
         return None
 
 class SmvCsvFile(SmvPyInput, WithParser):
-    """Raw input file in CSV format
+    """Input from a file in CSV format
     """
 
     def __init__(self, smvPy):
@@ -381,7 +381,7 @@ class SmvCsvStringData(SmvPyInput):
 
 
 class SmvHiveTable(SmvPyInput):
-    """Input data source from a Hive table
+    """Input from a Hive table
     """
 
     def __init__(self, smvPy):
@@ -393,10 +393,23 @@ class SmvHiveTable(SmvPyInput):
 
     @abc.abstractproperty
     def tableName(self):
-        """The qualified Hive table name"""
+        """User-specified name Hive hive table to extract input from
+
+            Override this to specify your own table name.
+
+            Returns:
+                (str): table name
+        """
 
     def tableQuery(self):
-        """Optional query. Default is equivalent to 'select * from ' + tableName()"""
+        """Query used to extract data from Hive table
+
+            Override this to specify your own query (optional). Default is
+            equivalent to 'select * from ' + tableName().
+
+            Returns:
+                (str): query
+        """
         return None
 
     def doRun(self, validator, known):
