@@ -572,13 +572,39 @@ def SmvExtModuleLink(refname):
     """
     return SmvModuleLink(SmvExtDataSet(refname))
 
-# For backwards compatibility
+# Aliases backwards compatibility
 SmvPyOutput = SmvOutput
+"""Deprecated alias of SmvOutput
+"""
+
 SmvPyExtDataSet = SmvExtDataSet
+"""Deprecated alias of SmvExtDataSet
+"""
+
 SmvPyCsvFile = SmvCsvFile
+"""Deprecated alias of SmvCsvFile
+"""
+
 SmvPyCsvStringData = SmvCsvStringData
+"""Deprecated alias of SmvCsvStringData
+"""
+
 SmvPyMultiCsvFiles = SmvMultiCsvFiles
+"""Deprecated alias of SmvMultiCsvFiles
+"""
+
 SmvPyHiveTable = SmvHiveTable
+"""Deprecated alias of SmvHiveTable
+"""
+
 SmvPyModule = SmvModule
+"""Deprecated alias of SmvModule
+"""
+
 SmvPyModuleLink = SmvModuleLink
+"""Deprecated alias of SmvModuleLink
+"""
+
 SmvPyExtModuleLink = SmvExtModuleLink
+"""Deprecated alias of SmvExtModuleLink
+"""
