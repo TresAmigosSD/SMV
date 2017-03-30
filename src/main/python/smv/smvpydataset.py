@@ -534,6 +534,27 @@ def SmvExtDataSet(refname):
     return cls
 
 def SmvModuleLink(target):
+    """Creates a link to an SmvDataSet
+
+        When a module X in one stage depends on a module Y in a different stage,
+        it must do through through an SmvModuleLink (listing Y directly as a
+        dependency will lead to a runtime error). For example,
+
+            # In stage s1
+            class Y(SmvModule):
+                ...
+
+            # In stage s2
+            class X(SmvModule)
+                def requiresDS(self): return [SmvModuleLink(Y)]
+                ...
+
+        Args:
+            ds (SmvDataSet): dataset to link to
+
+        Returns:
+            (SmvModuleLink): link to ds
+    """
     cls = type("SmvModuleLink", (SmvModuleLinkTemplate,), {})
     cls.target = classmethod(lambda klass: target)
     return cls
