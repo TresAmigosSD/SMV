@@ -114,7 +114,7 @@ Can be overridden using <code>--data-dir</code> command line option</td>
 <td>smv.inputDir</td>
 <td>dataDir<code>/input</code></td>
 <td>Optional</td>
-<td>Data input directory 
+<td>Data input directory
 Can be overridden using <code>--input-dir</code> command line option</td>
 </tr>
 
@@ -135,28 +135,14 @@ Can be overridden using <code>--publish-dir</code> command line option</td>
 </tr>
 
 <tr>
-<th colspan="4">Dynamic Class Server Parameters</th>
+<th colspan="4">Class Directory Parameter</th>
 </tr>
 
 <tr>
-<td>smv.class_server.host</td>
-<td>N/A</td>
-<td>Optional</td>
-<td>host name of class server.  If this is not specified, then the dynamic class server will not be utilized and SMV will look for modules in the normal CLASSPATH (using `Class.forName()` method).</td>
-</tr>
-
-<tr>
-<td>smv.class_server.port</td>
-<td>9900</td>
-<td>Optional</td>
-<td>port number where class server will be listening for connections and where SmvApp will connect to.</td>
-</tr>
-
-<tr>
-<td>smv.class_server.class_dir</td>
+<td>smv.class_dir</td>
 <td>./target/classes</td>
 <td>Optional</td>
-<td>directory where the class server would look for new class instances.</td>
+<td>directory where the class loader would look for new class instances.</td>
 </tr>
 </table>
 

@@ -70,15 +70,24 @@ def _stripComments(code):
     return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
 
 class SmvOutput(object):
-    """Marks an SmvModule as one of the output of its stage"""
+    """Mixin which marks an SmvModule as one of the output of its stage
+
+        SmvOutputs are distinct from other SmvDataSets in that
+            * SmvModuleLinks can *only* link to SmvOutputs
+            * The -s and --run-app options of smv-pyrun only run SmvOutputs and their dependencies.
+    """
     IsSmvOutput = True
 
     def tableName(self):
-        """The table name this SmvOutput will export to"""
+        """The user-specified table name used when exporting data to Hive (optional)
+
+            Returns:
+                (string)
+        """
         return None
 
 class SmvPyDataSet(object):
-    """Base class for all SmvDataSets written in Python
+    """Abstract base class for all SmvDataSets
     """
 
     # Python's issubclass() check does not work well with dynamically
@@ -98,10 +107,23 @@ class SmvPyDataSet(object):
 
     @abc.abstractmethod
     def requiresDS(self):
-        """The list of dataset dependencies"""
+        """User-specified list of dependencies
+
+            Override this method to specify the SmvDataSets needed as inputs.
+
+            Returns:
+                (list(SmvDataSet)): a list of dependencies
+        """
 
     def dqm(self):
-        """Subclasses with a non-default DQM policy should override this method"""
+        """DQM policy
+
+            Override this method to define your own DQM policy (optional).
+            Default is an empty policy.
+
+            Returns:
+                (SmvDQM): a DQM policy
+        """
         return SmvDQM()
 
     @abc.abstractmethod
@@ -109,8 +131,14 @@ class SmvPyDataSet(object):
         """Comput this dataset, and return the dataframe"""
 
     def version(self):
-        """All datasets are versioned, with a string,
-        so that code and the data it produces can be tracked together."""
+        """Version number
+
+            Each SmvDataSet is versioned with a numeric string, so it and its result
+            can be tracked together.
+
+            Returns:
+                (str): version number of this SmvDataSet
+        """
         return "0";
 
     def isOutput(self):
@@ -161,7 +189,10 @@ class SmvPyDataSet(object):
         return "mod:" + cls.fqn()
 
     def isEphemeral(self):
-        """If set to true, the run result of this dataset will not be persisted
+        """Should this SmvDataSet skip persisting its data?
+
+            Returns:
+                (bool): True if this SmvDataSet should not persist its data, false otherwise
         """
         return False
 
@@ -210,7 +241,8 @@ class SmvPyDataSet(object):
         implements = ['org.tresamigos.smv.ISmvModule']
 
 class SmvPyInput(SmvPyDataSet):
-    """Input DataSet, requiredDS is empty and isEphemeral is true"""
+    """SmvDataSet representing external input
+    """
     def isEphemeral(self):
         return True
 
@@ -221,7 +253,14 @@ class SmvPyInput(SmvPyDataSet):
         return []
 
     def run(self, df):
-        """This can be override by concrete SmvPyInput"""
+        """Post-processing for input data
+
+            Args:
+                df (DataFrame): input data
+
+            Returns:
+                (DataFrame): processed data
+        """
         return df
 
 class WithParser(object):
@@ -248,7 +287,7 @@ class WithParser(object):
         return None
 
 class SmvCsvFile(SmvPyInput, WithParser):
-    """Raw input file in CSV format
+    """Input from a file in CSV format
     """
 
     def __init__(self, smvPy):
@@ -262,15 +301,23 @@ class SmvCsvFile(SmvPyInput, WithParser):
 
     @abc.abstractproperty
     def path(self):
-        """The path to the csv input file"""
+        """User-specified path to the input csv file
+
+            Override this to specify the path to the csv file.
+
+            Returns:
+                (str): path
+        """
 
     def doRun(self, validator, known):
         jdf = self._smvCsvFile.doRun(validator)
         return self.run(DataFrame(jdf, self.smvPy.sqlContext))
 
 class SmvMultiCsvFiles(SmvPyInput, WithParser):
-    """Instead of a single input file, specify a data dir with files which has
-       the same schema and CsvAttributes.
+    """Raw input from multiple csv files sharing single schema
+
+        Instead of a single input file, specify a data dir with files which share
+        the same schema.
     """
 
     def __init__(self, smvPy):
@@ -286,14 +333,18 @@ class SmvMultiCsvFiles(SmvPyInput, WithParser):
 
     @abc.abstractproperty
     def dir(self):
-        """The path to the csv input dir"""
+        """Path to the directory containing the csv files and their schema
+
+            Returns:
+                (str): path
+        """
 
     def doRun(self, validator, known):
         jdf = self._smvMultiCsvFiles.doRun(validator)
         return self.run(DataFrame(jdf, self.smvPy.sqlContext))
 
 class SmvCsvStringData(SmvPyInput):
-    """Input data from a Schema String and Data String
+    """Input data defined by a schema string and data string
     """
 
     def __init__(self, smvPy):
@@ -306,12 +357,22 @@ class SmvCsvStringData(SmvPyInput):
 
     @abc.abstractproperty
     def schemaStr(self):
-        """Smv Schema string. E.g. "id:String; dt:Timestamp"
+        """Smv Schema string.
+
+            E.g. "id:String; dt:Timestamp"
+
+            Returns:
+                (str): schema
         """
 
     @abc.abstractproperty
     def dataStr(self):
-        """Smv data string. E.g. "212,2016-10-03;119,2015-01-07"
+        """Smv data string.
+
+            E.g. "212,2016-10-03;119,2015-01-07"
+
+            Returns:
+                (str): data
         """
 
     def doRun(self, validator, known):
@@ -320,7 +381,7 @@ class SmvCsvStringData(SmvPyInput):
 
 
 class SmvHiveTable(SmvPyInput):
-    """Input data source from a Hive table
+    """Input from a Hive table
     """
 
     def __init__(self, smvPy):
@@ -332,10 +393,23 @@ class SmvHiveTable(SmvPyInput):
 
     @abc.abstractproperty
     def tableName(self):
-        """The qualified Hive table name"""
+        """User-specified name Hive hive table to extract input from
+
+            Override this to specify your own table name.
+
+            Returns:
+                (str): table name
+        """
 
     def tableQuery(self):
-        """Optional query. Default is equivalent to 'select * from ' + tableName()"""
+        """Query used to extract data from Hive table
+
+            Override this to specify your own query (optional). Default is
+            equivalent to 'select * from ' + tableName().
+
+            Returns:
+                (str): query
+        """
         return None
 
     def doRun(self, validator, known):
@@ -351,17 +425,31 @@ class SmvModule(SmvPyDataSet):
     def dsType(self):
         return "Module"
 
-    # need to simulate map from ds to df where the same object can be keyed
-    # by different datasets with the same urn. usecase example
-    # class X(SmvModule):
-    #  def requiresDS(self): return [SmvModuleLink("foo")]
-    #  def run(self, i): return i[SmvModuleLink("foo")]
+
     class RunParams(object):
-        # urn2df should be a map from the urn to the df of the corresponding ds
+        """Map from SmvDataSet to resulting DataFrame
+
+            We need to simulate a dict from ds to df where the same object can be
+            keyed by different datasets with the same urn. For example, in the
+            module
+
+            class X(SmvModule):
+                def requiresDS(self): return [SmvModuleLink("foo")]
+                def run(self, i): return i[SmvModuleLink("foo")]
+
+            the i argument of the run method should map SmvModuleLink("foo") to
+            the correct DataFrame.
+
+            Args:
+                (dict): a map from urn to DataFrame
+        """
+
         def __init__(self, urn2df):
             self.urn2df = urn2df
-        # __getitem__ is called by [] operator
+
         def __getitem__(self, ds):
+            """Called by the '[]' operator
+            """
             return self.urn2df[ds.urn()]
 
     def __init__(self, smvPy):
@@ -369,7 +457,24 @@ class SmvModule(SmvPyDataSet):
 
     @abc.abstractmethod
     def run(self, i):
-        """This defines the real work done by this module"""
+        """User-specified definition of the operations of this SmvModule
+
+            Override this method to define the output of this module, given a map
+            'i' from inputSmvDataSet to resulting DataFrame. 'i' will have a
+            mapping for each SmvDataSet listed in requiresDS. E.g.
+
+            def requiresDS(self):
+                return [MyDependency]
+
+            def run(self, i):
+                return i[MyDependency].select("importantColumn")
+
+            Args:
+                (RunParams): mapping from input SmvDataSet to DataFrame
+
+            Returns:
+                (DataFrame): ouput of this SmvModule
+        """
 
     def doRun(self, validator, known):
         urn2df = {}

@@ -134,9 +134,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     "smv.appName" -> "Smv Application",
     "smv.stages" -> "",
     "smv.config.keys" -> "",
-    "smv.class_server.host" -> "",
-    "smv.class_server.port" -> "9900",
-    "smv.class_server.class_dir" -> "./target/classes"
+    "smv.class_dir" -> "./target/classes"
   )
 
   // merge order is important here.  Highest priority comes last as it will override all previous
@@ -146,9 +144,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   val appName = mergedProps("smv.appName")
   val stageNames = splitProp("smv.stages").toSeq
 
-  val classServerHost = mergedProps("smv.class_server.host")
-  val classServerPort = getPropAsInt("smv.class_server.port").get
-  val classServerClassDir = mergedProps("smv.class_server.class_dir")
+  val classDir = mergedProps("smv.class_dir")
 
   def stageVersions = stageNames.map{sn:String => {
     val baseName = FQN.extractBaseName(sn)
