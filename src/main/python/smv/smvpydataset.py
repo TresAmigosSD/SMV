@@ -314,8 +314,10 @@ class SmvCsvFile(SmvPyInput, WithParser):
         return self.run(DataFrame(jdf, self.smvPy.sqlContext))
 
 class SmvMultiCsvFiles(SmvPyInput, WithParser):
-    """Instead of a single input file, specify a data dir with files which has
-       the same schema and CsvAttributes.
+    """Raw input from multiple csv files sharing single schema
+
+        Instead of a single input file, specify a data dir with files which share
+        the same schema.
     """
 
     def __init__(self, smvPy):
@@ -331,7 +333,11 @@ class SmvMultiCsvFiles(SmvPyInput, WithParser):
 
     @abc.abstractproperty
     def dir(self):
-        """The path to the csv input dir"""
+        """Path to the directory containing the csv files and their schema
+
+            Returns:
+                (str): path
+        """
 
     def doRun(self, validator, known):
         jdf = self._smvMultiCsvFiles.doRun(validator)
