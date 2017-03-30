@@ -241,7 +241,8 @@ class SmvPyDataSet(object):
         implements = ['org.tresamigos.smv.ISmvModule']
 
 class SmvPyInput(SmvPyDataSet):
-    """Input DataSet, requiredDS is empty and isEphemeral is true"""
+    """SmvDataSet representing external input
+    """
     def isEphemeral(self):
         return True
 
@@ -252,7 +253,14 @@ class SmvPyInput(SmvPyDataSet):
         return []
 
     def run(self, df):
-        """This can be override by concrete SmvPyInput"""
+        """Post-processing for input data
+
+            Args:
+                df (DataFrame): input data
+
+            Returns:
+                (DataFrame): processed data
+        """
         return df
 
 class WithParser(object):
