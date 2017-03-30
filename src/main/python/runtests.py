@@ -13,8 +13,10 @@
 
 from unittest import *
 
-from pyspark import SparkContext
+from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession
+
+from pyspark.java_gateway import launch_gateway
 
 from smv import SmvApp as app
 
@@ -25,7 +27,25 @@ class TestConfig(object):
     @classmethod
     def sparkSession(cls):
         if not hasattr(cls, "spark"):
-            cls.spark = SparkSession.builder.appName("SMV Python Tests").enableHiveSupport().getOrCreate()
+            # We can't use the SparkSession Builder here, since we need to call
+            # Scala side's SmvTestHive.createSession to create the HiveTestContext's
+            # SparkSession.
+            # So we need to
+            #   * Create a java_gateway
+            #   * Create a SparkConf using the jgw (since without it SparkContext will ignore the given conf)
+            #   * Create python SparkContext using the SparkConf (so we can specify the warehouse.dir)
+            #   * Create Scala side HiveTestContext SparkSession
+            #   * Create python SparkSession
+            jgw = launch_gateway(None)
+            jvm = jgw.jvm
+            sConf = SparkConf(False, _jvm=jvm).set("spark.sql.test", "")\
+                  .set("spark.sql.hive.metastore.barrierPrefixes",
+                    "org.apache.spark.sql.hive.execution.PairSerDe")\
+                  .set("spark.sql.warehouse.dir", "file:///tmp/smv_hive_test")\
+                  .set("spark.ui.enabled", "false")
+            sc = SparkContext(master="local[1]", appName="SMV Python Test", conf=sConf, gateway=jgw).getOrCreate()
+            jss = sc._jvm.org.apache.spark.sql.hive.test.SmvTestHive.createSession(sc._jsc.sc())
+            cls.spark = SparkSession(sc, jss)
         return cls.spark
 
     @classmethod

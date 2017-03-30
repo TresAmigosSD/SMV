@@ -61,7 +61,7 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
     else
       SparkTestUtil.setLoggingLevel(Level.ERROR)
 
-    sparkSession = SmvTestHive.sparkSession
+    sparkSession = SmvTestHive.createSession(null)
     sqlContext = sparkSession.sqlContext
     sc = sqlContext.sparkContext
     sqlContext.setConf("spark.sql.shuffle.partitions", "4")
