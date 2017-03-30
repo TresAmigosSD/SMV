@@ -344,7 +344,7 @@ class SmvMultiCsvFiles(SmvPyInput, WithParser):
         return self.run(DataFrame(jdf, self.smvPy.sqlContext))
 
 class SmvCsvStringData(SmvPyInput):
-    """Input data from a Schema String and Data String
+    """Input data defined by a schema string and data string
     """
 
     def __init__(self, smvPy):
@@ -357,12 +357,22 @@ class SmvCsvStringData(SmvPyInput):
 
     @abc.abstractproperty
     def schemaStr(self):
-        """Smv Schema string. E.g. "id:String; dt:Timestamp"
+        """Smv Schema string.
+
+            E.g. "id:String; dt:Timestamp"
+
+            Returns:
+                (str): schema
         """
 
     @abc.abstractproperty
     def dataStr(self):
-        """Smv data string. E.g. "212,2016-10-03;119,2015-01-07"
+        """Smv data string.
+
+            E.g. "212,2016-10-03;119,2015-01-07"
+
+            Returns:
+                (str): data
         """
 
     def doRun(self, validator, known):
