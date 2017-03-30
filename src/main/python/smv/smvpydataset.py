@@ -301,7 +301,13 @@ class SmvCsvFile(SmvPyInput, WithParser):
 
     @abc.abstractproperty
     def path(self):
-        """The path to the csv input file"""
+        """User-specified path to the input csv file
+
+            Override this to specify the path to the csv file.
+
+            Returns:
+                (str): path
+        """
 
     def doRun(self, validator, known):
         jdf = self._smvCsvFile.doRun(validator)
