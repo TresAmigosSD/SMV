@@ -560,6 +560,16 @@ def SmvModuleLink(target):
     return cls
 
 def SmvExtModuleLink(refname):
+    """Creates a link to an external (Scala) SmvDataSet
+
+        SmvExtModuleLink(fqn) is equivalent to SmvModuleLink(SmvExtDataSet(fqn))
+
+        Args:
+            fqn (str): fqn of the the Scala SmvDataSet
+
+        Returns:
+            (SmvModuleLink): link to the Scala SmvDataSet
+    """
     return SmvModuleLink(SmvExtDataSet(refname))
 
 # For backwards compatibility
