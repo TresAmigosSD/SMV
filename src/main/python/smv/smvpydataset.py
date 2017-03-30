@@ -512,6 +512,16 @@ PyExtDataSetCache = {}
 from smvpy import smvPy
 
 def SmvExtDataSet(refname):
+    """Creates an SmvDataSet representing an external (Scala) SmvDataSet
+
+        E.g. MyExtMod = SmvExtDataSet("the.scala.mod")
+
+        Args:
+            fqn (str): fqn of the Scala SmvDataSet
+
+        Returns:
+            (SmvExtDataSet): external dataset with given fqn
+    """
     if refname in PyExtDataSetCache:
         return PyExtDataSetCache[refname]
     cls = type("SmvExtDataSet", (SmvPyDataSet,), {
