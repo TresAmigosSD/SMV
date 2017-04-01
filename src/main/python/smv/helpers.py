@@ -55,48 +55,103 @@ def _sparkContext():
     return SparkContext._active_spark_context
 
 class SmvGroupedData(object):
-    """Wrapper around the Scala SmvGroupedData"""
+    """The result of running `smvGroupBy` on a DataFrame. Implements special SMV aggregations.
+    """
     def __init__(self, df, sgd):
         self.df = df
         self.sgd = sgd
 
     def smvTopNRecs(self, maxElems, *cols):
+        """For each group, return the top N records according to a given ordering
+
+            Example:
+                # This will keep the 3 largest amt records for each id
+                df.smvGroupBy("id").smvTopNRecs(3, col("amt").desc())
+
+            Args:
+                maxElems (int): maximum number of records per group
+                cols (*str): columns defining the ordering
+
+            Returns:
+                (DataFrame): result of taking top records from groups
+
+        """
         return DataFrame(self.sgd.smvTopNRecs(maxElems, smv_copy_array(self.df._sc, *cols)), self.df.sql_ctx)
 
     def smvPivotSum(self, pivotCols, valueCols, baseOutput):
-        """Perform a normal SmvPivot using the pivot and value columns, followed by summing all the output.
-        TODO: docstring parameters and return values
-        pivotCols: list of list of strings
-        valueCols: list of strings
-        baseOutput: list of strings"""
+        """Perform SmvPivot, then sum the results
+
+            The user is required to supply the list of expected pivot column
+            output names to avoid extra action on the input DataFrame. If an
+            empty sequence is provided, then the base output columns will be
+            extracted from values in the pivot columns (will cause an action
+            on the entire DataFrame!)
+
+            Args:
+                pivotCols (list(list(str))): lists of names of column names to pivot
+                valueCols (list(string)): names of value columns to sum
+                baseOutput (list(str)): expected names pivoted column
+
+            Examples:
+                For example, given a DataFrame df that represents the table
+
+                | id  | month | product | count |
+                | --- | ----- | ------- | ----- |
+                | 1   | 5/14  |   A     |   100 |
+                | 1   | 6/14  |   B     |   200 |
+                | 1   | 5/14  |   B     |   300 |
+
+                we can use
+
+                >>> df.smvGroupBy("id").smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+
+                to produce the following output
+
+                | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+                | --- | ------------ | ------------ | ------------ | ------------ |
+                | 1   | 100          | 300          | NULL         | 200          |
+
+            Returns:
+                (DataFrame): result of pivot sum
+        """
         return DataFrame(self.sgd.smvPivotSum(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
 
     def smvPivotCoalesce(self, pivotCols, valueCols, baseOutput):
-        """Perform a normal SmvPivot using the pivot and value columns, followed by coalescing all the output.
-        pivotCols: list of list of strings
-        valueCols: list of strings
-        baseOutput: list of strings"""
+        """Perform SmvPivot, then coalesce the output
+
+            Args:
+                pivotCols (list(list(str))): lists of names of column names to pivot
+                valueCols (list(string)): names of value columns to coalesce
+                baseOutput (list(str)): expected names pivoted column
+
+            Returns:
+                (Dataframe): result of pivot coalesce
+        """
         return DataFrame(self.sgd.smvPivotCoalesce(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
 
     def smvFillNullWithPrevValue(self, *orderCols):
         """Fill in Null values with "previous" value according to an ordering
-           * Example:
-           * Input:
-           * K, T, V
-           * a, 1, null
-           * a, 2, a
-           * a, 3, b
-           * a, 4, null
-           *
-           * df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)("V")
-           *
-           * Output:
-           * K, T, V
-           * a, 1, null
-           * a, 2, a
-           * a, 3, b
-           * a, 4, b
-           *
+
+            Examples:
+                Given DataFrame df representing the table
+
+                K, T, V
+                a, 1, null
+                a, 2, a
+                a, 3, b
+                a, 4, null
+
+                we can use
+
+                >>> df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)("V")
+
+                to preduce the result
+
+                K, T, V
+                a, 1, null
+                a, 2, a
+                a, 3, b
+                a, 4, b
         """
         def __doFill(*valueCols):
             return DataFrame(self.sgd.smvFillNullWithPrevValue(smv_copy_array(self.df._sc, *orderCols), smv_copy_array(self.df._sc, *valueCols)), self.df.sql_ctx)

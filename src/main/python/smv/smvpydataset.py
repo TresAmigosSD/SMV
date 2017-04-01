@@ -512,6 +512,16 @@ PyExtDataSetCache = {}
 from smvpy import smvPy
 
 def SmvExtDataSet(refname):
+    """Creates an SmvDataSet representing an external (Scala) SmvDataSet
+
+        E.g. MyExtMod = SmvExtDataSet("the.scala.mod")
+
+        Args:
+            fqn (str): fqn of the Scala SmvDataSet
+
+        Returns:
+            (SmvExtDataSet): external dataset with given fqn
+    """
     if refname in PyExtDataSetCache:
         return PyExtDataSetCache[refname]
     cls = type("SmvExtDataSet", (SmvPyDataSet,), {
@@ -524,20 +534,77 @@ def SmvExtDataSet(refname):
     return cls
 
 def SmvModuleLink(target):
+    """Creates a link to an SmvDataSet
+
+        When a module X in one stage depends on a module Y in a different stage,
+        it must do through through an SmvModuleLink (listing Y directly as a
+        dependency will lead to a runtime error). For example,
+
+            # In stage s1
+            class Y(SmvModule):
+                ...
+
+            # In stage s2
+            class X(SmvModule)
+                def requiresDS(self): return [SmvModuleLink(Y)]
+                ...
+
+        Args:
+            ds (SmvDataSet): dataset to link to
+
+        Returns:
+            (SmvModuleLink): link to ds
+    """
     cls = type("SmvModuleLink", (SmvModuleLinkTemplate,), {})
     cls.target = classmethod(lambda klass: target)
     return cls
 
 def SmvExtModuleLink(refname):
+    """Creates a link to an external (Scala) SmvDataSet
+
+        SmvExtModuleLink(fqn) is equivalent to SmvModuleLink(SmvExtDataSet(fqn))
+
+        Args:
+            fqn (str): fqn of the the Scala SmvDataSet
+
+        Returns:
+            (SmvModuleLink): link to the Scala SmvDataSet
+    """
     return SmvModuleLink(SmvExtDataSet(refname))
 
-# For backwards compatibility
+# Aliases backwards compatibility
 SmvPyOutput = SmvOutput
+"""Deprecated alias of SmvOutput
+"""
+
 SmvPyExtDataSet = SmvExtDataSet
+"""Deprecated alias of SmvExtDataSet
+"""
+
 SmvPyCsvFile = SmvCsvFile
+"""Deprecated alias of SmvCsvFile
+"""
+
 SmvPyCsvStringData = SmvCsvStringData
+"""Deprecated alias of SmvCsvStringData
+"""
+
 SmvPyMultiCsvFiles = SmvMultiCsvFiles
+"""Deprecated alias of SmvMultiCsvFiles
+"""
+
 SmvPyHiveTable = SmvHiveTable
+"""Deprecated alias of SmvHiveTable
+"""
+
 SmvPyModule = SmvModule
+"""Deprecated alias of SmvModule
+"""
+
 SmvPyModuleLink = SmvModuleLink
+"""Deprecated alias of SmvModuleLink
+"""
+
 SmvPyExtModuleLink = SmvExtModuleLink
+"""Deprecated alias of SmvExtModuleLink
+"""

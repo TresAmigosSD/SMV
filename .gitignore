@@ -12,6 +12,7 @@ derby.log
 metastore_db/
 .DS_Store
 .ensime*
+/venv
 
 /R/lib
 /R/smvR/man
@@ -22,4 +23,3 @@ metastore_db/
 
 .sync-config.cson
 *.pyc
-
