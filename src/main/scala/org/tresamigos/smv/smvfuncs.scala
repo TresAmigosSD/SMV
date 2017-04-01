@@ -24,6 +24,10 @@ object smvfuncs {
   def smvFirst(c: Column, nonNull: Boolean = false) = {
     if (nonNull) first(c) // delegate to Spark's first for its non-null implementation (as of 1.5)
     else new Column(SmvFirst(c.toExpr))
+
+    //Spark 1.6.x should use the following and remove SmvFirst 
+    //import org.apache.spark.sql.catalyst.expressions.aggregate.First
+    //new Column(First(c.toExpr, lit(ignoreNulls).toExpr).toAggregateExpression(false))
   }
 
   /**
