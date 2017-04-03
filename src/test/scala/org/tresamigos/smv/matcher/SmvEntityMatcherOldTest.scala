@@ -106,7 +106,7 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       null,
       List(
         FuzzyLevelMatcher("Zip_And_Levenshtein_City", $"zip" === $"_zip", StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f),
-        ExactLevelMatcher("Zip_Not_Match", $"zip" !== $"_zip")
+        ExactLevelMatcher("Zip_Not_Match", $"zip" =!= $"_zip")
       )
     ).doMatch(createDF1, createDF2)
 
@@ -133,7 +133,7 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
       List(
         FuzzyLevelMatcher("Zip_And_Levenshtein_City", $"zip" === $"_zip", StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f),
-        ExactLevelMatcher("Zip_Not_Match", $"zip" !== $"_zip")
+        ExactLevelMatcher("Zip_Not_Match", $"zip" =!= $"_zip")
       )
     ).doMatch(createDF1, createDF2)
 
@@ -155,7 +155,7 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       null,
       List(
         FuzzyLevelMatcher("Zip_And_Levenshtein_City", $"zip" === $"_zip", StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f),
-        ExactLevelMatcher("Zip_Not_Match", $"zip" !== $"_zip")
+        ExactLevelMatcher("Zip_Not_Match", $"zip" =!= $"_zip")
       )
     ).doMatch(createDF1, createDF2)
 

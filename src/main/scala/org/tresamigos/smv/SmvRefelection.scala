@@ -48,12 +48,12 @@ private[smv] class SmvReflection(private val classLoader: ClassLoader) {
 
   /** return member value of an object */
   def get[T: ru.TypeTag : ClassTag](obj: T, name: String): Any = {
-    val field = ru.typeOf[T].member(ru.newTermName(name)).asTerm
+    val field = ru.typeOf[T].member(ru.TermName(name)).asTerm
     mirror.reflect(obj).reflectField(field).get
   }
 
   def invoke[T: ru.TypeTag : ClassTag](obj: T, name: String): Any = {
-    val method = ru.typeOf[T].member(ru.newTermName(name)).asMethod
+    val method = ru.typeOf[T].member(ru.TermName(name)).asMethod
     mirror.reflect(obj).reflectMethod(method)()
   }
 }

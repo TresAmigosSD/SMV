@@ -174,7 +174,7 @@ private[smv] class RejectLogger(sparkContext: SparkContext, val localMax: Int = 
   }
 
   def report: (Int, List[String]) = {
-    (rejectedRecordCount.value, rejectedRecords.value.toList)
+    (rejectedRecordCount.value, rejectedRecords.value.asScala.toList)
   }
 
 }

@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import java.io.{StringWriter, PrintWriter, InputStream}
+import java.io.{InputStream, PrintWriter, StringWriter}
 
 import scala.tools.asm.{ClassReader, ClassVisitor, MethodVisitor, Opcodes}
 import scala.collection.mutable.{Set => MSet}

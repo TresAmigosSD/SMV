@@ -37,7 +37,7 @@ private[smv] class SmvDSGraph(app: SmvApp, pstages: Seq[String] = Nil, targetDSs
     case _ => ds
   }
 
-  val nodes: Seq[SmvDataSet] = _nodes map {followLink} distinct
+  val nodes: Seq[SmvDataSet] = _nodes.map(followLink).distinct
 
   val edges: Seq[(SmvDataSet, SmvDataSet)] = nodes.flatMap{ds =>
     val fromDSs = ds.resolvedRequiresDS

@@ -16,11 +16,11 @@ package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.Accumulator
-import org.apache.spark.sql._, expressions.{Window, WindowSpec}
+import org.apache.spark.sql._
+import expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions._
-
 import org.apache.spark.annotation.Experimental
 import cds._
 import edd._
@@ -513,7 +513,7 @@ class SmvDFHelper(df: DataFrame) {
     }
     val diffColumns = overlapLeftStruct diff overlapRightStruct
     if (diffColumns.isEmpty) {
-      leftFull.unionAll(rightFull.select(leftFull.columns.head, leftFull.columns.tail:_*))
+      leftFull.union(rightFull.select(leftFull.columns.head, leftFull.columns.tail:_*))
     }
     else {
       val diffNames = diffColumns.map{col => col.name}.mkString(",")

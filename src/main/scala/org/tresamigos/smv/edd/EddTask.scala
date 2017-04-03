@@ -158,7 +158,7 @@ private[smv] case class StringDistinctCountTask(col: Column) extends EddStatTask
   override val taskName = "dct"
   override val taskDesc = "Approx Distinct Count"
   private val relativeSD = 0.01
-  override val statOp = approxCountDistinct(col, relativeSD).cast(LongType)
+  override val statOp = approx_count_distinct(col, relativeSD).cast(LongType)
 }
 
 private[smv] case class AmountHistogram(col: Column) extends EddHistTask {

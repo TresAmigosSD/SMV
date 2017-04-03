@@ -415,7 +415,7 @@ class SmvMultiCsvFiles(
     val df = filesInDir.map{s =>
       val handler = new FileIOHandler(app.sparkSession, s, fullSchemaPath, parserValidator)
       handler.csvFileWithSchema(csvAttributes)
-    }.reduce(_ unionAll _)
+    }.reduce(_ union _)
 
     run(df)
   }
