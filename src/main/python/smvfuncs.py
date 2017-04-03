@@ -94,5 +94,14 @@ def smvFirst(c, nonNull = False):
     return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.smvFirst(c._jc, nonNull))
 
 def smvCreateLookUp(m, default, outputType):
-    """Return a Python UDF which will perform a dictionary lookup on a column"""
+    """Return a Python UDF which will perform a dictionary lookup on a column
+
+        Args:
+            m (dictionary): a Python dictionary to be applied
+            default (any): default value if dictionary lookup failed
+            outputType (DataType): output value's data type
+
+        Returns:
+            (udf): an udf which can apply to a column and apply the lookup
+    """
     return udf(lambda k: m.get(k, default), outputType)
