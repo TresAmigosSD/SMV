@@ -14,9 +14,14 @@
 
 package org.tresamigos.smv.dqm
 
+import org.apache.spark.util.{AccumulatorV2, LongAccumulator}
+
 import scala.util.Try
-import org.apache.spark.{SparkContext, Accumulator}
-import scala.collection.mutable.MutableList
+import org.apache.spark.{Accumulator, SparkContext}
+import org.tresamigos.smv.util.IntAccumulator
+
+import scala.annotation.meta.param
+import scala.collection.JavaConverters._
 
 /**
  * DQMState keeps tracking of [[org.tresamigos.smv.dqm.DQMTask]] behavior on a DF
@@ -25,15 +30,15 @@ import scala.collection.mutable.MutableList
  * A list of DQMRule names and a list of DQMFix names are needed also.
  **/
 class DQMState(
-    @transient sc: SparkContext,
+    @(transient @param) sc: SparkContext,
     ruleNames: Seq[String],
     fixNames: Seq[String]
   ) extends Serializable {
 
-  private val recordCounter: Accumulator[Long] = sc.accumulator(0l)
-  private val parserLogger = new RejectLogger(sc, 10)
-  private val fixCounters: Map[String, Accumulator[Int]] = fixNames.map{n => (n, sc.accumulator(0))}.toMap
-  private val ruleLoggers: Map[String, RejectLogger] = ruleNames.map{n => (n, new RejectLogger(sc, 10))}.toMap
+  private val recordCounter: LongAccumulator = sc.longAccumulator
+  private val parserLogger = new RejectLogger(sc, 10, "parser")
+  private val fixCounters: Map[String, IntAccumulator] = fixNames.map{ n => (n, new IntAccumulator)}.toMap
+  private val ruleLoggers: Map[String, RejectLogger] = ruleNames.map{n => (n, new RejectLogger(sc, 10, n))}.toMap
 
   private var concluded: Boolean = false
   private var recordCounterCopy: Long = _
@@ -43,7 +48,7 @@ class DQMState(
 
   /** add one on the overall record counter */
   private[smv] def addRec(): Unit = {
-    recordCounter += 1l
+    recordCounter add 1l
   }
 
   private[smv] def addParserRec(log: String): Unit = {
@@ -51,7 +56,7 @@ class DQMState(
   }
   /** add one on the "fix" counter for the given fix name */
   private[smv] def addFixRec(name: String): Unit = {
-    fixCounters(name) += 1
+    fixCounters(name) add 1
   }
 
   /** add one on the "rule" counter for the give rule name, and also log the referred
@@ -152,24 +157,24 @@ class DQMState(
 
 class DQMRuleError(ruleName: String) extends Exception(ruleName) with Serializable
 
-private[smv] class RejectLogger(sparkContext: SparkContext, val localMax: Int = 10) extends Serializable {
-  private val rejectedRecords = sparkContext.accumulableCollection(MutableList[String]())
-  private val rejectedRecordCount = sparkContext.accumulator(0)
+private[smv] class RejectLogger(sparkContext: SparkContext, val localMax: Int = 10, loggerName: String) extends Serializable {
+  private val rejectedRecords = sparkContext.collectionAccumulator[String]
+  private val rejectedRecordCount = { val acc = new IntAccumulator; sparkContext.register(acc, loggerName); acc }
 
   val add: (String) => Unit = {
     var localCounter = 0
     (r:String) => {
       if (localCounter < localMax) {
-        rejectedRecords += r
+        rejectedRecords add r
       }
       localCounter = localCounter + 1
-      rejectedRecordCount += 1
+      rejectedRecordCount add 1
       Unit
     }
   }
 
   def report: (Int, List[String]) = {
-    (rejectedRecordCount.value, rejectedRecords.value.toList)
+    (rejectedRecordCount.value, rejectedRecords.value.asScala.toList)
   }
 
 }

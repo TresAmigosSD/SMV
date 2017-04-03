@@ -16,14 +16,15 @@ package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.Accumulator
-import org.apache.spark.sql._, expressions.{Window, WindowSpec}
+import org.apache.spark.sql._
+import expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions._
-
 import org.apache.spark.annotation.Experimental
 import cds._
 import edd._
+import org.apache.spark.util.LongAccumulator
 import smvfuncs._
 
 class SmvDFHelper(df: DataFrame) {
@@ -512,7 +513,7 @@ class SmvDFHelper(df: DataFrame) {
     }
     val diffColumns = overlapLeftStruct diff overlapRightStruct
     if (diffColumns.isEmpty) {
-      leftFull.unionAll(rightFull.select(leftFull.columns.head, leftFull.columns.tail:_*))
+      leftFull.union(rightFull.select(leftFull.columns.head, leftFull.columns.tail:_*))
     }
     else {
       val diffNames = diffColumns.map{col => col.name}.mkString(",")
@@ -928,10 +929,10 @@ class SmvDFHelper(df: DataFrame) {
    * '''Warning''': Since using accumulator in process can't guarantee results when error recovery occcurs,
    * we will only use this method to report processed records when persisting SmvModule and potentially other SMV functions.
    */
-  private[smv] def smvPipeCount(counter: Accumulator[Long]): DataFrame = {
-    counter.setValue(0l)
+  private[smv] def smvPipeCount(counter: LongAccumulator): DataFrame = {
+    counter.reset()
     val dummyFunc = udf({() =>
-      counter += 1l
+      counter add 1l
       true
     })
 

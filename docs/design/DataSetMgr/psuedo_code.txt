@@ -24,12 +24,12 @@ SmvExtModule::resolve(resolver):
   return ds2.resolve(resolver)
 
 SmvModule"scala"::resolve(resolver):
-  this.resReq = requireDS.map(resolver.resolve(_))
+  this.resReq = requiresDS.map(resolver.resolve(_))
   return this
 
 SmvExtModulePython::resolve(resolver):
   this.resReq = reqDSFQN.map(resolver.load(_))
   return this
 
-SmvExtModulePython::requireDS() : throw exception
-SmvExtModule::requireDS() : throw exception
+SmvExtModulePython::requiresDS() : throw exception
+SmvExtModule::requiresDS() : throw exception

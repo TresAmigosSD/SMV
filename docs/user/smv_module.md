@@ -23,7 +23,7 @@ Note that `requiresDS` returns a sequence of the actual `SmvDataSet` objects tha
 ### Scala
 ```scala
 object MyModule extends SmvModule("mod description") {
- override def requireDS() = Seq(File1, File2, Mod1)
+ override def requiresDS() = Seq(File1, File2, Mod1)
  ...
 ```
 ### Python
@@ -38,7 +38,7 @@ The module **must** also provide a `run()` method that performs the transformati
 ### Scala
 ```scala
 object MyModule extends SmvModule("mod description") {
- override def requireDS() = Seq(Mod1, Mod2)
+ override def requiresDS() = Seq(Mod1, Mod2)
 
  override def run(inputs: runParams) = {
    val M1df = inputs(Mod1) // DataFrame result of running Mod1 (done by framework automatically)
@@ -84,7 +84,7 @@ object MyModule extends SmvModule("mod description") {
 ### Python
 ```python
 class MyModule(SmvModule):
-  def isEphemeral(self): return False
+  def isEphemeral(self): return True
   ....    
 ```
 

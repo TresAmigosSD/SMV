@@ -2,7 +2,7 @@ package org.tresamigos.smv
 
 class SmvLabelTest extends SmvTestUtil {
   def fixture = dfFrom("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
-  def descriptionDF = dfFrom("variables:String;decriptions:String", 
+  def descriptionDF = dfFrom("variables:String;decriptions:String",
     "id,This is an ID field;name,This is a name field;sex,This is a sex filed")
 
   test("labeling a column should not affect other columns") {

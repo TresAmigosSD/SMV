@@ -41,7 +41,7 @@ object SmvUtil {
   def persist(sparkSession: SparkSession, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
-    val counter = sparkSession.sparkContext.accumulator(0l)
+    val counter = sparkSession.sparkContext.longAccumulator
     val before = DateTime.now()
     println(s"${fmt.print(before)} PERSISTING: ${path}")
 
@@ -81,7 +81,7 @@ object SmvUtil {
    */
   def exportDataFrameToHive(sqlContext: SQLContext, dataframe: DataFrame, tableName: String): Unit = {
     // register the dataframe as a temp table.  Will be overwritten on next register.
-    dataframe.registerTempTable("etable")
+    dataframe.createOrReplaceTempView("etable")
     sqlContext.sql(s"drop table if exists ${tableName}")
     sqlContext.sql(s"create table ${tableName} as select * from etable")
   }

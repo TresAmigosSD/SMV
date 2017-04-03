@@ -396,7 +396,7 @@ class smvHashSampleTest extends SmvTestUtil {
   test("test smvHashSample") {
     val ssc = sqlContext; import ssc.implicits._
     val a = dfFrom("key:String", "a;b;c;d;e;f;g;h;i;j;k")
-    val res = a.unionAll(a).smvHashSample($"key", 0.3)
+    val res = a.union(a).smvHashSample($"key", 0.3)
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
       "[a]",
       "[g]",
@@ -433,7 +433,7 @@ class smvPipeCount extends SmvTestUtil {
   test("Test smvPipeCount") {
     val ssc = sqlContext; import ssc.implicits._
     val a = dfFrom("key:String", "a;b;c;d;e;f;g;h;i;j;k")
-    val counter = sc.accumulator(0l)
+    val counter = sc.longAccumulator
 
     val n1 = a.smvPipeCount(counter).count
     val n2 = counter.value

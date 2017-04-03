@@ -73,7 +73,7 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       GroupCondition(soundex(col("first_name")) === soundex(col("_first_name"))),
       List(
         FuzzyLogic("Zip_And_Levenshtein_City", col("zip") === col("_zip"), normlevenshtein(col("city"), col("_city")), 0.9f),
-        ExactLogic("Zip_Not_Match", col("zip") !== col("_zip"))
+        ExactLogic("Zip_Not_Match", col("zip") =!= col("_zip"))
       )
     ).doMatch(createDF1, createDF2, false)
 
@@ -94,7 +94,7 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       NoOpGroupCondition,
       Seq(
         FuzzyLogic("Zip_And_Levenshtein_City", $"zip" === $"_zip", normlevenshtein($"city",$"_city"), 0.9f),
-        ExactLogic("Zip_Not_Match", $"zip" !== $"_zip")
+        ExactLogic("Zip_Not_Match", $"zip" =!= $"_zip")
       )
     ).doMatch(createDF1, createDF2, false)
 

@@ -129,7 +129,7 @@ class FooHiveTable(SmvPyHiveTable):
 **Scala**
 ```scala
 object MyModule extends SmvModule("mod description") {
-  override def requireDS() = Seq(Mod1, Mod2)
+  override def requiresDS() = Seq(Mod1, Mod2)
   override val isEphemeral = true //Optional, defalut = false
   override def run(inputs: runParams) = ...
   override def dqm = SmvDQM().add(DQMRule($"amt" < 1000000.0, "rule1", FailAny)) //optional
@@ -155,7 +155,7 @@ class MyModule(SmvPyModule):
 ```scala
 object MyModule extends SmvModule("this is my module") with SmvOutput {
   override val tableName = "hiveschema.hivetable"
-  override def requireDS() = ...
+  override def requiresDS() = ...
   override def run(i: runParams) = ...
 }
 ```

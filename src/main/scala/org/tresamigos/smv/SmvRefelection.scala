@@ -12,8 +12,8 @@ private[smv] class SmvReflection(private val classLoader: ClassLoader) {
   private val mirror = ru.runtimeMirror(classLoader)
 
   /** maps the FQN of a scala object to the actual object instance. */
-  private[smv] def objectNameToInstance[T: ClassTag](objName: String) : T =
-    findObjectByName(objName).get
+  private[smv] def objectNameToInstance[T: ClassTag](objName: String) : Try[T] =
+    findObjectByName(objName)
 
   /** Does a companion object exist with the given FQN and of the given type? */
   def findObjectByName[T: ClassTag](fqn: String): Try[T] = {
@@ -33,7 +33,7 @@ private[smv] class SmvReflection(private val classLoader: ClassLoader) {
 
     ClassPath.from(this.getClass.getClassLoader).
       getTopLevelClasses(pkgName).
-      map(c => Try(objectNameToInstance[T](c.getName))).
+      map(c => objectNameToInstance[T](c.getName)).
       filter(t => t.isSuccess).
       map(_.get).
       toSeq
@@ -48,12 +48,12 @@ private[smv] class SmvReflection(private val classLoader: ClassLoader) {
 
   /** return member value of an object */
   def get[T: ru.TypeTag : ClassTag](obj: T, name: String): Any = {
-    val field = ru.typeOf[T].member(ru.newTermName(name)).asTerm
+    val field = ru.typeOf[T].member(ru.TermName(name)).asTerm
     mirror.reflect(obj).reflectField(field).get
   }
 
   def invoke[T: ru.TypeTag : ClassTag](obj: T, name: String): Any = {
-    val method = ru.typeOf[T].member(ru.newTermName(name)).asMethod
+    val method = ru.typeOf[T].member(ru.TermName(name)).asMethod
     mirror.reflect(obj).reflectMethod(method)()
   }
 }
@@ -65,7 +65,7 @@ private[smv] object SmvReflection {
   private val ref = new SmvReflection(this.getClass.getClassLoader)
 
   /** maps the FQN of a scala object to the actual object instance. */
-  private[smv] def objectNameToInstance[T: ClassTag](objName: String) : T =
+  private[smv] def objectNameToInstance[T: ClassTag](objName: String) : Try[T] =
     ref.objectNameToInstance(objName)
 
   /** Does a companion object exist with the given FQN and of the given type? */
@@ -80,7 +80,7 @@ private[smv] object SmvReflection {
 
     ClassPath.from(this.getClass.getClassLoader).
       getTopLevelClasses(pkgName).
-      map(c => Try(objectNameToInstance[T](c.getName))).
+      map(c => objectNameToInstance[T](c.getName)).
       filter(t => t.isSuccess).
       map(_.get).
       toSeq

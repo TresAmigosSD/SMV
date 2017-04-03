@@ -135,6 +135,7 @@ case class SmvChunkUDF(
 )
 
 /* Add back chunkByPlus for project migration */
+@deprecated("will remove after 1.3", "1.3")
 private[smv] class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends SmvGDO {
   override val inGroupKeys = Nil
 
