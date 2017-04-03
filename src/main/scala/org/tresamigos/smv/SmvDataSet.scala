@@ -439,10 +439,14 @@ case class SmvFrlFile(
 /**
  * Maps SmvDataSet to DataFrame by FQN. This is the type of the parameter expected
  * by SmvModule's run method.
+ *
+ * Subclasses `Function1[SmvDataSet, DataFrame]` so it can be used the
+ * same way as before, when `runParams` was type-aliased to
+ * `Map[SmvDataSet, DataFrame]`
  */
-class RunParams(ds2df: Map[SmvDataSet, DataFrame]) {
+class RunParams(ds2df: Map[SmvDataSet, DataFrame]) extends (SmvDataSet => DataFrame) {
   val urn2df = ds2df.map {case (ds, df) => (ds.urn, df)}.toMap
-  def apply(ds: SmvDataSet) = urn2df(ds.urn)
+  override def apply(ds: SmvDataSet) = urn2df(ds.urn)
   def size = ds2df.size
 }
 
