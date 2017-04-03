@@ -129,6 +129,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     modulesToRun foreach {m => m.deleteOutputs()}
   }
 
+  /** Returns the app-level dependency graph as a dot string */
+  def dependencyGraphDotString(stageNames: Seq[String] = stages): String =
+    new graph.SmvGraphUtil(this, stageNames).createGraphvisCode(modulesToRun)
+
   /**
    * generate dependency graphs if "-g" flag was specified on command line.
    * @return true of graphs were generated otherwise return false.
@@ -136,8 +140,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   private def generateDependencyGraphs() : Boolean = {
     if (smvConfig.cmdLine.graph()) {
       val pathName = s"${smvConfig.appName}.dot"
-      val graphString = new graph.SmvGraphUtil(this, stages).createGraphvisCode(modulesToRun)
-      SmvReportIO.saveLocalReport(graphString, pathName)
+      SmvReportIO.saveLocalReport(dependencyGraphDotString(stages), pathName)
       true
     } else {
       false

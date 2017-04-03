@@ -15,7 +15,7 @@
 package org.tresamigos.smv.python
 
 import org.apache.spark._, sql._
-import org.tresamigos.smv._
+import org.tresamigos.smv._, graph.SmvGraphUtil
 import py4j.GatewayServer
 
 import scala.collection.JavaConversions._
@@ -234,17 +234,21 @@ graph {
    */
   def graph(str: String, fmt: String = "png"): Array[Byte] = {
     import guru.nidi.graphviz.engine.Graphviz
+    import guru.nidi.graphviz.engine.Format
 
-    val image = new BufferedImage(600, 800, BufferedImage.TYPE_INT_ARGB)
-    val g = image.createGraphics
-
-    Graphviz.fromString(str).renderToGraphics(g)
+    val image = Graphviz.fromString(str).render(Format.PNG).toImage
 
     val out = new java.io.ByteArrayOutputStream
     ImageIO.write(image, fmt, out)
     out.close
     out.toByteArray
   }
+
+  def graph(stageNames: Seq[String], fmt: String): Array[Byte] =
+    graph(j_smvApp.dependencyGraphDotString(stageNames), fmt)
+
+  def asciiGraph: String =
+    new SmvGraphUtil(j_smvApp).createDSAsciiGraph()
 }
 
 /** Not a companion object because we need to access it from Python */
