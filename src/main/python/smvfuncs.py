@@ -13,6 +13,7 @@
 
 from smv import smvPy
 from pyspark.sql.column import Column
+from pyspark.sql.functions import udf
 
 def nGram2(c1, c2):
     """2-gram UDF with formula (number of overlaped gramCnt)/max(c1.gramCnt, c2.gramCnt)
@@ -91,3 +92,7 @@ def smvFirst(c, nonNull = False):
             (object): first value
     """
     return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.smvFirst(c._jc, nonNull))
+
+def smvCreateLookUp(m, default, outputType):
+    """Return a Python UDF which will perform a dictionary lookup on a column"""
+    return udf(lambda k: m.get(k, default), outputType)
