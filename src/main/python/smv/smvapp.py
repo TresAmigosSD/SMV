@@ -24,7 +24,7 @@ import compileall
 # TODO: should add src/main/python by default in the consturctor of SmvApp.
 class SmvApp(object):
     @classmethod
-    def add_source(cls,d):
+    def prepend_source(cls,d):
         # Need to move `src/main/python` to the front of the sys.path
         codePath = os.path.abspath(d)
         sys.path.insert(1, codePath)

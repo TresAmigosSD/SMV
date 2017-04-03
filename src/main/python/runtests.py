@@ -40,7 +40,7 @@ if __name__ == "__main__":
     TestPath = "./src/test/python"
     SrcPath = "./src/main/python"
 
-    app.add_source(SrcPath)
+    app.prepend_source(SrcPath)
 
     loader = TestLoader()
 
