@@ -60,3 +60,15 @@ class SmvfuncsTest(SmvBaseTest):
             "asdfghj,asdfhgj,0.5,0.4,0.5,0.71,0.97")
 
         self.should_be_same(res, exp)
+
+    def test_smvCreateLookup(self):
+        from pyspark.sql.types import StringType
+        df = self.createDF("k:String;v:Integer", "a,1;b,2;,3;c,4")
+        map_key = smvCreateLookUp({"a":"AA", "b":"BB"}, "__", StringType())
+        res = df.withColumn("mapped", map_key(df.k))
+        exp = self.createDF("k: String;v: Integer;mapped: String",
+            "a,1,AA;" +
+            "b,2,BB;" +
+            ",3,__;" +
+            "c,4,__")
+        self.should_be_same(res, exp)
