@@ -24,6 +24,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.annotation.Experimental
 import cds._
 import edd._
+import org.apache.spark.util.LongAccumulator
 import smvfuncs._
 
 class SmvDFHelper(df: DataFrame) {
@@ -928,10 +929,10 @@ class SmvDFHelper(df: DataFrame) {
    * '''Warning''': Since using accumulator in process can't guarantee results when error recovery occcurs,
    * we will only use this method to report processed records when persisting SmvModule and potentially other SMV functions.
    */
-  private[smv] def smvPipeCount(counter: Accumulator[Long]): DataFrame = {
-    counter.setValue(0l)
+  private[smv] def smvPipeCount(counter: LongAccumulator): DataFrame = {
+    counter.reset()
     val dummyFunc = udf({() =>
-      counter += 1l
+      counter add 1l
       true
     })
 

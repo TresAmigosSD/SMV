@@ -41,7 +41,7 @@ object SmvUtil {
   def persist(sparkSession: SparkSession, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
-    val counter = sparkSession.sparkContext.accumulator(0l)
+    val counter = sparkSession.sparkContext.longAccumulator
     val before = DateTime.now()
     println(s"${fmt.print(before)} PERSISTING: ${path}")
 
