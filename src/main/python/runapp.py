@@ -11,7 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp as app
+from smv import SmvApp
 
+app = SmvApp()
 app.prepend_source('src/main/python')
 app.run()

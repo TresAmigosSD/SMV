@@ -20,16 +20,13 @@ from smv.error import SmvRuntimeError
 import compileall
 
 # TODO: need to decouple the smvPy.init from the .run() method.  smv server only needs to do init.
-# TODO: add_source/run should be instance methods.  Now, they are just global functions.
 # TODO: should add src/main/python by default in the consturctor of SmvApp.
 class SmvApp(object):
-    @classmethod
-    def prepend_source(cls,d):
-        # Need to move `src/main/python` to the front of the sys.path
-        codePath = os.path.abspath(d)
+    def prepend_source(self,source_dir):
+        # Source must be added to front of path to make sure it is found first
+        codePath = os.path.abspath(source_dir)
         sys.path.insert(1, codePath)
 
-    @classmethod
     def run(self):
         # skip the first argument, which is this program
         smvPy.init(sys.argv[1:])

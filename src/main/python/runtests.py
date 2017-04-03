@@ -16,7 +16,7 @@ from unittest import *
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
 
-from smv import SmvApp as app
+from smv import SmvApp
 
 import sys
 
@@ -40,6 +40,7 @@ if __name__ == "__main__":
     TestPath = "./src/test/python"
     SrcPath = "./src/main/python"
 
+    app = SmvApp()
     app.prepend_source(SrcPath)
 
     loader = TestLoader()
