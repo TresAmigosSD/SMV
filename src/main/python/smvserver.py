@@ -193,36 +193,39 @@ def get_module_code():
 
 @app.route("/api/update_module_code", methods = ['POST'])
 def update_module_code():
-    '''
-    body:
-        name = 'xxx' (fqn)
-        code = ['line1', 'line2', ...]
-    function: update the module's code
-    '''
-    try:
-        module_name = request.form['name']
-    except:
-        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+    moduleFqn = request.form["moduleFqn"]
+    return jsonify(test=moduleFqn)
 
-    try:
-        module_code = request.form['code']
-    except:
-        raise ValueError(CODE_NOT_PROVIDED_ERR)
-
-    global module_file_map
-    if not module_file_map:
-        module_file_map = get_module_code_file_mapping()
-
-    if (module_file_map.has_key(module_name)):
-        file_name = module_file_map[module_name]
-        module_code = json.loads(module_code)
-        module_code = [line.encode('utf-8') for line in module_code]
-        with open(file_name, 'wb') as f:
-            f.writelines(os.linesep.join(module_code))
-        return JOB_SUCCESS
-    else:
-        # TODO: deal with new module
-        raise ValueError(MODULE_NOT_FOUND_ERR)
+    # '''
+    # body:
+    #     name = 'xxx' (fqn)
+    #     code = ['line1', 'line2', ...]
+    # function: update the module's code
+    # '''
+    # try:
+    #     module_name = request.form['name']
+    # except:
+    #     raise ValueError(MODULE_NOT_PROVIDED_ERR)
+    #
+    # try:
+    #     module_code = request.form['code']
+    # except:
+    #     raise ValueError(CODE_NOT_PROVIDED_ERR)
+    #
+    # global module_file_map
+    # if not module_file_map:
+    #     module_file_map = get_module_code_file_mapping()
+    #
+    # if (module_file_map.has_key(module_name)):
+    #     file_name = module_file_map[module_name]
+    #     module_code = json.loads(module_code)
+    #     module_code = [line.encode('utf-8') for line in module_code]
+    #     with open(file_name, 'wb') as f:
+    #         f.writelines(os.linesep.join(module_code))
+    #     return JOB_SUCCESS
+    # else:
+    #     # TODO: deal with new module
+    #     raise ValueError(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/get_sample_output", methods = ['POST'])
 def get_sample_output():
