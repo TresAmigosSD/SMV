@@ -282,7 +282,7 @@ class JoinHelperTest extends SmvTestUtil {
   }
 }
 
-class smvUionTest extends SmvTestUtil {
+class smvUnionTest extends SmvTestUtil {
   test("test smvUion") {
     val df = dfFrom("a:Integer; b:Double; c:String",
       """1,2.0,hello;
