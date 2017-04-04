@@ -37,7 +37,7 @@ class DQMState(
 
   private val recordCounter: LongAccumulator = sc.longAccumulator
   private val parserLogger = new RejectLogger(sc, 10, "parser")
-  private val fixCounters: Map[String, IntAccumulator] = fixNames.map{ n => (n, new IntAccumulator)}.toMap
+  private val fixCounters: Map[String, IntAccumulator] = fixNames.map{ n => val acc = new IntAccumulator; sc.register(acc); (n, acc)}.toMap
   private val ruleLoggers: Map[String, RejectLogger] = ruleNames.map{n => (n, new RejectLogger(sc, 10, n))}.toMap
 
   private var concluded: Boolean = false
