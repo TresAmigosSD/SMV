@@ -103,14 +103,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
   }
 
-  def genJSON(stageNames: Seq[String] = Seq()) = {
-    val pathName = s"${smvConfig.appName}.json"
-
-    val graphString = new graph.SmvGraphUtil(this, stageNames).createGraphJSON()
-
-    SmvReportIO.saveLocalReport(graphString, pathName)
-  }
-
   /**
    * pass on the spark sql props set in the smv config file(s) to spark.
    * This is just for convenience so user can manage both smv/spark props in a single file.
@@ -135,9 +127,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /**
    * generate dependency graphs if "-g" flag was specified on command line.
-   * @return true of graphs were generated otherwise return false.
+   * @return true if graph were generated otherwise return false.
    */
-  private def generateDependencyGraphs() : Boolean = {
+  private def generateDotDependencyGraph() : Boolean = {
     if (smvConfig.cmdLine.graph()) {
       val pathName = s"${smvConfig.appName}.dot"
       SmvReportIO.saveLocalReport(dependencyGraphDotString(stages), pathName)
@@ -145,6 +137,33 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     } else {
       false
     }
+  }
+
+  /** Returns the app-level dependency graph as a json string */
+  def dependencyGraphJsonString(stageNames: Seq[String] = stages): String = {
+    new graph.SmvGraphUtil(this, stageNames).createGraphJSON()
+  }
+
+  /**
+   * generate JSON dependency graphs if "--json" flag was specified on command line.
+   * @return true if json graph were generated otherwise return false.
+   */
+  private def generateJsonDependencyGraph() : Boolean = {
+    if (smvConfig.cmdLine.jsonGraph()) {
+      val pathName = s"${smvConfig.appName}.json"
+      SmvReportIO.saveLocalReport(dependencyGraphJsonString(), pathName)
+      true
+    } else {
+      false
+    }
+  }
+
+  /**
+   * zero parameter wrapper around dependencyGraphJsonString that can be called from python directly.
+   * TODO: remove this once we pass args to dependencyGraphJsonString
+   */
+  def generateAllGraphJSON() = {
+    dependencyGraphJsonString()
   }
 
   /**
@@ -164,10 +183,6 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
       }
       true
     }.orElse(Some(false))()
-  }
-
-  def generateAllGraphJSON() = {
-    genJSON(stages)
   }
 
   /**
@@ -250,7 +265,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    compareEddResults() || generateDependencyGraphs() || publishModulesToHive() ||  publishOutputModules() || generateOutputModules()
+    compareEddResults() ||
+      generateDotDependencyGraph() || generateJsonDependencyGraph() ||
+      publishModulesToHive() ||  publishOutputModules() ||
+      generateOutputModules()
   }
 }
 

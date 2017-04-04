@@ -269,7 +269,7 @@ def get_graph_json():
     function: return the json file of the entire dependency graph
     '''
     res = smvPy.get_graph_json()
-    return jsonify(res=res)
+    return jsonify(graph=res)
 
 @app.route("/api/create_module", methods = ['POST'])
 def craete_module():

@@ -120,13 +120,10 @@ class SmvPy(object):
         return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
 
     def get_graph_json(self):
-        # TODO: this is an ugly hack.  We should modify smv to return a string directly!
-        self.j_smvApp.generateAllGraphJSON()
-        file_name = self.appName() + '.json'
-        file_path = os.path.sep.join([os.getcwd(), file_name])
-        with open(file_path, 'rb') as f:
-            lines = f.read()
-        return lines
+        """Generate a json string representing the dependency graph.
+           TODO: need to add a stageName parameter to limit it to a single stage.
+        """
+        return self.j_smvApp.generateAllGraphJSON()
 
     def dependency_graph(self, stageNames = None):
         from graph import SmvDependencyGraph
