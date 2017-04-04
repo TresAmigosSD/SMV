@@ -11,21 +11,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import smvPy
+from smv import SmvApp
 from pyspark.sql import DataFrame
 
 from smv import CsvAttributes
 
-jvmShellCmd = smvPy._jvm.org.tresamigos.smv.shell.ShellCmd
+jvmShellCmd = SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
-df = lambda name: smvPy.runModuleByName(name)
+df = lambda name: SmvApp.getInstance().runModuleByName(name)
 def ddf(fqn):
     print "ddf has been removed. df now runs modules dynamically. Use df instead of ddf."
 def pdf(fqn):
     print "pdf has been removed. Run modules dynamically with df instead."
 
-openHive = lambda tableName: DataFrame(jvmShellCmd.openHive(tableName), smvPy.sqlContext)
-openCsv = lambda path: DataFrame(jvmShellCmd.openCsv(path), smvPy.sqlContext)
+openHive = lambda tableName: DataFrame(jvmShellCmd.openHive(tableName), SmvApp.getInstance().sqlContext)
+openCsv = lambda path: DataFrame(jvmShellCmd.openCsv(path), SmvApp.getInstance().sqlContext)
 
 def help():
     import re
@@ -92,5 +92,5 @@ def graphStage():
 def now():
     print(jvmShellCmd.now())
 
-def discoverSchema(path, n=100000, ca=smvPy.defaultCsvWithHeader()):
-    smvPy._jvm.SmvPythonHelper.discoverSchema(path, n, ca)
+def discoverSchema(path, n=100000, ca=SmvApp.getInstance().defaultCsvWithHeader()):
+   SmvApp.getInstance()._jvm.SmvPythonHelper.discoverSchema(path, n, ca)

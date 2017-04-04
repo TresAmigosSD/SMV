@@ -16,7 +16,7 @@ This module defined the SmvRunConfig class which can be mixed-in into an
 SmvModule to get user configuration parameters at run-time.
 """
 
-from smv.smvpy import smvPy
+from smvapp import SmvApp
 import traceback
 
 
@@ -27,7 +27,7 @@ class SmvRunConfig(object):
 
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
-        return smvPy.j_smvPyClient.getRunConfig(key)
+        return SmvApp.getInstance().j_smvPyClient.getRunConfig(key)
 
     def smvGetRunConfigAsInt(self, key):
         return int(self.getRunConfig(key))
@@ -38,4 +38,4 @@ class SmvRunConfig(object):
 
     def _smvGetRunConfigHash(self):
         """return the app level hash of the all the current user config values"""
-        return smvPy.j_smvPyClient.getRunConfigHash()
+        return SmvApp.getInstance().j_smvPyClient.getRunConfigHash()

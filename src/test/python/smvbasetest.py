@@ -13,7 +13,7 @@
 
 import unittest
 from runtests import TestConfig
-from smv import smvPy
+from smv import SmvApp
 
 import pyspark
 from pyspark.context import SparkContext
@@ -36,14 +36,13 @@ class SmvBaseTest(unittest.TestCase):
         callback_server_port = random.randint(20000, 65535)
 
         args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
-        smvPy.init(args, cls.sparkContext, cls.sqlContext)
-        cls.smvPy = smvPy
+        cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
     def setUp(self):
         """Patch for Python 2.6 without using unittest
         """
         cls = self.__class__
-        if not hasattr(cls, 'smvPy'):
+        if not hasattr(cls, 'smvApp'):
             cls.sparkContext = TestConfig.sparkContext()
             cls.sqlContext = TestConfig.sqlContext()
             cls.sparkContext.setLogLevel("ERROR")
@@ -52,16 +51,16 @@ class SmvBaseTest(unittest.TestCase):
             callback_server_port = random.randint(20000, 65535)
 
             args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
-            smvPy.init(args, cls.sparkContext, cls.sqlContext)
-            cls.smvPy = smvPy
+            cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
+
 
     @classmethod
     def createDF(cls, schema, data):
-        return cls.smvPy.createDF(schema, data)
+        return cls.smvApp.createDF(schema, data)
 
     @classmethod
     def df(cls, fqn):
-        return cls.smvPy.runModule("mod:" + fqn)
+        return cls.smvApp.runModule("mod:" + fqn)
 
     def should_be_same(self, expected, result):
         """Asserts that the two dataframes contain the same data, ignoring order

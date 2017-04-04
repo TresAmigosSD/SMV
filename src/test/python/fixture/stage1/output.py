@@ -18,4 +18,4 @@ from pyspark.sql import DataFrame
 class A(SmvPyModule, SmvPyOutput):
     def requiresDS(self): return []
     def run(self, i):
-        return self.smvPy.createDF("k:String;v:Integer", "a,;b,2")
+        return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
