@@ -41,7 +41,6 @@ if __name__ == "__main__":
     SrcPath = "./src/main/python"
 
     app = SmvApp()
-    app.prepend_source(SrcPath)
 
     loader = TestLoader()
 

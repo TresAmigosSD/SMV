@@ -14,5 +14,4 @@
 from smv import SmvApp
 
 app = SmvApp()
-app.prepend_source('src/main/python')
 app.run()
