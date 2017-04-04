@@ -12,6 +12,8 @@
 # limitations under the License.
 
 from smv import SmvApp
+import sys
 
 app = SmvApp()
-app.run()
+# skip the first argument, which is this program
+app.run(sys.argv[1:])

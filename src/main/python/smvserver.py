@@ -18,7 +18,7 @@ import re
 import glob
 import json
 from flask import Flask, request, jsonify
-from smv import smvPy
+from smv import smvPy, SmvApp
 import compileall
 
 app = Flask(__name__)
@@ -333,7 +333,9 @@ if __name__ == "__main__":
 
     # init Smv context
     # TODO: should instantiate SmvApp here instead of callint init directly.
-    smvPy.init([])
+    smvApp = SmvApp()
+    smvApp.init([])
+
     module_file_map = {}
 
     # start server

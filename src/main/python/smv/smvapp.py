@@ -29,7 +29,10 @@ class SmvApp(object):
         codePath = os.path.abspath(source_dir)
         sys.path.insert(1, codePath)
 
-    def run(self):
-        # skip the first argument, which is this program
-        smvPy.init(sys.argv[1:])
+    # There may already be a SparkContext when SmvApp is initialized
+    def init(self, smv_args, sc = None, sqlContext = None):
+        smvPy.init(smv_args, sc, sqlContext)
+
+    def run(self, smv_args):
+        self.init(smv_args)
         smvPy.j_smvApp.run()
