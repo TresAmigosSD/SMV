@@ -39,7 +39,7 @@ object acct_demo extends SmvCsvFile("accounts/acct_demo.csv")
 ### Python
 ```Python
 # In file src/main/python/stage1/inputdata.py
-class acct_demo(PySmvCsvFile):
+class acct_demo(SmvCsvFile):
   def path(self):
     return "accounts/acct_demo.csv"
 ```
@@ -295,7 +295,7 @@ object MyTmpDS extends SmvCsvStringData("a:String;b:Double;c:String", "aa,1.0,cc
 ```
 ### Python
 ```python
-class MyTmpDS(SmvPyCsvStringData):
+class MyTmpDS(SmvCsvStringData):
     def schemaStr(self): return "a:String;b:Double;c:String"
     def dataStr(self):
         return "aa,1.0,cc;aa2,3.5,CC"
