@@ -131,8 +131,8 @@ def get_module_code_file_mapping():
     patterns = [
         'object (.+?) extends( )+SmvModule\(',
         'object (.+?) extends( )+SmvCsvFile\(',
-        'class (.+?)\(SmvPyModule',
-        'class (.+?)\(SmvPyCsvFile',
+        'class (.+?)\(SmvModule',
+        'class (.+?)\(SmvCsvFile',
     ]
     module_dict = get_module_file_mapping(files, patterns)
     return module_dict
