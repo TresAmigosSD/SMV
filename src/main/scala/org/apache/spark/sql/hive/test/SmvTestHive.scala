@@ -24,11 +24,11 @@ import org.apache.spark.sql.SparkSession
  * src/main instead of src/test
  **/
 object SmvTestHive {
-  //Each run should only have one SparkSession
-  var _ss: SparkSession = null
+  //Each run should only have one HiveContext, and therefore one SparkSession
+  private[this] var _hc: TestHiveContext = null
 
-  def createSession(_sc: SparkContext) = {
-    if (_ss == null) {
+  def createContext(_sc: SparkContext): TestHiveContext = {
+    if(_hc == null) {
       val sc = if (_sc == null) {
         new SparkContext(
           System.getProperty("spark.sql.test.master", "local[1]"),
@@ -44,8 +44,16 @@ object SmvTestHive {
       } else {
         _sc
       }
-      _ss = new TestHiveContext(sc, false).sparkSession
+      _hc = new TestHiveContext(sc, false)
+    } else {
+      assert(_sc == null)
     }
-    _ss
+    _hc
+  }
+
+  def destroyContext(): Unit = {
+    _hc.reset()
+    _hc.sparkSession.stop()
+    _hc = null
   }
 }

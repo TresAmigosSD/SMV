@@ -458,7 +458,7 @@ class SmvHierarchies(
    *
    * The result will be
    * {{{
-   * ${prefix}_type, ${prefix}_value, v1
+   * {prefix}_type, {prefix}_value, v1
    * h1,        1,          6.0
    * h1,        2,          3.0
    * h2,        02,         3.0

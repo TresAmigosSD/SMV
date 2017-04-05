@@ -34,6 +34,8 @@ parallelExecution in Test := false
 
 publishArtifact in Test := true
 
+fork in Test := true
+
 // Create itest task that runs integration tests
 val itest = TaskKey[Unit]("itest", "Run Integration Test")
 itest := {
@@ -66,3 +68,4 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 assemblyJarName in assembly := s"${name.value}-${version.value}-jar-with-dependencies.jar"
 
 test in assembly := {}
+

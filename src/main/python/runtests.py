@@ -28,7 +28,7 @@ class TestConfig(object):
     def sparkSession(cls):
         if not hasattr(cls, "spark"):
             # We can't use the SparkSession Builder here, since we need to call
-            # Scala side's SmvTestHive.createSession to create the HiveTestContext's
+            # Scala side's SmvTestHive.createContext to create the HiveTestContext's
             # SparkSession.
             # So we need to
             #   * Create a java_gateway
@@ -44,13 +44,20 @@ class TestConfig(object):
                   .set("spark.sql.warehouse.dir", "file:///tmp/smv_hive_test")\
                   .set("spark.ui.enabled", "false")
             sc = SparkContext(master="local[1]", appName="SMV Python Test", conf=sConf, gateway=jgw).getOrCreate()
-            jss = sc._jvm.org.apache.spark.sql.hive.test.SmvTestHive.createSession(sc._jsc.sc())
-            cls.spark = SparkSession(sc, jss)
+            jss = sc._jvm.org.apache.spark.sql.hive.test.SmvTestHive.createContext(sc._jsc.sc())
+            cls.spark = SparkSession(sc, jss.sparkSession())
         return cls.spark
 
     @classmethod
     def sparkContext(cls):
         return cls.sparkSession().sparkContext
+
+
+    @classmethod
+    def tearDown(cls):
+        cls.sparkContext()._jvm.org.apache.spark.sql.hive.test.SmvTestHive.destroyContext()
+        cls.spark.stop()
+        del cls.spark
 
 if __name__ == "__main__":
     print("Testing with Python " + sys.version)

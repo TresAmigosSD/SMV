@@ -56,6 +56,12 @@ class SmvBaseTest(unittest.TestCase):
             cls.smvPy = smvPy
 
     @classmethod
+    def tearDownClass(cls):
+        TestConfig.tearDown()
+        del cls.sparkSession
+        del cls.sparkContext
+
+    @classmethod
     def createDF(cls, schema, data):
         return cls.smvPy.createDF(schema, data)
 
