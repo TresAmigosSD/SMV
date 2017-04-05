@@ -14,19 +14,20 @@
 
 package org.tresamigos.smv
 
-import java.io.{PrintWriter, File}
+import java.io.{File, PrintWriter}
 
-import org.apache.log4j.{LogManager, Logger, Level}
+import org.apache.log4j.{Level, LogManager, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.hive.test.SmvTestHive
+import org.apache.spark.sql.hive.test.{SmvTestHive, TestHiveContext}
 import org.scalatest._
 
 trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
-  var sparkSession: SparkSession = _
-  var sc: SparkContext = _
-  var sqlContext: SQLContext = _
+  var _hiveContext: TestHiveContext = _
+  def sparkSession: SparkSession = _hiveContext.sparkSession
+  def sqlContext: SQLContext = _hiveContext.sparkSession.sqlContext
+  def sc: SparkContext = _hiveContext.sparkContext
 
   def disableLogging = false
 
@@ -61,16 +62,14 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
     else
       SparkTestUtil.setLoggingLevel(Level.ERROR)
 
-    sparkSession = SmvTestHive.createSession(null)
-    sqlContext = sparkSession.sqlContext
-    sc = sqlContext.sparkContext
+    _hiveContext = SmvTestHive.createSession(null)
     sqlContext.setConf("spark.sql.shuffle.partitions", "4")
     resetTestcaseTempDir()
   }
 
   override def afterAll() = {
-    sqlContext = null
-    sc = null
+    SmvTestHive.destroySession()
+    _hiveContext = null
     System.clearProperty("spark.master.port")
     // re-enable normal logging for next test if we disabled logging here.
     if (disableLogging) SparkTestUtil.setLoggingLevel(Level.ERROR)
