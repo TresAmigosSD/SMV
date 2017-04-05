@@ -106,7 +106,7 @@ verify_hash_unchanged
 echo "--------- CHANGE MODULE -------------"
 HASH_TEST_PKG=$(sed -e "s/\(.*\)\.[^.]*/\1/g" <<< "$HASH_TEST_MOD")
 HASH_TEST_MOD_FILE="src/main/python/$(sed -e "s/\./\//g" <<< "$HASH_TEST_PKG").py"
-sed -i "" "s/table1/table2/" $HASH_TEST_MOD_FILE
+sed -i "s/table1/table2/" $HASH_TEST_MOD_FILE
 
 echo "--------- RUN CHANGED MODULE -------------"
 ../../../tools/smv-pyrun -m hashtest.modules.M
@@ -117,7 +117,7 @@ verify_hash_changed
 
 
 echo "--------- GENERATE ENTERPRISE APP APP -------------"
-smv-init -e $E_APP_NAME
+../../tools/smv-init -e $E_APP_NAME
 
 (
 cd $E_APP_NAME
@@ -126,7 +126,7 @@ echo "--------- RUN ENTERPRISE APP -------------"
 )
 
 echo "--------- GENERATE SIMPLE APP -------------"
-smv-init -s $S_APP_NAME
+../../tools/smv-init -s $S_APP_NAME
 
 (
 cd $S_APP_NAME

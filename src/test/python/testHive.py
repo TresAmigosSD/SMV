@@ -24,7 +24,6 @@ class HiveTest(SmvBaseTest):
         super(HiveTest, cls).setUpClass()
         cls.smvPy.sqlContext.setConf("hive.metastore.warehouse.dir", "file:///tmp/smv_hive_test")
 
-
 # temporarily turn off the tests in this file. since we can't figure out
 # a way to specify the temp hive storage conf in 2.1. Specify
 # spark.sql.warehouse.dir doesn't solve the problem. The only way to
@@ -48,7 +47,7 @@ class ReadHiveTableTest(HiveTest):
     @classmethod
     def setUpClass(cls):
         super(ReadHiveTableTest, cls).setUpClass()
-        #cls.smvPy.j_smvApp.run()
+        cls.smvPy.j_smvApp.run()
 
     def test_smv_hive_table_can_read_hive_table(self):
         mDf = self.smvPy.runModule(M.urn())
