@@ -13,8 +13,8 @@ val sparkVersion = "1.5.2"
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
   "org.apache.spark" %% "spark-hive" % sparkVersion % "provided",
-  "org.tresamigos" %% "smv" % "1.5-SNAPSHOT",
-  "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+  "org.tresamigos"   %% "smv"        % "1.5-SNAPSHOT",
+  "org.scalatest"    %% "scalatest"  % "2.2.0" % "test"
 )
 
 parallelExecution in Test := false
@@ -30,9 +30,13 @@ assemblyJarName in assembly := s"${name.value}-${version.value}-jar-with-depende
 cancelable in Global := true
 
 val smvInit = if (sys.props.contains("smvInit")) {
-    val files = sys.props.get("smvInit").get.split(",")
-    files.map{f=> IO.read(new File(f))}.mkString("\n")
-  } else ""
+  val files = sys.props.get("smvInit").get.split(",")
+  files
+    .map { f =>
+      IO.read(new File(f))
+    }
+    .mkString("\n")
+} else ""
 
 initialCommands in console := s"""
 val sc = new org.apache.spark.SparkContext("local", "shell")
@@ -49,7 +53,7 @@ cleanupCommands in console := "sc.stop"
 // graphviz-java depends on both xml-apis and batik-ext, both of which
 // contain org.w3c.dom.events classes
 assemblyMergeStrategy in assembly := {
-  case PathList("org", "w3c", "dom", "events", xs @ _*) => MergeStrategy.last
+  case PathList("org", "w3c", "dom", "events", xs @ _ *) => MergeStrategy.last
   case x =>
     val oldStrat = (assemblyMergeStrategy in assembly).value
     oldStrat(x)

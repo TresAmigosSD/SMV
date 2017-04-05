@@ -146,3 +146,18 @@ cat_high_emp:Boolean = false
 ```
 
 See the [user guide](docs/user/0_user_toc.md) for further examples and documentation.
+
+
+# Contributions 
+
+## Scalafmt
+
+The project uses [Scalafmt](http://scalameta.org/scalafmt/) to ensure that the committed code is formatted 
+in a consistent manner. Follow instructions on the tool's [web](http://scalameta.org/scalafmt/#CLI) for the
+installation instructions. Before submitting a PR make sure that the result of
+
+```shell
+./scalafmt --test 
+```
+
+returns no errors.

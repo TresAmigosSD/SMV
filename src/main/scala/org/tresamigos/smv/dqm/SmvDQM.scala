@@ -63,12 +63,12 @@ import org.apache.spark.sql.functions.udf
  * }}}
  * The result is a [[org.tresamigos.smv.ValidationResult]]
  **/
-class SmvDQM (
+class SmvDQM(
     private[smv] val rules: Seq[DQMRule] = Nil,
     private[smv] val fixes: Seq[DQMFix] = Nil,
     private[smv] val policies: Seq[DQMPolicy] = Nil,
     val needAction: Boolean = false
-  ) {
+) {
 
   def add(rule: DQMRule): SmvDQM = {
     val newRules = rules :+ rule
@@ -95,11 +95,11 @@ object SmvDQM {
   def apply() = new SmvDQM()
 }
 
-class DQMValidator (dqm: SmvDQM) extends ValidationTask {
+class DQMValidator(dqm: SmvDQM) extends ValidationTask {
   private lazy val app: SmvApp = SmvApp.app
 
-  private val ruleNames = dqm.rules.map{_.name}
-  private val fixNames = dqm.fixes.map{_.name}
+  private val ruleNames = dqm.rules.map { _.name }
+  private val fixNames  = dqm.fixes.map { _.name }
 
   /** Check for duplicated task names */
   require((ruleNames ++ fixNames).size == (ruleNames ++ fixNames).toSet.size)
@@ -109,29 +109,26 @@ class DQMValidator (dqm: SmvDQM) extends ValidationTask {
 
   /** create policies from tasks. Filter out NoOpDQMPolicy */
   private def policiesFromTasks(): Seq[DQMPolicy] = {
-    (dqm.rules ++ dqm.fixes).map{_.createPolicy()}.filter(_ != NoOpDQMPolicy)
+    (dqm.rules ++ dqm.fixes).map { _.createPolicy() }.filter(_ != NoOpDQMPolicy)
   }
 
   /** since rule need to log the reference columns, need to plus them before check and remove after*/
   private def attachRules(df: DataFrame): DataFrame = {
     if (dqm.rules.isEmpty) df
     else {
-      val ruleColTriplets = dqm.rules.map{_.createCheckCol(dqmState)}
-      val plusCols = ruleColTriplets.map{_._1}
-      val filterCol = ruleColTriplets.map{_._2}.reduce(_ && _)
-      val minusCols = ruleColTriplets.map{_._3}
+      val ruleColTriplets = dqm.rules.map { _.createCheckCol(dqmState) }
+      val plusCols        = ruleColTriplets.map { _._1 }
+      val filterCol       = ruleColTriplets.map { _._2 }.reduce(_ && _)
+      val minusCols       = ruleColTriplets.map { _._3 }
 
-      df.
-        smvSelectPlus(plusCols: _*).
-        where(filterCol).
-        smvSelectMinus(minusCols: _*)
+      df.smvSelectPlus(plusCols: _*).where(filterCol).smvSelectMinus(minusCols: _*)
     }
   }
 
-  private def attachFixes(df: DataFrame): DataFrame ={
-    if(dqm.fixes.isEmpty) df
+  private def attachFixes(df: DataFrame): DataFrame = {
+    if (dqm.fixes.isEmpty) df
     else {
-      val fixCols = dqm.fixes.map{_.createFixCol(dqmState)}
+      val fixCols = dqm.fixes.map { _.createFixCol(dqmState) }
       df.selectWithReplace(fixCols: _*)
     }
   }
@@ -139,7 +136,7 @@ class DQMValidator (dqm: SmvDQM) extends ValidationTask {
   /** add overall record counter and rules and fixes */
   def attachTasks(df: DataFrame): DataFrame = {
     val _dqmState = dqmState
-    val totalCountCol = udf({() =>
+    val totalCountCol = udf({ () =>
       _dqmState.addRec()
       true
     })
@@ -155,15 +152,20 @@ class DQMValidator (dqm: SmvDQM) extends ValidationTask {
   override def needAction = dqm.needAction
 
   override def validate(df: DataFrame) = {
+
     /** need to take a snapshot on the DQMState before validation, since validation step could
      * have actions on the DF, which will change the accumulators of the DQMState*/
     dqmState.snapshot()
 
     val allPolicies = policiesFromTasks() ++ dqm.policies
-    val results = allPolicies.map{p => (p.name, p.policy(df, dqmState))}
+    val results = allPolicies.map { p =>
+      (p.name, p.policy(df, dqmState))
+    }
 
-    val passed = results.isEmpty || results.map{_._2}.reduce(_ && _)
-    val errorMessages = results.map{r => (r._1, r._2.toString)}
+    val passed = results.isEmpty || results.map { _._2 }.reduce(_ && _)
+    val errorMessages = results.map { r =>
+      (r._1, r._2.toString)
+    }
     val checkLog = dqmState.getAllLog()
 
     new ValidationResult(passed, errorMessages, checkLog)

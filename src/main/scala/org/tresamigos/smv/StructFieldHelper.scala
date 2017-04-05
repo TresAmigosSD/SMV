@@ -20,14 +20,18 @@ import scala.util.Try
 
 private[smv] class StructFieldHelper(field: StructField) {
   def ordering() = getOrdering(field.dataType)
-  def numeric() = getNumeric(field.dataType)
+  def numeric()  = getNumeric(field.dataType)
 }
 
 private[smv] class StructTypeHelper(schema: StructType) {
   def mergeSchema(that: StructType) = mergeStructType(schema, that)
-  def getIndices(names: String*) = names.map{n => schema.fieldNames.indexOf(n)}
+  def getIndices(names: String*) = names.map { n =>
+    schema.fieldNames.indexOf(n)
+  }
   def selfJoined(): StructType = {
-    val renamed = schema.fields.map{f => StructField("_" + f.name, f.dataType, f.nullable)}
+    val renamed = schema.fields.map { f =>
+      StructField("_" + f.name, f.dataType, f.nullable)
+    }
     StructType(schema.fields ++ renamed)
   }
 }

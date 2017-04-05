@@ -32,39 +32,38 @@ import org.apache.spark.rdd._
  * Extra functions available on RDDs for providing the RDD analogs of Scala drop,
  * dropRight and dropWhile, which return an RDD as a result
  */
-private[smv] class DropRDDFunctions[T : ClassTag](self: RDD[T]) extends Logging with Serializable {
+private[smv] class DropRDDFunctions[T: ClassTag](self: RDD[T]) extends Logging with Serializable {
 
   /**
    * Return a new RDD formed by dropping the first (n) elements of the input RDD
    */
-  def drop(n: Int):RDD[T] = {
+  def drop(n: Int): RDD[T] = {
     if (n <= 0) return self
 
     // locate partition that includes the nth element
     var rem = n
-    var p = 0
-    var np = 0
-    while (rem > 0  &&  p < self.partitions.length) {
-      val res = self.sparkContext.runJob(self, (it: Iterator[T]) => it.length,
-        p until 1 + p)
+    var p   = 0
+    var np  = 0
+    while (rem > 0 && p < self.partitions.length) {
+      val res = self.sparkContext.runJob(self, (it: Iterator[T]) => it.length, p until 1 + p)
       np = res(0)
       rem -= np
       p += 1
     }
 
     // all elements were dropped
-    if (rem > 0  ||  (rem == 0  &&  p >= self.partitions.length)) {
+    if (rem > 0 || (rem == 0 && p >= self.partitions.length)) {
       return self.sparkContext.emptyRDD[T]
     }
 
     // Return an RDD that discounts the first (n) elements of the parent RDD
     // (if we get here, note that rem <= 0)
     val pFirst = p - 1
-    val pDrop = np + rem
+    val pDrop  = np + rem
     new RDD[T](self) {
       override def getPartitions: Array[Partition] = firstParent[T].partitions
-      override val partitioner = self.partitioner
-      override def compute(split: Partition, context: TaskContext):Iterator[T] = {
+      override val partitioner                     = self.partitioner
+      override def compute(split: Partition, context: TaskContext): Iterator[T] = {
         if (split.index > pFirst) return firstParent[T].iterator(split, context)
         if (split.index == pFirst) return firstParent[T].iterator(split, context).drop(pDrop)
         Iterator.empty
@@ -72,38 +71,36 @@ private[smv] class DropRDDFunctions[T : ClassTag](self: RDD[T]) extends Logging 
     }
   }
 
-
   /**
    * Return a new RDD formed by dropping the last (n) elements of the input RDD
    */
-  def dropRight(n: Int):RDD[T] = {
+  def dropRight(n: Int): RDD[T] = {
     if (n <= 0) return self
 
     // locate partition that includes the nth element
     var rem = n
-    var p = self.partitions.length-1
-    var np = 0
-    while (rem > 0  &&  p >= 0) {
-      val res = self.sparkContext.runJob(self, (it: Iterator[T]) => it.length,
-        p until 1 + p)
+    var p   = self.partitions.length - 1
+    var np  = 0
+    while (rem > 0 && p >= 0) {
+      val res = self.sparkContext.runJob(self, (it: Iterator[T]) => it.length, p until 1 + p)
       np = res(0)
       rem -= np
       p -= 1
     }
 
     // all elements were dropped
-    if (rem > 0  ||  (rem == 0  &&  p < 0)) {
+    if (rem > 0 || (rem == 0 && p < 0)) {
       return self.sparkContext.emptyRDD[T]
     }
 
     // Return an RDD that discounts the last (n) elements of the parent RDD
     // (if we get here, note that rem <= 0)
     val pFirst = p + 1
-    val pTake = -rem
+    val pTake  = -rem
     new RDD[T](self) {
       override def getPartitions: Array[Partition] = firstParent[T].partitions
-      override val partitioner = self.partitioner
-      override def compute(split: Partition, context: TaskContext):Iterator[T] = {
+      override val partitioner                     = self.partitioner
+      override def compute(split: Partition, context: TaskContext): Iterator[T] = {
         if (split.index < pFirst) return firstParent[T].iterator(split, context)
         if (split.index == pFirst) return firstParent[T].iterator(split, context).take(pTake)
         Iterator.empty
@@ -111,30 +108,29 @@ private[smv] class DropRDDFunctions[T : ClassTag](self: RDD[T]) extends Logging 
     }
   }
 
-
   /**
    * Return a new RDD formed by dropping leading elements until predicate function (f) returns false
    */
-  def dropWhile(f: T=>Boolean):RDD[T] = {
-    var p = 0
+  def dropWhile(f: T => Boolean): RDD[T] = {
+    var p  = 0
     var np = 0
-    while (np <= 0  &&  p < self.partitions.length) {
-      val res = self.sparkContext.runJob(self, (it: Iterator[T]) => it.dropWhile(f).length,
-        p until 1 + p)
+    while (np <= 0 && p < self.partitions.length) {
+      val res =
+        self.sparkContext.runJob(self, (it: Iterator[T]) => it.dropWhile(f).length, p until 1 + p)
       np = res(0)
       p += 1
     }
 
     // all elements were dropped
-    if (np <= 0  &&  p >= self.partitions.length) {
+    if (np <= 0 && p >= self.partitions.length) {
       return self.sparkContext.emptyRDD[T]
     }
 
     val pFirst = p - 1
     new RDD[T](self) {
       override def getPartitions: Array[Partition] = firstParent[T].partitions
-      override val partitioner = self.partitioner
-      override def compute(split: Partition, context: TaskContext):Iterator[T] = {
+      override val partitioner                     = self.partitioner
+      override def compute(split: Partition, context: TaskContext): Iterator[T] = {
         if (split.index > pFirst) return firstParent[T].iterator(split, context)
         if (split.index == pFirst) return firstParent[T].iterator(split, context).dropWhile(f)
         Iterator.empty

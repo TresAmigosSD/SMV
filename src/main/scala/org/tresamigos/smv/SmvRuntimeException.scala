@@ -14,9 +14,11 @@
 
 package org.tresamigos.smv
 
-class SmvRuntimeException(message: String = null, cause: Throwable = null) extends
-  RuntimeException(message, cause)
+class SmvRuntimeException(message: String = null, cause: Throwable = null)
+    extends RuntimeException(message, cause)
 
-class SmvUnsupportedType(message: String, cause: Throwable = null) extends SmvRuntimeException(message, cause)
+class SmvUnsupportedType(message: String, cause: Throwable = null)
+    extends SmvRuntimeException(message, cause)
 
-class SmvDqmValidationError(message: String, cause: Throwable = null) extends SmvRuntimeException(message, cause)
+class SmvDqmValidationError(message: String, cause: Throwable = null)
+    extends SmvRuntimeException(message, cause)

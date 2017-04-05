@@ -18,19 +18,20 @@ import panel._
 
 class TimePanelTest extends SmvTestUtil {
 
-
-  test("test addToDF"){
+  test("test addToDF") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("k:Integer; ts:String; v:Double",
-      "1,20120101,1.5;" +
-      "1,20120501,2.45;" +
-      "2,20120201,3.3"
-    ).selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
+    val df =
+      dfFrom("k:Integer; ts:String; v:Double",
+             "1,20120101,1.5;" +
+               "1,20120501,2.45;" +
+               "2,20120201,3.3").selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
 
-    val tp = TimePanel(start = Month(2012, 1), end = Month(2012, 5))
+    val tp  = TimePanel(start = Month(2012, 1), end = Month(2012, 5))
     val res = tp.addToDF(df, "ts", Seq("k"), false)
 
-    assertSrddDataEqual(res, """1,null,null,M201202;
+    assertSrddDataEqual(
+      res,
+      """1,null,null,M201202;
 1,null,null,M201203;
 1,null,null,M201204;
 2,null,null,M201201;
@@ -39,71 +40,89 @@ class TimePanelTest extends SmvTestUtil {
 2,null,null,M201204;
 1,2012-01-01 00:00:00.0,1.5,M201201;
 1,2012-05-01 00:00:00.0,2.45,M201205;
-2,2012-02-01 00:00:00.0,3.3,M201202""")
+2,2012-02-01 00:00:00.0,3.3,M201202"""
+    )
   }
 
   test("test addTimePanels DF helper") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("k:Integer; ts:String; v:Double",
-      "1,20120101,1.5;" +
-      "1,20120701,7.5;" +
-      "1,20120501,2.45"
-    ).selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
+    val df =
+      dfFrom("k:Integer; ts:String; v:Double",
+             "1,20120101,1.5;" +
+               "1,20120701,7.5;" +
+               "1,20120501,2.45").selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
 
-    val res = df.smvGroupBy("k").addTimePanels("ts")(
-      TimePanel(Month(2012, 1), Month(2012, 6)),
-      TimePanel(Quarter(2012, 1), Quarter(2012, 2))
-    )
+    val res = df
+      .smvGroupBy("k")
+      .addTimePanels("ts")(
+        TimePanel(Month(2012, 1), Month(2012, 6)),
+        TimePanel(Quarter(2012, 1), Quarter(2012, 2))
+      )
 
-    assertSrddDataEqual(res, """1,null,null,M201206;
+    assertSrddDataEqual(
+      res,
+      """1,null,null,M201206;
 1,null,null,M201202;
 1,null,null,M201203;
 1,null,null,M201204;
 1,2012-01-01 00:00:00.0,1.5,M201201;
 1,2012-05-01 00:00:00.0,2.45,M201205;
 1,2012-01-01 00:00:00.0,1.5,Q201201;
-1,2012-05-01 00:00:00.0,2.45,Q201202""")
+1,2012-05-01 00:00:00.0,2.45,Q201202"""
+    )
 
   }
 
   test("test timePanelValueFill DF helper") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("k:Integer; ts:String; v:Double",
-      "1,20120201,1.5;" +
-      "1,20120701,7.5;" +
-      "1,20120501,2.45"
-    ).selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
+    val df =
+      dfFrom("k:Integer; ts:String; v:Double",
+             "1,20120201,1.5;" +
+               "1,20120701,7.5;" +
+               "1,20120501,2.45").selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
 
-    val res = df.smvGroupBy("k").addTimePanels("ts")(
-      TimePanel(Month(2012, 1), Month(2012, 6))
-    ).smvGroupBy("k").timePanelValueFill("smvTime")("v")
+    val res = df
+      .smvGroupBy("k")
+      .addTimePanels("ts")(
+        TimePanel(Month(2012, 1), Month(2012, 6))
+      )
+      .smvGroupBy("k")
+      .timePanelValueFill("smvTime")("v")
 
-    assertSrddDataEqual(res, """1,null,2.45,M201206;
+    assertSrddDataEqual(
+      res,
+      """1,null,2.45,M201206;
 1,2012-05-01 00:00:00.0,2.45,M201205;
 1,null,1.5,M201204;
 1,null,1.5,M201203;
 1,2012-02-01 00:00:00.0,1.5,M201202;
-1,null,1.5,M201201""")
+1,null,1.5,M201201"""
+    )
   }
 
   test("test addTimePanelsWithValueFill DF helper") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("k:Integer; ts:String; v:Double",
-      "1,20120201,1.5;" +
-      "1,20120701,7.5;" +
-      "1,20120501,2.45"
-    ).selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
+    val df =
+      dfFrom("k:Integer; ts:String; v:Double",
+             "1,20120201,1.5;" +
+               "1,20120701,7.5;" +
+               "1,20120501,2.45").selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
 
-    val res = df.smvGroupBy("k").addTimePanelsWithValueFill("ts")(
-      TimePanel(Month(2012, 1), Month(2012, 6))
-    )("v")
+    val res = df
+      .smvGroupBy("k")
+      .addTimePanelsWithValueFill("ts")(
+        TimePanel(Month(2012, 1), Month(2012, 6))
+      )("v")
 
-    assertSrddDataEqual(res, """1,null,2.45,M201206;
+    assertSrddDataEqual(
+      res,
+      """1,null,2.45,M201206;
 1,2012-05-01 00:00:00.0,2.45,M201205;
 1,null,1.5,M201204;
 1,null,1.5,M201203;
 1,2012-02-01 00:00:00.0,1.5,M201202;
-1,null,1.5,M201201""")
+1,null,1.5,M201201"""
+    )
   }
 
 }

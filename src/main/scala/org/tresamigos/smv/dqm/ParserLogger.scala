@@ -19,7 +19,7 @@ private[smv] abstract class ParserLogger extends Serializable {
 }
 
 /** For data files, log the parser errors and fail the DF if `failAtError == true` and error happens */
-private[smv] class ParserValidation(dqmState: DQMState) extends ParserLogger{
+private[smv] class ParserValidation(dqmState: DQMState) extends ParserLogger {
   def addWithReason(e: Exception, rec: String) = {
     val mess = s"${e.toString} @RECORD: ${rec}"
     dqmState.addParserRec(mess)

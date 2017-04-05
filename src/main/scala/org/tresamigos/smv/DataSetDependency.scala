@@ -36,37 +36,42 @@ case class DataSetDependency(className: String) {
   private val classResourcePath = "/" + className.replace('.', '/') + ".class"
 
   lazy val (dependsDS, dependsAnc) = {
-    val ds: MSet[String] = MSet()
+    val ds: MSet[String]  = MSet()
     val anc: MSet[String] = MSet()
 
     val is: InputStream = getClass.getResourceAsStream(classResourcePath)
-    val cv = new DsVisitor(Opcodes.ASM4, null, ds, anc)
+    val cv              = new DsVisitor(Opcodes.ASM4, null, ds, anc)
 
-    val reader=new ClassReader(is)
+    val reader = new ClassReader(is)
     reader.accept(cv, ClassReader.SKIP_DEBUG)
 
     (ds.toSeq, anc.toSeq)
   }
 
   private class DsVisitor(api: Int, cv: ClassVisitor, ds: MSet[String], anc: MSet[String])
-    extends ClassVisitor(api, cv) {
+      extends ClassVisitor(api, cv) {
 
-    override def visitMethod(access: Int, name: String, desc: String, signature: String, exceptions: Array[String]) = {
+    override def visitMethod(access: Int,
+                             name: String,
+                             desc: String,
+                             signature: String,
+                             exceptions: Array[String]) = {
       if (Seq("resolvedRequiresDS", "requiresAnc", "version").contains(name)) null
       else new RunVisitor(api, null, ds, anc)
     }
   }
 
   private class RunVisitor(api: Int, mv: MethodVisitor, ds: MSet[String], anc: MSet[String])
-    extends MethodVisitor(api, mv) {
+      extends MethodVisitor(api, mv) {
 
     private def addModule(rawName: String) = {
-        val cName = rawName.replaceAll("""package\$""", "").replace('/', '.').replaceAll("""\$""", "")
-        if (cName != className.replaceAll("""\$""", "")) {
-          if(SmvReflection.findObjectByName[SmvDataSet](cName).isSuccess) ds += cName
-          if(SmvReflection.findObjectByName[SmvAncillary](cName).isSuccess) anc += cName
-        }
-        Unit
+      val cName =
+        rawName.replaceAll("""package\$""", "").replace('/', '.').replaceAll("""\$""", "")
+      if (cName != className.replaceAll("""\$""", "")) {
+        if (SmvReflection.findObjectByName[SmvDataSet](cName).isSuccess) ds += cName
+        if (SmvReflection.findObjectByName[SmvAncillary](cName).isSuccess) anc += cName
+      }
+      Unit
     }
 
     override def visitFieldInsn(opc: Int, owner: String, name: String, desc: String) = {
@@ -82,21 +87,21 @@ case class DataSetDependency(className: String) {
     }
   }
 
- /**
-  * The ByteCode as a string
-  *
-  * The asm framework is easy to modify. The following code will print out the entire code,
-  * which will be useful for adding new function to `DataSetDependency`
-  * Please refer http://download.forge.objectweb.org/asm/asm4-guide.pdf for using asm
+  /**
+   * The ByteCode as a string
+   *
+   * The asm framework is easy to modify. The following code will print out the entire code,
+   * which will be useful for adding new function to `DataSetDependency`
+   * Please refer http://download.forge.objectweb.org/asm/asm4-guide.pdf for using asm
   **/
   def bcode() = {
     val is: InputStream = getClass.getResourceAsStream(classResourcePath)
 
-    val stringWriter = new StringWriter()
-    val printWriter = new PrintWriter(stringWriter)
+    val stringWriter      = new StringWriter()
+    val printWriter       = new PrintWriter(stringWriter)
     val traceClassVisitor = new util.TraceClassVisitor(null, new util.Textifier(), printWriter)
 
-    val reader=new ClassReader(is)
+    val reader = new ClassReader(is)
     reader.accept(traceClassVisitor, ClassReader.SKIP_DEBUG)
     stringWriter.toString()
   }
@@ -142,7 +147,7 @@ object LinkFromDiffStage extends DependencyRule {
     val links = for {
       dep <- ds.resolvedRequiresDS
       if dep.isInstanceOf[SmvModuleLink] &&
-      dep.asInstanceOf[SmvModuleLink].smvModule.parentStage == ds.parentStage
+        dep.asInstanceOf[SmvModuleLink].smvModule.parentStage == ds.parentStage
     } yield dep
 
     toViolation(links)

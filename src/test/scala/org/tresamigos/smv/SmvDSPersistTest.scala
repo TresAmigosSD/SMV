@@ -14,19 +14,22 @@
 
 package org.tresamigos.smv {
 
-class SmvDSPersistTest extends SmvTestUtil {
-  override def appArgs = Seq(
-    "--smv-props",
-    "smv.stages=org.tresamigos.smv.dspersistPkg",
-    "-m", "None",
-    "--data-dir", testcaseTempDir
-  )
+  class SmvDSPersistTest extends SmvTestUtil {
+    override def appArgs = Seq(
+      "--smv-props",
+      "smv.stages=org.tresamigos.smv.dspersistPkg",
+      "-m",
+      "None",
+      "--data-dir",
+      testcaseTempDir
+    )
 
-  test("test read back persisted module with meta data") {
-    val res = app.runModule(org.tresamigos.smv.dspersistPkg.Y.urn)
-    assertUnorderedSeqEqual(res.smvGetDesc(), Seq(("k",""), ("t","the time sequence"), ("v","")))
+    test("test read back persisted module with meta data") {
+      val res = app.runModule(org.tresamigos.smv.dspersistPkg.Y.urn)
+      assertUnorderedSeqEqual(res.smvGetDesc(),
+                              Seq(("k", ""), ("t", "the time sequence"), ("v", "")))
+    }
   }
-}
 
 } //org.tresamigos.smv
 
@@ -36,7 +39,8 @@ package org.tresamigos.smv.dspersistPkg {
   object X extends SmvModule("X") {
     override def requiresDS() = Seq()
     override def run(i: runParams) = {
-      app.createDF("""k:String; t:Integer @metadata={"smvDesc":"the time sequence"}; v:Double""", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+      app.createDF("""k:String; t:Integer @metadata={"smvDesc":"the time sequence"}; v:Double""",
+                   "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
     }
   }
 

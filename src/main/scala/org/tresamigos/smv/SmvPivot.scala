@@ -16,7 +16,8 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions._, codegen.{CodeGenContext,GeneratedExpressionCode}
+import org.apache.spark.sql.catalyst.expressions._,
+codegen.{CodeGenContext, GeneratedExpressionCode}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 
@@ -63,34 +64,38 @@ import org.apache.spark.sql.functions._
  *        function, PivotOp.getBaseOutputColumnNames(df, Seq(pivotCols))
  *        to generate baseOutputColumnNames.
  */
-
-private[smv] case class SmvPivot(
-        pivotColSets: Seq[Seq[String]],
-        valueColPrefixMap: Seq[(String, String)],
-        baseOutputColumnNames: Seq[String]) {
+private[smv] case class SmvPivot(pivotColSets: Seq[Seq[String]],
+                                 valueColPrefixMap: Seq[(String, String)],
+                                 baseOutputColumnNames: Seq[String]) {
   require(!baseOutputColumnNames.isEmpty, "Pivot requires the output column names to be known")
 
   def createSrdd(df: DataFrame, keys: Seq[String]): DataFrame =
-    mapValColsToOutputCols(addSmvPivotValColumn(df), keys.map{k => new ColumnName(k)})
+    mapValColsToOutputCols(addSmvPivotValColumn(df), keys.map { k =>
+      new ColumnName(k)
+    })
 
   private val tempPivotValCol = "_smv_pivot_val"
 
   private val createColName = (prefix: String, baseOutCol: String) => prefix + "_" + baseOutCol
-  private val contains: (Seq[Any], Any) => Boolean = { (a, v) => a.contains(v) }
+  private val contains: (Seq[Any], Any) => Boolean = { (a, v) =>
+    a.contains(v)
+  }
 
-  private val outputColExprs = valueColPrefixMap.map {case (valueCol, prefix) =>
-    //  Zero filling is replaced by Null filling to handle CountDistinct right
-    baseOutputColumnNames.map { outCol =>
-      when(array_contains(new ColumnName(tempPivotValCol), outCol), new ColumnName(valueCol)).
-        otherwise(null) as createColName(prefix, outCol)
-    }
+  private val outputColExprs = valueColPrefixMap.map {
+    case (valueCol, prefix) =>
+      //  Zero filling is replaced by Null filling to handle CountDistinct right
+      baseOutputColumnNames.map { outCol =>
+        when(array_contains(new ColumnName(tempPivotValCol), outCol), new ColumnName(valueCol))
+          .otherwise(null) as createColName(prefix, outCol)
+      }
   }.flatten
 
   def outCols(): Seq[String] = {
-    valueColPrefixMap.map {case (valueCol, prefix) =>
-      baseOutputColumnNames.map { outCol =>
-        createColName(prefix, outCol)
-      }
+    valueColPrefixMap.map {
+      case (valueCol, prefix) =>
+        baseOutputColumnNames.map { outCol =>
+          createColName(prefix, outCol)
+        }
     }.flatten
   }
 
@@ -103,12 +108,14 @@ private[smv] case class SmvPivot(
    * |  1  | Array(5_14_B)   |   300 |
    * |  1  | Array(6_14_B)   |   200 |
    */
-  private[smv] def addSmvPivotValColumn(origDF: DataFrame) : DataFrame = {
+  private[smv] def addSmvPivotValColumn(origDF: DataFrame): DataFrame = {
     import origDF.sqlContext.implicits._
-    val normStr = udf({s:String => SchemaEntry.valueToColumnName(s)})
+    val normStr = udf({ s: String =>
+      SchemaEntry.valueToColumnName(s)
+    })
     val pivotColsExprSets = pivotColSets.map(a => a.map(s => normStr($"$s".cast(StringType))))
 
-    val arrayExp = pivotColsExprSets.map{ pivotColsExpr =>
+    val arrayExp = pivotColsExprSets.map { pivotColsExpr =>
       concat_ws("_", pivotColsExpr: _*)
     }
 
@@ -132,6 +139,7 @@ private[smv] case class SmvPivot(
 }
 
 private[smv] object SmvPivot {
+
   /**
    * Extract the column names from the data.
    * This is done by gettting the ditinct values of concated pivot columns.
@@ -153,13 +161,23 @@ private[smv] object SmvPivot {
    *
    * TODO: Add a java log warning message
    */
-  private[smv] def getBaseOutputColumnNames(df: DataFrame, pivotColsSets: Seq[Seq[String]]): Seq[String] = {
+  private[smv] def getBaseOutputColumnNames(df: DataFrame,
+                                            pivotColsSets: Seq[Seq[String]]): Seq[String] = {
     // create set of distinct values.
     // this is a seq of array strings where each array is distinct values for a column.
-    val normStr = udf({s:String => SchemaEntry.valueToColumnName(s)})
-    pivotColsSets.map{ pivotCols =>
-      val colNames = df.select(smvStrCat("_", pivotCols.map{s => normStr(df(s).cast(StringType))}: _*)).
-        distinct.collect.map{r => r(0).toString}
+    val normStr = udf({ s: String =>
+      SchemaEntry.valueToColumnName(s)
+    })
+    pivotColsSets.map { pivotCols =>
+      val colNames = df
+        .select(smvStrCat("_", pivotCols.map { s =>
+          normStr(df(s).cast(StringType))
+        }: _*))
+        .distinct
+        .collect
+        .map { r =>
+          r(0).toString
+        }
 
       // ensure result column name is made up of valid characters.
       colNames.map(c => SchemaEntry.valueToColumnName(c)).sorted

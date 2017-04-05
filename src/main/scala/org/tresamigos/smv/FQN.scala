@@ -15,11 +15,12 @@
 package org.tresamigos.smv
 
 private[smv] object FQN {
+
   /**
    * extract the basename of a given FQN.
    * For example: "a.b.c" --> "c"
    */
-  def extractBaseName(fqn: String) : String = fqn.substring(fqn.lastIndexOf('.') + 1)
+  def extractBaseName(fqn: String): String = fqn.substring(fqn.lastIndexOf('.') + 1)
 
   /**
    * Remove package name from a given FQN.
@@ -29,6 +30,7 @@ private[smv] object FQN {
     val prefix = pkg + "."
     fqn.startsWith(prefix) match {
       case true => fqn.substring(prefix.length, fqn.length)
+
       /** if the given prefix is not really a prefix, return the full string back */
       case false => fqn
       //case false => throw new IllegalArgumentException(s"${prefix} is not a prefix of ${fqn}")
@@ -38,9 +40,9 @@ private[smv] object FQN {
   /** Find common prefix FQN from a Seq of FQNs */
   def sharedPrefix(fqns: Seq[String]): String = {
     if (fqns.isEmpty) ""
-    else fqns.reduce{(l,r) =>
-        (l.split('.') zip r.split('.')).
-          collect{ case (a, b) if (a==b) => a}.mkString(".")
+    else
+      fqns.reduce { (l, r) =>
+        (l.split('.') zip r.split('.')).collect { case (a, b) if (a == b) => a }.mkString(".")
       }
   }
 }
