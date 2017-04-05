@@ -62,13 +62,13 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
     else
       SparkTestUtil.setLoggingLevel(Level.ERROR)
 
-    _hiveContext = SmvTestHive.createSession(null)
+    _hiveContext = SmvTestHive.createContext(null)
     sqlContext.setConf("spark.sql.shuffle.partitions", "4")
     resetTestcaseTempDir()
   }
 
   override def afterAll() = {
-    SmvTestHive.destroySession()
+    SmvTestHive.destroyContext()
     _hiveContext = null
     System.clearProperty("spark.master.port")
     // re-enable normal logging for next test if we disabled logging here.
