@@ -23,12 +23,12 @@ import org.apache.spark.sql.hive.test.TestHive
 import org.scalatest._
 
 trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
-  var sc: SparkContext = _
+  var sc: SparkContext       = _
   var sqlContext: SQLContext = _
 
   def disableLogging = false
 
-  def name() = this.getClass().getName().filterNot(_=='$')
+  def name() = this.getClass().getName().filterNot(_ == '$')
 
   /** top of data dir to be used by tests.  For per testcase temp directory, use testcaseTempDir instead */
   final val testDataDir = {
@@ -83,7 +83,6 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
     }
   }
    **/
-
   /** name of a scratch test directory specific to this test case. */
   def testcaseTempDir = testDataDir + this.getClass.getName
 
@@ -96,7 +95,7 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
   /** create a temp file in the test case temp dir with the given contents. */
   def createTempFile(baseName: String, fileContents: String = "xxx"): File = {
     val outFile = new File(testcaseTempDir, baseName)
-    val pw = new PrintWriter(outFile)
+    val pw      = new PrintWriter(outFile)
     pw.write(fileContents)
     pw.close
     outFile
@@ -109,15 +108,18 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
   def assertDoubleSeqEqual(resultSeq: Seq[Any], expectSeq: Seq[Double], epsilon: Double = 0.01) {
     import java.lang.Math.abs
     assert(resultSeq.length === expectSeq.length)
-    resultSeq.map {
-      case d: Double => d
-      case i: Int => i.toDouble
-      case l: Long => l.toDouble
-      case f: Float => f.toDouble
-      case _ => Double.MinValue
-    }.zip(expectSeq).foreach {
-      case (a, b) => assert(abs(a - b) < epsilon, s"because array element $a not equal $b")
-    }
+    resultSeq
+      .map {
+        case d: Double => d
+        case i: Int    => i.toDouble
+        case l: Long   => l.toDouble
+        case f: Float  => f.toDouble
+        case _         => Double.MinValue
+      }
+      .zip(expectSeq)
+      .foreach {
+        case (a, b) => assert(abs(a - b) < epsilon, s"because array element $a not equal $b")
+      }
   }
 
   /**
@@ -140,14 +142,17 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
    * The order of the result strings is not important.
    */
   def assertSrddDataEqual(df: DataFrame, expectedRes: String) = {
-    val resLines = df.collect.map(_.toString.stripPrefix("[").stripSuffix("]"))
+    val resLines      = df.collect.map(_.toString.stripPrefix("[").stripSuffix("]"))
     val expectedLines = expectedRes.split(";").map(_.trim)
     assertUnorderedSeqEqual(resLines, expectedLines)
   }
 
   def assertDataFramesEqual(df1: DataFrame, df2: DataFrame) = {
-    var mergedDF = (df1.collect,df2.collect).zipped
-    assert(mergedDF.flatMap((r1,r2) => (r1.toSeq,r2.toSeq).zipped.map( (f1,f2) => (f1 == f2) ) ).reduce(_&&_))
+    var mergedDF = (df1.collect, df2.collect).zipped
+    assert(
+      mergedDF
+        .flatMap((r1, r2) => (r1.toSeq, r2.toSeq).zipped.map((f1, f2) => (f1 == f2)))
+        .reduce(_ && _))
   }
 
   /**
@@ -172,6 +177,7 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
     def rmsp(s: String) = """[ \t]+""".r.replaceAllIn(s, "")
     assert(rmsp(s1) === rmsp(s2))
   }
+
   /**
    * Verify that the contents of the file at the given path equal the expected contents.
    */
@@ -181,7 +187,7 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
   }
 
   def assertTextContains(text: String, expContent: String) = {
-    expContent.split('\n').foreach{l =>
+    expContent.split('\n').foreach { l =>
       assert(text.split('\n').contains(l), s"${l} is not in the text")
     }
   }
@@ -210,8 +216,10 @@ trait SmvTestUtil extends SparkTestUtil {
 
   /** appArgs could be overridden by concrete class to initiate SmvApp.app as required */
   def appArgs: Seq[String] = Seq(
-    "-m", "None",
-    "--data-dir", testcaseTempDir
+    "-m",
+    "None",
+    "--data-dir",
+    testcaseTempDir
   )
   var app: SmvApp = _
 
@@ -226,7 +234,7 @@ trait SmvTestUtil extends SparkTestUtil {
     super.afterAll()
   }
 
-  def open(path: String) ={
+  def open(path: String) = {
     val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv)
     file.rdd
   }

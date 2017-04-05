@@ -71,21 +71,27 @@ case class DQMRule(
     rule: Column,
     ruleName: String = null,
     taskPolicy: DQMTaskPolicy = FailNone
-  ) extends DQMTask {
+) extends DQMTask {
 
   val name = if (ruleName == null) rule.toString else ruleName
 
   private[smv] def createCheckCol(dqmState: DQMState): (Column, Column, Column) = {
-    val refCols = rule.toExpr.references.toSeq.map{r => r.name}
-    val catCols = refCols.flatMap{r => Seq(lit(s"$r="), new Column(r), lit(","))}.dropRight(1)
+    val refCols = rule.toExpr.references.toSeq.map { r =>
+      r.name
+    }
+    val catCols = refCols
+      .flatMap { r =>
+        Seq(lit(s"$r="), new Column(r), lit(","))
+      }
+      .dropRight(1)
 
     val logColName = s"${name}_log"
     /* Will log references columns for each rule */
     val logCol = smvStrCat(catCols: _*).as(logColName)
 
     val _name = name
-    val filterUdf = udf({(c: Boolean, logStr: String) =>
-      if(!c) dqmState.addRuleRec(_name, logStr)
+    val filterUdf = udf({ (c: Boolean, logStr: String) =>
+      if (!c) dqmState.addRuleRec(_name, logStr)
       c
     })
 
@@ -109,7 +115,7 @@ case class DQMFix(
     fix: Column,
     fixName: String = null,
     taskPolicy: DQMTaskPolicy = FailNone
-  ) extends DQMTask {
+) extends DQMTask {
 
   val name = if (fixName == null) s"if(${condition}) ${fix}" else fixName
 
@@ -121,10 +127,10 @@ case class DQMFix(
 
   private[smv] def createFixCol(dqmState: DQMState) = {
     val _name = name
-    val checkUdf = udf({c: Boolean =>
-      if(c) dqmState.addFixRec(_name)
+    val checkUdf = udf({ c: Boolean =>
+      if (c) dqmState.addFixRec(_name)
       c
     })
-    when(checkUdf(condition),  new Column(fixExpr)).otherwise(new Column(toBeFixed)) as toBeFixed
+    when(checkUdf(condition), new Column(fixExpr)).otherwise(new Column(toBeFixed)) as toBeFixed
   }
 }

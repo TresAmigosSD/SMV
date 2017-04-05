@@ -14,55 +14,54 @@
 
 package org.tresamigos.smv
 
-
 private[smv] object StringConversionUtil {
-  val IntThreshold: Int = Math.ceil(Int.MaxValue / 1.5).toInt
+  val IntThreshold: Int     = Math.ceil(Int.MaxValue / 1.5).toInt
   val FloatThreshold: Float = Float.MaxValue / 1.5f
 
-  def canConvertToInt(str: String) : Boolean =  {
+  def canConvertToInt(str: String): Boolean = {
     try {
       str.toInt < IntThreshold
     } catch {
-      case _ : Exception => false
+      case _: Exception => false
     }
   }
 
-  def canConvertToLong(str: String) : Boolean =  {
+  def canConvertToLong(str: String): Boolean = {
     try {
       str.toLong
       true
     } catch {
-      case _ : Exception => false
+      case _: Exception => false
     }
   }
 
-  def canConvertToFloat(str: String) : Boolean =  {
+  def canConvertToFloat(str: String): Boolean = {
     try {
       str.toFloat < FloatThreshold
     } catch {
-      case _ : Exception => false
+      case _: Exception => false
     }
   }
 
-  def canConvertToDouble(str: String) : Boolean =  {
+  def canConvertToDouble(str: String): Boolean = {
     try {
       str.toDouble
       true
     } catch {
-      case _ : Exception => false
+      case _: Exception => false
     }
   }
 
-  def canConvertToBoolean(str: String) : Boolean =  {
+  def canConvertToBoolean(str: String): Boolean = {
     try {
       str.toBoolean
       true
     } catch {
-      case _ : Exception => false
+      case _: Exception => false
     }
   }
 
-  def canConvertToDate(str: String, fmt: String) : Boolean = {
+  def canConvertToDate(str: String, fmt: String): Boolean = {
 
     try {
       val fmtObj = new java.text.SimpleDateFormat(fmt)
@@ -70,7 +69,7 @@ private[smv] object StringConversionUtil {
       fmtObj.parse(str)
       true
     } catch {
-      case _ : Exception => false
+      case _: Exception => false
     }
   }
 }

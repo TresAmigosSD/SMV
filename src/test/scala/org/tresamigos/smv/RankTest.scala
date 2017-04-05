@@ -18,8 +18,7 @@ class RankTest extends SmvTestUtil {
 
   test("Test the SmvRank function") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("k:Integer; v:String;",
-      """1,B; 2,C; 3,E; 4,D; 5,A""")
+    val df  = dfFrom("k:Integer; v:String;", """1,B; 2,C; 3,E; 4,D; 5,A""")
 
     val res = df.orderBy('v.asc).smvRank("rank", 100)
     assertSrddDataEqual(res, "5,A,100; 1,B,101; 2,C,102; 4,D,103; 3,E,104")

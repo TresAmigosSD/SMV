@@ -16,8 +16,7 @@ package org.tresamigos.smv
 
 class SmvPackageTest extends SmvUnitSpec {
   "urn2fqn" should "be an idempotent operation" in {
-    Seq(("mod:a.b.c", "a.b.c"), ("link:x.y", "x.y"),
-      ("bad:bad:bad:actor.in.ns", "actor.in.ns")) foreach {
+    Seq(("mod:a.b.c", "a.b.c"), ("link:x.y", "x.y"), ("bad:bad:bad:actor.in.ns", "actor.in.ns")) foreach {
       case (urn, fqn) =>
         urn2fqn(urn) shouldBe fqn
         urn2fqn(urn2fqn(urn)) shouldBe urn2fqn(urn)

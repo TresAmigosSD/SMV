@@ -17,10 +17,13 @@ package org.tresamigos.smv
 import java.io.File
 
 class SmvFileTest extends SmvTestUtil {
-  override   def appArgs: Seq[String] = Seq(
-    "-m", "None",
-    "--data-dir", testcaseTempDir,
-    "--input-dir", s"${testcaseTempDir}/input"
+  override def appArgs: Seq[String] = Seq(
+    "-m",
+    "None",
+    "--data-dir",
+    testcaseTempDir,
+    "--input-dir",
+    s"${testcaseTempDir}/input"
   )
 
   test("test SmvFile full path") {
@@ -41,7 +44,7 @@ class SmvFileTest extends SmvTestUtil {
     assertSrddDataEqual(res2, "a")
   }
 
-  test("test SmvModuleLink can link to an SmvFile"){
+  test("test SmvModuleLink can link to an SmvFile") {
     resetTestcaseTempDir()
 
     new File(testcaseTempDir, "input").mkdir()
@@ -53,7 +56,7 @@ class SmvFileTest extends SmvTestUtil {
     object Link1 extends SmvModuleLink(File3)
   }
 
-  test("read dir using SmvMultiCsvFiles"){
+  test("read dir using SmvMultiCsvFiles") {
     resetTestcaseTempDir()
 
     new File(testcaseTempDir, "input").mkdir()

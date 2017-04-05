@@ -24,24 +24,25 @@ import scala.util.{Try, Success, Failure}
  * Custom "network" class loader that enable the loading of modified class files
  * without the need to rebuild the app.
  */
-private[smv]
-case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: ClassLoader)
-  extends ClassLoader(parentClassLoader) {
+private[smv] case class SmvClassLoader(val classFinder: ClassFinder,
+                                       val parentClassLoader: ClassLoader)
+    extends ClassLoader(parentClassLoader) {
+
   /**
    * Override the default loadClass behaviour to check the local class directory
    * first. We can't check parent first because spark is usually run with the app
    * fat jar which will have all the modules defined in it.
    */
-  override def loadClass(classFQN: String) : Class[_] = {
-    var c : Class[_] = null
+  override def loadClass(classFQN: String): Class[_] = {
+    var c: Class[_] = null
 
     getClassLoadingLock(classFQN).synchronized {
       // see if we have a cached copy in the JVM
       c = findLoadedClass(classFQN)
 
       if (c == null) {
-        c = Try( findClass(classFQN) ) match {
-          case Success(cl: Class[_]) => cl
+        c = Try(findClass(classFQN)) match {
+          case Success(cl: Class[_])              => cl
           case Failure(e: ClassNotFoundException) => null
         }
       }
@@ -57,13 +58,13 @@ case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: C
   /**
    * Override the default findClass in ClassLoader to load the class using the class loader client.
    */
-  override def findClass(classFQN: String) : Class[_] = {
+  override def findClass(classFQN: String): Class[_] = {
     val klassBytes = getClassBytes(classFQN)
-    val klass = defineClass(classFQN, klassBytes, 0, klassBytes.length)
+    val klass      = defineClass(classFQN, klassBytes, 0, klassBytes.length)
     klass
   }
 
-  private def getClassBytes(classFQN: String) : Array[Byte] = {
+  private def getClassBytes(classFQN: String): Array[Byte] = {
     val b = classFinder.getClassBytes(classFQN)
     if (b == null)
       throw new ClassNotFoundException("SmvClassLoader class not found: " + classFQN)
@@ -73,12 +74,12 @@ case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: C
   /**
    * Get resource as a byte input stream.
    */
-  override def getResourceAsStream (name: String) : InputStream = {
+  override def getResourceAsStream(name: String): InputStream = {
     val bytes = getResourceBytes(name)
     new ByteArrayInputStream(bytes)
   }
 
-  private def getResourceBytes(resourcePath: String) : Array[Byte] = {
+  private def getResourceBytes(resourcePath: String): Array[Byte] = {
     val b = classFinder.getResourceBytes(resourcePath)
     if (b == null)
       throw new ClassNotFoundException("SmvClassLoader resource not found: " + resourcePath)
@@ -86,11 +87,11 @@ case class SmvClassLoader(val classFinder: ClassFinder, val parentClassLoader: C
   }
 }
 
-private[smv]
-object SmvClassLoader {
-  def apply(smvConfig: SmvConfig, parentClassLoader: ClassLoader = getClass.getClassLoader) : ClassLoader = {
+private[smv] object SmvClassLoader {
+  def apply(smvConfig: SmvConfig,
+            parentClassLoader: ClassLoader = getClass.getClassLoader): ClassLoader = {
     val classDir = smvConfig.classDir
-    if (! classDir.isEmpty) {
+    if (!classDir.isEmpty) {
       // network class loader with local client connection
       new SmvClassLoader(ClassFinder(classDir), parentClassLoader)
     } else {
