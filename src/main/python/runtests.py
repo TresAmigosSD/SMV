@@ -45,12 +45,19 @@ class TestConfig(object):
                   .set("spark.ui.enabled", "false")
             sc = SparkContext(master="local[1]", appName="SMV Python Test", conf=sConf, gateway=jgw).getOrCreate()
             jss = sc._jvm.org.apache.spark.sql.hive.test.SmvTestHive.createSession(sc._jsc.sc())
-            cls.spark = SparkSession(sc, jss)
+            cls.spark = SparkSession(sc, jss.sparkSession())
         return cls.spark
 
     @classmethod
     def sparkContext(cls):
         return cls.sparkSession().sparkContext
+
+
+    @classmethod
+    def tearDown(cls):
+        cls.sparkContext()._jvm.org.apache.spark.sql.hive.test.SmvTestHive.destroySession()
+        cls.spark.stop()
+        del cls.spark
 
 if __name__ == "__main__":
     print("Testing with Python " + sys.version)
