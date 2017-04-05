@@ -23,10 +23,7 @@ class FrlTest extends SmvTestUtil {
     val res = file.rdd
 
     assertSrddSchemaEqual(res, "id: String; v: String")
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[12,34]",
-      "[23,45]",
-      "[12,00]",
-      "[qa,da]"))
+    assertUnorderedSeqEqual(res.collect.map(_.toString),
+                            Seq("[12,34]", "[23,45]", "[12,00]", "[qa,da]"))
   }
 }

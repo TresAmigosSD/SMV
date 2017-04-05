@@ -13,8 +13,8 @@ val sparkVersion = "2.1.0"
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
   "org.apache.spark" %% "spark-hive" % sparkVersion % "provided",
-  "org.tresamigos" %% "smv" % "2.1-SNAPSHOT",
-  "org.scalatest" %% "scalatest" % "2.2.6" % "test"
+  "org.tresamigos"   %% "smv"        % "2.1-SNAPSHOT",
+  "org.scalatest"    %% "scalatest"  % "2.2.6" % "test"
 )
 
 parallelExecution in Test := false
@@ -30,9 +30,13 @@ assemblyJarName in assembly := s"${name.value}-${version.value}-jar-with-depende
 cancelable in Global := true
 
 val smvInit = if (sys.props.contains("smvInit")) {
-    val files = sys.props.get("smvInit").get.split(",")
-    files.map{f=> IO.read(new File(f))}.mkString("\n")
-  } else ""
+  val files = sys.props.get("smvInit").get.split(",")
+  files
+    .map { f =>
+      IO.read(new File(f))
+    }
+    .mkString("\n")
+} else ""
 
 initialCommands in console := s"""
 val sc = new org.apache.spark.SparkContext("local", "shell")

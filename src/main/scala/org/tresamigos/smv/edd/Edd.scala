@@ -71,7 +71,9 @@ class Edd(val df: DataFrame, val keys: Seq[String] = Seq()) {
    * Default `sortByFreq`: false (so sort by key)
    **/
   def histogram(colName: String, colNames: String*): EddResultFunctions = {
-    val histCols = (colName +: colNames).map{n => edd.Hist(n)}
+    val histCols = (colName +: colNames).map { n =>
+      edd.Hist(n)
+    }
     histogram(histCols: _*)
   }
 
@@ -102,18 +104,35 @@ case class EddResultFunctions(eddRes: DataFrame) {
     import eddRes.sqlContext.implicits._
 
     val cached = eddRes.cache
-    val res = if (cached.columns.contains("groupKey")){
-      val keys = cached.select($"groupKey".cast(StringType)).
-        distinct.collect.map{r => r(0).asInstanceOf[String]}.toSeq.sorted
+    val res = if (cached.columns.contains("groupKey")) {
+      val keys = cached
+        .select($"groupKey".cast(StringType))
+        .distinct
+        .collect
+        .map { r =>
+          r(0).asInstanceOf[String]
+        }
+        .toSeq
+        .sorted
 
       //TODO: implement indentation
-      keys.map{k =>
-        val rows = cached.where($"groupKey" === k).drop("groupKey").rdd.collect
-        s"Group $k:\n" + rows.map{r => EddResult(r).toReport}.mkString("\n")
-      }.mkString("\n")
+      keys
+        .map { k =>
+          val rows = cached.where($"groupKey" === k).drop("groupKey").rdd.collect
+          s"Group $k:\n" + rows
+            .map { r =>
+              EddResult(r).toReport
+            }
+            .mkString("\n")
+        }
+        .mkString("\n")
     } else {
       val rows = cached.rdd.collect
-      rows.map{r => EddResult(r).toReport}.mkString("\n")
+      rows
+        .map { r =>
+          EddResult(r).toReport
+        }
+        .mkString("\n")
     }
     cached.unpersist
     res
@@ -147,7 +166,12 @@ case class EddResultFunctions(eddRes: DataFrame) {
   def compareWith(that: DataFrame): (Boolean, String) = {
     val isGroup = eddRes.columns.contains("groupKey")
 
-    require(that.drop("groupKey").columns.toSeq.toSet == Set("colName", "taskType", "taskName", "taskDesc", "valueJSON"))
+    require(
+      that.drop("groupKey").columns.toSeq.toSet == Set("colName",
+                                                       "taskType",
+                                                       "taskName",
+                                                       "taskDesc",
+                                                       "valueJSON"))
 
     import eddRes.sqlContext.implicits._
 
@@ -161,7 +185,7 @@ case class EddResultFunctions(eddRes: DataFrame) {
       if (thisCnt != thatCnt) {
         (false, Option(s"Edd DFs have different counts: ${thisCnt} vs. ${thatCnt}"))
       } else {
-        val joinCond = if(isGroup) {
+        val joinCond = if (isGroup) {
           (($"groupKey" === "_groupKey") && ($"colName" === $"_colName") && ($"taskType" === $"_taskType") && ($"taskName" === $"_taskName"))
         } else {
           (($"colName" === $"_colName") && ($"taskType" === $"_taskType") && ($"taskName" === $"_taskName"))
@@ -172,27 +196,62 @@ case class EddResultFunctions(eddRes: DataFrame) {
 
         val joinedCnt = joined.count
         val res = if (joinedCnt != thisCnt) {
-          (false, Option(s"Edd DFs are not matched. Joined count: ${joinedCnt}, Original count: ${thisCnt}"))
+          (false,
+           Option(
+             s"Edd DFs are not matched. Joined count: ${joinedCnt}, Original count: ${thisCnt}"))
         } else {
-          val resSeq = if(isGroup) {
-            joined.select($"colName", $"taskType", $"taskName", $"taskDesc", $"valueJSON",
-                          $"_colName", $"_taskType", $"_taskName", $"_taskDesc", $"_valueJSON", $"groupKey".cast(StringType)).
-              rdd.collect.map{r =>
-                val k = r(10).asInstanceOf[String]
-                val e1 = EddResult(Row(r.toSeq.slice(0,5): _*))
-                val e2 = EddResult(Row(r.toSeq.slice(5,10): _*))
-                (e1 == e2, if(e1 == e2) None else Option(s"not equal: Key - ${k}: ${e1.colName}, ${e1.taskType}, ${e1.taskName}, ${e1.taskDesc}"))
+          val resSeq = if (isGroup) {
+            joined
+              .select(
+                $"colName",
+                $"taskType",
+                $"taskName",
+                $"taskDesc",
+                $"valueJSON",
+                $"_colName",
+                $"_taskType",
+                $"_taskName",
+                $"_taskDesc",
+                $"_valueJSON",
+                $"groupKey".cast(StringType)
+              )
+              .rdd
+              .collect
+              .map { r =>
+                val k  = r(10).asInstanceOf[String]
+                val e1 = EddResult(Row(r.toSeq.slice(0, 5): _*))
+                val e2 = EddResult(Row(r.toSeq.slice(5, 10): _*))
+                (e1 == e2,
+                 if (e1 == e2) None
+                 else
+                   Option(
+                     s"not equal: Key - ${k}: ${e1.colName}, ${e1.taskType}, ${e1.taskName}, ${e1.taskDesc}"))
               }
           } else {
-            joined.select($"colName", $"taskType", $"taskName", $"taskDesc", $"valueJSON",
-                          $"_colName", $"_taskType", $"_taskName", $"_taskDesc", $"_valueJSON").
-              rdd.collect.map{r =>
-                val e1 = EddResult(Row(r.toSeq.slice(0,5): _*))
-                val e2 = EddResult(Row(r.toSeq.slice(5,10): _*))
-                (e1 == e2, if(e1 == e2) None else Option(s"not equal: ${e1.colName}, ${e1.taskType}, ${e1.taskName}, ${e1.taskDesc}"))
+            joined
+              .select($"colName",
+                      $"taskType",
+                      $"taskName",
+                      $"taskDesc",
+                      $"valueJSON",
+                      $"_colName",
+                      $"_taskType",
+                      $"_taskName",
+                      $"_taskDesc",
+                      $"_valueJSON")
+              .rdd
+              .collect
+              .map { r =>
+                val e1 = EddResult(Row(r.toSeq.slice(0, 5): _*))
+                val e2 = EddResult(Row(r.toSeq.slice(5, 10): _*))
+                (e1 == e2,
+                 if (e1 == e2) None
+                 else
+                   Option(
+                     s"not equal: ${e1.colName}, ${e1.taskType}, ${e1.taskName}, ${e1.taskDesc}"))
               }
           }
-          (resSeq.map{_._1}.reduce(_ && _), Option(resSeq.flatMap(_._2).mkString("\n")))
+          (resSeq.map { _._1 }.reduce(_ && _), Option(resSeq.flatMap(_._2).mkString("\n")))
         }
         res
       }
@@ -203,7 +262,8 @@ case class EddResultFunctions(eddRes: DataFrame) {
   }
 }
 
-object Edd{
+object Edd {
+
   /**
    * map the data file path to edd path.
    * Ignores ".gz", ".csv", ".tsv" extensions when constructions schema file path.
@@ -211,8 +271,8 @@ object Edd{
    */
   private[smv] def dataPathToEddPath(dataPath: String): String = {
     // remove all known data file extensions from path.
-    val exts = List("gz", "csv", "tsv").map("\\."+_+"$")
-    val dataPathNoExt = exts.foldLeft(dataPath)((s,e) => s.replaceFirst(e,""))
+    val exts          = List("gz", "csv", "tsv").map("\\." + _ + "$")
+    val dataPathNoExt = exts.foldLeft(dataPath)((s, e) => s.replaceFirst(e, ""))
 
     dataPathNoExt + ".edd"
   }

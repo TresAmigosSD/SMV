@@ -47,15 +47,20 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
       List(
         ExactLevelMatcher("First_Name_Match", $"first_name" === $"_first_name"),
-        FuzzyLevelMatcher("Levenshtein_City", null, StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f)
+        FuzzyLevelMatcher("Levenshtein_City",
+                          null,
+                          StringMetricUDFs.levenshtein($"city", $"_city"),
+                          0.9f)
       )
     ).doMatch(createDF1, createDF2)
 
-    assertSrddSchemaEqual(resultDF, "id: String; _id: String; Full_Name_Match: Boolean; First_Name_Match: Boolean; Levenshtein_City: Boolean; Levenshtein_City_Value: Float; MatchBitmap: String")
+    assertSrddSchemaEqual(
+      resultDF,
+      "id: String; _id: String; Full_Name_Match: Boolean; First_Name_Match: Boolean; Levenshtein_City: Boolean; Levenshtein_City_Value: Float; MatchBitmap: String"
+    )
 
-    assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[2,1,true,null,null,null,100]",
-      "[1,3,false,false,true,1.0,001]"))
+    assertUnorderedSeqEqual(resultDF.collect.map(_.toString),
+                            Seq("[2,1,true,null,null,null,100]", "[1,3,false,false,true,1.0,001]"))
   }
 
   test("Main name matcher: only fuzzy level") {
@@ -66,15 +71,21 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       null,
       null,
       List(
-        FuzzyLevelMatcher("Zip_And_Levenshtein_City", $"zip" === $"_zip", StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f)
+        FuzzyLevelMatcher("Zip_And_Levenshtein_City",
+                          $"zip" === $"_zip",
+                          StringMetricUDFs.levenshtein($"city", $"_city"),
+                          0.9f)
       )
     ).doMatch(createDF1, createDF2)
 
-    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; MatchBitmap: String")
+    assertSrddSchemaEqual(
+      resultDF,
+      "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; MatchBitmap: String")
 
-    assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[2,1,true,1.0,1]"
-    ))
+    assertUnorderedSeqEqual(resultDF.collect.map(_.toString),
+                            Seq(
+                              "[2,1,true,1.0,1]"
+                            ))
   }
 
   test("Main name matcher: only exact level") {
@@ -91,10 +102,11 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
 
     assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_Match:Boolean; MatchBitmap:String")
 
-    assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[1,1,true,1]",
-      "[2,1,true,1]"
-    ))
+    assertUnorderedSeqEqual(resultDF.collect.map(_.toString),
+                            Seq(
+                              "[1,1,true,1]",
+                              "[2,1,true,1]"
+                            ))
   }
 
   test("Main name matcher: only exact and fuzzy levels") {
@@ -105,23 +117,31 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       null,
       null,
       List(
-        FuzzyLevelMatcher("Zip_And_Levenshtein_City", $"zip" === $"_zip", StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f),
+        FuzzyLevelMatcher("Zip_And_Levenshtein_City",
+                          $"zip" === $"_zip",
+                          StringMetricUDFs.levenshtein($"city", $"_city"),
+                          0.9f),
         ExactLevelMatcher("Zip_Not_Match", $"zip" =!= $"_zip")
       )
     ).doMatch(createDF1, createDF2)
 
-    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; Zip_Not_Match:Boolean; MatchBitmap:String")
+    assertSrddSchemaEqual(
+      resultDF,
+      "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; Zip_Not_Match:Boolean; MatchBitmap:String")
 
-    assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[1,2,false,0.3,true,01]",
-      "[1,3,false,1.0,true,01]",
-      "[2,1,true,1.0,false,10]",
-      "[3,1,false,0.3,true,01]",
-      "[2,2,false,0.111111104,true,01]",
-      "[2,3,false,0.100000024,true,01]",
-      "[3,2,false,0.100000024,true,01]",
-      "[3,3,false,0.0,true,01]"
-    ))
+    assertUnorderedSeqEqual(
+      resultDF.collect.map(_.toString),
+      Seq(
+        "[1,2,false,0.3,true,01]",
+        "[1,3,false,1.0,true,01]",
+        "[2,1,true,1.0,false,10]",
+        "[3,1,false,0.3,true,01]",
+        "[2,2,false,0.111111104,true,01]",
+        "[2,3,false,0.100000024,true,01]",
+        "[3,2,false,0.100000024,true,01]",
+        "[3,3,false,0.0,true,01]"
+      )
+    )
   }
 
   test("Main name matcher: common + exact & fuzzy") {
@@ -132,18 +152,24 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       null,
       CommonLevelMatcherExpression(StringMetricUDFs.soundexMatch($"first_name", $"_first_name")),
       List(
-        FuzzyLevelMatcher("Zip_And_Levenshtein_City", $"zip" === $"_zip", StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f),
+        FuzzyLevelMatcher("Zip_And_Levenshtein_City",
+                          $"zip" === $"_zip",
+                          StringMetricUDFs.levenshtein($"city", $"_city"),
+                          0.9f),
         ExactLevelMatcher("Zip_Not_Match", $"zip" =!= $"_zip")
       )
     ).doMatch(createDF1, createDF2)
 
-    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; Zip_Not_Match:Boolean; MatchBitmap:String")
+    assertSrddSchemaEqual(
+      resultDF,
+      "id:String; _id:String; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; Zip_Not_Match:Boolean; MatchBitmap:String")
 
-    assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[1,3,false,1.0,true,01]",
-      "[2,1,true,1.0,false,10]",
-      "[3,3,false,0.0,true,01]"
-    ))
+    assertUnorderedSeqEqual(resultDF.collect.map(_.toString),
+                            Seq(
+                              "[1,3,false,1.0,true,01]",
+                              "[2,1,true,1.0,false,10]",
+                              "[3,3,false,0.0,true,01]"
+                            ))
   }
 
   test("Main name matcher: filter + exact & fuzzy") {
@@ -154,21 +180,30 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
       ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name"),
       null,
       List(
-        FuzzyLevelMatcher("Zip_And_Levenshtein_City", $"zip" === $"_zip", StringMetricUDFs.levenshtein($"city",$"_city"), 0.9f),
+        FuzzyLevelMatcher("Zip_And_Levenshtein_City",
+                          $"zip" === $"_zip",
+                          StringMetricUDFs.levenshtein($"city", $"_city"),
+                          0.9f),
         ExactLevelMatcher("Zip_Not_Match", $"zip" =!= $"_zip")
       )
     ).doMatch(createDF1, createDF2)
 
-    assertSrddSchemaEqual(resultDF, "id:String; _id:String; Full_Name_Match:Boolean; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; " +
-      "Zip_Not_Match:Boolean; MatchBitmap:String")
+    assertSrddSchemaEqual(
+      resultDF,
+      "id:String; _id:String; Full_Name_Match:Boolean; Zip_And_Levenshtein_City:Boolean; Zip_And_Levenshtein_City_Value: Float; " +
+        "Zip_Not_Match:Boolean; MatchBitmap:String"
+    )
 
-    assertUnorderedSeqEqual(resultDF.collect.map(_.toString), Seq(
-      "[2,1,true,null,null,null,100]",
-      "[1,2,false,false,0.3,true,001]",
-      "[1,3,false,false,1.0,true,001]",
-      "[3,2,false,false,0.100000024,true,001]",
-      "[3,3,false,false,0.0,true,001]"
-    ))
+    assertUnorderedSeqEqual(
+      resultDF.collect.map(_.toString),
+      Seq(
+        "[2,1,true,null,null,null,100]",
+        "[1,2,false,false,0.3,true,001]",
+        "[1,3,false,false,1.0,true,001]",
+        "[3,2,false,false,0.100000024,true,001]",
+        "[3,3,false,false,0.0,true,001]"
+      )
+    )
   }
 
 }
@@ -180,25 +215,36 @@ class ExactMatchFilterTest extends NameMatcherTestFixture {
 
     val (df1, df2) = dfPair
 
-    val emf = ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name")
+    val emf    = ExactMatchFilter("Full_Name_Match", $"full_name" === $"_full_name")
     val result = emf.extract(df1, df2)
 
-    assertSrddSchemaEqual(result.remainingDF1, "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String")
-    assertUnorderedSeqEqual(result.remainingDF1.collect.map(_.toString), Seq(
-      "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson]",
-      "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington]"
-    ) )
+    assertSrddSchemaEqual(
+      result.remainingDF1,
+      "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String")
+    assertUnorderedSeqEqual(
+      result.remainingDF1.collect.map(_.toString),
+      Seq(
+        "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson]",
+        "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington]"
+      )
+    )
 
-    assertSrddSchemaEqual(result.remainingDF2, "_id:String; _first_name:String; _last_name:String; _address:String; _city:String; _state:String; _zip:String; _full_name:String")
-    assertUnorderedSeqEqual(result.remainingDF2.collect.map(_.toString), Seq(
-      "[2,Alice,Kramden,328 Chauncey Street,Brooklyn,NY,11233,Alice Kramden]",
-      "[3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson]"
-    ) )
+    assertSrddSchemaEqual(
+      result.remainingDF2,
+      "_id:String; _first_name:String; _last_name:String; _address:String; _city:String; _state:String; _zip:String; _full_name:String")
+    assertUnorderedSeqEqual(
+      result.remainingDF2.collect.map(_.toString),
+      Seq(
+        "[2,Alice,Kramden,328 Chauncey Street,Brooklyn,NY,11233,Alice Kramden]",
+        "[3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson]"
+      )
+    )
 
     assertSrddSchemaEqual(result.extracted, "id:String; _id:String")
-    assertUnorderedSeqEqual(result.extracted.collect.map(_.toString), Seq(
-      "[2,1]"
-    ) )
+    assertUnorderedSeqEqual(result.extracted.collect.map(_.toString),
+                            Seq(
+                              "[2,1]"
+                            ))
   }
 }
 
@@ -208,7 +254,10 @@ class FuzzyLevelMatcherTest extends NameMatcherTestFixture {
     import df1.sqlContext.implicits._
 
     val colName = "Result"
-    val target = FuzzyLevelMatcher(colName, null, StringMetricUDFs.levenshtein($"first_name", $"full_name"), 0.5f)
+    val target = FuzzyLevelMatcher(colName,
+                                   null,
+                                   StringMetricUDFs.levenshtein($"first_name", $"full_name"),
+                                   0.5f)
 
     // verify column name functions
     target.getMatchColName shouldBe colName
@@ -220,17 +269,26 @@ class FuzzyLevelMatcherTest extends NameMatcherTestFixture {
     import df1.sqlContext.implicits._
 
     val colName = "Result"
-    val target = FuzzyLevelMatcher(colName, null, StringMetricUDFs.levenshtein($"first_name", $"full_name"), 0.5f)
+    val target = FuzzyLevelMatcher(colName,
+                                   null,
+                                   StringMetricUDFs.levenshtein($"first_name", $"full_name"),
+                                   0.5f)
     val res = target.addCols(df1)
 
-    assertSrddSchemaEqual(res, "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String; " +
-      target.getMatchColName + ":Boolean; " + target.valueColName + ":Float" )
+    assertSrddSchemaEqual(
+      res,
+      "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String; " +
+        target.getMatchColName + ":Boolean; " + target.valueColName + ":Float"
+    )
 
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,false,0.46153843]",
-      "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,false,0.26666665]",
-      "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,false,0.35294116]"
-    ) )
+    assertUnorderedSeqEqual(
+      res.collect.map(_.toString),
+      Seq(
+        "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,false,0.46153843]",
+        "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,false,0.26666665]",
+        "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,false,0.35294116]"
+      )
+    )
 
   }
 
@@ -241,7 +299,10 @@ class FuzzyLevelMatcherTest extends NameMatcherTestFixture {
     val colName = "Result"
 
     val e = intercept[IllegalArgumentException] {
-      FuzzyLevelMatcher(colName, StringMetricUDFs.soundexMatch($"first_name", $"full_name"), null, 0f)
+      FuzzyLevelMatcher(colName,
+                        StringMetricUDFs.soundexMatch($"first_name", $"full_name"),
+                        null,
+                        0f)
     }
 
     assert(e.getMessage === "requirement failed")
@@ -252,17 +313,26 @@ class FuzzyLevelMatcherTest extends NameMatcherTestFixture {
     import df1.sqlContext.implicits._
 
     val colName = "Result"
-    val target = FuzzyLevelMatcher(colName, StringMetricUDFs.soundexMatch($"first_name", $"full_name"), StringMetricUDFs.levenshtein($"first_name", $"full_name"), 0.5f)
+    val target = FuzzyLevelMatcher(colName,
+                                   StringMetricUDFs.soundexMatch($"first_name", $"full_name"),
+                                   StringMetricUDFs.levenshtein($"first_name", $"full_name"),
+                                   0.5f)
     val res = target.addCols(df1)
 
-    assertSrddSchemaEqual(res, "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String; " +
-      target.getMatchColName + ":Boolean; " + target.valueColName + ":Float" )
+    assertSrddSchemaEqual(
+      res,
+      "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String; " +
+        target.getMatchColName + ":Boolean; " + target.valueColName + ":Float"
+    )
 
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,false,0.46153843]",
-      "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,false,0.26666665]",
-      "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,false,0.35294116]"
-    ) )
+    assertUnorderedSeqEqual(
+      res.collect.map(_.toString),
+      Seq(
+        "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,false,0.46153843]",
+        "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,false,0.26666665]",
+        "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,false,0.35294116]"
+      )
+    )
 
   }
 
@@ -280,7 +350,7 @@ class NoOpExactMatchFilterTest extends NameMatcherTestFixture {
 
     assertSrddSchemaEqual(ex, "id:String; _id:String")
 
-    assertUnorderedSeqEqual(ex.collect.map(_.toString), Seq() )
+    assertUnorderedSeqEqual(ex.collect.map(_.toString), Seq())
 
   }
 }
@@ -294,19 +364,25 @@ class CommonLevelMatcherNoneTest extends NameMatcherTestFixture {
 
     val res = CommonLevelMatcherNone.join(df1, df2)
 
-    assertSrddSchemaEqual(res, "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String; id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String")
+    assertSrddSchemaEqual(
+      res,
+      "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String; id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String"
+    )
 
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,1,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone]",
-      "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,2,Alice,Kramden,328 Chauncey Street,Brooklyn,NY,11233,Alice Kramden]",
-      "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson]",
-      "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,1,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone]",
-      "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,2,Alice,Kramden,328 Chauncey Street,Brooklyn,NY,11233,Alice Kramden]",
-      "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson]",
-      "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,1,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone]",
-      "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,2,Alice,Kramden,328 Chauncey Street,Brooklyn,NY,11233,Alice Kramden]",
-      "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson]"
-    ) )
+    assertUnorderedSeqEqual(
+      res.collect.map(_.toString),
+      Seq(
+        "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,1,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone]",
+        "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,2,Alice,Kramden,328 Chauncey Street,Brooklyn,NY,11233,Alice Kramden]",
+        "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson]",
+        "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,1,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone]",
+        "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,2,Alice,Kramden,328 Chauncey Street,Brooklyn,NY,11233,Alice Kramden]",
+        "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson]",
+        "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,1,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone]",
+        "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,2,Alice,Kramden,328 Chauncey Street,Brooklyn,NY,11233,Alice Kramden]",
+        "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson]"
+      )
+    )
 
   }
 }
@@ -317,18 +393,24 @@ class ExactLevelMatcherTest extends NameMatcherTestFixture {
     import df1.sqlContext.implicits._
 
     val colName = "Result"
-    val target = ExactLevelMatcher(colName, $"id" % 2 cast BooleanType as "c")
+    val target  = ExactLevelMatcher(colName, $"id" % 2 cast BooleanType as "c")
 
     val res = target.addCols(df1)
 
-    assertSrddSchemaEqual(res, "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String; " +
-      target.getMatchColName + ":Boolean")
+    assertSrddSchemaEqual(
+      res,
+      "id:String; first_name:String; last_name:String; address:String; city:String; state:String; zip:String; full_name:String; " +
+        target.getMatchColName + ":Boolean"
+    )
 
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,true]",
-      "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,false]",
-      "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,true]"
-    ) )
+    assertUnorderedSeqEqual(
+      res.collect.map(_.toString),
+      Seq(
+        "[1,George,Jetson,100 Skyway Drive,Metropolis,CA,90210,George Jetson,true]",
+        "[2,Fred,Flintsone,900 Rockaway Road,Pebbleton,CA,90210,Fred Flintstone,false]",
+        "[3,George,Washington,1600 Pennsylvania Avenue,Washington,DC,20006,George Washington,true]"
+      )
+    )
 
   }
 

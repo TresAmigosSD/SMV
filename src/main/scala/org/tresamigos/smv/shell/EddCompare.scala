@@ -20,33 +20,45 @@ import org.apache.spark.annotation._
 /**
  * Provides list functions for a SmvStage or SmvStages
  **/
- @Experimental
+@Experimental
 object EddCompare {
   private def readEddFile(path: String) = SmvApp.app.sqlContext.read.json(path)
-  def compareFiles(f1: String, f2: String) = EddResultFunctions(readEddFile(f1)).compareWith(readEddFile(f2))
+  def compareFiles(f1: String, f2: String) =
+    EddResultFunctions(readEddFile(f1)).compareWith(readEddFile(f2))
 
   def compareDirs(d1: String, d2: String) = {
-    val dir1Files = SmvHDFS.dirList(d1).filter{f => f.endsWith(".edd")}.sorted
-    val dir2Files = SmvHDFS.dirList(d2).filter{f => f.endsWith(".edd")}.sorted
+    val dir1Files = SmvHDFS
+      .dirList(d1)
+      .filter { f =>
+        f.endsWith(".edd")
+      }
+      .sorted
+    val dir2Files = SmvHDFS
+      .dirList(d2)
+      .filter { f =>
+        f.endsWith(".edd")
+      }
+      .sorted
 
     require(dir1Files == dir2Files)
 
-    dir1Files.map{fname => 
-      val f1 = s"${d1}/${fname}"
-      val f2 = s"${d2}/${fname}"
-      val title = s"Comparing ${fname} in ${d1} and ${d2}"
+    dir1Files.map { fname =>
+      val f1          = s"${d1}/${fname}"
+      val f2          = s"${d2}/${fname}"
+      val title       = s"Comparing ${fname} in ${d1} and ${d2}"
       val (pass, log) = compareFiles(f1, f2)
       (title, pass, log)
     }
   }
 
   def compareDirsReport(d1: String, d2: String) = {
-    compareDirs(d1, d2).foreach{case (title, pass, log) => 
-      println(title)
-      if (!pass) {
-        println("EDDs do not match")
-        println(log)
-      }
+    compareDirs(d1, d2).foreach {
+      case (title, pass, log) =>
+        println(title)
+        if (!pass) {
+          println("EDDs do not match")
+          println(log)
+        }
     }
   }
 }

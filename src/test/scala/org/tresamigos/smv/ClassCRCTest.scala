@@ -27,13 +27,13 @@ class ClassCRCTest extends FunSuite with Matchers {
 
   val ScalaBinaryVersion: String = {
     val PreReleasePattern = """.*-(M|RC).*""".r
-    val Pattern = """(\d+\.\d+)\..*""".r
-    val SnapshotPattern = """(\d+\.\d+\.\d+)-\d+-\d+-.*""".r
+    val Pattern           = """(\d+\.\d+)\..*""".r
+    val SnapshotPattern   = """(\d+\.\d+\.\d+)-\d+-\d+-.*""".r
     scala.util.Properties.versionNumberString match {
       case s @ PreReleasePattern(_) => s
-      case SnapshotPattern(v) => v + "-SNAPSHOT"
-      case Pattern(v) => v
-      case _          => ""
+      case SnapshotPattern(v)       => v + "-SNAPSHOT"
+      case Pattern(v)               => v
+      case _                        => ""
     }
   }
 
@@ -81,8 +81,8 @@ class ClassCRCTest extends FunSuite with Matchers {
   // temporarily ignore the 2 tests
   ignore("Adding comments to source code should not change bytecode checksum") {
     val crc1 = """object crc_1 {
-    |  def run: Int = 1
-    |}""".stripMargin
+                 |  def run: Int = 1
+                 |}""".stripMargin
 
     val crc2 = "// adding comments should not change checksum\n" + crc1
 
@@ -98,7 +98,8 @@ class ClassCRCTest extends FunSuite with Matchers {
     val compiler = mkGlobal()
     new compiler.Run().compileSources(List(new BatchSourceFile("source.scala", scalaCode)))
     if (compiler.reporter.hasErrors) {
-      throw new RuntimeException("compilation failed with " + compiler.reporter.asInstanceOf[StoreReporter].infos)
+      throw new RuntimeException(
+        "compilation failed with " + compiler.reporter.asInstanceOf[StoreReporter].infos)
     }
     getGeneratedClassfiles(compiler.settings.outputDirs.getSingleOutput.get)
   }
@@ -132,18 +133,18 @@ class ClassCRCTest extends FunSuite with Matchers {
   // is not yet working
   ignore("Updating referenced constants should change bytecode checksum") {
     val crc1 = """object Constants {
-    |  val Name1 = "value1"
-    |}
-    |object crc_1 {
-    |  def run = Constants.Name1
-    |}""".stripMargin
+                 |  val Name1 = "value1"
+                 |}
+                 |object crc_1 {
+                 |  def run = Constants.Name1
+                 |}""".stripMargin
 
     val crc2 = """object Constants {
-    |  val Name1 = "value2"
-    |}
-    |object crc_1 {
-    |  def run = Constants.Name1
-    |}""".stripMargin
+                 |  val Name1 = "value2"
+                 |}
+                 |object crc_1 {
+                 |  def run = Constants.Name1
+                 |}""".stripMargin
 
     val res1 = compile(crc1).filter(_._1 == "crc_1$.class")(0)._2
     val res2 = compile(crc2).filter(_._1 == "crc_1$.class")(0)._2
@@ -159,80 +160,80 @@ class ClassCRCTest extends FunSuite with Matchers {
 
   ignore("Changing base class should result in checksum change") {
     val src1 = """
-    | trait A
-    | trait B extends A
-    | trait C
-    | abstract class D
-    | object E extends D with B with C
-    |""".stripMargin
+                 | trait A
+                 | trait B extends A
+                 | trait C
+                 | abstract class D
+                 | object E extends D with B with C
+                 |""".stripMargin
     val src2 = """
-    | trait A
-    | trait B extends A { def f1(a:Int): Int = a }
-    | trait C
-    | abstract class D
-    | object E extends D with B with C
-    |""".stripMargin
+                 | trait A
+                 | trait B extends A { def f1(a:Int): Int = a }
+                 | trait C
+                 | abstract class D
+                 | object E extends D with B with C
+                 |""".stripMargin
 
     sameChecksum(src1, src2, "E$") shouldBe false
   }
 
   ignore("#319: Changing configuration should result in checksum change") {
     val src1 = """
-    | import org.tresamigos.smv._
-    | trait BaseConfig extends SmvRunConfig {
-    |   def name: String
-    | }
-    | object ConfigA extends BaseConfig {
-    |   override val name = "Adam"
-    | }
-    | object ConfigB extends BaseConfig {
-    |   override val name = "Eve"
-    | }
-    | object X extends SmvModule("Test") with Using[BaseConfig] {
-    |   override def requiresDS = Seq()
-    |   override def run (i: runParams) = {
-    |     app.createDF("k:String", runConfig.name)
-    |   }
-    |   override lazy val runConfig = ConfigA
-    | }
-    |""".stripMargin
+                 | import org.tresamigos.smv._
+                 | trait BaseConfig extends SmvRunConfig {
+                 |   def name: String
+                 | }
+                 | object ConfigA extends BaseConfig {
+                 |   override val name = "Adam"
+                 | }
+                 | object ConfigB extends BaseConfig {
+                 |   override val name = "Eve"
+                 | }
+                 | object X extends SmvModule("Test") with Using[BaseConfig] {
+                 |   override def requiresDS = Seq()
+                 |   override def run (i: runParams) = {
+                 |     app.createDF("k:String", runConfig.name)
+                 |   }
+                 |   override lazy val runConfig = ConfigA
+                 | }
+                 |""".stripMargin
     val src2 = """
-    | import org.tresamigos.smv._
-    | trait BaseConfig extends SmvRunConfig {
-    |   def name: String
-    | }
-    | object ConfigA extends BaseConfig {
-    |   override val name = "Adam"
-    | }
-    | object ConfigB extends BaseConfig {
-    |   override val name = "Eve"
-    | }
-    | object X extends SmvModule("Test") with Using[BaseConfig] {
-    |   override def requiresDS = Seq()
-    |   override def run (i: runParams) = {
-    |     app.createDF("k:String", runConfig.name)
-    |   }
-    |   override lazy val runConfig = ConfigB
-    | }
-    |""".stripMargin
+                 | import org.tresamigos.smv._
+                 | trait BaseConfig extends SmvRunConfig {
+                 |   def name: String
+                 | }
+                 | object ConfigA extends BaseConfig {
+                 |   override val name = "Adam"
+                 | }
+                 | object ConfigB extends BaseConfig {
+                 |   override val name = "Eve"
+                 | }
+                 | object X extends SmvModule("Test") with Using[BaseConfig] {
+                 |   override def requiresDS = Seq()
+                 |   override def run (i: runParams) = {
+                 |     app.createDF("k:String", runConfig.name)
+                 |   }
+                 |   override lazy val runConfig = ConfigB
+                 | }
+                 |""".stripMargin
 
     sameChecksum(src1, src2, "X$") shouldBe false
   }
 }
 
 /** A classloader for classes compiled during test */
-class CompiledClassesFirstClassLoader(compiled: Seq[(String, Array[Byte])],
-  parent: ClassLoader) extends ClassLoader(parent) {
+class CompiledClassesFirstClassLoader(compiled: Seq[(String, Array[Byte])], parent: ClassLoader)
+    extends ClassLoader(parent) {
   require(!compiled.isEmpty, "compilation failed")
 
   override def findClass(fqn: String) =
-    compiled.find(_._1 == fqn + ".class") map (x =>
-      defineClass(fqn, x._2, 0, x._2.length)) getOrElse super.findClass(fqn)
+    compiled.find(_._1 == fqn + ".class") map (x => defineClass(fqn, x._2, 0, x._2.length)) getOrElse super
+      .findClass(fqn)
 
   /** ClassCRC calls this method to load the byte array */
   override def getResourceAsStream(fqn: String) = {
     val name = fqn.replace('/', '.')
-    compiled.find(_._1 == name) map (x =>
-      new java.io.ByteArrayInputStream(x._2)) getOrElse super.getResourceAsStream(name)
+    compiled.find(_._1 == name) map (x => new java.io.ByteArrayInputStream(x._2)) getOrElse super
+      .getResourceAsStream(name)
   }
 }

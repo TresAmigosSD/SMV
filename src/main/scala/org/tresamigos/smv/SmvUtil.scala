@@ -24,6 +24,7 @@ import scala.util.Try
  * SmvModules written in Python.
  */
 object SmvUtil {
+
   /**
    * Read a dataframe from a persisted file path, that is usually an
    * input data set or the output of an upstream SmvModule.
@@ -31,30 +32,34 @@ object SmvUtil {
    * The default format is headerless CSV with '"' as the quote
    * character
    */
-  def readFile(sparkSession: SparkSession, path: String,
-    attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
-      new FileIOHandler(sparkSession, path).csvFileWithSchema(attr)
+  def readFile(sparkSession: SparkSession,
+               path: String,
+               attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
+    new FileIOHandler(sparkSession, path).csvFileWithSchema(attr)
 
   /**
    * Save the dataframe content to disk, optionally generate edd.
    */
-  def persist(sparkSession: SparkSession, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {
+  def persist(sparkSession: SparkSession,
+              dataframe: DataFrame,
+              path: String,
+              generateEdd: Boolean): Unit = {
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
     val counter = sparkSession.sparkContext.longAccumulator
-    val before = DateTime.now()
+    val before  = DateTime.now()
     println(s"${fmt.print(before)} PERSISTING: ${path}")
 
-    val df = dataframe.smvPipeCount(counter)
+    val df      = dataframe.smvPipeCount(counter)
     val handler = new FileIOHandler(sparkSession, path)
 
     //Always persist null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
 
-    val after = DateTime.now()
+    val after   = DateTime.now()
     val runTime = PeriodFormat.getDefault().print(new Period(before, after))
-    val n = counter.value
+    val n       = counter.value
 
     println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
 
@@ -65,7 +70,10 @@ object SmvUtil {
       readFile(sparkSession, path).edd.persistBesideData(path)
   }
 
-  def publish(sparkSession: SparkSession, dataframe: DataFrame, path: String, generateEdd: Boolean): Unit = {
+  def publish(sparkSession: SparkSession,
+              dataframe: DataFrame,
+              path: String,
+              generateEdd: Boolean): Unit = {
     val handler = new FileIOHandler(sparkSession, path)
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
@@ -79,7 +87,9 @@ object SmvUtil {
   /**
    * Exports a dataframe to a hive table.
    */
-  def exportDataFrameToHive(sqlContext: SQLContext, dataframe: DataFrame, tableName: String): Unit = {
+  def exportDataFrameToHive(sqlContext: SQLContext,
+                            dataframe: DataFrame,
+                            tableName: String): Unit = {
     // register the dataframe as a temp table.  Will be overwritten on next register.
     dataframe.createOrReplaceTempView("etable")
     sqlContext.sql(s"drop table if exists ${tableName}")

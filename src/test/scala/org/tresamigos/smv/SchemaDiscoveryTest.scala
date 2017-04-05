@@ -17,9 +17,9 @@ package org.tresamigos.smv
 // TODO: Still need to add more test cases mainly type promotion.
 class SchemaDiscoveryTest extends SmvTestUtil {
   test("Test schema discovery 1 line header") {
-    val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test1.csv")
-    val helper = new SchemaDiscoveryHelper(sqlContext)
-    val schema = helper.discoverSchema(strRDD,10, CsvAttributes.defaultCsvWithHeader)
+    val strRDD  = sqlContext.sparkContext.textFile(testDataDir + "SchemaDiscoveryTest/test1.csv")
+    val helper  = new SchemaDiscoveryHelper(sqlContext)
+    val schema  = helper.discoverSchema(strRDD, 10, CsvAttributes.defaultCsvWithHeader)
     val entries = schema.entries
 
     assert(entries.length === 8)
@@ -43,9 +43,9 @@ class SchemaDiscoveryTest extends SmvTestUtil {
   }
 
   test("Test schema discovery no header") {
-    val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test2.csv")
-    val helper = new SchemaDiscoveryHelper(sqlContext)
-    val schema = helper.discoverSchema(strRDD,10, CsvAttributes())
+    val strRDD  = sqlContext.sparkContext.textFile(testDataDir + "SchemaDiscoveryTest/test2.csv")
+    val helper  = new SchemaDiscoveryHelper(sqlContext)
+    val schema  = helper.discoverSchema(strRDD, 10, CsvAttributes())
     val entries = schema.entries
 
     assert(entries.length === 5)
@@ -63,9 +63,9 @@ class SchemaDiscoveryTest extends SmvTestUtil {
   }
 
   test("Test schema discovery type promotion") {
-    val strRDD = sqlContext.sparkContext.textFile(testDataDir +  "SchemaDiscoveryTest/test3.csv")
-    val helper = new SchemaDiscoveryHelper(sqlContext)
-    val schema = helper.discoverSchema(strRDD,10, CsvAttributes.defaultCsvWithHeader)
+    val strRDD  = sqlContext.sparkContext.textFile(testDataDir + "SchemaDiscoveryTest/test3.csv")
+    val helper  = new SchemaDiscoveryHelper(sqlContext)
+    val schema  = helper.discoverSchema(strRDD, 10, CsvAttributes.defaultCsvWithHeader)
     val entries = schema.entries
 
     assert(entries.length === 6)
@@ -85,9 +85,9 @@ class SchemaDiscoveryTest extends SmvTestUtil {
   }
 
   test("Test schema discovery with parser errors") {
-    val strRDD = sqlContext.sparkContext.textFile(testDataDir + "SchemaDiscoveryTest/test4.csv")
-    val helper = new SchemaDiscoveryHelper(sqlContext)
-    val schema = helper.discoverSchema(strRDD, 10, CsvAttributes.defaultCsvWithHeader)
+    val strRDD  = sqlContext.sparkContext.textFile(testDataDir + "SchemaDiscoveryTest/test4.csv")
+    val helper  = new SchemaDiscoveryHelper(sqlContext)
+    val schema  = helper.discoverSchema(strRDD, 10, CsvAttributes.defaultCsvWithHeader)
     val entries = schema.entries
 
     assert(entries.length === 3)

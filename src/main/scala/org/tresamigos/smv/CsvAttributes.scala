@@ -17,10 +17,9 @@ package org.tresamigos.smv
 import org.apache.spark.rdd.RDD
 import scala.reflect.ClassTag
 
-case class CsvAttributes(
-                          val delimiter: Char = ',',
-                          val quotechar: Char = '\"',
-                          val hasHeader: Boolean = false) {
+case class CsvAttributes(val delimiter: Char = ',',
+                         val quotechar: Char = '\"',
+                         val hasHeader: Boolean = false) {
   def isExcelCSV: Boolean = (quotechar == '"')
 }
 
@@ -28,7 +27,7 @@ object CsvAttributes {
   implicit val defaultCsv = new CsvAttributes()
 
   // common CsvAttributes combos to be imported explicitly
-  val defaultTsv = new CsvAttributes(delimiter = '\t')
+  val defaultTsv           = new CsvAttributes(delimiter = '\t')
   val defaultCsvWithHeader = new CsvAttributes(hasHeader = true)
   val defaultTsvWithHeader = new CsvAttributes(delimiter = '\t', hasHeader = true)
 

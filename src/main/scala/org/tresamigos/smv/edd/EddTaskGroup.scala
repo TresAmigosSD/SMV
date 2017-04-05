@@ -19,7 +19,6 @@ import org.apache.spark.sql.{DataFrame, Column}
 import org.apache.spark.sql.types._
 import org.apache.spark.rdd.UnionRDD
 
-
 private[smv] abstract class EddTaskGroup {
   val df: DataFrame
 
@@ -32,28 +31,59 @@ private[smv] abstract class EddTaskGroup {
 
     /* Have to separate tasks to "old" aggregations and "new" aggregations, since
       till 1.5.1 there are 2 types of aggregations, and they can't be mixed */
-    val aggCols: Seq[Either[EddTask, EddTask]] = taskList.map{t => t match {
-      case CntTask(_)|AvgTask(_)|MinTask(_)|MaxTask(_)|TimeMinTask(_)|TimeMaxTask(_)|StringMinLenTask(_)|StringMaxLenTask(_)|StringDistinctCountTask(_) => Left(t)
-      case _ => Right(t)
-    }}
+    val aggCols: Seq[Either[EddTask, EddTask]] = taskList.map { t =>
+      t match {
+        case CntTask(_) | AvgTask(_) | MinTask(_) | MaxTask(_) | TimeMinTask(_) | TimeMaxTask(_) |
+            StringMinLenTask(_) | StringMaxLenTask(_) | StringDistinctCountTask(_) =>
+          Left(t)
+        case _ => Right(t)
+      }
+    }
 
-    val aggOlds = aggCols.flatMap{e => e.left.toOption}.map{t => t.aggCol}
-    val aggNews = aggCols.flatMap{e => e.right.toOption}.map{t => t.aggCol}
+    val aggOlds = aggCols
+      .flatMap { e =>
+        e.left.toOption
+      }
+      .map { t =>
+        t.aggCol
+      }
+    val aggNews = aggCols
+      .flatMap { e =>
+        e.right.toOption
+      }
+      .map { t =>
+        t.aggCol
+      }
 
-    val resultCols = taskList.map{t => t.resultCols}
+    val resultCols = taskList.map { t =>
+      t.resultCols
+    }
     val hasKey = !keys.isEmpty
 
     val res = if (!hasKey) {
       // this DF only has 1 row
       if (aggOlds.isEmpty) df.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
       else if (aggNews.isEmpty) df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1)
-      else df.agg(aggNews.head, aggNews.tail: _*).coalesce(1).crossJoin(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
+      else
+        df.agg(aggNews.head, aggNews.tail: _*)
+          .coalesce(1)
+          .crossJoin(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
     } else {
       // on row per group
-      val dfGd = df.smvSelectPlus(smvStrCat("_", keys.map{c => $"$c"}: _*) as "groupKey").groupBy("groupKey")
+      val dfGd = df
+        .smvSelectPlus(smvStrCat("_", keys.map { c =>
+          $"$c"
+        }: _*) as "groupKey")
+        .groupBy("groupKey")
       if (aggOlds.isEmpty) dfGd.agg(aggNews.head, aggNews.tail: _*).coalesce(1)
       else if (aggNews.isEmpty) dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1)
-      else dfGd.agg(aggNews.head, aggNews.tail: _*).coalesce(1).smvJoinByKey(dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1), Seq("groupKey"), Inner)
+      else
+        dfGd
+          .agg(aggNews.head, aggNews.tail: _*)
+          .coalesce(1)
+          .smvJoinByKey(dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1),
+                        Seq("groupKey"),
+                        Inner)
     }
 
     val resCached = res.cache
@@ -70,9 +100,9 @@ private[smv] abstract class EddTaskGroup {
        Here we convert each small DF to RDD first, then create UnionRDD, which
        is a very cheap operation */
     /* collect here before unpersist resCached */
-    val resRdds = resultCols.map{rcols =>
-      val cols = if (hasKey) $"groupKey" +: rcols else rcols
-      val rddArray=resCached.select(cols: _*).rdd.collect
+    val resRdds = resultCols.map { rcols =>
+      val cols     = if (hasKey) $"groupKey" +: rcols else rcols
+      val rddArray = resCached.select(cols: _*).rdd.collect
       df.sqlContext.sparkContext.makeRDD(rddArray, 1)
     }
     resCached.unpersist()
@@ -85,9 +115,10 @@ private[smv] abstract class EddTaskGroup {
 }
 
 private[smv] class EddSummary(
-  override val df: DataFrame,
-  override val keys: Seq[String] = Seq()
-)(colNames: String*) extends EddTaskGroup {
+    override val df: DataFrame,
+    override val keys: Seq[String] = Seq()
+)(colNames: String*)
+    extends EddTaskGroup {
 
   val listSeq =
     if (colNames.isEmpty) {
@@ -96,57 +127,63 @@ private[smv] class EddSummary(
       colNames.toSet.toSeq
     }
 
-  override val taskList = listSeq.flatMap{ l =>
+  override val taskList = listSeq.flatMap { l =>
     val s = df(l)
     df.schema(l).dataType match {
-      case _: NumericType => Seq(CntTask(s), NulCntTask(s), AvgTask(s), StdDevTask(s), MinTask(s), MaxTask(s))
+      case _: NumericType =>
+        Seq(CntTask(s), NulCntTask(s), AvgTask(s), StdDevTask(s), MinTask(s), MaxTask(s))
       case BooleanType => Seq(edd.BooleanHistogram(s))
-      case TimestampType => Seq(
-        TimeMinTask(s),
-        TimeMaxTask(s),
-        YearHistogram(s),
-        MonthHistogram(s),
-        DoWHistogram(s),
-        HourHistogram(s)
-      )
-      case DateType => Seq(
-        TimeMinTask(s),
-        TimeMaxTask(s),
-        YearHistogram(s),
-        MonthHistogram(s),
-        DoWHistogram(s)
-      )
-      case StringType => Seq(
-        CntTask(s),
-        NulCntTask(s),
-        StringMinLenTask(s),
-        StringMaxLenTask(s),
-        StringDistinctCountTask(s)
-      )
+      case TimestampType =>
+        Seq(
+          TimeMinTask(s),
+          TimeMaxTask(s),
+          YearHistogram(s),
+          MonthHistogram(s),
+          DoWHistogram(s),
+          HourHistogram(s)
+        )
+      case DateType =>
+        Seq(
+          TimeMinTask(s),
+          TimeMaxTask(s),
+          YearHistogram(s),
+          MonthHistogram(s),
+          DoWHistogram(s)
+        )
+      case StringType =>
+        Seq(
+          CntTask(s),
+          NulCntTask(s),
+          StringMinLenTask(s),
+          StringMaxLenTask(s),
+          StringDistinctCountTask(s)
+        )
     }
   }
 
 }
 
 private[smv] class NullRate(
-  override val df: DataFrame,
-  override val keys: Seq[String] = Seq()
-)(colNames: String*) extends EddTaskGroup {
+    override val df: DataFrame,
+    override val keys: Seq[String] = Seq()
+)(colNames: String*)
+    extends EddTaskGroup {
   val listSeq =
     if (colNames.isEmpty)
       df.columns.toSeq
     else
       colNames.toSet.toSeq
 
-  override val taskList = listSeq.map{ l =>
+  override val taskList = listSeq.map { l =>
     NullRateTask(df(l))
   }
 }
 
 private[smv] class EddHistogram(
-  override val df: DataFrame,
-  override val keys: Seq[String] = Seq()
-)(histCols: HistColumn*) extends EddTaskGroup {
+    override val df: DataFrame,
+    override val keys: Seq[String] = Seq()
+)(histCols: HistColumn*)
+    extends EddTaskGroup {
 
   private def createHist(histCol: edd.Hist) = {
     val s = df(histCol.colName)
@@ -155,16 +192,16 @@ private[smv] class EddHistogram(
         if (histCol.sortByFreq) edd.StringByFreqHistogram(s)
         else edd.StringByKeyHistogram(s)
       case _: NumericType => edd.BinNumericHistogram(s, histCol.binSize)
-      case BooleanType => edd.BooleanHistogram(s)
-      case t => throw new SmvUnsupportedType(s"data type: ${t} is not supported")
+      case BooleanType    => edd.BooleanHistogram(s)
+      case t              => throw new SmvUnsupportedType(s"data type: ${t} is not supported")
     }
   }
 
-  override val taskList = histCols.map{ c =>
+  override val taskList = histCols.map { c =>
     c match {
-      case h: edd.Hist => createHist(h)
+      case h: edd.Hist                  => createHist(h)
       case edd.AmtHist(colName: String) => edd.AmountHistogram(df(colName))
-      case t => throw new SmvUnsupportedType(s"data type: ${t} is not supported")
+      case t                            => throw new SmvUnsupportedType(s"data type: ${t} is not supported")
     }
   }
 }

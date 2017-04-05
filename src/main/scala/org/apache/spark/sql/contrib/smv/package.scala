@@ -27,18 +27,18 @@ package object smv {
   def extractExpr(c: Column) = c.expr
 
   /** return Ordering[Any] to compare values of Any */
-  def getOrdering[T<: DataType](t: T): Ordering[Any] = {
+  def getOrdering[T <: DataType](t: T): Ordering[Any] = {
     t match {
       case v: AtomicType => v.ordering.asInstanceOf[Ordering[Any]]
-      case v => throw new IllegalArgumentException(s"DataType: $v has no ordering")
+      case v             => throw new IllegalArgumentException(s"DataType: $v has no ordering")
     }
   }
 
   /** return Numeric[Any] for the NumericType*/
-  def getNumeric[T<: DataType](t: T): Numeric[Any] = {
+  def getNumeric[T <: DataType](t: T): Numeric[Any] = {
     t match {
       case v: NumericType => v.numeric.asInstanceOf[Numeric[Any]]
-      case v => throw new IllegalArgumentException(s"DataType: $v has no numeric")
+      case v              => throw new IllegalArgumentException(s"DataType: $v has no numeric")
     }
   }
 

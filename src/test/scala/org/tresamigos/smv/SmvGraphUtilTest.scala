@@ -12,23 +12,22 @@
  * limitations under the License.
  */
 
-
 package org.tresamigos.smv {
 
-import org.apache.spark.sql.DataFrame
-import dqm.DQMValidator
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
+  import org.apache.spark.sql.DataFrame
+  import dqm.DQMValidator
+  import org.json4s._
+  import org.json4s.jackson.JsonMethods._
 
-class SmvGraphUtilTest extends SmvTestUtil {
-  override def appArgs = testAppArgs.multiStage ++ Seq("-m", "None")
+  class SmvGraphUtilTest extends SmvTestUtil {
+    override def appArgs = testAppArgs.multiStage ++ Seq("-m", "None")
 
-  // ignore faling graph util tests until ancestors/descendant is reimplemented
-  test("Test list modules") {
-    val gu = new graph.SmvGraphUtil(app)
-    val dsL = gu.createDSList()
+    // ignore faling graph util tests until ancestors/descendant is reimplemented
+    test("Test list modules") {
+      val gu  = new graph.SmvGraphUtil(app)
+      val dsL = gu.createDSList()
 
-    assert(dsL ===  """
+      assert(dsL === """
 org.tresamigos.smv.smvAppTestPkg1:
   (M) smvAppTestPkg1.X
   (O) smvAppTestPkg1.Y
@@ -41,8 +40,8 @@ org.tresamigos.smv.smvAppTestPkg3:
   (M) smvAppTestPkg3.T
   (O) smvAppTestPkg3.U""")
 
-    val deadL = gu.createDeadDSList()
-    assert(deadL === """
+      val deadL = gu.createDeadDSList()
+      assert(deadL === """
 org.tresamigos.smv.smvAppTestPkg1:
 
 org.tresamigos.smv.smvAppTestPkg2:
@@ -50,8 +49,8 @@ org.tresamigos.smv.smvAppTestPkg2:
 org.tresamigos.smv.smvAppTestPkg3:
   (M) smvAppTestPkg3.T""")
 
-    val deadLeafL = gu.createDeadLeafDSList()
-    assert(deadLeafL === """
+      val deadLeafL = gu.createDeadLeafDSList()
+      assert(deadLeafL === """
 org.tresamigos.smv.smvAppTestPkg1:
 
 org.tresamigos.smv.smvAppTestPkg2:
@@ -59,29 +58,31 @@ org.tresamigos.smv.smvAppTestPkg2:
 org.tresamigos.smv.smvAppTestPkg3:
   (M) smvAppTestPkg3.T""")
 
-    val aL = gu.createAncestorDSList(smvAppTestPkg3.U)
-    assert(aL === """(L) smvAppTestPkg1.Y
+      val aL = gu.createAncestorDSList(smvAppTestPkg3.U)
+      assert(aL === """(L) smvAppTestPkg1.Y
 (M) smvAppTestPkg1.X""")
 
-    val dL = gu.createDescendantDSList(smvAppTestPkg1.X)
-    assert(dL == """(O) smvAppTestPkg1.Y
+      val dL = gu.createDescendantDSList(smvAppTestPkg1.X)
+      assert(dL == """(O) smvAppTestPkg1.Y
 (M) smvAppTestPkg3.T
 (O) smvAppTestPkg3.U""")
-  }
+    }
 
-  test("Test createGraphvisCode") {
-    val graphString = new graph.SmvGraphUtil(app).createGraphvisCode(Seq(smvAppTestPkg3.U))
-    val expectPart = """    label="org.tresamigos.smv.smvAppTestPkg3"
+    test("Test createGraphvisCode") {
+      val graphString = new graph.SmvGraphUtil(app).createGraphvisCode(Seq(smvAppTestPkg3.U))
+      val expectPart  = """    label="org.tresamigos.smv.smvAppTestPkg3"
     color="#e0e0e0"
     "smvAppTestPkg3.U""""
 
-    assertTextContains(graphString, expectPart)
-  }
+      assertTextContains(graphString, expectPart)
+    }
 
-  ignore("Test createDSAsciiGraph") {
-    val graphString = new graph.SmvGraphUtil(app).createDSAsciiGraph()
-    //println(graphString)
-    assertStrIgnoreSpace(graphString, """               ┌────────────┐
+    ignore("Test createDSAsciiGraph") {
+      val graphString = new graph.SmvGraphUtil(app).createDSAsciiGraph()
+      //println(graphString)
+      assertStrIgnoreSpace(
+        graphString,
+        """               ┌────────────┐
                │(M) smvAppTe│
                │  stPkg1.X  │
                └──────┬─────┘
@@ -98,12 +99,15 @@ org.tresamigos.smv.smvAppTestPkg3:
  ┌────────────┐ ┌────────────┐ ┌────────────┐
  │(M) smvAppTe│ │(O) smvAppTe│ │(O) smvAppTe│
  │  stPkg3.T  │ │  stPkg3.U  │ │  stPkg2.Z  │
- └────────────┘ └────────────┘ └────────────┘""")
-  }
+ └────────────┘ └────────────┘ └────────────┘"""
+      )
+    }
 
-  ignore("Test createStageAsciiGraph") {
-    val graphString = new graph.SmvGraphUtil(app).createStageAsciiGraph()
-    assertStrIgnoreSpace(graphString, """         ┌──────────────┐
+    ignore("Test createStageAsciiGraph") {
+      val graphString = new graph.SmvGraphUtil(app).createStageAsciiGraph()
+      assertStrIgnoreSpace(
+        graphString,
+        """         ┌──────────────┐
          │smvAppTestPkg1│
          └───────┬──────┘
                  │
@@ -115,79 +119,82 @@ org.tresamigos.smv.smvAppTestPkg3:
          v
  ┌──────────────┐ ┌──────────────┐
  │smvAppTestPkg3│ │smvAppTestPkg2│
- └──────────────┘ └──────────────┘""")
-  }
-
-  // Ignore createGraphJSON test until bug that causes false failure in SBT is fixed
-  ignore("Test createGraphJSON") {
-    val graphString = new graph.SmvGraphUtil(app).createGraphJSON()
-    //println(graphString)
-    val json =parse(graphString)
-
-    val (nodes, clusters, links) = json match {
-      case JObject(List((_, nodes), (_, clusters), (_, links))) => (nodes, clusters, links)
+ └──────────────┘ └──────────────┘"""
+      )
     }
 
-    val descs = for {
-      JObject(child) <- nodes
-      JField("description", JString(desc))  <- child
-    } yield desc
+    // Ignore createGraphJSON test until bug that causes false failure in SBT is fixed
+    ignore("Test createGraphJSON") {
+      val graphString = new graph.SmvGraphUtil(app).createGraphJSON()
+      //println(graphString)
+      val json = parse(graphString)
 
-    assertUnorderedSeqEqual(descs, Seq(
-      "X Module",
-      "Y Module",
-      "Z Module",
-      "U Base",
-      "T Module"
-    ))
+      val (nodes, clusters, links) = json match {
+        case JObject(List((_, nodes), (_, clusters), (_, links))) => (nodes, clusters, links)
+      }
 
-    val stages = for {
-      JObject(child) <- clusters
-      JField(name, _) <- child
-    } yield name
+      val descs = for {
+        JObject(child)                       <- nodes
+        JField("description", JString(desc)) <- child
+      } yield desc
 
-    assertUnorderedSeqEqual(stages, Seq(
-      "org.tresamigos.smv.smvAppTestPkg1",
-      "org.tresamigos.smv.smvAppTestPkg3",
-      "org.tresamigos.smv.smvAppTestPkg2"
-    ))
+      assertUnorderedSeqEqual(descs,
+                              Seq(
+                                "X Module",
+                                "Y Module",
+                                "Z Module",
+                                "U Base",
+                                "T Module"
+                              ))
 
-    val edges = for {
-      JObject(child) <- links
-      JField(k, JString(v)) <- child
-    } yield (k, v)
+      val stages = for {
+        JObject(child)  <- clusters
+        JField(name, _) <- child
+      } yield name
 
-    assertUnorderedSeqEqual(edges, Seq(
-      ("smvAppTestPkg1.X", "smvAppTestPkg1.Y"),
-      ("smvAppTestPkg1.Y", "smvAppTestPkg3.T"),
-      ("smvAppTestPkg1.Y", "smvAppTestPkg3.U")
-    ))
+      assertUnorderedSeqEqual(stages,
+                              Seq(
+                                "org.tresamigos.smv.smvAppTestPkg1",
+                                "org.tresamigos.smv.smvAppTestPkg3",
+                                "org.tresamigos.smv.smvAppTestPkg2"
+                              ))
+
+      val edges = for {
+        JObject(child)        <- links
+        JField(k, JString(v)) <- child
+      } yield (k, v)
+
+      assertUnorderedSeqEqual(edges,
+                              Seq(
+                                ("smvAppTestPkg1.X", "smvAppTestPkg1.Y"),
+                                ("smvAppTestPkg1.Y", "smvAppTestPkg3.T"),
+                                ("smvAppTestPkg1.Y", "smvAppTestPkg3.U")
+                              ))
+    }
   }
-}
 
+  class SmvGraphUtilWithStrTest extends SmvTestUtil {
+    override def appArgs = Seq("--smv-props", "smv.stages=org.tresamigos.smv.smvAppTestPkgStr")
 
-class SmvGraphUtilWithStrTest extends SmvTestUtil {
-  override def appArgs = Seq(
-    "--smv-props",
-    "smv.stages=org.tresamigos.smv.smvAppTestPkgStr")
+    test("Test list modules") {
+      val gu  = new graph.SmvGraphUtil(app)
+      val dsL = gu.createDSList()
 
-  test("Test list modules") {
-    val gu = new graph.SmvGraphUtil(app)
-    val dsL = gu.createDSList()
-
-    assert(dsL ===  """
+      assert(dsL === """
 org.tresamigos.smv.smvAppTestPkgStr:
   (I) StrData""")
+    }
   }
-}
 } // package: org.tresamigos.smv
 
 package org.tresamigos.smv.smvAppTestPkgStr {
 
-import org.tresamigos.smv.SmvCsvStringData
+  import org.tresamigos.smv.SmvCsvStringData
 
-object StrData extends SmvCsvStringData(
-  "a:String;b:Integer", "1,2;3,4"
-)
+  object StrData
+      extends SmvCsvStringData(
+        "a:String;b:Integer",
+        "1,2;3,4"
+      )
 
 }

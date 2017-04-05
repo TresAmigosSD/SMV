@@ -26,10 +26,9 @@ import scala.util.{Try, Success, Failure}
  * arbitrary number of names so that all the target SmvDataSets
  * are loaded within the same transaction (which is much faster).
  */
-
 class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   private var dsRepoFactories: Seq[DataSetRepoFactory] = Seq.empty[DataSetRepoFactory]
-  private var allStageNames = smvConfig.stageNames
+  private var allStageNames                            = smvConfig.stageNames
 
   def register(newRepoFactory: DataSetRepoFactory): Unit = {
     dsRepoFactories = dsRepoFactories :+ newRepoFactory
@@ -37,29 +36,33 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
 
   def load(urns: URN*): Seq[SmvDataSet] = {
     val resolver = new DataSetResolver(dsRepoFactories, smvConfig, depRules)
-    resolver.loadDataSet(urns:_*)
+    resolver.loadDataSet(urns: _*)
   }
 
   def urnsForStage(stageNames: String*): Seq[URN] =
     createRepos flatMap (repo => stageNames flatMap (repo.urnsForStage(_)))
 
   def allUrns(): Seq[URN] =
-    urnsForStage(allStageNames:_*)
+    urnsForStage(allStageNames: _*)
 
   def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] =
-    load(urnsForStage(stageNames:_*):_*)
+    load(urnsForStage(stageNames: _*): _*)
 
   def dataSetsForStageWithLink(stageNames: String*): Seq[SmvDataSet] =
-    dataSetsForStage(stageNames:_*).flatMap{ds => ds.resolvedRequiresDS :+ ds}.distinct
+    dataSetsForStage(stageNames: _*).flatMap { ds =>
+      ds.resolvedRequiresDS :+ ds
+    }.distinct
 
   def stageForUrn(urn: URN): Option[String] =
-    allStageNames.find{stageName => urn.fqn.startsWith(stageName + ".")}
+    allStageNames.find { stageName =>
+      urn.fqn.startsWith(stageName + ".")
+    }
 
   def outputModulesForStage(stageNames: String*): Seq[SmvDataSet] =
-    filterOutput(dataSetsForStage(stageNames:_*))
+    filterOutput(dataSetsForStage(stageNames: _*))
 
   def allDataSets(): Seq[SmvDataSet] =
-    load(allUrns:_*)
+    load(allUrns: _*)
 
   def allOutputModules(): Seq[SmvDataSet] =
     filterOutput(allDataSets)
@@ -69,36 +72,35 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
    * modules specified via smv-pyrun -m.
    */
   def inferDS(partialNames: String*): Seq[SmvDataSet] = {
-      if(partialNames.isEmpty)
-        Seq.empty
-      else {
-        val allUrnsVal = allUrns
-        val foundUrns = partialNames map {
-          pName =>
-            val candidates = allUrnsVal filter (_.fqn.endsWith(pName))
-            candidates.size match {
-              case 0 =>
-                throw new SmvRuntimeException(
-                s"""Cannot find module named [${pName}]""")
-              case 1 => candidates.head
-              case _ => throw new SmvRuntimeException(
-                s"Module name [${pName}] is not specific enough, as it could refer to [${(candidates.map(_.fqn)).mkString(", ")}]")
-            }
+    if (partialNames.isEmpty)
+      Seq.empty
+    else {
+      val allUrnsVal = allUrns
+      val foundUrns = partialNames map { pName =>
+        val candidates = allUrnsVal filter (_.fqn.endsWith(pName))
+        candidates.size match {
+          case 0 =>
+            throw new SmvRuntimeException(s"""Cannot find module named [${pName}]""")
+          case 1 => candidates.head
+          case _ =>
+            throw new SmvRuntimeException(
+              s"Module name [${pName}] is not specific enough, as it could refer to [${(candidates.map(_.fqn)).mkString(", ")}]")
         }
-        load(foundUrns:_*)
       }
+      load(foundUrns: _*)
+    }
   }
 
   /**
    * Infer full stageName from a partial name
    */
-  def inferStageFullName(partialStageName: String) : String = {
+  def inferStageFullName(partialStageName: String): String = {
     val candidates = allStageNames filter (_.endsWith(partialStageName))
 
     val fullName = candidates.size match {
       case 0 => throw new SmvRuntimeException(s"Can't find stage ${partialStageName}")
       case 1 => candidates.head
-      case _ =>throw new SmvRuntimeException(s"Stage name ${partialStageName} is ambiguous")
+      case _ => throw new SmvRuntimeException(s"Stage name ${partialStageName} is ambiguous")
     }
 
     fullName

@@ -47,7 +47,7 @@ import org.apache.spark.annotation._
  * @groupname other All others
  */
 package object smv {
-  val ModDsPrefix = "mod:"
+  val ModDsPrefix  = "mod:"
   val LinkDsPrefix = "link:"
 
   /** Create an urn for a module from its fqn */
@@ -60,7 +60,7 @@ package object smv {
   def isLink(modUrn: String): Boolean = modUrn startsWith LinkDsPrefix
 
   /** Converts a possible urn to the module's fqn */
-  def urn2fqn(modUrn: String): String = modUrn.substring(modUrn.lastIndexOf(':')+1)
+  def urn2fqn(modUrn: String): String = modUrn.substring(modUrn.lastIndexOf(':') + 1)
 
   /** Converts a link urn to the mod urn representing its target */
   def link2mod(linkUrn: String): String = mkModUrn(urn2fqn(linkUrn))
@@ -98,14 +98,16 @@ package object smv {
    */
   @scala.annotation.tailrec
   def mkUniq(
-    collection: Seq[String],
-    candidate: String,
-    ignoreCase: Boolean = false,
-    postfix: String = null
+      collection: Seq[String],
+      candidate: String,
+      ignoreCase: Boolean = false,
+      postfix: String = null
   ): String = {
-    val col_comp = if(ignoreCase) collection.map{c => c.toLowerCase} else collection
-    val can_comp = if(ignoreCase) candidate.toLowerCase else candidate
-    val can_to = if(postfix == null) "_" + candidate else candidate + postfix
+    val col_comp = if (ignoreCase) collection.map { c =>
+      c.toLowerCase
+    } else collection
+    val can_comp = if (ignoreCase) candidate.toLowerCase else candidate
+    val can_to   = if (postfix == null) "_" + candidate else candidate + postfix
     if (col_comp.exists(_ == can_comp)) mkUniq(collection, can_to) else candidate
   }
 
@@ -121,17 +123,16 @@ package object smv {
    * @group other
    */
   object SmvJoinType {
-    val Inner = "inner"
-    val Outer = "outer"
-    val LeftOuter = "leftouter"
+    val Inner      = "inner"
+    val Outer      = "outer"
+    val LeftOuter  = "leftouter"
     val RightOuter = "rightouter"
-    val Semi = "leftsemi"
+    val Semi       = "leftsemi"
   }
 
   /***************************************************************************
    * Functions
    ***************************************************************************/
-
   /**
    * smvFirst: by default return null if the first record is null
    *
@@ -154,14 +155,13 @@ package object smv {
    * Patch Spark's `concat` and `concat_ws` to treat null as empty string in concatenation.
    **/
   def smvStrCat(columns: Column*) =
-    when(hasNonNull(columns:_*),
-      concat(columns.map{c => coalesce(c, lit(""))}:_*)).
-      otherwise(lit(null))
+    when(hasNonNull(columns: _*), concat(columns.map { c =>
+      coalesce(c, lit(""))
+    }: _*)).otherwise(lit(null))
 
   def smvStrCat(sep: String, columns: Column*) =
-    when(hasNonNull(columns:_*),
-      concat_ws(sep, columns.map(c => coalesce(c, lit(""))):_*)).
-      otherwise(lit(null))
+    when(hasNonNull(columns: _*), concat_ws(sep, columns.map(c => coalesce(c, lit(""))): _*))
+      .otherwise(lit(null))
 
   /**
    * create a UDF from a map
@@ -172,8 +172,10 @@ package object smv {
    * }}}
    * @group other
    **/
-  def smvCreateLookUp[S,D](map: Map[S,D])(implicit st: TypeTag[S], dt: TypeTag[D]) = {
-    val func: S => Option[D] = {s => map.get(s)}
+  def smvCreateLookUp[S, D](map: Map[S, D])(implicit st: TypeTag[S], dt: TypeTag[D]) = {
+    val func: S => Option[D] = { s =>
+      map.get(s)
+    }
     udf(func)
   }
 
@@ -182,7 +184,7 @@ package object smv {
    *
    * @group agg
    */
-  def smvSum0(col: Column) : Column = {
+  def smvSum0(col: Column): Column = {
     //no need for casting, coalesce is smart enough
     //val cZero = lit(0).cast(col.toExpr.dataType)
     coalesce(sum(col), lit(0))

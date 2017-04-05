@@ -21,35 +21,36 @@ import org.apache.spark.sql.functions._
  */
 object StringMetricUDFs {
   // separate function definition from the udf so we can test the function itself
-  private[smv] val SoundexFn: (String, String) => Option[Boolean] = {(s1, s2) =>
-    if (null  == s1 || null == s2) None else SoundexMetric.compare(s1, s2)
+  private[smv] val SoundexFn: (String, String) => Option[Boolean] = { (s1, s2) =>
+    if (null == s1 || null == s2) None else SoundexMetric.compare(s1, s2)
   }
 
-  private[smv] val NGram2Fn: (String, String) => Option[Float] = {(s1, s2) =>
+  private[smv] val NGram2Fn: (String, String) => Option[Float] = { (s1, s2) =>
     if (null == s1 || null == s2) None
     else NGramMetric(2).compare(s1, s2) map (_.toFloat)
   }
 
-  private[smv] val NGram3Fn: (String, String) => Option[Float] = {(s1, s2) =>
+  private[smv] val NGram3Fn: (String, String) => Option[Float] = { (s1, s2) =>
     if (null == s1 || null == s2) None
     else NGramMetric(3).compare(s1, s2) map (_.toFloat)
   }
 
-  private[smv] val DiceSorensenFn: (String, String) => Option[Float] = {(s1, s2) =>
+  private[smv] val DiceSorensenFn: (String, String) => Option[Float] = { (s1, s2) =>
     if (null == s1 || null == s2) None
     else DiceSorensenMetric(2).compare(s1, s2) map (_.toFloat)
   }
 
-  private[smv] val NormalizedLevenshteinFn: (String, String) => Option[Float] = {(s1, s2) =>
+  private[smv] val NormalizedLevenshteinFn: (String, String) => Option[Float] = { (s1, s2) =>
     if (null == s1 || null == s2) None
-    else LevenshteinMetric.compare(s1, s2) map { dist =>
-      // normalizing to 0..1
-      val maxLen = Seq(s1.length, s2.length).max
-      1.0f - (dist * 1.0f / maxLen)
-    }
+    else
+      LevenshteinMetric.compare(s1, s2) map { dist =>
+        // normalizing to 0..1
+        val maxLen = Seq(s1.length, s2.length).max
+        1.0f - (dist * 1.0f / maxLen)
+      }
   }
 
-  private[smv] val JaroWinklerFn: (String, String) => Option[Float] = {(s1, s2) =>
+  private[smv] val JaroWinklerFn: (String, String) => Option[Float] = { (s1, s2) =>
     if (null == s1 || null == s2) None
     else JaroWinklerMetric.compare(s1, s2) map (_.toFloat)
   }

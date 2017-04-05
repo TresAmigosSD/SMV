@@ -19,19 +19,23 @@ import cds._
 class SmvChunkTest extends SmvTestUtil {
   test("Test chunkBy") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("k:String;v:String", "k1,a;k1,b;k2,d;k2,c")
-    val runCat = (l: List[Seq[Any]]) => l.map{_(0)}.scanLeft(Seq("")){(a,b) => Seq(a(0) + b)}.tail
+    val df  = dfFrom("k:String;v:String", "k1,a;k1,b;k2,d;k2,c")
+    val runCat = (l: List[Seq[Any]]) =>
+      l.map { _(0) }
+        .scanLeft(Seq("")) { (a, b) =>
+          Seq(a(0) + b)
+        }
+        .tail
     val runCatFunc = SmvChunkUDF(Seq('v), SmvSchema.fromString("vcat:String").toStructType, runCat)
 
     val res = df.orderBy('k.asc, 'v.asc).chunkBy('k)(runCatFunc)
     assertSrddSchemaEqual(res, "vcat:String")
-    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq(
-      "[a]", "[ab]", "[c]", "[cd]"))
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq("[a]", "[ab]", "[c]", "[cd]"))
 
     val res2 = df.orderBy('k.asc, 'v.asc).chunkByPlus('k)(runCatFunc)
     assertSrddSchemaEqual(res2, "k:String; v: String; vcat:String")
-    assertUnorderedSeqEqual(res2.collect.map(_.toString), Seq(
-      "[k1,a,a]", "[k1,b,ab]", "[k2,c,c]", "[k2,d,cd]"))
+    assertUnorderedSeqEqual(res2.collect.map(_.toString),
+                            Seq("[k1,a,a]", "[k1,b,ab]", "[k2,c,c]", "[k2,d,cd]"))
   }
 
 }
