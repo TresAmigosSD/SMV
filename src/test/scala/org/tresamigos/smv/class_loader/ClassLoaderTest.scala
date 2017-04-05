@@ -14,7 +14,6 @@
 
 package org.tresamigos.smv.class_loader
 
-import org.eclipse.jetty.server.Server
 import org.tresamigos.smv.{SmvTestUtil, SmvConfig, SparkTestUtil}
 
 trait ClassLoaderTestHelper {
