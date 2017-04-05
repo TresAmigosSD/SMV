@@ -170,13 +170,17 @@ class SmvMultiJoin(object):
     def doJoin(self, dropextra = False):
         return DataFrame(self.mj.doJoin(dropextra), self.sqlContext)
 
-helper = lambda df: df._sc._jvm.SmvPythonHelper
-def dfhelper(df):
-    return _sparkContext()._jvm.SmvDFHelper(df._jdf)
+def _getUnboundMethod(helperCls, methodName):
+    def method(self, *args):
+        return getattr(helperCls(self), methodName)(*args)
+    return method
 
-def colhelper(c):
-    return _sparkContext()._jvm.ColumnHelper(c._jc)
-
+def _helpCls(receiverCls, helperCls):
+    for name, method in inspect.getmembers(helperCls, predicate=inspect.ismethod):
+        # ignore special and private methods
+        if not name.startswith("_"):
+            newMethod = _getUnboundMethod(helperCls, name)
+            setattr(receiverCls, name, newMethod)
 
 class DataFrameHelper(object):
     def __init__(self, df):
@@ -342,42 +346,75 @@ class DataFrameHelper(object):
     def smvDumpDF(self):
         self._println(self._jDfHelper._smvDumpDF())
 
-
-def _getUnboundMethod(helperCls, methodName):
-    def method(self, *args):
-        return getattr(helperCls(self), methodName)(*args)
-    return method
-
-def _helpCls(receiverCls, helperCls):
-    for name, method in inspect.getmembers(helperCls, predicate=inspect.ismethod):
-        # ignore special and private methods
-        if not name.startswith("_"):
-            newMethod = _getUnboundMethod(helperCls, name)
-            setattr(receiverCls, name, newMethod)
-
 _helpCls(DataFrame, DataFrameHelper)
 
-#############################################
-# ColumnHelper methods:
-#############################################
+class ColumnHelper(object):
+    def __init__(self, col):
+        self.col = col
+        self._jc = col._jc
+        self._jvm = _sparkContext()._jvm
+        self._jPythonHelper = self._jvm.SmvPythonHelper
+        self._jColumnHelper = self._jvm.ColumnHelper(self._jc)
 
-# SmvPythonHelper is necessary as frontend to generic Scala functions
-Column.smvIsAllIn = lambda c, *vals: Column(_sparkContext()._jvm.SmvPythonHelper.smvIsAllIn(c._jc, _to_seq(vals)))
-Column.smvIsAnyIn = lambda c, *vals: Column(_sparkContext()._jvm.SmvPythonHelper.smvIsAnyIn(c._jc, _to_seq(vals)))
+    def smvIsAllIn(self, *vals):
+        jc = self._jPythonHelper.smvIsAllIn(self._jc, _to_seq(vals))
+        return Column(jc)
 
-Column.smvMonth      = lambda c: Column(colhelper(c).smvMonth())
-Column.smvYear       = lambda c: Column(colhelper(c).smvYear())
-Column.smvQuarter    = lambda c: Column(colhelper(c).smvQuarter())
-Column.smvDayOfMonth = lambda c: Column(colhelper(c).smvDayOfMonth())
-Column.smvDayOfWeek  = lambda c: Column(colhelper(c).smvDayOfWeek())
-Column.smvHour       = lambda c: Column(colhelper(c).smvHour())
+    def smvIsAnyIn(self, *vals):
+        jc = self._jPythonHelper.smvIsAnyIn(self._jc, _to_seq(vals))
+        return Column(jc)
 
-Column.smvPlusDays   = lambda c, delta: Column(colhelper(c).smvPlusDays(delta))
-Column.smvPlusWeeks  = lambda c, delta: Column(colhelper(c).smvPlusWeeks(delta))
-Column.smvPlusMonths = lambda c, delta: Column(colhelper(c).smvPlusMonths(delta))
-Column.smvPlusYears  = lambda c, delta: Column(colhelper(c).smvPlusYears(delta))
+    def smvMonth(self):
+        jc = self._jColumnHelper.smvMonth()
+        return Column(jc)
 
-Column.smvDay70 = lambda c: Column(colhelper(c).smvDay70())
-Column.smvMonth70 = lambda c: Column(colhelper(c).smvMonth70())
+    def smvYear(self):
+        jc = self._jColumnHelper.smvYear()
+        return Column(jc)
 
-Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
+    def smvQuarter(self):
+        jc = self._jColumnHelper.smvQuarter()
+        return Column(jc)
+
+    def smvDayOfMonth(self):
+        jc = self._jColumnHelper.smvDayOfMonth()
+        return Column(jc)
+
+    def smvDayOfWeek(self):
+        jc = self._jColumnHelper.smvDayOfWeek()
+        return Column(jc)
+
+    def smvHour(self):
+        jc = self._jColumnHelper.smvHour()
+        return Column(jc)
+
+    def smvPlusDays(self, delta):
+        jc = self._jColumnHelper.smvPlusDays(delta)
+        return Column(jc)
+
+    def smvPlusWeeks(self, delta):
+        jc = self._jColumnHelper.smvPlusWeeks(delta)
+        return Column(jc)
+
+    def smvPlusMonths(self, delta):
+        jc = self._jColumnHelper.smvPlusMonths(delta)
+        return Column(jc)
+
+    def smvPlusYears(self, delta):
+        jc = self._jColumnHelper.smvPlusYears(delta)
+        return Column(jc)
+
+    def smvStrToTimestamp(self, fmt):
+        jc = self._jColumnHelper.smvStrToTimestamp(fmt)
+        return Column(jc)
+
+    def smvDay70(self):
+        jc = self._jColumnHelper.smvDay70()
+        return Column(jc)
+
+    def smvMonth70(self):
+        jc = self._jColumnHelper.smvMonth70()
+        return Column(jc)
+
+
+_helpCls(Column, ColumnHelper)
