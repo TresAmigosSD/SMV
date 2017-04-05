@@ -157,7 +157,7 @@ import org.tresamigos.smv.matcher._
 
 #### Python
 ```python
-from smvmatcher import *
+from smv.matcher import *
 ```
 
 ### NoOpPreFilter and NoOpGroupCondition
