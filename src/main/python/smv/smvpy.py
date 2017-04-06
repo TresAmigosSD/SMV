@@ -128,6 +128,10 @@ class SmvPy(object):
             lines = f.read()
         return lines
 
+    def dependency_graph(self, stageNames = None):
+        from graph import SmvDependencyGraph
+        return SmvDependencyGraph(self, stageNames)
+
     def runModule(self, urn):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """

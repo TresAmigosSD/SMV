@@ -45,3 +45,12 @@ cleanupCommands in console := "sc.stop"
 
 // Uncomment the following to include python scripts in the fat jar
 // unmanagedResourceDirectories in Compile += (sourceDirectory in Compile).value / "python"
+
+// graphviz-java depends on both xml-apis and batik-ext, both of which
+// contain org.w3c.dom.events classes
+assemblyMergeStrategy in assembly := {
+  case PathList("org", "w3c", "dom", "events", xs @ _*) => MergeStrategy.last
+  case x =>
+    val oldStrat = (assemblyMergeStrategy in assembly).value
+    oldStrat(x)
+}

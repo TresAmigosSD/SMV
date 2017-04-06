@@ -13,3 +13,5 @@ from runconfig import SmvRunConfig
 from csv_attributes import CsvAttributes
 
 import dqm
+
+from graph import SmvDependencyGraph
