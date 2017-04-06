@@ -36,7 +36,7 @@ val itest = TaskKey[Unit]("itest", "Run Integration Test")
 itest := {
   assembly.value
   publishLocal.value
-  val res = ("src/test/scripts/run-sample-app.sh" !)
+  val res = ("src/test/scripts/run-integration-test.sh" !)
   if (res > 0) throw new IllegalStateException("integration test failed")
 }
 
