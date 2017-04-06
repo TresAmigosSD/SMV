@@ -27,31 +27,39 @@ import org.apache.spark.annotation._
  * @param stages the collection of stages as the graph scope
  * @param targetDSs the collection of targeted DSs, if empty, all Modules are targets
  **/
-private[smv] class SmvDSGraph(app: SmvApp, pstages: Seq[String] = Nil, targetDSs: Seq[SmvDataSet] = Nil) {
+private[smv] class SmvDSGraph(app: SmvApp,
+                              pstages: Seq[String] = Nil,
+                              targetDSs: Seq[SmvDataSet] = Nil) {
   val stages = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
-  private val _nodes = if(targetDSs.isEmpty) app.dsm.dataSetsForStageWithLink(stages:_*) else
-    (targetDSs.flatMap(_.ancestors) ++ targetDSs).distinct
+  private val _nodes =
+    if (targetDSs.isEmpty) app.dsm.dataSetsForStageWithLink(stages: _*)
+    else
+      (targetDSs.flatMap(_.ancestors) ++ targetDSs).distinct
 
   private def followLink(ds: SmvDataSet) = ds match {
     case _ds: SmvModuleLink => _ds.smvModule
-    case _ => ds
+    case _                  => ds
   }
 
   val nodes: Seq[SmvDataSet] = _nodes.map(followLink).distinct
 
-  val edges: Seq[(SmvDataSet, SmvDataSet)] = nodes.flatMap{ds =>
+  val edges: Seq[(SmvDataSet, SmvDataSet)] = nodes.flatMap { ds =>
     val fromDSs = ds.resolvedRequiresDS
-    fromDSs.map{followLink}.filter{nodes contains _}.map{_ -> ds}
+    fromDSs.map { followLink }.filter { nodes contains _ }.map { _ -> ds }
   }
 
   val clusters: Seq[(String, Seq[SmvDataSet])] =
-    nodes.map(n => (n, n.parentStage)).collect{case (n, Some(x)) => n}.groupBy(_.parentStage.getOrElse(null)).toList
+    nodes
+      .map(n => (n, n.parentStage))
+      .collect { case (n, Some(x)) => n }
+      .groupBy(_.parentStage.getOrElse(null))
+      .toList
   val hasMultiClusters = clusters.size > 1
 
   def nodeString(
-    dsToNodeStr: SmvDataSet => String,
-    dsToInputNodeStr: SmvDataSet => String
-  ): Seq[String] = nodes.map{ds =>
+      dsToNodeStr: SmvDataSet => String,
+      dsToInputNodeStr: SmvDataSet => String
+  ): Seq[String] = nodes.map { ds =>
     if (ds.dsType == "Input") dsToInputNodeStr(ds)
     else dsToNodeStr(ds)
   }
@@ -61,7 +69,9 @@ private[smv] class SmvDSGraph(app: SmvApp, pstages: Seq[String] = Nil, targetDSs
  * There could be multiple SmvModuleLinks in between of stages, which with the
  * two stages define an "interface" between the 2 stages
  **/
-private[smv] case class SmvStageInterface(fromStage: String, toStage: String, links: Seq[SmvModuleLink])
+private[smv] case class SmvStageInterface(fromStage: String,
+                                          toStage: String,
+                                          links: Seq[SmvModuleLink])
 
 /**
  * Arbitrary Stage graph
@@ -69,26 +79,27 @@ private[smv] case class SmvStageInterface(fromStage: String, toStage: String, li
  * Edges are stage dependency
  **/
 private[smv] class SmvStageGraph(app: SmvApp, pstages: Seq[String] = Nil) {
-  val stages = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
+  val stages                  = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
   val stageNodes: Seq[String] = stages
-  val interfaceNodes: Seq[SmvStageInterface] = stageNodes.flatMap{s =>
+  val interfaceNodes: Seq[SmvStageInterface] = stageNodes.flatMap { s =>
     val allLinks = app.dsm.dataSetsForStageWithLink(s).filter(_.isInstanceOf[SmvModuleLink])
-    allLinks.map(_.asInstanceOf[SmvModuleLink]).groupBy(l => l.smvModule.parentStage).collect{
+    allLinks.map(_.asInstanceOf[SmvModuleLink]).groupBy(l => l.smvModule.parentStage).collect {
       case (Some(upStage), links) => SmvStageInterface(upStage, s, links)
     }
   }
 
   def nodeString(
-    stageToString: String => String,
-    interfaceToString: SmvStageInterface => String
-  ) = stageNodes.map{stageToString(_)} ++ interfaceNodes.map{interfaceToString(_)}
+      stageToString: String => String,
+      interfaceToString: SmvStageInterface => String
+  ) = stageNodes.map { stageToString(_) } ++ interfaceNodes.map { interfaceToString(_) }
 
   def edgeStringPair(
-    stageToString: String => String,
-    interfaceToString: SmvStageInterface => String
-  ) = interfaceNodes.flatMap{i =>
-    i match { case SmvStageInterface(s1, s2, links) =>
-      Seq(stageToString(s1) -> interfaceToString(i), interfaceToString(i) -> stageToString(s2))
+      stageToString: String => String,
+      interfaceToString: SmvStageInterface => String
+  ) = interfaceNodes.flatMap { i =>
+    i match {
+      case SmvStageInterface(s1, s2, links) =>
+        Seq(stageToString(s1) -> interfaceToString(i), interfaceToString(i) -> stageToString(s2))
     }
   }
 }
@@ -98,18 +109,18 @@ private[smv] class SmvStageGraph(app: SmvApp, pstages: Seq[String] = Nil) {
  **/
 private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
   val stages = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
-  val dsm = app.dsm
+  val dsm    = app.dsm
   // max string length per line in an ascii Box
   private val asciiBoxWidth = 12
 
-  private def wrapStr(str: String) = str.grouped(asciiBoxWidth).mkString("\n")
+  private def wrapStr(str: String)     = str.grouped(asciiBoxWidth).mkString("\n")
   private def baseName(ds: SmvDataSet) = FQN.removePrefix(ds.urn.fqn, FQN.sharedPrefix(stages))
 
   private def baseNameWithFlag(ds: SmvDataSet) = ds.dsType() match {
-    case "Output"     => "(O) " + baseName(ds)
-    case "Link"       => "(L) " + baseName(ds)
-    case "Input"      => "(I) " + baseName(ds)
-    case "Module"     => "(M) " + baseName(ds)
+    case "Output" => "(O) " + baseName(ds)
+    case "Link"   => "(L) " + baseName(ds)
+    case "Input"  => "(I) " + baseName(ds)
+    case "Module" => "(M) " + baseName(ds)
   }
 
   /**
@@ -121,7 +132,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
     val toPrint = (ds: SmvDataSet) => wrapStr(baseNameWithFlag(ds))
 
     val vertices = g.nodeString(toPrint, toPrint).toSet
-    val edges = g.edges.map{case (f, t) => toPrint(f) -> toPrint(t)}.toList
+    val edges    = g.edges.map { case (f, t) => toPrint(f) -> toPrint(t) }.toList
 
     // val graphObj = AsciiGraph(vertices, edges)
 
@@ -139,13 +150,14 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
     val g = new SmvStageGraph(app, stages)
 
     val printStage = (s: String) => FQN.removePrefix(s, FQN.sharedPrefix(stages))
-    val printInterface = (i: SmvStageInterface) => i match {
-      case SmvStageInterface(s1, s2, links) =>
-        links.map{baseNameWithFlag}.mkString("\n")
+    val printInterface = (i: SmvStageInterface) =>
+      i match {
+        case SmvStageInterface(s1, s2, links) =>
+          links.map { baseNameWithFlag }.mkString("\n")
     }
 
     val vertices = g.nodeString(printStage, printInterface).toSet
-    val edges = g.edgeStringPair(printStage, printInterface).toList
+    val edges    = g.edgeStringPair(printStage, printInterface).toList
 
     // val graphObj = AsciiGraph(vertices, edges)
 
@@ -166,28 +178,34 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
     def toName(ds: SmvDataSet) = "\"" + baseName(ds) + "\""
     val toNodeStr = (ds: SmvDataSet) =>
       s"  ${toName(ds)} " + "[tooltip=\"" + s"${ds.description}" + "\"]"
-    val toInputNodeStr = (ds: SmvDataSet) =>
-      s"  ${toName(ds)} " + "[shape=box, color=\"pink\"]"
+    val toInputNodeStr = (ds: SmvDataSet) => s"  ${toName(ds)} " + "[shape=box, color=\"pink\"]"
 
     val nodeString = Seq(g.nodeString(toNodeStr, toInputNodeStr).mkString("\n"))
-    val linkString = Seq(g.edges.map{case (f, t) => s"""  ${toName(f)} -> ${toName(t)} """}.mkString("\n"))
+    val linkString = Seq(
+      g.edges.map { case (f, t) => s"""  ${toName(f)} -> ${toName(t)} """ }.mkString("\n"))
 
-    val clusterString = if(g.hasMultiClusters) Seq(
-      g.clusters.zipWithIndex.map{case ((stg, nodes), i) =>
-        "  subgraph cluster_" + i + " {\n" +
-        "    label=\"" + stg + "\"\n" +
-        "    color=\"#e0e0e0\"\n" +
-        "    " + nodes.map(toName).mkString("; ") + "\n" +
-        "  }"
-      }.mkString("\n")
-    ) else Nil
+    val clusterString =
+      if (g.hasMultiClusters)
+        Seq(
+          g.clusters.zipWithIndex
+            .map {
+              case ((stg, nodes), i) =>
+                "  subgraph cluster_" + i + " {\n" +
+                  "    label=\"" + stg + "\"\n" +
+                  "    color=\"#e0e0e0\"\n" +
+                  "    " + nodes.map(toName).mkString("; ") + "\n" +
+                  "  }"
+            }
+            .mkString("\n")
+        )
+      else Nil
 
     val graphvisCode = {
       "digraph G {\n" +
-      "  rankdir=\"LR\";\n" +
-      "  node [style=filled,color=\"lightblue\"]\n" +
-      (nodeString ++ clusterString ++ linkString).mkString("\n") + "\n" +
-      "}"
+        "  rankdir=\"LR\";\n" +
+        "  node [style=filled,color=\"lightblue\"]\n" +
+        (nodeString ++ clusterString ++ linkString).mkString("\n") + "\n" +
+        "}"
     }
 
     graphvisCode
@@ -203,39 +221,48 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
     def toName(ds: SmvDataSet) = "\"" + baseName(ds) + "\""
     def toNodeStr(nodeType: String)(m: SmvDataSet) =
       s"""  ${toName(m)}: {""" + "\n" +
-      s"""    "type": "${nodeType}",""" + "\n" +
-      s"""    "version": ${m.version},""" + "\n" +
-      s"""    "description": "${m.description}"""" + "\n" +
-      s"""  }"""
+        s"""    "type": "${nodeType}",""" + "\n" +
+        s"""    "version": ${m.version},""" + "\n" +
+        s"""    "description": "${m.description}"""" + "\n" +
+        s"""  }"""
 
     val nodeString = Seq(
       s""""nodes": {""" + "\n" +
-      g.nodeString(toNodeStr("module")(_), toNodeStr("file")(_)).mkString(",\n") + "\n" +
-      "}"
+        g.nodeString(toNodeStr("module")(_), toNodeStr("file")(_)).mkString(",\n") + "\n" +
+        "}"
     )
 
-    val clusterString = if(g.hasMultiClusters) Seq(
-      s""""clusters": {""" + "\n" +
-      g.clusters.map{case (stg, nodes) =>
-        s"""  "${stg}": [""" + "\n" +
-        s"""    """ + nodes.map(toName).mkString(", ") + "\n" +
-        s"""  ]"""
-      }.mkString(",\n") + "\n" +
-      "}"
-    ) else Nil
+    val clusterString =
+      if (g.hasMultiClusters)
+        Seq(
+          s""""clusters": {""" + "\n" +
+            g.clusters
+              .map {
+                case (stg, nodes) =>
+                  s"""  "${stg}": [""" + "\n" +
+                    s"""    """ + nodes.map(toName).mkString(", ") + "\n" +
+                    s"""  ]"""
+              }
+              .mkString(",\n") + "\n" +
+            "}"
+        )
+      else Nil
 
     val linkString = Seq(
       s""""links": [""" + "\n" +
-      g.edges.map{case (f, t) =>
-        s"""  {${toName(f)}: ${toName(t)}}"""
-      }.mkString(",\n") + "\n" +
-      "]"
+        g.edges
+          .map {
+            case (f, t) =>
+              s"""  {${toName(f)}: ${toName(t)}}"""
+          }
+          .mkString(",\n") + "\n" +
+        "]"
     )
 
     val jsonStr = {
       "{\n" +
         (nodeString ++ clusterString ++ linkString).mkString(",\n") + "\n" +
-      "}"
+        "}"
     }
 
     jsonStr
@@ -243,15 +270,19 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
 
   private def _listInStage(d: Seq[SmvDataSet], prefix: String = ""): Seq[String] = {
     val dss = d.sortBy(_.urn.fqn)
-    dss.map{ds => prefix + baseNameWithFlag(ds)}
+    dss.map { ds =>
+      prefix + baseNameWithFlag(ds)
+    }
   }
 
-  private def _listAll(stageName:String, f: String => Seq[SmvDataSet]): String = {
+  private def _listAll(stageName: String, f: String => Seq[SmvDataSet]): String = {
     if (stageName == null) {
       /* list all in the app (the stages) */
-      stages.flatMap{s =>
-        Seq("", s + ":") ++ _listInStage(f(s), "  ")
-      }.mkString("\n")
+      stages
+        .flatMap { s =>
+          Seq("", s + ":") ++ _listInStage(f(s), "  ")
+        }
+        .mkString("\n")
     } else {
       /* list DS in the specified stage */
       _listInStage(f(stageName)).mkString("\n")
@@ -259,7 +290,10 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
   }
 
   /** list all datasets */
-  def createDSList(s: String = null): String = _listAll(s, {s => dsm.dataSetsForStageWithLink(s)})
+  def createDSList(s: String = null): String =
+    _listAll(s, { s =>
+      dsm.dataSetsForStageWithLink(s)
+    })
 
   private def deadDS(s: String): Seq[SmvDataSet] = {
     val inFlow = dsm.outputModulesForStage(s).flatMap(d => d.ancestors :+ d).distinct
@@ -267,9 +301,11 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
   }
 
   private def descendantsDS(ds: SmvDataSet): Seq[SmvDataSet] = {
-    dsm.dataSetsForStage(stages:_*).filter(
-      that => that.ancestors.map(_.urn).contains(ds.urn)
-    )
+    dsm
+      .dataSetsForStage(stages: _*)
+      .filter(
+        that => that.ancestors.map(_.urn).contains(ds.urn)
+      )
   }
 
   private def deadLeafDS(s: String): Seq[SmvDataSet] = {
@@ -277,19 +313,34 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
   }
 
   /** list `dead` datasets */
-  def createDeadDSList(s: String = null): String = _listAll(s, {s => deadDS(s)})
+  def createDeadDSList(s: String = null): String =
+    _listAll(s, { s =>
+      deadDS(s)
+    })
 
   /** list `leaf` datasets */
-  def createDeadLeafDSList(s: String = null): String = _listAll(s, {s => deadLeafDS(s)})
+  def createDeadLeafDSList(s: String = null): String =
+    _listAll(s, { s =>
+      deadLeafDS(s)
+    })
 
   /** list ancestors of a dataset */
   def createAncestorDSList(ds: SmvDataSet): String = {
-    ds.ancestors.map{d => baseNameWithFlag(d)}.mkString("\n")
+    ds.ancestors
+      .map { d =>
+        baseNameWithFlag(d)
+      }
+      .mkString("\n")
   }
 
   /** list descendants of a dataset */
   def createDescendantDSList(ds: SmvDataSet): String = {
-    descendantsDS(ds).sortBy(ds => ds.urn.fqn).map{d => baseNameWithFlag(d)}.mkString("\n")
+    descendantsDS(ds)
+      .sortBy(ds => ds.urn.fqn)
+      .map { d =>
+        baseNameWithFlag(d)
+      }
+      .mkString("\n")
   }
 
 }

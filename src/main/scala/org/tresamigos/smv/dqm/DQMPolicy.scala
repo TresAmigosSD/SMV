@@ -35,7 +35,7 @@ object DQMPolicy {
 
 /** No requirement, always pass */
 private[smv] object NoOpDQMPolicy extends DQMPolicy {
-  val name = "NoOpDQMPolicy"
+  val name                                            = "NoOpDQMPolicy"
   def policy(df: DataFrame, state: DQMState): Boolean = true
 }
 
@@ -46,7 +46,8 @@ private[smv] case class ImplementFailCountPolicy(name: String, threshold: Int) e
   }
 }
 
-private[smv] case class ImplementFailPercentPolicy(name: String, threshold: Double) extends DQMPolicy {
+private[smv] case class ImplementFailPercentPolicy(name: String, threshold: Double)
+    extends DQMPolicy {
   def policy(df: DataFrame, state: DQMState): Boolean = {
     state.getTaskCount(name) < threshold * state.getRecCount()
   }

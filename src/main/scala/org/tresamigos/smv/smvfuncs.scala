@@ -9,6 +9,7 @@ import com.rockymadden.stringmetric.similarity._
  * @since 1.5
  */
 object smvfuncs {
+
   /**
    * smvFirst: by default return null if the first record is null
    *
@@ -39,27 +40,31 @@ object smvfuncs {
 
   /** Count number of distinct values including null */
   def smvCountDistinctWithNull(cols: Column*): Column = {
-    val catCol = smvStrCat(cols.map{c => c.cast(StringType)}: _*)
+    val catCol = smvStrCat(cols.map { c =>
+      c.cast(StringType)
+    }: _*)
     countDistinct(catCol)
   }
 
   def smvCountDistinctWithNull(colN: String, colNs: String*): Column = {
-    val cols = (colN +: colNs).map{cn => new Column(cn)}
+    val cols = (colN +: colNs).map { cn =>
+      new Column(cn)
+    }
     smvCountDistinctWithNull(cols: _*)
   }
 
-  val boolsToBitmap = (r:Row) => {
-    r.toSeq.map( { case true => '1'; case false | null => '0' } ).mkString
+  val boolsToBitmap = (r: Row) => {
+    r.toSeq.map({ case true => '1'; case false | null => '0' }).mkString
   }
 
   /** Coalesce boolean columns into a String bitmap  **/
-  def smvBoolsToBitmap(boolColumns:Column*) = {
-    udf(boolsToBitmap).apply(struct(boolColumns:_*))
+  def smvBoolsToBitmap(boolColumns: Column*) = {
+    udf(boolsToBitmap).apply(struct(boolColumns: _*))
   }
 
   /** Coalesce boolean columns into a String bitmap  **/
-  def smvBoolsToBitmap(headColumnName:String, tailColumnNames: String*) = {
-    udf(boolsToBitmap).apply(struct(headColumnName, tailColumnNames:_*))
+  def smvBoolsToBitmap(headColumnName: String, tailColumnNames: String*) = {
+    udf(boolsToBitmap).apply(struct(headColumnName, tailColumnNames: _*))
   }
 
   /** Spark 1.6 will have collect_set aggregation function.*/
@@ -93,11 +98,12 @@ object smvfuncs {
 
   /** For an Array column create a String column with the Array values */
   def smvArrayCat(sep: String, col: Column, fn: Any => String = (x => x.toString)): Column = {
-    val catF = {a:Seq[Any] =>
-      a.map{
-        case null => ""
-        case s => fn(s)
-      }.mkString(sep)
+    val catF = { a: Seq[Any] =>
+      a.map {
+          case null => ""
+          case s    => fn(s)
+        }
+        .mkString(sep)
     }
 
     udf(catF).apply(col).as(s"smvArrayCat(${col})")
@@ -139,7 +145,7 @@ object smvfuncs {
    * Library reference: https://github.com/rockymadden/stringmetric
    */
   def nGram2(c1: Column, c2: Column) = {
-    val NGram2Fn: (String, String) => Option[Float] = {(s1, s2) =>
+    val NGram2Fn: (String, String) => Option[Float] = { (s1, s2) =>
       if (null == s1 || null == s2) None
       else NGramMetric(2).compare(s1, s2) map (_.toFloat)
     }
@@ -154,7 +160,7 @@ object smvfuncs {
    * Library reference: https://github.com/rockymadden/stringmetric
    */
   def nGram3(c1: Column, c2: Column) = {
-    val NGram3Fn: (String, String) => Option[Float] = {(s1, s2) =>
+    val NGram3Fn: (String, String) => Option[Float] = { (s1, s2) =>
       if (null == s1 || null == s2) None
       else NGramMetric(3).compare(s1, s2) map (_.toFloat)
     }
@@ -169,7 +175,7 @@ object smvfuncs {
    * Library reference: https://github.com/rockymadden/stringmetric
    */
   def diceSorensen(c1: Column, c2: Column) = {
-    val DiceSorensenFn: (String, String) => Option[Float] = {(s1, s2) =>
+    val DiceSorensenFn: (String, String) => Option[Float] = { (s1, s2) =>
       if (null == s1 || null == s2) None
       else DiceSorensenMetric(2).compare(s1, s2) map (_.toFloat)
     }
@@ -184,13 +190,14 @@ object smvfuncs {
    * Library reference: https://github.com/rockymadden/stringmetric
    */
   def normlevenshtein(c1: Column, c2: Column) = {
-    val NormalizedLevenshteinFn: (String, String) => Option[Float] = {(s1, s2) =>
+    val NormalizedLevenshteinFn: (String, String) => Option[Float] = { (s1, s2) =>
       if (null == s1 || null == s2) None
-      else LevenshteinMetric.compare(s1, s2) map { dist =>
-        // normalizing to 0..1
-        val maxLen = Seq(s1.length, s2.length).max
-        1.0f - (dist * 1.0f / maxLen)
-      }
+      else
+        LevenshteinMetric.compare(s1, s2) map { dist =>
+          // normalizing to 0..1
+          val maxLen = Seq(s1.length, s2.length).max
+          1.0f - (dist * 1.0f / maxLen)
+        }
     }
     udf(NormalizedLevenshteinFn).apply(c1, c2).alias(s"NormLevenshtein(${c1}, ${c2})")
   }
@@ -203,7 +210,7 @@ object smvfuncs {
    * Library reference: https://github.com/rockymadden/stringmetric
    */
   def jaroWinkler(c1: Column, c2: Column) = {
-    val JaroWinklerFn: (String, String) => Option[Float] = {(s1, s2) =>
+    val JaroWinklerFn: (String, String) => Option[Float] = { (s1, s2) =>
       if (null == s1 || null == s2) None
       else JaroWinklerMetric.compare(s1, s2) map (_.toFloat)
     }

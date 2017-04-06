@@ -21,7 +21,7 @@ class DQMTest extends SmvTestUtil {
   test("test DQMState functions") {
     val state = new DQMState(sc, Seq("rule1", "rule2"), Seq("fix1"))
 
-    (0 to 5).foreach{i =>
+    (0 to 5).foreach { i =>
       state.addRec()
       state.addRuleRec("rule1", s"record: $i")
     }
@@ -29,7 +29,7 @@ class DQMTest extends SmvTestUtil {
     state.addRec()
     state.addRuleRec("rule2", "rule2 record")
 
-    (0 to 2).foreach{i =>
+    (0 to 2).foreach { i =>
       state.addRec()
       state.addFixRec("fix1")
     }
@@ -45,39 +45,41 @@ class DQMTest extends SmvTestUtil {
     assert(state.getRuleCount("rule1") === 6)
     assert(state.getTotalRuleCount() === 7)
     assert(state.getTotalFixCount() === 3)
-    assertUnorderedSeqEqual(state.getRuleLog("rule2"), Seq(
-      "org.tresamigos.smv.dqm.DQMRuleError: rule2 @FIELDS: rule2 record"))
+    assertUnorderedSeqEqual(
+      state.getRuleLog("rule2"),
+      Seq("org.tresamigos.smv.dqm.DQMRuleError: rule2 @FIELDS: rule2 record"))
   }
 
   test("test DQMRule") {
-    val df = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2")
-    val state = new DQMState(sc, Seq("rule1"), Nil)
-    val dqmRule1 = DQMRule((new Column("a")) + (new Column("b")) > 0.3, "rule1")
+    val df           = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2")
+    val state        = new DQMState(sc, Seq("rule1"), Nil)
+    val dqmRule1     = DQMRule((new Column("a")) + (new Column("b")) > 0.3, "rule1")
     val (c1, c2, c3) = dqmRule1.createCheckCol(state)
-    val res = df.smvSelectPlus(c1).where(c2).smvSelectMinus(c3)
+    val res          = df.smvSelectPlus(c1).where(c2).smvSelectMinus(c3)
 
     assertSrddDataEqual(res, "1,0.3")
     state.snapshot()
 
-    assertUnorderedSeqEqual(state.getRuleLog("rule1"), Seq(
-      "org.tresamigos.smv.dqm.DQMRuleError: rule1 @FIELDS: a=0,b=0.2"
-    ))
+    assertUnorderedSeqEqual(state.getRuleLog("rule1"),
+                            Seq(
+                              "org.tresamigos.smv.dqm.DQMRuleError: rule1 @FIELDS: a=0,b=0.2"
+                            ))
   }
 
   test("test DQMFix") {
-    val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2")
-    val state = new DQMState(sc, Nil, Seq("fix1"))
+    val ssc    = sqlContext; import ssc.implicits._
+    val df     = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2")
+    val state  = new DQMState(sc, Nil, Seq("fix1"))
     val dqmFix = DQMFix($"a" > 0, lit(0) as "a", "fix1")
-    val c = dqmFix.createFixCol(state)
-    val res = df.selectWithReplace(c)
+    val c      = dqmFix.createFixCol(state)
+    val res    = df.selectWithReplace(c)
 
     assertSrddDataEqual(res, "0,0.3;0,0.2")
   }
 
   test("test SmvDQM with FailAny (so FailCount)") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2")
+    val df  = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2")
 
     val dqm = new DQMValidator(SmvDQM().add(DQMRule($"a" <= 0, "a_le_0", FailAny)))
 
@@ -99,11 +101,12 @@ class DQMTest extends SmvTestUtil {
 
   test("test FailPercent") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
+    val df  = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
 
-    val dqm = new DQMValidator(SmvDQM().
-      add(DQMRule($"b" < 0.4 , "b_lt_03", FailPercent(0.5))).
-      add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix", FailPercent(0.3))))
+    val dqm = new DQMValidator(
+      SmvDQM()
+        .add(DQMRule($"b" < 0.4, "b_lt_03", FailPercent(0.5)))
+        .add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix", FailPercent(0.3))))
 
     val res = dqm.attachTasks(df)
     assertSrddDataEqual(res, "1,0.3;1,0.2")
@@ -125,15 +128,16 @@ class DQMTest extends SmvTestUtil {
 
   test("test Total Policies") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
+    val df  = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5")
 
-    val dqm = new DQMValidator(SmvDQM().
-      add(DQMRule($"b" < 0.4 , "b_lt_03")).
-      add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix")).
-      add(FailTotalRuleCountPolicy(2)).
-      add(FailTotalFixCountPolicy(1)).
-      add(FailTotalRulePercentPolicy(0.3)).
-      add(FailTotalFixPercentPolicy(0.3)))
+    val dqm = new DQMValidator(
+      SmvDQM()
+        .add(DQMRule($"b" < 0.4, "b_lt_03"))
+        .add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix"))
+        .add(FailTotalRuleCountPolicy(2))
+        .add(FailTotalFixCountPolicy(1))
+        .add(FailTotalRulePercentPolicy(0.3))
+        .add(FailTotalFixPercentPolicy(0.3)))
 
     val res = dqm.attachTasks(df)
 
@@ -142,22 +146,26 @@ class DQMTest extends SmvTestUtil {
     res.rdd.count
 
     val dqmRes = dqm.validate(res)
-    assertUnorderedSeqEqual(dqmRes.errorMessages, Seq(
-      ("FailTotalRuleCountPolicy(2)","true"),
-      ("FailTotalFixCountPolicy(1)","false"),
-      ("FailTotalRulePercentPolicy(0.3)","false"),
-      ("FailTotalFixPercentPolicy(0.3)","false")
-    ))
+    assertUnorderedSeqEqual(
+      dqmRes.errorMessages,
+      Seq(
+        ("FailTotalRuleCountPolicy(2)", "true"),
+        ("FailTotalFixCountPolicy(1)", "false"),
+        ("FailTotalRulePercentPolicy(0.3)", "false"),
+        ("FailTotalFixPercentPolicy(0.3)", "false")
+      )
+    )
   }
 
   test("test dqm method in SmvDataSet") {
     val ssc = sqlContext; import ssc.implicits._
     object file extends SmvCsvStringData("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5") {
-      override def dqm() = SmvDQM().
-        add(DQMRule($"b" < 0.4 , "b_lt_03")).
-        add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix")).
-        add(FailTotalRuleCountPolicy(2)).
-        add(FailTotalFixCountPolicy(1))
+      override def dqm() =
+        SmvDQM()
+          .add(DQMRule($"b" < 0.4, "b_lt_03"))
+          .add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix"))
+          .add(FailTotalRuleCountPolicy(2))
+          .add(FailTotalFixCountPolicy(1))
     }
     intercept[SmvDqmValidationError] {
       file.rdd.show
@@ -166,12 +174,14 @@ class DQMTest extends SmvTestUtil {
 
   test("test additional DQMRules") {
     val ssc = sqlContext; import ssc.implicits._
-    object file extends SmvCsvStringData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,o,x;1,m,zz") {
-      override def dqm() = SmvDQM().
-        add(BoundRule($"a", 0, 2)).
-        add(SetRule($"b", Set("m", "f"))).
-        add(FormatRule($"c", ".")).
-        add(FailTotalRuleCountPolicy(3))
+    object file
+        extends SmvCsvStringData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,o,x;1,m,zz") {
+      override def dqm() =
+        SmvDQM()
+          .add(BoundRule($"a", 0, 2))
+          .add(SetRule($"b", Set("m", "f")))
+          .add(FormatRule($"c", "."))
+          .add(FailTotalRuleCountPolicy(3))
     }
     intercept[SmvDqmValidationError] {
       file.rdd.show
@@ -180,11 +190,13 @@ class DQMTest extends SmvTestUtil {
 
   test("test additional DQMFixes") {
     val ssc = sqlContext; import ssc.implicits._
-    object file extends SmvCsvStringData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,x,x;1,m,zz") {
-      override def dqm() = SmvDQM().
-        add(SetFix($"b", Set("m", "f", "o"), "o")).
-        add(FormatFix($"c", ".", "_")).
-        add(FailTotalFixCountPolicy(5))
+    object file
+        extends SmvCsvStringData("a:Integer;b:String;c:String", "1,m,a;0,f,c;2,m,z;1,x,x;1,m,zz") {
+      override def dqm() =
+        SmvDQM()
+          .add(SetFix($"b", Set("m", "f", "o"), "o"))
+          .add(FormatFix($"c", ".", "_"))
+          .add(FailTotalFixCountPolicy(5))
     }
     assertSrddDataEqual(file.rdd, "1,m,a;0,f,c;2,m,z;1,o,x;1,m,_")
   }
@@ -192,13 +204,14 @@ class DQMTest extends SmvTestUtil {
   test("test user defined policy") {
     val ssc = sqlContext; import ssc.implicits._
     object file extends SmvCsvStringData("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5") {
-      val policy: (DataFrame, DQMState) => Boolean = {(df, state) =>
+      val policy: (DataFrame, DQMState) => Boolean = { (df, state) =>
         state.getRuleCount("rule1") + state.getFixCount("fix2") == 3
       }
-      override def dqm() = SmvDQM().
-        add(DQMRule($"b" < 0.4 , "rule1")).
-        add(DQMFix($"a" < 1, lit(1) as "a", "fix2")).
-        add(DQMPolicy(policy, "udp"))
+      override def dqm() =
+        SmvDQM()
+          .add(DQMRule($"b" < 0.4, "rule1"))
+          .add(DQMFix($"a" < 1, lit(1) as "a", "fix2"))
+          .add(DQMPolicy(policy, "udp"))
     }
 
     intercept[SmvDqmValidationError] {

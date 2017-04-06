@@ -34,12 +34,12 @@ object SmvTestHive {
           System.getProperty("spark.sql.test.master", "local[1]"),
           "TestSQLContext",
           new SparkConf()
-          .set("spark.sql.test", "")
-          .set("spark.sql.hive.metastore.barrierPrefixes",
-            "org.apache.spark.sql.hive.execution.PairSerDe")
-          .set("spark.sql.warehouse.dir", TestHiveContext.makeWarehouseDir().toURI.getPath)
-          // SPARK-8910
-          .set("spark.ui.enabled", "false")
+            .set("spark.sql.test", "")
+            .set("spark.sql.hive.metastore.barrierPrefixes",
+                 "org.apache.spark.sql.hive.execution.PairSerDe")
+            .set("spark.sql.warehouse.dir", TestHiveContext.makeWarehouseDir().toURI.getPath)
+            // SPARK-8910
+            .set("spark.ui.enabled", "false")
         )
       } else {
         _sc

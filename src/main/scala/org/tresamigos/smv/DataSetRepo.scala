@@ -38,7 +38,9 @@ class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
 
   def urnsForStage(stageName: String): Seq[URN] = {
     val packages = Seq(stageName, stageName + ".input")
-    val allDatasets = packages.flatMap{ p => SmvReflection.objectsInPackage[SmvDataSet](p) }
+    val allDatasets = packages.flatMap { p =>
+      SmvReflection.objectsInPackage[SmvDataSet](p)
+    }
     allDatasets.map(_.urn).filterNot(_.isInstanceOf[LinkURN])
   }
 }
@@ -47,8 +49,7 @@ class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {
   def createRepo(): DataSetRepoScala = new DataSetRepoScala(smvConfig)
 }
 
-
-class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo {
+class DataSetRepoPython(iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo {
   def loadDataSet(urn: ModURN): Option[SmvDataSet] =
     Try(iDSRepo.loadDataSet(urn.fqn)).toOption.map(SmvExtModulePython.apply)
 
@@ -56,6 +57,8 @@ class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extend
     iDSRepo.dataSetsForStage(stageName) map (URN(_))
 }
 
-class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J, smvConfig: SmvConfig) extends DataSetRepoFactory {
-  def createRepo(): DataSetRepoPython = new DataSetRepoPython(iDSRepoFactory.createRepo(), smvConfig)
+class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J, smvConfig: SmvConfig)
+    extends DataSetRepoFactory {
+  def createRepo(): DataSetRepoPython =
+    new DataSetRepoPython(iDSRepoFactory.createRepo(), smvConfig)
 }

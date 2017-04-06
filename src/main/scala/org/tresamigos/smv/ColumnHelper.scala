@@ -60,7 +60,7 @@ class ColumnHelper(column: Column) {
    */
   def getName = expr match {
     case e: NamedExpression => e.name
-    case e: Expression => e.prettyName
+    case e: Expression      => e.prettyName
   }
 
   /**
@@ -73,10 +73,10 @@ class ColumnHelper(column: Column) {
    * @return The timestamp or null if input string is null
    */
   def smvStrToTimestamp(fmt: String) = {
-    val name = s"SmvStrToTimestamp($column,$fmt)"
+    val name   = s"SmvStrToTimestamp($column,$fmt)"
     val fmtObj = new java.text.SimpleDateFormat(fmt)
-    val f = (s:String) =>
-      if(s == null) null
+    val f = (s: String) =>
+      if (s == null) null
       else new Timestamp(fmtObj.parse(s).getTime())
     new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
   }
@@ -120,16 +120,18 @@ class ColumnHelper(column: Column) {
    */
   def smvMonth70 = {
     val name = s"SmvMonth70($column)"
-    val f = {ts:Any => ts match {
-      case null => null
-      case ts:Timestamp =>
-        panel.Month(ts).timeIndex
-      case ts:Date =>
-        panel.Month(ts).timeIndex
-      case _ => throw new SmvUnsupportedType("unsupported type")
-    }}
+    val f = { ts: Any =>
+      ts match {
+        case null => null
+        case ts: Timestamp =>
+          panel.Month(ts).timeIndex
+        case ts: Date =>
+          panel.Month(ts).timeIndex
+        case _ => throw new SmvUnsupportedType("unsupported type")
+      }
+    }
 
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)())
   }
 
   /**
@@ -170,20 +172,22 @@ class ColumnHelper(column: Column) {
    * @return The day of the week component as an integer (range 1-7, 1 being Sunday) or null if input column is null
    */
   def smvDayOfWeek = {
-    val name = s"SmvDayOfWeek($column)"
-    val cal : Calendar = Calendar.getInstance()
-    val f = {ts:Any => ts match {
-      case null => null
-      case ts:Timestamp =>
-        cal.setTimeInMillis(ts.getTime())
-        cal.get(Calendar.DAY_OF_WEEK)
-      case ts:Date =>
-        cal.setTimeInMillis(ts.getTime())
-        cal.get(Calendar.DAY_OF_WEEK)
-      case _ => throw new SmvUnsupportedType("unsupported type")
-    }}
+    val name          = s"SmvDayOfWeek($column)"
+    val cal: Calendar = Calendar.getInstance()
+    val f = { ts: Any =>
+      ts match {
+        case null => null
+        case ts: Timestamp =>
+          cal.setTimeInMillis(ts.getTime())
+          cal.get(Calendar.DAY_OF_WEEK)
+        case ts: Date =>
+          cal.setTimeInMillis(ts.getTime())
+          cal.get(Calendar.DAY_OF_WEEK)
+        case _ => throw new SmvUnsupportedType("unsupported type")
+      }
+    }
 
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)())
   }
 
   /**
@@ -197,17 +201,20 @@ class ColumnHelper(column: Column) {
    */
   def smvDay70 = {
     val name = s"SmvDay70($column)"
-    val f = {ts:Any => ts match {
-      case null => null
-      case ts:Timestamp =>
-        panel.Day(ts).timeIndex
-      case ts:Date =>
-        panel.Day(ts).timeIndex
-      case _ => throw new SmvUnsupportedType("unsupported type")
-    }}
+    val f = { ts: Any =>
+      ts match {
+        case null => null
+        case ts: Timestamp =>
+          panel.Day(ts).timeIndex
+        case ts: Date =>
+          panel.Day(ts).timeIndex
+        case _ => throw new SmvUnsupportedType("unsupported type")
+      }
+    }
 
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)())
   }
+
   /**
    * Extract hour component from a timestamp.
    *
@@ -276,29 +283,29 @@ class ColumnHelper(column: Column) {
    */
   private[smv] def smvAmtBin = {
     val name = s"SmvAmtBin($column)"
-    val f = (rawv:Any) =>
-      if(rawv == null) null
+    val f = (rawv: Any) =>
+      if (rawv == null) null
       else {
         val v = rawv.asInstanceOf[Double]
         if (v < 0.0)
-          math.floor(v/1000)*1000
+          math.floor(v / 1000) * 1000
         else if (v == 0.0)
           0.0
         else if (v < 10.0)
           0.01
         else if (v < 200.0)
-          math.floor(v/10)*10
+          math.floor(v / 10) * 10
         else if (v < 1000.0)
-          math.floor(v/50)*50
+          math.floor(v / 50) * 50
         else if (v < 10000.0)
-          math.floor(v/500)*500
+          math.floor(v / 500) * 500
         else if (v < 1000000.0)
-          math.floor(v/5000)*5000
+          math.floor(v / 5000) * 5000
         else
-          math.floor(v/1000000)*1000000
-      }
+          math.floor(v / 1000000) * 1000000
+    }
 
-    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)())
   }
 
   /**
@@ -310,18 +317,18 @@ class ColumnHelper(column: Column) {
    * '''Note:''' This only applies to columns of type `Double`.
    */
   private[smv] def smvNumericBin(min: Double, max: Double, n: Int) = {
-    val name = s"SmvNumericBin($column,$min,$max,$n)"
+    val name  = s"SmvNumericBin($column,$min,$max,$n)"
     val delta = (max - min) / n
     // TODO: smvNumericBin should handle case where value < min or > max.
-    val f = (rawv:Any) =>
-      if(rawv == null) null
+    val f = (rawv: Any) =>
+      if (rawv == null) null
       else {
         val v = rawv.asInstanceOf[Double]
         if (v == max) min + delta * (n - 1)
         else min + math.floor((v - min) / delta) * delta
-      }
+    }
 
-    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)())
   }
 
   /**
@@ -335,10 +342,10 @@ class ColumnHelper(column: Column) {
    **/
   def smvCoarseGrain(bin: Double) = {
     val name = s"SmvCoarseGrain($column,$bin)"
-    val f = (v:Any) =>
-      if(v == null) null
+    val f = (v: Any) =>
+      if (v == null) null
       else math.floor(v.asInstanceOf[Double] / bin) * bin
-    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)())
   }
 
   /**
@@ -346,10 +353,10 @@ class ColumnHelper(column: Column) {
    */
   def smvMetaphone = {
     val name = s"SmvMetaphone($column)"
-    val f = (s:String) =>
-      if(s == null) null
+    val f = (s: String) =>
+      if (s == null) null
       else MetaphoneAlgorithm.compute(s.replaceAll("""[^a-zA-Z]""", "")).getOrElse(null)
-    new Column(Alias(ScalaUDF(f, StringType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, StringType, Seq(expr)), name)())
   }
 
   /**
@@ -365,15 +372,15 @@ class ColumnHelper(column: Column) {
    * @param defaultValue Default value to use if `denom` is 0.0
    */
   @Experimental
-  def smvSafeDiv(denom: Column, defaultValue: Column) : Column = {
+  def smvSafeDiv(denom: Column, defaultValue: Column): Column = {
     val numDouble = column.cast(DoubleType)
     val denDouble = denom.cast(DoubleType)
     val defDouble = defaultValue.cast(DoubleType)
 
-    when(column.isNull || denom.isNull, lit(null).cast(DoubleType)
-      ).when(numDouble === lit(0.0), 0.0
-      ).when(denDouble === lit(0.0), defDouble
-      ).otherwise(numDouble / denDouble)
+    when(column.isNull || denom.isNull, lit(null).cast(DoubleType))
+      .when(numDouble === lit(0.0), 0.0)
+      .when(denDouble === lit(0.0), defDouble)
+      .otherwise(numDouble / denDouble)
   }
 
   /**
@@ -393,10 +400,10 @@ class ColumnHelper(column: Column) {
    */
   def smvPlusDays(n: Int) = {
     val name = s"SmvPlusDays($column, $n)"
-    val f = (t:Timestamp) =>
-      if(t == null) null
+    val f = (t: Timestamp) =>
+      if (t == null) null
       else new Timestamp((new DateTime(t)).plusDays(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
   }
 
   /**
@@ -410,10 +417,10 @@ class ColumnHelper(column: Column) {
    */
   def smvPlusDays(col: Column) = {
     val name = s"SmvPlusDays($column, $col)"
-    val f = (t:Timestamp, days: Integer) =>
-      if(t == null) null
+    val f = (t: Timestamp, days: Integer) =>
+      if (t == null) null
       else new Timestamp((new DateTime(t)).plusDays(days).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
   }
 
   /**
@@ -427,10 +434,10 @@ class ColumnHelper(column: Column) {
    */
   def smvPlusWeeks(n: Int) = {
     val name = s"SmvPlusWeeks($column, $n)"
-    val f = (t:Timestamp) =>
-      if(t == null) null
+    val f = (t: Timestamp) =>
+      if (t == null) null
       else new Timestamp((new DateTime(t)).plusWeeks(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
   }
 
   /**
@@ -449,10 +456,10 @@ class ColumnHelper(column: Column) {
    */
   def smvPlusMonths(n: Int) = {
     val name = s"SmvPlusMonths($column, $n)"
-    val f = (t:Timestamp) =>
-      if(t == null) null
+    val f = (t: Timestamp) =>
+      if (t == null) null
       else new Timestamp((new DateTime(t)).plusMonths(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
   }
 
   /**
@@ -466,10 +473,10 @@ class ColumnHelper(column: Column) {
    */
   def smvPlusYears(n: Int) = {
     val name = s"SmvPlusYears($column, $n)"
-    val f = (t:Timestamp) =>
-      if(t == null) null
+    val f = (t: Timestamp) =>
+      if (t == null) null
       else new Timestamp((new DateTime(t)).plusYears(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
   }
 
   /**
@@ -482,19 +489,19 @@ class ColumnHelper(column: Column) {
    **/
   def smvBinPercentile(percentile: Double) = {
     val name = s"smvBinPercentile($column,$percentile)"
-    val f = (v:Any) =>
-      if(v == null) {
+    val f = (v: Any) =>
+      if (v == null) {
         null
       } else {
         val bin_hist = v.asInstanceOf[mutable.WrappedArray[Row]]
 
-        if(bin_hist.isEmpty) {
+        if (bin_hist.isEmpty) {
           null
         } else {
           import scala.util.control.Breaks._
 
           val count_sum: Int = bin_hist.map(_.get(2).asInstanceOf[Int]).foldLeft(0)(_ + _)
-          val target_sum = if (percentile >= 100.0 ) count_sum else (count_sum * percentile / 100.0)
+          val target_sum     = if (percentile >= 100.0) count_sum else (count_sum * percentile / 100.0)
 
           var sum_so_far = 0.0
           var target_bin = -1
@@ -515,10 +522,12 @@ class ColumnHelper(column: Column) {
             target_bin = bin_hist.length - 1
           }
 
-          (bin_hist(target_bin).get(0).asInstanceOf[Double] + bin_hist(target_bin).get(1).asInstanceOf[Double]) / 2.0;
+          (bin_hist(target_bin).get(0).asInstanceOf[Double] + bin_hist(target_bin)
+            .get(1)
+            .asInstanceOf[Double]) / 2.0;
         }
-      }
-    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
+    }
+    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)())
   }
 
   /**
@@ -531,8 +540,8 @@ class ColumnHelper(column: Column) {
    **/
   def smvBinMode() = {
     val name = s"smvBinMode($column)"
-    val f = (v:Any) =>
-      if(v == null) {
+    val f = (v: Any) =>
+      if (v == null) {
         null
       } else {
         var bin_hist = v.asInstanceOf[mutable.WrappedArray[Row]]
@@ -555,9 +564,9 @@ class ColumnHelper(column: Column) {
           bin_hist = bin_hist.sortWith(sortByFreq)
           (bin_hist(0).get(0).asInstanceOf[Double] + bin_hist(0).get(1).asInstanceOf[Double]) / 2.0
         }
-      }
+    }
 
-    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)() )
+    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)())
   }
 
   /**
@@ -568,14 +577,18 @@ class ColumnHelper(column: Column) {
    * df.smvSelectPlus($"arrayCol".smvIsAnyIn(seqVals: _*) as "isFound")
    * }}}
    **/
-   def smvIsAnyIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
-     val name = s"smvIsAnyIn(${column})"
-     val f = (v: Seq[Any]) => {
-       if (v.isEmpty) false
-       else v.map{c => candidates.contains(c)}.reduce(_||_)
-     }
-     udf(f).apply(column) as name
-   }
+  def smvIsAnyIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
+    val name = s"smvIsAnyIn(${column})"
+    val f = (v: Seq[Any]) => {
+      if (v.isEmpty) false
+      else
+        v.map { c =>
+            candidates.contains(c)
+          }
+          .reduce(_ || _)
+    }
+    udf(f).apply(column) as name
+  }
 
   /**
    * A boolean, which is true if ALL of the Array column's elements are in the given
@@ -585,14 +598,18 @@ class ColumnHelper(column: Column) {
    * df.smvSelectPlus($"arrayCol".smvIsAllIn(seqVals: _*) as "isFound")
    * }}}
    **/
-   def smvIsAllIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
-     val name = s"smvIsAllIn(${column})"
-     val f = (v: Seq[Any]) => {
-       if (v.isEmpty) false
-       else v.map{c => candidates.contains(c)}.reduce(_&&_)
-     }
-     udf(f).apply(column) as name
-   }
+  def smvIsAllIn[T](candidates: T*)(implicit tt: ClassTag[T]) = {
+    val name = s"smvIsAllIn(${column})"
+    val f = (v: Seq[Any]) => {
+      if (v.isEmpty) false
+      else
+        v.map { c =>
+            candidates.contains(c)
+          }
+          .reduce(_ && _)
+    }
+    udf(f).apply(column) as name
+  }
 
   /**
    * A boolean, which is true if ALL of the given parameters are contained in the
@@ -602,14 +619,19 @@ class ColumnHelper(column: Column) {
    * df.smvSelectPlus($"arrayCol".containsAll(seqVals: _*) as "isFound")
    * }}}
    **/
-   def containsAll[T](candidates: T*)(implicit tt: ClassTag[T]) = {
-     val name = s"containsAll(${column})"
-     require(!candidates.isEmpty)
+  def containsAll[T](candidates: T*)(implicit tt: ClassTag[T]) = {
+    val name = s"containsAll(${column})"
+    require(!candidates.isEmpty)
 
-     val f = (v: Seq[Any]) => {
-       if (v.isEmpty) false
-       else candidates.map{c => v.contains(c)}.reduce(_&&_)
-     }
-     udf(f).apply(column) as name
-   }
+    val f = (v: Seq[Any]) => {
+      if (v.isEmpty) false
+      else
+        candidates
+          .map { c =>
+            v.contains(c)
+          }
+          .reduce(_ && _)
+    }
+    udf(f).apply(column) as name
+  }
 }

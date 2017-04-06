@@ -19,10 +19,11 @@ import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.sql.types._
 import scala.util.Try
 
-
 private[smv] case class SmvJoinDF(df: DataFrame, postfix: String, jType: String)
 
-private[smv] case class SmvMultiJoinConf(leftDf: DataFrame, keys: Seq[String], defaultJoinType: String)
+private[smv] case class SmvMultiJoinConf(leftDf: DataFrame,
+                                         keys: Seq[String],
+                                         defaultJoinType: String)
 
 class SmvMultiJoin(val dfChain: Seq[SmvJoinDF], val conf: SmvMultiJoinConf) {
 
@@ -36,7 +37,7 @@ class SmvMultiJoin(val dfChain: Seq[SmvJoinDF], val conf: SmvMultiJoinConf) {
    * }}}
    **/
   def joinWith(df: DataFrame, postfix: String, joinType: String = null) = {
-    val dfJT = if(joinType == null) conf.defaultJoinType else joinType
+    val dfJT     = if (joinType == null) conf.defaultJoinType else joinType
     val newChain = dfChain :+ SmvJoinDF(df, postfix, dfJT)
     new SmvMultiJoin(newChain, conf)
   }
@@ -45,18 +46,24 @@ class SmvMultiJoin(val dfChain: Seq[SmvJoinDF], val conf: SmvMultiJoinConf) {
    * Really triger the join operation
    *
    * @param dropExtra default false, which will keep all duplicated name columns with the postfix.
-   *                   when it's true, the duplicated columns will be dropped. 
+   *                   when it's true, the duplicated columns will be dropped.
    **/
   def doJoin(dropExtra: Boolean = false): DataFrame = {
-    val res = dfChain.foldLeft(conf.leftDf){case (acc: DataFrame, SmvJoinDF(df, postfix, jType)) =>
-      acc.smvJoinByKey(df, conf.keys, jType, postfix, false)
+    val res = dfChain.foldLeft(conf.leftDf) {
+      case (acc: DataFrame, SmvJoinDF(df, postfix, jType)) =>
+        acc.smvJoinByKey(df, conf.keys, jType, postfix, false)
     }
 
-    val colsWithPostfix = dfChain.map{_.postfix}.flatMap{p =>
-      res.columns.filter{c => c.endsWith(p)}
-    }.distinct
+    val colsWithPostfix = dfChain
+      .map { _.postfix }
+      .flatMap { p =>
+        res.columns.filter { c =>
+          c.endsWith(p)
+        }
+      }
+      .distinct
 
-    if (dropExtra && (! colsWithPostfix.isEmpty))
+    if (dropExtra && (!colsWithPostfix.isEmpty))
       res.smvSelectMinus(colsWithPostfix.head, colsWithPostfix.tail: _*)
     else
       res

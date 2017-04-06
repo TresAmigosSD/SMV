@@ -26,7 +26,8 @@ private[smv] abstract class HistColumn
  * @param binSize bin size for numeric column, default 100.0
  * @param sortByFreq histogram result sort be frequency or not, default false (sort by key)
  **/
-case class Hist(colName: String, binSize: Double = 100.0, sortByFreq: Boolean = false) extends HistColumn
+case class Hist(colName: String, binSize: Double = 100.0, sortByFreq: Boolean = false)
+    extends HistColumn
 
 /**
  * Specify an '''Amount''' binned histogram

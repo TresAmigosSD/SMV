@@ -33,17 +33,21 @@ class DQMState(
     @(transient @param) sc: SparkContext,
     ruleNames: Seq[String],
     fixNames: Seq[String]
-  ) extends Serializable {
+) extends Serializable {
 
   private val recordCounter: LongAccumulator = sc.longAccumulator
-  private val parserLogger = new RejectLogger(sc, 10, "parser")
-  private val fixCounters: Map[String, IntAccumulator] = fixNames.map{ n => val acc = new IntAccumulator; sc.register(acc); (n, acc)}.toMap
-  private val ruleLoggers: Map[String, RejectLogger] = ruleNames.map{n => (n, new RejectLogger(sc, 10, n))}.toMap
+  private val parserLogger                   = new RejectLogger(sc, 10, "parser")
+  private val fixCounters: Map[String, IntAccumulator] = fixNames.map{ n =>
+    val acc = new IntAccumulator; sc.register(acc); (n, acc)
+  }.toMap
+  private val ruleLoggers: Map[String, RejectLogger] = ruleNames.map { n =>
+    (n, new RejectLogger(sc, 10, n))
+  }.toMap
 
-  private var concluded: Boolean = false
-  private var recordCounterCopy: Long = _
-  private var parserLoggerCopy: (Int, List[String]) = _
-  private var fixCountersCopy: Map[String, Int] = _
+  private var concluded: Boolean                                = false
+  private var recordCounterCopy: Long                           = _
+  private var parserLoggerCopy: (Int, List[String])             = _
+  private var fixCountersCopy: Map[String, Int]                 = _
   private var ruleLoggersCopy: Map[String, (Int, List[String])] = _
 
   /** add one on the overall record counter */
@@ -54,6 +58,7 @@ class DQMState(
   private[smv] def addParserRec(log: String): Unit = {
     parserLogger.add(log)
   }
+
   /** add one on the "fix" counter for the given fix name */
   private[smv] def addFixRec(name: String): Unit = {
     fixCounters(name) add 1
@@ -74,13 +79,14 @@ class DQMState(
    * the DQMState
    **/
   private[smv] def snapshot(): Unit = {
+
     /** snapshot need to run once and only once */
-    if(!concluded){
+    if (!concluded) {
       concluded = true
       recordCounterCopy = recordCounter.value
       parserLoggerCopy = parserLogger.report
-      fixCountersCopy = fixCounters.map{case (k, a) => (k, a.value)}.toMap
-      ruleLoggersCopy = ruleLoggers.map{case (k, l) => (k, l.report)}.toMap
+      fixCountersCopy = fixCounters.map { case (k, a) => (k, a.value) }.toMap
+      ruleLoggersCopy = ruleLoggers.map { case (k, l) => (k, l.report) }.toMap
     }
   }
 
@@ -112,8 +118,9 @@ class DQMState(
   def getTaskCount(name: String): Int = {
     require(concluded)
     /* try whether we can find the task in the list of rules, then try on the list of fixes */
-    Try(getRuleCount(name)).recoverWith{case e =>
-      Try(getFixCount(name))
+    Try(getRuleCount(name)).recoverWith {
+      case e =>
+        Try(getFixCount(name))
     }.get
   }
 
@@ -132,11 +139,13 @@ class DQMState(
   /** return all the example failed records from all the rules */
   def getAllLog(): Seq[String] = {
     require(concluded)
-    val rLog = ruleLoggersCopy.flatMap{case (name, (n, log)) =>
-      Seq(s"Rule: ${name}, total count: ${n}") ++ log.toSeq
+    val rLog = ruleLoggersCopy.flatMap {
+      case (name, (n, log)) =>
+        Seq(s"Rule: ${name}, total count: ${n}") ++ log.toSeq
     }.toSeq
-    val fLog = fixCountersCopy.map{case (name, n) =>
-      s"Fix: ${name}, total count: ${n}"
+    val fLog = fixCountersCopy.map {
+      case (name, n) =>
+        s"Fix: ${name}, total count: ${n}"
     }.toSeq
     val pLog = getParserLog()
     rLog ++ fLog ++ pLog
@@ -151,26 +160,32 @@ class DQMState(
   /** return the total number of times rules get triggered */
   def getTotalRuleCount(): Int = {
     require(concluded)
-    ruleLoggersCopy.values.map{_._1}.reduce(_ + _)
+    ruleLoggersCopy.values.map { _._1 }.reduce(_ + _)
   }
 }
 
 class DQMRuleError(ruleName: String) extends Exception(ruleName) with Serializable
 
-private[smv] class RejectLogger(sparkContext: SparkContext, val localMax: Int = 10, loggerName: String) extends Serializable {
+private[smv] class RejectLogger(sparkContext: SparkContext,
+                                val localMax: Int = 10,
+                                loggerName: String)
+    extends Serializable {
   private val rejectedRecords = sparkContext.collectionAccumulator[String]
-  private val rejectedRecordCount = { val acc = new IntAccumulator; sparkContext.register(acc, loggerName); acc }
+  private val rejectedRecordCount = {
+    val acc = new IntAccumulator; sparkContext.register(acc, loggerName); acc
+  }
 
   val add: (String) => Unit = {
     var localCounter = 0
-    (r:String) => {
-      if (localCounter < localMax) {
-        rejectedRecords add r
+    (r: String) =>
+      {
+        if (localCounter < localMax) {
+          rejectedRecords add r
+        }
+        localCounter = localCounter + 1
+        rejectedRecordCount add 1
+        Unit
       }
-      localCounter = localCounter + 1
-      rejectedRecordCount add 1
-      Unit
-    }
   }
 
   def report: (Int, List[String]) = {
