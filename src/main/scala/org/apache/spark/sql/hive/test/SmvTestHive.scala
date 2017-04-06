@@ -15,7 +15,6 @@ package org.apache.spark.sql.hive.test
 
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SparkSession
 
 /**
  * Provides an entry to TestHiveContext

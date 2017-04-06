@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{struct, lit, array, explode}
 
 /**
  * Almost the opposite of the pivot operation.  Given a set of records with value columns,

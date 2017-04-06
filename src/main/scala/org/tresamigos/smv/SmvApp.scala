@@ -14,8 +14,6 @@
 
 package org.tresamigos.smv
 
-import org.tresamigos.smv.shell.EddCompare
-
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.SparkConf
 
@@ -153,7 +151,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
       .map { eddsToCompare =>
         val edd1          = eddsToCompare(0)
         val edd2          = eddsToCompare(1)
-        val (passed, log) = EddCompare.compareFiles(edd1, edd2)
+        val (passed, log) = util.Edd.compareFiles(edd1, edd2)
         if (passed) {
           println("EDD Results are the same")
         } else {

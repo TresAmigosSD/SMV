@@ -1,6 +1,8 @@
 package org.tresamigos.smv
 
-import org.apache.spark.sql._, functions._, types._
+import org.apache.spark.sql.{Column, Row}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 import com.rockymadden.stringmetric.similarity._
 
 /**

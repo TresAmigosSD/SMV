@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.tresamigos.smv.classloaders.SmvClassLoader
+import classloaders.SmvClassLoader
 
 import scala.util.Try
 

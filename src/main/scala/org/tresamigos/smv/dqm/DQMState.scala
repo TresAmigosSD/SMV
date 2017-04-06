@@ -12,14 +12,15 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.dqm
+package org.tresamigos.smv
+package dqm
 
-import org.apache.spark.util.{AccumulatorV2, LongAccumulator}
+import org.apache.spark.util.LongAccumulator
+import org.apache.spark.SparkContext
+
+import util.IntAccumulator
 
 import scala.util.Try
-import org.apache.spark.{Accumulator, SparkContext}
-import org.tresamigos.smv.util.IntAccumulator
-
 import scala.annotation.meta.param
 import scala.collection.JavaConverters._
 
