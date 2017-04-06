@@ -24,31 +24,98 @@ def SmvDQM():
 
 # Factory methods for DQM policies
 def FailParserCountPolicy(threshold):
+    """If the total time of parser fails >= threshold, fail the DF
+
+        Args:
+            threshold (int): the threshold after which the DF fails
+
+        Returns:
+            (DQMPolicy): policy for DQM
+    """
     return SmvApp.getInstance()._jvm.FailParserCountPolicy(threshold)
 
 def FailTotalRuleCountPolicy(threshold):
+    """For all the rules in a DQM, if the total number of times they are triggered is >= threshold, fail the DF
+
+        Args:
+            threshold (int): the threshold after which the DF fails
+
+        Returns:
+            (DQMPolicy): policy for DQM
+    """
     return SmvApp.getInstance()._jvm.FailTotalRuleCountPolicy(threshold)
 
 def FailTotalFixCountPolicy(threshold):
+    """For all the fixes in a DQM, if the total number of times they are triggered is >= threshold, fail the DF
+
+        Args:
+            threshold (int): the threshold after which the DF fails
+
+        Returns:
+            (DQMPolicy): policy for DQM
+    """
     return SmvApp.getInstance()._jvm.FailTotalFixCountPolicy(threshold)
 
 def FailTotalRulePercentPolicy(threshold):
+    """For all the rules in a DQM, if the total number of times they are triggered is >= threshold * total Records, fail the DF
+
+        Args:
+            threshold (double): the threshold after which the DF fails. value is between 0.0 and 1.0
+
+        Returns:
+            (DQMPolicy): policy for DQM
+    """
     return SmvApp.getInstance()._jvm.FailTotalRulePercentPolicy(threshold * 1.0)
 
 def FailTotalFixPercentPolicy(threshold):
+    """For all the fixes in a DQM, if the total number of times they are triggered is >= threshold * total Records, fail the DF
+
+        Args:
+            threshold (double): the threshold after which the DF fails. value is between 0.0 and 1.0
+
+        Returns:
+            (DQMPolicy): policy for DQM
+    """
     return SmvApp.getInstance()._jvm.FailTotalFixPercentPolicy(threshold * 1.0)
 
 # DQM task policies
 def FailNone():
+    """Tasks with FailNone will not trigger any DF level policy
+
+        Returns:
+            (DQMTaskPolicy): policy for DQM Task
+    """
     return SmvApp.getInstance()._jvm.DqmTaskPolicies.failNone()
 
 def FailAny():
+    """Any rule fail or fix with FailAny will cause the entire DF to fail
+
+        Returns:
+            (DQMTaskPolicy): policy for DQM Task
+    """
     return SmvApp.getInstance()._jvm.DqmTaskPolicies.failAny()
 
 def FailCount(threshold):
+    """Tasks with FailCount(n) will fail the DF if the task is triggered >= n times
+
+        Args:
+            threshold (int): the threshold after which the DF fails
+
+        Returns:
+            (DQMTaskPolicy): policy for DQM Task
+    """
     return SmvApp.getInstance()._jvm.FailCount(threshold)
 
 def FailPercent(threshold):
+    """Tasks with FailPercent(r) will fail the DF if the task is triggered >= r percent of the
+        total number of records in the DF
+
+        Args:
+            threshold (double): the threshold after which the DF fails. value is between 0.0 and 1.0
+
+        Returns:
+            (DQMTaskPolicy): policy for DQM Task
+    """
     return SmvApp.getInstance()._jvm.FailPercent(threshold * 1.0)
 
 def DQMRule(rule, name = None, taskPolicy = None):
