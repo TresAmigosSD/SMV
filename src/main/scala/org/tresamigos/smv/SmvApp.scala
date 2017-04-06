@@ -14,16 +14,12 @@
 
 package org.tresamigos.smv
 
-import org.tresamigos.smv.class_loader.SmvClassLoader
 import org.tresamigos.smv.shell.EddCompare
-import dqm.DQMValidator
 
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
-import scala.collection.JavaConversions._
-import scala.util.control.NonFatal
 import scala.util.{Try, Success, Failure}
 
 /**
@@ -188,7 +184,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
         case m: SmvOutput => Some(m)
         case _            => None
       } foreach (
-          m => SmvUtil.exportDataFrameToHive(sqlContext, m.rdd, m.tableName)
+          m => util.DataSet.exportDataFrameToHive(sqlContext, m.rdd, m.tableName)
       )
     }
 

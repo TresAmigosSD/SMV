@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.tresamigos.smv.class_loader.SmvClassLoader
+import org.tresamigos.smv.classloaders.SmvClassLoader
 
 /**
  * DataSetRepo is the entity responsible for discovering and loading the datasets
