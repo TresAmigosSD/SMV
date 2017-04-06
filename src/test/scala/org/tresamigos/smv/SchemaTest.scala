@@ -23,7 +23,7 @@ import scala.collection.SortedMap
 
 class SmvSchemaTest extends SmvTestUtil {
   test("Test schema string parsing") {
-    val s = SmvSchema.fromString("a:string; b:double")
+    val s       = SmvSchema.fromString("a:string; b:double")
     val entries = s.entries
     assert(entries.size === 2)
     assert(entries(0) === SchemaEntry("a", StringTypeFormat()))
@@ -31,7 +31,7 @@ class SmvSchemaTest extends SmvTestUtil {
   }
 
   test("Test schema file parsing") {
-    val s = SmvSchema.fromFile(sc, testDataDir +  "SchemaTest/test1.schema")
+    val s       = SmvSchema.fromFile(sc, testDataDir + "SchemaTest/test1.schema")
     val entries = s.entries
     assert(entries.size === 10)
     assert(entries(0) === SchemaEntry("id", StringTypeFormat()))
@@ -42,7 +42,8 @@ class SmvSchemaTest extends SmvTestUtil {
     assert(entries(5) === SchemaEntry("val5", IntegerTypeFormat()))
     assert(entries(6) === SchemaEntry("val6", BooleanTypeFormat()))
     assert(entries(7) === SchemaEntry("val7", FloatTypeFormat()))
-    assert(entries(8) === SchemaEntry("val8", MapTypeFormat(StringTypeFormat(), IntegerTypeFormat())))
+    assert(
+      entries(8) === SchemaEntry("val8", MapTypeFormat(StringTypeFormat(), IntegerTypeFormat())))
     assert(entries(9) === SchemaEntry("val9", ArrayTypeFormat(IntegerTypeFormat())))
 
     val atts = s.attributes
@@ -67,8 +68,8 @@ class SmvSchemaTest extends SmvTestUtil {
     val c = s.entries(2)
 
     assert(a === SchemaEntry("a", DecimalTypeFormat(10, 0)))
-    assert(b === SchemaEntry("b", DecimalTypeFormat( 5, 0)))
-    assert(c === SchemaEntry("c", DecimalTypeFormat( 8, 3)))
+    assert(b === SchemaEntry("b", DecimalTypeFormat(5, 0)))
+    assert(c === SchemaEntry("c", DecimalTypeFormat(8, 3)))
 
     assert(a.typeFormat.toString() === "Decimal[10,0]")
     assert(b.typeFormat.toString() === "Decimal[5,0]")
@@ -76,7 +77,7 @@ class SmvSchemaTest extends SmvTestUtil {
   }
 
   test("Test Decimal value serialize") {
-    val decFormat = DecimalTypeFormat(10,0)
+    val decFormat = DecimalTypeFormat(10, 0)
 
     assert(decFormat.strToVal("1234") === Decimal("1234"))
     assert(decFormat.valToStr(Decimal("1234")) === "1234")
@@ -118,11 +119,11 @@ class SmvSchemaTest extends SmvTestUtil {
     assert(a === SchemaEntry("a", MapTypeFormat(IntegerTypeFormat(), StringTypeFormat())))
 
     val map_a = a.typeFormat.strToVal("1|2|3|4")
-    assert(map_a === Map(1->"2", 3->"4"))
+    assert(map_a === Map(1 -> "2", 3 -> "4"))
 
     // use a sorted map to ensure traversal order during serialization.
-    val map_a_sorted = SortedMap(1->"2", 3->"4")
-    val str_a = a.typeFormat.valToStr(map_a_sorted)
+    val map_a_sorted = SortedMap(1 -> "2", 3 -> "4")
+    val str_a        = a.typeFormat.valToStr(map_a_sorted)
     assert(str_a === "1|2|3|4")
   }
 
@@ -136,11 +137,11 @@ class SmvSchemaTest extends SmvTestUtil {
     assert(array_a === Seq(1, 2, 3, 4))
 
     val array_a1 = Seq(4, 3, 2, 1)
-    val str_a1 = a.typeFormat.valToStr(array_a1)
+    val str_a1   = a.typeFormat.valToStr(array_a1)
     assert(str_a1 === "4|3|2|1")
 
     val array_a2 = Seq(4, 3, 2, 1).toArray
-    val str_a2 = a.typeFormat.valToStr(array_a2)
+    val str_a2   = a.typeFormat.valToStr(array_a2)
     assert(str_a2 === "4|3|2|1")
   }
 
@@ -156,7 +157,7 @@ class SmvSchemaTest extends SmvTestUtil {
   }
 
   test("Test Timestamp in file") {
-    val df = open(testDataDir +  "SchemaTest/test2")
+    val df = open(testDataDir + "SchemaTest/test2")
     assert(df.count === 3)
   }
 
@@ -173,10 +174,10 @@ class SmvSchemaTest extends SmvTestUtil {
   }
 
   test("Test schema name derivation from data file path") {
-    assert(SmvSchema.dataPathToSchemaPath("/a/b/c.csv")    === "/a/b/c.schema")
-    assert(SmvSchema.dataPathToSchemaPath("/a/b/c.tsv")    === "/a/b/c.schema")
+    assert(SmvSchema.dataPathToSchemaPath("/a/b/c.csv") === "/a/b/c.schema")
+    assert(SmvSchema.dataPathToSchemaPath("/a/b/c.tsv") === "/a/b/c.schema")
     assert(SmvSchema.dataPathToSchemaPath("/a/b/c.csv.gz") === "/a/b/c.schema")
-    assert(SmvSchema.dataPathToSchemaPath("/a/b/c")        === "/a/b/c.schema")
+    assert(SmvSchema.dataPathToSchemaPath("/a/b/c") === "/a/b/c.schema")
 
     // check that csv is only removed at end of string.
     assert(SmvSchema.dataPathToSchemaPath("/a/b/csv.foo") === "/a/b/csv.foo.schema")
@@ -191,18 +192,17 @@ class SmvSchemaTest extends SmvTestUtil {
   }
 
   test("Test ArraySchema read and write") {
-    val df = dfFrom("a:Integer; b:Array[Double]",
-      "1,0.3|0.11|0.1")
+    val df = dfFrom("a:Integer; b:Array[Double]", "1,0.3|0.11|0.1")
 
     assert(SmvSchema.fromDataFrame(df).toString === "Schema: a: Integer; b: Array[Double]")
     import df.sqlContext.implicits._
     val res = df.select($"b".getItem(0), $"b".getItem(1), $"b".getItem(2))
 
-    assertDoubleSeqEqual(res.collect()(0).toSeq, Seq(0.3,0.11,0.1))
+    assertDoubleSeqEqual(res.collect()(0).toSeq, Seq(0.3, 0.11, 0.1))
   }
 
   test("Test schema extractCsvAttributes") {
-    val s = SmvSchema.fromString("""
+    val s  = SmvSchema.fromString("""
           @has-header = false;
           @delimiter = \t;
           @quote-char = |;
@@ -213,25 +213,26 @@ class SmvSchemaTest extends SmvTestUtil {
 
   // test default values of extracted csv attributes.
   test("Test schema extractCsvAttributes defaults") {
-    val s = SmvSchema.fromString("a:string; b:double")
+    val s  = SmvSchema.fromString("a:string; b:double")
     val ca = s.extractCsvAttributes()
     assert(ca === CsvAttributes(',', '\"', true))
   }
 
   test("Test schema addCsvAttributes") {
     val s1 = SmvSchema.fromString("@delimiter = +; @foo=bar; a:string")
-    val s2 = s1.addCsvAttributes( CsvAttributes('\t', '^', false) )
-    val exp_att = Map("foo" -> "bar", "delimiter" -> "\\t", "has-header" -> "false", "quote-char" -> "^")
+    val s2 = s1.addCsvAttributes(CsvAttributes('\t', '^', false))
+    val exp_att =
+      Map("foo" -> "bar", "delimiter" -> "\\t", "has-header" -> "false", "quote-char" -> "^")
     assert(s2.attributes === exp_att)
   }
 
   test("test metadata read and write") {
-    val df = dfFrom("""k:String; t:Integer @metadata={"smvDesc":"the time sequence"}; v:Double""", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+    val df = dfFrom("""k:String; t:Integer @metadata={"smvDesc":"the time sequence"}; v:Double""",
+                    "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
     val smvSchema = SmvSchema.fromDataFrame(df)
     assert(smvSchema.toString === "Schema: k: String; t: Integer; v: Double")
-    assertUnorderedSeqEqual(smvSchema.toStringsWithMeta, Seq(
-      "k: String",
-      """t: Integer @metadata={"smvDesc":"the time sequence"}""",
-      "v: Double"))
+    assertUnorderedSeqEqual(
+      smvSchema.toStringsWithMeta,
+      Seq("k: String", """t: Integer @metadata={"smvDesc":"the time sequence"}""", "v: Double"))
   }
 }

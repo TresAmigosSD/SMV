@@ -17,98 +17,104 @@ import org.apache.spark.sql.types._
 
 package org.tresamigos.smv {
 
-import dqm.DQMValidator
+  import dqm.DQMValidator
 
-class SmvHashOfHashTest extends SmvTestUtil {
-  test("Test module hashOfHash") {
-    import org.tresamigos.fixture.hashofhash._
-    assert(X1.hashOfHash != X2.hashOfHash)
-  }
-}
-
-object SmvTestFile extends SmvModule("") {
-  override def requiresDS() = Seq.empty
-  override val isEphemeral = true
-  override def run(i: runParams) = app.createDF("a:Integer", "1;2;3")
-}
-
-class SmvNewAppTest extends SparkTestUtil {
-  test("test newApp function") {
-    val app = SmvApp.newApp(sqlContext, testDataDir)
-    assert(app.smvConfig.appName === "Smv Application")
-  }
-}
-
-class SmvAppTest extends SmvTestUtil {
-  override def appArgs = Seq("-m", "C",
-    "--data-dir", testcaseTempDir,
-    "--input-dir", testcaseTempDir,
-    "--smv-props", "smv.stages=org.tresamigos.fixture.smvapptest",
-    "--permit-dependency-violation"
-  )
-
-  test("Test normal dependency execution") {
-    import org.tresamigos.fixture.smvapptest._
-    resetTestcaseTempDir()
-
-    val res = app.runModule(C.urn)
-    assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
-
-    // even though both B and C depended on A, A should have only run once!
-    assert(A.moduleRunCount === 1)
-
-    //Resolve the same module, it should read the persisted file and not run the module again
-    val res2 = app.runModule(C.urn)
-    assertSrddDataEqual(res2, "1,2,3;2,3,4;3,4,5")
-    assert(A.moduleRunCount === 1)
-  }
-
-  test("Test cycle dependency execution") {
-    import org.tresamigos.fixture.smvapptest.B_cycle
-    intercept[IllegalStateException] {
-      app.runModule(B_cycle.urn)
+  class SmvHashOfHashTest extends SmvTestUtil {
+    test("Test module hashOfHash") {
+      import org.tresamigos.fixture.hashofhash._
+      assert(X1.hashOfHash != X2.hashOfHash)
     }
   }
 
-  test("Test SmvFile crc") {
-    import org.tresamigos.fixture.smvapptest._
-    createTempFile("F1.csv")
-    createTempFile("F1.schema")
-    createTempFile("F2.csv")
-    createTempFile("F2.schema")
-
-    assert(f1.datasetHash() !== f2.datasetHash)
-
-    SmvHDFS.deleteFile("F1.schema")
-    createTempFile("F1.schema")
-
-    assert(f1.datasetHash() !== f3.datasetHash())
+  object SmvTestFile extends SmvModule("") {
+    override def requiresDS()      = Seq.empty
+    override val isEphemeral       = true
+    override def run(i: runParams) = app.createDF("a:Integer", "1;2;3")
   }
 
-  test("SmvApp.createDF should be able to create an empty dataframe with schema") {
-    val r1 = app.createDF("k:String")
-    r1.count() shouldBe 0
-    r1.schema shouldBe StructType(Seq(StructField("k", StringType, true)))
-
-    val r2 = app.createDF("k:String")
-    r2.count() shouldBe 0
-    r2.schema shouldBe StructType(Seq(StructField("k", StringType, true)))
+  class SmvNewAppTest extends SparkTestUtil {
+    test("test newApp function") {
+      val app = SmvApp.newApp(sqlContext, testDataDir)
+      assert(app.smvConfig.appName === "Smv Application")
+    }
   }
-}
+
+  class SmvAppTest extends SmvTestUtil {
+    override def appArgs =
+      Seq(
+        "-m",
+        "C",
+        "--data-dir",
+        testcaseTempDir,
+        "--input-dir",
+        testcaseTempDir,
+        "--smv-props",
+        "smv.stages=org.tresamigos.fixture.smvapptest",
+        "--permit-dependency-violation"
+      )
+
+    test("Test normal dependency execution") {
+      import org.tresamigos.fixture.smvapptest._
+      resetTestcaseTempDir()
+
+      val res = app.runModule(C.urn)
+      assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
+
+      // even though both B and C depended on A, A should have only run once!
+      assert(A.moduleRunCount === 1)
+
+      //Resolve the same module, it should read the persisted file and not run the module again
+      val res2 = app.runModule(C.urn)
+      assertSrddDataEqual(res2, "1,2,3;2,3,4;3,4,5")
+      assert(A.moduleRunCount === 1)
+    }
+
+    test("Test cycle dependency execution") {
+      import org.tresamigos.fixture.smvapptest.B_cycle
+      intercept[IllegalStateException] {
+        app.runModule(B_cycle.urn)
+      }
+    }
+
+    test("Test SmvFile crc") {
+      import org.tresamigos.fixture.smvapptest._
+      createTempFile("F1.csv")
+      createTempFile("F1.schema")
+      createTempFile("F2.csv")
+      createTempFile("F2.schema")
+
+      assert(f1.datasetHash() !== f2.datasetHash)
+
+      SmvHDFS.deleteFile("F1.schema")
+      createTempFile("F1.schema")
+
+      assert(f1.datasetHash() !== f3.datasetHash())
+    }
+
+    test("SmvApp.createDF should be able to create an empty dataframe with schema") {
+      val r1 = app.createDF("k:String")
+      r1.count() shouldBe 0
+      r1.schema shouldBe StructType(Seq(StructField("k", StringType, true)))
+
+      val r2 = app.createDF("k:String")
+      r2.count() shouldBe 0
+      r2.schema shouldBe StructType(Seq(StructField("k", StringType, true)))
+    }
+  }
 
   class SmvAppModuleResolutionTest extends SparkTestUtil {
     val stageNames = Seq("org.tresamigos.smv.test1", "org.tresamigos.smv.test2")
-    def config(modname: String): Unit = SmvApp.init(Array(
-      "--smv-props", s"""smv.stages=${stageNames.mkString(":")}""",
-      "-m", modname), Option(sc), Option(sqlContext))
+    def config(modname: String): Unit =
+      SmvApp.init(Array("--smv-props", s"""smv.stages=${stageNames
+        .mkString(":")}""", "-m", modname), Option(sc), Option(sqlContext))
 
     test("should report non-existing modules") {
       val modname = "tooth-fary"
       config(modname)
 
-      val thrown = the [SmvRuntimeException] thrownBy SmvApp.app.modulesToRun
+      val thrown = the[SmvRuntimeException] thrownBy SmvApp.app.modulesToRun
       thrown.getMessage shouldBe
-      s"""Cannot find module named [${modname}]"""
+        s"""Cannot find module named [${modname}]"""
     }
 
     // #155
@@ -125,9 +131,9 @@ class SmvAppTest extends SmvTestUtil {
     test("should report ambiguous module names") {
       val modname = "obj3"
       config(modname)
-      val thrown = the [java.lang.RuntimeException] thrownBy SmvApp.app.modulesToRun
+      val thrown = the[java.lang.RuntimeException] thrownBy SmvApp.app.modulesToRun
       thrown.getMessage shouldBe
-      s"""Module name [${modname}] is not specific enough, as it could refer to [org.tresamigos.smv.test1.obj3, org.tresamigos.smv.test2.obj3]"""
+        s"""Module name [${modname}] is not specific enough, as it could refer to [org.tresamigos.smv.test1.obj3, org.tresamigos.smv.test2.obj3]"""
     }
 
     test("should resolve name ambiguity by prepending a containing package name") {
@@ -136,37 +142,38 @@ class SmvAppTest extends SmvTestUtil {
     }
   }
 
-class SmvAppPurgeTest extends SparkTestUtil {
-  test("Test purgeOldOutputFiles") {
-    resetTestcaseTempDir()
+  class SmvAppPurgeTest extends SparkTestUtil {
+    test("Test purgeOldOutputFiles") {
+      resetTestcaseTempDir()
 
-    /** create a test module with a fixed csv file name */
-    object m extends SmvModule("my module") {
-      override def requiresDS() = Seq()
-      override def run(i: runParams) = null
-      override def moduleCsvPath(prefix: String) = "com.foo.mymodule_555.csv"
+      /** create a test module with a fixed csv file name */
+      object m extends SmvModule("my module") {
+        override def requiresDS()                  = Seq()
+        override def run(i: runParams)             = null
+        override def moduleCsvPath(prefix: String) = "com.foo.mymodule_555.csv"
+      }
+
+      object testApp
+          extends SmvApp(Seq("--purge-old-output", "--output-dir", testcaseTempDir),
+                         Option(sc),
+                         Option(sqlContext)) {
+        override lazy val allDataSets = Seq(m)
+      }
+      SmvApp.app = testApp
+
+      /** create a dummy app that only has the module above as its only module. */
+      // create multiple versions of the module file in the output dir (one with a later time stamp too!)
+      createTempFile("com.foo.mymodule_444.csv")
+      createTempFile("com.foo.mymodule_555.csv")
+      createTempFile("com.foo.mymodule_666.csv")
+
+      testApp.purgeOldOutputFiles()
+
+      // Only the current file should remain after purge.
+      val files = SmvHDFS.dirList(testcaseTempDir)
+      assertUnorderedSeqEqual(files, Seq("com.foo.mymodule_555.csv"))
     }
-
-    object testApp extends SmvApp(
-      Seq("--purge-old-output", "--output-dir", testcaseTempDir), Option(sc), Option(sqlContext)) {
-      override lazy val allDataSets = Seq(m)
-    }
-    SmvApp.app = testApp
-
-    /** create a dummy app that only has the module above as its only module. */
-
-    // create multiple versions of the module file in the output dir (one with a later time stamp too!)
-    createTempFile("com.foo.mymodule_444.csv")
-    createTempFile("com.foo.mymodule_555.csv")
-    createTempFile("com.foo.mymodule_666.csv")
-
-    testApp.purgeOldOutputFiles()
-
-    // Only the current file should remain after purge.
-    val files = SmvHDFS.dirList(testcaseTempDir)
-    assertUnorderedSeqEqual(files, Seq("com.foo.mymodule_555.csv"))
   }
-}
 
 } // package: org.tresamigos.smv
 
@@ -182,7 +189,7 @@ package org.tresamigos.fixture.smvapptest {
   object f3 extends TestFile("F1.csv")
 
   object A extends SmvModule("A Module") {
-    var moduleRunCount = 0
+    var moduleRunCount        = 0
     override def requiresDS() = Seq(SmvTestFile)
     override def run(inputs: runParams) = {
       moduleRunCount = moduleRunCount + 1
@@ -213,14 +220,14 @@ package org.tresamigos.fixture.smvapptest {
   }
 
   object A_cycle extends SmvModule("A Cycle") {
-    override val isEphemeral = true
-    override def requiresDS() = Seq(B_cycle)
+    override val isEphemeral            = true
+    override def requiresDS()           = Seq(B_cycle)
     override def run(inputs: runParams) = null
   }
 
   object B_cycle extends SmvModule("B Cycle") {
-    override val isEphemeral = true
-    override def requiresDS() = Seq(A_cycle)
+    override val isEphemeral            = true
+    override def requiresDS()           = Seq(A_cycle)
     override def run(inputs: runParams) = null
   }
 
@@ -230,11 +237,11 @@ package org.tresamigos.fixture.hashofhash {
   import org.tresamigos.smv._
   // two modules with same code should hash to different values.
   object X1 extends SmvModule("X Module") {
-    override def requiresDS() = Seq()
+    override def requiresDS()      = Seq()
     override def run(i: runParams) = null
   }
   object X2 extends SmvModule("X Module") {
-    override def requiresDS() = Seq()
+    override def requiresDS()      = Seq()
     override def run(i: runParams) = null
   }
 }

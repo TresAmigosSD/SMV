@@ -18,7 +18,6 @@ import org.apache.spark.sql.functions._
 
 import java.io.File
 
-
 /**
  * Provide functions for the interactive shell
  *
@@ -28,6 +27,7 @@ import java.io.File
  * }}}
  **/
 package object shell {
+
   /**
    * list all the smv-shell commands
    **/
@@ -90,8 +90,8 @@ package object shell {
    * `ancestors` are datasets current dataset depends on, directly or in-directly,
    * even include datasets from other stages
    **/
-   def ancestors(ds: SmvDataSet) = println(ShellCmd.ancestors(ds))
-   def ancestors(dsName: String) = println(ShellCmd.ancestors(dsName))
+  def ancestors(ds: SmvDataSet) = println(ShellCmd.ancestors(ds))
+  def ancestors(dsName: String) = println(ShellCmd.ancestors(dsName))
 
 //  /**
 //   * list all `descendants` of a dataset
@@ -114,8 +114,8 @@ package object shell {
   /**
    * Read in a Csv file as DF
    **/
-  def openCsv(path: String, ca: CsvAttributes = null, parserCheck: Boolean = false)
-    = ShellCmd.openCsv(path, ca, parserCheck)
+  def openCsv(path: String, ca: CsvAttributes = null, parserCheck: Boolean = false) =
+    ShellCmd.openCsv(path, ca, parserCheck)
 
   /**
    * Resolve SmvDataSet
@@ -128,6 +128,7 @@ package object shell {
     println("ddf has been removed. df now runs modules dynamically. Use df instead of ddf.")
   def ddf(fqn: String) =
     println("ddf has been removed. df now runs modules dynamically. Use df instead of ddf.")
+
   /**
    * Try best to discover Schema from raw Csv file
    *
@@ -138,15 +139,15 @@ package object shell {
    * Will save a schema file with postfix ".toBeReviewed" in local directory.
    **/
   def discoverSchema(
-    path: String,
-    n: Int = 100000,
-    ca: CsvAttributes = CsvAttributes.defaultCsvWithHeader
+      path: String,
+      n: Int = 100000,
+      ca: CsvAttributes = CsvAttributes.defaultCsvWithHeader
   ) = {
-    implicit val csvAttributes=ca
-    val helper = new SchemaDiscoveryHelper(SmvApp.app.sqlContext)
-    val schema = helper.discoverSchemaFromFile(path, n)
-    val outpath = SmvSchema.dataPathToSchemaPath(path) + ".toBeReviewed"
-    val outFileName = (new File(outpath)).getName
+    implicit val csvAttributes = ca
+    val helper                 = new SchemaDiscoveryHelper(SmvApp.app.sqlContext)
+    val schema                 = helper.discoverSchemaFromFile(path, n)
+    val outpath                = SmvSchema.dataPathToSchemaPath(path) + ".toBeReviewed"
+    val outFileName            = (new File(outpath)).getName
     schema.saveToLocalFile(outFileName)
     println(s"Discovered schema file saved as ${outFileName}, please review and make changes.")
   }

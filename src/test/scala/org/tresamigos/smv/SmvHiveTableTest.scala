@@ -9,8 +9,7 @@ class SmvHiveTableTest extends SmvTestUtil {
     sqlContext.setConf("hive.metastore.warehouse.dir", "file://" + warehouseDir)
 
     // create a temporary hive table with two columns.
-    val t = app.createDF("k:String; v:Integer",
-      """k1,15; k2,20; k3,25""")
+    val t = app.createDF("k:String; v:Integer", """k1,15; k2,20; k3,25""")
     SmvUtil.exportDataFrameToHive(sqlContext, t, "bar")
 
     val ht = new SmvHiveTable("bar")

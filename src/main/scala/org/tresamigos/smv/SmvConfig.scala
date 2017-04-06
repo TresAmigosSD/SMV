@@ -26,51 +26,78 @@ import org.rogach.scallop.ScallopConf
  * See (https://github.com/scallop/scallop) for details on using scallop.
  */
 private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) {
-  val DEFAULT_SMV_APP_CONF_FILE = "conf/smv-app-conf.props"
+  val DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
   val DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
 
   val smvProps = propsLong[String]("smv-props", "key=value command line props override")
-  val smvAppDir = opt("smv-app-dir", noshort = true,
-    default = Some("."),
-    descr = "SMV app directory"
+  val smvAppDir =
+    opt("smv-app-dir", noshort = true, default = Some("."), descr = "SMV app directory")
+
+  val cbsPort =
+    opt[Int]("cbs-port", noshort = true, default = None, descr = "python callback server port")
+
+  val smvAppConfFile = opt("smv-app-conf",
+                           noshort = true,
+                           default = Some(DEFAULT_SMV_APP_CONF_FILE),
+                           descr = "app level (static) SMV configuration file path")
+  val smvUserConfFile = opt("smv-user-conf",
+                            noshort = true,
+                            default = Some(DEFAULT_SMV_USER_CONF_FILE),
+                            descr = "user level (dynamic) SMV configuration file path")
+  val publish = opt[String]("publish",
+                            noshort = true,
+                            default = None,
+                            descr = "publish the given modules/stage/app as given version")
+  val publishHive = toggle(
+    "publish-hive",
+    noshort = true,
+    default = Some(false),
+    descrYes = "publish|export given modules/stage/app to hive tables",
+    descrNo = "Do not publish results to hive tables."
   )
 
-  val cbsPort = opt[Int]("cbs-port", noshort=true, default=None,
-    descr = "python callback server port")
-
-  val smvAppConfFile = opt("smv-app-conf", noshort = true,
-    default = Some(DEFAULT_SMV_APP_CONF_FILE),
-    descr = "app level (static) SMV configuration file path")
-  val smvUserConfFile = opt("smv-user-conf", noshort = true,
-    default = Some(DEFAULT_SMV_USER_CONF_FILE),
-    descr = "user level (dynamic) SMV configuration file path")
-  val publish = opt[String]("publish", noshort = true,
-    default = None,
-    descr = "publish the given modules/stage/app as given version")
-  val publishHive = toggle("publish-hive", noshort=true,
-    default=Some(false),
-    descrYes="publish|export given modules/stage/app to hive tables",
-    descrNo="Do not publish results to hive tables.")
-
-  val compareEdd = opt[List[String]]("edd-compare", noshort = true,
-    default = None,
-    descr = "compare two edd result files")
-  val genEdd = toggle("edd", default = Some(false), noshort = true,
+  val compareEdd = opt[List[String]]("edd-compare",
+                                     noshort = true,
+                                     default = None,
+                                     descr = "compare two edd result files")
+  val genEdd = toggle(
+    "edd",
+    default = Some(false),
+    noshort = true,
     descrYes = "summarize data and generate an edd file in the same directory as csv and schema",
-    descrNo  = "do not summarize data")
-  val graph = toggle("graph", default=Some(false),
-    descrYes="generate a dependency graph of the given modules (modules are not run)",
-    descrNo="do not generate a dependency graph")
+    descrNo = "do not summarize data"
+  )
+  val graph = toggle(
+    "graph",
+    default = Some(false),
+    descrYes = "generate a dependency graph of the given modules (modules are not run)",
+    descrNo = "do not generate a dependency graph"
+  )
 
-  val json = opt[List[String]]("json", noshort = true, default = None, descr = "generate a json object to represent app's module dependency for a given set of stages (modules are not run)")
+  val json = opt[List[String]](
+    "json",
+    noshort = true,
+    default = None,
+    descr =
+      "generate a json object to represent app's module dependency for a given set of stages (modules are not run)")
 
-  val runConfObj = opt[String]("run-conf-obj", noshort = true, default = None, descr = "load and instantiate the configuration object by its fqn")
+  val runConfObj = opt[String]("run-conf-obj",
+                               noshort = true,
+                               default = None,
+                               descr = "load and instantiate the configuration object by its fqn")
 
   // --- data directories override
-  val dataDir    = opt[String]("data-dir",    noshort = true, descr = "specify the top level data directory")
-  val inputDir   = opt[String]("input-dir",   noshort = true, descr = "specify the input directory (default: datadir/input")
-  val outputDir  = opt[String]("output-dir",  noshort = true, descr = "specify the output directory (default: datadir/output")
-  val publishDir = opt[String]("publish-dir", noshort = true, descr = "specify the publish directory (default: datadir/publish")
+  val dataDir =
+    opt[String]("data-dir", noshort = true, descr = "specify the top level data directory")
+  val inputDir = opt[String]("input-dir",
+                             noshort = true,
+                             descr = "specify the input directory (default: datadir/input")
+  val outputDir = opt[String]("output-dir",
+                              noshort = true,
+                              descr = "specify the output directory (default: datadir/output")
+  val publishDir = opt[String]("publish-dir",
+                               noshort = true,
+                               descr = "specify the publish directory (default: datadir/publish")
 
   val permitDependencyViolation = toggle(
     "permit-dependency-violation",
@@ -78,21 +105,27 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrYes = "allows module resolution even if the module violates dependency rules",
     default = Some(false))
 
-  val purgeOldOutput = toggle("purge-old-output", noshort = true, default = Some(false),
-    descrYes = "remove all old output files in output dir ")
-  val modsToRun = opt[List[String]]("run-module", 'm',
-    default = Some(Nil),
-    descr = "run specified list of module FQNs")
-  val stagesToRun = opt[List[String]]("run-stage", 's',
-    default = Some(Nil),
-    descr = "run all output modules in specified stages")
-  val runAllApp = toggle("run-app", noshort = true, default = Some(false),
-                  descrYes = "run all output modules in all stages in app.")
+  val purgeOldOutput = toggle("purge-old-output",
+                              noshort = true,
+                              default = Some(false),
+                              descrYes = "remove all old output files in output dir ")
+  val modsToRun = opt[List[String]]("run-module",
+                                    'm',
+                                    default = Some(Nil),
+                                    descr = "run specified list of module FQNs")
+  val stagesToRun = opt[List[String]]("run-stage",
+                                      's',
+                                      default = Some(Nil),
+                                      descr = "run all output modules in specified stages")
+  val runAllApp = toggle("run-app",
+                         noshort = true,
+                         default = Some(false),
+                         descrYes = "run all output modules in all stages in app.")
 
   // if user specified "edd-compare" command line, user should have supplied two file names.
   validateOpt(compareEdd) {
     case (Some(edds)) if edds.length != 2 => Left("edd-compare param requires two EDD file names")
-    case _ => Right(Unit)
+    case _                                => Right(Unit)
   }
 
   // override default error message handler that does a sys.exit(1) which makes it difficult to debug.
@@ -121,43 +154,50 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // check for deprecated DATA_DIR environment variable.
   sys.env.get("DATA_DIR").foreach { d =>
-    println("WARNING: use of DATA_DIR environment variable is deprecated. use smv.dataDir instead!!!")
+    println(
+      "WARNING: use of DATA_DIR environment variable is deprecated. use smv.dataDir instead!!!")
   }
 
   val cmdLine = new CmdLineArgsConf(cmdLineArgs)
 
-  private val appConfProps = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvAppConfFile()))
-  private val usrConfProps = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvUserConfFile()))
+  private val appConfProps  = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvAppConfFile()))
+  private val usrConfProps  = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvUserConfFile()))
   private val homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
-  private val cmdLineProps = cmdLine.smvProps
+  private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
-    "smv.appName" -> "Smv Application",
-    "smv.stages" -> "",
+    "smv.appName"     -> "Smv Application",
+    "smv.stages"      -> "",
     "smv.config.keys" -> "",
-    "smv.class_dir" -> "./target/classes"
+    "smv.class_dir"   -> "./target/classes"
   )
 
   // merge order is important here.  Highest priority comes last as it will override all previous
   private[smv] val mergedProps = defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps
 
   // --- config params.  App should access configs through vals below rather than from props maps
-  val appName = mergedProps("smv.appName")
+  val appName    = mergedProps("smv.appName")
   val stageNames = splitProp("smv.stages").toSeq
 
   val classDir = mergedProps("smv.class_dir")
 
-  def stageVersions = stageNames.map{sn:String => {
-    val baseName = FQN.extractBaseName(sn)
-    val stageBasePropPrefix = s"smv.stages.${baseName}"
-    val stageFQNPropPrefix = s"smv.stages.${sn}"
+  def stageVersions =
+    stageNames
+      .map { sn: String =>
+        {
+          val baseName            = FQN.extractBaseName(sn)
+          val stageBasePropPrefix = s"smv.stages.${baseName}"
+          val stageFQNPropPrefix  = s"smv.stages.${sn}"
 
-    // get stage version (if any)
-    val version = getProp(stageBasePropPrefix + ".version").orElse(
-      getProp(stageFQNPropPrefix + ".version")
-    )
+          // get stage version (if any)
+          val version = getProp(stageBasePropPrefix + ".version").orElse(
+            getProp(stageFQNPropPrefix + ".version")
+          )
 
-    (sn, version)}
-  }.collect{case (x, Some(y)) => (x, y)}.toMap
+          (sn, version)
+        }
+      }
+      .collect { case (x, Some(y)) => (x, y) }
+      .toMap
 
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
 
@@ -168,8 +208,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // ---------- User Run Config Parameters key/values ----------
   val runConfigKeys: Seq[String] = splitProp("smv.config.keys")
+
   /** Get user run config parameter as a string. */
   def getRunConfig(key: String): String = mergedProps("smv.config." + key).trim
+
   /** compute hash of all key values defined in the app. */
   def getRunConfigHash(): Int = runConfigKeys.map(getRunConfig(_)).mkString(":").hashCode()
 
@@ -177,29 +219,26 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // TODO: need to remove requirement that data dir is specified (need to start using input dir and if both inpput/output are specified, we dont need datadir
   /** the configured data dir (command line OR props) */
-  def dataDir : String = {
-    cmdLine.dataDir.get.
-      orElse(mergedProps.get("smv.dataDir")).
-      orElse(sys.env.get("DATA_DIR")).
-      getOrElse(throw new SmvRuntimeException("Must specify a data-dir either on command line or in conf."))
+  def dataDir: String = {
+    cmdLine.dataDir.get
+      .orElse(mergedProps.get("smv.dataDir"))
+      .orElse(sys.env.get("DATA_DIR"))
+      .getOrElse(throw new SmvRuntimeException(
+        "Must specify a data-dir either on command line or in conf."))
   }
 
-  def inputDir : String = {
-    cmdLine.inputDir.get.
-      orElse(mergedProps.get("smv.inputDir")).
-      getOrElse(dataDir + "/input")
+  def inputDir: String = {
+    cmdLine.inputDir.get.orElse(mergedProps.get("smv.inputDir")).getOrElse(dataDir + "/input")
   }
 
-  def outputDir : String = {
-    cmdLine.outputDir.get.
-      orElse(mergedProps.get("smv.outputDir")).
-      getOrElse(dataDir + "/output")
+  def outputDir: String = {
+    cmdLine.outputDir.get.orElse(mergedProps.get("smv.outputDir")).getOrElse(dataDir + "/output")
   }
 
-  def publishDir : String = {
-    cmdLine.publishDir.get.
-      orElse(mergedProps.get("smv.publishDir")).
-      getOrElse(dataDir + "/publish")
+  def publishDir: String = {
+    cmdLine.publishDir.get
+      .orElse(mergedProps.get("smv.publishDir"))
+      .getOrElse(dataDir + "/publish")
   }
 
   /**
@@ -208,10 +247,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
    * This is by design as the default app/user smv config files may be missing (valid).
    * Adopted from the Spark AbstractCommnadBuilder::loadPropertiesFile
    */
-  private def _loadProps(propsFileName: String) : scala.collection.Map[String, String] = {
+  private def _loadProps(propsFileName: String): scala.collection.Map[String, String] = {
     import scala.collection.JavaConverters._
 
-    val props = new Properties()
+    val props     = new Properties()
     val propsFile = new File(propsFileName)
 
     if (propsFile.isFile()) {
@@ -224,7 +263,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
           try {
             fd.close()
           } catch {
-            case e:IOException => None
+            case e: IOException => None
           }
         }
       }
@@ -246,13 +285,15 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   }
 
   /** Return the value of given configuration parameter as an optional string. */
-  def getProp(propName: String) : Option[String] = {
+  def getProp(propName: String): Option[String] = {
     mergedProps.get(propName)
   }
 
   /** Get the given configuration property value as an integer option. */
-  private[smv] def getPropAsInt(propName: String) : Option[Int] = {
-    mergedProps.get(propName).flatMap { s: String => Try(s.toInt).toOption }
+  private[smv] def getPropAsInt(propName: String): Option[Int] = {
+    mergedProps.get(propName).flatMap { s: String =>
+      Try(s.toInt).toOption
+    }
   }
 }
 

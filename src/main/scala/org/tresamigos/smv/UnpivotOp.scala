@@ -17,7 +17,6 @@ package org.tresamigos.smv
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 
-
 /**
  * Almost the opposite of the pivot operation.  Given a set of records with value columns,
  * turns the value columns into value rows.  For example:
@@ -46,7 +45,12 @@ private[smv] class UnpivotOp(val df: DataFrame, val valueCols: Seq[String]) {
   // TODO: should not hardcode the column/value column names in the result.
   // TODO: perhaps accept multiple valueCols sets.
 
-  val types = valueCols.map{c => df(c).toExpr.dataType}.toSet.toSeq
+  val types = valueCols
+    .map { c =>
+      df(c).toExpr.dataType
+    }
+    .toSet
+    .toSeq
   require(types.size == 1)
   val dataType = types(0)
 
@@ -55,14 +59,16 @@ private[smv] class UnpivotOp(val df: DataFrame, val valueCols: Seq[String]) {
    * Given value columns (X,Y,Z), this produces:
    * Array( Struct("X", 'X), Struct("Y", 'Y), Struct("Z", 'Z) )
    */
-
-  val arrayCol = array(valueCols.map{c => struct(lit(c) as "column", $"${c}" as "value")}: _*)
+  val arrayCol = array(valueCols.map { c =>
+    struct(lit(c) as "column", $"${c}" as "value")
+  }: _*)
 
   def unpivot() = {
-    df.smvSelectPlus(arrayCol as "_unpivot_vals").
-      smvSelectPlus(explode($"_unpivot_vals") as "_kvpair").
-      smvSelectPlus($"_kvpair".getField("column") as "column", $"_kvpair".getField("value") as "value").
-      smvSelectMinus($"_unpivot_vals", $"_kvpair").
-      smvSelectMinus(valueCols.head, valueCols.tail: _*)
+    df.smvSelectPlus(arrayCol as "_unpivot_vals")
+      .smvSelectPlus(explode($"_unpivot_vals") as "_kvpair")
+      .smvSelectPlus($"_kvpair".getField("column") as "column",
+                     $"_kvpair".getField("value") as "value")
+      .smvSelectMinus($"_unpivot_vals", $"_kvpair")
+      .smvSelectMinus(valueCols.head, valueCols.tail: _*)
   }
 }

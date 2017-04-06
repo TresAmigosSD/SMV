@@ -16,13 +16,13 @@ package org.tresamigos.smv
 
 import java.io.{PrintWriter, File}
 
-private[smv] object SmvReportIO{
+private[smv] object SmvReportIO {
   def saveReport(report: String, path: String): Unit =
     SmvHDFS.writeToFile(report, path)
 
   def saveLocalReport(report: String, path: String): Unit = {
     val outFile = new File(path)
-    val pw = new PrintWriter(outFile)
+    val pw      = new PrintWriter(outFile)
     pw.write(report)
     pw.close
   }

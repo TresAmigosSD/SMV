@@ -33,7 +33,7 @@ object ShellCmd {
   import org.tresamigos.smv.graph._
 
   private val appGU = new SmvGraphUtil(SmvApp.app)
-  private val dsm = SmvApp.app.dsm
+  private val dsm   = SmvApp.app.dsm
 
   /** Resolve the ds, since user's input might not be resolved yet */
   private def load(ds: SmvDataSet): SmvDataSet = dsm.load(ds.urn).head
@@ -148,19 +148,20 @@ object ShellCmd {
   }
 
   /**
-  * Read in a Hive table as DF
+   * Read in a Hive table as DF
   **/
   def openHive(tableName: String) = {
     new SmvHiveTable(tableName).rdd()
   }
 
   /**
-  * Read in a Csv file as DF
+   * Read in a Csv file as DF
   **/
   def openCsv(path: String, ca: CsvAttributes, parserCheck: Boolean): DataFrame = {
+
     /** isFullPath = true to avoid prepending data_dir */
     object file extends SmvCsvFile(path, ca, null, true) {
-      override val forceParserCheck = false
+      override val forceParserCheck   = false
       override val failAtParsingError = parserCheck
     }
     file.rdd()
@@ -169,10 +170,10 @@ object ShellCmd {
   def openCsv(path: String): DataFrame = openCsv(path, null, false)
 
   /**
-  * Resolve SmvDataSet
-  *
-  * @param ds an SmvDataSet
-  * @return result DataFrame
+   * Resolve SmvDataSet
+   *
+   * @param ds an SmvDataSet
+   * @return result DataFrame
   **/
   def df(ds: SmvDataSet) = {
     hotdeployIfCapable(ds, getClass.getClassLoader)
@@ -182,10 +183,11 @@ object ShellCmd {
   /**
    * Reload modules using custom class loader
    **/
-  private[smv] def hotdeployIfCapable(ds: SmvDataSet, cl: ClassLoader = getClass.getClassLoader): Unit = {
+  private[smv] def hotdeployIfCapable(ds: SmvDataSet,
+                                      cl: ClassLoader = getClass.getClassLoader): Unit = {
     import scala.reflect.runtime.universe
 
-    val mir = universe.runtimeMirror(cl).reflect(SmvApp.app.sc)
+    val mir  = universe.runtimeMirror(cl).reflect(SmvApp.app.sc)
     val meth = mir.symbol.typeSignature.member(universe.newTermName("hotdeploy"))
 
     if (meth.isMethod) {

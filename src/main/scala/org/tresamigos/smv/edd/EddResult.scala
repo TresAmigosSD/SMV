@@ -42,11 +42,11 @@ import org.json4s.jackson.JsonMethods._
  * A histogram result represent as Map[Any, Long], where the key could be above 5 types.
  **/
 private[smv] class EddResult(
-  val colName: String,
-  val taskType: String,
-  val taskName: String,
-  val taskDesc: String,
-  val valueJSON: String
+    val colName: String,
+    val taskType: String,
+    val taskName: String,
+    val taskDesc: String,
+    val valueJSON: String
 )(val precision: Int) {
 
   private val mc = new java.math.MathContext(precision)
@@ -54,37 +54,43 @@ private[smv] class EddResult(
   def canEqual(a: Any) = {
     a match {
       case r: EddResult => r.precision == precision
-      case _ => false
+      case _            => false
     }
   }
 
   override def equals(that: Any): Boolean = that match {
     case that: EddResult => that.canEqual(this) && this.hashCode == that.hashCode
-    case _ => false
+    case _               => false
   }
 
   override def hashCode: Int = {
     val headerHash = colName.hashCode + taskType.hashCode + taskName.hashCode
     val valueHash = taskType match {
-      case "stat" => EddResult.parseSimpleJson(valueJSON) match {
-        case JNull => 0
-        case v: Double => BigDecimal(v, mc).hashCode
-        case v: Long => v.hashCode
-        case v: String => v.hashCode
-        case v: Decimal => v.hashCode
-        case _ => throw new SmvUnsupportedType("unsupported type")
-      }
-      case "hist" => EddResult.parseHistJson(valueJSON).map{ case (k, c) =>
-        k match {
-          case null => c.hashCode
-          case v: String => v.hashCode + c.hashCode
-          case v: Long => v.hashCode + c.hashCode
-          case v: Boolean => v.hashCode + c.hashCode
-          case v: Double => BigDecimal(v, mc).hashCode + BigDecimal(c, mc).hashCode
-          case v: Decimal => v.hashCode + c.hashCode
-          case _ => throw new SmvUnsupportedType("unsupported type")
+      case "stat" =>
+        EddResult.parseSimpleJson(valueJSON) match {
+          case JNull      => 0
+          case v: Double  => BigDecimal(v, mc).hashCode
+          case v: Long    => v.hashCode
+          case v: String  => v.hashCode
+          case v: Decimal => v.hashCode
+          case _          => throw new SmvUnsupportedType("unsupported type")
         }
-      }.reduce(_ + _)
+      case "hist" =>
+        EddResult
+          .parseHistJson(valueJSON)
+          .map {
+            case (k, c) =>
+              k match {
+                case null       => c.hashCode
+                case v: String  => v.hashCode + c.hashCode
+                case v: Long    => v.hashCode + c.hashCode
+                case v: Boolean => v.hashCode + c.hashCode
+                case v: Double  => BigDecimal(v, mc).hashCode + BigDecimal(c, mc).hashCode
+                case v: Decimal => v.hashCode + c.hashCode
+                case _          => throw new SmvUnsupportedType("unsupported type")
+              }
+          }
+          .reduce(_ + _)
     }
 
     headerHash + valueHash
@@ -98,30 +104,36 @@ private[smv] class EddResult(
       case "hist" => {
         val hist = EddResult.parseHistJson(valueJSON)
 
-        val csum = hist.scanLeft(0l){(c,m) => c + m._2}.tail
+        val csum = hist
+          .scanLeft(0l) { (c, m) =>
+            c + m._2
+          }
+          .tail
         val total = csum(csum.size - 1)
-        val out = (hist zip csum).map{
-          case ((k,c), sum) =>
-          val pct = c.toDouble/total*100
-          val cpct = sum.toDouble/total*100
-          f"$k%-20s$c%10d$pct%8.2f%%$sum%12d$cpct%8.2f%%"
-        }.mkString("\n")
+        val out = (hist zip csum)
+          .map {
+            case ((k, c), sum) =>
+              val pct  = c.toDouble / total * 100
+              val cpct = sum.toDouble / total * 100
+              f"$k%-20s$c%10d$pct%8.2f%%$sum%12d$cpct%8.2f%%"
+          }
+          .mkString("\n")
 
         s"Histogram of ${colName}: ${taskDesc}\n" +
-        "key                      count      Pct    cumCount   cumPct\n" +
-        out +
-        "\n-------------------------------------------------"
+          "key                      count      Pct    cumCount   cumPct\n" +
+          out +
+          "\n-------------------------------------------------"
       }
     }
   }
 
   def toJSON() = {
     val json =
-      ("colName" -> colName) ~
-      ("taskType" -> taskType) ~
-      ("taskName" -> taskName) ~
-      ("taskDesc" -> taskDesc) ~
-      ("valueJSON" -> valueJSON)
+      ("colName"     -> colName) ~
+        ("taskType"  -> taskType) ~
+        ("taskName"  -> taskName) ~
+        ("taskDesc"  -> taskDesc) ~
+        ("valueJSON" -> valueJSON)
     compact(json)
   }
 }
@@ -130,18 +142,19 @@ private[smv] object EddResult {
   def apply(r: Row, precision: Int = 5) = {
     r match {
       case Row(
-        colName: String,
-        taskType: String,
-        taskName: String,
-        taskDesc: String,
-        valueJSON: String
-      ) => new EddResult(
-        colName,
-        taskType,
-        taskName,
-        taskDesc,
-        valueJSON
-      )(precision)
+          colName: String,
+          taskType: String,
+          taskName: String,
+          taskDesc: String,
+          valueJSON: String
+          ) =>
+        new EddResult(
+          colName,
+          taskType,
+          taskName,
+          taskDesc,
+          valueJSON
+        )(precision)
     }
   }
 
@@ -154,22 +167,22 @@ private[smv] object EddResult {
     }
 
     val ordering = keyNonNull match {
-      case k: Long => implicitly[Ordering[Long]].asInstanceOf[Ordering[Any]]
-      case k: Double => implicitly[Ordering[Double]].asInstanceOf[Ordering[Any]]
-      case k: String => implicitly[Ordering[String]].asInstanceOf[Ordering[Any]]
+      case k: Long    => implicitly[Ordering[Long]].asInstanceOf[Ordering[Any]]
+      case k: Double  => implicitly[Ordering[Double]].asInstanceOf[Ordering[Any]]
+      case k: String  => implicitly[Ordering[String]].asInstanceOf[Ordering[Any]]
       case k: Boolean => implicitly[Ordering[Boolean]].asInstanceOf[Ordering[Any]]
       case k: Decimal => implicitly[Ordering[Decimal]].asInstanceOf[Ordering[Any]]
-      case _ => throw new SmvUnsupportedType("unsupported type")
+      case _          => throw new SmvUnsupportedType("unsupported type")
     }
 
-    if(histSortByFreq)
-      hist.toSeq.sortBy(- _._2)
+    if (histSortByFreq)
+      hist.toSeq.sortBy(-_._2)
     else {
       /* since some of the Ordering (e.g. Ordering[String]) can't handle null, we
        * handle null manually
        */
       val (nullOnly, nonNull) = hist.toSeq.partition(_._1 == null)
-      nullOnly ++ nonNull.sortWith((a,b) => ordering.compare(a._1, b._1) < 0)
+      nullOnly ++ nonNull.sortWith((a, b) => ordering.compare(a._1, b._1) < 0)
     }
   }
 
@@ -177,12 +190,12 @@ private[smv] object EddResult {
   private[smv] def parseSimpleJson(s: String): Any = {
     val json = parse(s)
     val res = json match {
-      case JInt(k) => k.toLong
-      case JDouble(k) => k
+      case JInt(k)     => k.toLong
+      case JDouble(k)  => k
       case JDecimal(k) => k
-      case JString(k) => k
-      case JNull => JNull
-      case x => throw new SmvUnsupportedType("unsupported type " + x.getClass())
+      case JString(k)  => k
+      case JNull       => JNull
+      case x           => throw new SmvUnsupportedType("unsupported type " + x.getClass())
     }
     res
   }
@@ -196,21 +209,24 @@ private[smv] object EddResult {
   private[smv] def parseHistJson(s: String): Seq[(Any, Long)] = {
     val json = parse(s)
     val res = for {
-      JObject(child) <- json
+      JObject(child)                                  <- json
       JField("histSortByFreq", JBool(histSortByFreq)) <- child
-      JField("hist", JObject(m)) <- child
+      JField("hist", JObject(m))                      <- child
     } yield {
-      val h = m.map{case (k,v) => (parse(k),v)}.map{ l =>
-        l match {
-          case (JString(k), JInt(v)) => (k, v.toLong)
-          case (JBool(k), JInt(v)) => (k, v.toLong)
-          case (JInt(k), JInt(v)) => (k.toLong, v.toLong)
-          case (JDouble(k),JInt(v)) => (k, v.toLong)
-          case (JDecimal(k), JInt(v)) => (k, v.toLong)
-          case (JNull, JInt(v)) => (null, v.toLong)
-          case _ => throw new SmvUnsupportedType("unsupported type")
+      val h = m
+        .map { case (k, v) => (parse(k), v) }
+        .map { l =>
+          l match {
+            case (JString(k), JInt(v))  => (k, v.toLong)
+            case (JBool(k), JInt(v))    => (k, v.toLong)
+            case (JInt(k), JInt(v))     => (k.toLong, v.toLong)
+            case (JDouble(k), JInt(v))  => (k, v.toLong)
+            case (JDecimal(k), JInt(v)) => (k, v.toLong)
+            case (JNull, JInt(v))       => (null, v.toLong)
+            case _                      => throw new SmvUnsupportedType("unsupported type")
+          }
         }
-      }.toMap
+        .toMap
       histSort(h, histSortByFreq)
     }
     res.head.toSeq

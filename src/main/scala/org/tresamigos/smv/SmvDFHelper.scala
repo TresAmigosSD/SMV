@@ -38,7 +38,10 @@ class SmvDFHelper(df: DataFrame) {
    * @param ca CSV attributes used to format output file.  Defaults to `CsvAttributes.defaultCsv`
    * @param schemaWithMeta Provide the companion schema (usually used when we need to persist some schema meta data along with the standard schema)
    */
-  def saveAsCsvWithSchema(dataPath: String, ca: CsvAttributes = CsvAttributes.defaultCsv, schemaWithMeta: SmvSchema = null, strNullValue: String = "") {
+  def saveAsCsvWithSchema(dataPath: String,
+                          ca: CsvAttributes = CsvAttributes.defaultCsv,
+                          schemaWithMeta: SmvSchema = null,
+                          strNullValue: String = "") {
     val handler = new FileIOHandler(df.sqlContext, dataPath)
     handler.saveAsCsvWithSchema(df, schemaWithMeta, ca, strNullValue)
   }
@@ -94,27 +97,30 @@ class SmvDFHelper(df: DataFrame) {
     val currColNames: Seq[String] = df.columns
 
     // separate columns into an overwrite set and the rest, which will be simply added
-    val (overwrite, add) = columns.partition(c => c.toExpr match {
-      case alias: NamedExpression => currColNames.contains(alias.name)
-      case _ => false
+    val (overwrite, add) = columns.partition(c =>
+      c.toExpr match {
+        case alias: NamedExpression => currColNames.contains(alias.name)
+        case _                      => false
     })
 
     // Update the overwritten columns first, working with a smaller
     // set of total columns, then add the rest
-    val edited = if (overwrite.isEmpty) df else {
-      val origColNames: Seq[String] = overwrite.map(_.getName)
-      val uniquelyNamed: Seq[Column] =
-        overwrite.map(c => c as "_SelectWithReplace_" + c.getName) // expecting this to be good-enough to ensure column name uniqueness in the schema
-      val renameArgs: Seq[(String, String)] = uniquelyNamed.map(_.getName) zip origColNames
+    val edited =
+      if (overwrite.isEmpty) df
+      else {
+        val origColNames: Seq[String] = overwrite.map(_.getName)
+        val uniquelyNamed: Seq[Column] =
+          overwrite.map(c => c as "_SelectWithReplace_" + c.getName) // expecting this to be good-enough to ensure column name uniqueness in the schema
+        val renameArgs: Seq[(String, String)] = uniquelyNamed.map(_.getName) zip origColNames
 
-      // add the new columns first, because they could (and usually)
-      // refer to the columns being updated
-      // the last select is to make sure the ordering of columns don't change
-      df.smvSelectPlus(uniquelyNamed:_*).
-        smvSelectMinus(origColNames.head, origColNames.tail:_*).
-        smvRenameField(renameArgs:_*).
-        select(currColNames.head, currColNames.tail: _*)
-    }
+        // add the new columns first, because they could (and usually)
+        // refer to the columns being updated
+        // the last select is to make sure the ordering of columns don't change
+        df.smvSelectPlus(uniquelyNamed: _*)
+          .smvSelectMinus(origColNames.head, origColNames.tail: _*)
+          .smvRenameField(renameArgs: _*)
+          .select(currColNames.head, currColNames.tail: _*)
+      }
 
     edited.smvSelectPlus(add: _*)
   }
@@ -127,8 +133,10 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    */
   def smvSelectPlus(exprs: Column*): DataFrame = {
-    val all = df.columns.map{l=>df(l)}
-    df.select( all ++ exprs : _* )
+    val all = df.columns.map { l =>
+      df(l)
+    }
+    df.select(all ++ exprs: _*)
   }
 
   /**
@@ -139,8 +147,10 @@ class SmvDFHelper(df: DataFrame) {
    * `amt` will be the first column in the output.
    */
   def selectPlusPrefix(exprs: Column*): DataFrame = {
-    val all = df.columns.map{l=>df(l)}
-    df.select( exprs ++ all : _* )
+    val all = df.columns.map { l =>
+      df(l)
+    }
+    df.select(exprs ++ all: _*)
   }
 
   /**
@@ -154,7 +164,9 @@ class SmvDFHelper(df: DataFrame) {
     val names = s +: others
     checkNames(names)
     val all = df.columns diff names
-    df.select(all.map{l=>df(l)} : _* )
+    df.select(all.map { l =>
+      df(l)
+    }: _*)
   }
 
   /**
@@ -185,12 +197,13 @@ class SmvDFHelper(df: DataFrame) {
 
     // We don't want to rename to some field names which already exist
     val overlap = df.columns.intersect(namePairsMap.values.toSeq)
-    if (!overlap.isEmpty) throw new SmvRuntimeException(
-      "Rename to existing fields: " + overlap.mkString(", ")
-    )
+    if (!overlap.isEmpty)
+      throw new SmvRuntimeException(
+        "Rename to existing fields: " + overlap.mkString(", ")
+      )
 
-    val renamedFields = df.columns.map {
-      fn => df(fn) as namePairsMap.getOrElse(fn, fn)
+    val renamedFields = df.columns.map { fn =>
+      df(fn) as namePairsMap.getOrElse(fn, fn)
     }
     df.select(renamedFields: _*)
   }
@@ -203,9 +216,9 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    * The above will add "x_" to the beginning of every column name in the `DataFrame`
    */
-  def prefixFieldNames(prefix: String) : DataFrame = {
-    val renamedFields = df.columns.map {
-      fn => df(fn) as (prefix + fn)
+  def prefixFieldNames(prefix: String): DataFrame = {
+    val renamedFields = df.columns.map { fn =>
+      df(fn) as (prefix + fn)
     }
     df.select(renamedFields: _*)
   }
@@ -218,9 +231,9 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    * The above will add "_x" to the end of every column name in the `DataFrame`
    */
-  def postfixFieldNames(postfix: String) : DataFrame = {
-    val renamedFields = df.columns.map {
-      fn => df(fn) as (fn + postfix)
+  def postfixFieldNames(postfix: String): DataFrame = {
+    val renamedFields = df.columns.map { fn =>
+      df(fn) as (fn + postfix)
     }
     df.select(renamedFields: _*)
   }
@@ -244,13 +257,19 @@ class SmvDFHelper(df: DataFrame) {
   def smvExpandStruct(colNames: String*): DataFrame = {
     checkNames(colNames)
 
-    val subFields = colNames.map{n =>
+    val subFields = colNames.map { n =>
       (n, df.schema.apply(n).dataType.asInstanceOf[StructType].fieldNames.toSeq)
     }.toMap
 
-    val exprs = subFields.map{ case (col, fields) =>
-      fields.map{f => df(col).getField(f) as f}
-    }.flatten.toSeq
+    val exprs = subFields
+      .map {
+        case (col, fields) =>
+          fields.map { f =>
+            df(col).getField(f) as f
+          }
+      }
+      .flatten
+      .toSeq
 
     df.smvSelectPlus(exprs: _*).smvSelectMinus(colNames.head, colNames.tail: _*)
   }
@@ -261,15 +280,19 @@ class SmvDFHelper(df: DataFrame) {
    * otherwise postfixing the them.
    */
   private[smv] def joinUniqFieldNames(
-    otherPlan: DataFrame,
-    on: Column,
-    joinType: String = "inner",
-    postfix: String = null
-  ) : DataFrame = {
-    val namesLower = df.columns.map{c => c.toLowerCase}
-    val renamedFields = otherPlan.columns.map{c =>
-      c -> mkUniq(df.columns, c, ignoreCase = true, postfix)
-    }.filter{case (l, r) => l != r}
+      otherPlan: DataFrame,
+      on: Column,
+      joinType: String = "inner",
+      postfix: String = null
+  ): DataFrame = {
+    val namesLower = df.columns.map { c =>
+      c.toLowerCase
+    }
+    val renamedFields = otherPlan.columns
+      .map { c =>
+        c -> mkUniq(df.columns, c, ignoreCase = true, postfix)
+      }
+      .filter { case (l, r) => l != r }
 
     df.join(otherPlan.smvRenameField(renamedFields: _*), on: Column, joinType)
   }
@@ -294,24 +317,26 @@ class SmvDFHelper(df: DataFrame) {
    * the specified `postfix`.
    */
   def smvJoinByKey(
-    otherPlan: DataFrame,
-    keys: Seq[String],
-    joinType: String,
-    postfix: String = null,
-    dropRightKey: Boolean = true
+      otherPlan: DataFrame,
+      keys: Seq[String],
+      joinType: String,
+      postfix: String = null,
+      dropRightKey: Boolean = true
   ): DataFrame = {
     import df.sqlContext.implicits._
 
-    val rightKeys = keys.map{k => mkUniq(df.columns, k, ignoreCase = true, postfix)}
+    val rightKeys = keys.map { k =>
+      mkUniq(df.columns, k, ignoreCase = true, postfix)
+    }
 
-    val joinedKeys = keys zip rightKeys
-    val renamedFields = joinedKeys.map{case (l,r) => (l -> r)}
-    val newOther = otherPlan.smvRenameField(renamedFields: _*)
-    val joinOpt = joinedKeys.map{case (l, r) => ($"$l" === $"$r")}.reduce(_ && _)
+    val joinedKeys    = keys zip rightKeys
+    val renamedFields = joinedKeys.map { case (l, r) => (l -> r) }
+    val newOther      = otherPlan.smvRenameField(renamedFields: _*)
+    val joinOpt       = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
 
     val dfJoined = df.joinUniqFieldNames(newOther, joinOpt, joinType, postfix)
     val dfCoalescedKeys = joinType match {
-      case SmvJoinType.Outer|SmvJoinType.RightOuter =>
+      case SmvJoinType.Outer | SmvJoinType.RightOuter =>
         // for each key used in the outer-join, coalesce key value from left to right
         joinedKeys.foldLeft(dfJoined)((acc: DataFrame, keypair) => {
           val (lk, rk) = keypair
@@ -387,7 +412,7 @@ class SmvDFHelper(df: DataFrame) {
    * | 2   | B       | C3      |
    * }}}
    */
-  def dedupByKey(k1: String, krest: String*) : DataFrame = {
+  def dedupByKey(k1: String, krest: String*): DataFrame = {
     import df.sqlContext.implicits._
     val keys = k1 +: krest
     /* Should call dropDuplicates, but that method has bug as if the first record has null
@@ -395,23 +420,28 @@ class SmvDFHelper(df: DataFrame) {
 
     val selectExpressions = df.columns.diff(keys).map {
       //using smvFirst instead of first, since `first` return the first non-null of each field
-      fn => smvFirst($"$fn") as fn
+      fn =>
+        smvFirst($"$fn") as fn
     }
 
     if (selectExpressions.isEmpty) {
       df.select(k1, krest: _*).distinct()
     } else {
       val ordinals = df.schema.getIndices(keys: _*)
-      val rowToKeys: Row => Seq[Any] = {row =>
-        ordinals.map{i => row(i)}
+      val rowToKeys: Row => Seq[Any] = { row =>
+        ordinals.map { i =>
+          row(i)
+        }
       }
 
-      val rdd = df.rdd.groupBy(rowToKeys).values.map{i => i.head}
+      val rdd = df.rdd.groupBy(rowToKeys).values.map { i =>
+        i.head
+      }
       df.sqlContext.createDataFrame(rdd, df.schema)
       /* although above code pased all test cases. keep the original code here just in-case
       df.groupBy(keys.map{k => $"$k"}: _*).agg(selectExpressions(0), selectExpressions.tail: _*).
         select(df.columns.head, df.columns.tail: _*)
-        */
+     */
     }
   }
 
@@ -449,15 +479,18 @@ class SmvDFHelper(df: DataFrame) {
    * method to make sure we can handel large key space.
    **/
   def dedupByKeyWithOrder(keyCol: Column*)(orderCol: Column*): DataFrame = {
-    val keys = keyCol.map{c => c.getName}
+    val keys = keyCol.map { c =>
+      c.getName
+    }
     dedupByKeyWithOrder(keys.head, keys.tail: _*)(orderCol: _*)
   }
 
   /** Same as `dedupByKeyWithOrder(Column*)(Column*)` but use `String` as key **/
   def dedupByKeyWithOrder(k1: String, krest: String*)(orderCol: Column*): DataFrame = {
-    val gdo = new cds.DedupWithOrderGDO(orderCol.map{o => o.toExpr}.toList)
-    df.smvGroupBy(k1, krest: _*).
-      smvMapGroup(gdo).toDF
+    val gdo = new cds.DedupWithOrderGDO(orderCol.map { o =>
+      o.toExpr
+    }.toList)
+    df.smvGroupBy(k1, krest: _*).smvMapGroup(gdo).toDF
   }
 
   /**
@@ -476,34 +509,36 @@ class SmvDFHelper(df: DataFrame) {
     val oldSchema = df.schema
     val newSchema = StructType(oldSchema.fields :+ StructField(rankColumnName, LongType, true))
 
-    val res: RDD[Row] = df.rdd.
-      zipWithIndex().
-      map{ case (row, idx) =>
-        new GenericRow(Array[Any](row.toSeq ++ Seq(idx + startValue): _*)) }
+    val res: RDD[Row] = df.rdd.zipWithIndex().map {
+      case (row, idx) =>
+        new GenericRow(Array[Any](row.toSeq ++ Seq(idx + startValue): _*))
+    }
 
     df.sqlContext.createDataFrame(res, newSchema)
   }
-   /** Union two data frames that have shared columns, kept columns on both side */
-  private[smv] def RowBind(
-    dfother: DataFrame): DataFrame = {
+
+  /** Union two data frames that have shared columns, kept columns on both side */
+  private[smv] def RowBind(dfother: DataFrame): DataFrame = {
     import df.sqlContext.implicits._
 
-    val leftNeed = dfother.columns diff df.columns
+    val leftNeed   = dfother.columns diff df.columns
     val leftStruct = leftNeed map (colName => dfother.schema.filter(_.name == colName)(0))
-    val leftFull = df.smvSelectPlus((leftStruct map (sf => lit(null).cast(sf.dataType) as sf.name)):_*)
+    val leftFull =
+      df.smvSelectPlus((leftStruct map (sf => lit(null).cast(sf.dataType) as sf.name)): _*)
 
-    val rightNeed = df.columns diff dfother.columns
+    val rightNeed   = df.columns diff dfother.columns
     val rightStruct = rightNeed map (colName => df.schema.filter(_.name == colName)(0))
-    val rightFull = dfother.smvSelectPlus((rightStruct map (sf => lit(null).cast(sf.dataType) as sf.name)):_*)
+    val rightFull =
+      dfother.smvSelectPlus((rightStruct map (sf => lit(null).cast(sf.dataType) as sf.name)): _*)
 
     val overlap = df.columns intersect dfother.columns
-    val overlapLeftStruct = overlap map {colName =>
+    val overlapLeftStruct = overlap map { colName =>
       val struct = df.schema.filter(_.name == colName)(0)
       // only compare the name and type, to match Spark's implementation of unionAll
       val structStripMeta = StructField(struct.name, struct.dataType)
       structStripMeta
     }
-    val overlapRightStruct = overlap map {colName =>
+    val overlapRightStruct = overlap map { colName =>
       val struct = dfother.schema.filter(_.name == colName)(0)
       // only compare the name and type
       val structStripMeta = StructField(struct.name, struct.dataType)
@@ -511,11 +546,15 @@ class SmvDFHelper(df: DataFrame) {
     }
     val diffColumns = overlapLeftStruct diff overlapRightStruct
     if (diffColumns.isEmpty) {
-      leftFull.unionAll(rightFull.select(leftFull.columns.head, leftFull.columns.tail:_*))
-    }
-    else {
-      val diffNames = diffColumns.map{col => col.name}.mkString(",")
-      throw new IllegalStateException(s"fail to union columns with same name but different StructTypes: ${diffNames}")
+      leftFull.unionAll(rightFull.select(leftFull.columns.head, leftFull.columns.tail: _*))
+    } else {
+      val diffNames = diffColumns
+        .map { col =>
+          col.name
+        }
+        .mkString(",")
+      throw new IllegalStateException(
+        s"fail to union columns with same name but different StructTypes: ${diffNames}")
     }
   }
 
@@ -523,9 +562,10 @@ class SmvDFHelper(df: DataFrame) {
    * smvUnion unions DataFrames with different number of columns by column name & schema.
    * spark unionAll ignores column names & schema, and can only be performed on tables with the same number of columns.
    */
-  def smvUnion(
-    dfothers: DataFrame*):DataFrame = {
-    dfothers.foldLeft(df){(acc, dfother) => acc.RowBind(dfother)}
+  def smvUnion(dfothers: DataFrame*): DataFrame = {
+    dfothers.foldLeft(df) { (acc, dfother) =>
+      acc.RowBind(dfother)
+    }
   }
 
   /**
@@ -564,7 +604,9 @@ class SmvDFHelper(df: DataFrame) {
    */
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
     // TODO: handle baseOutput == null with inferring using getBaseOutputColumnNames
-    val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, baseOutput)
+    val pivot = SmvPivot(pivotCols, valueCols.map { v =>
+      (v, v)
+    }, baseOutput)
     pivot.createSrdd(df, df.columns)
   }
 
@@ -612,8 +654,8 @@ class SmvDFHelper(df: DataFrame) {
    * @param indexColName the name of the index column, if present, if None, no index column would be added
    */
   def smvUnpivot(valueCols: Seq[String],
-    colNameFn: String => (String, String),
-    indexColName: Option[String] = Some("Index")): DataFrame = {
+                 colNameFn: String => (String, String),
+                 indexColName: Option[String] = Some("Index")): DataFrame = {
 
     import df.sqlContext.implicits._
 
@@ -621,17 +663,17 @@ class SmvDFHelper(df: DataFrame) {
     val (t1, t2, tbl) =
       valueCols.foldRight((Seq[String](), Seq[String](), Map[(String, String), String]())) {
         (vcol, acc) =>
-        val (k, v) = colNameFn(vcol)
-        (
-          k +: acc._1, // unpivoted column name
-          v +: acc._2, // unpivoted index value (row number)
-          acc._3 + ((k, v) -> vcol) // the inverse of colNameFn to retrieve value in the dataframe cell
-        )
+          val (k, v) = colNameFn(vcol)
+          (
+            k +: acc._1, // unpivoted column name
+            v +: acc._2, // unpivoted index value (row number)
+            acc._3 + ((k, v) -> vcol) // the inverse of colNameFn to retrieve value in the dataframe cell
+          )
       }
 
     val colNames = t1.distinct // collect the intended column names after unpivot
     // sort by length first, then in alphabetic order to simulate numeric ordering
-    val indexValues = t2.distinct.sortWith((a,b) => a.length < b.length && a.compareTo(b) < 0)
+    val indexValues = t2.distinct.sortWith((a, b) => a.length < b.length && a.compareTo(b) < 0)
 
     // need to make a name distinct from all the column names because
     // we are going to build a struct for each row, and the name is
@@ -641,22 +683,25 @@ class SmvDFHelper(df: DataFrame) {
     val embedded = indexValues map { v =>
       val fields = lit(v).as(indexName) +: (for {
         k <- colNames
-        col = tbl.get((k, v)).map(c => $"$c") getOrElse lit(null).cast(StringType) // We use $"$c" instead of df(c), since df(c) caused some type mismatch error in real data, which I can't reproduce as a test case.
+        col = tbl
+          .get((k, v))
+          .map(c => $"$c") getOrElse lit(null).cast(StringType) // We use $"$c" instead of df(c), since df(c) caused some type mismatch error in real data, which I can't reproduce as a test case.
       } yield col as k)
 
-      struct(fields:_*)
+      struct(fields: _*)
     }
 
-    val r1 = df.smvSelectPlus(array(embedded:_*) as "_unpivoted_values")
+    val r1 = df.smvSelectPlus(array(embedded: _*) as "_unpivoted_values")
     val r2 = r1.smvSelectPlus(explode(r1("_unpivoted_values")) as "_kvpair")
     val r3 = indexColName match {
-      case None => r2
+      case None           => r2
       case Some(indexCol) => r2.smvSelectPlus(r2("_kvpair")(indexName) as indexCol)
     }
     // now add each field in the embedded struct as a column
-    r3.smvSelectPlus((colNames.map(c => r3("_kvpair")(c) as c)):_*).
-      smvSelectMinus("_unpivoted_values", "_kvpair"). // remove intermediate results
-      smvSelectMinus(valueCols.head, valueCols.tail:_*)
+    r3.smvSelectPlus((colNames.map(c => r3("_kvpair")(c) as c)): _*)
+      .smvSelectMinus("_unpivoted_values", "_kvpair")
+      . // remove intermediate results
+      smvSelectMinus(valueCols.head, valueCols.tail: _*)
   }
 
   /**
@@ -691,7 +736,6 @@ class SmvDFHelper(df: DataFrame) {
   def smvUnpivot(valueCols: String*): DataFrame =
     smvUnpivot(valueCols, s => ("value", s), Some("column"))
 
-
   /**
    * a variation of the smvUnpivot function that takes a regex instead of a function.
    * this is due to the following reasons:
@@ -700,13 +744,16 @@ class SmvDFHelper(df: DataFrame) {
    *
    * The function name is different to keep consistency between Python and Scala
    */
-  def smvUnpivotRegex(valueCols: Seq[String], colNameFn: String, indexColName: String = "Index"): DataFrame = {
+  def smvUnpivotRegex(valueCols: Seq[String],
+                      colNameFn: String,
+                      indexColName: String = "Index"): DataFrame = {
     val pattern = colNameFn.r
 
     val fn = (s: String) => {
       s match {
         case pattern(x, y) => (x, y)
-        case _ => throw new IllegalArgumentException("smvUnpivotRegex: unable to use specified regex");
+        case _ =>
+          throw new IllegalArgumentException("smvUnpivotRegex: unable to use specified regex");
       }
     }
 
@@ -756,10 +803,10 @@ class SmvDFHelper(df: DataFrame) {
    * Will keep the 3 largest amt records
    **/
   def smvTopNRecs(maxElems: Int, orders: Column*) = {
-    val w = Window.orderBy(orders:_*)
+    val w       = Window.orderBy(orders: _*)
     val rankcol = mkUniq(df.columns, "rank")
-    val rownum = mkUniq(df.columns, "rownum")
-    val r1 = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    val rownum  = mkUniq(df.columns, "rownum")
+    val r1      = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 
@@ -788,7 +835,9 @@ class SmvDFHelper(df: DataFrame) {
    */
   @Experimental
   def smvGroupBy(cols: Column*) = {
-    val names = cols.map{c => c.getName}
+    val names = cols.map { c =>
+      c.getName
+    }
     SmvGroupedData(df, names)
   }
 
@@ -829,9 +878,10 @@ class SmvDFHelper(df: DataFrame) {
    **/
   @deprecated("will rename and refine interface", "1.5")
   def chunkBy(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
-    val kStr = keys.map{_.name}
-    df.smvGroupBy(kStr(0), kStr.tail: _*).
-      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, false), false).toDF
+    val kStr = keys.map { _.name }
+    df.smvGroupBy(kStr(0), kStr.tail: _*)
+      .smvMapGroup(new SmvChunkUDFGDO(chunkUDF, false), false)
+      .toDF
   }
 
   /**
@@ -839,9 +889,10 @@ class SmvDFHelper(df: DataFrame) {
    **/
   @deprecated("will rename and refine interface", "1.5")
   def chunkByPlus(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
-    val kStr = keys.map{_.name}
-    df.smvGroupBy(kStr(0), kStr.tail: _*).
-      smvMapGroup(new SmvChunkUDFGDO(chunkUDF, true), false).toDF
+    val kStr = keys.map { _.name }
+    df.smvGroupBy(kStr(0), kStr.tail: _*)
+      .smvMapGroup(new SmvChunkUDFGDO(chunkUDF, true), false)
+      .toDF
   }
 
   /**
@@ -868,20 +919,22 @@ class SmvDFHelper(df: DataFrame) {
     import df.sqlContext.implicits._
 
     val dfSimple = df.select($"${key}", $"${key}" as s"${key}_0").repartition(partition)
-    val otherSimple = dfother.zipWithIndex.map{case (df, i) =>
-      val newkey = s"${key}_${i+1}"
-      (newkey, df.select($"${key}" as newkey).repartition(partition))
+    val otherSimple = dfother.zipWithIndex.map {
+      case (df, i) =>
+        val newkey = s"${key}_${i + 1}"
+        (newkey, df.select($"${key}" as newkey).repartition(partition))
     }
 
-    val joined = otherSimple.foldLeft(dfSimple){(c, p) =>
+    val joined = otherSimple.foldLeft(dfSimple) { (c, p) =>
       val newkey = p._1
-      val r = p._2
-      c.join(r, $"${key}" === $"${newkey}", SmvJoinType.Outer).
-        smvSelectPlus(coalesce($"${key}", $"${newkey}") as "tmp").
-        smvSelectMinus(key).smvRenameField("tmp" -> key)
+      val r      = p._2
+      c.join(r, $"${key}" === $"${newkey}", SmvJoinType.Outer)
+        .smvSelectPlus(coalesce($"${key}", $"${newkey}") as "tmp")
+        .smvSelectMinus(key)
+        .smvRenameField("tmp" -> key)
     }
 
-    val hasCols = Range(0, otherSimple.size + 1).map{i =>
+    val hasCols = Range(0, otherSimple.size + 1).map { i =>
       val newkey = s"${key}_${i}"
       when($"${newkey}".isNull, "0").otherwise("1")
     }
@@ -901,11 +954,12 @@ class SmvDFHelper(df: DataFrame) {
    * @param rate sample rate in range (0, 1] with a default of 0.01 (1%)
    * @param seed random generator integer seed with a default of 23.
    **/
-
   def smvHashSample(key: Column, rate: Double = 0.01, seed: Int = 23) = {
-    import scala.util.hashing.{MurmurHash3=>MH3}
+    import scala.util.hashing.{MurmurHash3 => MH3}
     val cutoff = Int.MaxValue * rate
-    val getHash = {s: Any => MH3.stringHash(s.toString, seed) & Int.MaxValue}
+    val getHash = { s: Any =>
+      MH3.stringHash(s.toString, seed) & Int.MaxValue
+    }
     val hashUdf = udf(getHash)
     df.where(hashUdf(key) < lit(cutoff))
   }
@@ -929,7 +983,7 @@ class SmvDFHelper(df: DataFrame) {
    */
   private[smv] def smvPipeCount(counter: Accumulator[Long]): DataFrame = {
     counter.setValue(0l)
-    val dummyFunc = udf({() =>
+    val dummyFunc = udf({ () =>
       counter += 1l
       true
     })
@@ -1006,7 +1060,9 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    **/
   def selectByLabel(labels: String*): DataFrame = {
-    val cols = smvWithLabel(labels: _*).map{s => df(s)}
+    val cols = smvWithLabel(labels: _*).map { s =>
+      df(s)
+    }
     df.select(cols: _*)
   }
 
@@ -1035,8 +1091,9 @@ class SmvDFHelper(df: DataFrame) {
    **/
   def smvDescFromDF(dfDescs: DataFrame): DataFrame = {
     val in = dfDescs.collect
-    in.foldLeft(df){ (acc, t) =>
-      acc.smvDesc(t(0).toString -> t(1).toString)}
+    in.foldLeft(df) { (acc, t) =>
+      acc.smvDesc(t(0).toString -> t(1).toString)
+    }
   }
 
   /**
@@ -1049,7 +1106,9 @@ class SmvDFHelper(df: DataFrame) {
    * Return the sequence of field name - description pairs
    **/
   def smvGetDesc(): Seq[(String, String)] =
-    df.columns.map{c => (c, smvGetDesc(c))}
+    df.columns.map { c =>
+      (c, smvGetDesc(c))
+    }
 
   /**
    * Remove descriptions from specified columns (by name string)
@@ -1068,8 +1127,8 @@ class SmvDFHelper(df: DataFrame) {
    **/
   def printDesc() = {
     val discs = df.smvGetDesc().toMap
-    val width = discs.keys.map{_.size}.max
-    discs.foreach{case (n, d) => printf(s"%-${width}s: %s\n", n,d)}
+    val width = discs.keys.map { _.size }.max
+    discs.foreach { case (n, d) => printf(s"%-${width}s: %s\n", n, d) }
   }
 
   private[smv] def _peek(pos: Int, colRegex: String): String = {
@@ -1084,7 +1143,11 @@ class SmvDFHelper(df: DataFrame) {
       } yield (s"${f.name}:${f.dataType.toString.replaceAll("Type", "")}", i)
 
       val width = labels.maxBy(_._1.length)._1.length
-      labels.map{t => s"%-${width}s = %s".format(t._1, r(t._2))}.mkString("\n")
+      labels
+        .map { t =>
+          s"%-${width}s = %s".format(t._1, r(t._2))
+        }
+        .mkString("\n")
     } else {
       "Cannot peek an empty DataFrame"
     }
@@ -1151,19 +1214,18 @@ class SmvDFHelper(df: DataFrame) {
    **/
   def smvExportCsv(path: String, n: Integer = null) {
     val schema = SmvSchema.fromDataFrame(df)
-    val ca = CsvAttributes.defaultCsv
+    val ca     = CsvAttributes.defaultCsv
 
     val schemaPath = SmvSchema.dataPathToSchemaPath(path)
     schema.saveToLocalFile(schemaPath)
 
-    val qc = ca.quotechar
-    val headerStr = df.columns.map(_.trim).map(fn => qc + fn + qc).
-      mkString(ca.delimiter.toString)
+    val qc        = ca.quotechar
+    val headerStr = df.columns.map(_.trim).map(fn => qc + fn + qc).mkString(ca.delimiter.toString)
 
     // issue #312: Spark's collect from a large partition is observed
     // to add duplicate records, hence we use coalesce to reduce the
     // number of partitions before calling collect
-    val bodyStr = if(n == null) {
+    val bodyStr = if (n == null) {
       df.map(schema.rowToCsvString(_, ca)).coalesce(4).collect.mkString("\n")
     } else {
       df.limit(n).map(schema.rowToCsvString(_, ca)).coalesce(4).collect.mkString("\n")
@@ -1196,42 +1258,45 @@ class SmvDFHelper(df: DataFrame) {
     } else {
       import df.sqlContext.implicits._
 
-      val min_cols: Seq[Column] = columns_to_bin.map( col => min(col) as "_min_" + col )
-      val max_cols: Seq[Column] = columns_to_bin.map( col => max(col) as "_max_" + col)
-      val key_cols: Seq[Column] = keys.map( key => $"$key")
+      val min_cols: Seq[Column] = columns_to_bin.map(col => min(col) as "_min_" + col)
+      val max_cols: Seq[Column] = columns_to_bin.map(col => max(col) as "_max_" + col)
+      val key_cols: Seq[Column] = keys.map(key => $"$key")
 
       val min_max_cols = min_cols ++ max_cols
 
       val min_max_df = df.groupBy(key_cols: _*).agg(min_max_cols(0), min_max_cols.tail: _*)
-
 
       val df_with_min_max = df.smvJoinByKey(min_max_df, keys, SmvJoinType.Inner)
 
       var number_of_bins = num_of_bins
       //Make sure that size of number_of_bins is equal to size of columns_to_bin.
       //If not add default bin number which is 1000
-      while(number_of_bins.length < columns_to_bin.length) {
+      while (number_of_bins.length < columns_to_bin.length) {
         number_of_bins = number_of_bins :+ 1000
       }
 
       val min_col_names = columns_to_bin.map(col => "_min_" + col)
       val max_col_names = columns_to_bin.map(col => "_max_" + col)
 
-      val bin_col_names = columns_to_bin.map( col => col + post_fix)
+      val bin_col_names = columns_to_bin.map(col => col + post_fix)
 
       val num_of_cols = columns_to_bin.length
 
       //Construct a list of tuples where each tuple holds info about a given col to bin.
       val cols_info = for (i <- 0 until num_of_cols)
-            yield (columns_to_bin(i),  min_col_names(i),  max_col_names(i), number_of_bins(i), bin_col_names(i))
+        yield
+          (columns_to_bin(i),
+           min_col_names(i),
+           max_col_names(i),
+           number_of_bins(i),
+           bin_col_names(i))
 
       //Construct the bining expressions
-      val bin_cols_expr: Seq[Column] = for ((c_name, c_min, c_max, c_num_bin, c_bin_name) <- cols_info)
-            yield DoubleBinHistogram($"$c_name", $"$c_min", $"$c_max", lit(c_num_bin)) as c_bin_name
+      val bin_cols_expr: Seq[Column] =
+        for ((c_name, c_min, c_max, c_num_bin, c_bin_name) <- cols_info)
+          yield DoubleBinHistogram($"$c_name", $"$c_min", $"$c_max", lit(c_num_bin)) as c_bin_name
 
-      df_with_min_max.
-        groupBy(key_cols: _*).
-        agg(bin_cols_expr(0), bin_cols_expr.tail: _*)
+      df_with_min_max.groupBy(key_cols: _*).agg(bin_cols_expr(0), bin_cols_expr.tail: _*)
     }
   }
 
@@ -1245,7 +1310,10 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    * Create a new column named the same as passed column name to bin post fixed with post_fix.
    */
-  def smvDoubleBinHistogram(keys: Seq[String], column_to_bin: String, num_of_bins: Int, post_fix: String): DataFrame = {
+  def smvDoubleBinHistogram(keys: Seq[String],
+                            column_to_bin: String,
+                            num_of_bins: Int,
+                            post_fix: String): DataFrame = {
     smvDoubleBinHistogram(keys, Seq(column_to_bin), Seq(num_of_bins), post_fix)
   }
 
@@ -1259,7 +1327,9 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    * Create a new column named the same as passed column name to bin post fixed with "_bin"
    */
-  def smvDoubleBinHistogram(keys: Seq[String], column_to_bin: String, num_of_bins: Int): DataFrame = {
+  def smvDoubleBinHistogram(keys: Seq[String],
+                            column_to_bin: String,
+                            num_of_bins: Int): DataFrame = {
     smvDoubleBinHistogram(keys, Seq(column_to_bin), Seq(num_of_bins))
   }
 
@@ -1273,7 +1343,9 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    * Create a new column named the same as passed column name to bin post fixed with post_fix.
    */
-  def smvDoubleBinHistogram(keys: Seq[String], column_to_bin: String, post_fix: String): DataFrame = {
+  def smvDoubleBinHistogram(keys: Seq[String],
+                            column_to_bin: String,
+                            post_fix: String): DataFrame = {
     smvDoubleBinHistogram(keys, Seq(column_to_bin), Seq[Int](), post_fix)
   }
 
@@ -1301,7 +1373,10 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    * Create a new column named the same as passed column name to bin post fixed with post_fix.
    */
-  def smvDoubleBinHistogram(key: String, column_to_bin: String, num_of_bins: Int, post_fix: String): DataFrame = {
+  def smvDoubleBinHistogram(key: String,
+                            column_to_bin: String,
+                            num_of_bins: Int,
+                            post_fix: String): DataFrame = {
     smvDoubleBinHistogram(Seq(key), Seq(column_to_bin), Seq(num_of_bins), post_fix)
   }
 
@@ -1347,19 +1422,30 @@ class SmvDFHelper(df: DataFrame) {
     smvDoubleBinHistogram(Seq(key), Seq(column_to_bin))
   }
 
-
   /* Shared private method */
   private[smv] def _smvEdd(cols: String*) = df.edd.summary(cols: _*).createReport()
 
-  private[smv] def _smvHist(cols: String*) = df.edd.histogram(cols.head, cols.tail: _*).createReport()
+  private[smv] def _smvHist(cols: String*) =
+    df.edd.histogram(cols.head, cols.tail: _*).createReport()
 
   private[smv] def _smvConcatHist(colSeqs: Seq[String]*) = {
     import df.sqlContext.implicits._
-    val colNames = colSeqs.map{cols => cols.mkString("_")}
-    val exprs = colSeqs.zip(colNames).filter{case (cols, name) =>
-      cols.size > 1
-    }.map{case (cols, name) => smvStrCat("_", cols.map{c => $"$c"}: _*).as(name)}
-    val dfWithKey = if(exprs.isEmpty) {
+    val colNames = colSeqs.map { cols =>
+      cols.mkString("_")
+    }
+    val exprs = colSeqs
+      .zip(colNames)
+      .filter {
+        case (cols, name) =>
+          cols.size > 1
+      }
+      .map {
+        case (cols, name) =>
+          smvStrCat("_", cols.map { c =>
+            $"$c"
+          }: _*).as(name)
+      }
+    val dfWithKey = if (exprs.isEmpty) {
       df
     } else {
       df.smvSelectPlus(exprs: _*)
@@ -1368,19 +1454,24 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   private[smv] def _smvFreqHist(cols: String*) = {
-    val hists = cols.map{c => Hist(c, sortByFreq = true)}
+    val hists = cols.map { c =>
+      Hist(c, sortByFreq = true)
+    }
     df.edd.histogram(hists: _*).createReport()
   }
 
   private[smv] def _smvBinHist(colWithBin: (String, Double)*) = {
-    val hists = colWithBin.map{case (c, b) => Hist(c, binSize = b)}
+    val hists = colWithBin.map { case (c, b) => Hist(c, binSize = b) }
     df.edd.histogram(hists: _*).createReport()
   }
 
   private[smv] def _smvCountHist(keys: Seq[String], _binSize: Int) = {
     val colName = ("N" +: keys).mkString("_")
-    df.groupBy(keys.head, keys.tail: _*).agg(count(lit(1)) as colName).
-      edd.histogram(Hist(colName, binSize = _binSize)).createReport()
+    df.groupBy(keys.head, keys.tail: _*)
+      .agg(count(lit(1)) as colName)
+      .edd
+      .histogram(Hist(colName, binSize = _binSize))
+      .createReport()
   }
 
   /**
@@ -1401,7 +1492,8 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Save Edd summary
    **/
-  def smvEddSave(cols: String*)(path: String) = SmvReportIO.saveLocalReport(_smvEdd(cols: _*), path)
+  def smvEddSave(cols: String*)(path: String) =
+    SmvReportIO.saveLocalReport(_smvEdd(cols: _*), path)
 
   /**
    * Print EDD histogram (each col's histogram prints separately)
@@ -1411,7 +1503,8 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Save Edd histogram
    **/
-  def smvHistSave(cols: String*)(path: String) = SmvReportIO.saveLocalReport(_smvHist(cols: _*), path)
+  def smvHistSave(cols: String*)(path: String) =
+    SmvReportIO.saveLocalReport(_smvHist(cols: _*), path)
 
   /**
    * Print EDD histogram of a group of cols (joint distribution)
@@ -1421,7 +1514,8 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Save Edd histogram of a group of cols (joint distribution)
    **/
-  def smvConcatHistSave(cols: Seq[String]*)(path: String) = SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*), path)
+  def smvConcatHistSave(cols: Seq[String]*)(path: String) =
+    SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*), path)
 
   /**
    * Print EDD histogram with frequency sorting
@@ -1431,7 +1525,8 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Save Edd histogram with frequency sorting
    **/
-  def smvFreqHistSave(cols: String*)(path: String) = SmvReportIO.saveLocalReport(_smvFreqHist(cols: _*), path)
+  def smvFreqHistSave(cols: String*)(path: String) =
+    SmvReportIO.saveLocalReport(_smvFreqHist(cols: _*), path)
 
   /**
    * Print Edd histogram with bins
@@ -1441,7 +1536,8 @@ class SmvDFHelper(df: DataFrame) {
   /**
    * Save Edd histogram with bins
    **/
-  def smvBinHistSave(colWithBin: (String, Double)*)(path: String) = SmvReportIO.saveLocalReport(_smvBinHist(colWithBin: _*), path)
+  def smvBinHistSave(colWithBin: (String, Double)*)(path: String) =
+    SmvReportIO.saveLocalReport(_smvBinHist(colWithBin: _*), path)
 
   /**
    * Print Edd histogram on count of records for a group of given keys
@@ -1465,19 +1561,21 @@ class SmvDFHelper(df: DataFrame) {
    * 2     2     66.6%
    * }}}
    */
-  def smvCountHist(keys: Seq[String], binSize: Int = 1): Unit = println(_smvCountHist(keys, binSize))
+  def smvCountHist(keys: Seq[String], binSize: Int = 1): Unit =
+    println(_smvCountHist(keys, binSize))
 
   def smvCountHist(key: String): Unit = smvCountHist(Seq(key), 1)
 
   /**
    * Save Edd histogram on count of records for a group of given keys
    **/
-  def smvCountHistSave(keys: Seq[String], binSize: Int = 1)(path: String): Unit = SmvReportIO.saveLocalReport(_smvCountHist(keys, binSize), path)
+  def smvCountHistSave(keys: Seq[String], binSize: Int = 1)(path: String): Unit =
+    SmvReportIO.saveLocalReport(_smvCountHist(keys, binSize), path)
 
   def smvCountHistSave(key: String)(path: String): Unit = smvCountHistSave(Seq(key), 1)(path)
 
   private[smv] def _smvEddCompare(df2: DataFrame, ignoreColName: Boolean) = {
-    val toBeCom = if(ignoreColName) {
+    val toBeCom = if (ignoreColName) {
       require(df.columns.size == df2.columns.size)
       df2.sqlContext.createDataFrame(df2.rdd, df.schema)
     } else {
@@ -1503,5 +1601,6 @@ class SmvDFHelper(df: DataFrame) {
    *
    * Print out comparing result
    **/
-  def smvEddCompare(df2: DataFrame, ignoreColName: Boolean = false) = println(_smvEddCompare(df2, ignoreColName))
+  def smvEddCompare(df2: DataFrame, ignoreColName: Boolean = false) =
+    println(_smvEddCompare(df2, ignoreColName))
 }

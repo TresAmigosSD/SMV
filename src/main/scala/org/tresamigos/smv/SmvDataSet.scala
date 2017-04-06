@@ -36,7 +36,7 @@ trait FilenamePart {
  */
 abstract class SmvDataSet extends FilenamePart {
 
-  lazy val app: SmvApp = SmvApp.app
+  lazy val app: SmvApp            = SmvApp.app
   private var rddCache: DataFrame = null
 
   /**
@@ -45,8 +45,8 @@ abstract class SmvDataSet extends FilenamePart {
    * Scala proxies for implementations in other languages must
    * override this to name the proxied FQN.
    */
-  def fqn: String = this.getClass().getName().filterNot(_=='$')
-  def urn: URN = ModURN(fqn)
+  def fqn: String       = this.getClass().getName().filterNot(_ == '$')
+  def urn: URN          = ModURN(fqn)
   override def toString = urn.toString
 
   /** Names the persisted file for the result of this SmvDataSet */
@@ -61,7 +61,7 @@ abstract class SmvDataSet extends FilenamePart {
    * This is no longer the canonical list of dependencies. Internally
    * we should query resolvedRequiresDS for dependencies.
    */
-  def requiresDS() : Seq[SmvDataSet]
+  def requiresDS(): Seq[SmvDataSet]
 
   /** fixed list of SmvDataSet dependencies */
   var resolvedRequiresDS: Seq[SmvDataSet] = Seq.empty[SmvDataSet]
@@ -70,15 +70,19 @@ abstract class SmvDataSet extends FilenamePart {
     (resolvedRequiresDS ++ resolvedRequiresDS.flatMap(_.ancestors)).distinct
 
   def resolve(resolver: DataSetResolver): SmvDataSet = {
-      resolvedRequiresDS = requiresDS map ( resolver.resolveDataSet(_) )
-      this
+    resolvedRequiresDS = requiresDS map (resolver.resolveDataSet(_))
+    this
   }
 
   /** All dependencies with the dependency hierarchy flattened */
   def allDeps: Seq[SmvDataSet] =
-    (resolvedRequiresDS.foldLeft(Seq.empty[SmvDataSet]) { (acc, elem) => elem.allDeps ++ (elem +: acc) }).distinct
+    (resolvedRequiresDS
+      .foldLeft(Seq.empty[SmvDataSet]) { (acc, elem) =>
+        elem.allDeps ++ (elem +: acc)
+      })
+      .distinct
 
-  def requiresAnc() : Seq[SmvAncillary] = Seq.empty
+  def requiresAnc(): Seq[SmvAncillary] = Seq.empty
 
   /** TODO: remove this method as checkDependency replaced this function */
   def getAncillary[T <: SmvAncillary](anc: T) = {
@@ -87,11 +91,10 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   /** user tagged code "version".  Derived classes should update the value when code or data */
-  def version() : Int = 0
+  def version(): Int = 0
 
   /** full name of hive output table if this module is published to hive. */
   def tableName: String = throw new IllegalStateException("tableName not specified for ${fqn}")
-
 
   /** Objects defined in Spark Shell has class name start with $ **/
   val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
@@ -116,7 +119,7 @@ abstract class SmvDataSet extends FilenamePart {
    * a change in the hash of hash if some external dependency changed as well.
    * TODO: need to add requiresAnc dependency here
    */
-  private[smv] lazy val hashOfHash : Int = {
+  private[smv] lazy val hashOfHash: Int = {
     (resolvedRequiresDS.map(_.hashOfHash) ++ Seq(version, datasetHash)).hashCode()
   }
 
@@ -139,7 +142,7 @@ abstract class SmvDataSet extends FilenamePart {
    * Concrete modules and files should override this method to define rules/fixes to apply.
    * The default is to provide an empty set of DQM rules/fixes.
    */
-  def dqm(): SmvDQM = SmvDQM()
+  def dqm(): SmvDQM  = SmvDQM()
   def getDqm: SmvDQM = dqm()
 
   /**
@@ -160,7 +163,7 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   private def verHex = f"${hashOfHash}%08x"
-  def versionedFqn = s"${fqn}_${verHex}"
+  def versionedFqn   = s"${fqn}_${verHex}"
 
   /** The "versioned" module file base name. */
   private def versionedBasePath(prefix: String): String = {
@@ -191,8 +194,8 @@ abstract class SmvDataSet extends FilenamePart {
    * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
    */
   private[smv] def deleteOutputs() = {
-    val csvPath = moduleCsvPath()
-    val eddPath = moduleEddPath()
+    val csvPath    = moduleCsvPath()
+    val eddPath    = moduleEddPath()
     val schemaPath = moduleSchemaPath()
     val rejectPath = moduleValidPath()
     SmvHDFS.deleteFile(csvPath)
@@ -200,10 +203,11 @@ abstract class SmvDataSet extends FilenamePart {
     SmvHDFS.deleteFile(eddPath)
     SmvHDFS.deleteFile(rejectPath)
   }
+
   /**
    * Returns current valid outputs produced by this module.
    */
-  private[smv] def currentModuleOutputFiles() : Seq[String] = {
+  private[smv] def currentModuleOutputFiles(): Seq[String] = {
     Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath())
   }
 
@@ -214,7 +218,7 @@ abstract class SmvDataSet extends FilenamePart {
     Try(SmvUtil.readFile(app.sqlContext, moduleCsvPath(prefix)))
 
   private[smv] def computeRDD: DataFrame = {
-    val dsDqm = new DQMValidator(createDsDqm())
+    val dsDqm     = new DQMValidator(createDsDqm())
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
 
     if (isEphemeral) {
@@ -222,13 +226,14 @@ abstract class SmvDataSet extends FilenamePart {
       validator.validate(df, false, moduleValidPath()) // no action before this point
       df
     } else {
-      readPersistedFile().recoverWith {case e =>
-        val df = dsDqm.attachTasks(doRun(dsDqm))
-        // Delete outputs in case data was partially written previously
-        deleteOutputs
-        persist(df)
-        validator.validate(df, true, moduleValidPath()) // has already had action (from persist)
-        readPersistedFile()
+      readPersistedFile().recoverWith {
+        case e =>
+          val df = dsDqm.attachTasks(doRun(dsDqm))
+          // Delete outputs in case data was partially written previously
+          deleteOutputs
+          persist(df)
+          validator.validate(df, true, moduleValidPath()) // has already had action (from persist)
+          readPersistedFile()
       }.get
     }
   }
@@ -241,7 +246,7 @@ abstract class SmvDataSet extends FilenamePart {
    * PRECONDITION: user must have specified the --publish command line option (that is where we get the version)
    */
   private[smv] def publish() = {
-    val df = rdd()
+    val df      = rdd()
     val version = app.smvConfig.cmdLine.publish()
     val handler = new FileIOHandler(app.sqlContext, publishPath(version))
     //Same as in persist, publish null string as a special value with assumption that it's not
@@ -254,13 +259,13 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   private[smv] lazy val parentStage: Option[String] = app.dsm.stageForUrn(urn)
-  private[smv] def stageVersion() = parentStage flatMap {app.smvConfig.stageVersions.get(_)}
+  private[smv] def stageVersion()                   = parentStage flatMap { app.smvConfig.stageVersions.get(_) }
 
   /**
    * Read the published data of this module if the parent stage has specified a version.
    * @return Some(DataFrame) if the stage has a version specified, None otherwise.
    */
-  private[smv] def readPublishedData() : Option[DataFrame] = {
+  private[smv] def readPublishedData(): Option[DataFrame] = {
     stageVersion.map { v =>
       val handler = new FileIOHandler(app.sqlContext, publishPath(v))
       handler.csvFileWithSchema(null)
@@ -273,9 +278,10 @@ abstract class SmvDataSet extends FilenamePart {
  */
 private[smv] abstract class SmvInputDataSet extends SmvDataSet {
   override def requiresDS() = Seq.empty
-  override val isEphemeral = true
+  override val isEphemeral  = true
 
   override def dsType() = "Input"
+
   /**
    * Method to run/pre-process the input file.
    * Users can override this method to perform file level
@@ -287,11 +293,12 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
 /**
  * SMV Dataset Wrapper around a hive table.
  */
-case class SmvHiveTable(override val tableName: String, val userQuery: String = null) extends SmvInputDataSet {
+case class SmvHiveTable(override val tableName: String, val userQuery: String = null)
+    extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
 
   val query = {
-    if(userQuery == null)
+    if (userQuery == null)
       "select * from " + tableName
     else
       userQuery
@@ -308,7 +315,7 @@ case class SmvHiveTable(override val tableName: String, val userQuery: String = 
  * common part to the new ABC: SmvDSWithParser
  */
 trait SmvDSWithParser extends SmvDataSet {
-  val forceParserCheck = true
+  val forceParserCheck   = true
   val failAtParsingError = true
 
   override def createDsDqm() =
@@ -319,7 +326,7 @@ trait SmvDSWithParser extends SmvDataSet {
 
 abstract class SmvFile extends SmvInputDataSet {
   val path: String
-  val schemaPath: String = null
+  val schemaPath: String     = null
   override def description() = s"Input file: @${path}"
 
   private[smv] def isFullPath: Boolean = false
@@ -339,7 +346,7 @@ abstract class SmvFile extends SmvInputDataSet {
   private[smv] def fullPath = findFullPath(path)
 
   private[smv] def fullSchemaPath = {
-    if(schemaPath == null) None
+    if (schemaPath == null) None
     else Option(findFullPath(schemaPath))
   }
 
@@ -352,9 +359,9 @@ abstract class SmvFile extends SmvInputDataSet {
    */
   override def datasetHash() = {
     val fileName = fullPath
-    val mTime = SmvHDFS.modificationTime(fileName)
+    val mTime    = SmvHDFS.modificationTime(fileName)
 
-    val schemaPath = fullSchemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
+    val schemaPath  = fullSchemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
     val schemaMTime = SmvHDFS.modificationTime(schemaPath)
 
     val crc = new java.util.zip.CRC32
@@ -363,22 +370,23 @@ abstract class SmvFile extends SmvInputDataSet {
   }
 }
 
-
 /**
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
 case class SmvCsvFile(
-  override val path: String,
-  csvAttributes: CsvAttributes = null,
-  override val schemaPath: String = null,
-  override val isFullPath: Boolean = false
-) extends SmvFile with SmvDSWithParser {
+    override val path: String,
+    csvAttributes: CsvAttributes = null,
+    override val schemaPath: String = null,
+    override val isFullPath: Boolean = false
+) extends SmvFile
+    with SmvDSWithParser {
 
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
-    val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
+    val parserValidator =
+      if (dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
-    val df = handler.csvFileWithSchema(csvAttributes)
+    val df      = handler.csvFileWithSchema(csvAttributes)
     run(df)
   }
 }
@@ -392,30 +400,36 @@ case class SmvCsvFile(
  * However if every file has header, `SmvCsvFile` will not remove header correctly.
  **/
 class SmvMultiCsvFiles(
-  dir: String,
-  csvAttributes: CsvAttributes = null,
-  override val schemaPath: String = null
-) extends SmvFile with SmvDSWithParser {
+    dir: String,
+    csvAttributes: CsvAttributes = null,
+    override val schemaPath: String = null
+) extends SmvFile
+    with SmvDSWithParser {
 
   override val path = dir
 
   override def fullSchemaPath = {
-    if(schemaPath == null) Option(SmvSchema.dataPathToSchemaPath(fullPath))
+    if (schemaPath == null) Option(SmvSchema.dataPathToSchemaPath(fullPath))
     else Option(findFullPath(schemaPath))
   }
 
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
-    val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
+    val parserValidator =
+      if (dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
 
-    val filesInDir = SmvHDFS.dirList(fullPath).map{n => s"${fullPath}/${n}"}
+    val filesInDir = SmvHDFS.dirList(fullPath).map { n =>
+      s"${fullPath}/${n}"
+    }
 
     if (filesInDir.isEmpty)
-        throw new SmvRuntimeException(s"There are no data files in ${fullPath}")
+      throw new SmvRuntimeException(s"There are no data files in ${fullPath}")
 
-    val df = filesInDir.map{s =>
-      val handler = new FileIOHandler(app.sqlContext, s, fullSchemaPath, parserValidator)
-      handler.csvFileWithSchema(csvAttributes)
-    }.reduce(_ unionAll _)
+    val df = filesInDir
+      .map { s =>
+        val handler = new FileIOHandler(app.sqlContext, s, fullSchemaPath, parserValidator)
+        handler.csvFileWithSchema(csvAttributes)
+      }
+      .reduce(_ unionAll _)
 
     run(df)
   }
@@ -425,13 +439,15 @@ case class SmvFrlFile(
     override val path: String,
     override val schemaPath: String = null,
     override val isFullPath: Boolean = false
-  ) extends SmvFile with SmvDSWithParser {
+) extends SmvFile
+    with SmvDSWithParser {
 
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
-    val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
+    val parserValidator =
+      if (dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
-    val df = handler.frlFileWithSchema()
+    val df      = handler.frlFileWithSchema()
     run(df)
   }
 }
@@ -445,9 +461,9 @@ case class SmvFrlFile(
  * `Map[SmvDataSet, DataFrame]`
  */
 class RunParams(ds2df: Map[SmvDataSet, DataFrame]) extends (SmvDataSet => DataFrame) {
-  val urn2df = ds2df.map {case (ds, df) => (ds.urn, df)}.toMap
+  val urn2df                         = ds2df.map { case (ds, df) => (ds.urn, df) }.toMap
   override def apply(ds: SmvDataSet) = urn2df(ds.urn)
-  def size = ds2df.size
+  def size                           = ds2df.size
 }
 
 /**
@@ -471,13 +487,13 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   override def dsType() = "Module"
 
   type runParams = RunParams
-  def run(inputs: runParams) : DataFrame
+  def run(inputs: runParams): DataFrame
 
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val paramMap: Map[SmvDataSet, DataFrame] =
-      (resolvedRequiresDS map ( dep => (dep, app.resolveRDD(dep)) ) ).toMap
-    run( new runParams(paramMap) )
+      (resolvedRequiresDS map (dep => (dep, app.resolveRDD(dep)))).toMap
+    run(new runParams(paramMap))
   }
 
   /** Use Bytecode analysis to figure out dependency and check against
@@ -486,17 +502,24 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    **/
   private def checkDependency(): Unit = {
     val dep = DataSetDependency(this.getClass.getName)
-    dep.dependsAnc.
-      map{s => (s, SmvReflection.objectNameToInstance[SmvAncillary](s))}.
-      filterNot{case (s,a) => requiresAnc().contains(a)}.
-      foreach{case (s, a) =>
-        throw new SmvRuntimeException(s"SmvAncillary ${s} need to be specified in requiresAnc")
+    dep.dependsAnc
+      .map { s =>
+        (s, SmvReflection.objectNameToInstance[SmvAncillary](s))
       }
-    dep.dependsDS.
-      map{s => (s, SmvReflection.objectNameToInstance[SmvDataSet](s))}.
-      filterNot{case (s,a) => resolvedRequiresDS.contains(a)}.
-      foreach{case (s, a) =>
-        throw new SmvRuntimeException(s"SmvDataSet ${s} need to be specified in requiresDS, ${a}")
+      .filterNot { case (s, a) => requiresAnc().contains(a) }
+      .foreach {
+        case (s, a) =>
+          throw new SmvRuntimeException(s"SmvAncillary ${s} need to be specified in requiresAnc")
+      }
+    dep.dependsDS
+      .map { s =>
+        (s, SmvReflection.objectNameToInstance[SmvDataSet](s))
+      }
+      .filterNot { case (s, a) => resolvedRequiresDS.contains(a) }
+      .foreach {
+        case (s, a) =>
+          throw new SmvRuntimeException(
+            s"SmvDataSet ${s} need to be specified in requiresDS, ${a}")
       }
   }
 
@@ -515,7 +538,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
    *   }
    * }}}
    */
-  def snapshot(df: DataFrame, prefix: String) : DataFrame = {
+  def snapshot(df: DataFrame, prefix: String): DataFrame = {
     persist(df, prefix)
     readPersistedFile(prefix).get
   }
@@ -533,8 +556,8 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
  * }}}
  * Similar to File/Module, a `dqm()` method can also be overriden in the link
  */
-class SmvModuleLink(val outputModule: SmvOutput) extends
-    SmvModule(s"Link to ${outputModule.asInstanceOf[SmvDataSet].fqn}") {
+class SmvModuleLink(val outputModule: SmvOutput)
+    extends SmvModule(s"Link to ${outputModule.asInstanceOf[SmvDataSet].fqn}") {
 
   private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
@@ -558,24 +581,27 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
   /**
    * override the module run/requireDS methods to be a no-op as it will never be called (we overwrite doRun as well.)
    */
-  override def requiresDS() = Seq.empty[SmvDataSet]
+  override def requiresDS()           = Seq.empty[SmvDataSet]
   override def run(inputs: runParams) = null
 
   /**
    * Resolve the target SmvModule and wrap it in a new SmvModuleLink
    */
-  override def resolve(resolver: DataSetResolver): SmvDataSet = new SmvModuleLink(resolver.resolveDataSet(smvModule).asInstanceOf[SmvOutput])
+  override def resolve(resolver: DataSetResolver): SmvDataSet =
+    new SmvModuleLink(resolver.resolveDataSet(smvModule).asInstanceOf[SmvOutput])
 
   /**
    * If the depended smvModule has a published version, SmvModuleLink's datasetHash
    * depends on the version string. Otherwise, depends on the smvModule's hashOfHash
    **/
   override def datasetHash() = {
-    val dependedHash = smvModule.stageVersion.map{v =>
-      val crc = new java.util.zip.CRC32
-      crc.update(v.toCharArray.map(_.toByte))
-      (crc.getValue).toInt
-    }.getOrElse(smvModule.hashOfHash)
+    val dependedHash = smvModule.stageVersion
+      .map { v =>
+        val crc = new java.util.zip.CRC32
+        crc.update(v.toCharArray.map(_.toByte))
+        (crc.getValue).toInt
+      }
+      .getOrElse(smvModule.hashOfHash)
 
     (dependedHash + datasetCRC).toInt
   }
@@ -591,9 +617,11 @@ class SmvModuleLink(val outputModule: SmvOutput) extends
     if (isFollowLink) {
       smvModule.readPublishedData().getOrElse(smvModule.rdd())
     } else {
-      smvModule.readPublishedData().
-        orElse { smvModule.readPersistedFile().toOption }.
-        getOrElse(throw new IllegalStateException(s"can not find published or persisted ${description}"))
+      smvModule
+        .readPublishedData()
+        .orElse { smvModule.readPersistedFile().toOption }
+        .getOrElse(
+          throw new IllegalStateException(s"can not find published or persisted ${description}"))
     }
   }
 }
@@ -618,7 +646,8 @@ case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${mo
  * Declarative class for links to datasets defined in another language. Resolves
  * to a link to an SmvExtModulePython.
  */
-case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput)
+case class SmvExtModuleLink(modFqn: String)
+    extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput)
 
 /**
  * Concrete SmvDataSet representation of modules defined in Python. Created
@@ -626,18 +655,23 @@ case class SmvExtModuleLink(modFqn: String) extends SmvModuleLink(new SmvExtModu
  */
 class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
   override val description = s"SmvPyModule ${target.fqn}"
-  override val fqn = target.fqn
-  override def tableName = target.tableName()
+  override val fqn         = target.fqn
+  override def tableName   = target.tableName()
   override def isEphemeral = target.isEphemeral()
-  override def dsType = target.dsType()
+  override def dsType      = target.dsType()
   override def requiresDS =
-   throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
+    throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
-    resolvedRequiresDS = target.dependencies map ( urn => resolver.loadDataSet(URN(urn)).head )
+    resolvedRequiresDS = target.dependencies map (urn => resolver.loadDataSet(URN(urn)).head)
     this
   }
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame =
-    target.getDataFrame(new DQMValidator(createDsDqm), resolvedRequiresDS.map {ds => (ds.urn.toString, app.resolveRDD(ds))}.toMap[String, DataFrame])
+    target.getDataFrame(new DQMValidator(createDsDqm),
+                        resolvedRequiresDS
+                          .map { ds =>
+                            (ds.urn.toString, app.resolveRDD(ds))
+                          }
+                          .toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()
   override def createDsDqm = target.getDqm()
 }
@@ -648,7 +682,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
  */
 object SmvExtModulePython {
   def apply(target: ISmvModule): SmvExtModulePython = {
-    if(target.isOutput)
+    if (target.isOutput)
       new SmvExtModulePython(target) with SmvOutput
     else
       new SmvExtModulePython(target)
@@ -668,7 +702,8 @@ case class SmvCsvStringData(
     schemaStr: String,
     data: String,
     override val isPersistValidateResult: Boolean = false
-  ) extends SmvInputDataSet with SmvDSWithParser {
+) extends SmvInputDataSet
+    with SmvDSWithParser {
 
   override def description() = s"Dummy module to create DF from strings"
 
@@ -679,10 +714,11 @@ case class SmvCsvStringData(
   }
 
   override def doRun(dsDqm: DQMValidator): DataFrame = {
-    val schema = SmvSchema.fromString(schemaStr)
+    val schema    = SmvSchema.fromString(schemaStr)
     val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
 
-    val parserValidator = if(dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
+    val parserValidator =
+      if (dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
     val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
   }
@@ -691,8 +727,7 @@ case class SmvCsvStringData(
 /**
  * A marker trait that indicates that a SmvDataSet/SmvModule decorated with this trait is an output DataSet/module.
  */
-trait SmvOutput {
-  this : SmvDataSet =>
+trait SmvOutput { this: SmvDataSet =>
   override def dsType(): String = "Output"
 }
 
@@ -702,21 +737,20 @@ trait SmvRunConfig
 /**
  * SmvDataSet that can be configured to return different DataFrames.
  */
-trait Using[+T <: SmvRunConfig] extends FilenamePart {
-  self: SmvDataSet =>
+trait Using[+T <: SmvRunConfig] extends FilenamePart { self: SmvDataSet =>
 
   lazy val confObjName = self.app.smvConfig.runConfObj
 
   /** The actual run configuration object */
   lazy val runConfig: T = {
-    require(confObjName.isDefined,
+    require(
+      confObjName.isDefined,
       s"Expected a run configuration object provided with ${SmvConfig.RunConfObjKey} but found none")
-
 
     import scala.reflect.runtime.{universe => ru}
     val mir = ru.runtimeMirror(getClass.getClassLoader)
 
-    val sym = mir.staticModule(confObjName.get)
+    val sym    = mir.staticModule(confObjName.get)
     val module = mir.reflectModule(sym)
     module.instance.asInstanceOf[T]
   }

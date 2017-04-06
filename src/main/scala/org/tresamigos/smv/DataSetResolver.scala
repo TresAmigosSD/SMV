@@ -26,9 +26,10 @@ import scala.collection.mutable
  * dependencies. DSR caches the SmvDataSets it has already resolved to ensure that
  * any SmvDataSet is only resolved once.
  */
-
-class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
-  val repos = repoFactories.map( _.createRepo )
+class DataSetResolver(repoFactories: Seq[DataSetRepoFactory],
+                      smvConfig: SmvConfig,
+                      depRules: Seq[DependencyRule]) {
+  val repos = repoFactories.map(_.createRepo)
   // URN to resolved SmvDataSet
   var urn2res: Map[URN, SmvDataSet] = Map.empty
 
@@ -37,18 +38,17 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
    * otherwise load unresolved version from source and resolve it.
    */
   def loadDataSet(urns: URN*): Seq[SmvDataSet] =
-    urns map {
-      urn =>
-        urn2res.get(urn).getOrElse {
-          val ds = urn match {
-            case lUrn: LinkURN =>
-              val dsFound = loadDataSet(lUrn.toModURN).head
-              new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
-            case mUrn: ModURN =>
-              findDataSetInRepo(mUrn)
-          }
-          resolveDataSet(ds)
+    urns map { urn =>
+      urn2res.get(urn).getOrElse {
+        val ds = urn match {
+          case lUrn: LinkURN =>
+            val dsFound = loadDataSet(lUrn.toModURN).head
+            new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
+          case mUrn: ModURN =>
+            findDataSetInRepo(mUrn)
         }
+        resolveDataSet(ds)
+      }
     }
 
   /*
@@ -82,9 +82,9 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
    */
   def validateDependencies(ds: SmvDataSet): Unit = {
     val depViolations = depRules flatMap (_.check(ds))
-    if(depViolations.size > 0) {
+    if (depViolations.size > 0) {
       println(msg.listDepViolations(ds, depViolations))
-      if(smvConfig.permitDependencyViolation)
+      if (smvConfig.permitDependencyViolation)
         println(msg.nonfatalDepViolation)
       else
         throw new IllegalStateException(msg.fatalDepViolation)
@@ -98,11 +98,11 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
    * the SmvDataSet from each repo and move on to the next repo if it fails.
    */
   private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet = {
-    if(reposToTry.isEmpty)
+    if (reposToTry.isEmpty)
       throw new SmvRuntimeException(msg.dsNotFound(urn))
     else
       Try(reposToTry.head.loadDataSet(urn)) match {
-        case Failure(_) => findDataSetInRepo(urn, reposToTry.tail)
+        case Failure(_)  => findDataSetInRepo(urn, reposToTry.tail)
         case Success(ds) => ds
       }
   }
@@ -116,7 +116,7 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
     def nonfatalDepViolation: String =
       "Continuing module resolution as the app is configured to permit dependency rule violation"
     def fatalDepViolation: String =
-        s"Terminating module resolution when dependency rules are violated. To change this behavior, please run the app with option --${smvConfig.cmdLine.permitDependencyViolation.name}"
+      s"Terminating module resolution when dependency rules are violated. To change this behavior, please run the app with option --${smvConfig.cmdLine.permitDependencyViolation.name}"
     def dependencyCycle(ds: SmvDataSet, s: Seq[SmvDataSet]): String =
       s"cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}")
     def listDepViolations(ds: SmvDataSet, vis: Seq[DependencyViolation]) =
@@ -125,8 +125,6 @@ class DataSetResolver(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConf
       (for {
         v <- violations
         header = s".. ${v.description}"
-      } yield
-        (header +: v.components.map(m => s".... ${m.urn}")).mkString("\n")
-      ).mkString("\n")
+      } yield (header +: v.components.map(m => s".... ${m.urn}")).mkString("\n")).mkString("\n")
   }
 }

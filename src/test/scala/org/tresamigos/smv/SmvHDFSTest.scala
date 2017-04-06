@@ -1,6 +1,5 @@
 package org.tresamigos.smv
 
-
 class SmvHDFSTest extends SmvTestUtil {
 
   test("Test HDFS delete file operation") {
@@ -8,14 +7,14 @@ class SmvHDFSTest extends SmvTestUtil {
     val outFilePath = createTempFile("out.csv")
 
     // confirm csv file now exists.
-    assert( outFilePath.canRead() )
+    assert(outFilePath.canRead())
 
     // delete the generated file and confirm we get true from delete op
     val res1 = SmvHDFS.deleteFile(outFilePath.getAbsolutePath())
     assert(res1)
 
     // confirm csv file no longer exists.
-    assert( ! outFilePath.canRead() )
+    assert(!outFilePath.canRead())
 
     // second delete should just return false silently.
     val res2 = SmvHDFS.deleteFile(outFilePath.getAbsolutePath())
@@ -64,7 +63,7 @@ class SmvHDFSTest extends SmvTestUtil {
 
     val mt0 = SmvHDFS.modificationTime("target")
     val mt1 = SmvHDFS.modificationTime(s"${testcaseTempDir}/F1.csv")
-    assert (mt0 < mt1)
+    assert(mt0 < mt1)
   }
 
   test("Test HDFS file read") {
