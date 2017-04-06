@@ -283,6 +283,9 @@ def update_module_code():
 
     if (module_file_map.has_key(module_fqn)):
         file_name = module_file_map[module_fqn]
+
+        # TODO: get filepath from modulename
+
         module_code = json.loads(module_code)
         module_code = [line.encode('utf-8') for line in module_code]
 
@@ -298,7 +301,10 @@ def update_module_code():
             with open(duplicate_file_name, 'r+') as fd:
                 lines_of_code_list = fd.readlines()
                 lines_of_code = len(lines_of_code_list)
-                (run_method_start, run_method_end) = get_SMV_module_run_method_start_end(lines_of_code_list)
+
+                # TODO: temporarily updating class code
+                # (run_method_start, run_method_end) = get_SMV_module_class_start_end(lines_of_code_list)
+                (run_method_start, run_method_end) = get_SMV_module_class_start_end(lines_of_code_list)
 
                 # determine what to do if run method not provided
                 if not run_method_start and not run_method_end:
