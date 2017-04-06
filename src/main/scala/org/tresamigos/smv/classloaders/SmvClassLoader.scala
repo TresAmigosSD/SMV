@@ -12,11 +12,10 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.class_loader
+package org.tresamigos.smv
+package classloaders
 
 import java.io.{ByteArrayInputStream, InputStream}
-
-import org.tresamigos.smv.SmvConfig
 
 import scala.util.{Try, Success}
 

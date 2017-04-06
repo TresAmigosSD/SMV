@@ -179,7 +179,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
         case m: SmvOutput => Some(m)
         case _            => None
       } foreach (
-          m => SmvUtil.exportDataFrameToHive(sqlContext, resolveRDD(m), m.tableName)
+          m => util.DataSet.exportDataFrameToHive(sqlContext, resolveRDD(m), m.tableName)
       )
     }
 
