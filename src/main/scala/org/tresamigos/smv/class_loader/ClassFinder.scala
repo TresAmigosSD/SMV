@@ -20,7 +20,7 @@ import sun.misc.URLClassPath
 /**
  * Finds a class/file on a path and retrieve the byte code associated with it.
  */
-case class ClassFinder(val classDir: String) {
+class ClassFinder(val classDir: String) {
   val urlClassPath = new URLClassPath(Array(new URL("file:" + classDir + "/")))
 
   /**
