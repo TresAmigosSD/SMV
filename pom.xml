@@ -11,8 +11,6 @@
     <scala.binary.version>2.10</scala.binary.version>
     <scala.compat.version>${scala.binary.version}</scala.compat.version>
     <spark.version>1.5.2</spark.version>
-    <jetty.version>8.1.18.v20150929</jetty.version>
-    <commons.httpclient.version>4.3.2</commons.httpclient.version>
 
     <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
   </properties>
@@ -50,23 +48,6 @@
       <artifactId>spark-hive_${scala.binary.version}</artifactId>
       <version>${spark.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>${commons.httpclient.version}</version>
-    </dependency>
-    <dependency> <!-- Jetty Server dependency -->
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-      <version>${jetty.version}</version>
-      <!--<scope>provided</scope>-->
-    </dependency>
-    <dependency> <!-- Jetty Http Client dependency -->
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-client</artifactId>
-      <version>${jetty.version}</version>
-      <!--<scope>provided</scope>-->
     </dependency>
     <dependency>
       <groupId>org.scalatest</groupId>
@@ -332,38 +313,4 @@
             </plugin>
         </plugins>
     </reporting>
-
-    <!-- This whole profile setup below is just to execute the run-sample-app.sh conditionally in test phase but not when skipTests is defined -->
-    <profiles>
-        <profile>
-            <id>my-test-plugins</id>
-
-            <activation>
-                <!--<property><name>!maven.test.skip</name></property>-->
-                <property><name>!skipTests</name></property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <version>1.4.0</version>
-                        <executions>
-                            <execution>
-                                <id>run-sample-app</id>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <executable>./src/test/scripts/run-sample-app.sh</executable>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-
 </project>
