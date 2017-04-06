@@ -12,18 +12,15 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.cds
+package org.tresamigos.smv
+package cds
 
-import org.apache.spark.sql.catalyst.util.DateTimeUtils
+import org.apache.spark.sql.types.{DoubleType, IntegerType, StructField, StructType}
 
-import scala.math.floor
-
-import org.apache.spark.sql._, types._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions._
 
-import org.tresamigos.smv._
-import org.apache.spark.annotation._
+import org.apache.spark.annotation.Experimental
 
 /**
  * SmvGDO - SMV GroupedData Operator
@@ -121,7 +118,7 @@ private[smv] class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
       var runSum: Double = 0.0
       inGroup.sortBy(r => getValueAsDouble(r)).map { r =>
         runSum = runSum + getValueAsDouble(r)
-        val bin           = binBound(floor(runSum / binSize).toInt + 1)
+        val bin           = binBound(scala.math.floor(runSum / binSize).toInt + 1)
         val newValsDouble = Seq(valueTotal, runSum)
         val newValsInt    = Seq(bin)
         new GenericInternalRow(Array[Any](r.toSeq(inSchema) ++ newValsDouble ++ newValsInt: _*))

@@ -1,10 +1,10 @@
 package org.tresamigos.smv
+package util
 
-import StringConversionUtil._
-import org.scalatest._
+import StringConversion._
 
-class StringConversionUtilTest extends SmvUnitSpec {
-  "StringConversionUtil" should "be able to convert integers" in {
+class StringConversionTest extends SmvUnitSpec {
+  "StringConversion" should "be able to convert integers" in {
     canConvertToInt("a") shouldBe false
     canConvertToInt("1.0") shouldBe false
     canConvertToInt("123") shouldBe true

@@ -16,9 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
 
-import org.joda.time._
-import org.joda.time.format._
-import dqm._
+import dqm.{DQMValidator, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 
 import scala.collection.JavaConversions._
 import scala.util.Try
@@ -212,10 +210,10 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   private[smv] def persist(rdd: DataFrame, prefix: String = "") =
-    SmvUtil.persist(app.sparkSession, rdd, moduleCsvPath(prefix), app.genEdd)
+    util.DataSet.persist(app.sparkSession, rdd, moduleCsvPath(prefix), app.genEdd)
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
-    Try(SmvUtil.readFile(app.sparkSession, moduleCsvPath(prefix)))
+    Try(util.DataSet.readFile(app.sparkSession, moduleCsvPath(prefix)))
 
   private[smv] def computeRDD: DataFrame = {
     val dsDqm     = new DQMValidator(createDsDqm())

@@ -12,14 +12,15 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.dqm
+package org.tresamigos.smv
+package dqm
 
-import org.apache.spark.util.{AccumulatorV2, LongAccumulator}
+import org.apache.spark.util.LongAccumulator
+import org.apache.spark.SparkContext
+
+import util.IntAccumulator
 
 import scala.util.Try
-import org.apache.spark.{Accumulator, SparkContext}
-import org.tresamigos.smv.util.IntAccumulator
-
 import scala.annotation.meta.param
 import scala.collection.JavaConverters._
 
@@ -37,7 +38,7 @@ class DQMState(
 
   private val recordCounter: LongAccumulator = sc.longAccumulator
   private val parserLogger                   = new RejectLogger(sc, 10, "parser")
-  private val fixCounters: Map[String, IntAccumulator] = fixNames.map{ n =>
+  private val fixCounters: Map[String, IntAccumulator] = fixNames.map { n =>
     val acc = new IntAccumulator; sc.register(acc); (n, acc)
   }.toMap
   private val ruleLoggers: Map[String, RejectLogger] = ruleNames.map { n =>
