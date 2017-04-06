@@ -32,7 +32,7 @@ import org.apache.spark.sql.types.StringType
  */
 @Experimental
 private[smv] case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
-  def toDF: DataFrame = df
+  def toDF: DataFrame            = df
   def toGroupedData: GroupedData = df.groupBy(keys(0), keys.tail: _*)
 }
 
@@ -45,11 +45,11 @@ private[smv] case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
  * We can not use the standard Spark `GroupedData` because the internal DataFrame and keys are not exposed.
  */
 class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
-  private val df = smvGD.df
+  private val df   = smvGD.df
   private val keys = smvGD.keys
 
   // convenience method to get a prototype WindowSpec object
-  @inline private def winspec: WindowSpec = Window.partitionBy(keys.head, keys.tail:_*)
+  @inline private def winspec: WindowSpec = Window.partitionBy(keys.head, keys.tail: _*)
 
   /**
    * smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData
@@ -62,31 +62,38 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    **/
   @Experimental
   def smvMapGroup(gdo: SmvGDO, needConvert: Boolean = true): SmvGroupedData = {
-    val schema = df.schema
+    val schema   = df.schema
     val ordinals = schema.getIndices(keys: _*)
-    val rowToKeys: Row => Seq[Any] = {row =>
-      ordinals.map{i => row(i)}
+    val rowToKeys: Row => Seq[Any] = { row =>
+      ordinals.map { i =>
+        row(i)
+      }
     }
 
-    val outSchema = gdo.createOutSchema(schema)
-    val inGroupMapping =  gdo.createInGroupMapping(schema)
-    val rdd = df.rdd.
-      groupBy(rowToKeys).
-      flatMapValues(rowsInGroup => {
-          val inRow =
-            if(needConvert) convertToCatalyst(rowsInGroup, schema)
-            else rowsInGroup.map{r => InternalRow(r.toSeq: _*)}
-
-          // convert Iterable[Row] to Iterable[InternalRow] first
-          // so we can apply the function inGroupMapping
-          val res = inGroupMapping(inRow)
-          // now we have to convert an RDD[InternalRow] back to RDD[Row]
-          if(needConvert)
-            convertToScala(res, outSchema)
+    val outSchema      = gdo.createOutSchema(schema)
+    val inGroupMapping = gdo.createInGroupMapping(schema)
+    val rdd = df.rdd
+      .groupBy(rowToKeys)
+      .flatMapValues(rowsInGroup => {
+        val inRow =
+          if (needConvert) convertToCatalyst(rowsInGroup, schema)
           else
-            res.map{r => Row(r.toSeq(outSchema): _*)}
-        }
-      ).values
+            rowsInGroup.map { r =>
+              InternalRow(r.toSeq: _*)
+            }
+
+        // convert Iterable[Row] to Iterable[InternalRow] first
+        // so we can apply the function inGroupMapping
+        val res = inGroupMapping(inRow)
+        // now we have to convert an RDD[InternalRow] back to RDD[Row]
+        if (needConvert)
+          convertToScala(res, outSchema)
+        else
+          res.map { r =>
+            Row(r.toSeq(outSchema): _*)
+          }
+      })
+      .values
 
     /* since df.rdd method called ScalaReflection.convertToScala at the end on each row, here
        after process, we need to convert them all back by calling convertToCatalyst. One key difference
@@ -146,7 +153,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    **/
   def smvPivot(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): SmvGroupedData = {
     val output = ensureBaseOutput(baseOutput, pivotCols)
-    val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, output)
+    val pivot = SmvPivot(pivotCols, valueCols.map { v =>
+      (v, v)
+    }, output)
     SmvGroupedData(pivot.createSrdd(df, keys), keys)
   }
 
@@ -157,7 +166,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    *
    * NOTE: this will have a serious performance impact.
    */
-  private[this] def ensureBaseOutput(baseOutput: Seq[String], pivotCols: Seq[Seq[String]], srcDf: DataFrame = df): Seq[String] = {
+  private[this] def ensureBaseOutput(baseOutput: Seq[String],
+                                     pivotCols: Seq[Seq[String]],
+                                     srcDf: DataFrame = df): Seq[String] = {
     if (baseOutput.isEmpty)
       SmvPivot.getBaseOutputColumnNames(srcDf, pivotCols)
     else
@@ -200,24 +211,28 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   def smvPivotSum(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
     import df.sqlContext.implicits._
     val output = ensureBaseOutput(baseOutput, pivotCols)
-    val pivot= SmvPivot(pivotCols, valueCols.map{v => (v, v)}, output)
+    val pivot = SmvPivot(pivotCols, valueCols.map { v =>
+      (v, v)
+    }, output)
     val pivotRes = smvPivot(pivotCols: _*)(valueCols: _*)(output: _*)
     // in spark1.3, sum may return null for all null values.  In 1.4, sum(all_null) will be 0.
     // TODO: remove the coalesce to zero once we port to 1.4.
     val aggOutCols = pivot.outCols().map { c =>
       val cZero = lit(0).cast(pivotRes.df(c).toExpr.dataType)
-      (coalesce(sum(c), cZero) as c)}
+      (coalesce(sum(c), cZero) as c)
+    }
     /*
     val keysAndAggCols = keys.map{k => pivotRes.df(k)} ++ aggOutCols
     pivotRes.agg(keysAndAggCols(0), keysAndAggCols.tail: _*)
-    */
+     */
     pivotRes.agg(aggOutCols(0), aggOutCols.tail: _*)
   }
 
   /**
    * Same as smvPivotSum except that, instead of summing, we coalesce the pivot or grouped columns.
    */
-  def smvPivotCoalesce(pivotCols: Seq[String]*)(valueCols: String*)(baseOutput: String*): DataFrame = {
+  def smvPivotCoalesce(pivotCols: Seq[String]*)(valueCols: String*)(
+      baseOutput: String*): DataFrame = {
     import df.sqlContext.implicits._
 
     // ensure that pivoting columns exist
@@ -226,10 +241,15 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
         (df, pivotCols)
       } else {
         // get unique col name for in-group ranking
-        val pcol = mkUniq(df.columns, "pivot")
+        val pcol   = mkUniq(df.columns, "pivot")
         val orders = valueCols map (c => $"$c".asc)
-        val w = Window.partitionBy(keys map {c => $"$c"}: _*).orderBy(orders: _*)
-        val r1 = df.select((keys ++ valueCols map (c => $"$c")) :+ (rowNumber() over w as pcol) :_*)
+        val w = Window
+          .partitionBy(keys map { c =>
+            $"$c"
+          }: _*)
+          .orderBy(orders: _*)
+        val r1 =
+          df.select((keys ++ valueCols map (c => $"$c")) :+ (rowNumber() over w as pcol): _*)
         // in-group ranking starting value is 0
         val r2 = r1.selectWithReplace(r1(pcol) - 1 as pcol)
         (r2, Seq(Seq(pcol)))
@@ -237,12 +257,14 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
     // TODO: remove duplicate code in smvPivot, smvPivotSum, and here
     val output = ensureBaseOutput(baseOutput, pcols, dfp)
-    val pivot= SmvPivot(pcols, valueCols.map{v => (v, v)}, output)
+    val pivot = SmvPivot(pcols, valueCols.map { v =>
+      (v, v)
+    }, output)
     val pivotRes = SmvGroupedData(pivot.createSrdd(dfp, keys), keys)
 
     // collapse each group into 1 row
     val cols = pivot.outCols map (n => smvFirst($"$n", true) as n)
-    pivotRes.agg(cols(0), cols.tail:_*)
+    pivotRes.agg(cols(0), cols.tail: _*)
   }
 
   /**
@@ -266,16 +288,16 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       Math.min(Math.floor(percentage * numBins + 1).toInt, numBins)
 
     require(numBins >= 2)
-    val total = df.groupBy(keys.head, keys.tail:_*).agg(sum(valueCol) as s"${valueCol}_total")
-    val w = winspec.orderBy(valueCol)
-    df.smvSelectPlus(
-      sum(valueCol) over w as s"${valueCol}_rsum",
-      udf(percent2nTile).apply((percentRank() over w)) as s"${valueCol}_quantile").
-      smvJoinByKey(total, keys, SmvJoinType.Inner)
+    val total = df.groupBy(keys.head, keys.tail: _*).agg(sum(valueCol) as s"${valueCol}_total")
+    val w     = winspec.orderBy(valueCol)
+    df.smvSelectPlus(sum(valueCol) over w as s"${valueCol}_rsum",
+                     udf(percent2nTile).apply((percentRank() over w)) as s"${valueCol}_quantile")
+      .smvJoinByKey(total, keys, SmvJoinType.Inner)
   }
 
   /** same as `smvQuantile(String, Integer)` but uses a `Column` type to specify the column name */
-  def smvQuantile(valueCol: Column, numBins: Integer): DataFrame = smvQuantile(valueCol.getName, numBins)
+  def smvQuantile(valueCol: Column, numBins: Integer): DataFrame =
+    smvQuantile(valueCol.getName, numBins)
 
   /**
    * Compute the decile for a given column value with a DataFrame group.
@@ -315,51 +337,58 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * "v1_min" and "v1_max" as for the example. Please note that is "withZeroPivot" also set, the
    * lower and upper bounds will be the abs max.
   **/
-  def smvScale(ranges: (Column, (Double, Double))*)
-    (withZeroPivot: Boolean = false, doDropRange: Boolean = true): DataFrame = {
+  def smvScale(ranges: (Column, (Double, Double))*)(withZeroPivot: Boolean = false,
+                                                    doDropRange: Boolean = true): DataFrame = {
 
     import df.sqlContext.implicits._
 
-    val cols = ranges.map{case (c, (_,_)) => c}
-    val keyCols = keys.map{k => $"$k"}
+    val cols = ranges.map { case (c, (_, _)) => c }
+    val keyCols = keys.map { k =>
+      $"$k"
+    }
 
-    val aggExprs = cols.flatMap{v =>
+    val aggExprs = cols.flatMap { v =>
       val name = v.getName
       Seq(min(v).cast("double") as s"${name}_min", max(v).cast("double") as s"${name}_max")
     }
 
     val withRanges = if (withZeroPivot) {
-      val absMax : (Double, Double) => Double = (l,h) => scala.math.max(scala.math.abs(l), scala.math.abs(h))
+      val absMax: (Double, Double) => Double = (l, h) =>
+        scala.math.max(scala.math.abs(l), scala.math.abs(h))
       val absMaxUdf = udf(absMax)
-      df.groupBy(keyCols: _*).agg(aggExprs.head, aggExprs.tail: _*).select((keyCols ++
-        cols.flatMap{v =>
-          val name = v.getName
-          Seq(absMaxUdf($"${name}_min", $"${name}_max") * -1.0 as s"${name}_min",
-              absMaxUdf($"${name}_min", $"${name}_max")        as s"${name}_max")
-        }
-      ): _*)
+      df.groupBy(keyCols: _*)
+        .agg(aggExprs.head, aggExprs.tail: _*)
+        .select((keyCols ++
+          cols.flatMap { v =>
+            val name = v.getName
+            Seq(absMaxUdf($"${name}_min", $"${name}_max") * -1.0 as s"${name}_min",
+                absMaxUdf($"${name}_min", $"${name}_max") as s"${name}_max")
+          }): _*)
     } else {
       df.groupBy(keyCols: _*).agg(aggExprs.head, aggExprs.tail: _*)
     }
 
     /* When value all the same, return the middle value of the target range */
-    def createScaleUdf(low: Double, high: Double) = udf({(v: Double, l: Double, h: Double) =>
-      if (h == l){
-        (low + high) / 2.0
-      } else {
-        (v - l) / (h - l) * (high - low) + low
-      }
-    })
+    def createScaleUdf(low: Double, high: Double) =
+      udf({ (v: Double, l: Double, h: Double) =>
+        if (h == l) {
+          (low + high) / 2.0
+        } else {
+          (v - l) / (h - l) * (high - low) + low
+        }
+      })
 
-    val scaleExprs = ranges.map{case (v, (low, high)) =>
-      val sUdf = createScaleUdf(low, high)
-      val name = v.getName
-      sUdf(v.cast("double"), $"${name}_min", $"${name}_max") as s"${name}_scaled"
+    val scaleExprs = ranges.map {
+      case (v, (low, high)) =>
+        val sUdf = createScaleUdf(low, high)
+        val name = v.getName
+        sUdf(v.cast("double"), $"${name}_min", $"${name}_max") as s"${name}_scaled"
     }
 
-    if(doDropRange){
-      df.smvJoinByKey(withRanges, keys, SmvJoinType.Inner).smvSelectPlus(scaleExprs: _*).
-        smvSelectMinus(cols.flatMap{v =>
+    if (doDropRange) {
+      df.smvJoinByKey(withRanges, keys, SmvJoinType.Inner)
+        .smvSelectPlus(scaleExprs: _*)
+        .smvSelectMinus(cols.flatMap { v =>
           val name = v.getName
           Seq($"${name}_min", $"${name}_max")
         }: _*)
@@ -453,10 +482,10 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * Will keep the 3 largest amt records for each id
    **/
   def smvTopNRecs(maxElems: Int, orders: Column*) = {
-    val w = winspec.orderBy(orders:_*)
+    val w       = winspec.orderBy(orders: _*)
     val rankcol = mkUniq(df.columns, "rank")
-    val rownum = mkUniq(df.columns, "rownum")
-    val r1 = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    val rownum  = mkUniq(df.columns, "rownum")
+    val r1      = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 
@@ -492,47 +521,54 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
      */
     // In Spark 2.1 first and last aggregate functions take an
     // ignoreNull argument and are supported in window spec.
-    val isSimpleRunAgg = aggCols.map { a =>
-      a.toExpr match {
-        case Alias(Average(_), _) => true
-        case Alias(Sum(_), _) => true
-        case Alias(Count(_), _) => true
-        case Alias(Min(_), _) => true
-        case Alias(Max(_), _) => true
-        case _ => false
+    val isSimpleRunAgg = aggCols
+      .map { a =>
+        a.toExpr match {
+          case Alias(Average(_), _) => true
+          case Alias(Sum(_), _)     => true
+          case Alias(Count(_), _)   => true
+          case Alias(Min(_), _)     => true
+          case Alias(Max(_), _)     => true
+          case _                    => false
+        }
       }
-    }.reduce(_&&_)
+      .reduce(_ && _)
 
     if (isSimpleRunAgg) {
       val w = winspec.orderBy(orders: _*).rowsBetween(Long.MinValue, 0)
-      val cols = aggCols.map{aggCol =>
+      val cols = aggCols.map { aggCol =>
         aggCol.toExpr match {
           case Alias(e: AggregateExpression, n) => new Column(e) over w as n
-          case e: AggregateExpression => new Column(e) over w
-          case e => new Column(e)
+          case e: AggregateExpression           => new Column(e) over w
+          case e                                => new Column(e)
         }
       }
       df.select(cols: _*)
-    }
-    else
+    } else
       throw new UnsupportedOperationException("runAgg no longer supports CDS and GDO")
   }
 
   @Experimental
   private[smv] def runAgg(order: String, others: String*)(aggCols: Column*): DataFrame =
-    runAgg((order +: others).map{s => new ColumnName(s)}: _*)(aggCols: _*)
+    runAgg((order +: others).map { s =>
+      new ColumnName(s)
+    }: _*)(aggCols: _*)
 
   /**
    * Same as `runAgg` but with all input column propagated to output.
    **/
   @Experimental
   private[smv] def runAggPlus(orders: Column*)(aggCols: Column*): DataFrame = {
-    val inputCols = df.columns.map{c => new ColumnName(c)}
+    val inputCols = df.columns.map { c =>
+      new ColumnName(c)
+    }
     runAgg(orders: _*)((inputCols ++ aggCols): _*)
   }
   @Experimental
   private[smv] def runAggPlus(order: String, others: String*)(aggCols: Column*): DataFrame =
-    runAggPlus((order +: others).map{s => new ColumnName(s)}: _*)(aggCols: _*)
+    runAggPlus((order +: others).map { s =>
+      new ColumnName(s)
+    }: _*)(aggCols: _*)
 
   /**
    * Add `smvTime` column according to some `TimePanel`s
@@ -578,9 +614,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   def addTimePanels(timeColName: String, doFiltering: Boolean = true)(panels: panel.TimePanel*) = {
-    panels.map{tp =>
-      tp.addToDF(df, timeColName, keys, doFiltering)
-    }.reduce(_.unionAll(_))
+    panels
+      .map { tp =>
+        tp.addToDF(df, timeColName, keys, doFiltering)
+      }
+      .reduce(_.unionAll(_))
   }
 
   /**
@@ -622,9 +660,12 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     import df.sqlContext.implicits._
     val foreward = smvFillNullWithPrevValue($"$smvTimeColName".asc)(values: _*)
 
-    if(backwardFill)
-      foreward.smvGroupBy(keys.map{k => $"${k}"}: _*).
-        smvFillNullWithPrevValue($"$smvTimeColName".desc)(values: _*)
+    if (backwardFill)
+      foreward
+        .smvGroupBy(keys.map { k =>
+          $"${k}"
+        }: _*)
+        .smvFillNullWithPrevValue($"$smvTimeColName".desc)(values: _*)
     else
       foreward
   }
@@ -657,22 +698,27 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   def addTimePanelsWithValueFill(
-    timeColName: String,
-    doFiltering: Boolean = true,
-    backwardFill: Boolean = true
+      timeColName: String,
+      doFiltering: Boolean = true,
+      backwardFill: Boolean = true
   )(
-    panels: panel.TimePanel*
+      panels: panel.TimePanel*
   )(
-    values: String*
+      values: String*
   ) = {
     import df.sqlContext.implicits._
     val smvTimeName = mkUniq(df.columns, "smvTime")
-    panels.map{tp =>
-      tp.addToDF(df, timeColName, keys, doFiltering).
-        smvGroupBy(keys.map{k => $"${k}"}: _*).
-        timePanelValueFill(smvTimeName, backwardFill)(values: _*)
-    }.reduce(_.unionAll(_))
+    panels
+      .map { tp =>
+        tp.addToDF(df, timeColName, keys, doFiltering)
+          .smvGroupBy(keys.map { k =>
+            $"${k}"
+          }: _*)
+          .timePanelValueFill(smvTimeName, backwardFill)(values: _*)
+      }
+      .reduce(_.unionAll(_))
   }
+
   /**
    * Add records within each group is expected values of a column is missing
    * For now only works with StringType column.
@@ -698,26 +744,31 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   private[smv] def fillExpectedWithNull(
-    colName: String,
-    expected: Set[String],
-    doFiltering: Boolean
+      colName: String,
+      expected: Set[String],
+      doFiltering: Boolean
   ): DataFrame = {
     import df.sqlContext.implicits._
 
     val missings = (exists: Seq[String]) => (expected -- exists.toSet).toSeq
-    val tmpCol = mkUniq(df.columns, "tmpCol")
-    val nullCols = df.columns.diff(keys :+ colName).map{s => lit(null).cast(df.schema(s).dataType) as s}
+    val tmpCol   = mkUniq(df.columns, "tmpCol")
+    val nullCols = df.columns.diff(keys :+ colName).map { s =>
+      lit(null).cast(df.schema(s).dataType) as s
+    }
 
-    val res = df.groupBy(keys.head, keys.tail: _*).
-      agg(udf(missings).apply(smvfuncs.collectSet(StringType)($"$colName")) as tmpCol).
-      smvSelectPlus(explode($"$tmpCol") as colName).
-      smvSelectMinus(tmpCol).
-      smvSelectPlus(nullCols: _*).
-      select(df.columns.map{s => $"$s"}: _*).
-      unionAll(df)
+    val res = df
+      .groupBy(keys.head, keys.tail: _*)
+      .agg(udf(missings).apply(smvfuncs.collectSet(StringType)($"$colName")) as tmpCol)
+      .smvSelectPlus(explode($"$tmpCol") as colName)
+      .smvSelectMinus(tmpCol)
+      .smvSelectPlus(nullCols: _*)
+      .select(df.columns.map { s =>
+        $"$s"
+      }: _*)
+      .unionAll(df)
 
-    if(doFiltering) {
-      res.where($"$colName".isin(expected.toSeq.map{lit}: _*))
+    if (doFiltering) {
+      res.where($"$colName".isin(expected.toSeq.map { lit }: _*))
     } else {
       res
     }
@@ -768,20 +819,31 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   def smvFillNullWithPrevValue(orders: Column*)(values: String*): DataFrame = {
-    val gdo = new cds.FillNullWithPrev(orders.map{o => o.toExpr}.toList, values)
+    val gdo = new cds.FillNullWithPrev(orders.map { o =>
+      o.toExpr
+    }.toList, values)
     smvMapGroup(gdo).toDF
   }
 
   private[smv] def smvRePartition(partitioner: Partitioner): SmvGroupedData = {
     val fields = df.columns
 
-    val keyColsStr = keys.map{k => df(k).cast("string")}
+    val keyColsStr = keys.map { k =>
+      df(k).cast("string")
+    }
     val keyDf = df.selectPlusPrefix(smvStrCat(keyColsStr: _*) as "_smvRePartition_key_")
 
-    val resRdd = keyDf.rdd.keyBy({r => r(0)}).partitionBy(partitioner).values
-    val resDf = df.sqlContext.createDataFrame(resRdd.map{r => Row.fromSeq(r.toSeq)}, keyDf.schema)
+    val resRdd = keyDf.rdd
+      .keyBy({ r =>
+        r(0)
+      })
+      .partitionBy(partitioner)
+      .values
+    val resDf = df.sqlContext.createDataFrame(resRdd.map { r =>
+      Row.fromSeq(r.toSeq)
+    }, keyDf.schema)
 
-    resDf.select(fields.head, fields.tail:_*).smvGroupBy(keys.head, keys.tail: _*)
+    resDf.select(fields.head, fields.tail: _*).smvGroupBy(keys.head, keys.tail: _*)
   }
 
   /**
@@ -821,27 +883,45 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
   private[smv] def _smvConcatHist(colSeqs: Seq[String]*) = {
     import df.sqlContext.implicits._
-    val colNames = colSeqs.map{cols => cols.mkString("_")}
-    val exprs = colSeqs.zip(colNames).filter{case (cols, name) =>
-      cols.size > 1
-    }.map{case (cols, name) => smvStrCat("_", cols.map{c => $"$c"}: _*).as(name)}
-    val dfWithKey = if(exprs.isEmpty) {
+    val colNames = colSeqs.map { cols =>
+      cols.mkString("_")
+    }
+    val exprs = colSeqs
+      .zip(colNames)
+      .filter {
+        case (cols, name) =>
+          cols.size > 1
+      }
+      .map {
+        case (cols, name) =>
+          smvStrCat("_", cols.map { c =>
+            $"$c"
+          }: _*).as(name)
+      }
+    val dfWithKey = if (exprs.isEmpty) {
       df
     } else {
       df.smvSelectPlus(exprs: _*)
     }
-    dfWithKey.smvGroupBy(keys.map{k => $"$k"}: _*).edd.histogram(colNames.head, colNames.tail: _*).createReport()
+    dfWithKey
+      .smvGroupBy(keys.map { k =>
+        $"$k"
+      }: _*)
+      .edd
+      .histogram(colNames.head, colNames.tail: _*)
+      .createReport()
   }
 
   /**
-  * Print EDD histogram (each col's histogram prints separately)
+   * Print EDD histogram (each col's histogram prints separately)
   **/
   def smvHist(cols: String*) = println(_smvHist(cols: _*))
 
   /**
-  * Save Edd histogram
+   * Save Edd histogram
   **/
-  def smvHistSave(cols: String*)(path: String) = SmvReportIO.saveLocalReport(_smvHist(cols: _*), path)
+  def smvHistSave(cols: String*)(path: String) =
+    SmvReportIO.saveLocalReport(_smvHist(cols: _*), path)
 
   /**
    * Print EDD histogram of a group of cols (joint distribution)
@@ -851,5 +931,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   /**
    * Save Edd histogram of a group of cols (joint distribution)
    **/
-  def smvConcatHistSave(cols: Seq[String]*)(path: String) = SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*), path)
+  def smvConcatHistSave(cols: Seq[String]*)(path: String) =
+    SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*), path)
 }

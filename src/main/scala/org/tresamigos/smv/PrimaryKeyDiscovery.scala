@@ -31,28 +31,39 @@ private[smv] class PrimaryKeyDiscovery(val debug: Boolean) {
    *
    * @return (newKeys, newKeyCnt) new set of keys and the unique-count of them
    **/
-  private def oneByOnePK(df: DataFrame, pool: Seq[String], preKeys: Seq[String], preKeyCnt: Long):
-    (Seq[String], Long)= {
+  private def oneByOnePK(df: DataFrame,
+                         pool: Seq[String],
+                         preKeys: Seq[String],
+                         preKeyCnt: Long): (Seq[String], Long) = {
 
     if (!preKeys.isEmpty) debugMessage(s"current keys: ${preKeys};    unique-count: $preKeyCnt")
     /* adding each element from "pool" to "preKeys" one by one and unique-count */
-    val exprs = pool.map{p => smvCountDistinctWithNull(p, preKeys:_*) as p}
-    val res = df.agg(exprs.head, exprs.tail:_*)
-    val resMap = res.columns.zip(res.collect.head.toSeq.map{n => n.asInstanceOf[Long]})
+    val exprs = pool.map { p =>
+      smvCountDistinctWithNull(p, preKeys: _*) as p
+    }
+    val res = df.agg(exprs.head, exprs.tail: _*)
+    val resMap = res.columns.zip(res.collect.head.toSeq.map { n =>
+      n.asInstanceOf[Long]
+    })
 
     /* If adding a candidate does not increase unique-count, the candidate is rejected.*/
-    val filteredKeys = resMap.filter{case (k, v)=> v > preKeyCnt}
-    if (preKeyCnt > 0) debugMessage("Rejected: " + resMap.filter{case (k, v) => v == preKeyCnt}.map{_._1}.mkString(",") + "\n")
+    val filteredKeys = resMap.filter { case (k, v) => v > preKeyCnt }
+    if (preKeyCnt > 0)
+      debugMessage(
+        "Rejected: " + resMap
+          .filter { case (k, v) => v == preKeyCnt }
+          .map { _._1 }
+          .mkString(",") + "\n")
 
     if (filteredKeys.isEmpty) (preKeys, preKeyCnt)
     else {
       /* For the candidate left, add the one with largest contribution to the unique-count*/
       val newKeyNCnt = filteredKeys.sortWith(_._2 > _._2).head
-      val newKeys = preKeys :+ newKeyNCnt._1
-      val newCnt = newKeyNCnt._2
+      val newKeys    = preKeys :+ newKeyNCnt._1
+      val newCnt     = newKeyNCnt._2
 
       /* Keep left candidates and send to next round iteration */
-      val newPool = filteredKeys.diff(Seq(newKeyNCnt)).map{_._1}
+      val newPool = filteredKeys.diff(Seq(newKeyNCnt)).map { _._1 }
       if (newPool.isEmpty) (newKeys, newCnt)
       else oneByOnePK(df, newPool, newKeys, newCnt)
     }
@@ -62,7 +73,7 @@ private[smv] class PrimaryKeyDiscovery(val debug: Boolean) {
     val workingSet = df.limit(n).cache
 
     val pool = workingSet.columns
-    val res = oneByOnePK(workingSet, pool, Nil, 0l)
+    val res  = oneByOnePK(workingSet, pool, Nil, 0l)
 
     workingSet.unpersist
     res

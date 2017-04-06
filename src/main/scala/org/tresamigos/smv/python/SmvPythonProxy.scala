@@ -31,11 +31,13 @@ object SmvPythonHelper {
     df.smvExpandStruct(cols: _*)
 
   def smvGroupBy(df: DataFrame, cols: Array[Column]): SmvGroupedDataAdaptor =
-    new SmvGroupedDataAdaptor(df.smvGroupBy(cols:_*))
+    new SmvGroupedDataAdaptor(df.smvGroupBy(cols: _*))
 
   def smvGroupBy(df: DataFrame, cols: Array[String]): SmvGroupedDataAdaptor = {
     import df.sqlContext.implicits._
-    new SmvGroupedDataAdaptor(df.smvGroupBy(cols.toSeq.map{c => $"$c"}:_*))
+    new SmvGroupedDataAdaptor(df.smvGroupBy(cols.toSeq.map { c =>
+      $"$c"
+    }: _*))
   }
 
   /**
@@ -43,46 +45,55 @@ object SmvPythonHelper {
    * temporarily remove the trailing parameters till we can find a
    * workaround
    */
-  def smvJoinByKey(df: DataFrame, other: DataFrame, keys: Seq[String], joinType: String): DataFrame =
+  def smvJoinByKey(df: DataFrame,
+                   other: DataFrame,
+                   keys: Seq[String],
+                   joinType: String): DataFrame =
     df.smvJoinByKey(other, keys, joinType)
 
-  def smvJoinMultipleByKey(df: DataFrame, keys: Array[String], joinType: String): SmvMultiJoinAdaptor =
+  def smvJoinMultipleByKey(df: DataFrame,
+                           keys: Array[String],
+                           joinType: String): SmvMultiJoinAdaptor =
     new SmvMultiJoinAdaptor(df.smvJoinMultipleByKey(keys, joinType))
 
   def smvSelectMinus(df: DataFrame, cols: Array[String]): DataFrame =
-    df.smvSelectMinus(cols.head, cols.tail:_*)
+    df.smvSelectMinus(cols.head, cols.tail: _*)
 
   def smvSelectMinus(df: DataFrame, cols: Array[Column]): DataFrame =
-    df.smvSelectMinus(cols:_*)
+    df.smvSelectMinus(cols: _*)
 
   def smvDedupByKey(df: DataFrame, keys: Array[String]): DataFrame =
-    df.dedupByKey(keys.head, keys.tail:_*)
+    df.dedupByKey(keys.head, keys.tail: _*)
 
   def smvDedupByKey(df: DataFrame, cols: Array[Column]): DataFrame =
-    df.dedupByKey(cols:_*)
+    df.dedupByKey(cols: _*)
 
-  def smvDedupByKeyWithOrder(df: DataFrame, keys: Array[String], orderCol: Array[Column]): DataFrame =
-    df.dedupByKeyWithOrder(keys.head, keys.tail:_*)(orderCol:_*)
+  def smvDedupByKeyWithOrder(df: DataFrame,
+                             keys: Array[String],
+                             orderCol: Array[Column]): DataFrame =
+    df.dedupByKeyWithOrder(keys.head, keys.tail: _*)(orderCol: _*)
 
-  def smvDedupByKeyWithOrder(df: DataFrame, cols: Array[Column], orderCol: Array[Column]): DataFrame =
-    df.dedupByKeyWithOrder(cols:_*)(orderCol:_*)
+  def smvDedupByKeyWithOrder(df: DataFrame,
+                             cols: Array[Column],
+                             orderCol: Array[Column]): DataFrame =
+    df.dedupByKeyWithOrder(cols: _*)(orderCol: _*)
 
   def smvRenameField(df: DataFrame, namePairsAsList: ArrayList[ArrayList[String]]): DataFrame = {
     val namePairs = namePairsAsList.map(inner => Tuple2(inner(0), inner(1)))
-    df.smvRenameField(namePairs:_*)
+    df.smvRenameField(namePairs: _*)
   }
 
   def smvConcatHist(df: DataFrame, colNames: Array[String]) = df._smvConcatHist(colNames.toSeq)
 
   def smvBinHist(df: DataFrame, _colWithBin: java.util.List[java.util.List[Any]]) = {
-    val colWithBin = _colWithBin.map{t =>
+    val colWithBin = _colWithBin.map { t =>
       (t.get(0).asInstanceOf[String], t.get(1).asInstanceOf[Double])
     }.toSeq
     df._smvBinHist(colWithBin: _*)
   }
 
-  def smvIsAllIn(col: Column, values: Any*): Column = col.smvIsAllIn(values:_*)
-  def smvIsAnyIn(col: Column, values: Any*): Column = col.smvIsAnyIn(values:_*)
+  def smvIsAllIn(col: Column, values: Any*): Column = col.smvIsAllIn(values: _*)
+  def smvIsAnyIn(col: Column, values: Any*): Column = col.smvIsAnyIn(values: _*)
 
   //case class DiscoveredPK(pks: ArrayList[String], cnt: Long)
   def smvDiscoverPK(df: DataFrame, n: Int): (ArrayList[String], Long) = {
@@ -98,40 +109,43 @@ object SmvPythonHelper {
    */
   def updatePythonGatewayPort(gws: GatewayServer, port: Int): Unit = {
     val cl = gws.getCallbackClient
-    val f = cl.getClass.getDeclaredField("port")
+    val f  = cl.getClass.getDeclaredField("port")
     f.setAccessible(true)
     f.setInt(cl, port)
   }
 
   def createMatcher(
-    leftId: String, rightId: String,
-    exactMatchFilter:PreFilter,
-    groupCondition:AbstractGroupCondition,
-    levelLogics: Array[LevelLogic]
+      leftId: String,
+      rightId: String,
+      exactMatchFilter: PreFilter,
+      groupCondition: AbstractGroupCondition,
+      levelLogics: Array[LevelLogic]
   ): SmvEntityMatcher = {
     val lls = levelLogics.toSeq
-    SmvEntityMatcher(leftId, rightId,
-      if(exactMatchFilter == null) NoOpPreFilter else exactMatchFilter,
-      if(groupCondition == null) NoOpGroupCondition else groupCondition,
-      lls
-    )
+    SmvEntityMatcher(leftId,
+                     rightId,
+                     if (exactMatchFilter == null) NoOpPreFilter else exactMatchFilter,
+                     if (groupCondition == null) NoOpGroupCondition else groupCondition,
+                     lls)
   }
 
   def smvOverlapCheck(df: DataFrame, key: String, otherDf: Array[DataFrame]): DataFrame =
-    df.smvOverlapCheck(key)(otherDf:_*)
+    df.smvOverlapCheck(key)(otherDf: _*)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
   def smvTopNRecs(maxElems: Int, orders: Array[Column]): DataFrame =
-    grouped.smvTopNRecs(maxElems, orders:_*)
+    grouped.smvTopNRecs(maxElems, orders: _*)
 
   def smvPivotSum(pivotCols: java.util.List[Array[String]],
-    valueCols: Array[String], baseOutput: Array[String]): DataFrame =
-    grouped.smvPivotSum(pivotCols.map(_.toSeq).toSeq :_*)(valueCols:_*)(baseOutput:_*)
+                  valueCols: Array[String],
+                  baseOutput: Array[String]): DataFrame =
+    grouped.smvPivotSum(pivotCols.map(_.toSeq).toSeq: _*)(valueCols: _*)(baseOutput: _*)
 
   def smvPivotCoalesce(pivotCols: java.util.List[Array[String]],
-    valueCols: Array[String], baseOutput: Array[String]): DataFrame =
-    grouped.smvPivotCoalesce(pivotCols.map(_.toSeq).toSeq :_*)(valueCols:_*)(baseOutput:_*)
+                       valueCols: Array[String],
+                       baseOutput: Array[String]): DataFrame =
+    grouped.smvPivotCoalesce(pivotCols.map(_.toSeq).toSeq: _*)(valueCols: _*)(baseOutput: _*)
 
   def smvFillNullWithPrevValue(orderCols: Array[Column], valueCols: Array[String]): DataFrame =
     grouped.smvFillNullWithPrevValue(orderCols: _*)(valueCols: _*)
@@ -150,7 +164,7 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
  * The collection types should be accessible through the py4j gateway.
  */
 class SmvPyClient(val j_smvApp: SmvApp) {
-  val config = j_smvApp.smvConfig
+  val config      = j_smvApp.smvConfig
   val publishHive = j_smvApp.publishHive
 
   def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
@@ -162,12 +176,14 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     SmvUtil.persist(j_smvApp.sqlContext, dataframe, path, generateEdd)
 
   /** Create a SmvCsvFile for use in Python */
-  def smvCsvFile(moduleName: String, path: String, csvAttr: CsvAttributes,
-    pForceParserCheck: Boolean, pFailAtParsingError: Boolean
-  ): SmvCsvFile =
+  def smvCsvFile(moduleName: String,
+                 path: String,
+                 csvAttr: CsvAttributes,
+                 pForceParserCheck: Boolean,
+                 pFailAtParsingError: Boolean): SmvCsvFile =
     new SmvCsvFile(path, csvAttr) {
-      override def fqn = moduleName
-      override val forceParserCheck = pForceParserCheck
+      override def fqn                = moduleName
+      override val forceParserCheck   = pForceParserCheck
       override val failAtParsingError = pFailAtParsingError
     }
 
@@ -187,17 +203,17 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvPyOutput tables
   def moduleNames: java.util.List[String] = {
-    val cl = j_smvApp.smvConfig.cmdLine
+    val cl                      = j_smvApp.smvConfig.cmdLine
     val directMods: Seq[String] = cl.modsToRun()
     directMods
   }
 
   // ---- User Run Configuration Parameters proxy funcs.
   def getRunConfig(key: String): String = j_smvApp.smvConfig.getRunConfig(key)
-  def getRunConfigHash() = j_smvApp.smvConfig.getRunConfigHash()
+  def getRunConfigHash()                = j_smvApp.smvConfig.getRunConfigHash()
 
   def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
-    j_smvApp.registerRepoFactory( new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig) )
+    j_smvApp.registerRepoFactory(new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig))
 
   import java.io._
   import java.awt._

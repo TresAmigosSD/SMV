@@ -28,7 +28,9 @@ RUN sudo apt-get remove --purge -y python-dev &&\
 COPY ./settings.xml $M2_HOME/conf/settings.xml
 
 # Configures ivy (through sbt) repository to live on user's host mount (i.e. in /projects)
+# some versions of sbt seem to want sbtopts in /usr/local/etc!!! SMV issue #590
 COPY ./sbtopts /home/smv/lib/sbt/conf/sbtopts
+COPY ./sbtopts /usr/local/etc/sbtopts
 COPY ./kernel.json /usr/local/share/jupyter/kernels/smv-pyshell/kernel.json
 COPY ./.jupyter /home/smv/.jupyter
 COPY ./hive-site.xml /usr/lib/spark/conf/hive-site.xml

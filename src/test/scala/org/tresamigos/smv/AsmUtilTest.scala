@@ -12,14 +12,13 @@
  * limitations under the License.
  */
 
-
 package org.tresamigos.smv
 
 class AsmUtilTest extends SmvUnitSpec {
   object ModuleWithAnonFun {
     val fib: Int => Int = { n =>
       @annotation.tailrec
-      def iter (n1: Int, n2: Int, count: Int): Int = count match {
+      def iter(n1: Int, n2: Int, count: Int): Int = count match {
         case 1 => n1
         case 2 => n2
         case _ => iter(n2, n1 + n2, count - 1)
@@ -28,14 +27,14 @@ class AsmUtilTest extends SmvUnitSpec {
     }
   }
 
-  "AsmUtil.hasAnonfun" should  "identify modules with anonymous functions" in {
+  "AsmUtil.hasAnonfun" should "identify modules with anonymous functions" in {
     AsmUtil.hasAnonfun(ModuleWithAnonFun.getClass.getName, getClass.getClassLoader) shouldBe true
   }
 
   object EmptyModule
   object ModuleWithoutAnonFun {
     val `not$anonfun` = 1
-    val closeenough = "not $anonfun'$ either"
+    val closeenough   = "not $anonfun'$ either"
   }
   it should "not identify modules with no anonymous functions" in {
     Seq(EmptyModule, ModuleWithoutAnonFun) foreach { m =>

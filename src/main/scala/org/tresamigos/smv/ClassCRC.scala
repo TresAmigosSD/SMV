@@ -45,7 +45,9 @@ object ClassCRC {
 
     // #319: include configuration object in the hash calculation
     if (dataset.isInstanceOf[Using[_]]) {
-      checksum(dataset.asInstanceOf[Using[SmvRunConfig]].runConfig.getClass.getName, classLoader, crc)
+      checksum(dataset.asInstanceOf[Using[SmvRunConfig]].runConfig.getClass.getName,
+               classLoader,
+               crc)
     } else {
       crc
     }
@@ -60,7 +62,8 @@ object ClassCRC {
     // include self
     val contribs: Seq[String] = className +: (for {
       n <- new SmvReflection(classLoader).basesOf(className)
-      if (!n.startsWith("java.")) && (!n.startsWith("scala.")) && (!n.startsWith("org.tresamigos.smv."))
+      if (!n.startsWith("java.")) && (!n.startsWith("scala.")) && (!n.startsWith(
+        "org.tresamigos.smv."))
     } yield n)
 
     contribs.foldRight(initial)((e, acc) => step(classLoader, e, acc))
@@ -69,7 +72,7 @@ object ClassCRC {
   /** calculate CRC for a single class */
   private[this] def step(classLoader: ClassLoader, fqn: String, crc: CRC32): CRC32 = {
     val classResourcePath = fqn.replace('.', '/') + ".class"
-    val is: InputStream = classLoader.getResourceAsStream(classResourcePath)
+    val is: InputStream   = classLoader.getResourceAsStream(classResourcePath)
 
     try {
       cksum0(crc, new asm.ClassReader(is))

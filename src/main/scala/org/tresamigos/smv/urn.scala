@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
- package org.tresamigos.smv
+package org.tresamigos.smv
 
 /*
  * Universal Resource Name (URN) is the unique name for an SmvDataSet. There are
@@ -23,7 +23,7 @@
  */
 sealed abstract class URN(prefix: String) {
   def fqn: String
-  override def toString: String =  s"${prefix}:${fqn}"
+  override def toString: String = s"${prefix}:${fqn}"
 }
 
 /*
@@ -32,12 +32,12 @@ sealed abstract class URN(prefix: String) {
  */
 case class LinkURN(fqn: String) extends URN("link") {
   override def toString: String = super.toString
-  def toModURN: ModURN = ModURN(fqn)
+  def toModURN: ModURN          = ModURN(fqn)
 }
 
 case class ModURN(fqn: String) extends URN("mod") {
   override def toString: String = super.toString
-  def toLinkURN: LinkURN = LinkURN(fqn)
+  def toLinkURN: LinkURN        = LinkURN(fqn)
 }
 
 /**
@@ -48,16 +48,16 @@ object URN {
     def invalidURN(urn: String) = new SmvRuntimeException(s"Invalid urn: ${urn}")
   }
 
-  def apply(urn: String): URN ={
+  def apply(urn: String): URN = {
     val splitIdx = urn.lastIndexOf(':')
-    if(splitIdx < 0)
+    if (splitIdx < 0)
       throw errors.invalidURN(urn)
-    val fqn = urn.substring(splitIdx+1)
+    val fqn    = urn.substring(splitIdx + 1)
     val prefix = urn.substring(0, splitIdx)
     prefix match {
-      case "mod" => ModURN(fqn)
+      case "mod"  => ModURN(fqn)
       case "link" => LinkURN(fqn)
-      case _ => throw errors.invalidURN(urn)
+      case _      => throw errors.invalidURN(urn)
     }
   }
 }

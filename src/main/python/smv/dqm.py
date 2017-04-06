@@ -15,46 +15,46 @@
 This module defines the abstract classes which formed the SmvDataSet Framework for clients' projects
 """
 
-from smv.smvpy import smvPy
+from smvapp import SmvApp
 import traceback
 
 def SmvDQM():
     """Factory method for Scala SmvDQM"""
-    return smvPy._jvm.SmvDQM.apply()
+    return SmvApp.getInstance()._jvm.SmvDQM.apply()
 
 # Factory methods for DQM policies
 def FailParserCountPolicy(threshold):
-    return smvPy._jvm.FailParserCountPolicy(threshold)
+    return SmvApp.getInstance()._jvm.FailParserCountPolicy(threshold)
 
 def FailTotalRuleCountPolicy(threshold):
-    return smvPy._jvm.FailTotalRuleCountPolicy(threshold)
+    return SmvApp.getInstance()._jvm.FailTotalRuleCountPolicy(threshold)
 
 def FailTotalFixCountPolicy(threshold):
-    return smvPy._jvm.FailTotalFixCountPolicy(threshold)
+    return SmvApp.getInstance()._jvm.FailTotalFixCountPolicy(threshold)
 
 def FailTotalRulePercentPolicy(threshold):
-    return smvPy._jvm.FailTotalRulePercentPolicy(threshold * 1.0)
+    return SmvApp.getInstance()._jvm.FailTotalRulePercentPolicy(threshold * 1.0)
 
 def FailTotalFixPercentPolicy(threshold):
-    return smvPy._jvm.FailTotalFixPercentPolicy(threshold * 1.0)
+    return SmvApp.getInstance()._jvm.FailTotalFixPercentPolicy(threshold * 1.0)
 
 # DQM task policies
 def FailNone():
-    return smvPy._jvm.DqmTaskPolicies.failNone()
+    return SmvApp.getInstance()._jvm.DqmTaskPolicies.failNone()
 
 def FailAny():
-    return smvPy._jvm.DqmTaskPolicies.failAny()
+    return SmvApp.getInstance()._jvm.DqmTaskPolicies.failAny()
 
 def FailCount(threshold):
-    return smvPy._jvm.FailCount(threshold)
+    return SmvApp.getInstance()._jvm.FailCount(threshold)
 
 def FailPercent(threshold):
-    return smvPy._jvm.FailPercent(threshold * 1.0)
+    return SmvApp.getInstance()._jvm.FailPercent(threshold * 1.0)
 
 def DQMRule(rule, name = None, taskPolicy = None):
     task = taskPolicy or FailNone()
-    return smvPy._jvm.DQMRule(rule._jc, name, task)
+    return SmvApp.getInstance()._jvm.DQMRule(rule._jc, name, task)
 
 def DQMFix(condition, fix, name = None, taskPolicy = None):
     task = taskPolicy or FailNone()
-    return smvPy._jvm.DQMFix(condition._jc, fix._jc, name, task)
+    return SmvApp.getInstance()._jvm.DQMFix(condition._jc, fix._jc, name, task)

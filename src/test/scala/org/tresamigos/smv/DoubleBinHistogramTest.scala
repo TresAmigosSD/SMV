@@ -15,13 +15,11 @@
 package org.tresamigos.smv
 import org.apache.spark.sql.functions._
 
-
 class DoubleBinHistogramTest extends SmvTestUtil {
 
   test("Test the smvDoubleBinHistogram function with single key, single value") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("id:Integer; v:Double;",
-      """1,0.0; 1,100.0;1,25.0;1,60.5""")
+    val df  = dfFrom("id:Integer; v:Double;", """1,0.0; 1,100.0;1,25.0;1,60.5""")
 
     val df_with_bins = df.smvDoubleBinHistogram("id", "v", 2)
     assert(df_with_bins.schema.fieldNames.mkString(",") == "id,v_bin")
@@ -36,9 +34,9 @@ class DoubleBinHistogramTest extends SmvTestUtil {
   test("Test the smvDoubleBinHistogram function with multi-keys, multi-values") {
     val ssc = sqlContext; import ssc.implicits._
     val df = dfFrom("id1:Integer; id2:Integer; v1:Double; v2:Double;",
-      """1,10,0.0,1000.0; 1,10,100.0,20.0;1,10,25.0,0.0;1,10,60.5,500.0""")
+                    """1,10,0.0,1000.0; 1,10,100.0,20.0;1,10,25.0,0.0;1,10,60.5,500.0""")
 
-    val df_with_bins = df.smvDoubleBinHistogram(Seq("id1","id2"), Seq("v1","v2"), Seq(2,2))
+    val df_with_bins = df.smvDoubleBinHistogram(Seq("id1", "id2"), Seq("v1", "v2"), Seq(2, 2))
 
     assert(df_with_bins.schema.fieldNames.mkString(",") == "id1,id2,v1_bin,v2_bin")
 
@@ -55,12 +53,13 @@ class DoubleBinHistogramTest extends SmvTestUtil {
     assertSrddDataEqual(res4, "750.0")
   }
 
-  test("Test the smvDoubleBinHistogram function with multi-keys, multi-values using default num of bins") {
+  test(
+    "Test the smvDoubleBinHistogram function with multi-keys, multi-values using default num of bins") {
     val ssc = sqlContext; import ssc.implicits._
     val df = dfFrom("id1:Integer; id2:Integer; v1:Double; v2:Double;",
-      """1,10,0.0,1000.0; 1,10,100.0,20.0;1,10,25.0,0.0;1,10,60.5,500.0""")
+                    """1,10,0.0,1000.0; 1,10,100.0,20.0;1,10,25.0,0.0;1,10,60.5,500.0""")
 
-    val df_with_bins = df.smvDoubleBinHistogram(Seq("id1","id2"), Seq("v1","v2"), Seq(2))
+    val df_with_bins = df.smvDoubleBinHistogram(Seq("id1", "id2"), Seq("v1", "v2"), Seq(2))
 
     assert(df_with_bins.schema.fieldNames.mkString(",") == "id1,id2,v1_bin,v2_bin")
 
@@ -77,10 +76,9 @@ class DoubleBinHistogramTest extends SmvTestUtil {
     assertSrddDataEqual(res4, "999.5")
   }
 
-  test("Test the smvDoubleBinHistogram column post fix" ) {
+  test("Test the smvDoubleBinHistogram column post fix") {
     val ssc = sqlContext; import ssc.implicits._
-    val df = dfFrom("id:Integer; v:Double;",
-      """1,0.0; 1,100.0;1,25.0;1,60.5""")
+    val df  = dfFrom("id:Integer; v:Double;", """1,0.0; 1,100.0;1,25.0;1,60.5""")
 
     val df_with_bins = df.smvDoubleBinHistogram("id", "v", 2, "_xyz")
     assert(df_with_bins.schema.fieldNames.mkString(",") == "id,v_xyz")
@@ -93,9 +91,10 @@ class DoubleBinHistogramTest extends SmvTestUtil {
     val ssc = sqlContext; import ssc.implicits._
 
     val df = app.createDF("age:Integer", "60;56;63;36;41;43;69")
-    val res = df.smvSelectPlus(lit(1) as "id").
-      smvDoubleBinHistogram(Seq("id"), "age", 30).
-      select($"age_bin".smvBinPercentile(50.0) as "age_med")
+    val res = df
+      .smvSelectPlus(lit(1) as "id")
+      .smvDoubleBinHistogram(Seq("id"), "age", 30)
+      .select($"age_bin".smvBinPercentile(50.0) as "age_med")
 
     assertSrddDataEqual(res, "56.349999999999994")
   }

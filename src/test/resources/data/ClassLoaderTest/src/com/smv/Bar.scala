@@ -1,6 +1,5 @@
 package com.smv
 
 class Bar() {
-  val x : Int = 55
+  val x: Int = 55
 }
-

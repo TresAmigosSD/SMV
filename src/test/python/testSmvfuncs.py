@@ -19,7 +19,7 @@ from smvbasetest import SmvBaseTest
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
-from smvfuncs import *
+from smv.functions import *
 
 class SmvfuncsTest(SmvBaseTest):
     def test_smvFirst(self):

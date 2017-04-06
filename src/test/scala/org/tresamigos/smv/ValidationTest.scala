@@ -26,8 +26,9 @@ class ValidationTest extends SmvTestUtil {
     )
     val str = v.toJSON
     val res = pretty(parse(str))
-    assert(res ===
-"""{
+    assert(
+      res ===
+        """{
   "passed" : false,
   "errorMessages" : [ {
     "p1" : "many issues:\n Issue1: ...\n Issue2: ..."
@@ -56,9 +57,9 @@ class ValidationTest extends SmvTestUtil {
     val v3 = ValidationResult(
       false,
       Seq(("p2", "issue message2")),
-      Seq("log1","log2")
+      Seq("log1", "log2")
     )
 
-    assert( (v1 ++ v2) === v3 )
+    assert((v1 ++ v2) === v3)
   }
 }

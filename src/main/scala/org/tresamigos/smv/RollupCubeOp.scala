@@ -33,10 +33,9 @@ import org.apache.spark.sql.catalyst.expressions.{Alias, First, Literal, Express
  */
 @deprecated("Use Spark rollup/cube", "1.4")
 private[smv] class RollupCubeOp(df: DataFrame,
-                   keyCols: Seq[String],
-                   cols: Seq[String],
-                   sentinel: String = "*"
-                 ) {
+                                keyCols: Seq[String],
+                                cols: Seq[String],
+                                sentinel: String = "*") {
 
   /** for N cube cols, we want to produce 2**N columns (minus all "*") */
   def cubeBitmasks() = {
@@ -60,9 +59,10 @@ private[smv] class RollupCubeOp(df: DataFrame,
   def createSRDDWithSentinel(bitmask: Int) = {
     import df.sqlContext.implicits._
 
-    val cubeColsSelect = cols.zipWithIndex.map { case (s, i) =>
-      val idx = cols.length - i - 1
-      if (((1 << idx) & bitmask) != 0) lit(sentinel) as s else $"$s"
+    val cubeColsSelect = cols.zipWithIndex.map {
+      case (s, i) =>
+        val idx = cols.length - i - 1
+        if (((1 << idx) & bitmask) != 0) lit(sentinel) as s else $"$s"
     }
     val otherColsSelect = getNonRollupCols().map(n => $"$n")
 
@@ -75,7 +75,7 @@ private[smv] class RollupCubeOp(df: DataFrame,
    * the given bitmasks.
    */
   def duplicateSRDDByBitmasks(bitmasks: Seq[Int]) = {
-    bitmasks.map(m => createSRDDWithSentinel(m)).reduceLeft((s1,s2) => s1.unionAll(s2))
+    bitmasks.map(m => createSRDDWithSentinel(m)).reduceLeft((s1, s2) => s1.unionAll(s2))
   }
 
   /**
@@ -83,8 +83,9 @@ private[smv] class RollupCubeOp(df: DataFrame,
    */
   private def duplicateAndGroup(bitmasks: Seq[Int]) = {
     val cubeCols = keyCols ++ cols
-    duplicateSRDDByBitmasks(bitmasks).
-      smvGroupBy(cubeCols.map{c=> new ColumnName(c)}: _*)
+    duplicateSRDDByBitmasks(bitmasks).smvGroupBy(cubeCols.map { c =>
+      new ColumnName(c)
+    }: _*)
   }
 
   /**
