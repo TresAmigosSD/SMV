@@ -28,9 +28,11 @@ TAB_SIZE = 4
 
 # ---------- Helper Functions ---------- #
 
-def indentation(s):
-    sx = s.expandtabs(TAB_SIZE)
-    return 0 if sx.isspace() else len(sx) - len(sx.lstrip())
+def indentation(tabbed_str):
+    no_tabs_str = tabbed_str.expandtabs(TAB_SIZE)
+    # if string has only whitespace, return 0 indentation.
+    # else return length of string minus len of str with preceding whitespace stripped
+    return 0 if no_tabs_str.isspace() else len(no_tabs_str) - len(no_tabs_str.lstrip())
 
 def test_compile_for_errors(fullname):
     error = None
@@ -70,8 +72,10 @@ def test_compile_for_errors(fullname):
 #     return (run_method_start, run_method_end)
 
 # assumes class definition indentation is always 0
-def get_SMV_module_class_start_end(lines_of_code_list):
-    test_module_class_def = "class EmploymentByState("
+def get_SMV_module_class_start_end(lines_of_code_list, module_name):
+    test_module_class_def = "class {}(".format(module_name)
+    print 'module_name', module_name
+    print 'test_module_class_def', test_module_class_def
     start = None
     end = None
     # detect module class def
@@ -84,9 +88,14 @@ def get_SMV_module_class_start_end(lines_of_code_list):
     return (start, end)
 
 
-def get_filepath_from_moduleName(module_name):
-    prefix = "./src/main/python/"
-    return prefix + "/".join(module_name.split(".")[:-1]) + ".py"
+def get_filepath_from_moduleFqn(module_fqn):
+    # TODO: what env var for projects/ directory?
+    prefix = '/projects/' + project_dir + "/src/main/python/"
+    # dir1.dir2.file.class => [dir1, dir2, file]
+    fqn_dirs_filename_list = module_fqn.split(".")[:-1]
+    # concats fqn_dirs_filename_list into string with "/" intermezzo, appends .py, prepends prefix
+    filepath = prefix + "/".join(fqn_dirs_filename_list) + ".py"
+    return filepath
 
 def get_output_dir():
     output_dir = smvPy.outputDir()
@@ -200,16 +209,36 @@ def get_module_code_file_mapping():
     module_dict = get_module_file_mapping(files, patterns)
     return module_dict
 
+def error_response(err, res="", other_kv={}):
+    retval = other_kv
+    retval["err"] = err
+    retval["res"] = res
+    return jsonify(retval)
+
+def success_response(res, other_kv={}):
+    retval = other_kv
+    retval["err"] = OK
+    retval["res"] = res
+    return jsonify(retval)
+
+def get_module_name_from_fqn(fqn):
+    return fqn.split(".")[-1:]
+
 # ---------- API Definition ---------- #
 
-MODULE_NOT_PROVIDED_ERR = 'ERROR: No module name is provided!'
+MODULE_NOT_PROVIDED_ERR = 'ERROR: No module name provided!'
 MODULE_NOT_FOUND_ERR = 'ERROR: Job failed to run. Please check whether the module name is valid!'
 MODULE_ALREADY_EXISTS_ERR = 'ERROR: Module already exists!'
-TYPE_NOT_PROVIDED_ERR = 'ERROR: No module type is provided!'
+TYPE_NOT_PROVIDED_ERR = 'ERROR: No module type provided!'
 TYPE_NOT_SUPPORTED_ERR = 'ERROR: Module type not supported!'
-CODE_NOT_PROVIDED_ERR = 'ERROR: No module code is provided!'
+CODE_NOT_PROVIDED_ERR = 'ERROR: No module code provided!'
 OPEN_MODULE_FILE_ERR = 'ERROR: File not found'
 JOB_SUCCESS = 'SUCCESS: Job finished.'
+OK = ""
+
+@app.route("/api/test", methods = ['GET'])
+def get_project_dir():
+    return success_response('success msg')
 
 @app.route("/api/run_module", methods = ['POST'])
 def run_module():
@@ -231,28 +260,29 @@ def run_module():
 @app.route("/api/get_module_code", methods = ['POST'])
 def get_module_code():
     '''
-    body: name = 'xxx' (fqn)
+    body: fqn = 'xxx'
     function: return the module's code
     '''
     try:
-        module_name = request.form['name']
+        module_fqn = request.form['fqn']
     except:
-        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+        return error_response(MODULE_NOT_PROVIDED_ERR)
 
-    file_name = get_filepath_from_moduleName(module_name)
+    file_name = get_filepath_from_moduleFqn(module_fqn)
+    module_name = get_module_name_from_fqn(module_fqn)
 
     try:
         with open(file_name, 'rb') as f:
             lines_of_code_list = f.readlines()
-        (class_start, class_end) = get_SMV_module_class_start_end(lines_of_code_list)
+        (class_start, class_end) = get_SMV_module_class_start_end(lines_of_code_list, module_name)
         file_content = [line.rstrip() for line in lines_of_code_list]
         res = {
             'fileName': file_name,
             'fileContent': file_content[class_start:class_end],
         }
-        return jsonify(res=res)
+        return success_response(res)
     except:
-        raise ValueError(MODULE_NOT_FOUND_ERR)
+        return error_response(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/update_module_code", methods = ['POST'])
 def update_module_code():
@@ -268,14 +298,14 @@ def update_module_code():
 
     try:
         module_fqn = request.form["fqn"]
-        module_name = request.form['moduleName']
+        module_name = get_module_name_from_fqn(module_fqn)
     except:
-        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+        return error_response(MODULE_NOT_PROVIDED_ERR)
 
     try:
         module_code = request.form['code']
     except:
-        raise ValueError(CODE_NOT_PROVIDED_ERR)
+        return error_response(CODE_NOT_PROVIDED_ERR)
 
     global module_file_map
     if not module_file_map:
@@ -337,12 +367,12 @@ def update_module_code():
             with open(file_name, 'w') as fd:
                 for i in xrange(len(updated_code)):
                     fd.write(updated_code[i])
-            return JOB_SUCCESS
+            return success_response(JOB_SUCCESS)
         else:
             return OPEN_MODULE_FILE_ERR
     else:
         # TODO: deal with new module
-        raise ValueError(MODULE_NOT_FOUND_ERR)
+        return error_response(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/get_sample_output", methods = ['POST'])
 def get_sample_output():
@@ -460,4 +490,5 @@ if __name__ == "__main__":
     # start server
     host = os.environ.get('SMV_HOST', '0.0.0.0')
     port = os.environ.get('SMV_PORT', '5000')
+    project_dir = os.environ.get('PROJECT_DIR', './')
     app.run(host=host, port=int(port))
