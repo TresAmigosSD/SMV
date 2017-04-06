@@ -16,9 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
 
-import org.joda.time._
-import org.joda.time.format._
-import dqm._
+import dqm.{DQMValidator, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 
 import scala.collection.JavaConversions._
 import scala.util.Try

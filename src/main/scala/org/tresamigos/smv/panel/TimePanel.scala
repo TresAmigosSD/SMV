@@ -12,14 +12,13 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.panel
+package org.tresamigos.smv
+package panel
 
-import org.joda.time._
+import org.joda.time.{DateTime, DateTimeZone, LocalDate}
 import java.sql.{Timestamp, Date}
-import org.apache.spark.annotation._
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.format_string
 import org.apache.spark.sql.{Column, DataFrame}
-import org.tresamigos.smv._
 
 /**
  * PartialTime is a "gross" time concept.

@@ -16,9 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{ColumnName}
-import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.{Alias, First, Literal, Expression}
+import org.apache.spark.sql.ColumnName
 
 /**
  * implement the cube/rollup operations on a given SRDD and a set of columns.

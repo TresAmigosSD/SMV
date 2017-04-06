@@ -14,9 +14,8 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.contrib.smv._
-import org.apache.spark.sql.types._
-import scala.util.Try
+import org.apache.spark.sql.contrib.smv.{getNumeric, getOrdering, mergeStructType}
+import org.apache.spark.sql.types.{StructField, StructType}
 
 private[smv] class StructFieldHelper(field: StructField) {
   def ordering() = getOrdering(field.dataType)

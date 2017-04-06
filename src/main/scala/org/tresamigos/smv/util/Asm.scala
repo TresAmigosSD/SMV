@@ -18,7 +18,7 @@ package util
 import com.google.common.io.ByteStreams
 import java.io._
 import scala.tools.asm.ClassReader
-import scala.tools.asm.util._
+import scala.tools.asm.util.{TraceClassVisitor, Textifier}
 
 /**
  * Utility methods for analysis of class bytecode.

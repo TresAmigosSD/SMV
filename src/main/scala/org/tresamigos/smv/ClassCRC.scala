@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import java.io.{InputStream, StringWriter, PrintWriter}
+import java.io.InputStream
 import java.util.zip.CRC32
 
 import scala.util.control.NonFatal

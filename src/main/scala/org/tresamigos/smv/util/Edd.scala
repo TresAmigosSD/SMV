@@ -12,19 +12,19 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.shell
+package org.tresamigos.smv
+package util
 
-import org.tresamigos.smv._, edd._
-import org.apache.spark.annotation._
+import org.apache.spark.annotation.Experimental
 
 /**
  * Provides list functions for a SmvStage or SmvStages
  **/
 @Experimental
-object EddCompare {
+object Edd {
   private def readEddFile(path: String) = SmvApp.app.sqlContext.read.json(path)
   def compareFiles(f1: String, f2: String) =
-    EddResultFunctions(readEddFile(f1)).compareWith(readEddFile(f2))
+    edd.EddResultFunctions(readEddFile(f1)).compareWith(readEddFile(f2))
 
   def compareDirs(d1: String, d2: String) = {
     val dir1Files = SmvHDFS

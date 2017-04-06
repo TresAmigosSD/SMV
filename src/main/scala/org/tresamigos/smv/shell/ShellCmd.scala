@@ -12,14 +12,13 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.shell
-import org.apache.spark.sql._
-import org.apache.spark.sql.functions._
+package org.tresamigos.smv
+package shell
 
-import org.joda.time._
-import org.joda.time.format._
+import org.apache.spark.sql.{DataFrame}
 
-import org.tresamigos.smv._
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 /**
  * Provide functions for the interactive shell
