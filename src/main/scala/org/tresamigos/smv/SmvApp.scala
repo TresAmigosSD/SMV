@@ -14,16 +14,12 @@
 
 package org.tresamigos.smv
 
-import org.tresamigos.smv.class_loader.SmvClassLoader
 import org.tresamigos.smv.shell.EddCompare
-import dqm.DQMValidator
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.SparkConf
 
 import scala.collection.mutable
-import scala.collection.JavaConversions._
-import scala.util.control.NonFatal
 import scala.util.{Try, Success, Failure}
 
 /**
