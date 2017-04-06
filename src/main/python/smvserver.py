@@ -48,27 +48,45 @@ def test_compile_for_errors(fullname):
 
     return error
 
-def get_SMV_module_run_method_start_end(lines_of_code_list):
-    test_module_class_def = "class EmploymentByState(SmvModule"
-    module_definition_found = False
-    run_method_start = None
-    run_method_end = None
+# def get_SMV_module_run_method_start_end(lines_of_code_list):
+#     test_module_class_def = "class EmploymentByState(SmvModule"
+#     module_definition_found = False
+#     run_method_start = None
+#     run_method_end = None
+#     # detect module class def
+#     for i, line in enumerate(lines_of_code_list):
+#         if line.lstrip().startswith(test_module_class_def):
+#             module_definition_found = True
+#             test_run_method = (" " * (indentation(line) + TAB_SIZE)) + "def run("
+#         # detect run method if not already found
+#         if (module_definition_found and run_method_start is None) \
+#         and line.expandtabs(TAB_SIZE).startswith(test_run_method):
+#             run_method_start = i
+#             continue
+#         # detect end of run method
+#         if run_method_start is not None:
+#             if (run_method_end is None and i == (len(lines_of_code_list) - 1)):
+#                 run_method_end = i;
+#     return (run_method_start, run_method_end)
+
+# assumes class definition indentation is always 0
+def get_SMV_module_class_start_end(lines_of_code_list):
+    test_module_class_def = "class EmploymentByState("
+    start = None
+    end = None
     # detect module class def
     for i, line in enumerate(lines_of_code_list):
         if line.lstrip().startswith(test_module_class_def):
-            module_definition_found = True
-            test_run_method = (" " * (indentation(line) + TAB_SIZE)) + "def run("
-        # detect run method if not already found
-        if (module_definition_found and run_method_start is None) \
-        and line.expandtabs(TAB_SIZE).startswith(test_run_method):
-            run_method_start = i
-            continue
-        # detect end of run method
-        if run_method_start is not None:
-            if (run_method_end is None and i == (len(lines_of_code_list) - 1)):
-                run_method_end = i;
-    return (run_method_start, run_method_end)
+            start = i
+        if start is not None:
+            if (indentation(line) == 0) or (i == (len(lines_of_code_list) - 1)):
+                end = i
+    return (start, end)
 
+
+def get_filepath_from_moduleName(module_name):
+    prefix = "./src/main/python/"
+    return prefix + "/".join(module_name.split(".")[:-1]) + ".py"
 
 def get_output_dir():
     output_dir = smvPy.outputDir()
@@ -221,17 +239,16 @@ def get_module_code():
     except:
         raise ValueError(MODULE_NOT_PROVIDED_ERR)
 
+    file_name = get_filepath_from_moduleName(module_name)
+
     try:
-        global module_file_map
-        if not module_file_map:
-            module_file_map = get_module_code_file_mapping()
-        file_name = module_file_map[module_name]
         with open(file_name, 'rb') as f:
-            res = f.readlines()
-        file_content = [line.rstrip() for line in res]
+            lines_of_code_list = f.readlines()
+        (class_start, class_end) = get_SMV_module_class_start_end(lines_of_code_list)
+        file_content = [line.rstrip() for line in lines_of_code_list]
         res = {
             'fileName': file_name,
-            'fileContent': file_content,
+            'fileContent': file_content[class_start:class_end],
         }
         return jsonify(res=res)
     except:
@@ -365,6 +382,7 @@ def get_graph_json():
     body: none
     function: return the json file of the entire dependency graph
     '''
+    print "\nreturning dep graph"
     res = smvPy.get_graph_json()
     return jsonify(res=res)
 
