@@ -74,17 +74,21 @@ def test_compile_for_errors(fullname):
 # assumes class definition indentation is always 0
 def get_SMV_module_class_start_end(lines_of_code_list, module_name):
     test_module_class_def = "class {}(".format(module_name)
-    print 'module_name', module_name
-    print 'test_module_class_def', test_module_class_def
     start = None
     end = None
+
     # detect module class def
     for i, line in enumerate(lines_of_code_list):
         if line.lstrip().startswith(test_module_class_def):
             start = i
+            continue
         if start is not None:
-            if (indentation(line) == 0) or (i == (len(lines_of_code_list) - 1)):
+            # check if string not blank and has no indentation, or this is the last line
+            if (not line.isspace() and indentation(line) == 0):
                 end = i
+                break
+    if start is not None and end is None:
+        end = len(lines_of_code_list)
     return (start, end)
 
 
@@ -222,7 +226,7 @@ def success_response(res, other_kv={}):
     return jsonify(retval)
 
 def get_module_name_from_fqn(fqn):
-    return fqn.split(".")[-1:]
+    return fqn.split(".")[-1:][0]   # a.b.c => [a,b,c] => [c] => c
 
 # ---------- API Definition ---------- #
 
@@ -232,7 +236,7 @@ MODULE_ALREADY_EXISTS_ERR = 'ERROR: Module already exists!'
 TYPE_NOT_PROVIDED_ERR = 'ERROR: No module type provided!'
 TYPE_NOT_SUPPORTED_ERR = 'ERROR: Module type not supported!'
 CODE_NOT_PROVIDED_ERR = 'ERROR: No module code provided!'
-OPEN_MODULE_FILE_ERR = 'ERROR: File not found'
+COMPILATION_ERROR = 'ERROR: Compilation error'
 JOB_SUCCESS = 'SUCCESS: Job finished.'
 OK = ""
 
@@ -264,7 +268,7 @@ def get_module_code():
     function: return the module's code
     '''
     try:
-        module_fqn = request.form['fqn']
+        module_fqn = request.form['fqn'].encode("utf-8")
     except:
         return error_response(MODULE_NOT_PROVIDED_ERR)
 
@@ -275,6 +279,7 @@ def get_module_code():
         with open(file_name, 'rb') as f:
             lines_of_code_list = f.readlines()
         (class_start, class_end) = get_SMV_module_class_start_end(lines_of_code_list, module_name)
+
         file_content = [line.rstrip() for line in lines_of_code_list]
         res = {
             'fileName': file_name,
@@ -292,12 +297,12 @@ def update_module_code():
         code = ['line1', 'line2', ...]
     function: update the module's code
     '''
-
     run_method_start = None
     run_method_end = None
 
     try:
         module_fqn = request.form["fqn"]
+        file_name = get_filepath_from_moduleFqn(module_fqn)
         module_name = get_module_name_from_fqn(module_fqn)
     except:
         return error_response(MODULE_NOT_PROVIDED_ERR)
@@ -307,71 +312,59 @@ def update_module_code():
     except:
         return error_response(CODE_NOT_PROVIDED_ERR)
 
-    global module_file_map
-    if not module_file_map:
-        module_file_map = get_module_code_file_mapping()
+    module_code = json.loads(module_code)
+    module_code = [line.encode('utf-8') for line in module_code]
 
-    if (module_file_map.has_key(module_fqn)):
-        file_name = module_file_map[module_fqn]
+    # if file exists.. create copy
+    if os.path.isfile(file_name):
+        duplicate_file_name = file_name[:-3] + "_smv_update_code_duplicate.py" # -3 is len(".py")
+        copyfile(file_name, duplicate_file_name)
 
-        # TODO: get filepath from modulename
+        lines_of_code = None                    # counter for number of lines of code
+        lines_of_code_list = [];                # list containing a string for each line of code
 
-        module_code = json.loads(module_code)
-        module_code = [line.encode('utf-8') for line in module_code]
+        # open duplicate and update its run method with code input
+        with open(duplicate_file_name, 'r+') as fd:
+            lines_of_code_list = fd.readlines()
+            lines_of_code = len(lines_of_code_list)
 
-        # if file exists.. create copy
-        if os.path.isfile(file_name):
-            duplicate_file_name = file_name[:-3] + "_smv_update_code_duplicate.py" # -3 is len(".py")
-            copyfile(file_name, duplicate_file_name)
+            # TODO: temporarily updating class code, not run method.
+            # (run_method_start, run_method_end) = get_SMV_module_run_method_start_end(lines_of_code_list)
+            (run_method_start, run_method_end) = get_SMV_module_class_start_end(lines_of_code_list, module_name)
 
-            lines_of_code = None                    # counter for number of lines of code
-            lines_of_code_list = [];                # list containing a string for each line of code
+            # determine what to do if run method not provided
+            if not run_method_start and not run_method_end:
+                return 'no run method found in module' # TODO error message
 
-            # open duplicate and update its run method with code input
-            with open(duplicate_file_name, 'r+') as fd:
-                lines_of_code_list = fd.readlines()
-                lines_of_code = len(lines_of_code_list)
+            code_before_run_method = lines_of_code_list[:run_method_start]
+            code_after_run_method = lines_of_code_list[run_method_end:]
+            new_run_method_code = module_code
+            updated_code = code_before_run_method + new_run_method_code + code_after_run_method
 
-                # TODO: temporarily updating class code
-                # (run_method_start, run_method_end) = get_SMV_module_class_start_end(lines_of_code_list)
-                (run_method_start, run_method_end) = get_SMV_module_class_start_end(lines_of_code_list)
+            # modify duplicate
+            fd.seek(0)  # reset file stream
+            fd.truncate()
+            for i in xrange(len(updated_code)):
+                fd.write(updated_code[i])
 
-                # determine what to do if run method not provided
-                if not run_method_start and not run_method_end:
-                    return 'no run method found in module'
+        # compile duplicate
+        compile_has_errors = test_compile_for_errors(duplicate_file_name)
+        print "compile_errors: " + str(compile_has_errors)
 
-                code_before_run_method = lines_of_code_list[:run_method_start]
-                code_after_run_method = lines_of_code_list[(run_method_end + 1):]
-                new_run_method_code = module_code
-                updated_code = code_before_run_method + new_run_method_code + code_after_run_method
+        # remove duplicate and its .pyc
+        os.remove(duplicate_file_name)
+        if os.path.isfile(duplicate_file_name + 'c'):
+            os.remove(duplicate_file_name + 'c')
 
-                # modify duplicate
-                fd.seek(0)  # reset file stream
-                fd.truncate()
-                for i in xrange(len(updated_code)):
-                    fd.write(updated_code[i])
+        if compile_has_errors:
+            return error_response(COMPILATION_ERROR, compile_has_errors, {originalCode: str(lines_of_code_list)})
 
-            # compile duplicate
-            compile_has_errors = test_compile_for_errors(duplicate_file_name)
-            print "compile_errors: " + str(compile_has_errors)
-
-            # remove duplicate and its .pyc
-            os.remove(duplicate_file_name)
-            if os.path.isfile(duplicate_file_name + 'c'):
-                os.remove(duplicate_file_name + 'c')
-
-            if compile_has_errors:
-                return jsonify(error=compile_has_errors)
-
-            # if duplicate's compile successfull, modify the code of the original file
-            with open(file_name, 'w') as fd:
-                for i in xrange(len(updated_code)):
-                    fd.write(updated_code[i])
-            return success_response(JOB_SUCCESS)
-        else:
-            return OPEN_MODULE_FILE_ERR
+        # if duplicate's compile successfull, modify the code of the original file
+        with open(file_name, 'w') as fd:
+            for i in xrange(len(updated_code)):
+                fd.write(updated_code[i])
+        return success_response(JOB_SUCCESS)
     else:
-        # TODO: deal with new module
         return error_response(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/get_sample_output", methods = ['POST'])
