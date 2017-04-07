@@ -237,7 +237,7 @@ TYPE_NOT_PROVIDED_ERR = 'ERROR: No module type provided!'
 TYPE_NOT_SUPPORTED_ERR = 'ERROR: Module type not supported!'
 CODE_NOT_PROVIDED_ERR = 'ERROR: No module code provided!'
 COMPILATION_ERROR = 'ERROR: Compilation error'
-JOB_SUCCESS = 'SUCCESS: Job finished.'
+JOB_SUCCESS = 'SUCCESS: Code updated!'
 OK = ""
 
 @app.route("/api/test", methods = ['GET'])
@@ -283,7 +283,7 @@ def get_module_code():
         file_content = [line.rstrip() for line in lines_of_code_list]
         res = {
             'fileName': file_name,
-            'fileContent': file_content[class_start:class_end],
+            'fileContent': file_content # file_content[class_start:class_end],
         }
         return success_response(res)
     except:
@@ -344,8 +344,12 @@ def update_module_code():
             # modify duplicate
             fd.seek(0)  # reset file stream
             fd.truncate()
-            for i in xrange(len(updated_code)):
-                fd.write(updated_code[i])
+            # for i in xrange(len(updated_code)):
+            #    fd.write(updated_code[i])
+
+            # uses all code.. not just class or run method
+            for i in xrange(len(lines_of_code_list)):
+                fd.write(lines_of_code_list[i])
 
         # compile duplicate
         compile_has_errors = test_compile_for_errors(duplicate_file_name)
@@ -357,12 +361,15 @@ def update_module_code():
             os.remove(duplicate_file_name + 'c')
 
         if compile_has_errors:
-            return error_response(COMPILATION_ERROR, compile_has_errors, {originalCode: str(lines_of_code_list)})
+            return error_response(COMPILATION_ERROR, compile_has_errors)
 
         # if duplicate's compile successfull, modify the code of the original file
         with open(file_name, 'w') as fd:
-            for i in xrange(len(updated_code)):
-                fd.write(updated_code[i])
+            # for i in xrange(len(updated_code)):
+            #     fd.write(updated_code[i])
+            for i in xrange(len(lines_of_code_list)):
+                fd.write(lines_of_code_list[i])
+
         return success_response(JOB_SUCCESS)
     else:
         return error_response(MODULE_NOT_FOUND_ERR)
