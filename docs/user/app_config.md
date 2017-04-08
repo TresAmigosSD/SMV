@@ -39,7 +39,7 @@ specific config into `smv-user-conf`. Also config the version control system to 
 `conf/smv-user-conf.props`.
 
 The property files `smv-app-conf.props` and `smv-user-conf.props` are standard Jave property files.
-Here is an example:
+Here is an `smv-app-conf.props` example:
 ```
 # application name
 smv.appName = My Sample App
@@ -53,8 +53,18 @@ smv.stages = org.tresamigos.sample.etl.internal, \
 # spark sql properties
 spark.sql.shuffle.partitions = 256
 
-# App config
-smv.runConfObj = org.tresamigos.sample.conf.Conf1
+# Runtime config
+smv.config.keys=sample
+smv.config.sample=full
+```
+
+Here is an `smv-user-conf.props` example:
+```
+# data dir
+smv.dataDir = hdfs:///user/myunixname/data
+smv.inputDir = hdfs:///applications/project/data/landingzone
+
+smv.config.sample=1pct
 ```
 
 ## SMV Config Parameters
@@ -96,6 +106,13 @@ Note that for sequence/list type parameters (e.g. smv.stages), a "," or ":" can 
 <td>empty</td>
 <td>Optional</td>
 <td>The configuration object to use. See <a href="smv_module.md">SmvModule</a> for details</td>
+</tr>
+
+<tr>
+<td>smv.config.keys</td>
+<td>empty</td>
+<td>Optional</td>
+<td>A list of runtime configuration keys user can specify, and accessed through the `smvGetRunConfi` method of `SmvRunConfig` mix-in</td>
 </tr>
 
 <tr>
@@ -145,6 +162,37 @@ Can be overridden using <code>--publish-dir</code> command line option</td>
 <td>directory where the class loader would look for new class instances.</td>
 </tr>
 </table>
+
+Please refer [Runtime User Configuration](run_config.md) for details and examples
+of how to use runtime user specified configuration.
+
+## Data Directories configuration
+SMV will access either local or HDFS for CSV input, module persistency and [publish](smv_stages.md).
+User have to specify `smv.dataDir` either through the configuration files or command line.
+
+There are 3 other parameters for specify the detail location of input, persisted and published data:
+* `smv.inputDir`
+* `smv.outputDir`
+* `smv.publishDir`
+
+With only `smv.dataDir` specified, 3 sub-dir, `input`, `output`, `publish` will be used as the default
+values.
+
+Typically for a team setup, each member should have their own project code, and their own `outputDir`.
+
+For example, all members share the same data input under `hdfs:///applications/project/data/landingzone`,
+and share a published dir `hdfs:///applications/project/shareddata`. The `smv-user-conf.props` for a
+team member will look like,
+
+```
+smv.dataDir = hdfs:///user/myunixname/data
+smv.inputDir = hdfs:///applications/project/data/landingzone
+smv.publishDir = hdfs:///applications/project/shareddata
+```
+
+In this case the persisted data will be under `hdfs:///user/myunixname/data/output`, and input/published
+data will in their specified location.
+
 
 ## Spark SQL configuration parameters.
 

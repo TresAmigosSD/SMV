@@ -17,15 +17,15 @@ import org.apache.spark.sql.types._
 
 class DataTypeHelperTest extends SparkTestUtil {
   test("test getOrdering") {
-    val field = StructField("f1", StringType)
-    val helper = new StructFieldHelper(field)
+    val field    = StructField("f1", StringType)
+    val helper   = new StructFieldHelper(field)
     val ordering = helper.ordering
     assert(ordering.compare("a", "b") < 0)
   }
 
   test("test getNumeric") {
-    val field = StructField("f1", LongType)
-    val helper = new StructFieldHelper(field)
+    val field   = StructField("f1", LongType)
+    val helper  = new StructFieldHelper(field)
     val numeric = helper.numeric
 
     val value: Any = 10l

@@ -21,12 +21,14 @@ package fixture {
   object TestConf extends SmvTestUtil
 
   object Module1 extends SmvModule("test Module1") {
-    override def version() = 1
-    override def requiresDS() = Nil
+    override def version()         = 1
+    override def requiresDS()      = Nil
     override def run(i: runParams) = null
   }
 
-  object file extends SmvCsvFile("./" + TestConf.testDataDir +  "CsvTest/test1", CsvAttributes.defaultCsvWithHeader)
+  object file
+      extends SmvCsvFile("./" + TestConf.testDataDir + "CsvTest/test1",
+                         CsvAttributes.defaultCsvWithHeader)
 }
 
 package smv {
@@ -40,7 +42,7 @@ package smv {
       assert(fixture.Module1.datasetCRC === 476910372)
     }
 
-    ignore("test moduleCrc on SmvFile"){
+    ignore("test moduleCrc on SmvFile") {
       assert(fixture.file.datasetCRC === 24672138)
     }
   }

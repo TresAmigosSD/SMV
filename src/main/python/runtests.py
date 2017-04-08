@@ -16,8 +16,6 @@ from unittest import *
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
 
-from smv import SmvApp as app
-
 import sys
 
 # shared spark and sql context
@@ -39,8 +37,6 @@ if __name__ == "__main__":
 
     TestPath = "./src/test/python"
     SrcPath = "./src/main/python"
-
-    app.add_source(SrcPath)
 
     loader = TestLoader()
 

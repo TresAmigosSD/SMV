@@ -11,42 +11,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import smvPy, SmvModule
+from smv import SmvApp, SmvModule
 
 class ChangeCode(SmvModule):
     def requiresDS(self): return []
     def run(self, i):
-        return self.smvPy.createDF("k:String;v:Integer", "a,;b,2")
+        return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
 
 class AddComment(SmvModule):
     def requiresDS(Self): return[]
     def run(self,i):
-        return self.smvPy.createDF("k:String;v:Integer", "a,;b,5")
+        return self.smvApp.createDF("k:String;v:Integer", "a,;b,5")
 
 class DependencyA(SmvModule):
     def requiresDS(Self): return[]
     def run(self,i):
-        return self.smvPy.createDF("k:String;v:Integer", "a,;b,6")
+        return self.smvApp.createDF("k:String;v:Integer", "a,;b,6")
 
 class Dependent(DependencyA):
     def requiresDS(Self): return[]
     def run(self,i):
-        return self.smvPy.createDF("k:String;v:Integer", "a,;b,7")
+        return self.smvApp.createDF("k:String;v:Integer", "a,;b,7")
 
 class Upstream(SmvModule):
     def requiresDS(Self): return[]
     def run(self,i):
-        return self.smvPy.createDF("k:String;v:Integer", "a,;b,45")
+        return self.smvApp.createDF("k:String;v:Integer", "a,;b,45")
 
 class Downstream(SmvModule):
     def requiresDS(Self): return[Upstream]
     def run(self,i):
-        return self.smvPy.createDF("k:String;v:Integer", "a,;b,30")
+        return self.smvApp.createDF("k:String;v:Integer", "a,;b,30")
 
 class Parent(SmvModule):
     def requiresDS(Self): return[Upstream]
     def run(self,i):
-        return self.smvPy.createDF("k:String;v:Integer", "a,;b,30")
+        return self.smvApp.createDF("k:String;v:Integer", "a,;b,30")
 
 class Child(Parent):
     pass

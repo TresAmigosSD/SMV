@@ -14,21 +14,20 @@
 
 package org.tresamigos.smv.class_loader
 
-import org.eclipse.jetty.server.Server
 import org.tresamigos.smv.{SmvTestUtil, SmvConfig, SparkTestUtil}
 
-trait ClassLoaderTestHelper {
-  this : SparkTestUtil =>
+trait ClassLoaderTestHelper { this: SparkTestUtil =>
 
-  val PORT = 9999
+  val PORT               = 9999
   val classLoaderTestDir = testDataDir + "ClassLoaderTest"
 
   def cmdLineArgs(host: String, port: Integer, classDir: String) = {
     Seq("--smv-props",
-      s"smv.class_dir=${classDir}",
-      "smv.stages=com.smv",
-      "smv.dataDir=.",
-      "-m", "mod1")
+        s"smv.class_dir=${classDir}",
+        "smv.stages=com.smv",
+        "smv.dataDir=.",
+        "-m",
+        "mod1")
   }
 
   def makeSmvConfig(host: String, port: Integer, classDir: String) = {
@@ -56,7 +55,7 @@ trait ClassLoaderTestHelper {
 }
 
 class LocalClassLoaderTest extends SparkTestUtil with ClassLoaderTestHelper {
-  var classLoader : ClassLoader = _
+  var classLoader: ClassLoader = _
 
   override def beforeAll() = {
     super.beforeAll()
@@ -77,7 +76,7 @@ class ClassLoaderFactoryTest extends SparkTestUtil with ClassLoaderTestHelper {
   test("test SmvClassLoader client factory for local client config") {
     // local server config: no hostname but a class dir (port is ignored)
     val clLocalConfig = makeSmvConfig("", 1234, "/tmp")
-    val clLocal = SmvClassLoader(clLocalConfig).asInstanceOf[SmvClassLoader]
+    val clLocal       = SmvClassLoader(clLocalConfig).asInstanceOf[SmvClassLoader]
 
     // we better have created a local client connection.
     assert(clLocal.isInstanceOf[SmvClassLoader])
@@ -86,7 +85,7 @@ class ClassLoaderFactoryTest extends SparkTestUtil with ClassLoaderTestHelper {
   test("test SmvClassLoader client factory for default config") {
     // default class loader config: no hostname, no class dir.  Port is ignored
     val clLDefaultConfig = makeSmvConfig("", 1234, "")
-    val clDefault = SmvClassLoader(clLDefaultConfig)
+    val clDefault        = SmvClassLoader(clLDefaultConfig)
 
     // we better have gotten the standard default jar loader.
     assert(clDefault === getClass.getClassLoader)

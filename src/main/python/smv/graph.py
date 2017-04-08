@@ -16,15 +16,15 @@
 from utils import smv_copy_array
 
 class SmvDependencyGraph(object):
-    def __init__(self, smvPy, stageNames = None):
-        self.smvPy = smvPy
-        self.stageNames = smvPy.j_smvApp.stages() if stageNames is None else smv_copy_array(smvPy.sc, stageNames)
+    def __init__(self, smvApp, stageNames = None):
+        self.smvApp = smvApp
+        self.stageNames = smvApp.j_smvApp.stages() if stageNames is None else smv_copy_array(SmvApp.getInstance().sc, stageNames)
 
     def __repr__(self):
         # use side effect to show graph, as it is a unicode string and
         # can't be displayed via __repr__
-        print(self.smvPy.j_smvPyClient.asciiGraph())
+        print(self.smvApp.j_smvPyClient.asciiGraph())
         return ''
 
     def _repr_png_(self):
-        return bytes(self.smvPy.j_smvPyClient.graph(self.smvPy.j_smvApp.stages(), 'png'))
+        return bytes(self.smvApp.j_smvPyClient.graph(self.smvApp.j_smvApp.stages(), 'png'))

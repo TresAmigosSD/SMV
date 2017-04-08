@@ -30,13 +30,15 @@ import scala.util.{Try, Success, Failure}
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) {
+class SmvApp(private val cmdLineArgs: Seq[String],
+             _sc: Option[SparkContext] = None,
+             _sql: Option[SQLContext] = None) {
 
-  val smvConfig = new SmvConfig(cmdLineArgs)
-  val genEdd = smvConfig.cmdLine.genEdd()
+  val smvConfig   = new SmvConfig(cmdLineArgs)
+  val genEdd      = smvConfig.cmdLine.genEdd()
   val publishHive = smvConfig.cmdLine.publishHive()
-  val stages = smvConfig.stageNames
-  val sparkConf = new SparkConf().setAppName(smvConfig.appName)
+  val stages      = smvConfig.stageNames
+  val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
 
   /** Register Kryo Classes
    * Since none of the SMV classes will be put in an RDD, register them or not does not make
@@ -45,8 +47,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * val allSerializables = SmvReflection.objectsInPackage[Serializable]("org.tresamigos.smv")
    * sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
    **/
-
-  val sc = _sc.getOrElse(new SparkContext(sparkConf))
+  val sc         = _sc.getOrElse(new SparkContext(sparkConf))
   val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
 
   // dsm should be private but will be temporarily public to accomodate outside invocations
@@ -75,10 +76,8 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
   lazy val allDataSets = dsm.allDataSets
 
   /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
-  private[smv] def validFilesInOutputDir() : Seq[String] =
-    allDataSets.
-      flatMap(_.currentModuleOutputFiles).
-      map(SmvHDFS.baseName(_))
+  private[smv] def validFilesInOutputDir(): Seq[String] =
+    allDataSets.flatMap(_.currentModuleOutputFiles).map(SmvHDFS.baseName(_))
 
   /** remove all non-current files in the output directory */
   private[smv] def purgeOldOutputFiles() = {
@@ -91,25 +90,7 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * dfCache the to ensure only a single DataFrame exists for a given data set
    * (file/module).
    */
-  val dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
-  def resolveRDD(ds: SmvDataSet): DataFrame = {
-    val vFqn = ds.versionedFqn
-    Try( dfCache(vFqn) ) match {
-      case Success(df) => df
-      case Failure(_) =>
-        val df = ds.rdd
-        dfCache += (vFqn -> df)
-        df
-    }
-  }
-
-  def genJSON(stageNames: Seq[String] = Seq()) = {
-    val pathName = s"${smvConfig.appName}.json"
-
-    val graphString = new graph.SmvGraphUtil(this, stageNames).createGraphJSON()
-
-    SmvReportIO.saveLocalReport(graphString, pathName)
-  }
+  var dfCache: Map[String, DataFrame] = Map.empty[String, DataFrame]
 
   /**
    * pass on the spark sql props set in the smv config file(s) to spark.
@@ -126,7 +107,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   private def deleteOutputModules() = {
     // TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
-    modulesToRun foreach {m => m.deleteOutputs()}
+    modulesToRun foreach { m =>
+      m.deleteOutputs()
+    }
   }
 
   /** Returns the app-level dependency graph as a dot string */
@@ -135,9 +118,9 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
 
   /**
    * generate dependency graphs if "-g" flag was specified on command line.
-   * @return true of graphs were generated otherwise return false.
+   * @return true if graph were generated otherwise return false.
    */
-  private def generateDependencyGraphs() : Boolean = {
+  private def generateDotDependencyGraph() : Boolean = {
     if (smvConfig.cmdLine.graph()) {
       val pathName = s"${smvConfig.appName}.dot"
       SmvReportIO.saveLocalReport(dependencyGraphDotString(stages), pathName)
@@ -147,40 +130,65 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     }
   }
 
+  /** Returns the app-level dependency graph as a json string */
+  def dependencyGraphJsonString(stageNames: Seq[String] = stages): String = {
+    new graph.SmvGraphUtil(this, stageNames).createGraphJSON()
+  }
+
+  /**
+   * generate JSON dependency graphs if "--json" flag was specified on command line.
+   * @return true if json graph were generated otherwise return false.
+   */
+  private def generateJsonDependencyGraph() : Boolean = {
+    if (smvConfig.cmdLine.jsonGraph()) {
+      val pathName = s"${smvConfig.appName}.json"
+      SmvReportIO.saveLocalReport(dependencyGraphJsonString(), pathName)
+      true
+    } else {
+      false
+    }
+  }
+
+  /**
+   * zero parameter wrapper around dependencyGraphJsonString that can be called from python directly.
+   * TODO: remove this once we pass args to dependencyGraphJsonString
+   */
+  def generateAllGraphJSON() = {
+    dependencyGraphJsonString()
+  }
+
   /**
    * compare EDD results if the --edd-compare flag was specified with edd files to compare.
    * @return true if edd files were compared, otherwise false.
    */
-  private def compareEddResults() : Boolean = {
-    smvConfig.cmdLine.compareEdd.map { eddsToCompare =>
-      val edd1 = eddsToCompare(0)
-      val edd2 = eddsToCompare(1)
-      val (passed, log) = EddCompare.compareFiles(edd1, edd2)
-      if (passed) {
-        println("EDD Results are the same")
-      } else {
-        println("EDD Results differ:")
-        println(log)
+  private def compareEddResults(): Boolean = {
+    smvConfig.cmdLine.compareEdd
+      .map { eddsToCompare =>
+        val edd1          = eddsToCompare(0)
+        val edd2          = eddsToCompare(1)
+        val (passed, log) = EddCompare.compareFiles(edd1, edd2)
+        if (passed) {
+          println("EDD Results are the same")
+        } else {
+          println("EDD Results differ:")
+          println(log)
+        }
+        true
       }
-      true
-    }.orElse(Some(false))()
-  }
-
-  def generateAllGraphJSON() = {
-    genJSON(stages)
+      .orElse(Some(false))()
   }
 
   /**
    * if the publish to hive flag is setn, the publish
    */
-  def publishModulesToHive() : Boolean = {
-    if(publishHive){
+  def publishModulesToHive(): Boolean = {
+    if (publishHive) {
       // filter out the outout modules and publish them
       modulesToRun flatMap {
         case m: SmvOutput => Some(m)
-        case _ => None
+        case _            => None
       } foreach (
-        m => SmvUtil.exportDataFrameToHive(sqlContext, resolveRDD(m), m.tableName)
+          m => SmvUtil.exportDataFrameToHive(sqlContext, m.rdd, m.tableName)
       )
     }
 
@@ -191,9 +199,11 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * Publish the specified modules if the "--publish" flag was specified on command line.
    * @return true if modules were published, otherwise return false.
    */
-  private def publishOutputModules() : Boolean = {
+  private def publishOutputModules(): Boolean = {
     if (smvConfig.cmdLine.publish.isDefined) {
-      modulesToRun foreach { module => module.publish() }
+      modulesToRun foreach { module =>
+        module.publish()
+      }
       true
     } else {
       false
@@ -204,18 +214,18 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    * run the specified output modules.
    * @return true if modules were generated, otherwise false.
    */
-  private def generateOutputModules() : Boolean = {
-    modulesToRun foreach (resolveRDD(_))
+  private def generateOutputModules(): Boolean = {
+    modulesToRun foreach (_.rdd)
     modulesToRun.nonEmpty
   }
 
   /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(urn: URN): DataFrame = resolveRDD(dsm.load(urn).head)
+  def runModule(urn: URN): DataFrame = dsm.load(urn).head.rdd
 
   /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
    */
-  def runModuleByName(modName: String) : DataFrame = resolveRDD(dsm.inferDS(modName).head)
+  def runModuleByName(modName: String): DataFrame = dsm.inferDS(modName).head.rdd
 
   /**
    * sequence of SmvModules to run based on the command line arguments.
@@ -223,13 +233,13 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
    */
   lazy val modulesToRun: Seq[SmvDataSet] = {
     val cmdline = smvConfig.cmdLine
-    val empty = Some(Seq.empty[String])
+    val empty   = Some(Seq.empty[String])
 
     val modPartialNames = cmdline.modsToRun.orElse(empty)()
-    val directMods = dsm.inferDS(modPartialNames:_*) map (_.asInstanceOf[SmvDataSet])
-    val stageNames = cmdline.stagesToRun.orElse(empty)() map (dsm.inferStageFullName(_))
-    val stageMods = dsm.outputModulesForStage(stageNames:_*)
-    val appMods = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[SmvDataSet]
+    val directMods      = dsm.inferDS(modPartialNames: _*) map (_.asInstanceOf[SmvDataSet])
+    val stageNames      = cmdline.stagesToRun.orElse(empty)() map (dsm.inferStageFullName(_))
+    val stageMods       = dsm.outputModulesForStage(stageNames: _*)
+    val appMods         = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[SmvDataSet]
     (directMods ++ stageMods ++ appMods).distinct
   }
 
@@ -250,7 +260,10 @@ class SmvApp (private val cmdLineArgs: Seq[String], _sc: Option[SparkContext] = 
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    compareEddResults() || generateDependencyGraphs() || publishModulesToHive() ||  publishOutputModules() || generateOutputModules()
+    compareEddResults() ||
+      generateDotDependencyGraph() || generateJsonDependencyGraph() ||
+      publishModulesToHive() ||  publishOutputModules() ||
+      generateOutputModules()
   }
 }
 
@@ -262,7 +275,9 @@ object SmvApp {
 
   val DependencyRules: Seq[DependencyRule] = Seq(SameStageDependency, LinkFromDiffStage)
 
-  def init(args: Array[String], _sc: Option[SparkContext] = None, _sql: Option[SQLContext] = None) = {
+  def init(args: Array[String],
+           _sc: Option[SparkContext] = None,
+           _sql: Option[SQLContext] = None) = {
     app = new SmvApp(args, _sc, _sql)
     app
   }
@@ -270,11 +285,10 @@ object SmvApp {
   /**
    * Creates a new app instances from a sql context.  This is used by SparkR to create a new app.
    */
-  def newApp(sqlContext: SQLContext, appPath: String) : SmvApp = {
-    SmvApp.init(
-      Seq("-m", "None", "--smv-app-dir", appPath).toArray,
-      Option(sqlContext.sparkContext),
-      Option(sqlContext))
+  def newApp(sqlContext: SQLContext, appPath: String): SmvApp = {
+    SmvApp.init(Seq("-m", "None", "--smv-app-dir", appPath).toArray,
+                Option(sqlContext.sparkContext),
+                Option(sqlContext))
     SmvApp.app
   }
 

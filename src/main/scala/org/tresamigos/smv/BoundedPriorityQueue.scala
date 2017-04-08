@@ -59,6 +59,7 @@ private[smv] trait BoundedPriorityQueue[A] extends mutable.PriorityQueue[A] {
 }
 
 private[smv] object BoundedPriorityQueue {
+
   /**
    * Creates a new BoundedPriorityQueue instance.
    * @param maxElems the max number of elements
@@ -70,7 +71,7 @@ private[smv] object BoundedPriorityQueue {
     val ordering = implicitly[Ordering[A]].reverse
     new mutable.PriorityQueue[A]()(ordering) with BoundedPriorityQueue[A] {
       implicit override val ord = ordering
-      override val maxSize = maxElems
+      override val maxSize      = maxElems
     }
   }
 }

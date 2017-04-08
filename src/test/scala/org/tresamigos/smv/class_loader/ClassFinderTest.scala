@@ -18,7 +18,7 @@ import org.tresamigos.smv.SparkTestUtil
 
 class ClassFinderTest extends SparkTestUtil {
   val classLoaderTestDir = testDataDir + "ClassLoaderTest"
-  val finder = new ClassFinder(classLoaderTestDir)
+  val finder             = new ClassFinder(classLoaderTestDir)
 
   test("find valid class object") {
     val b = finder.getClassBytes("com.smv.Foo")

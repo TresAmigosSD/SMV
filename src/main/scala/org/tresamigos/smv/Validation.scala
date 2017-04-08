@@ -29,11 +29,11 @@ import dqm._
  * @param errorMessages detailed messages for sub results which the passed flag depends on
  * @param checkLog useful logs for reporting
  **/
-case class ValidationResult (
-  passed: Boolean,
-  errorMessages: Seq[(String, String)] = Nil,
-  checkLog: Seq[String] = Nil
-){
+case class ValidationResult(
+    passed: Boolean,
+    errorMessages: Seq[(String, String)] = Nil,
+    checkLog: Seq[String] = Nil
+) {
   def ++(that: ValidationResult) = {
     new ValidationResult(
       this.passed && that.passed,
@@ -43,15 +43,21 @@ case class ValidationResult (
   }
 
   def toJSON() = {
-    def e(s:String) = escapeJava(s)
+    def e(s: String) = escapeJava(s)
 
     "{\n" ++
       """  "passed":%s,""".format(passed) ++ "\n" ++
       """  "errorMessages": [""" ++ "\n" ++
-      errorMessages.map{case(k,m) => """    {"%s":"%s"}""".format(e(k),e(m))}.mkString(",\n") ++ "\n" ++
+      errorMessages
+        .map { case (k, m) => """    {"%s":"%s"}""".format(e(k), e(m)) }
+        .mkString(",\n") ++ "\n" ++
       "  ],\n" ++
       """  "checkLog": [""" ++ "\n" ++
-      checkLog.map{l => """    "%s"""".format(e(l))}.mkString(",\n") ++ "\n" ++
+      checkLog
+        .map { l =>
+          """    "%s"""".format(e(l))
+        }
+        .mkString(",\n") ++ "\n" ++
       "  ]\n" ++
       "}"
   }
@@ -65,19 +71,21 @@ private[smv] object ValidationResult {
   def apply(jsonStr: String) = {
     val json = parse(jsonStr)
     val (passed, errorList, checkList) = json match {
-      case JObject(List((_,JBool(p)), (_,JArray(e)), (_,JArray(c)))) => (p, e, c)
-      case _ => throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+      case JObject(List((_, JBool(p)), (_, JArray(e)), (_, JArray(c)))) => (p, e, c)
+      case _                                                            => throw new IllegalArgumentException("JSON string is not a ValidationResult object")
     }
-    val errorMessages = errorList.map{e =>
+    val errorMessages = errorList.map { e =>
       e match {
-        case JObject(List((k,JString(v)))) => (k, v)
-        case _ => throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+        case JObject(List((k, JString(v)))) => (k, v)
+        case _ =>
+          throw new IllegalArgumentException("JSON string is not a ValidationResult object")
       }
     }
-    val checkLog = checkList.map{e =>
+    val checkLog = checkList.map { e =>
       e match {
         case JString(l) => l
-        case _ => throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+        case _ =>
+          throw new IllegalArgumentException("JSON string is not a ValidationResult object")
       }
     }
 
@@ -129,12 +137,16 @@ private[smv] class ValidationSet(val tasks: Seq[ValidationTask], val isPersist: 
   }
 
   private def doValidate(df: DataFrame, forceAnAction: Boolean, path: String): ValidationResult = {
-    if(forceAnAction) forceAction(df)
+    if (forceAnAction) forceAction(df)
 
-    val res = tasks.map{t => t.validate(df)}.reduce(_ ++ _)
+    val res = tasks
+      .map { t =>
+        t.validate(df)
+      }
+      .reduce(_ ++ _)
 
     // as long as result non-empty, print it to the console
-    if(!res.isEmpty) toConsole(res)
+    if (!res.isEmpty) toConsole(res)
 
     // persist if result is not empty or forced an action
     if (isPersist && ((!res.isEmpty) || forceAnAction)) persist(res, path)
@@ -144,13 +156,18 @@ private[smv] class ValidationSet(val tasks: Seq[ValidationTask], val isPersist: 
 
   def validate(df: DataFrame, hadAction: Boolean, path: String = ""): ValidationResult = {
     if (!tasks.isEmpty) {
-      val needAction = tasks.map{t => t.needAction}.reduce(_ || _)
+      val needAction = tasks
+        .map { t =>
+          t.needAction
+        }
+        .reduce(_ || _)
       val forceAnAction = (!hadAction) && needAction
 
-      val result = if(isPersist) {
+      val result = if (isPersist) {
         // try to read from persisted validation file
-        readPersistsedValidationFile(path).recoverWith {case e =>
-          Try(doValidate(df, forceAnAction, path))
+        readPersistsedValidationFile(path).recoverWith {
+          case e =>
+            Try(doValidate(df, forceAnAction, path))
         }.get
       } else {
         doValidate(df, forceAnAction, path)

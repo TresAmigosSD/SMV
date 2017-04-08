@@ -23,9 +23,10 @@ import scala.tools.asm.util._
  * Utility methods for analysis of class bytecode.
  */
 object AsmUtil {
+
   /** Returns an asm-based text representation of the class bytecode */
-  def asmTrace (reader: ClassReader): String = {
-    val buf = new StringWriter
+  def asmTrace(reader: ClassReader): String = {
+    val buf     = new StringWriter
     val visitor = new TraceClassVisitor(null, new Textifier(), new PrintWriter(buf))
 
     /* SKIP_DEBUG: the visitLocalVariable and visitLineNumber methods will not be called. */
@@ -33,15 +34,18 @@ object AsmUtil {
     buf.toString
   }
 
-  def asmTrace (fqn: String, cl: ClassLoader): String = {
+  def asmTrace(fqn: String, cl: ClassLoader): String = {
     val in = cl.getResourceAsStream(fqn.replace('.', '/') + ".class")
     asmTrace(new ClassReader(getBytes(in)))
   }
 
   // a crude way to test if a class definition contains anonymous functions
   val AnonfunRegex = """\$anonfun\$""".r
-  def hasAnonfun (fqn: String, cl: ClassLoader): Boolean = AnonfunRegex.findFirstIn(asmTrace(fqn, cl)).isDefined
+  def hasAnonfun(fqn: String, cl: ClassLoader): Boolean =
+    AnonfunRegex.findFirstIn(asmTrace(fqn, cl)).isDefined
 
   // TODO: this can be moved to a separate IO util module
-  def getBytes (in: InputStream): Array[Byte] = try ByteStreams.toByteArray(in) finally in.close
+  def getBytes(in: InputStream): Array[Byte] =
+    try ByteStreams.toByteArray(in)
+    finally in.close
 }

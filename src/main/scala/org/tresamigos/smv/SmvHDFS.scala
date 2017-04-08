@@ -6,7 +6,6 @@ import java.io.{BufferedWriter, StringWriter, OutputStreamWriter}
 import org.apache.hadoop.fs.FileSystem
 import org.apache.commons.io.IOUtils
 
-
 import scala.util.Try
 
 /**
@@ -30,7 +29,7 @@ private[smv] object SmvHDFS {
    * and not the entire directory.  So if you overwrite an existing file with less partitions, some old
    * partitions will linger around (BAD!!!!)
    */
-  def deleteFile(fileName: String) : Boolean = {
+  def deleteFile(fileName: String): Boolean = {
     val path = new org.apache.hadoop.fs.Path(fileName)
     val hdfs = getFileSystem(fileName)
 
@@ -51,9 +50,9 @@ private[smv] object SmvHDFS {
     val path = new org.apache.hadoop.fs.Path(fileName)
     val hdfs = getFileSystem(fileName)
 
-    if ( hdfs.exists(path)) hdfs.delete(path, true)
+    if (hdfs.exists(path)) hdfs.delete(path, true)
     val stream = hdfs.create(path)
-    val writer = new BufferedWriter( new OutputStreamWriter(stream, "UTF-8") )
+    val writer = new BufferedWriter(new OutputStreamWriter(stream, "UTF-8"))
     writer.write(contents);
     writer.close()
     stream.close()
@@ -62,13 +61,13 @@ private[smv] object SmvHDFS {
   /**
    * get modification time of a HDFS file
    **/
-
-  def modificationTime(fileName: String) : Long = {
+  def modificationTime(fileName: String): Long = {
     val path = new org.apache.hadoop.fs.Path(fileName)
     val hdfs = getFileSystem(fileName)
 
     hdfs.getFileStatus(path).getModificationTime()
   }
+
   /**
    * Return a list of files in the given directory.
    * Note that we don't use hdfs.listFiles as it was not available in earlier
@@ -76,7 +75,7 @@ private[smv] object SmvHDFS {
    * The only exception would be if we needed to implement recursive directory
    * walk, then we should switch to listFiles method instead.
    */
-  def dirList(dirName: String) : Seq[String] = {
+  def dirList(dirName: String): Seq[String] = {
     Try {
       val path = new org.apache.hadoop.fs.Path(dirName)
       val hdfs = getFileSystem(dirName)
@@ -87,7 +86,7 @@ private[smv] object SmvHDFS {
   /**
    * Returns the basename of a given file path (the last part of the full path)
    */
-  def baseName(pathName: String) : String = new File(pathName).getName
+  def baseName(pathName: String): String = new File(pathName).getName
 
   /**
    * Purge the contents of the given directory that are not in the keep list.

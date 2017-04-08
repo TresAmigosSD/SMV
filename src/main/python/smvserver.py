@@ -18,7 +18,7 @@ import re
 import glob
 import json
 from flask import Flask, request, jsonify
-from smv import smvPy
+from smv import SmvApp
 from shutil import copyfile
 import py_compile
 
@@ -102,7 +102,7 @@ def get_filepath_from_moduleFqn(module_fqn):
     return filepath
 
 def get_output_dir():
-    output_dir = smvPy.outputDir()
+    output_dir = SmvApp.getInstance().outputDir()
     if (output_dir.startswith('file://')):
         output_dir = output_dir[7:]
     return output_dir
@@ -256,7 +256,7 @@ def run_module():
         raise ValueError(MODULE_NOT_PROVIDED_ERR)
 
     try:
-        smvPy.runModule(module_name.strip())
+        SmvApp.getInstance().runModule(module_name.strip())
         return JOB_SUCCESS
     except:
         raise ValueError(MODULE_NOT_FOUND_ERR)
@@ -418,9 +418,8 @@ def get_graph_json():
     body: none
     function: return the json file of the entire dependency graph
     '''
-    print "\nreturning dep graph"
-    res = smvPy.get_graph_json()
-    return jsonify(res=res)
+    res = SmvApp.getInstance().get_graph_json()
+    return jsonify(graph=res)
 
 @app.route("/api/create_module", methods = ['POST'])
 def craete_module():
@@ -483,8 +482,8 @@ if __name__ == "__main__":
     sys.path.insert(1, codePath)
 
     # init Smv context
-    # TODO: should instantiate SmvApp here instead of callint init directly.
-    smvPy.init([])
+    smvApp = SmvApp.createInstance([])
+
     module_file_map = {}
 
     # start server
