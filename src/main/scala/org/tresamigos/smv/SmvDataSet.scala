@@ -156,10 +156,10 @@ abstract class SmvDataSet extends FilenamePart {
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */
   def rdd() = {
-    if (rddCache == null) {
-      rddCache = computeRDD
+    if (!app.dfCache.contains(versionedFqn)) {
+      app.dfCache = app.dfCache + (versionedFqn -> computeRDD)
     }
-    rddCache
+    app.dfCache(versionedFqn)
   }
 
   private def verHex = f"${hashOfHash}%08x"
@@ -492,7 +492,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val paramMap: Map[SmvDataSet, DataFrame] =
-      (resolvedRequiresDS map (dep => (dep, app.resolveRDD(dep)))).toMap
+      (resolvedRequiresDS map (dep => (dep, dep.rdd))).toMap
     run(new runParams(paramMap))
   }
 
@@ -669,7 +669,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
     target.getDataFrame(new DQMValidator(createDsDqm),
                         resolvedRequiresDS
                           .map { ds =>
-                            (ds.urn.toString, app.resolveRDD(ds))
+                            (ds.urn.toString, ds.rdd)
                           }
                           .toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()
