@@ -90,17 +90,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * dfCache the to ensure only a single DataFrame exists for a given data set
    * (file/module).
    */
-  val dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
-  def resolveRDD(ds: SmvDataSet): DataFrame = {
-    val vFqn = ds.versionedFqn
-    Try(dfCache(vFqn)) match {
-      case Success(df) => df
-      case Failure(_) =>
-        val df = ds.rdd
-        dfCache += (vFqn -> df)
-        df
-    }
-  }
+  var dfCache: Map[String, DataFrame] = Map.empty[String, DataFrame]
 
   /**
    * pass on the spark sql props set in the smv config file(s) to spark.
@@ -198,7 +188,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
         case m: SmvOutput => Some(m)
         case _            => None
       } foreach (
-          m => SmvUtil.exportDataFrameToHive(sqlContext, resolveRDD(m), m.tableName)
+          m => SmvUtil.exportDataFrameToHive(sqlContext, m.rdd, m.tableName)
       )
     }
 
@@ -225,17 +215,17 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * @return true if modules were generated, otherwise false.
    */
   private def generateOutputModules(): Boolean = {
-    modulesToRun foreach (resolveRDD(_))
+    modulesToRun foreach (_.rdd)
     modulesToRun.nonEmpty
   }
 
   /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(urn: URN): DataFrame = resolveRDD(dsm.load(urn).head)
+  def runModule(urn: URN): DataFrame = dsm.load(urn).head.rdd
 
   /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
    */
-  def runModuleByName(modName: String): DataFrame = resolveRDD(dsm.inferDS(modName).head)
+  def runModuleByName(modName: String): DataFrame = dsm.inferDS(modName).head.rdd
 
   /**
    * sequence of SmvModules to run based on the command line arguments.

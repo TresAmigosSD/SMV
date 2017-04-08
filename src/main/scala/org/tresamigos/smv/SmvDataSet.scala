@@ -152,14 +152,16 @@ abstract class SmvDataSet extends FilenamePart {
 
   /**
    * returns the DataFrame from this dataset (file/module).
-   * The value is cached so this function can be called repeatedly.
+   * The value is cached so this function can be called repeatedly. The cache is
+   * external to SmvDataSet so that it we will not recalculate the DF even after
+   * dynamically loading the same SmvDataSet.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */
   def rdd() = {
-    if (rddCache == null) {
-      rddCache = computeRDD
+    if (!app.dfCache.contains(versionedFqn)) {
+      app.dfCache = app.dfCache + (versionedFqn -> computeRDD)
     }
-    rddCache
+    app.dfCache(versionedFqn)
   }
 
   private def verHex = f"${hashOfHash}%08x"
@@ -492,7 +494,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val paramMap: Map[SmvDataSet, DataFrame] =
-      (resolvedRequiresDS map (dep => (dep, app.resolveRDD(dep)))).toMap
+      (resolvedRequiresDS map (dep => (dep, dep.rdd))).toMap
     run(new runParams(paramMap))
   }
 
@@ -561,6 +563,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
 
   private[smv] val smvModule = outputModule.asInstanceOf[SmvDataSet]
 
+  override def fqn = throw new SmvRuntimeException("SmvModuleLink fqn should never be called")
   override def urn = LinkURN(smvModule.fqn)
 
   override lazy val ancestors = smvModule.ancestors
@@ -607,13 +610,19 @@ class SmvModuleLink(val outputModule: SmvOutput)
   }
 
   /**
+   * SmvModuleLinks should not cache or validate their data
+   */
+  override def computeRDD = throw new SmvRuntimeException("SmvModuleLink computeRDD should never be called")
+  override private[smv] def doRun(dsDqm: DQMValidator) = throw new SmvRuntimeException("SmvModuleLink doRun should never be called")
+
+  /**
    * "Running" a link requires that we read the published output from the upstream `DataSet`.
    * When publish version is specified, it will try to read from the published dir. Otherwise
    * it will either "follow-the-link", which means resolve the modules the linked DS depends on
    * and run the DS, or "not-follow-the-link", which will try to read from the persisted data dir
    * and fail if not found.
    */
-  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
+  override def rdd: DataFrame = {
     if (isFollowLink) {
       smvModule.readPublishedData().getOrElse(smvModule.rdd())
     } else {
@@ -669,7 +678,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
     target.getDataFrame(new DQMValidator(createDsDqm),
                         resolvedRequiresDS
                           .map { ds =>
-                            (ds.urn.toString, app.resolveRDD(ds))
+                            (ds.urn.toString, ds.rdd)
                           }
                           .toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()
