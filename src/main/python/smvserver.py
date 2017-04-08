@@ -347,9 +347,9 @@ def update_module_code():
             # for i in xrange(len(updated_code)):
             #    fd.write(updated_code[i])
 
-            # uses all code.. not just class or run method
-            for i in xrange(len(lines_of_code_list)):
-                fd.write(lines_of_code_list[i])
+            # will write whole code to file.. not just class or run method
+            for i in xrange(len(module_code)):
+                fd.write(module_code[i])
 
         # compile duplicate
         compile_has_errors = test_compile_for_errors(duplicate_file_name)
@@ -367,8 +367,8 @@ def update_module_code():
         with open(file_name, 'w') as fd:
             # for i in xrange(len(updated_code)):
             #     fd.write(updated_code[i])
-            for i in xrange(len(lines_of_code_list)):
-                fd.write(lines_of_code_list[i])
+            for i in xrange(len(module_code)):
+                fd.write(module_code[i])
 
         return success_response(JOB_SUCCESS)
     else:
