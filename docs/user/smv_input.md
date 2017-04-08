@@ -159,9 +159,21 @@ The schema file can specify the CSV attributes (delimiter, quote char, and heade
 <tr>
 <td>quote-char</td>
 <td>"</td>
-<td>character used to quote fields (only used if field contains characters that would confuse the parser)</td>
+<td>character used to quote fields (only used if field contains characters that would confuse the parser). For NO-quote-char case use \0</td>
 </tr>
 </table>
+
+Example schema file with special characters:
+
+```
+# CSV attributes
+@has-header = true
+@quote-char = \0
+@delimiter = \t
+# schema for input
+acct_id: String;  # this is the id
+user_id: String;
+```
 
 ## Supported schema types
 ### Native types

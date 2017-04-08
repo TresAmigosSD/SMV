@@ -1,0 +1,6 @@
+@has-header = false
+@quote-char = \0
+@delimiter = |
+
+name: String
+age: Integer
