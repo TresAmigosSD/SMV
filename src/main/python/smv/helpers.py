@@ -265,6 +265,29 @@ class DataFrameHelper(object):
             return DataFrame(jdf, self._sql_ctx)
         return _check
 
+    def smvDesc(self, *colDescs):
+        """Adds column descriptions
+
+        Example:
+        val res = df.smvDesc(
+          ("name", "This is customer's name"),
+          ("sex", "This is customer\'s self-identified sex")
+        )
+        """
+        jdf = self._jPythonHelper.smvDesc(self._jdf, smv_copy_array(self._sc, *colDescs))
+        return DataFrame(jdf, self._sql_ctx)
+
+    def smvGetDesc(self, colName = None):
+        """Return column description(s)
+
+        If colName specified, will return the Description string, if not specified,
+        will return a list of (colName, description) pairs
+        """
+        if (colName is not None):
+            return self._jDfHelper.smvGetDesc(colName)
+        else:
+            return [(c, self._jDfHelper.smvGetDesc(c)) for c in self.df.columns]
+
     #############################################
     # DfHelpers which print to STDOUT
     # Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout

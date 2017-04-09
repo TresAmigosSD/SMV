@@ -131,6 +131,11 @@ object SmvPythonHelper {
 
   def smvOverlapCheck(df: DataFrame, key: String, otherDf: Array[DataFrame]): DataFrame =
     df.smvOverlapCheck(key)(otherDf: _*)
+
+  def smvDesc(df: DataFrame, colDescs: ArrayList[ArrayList[String]]): DataFrame = {
+    val colDescPairs = colDescs.map(inner => Tuple2(inner(0), inner(1)))
+    df.smvDesc(colDescPairs: _*)
+  }
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
