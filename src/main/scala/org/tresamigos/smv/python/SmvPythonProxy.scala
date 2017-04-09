@@ -136,6 +136,10 @@ object SmvPythonHelper {
     val colDescPairs = colDescs.map(inner => Tuple2(inner(0), inner(1)))
     df.smvDesc(colDescPairs: _*)
   }
+
+  def smvRemoveDesc(df: DataFrame, colNames: Array[String]): DataFrame = {
+    df.smvRemoveDesc(colNames: _*)
+  }
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

@@ -288,6 +288,12 @@ class DataFrameHelper(object):
         else:
             return [(c, self._jDfHelper.smvGetDesc(c)) for c in self.df.columns]
 
+    def smvRemoveDesc(self, *colNames):
+        """Return a Dataframe with the Description removed from the given columns
+        """
+        jdf = self._jPythonHelper.smvRemoveDesc(self._jdf, smv_copy_array(self._sc, *colNames))
+        return DataFrame(jdf, self._sql_ctx)
+
     #############################################
     # DfHelpers which print to STDOUT
     # Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout
