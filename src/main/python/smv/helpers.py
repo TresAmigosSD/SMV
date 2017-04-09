@@ -277,6 +277,10 @@ class DataFrameHelper(object):
         jdf = self._jPythonHelper.smvDesc(self._jdf, smv_copy_array(self._sc, *colDescs))
         return DataFrame(jdf, self._sql_ctx)
 
+    def smvDescFromDF(self, descDF):
+        desclist = [(str(r[0]), str(r[1])) for r in descDF.collect()]
+        return self.smvDesc(*desclist)
+        
     def smvGetDesc(self, colName = None):
         """Return column description(s)
 
