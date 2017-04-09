@@ -261,6 +261,28 @@ class DfHelperTest(SmvBaseTest):
         expect = self.createDF("k:String;v:Integer;v2:Integer", "a,1,2;b,2,3")
         self.should_be_same(expect, r1)
 
+    def test_smvDesc(self):
+        df = self.createDF("a:String", "a")
+        res = df.smvDesc(("a", "this is col a"))
+        self.assertEqual(res.schema.fields[0].metadata["smvDesc"], "this is col a")
+
+    def test_smvGetDesc(self):
+        df = self.createDF("a:String", "a")
+        res = df.smvDesc(("a", "this is col a"))
+        self.assertEqual(res.smvGetDesc("a"), "this is col a")
+        self.assertEqual(res.smvGetDesc(), [("a", "this is col a")])
+
+    def test_smvRemoveDesc(self):
+        df = self.createDF("a:String", "a")
+        res = df.smvDesc(("a", "this is col a")).smvRemoveDesc("a")
+        self.assertEqual(res.smvGetDesc("a"), "")
+
+    def test_smvDescFromDF(self):
+        df = self.createDF("a:String;b:Integer", "a,1")
+        desc = self.createDF("c:String;desc:String", "a,this is col a from a df;b,this is b")
+        res = df.smvDescFromDF(desc)
+        self.assertEqual(res.smvGetDesc("b"), "this is b")
+
 class ShellDfHelperTest(SmvBaseTest):
     def test_smvEdd(self):
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
