@@ -13,13 +13,11 @@ RUN sudo apt-get update &&\
 RUN wget https://github.com/TresAmigosSD/SMV/archive/master.zip &&\
     unzip master.zip &&\
     rm master.zip &&\
-    sudo mv SMV-master $SMV_HOME/
-
-RUN rm -rf /home/smv/.ivy2 &&\
+    sudo mv SMV-master $SMV_HOME/ &&\
+    rm -rf /home/smv/.ivy2 &&\
     mkdir -p /projects/.ivy2 &&\
-    ln -s /projects/.ivy2 /home/smv/.ivy2
-
-RUN cd $SMV_HOME &&\
+    ln -s /projects/.ivy2 /home/smv/.ivy2 &&\
+    cd $SMV_HOME &&\
     sbt assembly publish-local &&\
     mvn install -DskipTests
 
@@ -39,7 +37,6 @@ COPY ./.jupyter /home/smv/.jupyter
 COPY ./hive-site.xml /usr/lib/spark/conf/hive-site.xml
 
 RUN sudo chown -R smv:smv /home/smv/.jupyter &&\
-    sudo chown -R smv:smv /home/smv/lib &&\
     sudo chown -R smv:smv /usr/lib/spark/conf/hive-site.xml
 
 # Entrypoint rsyncs maven and ivy caches from the container to the host
