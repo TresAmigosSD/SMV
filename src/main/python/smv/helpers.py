@@ -174,9 +174,7 @@ class SmvMultiJoin(object):
                                    choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
 
             Example:
-                joindf = df1.smvJoinMultipleByKey(['a'], 'inner'
-                    ).joinWith(df2, '_df2'
-                    ).joinWith(df3, '_df3', 'outer')
+                >>> joindf = df1.smvJoinMultipleByKey(['a'], 'inner').joinWith(df2, '_df2').joinWith(df3, '_df3', 'outer')
 
             Returns:
                 (SmvMultiJoin): formula of the join. need to call `doJoin()` on it to execute
@@ -220,10 +218,41 @@ class DataFrameHelper(object):
         self._jDfHelper = df._sc._jvm.SmvDFHelper(df._jdf)
 
     def smvExpandStruct(self, *cols):
+        """Expand structure type column to a group of columns
+
+            Args:
+                cols (*string): column names to expand
+
+            Example:
+                input DF:
+                    [id: string, address: struct<state:string, zip:string, street:string>]
+
+                >>> df.smvExpandStruct("address")
+
+                output DF:
+                    [id: string, state: string, zip: string, street: string]
+
+            Returns:
+                (DataFrame): DF with expanded columns
+        """
         jdf = self._jPythonHelper.smvExpandStruct(self._jdf, smv_copy_array(self._sc, *cols))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvGroupBy(self, *cols):
+        """Similar to groupBy, instead of creating GroupedData, create an `SmvGroupedData` object.
+
+            See [[org.tresamigos.smv.SmvGroupedDataFunc]] for list of functions that can be applied to the grouped data.
+
+            Args:
+                cols (*string or *Column): column names or Column objects to group on
+
+            Note:
+                This is going away shortly and user will be able to use standard Spark `groupBy` method directly.
+
+            Example:
+                >>> df.smvGroupBy(col("k"))
+                >>> df.smvGroupBy("k")
+        """
         jSgd = self._jPythonHelper.smvGroupBy(self._jdf, smv_copy_array(self._sc, *cols))
         return SmvGroupedData(self.df, jSgd)
 
@@ -308,7 +337,7 @@ class DataFrameHelper(object):
     def smvDescFromDF(self, descDF):
         desclist = [(str(r[0]), str(r[1])) for r in descDF.collect()]
         return self.smvDesc(*desclist)
-        
+
     def smvGetDesc(self, colName = None):
         """Return column description(s)
 
