@@ -19,7 +19,7 @@ from smvbasetest import SmvBaseTest
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
-from pyspark.sql.functions import array
+from pyspark.sql.functions import *
 from smv.functions import *
 
 class SmvfuncsTest(SmvBaseTest):
@@ -79,4 +79,11 @@ class SmvfuncsTest(SmvBaseTest):
         df2 = df.select(array(df.a, df.b).alias("aa"))
         res = df2.select(smvArrayCat("_", df2.aa).alias("aaCat"))
         exp = self.createDF("aaCat: String", "a_1; b_2")
+        self.should_be_same(res, exp)
+
+    def test_smvCollectSet(self):
+        from pyspark.sql.types import StringType
+        df = self.createDF("a:String", "a;b;a;c;a")
+        res = df.agg(smvArrayCat("_", sort_array(smvCollectSet(df.a, StringType()))).alias("aa"))
+        exp = self.createDF("aa: String", "a_b_c")
         self.should_be_same(res, exp)

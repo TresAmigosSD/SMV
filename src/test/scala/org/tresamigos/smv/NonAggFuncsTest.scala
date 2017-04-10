@@ -85,28 +85,28 @@ class NonAggFuncsTest extends SmvTestUtil {
   test("test collectSet for String") {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("a:String; b:Boolean;", "1,false;2,;3,true;4,;5,true;6,false")
-    val res = df.select(collectSet(StringType)($"a") as "r1")
+    val res = df.select(smvCollectSet($"a", StringType) as "r1")
     assertSrddDataEqual(res, "WrappedArray(4, 5, 6, 1, 2, 3)")
   }
 
   test("test collectSet for Integer") {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("a:Integer; b:Boolean;", "1,false;2,;3,true;4,;5,true;6,false")
-    val res = df.select(collectSet(IntegerType)($"a") as "r1")
+    val res = df.select(smvCollectSet($"a", IntegerType) as "r1")
     assertSrddDataEqual(res, "WrappedArray(5, 1, 6, 2, 3, 4)")
   }
 
   test("test collectSet for Boolean") {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("a:Integer; b:Boolean;", "1,false;2,;3,true;4,;5,true;6,false")
-    val res = df.select(collectSet(BooleanType)($"b") as "r1")
+    val res = df.select(smvCollectSet($"b", BooleanType) as "r1")
     assertSrddDataEqual(res, "WrappedArray(false, null, true)")
   }
 
   test("test collectSet for Double") {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("a:Double; b:Boolean;", "1.1,false;2.2,;3.3,true;4.4,;5.5,true;6.0,false")
-    val res = df.select(collectSet(DoubleType)($"a") as "r1")
+    val res = df.select(smvCollectSet($"a", DoubleType) as "r1")
     assertSrddDataEqual(res, "WrappedArray(2.2, 6.0, 4.4, 5.5, 3.3, 1.1)")
   }
 
@@ -114,7 +114,7 @@ class NonAggFuncsTest extends SmvTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("a:Integer", "1;2;3")
 
-    val res = df.select(collectSet(IntegerType)($"a") as "arr").select(smvArrayCat(",", $"arr"))
+    val res = df.select(smvCollectSet($"a", IntegerType) as "arr").select(smvArrayCat(",", $"arr"))
 
     assertSrddDataEqual(res, "1,2,3")
   }

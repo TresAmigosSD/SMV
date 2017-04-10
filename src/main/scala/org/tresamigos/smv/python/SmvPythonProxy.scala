@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv.python
 
-import org.apache.spark._, sql._
+import org.apache.spark._, sql._, sql.types._
 import org.tresamigos.smv._, graph.SmvGraphUtil
 import py4j.GatewayServer
 
@@ -139,6 +139,11 @@ object SmvPythonHelper {
 
   def smvRemoveDesc(df: DataFrame, colNames: Array[String]): DataFrame = {
     df.smvRemoveDesc(colNames: _*)
+  }
+
+  def smvCollectSet(col: Column, datatypeJson: String): Column = {
+    val dt = DataType.fromJson(datatypeJson)
+    smvfuncs.smvCollectSet(col, dt)
   }
 }
 

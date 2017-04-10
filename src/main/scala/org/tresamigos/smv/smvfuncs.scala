@@ -72,7 +72,7 @@ object smvfuncs {
   }
 
   /** Spark 1.6 will have collect_set aggregation function.*/
-  def collectSet(dt: DataType)(c: Column): Column = {
+  def smvCollectSet(c: Column, dt: DataType): Column = {
 
     dt match {
       case StringType => {
@@ -99,6 +99,9 @@ object smvfuncs {
       }
     }
   }
+
+  @deprecated("Replaced by smvCollectSet(col, datatype)", "2.1")
+  def collectSet(dt: DataType)(c: Column): Column = smvCollectSet(c, dt)
 
   /** For an Array column create a String column with the Array values */
   def smvArrayCat(sep: String, col: Column, fn: Any => String): Column = {

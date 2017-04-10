@@ -117,3 +117,14 @@ def smvArrayCat(sep, col):
             (col): a Column in StringType with array elements concatenated
     """
     return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.smvfuncs.smvArrayCat(sep, col._jc))
+
+def smvCollectSet(col, datatype):
+    """An aggregate function, which will collect all the values of the given column and create a set as an array typed column.
+       Since Spark 1.6, a spark function collect_set was introduced, so as migrate to Spark 1.6 and later, this smvCollectSet
+       will be depricated.
+
+       Args:
+            col (Column): column to be aggregated on
+            datatype (DataType): datatype of the input column
+    """
+    return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvCollectSet(col._jc, datatype.json()))
