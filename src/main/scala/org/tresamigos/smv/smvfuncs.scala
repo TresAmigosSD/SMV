@@ -101,7 +101,7 @@ object smvfuncs {
   }
 
   /** For an Array column create a String column with the Array values */
-  def smvArrayCat(sep: String, col: Column, fn: Any => String = (x => x.toString)): Column = {
+  def smvArrayCat(sep: String, col: Column, fn: Any => String): Column = {
     val catF = { a: Seq[Any] =>
       a.map {
           case null => ""
@@ -112,6 +112,8 @@ object smvfuncs {
 
     udf(catF).apply(col).as(s"smvArrayCat(${col})")
   }
+
+  def smvArrayCat(sep: String, col: Column): Column = smvArrayCat(sep, col, {x:Any => x.toString})
 
   /**
    * Creating unique id from the primary key list.

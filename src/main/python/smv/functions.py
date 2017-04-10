@@ -105,3 +105,15 @@ def smvCreateLookUp(m, default, outputType):
             (udf): an udf which can apply to a column and apply the lookup
     """
     return udf(lambda k: m.get(k, default), outputType)
+
+def smvArrayCat(sep, col):
+    """For an array typed column, concat the elements to a string with the given separater.
+
+       Args:
+            sep: a Python string to separate the fields
+            col: a Column with ArrayType
+
+       Return:
+            (col): a Column in StringType with array elements concatenated
+    """
+    return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.smvfuncs.smvArrayCat(sep, col._jc))
