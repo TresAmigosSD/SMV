@@ -14,17 +14,16 @@
 """Provides dependency graphing of SMV modules.
 """
 from utils import smv_copy_array
+from graphviz import Source
 
-class SmvDependencyGraph(object):
+class SmvDependencyGraph(Source):
     def __init__(self, smvApp, stageNames = None):
         self.smvApp = smvApp
-        self.stageNames = smvApp.j_smvApp.stages() if stageNames is None else smv_copy_array(SmvApp.getInstance().sc, stageNames)
-
-    def __repr__(self):
-        # use side effect to show graph, as it is a unicode string and
-        # can't be displayed via __repr__
-        print(self.smvApp.j_smvPyClient.asciiGraph())
-        return ''
-
-    def _repr_png_(self):
-        return bytes(self.smvApp.j_smvPyClient.graph(self.smvApp.j_smvApp.stages(), 'png'))
+        if stageNames is None:
+            self.stageNames = smvApp.j_smvApp.stages()
+        elif (isinstance(stageNames, list)):
+            self.stageNames = smvApp._jvm.PythonUtils.toSeq(stageNames)
+        else:
+            self.stageNames = smvApp._jvm.PythonUtils.toSeq([stageNames])
+        self.dotstring = smvApp.j_smvApp.dependencyGraphDotString(self.stageNames)
+        super(SmvDependencyGraph, self).__init__(self.dotstring)
