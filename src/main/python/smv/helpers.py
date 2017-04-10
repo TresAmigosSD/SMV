@@ -165,9 +165,37 @@ class SmvMultiJoin(object):
         self.mj = mj
 
     def joinWith(self, df, postfix, jointype = None):
+        """Append SmvMultiJoin Chain
+
+            Args:
+                df (DataFrame): the DataFrame to join with
+                postfix (string): postfix to use when renaming join columns
+                jointype (string): optional jointype. if not specified, `conf.defaultJoinType` is used.
+                                   choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
+
+            Example:
+                joindf = df1.smvJoinMultipleByKey(['a'], 'inner'
+                    ).joinWith(df2, '_df2'
+                    ).joinWith(df3, '_df3', 'outer')
+
+            Returns:
+                (SmvMultiJoin): formula of the join. need to call `doJoin()` on it to execute
+        """
         return SmvMultiJoin(self.sqlContext, self.mj.joinWith(df._jdf, postfix, jointype))
 
     def doJoin(self, dropextra = False):
+        """Trigger the join operation
+
+            Args:
+                dropExtra (boolean): default false, which will keep all duplicated name columns with the postfix.
+                                     when true, the duplicated columns will be dropped
+
+            Example:
+                joindf.doJoin()
+
+            Returns:
+                (DataFrame): result of executing the join operation
+        """
         return DataFrame(self.mj.doJoin(dropextra), self.sqlContext)
 
 def _getUnboundMethod(helperCls, methodName):
