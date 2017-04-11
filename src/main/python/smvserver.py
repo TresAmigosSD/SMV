@@ -273,17 +273,12 @@ def get_module_code():
     file_name = get_filepath_from_moduleFqn(module_fqn)
     module_name = get_module_name_from_fqn(module_fqn)
 
-    print 'filename: ', file_name
-    print 'modulename: ', module_name
-
     try:
         with open(file_name, 'rb') as f:
             lines_of_code_list = f.readlines()
         (class_start, class_end) = get_SMV_module_class_start_end(lines_of_code_list, module_name)
 
         file_content = [line.rstrip() for line in lines_of_code_list]
-
-        print 'filecontent: ', file_content
 
         res = {
             'fileName': file_name,
