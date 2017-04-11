@@ -13,18 +13,30 @@
 
 """Provides dependency graphing of SMV modules.
 """
+from smv import SmvApp
 from utils import smv_copy_array
 
-class SmvDependencyGraph(object):
-    def __init__(self, smvApp, stageNames = None):
-        self.smvApp = smvApp
-        self.stageNames = smvApp.j_smvApp.stages() if stageNames is None else smv_copy_array(SmvApp.getInstance().sc, stageNames)
+try:
+    from graphviz import Source
+except ImportError:
+    def svg_graph(stageNames):
+        print ("graphviz Python package is not installed. Please install with\n\n" +\
+               "$ pip install graphviz")
+else:
+    class SmvDependencyGraph(Source):
+        def __init__(self, smvApp, stageNames = None):
+            self.smvApp = smvApp
+            if stageNames is None:
+                self.stageNames = smvApp.j_smvApp.stages()
+            elif (isinstance(stageNames, list)):
+                self.stageNames = smvApp._jvm.PythonUtils.toSeq(stageNames)
+            else:
+                self.stageNames = smvApp._jvm.PythonUtils.toSeq([stageNames])
+            self.dotstring = smvApp.j_smvApp.dependencyGraphDotString(self.stageNames)
+            super(SmvDependencyGraph, self).__init__(self.dotstring)
 
-    def __repr__(self):
-        # use side effect to show graph, as it is a unicode string and
-        # can't be displayed via __repr__
-        print(self.smvApp.j_smvPyClient.asciiGraph())
-        return ''
-
-    def _repr_png_(self):
-        return bytes(self.smvApp.j_smvPyClient.graph(self.smvApp.j_smvApp.stages(), 'png'))
+    def svg_graph(*stageNames):
+        if (not stageNames):
+            return SmvDependencyGraph(SmvApp.getInstance())
+        else:
+            return SmvDependencyGraph(SmvApp.getInstance(), list(stageNames))

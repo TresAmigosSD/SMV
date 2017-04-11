@@ -72,7 +72,7 @@ object smvfuncs {
   }
 
   /** Spark 1.6 will have collect_set aggregation function.*/
-  def collectSet(dt: DataType)(c: Column): Column = {
+  def smvCollectSet(c: Column, dt: DataType): Column = {
 
     dt match {
       case StringType => {
@@ -100,8 +100,11 @@ object smvfuncs {
     }
   }
 
+  @deprecated("Replaced by smvCollectSet(col, datatype)", "2.1")
+  def collectSet(dt: DataType)(c: Column): Column = smvCollectSet(c, dt)
+
   /** For an Array column create a String column with the Array values */
-  def smvArrayCat(sep: String, col: Column, fn: Any => String = (x => x.toString)): Column = {
+  def smvArrayCat(sep: String, col: Column, fn: Any => String): Column = {
     val catF = { a: Seq[Any] =>
       a.map {
           case null => ""
@@ -112,6 +115,8 @@ object smvfuncs {
 
     udf(catF).apply(col).as(s"smvArrayCat(${col})")
   }
+
+  def smvArrayCat(sep: String, col: Column): Column = smvArrayCat(sep, col, {x:Any => x.toString})
 
   /**
    * Creating unique id from the primary key list.

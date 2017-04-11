@@ -41,10 +41,7 @@ private[smv] case class SmvClassLoader(val classFinder: ClassFinder,
       c = findLoadedClass(classFQN)
 
       if (c == null) {
-        c = Try(findClass(classFQN)) match {
-          case Success(cl: Class[_])              => cl
-          case Failure(e: ClassNotFoundException) => null
-        }
+        c = Try(findClass(classFQN)).getOrElse(null)
       }
 
       if (c == null) {

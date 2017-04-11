@@ -1,5 +1,4 @@
 package org.tresamigos.smv
-import org.tresamigos.smv.SmvApp
 
 class SmvExtModuleLinkTest extends SmvTestUtil {
   override val appArgs = Seq("--smv-props", "smv.stages=s1:s2", "-m", "None")

@@ -23,7 +23,6 @@ libraryDependencies ++= Seq(
   "org.joda"                     % "joda-convert"       % "1.7",
   "joda-time"                    % "joda-time"          % "2.7",
   "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.2",
-  "guru.nidi"                    % "graphviz-java"      % "0.1.3",
   "com.github.mdr"               %% "ascii-graphs"      % "0.0.6"
 )
 
@@ -63,12 +62,3 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 assemblyJarName in assembly := s"${name.value}-${version.value}-jar-with-dependencies.jar"
 
 test in assembly := {}
-
-// graphviz-java depends on both xml-apis and batik-ext, both of which
-// contain org.w3c.dom.events classes
-assemblyMergeStrategy in assembly := {
-  case PathList("org", "w3c", "dom", "events", xs @ _ *) => MergeStrategy.last
-  case x =>
-    val oldStrat = (assemblyMergeStrategy in assembly).value
-    oldStrat(x)
-}
