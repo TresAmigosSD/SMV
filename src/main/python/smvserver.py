@@ -238,12 +238,8 @@ TYPE_NOT_PROVIDED_ERR = 'ERROR: No module type provided!'
 TYPE_NOT_SUPPORTED_ERR = 'ERROR: Module type not supported!'
 CODE_NOT_PROVIDED_ERR = 'ERROR: No module code provided!'
 COMPILATION_ERROR = 'ERROR: Compilation error'
-JOB_SUCCESS = 'SUCCESS: Code updated!'
+JOB_SUCCESS = 'SUCCESS: Code updated!' # TODO: rename CODE_UPDATE_SUCCESS
 OK = ""
-
-@app.route("/api/test", methods = ['GET'])
-def get_project_dir():
-    return ok_res('success msg')
 
 @app.route("/api/run_module", methods = ['POST'])
 def run_module():
@@ -292,7 +288,7 @@ def get_module_code():
 def update_module_code():
     '''
     body:
-        name = 'xxx' (fqn)
+        fqn = 'xxx' (fqn)
         code = ['line1', 'line2', ...]
     function: update the module's code
     '''
@@ -376,21 +372,27 @@ def update_module_code():
 @app.route("/api/get_sample_output", methods = ['POST'])
 def get_sample_output():
     '''
-    body: name = 'xxx' (fqn)
+    body: fqn = 'xxx' (fqn)
     function: return the module's sample output
     '''
     try:
-        module_name = request.form['name']
+        module_fqn = request.form['fqn'].encode("utf-8")
     except:
-        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+        raise err_res(MODULE_NOT_PROVIDED_ERR)
 
     try:
-        output_dir = get_output_dir()
-        latest_dir = get_latest_file_dir(output_dir, module_name, '.csv')
-        res = read_file_dir(latest_dir, limit=20)
-        return jsonify(res=res)
+        # run and get DataFrame
+        module_fqn = request.form['fqn'].encode("utf-8")
+        df = SmvApp.getInstance().runModule("mod:{}".format(module_fqn))
+        # get first 10 entries from dataframe
+        raw_sample_output = df.limit(10).collect()
+        # express each row as a dict
+        sample_output_as_dict = list(map((lambda row: row.asDict()), raw_sample_output))
+        df_fields = list(map((lambda field: field.json()), df.schema.fields))
+        retval = { "fields": df_fields, "output": sample_output_as_dict }
+        return ok_res(retval)
     except:
-        raise ValueError(MODULE_NOT_FOUND_ERR)
+        raise err_res(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/get_module_schema", methods = ['POST'])
 def get_module_schema():
