@@ -13,17 +13,30 @@
 
 """Provides dependency graphing of SMV modules.
 """
+from smv import SmvApp
 from utils import smv_copy_array
-from graphviz import Source
 
-class SmvDependencyGraph(Source):
-    def __init__(self, smvApp, stageNames = None):
-        self.smvApp = smvApp
-        if stageNames is None:
-            self.stageNames = smvApp.j_smvApp.stages()
-        elif (isinstance(stageNames, list)):
-            self.stageNames = smvApp._jvm.PythonUtils.toSeq(stageNames)
+try:
+    from graphviz import Source
+except ImportError:
+    def svg_graph(stageNames):
+        print ("graphviz Python package is not installed. Please install with\n\n" +\
+               "$ pip install graphviz")
+else:
+    class SmvDependencyGraph(Source):
+        def __init__(self, smvApp, stageNames = None):
+            self.smvApp = smvApp
+            if stageNames is None:
+                self.stageNames = smvApp.j_smvApp.stages()
+            elif (isinstance(stageNames, list)):
+                self.stageNames = smvApp._jvm.PythonUtils.toSeq(stageNames)
+            else:
+                self.stageNames = smvApp._jvm.PythonUtils.toSeq([stageNames])
+            self.dotstring = smvApp.j_smvApp.dependencyGraphDotString(self.stageNames)
+            super(SmvDependencyGraph, self).__init__(self.dotstring)
+
+    def svg_graph(*stageNames):
+        if (not stageNames):
+            return SmvDependencyGraph(SmvApp.getInstance())
         else:
-            self.stageNames = smvApp._jvm.PythonUtils.toSeq([stageNames])
-        self.dotstring = smvApp.j_smvApp.dependencyGraphDotString(self.stageNames)
-        super(SmvDependencyGraph, self).__init__(self.dotstring)
+            return SmvDependencyGraph(SmvApp.getInstance(), list(stageNames))
