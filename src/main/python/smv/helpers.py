@@ -366,6 +366,55 @@ class DataFrameHelper(object):
         return DataFrame(jdf, self._sql_ctx)
 
     def smvDedupByKey(self, *keys):
+        """Remove duplicate records from the DataFrame by arbitrarly selecting the first record from a set of records with same primary key or key combo.
+
+            Args:
+                keys (*string or *Column): the column names or Columns on which to apply dedup
+
+            Example:
+                input DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+                | 2   | B       | C4      |
+                +-----+---------+---------+
+
+                >>> df.debupByKey("id")
+
+                output DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+
+                >>> df.debupByKey("id", "product")
+
+                output DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+
+            Returns:
+                (DataFrame): a DataFrame without duplicates for the specified keys
+        """
         jdf = self._jPythonHelper.smvDedupByKey(self._jdf, smv_copy_array(self._sc, *keys))
         return DataFrame(jdf, self._sql_ctx)
 
