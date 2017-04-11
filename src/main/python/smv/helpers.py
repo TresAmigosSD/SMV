@@ -333,10 +333,35 @@ class DataFrameHelper(object):
         return SmvMultiJoin(self._sql_ctx, jdf)
 
     def smvSelectMinus(self, *cols):
+        """Remove one or more columns from current DataFrame
+
+            Args:
+                cols (*string or *Column): column names or Columns to remove from the DataFrame
+
+            Example:
+                >>> df.smvSelectMinus("col1", "col2")
+                >>> df.smvSelectMinus(col("col1"), col("col2"))
+
+            Returns:
+                (DataFrame): the resulting DataFrame after removal of columns
+        """
         jdf = self._jPythonHelper.smvSelectMinus(self._jdf, smv_copy_array(self._sc, *cols))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvSelectPlus(self, *cols):
+        """Selects all the current columns in current DataFrame plus the supplied expressions
+
+            The new columns are added to the end of the current column list.
+
+            Args:
+                cols (*Column): expressions to add to the DataFrame
+
+            Example:
+                >>> df.smvSelectPlus(col("price") * col("count") as "amt")
+
+            Returns:
+                (DataFrame): the resulting DataFrame after removal of columns
+        """
         jdf = self._jDfHelper.smvSelectPlus(_to_seq(cols, _jcol))
         return DataFrame(jdf, self._sql_ctx)
 
