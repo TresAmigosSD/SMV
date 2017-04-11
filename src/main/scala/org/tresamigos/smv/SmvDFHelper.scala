@@ -344,7 +344,8 @@ class SmvDFHelper(df: DataFrame) {
         })
       case _ => dfJoined
     }
-    dfCoalescedKeys.smvSelectMinus(rightKeys(0), rightKeys.tail: _*)
+    if (joinType == SmvJoinType.Semi) dfCoalescedKeys
+    else dfCoalescedKeys.smvSelectMinus(rightKeys(0), rightKeys.tail: _*)
   }
 
   /**
