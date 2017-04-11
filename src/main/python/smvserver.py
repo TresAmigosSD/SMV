@@ -213,14 +213,15 @@ def get_module_code_file_mapping():
     module_dict = get_module_file_mapping(files, patterns)
     return module_dict
 
-def error_response(err, res="", other_kv={}):
-    retval = other_kv
+def err_res(err, err_msg="", res={}): # err, errmsg="", res={}
+    retval = {}
     retval["err"] = err
+    retval["err_msg"] = err_msg
     retval["res"] = res
     return jsonify(retval)
 
-def success_response(res, other_kv={}):
-    retval = other_kv
+def ok_res(res):
+    retval = {}
     retval["err"] = OK
     retval["res"] = res
     return jsonify(retval)
@@ -242,24 +243,21 @@ OK = ""
 
 @app.route("/api/test", methods = ['GET'])
 def get_project_dir():
-    return success_response('success msg')
+    return ok_res('success msg')
 
 @app.route("/api/run_module", methods = ['POST'])
 def run_module():
     '''
-    body: name = 'xxx' (fqn)
+    body: fqn = 'xxx' (fqn)
     function: run the module
     '''
     try:
-        module_name = request.form['name']
+        module_fqn = request.form['fqn'].encode("utf-8")
     except:
-        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+        raise err_res('MODULE_NOT_PROVIDED_ERR')
 
-    try:
-        SmvApp.getInstance().runModule(module_name.strip())
-        return JOB_SUCCESS
-    except:
-        raise ValueError(MODULE_NOT_FOUND_ERR)
+    run_result = SmvApp.getInstance().runModule("mod:{}".format(module_fqn))
+    return ok_res(str(run_result))
 
 @app.route("/api/get_module_code", methods = ['POST'])
 def get_module_code():
@@ -270,10 +268,13 @@ def get_module_code():
     try:
         module_fqn = request.form['fqn'].encode("utf-8")
     except:
-        return error_response(MODULE_NOT_PROVIDED_ERR)
+        return err_res(MODULE_NOT_PROVIDED_ERR)
 
     file_name = get_filepath_from_moduleFqn(module_fqn)
     module_name = get_module_name_from_fqn(module_fqn)
+
+    print 'filename: ', file_name
+    print 'modulename: ', module_name
 
     try:
         with open(file_name, 'rb') as f:
@@ -281,13 +282,16 @@ def get_module_code():
         (class_start, class_end) = get_SMV_module_class_start_end(lines_of_code_list, module_name)
 
         file_content = [line.rstrip() for line in lines_of_code_list]
+
+        print 'filecontent: ', file_content
+
         res = {
             'fileName': file_name,
             'fileContent': file_content # file_content[class_start:class_end],
         }
-        return success_response(res)
+        return ok_res(res)
     except:
-        return error_response(MODULE_NOT_FOUND_ERR)
+        return err_res(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/update_module_code", methods = ['POST'])
 def update_module_code():
@@ -305,12 +309,12 @@ def update_module_code():
         file_name = get_filepath_from_moduleFqn(module_fqn)
         module_name = get_module_name_from_fqn(module_fqn)
     except:
-        return error_response(MODULE_NOT_PROVIDED_ERR)
+        return err_res(MODULE_NOT_PROVIDED_ERR)
 
     try:
         module_code = request.form['code']
     except:
-        return error_response(CODE_NOT_PROVIDED_ERR)
+        return err_res(CODE_NOT_PROVIDED_ERR)
 
     module_code = json.loads(module_code)
     module_code = [line.encode('utf-8') for line in module_code]
@@ -361,7 +365,7 @@ def update_module_code():
             os.remove(duplicate_file_name + 'c')
 
         if compile_has_errors:
-            return error_response(COMPILATION_ERROR, compile_has_errors)
+            return err_res(COMPILATION_ERROR, "Module failed to compile", compile_has_errors)
 
         # if duplicate's compile successfull, modify the code of the original file
         with open(file_name, 'w') as fd:
@@ -370,9 +374,9 @@ def update_module_code():
             for i in xrange(len(module_code)):
                 fd.write(module_code[i])
 
-        return success_response(JOB_SUCCESS)
+        return ok_res(JOB_SUCCESS)
     else:
-        return error_response(MODULE_NOT_FOUND_ERR)
+        return err_res(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/get_sample_output", methods = ['POST'])
 def get_sample_output():
