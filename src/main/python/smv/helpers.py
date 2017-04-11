@@ -290,10 +290,45 @@ class DataFrameHelper(object):
     # temporarily remove the trailing parameters till we can find a
     # workaround
     def smvJoinByKey(self, other, keys, joinType):
+        """joins two DataFrames on a key
+
+            The Spark `DataFrame` join operation does not handle duplicate key names.
+            If both left and right side of the join operation contain the same key,
+            the result `DataFrame` is unusable.
+
+            The `smvJoinByKey` method will allow the user to join two `DataFrames` using the same join key.
+            Post join, only the left side keys will remain. In case of outer-join, the
+            `coalesce(leftkey, rightkey)` will replace the left key to be kept.
+
+            Args:
+                other (DataFrame): the DataFrame to join with
+                keys (list(string)): a list of column names on which to apply the join
+                joinType (string): choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
+
+            Example:
+                >>> df1.smvJoinByKey(df2, ["k"], "inner")
+
+            Returns:
+                (DataFrame): result of the join operation
+        """
         jdf = self._jPythonHelper.smvJoinByKey(self._jdf, other._jdf, _to_seq(keys), joinType)
         return DataFrame(jdf, self._sql_ctx)
 
     def smvJoinMultipleByKey(self, keys, joinType = 'inner'):
+        """Create multiple DF join builder
+
+            It is used in conjunction with `joinWith` and `doJoin`
+
+            Args:
+                keys (list(string)): a list of column names on which to apply the join
+                joinType (string): choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
+
+            Example:
+                >>> df.joinMultipleByKey(["k1", "k2"], "inner").joinWith(df2, "_df2").joinWith(df3, "_df3", "leftouter").doJoin()
+
+            Returns:
+                (SmvMultiJoin): the builder object for the multi join operation
+        """
         jdf = self._jPythonHelper.smvJoinMultipleByKey(self._jdf, smv_copy_array(self._sc, *keys), joinType)
         return SmvMultiJoin(self._sql_ctx, jdf)
 
