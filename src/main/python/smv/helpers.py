@@ -170,8 +170,7 @@ class SmvMultiJoin(object):
             Args:
                 df (DataFrame): the DataFrame to join with
                 postfix (string): postfix to use when renaming join columns
-                jointype (string): optional jointype. if not specified, `conf.defaultJoinType` is used.
-                                   choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
+                jointype (string): optional jointype. if not specified, `conf.defaultJoinType` is used.  choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
 
             Example:
                 >>> joindf = df1.smvJoinMultipleByKey(['a'], 'inner').joinWith(df2, '_df2').joinWith(df3, '_df3', 'outer')
