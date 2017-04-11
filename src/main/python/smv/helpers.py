@@ -251,11 +251,30 @@ class DataFrameHelper(object):
             Example:
                 >>> df.smvGroupBy(col("k"))
                 >>> df.smvGroupBy("k")
+
+            Returns:
+                (SmvGroupedData): grouped data object
+
         """
         jSgd = self._jPythonHelper.smvGroupBy(self._jdf, smv_copy_array(self._sc, *cols))
         return SmvGroupedData(self.df, jSgd)
 
     def smvHashSample(self, key, rate=0.01, seed=23):
+        """Sample the df according to the hash of a column
+
+            MurmurHash3 algorithm is used for generating the hash
+
+            Args:
+                key (Column): column to sample on
+                rate (double): sample rate in range (0, 1] with a default of 0.01 (1%)
+                seed (int): random generator integer seed with a default of 23
+
+            Example:
+                >>> df.smvHashSample(col("key"), rate=0.1, seed=123)
+
+            Returns:
+                (DataFrame): sampled DF
+        """
         if (isinstance(key, basestring)):
             jkey = col(key)._jc
         elif (isinstance(key, Column)):
