@@ -265,7 +265,7 @@ class DataFrameHelper(object):
             MurmurHash3 algorithm is used for generating the hash
 
             Args:
-                key (Column): column to sample on
+                key (string or Column): column name or Column to sample on
                 rate (double): sample rate in range (0, 1] with a default of 0.01 (1%)
                 seed (int): random generator integer seed with a default of 23
 
