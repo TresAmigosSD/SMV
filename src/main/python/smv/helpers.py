@@ -220,7 +220,7 @@ class DataFrameHelper(object):
         """Expand structure type column to a group of columns
 
             Args:
-                cols (*string): column names to expand
+                cols (\*string): column names to expand
 
             Example:
                 input DF:
@@ -243,7 +243,7 @@ class DataFrameHelper(object):
             See [[org.tresamigos.smv.SmvGroupedDataFunc]] for list of functions that can be applied to the grouped data.
 
             Args:
-                cols (*string or *Column): column names or Column objects to group on
+                cols (\*string or \*Column): column names or Column objects to group on
 
             Note:
                 This is going away shortly and user will be able to use standard Spark `groupBy` method directly.
@@ -336,7 +336,7 @@ class DataFrameHelper(object):
         """Remove one or more columns from current DataFrame
 
             Args:
-                cols (*string or *Column): column names or Columns to remove from the DataFrame
+                cols (\*string or \*Column): column names or Columns to remove from the DataFrame
 
             Example:
                 >>> df.smvSelectMinus("col1", "col2")
@@ -354,7 +354,7 @@ class DataFrameHelper(object):
             The new columns are added to the end of the current column list.
 
             Args:
-                cols (*Column): expressions to add to the DataFrame
+                cols (\*Column): expressions to add to the DataFrame
 
             Example:
                 >>> df.smvSelectPlus(col("price") * col("count") as "amt")
@@ -369,7 +369,7 @@ class DataFrameHelper(object):
         """Remove duplicate records from the DataFrame by arbitrarly selecting the first record from a set of records with same primary key or key combo.
 
             Args:
-                keys (*string or *Column): the column names or Columns on which to apply dedup
+                keys (\*string or \*Column): the column names or Columns on which to apply dedup
 
             Example:
                 input DataFrame:
