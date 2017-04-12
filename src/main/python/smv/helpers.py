@@ -499,10 +499,90 @@ class DataFrameHelper(object):
         return DataFrame(jdf, self._sql_ctx)
 
     def smvUnpivot(self, *cols):
+        """Unpivot the selected columns
+
+            Given a set of records with value columns, turns the value columns into value rows.
+
+            Args:
+                cols (\*string): the names of the columns to unpivot
+
+            Example:
+                input DF:
+
+                    +----+---+---+---+
+                    | id | X | Y | Z |
+                    +====+===+===+===+
+                    | 1  | A | B | C |
+                    +----+---+---+---+
+                    | 2  | D | E | F |
+                    +----+---+---+---+
+                    | 3  | G | H | I |
+                    +----+---+---+---+
+
+                >>> df.smvUnpivot("X", "Y", "Z")
+
+                output DF:
+
+                    +----+--------+-------+
+                    | id | column | value |
+                    +====+========+=======+
+                    |  1 |   X    |   A   |
+                    +----+--------+-------+
+                    |  1 |   Y    |   B   |
+                    +----+--------+-------+
+                    |  1 |   Z    |   C   |
+                    +----+--------+-------+
+                    | ...   ...      ...  |
+                    +----+--------+-------+
+                    |  3 |   Y    |   H   |
+                    +----+--------+-------+
+                    |  3 |   Z    |   I   |
+                    +----+--------+-------+
+
+            Returns:
+                (DataFrame): the unpivoted DataFrame
+        """
         jdf = self._jDfHelper.smvUnpivot(_to_seq(cols))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvUnpivotRegex(self, cols, colNameFn, indexColName):
+        """Unpivot the selected columns using the specified regex
+
+            Args:
+                cols (\*string): the names of the columns to unpivot
+                colNameFn (string): a regex representing the function to be applied when unpivoting
+                indexColName (string): the name of the index column to be created
+
+            Example:
+                input DF:
+
+                    +----+-------+-------+-------+-------+
+                    | id |  A_1  |  A_2  |  B_1  |  B_2  |
+                    +====+=======+=======+=======+=======+
+                    | 1  | 1_a_1 | 1_a_2 | 1_b_1 | 1_b_2 |
+                    +----+-------+-------+-------+-------+
+                    | 2  | 2_a_1 | 2_a_2 | 2_b_1 | 2_b_2 |
+                    +----+-------+-------+-------+-------+
+
+                >>> df.smvUnpivotRegex( ["A_1", "A_2", "B_1", "B_2"], "(.*)_(.*)", "index" )
+
+                output DF:
+
+                    +----+-------+-------+-------+
+                    | id | index |   A   |   B   |
+                    +====+=======+=======+=======+
+                    | 1  |   1   | 1_a_1 | 1_b_1 |
+                    +----+-------+-------+-------+
+                    | 1  |   2   | 1_a_2 | 1_b_2 |
+                    +----+-------+-------+-------+
+                    | 2  |   1   | 2_a_1 | 2_b_1 |
+                    +----+-------+-------+-------+
+                    | 2  |   2   | 2_a_2 | 2_b_2 |
+                    +----+-------+-------+-------+
+
+            Returns:
+                (DataFrame): the unpivoted DataFrame
+        """
         jdf = self._jDfHelper.smvUnpivotRegex(_to_seq(cols), colNameFn, indexColName)
         return DataFrame(jdf, self._sql_ctx)
 
