@@ -467,10 +467,34 @@ class DataFrameHelper(object):
         return _withOrder
 
     def smvUnion(self, *dfothers):
+        """Unions DataFrames with different number of columns by column name and schema
+
+            Spark unionAll ignores column names & schema, and can only be performed on tables with the same number of columns.
+
+            Args:
+                dfOthers (\*DataFrame): the dataframes to union with
+
+            Example:
+                >>> df.smvUnion(df2, df3)
+
+            Returns:
+                (DataFrame): the union of all specified DataFrames
+        """
         jdf = self._jDfHelper.smvUnion(_to_seq(dfothers, _jdf))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvRenameField(self, *namePairs):
+        """Rename one or more fields of a `DataFrame`
+
+            Args:
+                namePairs (\*tuple): tuples of strings where the first is the source column name, and the second is the target column name
+
+            Example:
+                >>> df.smvRenameField(("a", "aa"), ("c", "cc"))
+
+            Returns:
+                (DataFrame): the DataFrame with renamed fields
+        """
         jdf = self._jPythonHelper.smvRenameField(self._jdf, smv_copy_array(self._sc, *namePairs))
         return DataFrame(jdf, self._sql_ctx)
 
