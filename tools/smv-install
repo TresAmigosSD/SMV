@@ -6,7 +6,7 @@ PROG_NAME=$(basename "$0")
 function usage()
 {
   echo "USAGE: ${PROG_NAME} [-spark] smv_version_to_release(n.n.n.n)"
-  LATEST_VERSION=$(curl -s https://api.github.com/repos/tresamigossd/smv/releases | grep browser_download_url | head -n 1 | cut -d '"' -f 4 | cut -d '/' -f 8 | cut -c 2-)
+  LATEST_VERSION=$(curl https://raw.githubusercontent.com/TresAmigosSD/SMV/master/.smv_version)
   echo "Latest SMV version is: ${LATEST_VERSION:-Could not parse version from Github API}"
   exit $1
 }
