@@ -389,7 +389,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * and the following call:
    * {{{
-   *   df.debupByKey("id")
+   *   df.dedupByKey("id")
    * }}}
    * will yield the following `DataFrame`:
    * {{{
@@ -401,7 +401,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * while the following call:
    * {{{
-   *   df.debupByKey("id", "product")
+   *   df.dedupByKey("id", "product")
    * }}}
    *
    * will yield the following:
@@ -466,7 +466,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * and the following call:
    * {{{
-   *   df.debupByKeyWithOrder($"id")($"product".desc)
+   *   df.dedupByKeyWithOrder($"id")($"product".desc)
    * }}}
    * will yield the following `DataFrame`:
    * {{{

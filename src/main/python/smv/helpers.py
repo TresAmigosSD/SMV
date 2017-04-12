@@ -386,7 +386,7 @@ class DataFrameHelper(object):
                 | 2   | B       | C4      |
                 +-----+---------+---------+
 
-                >>> df.debupByKey("id")
+                >>> df.dedupByKey("id")
 
                 output DataFrame:
 
@@ -398,7 +398,7 @@ class DataFrameHelper(object):
                 | 2   | B       | C3      |
                 +-----+---------+---------+
 
-                >>> df.debupByKey("id", "product")
+                >>> df.dedupByKey("id", "product")
 
                 output DataFrame:
 
