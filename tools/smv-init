@@ -102,7 +102,7 @@ function copy_conf_files()
 {
     # copy appropriate files based on project type
     PYTHON_FILES="README.md notebooks/Untitled.ipynb .gitignore.template log4j.properties conf/smv-app-conf.props conf/smv-user-conf.props"
-    SCALA_FILES="$PYTHON_FILES build.sbt project/assembly.sbt project/build.properties"
+    SCALA_FILES="$PYTHON_FILES build.sbt pom.xml project/assembly.sbt project/build.properties"
     ENTERPRISE_FILES="$PYTHON_FILES conf/smv-user-conf.props.template"
 
     if [ "$PROJ_TYPE" = "test" ] ; then

@@ -8,11 +8,6 @@ source $SMV_TOOLS/_pyenv.sh
 
 export SPARK_PRINT_LAUNCH_COMMAND=1
 
-# Another way to add smv.py is through the --py-files option passed to
-# pyspark, as in `pyspark --py-files $SMV_TOOLS/../python/smv.py`
-# Not sure yet which way is best practice.
-export PYTHONPATH="$PYTHONPATH:$SMV_TOOLS/../src/main/python"
-
 # Set PYTHONSTARTUP to load the init script
 # Since pyspark does not take app parameters, we have to pass SMV_ARGS to the
 # startup script. A little hackish before we figure out better ways.

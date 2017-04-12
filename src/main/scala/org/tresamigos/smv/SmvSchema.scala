@@ -428,6 +428,7 @@ class SmvSchema(val entries: Seq[SchemaEntry], val attributes: Map[String, Strin
     def strToChar(s: String): Char = {
       s match {
         case "\\t" => '\t' // map \t to tab
+        case "\\0" => '\0' // map \0 to null
         case x     => x(0)
       }
     }
@@ -448,6 +449,7 @@ class SmvSchema(val entries: Seq[SchemaEntry], val attributes: Map[String, Strin
     def charToStr(c: Char): String = {
       c match {
         case '\t' => "\\t"
+        case '\0' => "\\0"
         case x    => x.toString
       }
     }

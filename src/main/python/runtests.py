@@ -18,8 +18,6 @@ from pyspark.sql import SparkSession
 
 from pyspark.java_gateway import launch_gateway
 
-from smv import SmvApp as app
-
 import sys
 
 # shared spark and sql context
@@ -64,8 +62,6 @@ if __name__ == "__main__":
 
     TestPath = "./src/test/python"
     SrcPath = "./src/main/python"
-
-    app.add_source(SrcPath)
 
     loader = TestLoader()
 

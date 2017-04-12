@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smvbasetest import SmvBaseTest
-from smv import smvPy
+from smv import SmvApp
 
 class RunModuleFromCmdLineTest(SmvBaseTest):
     modUrn = 'mod:fixture.cmdline.runmod.stage1.modules.A'
@@ -23,8 +23,8 @@ class RunModuleFromCmdLineTest(SmvBaseTest):
                 '-m', "modules.A"]
 
     def test_can_run_module_from_cmdline(self):
-        smvPy.j_smvApp.run()
-        a = smvPy.runModule(self.modUrn)
+        self.smvApp.j_smvApp.run()
+        a = self.smvApp.runModule(self.modUrn)
         expected = self.createDF("k:String;v:Integer", "a,;b,2")
         self.should_be_same(a, expected)
 
@@ -37,8 +37,8 @@ class RunStageFromCmdLineTest(SmvBaseTest):
                 '-s', cls.stageName]
 
     def test_can_run_stage_from_cmdline(self):
-        smvPy.j_smvApp.run()
-        a = smvPy.runModule("mod:" + self.stageName + ".modules.A")
+        self.smvApp.j_smvApp.run()
+        a = self.smvApp.runModule("mod:" + self.stageName + ".modules.A")
         self.should_be_same(a, self.createDF("k:String;v:Integer", "a,;b,2"))
-        b = smvPy.runModule("mod:" + self.stageName + ".modules.B")
+        b = self.smvApp.runModule("mod:" + self.stageName + ".modules.B")
         self.should_be_same(b, self.createDF("k:String;v:Integer", "c,3;d,4"))

@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smvbasetest import SmvBaseTest
-from smv import smvPy
+from smv import SmvApp
 
 class DiscoverSchemaTest(SmvBaseTest):
     def test_discoverSchema(self):

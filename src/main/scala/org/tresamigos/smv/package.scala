@@ -146,20 +146,22 @@ package object smv {
   @deprecated("use the one in smvfuncs package instead", "1.6")
   def smvFirst(c: Column, nonNull: Boolean = false) = smvfuncs.smvFirst(c, nonNull)
 
-  /** True if any of the columns is not null */
-  def hasNonNull(columns: Column*) = columns.foldRight(lit(false))((c, acc) => acc || c.isNotNull)
+  /** True if any of the columns is not null
+   **/
+  @deprecated("use smvHasNonNull in smvfuncs package instead", "2.1")
+  def hasNonNull(columns: Column*) = smvfuncs.smvHasNonNull(columns: _*)
 
   /**
    * Patch Spark's `concat` and `concat_ws` to treat null as empty string in concatenation.
    **/
-  def smvStrCat(columns: Column*) =
-    when(hasNonNull(columns: _*), concat(columns.map { c =>
-      coalesce(c, lit(""))
-    }: _*)).otherwise(lit(null))
+  @deprecated("use smvHasNonNull in smvfuncs package instead", "2.1")
+  def smvStrCat(columns: Column*) = smvfuncs.smvStrCat(columns: _*)
 
-  def smvStrCat(sep: String, columns: Column*) =
-    when(hasNonNull(columns: _*), concat_ws(sep, columns.map(c => coalesce(c, lit(""))): _*))
-      .otherwise(lit(null))
+  /**
+   * Patch Spark's `concat` and `concat_ws` to treat null as empty string in concatenation.
+   **/
+  @deprecated("use smvHasNonNull in smvfuncs package instead", "2.1")
+  def smvStrCat(sep: String, columns: Column*) = smvfuncs.smvStrCat(sep, columns: _*)
 
   /**
    * create a UDF from a map

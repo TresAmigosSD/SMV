@@ -11,7 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp as app
+from smv import SmvApp
+import sys
 
-app.add_source('src/main/python')
+app = SmvApp.createInstance(sys.argv[1:])
+# skip the first argument, which is this program
 app.run()

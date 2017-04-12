@@ -11,29 +11,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import smvPy
+from smv import SmvApp
 from smv.utils import smv_copy_array
 
 from pyspark.sql import HiveContext, DataFrame
 
 def ExactMatchPreFilter(colName, expr):
-    return smvPy._jvm.org.tresamigos.smv.matcher.ExactMatchPreFilter(colName, expr._jc)
+    return SmvApp.getInstance()._jvm.org.tresamigos.smv.matcher.ExactMatchPreFilter(colName, expr._jc)
 
 def NoOpPreFilter():
     return None
 
 def GroupCondition(expr):
-    return smvPy._jvm.org.tresamigos.smv.matcher.GroupCondition(expr._jc)
+    return SmvApp.getInstance()._jvm.org.tresamigos.smv.matcher.GroupCondition(expr._jc)
 
 def NoOpGroupCondition():
     return None
 
 def ExactLogic(colName, expr):
-    return smvPy._jvm.org.tresamigos.smv.matcher.ExactLogic(colName, expr._jc)
+    return SmvApp.getInstance()._jvm.org.tresamigos.smv.matcher.ExactLogic(colName, expr._jc)
 
 def FuzzyLogic(colName, predicate, valueExpr, threshold):
     pjc = predicate._jc
-    return smvPy._jvm.org.tresamigos.smv.matcher.FuzzyLogic(colName, pjc, valueExpr._jc, threshold)
+    return SmvApp.getInstance()._jvm.org.tresamigos.smv.matcher.FuzzyLogic(colName, pjc, valueExpr._jc, threshold)
 
 class SmvEntityMatcher(object):
     def __init__(self,
@@ -43,11 +43,11 @@ class SmvEntityMatcher(object):
         groupCondition,
         levelLogics
     ):
-        jlls = smvPy.sc._gateway.new_array(smvPy._jvm.org.tresamigos.smv.matcher.LevelLogic, len(levelLogics))
+        jlls = SmvApp.getInstance().sc._gateway.new_array(SmvApp.getInstance()._jvm.org.tresamigos.smv.matcher.LevelLogic, len(levelLogics))
         for i in range(0, len(jlls)):
             jlls[i] = levelLogics[i]
 
-        self.jem = smvPy._jvm.org.tresamigos.smv.python.SmvPythonHelper.createMatcher(
+        self.jem = SmvApp.getInstance()._jvm.org.tresamigos.smv.python.SmvPythonHelper.createMatcher(
             leftId,
             rightId,
             exactMatchFilter,
@@ -57,4 +57,4 @@ class SmvEntityMatcher(object):
 
     def doMatch(self, df1, df2, keepOriginalCols=True):
         jres = self.jem.doMatch(df1._jdf, df2._jdf, keepOriginalCols)
-        return DataFrame(jres, smvPy.sqlContext)
+        return DataFrame(jres, SmvApp.getInstance().sqlContext)

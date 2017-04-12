@@ -22,6 +22,7 @@ from pyspark.sql.functions import col
 from utils import smv_copy_array
 
 import sys
+import inspect
 
 # common converters to pass to _to_seq and _to_list
 def _jcol(c): return c._jc
@@ -164,140 +165,515 @@ class SmvMultiJoin(object):
         self.mj = mj
 
     def joinWith(self, df, postfix, jointype = None):
+        """Append SmvMultiJoin Chain
+
+            Args:
+                df (DataFrame): the DataFrame to join with
+                postfix (string): postfix to use when renaming join columns
+                jointype (string): optional jointype. if not specified, `conf.defaultJoinType` is used.  choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
+
+            Example:
+                >>> joindf = df1.smvJoinMultipleByKey(['a'], 'inner').joinWith(df2, '_df2').joinWith(df3, '_df3', 'outer')
+
+            Returns:
+                (SmvMultiJoin): formula of the join. need to call `doJoin()` on it to execute
+        """
         return SmvMultiJoin(self.sqlContext, self.mj.joinWith(df._jdf, postfix, jointype))
 
     def doJoin(self, dropextra = False):
+        """Trigger the join operation
+
+            Args:
+                dropExtra (boolean): default false, which will keep all duplicated name columns with the postfix.
+                                     when true, the duplicated columns will be dropped
+
+            Example:
+                joindf.doJoin()
+
+            Returns:
+                (DataFrame): result of executing the join operation
+        """
         return DataFrame(self.mj.doJoin(dropextra), self.sqlContext)
 
-helper = lambda df: df._sc._jvm.SmvPythonHelper
-def dfhelper(df):
-    return _sparkContext()._jvm.SmvDFHelper(df._jdf)
+def _getUnboundMethod(helperCls, methodName):
+    def method(self, *args):
+        return getattr(helperCls(self), methodName)(*args)
+    return method
 
-def colhelper(c):
-    return _sparkContext()._jvm.ColumnHelper(c._jc)
+def _helpCls(receiverCls, helperCls):
+    for name, method in inspect.getmembers(helperCls, predicate=inspect.ismethod):
+        # ignore special and private methods
+        if not name.startswith("_"):
+            newMethod = _getUnboundMethod(helperCls, name)
+            setattr(receiverCls, name, newMethod)
 
-DataFrame.smvExpandStruct = lambda df, *cols: DataFrame(helper(df).smvExpandStruct(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
+class DataFrameHelper(object):
+    def __init__(self, df):
+        self.df = df
+        self._sc = df._sc
+        self._sql_ctx = df.sql_ctx
+        self._jdf = df._jdf
+        self._jPythonHelper = df._sc._jvm.SmvPythonHelper
+        self._jDfHelper = df._sc._jvm.SmvDFHelper(df._jdf)
 
-# TODO can we port this without going through the proxy?
-DataFrame.smvGroupBy = lambda df, *cols: SmvGroupedData(df, helper(df).smvGroupBy(df._jdf, smv_copy_array(df._sc, *cols)))
+    def smvExpandStruct(self, *cols):
+        """Expand structure type column to a group of columns
 
-def __smvHashSample(df, key, rate=0.01, seed=23):
-    if (isinstance(key, basestring)):
-        jkey = col(key)._jc
-    elif (isinstance(key, Column)):
-        jkey = key._jc
-    else:
-        raise RuntimeError("key parameter must be either a String or a Column")
-    return DataFrame(dfhelper(df).smvHashSample(jkey, rate, seed), df.sql_ctx)
-DataFrame.smvHashSample = __smvHashSample
+            Args:
+                cols (\*string): column names to expand
 
-# FIXME py4j method resolution with null argument can fail, so we
-# temporarily remove the trailing parameters till we can find a
-# workaround
-DataFrame.smvJoinByKey = lambda df, other, keys, joinType: DataFrame(helper(df).smvJoinByKey(df._jdf, other._jdf, _to_seq(keys), joinType), df.sql_ctx)
+            Example:
+                input DF:
+                    [id: string, address: struct<state:string, zip:string, street:string>]
 
-DataFrame.smvJoinMultipleByKey = lambda df, keys, joinType = 'inner': SmvMultiJoin(df.sql_ctx, helper(df).smvJoinMultipleByKey(df._jdf, smv_copy_array(df._sc, *keys), joinType))
+                >>> df.smvExpandStruct("address")
 
-DataFrame.smvSelectMinus = lambda df, *cols: DataFrame(helper(df).smvSelectMinus(df._jdf, smv_copy_array(df._sc, *cols)), df.sql_ctx)
+                output DF:
+                    [id: string, state: string, zip: string, street: string]
 
-DataFrame.smvSelectPlus = lambda df, *cols: DataFrame(dfhelper(df).smvSelectPlus(_to_seq(cols, _jcol)), df.sql_ctx)
+            Returns:
+                (DataFrame): DF with expanded columns
+        """
+        jdf = self._jPythonHelper.smvExpandStruct(self._jdf, smv_copy_array(self._sc, *cols))
+        return DataFrame(jdf, self._sql_ctx)
 
-DataFrame.smvDedupByKey = lambda df, *keys: DataFrame(helper(df).smvDedupByKey(df._jdf, smv_copy_array(df._sc, *keys)), df.sql_ctx)
+    def smvGroupBy(self, *cols):
+        """Similar to groupBy, instead of creating GroupedData, create an `SmvGroupedData` object.
 
-def __smvDedupByKeyWithOrder(df, *keys):
-    def _withOrder(*orderCols):
-        return DataFrame(helper(df).smvDedupByKeyWithOrder(df._jdf, smv_copy_array(df._sc, *keys), smv_copy_array(df._sc, *orderCols)), df.sql_ctx)
-    return _withOrder
-DataFrame.smvDedupByKeyWithOrder = __smvDedupByKeyWithOrder
+            See [[org.tresamigos.smv.SmvGroupedDataFunc]] for list of functions that can be applied to the grouped data.
 
-DataFrame.smvUnion = lambda df, *dfothers: DataFrame(dfhelper(df).smvUnion(_to_seq(dfothers, _jdf)), df.sql_ctx)
+            Args:
+                cols (\*string or \*Column): column names or Column objects to group on
 
-DataFrame.smvRenameField = lambda df, *namePairs: DataFrame(helper(df).smvRenameField(df._jdf, smv_copy_array(df._sc, *namePairs)), df.sql_ctx)
+            Note:
+                This is going away shortly and user will be able to use standard Spark `groupBy` method directly.
 
-DataFrame.smvUnpivot = lambda df, *cols: DataFrame(dfhelper(df).smvUnpivot(_to_seq(cols)), df.sql_ctx)
+            Example:
+                >>> df.smvGroupBy(col("k"))
+                >>> df.smvGroupBy("k")
 
-DataFrame.smvUnpivotRegex = lambda df, cols, colNameFn, indexColName: DataFrame(dfhelper(df).smvUnpivotRegex(_to_seq(cols), colNameFn, indexColName), df.sql_ctx)
+            Returns:
+                (SmvGroupedData): grouped data object
 
-DataFrame.smvExportCsv = lambda df, path, n=None: dfhelper(df).smvExportCsv(path, n)
+        """
+        jSgd = self._jPythonHelper.smvGroupBy(self._jdf, smv_copy_array(self._sc, *cols))
+        return SmvGroupedData(self.df, jSgd)
 
-def __smvOverlapCheck(df, keyColName):
-    def _check(*dfothers):
-        return DataFrame(helper(df).smvOverlapCheck(df._jdf, keyColName, smv_copy_array(df._sc, *dfothers)), df.sql_ctx)
-    return _check
-DataFrame.smvOverlapCheck = __smvOverlapCheck
+    def smvHashSample(self, key, rate=0.01, seed=23):
+        """Sample the df according to the hash of a column
 
-#############################################
-# DfHelpers which print to STDOUT
-# Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout
-#############################################
-println = lambda str: sys.stdout.write(str + "\n")
+            MurmurHash3 algorithm is used for generating the hash
 
-def printFile(f, str):
-    tgt = open(f, "w")
-    tgt.write(str + "\n")
-    tgt.close()
+            Args:
+                key (string or Column): column name or Column to sample on
+                rate (double): sample rate in range (0, 1] with a default of 0.01 (1%)
+                seed (int): random generator integer seed with a default of 23
 
-DataFrame.peek = lambda df, pos = 1, colRegex = ".*": println(helper(df).peekStr(df._jdf, pos, colRegex))
-DataFrame.peekSave = lambda df, path, pos = 1, colRegex = ".*": printFile(path, helper(df).peekStr(df._jdf, pos, colRegex))
+            Example:
+                >>> df.smvHashSample(col("key"), rate=0.1, seed=123)
 
-def _smvEdd(df, *cols): return dfhelper(df)._smvEdd(_to_seq(cols))
-def _smvHist(df, *cols): return dfhelper(df)._smvHist(_to_seq(cols))
-def _smvConcatHist(df, cols): return helper(df).smvConcatHist(df._jdf, smv_copy_array(df._sc, *cols))
-def _smvFreqHist(df, *cols): return dfhelper(df)._smvFreqHist(_to_seq(cols))
-def _smvCountHist(df, keys, binSize): return dfhelper(df)._smvCountHist(_to_seq(keys), binSize)
-def _smvBinHist(df, *colWithBin):
-    for elem in colWithBin:
-        assert type(elem) is tuple, "smvBinHist takes a list of tuple(string, double) as paraeter"
-        assert len(elem) == 2, "smvBinHist takes a list of tuple(string, double) as parameter"
-    insureDouble = map(lambda t: (t[0], t[1] * 1.0), colWithBin)
-    return helper(df).smvBinHist(df._jdf, smv_copy_array(df._sc, *insureDouble))
+            Returns:
+                (DataFrame): sampled DF
+        """
+        if (isinstance(key, basestring)):
+            jkey = col(key)._jc
+        elif (isinstance(key, Column)):
+            jkey = key._jc
+        else:
+            raise RuntimeError("key parameter must be either a String or a Column")
 
-def _smvEddCompare(df, df2, ignoreColName): return dfhelper(df)._smvEddCompare(df2._jdf, ignoreColName)
+        jdf = self._jDfHelper.smvHashSample(jkey, rate, seed)
 
-DataFrame.smvEdd = lambda df, *cols: println(_smvEdd(df, *cols))
-DataFrame.smvHist = lambda df, *cols: println(_smvHist(df, *cols))
-DataFrame.smvConcatHist = lambda df, cols: println(_smvConcatHist(df, cols))
-DataFrame.smvFreqHist = lambda df, *cols: println(_smvFreqHist(df, *cols))
-DataFrame.smvEddCompare = lambda df, df2, ignoreColName=False: println(_smvEddCompare(df, df2, ignoreColName))
+        return DataFrame(jdf, self._sql_ctx)
 
-def __smvCountHistFn(df, keys, binSize = 1):
-    if (isinstance(keys, basestring)):
-        return println(_smvCountHist(df, [keys], binSize))
-    else:
-        return println(_smvCountHist(df, keys, binSize))
-DataFrame.smvCountHist = __smvCountHistFn
+    # FIXME py4j method resolution with null argument can fail, so we
+    # temporarily remove the trailing parameters till we can find a
+    # workaround
+    def smvJoinByKey(self, other, keys, joinType):
+        """joins two DataFrames on a key
 
-DataFrame.smvBinHist = lambda df, *colWithBin: println(_smvBinHist(df, *colWithBin))
+            The Spark `DataFrame` join operation does not handle duplicate key names.
+            If both left and right side of the join operation contain the same key,
+            the result `DataFrame` is unusable.
 
-def __smvDiscoverPK(df, n):
-    res = helper(df).smvDiscoverPK(df._jdf, n)
-    println("[{}], {}".format(", ".join(map(str, res._1())), res._2()))
+            The `smvJoinByKey` method will allow the user to join two `DataFrames` using the same join key.
+            Post join, only the left side keys will remain. In case of outer-join, the
+            `coalesce(leftkey, rightkey)` will replace the left key to be kept.
 
-DataFrame.smvDiscoverPK = lambda df, n=10000: __smvDiscoverPK(df, n)
+            Args:
+                other (DataFrame): the DataFrame to join with
+                keys (list(string)): a list of column names on which to apply the join
+                joinType (string): choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
 
-DataFrame.smvDumpDF = lambda df: println(dfhelper(df)._smvDumpDF())
+            Example:
+                >>> df1.smvJoinByKey(df2, ["k"], "inner")
 
-#############################################
-# ColumnHelper methods:
-#############################################
+            Returns:
+                (DataFrame): result of the join operation
+        """
+        jdf = self._jPythonHelper.smvJoinByKey(self._jdf, other._jdf, _to_seq(keys), joinType)
+        return DataFrame(jdf, self._sql_ctx)
 
-# SmvPythonHelper is necessary as frontend to generic Scala functions
-Column.smvIsAllIn = lambda c, *vals: Column(_sparkContext()._jvm.SmvPythonHelper.smvIsAllIn(c._jc, _to_seq(vals)))
-Column.smvIsAnyIn = lambda c, *vals: Column(_sparkContext()._jvm.SmvPythonHelper.smvIsAnyIn(c._jc, _to_seq(vals)))
+    def smvJoinMultipleByKey(self, keys, joinType = 'inner'):
+        """Create multiple DF join builder
 
-Column.smvMonth      = lambda c: Column(colhelper(c).smvMonth())
-Column.smvYear       = lambda c: Column(colhelper(c).smvYear())
-Column.smvQuarter    = lambda c: Column(colhelper(c).smvQuarter())
-Column.smvDayOfMonth = lambda c: Column(colhelper(c).smvDayOfMonth())
-Column.smvDayOfWeek  = lambda c: Column(colhelper(c).smvDayOfWeek())
-Column.smvHour       = lambda c: Column(colhelper(c).smvHour())
+            It is used in conjunction with `joinWith` and `doJoin`
 
-Column.smvPlusDays   = lambda c, delta: Column(colhelper(c).smvPlusDays(delta))
-Column.smvPlusWeeks  = lambda c, delta: Column(colhelper(c).smvPlusWeeks(delta))
-Column.smvPlusMonths = lambda c, delta: Column(colhelper(c).smvPlusMonths(delta))
-Column.smvPlusYears  = lambda c, delta: Column(colhelper(c).smvPlusYears(delta))
+            Args:
+                keys (list(string)): a list of column names on which to apply the join
+                joinType (string): choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
 
-Column.smvDay70 = lambda c: Column(colhelper(c).smvDay70())
-Column.smvMonth70 = lambda c: Column(colhelper(c).smvMonth70())
+            Example:
+                >>> df.joinMultipleByKey(["k1", "k2"], "inner").joinWith(df2, "_df2").joinWith(df3, "_df3", "leftouter").doJoin()
 
-Column.smvStrToTimestamp = lambda c, fmt: Column(colhelper(c).smvStrToTimestamp(fmt))
+            Returns:
+                (SmvMultiJoin): the builder object for the multi join operation
+        """
+        jdf = self._jPythonHelper.smvJoinMultipleByKey(self._jdf, smv_copy_array(self._sc, *keys), joinType)
+        return SmvMultiJoin(self._sql_ctx, jdf)
+
+    def smvSelectMinus(self, *cols):
+        """Remove one or more columns from current DataFrame
+
+            Args:
+                cols (\*string or \*Column): column names or Columns to remove from the DataFrame
+
+            Example:
+                >>> df.smvSelectMinus("col1", "col2")
+                >>> df.smvSelectMinus(col("col1"), col("col2"))
+
+            Returns:
+                (DataFrame): the resulting DataFrame after removal of columns
+        """
+        jdf = self._jPythonHelper.smvSelectMinus(self._jdf, smv_copy_array(self._sc, *cols))
+        return DataFrame(jdf, self._sql_ctx)
+
+    def smvSelectPlus(self, *cols):
+        """Selects all the current columns in current DataFrame plus the supplied expressions
+
+            The new columns are added to the end of the current column list.
+
+            Args:
+                cols (\*Column): expressions to add to the DataFrame
+
+            Example:
+                >>> df.smvSelectPlus(col("price") * col("count") as "amt")
+
+            Returns:
+                (DataFrame): the resulting DataFrame after removal of columns
+        """
+        jdf = self._jDfHelper.smvSelectPlus(_to_seq(cols, _jcol))
+        return DataFrame(jdf, self._sql_ctx)
+
+    def smvDedupByKey(self, *keys):
+        """Remove duplicate records from the DataFrame by arbitrarly selecting the first record from a set of records with same primary key or key combo.
+
+            Args:
+                keys (\*string or \*Column): the column names or Columns on which to apply dedup
+
+            Example:
+                input DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+                | 2   | B       | C4      |
+                +-----+---------+---------+
+
+                >>> df.dedupByKey("id")
+
+                output DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+
+                >>> df.dedupByKey("id", "product")
+
+                output DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+
+            Returns:
+                (DataFrame): a DataFrame without duplicates for the specified keys
+        """
+        jdf = self._jPythonHelper.smvDedupByKey(self._jdf, smv_copy_array(self._sc, *keys))
+        return DataFrame(jdf, self._sql_ctx)
+
+    def smvDedupByKeyWithOrder(self, *keys):
+        """Remove duplicated records by selecting the first record relative to a given ordering
+
+            The order is specified in another set of parentheses, as follows:
+
+            >>> def smvDedupByKeyWithOrder(self, *keys)(*orderCols)
+
+            Note:
+                Same as the `dedupByKey` method, we use RDD groupBy in the implementation of this method to make sure we can handle large key space.
+
+            Args:
+                keys (\*string or \*Column): the column names or Columns on which to apply dedup
+
+            Example:
+                input DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+                | 2   | B       | C4      |
+                +-----+---------+---------+
+
+                >>> df.dedupByKeyWithOrder(col("id"))(col("product").desc())
+
+                output DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+
+            Returns:
+                (DataFrame): a DataFrame without duplicates for the specified keys / order
+        """
+        def _withOrder(*orderCols):
+            jdf = self._jPythonHelper.smvDedupByKeyWithOrder(self._jdf, smv_copy_array(self._sc, *keys), smv_copy_array(self._sc, *orderCols))
+            return DataFrame(jdf, self._sql_ctx)
+        return _withOrder
+
+    def smvUnion(self, *dfothers):
+        jdf = self._jDfHelper.smvUnion(_to_seq(dfothers, _jdf))
+        return DataFrame(jdf, self._sql_ctx)
+
+    def smvRenameField(self, *namePairs):
+        jdf = self._jPythonHelper.smvRenameField(self._jdf, smv_copy_array(self._sc, *namePairs))
+        return DataFrame(jdf, self._sql_ctx)
+
+    def smvUnpivot(self, *cols):
+        jdf = self._jDfHelper.smvUnpivot(_to_seq(cols))
+        return DataFrame(jdf, self._sql_ctx)
+
+    def smvUnpivotRegex(self, cols, colNameFn, indexColName):
+        jdf = self._jDfHelper.smvUnpivotRegex(_to_seq(cols), colNameFn, indexColName)
+        return DataFrame(jdf, self._sql_ctx)
+
+    def smvExportCsv(self, path, n=None):
+        self._jDfHelper.smvExportCsv(path, n)
+
+    def smvOverlapCheck(self, keyColName):
+        def _check(*dfothers):
+            jdf = self._jPythonHelper.smvOverlapCheck(self._jdf, keyColName, smv_copy_array(self._sc, *dfothers))
+            return DataFrame(jdf, self._sql_ctx)
+        return _check
+
+    def smvDesc(self, *colDescs):
+        """Adds column descriptions
+
+        Example:
+        val res = df.smvDesc(
+          ("name", "This is customer's name"),
+          ("sex", "This is customer\'s self-identified sex")
+        )
+        """
+        jdf = self._jPythonHelper.smvDesc(self._jdf, smv_copy_array(self._sc, *colDescs))
+        return DataFrame(jdf, self._sql_ctx)
+
+    def smvDescFromDF(self, descDF):
+        desclist = [(str(r[0]), str(r[1])) for r in descDF.collect()]
+        return self.smvDesc(*desclist)
+
+    def smvGetDesc(self, colName = None):
+        """Return column description(s)
+
+        If colName specified, will return the Description string, if not specified,
+        will return a list of (colName, description) pairs
+        """
+        if (colName is not None):
+            return self._jDfHelper.smvGetDesc(colName)
+        else:
+            return [(c, self._jDfHelper.smvGetDesc(c)) for c in self.df.columns]
+
+    def smvRemoveDesc(self, *colNames):
+        """Return a Dataframe with the Description removed from the given columns
+        """
+        jdf = self._jPythonHelper.smvRemoveDesc(self._jdf, smv_copy_array(self._sc, *colNames))
+        return DataFrame(jdf, self._sql_ctx)
+
+    #############################################
+    # DfHelpers which print to STDOUT
+    # Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout
+    #############################################
+    def _println(self, string):
+        sys.stdout.write(string + "\n")
+
+    def _printFile(self, f, str):
+        tgt = open(f, "w")
+        tgt.write(str + "\n")
+        tgt.close()
+
+    def _peekStr(self, pos = 1, colRegex = ".*"):
+        return self._jPythonHelper.peekStr(self._jdf, pos, colRegex)
+
+    def peek(self, pos = 1, colRegex = ".*"):
+        self._println(self._peekStr(pos, colRegex))
+
+    def peekSave(self, path, pos = 1,  colRegex = ".*"):
+        self._printFile(path, self._peekStr(pos, colRegex))
+
+    def _smvEdd(self, *cols):
+        return self._jDfHelper._smvEdd(_to_seq(cols))
+
+    def smvEdd(self, *cols):
+        self._println(self._smvEdd(*cols))
+
+    def _smvHist(self, *cols):
+        return self._jDfHelper._smvHist(_to_seq(cols))
+
+    def smvHist(self, *cols):
+        self._println(self._smvHist(*cols))
+
+    def _smvConcatHist(self, *cols):
+        return self._jPythonHelper.smvConcatHist(self._jdf, smv_copy_array(self._sc, *cols))
+
+    def smvConcatHist(self, *cols):
+        self._println(self._smvConcatHist(*cols))
+
+    def _smvFreqHist(self, *cols):
+        return self._jDfHelper._smvFreqHist(_to_seq(cols))
+
+    def smvFreqHist(self, *cols):
+        self._println(self._smvFreqHist(*cols))
+
+    def _smvCountHist(self, keys, binSize):
+        if isinstance(keys, basestring):
+            res = self._jDfHelper._smvCountHist(_to_seq([keys]), binSize)
+        else:
+            res = self._jDfHelper._smvCountHist(_to_seq(keys), binSize)
+        return res
+
+    def smvCountHist(self, keys, binSize):
+        self._println(self._smvCountHist(keys, binSize))
+
+    def _smvBinHist(self, *colWithBin):
+        for elem in colWithBin:
+            assert type(elem) is tuple, "smvBinHist takes a list of tuple(string, double) as paraeter"
+            assert len(elem) == 2, "smvBinHist takes a list of tuple(string, double) as parameter"
+        insureDouble = map(lambda t: (t[0], t[1] * 1.0), colWithBin)
+        return self._jPythonHelper.smvBinHist(self._jdf, smv_copy_array(self._sc, *insureDouble))
+
+    def smvBinHist(self, *colWithBin):
+        self._println(self._smvBinHist(*colWithBin))
+
+    def _smvEddCompare(self, df2, ignoreColName):
+        return self._jDfHelper._smvEddCompare(df2._jdf, ignoreColName)
+
+    def smvEddCompare(self, df2, ignoreColName):
+        self._println(self._smvEddCompare(df2, ignoreColName))
+
+    def _smvDiscoverPK(self, n):
+        pk = self._jPythonHelper.smvDiscoverPK(self._jdf, n)
+        return "[{}], {}".format(", ".join(map(str, pk._1())), pk._2())
+
+    def smvDiscoverPK(self, n=10000):
+        self._println(self._smvDiscoverPK(n))
+
+    def smvDumpDF(self):
+        self._println(self._jDfHelper._smvDumpDF())
+
+_helpCls(DataFrame, DataFrameHelper)
+
+class ColumnHelper(object):
+    def __init__(self, col):
+        self.col = col
+        self._jc = col._jc
+        self._jvm = _sparkContext()._jvm
+        self._jPythonHelper = self._jvm.SmvPythonHelper
+        self._jColumnHelper = self._jvm.ColumnHelper(self._jc)
+
+    def smvIsAllIn(self, *vals):
+        jc = self._jPythonHelper.smvIsAllIn(self._jc, _to_seq(vals))
+        return Column(jc)
+
+    def smvIsAnyIn(self, *vals):
+        jc = self._jPythonHelper.smvIsAnyIn(self._jc, _to_seq(vals))
+        return Column(jc)
+
+    def smvMonth(self):
+        jc = self._jColumnHelper.smvMonth()
+        return Column(jc)
+
+    def smvYear(self):
+        jc = self._jColumnHelper.smvYear()
+        return Column(jc)
+
+    def smvQuarter(self):
+        jc = self._jColumnHelper.smvQuarter()
+        return Column(jc)
+
+    def smvDayOfMonth(self):
+        jc = self._jColumnHelper.smvDayOfMonth()
+        return Column(jc)
+
+    def smvDayOfWeek(self):
+        jc = self._jColumnHelper.smvDayOfWeek()
+        return Column(jc)
+
+    def smvHour(self):
+        jc = self._jColumnHelper.smvHour()
+        return Column(jc)
+
+    def smvPlusDays(self, delta):
+        jc = self._jColumnHelper.smvPlusDays(delta)
+        return Column(jc)
+
+    def smvPlusWeeks(self, delta):
+        jc = self._jColumnHelper.smvPlusWeeks(delta)
+        return Column(jc)
+
+    def smvPlusMonths(self, delta):
+        jc = self._jColumnHelper.smvPlusMonths(delta)
+        return Column(jc)
+
+    def smvPlusYears(self, delta):
+        jc = self._jColumnHelper.smvPlusYears(delta)
+        return Column(jc)
+
+    def smvStrToTimestamp(self, fmt):
+        jc = self._jColumnHelper.smvStrToTimestamp(fmt)
+        return Column(jc)
+
+    def smvDay70(self):
+        jc = self._jColumnHelper.smvDay70()
+        return Column(jc)
+
+    def smvMonth70(self):
+        jc = self._jColumnHelper.smvMonth70()
+        return Column(jc)
+
+
+_helpCls(Column, ColumnHelper)

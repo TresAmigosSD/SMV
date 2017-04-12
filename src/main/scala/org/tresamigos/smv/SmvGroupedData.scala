@@ -765,7 +765,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
     val res = df
       .groupBy(keys.head, keys.tail: _*)
-      .agg(udf(missings).apply(smvfuncs.collectSet(StringType)($"$colName")) as tmpCol)
+      .agg(udf(missings).apply(smvfuncs.smvCollectSet($"$colName", StringType)) as tmpCol)
       .smvSelectPlus(explode($"$tmpCol") as colName)
       .smvSelectMinus(tmpCol)
       .smvSelectPlus(nullCols: _*)

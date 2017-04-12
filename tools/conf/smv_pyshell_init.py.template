@@ -27,7 +27,6 @@ except ImportError:
 import rlcompleter
 
 from smv import SmvApp as app
-app.add_source("src/main/python")
 
 historyPath = os.path.expanduser("~/.pysparkhistory")
 
@@ -51,10 +50,8 @@ from pyspark.sql.types import *
 
 sc.setLogLevel("ERROR")
 
-smv_args = "_SMV_ALL_ARGS_".split()
-# Imnport smv
-from smv import smvPy
-
-app = smvPy.init(['-m', 'None', '--cbs-port', str(callback_server_port)] + smv_args, spark)
+user_args = "_SMV_ALL_ARGS_".split()
+all_args = ['--cbs-port', str(callback_server_port)] + user_args
+SmvApp.createInstance(all_args, spark)
 
 from smvshell import *

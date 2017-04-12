@@ -70,16 +70,15 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val graph = toggle(
     "graph",
     default = Some(false),
-    descrYes = "generate a dependency graph of the given modules (modules are not run)",
-    descrNo = "do not generate a dependency graph"
+    descrYes = "generate a dot dependency graph of the given modules (modules are not run)",
+    descrNo = "do not generate a dot dependency graph"
   )
-
-  val json = opt[List[String]](
-    "json",
-    noshort = true,
-    default = None,
-    descr =
-      "generate a json object to represent app's module dependency for a given set of stages (modules are not run)")
+  val jsonGraph = toggle(
+    "json-graph",
+    default = Some(false),
+    descrYes = "generate a json dependency graph of the given modules (modules are not run)",
+    descrNo = "do not generate a json dependency graph"
+  )
 
   val runConfObj = opt[String]("run-conf-obj",
                                noshort = true,

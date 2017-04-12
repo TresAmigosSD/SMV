@@ -151,7 +151,7 @@ class MyModule(SmvPyModule):
     ...
     def run(self, i):
       ...
-    def dqm(self) = SmvDQM().add(
+    def dqm(self) = return SmvDQM().add(
         DQMRule(col("Price") < 1000000.0, "rule1", FailAny())
     ).add(
         DQMFix(col("age") > 120, lit(120) as "age", "fix1")

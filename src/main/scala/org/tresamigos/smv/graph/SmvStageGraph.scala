@@ -208,55 +208,55 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
 
   /**
    * Create a JSON object which could be consumed by SMV_MA, the web-based
-   * interactive dependency graph
+   * interactive dependency graph.
+   * TODO: extract this out into own class.
    **/
   def createGraphJSON(targetDSs: Seq[SmvDataSet] = Nil): String = {
     val g = new SmvDSGraph(app, stages, targetDSs)
 
-    def toName(ds: SmvDataSet) = "\"" + baseName(ds) + "\""
+    def toName(ds: SmvDataSet) = s"""\"${ds.fqn}\""""
+
     def toNodeStr(nodeType: String)(m: SmvDataSet) =
-      s"""  ${toName(m)}: {""" + "\n" +
-        s"""    "type": "${nodeType}",""" + "\n" +
-        s"""    "version": ${m.version},""" + "\n" +
-        s"""    "description": "${m.description}"""" + "\n" +
-        s"""  }"""
+      s"""  {""" + "\n" +
+      s"""    "fqn": ${toName(m)},""" + "\n" +
+      s"""    "type": "${nodeType}",""" + "\n" +
+      s"""    "version": ${m.version},""" + "\n" +
+      s"""    "description": "${m.description}"""" + "\n" +
+      s"""  }"""
 
     val nodeString = Seq(
-      s""""nodes": {""" + "\n" +
-        g.nodeString(toNodeStr("module")(_), toNodeStr("file")(_)).mkString(",\n") + "\n" +
-        "}"
+      s""""nodes": [""" + "\n" +
+      g.nodeString(toNodeStr("module")(_), toNodeStr("file")(_)).mkString(",\n") + "\n" +
+      "]"
     )
 
-    val clusterString =
-      if (g.hasMultiClusters)
-        Seq(
-          s""""clusters": {""" + "\n" +
-            g.clusters
-              .map {
-                case (stg, nodes) =>
-                  s"""  "${stg}": [""" + "\n" +
-                    s"""    """ + nodes.map(toName).mkString(", ") + "\n" +
-                    s"""  ]"""
-              }
-              .mkString(",\n") + "\n" +
-            "}"
-        )
-      else Nil
+    // create json for a single stage info.
+    def stageString(stageName: String, nodes: Seq[SmvDataSet]) = {
+      "  {\n" +
+      s"""    "name": "${stageName}",""" + "\n" +
+      """    "nodes": [""" + "\n      " +
+      nodes.map(toName).mkString(",\n      ") + "\n    ]\n" +
+      "  }"
+    }
+
+    // generates json string for ALL stages.
+    val stagesString = Seq(
+      s""""stages": [""" + "\n" +
+      g.clusters.map{case (stg, nodes) => stageString(stg, nodes)}.mkString(",\n") + "\n" +
+      "]"
+    )
 
     val linkString = Seq(
-      s""""links": [""" + "\n" +
-        g.edges
-          .map {
-            case (f, t) =>
-              s"""  {${toName(f)}: ${toName(t)}}"""
-          }
-          .mkString(",\n") + "\n" +
-        "]"
+      s""""edges": [""" + "\n" +
+      g.edges.map{case (f, t) =>
+        s"""  [${toName(f)},${toName(t)}]"""
+      }.mkString(",\n") + "\n" +
+      "]"
     )
 
     val jsonStr = {
       "{\n" +
-        (nodeString ++ clusterString ++ linkString).mkString(",\n") + "\n" +
+        (nodeString ++ stagesString ++ linkString).mkString(",\n") + "\n" +
         "}"
     }
 

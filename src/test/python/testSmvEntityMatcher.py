@@ -15,8 +15,8 @@ import unittest
 
 from smvbasetest import SmvBaseTest
 
-from smvfuncs import normlevenshtein
-from smvmatcher import *
+from smv.functions import normlevenshtein
+from smv.matcher import *
 from pyspark.sql.functions import *
 
 class SmvEntityMatcherTest(SmvBaseTest):

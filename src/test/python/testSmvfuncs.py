@@ -19,7 +19,8 @@ from smvbasetest import SmvBaseTest
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
-from smvfuncs import *
+from pyspark.sql.functions import *
+from smv.functions import *
 
 class SmvfuncsTest(SmvBaseTest):
     def test_smvFirst(self):
@@ -71,4 +72,24 @@ class SmvfuncsTest(SmvBaseTest):
             "b,2,BB;" +
             ",3,__;" +
             "c,4,__")
+        self.should_be_same(res, exp)
+
+    def test_smvArrayCat(self):
+        df = self.createDF("a:String;b:String", "a,1;b,2")
+        df2 = df.select(array(df.a, df.b).alias("aa"))
+        res = df2.select(smvArrayCat("_", df2.aa).alias("aaCat"))
+        exp = self.createDF("aaCat: String", "a_1; b_2")
+        self.should_be_same(res, exp)
+
+    def test_smvCollectSet(self):
+        from pyspark.sql.types import StringType
+        df = self.createDF("a:String", "a;b;a;c;a")
+        res = df.agg(smvArrayCat("_", sort_array(smvCollectSet(df.a, StringType()))).alias("aa"))
+        exp = self.createDF("aa: String", "a_b_c")
+        self.should_be_same(res, exp)
+
+    def test_smvStrCat(self):
+        df = self.createDF("a:String;b:Integer", "a,1;b,2;c,")
+        res = df.select(smvStrCat("_", df.a, df.b).alias("a_b"))
+        exp = self.createDF("a_b: String", "a_1;b_2;c_")
         self.should_be_same(res, exp)

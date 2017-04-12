@@ -11,9 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import smvPy
+from smv import SmvApp
 from pyspark.sql.column import Column
 from pyspark.sql.functions import udf
+from utils import smv_copy_array
 
 def nGram2(c1, c2):
     """2-gram UDF with formula (number of overlaped gramCnt)/max(c1.gramCnt, c2.gramCnt)
@@ -25,7 +26,7 @@ def nGram2(c1, c2):
         Returns:
             (Column): 2-gram
     """
-    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.nGram2(c1._jc, c2._jc))
+    return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.smvfuncs.nGram2(c1._jc, c2._jc))
 
 def nGram3(c1, c2):
     """3-gram UDF with formula (number of overlaped gramCnt)/max(s1.gramCnt, s2.gramCnt)
@@ -37,7 +38,7 @@ def nGram3(c1, c2):
         Returns:
             (Column): 3-gram
     """
-    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.nGram3(c1._jc, c2._jc))
+    return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.smvfuncs.nGram3(c1._jc, c2._jc))
 
 def diceSorensen(c1, c2):
     """2-gram UDF with formula (2 * number of overlaped gramCnt)/(s1.gramCnt + s2.gramCnt)
@@ -49,7 +50,7 @@ def diceSorensen(c1, c2):
         Returns:
             (Column): 2-gram
     """
-    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.diceSorensen(c1._jc, c2._jc))
+    return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.smvfuncs.diceSorensen(c1._jc, c2._jc))
 
 def normlevenshtein(c1, c2):
     """Levenshtein edit distance metric UDF
@@ -61,7 +62,7 @@ def normlevenshtein(c1, c2):
         Returns:
             (Column): distances
     """
-    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.normlevenshtein(c1._jc, c2._jc))
+    return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.smvfuncs.normlevenshtein(c1._jc, c2._jc))
 
 def jaroWinkler(c1, c2):
     """Jaro-Winkler edit distance metric UDF
@@ -73,7 +74,7 @@ def jaroWinkler(c1, c2):
         Returns:
             (Column): distances
     """
-    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.jaroWinkler(c1._jc, c2._jc))
+    return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.smvfuncs.jaroWinkler(c1._jc, c2._jc))
 
 def smvFirst(c, nonNull = False):
     """Variation of Spark "first" which also returns null values
@@ -91,7 +92,7 @@ def smvFirst(c, nonNull = False):
         Returns:
             (object): first value
     """
-    return Column(smvPy._jvm.org.tresamigos.smv.smvfuncs.smvFirst(c._jc, nonNull))
+    return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.smvfuncs.smvFirst(c._jc, nonNull))
 
 def smvCreateLookUp(m, default, outputType):
     """Return a Python UDF which will perform a dictionary lookup on a column
@@ -105,3 +106,41 @@ def smvCreateLookUp(m, default, outputType):
             (udf): an udf which can apply to a column and apply the lookup
     """
     return udf(lambda k: m.get(k, default), outputType)
+
+def smvArrayCat(sep, col):
+    """For an array typed column, concat the elements to a string with the given separater.
+
+       Args:
+            sep: a Python string to separate the fields
+            col: a Column with ArrayType
+
+       Return:
+            (col): a Column in StringType with array elements concatenated
+    """
+    return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.smvfuncs.smvArrayCat(sep, col._jc))
+
+def smvCollectSet(col, datatype):
+    """An aggregate function, which will collect all the values of the given column and create a set as an array typed column.
+       Since Spark 1.6, a spark function collect_set was introduced, so as migrate to Spark 1.6 and later, this smvCollectSet
+       will be depricated.
+
+       Args:
+            col (Column): column to be aggregated on
+            datatype (DataType): datatype of the input column
+    """
+    return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvCollectSet(col._jc, datatype.json()))
+
+def smvStrCat(head, *others):
+    """Concatenate multiple columns to a single string. Similar to `concat` and `concat_ws` functions in Spark but behaves differently
+       when some columns are nulls. 
+    """
+    if (isinstance(head, basestring)):
+        sep = head
+        cols = list(others)
+    elif (isinstance(head, Column)):
+        sep = ""
+        cols = [head] + list(others)
+    else:
+        raise RuntimeError("first parameter must be either a String or a Column")
+    app = SmvApp.getInstance()
+    return Column(app._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvStrCat(sep, smv_copy_array(app.sc, *cols)))

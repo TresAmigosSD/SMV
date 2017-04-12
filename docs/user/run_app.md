@@ -77,6 +77,13 @@ graphvis must be used to convert the ".dot" file to an image or doc.  For exampl
 </tr>
 
 <tr>
+<td>--json-graph</td>
+<td>off</td>
+<td>Generate a json formatted dependency graph ".json" file instead of running the given modules.
+</td>
+</tr>
+
+<tr>
 <td>--purge-old-output</td>
 <td>off</td>
 <td>Remove <b>ALL</b> files in output directory that are not the current version of the outputs in the app.

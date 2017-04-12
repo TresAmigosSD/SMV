@@ -18,15 +18,91 @@ import re
 import glob
 import json
 from flask import Flask, request, jsonify
-from smv import smvPy
-import compileall
+from smv import SmvApp
+from shutil import copyfile
+import py_compile
 
 app = Flask(__name__)
 
+TAB_SIZE = 4
+
 # ---------- Helper Functions ---------- #
 
+def indentation(tabbed_str):
+    no_tabs_str = tabbed_str.expandtabs(TAB_SIZE)
+    # if string has only whitespace, return 0 indentation.
+    # else return length of string minus len of str with preceding whitespace stripped
+    return 0 if no_tabs_str.isspace() else len(no_tabs_str) - len(no_tabs_str.lstrip())
+
+def test_compile_for_errors(fullname):
+    error = None
+    try:
+        ok = py_compile.compile(fullname, None, None, True)
+    except py_compile.PyCompileError,err:
+        print 'Compiling', fullname, '...'
+        print err.msg
+        error = err.msg
+    except IOError, e:
+        error = e
+    else:
+        if ok == 0:
+            error = 1
+
+    return error
+
+# def get_SMV_module_run_method_start_end(lines_of_code_list):
+#     test_module_class_def = "class EmploymentByState(SmvModule"
+#     module_definition_found = False
+#     run_method_start = None
+#     run_method_end = None
+#     # detect module class def
+#     for i, line in enumerate(lines_of_code_list):
+#         if line.lstrip().startswith(test_module_class_def):
+#             module_definition_found = True
+#             test_run_method = (" " * (indentation(line) + TAB_SIZE)) + "def run("
+#         # detect run method if not already found
+#         if (module_definition_found and run_method_start is None) \
+#         and line.expandtabs(TAB_SIZE).startswith(test_run_method):
+#             run_method_start = i
+#             continue
+#         # detect end of run method
+#         if run_method_start is not None:
+#             if (run_method_end is None and i == (len(lines_of_code_list) - 1)):
+#                 run_method_end = i;
+#     return (run_method_start, run_method_end)
+
+# assumes class definition indentation is always 0
+def get_SMV_module_class_start_end(lines_of_code_list, module_name):
+    test_module_class_def = "class {}(".format(module_name)
+    start = None
+    end = None
+
+    # detect module class def
+    for i, line in enumerate(lines_of_code_list):
+        if line.lstrip().startswith(test_module_class_def):
+            start = i
+            continue
+        if start is not None:
+            # check if string not blank and has no indentation, or this is the last line
+            if (not line.isspace() and indentation(line) == 0):
+                end = i
+                break
+    if start is not None and end is None:
+        end = len(lines_of_code_list)
+    return (start, end)
+
+
+def get_filepath_from_moduleFqn(module_fqn):
+    # TODO: what env var for projects/ directory?
+    prefix = '/projects/' + project_dir + "/src/main/python/"
+    # dir1.dir2.file.class => [dir1, dir2, file]
+    fqn_dirs_filename_list = module_fqn.split(".")[:-1]
+    # concats fqn_dirs_filename_list into string with "/" intermezzo, appends .py, prepends prefix
+    filepath = prefix + "/".join(fqn_dirs_filename_list) + ".py"
+    return filepath
+
 def get_output_dir():
-    output_dir = smvPy.outputDir()
+    output_dir = SmvApp.getInstance().outputDir()
     if (output_dir.startswith('file://')):
         output_dir = output_dir[7:]
     return output_dir
@@ -131,65 +207,86 @@ def get_module_code_file_mapping():
     patterns = [
         'object (.+?) extends( )+SmvModule\(',
         'object (.+?) extends( )+SmvCsvFile\(',
-        'class (.+?)\(SmvPyModule',
-        'class (.+?)\(SmvPyCsvFile',
+        'class (.+?)\(SmvModule',
+        'class (.+?)\(SmvCsvFile',
     ]
     module_dict = get_module_file_mapping(files, patterns)
     return module_dict
 
+def err_res(err, err_msg="", res={}): # err, errmsg="", res={}
+    retval = {}
+    retval["err"] = err
+    retval["err_msg"] = err_msg
+    retval["res"] = res
+    return jsonify(retval)
+
+def ok_res(res):
+    retval = {}
+    retval["err"] = OK
+    retval["res"] = res
+    return jsonify(retval)
+
+def get_module_name_from_fqn(fqn):
+    return fqn.split(".")[-1:][0]   # a.b.c => [a,b,c] => [c] => c
+
 # ---------- API Definition ---------- #
 
-MODULE_NOT_PROVIDED_ERR = 'ERROR: No module name is provided!'
+MODULE_NOT_PROVIDED_ERR = 'ERROR: No module name provided!'
 MODULE_NOT_FOUND_ERR = 'ERROR: Job failed to run. Please check whether the module name is valid!'
 MODULE_ALREADY_EXISTS_ERR = 'ERROR: Module already exists!'
-TYPE_NOT_PROVIDED_ERR = 'ERROR: No module type is provided!'
+TYPE_NOT_PROVIDED_ERR = 'ERROR: No module type provided!'
 TYPE_NOT_SUPPORTED_ERR = 'ERROR: Module type not supported!'
-CODE_NOT_PROVIDED_ERR = 'ERROR: No module code is provided!'
-JOB_SUCCESS = 'SUCCESS: Job finished.'
+CODE_NOT_PROVIDED_ERR = 'ERROR: No module code provided!'
+COMPILATION_ERROR = 'ERROR: Compilation error'
+JOB_SUCCESS = 'SUCCESS: Code updated!'
+OK = ""
+
+@app.route("/api/test", methods = ['GET'])
+def get_project_dir():
+    return ok_res('success msg')
 
 @app.route("/api/run_module", methods = ['POST'])
 def run_module():
     '''
-    body: name = 'xxx' (fqn)
+    body: fqn = 'xxx' (fqn)
     function: run the module
     '''
     try:
-        module_name = request.form['name']
+        module_fqn = request.form['fqn'].encode("utf-8")
     except:
-        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+        raise err_res('MODULE_NOT_PROVIDED_ERR')
 
-    try:
-        smvPy.runModule(module_name.strip())
-        return JOB_SUCCESS
-    except:
-        raise ValueError(MODULE_NOT_FOUND_ERR)
+    run_result = SmvApp.getInstance().runModule("mod:{}".format(module_fqn))
+    return ok_res(str(run_result))
 
 @app.route("/api/get_module_code", methods = ['POST'])
 def get_module_code():
     '''
-    body: name = 'xxx' (fqn)
+    body: fqn = 'xxx'
     function: return the module's code
     '''
     try:
-        module_name = request.form['name']
+        module_fqn = request.form['fqn'].encode("utf-8")
     except:
-        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+        return err_res(MODULE_NOT_PROVIDED_ERR)
+
+    file_name = get_filepath_from_moduleFqn(module_fqn)
+    module_name = get_module_name_from_fqn(module_fqn)
 
     try:
-        global module_file_map
-        if not module_file_map:
-            module_file_map = get_module_code_file_mapping()
-        file_name = module_file_map[module_name]
         with open(file_name, 'rb') as f:
-            res = f.readlines()
-        file_content = [line.rstrip() for line in res]
+            lines_of_code_list = f.readlines()
+        (class_start, class_end) = get_SMV_module_class_start_end(lines_of_code_list, module_name)
+
+        file_content = [line.rstrip() for line in lines_of_code_list]
+
         res = {
             'fileName': file_name,
-            'fileContent': file_content,
+            'fileContent': file_content # file_content[class_start:class_end],
         }
-        return jsonify(res=res)
+        return ok_res(res)
     except:
-        raise ValueError(MODULE_NOT_FOUND_ERR)
+        return err_res(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/update_module_code", methods = ['POST'])
 def update_module_code():
@@ -199,30 +296,82 @@ def update_module_code():
         code = ['line1', 'line2', ...]
     function: update the module's code
     '''
+    run_method_start = None
+    run_method_end = None
+
     try:
-        module_name = request.form['name']
+        module_fqn = request.form["fqn"]
+        file_name = get_filepath_from_moduleFqn(module_fqn)
+        module_name = get_module_name_from_fqn(module_fqn)
     except:
-        raise ValueError(MODULE_NOT_PROVIDED_ERR)
+        return err_res(MODULE_NOT_PROVIDED_ERR)
 
     try:
         module_code = request.form['code']
     except:
-        raise ValueError(CODE_NOT_PROVIDED_ERR)
+        return err_res(CODE_NOT_PROVIDED_ERR)
 
-    global module_file_map
-    if not module_file_map:
-        module_file_map = get_module_code_file_mapping()
+    module_code = json.loads(module_code)
+    module_code = [line.encode('utf-8') for line in module_code]
 
-    if (module_file_map.has_key(module_name)):
-        file_name = module_file_map[module_name]
-        module_code = json.loads(module_code)
-        module_code = [line.encode('utf-8') for line in module_code]
-        with open(file_name, 'wb') as f:
-            f.writelines(os.linesep.join(module_code))
-        return JOB_SUCCESS
+    # if file exists.. create copy
+    if os.path.isfile(file_name):
+        duplicate_file_name = file_name[:-3] + "_smv_update_code_duplicate.py" # -3 is len(".py")
+        copyfile(file_name, duplicate_file_name)
+
+        lines_of_code = None                    # counter for number of lines of code
+        lines_of_code_list = [];                # list containing a string for each line of code
+
+        # open duplicate and update its run method with code input
+        with open(duplicate_file_name, 'r+') as fd:
+            lines_of_code_list = fd.readlines()
+            lines_of_code = len(lines_of_code_list)
+
+            # TODO: temporarily updating class code, not run method.
+            # (run_method_start, run_method_end) = get_SMV_module_run_method_start_end(lines_of_code_list)
+            (run_method_start, run_method_end) = get_SMV_module_class_start_end(lines_of_code_list, module_name)
+
+            # determine what to do if run method not provided
+            if not run_method_start and not run_method_end:
+                return 'no run method found in module' # TODO error message
+
+            code_before_run_method = lines_of_code_list[:run_method_start]
+            code_after_run_method = lines_of_code_list[run_method_end:]
+            new_run_method_code = module_code
+            updated_code = code_before_run_method + new_run_method_code + code_after_run_method
+
+            # modify duplicate
+            fd.seek(0)  # reset file stream
+            fd.truncate()
+            # for i in xrange(len(updated_code)):
+            #    fd.write(updated_code[i])
+
+            # will write whole code to file.. not just class or run method
+            for i in xrange(len(module_code)):
+                fd.write(module_code[i])
+
+        # compile duplicate
+        compile_has_errors = test_compile_for_errors(duplicate_file_name)
+        print "compile_errors: " + str(compile_has_errors)
+
+        # remove duplicate and its .pyc
+        os.remove(duplicate_file_name)
+        if os.path.isfile(duplicate_file_name + 'c'):
+            os.remove(duplicate_file_name + 'c')
+
+        if compile_has_errors:
+            return err_res(COMPILATION_ERROR, "Module failed to compile", compile_has_errors)
+
+        # if duplicate's compile successfull, modify the code of the original file
+        with open(file_name, 'w') as fd:
+            # for i in xrange(len(updated_code)):
+            #     fd.write(updated_code[i])
+            for i in xrange(len(module_code)):
+                fd.write(module_code[i])
+
+        return ok_res(JOB_SUCCESS)
     else:
-        # TODO: deal with new module
-        raise ValueError(MODULE_NOT_FOUND_ERR)
+        return err_res(MODULE_NOT_FOUND_ERR)
 
 @app.route("/api/get_sample_output", methods = ['POST'])
 def get_sample_output():
@@ -268,8 +417,8 @@ def get_graph_json():
     body: none
     function: return the json file of the entire dependency graph
     '''
-    res = smvPy.get_graph_json()
-    return jsonify(res=res)
+    res = SmvApp.getInstance().get_graph_json()
+    return jsonify(graph=res)
 
 @app.route("/api/create_module", methods = ['POST'])
 def craete_module():
@@ -332,11 +481,12 @@ if __name__ == "__main__":
     sys.path.insert(1, codePath)
 
     # init Smv context
-    # TODO: should instantiate SmvApp here instead of callint init directly.
-    smvPy.init([])
+    smvApp = SmvApp.createInstance([])
+
     module_file_map = {}
 
     # start server
     host = os.environ.get('SMV_HOST', '0.0.0.0')
     port = os.environ.get('SMV_PORT', '5000')
+    project_dir = os.environ.get('PROJECT_DIR', './')
     app.run(host=host, port=int(port))

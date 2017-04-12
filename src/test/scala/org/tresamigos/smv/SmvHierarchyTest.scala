@@ -115,8 +115,8 @@ package org.tresamigos.smv {
         }
       }
 
-      app.resolveRDD(hierTestPkg1.GeoMapFile)
-      val res = app.resolveRDD(TestModule)
+      hierTestPkg1.GeoMapFile.rdd
+      val res = TestModule.rdd
 
       assertSrddDataEqual(
         res,

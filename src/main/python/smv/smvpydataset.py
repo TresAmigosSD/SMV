@@ -99,8 +99,8 @@ class SmvPyDataSet(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, smvPy):
-        self.smvPy = smvPy
+    def __init__(self, smvApp):
+        self.smvApp = smvApp
 
     def description(self):
         return self.__doc__
@@ -165,7 +165,7 @@ class SmvPyDataSet(object):
             for m in inspect.getmro(cls):
                 try:
                     if m.IsSmvPyDataSet and m != cls and not m.fqn().startswith("smv."):
-                        res += m(self.smvPy).datasetHash()
+                        res += m(self.smvApp).datasetHash()
                 except: pass
 
             # if module inherits from SmvRunConfig, then add hash of all config values to module hash
@@ -214,7 +214,7 @@ class SmvPyDataSet(object):
         # the user gets a full stack trace when SmvPyDataSet user-defined methods
         # causes errors
         try:
-            arr = smv_copy_array(self.smvPy.sc, *[x.urn() for x in self.requiresDS()])
+            arr = smv_copy_array(self.smvApp.sc, *[x.urn() for x in self.requiresDS()])
         except BaseException as err:
             traceback.print_exc()
             raise err
@@ -273,13 +273,13 @@ class WithParser(object):
         return True
 
     def defaultCsvWithHeader(self):
-        return self.smvPy.defaultCsvWithHeader()
+        return self.smvApp.defaultCsvWithHeader()
 
     def defaultTsv(self):
-        return self.smvPy.defaultTsv()
+        return self.smvApp.defaultTsv()
 
     def defaultTsvWithHeader(self):
-        return self.smvPy.defaultTsvWithHeader()
+        return self.smvApp.defaultTsvWithHeader()
 
     def csvAttr(self):
         """Specifies the csv file format.  Corresponds to the CsvAttributes case class in Scala.
@@ -290,9 +290,9 @@ class SmvCsvFile(SmvPyInput, WithParser):
     """Input from a file in CSV format
     """
 
-    def __init__(self, smvPy):
-        super(SmvCsvFile, self).__init__(smvPy)
-        self._smvCsvFile = smvPy.j_smvPyClient.smvCsvFile(
+    def __init__(self, smvApp):
+        super(SmvCsvFile, self).__init__(smvApp)
+        self._smvCsvFile = smvApp.j_smvPyClient.smvCsvFile(
             self.fqn(), self.path(), self.csvAttr(),
             self.forceParserCheck(), self.failAtParsingError())
 
@@ -311,7 +311,7 @@ class SmvCsvFile(SmvPyInput, WithParser):
 
     def doRun(self, validator, known):
         jdf = self._smvCsvFile.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvPy.sqlContext))
+        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
 class SmvMultiCsvFiles(SmvPyInput, WithParser):
     """Raw input from multiple csv files sharing single schema
@@ -320,9 +320,9 @@ class SmvMultiCsvFiles(SmvPyInput, WithParser):
         the same schema.
     """
 
-    def __init__(self, smvPy):
-        super(SmvMultiCsvFiles, self).__init__(smvPy)
-        self._smvMultiCsvFiles = smvPy._jvm.org.tresamigos.smv.SmvMultiCsvFiles(
+    def __init__(self, smvApp):
+        super(SmvMultiCsvFiles, self).__init__(smvApp)
+        self._smvMultiCsvFiles = smvApp._jvm.org.tresamigos.smv.SmvMultiCsvFiles(
             self.dir(),
             self.csvAttr(),
             None
@@ -341,15 +341,15 @@ class SmvMultiCsvFiles(SmvPyInput, WithParser):
 
     def doRun(self, validator, known):
         jdf = self._smvMultiCsvFiles.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvPy.sqlContext))
+        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
 class SmvCsvStringData(SmvPyInput):
     """Input data defined by a schema string and data string
     """
 
-    def __init__(self, smvPy):
-        super(SmvCsvStringData, self).__init__(smvPy)
-        self._smvCsvStringData = self.smvPy._jvm.org.tresamigos.smv.SmvCsvStringData(
+    def __init__(self, smvApp):
+        super(SmvCsvStringData, self).__init__(smvApp)
+        self._smvCsvStringData = self.smvApp._jvm.org.tresamigos.smv.SmvCsvStringData(
             self.schemaStr(),
             self.dataStr(),
             False
@@ -377,16 +377,16 @@ class SmvCsvStringData(SmvPyInput):
 
     def doRun(self, validator, known):
         jdf = self._smvCsvStringData.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvPy.sqlContext))
+        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
 
 class SmvHiveTable(SmvPyInput):
     """Input from a Hive table
     """
 
-    def __init__(self, smvPy):
-        super(SmvHiveTable, self).__init__(smvPy)
-        self._smvHiveTable = self.smvPy._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName(), self.tableQuery())
+    def __init__(self, smvApp):
+        super(SmvHiveTable, self).__init__(smvApp)
+        self._smvHiveTable = self.smvApp._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName(), self.tableQuery())
 
     def description(self):
         return "Hive Table: @" + self.tableName()
@@ -413,7 +413,7 @@ class SmvHiveTable(SmvPyInput):
         return None
 
     def doRun(self, validator, known):
-        return self.run(DataFrame(self._smvHiveTable.rdd(), self.smvPy.sqlContext))
+        return self.run(DataFrame(self._smvHiveTable.rdd(), self.smvApp.sqlContext))
 
 class SmvModule(SmvPyDataSet):
     """Base class for SmvModules written in Python
@@ -452,8 +452,8 @@ class SmvModule(SmvPyDataSet):
             """
             return self.urn2df[ds.urn()]
 
-    def __init__(self, smvPy):
-        super(SmvModule, self).__init__(smvPy)
+    def __init__(self, smvApp):
+        super(SmvModule, self).__init__(smvApp)
 
     @abc.abstractmethod
     def run(self, i):
@@ -479,7 +479,7 @@ class SmvModule(SmvPyDataSet):
     def doRun(self, validator, known):
         urn2df = {}
         for dep in self.requiresDS():
-            urn2df[dep.urn()] = DataFrame(known[dep.urn()], self.smvPy.sqlContext)
+            urn2df[dep.urn()] = DataFrame(known[dep.urn()], self.smvApp.sqlContext)
         i = self.RunParams(urn2df)
         return self.run(i)
 
@@ -509,7 +509,7 @@ class SmvModuleLinkTemplate(SmvModule):
 
 PyExtDataSetCache = {}
 
-from smvpy import smvPy
+from smvapp import SmvApp
 
 def SmvExtDataSet(refname):
     """Creates an SmvDataSet representing an external (Scala) SmvDataSet
@@ -526,8 +526,8 @@ def SmvExtDataSet(refname):
         return PyExtDataSetCache[refname]
     cls = type("SmvExtDataSet", (SmvPyDataSet,), {
         "refname" : refname,
-        "smvPy"   : smvPy,
-        "doRun"   : lambda self, validator, known: smvPy.runModule(self.urn)
+        "smvApp"   : SmvApp.getInstance(),
+        "doRun"   : lambda self, validator, known: smvApp.runModule(self.urn)
     })
     cls.fqn = classmethod(lambda klass: refname)
     PyExtDataSetCache[refname] = cls
@@ -538,7 +538,7 @@ def SmvModuleLink(target):
 
         When a module X in one stage depends on a module Y in a different stage,
         it must do through through an SmvModuleLink (listing Y directly as a
-        dependency will lead to a runtime error). For example,
+        dependency will lead to a runtime error). For example,::
 
             # In stage s1
             class Y(SmvModule):
