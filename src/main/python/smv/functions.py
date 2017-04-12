@@ -132,7 +132,7 @@ def smvCollectSet(col, datatype):
 
 def smvStrCat(head, *others):
     """Concatenate multiple columns to a single string. Similar to `concat` and `concat_ws` functions in Spark but behaves differently
-       when some columns are nulls. 
+       when some columns are nulls.
     """
     if (isinstance(head, basestring)):
         sep = head
@@ -144,3 +144,17 @@ def smvStrCat(head, *others):
         raise RuntimeError("first parameter must be either a String or a Column")
     app = SmvApp.getInstance()
     return Column(app._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvStrCat(sep, smv_copy_array(app.sc, *cols)))
+
+def smvHashKey(head, *others):
+    """
+    """
+    if (isinstance(head, basestring)):
+        pre = head
+        cols = list(others)
+    elif (isinstance(head, Column)):
+        pre = ""
+        cols = [head] + list(others)
+    else:
+        raise RuntimeError("first parameter must be either a String or a Column")
+    app = SmvApp.getInstance()
+    return Column(app._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvHashKey(pre, smv_copy_array(app.sc, *cols)))
