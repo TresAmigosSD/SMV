@@ -220,7 +220,7 @@ class DataFrameHelper(object):
         """Expand structure type column to a group of columns
 
             Args:
-                cols (*string): column names to expand
+                cols (\*string): column names to expand
 
             Example:
                 input DF:
@@ -243,7 +243,7 @@ class DataFrameHelper(object):
             See [[org.tresamigos.smv.SmvGroupedDataFunc]] for list of functions that can be applied to the grouped data.
 
             Args:
-                cols (*string or *Column): column names or Column objects to group on
+                cols (\*string or \*Column): column names or Column objects to group on
 
             Note:
                 This is going away shortly and user will be able to use standard Spark `groupBy` method directly.
@@ -265,7 +265,7 @@ class DataFrameHelper(object):
             MurmurHash3 algorithm is used for generating the hash
 
             Args:
-                key (Column): column to sample on
+                key (string or Column): column name or Column to sample on
                 rate (double): sample rate in range (0, 1] with a default of 0.01 (1%)
                 seed (int): random generator integer seed with a default of 23
 
@@ -290,44 +290,299 @@ class DataFrameHelper(object):
     # temporarily remove the trailing parameters till we can find a
     # workaround
     def smvJoinByKey(self, other, keys, joinType):
+        """joins two DataFrames on a key
+
+            The Spark `DataFrame` join operation does not handle duplicate key names.
+            If both left and right side of the join operation contain the same key,
+            the result `DataFrame` is unusable.
+
+            The `smvJoinByKey` method will allow the user to join two `DataFrames` using the same join key.
+            Post join, only the left side keys will remain. In case of outer-join, the
+            `coalesce(leftkey, rightkey)` will replace the left key to be kept.
+
+            Args:
+                other (DataFrame): the DataFrame to join with
+                keys (list(string)): a list of column names on which to apply the join
+                joinType (string): choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
+
+            Example:
+                >>> df1.smvJoinByKey(df2, ["k"], "inner")
+
+            Returns:
+                (DataFrame): result of the join operation
+        """
         jdf = self._jPythonHelper.smvJoinByKey(self._jdf, other._jdf, _to_seq(keys), joinType)
         return DataFrame(jdf, self._sql_ctx)
 
     def smvJoinMultipleByKey(self, keys, joinType = 'inner'):
+        """Create multiple DF join builder
+
+            It is used in conjunction with `joinWith` and `doJoin`
+
+            Args:
+                keys (list(string)): a list of column names on which to apply the join
+                joinType (string): choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
+
+            Example:
+                >>> df.joinMultipleByKey(["k1", "k2"], "inner").joinWith(df2, "_df2").joinWith(df3, "_df3", "leftouter").doJoin()
+
+            Returns:
+                (SmvMultiJoin): the builder object for the multi join operation
+        """
         jdf = self._jPythonHelper.smvJoinMultipleByKey(self._jdf, smv_copy_array(self._sc, *keys), joinType)
         return SmvMultiJoin(self._sql_ctx, jdf)
 
     def smvSelectMinus(self, *cols):
+        """Remove one or more columns from current DataFrame
+
+            Args:
+                cols (\*string or \*Column): column names or Columns to remove from the DataFrame
+
+            Example:
+                >>> df.smvSelectMinus("col1", "col2")
+                >>> df.smvSelectMinus(col("col1"), col("col2"))
+
+            Returns:
+                (DataFrame): the resulting DataFrame after removal of columns
+        """
         jdf = self._jPythonHelper.smvSelectMinus(self._jdf, smv_copy_array(self._sc, *cols))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvSelectPlus(self, *cols):
+        """Selects all the current columns in current DataFrame plus the supplied expressions
+
+            The new columns are added to the end of the current column list.
+
+            Args:
+                cols (\*Column): expressions to add to the DataFrame
+
+            Example:
+                >>> df.smvSelectPlus(col("price") * col("count") as "amt")
+
+            Returns:
+                (DataFrame): the resulting DataFrame after removal of columns
+        """
         jdf = self._jDfHelper.smvSelectPlus(_to_seq(cols, _jcol))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvDedupByKey(self, *keys):
+        """Remove duplicate records from the DataFrame by arbitrarly selecting the first record from a set of records with same primary key or key combo.
+
+            Args:
+                keys (\*string or \*Column): the column names or Columns on which to apply dedup
+
+            Example:
+                input DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+                | 2   | B       | C4      |
+                +-----+---------+---------+
+
+                >>> df.dedupByKey("id")
+
+                output DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+
+                >>> df.dedupByKey("id", "product")
+
+                output DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+
+            Returns:
+                (DataFrame): a DataFrame without duplicates for the specified keys
+        """
         jdf = self._jPythonHelper.smvDedupByKey(self._jdf, smv_copy_array(self._sc, *keys))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvDedupByKeyWithOrder(self, *keys):
+        """Remove duplicated records by selecting the first record relative to a given ordering
+
+            The order is specified in another set of parentheses, as follows:
+
+            >>> def smvDedupByKeyWithOrder(self, *keys)(*orderCols)
+
+            Note:
+                Same as the `dedupByKey` method, we use RDD groupBy in the implementation of this method to make sure we can handle large key space.
+
+            Args:
+                keys (\*string or \*Column): the column names or Columns on which to apply dedup
+
+            Example:
+                input DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+                | 2   | B       | C4      |
+                +-----+---------+---------+
+
+                >>> df.dedupByKeyWithOrder(col("id"))(col("product").desc())
+
+                output DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+
+            Returns:
+                (DataFrame): a DataFrame without duplicates for the specified keys / order
+        """
         def _withOrder(*orderCols):
             jdf = self._jPythonHelper.smvDedupByKeyWithOrder(self._jdf, smv_copy_array(self._sc, *keys), smv_copy_array(self._sc, *orderCols))
             return DataFrame(jdf, self._sql_ctx)
         return _withOrder
 
     def smvUnion(self, *dfothers):
+        """Unions DataFrames with different number of columns by column name and schema
+
+            Spark unionAll ignores column names & schema, and can only be performed on tables with the same number of columns.
+
+            Args:
+                dfOthers (\*DataFrame): the dataframes to union with
+
+            Example:
+                >>> df.smvUnion(df2, df3)
+
+            Returns:
+                (DataFrame): the union of all specified DataFrames
+        """
         jdf = self._jDfHelper.smvUnion(_to_seq(dfothers, _jdf))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvRenameField(self, *namePairs):
+        """Rename one or more fields of a `DataFrame`
+
+            Args:
+                namePairs (\*tuple): tuples of strings where the first is the source column name, and the second is the target column name
+
+            Example:
+                >>> df.smvRenameField(("a", "aa"), ("c", "cc"))
+
+            Returns:
+                (DataFrame): the DataFrame with renamed fields
+        """
         jdf = self._jPythonHelper.smvRenameField(self._jdf, smv_copy_array(self._sc, *namePairs))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvUnpivot(self, *cols):
+        """Unpivot the selected columns
+
+            Given a set of records with value columns, turns the value columns into value rows.
+
+            Args:
+                cols (\*string): the names of the columns to unpivot
+
+            Example:
+                input DF:
+
+                    +----+---+---+---+
+                    | id | X | Y | Z |
+                    +====+===+===+===+
+                    | 1  | A | B | C |
+                    +----+---+---+---+
+                    | 2  | D | E | F |
+                    +----+---+---+---+
+                    | 3  | G | H | I |
+                    +----+---+---+---+
+
+                >>> df.smvUnpivot("X", "Y", "Z")
+
+                output DF:
+
+                    +----+--------+-------+
+                    | id | column | value |
+                    +====+========+=======+
+                    |  1 |   X    |   A   |
+                    +----+--------+-------+
+                    |  1 |   Y    |   B   |
+                    +----+--------+-------+
+                    |  1 |   Z    |   C   |
+                    +----+--------+-------+
+                    | ...   ...      ...  |
+                    +----+--------+-------+
+                    |  3 |   Y    |   H   |
+                    +----+--------+-------+
+                    |  3 |   Z    |   I   |
+                    +----+--------+-------+
+
+            Returns:
+                (DataFrame): the unpivoted DataFrame
+        """
         jdf = self._jDfHelper.smvUnpivot(_to_seq(cols))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvUnpivotRegex(self, cols, colNameFn, indexColName):
+        """Unpivot the selected columns using the specified regex
+
+            Args:
+                cols (\*string): the names of the columns to unpivot
+                colNameFn (string): a regex representing the function to be applied when unpivoting
+                indexColName (string): the name of the index column to be created
+
+            Example:
+                input DF:
+
+                    +----+-------+-------+-------+-------+
+                    | id |  A_1  |  A_2  |  B_1  |  B_2  |
+                    +====+=======+=======+=======+=======+
+                    | 1  | 1_a_1 | 1_a_2 | 1_b_1 | 1_b_2 |
+                    +----+-------+-------+-------+-------+
+                    | 2  | 2_a_1 | 2_a_2 | 2_b_1 | 2_b_2 |
+                    +----+-------+-------+-------+-------+
+
+                >>> df.smvUnpivotRegex( ["A_1", "A_2", "B_1", "B_2"], "(.*)_(.*)", "index" )
+
+                output DF:
+
+                    +----+-------+-------+-------+
+                    | id | index |   A   |   B   |
+                    +====+=======+=======+=======+
+                    | 1  |   1   | 1_a_1 | 1_b_1 |
+                    +----+-------+-------+-------+
+                    | 1  |   2   | 1_a_2 | 1_b_2 |
+                    +----+-------+-------+-------+
+                    | 2  |   1   | 2_a_1 | 2_b_1 |
+                    +----+-------+-------+-------+
+                    | 2  |   2   | 2_a_2 | 2_b_2 |
+                    +----+-------+-------+-------+
+
+            Returns:
+                (DataFrame): the unpivoted DataFrame
+        """
         jdf = self._jDfHelper.smvUnpivotRegex(_to_seq(cols), colNameFn, indexColName)
         return DataFrame(jdf, self._sql_ctx)
 

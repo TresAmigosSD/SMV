@@ -145,6 +145,13 @@ object SmvPythonHelper {
     val dt = DataType.fromJson(datatypeJson)
     smvfuncs.smvCollectSet(col, dt)
   }
+
+  def smvStrCat(sep: String, cols: Array[Column]): Column = {
+    smvfuncs.smvStrCat(sep, cols: _*)
+  }
+
+  def smvHashKey(prefix: String, cols: Array[Column]): Column =
+    smvfuncs.smvHashKey(prefix, cols: _*)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

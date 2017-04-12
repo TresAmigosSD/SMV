@@ -118,6 +118,21 @@ object smvfuncs {
 
   def smvArrayCat(sep: String, col: Column): Column = smvArrayCat(sep, col, {x:Any => x.toString})
 
+  /** True if any of the columns is not null */
+  def smvHasNonNull(columns: Column*) = columns.foldRight(lit(false))((c, acc) => acc || c.isNotNull)
+
+  /**
+   * Patch Spark's `concat` and `concat_ws` to treat null as empty string in concatenation.
+   **/
+  def smvStrCat(columns: Column*) =
+    when(smvHasNonNull(columns: _*), concat(columns.map { c =>
+      coalesce(c, lit(""))
+    }: _*)).otherwise(lit(null)).alias(s"smvStrCat(${columns.mkString(", ")})")
+
+  def smvStrCat(sep: String, columns: Column*) =
+    when(smvHasNonNull(columns: _*), concat_ws(sep, columns.map(c => coalesce(c, lit(""))): _*))
+      .otherwise(lit(null)).alias(s"smvStrCat($sep, ${columns.mkString(", ")})")
+
   /**
    * Creating unique id from the primary key list.
    *
@@ -140,8 +155,7 @@ object smvfuncs {
    * There for using MD5 to hash primary key columns is good enough for creating an unique key
    */
   def smvHashKey(prefix: String, cols: Column*): Column = {
-    val allcols = lit(prefix) +: cols
-    smvStrCat(lit(prefix), md5(smvStrCat(allcols: _*))) as s"smvHashKey(${prefix}, ${cols})"
+    smvStrCat(lit(prefix), md5(smvStrCat(cols: _*))) as s"smvHashKey(${prefix}, ${cols})"
   }
 
   def smvHashKey(cols: Column*): Column = smvHashKey("", cols: _*)

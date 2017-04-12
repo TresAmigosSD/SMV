@@ -87,3 +87,20 @@ class SmvfuncsTest(SmvBaseTest):
         res = df.agg(smvArrayCat("_", sort_array(smvCollectSet(df.a, StringType()))).alias("aa"))
         exp = self.createDF("aa: String", "a_b_c")
         self.should_be_same(res, exp)
+
+    def test_smvStrCat(self):
+        df = self.createDF("a:String;b:Integer", "a,1;b,2;c,")
+        res = df.select(smvStrCat("_", df.a, df.b).alias("a_b"))
+        exp = self.createDF("a_b: String", "a_1;b_2;c_")
+        self.should_be_same(res, exp)
+
+    def test_smvHashKey(self):
+        df = self.createDF("a:String;b:Integer", "a,1;,;c,;a,1")
+        res = df.select(smvHashKey("pre_", df.a, df.b).alias("key"))
+        exp = self.createDF("key: String",
+            "pre_8a8bb7cd343aa2ad99b7d762030857a2;" +
+            "pre_;" +
+            "pre_4a8a08f09d37b73795649038408b5f33;" +
+            "pre_8a8bb7cd343aa2ad99b7d762030857a2"
+        )
+        self.should_be_same(res, exp)
