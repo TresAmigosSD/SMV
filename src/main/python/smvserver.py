@@ -390,7 +390,7 @@ def get_sample_output():
     sample_output_as_dict = list(map((lambda row: row.asDict()), raw_sample_output))
     df_fields = list(map((lambda field: field.jsonValue()), df.schema.fields))
 
-    retval = { "fields": df_fields, "output": sample_output_as_dict }
+    retval = { "schema": df_fields, "rows": sample_output_as_dict, "fqn": module_fqn }
     return ok_res(retval)
 
 @app.route("/api/get_module_schema", methods = ['POST'])
