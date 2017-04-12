@@ -21,6 +21,7 @@ from flask import Flask, request, jsonify
 from smv import SmvApp
 from shutil import copyfile
 import py_compile
+import json
 
 app = Flask(__name__)
 
@@ -380,19 +381,17 @@ def get_sample_output():
     except:
         raise err_res(MODULE_NOT_PROVIDED_ERR)
 
-    try:
-        # run and get DataFrame
-        module_fqn = request.form['fqn'].encode("utf-8")
-        df = SmvApp.getInstance().runModule("mod:{}".format(module_fqn))
-        # get first 10 entries from dataframe
-        raw_sample_output = df.limit(10).collect()
-        # express each row as a dict
-        sample_output_as_dict = list(map((lambda row: row.asDict()), raw_sample_output))
-        df_fields = list(map((lambda field: field.json()), df.schema.fields))
-        retval = { "fields": df_fields, "output": sample_output_as_dict }
-        return ok_res(retval)
-    except:
-        raise err_res(MODULE_NOT_FOUND_ERR)
+    # run and get DataFrame
+    module_fqn = request.form['fqn'].encode("utf-8")
+    df = SmvApp.getInstance().runModule("mod:{}".format(module_fqn))
+    # get first 10 entries from dataframe
+    raw_sample_output = df.limit(10).collect()
+    # express each row as a dict
+    sample_output_as_dict = list(map((lambda row: row.asDict()), raw_sample_output))
+    df_fields = list(map((lambda field: field.jsonValue()), df.schema.fields))
+
+    retval = { "fields": df_fields, "output": sample_output_as_dict }
+    return ok_res(retval)
 
 @app.route("/api/get_module_schema", methods = ['POST'])
 def get_module_schema():
