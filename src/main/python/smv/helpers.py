@@ -419,6 +419,48 @@ class DataFrameHelper(object):
         return DataFrame(jdf, self._sql_ctx)
 
     def smvDedupByKeyWithOrder(self, *keys):
+        """Remove duplicated records by selecting the first record relative to a given ordering
+
+            The order is specified in another set of parentheses, as follows:
+
+            >>> def smvDedupByKeyWithOrder(self, *keys)(*orderCols)
+
+            Note:
+                Same as the `dedupByKey` method, we use RDD groupBy in the implementation of this method to make sure we can handle large key space.
+
+            Args:
+                keys (\*string or \*Column): the column names or Columns on which to apply dedup
+
+            Example:
+                input DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | A       | C1      |
+                +-----+---------+---------+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+                | 2   | B       | C4      |
+                +-----+---------+---------+
+
+                >>> df.dedupByKeyWithOrder(col("id"))(col("product").desc())
+
+                output DataFrame:
+
+                +-----+---------+---------+
+                | id  | product | Company |
+                +=====+=========+=========+
+                | 1   | C       | C2      |
+                +-----+---------+---------+
+                | 2   | B       | C3      |
+                +-----+---------+---------+
+
+            Returns:
+                (DataFrame): a DataFrame without duplicates for the specified keys / order
+        """
         def _withOrder(*orderCols):
             jdf = self._jPythonHelper.smvDedupByKeyWithOrder(self._jdf, smv_copy_array(self._sc, *keys), smv_copy_array(self._sc, *orderCols))
             return DataFrame(jdf, self._sql_ctx)
