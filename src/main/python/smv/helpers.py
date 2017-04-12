@@ -587,6 +587,21 @@ class DataFrameHelper(object):
         return DataFrame(jdf, self._sql_ctx)
 
     def smvExportCsv(self, path, n=None):
+        """Export DataFrame to local file system
+
+            Args:
+                path (string): relative path to the app running directory on local file system (instead of HDFS)
+                n (integer): optional. number of records to export. default is all records
+
+            Note:
+                Since we have to collect the DF and then call JAVA file operations, the job have to be launched as either local or yar-client mode. Also it is user's responsibility to make sure that the DF is small enought to fit into memory.
+
+            Example:
+                >>> df.smvExportCsv("./target/python-test-export-csv.csv")
+
+            Returns:
+                (None)
+        """
         self._jDfHelper.smvExportCsv(path, n)
 
     def smvOverlapCheck(self, keyColName):
