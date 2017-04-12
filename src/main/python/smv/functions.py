@@ -14,6 +14,7 @@
 from smv import SmvApp
 from pyspark.sql.column import Column
 from pyspark.sql.functions import udf
+from utils import smv_copy_array
 
 def nGram2(c1, c2):
     """2-gram UDF with formula (number of overlaped gramCnt)/max(c1.gramCnt, c2.gramCnt)
@@ -128,3 +129,18 @@ def smvCollectSet(col, datatype):
             datatype (DataType): datatype of the input column
     """
     return Column(SmvApp.getInstance()._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvCollectSet(col._jc, datatype.json()))
+
+def smvStrCat(head, *others):
+    """Concatenate multiple columns to a single string. Similar to `concat` and `concat_ws` functions in Spark but behaves differently
+       when some columns are nulls. 
+    """
+    if (isinstance(head, basestring)):
+        sep = head
+        cols = list(others)
+    elif (isinstance(head, Column)):
+        sep = ""
+        cols = [head] + list(others)
+    else:
+        raise RuntimeError("first parameter must be either a String or a Column")
+    app = SmvApp.getInstance()
+    return Column(app._jvm.org.tresamigos.smv.python.SmvPythonHelper.smvStrCat(sep, smv_copy_array(app.sc, *cols)))
