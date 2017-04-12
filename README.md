@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/TresAmigosSD/SMV.svg?branch=master)](https://travis-ci.org/TresAmigosSD/SMV)
 # Spark Modularized View (SMV)
 Spark Modularized View enables users to build enterprise scale applications on Apache Spark platform.
 
