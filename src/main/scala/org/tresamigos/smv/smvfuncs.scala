@@ -155,8 +155,7 @@ object smvfuncs {
    * There for using MD5 to hash primary key columns is good enough for creating an unique key
    */
   def smvHashKey(prefix: String, cols: Column*): Column = {
-    val allcols = lit(prefix) +: cols
-    smvStrCat(lit(prefix), md5(smvStrCat(allcols: _*))) as s"smvHashKey(${prefix}, ${cols})"
+    smvStrCat(lit(prefix), md5(smvStrCat(cols: _*))) as s"smvHashKey(${prefix}, ${cols})"
   }
 
   def smvHashKey(cols: Column*): Column = smvHashKey("", cols: _*)
