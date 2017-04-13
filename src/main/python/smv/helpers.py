@@ -633,11 +633,14 @@ class DataFrameHelper(object):
     def smvDesc(self, *colDescs):
         """Adds column descriptions
 
-        Example:
-        val res = df.smvDesc(
-          ("name", "This is customer's name"),
-          ("sex", "This is customer\'s self-identified sex")
-        )
+            Args:
+                colDescs (\*tuple): tuples of strings where the first is the column name, and the second is the description to add
+
+                Example:
+                    >>> df.smvDesc(("a", "description of col a"), ("b", "description of col b"))
+
+                Returns:
+                    (DataFrame): the DataFrame with column descriptions added
         """
         jdf = self._jPythonHelper.smvDesc(self._jdf, smv_copy_array(self._sc, *colDescs))
         return DataFrame(jdf, self._sql_ctx)
