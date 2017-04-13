@@ -153,6 +153,9 @@ class SmvGroupedData(object):
                 a, 2, a
                 a, 3, b
                 a, 4, b
+
+            Returns:
+                (Dataframe): result of fill nulls with previous value
         """
         def __doFill(*valueCols):
             return DataFrame(self.sgd.smvFillNullWithPrevValue(smv_copy_array(self.df._sc, *orderCols), smv_copy_array(self.df._sc, *valueCols)), self.df.sql_ctx)
