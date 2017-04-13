@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
-import smvfuncs.smvCountDistinctWithNull
+import smvfuncs._
 
 private[smv] class PrimaryKeyDiscovery(val debug: Boolean) {
 

@@ -15,6 +15,7 @@ package org.apache.spark.sql.hive.test
 
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
+import org.apache.spark.sql.SparkSession
 
 /**
  * Provides an entry to TestHiveContext
@@ -27,7 +28,7 @@ object SmvTestHive {
   private[this] var _hc: TestHiveContext = null
 
   def createContext(_sc: SparkContext): TestHiveContext = {
-    if (_hc == null) {
+    if(_hc == null) {
       val sc = if (_sc == null) {
         new SparkContext(
           System.getProperty("spark.sql.test.master", "local[1]"),

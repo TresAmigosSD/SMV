@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.SparkContext
-import org.apache.spark.annotation.DeveloperApi
+import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.DataFrame
@@ -23,7 +23,9 @@ import org.apache.spark.sql.DataFrame
 import java.sql.Date
 import java.text.{DateFormat, SimpleDateFormat}
 
+import scala.annotation.switch
 import scala.util.Try
+import org.apache.spark.annotation._
 
 private[smv] abstract class TypeFormat extends Serializable {
   val dataType: DataType

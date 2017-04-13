@@ -13,9 +13,7 @@
  */
 
 package org.tresamigos.smv
-
-import org.apache.spark.sql.{Column, DataFrame}
-import org.apache.spark.sql.types.{Metadata, MetadataBuilder, StructField}
+import org.apache.spark.sql._, functions._, types._
 
 trait SmvKeys {
   val SmvLabel = "smvLabel"

@@ -13,17 +13,17 @@
  */
 
 package org.tresamigos.smv
-package util
 
 import org.apache.spark.sql._
 import org.joda.time._, format._
+import scala.util.Try
 
 /**
  * These methods were originally implemented in SmvDataSet.  They are
  * extracted to this utility class so they can be shared with
  * SmvModules written in Python.
  */
-object DataSet {
+object SmvUtil {
 
   /**
    * Read a dataframe from a persisted file path, that is usually an

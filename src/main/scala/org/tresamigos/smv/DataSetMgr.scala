@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import scala.util.{Try, Success, Failure}
+
 /**
  * DataSetMgr (DSM) is the entrypoint for SmvApp to load the SmvDataSets in a project.
  * Every DSM method to load SmvDataSets creates a new transaction within which

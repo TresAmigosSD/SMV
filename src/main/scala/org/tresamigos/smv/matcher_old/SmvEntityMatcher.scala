@@ -1,10 +1,12 @@
-package org.tresamigos.smv
-package matcher_old
+package org.tresamigos.smv.matcher_old
 
-import org.apache.spark.sql.{Column, Row, DataFrame}
-import org.apache.spark.sql.types.{BooleanType, StructType, FloatType}
-import org.apache.spark.sql.functions.lit
-import smvfuncs._
+import com.rockymadden.stringmetric.similarity._
+import org.apache.spark.sql._
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.DataFrame
+import com.rockymadden.stringmetric.phonetic._
+import org.tresamigos.smv._, smvfuncs._
 
 /**
  * SmvEntityMatcher

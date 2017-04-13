@@ -14,6 +14,9 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.functions._
+
 import scala.language.implicitConversions
 
 /**

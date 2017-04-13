@@ -14,6 +14,9 @@
 
 package org.tresamigos.smv.edd
 
+import org.tresamigos.smv._
+import org.apache.spark.sql.Column
+
 private[smv] abstract class HistColumn
 
 /**

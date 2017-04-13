@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.classloaders
+package org.tresamigos.smv.class_loader
 
 import org.tresamigos.smv.SparkTestUtil
 

@@ -57,9 +57,12 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        TestConfig.tearDown()
-        del cls.sparkSession
-        del cls.sparkContext
+        # Temporarily don't shutdown Spark on every test suite class.
+        # See issue #588
+        # TestConfig.tearDown()
+        # del cls.sparkSession
+        # del cls.sparkContext
+        pass
 
     @classmethod
     def createDF(cls, schema, data):
