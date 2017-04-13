@@ -14,16 +14,16 @@
 import sys
 
 from smvbasetest import SmvBaseTest
-from smv import smvPy
-from smv.smvpy import DataSetRepo
+from smv import SmvApp
+from smv.smvapp import DataSetRepo
 
 class ModuleHashTest(SmvBaseTest):
     ResourcePath1 = 'src/test/python/dsh1'
     ResourcePath2 = 'src/test/python/dsh2'
 
     class Resource(object):
-        def __init__(self, smvPy, path, fqn):
-            self.dsr = DataSetRepo(smvPy)
+        def __init__(self, smvApp, path, fqn):
+            self.dsr = DataSetRepo(smvApp)
             self.path = path
             self.fqn = fqn
 
@@ -35,9 +35,9 @@ class ModuleHashTest(SmvBaseTest):
             sys.path.remove(self.path)
 
     def compare_resource_hash(self, fqn, assertion):
-        with self.Resource(self.smvPy,self.ResourcePath1,fqn) as ds:
+        with self.Resource(self.smvApp,self.ResourcePath1,fqn) as ds:
             hash1 = ds.datasetHash()
-        with self.Resource(self.smvPy,self.ResourcePath2,fqn) as ds:
+        with self.Resource(self.smvApp,self.ResourcePath2,fqn) as ds:
             hash2 = ds.datasetHash()
         assertion(hash1, hash2)
 

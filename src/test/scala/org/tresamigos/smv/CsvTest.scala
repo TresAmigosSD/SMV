@@ -103,6 +103,29 @@ class CsvTest extends SmvTestUtil {
 
   }
 
+  test("Read file with quote-char null") {
+    val file = SmvCsvFile("./" + testDataDir + "CsvTest/test3.csv")
+    val exp = dfFrom("@quote-char = \\0;name: String;age: Integer",
+                    """Bob,22;
+                    |Fred,24;
+                    |"Joe,50""".stripMargin
+              )
+    assertDataFramesEqual(file.rdd, exp)
+  }
+
+  test("Write file with \" as content instead of quote-char") {
+    /* In this case res will be saved with @quote-char = ", but data will use Excel escape
+       style as """b". 
+       */
+    val res = dfFrom("name:String", "a").withColumn("name2", lit("\"b"))
+    val csvPath = testcaseTempDir + "/test_write_data_with_quote"
+
+    res.saveAsCsvWithSchema(csvPath)
+
+    val fileOut = SmvCsvFile("./" + csvPath)
+    assertDataFramesEqual(fileOut.rdd, res)
+  }
+
   test("Test escaping quotes in strings") {
 
     /** Test for CSV Excel format  **/

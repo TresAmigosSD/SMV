@@ -6,6 +6,8 @@ PROG_NAME=$(basename "$0")
 function usage()
 {
   echo "USAGE: ${PROG_NAME} [-spark] smv_version_to_release(n.n.n.n)"
+  LATEST_VERSION=$(curl https://raw.githubusercontent.com/TresAmigosSD/SMV/master/.smv_version)
+  echo "Latest SMV version is: ${LATEST_VERSION:-Could not parse version from Github API}"
   exit $1
 }
 
@@ -23,7 +25,8 @@ function parse_args()
 
   SMV_DIR="SMV_${SMV_VERSION}"
   SPARK_DIR="spark-1.5.2-bin-2.7.2"
-  SMV_PROFILE="${HOME}/.smv/smv-profile.sh"
+  SMV_PROFILE_FILENAME="smv-profile.sh"
+  SMV_PROFILE="${HOME}/.smv/${SMV_PROFILE_FILENAME}"
 
   validate_version
 }
@@ -122,6 +125,9 @@ generate_profile_file() {
     echo 'export PATH="'${install_dir}/${SPARK_DIR}/bin':${PATH}"' >> ${SMV_PROFILE}
   fi
   echo "[INFO] created ${SMV_PROFILE}"
+  COPIED_SMV_PROFILE_PATH="${SMV_DIR}/tools/${SMV_PROFILE_FILENAME}"
+  cp "${SMV_PROFILE}" "${COPIED_SMV_PROFILE_PATH}"
+  echo "[INFO] copied SMV profile to ${COPIED_SMV_PROFILE_PATH}"
 }
 
 # add a call in users "profile" file to source the generated SMV profile file

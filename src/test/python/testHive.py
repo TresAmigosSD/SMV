@@ -22,7 +22,7 @@ class HiveTest(SmvBaseTest):
     @classmethod
     def setUpClass(cls):
         super(HiveTest, cls).setUpClass()
-        cls.smvPy.sqlContext.setConf("hive.metastore.warehouse.dir", "file:///tmp/smv_hive_test")
+        cls.smvApp.sqlContext.setConf("hive.metastore.warehouse.dir", "file:///tmp/smv_hive_test")
 
 # temporarily turn off the tests in this file. since we can't figure out
 # a way to specify the temp hive storage conf in 2.1. Specify
@@ -34,9 +34,9 @@ class PublishModuleToHiveTest(HiveTest):
         return super(PublishModuleToHiveTest, cls).smvAppInitArgs() + ['--publish-hive', '-m', M.fqn()]
 
     def test_publish_module_to_hive(self):
-        self.smvPy.j_smvApp.run()
-        mDf = self.smvPy.runModule(M.urn())
-        hiveDf = self.smvPy.sqlContext.sql("select * from " + "M")
+        self.smvApp.j_smvApp.run()
+        mDf = self.smvApp.runModule(M.urn())
+        hiveDf = self.smvApp.sqlContext.sql("select * from " + "M")
         self.should_be_same(mDf, hiveDf)
 
 class ReadHiveTableTest(HiveTest):
@@ -47,14 +47,14 @@ class ReadHiveTableTest(HiveTest):
     @classmethod
     def setUpClass(cls):
         super(ReadHiveTableTest, cls).setUpClass()
-        cls.smvPy.j_smvApp.run()
+        cls.smvApp.j_smvApp.run()
 
     def test_smv_hive_table_can_read_hive_table(self):
-        mDf = self.smvPy.runModule(M.urn())
-        hiveDf = self.smvPy.runModule(MyHive.urn())
+        mDf = self.smvApp.runModule(M.urn())
+        hiveDf = self.smvApp.runModule(MyHive.urn())
         self.should_be_same(mDf,hiveDf)
 
     def test_smv_hive_table_can_use_custom_query(self):
-        mDf = self.smvPy.runModule(M.urn()).select("k")
-        hiveDf = self.smvPy.runModule(MyHiveWithQuery.urn())
+        mDf = self.smvApp.runModule(M.urn()).select("k")
+        hiveDf = self.smvApp.runModule(MyHiveWithQuery.urn())
         self.should_be_same(mDf,hiveDf)

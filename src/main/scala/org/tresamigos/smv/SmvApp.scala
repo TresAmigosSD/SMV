@@ -93,25 +93,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
    * dfCache the to ensure only a single DataFrame exists for a given data set
    * (file/module).
    */
-  val dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
-  def resolveRDD(ds: SmvDataSet): DataFrame = {
-    val vFqn = ds.versionedFqn
-    Try(dfCache(vFqn)) match {
-      case Success(df) => df
-      case Failure(_) =>
-        val df = ds.rdd
-        dfCache += (vFqn -> df)
-        df
-    }
-  }
-
-  def genJSON(stageNames: Seq[String] = Seq()) = {
-    val pathName = s"${smvConfig.appName}.json"
-
-    val graphString = new graph.SmvGraphUtil(this, stageNames).createGraphJSON()
-
-    SmvReportIO.saveLocalReport(graphString, pathName)
-  }
+  var dfCache: Map[String, DataFrame] = Map.empty[String, DataFrame]
 
   /**
    * pass on the spark sql props set in the smv config file(s) to spark.
@@ -133,19 +115,49 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     }
   }
 
+  /** Returns the app-level dependency graph as a dot string */
+  def dependencyGraphDotString(stageNames: Seq[String] = stages): String =
+    new graph.SmvGraphUtil(this, stageNames).createGraphvisCode(modulesToRun)
+
   /**
    * generate dependency graphs if "-g" flag was specified on command line.
-   * @return true of graphs were generated otherwise return false.
+   * @return true if graph were generated otherwise return false.
    */
-  private def generateDependencyGraphs(): Boolean = {
+  private def generateDotDependencyGraph() : Boolean = {
     if (smvConfig.cmdLine.graph()) {
-      val pathName    = s"${smvConfig.appName}.dot"
-      val graphString = new graph.SmvGraphUtil(this, stages).createGraphvisCode(modulesToRun)
-      SmvReportIO.saveLocalReport(graphString, pathName)
+      val pathName = s"${smvConfig.appName}.dot"
+      SmvReportIO.saveLocalReport(dependencyGraphDotString(stages), pathName)
       true
     } else {
       false
     }
+  }
+
+  /** Returns the app-level dependency graph as a json string */
+  def dependencyGraphJsonString(stageNames: Seq[String] = stages): String = {
+    new graph.SmvGraphUtil(this, stageNames).createGraphJSON()
+  }
+
+  /**
+   * generate JSON dependency graphs if "--json" flag was specified on command line.
+   * @return true if json graph were generated otherwise return false.
+   */
+  private def generateJsonDependencyGraph() : Boolean = {
+    if (smvConfig.cmdLine.jsonGraph()) {
+      val pathName = s"${smvConfig.appName}.json"
+      SmvReportIO.saveLocalReport(dependencyGraphJsonString(), pathName)
+      true
+    } else {
+      false
+    }
+  }
+
+  /**
+   * zero parameter wrapper around dependencyGraphJsonString that can be called from python directly.
+   * TODO: remove this once we pass args to dependencyGraphJsonString
+   */
+  def generateAllGraphJSON() = {
+    dependencyGraphJsonString()
   }
 
   /**
@@ -169,10 +181,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
       .orElse(Some(false))()
   }
 
-  def generateAllGraphJSON() = {
-    genJSON(stages)
-  }
-
   /**
    * if the publish to hive flag is setn, the publish
    */
@@ -183,7 +191,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
         case m: SmvOutput => Some(m)
         case _            => None
       } foreach (
-          m => SmvUtil.exportDataFrameToHive(sqlContext, resolveRDD(m), m.tableName)
+          m => SmvUtil.exportDataFrameToHive(sqlContext, m.rdd, m.tableName)
       )
     }
 
@@ -210,17 +218,17 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
    * @return true if modules were generated, otherwise false.
    */
   private def generateOutputModules(): Boolean = {
-    modulesToRun foreach (resolveRDD(_))
+    modulesToRun foreach (_.rdd)
     modulesToRun.nonEmpty
   }
 
   /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(urn: URN): DataFrame = resolveRDD(dsm.load(urn).head)
+  def runModule(urn: URN): DataFrame = dsm.load(urn).head.rdd
 
   /**
    * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
    */
-  def runModuleByName(modName: String): DataFrame = resolveRDD(dsm.inferDS(modName).head)
+  def runModuleByName(modName: String): DataFrame = dsm.inferDS(modName).head.rdd
 
   /**
    * sequence of SmvModules to run based on the command line arguments.
@@ -255,7 +263,10 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    compareEddResults() || generateDependencyGraphs() || publishModulesToHive() || publishOutputModules() || generateOutputModules()
+    compareEddResults() ||
+      generateDotDependencyGraph() || generateJsonDependencyGraph() ||
+      publishModulesToHive() ||  publishOutputModules() ||
+      generateOutputModules()
   }
 }
 
