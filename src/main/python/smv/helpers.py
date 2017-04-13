@@ -605,6 +605,26 @@ class DataFrameHelper(object):
         self._jDfHelper.smvExportCsv(path, n)
 
     def smvOverlapCheck(self, keyColName):
+        """For a set of DFs, which share the same key column, check the overlap across them
+
+            The other DataFrames are specified in another set of parentheses, as follows:
+
+            >>> df1.smvOverlapCheck(key)(*df)
+
+            Args:
+                keyColName (string): the column name for the key column
+
+            Examples:
+                >>> df1.smvOverlapCheck("key")(df2, df3, df4)
+
+                output DF has 2 columns:
+                  - key
+                  - flag: a bit-string, e.g. 0110. Each bit represents whether the original DF has this key
+
+                It can be used with EDD to summarize on the flag:
+
+                >>> df1.smvOverlapCheck("key")(df2, df3).smvHist("flag")
+        """
         def _check(*dfothers):
             jdf = self._jPythonHelper.smvOverlapCheck(self._jdf, keyColName, smv_copy_array(self._sc, *dfothers))
             return DataFrame(jdf, self._sql_ctx)
