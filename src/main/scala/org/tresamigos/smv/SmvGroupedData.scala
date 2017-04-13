@@ -14,20 +14,18 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.contrib.smv.{convertToCatalyst, convertToScala}
+import org.apache.spark.sql.contrib.smv._
 
-import org.apache.spark.sql.{Column, DataFrame, RelationalGroupedDataset, Row, ColumnName}
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
+import org.apache.spark.sql._, expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.Alias
-import org.apache.spark.sql.catalyst.expressions.aggregate._
+import org.apache.spark.sql.catalyst.expressions._, aggregate._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.Partitioner
-import org.apache.spark.annotation.Experimental
+import org.apache.spark.annotation._
 
-import cds.SmvGDO
-import edd.Edd
+import cds._
+import edd._
 import org.apache.spark.sql.types.StringType
 
 /**

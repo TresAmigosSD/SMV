@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.tresamigos.smv.util.StringConversion._
+import org.tresamigos.smv.StringConversionUtil._
 
 import scala.util.Try
 

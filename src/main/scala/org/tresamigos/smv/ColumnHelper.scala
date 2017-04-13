@@ -16,16 +16,18 @@ package org.tresamigos.smv
 
 import org.apache.spark.annotation.Experimental
 import org.apache.spark.sql.{Row, Column}
-import org.apache.spark.sql.contrib.smv.extractExpr
+import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.catalyst.expressions.{Alias, Expression, ScalaUDF, NamedExpression}
+import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types._
+
+import cds._
 
 import java.util.Calendar
 import java.sql.{Timestamp, Date}
-import com.rockymadden.stringmetric.phonetic.{MetaphoneAlgorithm}
-import org.joda.time.DateTime
-import org.apache.spark.annotation.DeveloperApi
+import com.rockymadden.stringmetric.phonetic.{MetaphoneAlgorithm, SoundexAlgorithm}
+import org.joda.time._
+import org.apache.spark.annotation._
 
 import scala.collection.mutable
 import scala.reflect.ClassTag

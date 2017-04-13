@@ -15,10 +15,13 @@
 package org.tresamigos.smv
 
 import scala.util.Try
-import org.json4s.{JObject, JString, JBool, JArray}
-import org.json4s.jackson.JsonMethods.{parse}
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 import org.apache.commons.lang.StringEscapeUtils.escapeJava
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
+
+import dqm._
 
 /**
  * ValidationTask's will generate ValidationResult, which has

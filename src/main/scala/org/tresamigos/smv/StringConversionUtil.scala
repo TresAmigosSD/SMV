@@ -13,9 +13,8 @@
  */
 
 package org.tresamigos.smv
-package util
 
-private[smv] object StringConversion {
+private[smv] object StringConversionUtil {
   val IntThreshold: Int     = Math.ceil(Int.MaxValue / 1.5).toInt
   val FloatThreshold: Float = Float.MaxValue / 1.5f
 

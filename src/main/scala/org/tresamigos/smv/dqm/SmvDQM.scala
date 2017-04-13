@@ -12,10 +12,12 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv
-package dqm
+package org.tresamigos.smv.dqm
 
+import org.tresamigos.smv._
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions.udf
 
 /**

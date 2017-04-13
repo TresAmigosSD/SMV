@@ -12,14 +12,17 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv
-package edd
+package org.tresamigos.smv.edd
 
-import org.apache.spark.sql.types.{LongType, DoubleType, StringType}
+import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions.{stddev => _, _}
 import org.apache.spark.sql.Column
 
-import org.json4s.jackson.JsonMethods.{render, compact}
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+import org.tresamigos.smv._
 
 private[smv] abstract class EddTask {
   val col: Column
@@ -49,7 +52,6 @@ private[smv] abstract class EddTask {
 
 /** need to be Serializable to make it udf **/
 private object EddTask extends Serializable {
-  import org.json4s.JsonDSL._
 
   /** Spark map catalyst Decimal to java.math.BigDecimal, while
    *  JSON4S can render scala.math.BigDecimal, so here we need to
@@ -73,7 +75,6 @@ private[smv] abstract class EddStatTask extends EddTask {
 }
 
 private[smv] abstract class EddHistTask extends EddTask {
-  import org.json4s.JsonDSL._
   override val taskType = "hist"
   def sortByFreq        = false
 

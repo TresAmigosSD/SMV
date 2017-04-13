@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.classloaders
+package org.tresamigos.smv.class_loader
 
 import java.net.URL
 import sun.misc.URLClassPath
@@ -20,7 +20,7 @@ import sun.misc.URLClassPath
 /**
  * Finds a class/file on a path and retrieve the byte code associated with it.
  */
-class ClassFinder(val classDir: String) {
+case class ClassFinder(val classDir: String) {
   val urlClassPath = new URLClassPath(Array(new URL("file:" + classDir + "/")))
 
   /**

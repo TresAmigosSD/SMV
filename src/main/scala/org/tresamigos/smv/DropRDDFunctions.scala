@@ -20,12 +20,13 @@
 //      Related article: http://erikerlandson.github.io/blog/2014/07/27/some-implications-of-supporting-the-scala-drop-method-for-spark-rdds/
 //TODO: This file need to move to another directory
 
+//package org.apache.spark.rdd
 package org.tresamigos.smv
 
 import scala.reflect.ClassTag
 
 import org.apache.spark.{Partition, TaskContext}
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd._
 
 /**
  * Extra functions available on RDDs for providing the RDD analogs of Scala drop,

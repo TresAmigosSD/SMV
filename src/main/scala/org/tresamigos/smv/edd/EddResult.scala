@@ -12,13 +12,14 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv
-package edd
+package org.tresamigos.smv.edd
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.Decimal
+import org.tresamigos.smv._
 import org.json4s._
-import org.json4s.jackson.JsonMethods.{compact, parse}
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 
 /**
  * Edd result has the following attributes
@@ -127,7 +128,6 @@ private[smv] class EddResult(
   }
 
   def toJSON() = {
-    import org.json4s.JsonDSL._
     val json =
       ("colName"     -> colName) ~
         ("taskType"  -> taskType) ~
