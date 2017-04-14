@@ -1001,7 +1001,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob")).smvMonth()
 
             Returns:
-                (int): month component as integer, or null if input column is null
+                (integer): month component as integer, or null if input column is null
         """
         jc = self._jColumnHelper.smvMonth()
         return Column(jc)
@@ -1013,7 +1013,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob")).smvYear()
 
             Returns:
-                (int): year component as integer, or null if input column is null
+                (integer): year component as integer, or null if input column is null
         """
         jc = self._jColumnHelper.smvYear()
         return Column(jc)
@@ -1025,7 +1025,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob")).smvQuarter()
 
             Returns:
-                (int): quarter component as integer (1-based), or null if input column is null
+                (integer): quarter component as integer (1-based), or null if input column is null
         """
         jc = self._jColumnHelper.smvQuarter()
         return Column(jc)
@@ -1037,7 +1037,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob")).smvDayOfMonth()
 
             Returns:
-                (int): day of month component as integer (range 1-31), or null if input column is null
+                (integer): day of month component as integer (range 1-31), or null if input column is null
         """
         jc = self._jColumnHelper.smvDayOfMonth()
         return Column(jc)
@@ -1049,7 +1049,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob")).smvDayOfWeek()
 
             Returns:
-                (int): day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
+                (integer): day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
         """
         jc = self._jColumnHelper.smvDayOfWeek()
         return Column(jc)
@@ -1061,24 +1061,71 @@ class ColumnHelper(object):
                 >>> df.select(col("dob")).smvHour()
 
             Returns:
-                (int): hour component as integer, or null if input column is null
+                (integer): hour component as integer, or null if input column is null
         """
         jc = self._jColumnHelper.smvHour()
         return Column(jc)
 
     def smvPlusDays(self, delta):
+        """Add N days to `Timestamp` column
+
+            Args:
+                delta (integer): the number of days to add
+
+            Example:
+                >>> df.select(col("dob")).smvPlusDays(3)
+
+            Returns:
+                (Timestamp): the incremented Timestamp, or null if input is null
+        """
         jc = self._jColumnHelper.smvPlusDays(delta)
         return Column(jc)
 
     def smvPlusWeeks(self, delta):
+        """Add N weeks to `Timestamp` column
+
+            Args:
+                delta (integer): the number of weeks to add
+
+            Example:
+                >>> df.select(col("dob")).smvPlusWeeks(3)
+
+            Returns:
+                (Timestamp): the incremented Timestamp, or null if input is null
+        """
         jc = self._jColumnHelper.smvPlusWeeks(delta)
         return Column(jc)
 
     def smvPlusMonths(self, delta):
+        """Add N months to `Timestamp` column
+
+            Args:
+                delta (integer): the number of months to add
+
+            Note:
+                The calculation will do its best to only change the month field retaining the same day of month. However, in certain circumstances, it may be necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot result in 2007-04-31, so the day of month is adjusted to 2007-04-30.
+
+            Example:
+                >>> df.select(col("dob")).smvPlusMonths(3)
+
+            Returns:
+                (Timestamp): the incremented Timestamp, or null if input is null
+        """
         jc = self._jColumnHelper.smvPlusMonths(delta)
         return Column(jc)
 
     def smvPlusYears(self, delta):
+        """Add N years to `Timestamp` column
+
+            Args:
+                delta (integer): the number of years to add
+
+            Example:
+                >>> df.select(col("dob")).smvPlusYears(3)
+
+            Returns:
+                (Timestamp): the incremented Timestamp, or null if input is null
+        """
         jc = self._jColumnHelper.smvPlusYears(delta)
         return Column(jc)
 
