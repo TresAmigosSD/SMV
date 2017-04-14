@@ -1130,14 +1130,41 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvStrToTimestamp(self, fmt):
+        """Build a timestamp from a string
+
+            Args:
+                fmt (string): the format is the same as the Java `Date` format
+
+            Example:
+                >>> df.select(col("dob")).smvStrToTimestamp("yyyy-MM-dd")
+
+            Returns:
+                (Timestamp): the converted Timestamp
+        """
         jc = self._jColumnHelper.smvStrToTimestamp(fmt)
         return Column(jc)
 
     def smvDay70(self):
+        """Convert a Timestamp to the number of days from 1970-01-01
+
+            Example:
+                >>> df.select(col("dob")).smvDay70
+
+            Returns:
+                (integer): number of days from 1970-01-01 (start from 0)
+        """
         jc = self._jColumnHelper.smvDay70()
         return Column(jc)
 
     def smvMonth70(self):
+        """Convert a Timestamp to the number of months from 1970-01-01
+
+            Example:
+                >>> df.select(col("dob")).smvMonth70
+
+            Returns:
+                (integer): number of months from 1970-01-01 (start from 0)
+        """
         jc = self._jColumnHelper.smvMonth70()
         return Column(jc)
 
