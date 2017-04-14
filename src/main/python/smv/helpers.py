@@ -917,10 +917,80 @@ class ColumnHelper(object):
         self._jColumnHelper = self._jvm.ColumnHelper(self._jc)
 
     def smvIsAllIn(self, *vals):
+        """Returns true if ALL of the Array columns' elements are in the given parameter sequence
+
+            Args:
+                vals (\*any): vals must be of the same type as the Array content
+
+            Example:
+                input DF:
+
+                    +---+---+
+                    | k | v |
+                    +===+===+
+                    | a | b |
+                    +---+---+
+                    | c | d |
+                    +---+---+
+                    |   |   |
+                    +---+---+
+
+                >>> df.select( array(col("k"), col("v")) ).smvIsAllIn("a", "b", "c").alias("isFound"))
+
+                output DF:
+
+                    +---------+
+                    | isFound |
+                    +=========+
+                    |  true   |
+                    +---------+
+                    |  false  |
+                    +---------+
+                    |  false  |
+                    +---------+
+
+            Returns:
+                (DataFrame): result of smvIsAllIn
+        """
         jc = self._jPythonHelper.smvIsAllIn(self._jc, _to_seq(vals))
         return Column(jc)
 
     def smvIsAnyIn(self, *vals):
+        """Returns true if ANY one of the Array columns' elements are in the given parameter sequence
+
+            Args:
+                vals (\*any): vals must be of the same type as the Array content
+
+            Example:
+                input DF:
+
+                    +---+---+
+                    | k | v |
+                    +===+===+
+                    | a | b |
+                    +---+---+
+                    | c | d |
+                    +---+---+
+                    |   |   |
+                    +---+---+
+
+                >>> df.select( array(col("k"), col("v")) ).smvIsAnyIn("a", "b", "c").alias("isFound"))
+
+                output DF:
+
+                    +---------+
+                    | isFound |
+                    +=========+
+                    |  true   |
+                    +---------+
+                    |  true   |
+                    +---------+
+                    |  false  |
+                    +---------+
+
+            Returns:
+                (DataFrame): result of smvIsAnyIn
+        """
         jc = self._jPythonHelper.smvIsAnyIn(self._jc, _to_seq(vals))
         return Column(jc)
 
