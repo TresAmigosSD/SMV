@@ -854,6 +854,21 @@ class DataFrameHelper(object):
         return self._jDfHelper._smvEddCompare(df2._jdf, ignoreColName)
 
     def smvEddCompare(self, df2, ignoreColName):
+        """Compare 2 DFs by comparing their Edd Summary result
+
+            The result of the comparison is printed out.
+
+            Args:
+                df2 (DataFrame): the DataFrame to compare with
+                ignoreColName (boolean): specifies whether to ignore column names, default is false
+
+            Example:
+                >>> df.smvEddCompare(df2)
+                >>> df.smvEddCompare(df2, true)
+
+            Returns:
+                (None)
+        """
         self._println(self._smvEddCompare(df2, ignoreColName))
 
     def _smvDiscoverPK(self, n):
@@ -861,6 +876,21 @@ class DataFrameHelper(object):
         return "[{}], {}".format(", ".join(map(str, pk._1())), pk._2())
 
     def smvDiscoverPK(self, n=10000):
+        """Find a column combination which uniquely identifies a row from the data
+
+            Note:
+                The algorithm only looks for a set of keys which uniquely identifies the row. There could be more key combinations which can also be the primary key.
+
+            Args:
+                n (integer): number of rows the PK discovery algorithm will run on, defaults to 10000
+
+            Example:
+                >>> df.smvDiscoverPK(5000)
+
+            Returns:
+                (None)
+
+        """
         self._println(self._smvDiscoverPK(n))
 
     def smvDumpDF(self):
