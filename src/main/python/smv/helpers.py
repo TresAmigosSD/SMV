@@ -894,6 +894,16 @@ class DataFrameHelper(object):
         self._println(self._smvDiscoverPK(n))
 
     def smvDumpDF(self):
+        """Dump the schema and data of given df to screen for debugging purposes
+
+            Similar to `show()` method of DF from Spark 1.3, although the format is slightly different.  This function's format is more convenient for us and hence has remained.
+
+            Example:
+                >>> df.smvDumpDF()
+
+            Returns:
+                (None)
+        """
         self._println(self._jDfHelper._smvDumpDF())
 
 _helpCls(DataFrame, DataFrameHelper)
