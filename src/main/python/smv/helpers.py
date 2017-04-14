@@ -639,24 +639,43 @@ class DataFrameHelper(object):
             Args:
                 colDescs (\*tuple): tuples of strings where the first is the column name, and the second is the description to add
 
-                Example:
-                    >>> df.smvDesc(("a", "description of col a"), ("b", "description of col b"))
+            Example:
+                >>> df.smvDesc(("a", "description of col a"), ("b", "description of col b"))
 
-                Returns:
-                    (DataFrame): the DataFrame with column descriptions added
+            Returns:
+                (DataFrame): the DataFrame with column descriptions added
         """
         jdf = self._jPythonHelper.smvDesc(self._jdf, smv_copy_array(self._sc, *colDescs))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvDescFromDF(self, descDF):
+        """Adds column descriptions
+
+            Args:
+                descDF (DataFrame): a companion 2-column desciptionDF that has variable names as column 1 and corresponding variable descriptions as column 2
+
+            Example:
+                >>> df.smvDescFromDF(desciptionDF)
+
+            Returns:
+                (DataFrame): the DataFrame with column descriptions added
+        """
         desclist = [(str(r[0]), str(r[1])) for r in descDF.collect()]
         return self.smvDesc(*desclist)
 
     def smvGetDesc(self, colName = None):
-        """Return column description(s)
+        """Returns column description(s)
 
-        If colName specified, will return the Description string, if not specified,
-        will return a list of (colName, description) pairs
+            Args:
+                colName (string): optional column name for which to get the description.
+
+            Example:
+                >>> df.smvGetDesc("col_a")
+                >>> df.smvGetDesc()
+
+            Returns:
+                (string): description string of colName, if specified
+                (list(tuple)): a list of (colName, description) pairs for all columns
         """
         if (colName is not None):
             return self._jDfHelper.smvGetDesc(colName)
@@ -664,7 +683,16 @@ class DataFrameHelper(object):
             return [(c, self._jDfHelper.smvGetDesc(c)) for c in self.df.columns]
 
     def smvRemoveDesc(self, *colNames):
-        """Return a Dataframe with the Description removed from the given columns
+        """Removes description for the given columns from the Dataframe
+
+            Args:
+                colNames (\*string): names of columns for which to remove the description
+
+            Example:
+                >>> df.smvRemoveDesc("col_a", "col_b")
+
+            Returns:
+                (DataFrame): the DataFrame with column descriptions removed
         """
         jdf = self._jPythonHelper.smvRemoveDesc(self._jdf, smv_copy_array(self._sc, *colNames))
         return DataFrame(jdf, self._sql_ctx)
@@ -685,33 +713,98 @@ class DataFrameHelper(object):
         return self._jPythonHelper.peekStr(self._jdf, pos, colRegex)
 
     def peek(self, pos = 1, colRegex = ".*"):
+        """Display a DataFrame row in transposed view
+
+            Args:
+                pos (integer): the n-th row to display, default as 1
+                colRegex (string): show the columns with name matching the regex, default as ".*"
+
+            Returns:
+                (None)
+        """
         self._println(self._peekStr(pos, colRegex))
 
     def peekSave(self, path, pos = 1,  colRegex = ".*"):
+        """Write `peek` result to a file
+
+            Args:
+                path (string): local file name to Write
+                pos (integer): the n-th row to display, default as 1
+                colRegex (string): show the columns with name matching the regex, default as ".*"
+
+            Returns:
+                (None)
+        """
         self._printFile(path, self._peekStr(pos, colRegex))
 
     def _smvEdd(self, *cols):
         return self._jDfHelper._smvEdd(_to_seq(cols))
 
     def smvEdd(self, *cols):
+        """Display EDD summary
+
+            Args:
+                cols (\*string): column names on which to perform EDD summary
+
+            Example:
+                >>> df.smvEdd("a", "b")
+
+            Returns:
+                (None)
+        """
         self._println(self._smvEdd(*cols))
 
     def _smvHist(self, *cols):
         return self._jDfHelper._smvHist(_to_seq(cols))
 
     def smvHist(self, *cols):
+        """Display EDD histogram
+
+            Each column's histogram prints separately
+
+            Args:
+                cols (\*string): The columns on which to perform EDD histogram
+
+            Example:
+                >>> df.smvHist("a")
+
+            Returns:
+                (None)
+        """
         self._println(self._smvHist(*cols))
 
     def _smvConcatHist(self, *cols):
         return self._jPythonHelper.smvConcatHist(self._jdf, smv_copy_array(self._sc, *cols))
 
     def smvConcatHist(self, *cols):
+        """Display EDD histogram of a group of columns (joint distribution)
+
+            Args:
+                cols (\*string): The columns on which to perform EDD histogram
+
+            Example:
+                >>> df.smvConcatHist("a", "b")
+
+            Returns:
+                (None)
+        """
         self._println(self._smvConcatHist(*cols))
 
     def _smvFreqHist(self, *cols):
         return self._jDfHelper._smvFreqHist(_to_seq(cols))
 
     def smvFreqHist(self, *cols):
+        """Print EDD histogram with frequency sorting
+
+            Args:
+                cols (*string): The columns on which to perform EDD histogram
+
+            Example:
+                >>> df.smvFreqHist("a")
+
+            Returns:
+                (None)
+        """
         self._println(self._smvFreqHist(*cols))
 
     def _smvCountHist(self, keys, binSize):
