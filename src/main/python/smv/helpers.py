@@ -71,7 +71,7 @@ class SmvGroupedData(object):
 
             Args:
                 maxElems (int): maximum number of records per group
-                cols (*str): columns defining the ordering
+                cols (\*str): columns defining the ordering
 
             Returns:
                 (DataFrame): result of taking top records from groups
@@ -797,7 +797,7 @@ class DataFrameHelper(object):
         """Print EDD histogram with frequency sorting
 
             Args:
-                cols (*string): The columns on which to perform EDD histogram
+                cols (\*string): The columns on which to perform EDD histogram
 
             Example:
                 >>> df.smvFreqHist("a")
@@ -840,7 +840,7 @@ class DataFrameHelper(object):
         """Print distributions on numerical columns with applying the specified bin size
 
             Args:
-                colWithBin (*tuple): each tuple must be of size 2, where the first element is the column name, and the second is the bin size for that column
+                colWithBin (\*tuple): each tuple must be of size 2, where the first element is the column name, and the second is the bin size for that column
 
             Example:
                 >>> df.smvBinHist(("col_a", 1))
