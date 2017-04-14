@@ -995,26 +995,74 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvMonth(self):
+        """Extract month component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvMonth()
+
+            Returns:
+                (int): month component as integer, or null if input column is null
+        """
         jc = self._jColumnHelper.smvMonth()
         return Column(jc)
 
     def smvYear(self):
+        """Extract year component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvYear()
+
+            Returns:
+                (int): year component as integer, or null if input column is null
+        """
         jc = self._jColumnHelper.smvYear()
         return Column(jc)
 
     def smvQuarter(self):
+        """Extract quarter component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvQuarter()
+
+            Returns:
+                (int): quarter component as integer (1-based), or null if input column is null
+        """
         jc = self._jColumnHelper.smvQuarter()
         return Column(jc)
 
     def smvDayOfMonth(self):
+        """Extract day of month component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvDayOfMonth()
+
+            Returns:
+                (int): day of month component as integer (range 1-31), or null if input column is null
+        """
         jc = self._jColumnHelper.smvDayOfMonth()
         return Column(jc)
 
     def smvDayOfWeek(self):
+        """Extract day of week component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvDayOfWeek()
+
+            Returns:
+                (int): day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
+        """
         jc = self._jColumnHelper.smvDayOfWeek()
         return Column(jc)
 
     def smvHour(self):
+        """Extract hour component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvHour()
+
+            Returns:
+                (int): hour component as integer, or null if input column is null
+        """
         jc = self._jColumnHelper.smvHour()
         return Column(jc)
 
