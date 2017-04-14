@@ -815,6 +815,18 @@ class DataFrameHelper(object):
         return res
 
     def smvCountHist(self, keys, binSize):
+        """Print the distribution of the value frequency on specific columns
+
+            Args:
+                keys (list(string)): the column names on which the EDD histogram is performed
+                binSize (integer): the bin size for the histogram
+
+            Example:
+                >>> df.smvCountHist(["k"], 1)
+
+            Returns:
+                (None)
+        """
         self._println(self._smvCountHist(keys, binSize))
 
     def _smvBinHist(self, *colWithBin):
@@ -825,6 +837,17 @@ class DataFrameHelper(object):
         return self._jPythonHelper.smvBinHist(self._jdf, smv_copy_array(self._sc, *insureDouble))
 
     def smvBinHist(self, *colWithBin):
+        """Print distributions on numerical columns with applying the specified bin size
+
+            Args:
+                colWithBin (*tuple): each tuple must be of size 2, where the first element is the column name, and the second is the bin size for that column
+
+            Example:
+                >>> df.smvBinHist(("col_a", 1))
+
+            Returns:
+                (None)
+        """
         self._println(self._smvBinHist(*colWithBin))
 
     def _smvEddCompare(self, df2, ignoreColName):
