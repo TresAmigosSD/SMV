@@ -15,18 +15,16 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/
     apt-get install -y python "python-dev" "python-pip" &&\
     apt-get install -y graphviz
 
-# installs python packages.
-RUN pip install --upgrade pip &&\
-    pip install Flask
-
-# for some reason, jupyter must be installed in it's own RUN, fails otherwise.
-RUN pip install jupyter
-
 # Add smv user (must be done after install sudo).
 RUN useradd -G sudo --create-home --shell /bin/bash smv &&\
     echo "smv ALL = NOPASSWD: ALL" >> /etc/sudoers &&\
     mkdir /projects &&\
     chown smv:smv /projects
+
+# installs python packages.
+COPY ./requirements.txt /tmp/requirements.txt
+RUN pip install --upgrade pip
+RUN pip install -r /tmp/requirements.txt
 
 # install smv and spark and move them into /usr/lib dir.
 RUN cd /projects &&\
