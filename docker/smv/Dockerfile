@@ -28,9 +28,6 @@ RUN useradd -G sudo --create-home --shell /bin/bash smv &&\
     mkdir /projects &&\
     chown smv:smv /projects
 
-# Customizes prompt
-COPY ./.bashrc /home/smv
-
 # install smv and spark and move them into /usr/lib dir.
 RUN cd /projects &&\
   wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.5 &&\
@@ -52,11 +49,12 @@ USER smv
 RUN rm -rf /home/smv/.ivy2 &&\
     mkdir -p /projects/.ivy2 &&\
     ln -s /projects/.ivy2 /home/smv/.ivy2 &&\
-    rm -rf /home/smv/.ivy2/cache/*
+    rm -rf /home/smv/.ivy2/cache/* &&\
+    mkdir /home/smv/.jupyter
 
-# TODO: should rename .foo files to just foo
+COPY ./bashrc /home/smv/.bashrc
 COPY ./kernel.json /usr/local/share/jupyter/kernels/smv-pyshell/kernel.json
-COPY ./.jupyter /home/smv/.jupyter
+COPY ./jupyter_notebook_config.py /home/smv/.jupyter/jupyter_notebook_config.py
 COPY ./hive-site.xml /usr/lib/spark/conf/hive-site.xml
 COPY ./entrypoint.sh /usr/bin/entrypoint.sh
 
