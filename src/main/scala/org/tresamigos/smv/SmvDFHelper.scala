@@ -344,8 +344,7 @@ class SmvDFHelper(df: DataFrame) {
         })
       case _ => dfJoined
     }
-    if (joinType == SmvJoinType.Semi) dfCoalescedKeys
-    else dfCoalescedKeys.smvSelectMinus(rightKeys(0), rightKeys.tail: _*)
+    dfCoalescedKeys.smvSelectMinus(rightKeys(0), rightKeys.tail: _*)
   }
 
   /**
@@ -389,7 +388,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * and the following call:
    * {{{
-   *   df.dedupByKey("id")
+   *   df.debupByKey("id")
    * }}}
    * will yield the following `DataFrame`:
    * {{{
@@ -401,7 +400,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * while the following call:
    * {{{
-   *   df.dedupByKey("id", "product")
+   *   df.debupByKey("id", "product")
    * }}}
    *
    * will yield the following:
@@ -466,7 +465,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * and the following call:
    * {{{
-   *   df.dedupByKeyWithOrder($"id")($"product".desc)
+   *   df.debupByKeyWithOrder($"id")($"product".desc)
    * }}}
    * will yield the following `DataFrame`:
    * {{{
@@ -810,6 +809,18 @@ class SmvDFHelper(df: DataFrame) {
     val r1      = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
+
+  /*
+   * Create single-columned dataframe whose values are the top N for the specified
+   * column. For the Python port, we cannot return the sequence of values across
+   * Py4J because the values have type Any and Py4J does not how to cast them as
+   * Python values. Therefore, we collect the DataFrame into a list in Python
+   */
+  private[smv] def _topNValsByFreq(n: Integer, c: Column) =
+    df.groupBy(c).agg(count(c) as "freq").smvTopNRecs(n, col("freq").desc).select(c)
+
+  private[smv] def topNValsByFreq(n: Integer, c: Column) =
+    _topNValsByFreq(n, c).collect() map ( _.get(0) )
 
   /**
    * Create an Edd on DataFrame.

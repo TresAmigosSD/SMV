@@ -171,6 +171,11 @@ class DfHelperTest(SmvBaseTest):
             3,z1,"""
         ))
 
+    def test_topNValsByFreq(self):
+        df = self.createDF("a:Integer;b:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
+        topN = df.topNValsByFreq(2, df["a"])
+        self.assertEqual(topN, [4,3])
+
     def test_smvUnion(self):
         schema       = "a:Integer; b:Double; c:String"
         schema2      = "c:String; a:Integer; d:Double"
