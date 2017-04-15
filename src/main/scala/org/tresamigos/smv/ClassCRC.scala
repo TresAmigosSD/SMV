@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import java.io.{InputStream, StringWriter, PrintWriter}
+import java.io.InputStream
 import java.util.zip.CRC32
 
 import scala.util.control.NonFatal
@@ -32,7 +32,7 @@ object ClassCRC {
     checksum(className, classLoader).getValue
 
   private[smv] def cksum0(acc: CRC32, reader: asm.ClassReader): CRC32 = {
-    val code = AsmUtil.asmTrace(reader).getBytes("UTF-8")
+    val code = util.Asm.trace(reader).getBytes("UTF-8")
     acc.update(code)
     acc
   }

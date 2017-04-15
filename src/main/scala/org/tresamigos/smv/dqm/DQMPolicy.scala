@@ -12,7 +12,8 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.dqm
+package org.tresamigos.smv
+package dqm
 
 import org.apache.spark.sql.DataFrame
 

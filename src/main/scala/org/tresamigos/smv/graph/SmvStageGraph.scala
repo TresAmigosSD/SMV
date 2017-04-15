@@ -12,19 +12,16 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.graph
+package org.tresamigos.smv
+package graph
 
-import org.tresamigos.smv._
 import com.github.mdr.ascii.graph.{Graph => AsciiGraph}
 import com.github.mdr.ascii.layout.{GraphLayout => AsciiGraphLayout}
-
-import org.apache.spark.annotation._
-
 /**
  * Arbitrary SmvDataSet graph
  * Nodes are SmvDataSets and edges are the dependency of DSs
  *
- * @param stages the collection of stages as the graph scope
+ * @param pstages the collection of stages as the graph scope
  * @param targetDSs the collection of targeted DSs, if empty, all Modules are targets
  **/
 private[smv] class SmvDSGraph(app: SmvApp,
