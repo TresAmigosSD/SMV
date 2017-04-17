@@ -1,3 +1,9 @@
 language: scala
+
 scala:
-   - 2.11.8
+  - 2.11.8
+
+dist: trusty
+
+jdk:
+  - openjdk8
