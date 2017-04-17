@@ -22,6 +22,7 @@ RUN useradd -G sudo --create-home --shell /bin/bash smv &&\
     chown smv:smv /projects
 
 # installs python packages.
+# TODO: use requirements.txt from image downloaded below once 1.5.2.6 is out.
 COPY ./requirements.txt /tmp/requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r /tmp/requirements.txt
@@ -47,7 +48,6 @@ USER smv
 RUN rm -rf /home/smv/.ivy2 &&\
     mkdir -p /projects/.ivy2 &&\
     ln -s /projects/.ivy2 /home/smv/.ivy2 &&\
-    rm -rf /home/smv/.ivy2/cache/* &&\
     mkdir /home/smv/.jupyter
 
 COPY ./bashrc /home/smv/.bashrc
