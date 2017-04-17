@@ -12,13 +12,12 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.class_loader
+package org.tresamigos.smv
+package classloaders
 
 import java.io.{ByteArrayInputStream, InputStream}
 
-import org.tresamigos.smv.SmvConfig
-
-import scala.util.{Try, Success, Failure}
+import scala.util.{Try, Success}
 
 /**
  * Custom "network" class loader that enable the loading of modified class files
@@ -34,22 +33,22 @@ private[smv] case class SmvClassLoader(val classFinder: ClassFinder,
    * fat jar which will have all the modules defined in it.
    */
   override def loadClass(classFQN: String): Class[_] = {
-    var c: Class[_] = null
 
-    getClassLoadingLock(classFQN).synchronized {
+    val clazz: Class[_] = getClassLoadingLock(classFQN).synchronized {
       // see if we have a cached copy in the JVM
-      c = findLoadedClass(classFQN)
+      val clazz0 = findLoadedClass(classFQN)
 
-      if (c == null) {
-        c = Try(findClass(classFQN)).getOrElse(null)
-      }
+      val clazz1: Option[Class[_]] = if (clazz0 == null) {
+        Try(findClass(classFQN)) match {
+          case Success(cl: Class[_]) => Some(cl)
+          case _                     => None
+        }
+      } else Some(clazz0)
 
-      if (c == null) {
-        c = getParent.loadClass(classFQN)
-      }
+      clazz1.getOrElse(getParent.loadClass(classFQN))
     }
 
-    c
+    clazz
   }
 
   /**
@@ -64,7 +63,7 @@ private[smv] case class SmvClassLoader(val classFinder: ClassFinder,
   private def getClassBytes(classFQN: String): Array[Byte] = {
     val b = classFinder.getClassBytes(classFQN)
     if (b == null)
-      throw new ClassNotFoundException("SmvClassLoader class not found: " + classFQN)
+      throw new ClassNotFoundException(s"SmvClassLoader class not found: $classFQN")
     b
   }
 
@@ -79,7 +78,7 @@ private[smv] case class SmvClassLoader(val classFinder: ClassFinder,
   private def getResourceBytes(resourcePath: String): Array[Byte] = {
     val b = classFinder.getResourceBytes(resourcePath)
     if (b == null)
-      throw new ClassNotFoundException("SmvClassLoader resource not found: " + resourcePath)
+      throw new ClassNotFoundException(s"SmvClassLoader resource not found: $resourcePath")
     b
   }
 }
@@ -88,12 +87,11 @@ private[smv] object SmvClassLoader {
   def apply(smvConfig: SmvConfig,
             parentClassLoader: ClassLoader = getClass.getClassLoader): ClassLoader = {
     val classDir = smvConfig.classDir
-    if (!classDir.isEmpty) {
+    if (!classDir.isEmpty)
       // network class loader with local client connection
-      new SmvClassLoader(ClassFinder(classDir), parentClassLoader)
-    } else {
+      new SmvClassLoader(new ClassFinder(classDir), parentClassLoader)
+    else
       // default jar class loader
       parentClassLoader
-    }
   }
 }

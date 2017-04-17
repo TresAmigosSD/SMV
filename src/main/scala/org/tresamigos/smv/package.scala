@@ -17,13 +17,10 @@ package org.tresamigos
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.{Column, ColumnName}
-import org.apache.spark.sql.RelationalGroupedDataset
-import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.contrib.smv._
 import org.apache.spark.sql.types.{StructField, StructType}
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe.TypeTag
-import org.apache.spark.annotation._
+import org.apache.spark.annotation.DeveloperApi
 
 /**
  * == Spark Modularized View (SMV) ==

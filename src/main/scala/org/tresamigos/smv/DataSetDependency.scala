@@ -16,6 +16,7 @@ package org.tresamigos.smv
 
 import java.io.{InputStream, PrintWriter, StringWriter}
 
+import scala.tools.asm.util.{TraceClassVisitor, Textifier}
 import scala.tools.asm.{ClassReader, ClassVisitor, MethodVisitor, Opcodes}
 import scala.collection.mutable.{Set => MSet}
 import scala.tools.asm.util.{Textifier, TraceClassVisitor}

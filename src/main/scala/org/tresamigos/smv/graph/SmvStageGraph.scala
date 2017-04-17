@@ -12,16 +12,14 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.graph
-
-import org.tresamigos.smv._
-import org.apache.spark.annotation._
+package org.tresamigos.smv
+package graph
 
 /**
  * Arbitrary SmvDataSet graph
  * Nodes are SmvDataSets and edges are the dependency of DSs
  *
- * @param stages the collection of stages as the graph scope
+ * @param pstages the collection of stages as the graph scope
  * @param targetDSs the collection of targeted DSs, if empty, all Modules are targets
  **/
 private[smv] class SmvDSGraph(app: SmvApp,

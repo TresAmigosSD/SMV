@@ -71,7 +71,7 @@ class SmvGroupedData(object):
 
             Args:
                 maxElems (int): maximum number of records per group
-                cols (*str): columns defining the ordering
+                cols (\*str): columns defining the ordering
 
             Returns:
                 (DataFrame): result of taking top records from groups
@@ -96,11 +96,15 @@ class SmvGroupedData(object):
             Examples:
                 For example, given a DataFrame df that represents the table
 
+                +-----+-------+---------+-------+
                 | id  | month | product | count |
-                | --- | ----- | ------- | ----- |
+                +=====+=======+=========+=======+
                 | 1   | 5/14  |   A     |   100 |
+                +-----+-------+---------+-------+
                 | 1   | 6/14  |   B     |   200 |
+                +-----+-------+---------+-------+
                 | 1   | 5/14  |   B     |   300 |
+                +-----+-------+---------+-------+
 
                 we can use
 
@@ -108,9 +112,11 @@ class SmvGroupedData(object):
 
                 to produce the following output
 
+                +-----+--------------+--------------+--------------+--------------+
                 | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
-                | --- | ------------ | ------------ | ------------ | ------------ |
+                +=====+==============+==============+==============+==============+
                 | 1   | 100          | 300          | NULL         | 200          |
+                +-----+--------------+--------------+--------------+--------------+
 
             Returns:
                 (DataFrame): result of pivot sum
@@ -153,6 +159,9 @@ class SmvGroupedData(object):
                 a, 2, a
                 a, 3, b
                 a, 4, b
+
+            Returns:
+                (Dataframe): result of fill nulls with previous value
         """
         def __doFill(*valueCols):
             return DataFrame(self.sgd.smvFillNullWithPrevValue(smv_copy_array(self.df._sc, *orderCols), smv_copy_array(self.df._sc, *valueCols)), self.df.sql_ctx)
@@ -636,24 +645,43 @@ class DataFrameHelper(object):
             Args:
                 colDescs (\*tuple): tuples of strings where the first is the column name, and the second is the description to add
 
-                Example:
-                    >>> df.smvDesc(("a", "description of col a"), ("b", "description of col b"))
+            Example:
+                >>> df.smvDesc(("a", "description of col a"), ("b", "description of col b"))
 
-                Returns:
-                    (DataFrame): the DataFrame with column descriptions added
+            Returns:
+                (DataFrame): the DataFrame with column descriptions added
         """
         jdf = self._jPythonHelper.smvDesc(self._jdf, smv_copy_array(self._sc, *colDescs))
         return DataFrame(jdf, self._sql_ctx)
 
     def smvDescFromDF(self, descDF):
+        """Adds column descriptions
+
+            Args:
+                descDF (DataFrame): a companion 2-column desciptionDF that has variable names as column 1 and corresponding variable descriptions as column 2
+
+            Example:
+                >>> df.smvDescFromDF(desciptionDF)
+
+            Returns:
+                (DataFrame): the DataFrame with column descriptions added
+        """
         desclist = [(str(r[0]), str(r[1])) for r in descDF.collect()]
         return self.smvDesc(*desclist)
 
     def smvGetDesc(self, colName = None):
-        """Return column description(s)
+        """Returns column description(s)
 
-        If colName specified, will return the Description string, if not specified,
-        will return a list of (colName, description) pairs
+            Args:
+                colName (string): optional column name for which to get the description.
+
+            Example:
+                >>> df.smvGetDesc("col_a")
+                >>> df.smvGetDesc()
+
+            Returns:
+                (string): description string of colName, if specified
+                (list(tuple)): a list of (colName, description) pairs for all columns
         """
         if (colName is not None):
             return self._jDfHelper.smvGetDesc(colName)
@@ -661,7 +689,16 @@ class DataFrameHelper(object):
             return [(c, self._jDfHelper.smvGetDesc(c)) for c in self.df.columns]
 
     def smvRemoveDesc(self, *colNames):
-        """Return a Dataframe with the Description removed from the given columns
+        """Removes description for the given columns from the Dataframe
+
+            Args:
+                colNames (\*string): names of columns for which to remove the description
+
+            Example:
+                >>> df.smvRemoveDesc("col_a", "col_b")
+
+            Returns:
+                (DataFrame): the DataFrame with column descriptions removed
         """
         jdf = self._jPythonHelper.smvRemoveDesc(self._jdf, smv_copy_array(self._sc, *colNames))
         return DataFrame(jdf, self._sql_ctx)
@@ -682,33 +719,98 @@ class DataFrameHelper(object):
         return self._jPythonHelper.peekStr(self._jdf, pos, colRegex)
 
     def peek(self, pos = 1, colRegex = ".*"):
+        """Display a DataFrame row in transposed view
+
+            Args:
+                pos (integer): the n-th row to display, default as 1
+                colRegex (string): show the columns with name matching the regex, default as ".*"
+
+            Returns:
+                (None)
+        """
         self._println(self._peekStr(pos, colRegex))
 
     def peekSave(self, path, pos = 1,  colRegex = ".*"):
+        """Write `peek` result to a file
+
+            Args:
+                path (string): local file name to Write
+                pos (integer): the n-th row to display, default as 1
+                colRegex (string): show the columns with name matching the regex, default as ".*"
+
+            Returns:
+                (None)
+        """
         self._printFile(path, self._peekStr(pos, colRegex))
 
     def _smvEdd(self, *cols):
         return self._jDfHelper._smvEdd(_to_seq(cols))
 
     def smvEdd(self, *cols):
+        """Display EDD summary
+
+            Args:
+                cols (\*string): column names on which to perform EDD summary
+
+            Example:
+                >>> df.smvEdd("a", "b")
+
+            Returns:
+                (None)
+        """
         self._println(self._smvEdd(*cols))
 
     def _smvHist(self, *cols):
         return self._jDfHelper._smvHist(_to_seq(cols))
 
     def smvHist(self, *cols):
+        """Display EDD histogram
+
+            Each column's histogram prints separately
+
+            Args:
+                cols (\*string): The columns on which to perform EDD histogram
+
+            Example:
+                >>> df.smvHist("a")
+
+            Returns:
+                (None)
+        """
         self._println(self._smvHist(*cols))
 
     def _smvConcatHist(self, *cols):
         return self._jPythonHelper.smvConcatHist(self._jdf, smv_copy_array(self._sc, *cols))
 
     def smvConcatHist(self, *cols):
+        """Display EDD histogram of a group of columns (joint distribution)
+
+            Args:
+                cols (\*string): The columns on which to perform EDD histogram
+
+            Example:
+                >>> df.smvConcatHist("a", "b")
+
+            Returns:
+                (None)
+        """
         self._println(self._smvConcatHist(*cols))
 
     def _smvFreqHist(self, *cols):
         return self._jDfHelper._smvFreqHist(_to_seq(cols))
 
     def smvFreqHist(self, *cols):
+        """Print EDD histogram with frequency sorting
+
+            Args:
+                cols (\*string): The columns on which to perform EDD histogram
+
+            Example:
+                >>> df.smvFreqHist("a")
+
+            Returns:
+                (None)
+        """
         self._println(self._smvFreqHist(*cols))
 
     def _smvCountHist(self, keys, binSize):
@@ -719,6 +821,18 @@ class DataFrameHelper(object):
         return res
 
     def smvCountHist(self, keys, binSize):
+        """Print the distribution of the value frequency on specific columns
+
+            Args:
+                keys (list(string)): the column names on which the EDD histogram is performed
+                binSize (integer): the bin size for the histogram
+
+            Example:
+                >>> df.smvCountHist(["k"], 1)
+
+            Returns:
+                (None)
+        """
         self._println(self._smvCountHist(keys, binSize))
 
     def _smvBinHist(self, *colWithBin):
@@ -729,12 +843,38 @@ class DataFrameHelper(object):
         return self._jPythonHelper.smvBinHist(self._jdf, smv_copy_array(self._sc, *insureDouble))
 
     def smvBinHist(self, *colWithBin):
+        """Print distributions on numerical columns with applying the specified bin size
+
+            Args:
+                colWithBin (\*tuple): each tuple must be of size 2, where the first element is the column name, and the second is the bin size for that column
+
+            Example:
+                >>> df.smvBinHist(("col_a", 1))
+
+            Returns:
+                (None)
+        """
         self._println(self._smvBinHist(*colWithBin))
 
     def _smvEddCompare(self, df2, ignoreColName):
         return self._jDfHelper._smvEddCompare(df2._jdf, ignoreColName)
 
     def smvEddCompare(self, df2, ignoreColName):
+        """Compare 2 DFs by comparing their Edd Summary result
+
+            The result of the comparison is printed out.
+
+            Args:
+                df2 (DataFrame): the DataFrame to compare with
+                ignoreColName (boolean): specifies whether to ignore column names, default is false
+
+            Example:
+                >>> df.smvEddCompare(df2)
+                >>> df.smvEddCompare(df2, true)
+
+            Returns:
+                (None)
+        """
         self._println(self._smvEddCompare(df2, ignoreColName))
 
     def _smvDiscoverPK(self, n):
@@ -742,9 +882,34 @@ class DataFrameHelper(object):
         return "[{}], {}".format(", ".join(map(str, pk._1())), pk._2())
 
     def smvDiscoverPK(self, n=10000):
+        """Find a column combination which uniquely identifies a row from the data
+
+            Note:
+                The algorithm only looks for a set of keys which uniquely identifies the row. There could be more key combinations which can also be the primary key.
+
+            Args:
+                n (integer): number of rows the PK discovery algorithm will run on, defaults to 10000
+
+            Example:
+                >>> df.smvDiscoverPK(5000)
+
+            Returns:
+                (None)
+
+        """
         self._println(self._smvDiscoverPK(n))
 
     def smvDumpDF(self):
+        """Dump the schema and data of given df to screen for debugging purposes
+
+            Similar to `show()` method of DF from Spark 1.3, although the format is slightly different.  This function's format is more convenient for us and hence has remained.
+
+            Example:
+                >>> df.smvDumpDF()
+
+            Returns:
+                (None)
+        """
         self._println(self._jDfHelper._smvDumpDF())
 
 _helpCls(DataFrame, DataFrameHelper)
@@ -758,62 +923,254 @@ class ColumnHelper(object):
         self._jColumnHelper = self._jvm.ColumnHelper(self._jc)
 
     def smvIsAllIn(self, *vals):
+        """Returns true if ALL of the Array columns' elements are in the given parameter sequence
+
+            Args:
+                vals (\*any): vals must be of the same type as the Array content
+
+            Example:
+                input DF:
+
+                    +---+---+
+                    | k | v |
+                    +===+===+
+                    | a | b |
+                    +---+---+
+                    | c | d |
+                    +---+---+
+                    |   |   |
+                    +---+---+
+
+                >>> df.select( array(col("k"), col("v")) ).smvIsAllIn("a", "b", "c").alias("isFound"))
+
+                output DF:
+
+                    +---------+
+                    | isFound |
+                    +=========+
+                    |  true   |
+                    +---------+
+                    |  false  |
+                    +---------+
+                    |  false  |
+                    +---------+
+
+            Returns:
+                (DataFrame): result of smvIsAllIn
+        """
         jc = self._jPythonHelper.smvIsAllIn(self._jc, _to_seq(vals))
         return Column(jc)
 
     def smvIsAnyIn(self, *vals):
+        """Returns true if ANY one of the Array columns' elements are in the given parameter sequence
+
+            Args:
+                vals (\*any): vals must be of the same type as the Array content
+
+            Example:
+                input DF:
+
+                    +---+---+
+                    | k | v |
+                    +===+===+
+                    | a | b |
+                    +---+---+
+                    | c | d |
+                    +---+---+
+                    |   |   |
+                    +---+---+
+
+                >>> df.select( array(col("k"), col("v")) ).smvIsAnyIn("a", "b", "c").alias("isFound"))
+
+                output DF:
+
+                    +---------+
+                    | isFound |
+                    +=========+
+                    |  true   |
+                    +---------+
+                    |  true   |
+                    +---------+
+                    |  false  |
+                    +---------+
+
+            Returns:
+                (DataFrame): result of smvIsAnyIn
+        """
         jc = self._jPythonHelper.smvIsAnyIn(self._jc, _to_seq(vals))
         return Column(jc)
 
     def smvMonth(self):
+        """Extract month component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvMonth()
+
+            Returns:
+                (integer): month component as integer, or null if input column is null
+        """
         jc = self._jColumnHelper.smvMonth()
         return Column(jc)
 
     def smvYear(self):
+        """Extract year component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvYear()
+
+            Returns:
+                (integer): year component as integer, or null if input column is null
+        """
         jc = self._jColumnHelper.smvYear()
         return Column(jc)
 
     def smvQuarter(self):
+        """Extract quarter component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvQuarter()
+
+            Returns:
+                (integer): quarter component as integer (1-based), or null if input column is null
+        """
         jc = self._jColumnHelper.smvQuarter()
         return Column(jc)
 
     def smvDayOfMonth(self):
+        """Extract day of month component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvDayOfMonth()
+
+            Returns:
+                (integer): day of month component as integer (range 1-31), or null if input column is null
+        """
         jc = self._jColumnHelper.smvDayOfMonth()
         return Column(jc)
 
     def smvDayOfWeek(self):
+        """Extract day of week component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvDayOfWeek()
+
+            Returns:
+                (integer): day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
+        """
         jc = self._jColumnHelper.smvDayOfWeek()
         return Column(jc)
 
     def smvHour(self):
+        """Extract hour component from a timestamp
+
+            Example:
+                >>> df.select(col("dob")).smvHour()
+
+            Returns:
+                (integer): hour component as integer, or null if input column is null
+        """
         jc = self._jColumnHelper.smvHour()
         return Column(jc)
 
     def smvPlusDays(self, delta):
+        """Add N days to `Timestamp` column
+
+            Args:
+                delta (integer): the number of days to add
+
+            Example:
+                >>> df.select(col("dob")).smvPlusDays(3)
+
+            Returns:
+                (Timestamp): the incremented Timestamp, or null if input is null
+        """
         jc = self._jColumnHelper.smvPlusDays(delta)
         return Column(jc)
 
     def smvPlusWeeks(self, delta):
+        """Add N weeks to `Timestamp` column
+
+            Args:
+                delta (integer): the number of weeks to add
+
+            Example:
+                >>> df.select(col("dob")).smvPlusWeeks(3)
+
+            Returns:
+                (Timestamp): the incremented Timestamp, or null if input is null
+        """
         jc = self._jColumnHelper.smvPlusWeeks(delta)
         return Column(jc)
 
     def smvPlusMonths(self, delta):
+        """Add N months to `Timestamp` column
+
+            Args:
+                delta (integer): the number of months to add
+
+            Note:
+                The calculation will do its best to only change the month field retaining the same day of month. However, in certain circumstances, it may be necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot result in 2007-04-31, so the day of month is adjusted to 2007-04-30.
+
+            Example:
+                >>> df.select(col("dob")).smvPlusMonths(3)
+
+            Returns:
+                (Timestamp): the incremented Timestamp, or null if input is null
+        """
         jc = self._jColumnHelper.smvPlusMonths(delta)
         return Column(jc)
 
     def smvPlusYears(self, delta):
+        """Add N years to `Timestamp` column
+
+            Args:
+                delta (integer): the number of years to add
+
+            Example:
+                >>> df.select(col("dob")).smvPlusYears(3)
+
+            Returns:
+                (Timestamp): the incremented Timestamp, or null if input is null
+        """
         jc = self._jColumnHelper.smvPlusYears(delta)
         return Column(jc)
 
     def smvStrToTimestamp(self, fmt):
+        """Build a timestamp from a string
+
+            Args:
+                fmt (string): the format is the same as the Java `Date` format
+
+            Example:
+                >>> df.select(col("dob")).smvStrToTimestamp("yyyy-MM-dd")
+
+            Returns:
+                (Timestamp): the converted Timestamp
+        """
         jc = self._jColumnHelper.smvStrToTimestamp(fmt)
         return Column(jc)
 
     def smvDay70(self):
+        """Convert a Timestamp to the number of days from 1970-01-01
+
+            Example:
+                >>> df.select(col("dob")).smvDay70
+
+            Returns:
+                (integer): number of days from 1970-01-01 (start from 0)
+        """
         jc = self._jColumnHelper.smvDay70()
         return Column(jc)
 
     def smvMonth70(self):
+        """Convert a Timestamp to the number of months from 1970-01-01
+
+            Example:
+                >>> df.select(col("dob")).smvMonth70
+
+            Returns:
+                (integer): number of months from 1970-01-01 (start from 0)
+        """
         jc = self._jColumnHelper.smvMonth70()
         return Column(jc)
 

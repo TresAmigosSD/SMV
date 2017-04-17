@@ -13,8 +13,9 @@
  */
 
 package org.tresamigos.smv
+package util
 
-class AsmUtilTest extends SmvUnitSpec {
+class AsmTest extends SmvUnitSpec {
   object ModuleWithAnonFun {
     val fib: Int => Int = { n =>
       @annotation.tailrec
@@ -28,7 +29,7 @@ class AsmUtilTest extends SmvUnitSpec {
   }
 
   "AsmUtil.hasAnonfun" should "identify modules with anonymous functions" in {
-    AsmUtil.hasAnonfun(ModuleWithAnonFun.getClass.getName, getClass.getClassLoader) shouldBe true
+    Asm.hasAnonfun(ModuleWithAnonFun.getClass.getName, getClass.getClassLoader) shouldBe true
   }
 
   object EmptyModule
@@ -38,7 +39,7 @@ class AsmUtilTest extends SmvUnitSpec {
   }
   it should "not identify modules with no anonymous functions" in {
     Seq(EmptyModule, ModuleWithoutAnonFun) foreach { m =>
-      AsmUtil.hasAnonfun(m.getClass.getName, getClass.getClassLoader) shouldBe false
+      Asm.hasAnonfun(m.getClass.getName, getClass.getClassLoader) shouldBe false
     }
   }
 }

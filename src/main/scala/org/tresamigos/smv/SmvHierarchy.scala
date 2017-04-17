@@ -16,9 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.{DataFrame, Column}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
-
-import SmvJoinType._
+import org.apache.spark.sql.types.StringType
 
 private[smv] class SmvHierarchyColumns(prefix: String) {
   val typeName  = prefix + "_type"
@@ -92,7 +90,7 @@ case class SmvHierarchy(
               df(cols.typeName) === map(hierCols.typeName) &&
                 df(cols.valueName) === map(hierCols.valueName)
             ),
-            LeftOuter)
+            SmvJoinType.LeftOuter)
       .smvSelectMinus(hierCols.typeName, hierCols.valueName)
 
     if (df.columns.contains(cols.nameName)) {
@@ -123,7 +121,7 @@ case class SmvHierarchy(
           df(cols.typeName) === mapWithNameAndParent(hierCols.typeName) &&
             df(cols.valueName) === mapWithNameAndParent(hierCols.valueName)
         ),
-        LeftOuter
+        SmvJoinType.LeftOuter
       )
       .smvRenameField(
         hierCols.nameName   -> cols.nameName,
@@ -272,7 +270,7 @@ class SmvHierarchies(
       .toMap
 
     mapDFsMap.foldLeft(df)((res, pair) =>
-      pair match { case (k, v) => res.smvJoinByKey(v, Seq(k), Inner) })
+      pair match { case (k, v) => res.smvJoinByKey(v, Seq(k), SmvJoinType.Inner) })
   }
 
   /**
@@ -428,7 +426,7 @@ class SmvHierarchies(
       prepared(colNames.pValueName) === right("_right_" + colNames.valueName)
     )).reduce(_ && _)
 
-    prepared.join(right, compareCol, LeftOuter).smvSelectMinus(keyCols: _*)
+    prepared.join(right, compareCol, SmvJoinType.LeftOuter).smvSelectMinus(keyCols: _*)
   }
 
   /**

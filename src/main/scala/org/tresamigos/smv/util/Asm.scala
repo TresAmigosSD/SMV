@@ -13,19 +13,20 @@
  */
 
 package org.tresamigos.smv
+package util
 
 import com.google.common.io.ByteStreams
 import java.io._
 import scala.tools.asm.ClassReader
-import scala.tools.asm.util._
+import scala.tools.asm.util.{TraceClassVisitor, Textifier}
 
 /**
  * Utility methods for analysis of class bytecode.
  */
-object AsmUtil {
+object Asm {
 
   /** Returns an asm-based text representation of the class bytecode */
-  def asmTrace(reader: ClassReader): String = {
+  def trace(reader: ClassReader): String = {
     val buf     = new StringWriter
     val visitor = new TraceClassVisitor(null, new Textifier(), new PrintWriter(buf))
 
@@ -34,15 +35,15 @@ object AsmUtil {
     buf.toString
   }
 
-  def asmTrace(fqn: String, cl: ClassLoader): String = {
+  def trace(fqn: String, cl: ClassLoader): String = {
     val in = cl.getResourceAsStream(fqn.replace('.', '/') + ".class")
-    asmTrace(new ClassReader(getBytes(in)))
+    trace(new ClassReader(getBytes(in)))
   }
 
   // a crude way to test if a class definition contains anonymous functions
   val AnonfunRegex = """\$anonfun\$""".r
   def hasAnonfun(fqn: String, cl: ClassLoader): Boolean =
-    AnonfunRegex.findFirstIn(asmTrace(fqn, cl)).isDefined
+    AnonfunRegex.findFirstIn(trace(fqn, cl)).isDefined
 
   // TODO: this can be moved to a separate IO util module
   def getBytes(in: InputStream): Array[Byte] =

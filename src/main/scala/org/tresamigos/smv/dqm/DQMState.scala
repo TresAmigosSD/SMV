@@ -12,16 +12,17 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.dqm
+package org.tresamigos.smv
+package dqm
 
-import org.apache.spark.util.{AccumulatorV2, LongAccumulator}
-
-import scala.util.Try
 import org.apache.spark.{Accumulator, SparkContext}
+import org.apache.spark.util.{AccumulatorV2, LongAccumulator}
 import org.tresamigos.smv.util.IntAccumulator
 
+import scala.util.Try
 import scala.annotation.meta.param
 import scala.collection.JavaConverters._
+import scala.collection.mutable.MutableList
 
 /**
  * DQMState keeps tracking of [[org.tresamigos.smv.dqm.DQMTask]] behavior on a DF
