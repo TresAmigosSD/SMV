@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# ensure that the mvn and ivy caches have been copied to the host mount
-mkdir -p /projects/.ivy2 /projects/.m2
-rsync -r /home/smv/.ivy2/* /projects/.ivy2
-rsync -r /home/smv/.m2/* /projects/.m2
-
 function start_server() {
     # ${PROJECT_DIR} is the pre-built project path name, "MyApp" by default
     if [ -z ${PROJECT_DIR+x} ]; then

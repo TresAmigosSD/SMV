@@ -4,29 +4,72 @@
 
 # SMV with Jupyter
 
-The smv-jupyter docker image makes it easy to run SMV code through Jupyter. Jupyter started out as iPython, an interactive python interpreter, and the initial installation of Jupyter supports only Python code - even to use pyspark (without SMV) with Jupyter requires a special configuration. smv-jupyter currently configures Jupyter with an smv-pyshell [kernel](http://jupyter.readthedocs.io/en/latest/projects/kernels.html). Support for SMV in Scala and R is in the works.
+Jupyter started out as iPython, an interactive python interpreter, and the initial installation of
+Jupyter supports only Python code - even to use pyspark (without SMV) with Jupyter requires a special
+configuration. `smv-jupyter` currently configures Jupyter with an
+smv-pyshell [kernel](http://jupyter.readthedocs.io/en/latest/projects/kernels.html).
+
+SMV currently tested with Jupyter with Python 2.7. AS long as Jupyter is installed and `jupyter`
+command is in the `PATH`, `smv-jupyter` should be able to start the Jupyter server and can be
+connected from a browser.
+
 
 # How to use
 
-Build the docker image yourself with
+One can install Jupyter himself on the machine he runs SMV, or use the smv docker image, which has
+Jupyter installed.
+
+Start SMV docker container with Jupyter port prepared,
 
 ```shell
-$ docker build -t smv-jupyter _SMV_HOME_/docker/smv-jupyter
+$ docker run -it -p 8888:8888 -v /path/contains/proj:/projects tresamigos/smv
 ```
 
-and run on a compiled project with
+You can view your notebooks from the host at localhost:8888. If the docker command complains
+that the port `8888` is used, you can map other host port to the docker container, e.g. `8889:8888`.
 
-```shell
-$ docker run -it -p 8888:8888 -v /path/to/proj:/proj smv-jupyter
+Either within the docker container or on a machine with SMV and Jupyter installed,
+to run `smv-jupyter`, **you need to change
+directory to the project root, then run `smv-jupyter`.
+It will look for `nodebooks` directory under the project root for store notebooks.**
+
+To use other directories to store the notebooks, one may need to create his own script to launch
+Jupyter by using `tools/smv-jupyter` script as an example. Another way to do so is to use an user
+conf file for Jupyter. For example,
+
+```python
+#In $HOME/.jupyter/jupyter_notebook_config.py
+c.FileContentsManager.root_dir = u'othernotebooks'
+c.NotebookApp.open_browser = False
 ```
 
-Any arguments following smv-jupyter will be passed to jupyter notebook
+With it `smv-jupyter` will use `othernotebooks` under the project root to store the notebooks.
 
-You can view your notebooks at localhost:8888.
+# Work on a remote server
 
-You could also install Jupyter on your host machine without docker. To run `smv-jupyter`, you need to change
-directory to the project root, compile the project with `mvn package` or `sbt assembly`, then run `smv-jupyter`.
-It will look for `nodebooks` directory under the project root for store notebooks. 
+To take advantage of the power of Spark and SMV, we typically need to work on a remote server.
+Basically, user need to connect to a server machine through SSH, and do development and data
+investigation on the server. Assume user has a way to edit the project code on the server, here we
+describe how one can use Jupyter on the remote server setup.
+
+When run `smv-jupyter` on the server, it will open up a high port (e.g. 8888) if the port is available,
+if not it will try some higher numbers. Please note that we use Jupyter in single user mode, in other
+words, different team members should launch their own Jupyter server (using `smv-jupyter` command).
+
+As Jupyter server started on the server, user can use SSH tunneling to map the remote server's Jupyter
+port to local laptop. E.g. from laptop run the following command,
+```
+ssh -L 9000:localhost:8888 myusername@myserver.com
+```
+where `8888` should be replaced by the real port the Jupyter server is listening.
+
+Then user can open a browser and type in
+```
+http://localhost:9000
+```
+
+For the first time connection, the user may ask to type in a token, which can be copy-pasted from
+the Jupter server's starting shell.
 
 # Jupyter notebook keyboard shortcuts
 
@@ -59,6 +102,12 @@ Shift-Enter        run cell, select below
 For more shortcuts, refer [Jupyter notebook keyboard shortcuts](https://www.cheatography.com/weidadeyue/cheat-sheets/jupyter-notebook/).
 
 # View data
+
+Jupyter will load the `smv-pyshell`, so all the commands supported in the `smv-pyshell` will
+be working in Jupyter.
+
+In addition, for people who familiar with the `pandas` package, Jupyter provides additional
+tools to `smv-pyshell`.
 
 View the first `n` rows of the dataframe `df` with
 

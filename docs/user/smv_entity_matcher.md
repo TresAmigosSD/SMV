@@ -97,7 +97,7 @@ resultDF = SmvEntityMatcher("id", "_id",
   GroupCondition(soundex(col("first_name")) == soundex(col("_first_name"))),
   [  
     ExactLogic("First_Name_Match", col("first_name") == col("_first_name")),
-    FuzzyLogic("Levenshtein_City", null, normlevenshtein(col("city"), col("_city")), 0.9)
+    FuzzyLogic("Levenshtein_City", lit(True), normlevenshtein(col("city"), col("_city")), 0.9)
   ]
 ).doMatch(df1, df2, False)
 ```
@@ -157,7 +157,11 @@ import org.tresamigos.smv.matcher._
 
 #### Python
 ```python
-from smvmatcher import *
+from smv.matcher import *
+```
+To use the [String Distance Measures](#string-distance-measures), users also need to add:  
+```python
+from smv.functions import *
 ```
 
 ### NoOpPreFilter and NoOpGroupCondition

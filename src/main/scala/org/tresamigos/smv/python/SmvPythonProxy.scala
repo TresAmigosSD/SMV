@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv.python
 
-import org.apache.spark._, sql._
+import org.apache.spark._, sql._, sql.types._
 import org.tresamigos.smv._
 import py4j.GatewayServer
 
@@ -131,6 +131,27 @@ object SmvPythonHelper {
 
   def smvOverlapCheck(df: DataFrame, key: String, otherDf: Array[DataFrame]): DataFrame =
     df.smvOverlapCheck(key)(otherDf: _*)
+
+  def smvDesc(df: DataFrame, colDescs: ArrayList[ArrayList[String]]): DataFrame = {
+    val colDescPairs = colDescs.map(inner => Tuple2(inner(0), inner(1)))
+    df.smvDesc(colDescPairs: _*)
+  }
+
+  def smvRemoveDesc(df: DataFrame, colNames: Array[String]): DataFrame = {
+    df.smvRemoveDesc(colNames: _*)
+  }
+
+  def smvCollectSet(col: Column, datatypeJson: String): Column = {
+    val dt = DataType.fromJson(datatypeJson)
+    smvfuncs.smvCollectSet(col, dt)
+  }
+
+  def smvStrCat(sep: String, cols: Array[Column]): Column = {
+    smvfuncs.smvStrCat(sep, cols: _*)
+  }
+
+  def smvHashKey(prefix: String, cols: Array[Column]): Column =
+    smvfuncs.smvHashKey(prefix, cols: _*)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
@@ -214,53 +235,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
     j_smvApp.registerRepoFactory(new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig))
-
-  import java.io._
-  import java.awt._
-  import java.awt.image.BufferedImage
-  import javax.imageio.ImageIO
-
-  /**
-   * Returns the image byte-array specified by the input string, which
-   * is in the dot file format used by graphviz.
-   *
-   * An example use of this is in Jupyter:
-   *
-   * <pre>
-import IPython.display
-from IPython.display import Image
-
-IPython.display.display(Image(bytes(smvPy.j_smvPyClient.graph("""
-graph {
-    { rank=same; white}
-    { rank=same; cyan; yellow; pink}
-    { rank=same; red; green; blue}
-    { rank=same; black}
-
-    white -- cyan -- blue
-    white -- yellow -- green
-    white -- pink -- red
-
-    cyan -- green -- black
-    yellow -- red -- black
-    pink -- blue -- black
-}
-"""))))
-   * </pre>
-   */
-  def graph(str: String, fmt: String = "png"): Array[Byte] = {
-    import guru.nidi.graphviz.engine.Graphviz
-
-    val image = new BufferedImage(600, 800, BufferedImage.TYPE_INT_ARGB)
-    val g     = image.createGraphics
-
-    Graphviz.fromString(str).renderToGraphics(g)
-
-    val out = new java.io.ByteArrayOutputStream
-    ImageIO.write(image, fmt, out)
-    out.close
-    out.toByteArray
-  }
 }
 
 /** Not a companion object because we need to access it from Python */

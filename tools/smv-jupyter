@@ -5,7 +5,12 @@ set -e
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 
 export PYSPARK_DRIVER_PYTHON="$(which jupyter)"
-export PYSPARK_DRIVER_PYTHON_OPTS="notebook"
+
+if [ -f "${HOME}/.jupyter/jupyter_notebook_config.py" ]; then
+  export PYSPARK_DRIVER_PYTHON_OPTS="notebook"
+else
+  export PYSPARK_DRIVER_PYTHON_OPTS="notebook --FileContentsManager.root_dir=notebooks --NotebookApp.open_browser=False"
+fi
 
 # Pass through the options from `smv-jupyter` invocation through to `smv-pyshell`
 # This will allow the user to specify pyspark options like:
