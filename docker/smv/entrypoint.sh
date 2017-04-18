@@ -34,6 +34,7 @@ rm -rf ${USER_HOME}/.ivy2
 ln -s /projects/.ivy2 ${USER_HOME}/.ivy2
 
 # copy bashrc / jupyter config into new user dir and make user own them.
+# TEMPLATE_DIR should have been defined and exported in the Dockerfile.
 cp ${TEMPLATE_DIR}/bashrc ${USER_HOME}/.bashrc
 mkdir -p ${USER_HOME}/.jupyter
 cp ${TEMPLATE_DIR}/jupyter_notebook_config.py ${USER_HOME}/.jupyter/jupyter_notebook_config.py
@@ -45,11 +46,15 @@ cd /projects
 
 if [[ $# == 0 ]]; then
     # start bash if user did not supply parameters.
-    sudo -u ${USER_NAME} bash
+    sudo -u ${USER_NAME} -i bash
 elif [[ $1 == "--start-server" ]]; then
+    SERVER_PROJ_DIR="${2:?must provide project directory}"
     # start smv server and jupyter server
-    sudo -u ${USER_NAME} start_server // TODO: may need to move this to outside script
+    sudo -u ${USER_NAME} -i bash -c "
+          cd ${SERVER_PROJ_DIR};
+          (smv-jupyter&);
+          smv-server"
 else
     # start command supplied by user.
-    sudo -u ${USER_NAME} "$@"
+    sudo -u ${USER_NAME} -i "$@"
 fi
