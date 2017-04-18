@@ -18,8 +18,37 @@ from pyspark.sql import HiveContext
 
 import sys
 
+
 # shared spark and sql context
 class TestConfig(object):
+    @classmethod
+    def smv_args(cls):
+        if not hasattr(cls, '_smv_args'):
+            cls.parse_args()
+        return cls._smv_args
+
+    @classmethod
+    def test_names(cls):
+        if not hasattr(cls, '_test_names'):
+            cls.parse_args()
+        return cls._test_names
+
+    # Parse argv to get split up the the smv_args and the test names
+    @classmethod
+    def parse_args(cls):
+        args = sys.argv[1:]
+        test_names = []
+        smv_args = []
+        while(len(args) > 0):
+            next_arg = args.pop(0)
+            if(next_arg == "-t"):
+                test_names.append( args.pop(0) )
+            else:
+                smv_args.append(next_arg)
+
+        cls._test_names = test_names
+        cls._smv_args = smv_args
+
     @classmethod
     def sparkContext(cls):
         if not hasattr(cls, 'sc'):
@@ -32,6 +61,7 @@ class TestConfig(object):
             cls.sqlc = HiveContext(cls.sparkContext())
         return cls.sqlc
 
+
 if __name__ == "__main__":
     print("Testing with Python " + sys.version)
 
@@ -40,13 +70,11 @@ if __name__ == "__main__":
 
     loader = TestLoader()
 
-    import sys
-    argv = sys.argv[1:]
-    if (len(argv) == 0):
+    if (len(TestConfig.test_names()) == 0):
         suite = loader.discover(TestPath)
     else:
         sys.path.append(TestPath)
-        suite = loader.loadTestsFromNames(argv)
+        suite = loader.loadTestsFromNames(TestConfig.test_names())
 
     result = TextTestRunner(verbosity=2).run(suite)
     print("result is ", result)
