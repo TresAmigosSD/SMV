@@ -21,6 +21,7 @@ export PYTHONPATH="$SPARK_HOME/python/lib/py4j-0.8.2.1-src.zip:$PYTHONPATH"
 
 rm -rf $DOC_DIR
 sphinx-apidoc --full -o $DOC_DIR $PKG_TO_DOC
+cp $SMV_TOOLS/conf/sphinx-conf.py $DOC_DIR/conf.py
 (cd $DOC_DIR; make html)
 
 mkdir -p $(dirname $DST)
