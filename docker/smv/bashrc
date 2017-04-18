@@ -98,3 +98,6 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+
+# add smv and spark to path
+PATH=/usr/lib/SMV/tools:/usr/lib/spark/bin:$PATH
