@@ -10,57 +10,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import sys
 from unittest import *
 
-from pyspark import SparkContext
-from pyspark.sql import HiveContext
-
-import sys
-
-
-# shared spark and sql context
-class TestConfig(object):
-    @classmethod
-    def smv_args(cls):
-        if not hasattr(cls, '_smv_args'):
-            cls.parse_args()
-        return cls._smv_args
-
-    @classmethod
-    def test_names(cls):
-        if not hasattr(cls, '_test_names'):
-            cls.parse_args()
-        return cls._test_names
-
-    # Parse argv to get split up the the smv_args and the test names
-    @classmethod
-    def parse_args(cls):
-        args = sys.argv[1:]
-        test_names = []
-        smv_args = []
-        while(len(args) > 0):
-            next_arg = args.pop(0)
-            if(next_arg == "-t"):
-                test_names.append( args.pop(0) )
-            else:
-                smv_args.append(next_arg)
-
-        cls._test_names = test_names
-        cls._smv_args = smv_args
-
-    @classmethod
-    def sparkContext(cls):
-        if not hasattr(cls, 'sc'):
-            cls.sc = SparkContext(appName="SMV Python Tests")
-        return cls.sc
-
-    @classmethod
-    def sqlContext(cls):
-        if not hasattr(cls, 'sqlc'):
-            cls.sqlc = HiveContext(cls.sparkContext())
-        return cls.sqlc
-
+from testconfig import TestConfig
 
 if __name__ == "__main__":
     print("Testing with Python " + sys.version)
