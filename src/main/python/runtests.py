@@ -10,27 +10,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import sys
 from unittest import *
 
-from pyspark import SparkContext
-from pyspark.sql import HiveContext
-
-import sys
-
-# shared spark and sql context
-class TestConfig(object):
-    @classmethod
-    def sparkContext(cls):
-        if not hasattr(cls, 'sc'):
-            cls.sc = SparkContext(appName="SMV Python Tests")
-        return cls.sc
-
-    @classmethod
-    def sqlContext(cls):
-        if not hasattr(cls, 'sqlc'):
-            cls.sqlc = HiveContext(cls.sparkContext())
-        return cls.sqlc
+from test_support.testconfig import TestConfig
 
 if __name__ == "__main__":
     print("Testing with Python " + sys.version)
@@ -40,13 +23,11 @@ if __name__ == "__main__":
 
     loader = TestLoader()
 
-    import sys
-    argv = sys.argv[1:]
-    if (len(argv) == 0):
+    if (len(TestConfig.test_names()) == 0):
         suite = loader.discover(TestPath)
     else:
         sys.path.append(TestPath)
-        suite = loader.loadTestsFromNames(argv)
+        suite = loader.loadTestsFromNames(TestConfig.test_names())
 
     result = TextTestRunner(verbosity=2).run(suite)
     print("result is ", result)

@@ -217,6 +217,13 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
     Try(util.DataSet.readFile(app.sqlContext, moduleCsvPath(prefix)))
 
+  /** Has the result of this data set been persisted? */
+  private[smv] def isPersisted: Boolean =
+    Try(new FileIOHandler(app.sqlContext, moduleCsvPath()).readSchema()).isSuccess
+
+  /** #560 */
+  private[smv] lazy val needsToRun: Boolean = ???
+
   private[smv] def computeRDD: DataFrame = {
     val dsDqm     = new DQMValidator(createDsDqm())
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)

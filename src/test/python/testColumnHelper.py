@@ -14,7 +14,7 @@
 import unittest
 import sys
 
-from smvbasetest import SmvBaseTest
+from test_support.smvbasetest import SmvBaseTest
 
 import pyspark
 from pyspark.context import SparkContext

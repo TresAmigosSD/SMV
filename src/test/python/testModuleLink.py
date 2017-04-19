@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smvbasetest import SmvBaseTest
+from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
 
 from fixture.stage2.links import L,B
