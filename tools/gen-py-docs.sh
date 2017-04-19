@@ -24,6 +24,23 @@ sphinx-apidoc --full -o $DOC_DIR $PKG_TO_DOC
 cp $SMV_TOOLS/conf/sphinx-conf.py $DOC_DIR/conf.py
 (cd $DOC_DIR; make html)
 
+# maintain SMV gh-pages branch in its own directory
+GHPAGES_DIR="$HOME/.smv.ghpages"
+SMV_DIR="SMV"
+
+mkdir -p $GHPAGES_DIR
+cd $GHPAGES_DIR
+
+# clone repo if it does not exist, else just pull
+if [ ! -d $SMV_DIR ]; then
+  git clone -b gh-pages https://github.com/TresAmigosSD/SMV.git
+else
+  (cd "$GHPAGES_DIR/$SMV_DIR"; git pull)
+fi
+
+# write the python docs directly to the SMV gh-pages branch
+cd "$GHPAGES_DIR/$SMV_DIR"
+
 mkdir -p $(dirname $DST)
 cp -r $DOC_DIR/_build/html $DST
 rm -rf $DOC_DIR
