@@ -12,10 +12,14 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.dqm
+package org.tresamigos.smv
+package dqm
 
 import scala.util.Try
-import org.apache.spark.{SparkContext, Accumulator}
+import org.apache.spark.{Accumulator, SparkContext}
+
+import scala.annotation.meta.param
+import scala.collection.JavaConverters._
 import scala.collection.mutable.MutableList
 
 /**

@@ -85,9 +85,7 @@ def smvFirst(c, nonNull = False):
 
         Args:
             c (Column: column to extract first value from
-            nonNull (bool): If false, return first value even if null.
-                            If true, return first non-null value.
-                            Defaults to false.
+            nonNull (bool): If false, return first value even if null. If true, return first non-null value. Defaults to false.
 
         Returns:
             (object): first value
@@ -189,7 +187,7 @@ def smvHashKey(head, *others):
     Return:
      (col): a StringType column as Prefix + MD5 Hex string
     """
-    
+
     if (isinstance(head, basestring)):
         pre = head
         cols = list(others)

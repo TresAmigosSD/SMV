@@ -12,15 +12,11 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.edd
+package org.tresamigos.smv
+package edd
 
-import org.apache.spark.{SparkContext}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{Row, DataFrame}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
-
-import org.tresamigos.smv._
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.{DataFrame, Row}
 
 /**
  * Implement the `edd` method of DFHelper

@@ -1,11 +1,12 @@
-package org.tresamigos.smv.matcher
+package org.tresamigos.smv
+package matcher
 
-import org.apache.spark.sql._
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Column, Row}
+import org.apache.spark.sql.types.{BooleanType, StructType}
+import org.apache.spark.sql.functions.{col, lit, coalesce}
 import org.apache.spark.sql.catalyst.expressions.EqualTo
 import org.apache.spark.sql.DataFrame
-import org.tresamigos.smv._, smvfuncs._
+import smvfuncs._
 
 /**
  * SmvEntityMatcher

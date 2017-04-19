@@ -12,13 +12,12 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.dqm
+package org.tresamigos.smv
+package dqm
 
-import org.tresamigos.smv._
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.functions._
-import scala.util.matching.Regex
+import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.functions.{lit, udf, when}
 
 /** Each DQMTask (DQMRule/DQMFix) need to have a DQMTaskPolicy */
 sealed abstract class DQMTaskPolicy {
