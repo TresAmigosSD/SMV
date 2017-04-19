@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import unittest
-from testconfig import TestConfig
+from test_support.testconfig import TestConfig
 from smv import SmvApp
 
 import pyspark

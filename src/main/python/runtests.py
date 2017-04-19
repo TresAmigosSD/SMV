@@ -13,7 +13,7 @@
 import sys
 from unittest import *
 
-from testconfig import TestConfig
+from test_support.testconfig import TestConfig
 
 if __name__ == "__main__":
     print("Testing with Python " + sys.version)
