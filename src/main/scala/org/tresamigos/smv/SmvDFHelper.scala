@@ -825,9 +825,31 @@ class SmvDFHelper(df: DataFrame) {
   private[smv] def _topNValsByFreq(n: Integer, c: Column) =
     df.groupBy(c).agg(count(c) as "freq").smvTopNRecs(n, col("freq").desc).select(c)
 
+  /** Get top N most frequent values in Column c
+   *
+   *  Example:
+   *  {{{
+   *    df.topNValsByFreq(1, col("cid"))
+   *  }}}
+   *  will return the single most frequent value in the cid column
+   */
   def topNValsByFreq(n: Integer, c: Column) =
     _topNValsByFreq(n, c).collect() map (_.get(0))
 
+  /** Join that leverages broadcast (map-side) join of skewed (high-frequency) key values
+   *
+   *  Rows keyed by skewed values are joined via broadcast join while remaining
+   *  rows are joined without broadcast join. Occurrences of skewVals in df2 should be
+   *  infrequent enough that the filtered table is small enough for a broadcast join.
+   *  result is the union of the join results.
+   *
+   *  Example:
+   *  {{{
+   *    df.smvSkewJoinByKey(df2, SmvJoinType.Inner, Seq("9999999"), "cid")
+   *  }}}
+   *  will broadcast join the rows of df1 and df2 where col("cid") == "9999999"
+   *  and join the remaining rows of df1 and df2 without broadcast join.
+   */
   def smvSkewJoinByKey(df2: DataFrame,
                        joinType: String,
                        skewVals: Seq[Any],
