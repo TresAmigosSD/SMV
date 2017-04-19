@@ -15,24 +15,19 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/
     apt-get install -y python "python-dev" "python-pip" &&\
     apt-get install -y graphviz
 
-# Add smv user (must be done after install sudo).
-RUN useradd -G sudo --create-home --shell /bin/bash smv &&\
-    echo "smv ALL = NOPASSWD: ALL" >> /etc/sudoers &&\
-    mkdir /projects &&\
-    chown smv:smv /projects
+# install smv and spark and move them into /usr/lib dir.
+RUN mkdir /projects &&\
+    cd /projects &&\
+    wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.5 &&\
+    mkdir -p /usr/lib &&\
+    mv SMV_* /usr/lib/SMV &&\
+    mv spark-* /usr/lib/spark
 
 # installs python packages.
-# TODO: use requirements.txt from image downloaded below once 1.5.2.6 is out.
+# TODO: use requirements.txt from image downloaded above once 1.5.2.6 is out.
 COPY ./requirements.txt /tmp/requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r /tmp/requirements.txt
-
-# install smv and spark and move them into /usr/lib dir.
-RUN cd /projects &&\
-  wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.5 &&\
-  mkdir -p /usr/lib &&\
-  mv SMV_* /usr/lib/SMV &&\
-  mv spark-* /usr/lib/spark
 
 # cleanup python dev tools and apt caches.
 RUN apt-get remove --purge -y python-dev &&\
@@ -40,24 +35,13 @@ RUN apt-get remove --purge -y python-dev &&\
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# switch to smv user
-WORKDIR /projects
-USER smv
-
-# gave up on moving ivy dir using sbtopts.  Just link ~/.ivy2 to /projects/.ivy2
-RUN rm -rf /home/smv/.ivy2 &&\
-    mkdir -p /projects/.ivy2 &&\
-    ln -s /projects/.ivy2 /home/smv/.ivy2 &&\
-    mkdir /home/smv/.jupyter
-
-COPY ./bashrc /home/smv/.bashrc
 COPY ./kernel.json /usr/local/share/jupyter/kernels/smv-pyshell/kernel.json
-COPY ./jupyter_notebook_config.py /home/smv/.jupyter/jupyter_notebook_config.py
 COPY ./hive-site.xml /usr/lib/spark/conf/hive-site.xml
 COPY ./entrypoint.sh /usr/bin/entrypoint.sh
 
-RUN sudo chown -R smv:smv /home/smv/.jupyter &&\
-    sudo chown -R root:root /usr/lib/spark/conf/hive-site.xml
+# copy files into template directory.  They will be copied to smv home later in entrypoint.sh
+ENV TEMPLATE_DIR=/home/template
+COPY ./bashrc ./jupyter_notebook_config.py ${TEMPLATE_DIR}/
 
 # Must use bracket syntax (["command"]) so that user can supply params (additional commands to execute)
 ENTRYPOINT ["entrypoint.sh"]

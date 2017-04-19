@@ -341,6 +341,10 @@ class DataFrameHelper(object):
         jdf = self._jPythonHelper.smvJoinMultipleByKey(self._jdf, smv_copy_array(self._sc, *keys), joinType)
         return SmvMultiJoin(self._sql_ctx, jdf)
 
+    def topNValsByFreq(self, n, col):
+        topNdf = DataFrame(self._jDfHelper._topNValsByFreq(n, col._jc), self._sql_ctx)
+        return map(lambda r: r.asDict().values()[0], topNdf.collect())
+
     def smvSelectMinus(self, *cols):
         """Remove one or more columns from current DataFrame
 

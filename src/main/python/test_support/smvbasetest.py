@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import unittest
-from runtests import TestConfig
+from test_support.testconfig import TestConfig
 from smv import SmvApp
 
 import pyspark
@@ -35,7 +35,7 @@ class SmvBaseTest(unittest.TestCase):
         import random;
         callback_server_port = random.randint(20000, 65535)
 
-        args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
+        args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
         cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
     def setUp(self):
@@ -50,7 +50,7 @@ class SmvBaseTest(unittest.TestCase):
             import random;
             callback_server_port = random.randint(20000, 65535)
 
-            args = cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
+            args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
             cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
 
