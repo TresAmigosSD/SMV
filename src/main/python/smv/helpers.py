@@ -339,6 +339,10 @@ class DataFrameHelper(object):
         topNdf = DataFrame(self._jDfHelper._topNValsByFreq(n, col._jc), self._sql_ctx)
         return map(lambda r: r.asDict().values()[0], topNdf.collect())
 
+    def smvSkewJoinByKey(self, other, joinType, skewVals, key):
+        jdf = self._jDfHelper.smvSkewJoinByKey(other._jdf, joinType, _to_seq(skewVals), key)
+        return DataFrame(jdf, self._sql_ctx)
+
     def smvSelectMinus(self, *cols):
         """Remove one or more columns from current DataFrame
 

@@ -20,6 +20,7 @@ import org.apache.spark.sql._, expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.contrib.smv.hasBroadcastHint
 
 import org.apache.spark.annotation.Experimental
 import cds._
@@ -294,7 +295,14 @@ class SmvDFHelper(df: DataFrame) {
       }
       .filter { case (l, r) => l != r }
 
-    df.join(otherPlan.smvRenameField(renamedFields: _*), on: Column, joinType)
+    val renamedOther = otherPlan.smvRenameField(renamedFields: _*)
+    // Make sure that the renamed df is broadcasted if df2 was broadcasted
+    val finalOther =
+      if(hasBroadcastHint(otherPlan))
+        broadcast(renamedOther)
+      else
+        renamedOther
+    df.join(finalOther, on: Column, joinType)
   }
 
   /**
@@ -331,7 +339,13 @@ class SmvDFHelper(df: DataFrame) {
 
     val joinedKeys    = keys zip rightKeys
     val renamedFields = joinedKeys.map { case (l, r) => (l -> r) }
-    val newOther      = otherPlan.smvRenameField(renamedFields: _*)
+    val renamedOther  = otherPlan.smvRenameField(renamedFields: _*)
+    // Make sure that the renamed df is broadcasted if df2 was broadcasted
+    val newOther      =
+      if(hasBroadcastHint(otherPlan))
+        broadcast(renamedOther)
+      else
+        renamedOther
     val joinOpt       = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
 
     val dfJoined = df.joinUniqFieldNames(newOther, joinOpt, joinType, postfix)
@@ -819,8 +833,24 @@ class SmvDFHelper(df: DataFrame) {
   private[smv] def _topNValsByFreq(n: Integer, c: Column) =
     df.groupBy(c).agg(count(c) as "freq").smvTopNRecs(n, col("freq").desc).select(c)
 
-  private[smv] def topNValsByFreq(n: Integer, c: Column) =
+  def topNValsByFreq(n: Integer, c: Column) =
     _topNValsByFreq(n, c).collect() map ( _.get(0) )
+
+  def smvSkewJoinByKey(df2: DataFrame,
+                       joinType: String,
+                       skewVals: Seq[Any],
+                       key: String): DataFrame = {
+    val skewDf1 = df.where( df(key).isin(skewVals:_*) )
+    val balancedDf1 = df.where( !df(key).isin( skewVals:_* ) )
+
+    val skewDf2 = df2.where( df2(key).isin(skewVals:_*) )
+    val balancedDf2 = df2.where( !df2(key).isin( skewVals:_* ) )
+
+    val skewRes = skewDf1.smvJoinByKey(broadcast(skewDf2), Seq(key), joinType)
+    val balancedRes = balancedDf1.smvJoinByKey(balancedDf2, Seq(key), joinType)
+
+    balancedRes.smvUnion(skewRes)
+  }
 
   /**
    * Create an Edd on DataFrame.

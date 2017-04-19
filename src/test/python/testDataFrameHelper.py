@@ -176,6 +176,13 @@ class DfHelperTest(SmvBaseTest):
         topN = df.topNValsByFreq(2, df["a"])
         self.assertEqual(topN, [4,3])
 
+    def test_smvSkewJoinByKey(self):
+        df1 = self.createDF("a:Integer;b:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
+        df2 = self.createDF("a:Integer;c:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
+        dfNormalJoin = df1.smvJoinByKey(df2, ["a"], "inner")
+        dfSkewJoin = df1.smvSkewJoinByKey(df2, "inner", [4], "a")
+        self.should_be_same(dfNormalJoin, dfSkewJoin)
+
     def test_smvUnion(self):
         schema       = "a:Integer; b:Double; c:String"
         schema2      = "c:String; a:Integer; d:Double"

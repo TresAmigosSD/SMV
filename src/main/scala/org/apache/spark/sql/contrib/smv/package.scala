@@ -14,7 +14,9 @@
 
 package org.apache.spark.sql.contrib
 
-import org.apache.spark.sql.{Row, Column}
+import org.apache.spark.sql.{Row, Column, DataFrame, SQLContext}
+import org.apache.spark.sql.catalyst.plans.logical.BroadcastHint
+
 import org.apache.spark.rdd.RDD
 
 import org.apache.spark.sql.types._
@@ -62,4 +64,10 @@ package object smv {
     val converter = CatalystTypeConverters.createToCatalystConverter(dt)
     converter(sv)
   }
+
+  def hasBroadcastHint(df: DataFrame): Boolean =
+    df.logicalPlan match {
+      case _: BroadcastHint => true
+      case _ => false
+    }
 }
