@@ -18,6 +18,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, Column}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.contrib.smv.{hasBroadcastHint, propagateBroadcastHint}
 import org.apache.spark.sql.types.{StructType, StringType, StructField, LongType}
 import org.apache.spark.sql.catalyst.expressions.{NamedExpression, GenericRow}
 import org.apache.spark.annotation.Experimental
@@ -294,7 +295,9 @@ class SmvDFHelper(df: DataFrame) {
       }
       .filter { case (l, r) => l != r }
 
-    df.join(otherPlan.smvRenameField(renamedFields: _*), on: Column, joinType)
+    val renamedOther = otherPlan.smvRenameField(renamedFields: _*)
+
+    df.join(propagateBroadcastHint(otherPlan, renamedOther), on: Column, joinType)
   }
 
   /**
@@ -331,10 +334,13 @@ class SmvDFHelper(df: DataFrame) {
 
     val joinedKeys    = keys zip rightKeys
     val renamedFields = joinedKeys.map { case (l, r) => (l -> r) }
-    val newOther      = otherPlan.smvRenameField(renamedFields: _*)
+    val renamedOther  = otherPlan.smvRenameField(renamedFields: _*)
     val joinOpt       = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
 
-    val dfJoined = df.joinUniqFieldNames(newOther, joinOpt, joinType, postfix)
+    val dfJoined = df.joinUniqFieldNames(propagateBroadcastHint(otherPlan, renamedOther),
+                                         joinOpt,
+                                         joinType,
+                                         postfix)
     val dfCoalescedKeys = joinType match {
       case SmvJoinType.Outer | SmvJoinType.RightOuter =>
         // for each key used in the outer-join, coalesce key value from left to right
@@ -819,8 +825,46 @@ class SmvDFHelper(df: DataFrame) {
   private[smv] def _topNValsByFreq(n: Integer, c: Column) =
     df.groupBy(c).agg(count(c) as "freq").smvTopNRecs(n, col("freq").desc).select(c)
 
-  private[smv] def topNValsByFreq(n: Integer, c: Column) =
-    _topNValsByFreq(n, c).collect() map ( _.get(0) )
+  /** Get top N most frequent values in Column c
+   *
+   *  Example:
+   *  {{{
+   *    df.topNValsByFreq(1, col("cid"))
+   *  }}}
+   *  will return the single most frequent value in the cid column
+   */
+  def topNValsByFreq(n: Integer, c: Column) =
+    _topNValsByFreq(n, c).collect() map (_.get(0))
+
+  /** Join that leverages broadcast (map-side) join of skewed (high-frequency) key values
+   *
+   *  Rows keyed by skewed values are joined via broadcast join while remaining
+   *  rows are joined without broadcast join. Occurrences of skewVals in df2 should be
+   *  infrequent enough that the filtered table is small enough for a broadcast join.
+   *  result is the union of the join results.
+   *
+   *  Example:
+   *  {{{
+   *    df.smvSkewJoinByKey(df2, SmvJoinType.Inner, Seq("9999999"), "cid")
+   *  }}}
+   *  will broadcast join the rows of df1 and df2 where col("cid") == "9999999"
+   *  and join the remaining rows of df1 and df2 without broadcast join.
+   */
+  def smvSkewJoinByKey(df2: DataFrame,
+                       joinType: String,
+                       skewVals: Seq[Any],
+                       key: String): DataFrame = {
+    val skewDf1     = df.where(df(key).isin(skewVals: _*))
+    val balancedDf1 = df.where(!df(key).isin(skewVals: _*))
+
+    val skewDf2     = df2.where(df2(key).isin(skewVals: _*))
+    val balancedDf2 = df2.where(!df2(key).isin(skewVals: _*))
+
+    val skewRes     = skewDf1.smvJoinByKey(broadcast(skewDf2), Seq(key), joinType)
+    val balancedRes = balancedDf1.smvJoinByKey(balancedDf2, Seq(key), joinType)
+
+    balancedRes.smvUnion(skewRes)
+  }
 
   /**
    * Create an Edd on DataFrame.
