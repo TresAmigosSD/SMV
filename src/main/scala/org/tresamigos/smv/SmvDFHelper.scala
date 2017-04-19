@@ -18,7 +18,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, Column}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.contrib.smv.hasBroadcastHint
+import org.apache.spark.sql.contrib.smv.{hasBroadcastHint, propagateBroadcastHint}
 import org.apache.spark.sql.types.{StructType, StringType, StructField, LongType}
 import org.apache.spark.sql.catalyst.expressions.{NamedExpression, GenericRow}
 import org.apache.spark.annotation.Experimental
@@ -296,13 +296,8 @@ class SmvDFHelper(df: DataFrame) {
       .filter { case (l, r) => l != r }
 
     val renamedOther = otherPlan.smvRenameField(renamedFields: _*)
-    // Make sure that the renamed df is broadcasted if df2 was broadcasted
-    val finalOther =
-      if (hasBroadcastHint(otherPlan))
-        broadcast(renamedOther)
-      else
-        renamedOther
-    df.join(finalOther, on: Column, joinType)
+
+    df.join(propagateBroadcastHint(otherPlan, renamedOther), on: Column, joinType)
   }
 
   /**
@@ -340,15 +335,12 @@ class SmvDFHelper(df: DataFrame) {
     val joinedKeys    = keys zip rightKeys
     val renamedFields = joinedKeys.map { case (l, r) => (l -> r) }
     val renamedOther  = otherPlan.smvRenameField(renamedFields: _*)
-    // Make sure that the renamed df is broadcasted if df2 was broadcasted
-    val newOther =
-      if (hasBroadcastHint(otherPlan))
-        broadcast(renamedOther)
-      else
-        renamedOther
-    val joinOpt = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
+    val joinOpt       = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
 
-    val dfJoined = df.joinUniqFieldNames(newOther, joinOpt, joinType, postfix)
+    val dfJoined = df.joinUniqFieldNames(propagateBroadcastHint(otherPlan, renamedOther),
+                                         joinOpt,
+                                         joinType,
+                                         postfix)
     val dfCoalescedKeys = joinType match {
       case SmvJoinType.Outer | SmvJoinType.RightOuter =>
         // for each key used in the outer-join, coalesce key value from left to right

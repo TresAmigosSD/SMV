@@ -16,6 +16,7 @@ package org.apache.spark.sql.contrib
 
 import org.apache.spark.sql.{Row, Column, DataFrame, SQLContext}
 import org.apache.spark.sql.catalyst.plans.logical.BroadcastHint
+import org.apache.spark.sql.functions._
 
 import org.apache.spark.rdd.RDD
 
@@ -70,4 +71,7 @@ package object smv {
       case _: BroadcastHint => true
       case _                => false
     }
+
+  def propagateBroadcastHint(dfParent: DataFrame, dfChild: DataFrame): DataFrame =
+    if (hasBroadcastHint(dfParent)) broadcast(dfChild) else dfChild
 }
