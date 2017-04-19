@@ -3,7 +3,8 @@
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 PKG_TO_DOC="$SMV_TOOLS/../src/main/python/smv"
 PKG_DIR=$(dirname $PKG_TO_DOC)
-DOC_DIR="$SMV_TOOLS/../sphinx_docs"
+PYDOC_DIR="$SMV_TOOLS/../sphinx_docs"
+SCALADOC_DIR="$SMV_TOOLS/../target/scala-*/api"
 
 if [ "$#" -ne 3 ]; then
   echo "ERROR: Invalid number of arguments"
@@ -14,7 +15,7 @@ if [ "$#" -ne 3 ]; then
   exit 1
 fi
 
-DST=$1
+PYDST=$1
 FROM_VERSION=$2
 TO_VERSION=$3
 
@@ -29,10 +30,16 @@ export PYTHONPATH="$PKG_DIR:$PYTHONPATH"
 export PYTHONPATH="$SPARK_HOME/python/:$PYTHONPATH"
 export PYTHONPATH="$SPARK_HOME/python/lib/py4j-0.8.2.1-src.zip:$PYTHONPATH"
 
-rm -rf $DOC_DIR
-sphinx-apidoc --full -o $DOC_DIR $PKG_TO_DOC
-cp $SMV_TOOLS/conf/sphinx-conf.py $DOC_DIR/conf.py
-(cd $DOC_DIR; make html)
+# build the python docs
+echo "-- building pythondocs..."
+rm -rf $PYDOC_DIR
+sphinx-apidoc --full -o $PYDOC_DIR $PKG_TO_DOC
+cp $SMV_TOOLS/conf/sphinx-conf.py $PYDOC_DIR/conf.py
+(cd $PYDOC_DIR; make html)
+
+# build the scala docs
+echo "-- building scaladocs..."
+sbt doc
 
 # maintain SMV gh-pages branch in its own directory
 GHPAGES_DIR="$HOME/.smv.ghpages"
@@ -51,8 +58,12 @@ fi
 # write the python docs directly to the SMV gh-pages branch
 cd "$GHPAGES_DIR/$SMV_DIR"
 
-VERSION_DIR="$DST/$TO_VERSION"
+PYVERSION_DIR="$PYDST/$TO_VERSION"
+SCALAVERSION_DIR="scaladocs/$TO_VERSION"
 
-mkdir -p $(dirname $VERSION_DIR)
-cp -r $DOC_DIR/_build/html $VERSION_DIR
-rm -rf $DOC_DIR
+# put the docs in the right version subdirectory
+mkdir -p $(dirname $PYVERSION_DIR)
+mkdir -p $(dirname $SCALAVERSION_DIR)
+cp -r $PYDOC_DIR/_build/html $PYVERSION_DIR
+cp -r $SCALADOC_DIR $SCALAVERSION_DIR
+rm -rf $PYDOC_DIR
