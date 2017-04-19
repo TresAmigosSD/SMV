@@ -298,7 +298,7 @@ class SmvDFHelper(df: DataFrame) {
     val renamedOther = otherPlan.smvRenameField(renamedFields: _*)
     // Make sure that the renamed df is broadcasted if df2 was broadcasted
     val finalOther =
-      if(hasBroadcastHint(otherPlan))
+      if (hasBroadcastHint(otherPlan))
         broadcast(renamedOther)
       else
         renamedOther
@@ -341,12 +341,12 @@ class SmvDFHelper(df: DataFrame) {
     val renamedFields = joinedKeys.map { case (l, r) => (l -> r) }
     val renamedOther  = otherPlan.smvRenameField(renamedFields: _*)
     // Make sure that the renamed df is broadcasted if df2 was broadcasted
-    val newOther      =
-      if(hasBroadcastHint(otherPlan))
+    val newOther =
+      if (hasBroadcastHint(otherPlan))
         broadcast(renamedOther)
       else
         renamedOther
-    val joinOpt       = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
+    val joinOpt = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
 
     val dfJoined = df.joinUniqFieldNames(newOther, joinOpt, joinType, postfix)
     val dfCoalescedKeys = joinType match {
@@ -834,19 +834,19 @@ class SmvDFHelper(df: DataFrame) {
     df.groupBy(c).agg(count(c) as "freq").smvTopNRecs(n, col("freq").desc).select(c)
 
   def topNValsByFreq(n: Integer, c: Column) =
-    _topNValsByFreq(n, c).collect() map ( _.get(0) )
+    _topNValsByFreq(n, c).collect() map (_.get(0))
 
   def smvSkewJoinByKey(df2: DataFrame,
                        joinType: String,
                        skewVals: Seq[Any],
                        key: String): DataFrame = {
-    val skewDf1 = df.where( df(key).isin(skewVals:_*) )
-    val balancedDf1 = df.where( !df(key).isin( skewVals:_* ) )
+    val skewDf1     = df.where(df(key).isin(skewVals: _*))
+    val balancedDf1 = df.where(!df(key).isin(skewVals: _*))
 
-    val skewDf2 = df2.where( df2(key).isin(skewVals:_*) )
-    val balancedDf2 = df2.where( !df2(key).isin( skewVals:_* ) )
+    val skewDf2     = df2.where(df2(key).isin(skewVals: _*))
+    val balancedDf2 = df2.where(!df2(key).isin(skewVals: _*))
 
-    val skewRes = skewDf1.smvJoinByKey(broadcast(skewDf2), Seq(key), joinType)
+    val skewRes     = skewDf1.smvJoinByKey(broadcast(skewDf2), Seq(key), joinType)
     val balancedRes = balancedDf1.smvJoinByKey(balancedDf2, Seq(key), joinType)
 
     balancedRes.smvUnion(skewRes)

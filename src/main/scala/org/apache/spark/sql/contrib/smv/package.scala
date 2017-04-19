@@ -68,6 +68,6 @@ package object smv {
   def hasBroadcastHint(df: DataFrame): Boolean =
     df.logicalPlan match {
       case _: BroadcastHint => true
-      case _ => false
+      case _                => false
     }
 }
