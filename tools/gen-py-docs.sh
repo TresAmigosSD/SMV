@@ -5,8 +5,18 @@ PKG_TO_DOC="$SMV_TOOLS/../src/main/python/smv"
 PKG_DIR=$(dirname $PKG_TO_DOC)
 DOC_DIR="$SMV_TOOLS/../sphinx_docs"
 
+if [ "$#" -ne 3 ]; then
+  echo "ERROR: Invalid number of arguments"
+  echo "USAGE: $0 output_path current_version target_version"
+
+  echo "example:"
+  echo "  \$ $0 pydocs 1.31 1.32"
+  exit 1
+fi
+
 DST=$1
-[ -z $DST ] && echo "ERROR: destination not specified" && exit 1
+FROM_VERSION=$2
+TO_VERSION=$3
 
 if [ -z $SPARK_HOME ]; then
   SPARK_HOME="$(dirname $(which spark-submit))/.."
@@ -41,6 +51,8 @@ fi
 # write the python docs directly to the SMV gh-pages branch
 cd "$GHPAGES_DIR/$SMV_DIR"
 
-mkdir -p $(dirname $DST)
-cp -r $DOC_DIR/_build/html $DST
+VERSION_DIR="$DST/$TO_VERSION"
+
+mkdir -p $(dirname $VERSION_DIR)
+cp -r $DOC_DIR/_build/html $VERSION_DIR
 rm -rf $DOC_DIR
