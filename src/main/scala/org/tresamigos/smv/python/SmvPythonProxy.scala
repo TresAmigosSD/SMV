@@ -12,15 +12,16 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.python
+package org.tresamigos.smv
+package python
 
-import org.apache.spark._, sql._, sql.types._
-import org.tresamigos.smv._, graph.SmvGraphUtil
 import py4j.GatewayServer
 
 import scala.collection.JavaConversions._
-import scala.util.Try
 import java.util.ArrayList
+
+import org.apache.spark.sql.{Column, DataFrame, SQLContext}
+import org.apache.spark.sql.types.DataType
 import matcher._
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
@@ -194,7 +195,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   /** Saves the dataframe to disk */
   def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
-    SmvUtil.persist(j_smvApp.sqlContext, dataframe, path, generateEdd)
+    util.DataSet.persist(j_smvApp.sqlContext, dataframe, path, generateEdd)
 
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String,

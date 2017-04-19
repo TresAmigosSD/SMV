@@ -16,7 +16,8 @@ package org.tresamigos.smv
 
 import java.io.{StringWriter, PrintWriter, InputStream}
 
-import scala.tools.asm.{ClassReader, ClassVisitor, MethodVisitor, Opcodes, util}
+import scala.tools.asm.util.{TraceClassVisitor, Textifier}
+import scala.tools.asm.{ClassReader, ClassVisitor, MethodVisitor, Opcodes}
 import scala.collection.mutable.{Set => MSet}
 
 /**
@@ -99,7 +100,7 @@ case class DataSetDependency(className: String) {
 
     val stringWriter      = new StringWriter()
     val printWriter       = new PrintWriter(stringWriter)
-    val traceClassVisitor = new util.TraceClassVisitor(null, new util.Textifier(), printWriter)
+    val traceClassVisitor = new TraceClassVisitor(null, new Textifier(), printWriter)
 
     val reader = new ClassReader(is)
     reader.accept(traceClassVisitor, ClassReader.SKIP_DEBUG)

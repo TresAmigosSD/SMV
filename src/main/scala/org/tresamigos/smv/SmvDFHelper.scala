@@ -15,16 +15,16 @@
 package org.tresamigos.smv
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.Accumulator
-import org.apache.spark.sql._, expressions.{Window, WindowSpec}
+import org.apache.spark.sql.{DataFrame, Row, Column}
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.contrib.smv.hasBroadcastHint
-
+import org.apache.spark.sql.types.{StructType, StringType, StructField, LongType}
+import org.apache.spark.sql.catalyst.expressions.{NamedExpression, GenericRow}
 import org.apache.spark.annotation.Experimental
-import cds._
-import edd._
+import org.apache.spark.Accumulator
+import cds.{SmvChunkUDF, SmvChunkUDFGDO}
+import edd.{Edd, Hist}
 import smvfuncs._
 
 class SmvDFHelper(df: DataFrame) {

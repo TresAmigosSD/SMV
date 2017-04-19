@@ -12,10 +12,10 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv.edd
+package org.tresamigos.smv
+package edd
 
-import org.tresamigos.smv._, SmvJoinType._
-import org.apache.spark.sql.{DataFrame, Column}
+import org.apache.spark.sql.{DataFrame}
 import org.apache.spark.sql.types._
 import org.apache.spark.rdd.UnionRDD
 
@@ -83,7 +83,7 @@ private[smv] abstract class EddTaskGroup {
           .coalesce(1)
           .smvJoinByKey(dfGd.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1),
                         Seq("groupKey"),
-                        Inner)
+                        SmvJoinType.Inner)
     }
 
     val resCached = res.cache

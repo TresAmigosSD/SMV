@@ -14,16 +14,12 @@
 
 package org.tresamigos.smv
 
-import org.tresamigos.smv.class_loader.SmvClassLoader
-import org.tresamigos.smv.shell.EddCompare
-import dqm.DQMValidator
+import org.tresamigos.smv.util.Edd
 
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
-import scala.collection.JavaConversions._
-import scala.util.control.NonFatal
 import scala.util.{Try, Success, Failure}
 
 /**
@@ -90,7 +86,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * dfCache the to ensure only a single DataFrame exists for a given data set
    * (file/module).
    */
-  var dfCache: Map[String, DataFrame] = Map.empty[String, DataFrame]
+  var dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
 
   /**
    * pass on the spark sql props set in the smv config file(s) to spark.
@@ -166,7 +162,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
       .map { eddsToCompare =>
         val edd1          = eddsToCompare(0)
         val edd2          = eddsToCompare(1)
-        val (passed, log) = EddCompare.compareFiles(edd1, edd2)
+        val (passed, log) = util.Edd.compareFiles(edd1, edd2)
         if (passed) {
           println("EDD Results are the same")
         } else {
@@ -188,7 +184,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
         case m: SmvOutput => Some(m)
         case _            => None
       } foreach (
-          m => SmvUtil.exportDataFrameToHive(sqlContext, m.rdd, m.tableName)
+          m => util.DataSet.exportDataFrameToHive(sqlContext, m.rdd, m.tableName)
       )
     }
 

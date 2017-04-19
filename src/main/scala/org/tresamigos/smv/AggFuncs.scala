@@ -14,11 +14,11 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql._, types._
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.expressions.{UserDefinedAggregateFunction, MutableAggregationBuffer}
 import org.apache.spark.sql.catalyst.expressions._
-
-import org.apache.spark.sql.expressions._
 
 /** Since UserDefinedAggregateFunction is not very flexible on input/output schema(or type),
  we have to separate histogram function for different data types. At some stage we may come back
