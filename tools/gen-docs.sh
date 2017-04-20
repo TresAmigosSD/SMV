@@ -6,18 +6,17 @@ PKG_DIR=$(dirname $PKG_TO_DOC)
 PYDOC_DIR="$SMV_TOOLS/../sphinx_docs"
 SCALADOC_DIR="$SMV_TOOLS/../target/scala-*/api"
 
-if [ "$#" -ne 3 ]; then
+if [ "$#" -ne 2 ]; then
   echo "ERROR: Invalid number of arguments"
-  echo "USAGE: $0 output_path current_version target_version"
+  echo "USAGE: $0 current_version target_version"
 
   echo "example:"
-  echo "  \$ $0 pydocs 1.31 1.32"
+  echo "  \$ $0 1.31 1.32"
   exit 1
 fi
 
-PYDST=$1
-FROM_VERSION=$2
-TO_VERSION=$3
+FROM_VERSION=$1
+TO_VERSION=$2
 
 if [ -z $SPARK_HOME ]; then
   SPARK_HOME="$(dirname $(which spark-submit))/.."
@@ -42,12 +41,13 @@ echo "-- building scaladocs..."
 sbt doc
 
 # maintain SMV gh-pages branch in its own directory
-GHPAGES_DIR="$HOME/.smv.ghpages"
+GHPAGES_DIR="$HOME/.smv/ghpages"
 SMV_DIR="SMV"
 
 mkdir -p $GHPAGES_DIR
 cd $GHPAGES_DIR
 
+echo "-- fetching latest SMV gh-pages branch to ~/.smv/ghpages/SMV ..."
 # clone repo if it does not exist, else just pull
 if [ ! -d $SMV_DIR ]; then
   git clone -b gh-pages https://github.com/TresAmigosSD/SMV.git
@@ -58,12 +58,14 @@ fi
 # write the python docs directly to the SMV gh-pages branch
 cd "$GHPAGES_DIR/$SMV_DIR"
 
-PYVERSION_DIR="$PYDST/$TO_VERSION"
+PYVERSION_DIR="pythondocs/$TO_VERSION"
 SCALAVERSION_DIR="scaladocs/$TO_VERSION"
 
+echo "-- copying scaladocs to ~/.smv/ghpages/SMV/scaladocs ..."
+echo "-- copying pythondocs to ~/.smv/ghpages/SMV/pydocs ..."
 # put the docs in the right version subdirectory
-mkdir -p $(dirname $PYVERSION_DIR)
-mkdir -p $(dirname $SCALAVERSION_DIR)
-cp -r $PYDOC_DIR/_build/html $PYVERSION_DIR
-cp -r $SCALADOC_DIR $SCALAVERSION_DIR
+mkdir -p $PYVERSION_DIR
+mkdir -p $SCALAVERSION_DIR
+cp -R ${PYDOC_DIR}/_build/html/* $PYVERSION_DIR
+cp -R ${SCALADOC_DIR}/* $SCALAVERSION_DIR
 rm -rf $PYDOC_DIR
