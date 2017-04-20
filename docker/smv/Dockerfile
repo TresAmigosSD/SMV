@@ -1,7 +1,8 @@
 FROM openjdk:7-jdk
 
 ARG DEBIAN_FRONTEND=noninteractive
-ENV PATH=$PATH:/usr/lib/SMV/tools:/usr/lib/spark/bin
+ARG SBT_VERSION=0.13.11
+ENV PATH=$PATH:/usr/lib/SMV/tools:/usr/lib/spark/bin:/usr/lib/sbt/bin
 
 RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/source.list &&\
     apt-key adv --keyserver hkp://pgp.mit.edu --recv-key 381BA480 &&\
@@ -15,9 +16,17 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/
     apt-get install -y python "python-dev" "python-pip" &&\
     apt-get install -y graphviz
 
-# install smv and spark and move them into /usr/lib dir.
+# install sbt.  The real sbt will be downloaded the first time sbt is run.
+# Note: do not run "sbt exit" here to prime the download as we want to wait until user mounts /projects/.ivy2
 RUN mkdir /projects &&\
     cd /projects &&\
+    wget https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz &&\
+    tar -xzvf sbt-$SBT_VERSION.tgz &&\
+    mv sbt /usr/lib/sbt &&\
+    rm sbt-$SBT_VERSION.tgz
+
+# install smv and spark and move them into /usr/lib dir.
+RUN cd /projects &&\
     wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.5 &&\
     mkdir -p /usr/lib &&\
     mv SMV_* /usr/lib/SMV &&\
