@@ -95,6 +95,7 @@ function build_smv()
   info "Building SMV"
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
   docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:latest \
+    -u $(id -u)\
     sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 clean assembly" \
     >> ${LOGFILE} 2>&1 || error "SMV build failed"
 
