@@ -221,7 +221,12 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def isPersisted: Boolean =
     Try(new FileIOHandler(app.sqlContext, moduleCsvPath()).readSchema()).isSuccess
 
-  /** #560 */
+  /**
+   * #560
+   *
+   * Make this a `lazy val` to avoid O(n^2) when each module triggers
+   * computation in all its ancestors.
+   */
   private[smv] lazy val needsToRun: Boolean = ???
 
   private[smv] def computeRDD: DataFrame = {
