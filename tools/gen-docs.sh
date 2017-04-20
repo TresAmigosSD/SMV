@@ -69,3 +69,14 @@ mkdir -p $SCALAVERSION_DIR
 cp -R ${PYDOC_DIR}/_build/html/* $PYVERSION_DIR
 cp -R ${SCALADOC_DIR}/* $SCALAVERSION_DIR
 rm -rf $PYDOC_DIR
+
+echo "-- replacing version numbers in index.html ..."
+sed -i '.bak' "s/${FROM_VERSION}/${TO_VERSION}/g" index.html
+
+# get rid of sed backup file
+rm index.html.bak
+
+echo "-- commiting and pushing doc updates to github SMV/gh-pages..."
+git add .
+git commit -a -m "updating docs from v${FROM_VERSION} to v${TO_VERSION}"
+# git push
