@@ -10,10 +10,6 @@ scalacOptions ++= Seq("-deprecation", "-feature")
 
 val sparkVersion = "1.5.2"
 
-val jettyVersion = "8.1.18.v20150929"
-
-val commonsHttpclientVersion = "4.3.2"
-
 libraryDependencies ++= Seq(
   "org.apache.spark"             %% "spark-sql"         % sparkVersion % "provided",
   "org.apache.spark"             %% "spark-hive"        % sparkVersion % "provided",

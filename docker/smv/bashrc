@@ -94,4 +94,4 @@ if ! shopt -oq posix; then
 fi
 
 # add smv and spark to path
-PATH=/usr/lib/SMV/tools:/usr/lib/spark/bin:$PATH
+PATH=/usr/lib/SMV/tools:/usr/lib/spark/bin:/usr/lib/sbt/bin:$PATH
