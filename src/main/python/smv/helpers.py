@@ -341,6 +341,47 @@ class DataFrameHelper(object):
         jdf = self._jPythonHelper.smvJoinMultipleByKey(self._jdf, smv_copy_array(self._sc, *keys), joinType)
         return SmvMultiJoin(self._sql_ctx, jdf)
 
+    def topNValsByFreq(self, n, col):
+        """Get top N most frequent values in Column c
+
+            Args:
+                n (int): maximum number of values
+                col (Column): which column to get values from
+
+            Examples:
+                >>> df.topNValsByFreq(1, col("cid"))
+                will return the single most frequent value in the cid column
+
+            Returns:
+                (list(object)): most frequent values (type depends on schema)
+        """
+        topNdf = DataFrame(self._jDfHelper._topNValsByFreq(n, col._jc), self._sql_ctx)
+        return map(lambda r: r.asDict().values()[0], topNdf.collect())
+
+    def smvSkewJoinByKey(self, other, joinType, skewVals, key):
+        """Join that leverages broadcast (map-side) join of rows with skewed (high-frequency) values
+
+            Rows keyed by skewed values are joined via broadcast join while remaining
+            rows are joined without broadcast join. Occurrences of skewVals in df2 should be
+            infrequent enough that the filtered table is small enough for a broadcast join.
+            result is the union of the join results.
+
+            Args:
+                other (DataFrame): DataFrame to join with
+                joinType (str): name of type of join (e.g. "inner")
+                skewVals (list(object)): list of skewed values
+                key (str): key on which to join (also the Column with the skewed values)
+
+            Example:
+                {{{
+                df.smvSkewJoinByKey(df2, SmvJoinType.Inner, Seq("9999999"), "cid")
+                }}}
+                will broadcast join the rows of df1 and df2 where col("cid") == "9999999"
+                and join the remaining rows of df1 and df2 without broadcast join.
+        """
+        jdf = self._jDfHelper.smvSkewJoinByKey(other._jdf, joinType, _to_seq(skewVals), key)
+        return DataFrame(jdf, self._sql_ctx)
+
     def smvSelectMinus(self, *cols):
         """Remove one or more columns from current DataFrame
 

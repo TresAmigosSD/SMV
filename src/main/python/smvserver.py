@@ -490,4 +490,9 @@ if __name__ == "__main__":
     host = os.environ.get('SMV_HOST', '0.0.0.0')
     port = os.environ.get('SMV_PORT', '5000')
     project_dir = os.environ.get('PROJECT_DIR', './')
+    # To run Flask server in multi-threaded mode, choose one of the following:
+    #
+    # app.run(host=host, port=int(port), threaded=True)
+    #
+    # app.run(host=host, port=int(port), processes=10)
     app.run(host=host, port=int(port))

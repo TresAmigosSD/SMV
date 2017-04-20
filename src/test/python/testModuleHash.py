@@ -13,7 +13,7 @@
 
 import sys
 
-from smvbasetest import SmvBaseTest
+from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
 from smv.smvapp import DataSetRepo
 
