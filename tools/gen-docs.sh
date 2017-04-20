@@ -79,4 +79,4 @@ rm index.html.bak
 echo "-- commiting and pushing doc updates to github SMV/gh-pages..."
 git add .
 git commit -a -m "updating docs from v${FROM_VERSION} to v${TO_VERSION}"
-# git push
+git push
