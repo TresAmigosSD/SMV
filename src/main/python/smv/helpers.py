@@ -205,8 +205,8 @@ class SmvMultiJoin(object):
         return DataFrame(self.mj.doJoin(dropextra), self.sqlContext)
 
 def _getUnboundMethod(helperCls, methodName):
-    def method(self, *args):
-        return getattr(helperCls(self), methodName)(*args)
+    def method(self, *args, **kwargs):
+        return getattr(helperCls(self), methodName)(*args, **kwargs)
     return method
 
 def _helpCls(receiverCls, helperCls):
