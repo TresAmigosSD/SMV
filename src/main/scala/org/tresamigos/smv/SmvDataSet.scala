@@ -619,7 +619,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
     val dependedHash = smvModule.stageVersion
       .map { v =>
         val crc = new java.util.zip.CRC32
-        crc.update(v.toCharArray.map(_.toByte))
+        crc.update((v + smvModule.fqn).toCharArray.map(_.toByte))
         (crc.getValue).toInt
       }
       .getOrElse(smvModule.hashOfHash)
@@ -630,8 +630,10 @@ class SmvModuleLink(val outputModule: SmvOutput)
   /**
    * SmvModuleLinks should not cache or validate their data
    */
-  override def computeRDD = throw new SmvRuntimeException("SmvModuleLink computeRDD should never be called")
-  override private[smv] def doRun(dsDqm: DQMValidator) = throw new SmvRuntimeException("SmvModuleLink doRun should never be called")
+  override def computeRDD =
+    throw new SmvRuntimeException("SmvModuleLink computeRDD should never be called")
+  override private[smv] def doRun(dsDqm: DQMValidator) =
+    throw new SmvRuntimeException("SmvModuleLink doRun should never be called")
 
   /**
    * "Running" a link requires that we read the published output from the upstream `DataSet`.
