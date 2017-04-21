@@ -207,6 +207,7 @@ class SmvMultiJoin(object):
 def _getUnboundMethod(helperCls, methodName):
     def method(self, *args, **kwargs):
         return getattr(helperCls(self), methodName)(*args, **kwargs)
+    method.__name__ = methodName
     return method
 
 def _helpCls(receiverCls, helperCls):
