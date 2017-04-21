@@ -89,9 +89,7 @@ class MyModule(SmvModule):
 ```
 
 # Output Modules
-As the number of modules in a given SMV stage grows, it becomes more difficult to track which
-modules are the "leaf"/output modules within the stage. Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait. If you would like to publish the module to a Hive table, include a `tableName`, and use `--publish-hive` command line parameter to
-publish/export the output to the specified Hive table.
+As the number of modules in a given SMV stage grows, it becomes more difficult to track which modules are the "leaf"/output modules within the stage. Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait. If you would like to publish the module to a Hive table, include a `tableName`, and use `--publish-hive` command line parameter to publish/export the output to the specified Hive table (See Publish to Hive section below for details).
 
 For example:
 
@@ -121,3 +119,23 @@ In addition to the above, the ability to mark certain modules as output has the 
 * We may add a future option to `SmvApp` that allows the user to display a "catalog" of output modules and their description.
 
 See [Smv Stages](smv_stages.md) for details on how to configure multiple stages.
+
+## Publish To Hive
+When publishing to hive (using the `--publish-hive` command line argument, the user has two options:
+* provide a `tableName` method that return the full name of the destination table as described above.
+* provide a `publishHiveSql` method that returns a sql statement to do the actual publishing.  This could be any valid HQL query such as `insert overwrite` or `create table from...`
+
+### Scala
+```scala
+object MyModule extends SmvModule("this is my module") with SmvOutput {
+  def publishHiveSql = Option("insert overwrite table foo ...")
+...
+}
+```
+### Python
+```python
+class MyModule(SmvModule, SmvOutput):
+  def publishHiveSql(self):
+    return "insert overwrite table foo ..."
+  ...
+```
