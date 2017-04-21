@@ -15,7 +15,7 @@ import sys
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
-from smv.smvapp import DataSetRepo
+from smv.datasetrepo import DataSetRepo
 
 class ModuleHashTest(SmvBaseTest):
     ResourcePath1 = 'src/test/python/dsh1'
