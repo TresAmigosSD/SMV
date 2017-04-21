@@ -613,7 +613,9 @@ class SmvModuleLink(val outputModule: SmvOutput)
 
   /**
    * If the depended smvModule has a published version, SmvModuleLink's datasetHash
-   * depends on the version string. Otherwise, depends on the smvModule's hashOfHash
+   * depends on the version string and the target's FQN (even with versioned data
+   * the hash should change if the target changes). Otherwise, depends on the 
+   * smvModule's hashOfHash
    **/
   override def datasetHash() = {
     val dependedHash = smvModule.stageVersion
