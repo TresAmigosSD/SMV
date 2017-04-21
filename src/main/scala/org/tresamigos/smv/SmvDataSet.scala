@@ -129,6 +129,16 @@ abstract class SmvDataSet extends FilenamePart {
    */
   def isEphemeral: Boolean
 
+  /**
+   * An optional sql query to run to publish the results of this module when the
+   * --publish-hive command line is used.  The DataFrame result of running this
+   * module will be available to the query as the "dftable" table.  For example:
+   *    return "insert overwrite table mytable select * from dftable"
+   * If this method is not specified, the default is to just create the table
+   * specified by tableName() with the results of the module.
+   */
+  def publishHiveSql: Option[String] = None
+
   /** do not persist validation result if isObjectInShell **/
   private[smv] def isPersistValidateResult = !isObjectInShell
 
@@ -685,12 +695,13 @@ case class SmvExtModuleLink(modFqn: String)
  * exclusively by DataSetRepoPython. Wraps an ISmvModule.
  */
 class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
-  override val description = s"SmvPyModule ${target.fqn}"
-  override val fqn         = target.fqn
-  override def tableName   = target.tableName()
-  override def isEphemeral = target.isEphemeral()
-  override def dsType      = target.dsType()
-  override def requiresDS =
+  override val description    = s"SmvPyModule ${target.fqn}"
+  override val fqn            = target.fqn
+  override def tableName      = target.tableName()
+  override def isEphemeral    = target.isEphemeral()
+  override def publishHiveSql = Option(target.publishHiveSql())
+  override def dsType         = target.dsType()
+  override def requiresDS     =
     throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
     resolvedRequiresDS = target.dependencies map (urn => resolver.loadDataSet(URN(urn)).head)

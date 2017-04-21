@@ -34,6 +34,11 @@ public interface ISmvModule {
 	 */
 	boolean isEphemeral();
 
+  /**
+   * override sql query to use when publishing to a hive table.
+   */
+  String publishHiveSql();
+
   /** DataSet type: could be 3 values, Input, Link, Module */
 	String dsType();
 

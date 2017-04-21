@@ -13,9 +13,17 @@
 
 from smv import SmvApp, SmvPyModule, SmvPyOutput, SmvHiveTable
 
-class M(SmvPyModule, SmvPyOutput):
+class M(SmvModule, SmvPyOutput):
     def requiresDS(self): return []
     def tableName(self): return "M"
+    def run(self, i):
+        return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
+
+// test module that uses publishHiveSql
+// TODO: need to figure out how to test publishHiveSql as we need to create the table and then overwrite here!!!
+class HSql(SmvModule, SmvPyOutput):
+    def requiresDS(self): return []
+    def publishHiveSql(self): return "???"
     def run(self, i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
 
