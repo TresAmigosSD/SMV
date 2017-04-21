@@ -125,6 +125,10 @@ class SmvApp(object):
 
         self.j_smvPyClient.registerRepoFactory('Python', DataSetRepoFactory(self))
 
+        # Suppress creation of .pyc files. These cause complications with
+        # reloading code and have led to discovering deleted modules (#612)
+        sys.dont_write_bytecode = True
+
     def appName(self):
         return self.j_smvApp.smvConfig().appName()
 
