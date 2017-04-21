@@ -89,9 +89,20 @@ class MyModule(SmvModule):
 ```
 
 # Output Modules
-As the number of modules in a given SMV stage grows, it becomes more difficult to track which modules are the "leaf"/output modules within the stage. Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait. If you would like to publish the module to a Hive table, include a `tableName`, and use `--publish-hive` command line parameter to publish/export the output to the specified Hive table (See Publish to Hive section below for details).
+As the number of modules in a given SMV stage grows, it becomes more difficult to track which modules are the "leaf"/output modules within the stage. Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait.
 
-For example:
+The set of `SmvOutput` output modules in a stage define the data *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
+
+In addition to the above, the ability to mark certain modules as output has the following benefits:
+
+* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-pyrun`). Depending on the options specified, they can then be published to CSV or to Hive.
+* A future option might be added to allow for listing of "dead" modules.  That is, any module in a stage that does not contribute to any output module either directly or indirectly.
+* We may add a future option to `SmvApp` that allows the user to display a "catalog" of output modules and their description.
+
+See [Smv Stages](smv_stages.md) for details on how to configure multiple stages.
+
+## Simple Publish To Hive
+If you would like to publish the module to a Hive table, include a `tableName`, and use `--publish-hive` command line parameter to publish/export the output to the specified Hive table (For advanced use case, see section below).  For example:
 
 ### Scala
 ```scala
@@ -110,25 +121,13 @@ class MyFile(SmvCsvFile, SmvOutput):
   ...
 ```
 
-The set of `SmvOutput` output modules in a stage define the data *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
-
-In addition to the above, the ability to mark certain modules as output has the following benefits:
-
-* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-pyrun`). Depending on the options specified, they can then be published to CSV or to Hive.
-* A future option might be added to allow for listing of "dead" modules.  That is, any module in a stage that does not contribute to any output module either directly or indirectly.
-* We may add a future option to `SmvApp` that allows the user to display a "catalog" of output modules and their description.
-
-See [Smv Stages](smv_stages.md) for details on how to configure multiple stages.
-
-## Publish To Hive
-When publishing to hive (using the `--publish-hive` command line argument, the user has two options:
-* provide a `tableName` method that return the full name of the destination table as described above.
-* provide a `publishHiveSql` method that returns a sql statement to do the actual publishing.  This could be any valid HQL query such as `insert overwrite` or `create table from...`
+## Advanced Publish To Hive
+A more advanced alternative to the `tableName` method described above is to provide a `publishHiveSql` method that returns a sql statement to do the actual publishing.  This could be any valid HQL query such as `insert overwrite` or `create table from...`.  The result of running the module is provided as a temporary table named `dftable`.
 
 ### Scala
 ```scala
 object MyModule extends SmvModule("this is my module") with SmvOutput {
-  def publishHiveSql = Option("insert overwrite table foo ...")
+  def publishHiveSql = Option("insert overwrite table foo ... select * from dftable")
 ...
 }
 ```
@@ -136,6 +135,6 @@ object MyModule extends SmvModule("this is my module") with SmvOutput {
 ```python
 class MyModule(SmvModule, SmvOutput):
   def publishHiveSql(self):
-    return "insert overwrite table foo ..."
+    return "insert overwrite table foo ... select * from dftable"
   ...
 ```
