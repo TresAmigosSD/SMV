@@ -153,6 +153,9 @@ function update_version()
   find docs/user -name '*.md' \
     -exec perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" \{\} +
 
+  # update version in Dockerfile
+  perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" docker/smv/Dockerfile
+
   # add the smv version to the SMV directory.
   echo ${SMV_VERSION} > "${SMV_DIR}/.smv_version"
 
