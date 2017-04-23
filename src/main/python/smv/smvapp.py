@@ -15,6 +15,9 @@
 This module provides the main SMV Python entry point ``SmvPy`` class and a singleton `smvApp`.
 It is equivalent to ``SmvApp`` on Scala side
 """
+import os
+import sys
+import traceback
 
 from py4j.java_gateway import java_import, JavaObject
 
@@ -22,10 +25,6 @@ from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
 from utils import smv_copy_array, check_socket
 from error import SmvRuntimeError
-
-import os
-import sys
-import traceback
 
 from datasetrepo import DataSetRepoFactory
 
@@ -88,6 +87,8 @@ class SmvApp(object):
 
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
+
+        self.stages = self.j_smvPyClient.stages()
 
         # issue #429 set application name from smv config
         sc._conf.setAppName(self.appName())

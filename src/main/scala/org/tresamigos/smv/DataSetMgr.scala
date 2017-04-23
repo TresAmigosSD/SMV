@@ -69,9 +69,6 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   def outputModulesForStage(stageNames: String*): Seq[SmvDataSet] =
     withTX ( _.outputModulesForStage(stageNames: _*) )
 
-  def allOutputModules(): Seq[SmvDataSet] =
-    withTX( _.allOutputModules )
-
   def inferDS(partialNames: String*): Seq[SmvDataSet] =
     withTX( _.inferDS(partialNames: _*) )
 

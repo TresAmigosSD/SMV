@@ -38,41 +38,33 @@ class DataSetRepoFactory(object):
 class DataSetRepo(object):
     def __init__(self, smvApp):
         self.smvApp = smvApp
+        self._clear_sys_modules()
+
+    def _clear_sys_modules(self):
+        """Clear all client modules from sys.modules
+        """
+        for fqn in sys.modules.keys():
+            for stage_name in self.smvApp.stages:
+                if fqn.startswith(stage_name):
+                    sys.modules.pop(fqn)
+                    break
+
     # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
     # from the most recent source
     def loadDataSet(self, fqn):
-        lastdot = fqn.rfind('.')
         try:
-            if sys.modules.has_key(fqn[:lastdot]):
-                # reload the module if it has already been imported
-                return self._reload(fqn)
-            else:
-                # otherwise import the module
-                return self._load(fqn)
+            ds = for_name(fqn)(self.smvApp)
+            #
+            # # Python issue https://bugs.python.org/issue1218234
+            # # need to invalidate inspect.linecache to make dataset hash work
+            # srcfile = inspect.getsourcefile(ds.__class__)
+            # if srcfile:
+            #     inspect.linecache.checkcache(srcfile)
+
+            return ds
         except BaseException as e:
             traceback.print_exc()
             raise e
-
-
-
-    # Import the module (Python module, not SMV module) containing the dataset
-    # and return the dataset
-    def _load(self, fqn):
-        return for_name(fqn)(self.smvApp)
-
-    # Reload the module containing the dataset from the most recent source
-    # and invalidate the linecache
-    def _reload(self, fqn):
-        lastdot = fqn.rfind('.')
-        pmod = reload(sys.modules[fqn[:lastdot]])
-        klass = getattr(pmod, fqn[lastdot+1:])
-        ds = klass(self.smvApp)
-        # Python issue https://bugs.python.org/issue1218234
-        # need to invalidate inspect.linecache to make dataset hash work
-        srcfile = inspect.getsourcefile(ds.__class__)
-        if srcfile:
-            inspect.linecache.checkcache(srcfile)
-        return ds
 
     def dataSetsForStage(self, stageName):
         try:
