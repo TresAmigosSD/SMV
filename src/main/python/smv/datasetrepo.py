@@ -38,6 +38,8 @@ class DataSetRepoFactory(object):
 class DataSetRepo(object):
     def __init__(self, smvApp):
         self.smvApp = smvApp
+        # Remove client modules from sys.modules to force reload of all client
+        # code in the new transaction
         self._clear_sys_modules()
 
     def _clear_sys_modules(self):
@@ -54,7 +56,7 @@ class DataSetRepo(object):
     def loadDataSet(self, fqn):
         try:
             ds = for_name(fqn)(self.smvApp)
-            
+
             # Python issue https://bugs.python.org/issue1218234
             # need to invalidate inspect.linecache to make dataset hash work
             srcfile = inspect.getsourcefile(ds.__class__)
