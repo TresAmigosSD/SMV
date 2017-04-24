@@ -54,12 +54,12 @@ class DataSetRepo(object):
     def loadDataSet(self, fqn):
         try:
             ds = for_name(fqn)(self.smvApp)
-            #
-            # # Python issue https://bugs.python.org/issue1218234
-            # # need to invalidate inspect.linecache to make dataset hash work
-            # srcfile = inspect.getsourcefile(ds.__class__)
-            # if srcfile:
-            #     inspect.linecache.checkcache(srcfile)
+            
+            # Python issue https://bugs.python.org/issue1218234
+            # need to invalidate inspect.linecache to make dataset hash work
+            srcfile = inspect.getsourcefile(ds.__class__)
+            if srcfile:
+                inspect.linecache.checkcache(srcfile)
 
             return ds
         except BaseException as e:
