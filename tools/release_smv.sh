@@ -2,10 +2,6 @@
 # Release the current version of SMV.  This will use the tresamigos:smv
 # docker container to maintain release consistency.
 
-# TODO: add docker build step.
-# TODO: add upload of docker image to docker hub (docker push)
-# TODO: add -latest flag to also tag docker release as latest.
-
 set -e
 PROG_NAME=$(basename "$0")
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
@@ -30,7 +26,7 @@ function error()
 
 function usage()
 {
-  echo "USAGE: ${PROG_NAME} -u github_user:github_token smv_version_to_release(a.b.c.d)"
+  echo "USAGE: ${PROG_NAME} -g github_user:github_token -d docker_user docker_password smv_version_to_release(a.b.c.d)"
   echo "See (https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) for auth tokens"
   exit $1
 }
@@ -53,11 +49,14 @@ function parse_args()
 {
   info "parsing command line args"
   [ "$1" = "-h" ] && usage 0
-  [ $# -ne 3 ] && echo "ERROR: invalid number of arguments" && usage 1
-  [ "$1" != "-u" ] && echo "ERROR: must supply github user name/token" && usage 1
+  [ $# -ne 6 ] && echo "ERROR: invalid number of arguments" && usage 1
+  [ "$1" != "-g" ] && echo "ERROR: must supply github user name/token" && usage 1
+  [ "$3" != "-d" ] && echo "ERROR: must supply dockerhub user name/password" && usage 1
 
   GITHUB_USER_TOKEN="$2"
-  SMV_VERSION="$3"
+  DOCKERHUB_USER_NAME="$4"
+  DOCKERHUB_USER_PASSWORD="$5"
+  SMV_VERSION="$6"
   validate_version "$SMV_VERSION"
 
   # version specific vars
@@ -95,6 +94,7 @@ function build_smv()
   info "Building SMV"
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
   docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:latest \
+    -u $(id -u)\
     sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 clean assembly" \
     >> ${LOGFILE} 2>&1 || error "SMV build failed"
 
@@ -151,6 +151,9 @@ function update_version()
   # update version in user docs.
   find docs/user -name '*.md' \
     -exec perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" \{\} +
+
+  # update version in Dockerfile
+  perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" docker/smv/Dockerfile
 
   # add the smv version to the SMV directory.
   echo ${SMV_VERSION} > "${SMV_DIR}/.smv_version"
@@ -230,6 +233,28 @@ function attach_tar_to_github_release()
 
 }
 
+function create_docker_image()
+{
+  local tag=v"$SMV_VERSION"
+
+  cd "${SMV_DIR}/docker/smv"
+
+  info "logging in to docker hub"
+  docker login -u ${DOCKERHUB_USER_NAME} -p ${DOCKERHUB_USER_PASSWORD}
+
+  info "building docker image"
+  docker build -t docker_build .
+
+  info "pushing new tagged docker image (${tag})"
+  docker tag docker_build tresamigos/smv:${tag}
+  docker push tresamigos/smv:${tag}
+
+  # TODO: make this an option.
+  info "pushing docker image as latest"
+  docker tag docker_build tresamigos/smv:latest
+  docker push tresamigos/smv:latest
+}
+
 
 # ---- MAIN ----
 create_logdir
@@ -245,4 +270,5 @@ tag_release
 create_tar
 create_github_release
 attach_tar_to_github_release
+create_docker_image
 clean_logdir

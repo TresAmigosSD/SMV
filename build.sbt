@@ -46,11 +46,11 @@ pytest := {
 
 // Create alltest task that sequentially runs each test suite
 val allTest = TaskKey[Unit]("alltest", "Run All Test Suites")
-allTest := {
-  (test in Test).value
-  pytest.value
-  itest.value
-}
+allTest <<= Def.sequential(
+  test in Test,
+  pytest,
+  itest
+)
 
 mainClass in assembly := Some("org.tresamigos.smv.SmvApp")
 

@@ -89,11 +89,18 @@ object DataSet {
    */
   def exportDataFrameToHive(sqlContext: SQLContext,
                             dataframe: DataFrame,
-                            tableName: String): Unit = {
+                            tableName: String,
+                            publishHiveSql: Option[String]): Unit = {
     // register the dataframe as a temp table.  Will be overwritten on next register.
-    dataframe.createOrReplaceTempView("etable")
-    sqlContext.sql(s"drop table if exists ${tableName}")
-    sqlContext.sql(s"create table ${tableName} as select * from etable")
-  }
+    dataframe.createOrReplaceTempView("dftable")
 
+    // if user provided a publish hive sql command, run it instead of default
+    // table creation from data frame result.
+    if (publishHiveSql.isDefined) {
+      sqlContext.sql(publishHiveSql.get)
+    } else {
+      sqlContext.sql(s"drop table if exists ${tableName}")
+      sqlContext.sql(s"create table ${tableName} as select * from dftable")
+    }
+  }
 }

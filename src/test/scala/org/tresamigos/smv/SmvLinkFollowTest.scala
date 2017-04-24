@@ -52,7 +52,7 @@ package org.tresamigos.smv {
     /* Since DS will cache the resolved DF we need to use a separate Y for SmvLinkFollowWithVersionTest */
     test("Test SmvModuleLink datasetHash follow link version") {
       val res = smvLinkTestPkg2.L2.datasetHash()
-      assert(res === 279780969) // when version = v1
+      assert(res === -70432112) // when version = v1
     }
 
     test("Test SmvModuleLink follow link with version config") {

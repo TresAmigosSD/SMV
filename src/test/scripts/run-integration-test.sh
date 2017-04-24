@@ -11,7 +11,6 @@ TEST_DIR=target/test-sample
 I_APP_NAME=IntegrationApp
 S_APP_NAME=SimpleApp
 E_APP_NAME=EnterpriseApp
-MVN=$(type -P mvn || type -P mvn3)
 
 rm -rf ${TEST_DIR}
 mkdir -p ${TEST_DIR}

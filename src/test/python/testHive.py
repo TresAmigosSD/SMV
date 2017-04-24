@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from test_support.smvbasetest import SmvBaseTest
-from fixture.hive.modules import M, MyHive, MyHiveWithQuery
+from fixture.hive.modules import M, MAdv, MyHive, MyHiveWithQuery
 
 class HiveTest(SmvBaseTest):
     @classmethod
@@ -38,6 +38,24 @@ class PublishModuleToHiveTest(HiveTest):
         mDf = self.smvApp.runModule(M.urn())
         hiveDf = self.smvApp.sqlContext.sql("select * from " + "M")
         self.should_be_same(mDf, hiveDf)
+
+class AdvancedPublishModuleToHiveTest(HiveTest):
+    """Use the advanced hive publish option of overriding the publishHiveSql method
+       in a module to overwrite contents of an existing module.
+    """
+    @classmethod
+    def smvAppInitArgs(cls):
+        return super(AdvancedPublishModuleToHiveTest, cls).smvAppInitArgs() + \
+            ['--publish-hive', '-m', M.fqn(), MAdv.fqn()]
+
+    def test_publish_module_to_hive(self):
+        # generate the M module output on hive here and then should overwrite it when MAdv is published.
+        self.smvApp.j_smvApp.run()
+
+        # Verify that the M in hive now has the same output as MAdv.
+        madvDf = self.smvApp.runModule(MAdv.urn())
+        hiveDf = self.smvApp.sqlContext.sql("select * from " + "M")
+        self.should_be_same(madvDf, hiveDf)
 
 class ReadHiveTableTest(HiveTest):
     @classmethod
