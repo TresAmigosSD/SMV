@@ -1,7 +1,7 @@
-FROM openjdk:7-jdk
+FROM openjdk:8-jdk
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SBT_VERSION=0.13.11
+ARG SBT_VERSION=0.13.15
 ENV PATH=$PATH:/usr/lib/SMV/tools:/usr/lib/spark/bin:/usr/lib/sbt/bin
 
 RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/source.list &&\
@@ -27,7 +27,7 @@ RUN mkdir /projects &&\
 
 # install smv and spark and move them into /usr/lib dir.
 RUN cd /projects &&\
-    wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.7 &&\
+    wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 2.1.0.0 &&\
     mkdir -p /usr/lib &&\
     mv SMV_* /usr/lib/SMV &&\
     mv spark-* /usr/lib/spark
