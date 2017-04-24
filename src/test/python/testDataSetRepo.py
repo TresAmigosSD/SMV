@@ -49,19 +49,18 @@ class DataSetRepoTest(SmvBaseTest):
         """DataSetRepo should not recompile module twice in a transaction
 
             Loading an SmvDataSet should only cause a recompile of its module
-            if the module has not been imported previously in this transaction
+            if the module has not been imported previously in this transaction.
+            This applies even when loading different SmvDataSets from the same file.
         """
         dsr = self.build_new_repo()
         with self.ExtraPath("src/test/python/data_set_repo_1"):
-            dsr.loadDataSet("stage.modules.CompileOnceA")
-            # Get the first SmvDataSet class from its module
-            dsA1 = getattr(sys.modules["stage.modules"], "CompileOnceA")
-            # Load a different SmvDataSet from the same file
+            dsA1 = dsr.loadDataSet("stage.modules.CompileOnceA").__class__
+            # load a different SmvDataSet from the same file
             dsr.loadDataSet("stage.modules.CompileOnceB")
-            # Get the first SmvDataSet from the second SmvDataSet's module.
-            # If the module wasn't recompiled then these should be equal.
+            # get the first SmvDataSet from the second SmvDataSet's module
+            # if the module wasn't recompiled these should be equal
             dsA2 = getattr(sys.modules["stage.modules"], "CompileOnceA")
-            # Note that the module `sys.modules["stage.modules"]` won't change
+            # note that the module `sys.modules["stage.modules"]` won't change
             # identity (at least in Python 2.7), but its attributes will
 
         self.assertEqual(dsA1, dsA2)
@@ -75,11 +74,9 @@ class DataSetRepoTest(SmvBaseTest):
             trigger the reload of the ABC even if the ABC lives in another file.
         """
         with self.ExtraPath("src/test/python/data_set_repo_1"):
-            self.build_new_repo().loadDataSet("stage.modules.ImplMod")
-            abcmod1 = getattr(sys.modules["stage.abcmod"], "ABCMod")
+            abcmod1 = self.build_new_repo().loadDataSet("stage.modules.ImplMod").__class__
 
         with self.ExtraPath("src/test/python/data_set_repo_1"):
-            self.build_new_repo().loadDataSet("stage.modules.ImplMod")
-            abcmod2 = getattr(sys.modules["stage.abcmod"], "ABCMod")
+            abcmod2 = self.build_new_repo().loadDataSet("stage.modules.ImplMod").__class__
 
         self.assertNotEqual(abcmod1, abcmod2)
