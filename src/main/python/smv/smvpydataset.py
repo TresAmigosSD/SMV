@@ -197,6 +197,18 @@ class SmvPyDataSet(object):
         """
         return False
 
+    def publishHiveSql(self):
+        """An optional sql query to run to publish the results of this module when the
+           --publish-hive command line is used.  The DataFrame result of running this
+           module will be available to the query as the "dftable" table.  For example:
+              return "insert overwrite table mytable select * from dftable"
+           If this method is not specified, the default is to just create the table
+           specified by tableName() with the results of the module.
+           Returns:
+               (string): the query to run.
+        """
+        return None
+
     @abc.abstractmethod
     def dsType(self):
         """Return SmvPyDataSet's type"""

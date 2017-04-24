@@ -11,13 +11,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp, SmvPyModule, SmvPyOutput, SmvHiveTable
+from smv import SmvApp, SmvModule, SmvOutput, SmvHiveTable
 
-class M(SmvPyModule, SmvPyOutput):
+class M(SmvModule, SmvOutput):
     def requiresDS(self): return []
     def tableName(self): return "M"
     def run(self, i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
+
+class MAdv(SmvModule, SmvOutput):
+    """Advanced Hive publish module that uses the publishHiveSql method to override
+       the output of table M in hive."""
+    def requiresDS(self): return []
+    def publishHiveSql(self): return "INSERT OVERWRITE TABLE M SELECT * from dftable"
+    def run(self, i):
+        return self.smvApp.createDF("k:String;v:Integer", "x,1;y,2")
 
 class MyHive(SmvHiveTable):
     def tableName(self): return "M"
