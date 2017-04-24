@@ -44,3 +44,24 @@ class DataSetRepoTest(SmvBaseTest):
             modules = list( self.build_new_repo().dataSetsForStage("stage") )
 
         self.assertTrue( "mod:stage.modules.NewModule" in modules, "mod:stage.modules.NewModule not in " + str(modules) )
+
+    def test_repo_compiles_module_only_once(self):
+        """DataSetRepo should not recompile module twice in a transaction
+
+            Loading an SmvDataSet should only cause a recompile of its module
+            if the module has not been imported previously in this transaction
+        """
+        dsr = self.build_new_repo()
+        with self.ExtraPath("src/test/python/data_set_repo_1"):
+            dsr.loadDataSet("stage.modules.CompileOnceA")
+            # Get the first SmvDataSet class from its module
+            dsA1 = getattr(sys.modules["stage.modules"], "CompileOnceA")
+            # Load a different SmvDataSet from the same file
+            dsr.loadDataSet("stage.modules.CompileOnceB")
+            # Get the first SmvDataSet from the second SmvDataSet's module.
+            # If the module wasn't recompiled then these should be equal.
+            dsA2 = getattr(sys.modules["stage.modules"], "CompileOnceA")
+            # Note that the module `sys.modules["stage.modules"]` won't change
+            # identity (at least in Python 2.7), but its attributes will
+
+        self.assertEqual(dsA1, dsA2)
