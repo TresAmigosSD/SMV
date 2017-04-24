@@ -65,3 +65,21 @@ class DataSetRepoTest(SmvBaseTest):
             # identity (at least in Python 2.7), but its attributes will
 
         self.assertEqual(dsA1, dsA2)
+
+    def test_new_repo_reloads_base_class(self):
+        """When DataSetRepo reloads an SmvDataSet it should reload its client ABC (if any)
+
+            Users may create ABCs (which may or may not actually use the abc module)
+            for SmvModules. When an implementation SmvModule is imported for the
+            first time in a transaction it should be recompiled, and it should also
+            trigger the reload of the ABC even if the ABC lives in another file.
+        """
+        with self.ExtraPath("src/test/python/data_set_repo_1"):
+            self.build_new_repo().loadDataSet("stage.modules.ImplMod")
+            abcmod1 = getattr(sys.modules["stage.abcmod"], "ABCMod")
+
+        with self.ExtraPath("src/test/python/data_set_repo_1"):
+            self.build_new_repo().loadDataSet("stage.modules.ImplMod")
+            abcmod2 = getattr(sys.modules["stage.abcmod"], "ABCMod")
+
+        self.assertNotEqual(abcmod1, abcmod2)
