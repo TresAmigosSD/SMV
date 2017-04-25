@@ -3,40 +3,56 @@
   <head>
     <meta charset="utf-8">
     <title>SMV docs</title>
-    <style>
-      table {
-          font-family: arial, sans-serif;
-          border-collapse: collapse;
-          width: 100%;
-      }
 
-      td, th {
-          border: 1px solid #dddddd;
-          text-align: left;
-          padding: 8px;
-      }
-
-      tr:nth-child(even) {
-          background-color: #eeeeee;
-      }
-    </style>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
   </head>
   <body>
 
-    <h1 style="text-align: center"> SMV </h1>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-sm-3'>
+          <img style="text-align: center; margin: 0 auto; height: 100px" src="smv-logo.png" />
+        </div>
 
-    <hr />
-    <h3>v1.5.2.7 (latest release):</h3>
-    <ul>
-      <li> <a href="https://github.com/TresAmigosSD/SMV/tree/v1.5.2.7#spark-modularized-view-smv">Homepage</a> </li>
-      <li> <a href="https://github.com/TresAmigosSD/SMV/blob/v1.5.2.7/docs/user/0_user_toc.md">User Guide</a> </li>
-      <li> <a href="scaladocs/1.5.2.7/index.html">Scala API</a> </li>
-      <li> <a href="pythondocs/1.5.2.7/index.html">Python API</a> </li>
-    </ul>
+        <div class='col-sm-9'>
+          <h1>Spark Modularized View (SMV)</h1>
+        </div>
+      </div>
 
-    <hr />
+      <hr/>
 
-    <h3>v2.1 (coming soon) </h3>
+      <h3>Intro</h3>
+      <p>Spark Modularized View enables users to build enterprise scale applications on Apache Spark platform.</p>
+
+      <h3>Releases</h3>
+      <table class='table'>
+        <tr>
+          <th>Version</th>
+          <th>Homepage</th>
+          <th>User Guide</th>
+          <th>Scala API</th>
+          <th>Python API</th>
+        </tr>
+
+        <tr>
+          <td>v1.5.2.7</td>
+          <td><a href="https://github.com/TresAmigosSD/SMV/tree/v1.5.2.7#spark-modularized-view-smv">v1.5 Homepage</a></td>
+          <td><a href="https://github.com/TresAmigosSD/SMV/blob/v1.5.2.7/docs/user/0_user_toc.md">v1.5 User Guide</a></td>
+          <td><a href="scaladocs/1.5.2.7/index.html">v1.5 Scala API</a></td>
+          <td><a href="pythondocs/1.5.2.7/index.html">v1.5 Python API</a></td>
+        </tr>
+
+        <tr>
+          <td>v2.1</td>
+          <td>Coming soon</td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </table>
+
+    </div>
 
   </body>
 </html>
