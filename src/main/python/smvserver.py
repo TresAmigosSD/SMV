@@ -491,7 +491,9 @@ class Main(object):
         host = os.environ.get('SMV_HOST', '0.0.0.0')
         port = os.environ.get('SMV_PORT', '5000')
         project_dir = os.environ.get('PROJECT_DIR', './')
-        app.run(host=host, port=int(port), threaded=True)
+
+        # to reduce complexity in SmvApp, keep the rest server single-threaded
+        app.run(host=host, port=int(port), threaded=False, processes=1)
 
 main = Main
 # temporary till module source control is implemented
