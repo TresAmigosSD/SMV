@@ -47,7 +47,7 @@ class DataSetRepo(object):
         """
         for fqn in sys.modules.keys():
             for stage_name in self.smvApp.stages:
-                if fqn.startswith(stage_name):
+                if fqn == stage_name or fqn.startswith(stage_name + "."):
                     sys.modules.pop(fqn)
                     break
 
