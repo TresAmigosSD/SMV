@@ -1,5 +1,6 @@
 
-<img height="128" src="https://github.com/TresAmigosSD/SMV/raw/master/docs/images/smv-logo.png">
+<img height="128" src="https://github.com/TresAmigosSD/SMV/raw/master/docs/images/smv-logo.png"/>
+
 # Spark Modularized View (SMV)
 
 [![Build Status](https://travis-ci.org/TresAmigosSD/SMV.svg?branch=master)](https://travis-ci.org/TresAmigosSD/SMV)
