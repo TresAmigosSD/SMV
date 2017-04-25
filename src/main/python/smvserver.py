@@ -422,7 +422,7 @@ def get_graph_json():
     return jsonify(graph=res)
 
 @app.route("/api/create_module", methods = ['POST'])
-def craete_module():
+def create_module():
     '''
     body:
         name = 'xxx' (fqn)
@@ -475,6 +475,7 @@ def craete_module():
     }
     return jsonify(res=res)
 
+
 # Wrapper so that other python scripts can import and then call
 # smvserver.main()
 class Main(object):
@@ -486,8 +487,6 @@ class Main(object):
         # init Smv context
         smvApp = SmvApp.createInstance([])
 
-        module_file_map = {}
-
         # start server
         host = os.environ.get('SMV_HOST', '0.0.0.0')
         port = os.environ.get('SMV_PORT', '5000')
@@ -495,6 +494,8 @@ class Main(object):
         app.run(host=host, port=int(port), threaded=True)
 
 main = Main
+# temporary till module source control is implemented
+module_file_map = {}
 
 if __name__ == "__main__":
     main()
