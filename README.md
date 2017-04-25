@@ -1,5 +1,5 @@
 
-<img height="128" src="https://github.com/TresAmigosSD/SMV/raw/master/docs/images/smv-logo.png"/>
+<img height="128" src="https://github.com/TresAmigosSD/SMV/raw/master/docs/images/smv-logo-100px.png"/>
 
 # Spark Modularized View (SMV)
 
