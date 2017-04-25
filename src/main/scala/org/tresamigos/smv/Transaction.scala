@@ -14,6 +14,17 @@
 
 package org.tresamigos.smv
 
+/**
+ * Abstraction of the transaction boundary for loading SmvDataSets. A TX object
+ * will instantiate a set of repos when it is it self instantiated and will
+ * reuse the same repos for all queries. This means that each new TX object will
+ * reload the SmvDataSet from source **once** during its lifetime.
+ *
+ * NOTE: Once a new TX is created, the well-formedness of the SmvDataSets provided
+ * by the previous TX is not guaranteed. Particularly it may become impossible
+ * to run modules from the previous TX.
+ */
+
 class TX(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   val repos: Seq[DataSetRepo] = repoFactories map (_.createRepo)
   val resolver = new DataSetResolver(repos, smvConfig, depRules)
@@ -38,11 +49,11 @@ class TX(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig, depRules:
 
   def outputModulesForStage(stageNames: String*): Seq[SmvDataSet] =
     filterOutput(dataSetsForStage(stageNames: _*))
+
   /**
    * Infer which SmvDataSet corresponds to a partial name. Used e.g. to identify
    * modules specified via smv-pyrun -m.
    */
-
   def inferDS(partialNames: String*): Seq[SmvDataSet] =
     load( inferUrn(partialNames: _*): _*)
 
