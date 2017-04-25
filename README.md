@@ -8,7 +8,8 @@ Spark Modularized View enables users to build enterprise scale applications on A
 
 * [Quick Start](#smv-quickstart)
 * [User Guide](docs/user/0_user_toc.md)
-* [API docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.package)
+* [Python API docs](http://tresamigossd.github.io/SMV/pythondocs/1.5.2.7/index.html)
+* [Scala API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.7/index.html#package)
 
 # SMV Quickstart
 
@@ -153,16 +154,16 @@ cat_high_emp:Boolean = false
 See the [user guide](docs/user/0_user_toc.md) for further examples and documentation.
 
 
-# Contributions 
+# Contributions
 
 ## Scalafmt
 
-The project uses [Scalafmt](http://scalameta.org/scalafmt/) to ensure that the committed code is formatted 
+The project uses [Scalafmt](http://scalameta.org/scalafmt/) to ensure that the committed code is formatted
 in a consistent manner. Follow instructions on the tool's [web](http://scalameta.org/scalafmt/#CLI) for the
 installation instructions. Before submitting a PR make sure that the result of
 
 ```shell
-./scalafmt --test 
+./scalafmt --test
 ```
 
 returns no errors.
