@@ -1,7 +1,9 @@
+
+<img height="128" src="https://github.com/TresAmigosSD/SMV/raw/master/docs/images/smv-logo.png">
+# Spark Modularized View (SMV)
+
 [![Build Status](https://travis-ci.org/TresAmigosSD/SMV.svg?branch=master)](https://travis-ci.org/TresAmigosSD/SMV)
 [![Join the chat at https://gitter.im/TresAmigosSD/SMV](https://badges.gitter.im/TresAmigosSD/SMV.svg)](https://gitter.im/TresAmigosSD/SMV?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-# Spark Modularized View (SMV)
 
 
 Spark Modularized View enables users to build enterprise scale applications on Apache Spark platform.
