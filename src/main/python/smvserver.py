@@ -475,24 +475,26 @@ def craete_module():
     }
     return jsonify(res=res)
 
+# Wrapper so that other python scripts can import and then call
+# smvserver.main()
+class Main(object):
+    def __init__(self):
+        # TODO: should be done by SmvApp (python) automatically.
+        codePath = os.path.abspath("src/main/python")
+        sys.path.insert(1, codePath)
+
+        # init Smv context
+        smvApp = SmvApp.createInstance([])
+
+        module_file_map = {}
+
+        # start server
+        host = os.environ.get('SMV_HOST', '0.0.0.0')
+        port = os.environ.get('SMV_PORT', '5000')
+        project_dir = os.environ.get('PROJECT_DIR', './')
+        app.run(host=host, port=int(port), threaded=True)
+
+main = Main
 
 if __name__ == "__main__":
-    # TODO: should be done by SmvApp (python) automatically.
-    codePath = os.path.abspath("src/main/python")
-    sys.path.insert(1, codePath)
-
-    # init Smv context
-    smvApp = SmvApp.createInstance([])
-
-    module_file_map = {}
-
-    # start server
-    host = os.environ.get('SMV_HOST', '0.0.0.0')
-    port = os.environ.get('SMV_PORT', '5000')
-    project_dir = os.environ.get('PROJECT_DIR', './')
-    # To run Flask server in multi-threaded mode, choose one of the following:
-    #
-    # app.run(host=host, port=int(port), threaded=True)
-    #
-    # app.run(host=host, port=int(port), processes=10)
-    app.run(host=host, port=int(port))
+    main()
