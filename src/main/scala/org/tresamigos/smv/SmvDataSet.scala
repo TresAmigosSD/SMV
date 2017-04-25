@@ -162,11 +162,12 @@ abstract class SmvDataSet extends FilenamePart {
    * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly. The cache is
    * external to SmvDataSet so that it we will not recalculate the DF even after
-   * dynamically loading the same SmvDataSet.
+   * dynamically loading the same SmvDataSet. If force argument is true, the we
+   * skip the cache.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */
-  def rdd() = {
-    if (!app.dfCache.contains(versionedFqn)) {
+  def rdd(force: Boolean = false) = {
+    if (force || !app.dfCache.contains(versionedFqn)) {
       app.dfCache = app.dfCache + (versionedFqn -> computeRDD)
     }
     app.dfCache(versionedFqn)
@@ -522,7 +523,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val paramMap: Map[SmvDataSet, DataFrame] =
-      (resolvedRequiresDS map (dep => (dep, dep.rdd))).toMap
+      (resolvedRequiresDS map (dep => (dep, dep.rdd()))).toMap
     run(new runParams(paramMap))
   }
 
@@ -624,7 +625,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
   /**
    * If the depended smvModule has a published version, SmvModuleLink's datasetHash
    * depends on the version string and the target's FQN (even with versioned data
-   * the hash should change if the target changes). Otherwise, depends on the 
+   * the hash should change if the target changes). Otherwise, depends on the
    * smvModule's hashOfHash
    **/
   override def datasetHash() = {
@@ -654,7 +655,8 @@ class SmvModuleLink(val outputModule: SmvOutput)
    * and run the DS, or "not-follow-the-link", which will try to read from the persisted data dir
    * and fail if not found.
    */
-  override def rdd: DataFrame = {
+  override def rdd(force: Boolean = false): DataFrame = {
+    // force argument is ignored (SmvModuleLink is rerun anyway)
     if (isFollowLink) {
       smvModule.readPublishedData().getOrElse(smvModule.rdd())
     } else {
@@ -711,7 +713,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
     target.getDataFrame(new DQMValidator(createDsDqm),
                         resolvedRequiresDS
                           .map { ds =>
-                            (ds.urn.toString, ds.rdd)
+                            (ds.urn.toString, ds.rdd())
                           }
                           .toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()

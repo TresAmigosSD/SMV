@@ -23,7 +23,7 @@ class RejectTest extends SmvTestUtil {
         extends SmvCsvFile("./" + testDataDir + "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
     }
-    val df = file.rdd
+    val df = file.rdd()
 
     val res = df.collect.map(_.mkString(","))
     val exp = List(
@@ -62,7 +62,7 @@ class RejectTest extends SmvTestUtil {
       override val failAtParsingError = false
       override def dqm()              = SmvDQM().add(FailParserCountPolicy(10))
     }
-    val df  = file.rdd
+    val df  = file.rdd()
     val res = ValidationResult(SmvReportIO.readReport(file.moduleValidPath()))
     assert(res.passed === true)
     assertUnorderedSeqEqual(res.errorMessages, Seq(("FailParserCountPolicy(10)", "true")))
@@ -94,7 +94,7 @@ class RejectTest extends SmvTestUtil {
     object smvCF extends SmvCsvStringData(schemaStr, data, true) {
       override val failAtParsingError = false
     }
-    val prdd = smvCF.rdd
+    val prdd = smvCF.rdd()
 
     val res = SmvReportIO.readReport(smvCF.moduleValidPath())
 

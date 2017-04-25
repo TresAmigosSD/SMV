@@ -14,16 +14,15 @@
 
 package org.tresamigos.smv
 
-class FrlTest extends SmvTestUtil {
-  test("test frlFile loader with NoOp rejectlogger") {
-    object file extends SmvFrlFile("./" + testDataDir + "FrlTest/test") {
-      override val failAtParsingError = false
-    }
+class SmvForceRunTest extends SmvTestUtil {
+  object X extends SmvModule("X") {
+    def requiresDS() = Seq()
+    def run(i: runParams) = dfFrom("k:String","")
+  }
 
-    val res = file.rdd()
-
-    assertSrddSchemaEqual(res, "id: String; v: String")
-    assertUnorderedSeqEqual(res.collect.map(_.toString),
-                            Seq("[12,34]", "[23,45]", "[12,00]", "[qa,da]"))
+  test("Test forcing module to run skips the DataFrame cache") {
+    val rdd1 = X.rdd()
+    val rdd2 = X.rdd(true)
+    assert(rdd1 !== rdd2)
   }
 }

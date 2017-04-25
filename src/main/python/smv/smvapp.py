@@ -142,14 +142,14 @@ class SmvApp(object):
         """
         return self.j_smvApp.generateAllGraphJSON()
 
-    def runModule(self, urn):
+    def runModule(self, urn, force = False):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.j_smvPyClient.runModule(urn)
+        jdf = self.j_smvPyClient.runModule(urn, force)
         return DataFrame(jdf, self.sqlContext)
 
-    def runModuleByName(self, name):
-        jdf = self.j_smvApp.runModuleByName(name)
+    def runModuleByName(self, name, force = False):
+        jdf = self.j_smvApp.runModuleByName(name, force)
         return DataFrame(jdf, self.sqlContext)
 
     def urn2fqn(self, urnOrFqn):

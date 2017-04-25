@@ -236,7 +236,7 @@ trait SmvTestUtil extends SparkTestUtil {
 
   def open(path: String) = {
     val file = SmvCsvFile("./" + path, CsvAttributes.defaultCsv)
-    file.rdd
+    file.rdd()
   }
 
   def dfFrom(schemaStr: String, data: String): DataFrame = app.createDF(schemaStr, data)
