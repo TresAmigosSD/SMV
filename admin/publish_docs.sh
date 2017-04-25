@@ -52,7 +52,7 @@ function write_docs()
   mkdir -p $SCALAVERSION_DIR
   cp -R ${PYDOC_DIR}/_build/html/* $PYVERSION_DIR
   cp -R ${SCALADOC_DIR}/* $SCALAVERSION_DIR
-  # rm -rf $OUTPUT_DIR
+  rm -rf $OUTPUT_DIR
 }
 
 function update_links()
