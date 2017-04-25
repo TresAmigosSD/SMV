@@ -212,6 +212,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   /** Output directory for files */
   def outputDir: String = j_smvApp.smvConfig.outputDir
 
+  def stages: Array[String] = j_smvApp.stages.toArray
+  
   /** Used to create small dataframes for testing */
   def dfFrom(schema: String, data: String): DataFrame =
     j_smvApp.createDF(schema, data)

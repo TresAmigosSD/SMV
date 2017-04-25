@@ -158,6 +158,7 @@ class SmvPyDataSet(object):
             except Exception as err: # `inspect` will raise error for classes defined in the REPL
                 # Instead of handle the case that module defined in REPL, just raise Exception here
                 # res = _smvhash(_disassemble(cls))
+                traceback.print_exc()
                 message = "{0}({1!r})".format(type(err).__name__, err.args)
                 raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
 
