@@ -82,6 +82,15 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
+   * Remove all current files (if any) in the output directory if --force-run-all
+   * argument was specified at the commandline
+   */
+  private[smv] def purgeCurrentOutputFiles() = {
+    if (smvConfig.cmdLine.forceRunAll())
+      deletePersistedResults(modulesToRunWithAncestors)
+  }
+
+  /**
    * Get the DataFrame associated with data set. The DataFrame plan (not data) is cached in
    * dfCache the to ensure only a single DataFrame exists for a given data set
    * (file/module).
@@ -251,6 +260,14 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
+   * Sequence of SmvModules to run + all of their ancestors
+   */
+  lazy val modulesToRunWithAncestors: Seq[SmvDataSet] = {
+    val ancestors = modulesToRun flatMap (_.ancestors)
+    (modulesToRun ++ ancestors).distinct
+  }
+  
+  /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
    */
@@ -264,6 +281,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
       println("----------------------")
     }
 
+    purgeCurrentOutputFiles()
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)

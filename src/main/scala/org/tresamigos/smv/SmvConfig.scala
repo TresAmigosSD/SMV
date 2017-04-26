@@ -48,6 +48,12 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                             noshort = true,
                             default = None,
                             descr = "publish the given modules/stage/app as given version")
+
+  val forceRunAll = toggle("force-run-all",
+                        noshort = true,
+                        default = Some(false),
+                        descrYes = "ignore persisted data and force all modules to run")
+
   val publishHive = toggle(
     "publish-hive",
     noshort = true,
