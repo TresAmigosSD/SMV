@@ -328,6 +328,13 @@ class SmvDFHelper(df: DataFrame) {
   ): DataFrame = {
     import df.sqlContext.implicits._
 
+    keys.foreach { k =>
+      Seq(df, otherPlan) foreach { plan =>
+        if ( !plan.columns.contains(k) )
+          throw new SmvRuntimeException(s"${plan.toString} does not have key ${k}")
+      }
+    }
+
     val rightKeys = keys.map { k =>
       mkUniq(df.columns, k, ignoreCase = true, postfix)
     }
