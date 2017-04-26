@@ -168,7 +168,7 @@ class DQMTest extends SmvTestUtil {
           .add(FailTotalFixCountPolicy(1))
     }
     intercept[SmvDqmValidationError] {
-      file.rdd.show
+      file.rdd().show
     }
   }
 
@@ -184,7 +184,7 @@ class DQMTest extends SmvTestUtil {
           .add(FailTotalRuleCountPolicy(3))
     }
     intercept[SmvDqmValidationError] {
-      file.rdd.show
+      file.rdd().show
     }
   }
 
@@ -198,7 +198,7 @@ class DQMTest extends SmvTestUtil {
           .add(FormatFix($"c", ".", "_"))
           .add(FailTotalFixCountPolicy(5))
     }
-    assertSrddDataEqual(file.rdd, "1,m,a;0,f,c;2,m,z;1,o,x;1,m,_")
+    assertSrddDataEqual(file.rdd(), "1,m,a;0,f,c;2,m,z;1,o,x;1,m,_")
   }
 
   test("test user defined policy") {
@@ -215,7 +215,7 @@ class DQMTest extends SmvTestUtil {
     }
 
     intercept[SmvDqmValidationError] {
-      file.rdd
+      file.rdd()
     }
   }
 }
