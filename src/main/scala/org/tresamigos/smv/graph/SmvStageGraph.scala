@@ -17,6 +17,7 @@ package graph
 
 import com.github.mdr.ascii.graph.{Graph => AsciiGraph}
 import com.github.mdr.ascii.layout.{GraphLayout => AsciiGraphLayout}
+
 /**
  * Arbitrary SmvDataSet graph
  * Nodes are SmvDataSets and edges are the dependency of DSs
@@ -221,40 +222,43 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
 
     def toNodeStr(nodeType: String)(m: SmvDataSet) =
       s"""  {""" + "\n" +
-      s"""    "fqn": ${toName(m)},""" + "\n" +
-      s"""    "type": "${nodeType}",""" + "\n" +
-      s"""    "version": ${m.version},""" + "\n" +
-      s"""    "description": "${m.description}"""" + "\n" +
-      s"""  }"""
+        s"""    "fqn": ${toName(m)},""" + "\n" +
+        s"""    "type": "${nodeType}",""" + "\n" +
+        s"""    "version": ${m.version},""" + "\n" +
+        s"""    "description": "${m.description}"""" + "\n" +
+        s"""  }"""
 
     val nodeString = Seq(
       s""""nodes": [""" + "\n" +
-      g.nodeString(toNodeStr("module")(_), toNodeStr("file")(_)).mkString(",\n") + "\n" +
-      "]"
+        g.nodeString(toNodeStr("module")(_), toNodeStr("file")(_)).mkString(",\n") + "\n" +
+        "]"
     )
 
     // create json for a single stage info.
     def stageString(stageName: String, nodes: Seq[SmvDataSet]) = {
       "  {\n" +
-      s"""    "name": "${stageName}",""" + "\n" +
-      """    "nodes": [""" + "\n      " +
-      nodes.map(toName).mkString(",\n      ") + "\n    ]\n" +
-      "  }"
+        s"""    "name": "${stageName}",""" + "\n" +
+        """    "nodes": [""" + "\n      " +
+        nodes.map(toName).mkString(",\n      ") + "\n    ]\n" +
+        "  }"
     }
 
     // generates json string for ALL stages.
     val stagesString = Seq(
       s""""stages": [""" + "\n" +
-      g.clusters.map{case (stg, nodes) => stageString(stg, nodes)}.mkString(",\n") + "\n" +
-      "]"
+        g.clusters.map { case (stg, nodes) => stageString(stg, nodes) }.mkString(",\n") + "\n" +
+        "]"
     )
 
     val linkString = Seq(
       s""""edges": [""" + "\n" +
-      g.edges.map{case (f, t) =>
-        s"""  [${toName(f)},${toName(t)}]"""
-      }.mkString(",\n") + "\n" +
-      "]"
+        g.edges
+          .map {
+            case (f, t) =>
+              s"""  [${toName(f)},${toName(t)}]"""
+          }
+          .mkString(",\n") + "\n" +
+        "]"
     )
 
     val jsonStr = {

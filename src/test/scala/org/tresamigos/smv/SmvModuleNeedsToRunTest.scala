@@ -56,7 +56,8 @@ package org.tresamigos.smv {
       m.needsToRun shouldBe false
     }
 
-    test("Ephemeral, non-input modules downstream from modified modules should return true for needsToRun") {
+    test(
+      "Ephemeral, non-input modules downstream from modified modules should return true for needsToRun") {
       val m = load(needstoruntest.Mod7)
       assume(m.isEphemeral)
       assume(m.resolvedRequiresDS.exists(_.needsToRun))
@@ -70,7 +71,7 @@ package org.tresamigos.smv.needstoruntest {
   object In1 extends SmvCsvFile("should/not/matter/what/file")
 
   abstract class BaseModule(desc: String) extends SmvModule(desc) {
-    override def requiresDS = Seq.empty[SmvDataSet]
+    override def requiresDS        = Seq.empty[SmvDataSet]
     override def run(i: runParams) = app.createDF("k:String;v:Integer", "a,1").repartition(1)
   }
 
@@ -89,6 +90,6 @@ package org.tresamigos.smv.needstoruntest {
   }
   object Mod7 extends BaseModule("this ephemeral module depends on a module that needs to run") {
     override def isEphemeral = true
-    override def requiresDS = Seq(Mod1)
+    override def requiresDS  = Seq(Mod1)
   }
 }

@@ -124,9 +124,12 @@ class NonAggFuncsTest extends SmvTestUtil {
     val df  = dfFrom("a:Integer; b:String", "1, a;2,;,;1, a")
 
     val res = df.select(smvHashKey("key_", $"a", $"b"))
-    assertSrddDataEqual(res, """key_75b9dc8e5e3c162edac82adf57acd94f;
-                               |key_c81e728d9d4c2f636f067f89cc14862c;
-                               |key_;
-                               |key_75b9dc8e5e3c162edac82adf57acd94f""".stripMargin)
+    assertSrddDataEqual(
+      res,
+      """key_75b9dc8e5e3c162edac82adf57acd94f;
+        |key_c81e728d9d4c2f636f067f89cc14862c;
+        |key_;
+        |key_75b9dc8e5e3c162edac82adf57acd94f""".stripMargin
+    )
   }
 }

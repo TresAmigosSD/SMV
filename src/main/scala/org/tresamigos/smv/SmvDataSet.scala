@@ -703,7 +703,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
   override def isEphemeral    = target.isEphemeral()
   override def publishHiveSql = Option(target.publishHiveSql())
   override def dsType         = target.dsType()
-  override def requiresDS     =
+  override def requiresDS =
     throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
     resolvedRequiresDS = target.dependencies map (urn => resolver.loadDataSet(URN(urn)).head)

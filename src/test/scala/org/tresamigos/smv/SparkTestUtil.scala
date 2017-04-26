@@ -241,8 +241,8 @@ trait SmvTestUtil extends SparkTestUtil {
 
   def dfFrom(schemaStr: String, data: String): DataFrame = app.createDF(schemaStr, data)
 
-  def load(mod: SmvDataSet): SmvDataSet = app.dsm.load(mod.urn).head
-  def loadM(mods: SmvDataSet*): Seq[SmvDataSet] = app.dsm.load(mods.map(_.urn):_*)
+  def load(mod: SmvDataSet): SmvDataSet         = app.dsm.load(mod.urn).head
+  def loadM(mods: SmvDataSet*): Seq[SmvDataSet] = app.dsm.load(mods.map(_.urn): _*)
 }
 
 /** Base trait for unit tests that do not need a Spark test environment */

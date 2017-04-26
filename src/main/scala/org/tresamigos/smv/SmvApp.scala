@@ -114,7 +114,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * generate dependency graphs if "-g" flag was specified on command line.
    * @return true if graph were generated otherwise return false.
    */
-  private def generateDotDependencyGraph() : Boolean = {
+  private def generateDotDependencyGraph(): Boolean = {
     if (smvConfig.cmdLine.graph()) {
       val pathName = s"${smvConfig.appName}.dot"
       SmvReportIO.saveLocalReport(dependencyGraphDotString(stages), pathName)
@@ -133,7 +133,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * generate JSON dependency graphs if "--json" flag was specified on command line.
    * @return true if json graph were generated otherwise return false.
    */
-  private def generateJsonDependencyGraph() : Boolean = {
+  private def generateJsonDependencyGraph(): Boolean = {
     if (smvConfig.cmdLine.jsonGraph()) {
       val pathName = s"${smvConfig.appName}.json"
       SmvReportIO.saveLocalReport(dependencyGraphJsonString(), pathName)
@@ -268,9 +268,9 @@ class SmvApp(private val cmdLineArgs: Seq[String],
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
     compareEddResults() ||
-      generateDotDependencyGraph() || generateJsonDependencyGraph() ||
-      publishModulesToHive() ||  publishOutputModules() ||
-      generateOutputModules()
+    generateDotDependencyGraph() || generateJsonDependencyGraph() ||
+    publishModulesToHive() || publishOutputModules() ||
+    generateOutputModules()
   }
 }
 

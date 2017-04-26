@@ -26,6 +26,18 @@ parallelExecution in Test := false
 
 publishArtifact in Test := true
 
+// Once upgraded to sbt 1.0.0 (even milestones) this hack
+// is no longer necessary. Note that this command is present irrespective of the
+// `scalafmt on compile` task that is present in the ScalafmtOnCompile plugin, and
+// accepts normal scalafmt arguments.
+commands += Command.args("scalafmt", "Run scalafmt cli.") {
+  case (state, args) =>
+    for {
+      scalafmt <- ScalafmtOnCompilePlugin.getLatestScalafmt().right
+    } yield scalafmt.main("--non-interactive" +: args.toArray)
+    state
+}
+
 // Create itest task that runs integration tests
 val itest = TaskKey[Unit]("itest", "Run Integration Test")
 itest := {
@@ -45,7 +57,7 @@ pytest := {
 
 // Create alltest task that sequentially runs each test suite
 val allTest = TaskKey[Unit]("alltest", "Run All Test Suites")
-allTest <<= Def.sequential(
+allTest := Def.sequential(
   test in Test,
   pytest,
   itest

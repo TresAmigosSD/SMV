@@ -118,10 +118,14 @@ object smvfuncs {
     udf(catF).apply(col).as(s"smvArrayCat(${col})")
   }
 
-  def smvArrayCat(sep: String, col: Column): Column = smvArrayCat(sep, col, {x:Any => x.toString})
+  def smvArrayCat(sep: String, col: Column): Column =
+    smvArrayCat(sep, col, { x: Any =>
+      x.toString
+    })
 
   /** True if any of the columns is not null */
-  def smvHasNonNull(columns: Column*) = columns.foldRight(lit(false))((c, acc) => acc || c.isNotNull)
+  def smvHasNonNull(columns: Column*) =
+    columns.foldRight(lit(false))((c, acc) => acc || c.isNotNull)
 
   /**
    * Patch Spark's `concat` and `concat_ws` to treat null as empty string in concatenation.
@@ -133,7 +137,8 @@ object smvfuncs {
 
   def smvStrCat(sep: String, columns: Column*) =
     when(smvHasNonNull(columns: _*), concat_ws(sep, columns.map(c => coalesce(c, lit(""))): _*))
-      .otherwise(lit(null)).alias(s"smvStrCat($sep, ${columns.mkString(", ")})")
+      .otherwise(lit(null))
+      .alias(s"smvStrCat($sep, ${columns.mkString(", ")})")
 
   /**
    * Creating unique id from the primary key list.
