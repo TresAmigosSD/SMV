@@ -22,6 +22,8 @@ import org.apache.spark.{SparkContext, SparkConf}
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 
+import scala.language.postfixOps
+
 /**
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
@@ -79,6 +81,15 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   private[smv] def purgeOldOutputFiles() = {
     if (smvConfig.cmdLine.purgeOldOutput())
       SmvHDFS.purgeDirectory(smvConfig.outputDir, validFilesInOutputDir())
+  }
+
+  /**
+   * Remove all current files (if any) in the output directory if --force-run-all
+   * argument was specified at the commandline
+   */
+  private[smv] def purgeCurrentOutputFiles() = {
+    if (smvConfig.cmdLine.forceRunAll())
+      deletePersistedResults(modulesToRunWithAncestors)
   }
 
   /**
@@ -251,6 +262,13 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
+   * Sequence of SmvModules to run + all of their ancestors
+   */
+  lazy val modulesToRunWithAncestors: Seq[SmvDataSet] = {
+    val ancestors = modulesToRun flatMap (_.ancestors)
+    (modulesToRun ++ ancestors) distinct
+  }
+  /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
    */
@@ -264,6 +282,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
       println("----------------------")
     }
 
+    purgeCurrentOutputFiles()
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
