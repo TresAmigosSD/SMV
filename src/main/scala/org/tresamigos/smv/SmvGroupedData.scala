@@ -266,7 +266,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val pivotRes = SmvGroupedData(pivot.createSrdd(dfp, keys), keys)
 
     // collapse each group into 1 row
-    val cols = pivot.outCols map (n => smvFirst($"$n", true) as n)
+    val cols = pivot.outCols map (n => smvfuncs.smvFirst($"$n", true) as n)
     pivotRes.agg(cols(0), cols.tail: _*)
   }
 
@@ -834,7 +834,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val keyColsStr = keys.map { k =>
       df(k).cast("string")
     }
-    val keyDf = df.selectPlusPrefix(smvStrCat(keyColsStr: _*) as "_smvRePartition_key_")
+    val keyDf = df.selectPlusPrefix(smvfuncs.smvStrCat(keyColsStr: _*) as "_smvRePartition_key_")
 
     val resRdd = keyDf.rdd
       .keyBy({ r =>
@@ -897,7 +897,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       }
       .map {
         case (cols, name) =>
-          smvStrCat("_", cols.map { c =>
+          smvfuncs.smvStrCat("_", cols.map { c =>
             $"$c"
           }: _*).as(name)
       }

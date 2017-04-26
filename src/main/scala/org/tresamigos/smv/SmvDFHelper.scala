@@ -434,7 +434,7 @@ class SmvDFHelper(df: DataFrame) {
     val selectExpressions = df.columns.diff(keys).map {
       //using smvFirst instead of first, since `first` return the first non-null of each field
       fn =>
-        smvFirst($"$fn") as fn
+        smvfuncs.smvFirst($"$fn") as fn
     }
 
     if (selectExpressions.isEmpty) {
@@ -1002,7 +1002,7 @@ class SmvDFHelper(df: DataFrame) {
       when($"${newkey}".isNull, "0").otherwise("1")
     }
 
-    joined.select($"${key}", smvStrCat(hasCols: _*) as "flag")
+    joined.select($"${key}", smvfuncs.smvStrCat(hasCols: _*) as "flag")
   }
 
   /**
@@ -1504,7 +1504,7 @@ class SmvDFHelper(df: DataFrame) {
       }
       .map {
         case (cols, name) =>
-          smvStrCat("_", cols.map { c =>
+          smvfuncs.smvStrCat("_", cols.map { c =>
             $"$c"
           }: _*).as(name)
       }

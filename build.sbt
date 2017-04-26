@@ -58,3 +58,5 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 assemblyJarName in assembly := s"${name.value}-${version.value}-jar-with-dependencies.jar"
 
 test in assembly := {}
+
+initialize ~= { _ => sys.props("scalac.patmat.analysisBudget") = "off" }

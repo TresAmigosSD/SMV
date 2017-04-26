@@ -436,7 +436,7 @@ class SmvHierarchies(
    *
    * Example:
    * {{{
-   * ProdHier.levelRollup(df, "h1", "h2")(sum($"v1") as "v1", ...)()
+   * ProdHier.levelRollup(df, "h1", "h2")(sum(\$"v1") as "v1", ...)()
    * }}}
    *
    * The result will not depend of the paremerter order of "h1" and "h2"
@@ -456,7 +456,7 @@ class SmvHierarchies(
    *
    * The result will be
    * {{{
-   * ${prefix}_type, ${prefix}_value, v1
+   * \${prefix}_type, \${prefix}_value, v1
    * h1,        1,          6.0
    * h1,        2,          3.0
    * h2,        02,         3.0
@@ -488,7 +488,7 @@ class SmvHierarchies(
    * one need to copy the key to a new column and then apply the aggregate funtion on
    * the new column, like the following,
    * {{{
-   * df.smvSelectPlus($"b" as "newb").rollup("a", "b").agg(count("newb") as "n")
+   * df.smvSelectPlus(\$"b" as "newb").rollup("a", "b").agg(count("newb") as "n")
    * }}}
    *
    *
