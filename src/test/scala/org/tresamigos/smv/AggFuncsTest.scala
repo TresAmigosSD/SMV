@@ -68,9 +68,9 @@ class AggFuncsTest extends SmvTestUtil {
     val res = df
       .groupBy("k")
       .agg(
-        smvFirst($"t", true), // use smvFirst instead of Spark's first to test the alternative form also
-        smvFirst($"v", true) as "first_v",
-        smvFirst($"v") as "smvFirst_v"
+        smvfuncs.smvFirst($"t", true), // use smvFirst instead of Spark's first to test the alternative form also
+        smvfuncs.smvFirst($"v", true) as "first_v",
+        smvfuncs.smvFirst($"v") as "smvFirst_v"
       )
 
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq("[a,1,0.3,0.3]", "[z,1,1.4,null]"))

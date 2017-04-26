@@ -266,7 +266,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val pivotRes = SmvGroupedData(pivot.createSrdd(dfp, keys), keys)
 
     // collapse each group into 1 row
-    val cols = pivot.outCols map (n => smvFirst($"$n", true) as n)
+    val cols = pivot.outCols map (n => smvfuncs.smvFirst($"$n", true) as n)
     pivotRes.agg(cols(0), cols.tail: _*)
   }
 

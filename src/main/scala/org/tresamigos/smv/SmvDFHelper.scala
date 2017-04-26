@@ -427,7 +427,7 @@ class SmvDFHelper(df: DataFrame) {
     val selectExpressions = df.columns.diff(keys).map {
       //using smvFirst instead of first, since `first` return the first non-null of each field
       fn =>
-        smvFirst($"$fn") as fn
+        smvfuncs.smvFirst($"$fn") as fn
     }
 
     if (selectExpressions.isEmpty) {
