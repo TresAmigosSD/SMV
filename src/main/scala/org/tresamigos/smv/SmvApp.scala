@@ -22,8 +22,6 @@ import org.apache.spark.{SparkContext, SparkConf}
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 
-import scala.language.postfixOps
-
 /**
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
@@ -266,8 +264,9 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    */
   lazy val modulesToRunWithAncestors: Seq[SmvDataSet] = {
     val ancestors = modulesToRun flatMap (_.ancestors)
-    (modulesToRun ++ ancestors) distinct
+    (modulesToRun ++ ancestors).distinct
   }
+  
   /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
