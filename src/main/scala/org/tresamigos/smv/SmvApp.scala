@@ -98,6 +98,11 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     }
   }
 
+  /**
+   * For each module, delete its persisted csv and schema (if any) with the
+   * modules current hash
+   */
+
   private[smv] def deletePersistedResults(dsList: Seq[SmvDataSet]) =
     dsList foreach (_.deleteOutputs)
 
