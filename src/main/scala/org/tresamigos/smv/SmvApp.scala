@@ -217,11 +217,11 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    *  If force argument is true, any existing persisted results will be deleted
    *  and the module's DataFrame cache will be ignored, forcing the module to run again.
    */
-  def runModule(urn: URN, force: Boolean = false): DataFrame = {
+  def runModule(urn: URN, forceRun: Boolean = false): DataFrame = {
     val ds = dsm.load(urn).head
-    if(force)
+    if (forceRun)
       deletePersistedResults(Seq(ds))
-    ds.rdd(force)
+    ds.rdd(forceRun)
   }
 
   /**
@@ -229,11 +229,11 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * is true, any existing persisted results will be deleted and the module's
    *  DataFrame cache will be ignored, forcing the module to run again.
    */
-  def runModuleByName(modName: String, force: Boolean = false): DataFrame = {
+  def runModuleByName(modName: String, forceRun: Boolean = false): DataFrame = {
     val ds = dsm.inferDS(modName).head
-    if(force)
+    if (forceRun)
       deletePersistedResults(Seq(ds))
-    ds.rdd(force)
+    ds.rdd(forceRun)
   }
 
   /**

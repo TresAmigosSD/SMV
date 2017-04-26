@@ -166,8 +166,8 @@ abstract class SmvDataSet extends FilenamePart {
    * skip the cache.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */
-  def rdd(force: Boolean = false) = {
-    if (force || !app.dfCache.contains(versionedFqn)) {
+  def rdd(forceRun: Boolean = false) = {
+    if (forceRun || !app.dfCache.contains(versionedFqn)) {
       app.dfCache = app.dfCache + (versionedFqn -> computeRDD)
     }
     app.dfCache(versionedFqn)
