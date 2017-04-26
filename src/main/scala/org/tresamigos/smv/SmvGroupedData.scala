@@ -897,7 +897,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       }
       .map {
         case (cols, name) =>
-          smvStrCat("_", cols.map { c =>
+          smvfuncs.smvStrCat("_", cols.map { c =>
             $"$c"
           }: _*).as(name)
       }

@@ -1497,7 +1497,7 @@ class SmvDFHelper(df: DataFrame) {
       }
       .map {
         case (cols, name) =>
-          smvStrCat("_", cols.map { c =>
+          smvfuncs.smvStrCat("_", cols.map { c =>
             $"$c"
           }: _*).as(name)
       }

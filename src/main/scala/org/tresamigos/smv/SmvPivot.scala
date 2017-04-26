@@ -167,7 +167,7 @@ private[smv] object SmvPivot {
     })
     pivotColsSets.map { pivotCols =>
       val colNames = df
-        .select(smvStrCat("_", pivotCols.map { s =>
+        .select(smvfuncs.smvStrCat("_", pivotCols.map { s =>
           normStr(df(s).cast(StringType))
         }: _*))
         .distinct

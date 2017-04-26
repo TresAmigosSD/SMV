@@ -141,9 +141,8 @@ package object smv {
    * @param nonNull  switches whether the function will try to find the first non-null value
    *
    * @group agg
-   *
    **/
- @deprecated("use the one in smvfuncs package instead", "1.6")
+  @deprecated("use the one in smvfuncs package instead", "1.6")
   def smvFirst(c: Column, nonNull: Boolean = false) = smvfuncs.smvFirst(c, nonNull)
 
   /** True if any of the columns is not null
@@ -159,8 +158,8 @@ package object smv {
 
   /**
    * Patch Spark's `concat` and `concat_ws` to treat null as empty string in concatenation.
-   * @deprecated("use smvHasNonNull in smvfuncs package instead", "2.1")
    **/
+  @deprecated("use smvHasNonNull in smvfuncs package instead", "2.1")
   def smvStrCat(sep: String, columns: Column*) = smvfuncs.smvStrCat(sep, columns: _*)
 
   /**

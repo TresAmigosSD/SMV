@@ -22,7 +22,7 @@ class NonAggFuncsTest extends SmvTestUtil {
   test("test smvStrCat") {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("k:String; v:String;", "1,a;2,")
-    val res = df.select(smvStrCat($"v", $"k"))
+    val res = df.select(smvfuncs.smvStrCat($"v", $"k"))
     assertSrddDataEqual(res,
                         "a1;" +
                           "2")
@@ -31,7 +31,7 @@ class NonAggFuncsTest extends SmvTestUtil {
   test("smvStrCat(ws, cols) should yield null if all columns are null") {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("k:String; v:String;", "1,a;2,;,")
-    val res = df.select(smvStrCat("-", $"v", $"k"))
+    val res = df.select(smvfuncs.smvStrCat("-", $"v", $"k"))
     assertSrddDataEqual(res, "a-1;-2;null")
   }
 
