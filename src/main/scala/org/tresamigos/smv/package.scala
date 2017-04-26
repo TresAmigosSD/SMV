@@ -146,8 +146,8 @@ package object smv {
   def smvFirst(c: Column, nonNull: Boolean = false) = smvfuncs.smvFirst(c, nonNull)
 
   /** True if any of the columns is not null
-   * @deprecated("use smvHasNonNull in smvfuncs package instead", "2.1")
    **/
+  @deprecated("use smvHasNonNull in smvfuncs package instead", "2.1")
   def hasNonNull(columns: Column*) = smvfuncs.smvHasNonNull(columns: _*)
 
   /**
