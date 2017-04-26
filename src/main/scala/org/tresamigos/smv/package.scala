@@ -152,8 +152,8 @@ package object smv {
 
   /**
    * Patch Spark's `concat` and `concat_ws` to treat null as empty string in concatenation.
-   * @deprecated("use smvHasNonNull in smvfuncs package instead", "2.1")
    **/
+  @deprecated("use smvHasNonNull in smvfuncs package instead", "2.1")
   def smvStrCat(columns: Column*) = smvfuncs.smvStrCat(columns: _*)
 
   /**

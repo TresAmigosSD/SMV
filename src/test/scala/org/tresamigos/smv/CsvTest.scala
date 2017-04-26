@@ -29,7 +29,7 @@ class CsvTest extends SmvTestUtil {
                            CsvAttributes.defaultCsvWithHeader) {
       override def run(df: DataFrame) = {
         import df.sqlContext.implicits._
-        df.smvSelectPlus(smvStrCat($"name", $"id") as "name_id")
+        df.smvSelectPlus(smvfuncs.smvStrCat($"name", $"id") as "name_id")
       }
     }
     val df = TestFile.rdd()
@@ -114,7 +114,7 @@ class CsvTest extends SmvTestUtil {
 
   test("Write file with \" as content instead of quote-char") {
     /* In this case res will be saved with @quote-char = ", but data will use Excel escape
-       style as """b". 
+       style as """b".
        */
     val res = dfFrom("name:String", "a").withColumn("name2", lit("\"b"))
     val csvPath = testcaseTempDir + "/test_write_data_with_quote"

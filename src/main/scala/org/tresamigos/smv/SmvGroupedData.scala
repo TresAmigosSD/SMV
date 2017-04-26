@@ -834,7 +834,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val keyColsStr = keys.map { k =>
       df(k).cast("string")
     }
-    val keyDf = df.selectPlusPrefix(smvStrCat(keyColsStr: _*) as "_smvRePartition_key_")
+    val keyDf = df.selectPlusPrefix(smvfuncs.smvStrCat(keyColsStr: _*) as "_smvRePartition_key_")
 
     val resRdd = keyDf.rdd
       .keyBy({ r =>

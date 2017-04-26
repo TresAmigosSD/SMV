@@ -995,7 +995,7 @@ class SmvDFHelper(df: DataFrame) {
       when($"${newkey}".isNull, "0").otherwise("1")
     }
 
-    joined.select($"${key}", smvStrCat(hasCols: _*) as "flag")
+    joined.select($"${key}", smvfuncs.smvStrCat(hasCols: _*) as "flag")
   }
 
   /**
