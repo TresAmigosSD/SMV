@@ -48,7 +48,7 @@ case class SmvHierarchy(
 ) {
   private val hierCols = new SmvHierarchyColumns(name + "_map")
 
-  private[smv] lazy val mapDF = hierarchyMap.asInstanceOf[SmvDataSet].rdd
+  private[smv] lazy val mapDF = hierarchyMap.asInstanceOf[SmvDataSet].rdd()
 
   private lazy val mapWithNameAndParent = hierarchy
     .zip(hierarchy.tail :+ (null: String))

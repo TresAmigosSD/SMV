@@ -66,7 +66,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    **/
   def createDF(schemaStr: String, data: String = null, isPersistValidateResult: Boolean = false) = {
     val smvCF = SmvCsvStringData(schemaStr, data, isPersistValidateResult)
-    smvCF.rdd
+    smvCF.rdd()
   }
 
   lazy val allDataSets = dsm.allDataSets
@@ -98,15 +98,8 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     }
   }
 
-  /**
-   * delete the current output files of the modules to run (and not all the intermediate modules).
-   */
-  private def deleteOutputModules() = {
-    // TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
-    modulesToRun foreach { m =>
-      m.deleteOutputs()
-    }
-  }
+  private[smv] def deletePersistedResults(dsList: Seq[SmvDataSet]) =
+    dsList foreach (_.deleteOutputs)
 
   /** Returns the app-level dependency graph as a dot string */
   def dependencyGraphDotString(stageNames: Seq[String] = stages): String =
@@ -184,7 +177,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
         case m: SmvOutput => Some(m)
         case _            => None
       } foreach (
-          m => util.DataSet.exportDataFrameToHive(sqlContext, m.rdd, m.tableName, m.publishHiveSql)
+          m => util.DataSet.exportDataFrameToHive(sqlContext, m.rdd(), m.tableName, m.publishHiveSql)
       )
     }
 
@@ -211,17 +204,32 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * @return true if modules were generated, otherwise false.
    */
   private def generateOutputModules(): Boolean = {
-    modulesToRun foreach (_.rdd)
+    modulesToRun foreach (_.rdd())
     modulesToRun.nonEmpty
   }
 
-  /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(urn: URN): DataFrame = dsm.load(urn).head.rdd
+  /** Run a module by its fully qualified name in its respective language environment
+   *  If force argument is true, any existing persisted results will be deleted
+   *  and the module's DataFrame cache will be ignored, forcing the module to run again.
+   */
+  def runModule(urn: URN, force: Boolean = false): DataFrame = {
+    val ds = dsm.load(urn).head
+    if(force)
+      deletePersistedResults(Seq(ds))
+    ds.rdd(force)
+  }
 
   /**
-   * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
+   * Run a module based on the end of its name (must be unique). If force argument
+   * is true, any existing persisted results will be deleted and the module's
+   *  DataFrame cache will be ignored, forcing the module to run again.
    */
-  def runModuleByName(modName: String): DataFrame = dsm.inferDS(modName).head.rdd
+  def runModuleByName(modName: String, force: Boolean = false): DataFrame = {
+    val ds = dsm.inferDS(modName).head
+    if(force)
+      deletePersistedResults(Seq(ds))
+    ds.rdd(force)
+  }
 
   /**
    * sequence of SmvModules to run based on the command line arguments.

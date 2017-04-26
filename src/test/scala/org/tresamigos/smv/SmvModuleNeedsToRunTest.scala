@@ -27,7 +27,7 @@ package org.tresamigos.smv {
     test("Persisted modules should return false for needsToRun") {
       val m = load(needstoruntest.Mod2)
       m.deleteOutputs()
-      m.rdd
+      m.rdd()
       m.needsToRun shouldBe false
       m.deleteOutputs()
     }
@@ -35,7 +35,7 @@ package org.tresamigos.smv {
     test("Persisted but modified modules should return true for needsToRun") {
       val m = load(needstoruntest.Mod3)
       m.deleteOutputs()
-      m.rdd
+      m.rdd()
       m.deleteOutputs()
       m.needsToRun shouldBe true
     }
@@ -43,7 +43,7 @@ package org.tresamigos.smv {
     test("Modules depending on persisted but modified modules should return true for needsToRun") {
       val Seq(m3, m4) = loadM(needstoruntest.Mod3, needstoruntest.Mod4)
 
-      m3.rdd
+      m3.rdd()
       m3.deleteOutputs()
 
       assume(m4.resolvedRequiresDS.contains(m3))

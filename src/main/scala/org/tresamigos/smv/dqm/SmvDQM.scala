@@ -53,7 +53,7 @@ import org.apache.spark.sql.functions.udf
  * like "count" might be optimized so that transformations which have no impact on "count" might be
  * totally ignored. If there no natural action to be apply, you may need to do convert DF to RDD first
  * {{{
- * dfWithDqm.rdd.count
+ * dfWithDqm.rdd().count
  * }}}
  * After the action, we can check the policies
  * {{{
