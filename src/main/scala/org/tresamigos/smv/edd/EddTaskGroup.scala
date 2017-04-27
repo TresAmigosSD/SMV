@@ -71,7 +71,7 @@ private[smv] abstract class EddTaskGroup {
     } else {
       // on row per group
       val dfGd = df
-        .smvSelectPlus(smvStrCat("_", keys.map { c =>
+        .smvSelectPlus(smvfuncs.smvStrCat("_", keys.map { c =>
           $"$c"
         }: _*) as "groupKey")
         .groupBy("groupKey")

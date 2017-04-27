@@ -15,11 +15,15 @@ import sys
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
-from smv.smvapp import DataSetRepo
+from smv.datasetrepo import DataSetRepo
 
 class ModuleHashTest(SmvBaseTest):
-    ResourcePath1 = 'src/test/python/dsh1'
-    ResourcePath2 = 'src/test/python/dsh2'
+    ResourcePath1 = 'src/test/python/datasethash1'
+    ResourcePath2 = 'src/test/python/datasethash2'
+
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ["--smv-props", "smv.stages=stage"]
 
     class Resource(object):
         def __init__(self, smvApp, path, fqn):
@@ -49,20 +53,20 @@ class ModuleHashTest(SmvBaseTest):
 
     def test_add_comment_should_not_change_hash(self):
         """hash will not change if we add a comment to its code"""
-        self.assert_hash_should_not_change("modules.AddComment")
+        self.assert_hash_should_not_change("stage.modules.AddComment")
 
     def test_change_code_should_change_hash(self):
         """hash will change if we change module's code"""
-        self.assert_hash_should_change("modules.ChangeCode")
+        self.assert_hash_should_change("stage.modules.ChangeCode")
 
     def test_change_dependency_should_change_hash(self):
         """hash will change if we change module's requiresDS"""
-        self.assert_hash_should_change("modules.Dependent")
+        self.assert_hash_should_change("stage.modules.Dependent")
 
     def test_change_baseclass_should_change_hash(self):
         """hash will change if we change code for class that module inherits from"""
-        self.assert_hash_should_change("modules.Child")
+        self.assert_hash_should_change("stage.modules.Child")
 
     def test_change_upstream_module_should_not_change_datasethash(self):
         """hash will not change if we change module that is listed in module's requiresDS"""
-        self.assert_hash_should_not_change("modules.Downstream")
+        self.assert_hash_should_not_change("stage.modules.Downstream")

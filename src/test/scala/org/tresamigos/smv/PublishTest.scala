@@ -37,7 +37,7 @@ package org.tresamigos.smv {
       org.tresamigos.smv.publish.stage1.M1.publish()
 
       // Verify that the published file has same data/schema as the source module.
-      val df = SmvCsvFile("publish/v1/org.tresamigos.smv.publish.stage1.M1.csv").rdd
+      val df = SmvCsvFile("publish/v1/org.tresamigos.smv.publish.stage1.M1.csv").rdd()
       assertSrddSchemaEqual(df, "x:Integer")
       assertSrddDataEqual(df, "1;2;3")
 

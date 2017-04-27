@@ -23,9 +23,9 @@ package org.tresamigos.smv {
     /* TODO: turn on dependency check when tests on all the projects
   test("test dependency check on SmvAncillary") {
     intercept[IllegalArgumentException] {
-      val f = org.tresamigos.smv.dsdependencyPkg.B.rdd
+      val f = org.tresamigos.smv.dsdependencyPkg.B.rdd()
     }
-    val g = org.tresamigos.smv.dsdependencyPkg.C.rdd
+    val g = org.tresamigos.smv.dsdependencyPkg.C.rdd()
   }
    */
   }

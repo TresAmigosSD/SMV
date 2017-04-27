@@ -86,7 +86,7 @@ case class DQMRule(
 
     val logColName = s"${name}_log"
     /* Will log references columns for each rule */
-    val logCol = smvStrCat(catCols: _*).as(logColName)
+    val logCol = smvfuncs.smvStrCat(catCols: _*).as(logColName)
 
     val _name = name
     val filterUdf = udf({ (c: Boolean, logStr: String) =>

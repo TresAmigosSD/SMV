@@ -46,11 +46,11 @@ pytest := {
 
 // Create alltest task that sequentially runs each test suite
 val allTest = TaskKey[Unit]("alltest", "Run All Test Suites")
-allTest <<= Def.sequential(
+allTest := Def.sequential(
   test in Test,
   pytest,
   itest
-)
+).value
 
 mainClass in assembly := Some("org.tresamigos.smv.SmvApp")
 
@@ -60,3 +60,4 @@ assemblyJarName in assembly := s"${name.value}-${version.value}-jar-with-depende
 
 test in assembly := {}
 
+// initialize ~= { _ => sys.props("scalac.patmat.analysisBudget") = "off" }

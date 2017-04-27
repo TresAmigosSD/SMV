@@ -35,10 +35,10 @@ class SmvFileTest extends SmvTestUtil {
     createTempFile("input/a.schema", "f1: String")
 
     object File1 extends SmvCsvFile("a.csv")
-    val res1 = File1.rdd
+    val res1 = File1.rdd()
 
     object File2 extends SmvCsvFile("input/a.csv")
-    val res2 = File2.rdd
+    val res2 = File2.rdd()
 
     assertSrddDataEqual(res1, "a")
     assertSrddDataEqual(res2, "a")
@@ -68,7 +68,7 @@ class SmvFileTest extends SmvTestUtil {
 
     object Data1 extends SmvMultiCsvFiles("data1")
 
-    val res = Data1.rdd
+    val res = Data1.rdd()
     assertSrddDataEqual(res, "a;b")
   }
 }

@@ -13,43 +13,8 @@ fi
 FROM_VERSION=$1
 TO_VERSION=$2
 
+OUTPUT_DIR="/tmp/docgen"
 
-function define_vars()
-{
-  SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
-  PKG_TO_DOC="$SMV_TOOLS/../src/main/python/smv"
-  PKG_DIR=$(dirname $PKG_TO_DOC)
-  PYDOC_DIR="$SMV_TOOLS/../sphinx_docs"
-  SCALADOC_DIR="$SMV_TOOLS/../target/scala-*/api"
-
-  if [ -z $SPARK_HOME ]; then
-    SPARK_HOME="$(dirname $(which spark-submit))/.."
-  fi
-
-  [ -z $SPARK_HOME ] && echo "ERROR: can't find spark" && exit 1
-
-  export PYTHONPATH="$PKG_DIR:$PYTHONPATH"
-  # Need pyspark and py4j the sys.path so they can be imported by sphinx
-  export PYTHONPATH="$SPARK_HOME/python/:$PYTHONPATH"
-  export PYTHONPATH="$SPARK_HOME/python/lib/py4j-0.8.2.1-src.zip:$PYTHONPATH"
-}
-
-function  build_pydocs()
-{
-  # build the python docs
-  echo "-- building pythondocs..."
-  rm -rf $PYDOC_DIR
-  sphinx-apidoc --full -o $PYDOC_DIR $PKG_TO_DOC
-  cp $SMV_TOOLS/conf/sphinx-conf.py $PYDOC_DIR/conf.py
-  (cd $PYDOC_DIR; make html)
-}
-
-function build_scaladocs()
-{
-  # build the scala docs
-  echo "-- building scaladocs..."
-  sbt doc
-}
 
 function get_latest_ghpages()
 {
@@ -77,6 +42,9 @@ function write_docs()
   PYVERSION_DIR="pythondocs/$TO_VERSION"
   SCALAVERSION_DIR="scaladocs/$TO_VERSION"
 
+  PYDOC_DIR="$OUTPUT_DIR/pythondocs"
+  SCALADOC_DIR="$OUTPUT_DIR/scaladocs"
+
   echo "-- copying scaladocs to ~/.smv/ghpages/SMV/scaladocs ..."
   echo "-- copying pythondocs to ~/.smv/ghpages/SMV/pydocs ..."
   # put the docs in the right version subdirectory
@@ -84,7 +52,7 @@ function write_docs()
   mkdir -p $SCALAVERSION_DIR
   cp -R ${PYDOC_DIR}/_build/html/* $PYVERSION_DIR
   cp -R ${SCALADOC_DIR}/* $SCALAVERSION_DIR
-  rm -rf $PYDOC_DIR
+  rm -rf $OUTPUT_DIR
 }
 
 function update_links()
@@ -104,9 +72,7 @@ function commit_push()
   git push
 }
 
-define_vars
-build_pydocs
-build_scaladocs
+./admin/gen_docs.sh $OUTPUT_DIR
 get_latest_ghpages
 write_docs
 update_links

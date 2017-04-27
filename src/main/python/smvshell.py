@@ -18,9 +18,12 @@ from smv import CsvAttributes
 
 jvmShellCmd = SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
-df = lambda name: SmvApp.getInstance().runModuleByName(name)
+def df(name, forceRun = False):
+    return SmvApp.getInstance().runModuleByName(name, forceRun)
+
 def ddf(fqn):
     print "ddf has been removed. df now runs modules dynamically. Use df instead of ddf."
+
 def pdf(fqn):
     print "pdf has been removed. Run modules dynamically with df instead."
 

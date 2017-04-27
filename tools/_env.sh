@@ -23,7 +23,19 @@ function split_smv_spark_args()
         shift
     done
 
-    SPARK_ARGS=("$@")
+    # Need to extract the --jars option so we can concatenate those jars with
+    # the APP_JAR when we run the spark-submit. Spark will not accept 2 separate
+    # --jars options
+    while [ $# -ne 0 ]; do
+        if [ "$1" == "--jars" ]; then
+            shift
+            EXTRA_JARS="$1"
+            shift
+        else
+          SPARK_ARGS=("${SPARK_ARGS[@]}" "$1")
+          shift
+        fi
+    done
 }
 
 function find_file_in_dir()
