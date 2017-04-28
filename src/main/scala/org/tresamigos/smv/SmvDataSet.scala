@@ -36,6 +36,7 @@ abstract class SmvDataSet extends FilenamePart {
 
   lazy val app: SmvApp            = SmvApp.app
   private var rddCache: DataFrame = null
+  val metadata = new SmvMetadata
 
   /**
    * The FQN of an SmvDataSet is its classname for Scala implementations.
@@ -197,6 +198,11 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def moduleValidPath(prefix: String = ""): String =
     versionedBasePath(prefix) + ".valid"
 
+  /** Returns the path for the module's reject report output */
+  private[smv] def moduleMetaPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".meta"
+
+
   /** perform the actual run of this module to get the generated SRDD result. */
   private[smv] def doRun(dsDqm: DQMValidator): DataFrame
 
@@ -252,7 +258,7 @@ abstract class SmvDataSet extends FilenamePart {
     val dsDqm     = new DQMValidator(createDsDqm())
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
 
-    if (isEphemeral) {
+    val res = if (isEphemeral) {
       val df = dsDqm.attachTasks(doRun(dsDqm))
       validator.validate(df, false, moduleValidPath()) // no action before this point
       df
@@ -267,6 +273,12 @@ abstract class SmvDataSet extends FilenamePart {
           readPersistedFile()
       }.get
     }
+
+    // Note that because SmvModuleLink overrides this method it will not save metadata
+    metadata.addSchemaMetadata(res)
+    metadata.saveToFile(app.sc, moduleMetaPath())
+
+    res
   }
 
   /** path of published data for a given version. */

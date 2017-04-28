@@ -24,6 +24,7 @@ class SmvMetadata {
   def addSchemaMetadata(df: DataFrame) =
     builder.putMetadataArray("columns", createSchemaMetadataArray(df))
 
+  // Schema metadata is organized in an array to preserve order of columns
   private def createSchemaMetadataArray(df: DataFrame): Array[Metadata] =
     SmvSchema.fromDataFrame(df).entries.map{ entry =>
       val field = entry.field
