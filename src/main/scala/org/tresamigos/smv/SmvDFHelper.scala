@@ -1484,7 +1484,6 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /* Shared private method */
-  //private[smv] def _smvEdd(cols: String*) = df.edd.summary(cols: _*).createReport()
   private[smv] def _smvEdd(cols: String*) = df.edd.summary(cols: _*)
 
   private[smv] def _smvHist(cols: String*) =
