@@ -31,6 +31,10 @@ class T(SmvPyCsvFile):
         return self.defaultCsvWithHeader()
 
 class DfHelperTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=testDataFrameHelper.T']
+
     def test_smvGroupBy(self):
         return "TODO implement"
 

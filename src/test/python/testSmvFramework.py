@@ -47,6 +47,10 @@ class D3(SmvPyCsvStringData):
             FailTotalFixCountPolicy(1))
 
 class SmvFrameworkTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=testSmvFramework.D1:testSmvFramework.D2:testSmvFramework.D3']
+
     def _escapeRegex(self, s):
         import re
         return re.sub(r"([\[\]\(\)])", r"\\\1", s)
@@ -102,7 +106,7 @@ class SmvRunConfigTest1(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s1',
+        return ['--smv-props', 'smv.config.s=s1', 'smv.stages=testSmvFramework.D4',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
@@ -115,7 +119,7 @@ class SmvRunConfigTest2(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s2',
+        return ['--smv-props', 'smv.config.s=s2', 'smv.stages=testSmvFramework.D4',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
