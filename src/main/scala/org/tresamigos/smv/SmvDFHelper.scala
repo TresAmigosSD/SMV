@@ -1273,7 +1273,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * **NOTE** since we have to collect the DF and then call JAVA file operations, the job
    * have to be launched as either local or yar-client mode. Also it is user's responsibility
-   * to make sure that the DF is small enought to fit into memory.
+   * to make sure that the DF is small enough to fit into local file system.
    **/
   def smvExportCsv(path: String, n: Integer = null) {
     val schema = SmvSchema.fromDataFrame(df)
@@ -1284,17 +1284,18 @@ class SmvDFHelper(df: DataFrame) {
 
     val qc        = ca.quotechar
     val headerStr = df.columns.map(_.trim).map(fn => qc + fn + qc).mkString(ca.delimiter.toString)
+    val headerRdd = df.sqlContext.sparkContext.makeRDD(Seq(headerStr))
 
     // issue #312: Spark's collect from a large partition is observed
     // to add duplicate records, hence we use coalesce to reduce the
     // number of partitions before calling collect
-    val bodyStr = if (n == null) {
-      df.map(schema.rowToCsvString(_, ca)).coalesce(4).collect.mkString("\n")
+    val bodyRdd = if (n == null) {
+      df.map(schema.rowToCsvString(_, ca)).coalesce(4)
     } else {
-      df.limit(n).map(schema.rowToCsvString(_, ca)).coalesce(4).collect.mkString("\n")
+      df.limit(n).map(schema.rowToCsvString(_, ca)).coalesce(4)
     }
 
-    SmvReportIO.saveLocalReport(headerStr + "\n" + bodyStr + "\n", path)
+    SmvReportIO.saveLocalReportFromRdd(headerRdd ++ bodyRdd, path)
   }
 
   /**
