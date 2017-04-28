@@ -14,6 +14,7 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.rdd.RDD
 import java.io.{PrintWriter, File}
 
 private[smv] object SmvReportIO {
@@ -25,6 +26,17 @@ private[smv] object SmvReportIO {
     val pw      = new PrintWriter(outFile)
     pw.write(report)
     pw.close
+  }
+
+  def saveLocalReportFromRdd(report: RDD[String], path: String): Unit = {
+    // Since PrintWriter is not serializable, need to create 1 per partition
+    // Simply coalesce to 1 partition and only create 1 file to output
+    report.coalesce(1).foreachPartition{rows => {
+      val outFile = new File(path)
+      val pw      = new PrintWriter(outFile)
+      rows.foreach{r => pw.write(r + "\n")}
+      pw.close
+    }}
   }
 
   def readReport(path: String): String =

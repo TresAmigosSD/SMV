@@ -645,7 +645,7 @@ class DataFrameHelper(object):
                 n (integer): optional. number of records to export. default is all records
 
             Note:
-                Since we have to collect the DF and then call JAVA file operations, the job have to be launched as either local or yar-client mode. Also it is user's responsibility to make sure that the DF is small enought to fit into memory.
+                Since we have to collect the DF and then call JAVA file operations, the job have to be launched as either local or yar-client mode. Also it is user's responsibility to make sure that the DF is small enough to fit into local file system.
 
             Example:
                 >>> df.smvExportCsv("./target/python-test-export-csv.csv")
@@ -786,7 +786,7 @@ class DataFrameHelper(object):
         self._printFile(path, self._peekStr(pos, colRegex))
 
     def _smvEdd(self, *cols):
-        return self._jDfHelper._smvEdd(_to_seq(cols))
+        return self._jDfHelper._smvEdd(_to_seq(cols)).createReport()
 
     def smvEdd(self, *cols):
         """Display EDD summary
@@ -803,7 +803,7 @@ class DataFrameHelper(object):
         self._println(self._smvEdd(*cols))
 
     def _smvHist(self, *cols):
-        return self._jDfHelper._smvHist(_to_seq(cols))
+        return self._jDfHelper._smvHist(_to_seq(cols)).createReport()
 
     def smvHist(self, *cols):
         """Display EDD histogram
@@ -822,7 +822,7 @@ class DataFrameHelper(object):
         self._println(self._smvHist(*cols))
 
     def _smvConcatHist(self, *cols):
-        return self._jPythonHelper.smvConcatHist(self._jdf, smv_copy_array(self._sc, *cols))
+        return self._jPythonHelper.smvConcatHist(self._jdf, smv_copy_array(self._sc, *cols)).createReport()
 
     def smvConcatHist(self, *cols):
         """Display EDD histogram of a group of columns (joint distribution)
@@ -839,7 +839,7 @@ class DataFrameHelper(object):
         self._println(self._smvConcatHist(*cols))
 
     def _smvFreqHist(self, *cols):
-        return self._jDfHelper._smvFreqHist(_to_seq(cols))
+        return self._jDfHelper._smvFreqHist(_to_seq(cols)).createReport()
 
     def smvFreqHist(self, *cols):
         """Print EDD histogram with frequency sorting
@@ -860,7 +860,7 @@ class DataFrameHelper(object):
             res = self._jDfHelper._smvCountHist(_to_seq([keys]), binSize)
         else:
             res = self._jDfHelper._smvCountHist(_to_seq(keys), binSize)
-        return res
+        return res.createReport()
 
     def smvCountHist(self, keys, binSize):
         """Print the distribution of the value frequency on specific columns
@@ -882,7 +882,7 @@ class DataFrameHelper(object):
             assert type(elem) is tuple, "smvBinHist takes a list of tuple(string, double) as paraeter"
             assert len(elem) == 2, "smvBinHist takes a list of tuple(string, double) as parameter"
         insureDouble = map(lambda t: (t[0], t[1] * 1.0), colWithBin)
-        return self._jPythonHelper.smvBinHist(self._jdf, smv_copy_array(self._sc, *insureDouble))
+        return self._jPythonHelper.smvBinHist(self._jdf, smv_copy_array(self._sc, *insureDouble)).createReport()
 
     def smvBinHist(self, *colWithBin):
         """Print distributions on numerical columns with applying the specified bin size

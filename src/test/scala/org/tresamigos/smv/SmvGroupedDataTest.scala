@@ -108,7 +108,7 @@ class SmvGroupedDataTest extends SmvTestUtil {
 
   test("GroupedData with smvHist") {
     val df  = dfFrom("k:String;t:String", "1,a;1,b;2,a")
-    val res = df.smvGroupBy("k")._smvHist("t")
+    val res = df.smvGroupBy("k")._smvHist("t").createReport()
 
     assert(res === """Group 1:
 Histogram of t: String sort by Key
@@ -125,7 +125,7 @@ a                            1  100.00%           1  100.00%
 
   test("GroupedData with smvConcatHist") {
     val df  = dfFrom("k:String;t:String;i:Integer", "1,a,30;1,b,20;2,a,20")
-    val res = df.smvGroupBy("k")._smvConcatHist(Seq("t", "i"))
+    val res = df.smvGroupBy("k")._smvConcatHist(Seq("t", "i")).createReport()
 
     assert(res === """Group 1:
 Histogram of t_i: String sort by Key
@@ -142,7 +142,7 @@ a_20                         1  100.00%           1  100.00%
 
   test("GroupedData with smvConcatHist with multiple key sequences") {
     val df  = dfFrom("k:String;t:String;t2:String", "1,a,b;1,b,b;2,a,b")
-    val res = df.smvGroupBy("k")._smvConcatHist(Seq("t2", "t"), Seq("t"))
+    val res = df.smvGroupBy("k")._smvConcatHist(Seq("t2", "t"), Seq("t")).createReport()
 
     assert(res === """Group 1:
 Histogram of t2_t: String sort by Key
