@@ -1273,7 +1273,7 @@ class SmvDFHelper(df: DataFrame) {
    *
    * **NOTE** since we have to collect the DF and then call JAVA file operations, the job
    * have to be launched as either local or yar-client mode. Also it is user's responsibility
-   * to make sure that the DF is small enought to fit into memory.
+   * to make sure that the DF is small enough to fit into local file system.
    **/
   def smvExportCsv(path: String, n: Integer = null) {
     val schema = SmvSchema.fromDataFrame(df)
@@ -1284,17 +1284,15 @@ class SmvDFHelper(df: DataFrame) {
 
     val qc        = ca.quotechar
     val headerStr = df.columns.map(_.trim).map(fn => qc + fn + qc).mkString(ca.delimiter.toString)
+    val headerRdd = df.sqlContext.sparkContext.makeRDD(Seq(headerStr))
 
-    // issue #312: Spark's collect from a large partition is observed
-    // to add duplicate records, hence we use coalesce to reduce the
-    // number of partitions before calling collect
-    val bodyStr = if (n == null) {
-      df.map(schema.rowToCsvString(_, ca)).coalesce(4).collect.mkString("\n")
+    val bodyRdd = if (n == null) {
+      df.map(schema.rowToCsvString(_, ca))
     } else {
-      df.limit(n).map(schema.rowToCsvString(_, ca)).coalesce(4).collect.mkString("\n")
+      df.limit(n).map(schema.rowToCsvString(_, ca))
     }
 
-    SmvReportIO.saveLocalReport(headerStr + "\n" + bodyStr + "\n", path)
+    SmvReportIO.saveLocalReportFromRdd(headerRdd ++ bodyRdd, path)
   }
 
   /**
@@ -1486,10 +1484,10 @@ class SmvDFHelper(df: DataFrame) {
   }
 
   /* Shared private method */
-  private[smv] def _smvEdd(cols: String*) = df.edd.summary(cols: _*).createReport()
+  private[smv] def _smvEdd(cols: String*) = df.edd.summary(cols: _*)
 
   private[smv] def _smvHist(cols: String*) =
-    df.edd.histogram(cols.head, cols.tail: _*).createReport()
+    df.edd.histogram(cols.head, cols.tail: _*)
 
   private[smv] def _smvConcatHist(colSeqs: Seq[String]*) = {
     import df.sqlContext.implicits._
@@ -1513,19 +1511,19 @@ class SmvDFHelper(df: DataFrame) {
     } else {
       df.smvSelectPlus(exprs: _*)
     }
-    dfWithKey.edd.histogram(colNames.head, colNames.tail: _*).createReport()
+    dfWithKey.edd.histogram(colNames.head, colNames.tail: _*)
   }
 
   private[smv] def _smvFreqHist(cols: String*) = {
     val hists = cols.map { c =>
       Hist(c, sortByFreq = true)
     }
-    df.edd.histogram(hists: _*).createReport()
+    df.edd.histogram(hists: _*)
   }
 
   private[smv] def _smvBinHist(colWithBin: (String, Double)*) = {
     val hists = colWithBin.map { case (c, b) => Hist(c, binSize = b) }
-    df.edd.histogram(hists: _*).createReport()
+    df.edd.histogram(hists: _*)
   }
 
   private[smv] def _smvCountHist(keys: Seq[String], _binSize: Int) = {
@@ -1534,7 +1532,6 @@ class SmvDFHelper(df: DataFrame) {
       .agg(count(lit(1)) as colName)
       .edd
       .histogram(Hist(colName, binSize = _binSize))
-      .createReport()
   }
 
   /**
@@ -1550,57 +1547,57 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    * Perform EDD summary on specified columns
    **/
-  def smvEdd(cols: String*) = println(_smvEdd(cols: _*))
+  def smvEdd(cols: String*) = println(_smvEdd(cols: _*).createReport())
 
   /**
    * Save Edd summary
    **/
   def smvEddSave(cols: String*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvEdd(cols: _*), path)
+    SmvReportIO.saveLocalReport(_smvEdd(cols: _*).createReport(), path)
 
   /**
    * Print EDD histogram (each col's histogram prints separately)
    **/
-  def smvHist(cols: String*) = println(_smvHist(cols: _*))
+  def smvHist(cols: String*) = println(_smvHist(cols: _*).createReport())
 
   /**
    * Save Edd histogram
    **/
   def smvHistSave(cols: String*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvHist(cols: _*), path)
+    SmvReportIO.saveLocalReport(_smvHist(cols: _*).createReport(), path)
 
   /**
    * Print EDD histogram of a group of cols (joint distribution)
    **/
-  def smvConcatHist(cols: Seq[String]*) = println(_smvConcatHist(cols: _*))
+  def smvConcatHist(cols: Seq[String]*) = println(_smvConcatHist(cols: _*).createReport())
 
   /**
    * Save Edd histogram of a group of cols (joint distribution)
    **/
   def smvConcatHistSave(cols: Seq[String]*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*), path)
+    SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*).createReport(), path)
 
   /**
    * Print EDD histogram with frequency sorting
    **/
-  def smvFreqHist(cols: String*) = println(_smvFreqHist(cols: _*))
+  def smvFreqHist(cols: String*) = println(_smvFreqHist(cols: _*).createReport())
 
   /**
    * Save Edd histogram with frequency sorting
    **/
   def smvFreqHistSave(cols: String*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvFreqHist(cols: _*), path)
+    SmvReportIO.saveLocalReport(_smvFreqHist(cols: _*).createReport(), path)
 
   /**
    * Print Edd histogram with bins
    **/
-  def smvBinHist(colWithBin: (String, Double)*) = println(_smvBinHist(colWithBin: _*))
+  def smvBinHist(colWithBin: (String, Double)*) = println(_smvBinHist(colWithBin: _*).createReport())
 
   /**
    * Save Edd histogram with bins
    **/
   def smvBinHistSave(colWithBin: (String, Double)*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvBinHist(colWithBin: _*), path)
+    SmvReportIO.saveLocalReport(_smvBinHist(colWithBin: _*).createReport(), path)
 
   /**
    * Print Edd histogram on count of records for a group of given keys
@@ -1625,7 +1622,7 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    */
   def smvCountHist(keys: Seq[String], binSize: Int = 1): Unit =
-    println(_smvCountHist(keys, binSize))
+    println(_smvCountHist(keys, binSize).createReport())
 
   def smvCountHist(key: String): Unit = smvCountHist(Seq(key), 1)
 
@@ -1633,7 +1630,7 @@ class SmvDFHelper(df: DataFrame) {
    * Save Edd histogram on count of records for a group of given keys
    **/
   def smvCountHistSave(keys: Seq[String], binSize: Int = 1)(path: String): Unit =
-    SmvReportIO.saveLocalReport(_smvCountHist(keys, binSize), path)
+    SmvReportIO.saveLocalReport(_smvCountHist(keys, binSize).createReport(), path)
 
   def smvCountHistSave(key: String)(path: String): Unit = smvCountHistSave(Seq(key), 1)(path)
 
