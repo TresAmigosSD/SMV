@@ -645,7 +645,7 @@ class DataFrameHelper(object):
                 n (integer): optional. number of records to export. default is all records
 
             Note:
-                Since we have to collect the DF and then call JAVA file operations, the job have to be launched as either local or yar-client mode. Also it is user's responsibility to make sure that the DF is small enought to fit into memory.
+                Since we have to collect the DF and then call JAVA file operations, the job have to be launched as either local or yar-client mode. Also it is user's responsibility to make sure that the DF is small enough to fit into local file system.
 
             Example:
                 >>> df.smvExportCsv("./target/python-test-export-csv.csv")
