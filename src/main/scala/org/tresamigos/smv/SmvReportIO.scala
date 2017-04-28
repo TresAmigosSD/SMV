@@ -29,6 +29,8 @@ private[smv] object SmvReportIO {
   }
 
   def saveLocalReportFromRdd(report: RDD[String], path: String): Unit = {
+    // Since PrintWriter is not serializable, need to create 1 per partition
+    // Simply coalesce to 1 partition and only create 1 file to output
     report.coalesce(1).foreachPartition{rows => {
       val outFile = new File(path)
       val pw      = new PrintWriter(outFile)
