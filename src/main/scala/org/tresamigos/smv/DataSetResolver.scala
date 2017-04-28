@@ -38,6 +38,12 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
    */
   def loadDataSet(urns: URN*): Seq[SmvDataSet] =
     urns map { urn =>
+
+      val found = smvConfig.stageNames.map( stage => urn.fqn.startsWith(stage) ).foldLeft(false)(_ || _)
+      if (!found) {
+        throw new SmvRuntimeException(s"""Cannot find module with FQN [${urn.fqn}]. Is the stage name specified in the config?""")
+      }
+
       urn2res.get(urn).getOrElse {
         val ds = urn match {
           case lUrn: LinkURN =>
