@@ -1286,13 +1286,10 @@ class SmvDFHelper(df: DataFrame) {
     val headerStr = df.columns.map(_.trim).map(fn => qc + fn + qc).mkString(ca.delimiter.toString)
     val headerRdd = df.sqlContext.sparkContext.makeRDD(Seq(headerStr))
 
-    // issue #312: Spark's collect from a large partition is observed
-    // to add duplicate records, hence we use coalesce to reduce the
-    // number of partitions before calling collect
     val bodyRdd = if (n == null) {
-      df.map(schema.rowToCsvString(_, ca)).coalesce(4)
+      df.map(schema.rowToCsvString(_, ca))
     } else {
-      df.limit(n).map(schema.rowToCsvString(_, ca)).coalesce(4)
+      df.limit(n).map(schema.rowToCsvString(_, ca))
     }
 
     SmvReportIO.saveLocalReportFromRdd(headerRdd ++ bodyRdd, path)
