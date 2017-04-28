@@ -1,0 +1,23 @@
+@startuml
+
+title Smv Metadata utility
+
+hide empty methods
+hide empty fields
+hide circle
+
+package Scala {
+  class SmvDataSet
+
+  class SmvMetadata {
+    builder: MetadataBuilder
+    saveToFile(path: String)
+    addSchema(df: DataFrame)
+    addValidation(results: Seq[ValidationResult])
+    addTrace(???)
+  }
+
+  SmvDataSet --* SmvMetadata
+}
+
+@enduml
