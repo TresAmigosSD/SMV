@@ -222,6 +222,9 @@ abstract class SmvDataSet extends FilenamePart {
     SmvHDFS.deleteFile(metaPath)
   }
 
+  private[smv] def deleteMetaOutput =
+    SmvHDFS.deleteFile(moduleMetaPath())
+
   /**
    * Returns current valid outputs produced by this module.
    */
@@ -255,9 +258,8 @@ abstract class SmvDataSet extends FilenamePart {
       !isPersisted
   }
 
-  private[smv] def getMetadata: SmvMetadata = {
+  private[smv] def getMetadata: SmvMetadata =
     createMetadata(None)
-  }
 
   /**
    * Create SmvMetadata object for this SmvDataSet. If a DataFrame is provided,
@@ -274,9 +276,11 @@ abstract class SmvDataSet extends FilenamePart {
     val dsDqm     = new DQMValidator(createDsDqm())
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
 
-    val res = if (isEphemeral) {
+    if (isEphemeral) {
       val df = dsDqm.attachTasks(doRun(dsDqm))
       validator.validate(df, false, moduleValidPath()) // no action before this point
+      deleteMetaOutput
+      createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
       df
     } else {
       readPersistedFile().recoverWith {
@@ -286,14 +290,10 @@ abstract class SmvDataSet extends FilenamePart {
           deleteOutputs
           persist(df)
           validator.validate(df, true, moduleValidPath()) // has already had action (from persist)
+          createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
           readPersistedFile()
       }.get
     }
-
-    // Note that because SmvModuleLink overrides this method it will not save metadata
-    createMetadata(Some(res)).saveToFile(app.sc, moduleMetaPath())
-
-    res
   }
 
   /** path of published data for a given version. */
