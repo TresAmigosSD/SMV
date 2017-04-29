@@ -212,6 +212,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   /** Output directory for files */
   def outputDir: String = j_smvApp.smvConfig.outputDir
 
+  def stages: Array[String] = j_smvApp.stages.toArray
+
   /** Used to create small dataframes for testing */
   def dfFrom(schema: String, data: String): DataFrame =
     j_smvApp.createDF(schema, data)
@@ -219,8 +221,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(urn: String): DataFrame =
-    j_smvApp.runModule(URN(urn))
+  def runModule(urn: String, forceRun: Boolean): DataFrame =
+    j_smvApp.runModule(URN(urn), forceRun)
 
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvPyOutput tables

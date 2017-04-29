@@ -35,12 +35,12 @@ SMV installing requires either curl or wget to be available.  **Note:** The inst
 
 ## Install SMV using curl
 ```bash
-$ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.5
+$ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.7
 ```
 
 ## Install SMV using wget
 ```bash
-$ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.5
+$ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.5.2.7
 ```
 
 ## Updating paths.
@@ -52,3 +52,10 @@ To verify that SMV was installed correctly, run the following command:
 $ type smv-pyrun
 ```
 The above should point to the `smv-pyrun` script in the SMV tools directory.  If it can not find `smv-pyrun` ensure that the profile rc file was sourced by either logging out / logging in or sourcing the appropriate profile file.
+
+# Python packages
+SMV depends on some third party python packages (e.g. jupyter, graphviz, etc).  To install these packages, use pip as follows:
+```
+$ dirname $(dirname $(type -p smv-pyrun))  # this will show the SMV home directory.
+$ pip install -r _SMV_HOME_/docker/smv/requirements.txt
+```

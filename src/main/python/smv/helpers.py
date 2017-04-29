@@ -205,8 +205,9 @@ class SmvMultiJoin(object):
         return DataFrame(self.mj.doJoin(dropextra), self.sqlContext)
 
 def _getUnboundMethod(helperCls, methodName):
-    def method(self, *args):
-        return getattr(helperCls(self), methodName)(*args)
+    def method(self, *args, **kwargs):
+        return getattr(helperCls(self), methodName)(*args, **kwargs)
+    method.__name__ = methodName
     return method
 
 def _helpCls(receiverCls, helperCls):
@@ -340,6 +341,47 @@ class DataFrameHelper(object):
         """
         jdf = self._jPythonHelper.smvJoinMultipleByKey(self._jdf, smv_copy_array(self._sc, *keys), joinType)
         return SmvMultiJoin(self._sql_ctx, jdf)
+
+    def topNValsByFreq(self, n, col):
+        """Get top N most frequent values in Column c
+
+            Args:
+                n (int): maximum number of values
+                col (Column): which column to get values from
+
+            Examples:
+                >>> df.topNValsByFreq(1, col("cid"))
+                will return the single most frequent value in the cid column
+
+            Returns:
+                (list(object)): most frequent values (type depends on schema)
+        """
+        topNdf = DataFrame(self._jDfHelper._topNValsByFreq(n, col._jc), self._sql_ctx)
+        return map(lambda r: r.asDict().values()[0], topNdf.collect())
+
+    def smvSkewJoinByKey(self, other, joinType, skewVals, key):
+        """Join that leverages broadcast (map-side) join of rows with skewed (high-frequency) values
+
+            Rows keyed by skewed values are joined via broadcast join while remaining
+            rows are joined without broadcast join. Occurrences of skewVals in df2 should be
+            infrequent enough that the filtered table is small enough for a broadcast join.
+            result is the union of the join results.
+
+            Args:
+                other (DataFrame): DataFrame to join with
+                joinType (str): name of type of join (e.g. "inner")
+                skewVals (list(object)): list of skewed values
+                key (str): key on which to join (also the Column with the skewed values)
+
+            Example:
+                {{{
+                df.smvSkewJoinByKey(df2, SmvJoinType.Inner, Seq("9999999"), "cid")
+                }}}
+                will broadcast join the rows of df1 and df2 where col("cid") == "9999999"
+                and join the remaining rows of df1 and df2 without broadcast join.
+        """
+        jdf = self._jDfHelper.smvSkewJoinByKey(other._jdf, joinType, _to_seq(skewVals), key)
+        return DataFrame(jdf, self._sql_ctx)
 
     def smvSelectMinus(self, *cols):
         """Remove one or more columns from current DataFrame
@@ -603,7 +645,7 @@ class DataFrameHelper(object):
                 n (integer): optional. number of records to export. default is all records
 
             Note:
-                Since we have to collect the DF and then call JAVA file operations, the job have to be launched as either local or yar-client mode. Also it is user's responsibility to make sure that the DF is small enought to fit into memory.
+                Since we have to collect the DF and then call JAVA file operations, the job have to be launched as either local or yar-client mode. Also it is user's responsibility to make sure that the DF is small enough to fit into local file system.
 
             Example:
                 >>> df.smvExportCsv("./target/python-test-export-csv.csv")
@@ -744,7 +786,7 @@ class DataFrameHelper(object):
         self._printFile(path, self._peekStr(pos, colRegex))
 
     def _smvEdd(self, *cols):
-        return self._jDfHelper._smvEdd(_to_seq(cols))
+        return self._jDfHelper._smvEdd(_to_seq(cols)).createReport()
 
     def smvEdd(self, *cols):
         """Display EDD summary
@@ -761,7 +803,7 @@ class DataFrameHelper(object):
         self._println(self._smvEdd(*cols))
 
     def _smvHist(self, *cols):
-        return self._jDfHelper._smvHist(_to_seq(cols))
+        return self._jDfHelper._smvHist(_to_seq(cols)).createReport()
 
     def smvHist(self, *cols):
         """Display EDD histogram
@@ -780,7 +822,7 @@ class DataFrameHelper(object):
         self._println(self._smvHist(*cols))
 
     def _smvConcatHist(self, *cols):
-        return self._jPythonHelper.smvConcatHist(self._jdf, smv_copy_array(self._sc, *cols))
+        return self._jPythonHelper.smvConcatHist(self._jdf, smv_copy_array(self._sc, *cols)).createReport()
 
     def smvConcatHist(self, *cols):
         """Display EDD histogram of a group of columns (joint distribution)
@@ -797,7 +839,7 @@ class DataFrameHelper(object):
         self._println(self._smvConcatHist(*cols))
 
     def _smvFreqHist(self, *cols):
-        return self._jDfHelper._smvFreqHist(_to_seq(cols))
+        return self._jDfHelper._smvFreqHist(_to_seq(cols)).createReport()
 
     def smvFreqHist(self, *cols):
         """Print EDD histogram with frequency sorting
@@ -818,7 +860,7 @@ class DataFrameHelper(object):
             res = self._jDfHelper._smvCountHist(_to_seq([keys]), binSize)
         else:
             res = self._jDfHelper._smvCountHist(_to_seq(keys), binSize)
-        return res
+        return res.createReport()
 
     def smvCountHist(self, keys, binSize):
         """Print the distribution of the value frequency on specific columns
@@ -840,7 +882,7 @@ class DataFrameHelper(object):
             assert type(elem) is tuple, "smvBinHist takes a list of tuple(string, double) as paraeter"
             assert len(elem) == 2, "smvBinHist takes a list of tuple(string, double) as parameter"
         insureDouble = map(lambda t: (t[0], t[1] * 1.0), colWithBin)
-        return self._jPythonHelper.smvBinHist(self._jdf, smv_copy_array(self._sc, *insureDouble))
+        return self._jPythonHelper.smvBinHist(self._jdf, smv_copy_array(self._sc, *insureDouble)).createReport()
 
     def smvBinHist(self, *colWithBin):
         """Print distributions on numerical columns with applying the specified bin size

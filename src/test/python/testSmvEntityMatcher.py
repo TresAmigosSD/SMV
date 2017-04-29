@@ -13,7 +13,7 @@
 
 import unittest
 
-from smvbasetest import SmvBaseTest
+from test_support.smvbasetest import SmvBaseTest
 
 from smv.functions import normlevenshtein
 from smv.matcher import *

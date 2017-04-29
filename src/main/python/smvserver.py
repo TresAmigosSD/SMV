@@ -850,18 +850,28 @@ def get_graph_json():
     return jsonify(graph=res)
 
 
+# Wrapper so that other python scripts can import and then call
+# smvserver.main()
+class Main(object):
+    def __init__(self):
+        # TODO: should be done by SmvApp (python) automatically.
+        codePath = os.path.abspath("src/main/python")
+        sys.path.insert(1, codePath)
+
+        # init Smv context
+        smvApp = SmvApp.createInstance([])
+
+        # start server
+        host = os.environ.get('SMV_HOST', '0.0.0.0')
+        port = os.environ.get('SMV_PORT', '5000')
+        project_dir = os.environ.get('PROJECT_DIR', './')
+
+        # to reduce complexity in SmvApp, keep the rest server single-threaded
+        app.run(host=host, port=int(port), threaded=False, processes=1)
+
+main = Main
+# temporary till module source control is implemented
+module_file_map = {}
+
 if __name__ == "__main__":
-    # TODO: should be done by SmvApp (python) automatically.
-    codePath = os.path.abspath("src/main/python")
-    sys.path.insert(1, codePath)
-
-    # init Smv context
-    smvApp = SmvApp.createInstance([])
-
-    module_file_map = {}
-
-    # start server
-    host = os.environ.get('SMV_HOST', '0.0.0.0')
-    port = os.environ.get('SMV_PORT', '5000')
-    project_dir = os.environ.get('PROJECT_DIR', './')
-    app.run(host=host, port=int(port))
+    main()

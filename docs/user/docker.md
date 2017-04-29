@@ -41,6 +41,19 @@ SampleProj
 ```
 Note that SampleProj now exists in host ~/MyProjects dir.
 
+## Changing container user id.
+On linux systems, if the host user id is not 1000 then the user may run into permission issues writing to the mounted directory (see above section).  For example, if the host user id is 501 and the mounted directory is owned by host user 501, then the container smv user (id 1000 by default) will not be able to write to the mounted directory unless the directory write permission is world writable (not likely).
+To get around the issue, the user is able to supply the user id of the smv user in the container using the `-u` flag.
+```
+$ docker run -it --rm -v ~/MyProjects:/projects tresamigos/smv -u 501
+```
+Or to make it work with whatever the user id is:
+```
+$ docker run -it --rm -v ~/MyProjects:/projects tresamigos/smv -u $(id -u)
+```
+Note that `$(id -u)` returns the current user id on the host.
+With the container smv user id set to be the same as the user id on the host, the smv user inside the container should be able to write to the mounted directory.
+
 ## Updating your SMV image
 
 If you want to update to the most recent Docker image of SMV, use

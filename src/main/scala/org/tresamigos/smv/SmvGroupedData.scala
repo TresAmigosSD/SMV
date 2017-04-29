@@ -266,7 +266,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val pivotRes = SmvGroupedData(pivot.createSrdd(dfp, keys), keys)
 
     // collapse each group into 1 row
-    val cols = pivot.outCols map (n => smvFirst($"$n", true) as n)
+    val cols = pivot.outCols map (n => smvfuncs.smvFirst($"$n", true) as n)
     pivotRes.agg(cols(0), cols.tail: _*)
   }
 
@@ -834,7 +834,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val keyColsStr = keys.map { k =>
       df(k).cast("string")
     }
-    val keyDf = df.selectPlusPrefix(smvStrCat(keyColsStr: _*) as "_smvRePartition_key_")
+    val keyDf = df.selectPlusPrefix(smvfuncs.smvStrCat(keyColsStr: _*) as "_smvRePartition_key_")
 
     val resRdd = keyDf.rdd
       .keyBy({ r =>
@@ -882,7 +882,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    */
   def edd(): Edd = new Edd(df, keys)
 
-  private[smv] def _smvHist(cols: String*) = edd.histogram(cols.head, cols.tail: _*).createReport()
+  private[smv] def _smvHist(cols: String*) = edd.histogram(cols.head, cols.tail: _*)
 
   private[smv] def _smvConcatHist(colSeqs: Seq[String]*) = {
     import df.sqlContext.implicits._
@@ -897,7 +897,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       }
       .map {
         case (cols, name) =>
-          smvStrCat("_", cols.map { c =>
+          smvfuncs.smvStrCat("_", cols.map { c =>
             $"$c"
           }: _*).as(name)
       }
@@ -912,28 +912,27 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       }: _*)
       .edd
       .histogram(colNames.head, colNames.tail: _*)
-      .createReport()
   }
 
   /**
    * Print EDD histogram (each col's histogram prints separately)
   **/
-  def smvHist(cols: String*) = println(_smvHist(cols: _*))
+  def smvHist(cols: String*) = println(_smvHist(cols: _*).createReport())
 
   /**
    * Save Edd histogram
   **/
   def smvHistSave(cols: String*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvHist(cols: _*), path)
+    SmvReportIO.saveLocalReport(_smvHist(cols: _*).createReport(), path)
 
   /**
    * Print EDD histogram of a group of cols (joint distribution)
    **/
-  def smvConcatHist(cols: Seq[String]*) = println(_smvConcatHist(cols: _*))
+  def smvConcatHist(cols: Seq[String]*) = println(_smvConcatHist(cols: _*).createReport())
 
   /**
    * Save Edd histogram of a group of cols (joint distribution)
    **/
   def smvConcatHistSave(cols: Seq[String]*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*), path)
+    SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*).createReport(), path)
 }

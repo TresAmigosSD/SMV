@@ -2,12 +2,6 @@
 # Release the current version of SMV.  This will use the tresamigos:smv
 # docker container to maintain release consistency.
 
-# TODO: create github release automatically.
-# TODO: create /tmp/vx.x.x.x dir for logs and assets
-# TODO: add "info" func to put message to stdout and logs
-# TODO: redirect output of intermediate results to logs instead of stdout.
-# TODO: verify that a current tag for the version does not alrady exist.
-
 set -e
 PROG_NAME=$(basename "$0")
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
@@ -32,7 +26,7 @@ function error()
 
 function usage()
 {
-  echo "USAGE: ${PROG_NAME} -u github_user:github_token smv_version_to_release(a.b.c.d)"
+  echo "USAGE: ${PROG_NAME} -g github_user:github_token -d docker_user docker_password smv_version_to_release(a.b.c.d)"
   echo "See (https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) for auth tokens"
   exit $1
 }
@@ -45,25 +39,30 @@ function create_logdir()
   info "logs/assets can be found in: ${LOGDIR}"
 }
 
-function clean_logdir()
-{
-  info "cleaning log directory"
-  rm -rf "${LOGDIR}"
-}
-
 function parse_args()
 {
   info "parsing command line args"
   [ "$1" = "-h" ] && usage 0
-  [ $# -ne 3 ] && echo "ERROR: invalid number of arguments" && usage 1
-  [ "$1" != "-u" ] && echo "ERROR: must supply github user name/token" && usage 1
+  [ $# -ne 6 ] && echo "ERROR: invalid number of arguments" && usage 1
+  [ "$1" != "-g" ] && echo "ERROR: must supply github user name/token" && usage 1
+  [ "$3" != "-d" ] && echo "ERROR: must supply dockerhub user name/password" && usage 1
 
   GITHUB_USER_TOKEN="$2"
-  SMV_VERSION="$3"
+  DOCKERHUB_USER_NAME="$4"
+  DOCKERHUB_USER_PASSWORD="$5"
+  SMV_VERSION="$6"
   validate_version "$SMV_VERSION"
 
   # version specific vars
   TGZ_IMAGE="${LOGDIR}/smv_${SMV_VERSION}.tgz"
+}
+
+function check_for_existing_tag()
+{
+  info "checking for existing tag"
+  if [ $(git tag -l "v${SMV_VERSION}" | wc -l) -eq 1 ]; then
+    error version ${SMV_VERSION} already exists.
+  fi
 }
 
 function get_prev_smv_version()
@@ -89,8 +88,12 @@ function build_smv()
   info "Building SMV"
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
   docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:latest \
-    sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 clean assembly alltest" \
+    -u $(id -u)\
+    sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 clean assembly" \
     >> ${LOGFILE} 2>&1 || error "SMV build failed"
+
+  info "Testing SMV"
+  sbt alltest >> ${LOGFILE} 2>&1 || error "SMV Test failed"
 }
 
 # find the gnu tar on this system.
@@ -126,7 +129,7 @@ function find_release_msg_file()
 
 function check_git_repo()
 {
-  echo "--- checking repo for modified files"
+  info "checking repo for modified files"
   cd "${SMV_DIR}"
   if ! git diff-index --quiet HEAD --; then
     error "SMV git repo has locally modified files"
@@ -143,6 +146,12 @@ function update_version()
   find docs/user -name '*.md' \
     -exec perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" \{\} +
 
+  # update version in README file
+  perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" README.md
+
+  # update version in Dockerfile
+  perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" docker/smv/Dockerfile
+
   # add the smv version to the SMV directory.
   echo ${SMV_VERSION} > "${SMV_DIR}/.smv_version"
 
@@ -155,8 +164,9 @@ function tag_release()
   local tag=v"$SMV_VERSION"
   info "tagging release as $tag"
   cd "${SMV_DIR}"
-  git tag -a $tag -m "SMV Release $SMV_VERSION on `date +%m/%d/%Y`"
-  git push origin $tag
+  git tag -a $tag -m "SMV Release $SMV_VERSION on `date +%m/%d/%Y`" \
+    >> ${LOGFILE} 2>&1 || error "git tag failed"
+  git push origin $tag >> ${LOGFILE} 2>&1 || error "git tag push failed"
 }
 
 function create_tar()
@@ -221,10 +231,34 @@ function attach_tar_to_github_release()
 
 }
 
+function create_docker_image()
+{
+  local tag=v"$SMV_VERSION"
+
+  cd "${SMV_DIR}/docker/smv"
+
+  info "logging in to docker hub"
+  docker login -u ${DOCKERHUB_USER_NAME} -p ${DOCKERHUB_USER_PASSWORD}
+
+  info "building docker image"
+  docker build -t docker_build . >> ${LOGFILE} 2>&1 || error "docker build failed"
+
+  info "pushing new tagged docker image (${tag})"
+  docker tag docker_build tresamigos/smv:${tag} >> ${LOGFILE} 2>&1 || error "docker tag failed"
+  docker push tresamigos/smv:${tag} >> ${LOGFILE} 2>&1 || error "docker push failed"
+
+  # TODO: make this an option.
+  info "pushing docker image as latest"
+  docker tag docker_build tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker tag failed"
+  docker push tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker push failed"
+}
+
 
 # ---- MAIN ----
 create_logdir
+info "Start Release on: $(date)"
 parse_args "$@"
+check_for_existing_tag
 get_prev_smv_version
 find_gnu_tar
 find_release_msg_file
@@ -235,4 +269,5 @@ tag_release
 create_tar
 create_github_release
 attach_tar_to_github_release
-clean_logdir
+create_docker_image
+info "Finish Release on: $(date)"

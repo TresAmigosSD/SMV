@@ -66,7 +66,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    **/
   def createDF(schemaStr: String, data: String = null, isPersistValidateResult: Boolean = false) = {
     val smvCF = SmvCsvStringData(schemaStr, data, isPersistValidateResult)
-    smvCF.rdd
+    smvCF.rdd()
   }
 
   lazy val allDataSets = dsm.allDataSets
@@ -79,6 +79,15 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   private[smv] def purgeOldOutputFiles() = {
     if (smvConfig.cmdLine.purgeOldOutput())
       SmvHDFS.purgeDirectory(smvConfig.outputDir, validFilesInOutputDir())
+  }
+
+  /**
+   * Remove all current files (if any) in the output directory if --force-run-all
+   * argument was specified at the commandline
+   */
+  private[smv] def purgeCurrentOutputFiles() = {
+    if (smvConfig.cmdLine.forceRunAll())
+      deletePersistedResults(modulesToRunWithAncestors)
   }
 
   /**
@@ -99,14 +108,12 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
-   * delete the current output files of the modules to run (and not all the intermediate modules).
+   * For each module, delete its persisted csv and schema (if any) with the
+   * modules current hash
    */
-  private def deleteOutputModules() = {
-    // TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
-    modulesToRun foreach { m =>
-      m.deleteOutputs()
-    }
-  }
+
+  private[smv] def deletePersistedResults(dsList: Seq[SmvDataSet]) =
+    dsList foreach (_.deleteOutputs)
 
   /** Returns the app-level dependency graph as a dot string */
   def dependencyGraphDotString(stageNames: Seq[String] = stages): String =
@@ -184,7 +191,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
         case m: SmvOutput => Some(m)
         case _            => None
       } foreach (
-          m => util.DataSet.exportDataFrameToHive(sqlContext, m.rdd, m.tableName)
+          m => util.DataSet.exportDataFrameToHive(sqlContext, m.rdd(), m.tableName, m.publishHiveSql)
       )
     }
 
@@ -211,17 +218,32 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * @return true if modules were generated, otherwise false.
    */
   private def generateOutputModules(): Boolean = {
-    modulesToRun foreach (_.rdd)
+    modulesToRun foreach (_.rdd())
     modulesToRun.nonEmpty
   }
 
-  /** Run a module by its fully qualified name in its respective language environment */
-  def runModule(urn: URN): DataFrame = dsm.load(urn).head.rdd
+  /** Run a module by its fully qualified name in its respective language environment
+   *  If force argument is true, any existing persisted results will be deleted
+   *  and the module's DataFrame cache will be ignored, forcing the module to run again.
+   */
+  def runModule(urn: URN, forceRun: Boolean = false): DataFrame = {
+    val ds = dsm.load(urn).head
+    if (forceRun)
+      deletePersistedResults(Seq(ds))
+    ds.rdd(forceRun)
+  }
 
   /**
-   * Run a module given it's name.  This is mostly used by SparkR to resolve modules.
+   * Run a module based on the end of its name (must be unique). If force argument
+   * is true, any existing persisted results will be deleted and the module's
+   *  DataFrame cache will be ignored, forcing the module to run again.
    */
-  def runModuleByName(modName: String): DataFrame = dsm.inferDS(modName).head.rdd
+  def runModuleByName(modName: String, forceRun: Boolean = false): DataFrame = {
+    val ds = dsm.inferDS(modName).head
+    if (forceRun)
+      deletePersistedResults(Seq(ds))
+    ds.rdd(forceRun)
+  }
 
   /**
    * sequence of SmvModules to run based on the command line arguments.
@@ -232,13 +254,19 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     val empty   = Some(Seq.empty[String])
 
     val modPartialNames = cmdline.modsToRun.orElse(empty)()
-    val directMods      = dsm.inferDS(modPartialNames: _*) map (_.asInstanceOf[SmvDataSet])
     val stageNames      = cmdline.stagesToRun.orElse(empty)() map (dsm.inferStageFullName(_))
-    val stageMods       = dsm.outputModulesForStage(stageNames: _*)
-    val appMods         = if (cmdline.runAllApp()) dsm.allOutputModules else Seq.empty[SmvDataSet]
-    (directMods ++ stageMods ++ appMods).distinct
+
+    dsm.modulesToRun(modPartialNames, stageNames, cmdline.runAllApp())
   }
 
+  /**
+   * Sequence of SmvModules to run + all of their ancestors
+   */
+  lazy val modulesToRunWithAncestors: Seq[SmvDataSet] = {
+    val ancestors = modulesToRun flatMap (_.ancestors)
+    (modulesToRun ++ ancestors).distinct
+  }
+  
   /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.
@@ -253,6 +281,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
       println("----------------------")
     }
 
+    purgeCurrentOutputFiles()
     purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)

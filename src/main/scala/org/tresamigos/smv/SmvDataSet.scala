@@ -129,6 +129,16 @@ abstract class SmvDataSet extends FilenamePart {
    */
   def isEphemeral: Boolean
 
+  /**
+   * An optional sql query to run to publish the results of this module when the
+   * --publish-hive command line is used.  The DataFrame result of running this
+   * module will be available to the query as the "dftable" table.  For example:
+   *    return "insert overwrite table mytable select * from dftable"
+   * If this method is not specified, the default is to just create the table
+   * specified by tableName() with the results of the module.
+   */
+  def publishHiveSql: Option[String] = None
+
   /** do not persist validation result if isObjectInShell **/
   private[smv] def isPersistValidateResult = !isObjectInShell
 
@@ -152,11 +162,12 @@ abstract class SmvDataSet extends FilenamePart {
    * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly. The cache is
    * external to SmvDataSet so that it we will not recalculate the DF even after
-   * dynamically loading the same SmvDataSet.
+   * dynamically loading the same SmvDataSet. If force argument is true, the we
+   * skip the cache.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */
-  def rdd() = {
-    if (!app.dfCache.contains(versionedFqn)) {
+  def rdd(forceRun: Boolean = false) = {
+    if (forceRun || !app.dfCache.contains(versionedFqn)) {
       app.dfCache = app.dfCache + (versionedFqn -> computeRDD)
     }
     app.dfCache(versionedFqn)
@@ -216,6 +227,26 @@ abstract class SmvDataSet extends FilenamePart {
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
     Try(util.DataSet.readFile(app.sqlContext, moduleCsvPath(prefix)))
+
+  /** Has the result of this data set been persisted? */
+  private[smv] def isPersisted: Boolean =
+    Try(new FileIOHandler(app.sqlContext, moduleCsvPath()).readSchema()).isSuccess
+
+  /**
+   * #560
+   *
+   * Make this a `lazy val` to avoid O(n^2) when each module triggers
+   * computation in all its ancestors.
+   */
+  private[smv] lazy val needsToRun: Boolean = {
+    val upstreamNeedsToRun = resolvedRequiresDS.exists(_.needsToRun)
+    if (upstreamNeedsToRun)
+      true
+    else if (isEphemeral)
+      false
+    else
+      !isPersisted
+  }
 
   private[smv] def computeRDD: DataFrame = {
     val dsDqm     = new DQMValidator(createDsDqm())
@@ -492,7 +523,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   /** perform the actual run of this module to get the generated SRDD result. */
   override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
     val paramMap: Map[SmvDataSet, DataFrame] =
-      (resolvedRequiresDS map (dep => (dep, dep.rdd))).toMap
+      (resolvedRequiresDS map (dep => (dep, dep.rdd()))).toMap
     run(new runParams(paramMap))
   }
 
@@ -593,13 +624,15 @@ class SmvModuleLink(val outputModule: SmvOutput)
 
   /**
    * If the depended smvModule has a published version, SmvModuleLink's datasetHash
-   * depends on the version string. Otherwise, depends on the smvModule's hashOfHash
+   * depends on the version string and the target's FQN (even with versioned data
+   * the hash should change if the target changes). Otherwise, depends on the
+   * smvModule's hashOfHash
    **/
   override def datasetHash() = {
     val dependedHash = smvModule.stageVersion
       .map { v =>
         val crc = new java.util.zip.CRC32
-        crc.update(v.toCharArray.map(_.toByte))
+        crc.update((v + smvModule.fqn).toCharArray.map(_.toByte))
         (crc.getValue).toInt
       }
       .getOrElse(smvModule.hashOfHash)
@@ -610,8 +643,10 @@ class SmvModuleLink(val outputModule: SmvOutput)
   /**
    * SmvModuleLinks should not cache or validate their data
    */
-  override def computeRDD = throw new SmvRuntimeException("SmvModuleLink computeRDD should never be called")
-  override private[smv] def doRun(dsDqm: DQMValidator) = throw new SmvRuntimeException("SmvModuleLink doRun should never be called")
+  override def computeRDD =
+    throw new SmvRuntimeException("SmvModuleLink computeRDD should never be called")
+  override private[smv] def doRun(dsDqm: DQMValidator) =
+    throw new SmvRuntimeException("SmvModuleLink doRun should never be called")
 
   /**
    * "Running" a link requires that we read the published output from the upstream `DataSet`.
@@ -620,7 +655,8 @@ class SmvModuleLink(val outputModule: SmvOutput)
    * and run the DS, or "not-follow-the-link", which will try to read from the persisted data dir
    * and fail if not found.
    */
-  override def rdd: DataFrame = {
+  override def rdd(force: Boolean = false): DataFrame = {
+    // force argument is ignored (SmvModuleLink is rerun anyway)
     if (isFollowLink) {
       smvModule.readPublishedData().getOrElse(smvModule.rdd())
     } else {
@@ -661,12 +697,13 @@ case class SmvExtModuleLink(modFqn: String)
  * exclusively by DataSetRepoPython. Wraps an ISmvModule.
  */
 class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
-  override val description = s"SmvPyModule ${target.fqn}"
-  override val fqn         = target.fqn
-  override def tableName   = target.tableName()
-  override def isEphemeral = target.isEphemeral()
-  override def dsType      = target.dsType()
-  override def requiresDS =
+  override val description    = s"SmvPyModule ${target.fqn}"
+  override val fqn            = target.fqn
+  override def tableName      = target.tableName()
+  override def isEphemeral    = target.isEphemeral()
+  override def publishHiveSql = Option(target.publishHiveSql())
+  override def dsType         = target.dsType()
+  override def requiresDS     =
     throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
     resolvedRequiresDS = target.dependencies map (urn => resolver.loadDataSet(URN(urn)).head)
@@ -676,7 +713,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
     target.getDataFrame(new DQMValidator(createDsDqm),
                         resolvedRequiresDS
                           .map { ds =>
-                            (ds.urn.toString, ds.rdd)
+                            (ds.urn.toString, ds.rdd())
                           }
                           .toMap[String, DataFrame])
   override def datasetHash = target.datasetHash()

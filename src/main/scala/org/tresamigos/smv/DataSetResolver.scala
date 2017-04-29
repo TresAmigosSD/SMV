@@ -26,10 +26,9 @@ import scala.collection.mutable
  * dependencies. DSR caches the SmvDataSets it has already resolved to ensure that
  * any SmvDataSet is only resolved once.
  */
-class DataSetResolver(repoFactories: Seq[DataSetRepoFactory],
+class DataSetResolver(val repos: Seq[DataSetRepo],
                       smvConfig: SmvConfig,
                       depRules: Seq[DependencyRule]) {
-  val repos = repoFactories.map(_.createRepo)
   // URN to resolved SmvDataSet
   var urn2res: Map[URN, SmvDataSet] = Map.empty
 

@@ -35,6 +35,8 @@ private[smv] class FileIOHandler(
 
   private def fullSchemaPath = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
 
+  def readSchema(): SmvSchema = SmvSchema.fromFile(sqlContext.sparkContext, fullSchemaPath)
+
   /**
    * Create a DataFrame from the given data/schema path and CSV attributes.
    * If CSV attributes are null, then they are extracted from the schema file directly.
@@ -43,7 +45,7 @@ private[smv] class FileIOHandler(
       csvAttributes: CsvAttributes
   ): DataFrame = {
     val sc     = sqlContext.sparkContext
-    val schema = SmvSchema.fromFile(sc, fullSchemaPath)
+    val schema = readSchema()
 
     val ca = if (csvAttributes == null) schema.extractCsvAttributes() else csvAttributes
 
@@ -56,7 +58,7 @@ private[smv] class FileIOHandler(
   private[smv] def frlFileWithSchema(): DataFrame = {
     val sc     = sqlContext.sparkContext
     val slices = SmvSchema.slicesFromFile(sc, fullSchemaPath)
-    val schema = SmvSchema.fromFile(sc, fullSchemaPath)
+    val schema = readSchema()
     require(slices.size == schema.getSize)
 
     // TODO: show we allow header in Frl files?

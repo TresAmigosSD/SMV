@@ -11,24 +11,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""SmvPy entry class and ``singleton``smvApp
+"""SmvApp entry class
 This module provides the main SMV Python entry point ``SmvPy`` class and a singleton `smvApp`.
 It is equivalent to ``SmvApp`` on Scala side
 """
+import os
+import sys
+import traceback
 
 from py4j.java_gateway import java_import, JavaObject
 
 from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
-from utils import for_name, smv_copy_array, check_socket
+from utils import smv_copy_array, check_socket
 from error import SmvRuntimeError
 
-import inspect
-import pkgutil
-import os
-import re
-import sys
-import traceback
+from datasetrepo import DataSetRepoFactory
 
 if sys.version >= '3':
     basestring = unicode = str
@@ -90,6 +88,8 @@ class SmvApp(object):
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
 
+        self.stages = self.j_smvPyClient.stages()
+
         # issue #429 set application name from smv config
         sc._conf.setAppName(self.appName())
 
@@ -125,6 +125,10 @@ class SmvApp(object):
 
         self.j_smvPyClient.registerRepoFactory('Python', DataSetRepoFactory(self))
 
+        # Suppress creation of .pyc files. These cause complications with
+        # reloading code and have led to discovering deleted modules (#612)
+        sys.dont_write_bytecode = True
+
     def appName(self):
         return self.j_smvApp.smvConfig().appName()
 
@@ -142,14 +146,14 @@ class SmvApp(object):
         """
         return self.j_smvApp.generateAllGraphJSON()
 
-    def runModule(self, urn):
+    def runModule(self, urn, forceRun = False):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.j_smvPyClient.runModule(urn)
+        jdf = self.j_smvPyClient.runModule(urn, forceRun)
         return DataFrame(jdf, self.sqlContext)
 
-    def runModuleByName(self, name):
-        jdf = self.j_smvApp.runModuleByName(name)
+    def runModuleByName(self, name, forceRun = False):
+        jdf = self.j_smvApp.runModuleByName(name, forceRun)
         return DataFrame(jdf, self.sqlContext)
 
     def urn2fqn(self, urnOrFqn):
@@ -186,110 +190,3 @@ class SmvApp(object):
 
     def run(self):
         self.j_smvApp.run()
-
-class DataSetRepoFactory(object):
-    def __init__(self, smvApp):
-        self.smvApp = smvApp
-    def createRepo(self):
-        try:
-            return DataSetRepo(self.smvApp)
-        except BaseException as e:
-            traceback.print_exc()
-            raise e
-
-    class Java:
-        implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
-
-
-class DataSetRepo(object):
-    def __init__(self, smvApp):
-        self.smvApp = smvApp
-    # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
-    # from the most recent source
-    def loadDataSet(self, fqn):
-        lastdot = fqn.rfind('.')
-        try:
-            if sys.modules.has_key(fqn[:lastdot]):
-                # reload the module if it has already been imported
-                return self._reload(fqn)
-            else:
-                # otherwise import the module
-                return self._load(fqn)
-        except BaseException as e:
-            traceback.print_exc()
-            raise e
-
-
-
-    # Import the module (Python module, not SMV module) containing the dataset
-    # and return the dataset
-    def _load(self, fqn):
-        return for_name(fqn)(self.smvApp)
-
-    # Reload the module containing the dataset from the most recent source
-    # and invalidate the linecache
-    def _reload(self, fqn):
-        lastdot = fqn.rfind('.')
-        pmod = reload(sys.modules[fqn[:lastdot]])
-        klass = getattr(pmod, fqn[lastdot+1:])
-        ds = klass(self.smvApp)
-        # Python issue https://bugs.python.org/issue1218234
-        # need to invalidate inspect.linecache to make dataset hash work
-        srcfile = inspect.getsourcefile(ds.__class__)
-        if srcfile:
-            inspect.linecache.checkcache(srcfile)
-        return ds
-
-    def dataSetsForStage(self, stageName):
-        try:
-            return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
-        except BaseException as e:
-            traceback.print_exc()
-            raise e
-
-    def outputModsForStage(self, stageName):
-        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyModule and obj.IsSmvPyOutput)
-
-    def _moduleUrnsForStage(self, stageName, fn):
-        # `walk_packages` can generate AttributeError if the system has
-        # Gtk modules, which are not designed to use with reflection or
-        # introspection. Best action to take in this situation is probably
-        # to simply suppress the error.
-        def err(name): pass
-        # print("Error importing module %s" % name)
-        # t, v, tb = sys.exc_info()
-        # print("type is {0}, value is {1}".format(t, v))
-        buf = []
-        # import the stage and only walk the packages in the path of that stage, recursively
-        try:
-            stagemod = __import__(stageName)
-        except:
-            # may be a scala-only stage
-            pass
-        else:
-            for loader, name, is_pkg in pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=err):
-                # The additional "." is necessary to prevent false positive, e.g. stage_2.M1 matches stage
-                if name.startswith(stageName + ".") and not is_pkg:
-                    pymod = __import__(name)
-                    for c in name.split('.')[1:]:
-                        pymod = getattr(pymod, c)
-
-                    for n in dir(pymod):
-                        obj = getattr(pymod, n)
-                        try:
-                            # Class should have an fqn which begins with the stageName.
-                            # Each package will contain among other things all of
-                            # the modules that were imported into it, and we need
-                            # to exclude these (so that we only count each module once)
-                            if fn(obj) and obj.fqn().startswith(name):
-                                buf.append(obj.urn())
-                        except AttributeError:
-                            continue
-
-        return smv_copy_array(self.smvApp.sc, *buf)
-
-    def notFound(self, modUrn, msg):
-        raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))
-
-    class Java:
-        implements = ['org.tresamigos.smv.IDataSetRepoPy4J']

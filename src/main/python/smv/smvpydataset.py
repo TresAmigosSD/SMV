@@ -158,6 +158,7 @@ class SmvPyDataSet(object):
             except Exception as err: # `inspect` will raise error for classes defined in the REPL
                 # Instead of handle the case that module defined in REPL, just raise Exception here
                 # res = _smvhash(_disassemble(cls))
+                traceback.print_exc()
                 message = "{0}({1!r})".format(type(err).__name__, err.args)
                 raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
 
@@ -195,6 +196,22 @@ class SmvPyDataSet(object):
                 (bool): True if this SmvDataSet should not persist its data, false otherwise
         """
         return False
+
+    def publishHiveSql(self):
+        """An optional sql query to run to publish the results of this module when the
+           --publish-hive command line is used.  The DataFrame result of running this
+           module will be available to the query as the "dftable" table.
+
+            Example:
+                >>> return "insert overwrite table mytable select * from dftable"
+
+            Note:
+                If this method is not specified, the default is to just create the table specified by tableName() with the results of the module.
+
+           Returns:
+               (string): the query to run.
+        """
+        return None
 
     @abc.abstractmethod
     def dsType(self):
@@ -413,7 +430,7 @@ class SmvHiveTable(SmvPyInput):
         return None
 
     def doRun(self, validator, known):
-        return self.run(DataFrame(self._smvHiveTable.rdd(), self.smvApp.sqlContext))
+        return self.run(DataFrame(self._smvHiveTable.rdd(False), self.smvApp.sqlContext))
 
 class SmvModule(SmvPyDataSet):
     """Base class for SmvModules written in Python

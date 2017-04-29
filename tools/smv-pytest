@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 #
 # Run SMV unit tests
-# USAGE: smv-pytest [-h] -- spark_args
+# USAGE: smv-pytest [-t test_name] smv_args -- spark_args
 #
-# TODO: add test arguments, e.g. to specify a single test to run
+# specifying tests with -t will run just those tests
+#
+# smv_args will be combined with each test's SMV args when the test is run
 #
 # user can specify spark args (such as --master, --class or --jar to override the fat jar selection)
 # the rest of the arguments are the standard SmvApp arguments.

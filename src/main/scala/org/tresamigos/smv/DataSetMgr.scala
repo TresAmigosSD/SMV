@@ -32,62 +32,50 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
     dsRepoFactories = dsRepoFactories :+ newRepoFactory
   }
 
-  def load(urns: URN*): Seq[SmvDataSet] = {
-    val resolver = new DataSetResolver(dsRepoFactories, smvConfig, depRules)
-    resolver.loadDataSet(urns: _*)
-  }
+  /**
+   * Creates a new transaction and passes it to the function given as an argument
+   * so we don't have to write
+   *   val tx = TX(...)
+   *   tx.blah
+   * every time
+   */
+  private[this] def withTX[T](func: TX => T): T =
+    func(new TX(dsRepoFactories, smvConfig, depRules))
 
-  def urnsForStage(stageNames: String*): Seq[URN] =
-    createRepos flatMap (repo => stageNames flatMap (repo.urnsForStage(_)))
+  def load(urns: URN*): Seq[SmvDataSet] =
+    withTX ( _.load(urns: _*) )
 
-  def allUrns(): Seq[URN] =
-    urnsForStage(allStageNames: _*)
+  def modulesToRun(modPartialNames: Seq[String], stageNames: Seq[String], allMods: Boolean): Seq[SmvDataSet] =
+    withTX[Seq[SmvDataSet]] { tx =>
+      val namedMods = tx.inferDS(modPartialNames: _*)
+      val stageMods = tx.outputModulesForStage(stageNames: _*)
+      val appMods = if(allMods) tx.allOutputModules else Seq.empty[SmvDataSet]
+      (namedMods ++ stageMods ++ appMods).distinct
+    }
 
   def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] =
-    load(urnsForStage(stageNames: _*): _*)
+    withTX ( _.dataSetsForStage(stageNames: _*) )
 
   def dataSetsForStageWithLink(stageNames: String*): Seq[SmvDataSet] =
-    dataSetsForStage(stageNames: _*).flatMap { ds =>
-      ds.resolvedRequiresDS :+ ds
-    }.distinct
+    withTX (
+      _.dataSetsForStage(stageNames: _*).flatMap { ds =>
+        ds.resolvedRequiresDS :+ ds
+      }.distinct
+    )
+
+  def allDataSets(): Seq[SmvDataSet] =
+    withTX ( _.allDataSets )
+
+  def outputModulesForStage(stageNames: String*): Seq[SmvDataSet] =
+    withTX ( _.outputModulesForStage(stageNames: _*) )
+
+  def inferDS(partialNames: String*): Seq[SmvDataSet] =
+    withTX( _.inferDS(partialNames: _*) )
 
   def stageForUrn(urn: URN): Option[String] =
     allStageNames.find { stageName =>
       urn.fqn.startsWith(stageName + ".")
     }
-
-  def outputModulesForStage(stageNames: String*): Seq[SmvDataSet] =
-    filterOutput(dataSetsForStage(stageNames: _*))
-
-  def allDataSets(): Seq[SmvDataSet] =
-    load(allUrns: _*)
-
-  def allOutputModules(): Seq[SmvDataSet] =
-    filterOutput(allDataSets)
-
-  /**
-   * Infer which SmvDataSet corresponds to a partial name. Used e.g. to identify
-   * modules specified via smv-pyrun -m.
-   */
-  def inferDS(partialNames: String*): Seq[SmvDataSet] = {
-    if (partialNames.isEmpty)
-      Seq.empty
-    else {
-      val allUrnsVal = allUrns
-      val foundUrns = partialNames map { pName =>
-        val candidates = allUrnsVal filter (_.fqn.endsWith(pName))
-        candidates.size match {
-          case 0 =>
-            throw new SmvRuntimeException(s"""Cannot find module named [${pName}]""")
-          case 1 => candidates.head
-          case _ =>
-            throw new SmvRuntimeException(
-              s"Module name [${pName}] is not specific enough, as it could refer to [${(candidates.map(_.fqn)).mkString(", ")}]")
-        }
-      }
-      load(foundUrns: _*)
-    }
-  }
 
   /**
    * Infer full stageName from a partial name
@@ -103,8 +91,4 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
 
     fullName
   }
-
-  private def createRepos: Seq[DataSetRepo] = dsRepoFactories map (_.createRepo)
-  private def filterOutput(dataSets: Seq[SmvDataSet]): Seq[SmvDataSet] =
-    dataSets filter (ds => ds.isInstanceOf[SmvOutput]) map (_.asInstanceOf[SmvDataSet])
 }

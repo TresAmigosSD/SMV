@@ -12,7 +12,7 @@ Smv provides a group of `DataFrame` helper methods, as summarized bellow
 * `df.smvHist("k")` - print histogram on column `k`
 * `df.smvFreqHist("k")` - print histogram on column `k`, sorted by frequency
 * `df.smvBinHist(("k", 100.0))` - print histogram of `k` (as numeric) by bins (bin size 100 in the example)
-* `df.smvConcatHist(["k1", "k2"])` - print joint histogram on `k1` and `k2` with values concatenated with `_` in between
+* `df.smvConcatHist("k1", "k2")` - print joint histogram on `k1` and `k2` with values concatenated with `_` in between
 * `df.smvCountHist("k")` - print histogram of `k`'s frequency
 
 Above functions in **Scala** and **Python** are exactly the same, except the parameter of

@@ -10,10 +10,6 @@ scalacOptions ++= Seq("-deprecation", "-feature")
 
 val sparkVersion = "1.5.2"
 
-val jettyVersion = "8.1.18.v20150929"
-
-val commonsHttpclientVersion = "4.3.2"
-
 libraryDependencies ++= Seq(
   "org.apache.spark"             %% "spark-sql"         % sparkVersion % "provided",
   "org.apache.spark"             %% "spark-hive"        % sparkVersion % "provided",
@@ -49,11 +45,11 @@ pytest := {
 
 // Create alltest task that sequentially runs each test suite
 val allTest = TaskKey[Unit]("alltest", "Run All Test Suites")
-allTest := {
-  (test in Test).value
-  pytest.value
-  itest.value
-}
+allTest <<= Def.sequential(
+  test in Test,
+  pytest,
+  itest
+)
 
 mainClass in assembly := Some("org.tresamigos.smv.SmvApp")
 
@@ -62,3 +58,5 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 assemblyJarName in assembly := s"${name.value}-${version.value}-jar-with-dependencies.jar"
 
 test in assembly := {}
+
+initialize ~= { _ => sys.props("scalac.patmat.analysisBudget") = "off" }
