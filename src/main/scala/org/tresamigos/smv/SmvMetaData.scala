@@ -21,6 +21,9 @@ import org.apache.spark.SparkContext
 class SmvMetadata {
   val builder = new MetadataBuilder
 
+  def addFQN(fqn: String) =
+    builder.putString("fqn", fqn)
+
   def addSchemaMetadata(df: DataFrame) =
     builder.putMetadataArray("columns", createSchemaMetadataArray(df))
 
