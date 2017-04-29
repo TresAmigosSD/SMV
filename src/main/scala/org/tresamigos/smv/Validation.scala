@@ -90,13 +90,17 @@ private[smv] object ValidationResult {
   }
 }
 
+
 private[smv] abstract class ValidationTask {
   def needAction(): Boolean
   def validate(df: DataFrame): ValidationResult
 }
 
-/** ValidationSet is a collection of ValidationTask's
- *  it provide a single entire to the list of tasks from SmvDataSet
+
+/**
+ * ValidationSet is a collection of ValidationTask's
+ * it provide a single entry to the list of tasks from SmvDataSet
+ * TODO: should probably get rid of ValidationSet as we only do DQM validation now.
  **/
 private[smv] class ValidationSet(val tasks: Seq[ValidationTask], val isPersist: Boolean = true) {
   def add(task: ValidationTask) = {
@@ -163,8 +167,9 @@ private[smv] class ValidationSet(val tasks: Seq[ValidationTask], val isPersist: 
       val result = if (isPersist) {
         // try to read from persisted validation file
         readPersistsedValidationFile(path).recoverWith {
-          case e =>
+          case e => {
             Try(doValidate(df, forceAnAction, path))
+          }
         }.get
       } else {
         doValidate(df, forceAnAction, path)

@@ -31,6 +31,7 @@ object CsvAttributes {
   val defaultCsvWithHeader = new CsvAttributes(hasHeader = true)
   val defaultTsvWithHeader = new CsvAttributes(delimiter = '\t', hasHeader = true)
 
+  // TODO: this should be moved to FileIOHandler instead of here.
   def dropHeader[T](rdd: RDD[T])(implicit tt: ClassTag[T]) = {
     val dropFunc = new DropRDDFunctions(rdd)
     dropFunc.drop(1)
