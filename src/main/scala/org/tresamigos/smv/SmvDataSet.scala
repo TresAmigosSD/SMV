@@ -214,10 +214,12 @@ abstract class SmvDataSet extends FilenamePart {
     val eddPath    = moduleEddPath()
     val schemaPath = moduleSchemaPath()
     val rejectPath = moduleValidPath()
+    val metaPath = moduleMetaPath()
     SmvHDFS.deleteFile(csvPath)
     SmvHDFS.deleteFile(schemaPath)
     SmvHDFS.deleteFile(eddPath)
     SmvHDFS.deleteFile(rejectPath)
+    SmvHDFS.deleteFile(metaPath)
   }
 
   /**
