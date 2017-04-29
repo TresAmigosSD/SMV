@@ -36,7 +36,6 @@ abstract class SmvDataSet extends FilenamePart {
 
   lazy val app: SmvApp            = SmvApp.app
   private var rddCache: DataFrame = null
-  val metadata = new SmvMetadata
 
   /**
    * The FQN of an SmvDataSet is its classname for Scala implementations.
@@ -254,6 +253,20 @@ abstract class SmvDataSet extends FilenamePart {
       !isPersisted
   }
 
+  private[smv] def getMetadata: SmvMetadata = {
+    createMetadata(None)
+  }
+
+  /**
+   * Create SmvMetadata object for this SmvDataSet. If a DataFrame is provided,
+   * its schema will be extracted and included in the metadata
+   */
+  private[smv] def createMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
+    val metadata = new SmvMetadata
+    dfOpt foreach (df => metadata.addSchemaMetadata(df))
+    metadata
+  }
+
   private[smv] def computeRDD: DataFrame = {
     val dsDqm     = new DQMValidator(createDsDqm())
     val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
@@ -275,8 +288,7 @@ abstract class SmvDataSet extends FilenamePart {
     }
 
     // Note that because SmvModuleLink overrides this method it will not save metadata
-    metadata.addSchemaMetadata(res)
-    metadata.saveToFile(app.sc, moduleMetaPath())
+    createMetadata(Some(res)).saveToFile(app.sc, moduleMetaPath())
 
     res
   }
