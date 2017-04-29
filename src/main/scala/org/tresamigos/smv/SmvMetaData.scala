@@ -18,9 +18,7 @@ import org.apache.spark.sql.types.{Metadata, MetadataBuilder}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.SparkContext
 
-class SmvMetadata {
-  val builder = new MetadataBuilder
-
+class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
   def addFQN(fqn: String) =
     builder.putString("fqn", fqn)
 
@@ -51,4 +49,12 @@ class SmvMetadata {
 
   def saveToFile(sc: SparkContext, path: String) =
     sc.makeRDD(Seq(toString), 1).saveAsTextFile(path)
+}
+
+object SmvMetadata {
+  def fromJson(json: String): SmvMetadata = {
+    val metadataFromString = Metadata.fromJson(json)
+    val builder = (new MetadataBuilder()).withMetadata(metadataFromString)
+    new SmvMetadata(builder)
+  }
 }

@@ -23,4 +23,20 @@ class SmvMetadataTest extends SmvTestUtil {
     // of dictionary pairs is arbitrary (under the hood they are in an unordered map)
     assert(metadata.toString === "{\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}")
   }
+
+  test("Persisted SmvDataSet's metadata include schema") {
+    println(modules.X.urn.fqn)
+    app.runModule(modules.X.urn)
+    val expected = "{\"fqn\":\"org.tresamigos.smv.modules.X\",\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}"
+    assert(modules.X.getMetadata.toString === expected)
+  }
+}
+
+package modules {
+  object X extends SmvModule("") {
+    def requiresDS = Seq()
+    def run(i: runParams) = {
+      app.createDF("a:String;b:Integer")
+    }
+  }
 }

@@ -238,6 +238,12 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
     Try(util.DataSet.readFile(app.sqlContext, moduleCsvPath(prefix)))
 
+  private[smv] def readPersistedMetadata(prefix: String = ""): Try[SmvMetadata] =
+    Try {
+      val json = app.sc.textFile(moduleMetaPath(prefix)).collect.head
+      SmvMetadata.fromJson(json)
+    }
+
   /** Has the result of this data set been persisted? */
   private[smv] def isPersisted: Boolean =
     Try(new FileIOHandler(app.sqlContext, moduleCsvPath()).readSchema()).isSuccess
@@ -259,7 +265,7 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   private[smv] def getMetadata: SmvMetadata =
-    createMetadata(None)
+    readPersistedMetadata().getOrElse(createMetadata(None))
 
   /**
    * Create SmvMetadata object for this SmvDataSet. If a DataFrame is provided,
