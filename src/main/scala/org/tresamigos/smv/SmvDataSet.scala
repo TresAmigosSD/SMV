@@ -267,6 +267,12 @@ abstract class SmvDataSet extends FilenamePart {
       !isPersisted
   }
 
+  /**
+   * Get the most detailed metadata available without running this module. If
+   * the modules has been run and hasn't been changed, this will be all the metadata
+   * that was persisted. If the module hasn't been run since it was changed, this
+   * will be a less detailed report.
+   */
   private[smv] def getMetadata: SmvMetadata =
     readPersistedMetadata().getOrElse(createMetadata(None))
 
