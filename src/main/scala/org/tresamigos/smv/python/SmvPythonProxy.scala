@@ -203,12 +203,14 @@ class SmvPyClient(val j_smvApp: SmvApp) {
                  path: String,
                  csvAttr: CsvAttributes,
                  pForceParserCheck: Boolean,
-                 pFailAtParsingError: Boolean): SmvCsvFile =
+                 pFailAtParsingError: Boolean): SmvCsvFile = {
+
     new SmvCsvFile(path, csvAttr) {
       override def fqn                = moduleName
       override val forceParserCheck   = pForceParserCheck
       override val failAtParsingError = pFailAtParsingError
     }
+  }
 
   /** Output directory for files */
   def outputDir: String = j_smvApp.smvConfig.outputDir

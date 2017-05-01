@@ -217,7 +217,7 @@ class SmvPyDataSet(object):
     def dsType(self):
         """Return SmvPyDataSet's type"""
 
-    def getDqm(self):
+    def dqmWithTypeSpecificPolicy(self):
         try:
             res = self.dqm()
         except BaseException as err:
@@ -283,6 +283,24 @@ class SmvPyInput(SmvPyDataSet):
 class WithParser(object):
     """shared parser funcs"""
 
+    def dqmWithTypeSpecificPolicy(self):
+        """for parsers we should get the type specific dqm policy from the
+           concrete scala proxy class that is the actual input (e.g. SmvCsvFile)"""
+        try:
+            userDqm = self.dqm()
+            scalaInputDS = self.getRawScalaInputDS()
+            res = scalaInputDS.dqmWithTypeSpecificPolicy(userDqm)
+        except BaseException as err:
+            traceback.print_exc()
+            raise err
+
+        return res
+
+    def getRawScalaInputDS(self):
+        """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
+           that is created in their init."""
+        return None
+
     def forceParserCheck(self):
         return True
 
@@ -303,7 +321,9 @@ class WithParser(object):
         """
         return None
 
-class SmvCsvFile(SmvPyInput, WithParser):
+# Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
+# Otherwise we will pick methods up from SmvDataSet instead of WithParser.
+class SmvCsvFile(WithParser, SmvPyInput):
     """Input from a file in CSV format
     """
 
@@ -312,6 +332,9 @@ class SmvCsvFile(SmvPyInput, WithParser):
         self._smvCsvFile = smvApp.j_smvPyClient.smvCsvFile(
             self.fqn(), self.path(), self.csvAttr(),
             self.forceParserCheck(), self.failAtParsingError())
+
+    def getRawScalaInputDS(self):
+        return self._smvCsvFile
 
     def description(self):
         return "Input file: @" + self.path()
@@ -330,7 +353,9 @@ class SmvCsvFile(SmvPyInput, WithParser):
         jdf = self._smvCsvFile.doRun(validator)
         return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
-class SmvMultiCsvFiles(SmvPyInput, WithParser):
+# Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
+# Otherwise we will pick methods up from SmvDataSet instead of WithParser.
+class SmvMultiCsvFiles(WithParser, SmvPyInput):
     """Raw input from multiple csv files sharing single schema
 
         Instead of a single input file, specify a data dir with files which share
@@ -344,6 +369,9 @@ class SmvMultiCsvFiles(SmvPyInput, WithParser):
             self.csvAttr(),
             None
         )
+
+    def getRawScalaInputDS(self):
+        return self._smvMultiCsvFiles
 
     def description(self):
         return "Input dir: @" + self.dir()

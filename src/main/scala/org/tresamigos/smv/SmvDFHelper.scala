@@ -1288,9 +1288,9 @@ class SmvDFHelper(df: DataFrame) {
     val headerRdd = df.sqlContext.sparkContext.makeRDD(Seq(headerStr))
 
     val bodyRdd = if (n == null) {
-      df.map(schema.rowToCsvString(_, ca))
+      df.map(schema.rowToCsvString(_, ca)).rdd
     } else {
-      df.limit(n).map(schema.rowToCsvString(_, ca))
+      df.limit(n).map(schema.rowToCsvString(_, ca)).rdd
     }
 
     SmvReportIO.saveLocalReportFromRdd(headerRdd ++ bodyRdd, path)

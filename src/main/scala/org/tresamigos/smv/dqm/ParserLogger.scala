@@ -22,11 +22,13 @@ private[smv] abstract class ParserLogger extends Serializable {
 private[smv] class ParserValidation(dqmState: DQMState) extends ParserLogger {
   def addWithReason(e: Exception, rec: String) = {
     val mess = s"${e.toString} @RECORD: ${rec}"
-    dqmState.addParserRec(mess)
+    dqmState.addParserErrorRec(mess)
   }
 }
 
 /** For persisted data, we are not expecting any parser error, so terminate if we have any */
 private[smv] object TerminateParserLogger extends ParserLogger {
-  override def addWithReason(e: Exception, rec: String) = throw e
+  override def addWithReason(e: Exception, rec: String) = {
+    throw e
+  }
 }

@@ -50,9 +50,9 @@ public interface ISmvModule {
 	String fqn();
 
 	/**
-	 * The attached DQM policy.
+	 * The attached DQM policy + any type specific policies.
 	 */
-	SmvDQM getDqm();
+	SmvDQM dqmWithTypeSpecificPolicy();
 
 	/**
 	 * Dependent module fqns or an empty array.

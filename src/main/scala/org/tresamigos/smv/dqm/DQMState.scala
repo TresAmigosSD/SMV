@@ -56,7 +56,8 @@ class DQMState(
     recordCounter add 1l
   }
 
-  private[smv] def addParserRec(log: String): Unit = {
+  /** add one record to the log of parser errors. */
+  private[smv] def addParserErrorRec(log: String): Unit = {
     parserLogger.add(log)
   }
 
@@ -85,6 +86,7 @@ class DQMState(
     if (!concluded) {
       concluded = true
       recordCounterCopy = recordCounter.value
+      // TODO: rename parser to parserErrors
       parserLoggerCopy = parserLogger.report
       fixCountersCopy = fixCounters.map { case (k, a) => (k, a.value) }.toMap
       ruleLoggersCopy = ruleLoggers.map { case (k, l) => (k, l.report) }.toMap
@@ -167,6 +169,11 @@ class DQMState(
 
 class DQMRuleError(ruleName: String) extends Exception(ruleName) with Serializable
 
+/**
+ * One instance of this RejectLogger will be created per DQMState.
+ * This class keeps track of how many errors were logged and only keeps the
+ * first N (default to 10) records to avoid overwhelming the log files.
+ */
 private[smv] class RejectLogger(sparkContext: SparkContext,
                                 val localMax: Int = 10,
                                 loggerName: String)
@@ -176,6 +183,10 @@ private[smv] class RejectLogger(sparkContext: SparkContext,
     val acc = new IntAccumulator; sparkContext.register(acc, loggerName); acc
   }
 
+  /**
+   * adds an error message to the log.  Note that there will be a separate
+   * localCounter per schedules spark task.
+   */
   val add: (String) => Unit = {
     var localCounter = 0
     (r: String) =>
@@ -189,8 +200,11 @@ private[smv] class RejectLogger(sparkContext: SparkContext,
       }
   }
 
-  def report: (Int, List[String]) = {
+  /**
+   * Generate the reject logger report which consists of a tuple of
+   * (total count of errors, first N log errors)
+   */
+  def report : (Int, List[String]) = {
     (rejectedRecordCount.value, rejectedRecords.value.asScala.toList)
   }
-
 }
