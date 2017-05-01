@@ -24,6 +24,7 @@ import org.apache.spark.SparkContext
  * TODO: Add getter methods and more types of metadata (e.g. validation results)
  */
 class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
+
   /**
    * Add FQN field
    */
@@ -42,19 +43,23 @@ class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
    * column-level metadata if any. Order of the array is the order of the columns.
    */
   private def createSchemaMetadataArray(df: DataFrame): Array[Metadata] =
-    SmvSchema.fromDataFrame(df).entries.map{ entry =>
-      val field = entry.field
-      val typeFormat = entry.typeFormat
-      val colBuilder =
-        new MetadataBuilder()
-        .putString("type", typeFormat.typeName)
-        .putString("name", field.name)
-      if(typeFormat.format != null)
-        colBuilder.putString("format", typeFormat.format)
-      if(field.metadata != Metadata.empty)
-        colBuilder.putMetadata("metadata", field.metadata)
-      colBuilder.build
-    }.toArray
+    SmvSchema
+      .fromDataFrame(df)
+      .entries
+      .map { entry =>
+        val field      = entry.field
+        val typeFormat = entry.typeFormat
+        val colBuilder =
+          new MetadataBuilder()
+            .putString("type", typeFormat.typeName)
+            .putString("name", field.name)
+        if (typeFormat.format != null)
+          colBuilder.putString("format", typeFormat.format)
+        if (field.metadata != Metadata.empty)
+          colBuilder.putMetadata("metadata", field.metadata)
+        colBuilder.build
+      }
+      .toArray
 
   def toSparkMetadata: Metadata =
     builder.build
@@ -75,7 +80,7 @@ class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
 object SmvMetadata {
   def fromJson(json: String): SmvMetadata = {
     val metadataFromString = Metadata.fromJson(json)
-    val builder = (new MetadataBuilder()).withMetadata(metadataFromString)
+    val builder            = (new MetadataBuilder()).withMetadata(metadataFromString)
     new SmvMetadata(builder)
   }
 }

@@ -17,17 +17,19 @@ package org.tresamigos.smv
 class SmvMetadataTest extends SmvTestUtil {
   test("SmvMetaData extracts schema from DataFrames") {
     val metadata = new SmvMetadata
-    val df = app.createDF("a:String;b:Integer", "x,10")
+    val df       = app.createDF("a:String;b:Integer", "x,10")
     metadata.addSchemaMetadata(df)
     // Note that type comes before name due to implementation details; the order
     // of dictionary pairs is arbitrary (under the hood they are in an unordered map)
-    assert(metadata.toString === "{\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}")
+    assert(
+      metadata.toString === "{\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}")
   }
 
   test("Persisted SmvDataSet's metadata include schema") {
     // Need to run the module first to persist its metadata (otherwise won't get the full metadata)
     app.runModule(modules.X.urn)
-    val expected = "{\"fqn\":\"org.tresamigos.smv.modules.X\",\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}"
+    val expected =
+      "{\"fqn\":\"org.tresamigos.smv.modules.X\",\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}"
     assert(modules.X.getMetadata.toString === expected)
   }
 }
