@@ -39,12 +39,6 @@ function create_logdir()
   info "logs/assets can be found in: ${LOGDIR}"
 }
 
-function clean_logdir()
-{
-  info "cleaning log directory"
-  rm -rf "${LOGDIR}"
-}
-
 function parse_args()
 {
   info "parsing command line args"
@@ -135,7 +129,7 @@ function find_release_msg_file()
 
 function check_git_repo()
 {
-  echo "--- checking repo for modified files"
+  info "checking repo for modified files"
   cd "${SMV_DIR}"
   if ! git diff-index --quiet HEAD --; then
     error "SMV git repo has locally modified files"
@@ -170,8 +164,9 @@ function tag_release()
   local tag=v"$SMV_VERSION"
   info "tagging release as $tag"
   cd "${SMV_DIR}"
-  git tag -a $tag -m "SMV Release $SMV_VERSION on `date +%m/%d/%Y`"
-  git push origin $tag
+  git tag -a $tag -m "SMV Release $SMV_VERSION on `date +%m/%d/%Y`" \
+    >> ${LOGFILE} 2>&1 || error "git tag failed"
+  git push origin $tag >> ${LOGFILE} 2>&1 || error "git tag push failed"
 }
 
 function create_tar()
@@ -246,21 +241,22 @@ function create_docker_image()
   docker login -u ${DOCKERHUB_USER_NAME} -p ${DOCKERHUB_USER_PASSWORD}
 
   info "building docker image"
-  docker build -t docker_build .
+  docker build -t docker_build . >> ${LOGFILE} 2>&1 || error "docker build failed"
 
   info "pushing new tagged docker image (${tag})"
-  docker tag docker_build tresamigos/smv:${tag}
-  docker push tresamigos/smv:${tag}
+  docker tag docker_build tresamigos/smv:${tag} >> ${LOGFILE} 2>&1 || error "docker tag failed"
+  docker push tresamigos/smv:${tag} >> ${LOGFILE} 2>&1 || error "docker push failed"
 
   # TODO: make this an option.
   info "pushing docker image as latest"
-  docker tag docker_build tresamigos/smv:latest
-  docker push tresamigos/smv:latest
+  docker tag docker_build tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker tag failed"
+  docker push tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker push failed"
 }
 
 
 # ---- MAIN ----
 create_logdir
+info "Start Release on: $(date)"
 parse_args "$@"
 check_for_existing_tag
 get_prev_smv_version
@@ -274,4 +270,4 @@ create_tar
 create_github_release
 attach_tar_to_github_release
 create_docker_image
-clean_logdir
+info "Finish Release on: $(date)"
