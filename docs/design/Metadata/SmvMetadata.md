@@ -7,7 +7,7 @@ There are various contexts in which it would be useful to save metadata associat
 
 # SmvMetadata
 
-An extensible approach is needed for collecting metadata. We may need to add metadata as it becomes available (e.g. validation metadata will not be available until after the module is persisted). We will create an `SmvMetadata` class which accumulates metadata using Spark's `MetadataBuilder` and saves it to file when the module is persisted. In most contexts, we will be adding specific data with a known structure (e.g. schema data with optional metadata), and `SmvMetadata` will provide convenience methods that extract and organize certain kinds of data (e.g. extracting the schema and metadata from the `DataFrame`). Eventually we can also enable users to add on their own arbitrary metadata. This will collect knowledge about metadata into one place and also ensure encapsulate Spark's `Metadata`, which is part of Spark's DeveloperAPI and which may change with minor versions of Spark.
+ We will create an `SmvMetadata` class which accumulates metadata using Spark's `MetadataBuilder` and saves it to file when the module is persisted. In most contexts, we will be adding specific data with a known structure (e.g. schema data with optional metadata), and `SmvMetadata` will provide convenience methods that extract and organize certain kinds of data (e.g. extracting the schema and metadata from the `DataFrame`). Eventually we can also enable users to add on their own arbitrary metadata. This will collect knowledge about metadata into one place and also ensure encapsulate Spark's `Metadata`, which is part of Spark's DeveloperAPI and which may change with minor versions of Spark.
 
 # Saving metadata
 
