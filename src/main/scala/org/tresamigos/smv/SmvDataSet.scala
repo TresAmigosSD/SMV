@@ -222,7 +222,10 @@ abstract class SmvDataSet extends FilenamePart {
     SmvHDFS.deleteFile(metaPath)
   }
 
-  private[smv] def deleteMetaOutput =
+  /**
+   * Delete just the metadata output
+   */
+  private[smv] def deleteMetadataOutput =
     SmvHDFS.deleteFile(moduleMetaPath())
 
   /**
@@ -285,7 +288,7 @@ abstract class SmvDataSet extends FilenamePart {
     if (isEphemeral) {
       val df = dsDqm.attachTasks(doRun(dsDqm))
       validator.validate(df, false, moduleValidPath()) // no action before this point
-      deleteMetaOutput
+      deleteMetadataOutput
       createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
       df
     } else {
