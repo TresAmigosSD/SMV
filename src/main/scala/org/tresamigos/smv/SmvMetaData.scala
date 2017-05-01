@@ -18,14 +18,29 @@ import org.apache.spark.sql.types.{Metadata, MetadataBuilder}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.SparkContext
 
+/**
+ * Representation of module metadata which can be saved to file.
+ *
+ * TODO: Add getter methods and more types of metadata (e.g. validation results)
+ */
 class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
+  /**
+   * Add FQN field
+   */
   def addFQN(fqn: String) =
     builder.putString("fqn", fqn)
 
+  /**
+   * Extract schema-related metadata from this DataFrame and add it
+   */
   def addSchemaMetadata(df: DataFrame) =
     builder.putMetadataArray("columns", createSchemaMetadataArray(df))
 
-  // Schema metadata is organized in an array to preserve order of columns
+  /**
+   * Returns an array where each element is a metadata containing information
+   * about one of the DataFrame's columns, including name, type, and format and
+   * column-level metadata if any. Order of the array is the order of the columns.
+   */
   private def createSchemaMetadataArray(df: DataFrame): Array[Metadata] =
     SmvSchema.fromDataFrame(df).entries.map{ entry =>
       val field = entry.field
@@ -44,9 +59,15 @@ class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
   def toSparkMetadata: Metadata =
     builder.build
 
+  /**
+   * String representation is a minified json string
+   */
   override def toString =
     toSparkMetadata.json
 
+  /**
+   * Saves the string representation to file as a single row RDD
+   */
   def saveToFile(sc: SparkContext, path: String) =
     sc.makeRDD(Seq(toString), 1).saveAsTextFile(path)
 }
