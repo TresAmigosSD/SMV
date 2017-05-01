@@ -151,12 +151,13 @@ abstract class SmvDataSet extends FilenamePart {
    * The default is to provide an empty set of DQM rules/fixes.
    */
   def dqm(): SmvDQM  = SmvDQM()
-  def getDqm: SmvDQM = dqm()
 
   /**
-   * createDsDqm could be overridden by smv internal SmvDataSet's sub-classes
+   * Allow internal SMV DataSet types to add additional policy checks to user specified DQM rules.
+   * Note: we should accept the user DQM rules as param rather than call dqm() directly as
+   * we may need to be passed the user defined DQM rules in python.
    */
-  private[smv] def createDsDqm() = dqm()
+  private[smv] def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = userDQM
 
   /**
    * returns the DataFrame from this dataset (file/module).
@@ -198,7 +199,7 @@ abstract class SmvDataSet extends FilenamePart {
     versionedBasePath(prefix) + ".valid"
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  private[smv] def doRun(dsDqm: DQMValidator): DataFrame
+  private[smv] def doRun(dqmValidator: DQMValidator): DataFrame
 
   /**
    * delete the output(s) associated with this module (csv file and schema).
@@ -249,21 +250,21 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   private[smv] def computeRDD: DataFrame = {
-    val dsDqm     = new DQMValidator(createDsDqm())
-    val validator = new ValidationSet(Seq(dsDqm), isPersistValidateResult)
+    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()))
+    val validationSet = new ValidationSet(Seq(dqmValidator), isPersistValidateResult)
 
     if (isEphemeral) {
-      val df = dsDqm.attachTasks(doRun(dsDqm))
-      validator.validate(df, false, moduleValidPath()) // no action before this point
+      val df = dqmValidator.attachTasks(doRun(dqmValidator))
+      validationSet.validate(df, false, moduleValidPath()) // no action before this point
       df
     } else {
       readPersistedFile().recoverWith {
         case e =>
-          val df = dsDqm.attachTasks(doRun(dsDqm))
+          val df = dqmValidator.attachTasks(doRun(dqmValidator))
           // Delete outputs in case data was partially written previously
           deleteOutputs
           persist(df)
-          validator.validate(df, true, moduleValidPath()) // has already had action (from persist)
+          validationSet.validate(df, true, moduleValidPath()) // has already had action (from persist)
           readPersistedFile()
       }.get
     }
@@ -335,11 +336,12 @@ case class SmvHiveTable(override val tableName: String, val userQuery: String = 
       userQuery
   }
 
-  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
+  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
     val df = app.sqlContext.sql(query)
     run(df)
   }
 }
+
 
 /**
  * Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
@@ -349,11 +351,16 @@ trait SmvDSWithParser extends SmvDataSet {
   val forceParserCheck   = true
   val failAtParsingError = true
 
-  override def createDsDqm() =
-    if (failAtParsingError) dqm().add(FailParserCountPolicy(1)).addAction()
-    else if (forceParserCheck) dqm().addAction()
-    else dqm()
+  /**
+   *  Add parser failure policy to any DataSets that use a parser (e.g. csv files and hive tables)
+   */
+  override def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = {
+    if (failAtParsingError) userDQM.add(FailParserCountPolicy(1)).addAction()
+    else if (forceParserCheck) userDQM.addAction()
+    else userDQM
+  }
 }
+
 
 abstract class SmvFile extends SmvInputDataSet {
   val path: String
@@ -412,10 +419,9 @@ case class SmvCsvFile(
 ) extends SmvFile
     with SmvDSWithParser {
 
-  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
+  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
     val parserValidator =
-      if (dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
-    // TODO: this should use inputDir instead of dataDir
+      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
     val df      = handler.csvFileWithSchema(csvAttributes)
     run(df)
@@ -444,9 +450,9 @@ class SmvMultiCsvFiles(
     else Option(findFullPath(schemaPath))
   }
 
-  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
+  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
     val parserValidator =
-      if (dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
+      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
 
     val filesInDir = SmvHDFS.dirList(fullPath).map { n =>
       s"${fullPath}/${n}"
@@ -473,9 +479,9 @@ case class SmvFrlFile(
 ) extends SmvFile
     with SmvDSWithParser {
 
-  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
+  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
     val parserValidator =
-      if (dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
+      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
     // TODO: this should use inputDir instead of dataDir
     val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
     val df      = handler.frlFileWithSchema()
@@ -521,7 +527,7 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   def run(inputs: runParams): DataFrame
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame = {
+  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
     val paramMap: Map[SmvDataSet, DataFrame] =
       (resolvedRequiresDS map (dep => (dep, dep.rdd()))).toMap
     run(new runParams(paramMap))
@@ -645,7 +651,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
    */
   override def computeRDD =
     throw new SmvRuntimeException("SmvModuleLink computeRDD should never be called")
-  override private[smv] def doRun(dsDqm: DQMValidator) =
+  override private[smv] def doRun(dqmValidator: DQMValidator) =
     throw new SmvRuntimeException("SmvModuleLink doRun should never be called")
 
   /**
@@ -709,15 +715,19 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
     resolvedRequiresDS = target.dependencies map (urn => resolver.loadDataSet(URN(urn)).head)
     this
   }
-  override private[smv] def doRun(dsDqm: DQMValidator): DataFrame =
-    target.getDataFrame(new DQMValidator(createDsDqm),
+  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
+    target.getDataFrame(dqmValidator,
                         resolvedRequiresDS
                           .map { ds =>
                             (ds.urn.toString, ds.rdd())
                           }
                           .toMap[String, DataFrame])
+  }
   override def datasetHash = target.datasetHash()
-  override def createDsDqm = target.getDqm()
+  override def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = {
+    // ignore passed in userDQM as we want the user defined dqm from the python side.
+    target.dqmWithTypeSpecificPolicy()
+  }
 }
 
 /**
@@ -757,12 +767,12 @@ case class SmvCsvStringData(
     (crc.getValue + datasetCRC).toInt
   }
 
-  override def doRun(dsDqm: DQMValidator): DataFrame = {
+  override def doRun(dqmValidator: DQMValidator): DataFrame = {
     val schema    = SmvSchema.fromString(schemaStr)
     val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
 
     val parserValidator =
-      if (dsDqm == null) TerminateParserLogger else dsDqm.createParserValidator()
+      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
     val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
   }

@@ -24,7 +24,7 @@ package Scala {
     datasetHash()
     getDataFrame()
     isEphemeral()
-    getDqm()
+    dqmWithTypeSpecificPolicy()
   }
   class Scala.SmvDataSetRepository {
     getSmvModule : SmvExtModuleInt
