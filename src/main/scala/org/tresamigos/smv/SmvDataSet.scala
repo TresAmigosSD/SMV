@@ -197,7 +197,7 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def moduleValidPath(prefix: String = ""): String =
     versionedBasePath(prefix) + ".valid"
 
-  /** Returns the path for the module's reject report output */
+  /** Returns the path for the module's metadata output */
   private[smv] def moduleMetaPath(prefix: String = ""): String =
     versionedBasePath(prefix) + ".meta"
 
