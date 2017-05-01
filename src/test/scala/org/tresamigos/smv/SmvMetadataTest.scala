@@ -25,7 +25,7 @@ class SmvMetadataTest extends SmvTestUtil {
   }
 
   test("Persisted SmvDataSet's metadata include schema") {
-    println(modules.X.urn.fqn)
+    // Need to run the module first to persist its metadata (otherwise won't get the full metadata)
     app.runModule(modules.X.urn)
     val expected = "{\"fqn\":\"org.tresamigos.smv.modules.X\",\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}"
     assert(modules.X.getMetadata.toString === expected)
