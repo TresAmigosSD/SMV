@@ -284,7 +284,7 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def createMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
     val metadata = new SmvMetadata
     metadata.addFQN(fqn)
-    dfOpt foreach (df => metadata.addSchemaMetadata(df))
+    dfOpt foreach (df =>metadata.addSchemaMetadata(df))
     metadata
   }
 

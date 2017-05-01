@@ -22,7 +22,7 @@ class SmvMetadataTest extends SmvTestUtil {
     // Note that type comes before name due to implementation details; the order
     // of dictionary pairs is arbitrary (under the hood they are in an unordered map)
     assert(
-      metadata.toString === "{\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}")
+      metadata.toJson === "{\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}")
   }
 
   test("Persisted SmvDataSet's metadata include schema") {
@@ -30,7 +30,7 @@ class SmvMetadataTest extends SmvTestUtil {
     app.runModule(modules.X.urn)
     val expected =
       "{\"fqn\":\"org.tresamigos.smv.modules.X\",\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}"
-    assert(modules.X.getMetadata.toString === expected)
+    assert(modules.X.getMetadata.toJson === expected)
   }
 }
 

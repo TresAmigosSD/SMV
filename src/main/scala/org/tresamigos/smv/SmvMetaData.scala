@@ -61,20 +61,17 @@ class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
       }
       .toArray
 
-  def toSparkMetadata: Metadata =
-    builder.build
-
   /**
    * String representation is a minified json string
    */
-  override def toString =
-    toSparkMetadata.json
+  def toJson =
+    builder.build.json
 
   /**
    * Saves the string representation to file as a single row RDD
    */
   def saveToFile(sc: SparkContext, path: String) =
-    sc.makeRDD(Seq(toString), 1).saveAsTextFile(path)
+    sc.makeRDD(Seq(toJson), 1).saveAsTextFile(path)
 }
 
 object SmvMetadata {
