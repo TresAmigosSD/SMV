@@ -384,7 +384,7 @@ class smvPipeCount extends SmvTestUtil {
 class EddDFHelperTest extends SmvTestUtil {
   test("smvConcatHist") {
     val a   = dfFrom("id:String; v:Integer", "a,1;b,1;a,1;a,2")
-    val res = a._smvConcatHist(Seq("id", "v"))
+    val res = a._smvConcatHist(Seq("id", "v")).createReport()
     assert(res === """Histogram of id_v: String sort by Key
 key                      count      Pct    cumCount   cumPct
 a_1                          2   50.00%           2   50.00%
@@ -395,7 +395,7 @@ b_1                          1   25.00%           4  100.00%
 
   test("smvFreqHist") {
     val a   = dfFrom("id:String; v:Integer", "a,1;b,1;a,1;a,2")
-    val res = a._smvFreqHist("id")
+    val res = a._smvFreqHist("id").createReport()
     assert(res === """Histogram of id: String sorted by Frequency
 key                      count      Pct    cumCount   cumPct
 a                            3   75.00%           3   75.00%
@@ -405,7 +405,7 @@ b                            1   25.00%           4  100.00%
 
   test("smvCountHist") {
     val a   = dfFrom("id:String; v:Integer", "a,1;b,1;a,1;a,2")
-    val res = a._smvCountHist(Seq("id"), 1)
+    val res = a._smvCountHist(Seq("id"), 1).createReport()
     assert(res === """Histogram of N_id: with BIN size 1.0
 key                      count      Pct    cumCount   cumPct
 1.0                          1   50.00%           1   50.00%
@@ -415,7 +415,7 @@ key                      count      Pct    cumCount   cumPct
 
   test("smvBinHist") {
     val a   = dfFrom("id:String; v:Double", "a,100;b,1201;a,231;a,2")
-    val res = a._smvBinHist("v" -> 100)
+    val res = a._smvBinHist("v" -> 100).createReport()
     assert(res === """Histogram of v: with BIN size 100.0
 key                      count      Pct    cumCount   cumPct
 0.0                          1   25.00%           1   25.00%
