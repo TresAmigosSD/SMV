@@ -24,6 +24,9 @@ private[smv] object SmvHDFS {
 
   def exists(fileName: String): Boolean = getFileSystem(fileName).exists(new Path(fileName))
 
+  def createFileAtomic(fileName: String): Unit =
+    getFileSystem(fileName).create(new Path(fileName), false).close()
+
   /**
    * delete an HDFS file by given path.
    *
