@@ -46,13 +46,20 @@ function write_docs()
   SCALADOC_DIR="$OUTPUT_DIR/scaladocs"
 
   echo "-- copying scaladocs to ~/.smv/ghpages/SMV/scaladocs ..."
-  echo "-- copying pythondocs to ~/.smv/ghpages/SMV/pydocs ..."
+  echo "-- copying pythondocs to ~/.smv/ghpages/SMV/pythondocs ..."
   # put the docs in the right version subdirectory
   mkdir -p $PYVERSION_DIR
   mkdir -p $SCALAVERSION_DIR
   cp -R ${PYDOC_DIR}/_build/html/* $PYVERSION_DIR
   cp -R ${SCALADOC_DIR}/* $SCALAVERSION_DIR
   rm -rf $OUTPUT_DIR
+
+  echo "-- updating symlinks... pythondocs/$TO_VERSION -> pythondocs/latest"
+  echo "-- updating symlinks... scaladocs/$TO_VERSION -> scaladocs/latest"
+  rm scaladocs/latest
+  rm pythondocs/latest
+  ln -s $TO_VERSION scaladocs/latest
+  ln -s $TO_VERSION pythondocs/latest
 }
 
 function update_links()
