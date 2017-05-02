@@ -198,6 +198,11 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def moduleValidPath(prefix: String = ""): String =
     versionedBasePath(prefix) + ".valid"
 
+  /** Returns the path for the module's metadata output */
+  private[smv] def moduleMetaPath(prefix: String = ""): String =
+    versionedBasePath(prefix) + ".meta"
+
+
   /** perform the actual run of this module to get the generated SRDD result. */
   private[smv] def doRun(dqmValidator: DQMValidator): DataFrame
 
@@ -210,11 +215,19 @@ abstract class SmvDataSet extends FilenamePart {
     val eddPath    = moduleEddPath()
     val schemaPath = moduleSchemaPath()
     val rejectPath = moduleValidPath()
+    val metaPath = moduleMetaPath()
     SmvHDFS.deleteFile(csvPath)
     SmvHDFS.deleteFile(schemaPath)
     SmvHDFS.deleteFile(eddPath)
     SmvHDFS.deleteFile(rejectPath)
+    SmvHDFS.deleteFile(metaPath)
   }
+
+  /**
+   * Delete just the metadata output
+   */
+  private[smv] def deleteMetadataOutput =
+    SmvHDFS.deleteFile(moduleMetaPath())
 
   /**
    * Returns current valid outputs produced by this module.
@@ -228,6 +241,12 @@ abstract class SmvDataSet extends FilenamePart {
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
     Try(util.DataSet.readFile(app.sparkSession, moduleCsvPath(prefix)))
+
+  private[smv] def readPersistedMetadata(prefix: String = ""): Try[SmvMetadata] =
+    Try {
+      val json = app.sc.textFile(moduleMetaPath(prefix)).collect.head
+      SmvMetadata.fromJson(json)
+    }
 
   /** Has the result of this data set been persisted? */
   private[smv] def isPersisted: Boolean =
@@ -249,6 +268,26 @@ abstract class SmvDataSet extends FilenamePart {
       !isPersisted
   }
 
+  /**
+   * Get the most detailed metadata available without running this module. If
+   * the modules has been run and hasn't been changed, this will be all the metadata
+   * that was persisted. If the module hasn't been run since it was changed, this
+   * will be a less detailed report.
+   */
+  private[smv] def getMetadata: SmvMetadata =
+    readPersistedMetadata().getOrElse(createMetadata(None))
+
+  /**
+   * Create SmvMetadata object for this SmvDataSet. If a DataFrame is provided,
+   * its schema will be extracted and included in the metadata
+   */
+  private[smv] def createMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
+    val metadata = new SmvMetadata
+    metadata.addFQN(fqn)
+    dfOpt foreach (df =>metadata.addSchemaMetadata(df))
+    metadata
+  }
+
   private[smv] def computeRDD: DataFrame = {
     val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()))
     val validationSet = new ValidationSet(Seq(dqmValidator), isPersistValidateResult)
@@ -256,6 +295,8 @@ abstract class SmvDataSet extends FilenamePart {
     if (isEphemeral) {
       val df = dqmValidator.attachTasks(doRun(dqmValidator))
       validationSet.validate(df, false, moduleValidPath()) // no action before this point
+      deleteMetadataOutput
+      createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
       df
     } else {
       readPersistedFile().recoverWith {
@@ -265,6 +306,7 @@ abstract class SmvDataSet extends FilenamePart {
           deleteOutputs
           persist(df)
           validationSet.validate(df, true, moduleValidPath()) // has already had action (from persist)
+          createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
           readPersistedFile()
       }.get
     }
