@@ -312,8 +312,14 @@ abstract class SmvDataSet extends FilenamePart {
     }
   }
 
+  /** path to published output without file extension **/
+  private[smv] def publishPathNoExt(version: String) = s"${app.smvConfig.publishDir}/${version}/${fqn}"
+
   /** path of published data for a given version. */
-  private def publishPath(version: String) = s"${app.smvConfig.publishDir}/${version}/${fqn}.csv"
+  private[smv] def publishCsvPath(version: String) = publishPathNoExt(version) + ".csv"
+
+  /** path of published metadata for a given version */
+  private[smv] def publishMetaPath(version: String) = publishPathNoExt(version) + ".meta"
 
   /**
    * Publish the current module data to the publish directory.
@@ -322,14 +328,15 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def publish() = {
     val df      = rdd()
     val version = app.smvConfig.cmdLine.publish()
-    val handler = new FileIOHandler(app.sqlContext, publishPath(version))
+    val handler = new FileIOHandler(app.sqlContext, publishCsvPath(version))
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
+    createMetadata(Some(df)).saveToFile(app.sc, publishMetaPath(version))
 
     /* publish should also calculate edd if generarte Edd flag was turned on */
     if (app.genEdd)
-      df.edd.persistBesideData(publishPath(version))
+      df.edd.persistBesideData(publishCsvPath(version))
   }
 
   private[smv] lazy val parentStage: Option[String] = app.dsm.stageForUrn(urn)
@@ -341,7 +348,7 @@ abstract class SmvDataSet extends FilenamePart {
    */
   private[smv] def readPublishedData(): Option[DataFrame] = {
     stageVersion.map { v =>
-      val handler = new FileIOHandler(app.sqlContext, publishPath(v))
+      val handler = new FileIOHandler(app.sqlContext, publishCsvPath(v))
       handler.csvFileWithSchema(null)
     }
   }
