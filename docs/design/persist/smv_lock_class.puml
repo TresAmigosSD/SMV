@@ -1,21 +1,24 @@
 @startuml
 
 class SmvLock {
-	-path
+	-path: String
+	-timeout: Long
 	+lock(): Unit
 	+unlock(): Unit
-	+tryLock(timeout): Unit
 }
 
 note as lock_pseudocode
 	lock ():
 		obtained = false
+		enter_ts = current time
 		while (not obtained) {
 			try {
 				create file at path  // atomic operation
 				obtained = true
 			}
 			catch (exception) {
+				if (current time - enter_ts > timeout)
+					throw TimeoutException
 				sleep(interval)
 			}
 		}
@@ -24,23 +27,6 @@ end note
 note as unlock_pseudocode
 	unlock ():
 		delete file at path
-end note
-
-note as trylock_pseudocode
-	trylock (timeout):
-		obtained = false
-		enter_ts = current time
-		while (not obtained) {
-			try {
-				create file at path  // atomnic operation
-				obtained = true
-			}
-			catch (exception) {
-				sleep(interval)
-				if (current time > enter_ts + timeout)
-					throw TimeoutException
-			}
-		}
 end note
 
 @enduml
