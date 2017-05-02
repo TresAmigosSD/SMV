@@ -40,9 +40,11 @@ def indentation(tabbed_str):
     return 0 if no_tabs_str.isspace() else len(no_tabs_str) - len(no_tabs_str.lstrip())
 
 def test_compile_for_errors(fullname):
+    print 'test_compile_for_errors, fullname: ', fullname
     error = None
     try:
         ok = py_compile.compile(fullname, None, None, True)
+        print 'ok: ', ok
     except py_compile.PyCompileError,err:
         print 'Compiling', fullname, '...'
         print err.msg
@@ -152,8 +154,8 @@ def getDatasetClassStartEnd(lines_of_code_list, module_name):
 
 
 def get_filepath_from_moduleFqn(module_fqn):
-    # TODO: what env var for projects/ directory?
-    prefix = '/projects/' + project_dir + "/src/main/python/"
+    # TODO: do not use hardcoded value... FIXME
+    prefix = "/projects/sample_smv_project/src/main/python/"
     # dir1.dir2.file.class => [dir1, dir2, file]
     fqn_dirs_filename_list = module_fqn.split(".")[:-1]
     # concats fqn_dirs_filename_list into string with "/" intermezzo, appends .py, prepends prefix
@@ -480,6 +482,7 @@ def get_module_code():
     body: fqn = 'xxx'
     function: return the module's code
     '''
+
     module_fqn = None
     module_name = None
     module_stage = None
@@ -541,11 +544,15 @@ def get_module_code():
     (run_start, run_end, _, _) = getCodeBlockStartEnd(lines_of_code_list, module_name, 'run')
     print 'rm start, end: ', run_start, ', ', run_end
 
-    # remove indentation from run method body
-    raw_run_method_body = file_content[(run_start + 1):(run_end + 1)]
-    run_body_indent = indentation(raw_run_method_body[0])
-    print 'run_body_indent: ', run_body_indent
-    run_method_body = [line[run_body_indent:] for line in raw_run_method_body]
+    run_method_body = [""]
+    if run_start and run_end:
+        # remove indentation from run method body
+        raw_run_method_body = file_content[(run_start + 1):(run_end + 1)]
+        run_body_indent = indentation(raw_run_method_body[0])
+        print 'run_body_indent: ', run_body_indent
+        run_method_body = [line[run_body_indent:] for line in raw_run_method_body]
+    else:
+        print 'run method not detected in dataset'
 
     res["srcFile"] = file_name,
     res["srcCode"] = run_method_body
@@ -569,11 +576,12 @@ def updateModuleMetaData():
     dsType = request.form["dsType"].encode("utf-8").lower()
     isEphemeral = ast.literal_eval(request.form["ephemeral"].encode("utf-8").capitalize())
 
+    # ----TODO: use getDatasetInfo() for dsProperties when working!!!!!!----
+    dsProperties = { "fqn":fqn, "description":description, "dsType":dsType, "srcCode":"return None", "ephemeral":isEphemeral }
+
     if dsType == 'input':
         dsInputType = request.form["dsInputType"].encode("utf-8").lower()
 
-        # ----TODO: remove dsProperties when getDatasetInfo() working!!!!!!----
-        dsProperties = { "fqn":fqn, "description":description, "dsType":dsType, "srcCode":"return None", "ephemeral":isEphemeral }
         if dsType == 'input':
             if dsInputType == 'csv': dsProperties["fileName"] = ""
             if dsInputType == 'hive': dsProperties["tableName"] = ""
@@ -633,6 +641,7 @@ def updateModuleMetaData():
         # TODO: check if dsProperties is None... raise exception... could not get code from created ds
 
         print 'printing dsProperties'
+        dsProperties["srcFile"] = newFile,
         print str(dsProperties)
 
         return ok_res({ "msg":"Dataset created", "dsProperties":dsProperties})
@@ -849,6 +858,68 @@ def get_graph_json():
     res = SmvApp.getInstance().get_graph_json()
     return jsonify(graph=res)
 
+@app.route("/api/get_dataset_src", methods = ['POST'])
+def getDatasetSrc():
+    '''
+    fqn
+    '''
+    # get form values
+    fqn = request.form["fqn"].encode("utf-8").strip()
+    # get filename from fqn
+    fileName = get_filepath_from_moduleFqn(fqn)
+    print 'getting file: ', fileName
+
+    try:
+        with open(fileName, 'r') as f:
+            linesOfCodeList = f.readlines()
+    except IOError:
+        return err_res("Failed to get src code")
+
+    fileContents = [line.rstrip() for line in linesOfCodeList]
+    res = { "fullSrc": fileContents }
+    return ok_res(res)
+
+@app.route("/api/update_dataset_src", methods = ['POST'])
+def updateDatasetSrc():
+    '''
+    fqn
+    '''
+
+    # get form values
+    fqn = request.form["fqn"].encode("utf-8").strip()
+    fullSrc = "".join(map((lambda c: c.encode("utf-8")), json.loads(request.form["fullSrc"])))
+
+    # get filename from fqn
+    fileName = get_filepath_from_moduleFqn(fqn)
+    duplicateFileName = fileName[:-3] + "_smv_update_code_duplicate.py"
+    print 'dup: ', duplicateFileName
+
+    # check if filename exists, else return error
+    if not os.path.isfile(fileName):
+        return err_res(MODULE_NOT_FOUND_ERR, "Source file for {} not found".format(fqn))
+
+    # create duplicate to write and compile
+    with open(duplicateFileName, 'w') as fd:
+        for i in xrange(len(fullSrc)):
+            fd.write(fullSrc[i])
+
+        # compile duplicate
+        compileHasErrors = test_compile_for_errors(duplicateFileName)
+        print "update full src code compile_errors: " + str(compileHasErrors)
+
+        if os.path.isfile(duplicateFileName): os.remove(duplicateFileName)
+        if os.path.isfile(duplicateFileName + 'c'):
+            print 'will remove ' + duplicateFileName + 'c'
+            os.remove("{}c".format(duplicateFileName))
+
+        if compileHasErrors:
+            return err_res(COMPILATION_ERROR, "Dataset failed to compile", compileHasErrors)
+
+    with open(fileName, 'w') as fd:
+        for i in xrange(len(fullSrc)):
+            fd.write(fullSrc[i])
+
+    return ok_res({ "msg": "Dataset updated", "fullSrc": fullSrc })
 
 # Wrapper so that other python scripts can import and then call
 # smvserver.main()
@@ -864,7 +935,7 @@ class Main(object):
         # start server
         host = os.environ.get('SMV_HOST', '0.0.0.0')
         port = os.environ.get('SMV_PORT', '5000')
-        project_dir = os.environ.get('PROJECT_DIR', './')
+        project_dir = 'sample_smv_project' #os.environ.get('PROJECT_DIR', './')  # TODO: ...why env var not visible?
 
         # to reduce complexity in SmvApp, keep the rest server single-threaded
         app.run(host=host, port=int(port), threaded=False, processes=1)
