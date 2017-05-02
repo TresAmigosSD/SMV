@@ -577,7 +577,7 @@ def updateModuleMetaData():
     isEphemeral = ast.literal_eval(request.form["ephemeral"].encode("utf-8").capitalize())
 
     # ----TODO: use getDatasetInfo() for dsProperties when working!!!!!!----
-    dsProperties = { "fqn":fqn, "description":description, "dsType":dsType, "srcCode":"return None", "ephemeral":isEphemeral }
+    dsProperties = { "fqn":fqn, "description":description, "dsType":dsType, "srcCode":["return None\n"], "ephemeral":isEphemeral }
 
     if dsType == 'input':
         dsInputType = request.form["dsInputType"].encode("utf-8").lower()
