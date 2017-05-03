@@ -21,6 +21,8 @@ import dqm.{DQMValidator, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 import scala.collection.JavaConversions._
 import scala.util.Try
 
+import org.joda.time.DateTime
+
 /** A module's file name part is stackable, e.g. with Using[SmvRunConfig] */
 trait FilenamePart {
   def fnpart: String
@@ -63,6 +65,15 @@ abstract class SmvDataSet extends FilenamePart {
 
   /** fixed list of SmvDataSet dependencies */
   var resolvedRequiresDS: Seq[SmvDataSet] = Seq.empty[SmvDataSet]
+
+  /**
+   * Timestamp which will be included in the metadata. Should be the timestamp
+   * of the transaction that loaded this module.
+   */
+  private var timestamp: Option[DateTime] = None
+
+  def setTimestamp(dt: DateTime) =
+    timestamp = Some(dt)
 
   lazy val ancestors: Seq[SmvDataSet] =
     (resolvedRequiresDS ++ resolvedRequiresDS.flatMap(_.ancestors)).distinct
@@ -277,11 +288,17 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def getMetadata: SmvMetadata =
     readPersistedMetadata().getOrElse(createMetadata(None))
 
+
+  /**
+   * Create SmvMetadata for this SmvDataset. SmvMetadata will be more detailed if
+   * a DataFrame is provided
+   */
   private[smv] def createMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
     val metadata = new SmvMetadata
     metadata.addFQN(fqn)
     metadata.addDependencyMetadata(resolvedRequiresDS)
-    dfOpt foreach (df => metadata.addSchemaMetadata(df))
+    dfOpt foreach (metadata.addSchemaMetadata(_))
+    timestamp foreach (metadata.addTimestamp(_))
     metadata
   }
 

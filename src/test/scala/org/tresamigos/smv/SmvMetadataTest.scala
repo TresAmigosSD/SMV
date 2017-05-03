@@ -42,12 +42,20 @@ class SmvMetadataTest extends SmvTestUtil {
   }
 
   test("Persisted SmvDataSet's metadata include schema") {
-    // Need to run the module first to persist its metadata (otherwise won't get the full metadata)
     app.runModule(modules1.V.urn)
+    // Need to run the module first to persist its metadata (otherwise won't get the full metadata)
     val expectedSubstring =
       "\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]"
     val x = app.dsm.load(modules1.V.urn).head
     assert( x.getMetadata.toJson.contains(expectedSubstring) )
+  }
+
+  test("Persisted SmvDataSet's metadata include timestamp") {
+    app.runModule(modules1.V.urn)
+    // Need to run the module first to persist its metadata (otherwise won't get the full metadata)
+    val expectedPattern = "\"timestamp\":\".+\"".r
+    val x = app.dsm.load(modules1.V.urn).head
+    assert( expectedPattern.findAllIn(x.getMetadata.toJson).hasNext )
   }
 }
 
