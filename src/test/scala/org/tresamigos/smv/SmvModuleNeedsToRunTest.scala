@@ -14,6 +14,9 @@
 
 package org.tresamigos.smv {
   class SmvModuleNeedsToRunTest extends SmvTestUtil {
+    override def appArgs =
+      super.appArgs ++ Seq("--smv-props", "smv.stages=org.tresamigos.smv.needstoruntest")
+
     test("Input modules should return false for needsToRun") {
       needstoruntest.In1.needsToRun shouldBe false
     }
