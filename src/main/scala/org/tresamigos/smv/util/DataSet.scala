@@ -38,53 +38,6 @@ object DataSet {
     new FileIOHandler(sqlContext, path).csvFileWithSchema(attr)
 
   /**
-   * Save the dataframe content to disk, optionally generate edd.
-   */
-  def persist(sqlContext: SQLContext,
-              dataframe: DataFrame,
-              path: String,
-              generateEdd: Boolean): Unit = {
-    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
-
-    val counter = sqlContext.sparkContext.accumulator(0l)
-    val before  = DateTime.now()
-    println(s"${fmt.print(before)} PERSISTING: ${path}")
-
-    val df      = dataframe.smvPipeCount(counter)
-    val handler = new FileIOHandler(sqlContext, path)
-
-    //Always persist null string as a special value with assumption that it's not
-    //a valid data value
-    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
-
-    val after   = DateTime.now()
-    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
-    val n       = counter.value
-
-    println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
-
-    // if EDD flag was specified, generate EDD for the just saved file!
-    // Use the "cached" file that was just saved rather than cause an action
-    // on the input RDD which may cause some expensive computation to re-occur.
-    if (generateEdd)
-      readFile(sqlContext, path).edd.persistBesideData(path)
-  }
-
-  def publish(sqlContext: SQLContext,
-              dataframe: DataFrame,
-              path: String,
-              generateEdd: Boolean): Unit = {
-    val handler = new FileIOHandler(sqlContext, path)
-    //Same as in persist, publish null string as a special value with assumption that it's not
-    //a valid data value
-    handler.saveAsCsvWithSchema(dataframe, strNullValue = "_SmvStrNull_")
-
-    /* publish should also calculate edd if generarte Edd flag was turned on */
-    if (generateEdd)
-      dataframe.edd.persistBesideData(path)
-  }
-
-  /**
    * Exports a dataframe to a hive table.
    */
   def exportDataFrameToHive(sqlContext: SQLContext,

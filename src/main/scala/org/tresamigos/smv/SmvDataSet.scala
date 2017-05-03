@@ -21,7 +21,7 @@ import dqm.{DQMValidator, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 import scala.collection.JavaConversions._
 import scala.util.Try
 
-import org.joda.time.DateTime
+import org.joda.time._, format._
 
 /** A module's file name part is stackable, e.g. with Using[SmvRunConfig] */
 trait FilenamePart {
@@ -247,8 +247,34 @@ abstract class SmvDataSet extends FilenamePart {
     Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath())
   }
 
-  private[smv] def persist(rdd: DataFrame, prefix: String = "") =
-    util.DataSet.persist(app.sqlContext, rdd, moduleCsvPath(prefix), app.genEdd)
+  def persist(dataframe: DataFrame,
+              prefix: String = ""): Unit = {
+    val path = moduleCsvPath(prefix)
+    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
+
+    val counter = app.sqlContext.sparkContext.accumulator(0l)
+    val before  = DateTime.now()
+    println(s"${fmt.print(before)} PERSISTING: ${path}")
+
+    val df      = dataframe.smvPipeCount(counter)
+    val handler = new FileIOHandler(app.sqlContext, path)
+
+    //Always persist null string as a special value with assumption that it's not
+    //a valid data value
+    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
+
+    val after   = DateTime.now()
+    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
+    val n       = counter.value
+
+    println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
+
+    // if EDD flag was specified, generate EDD for the just saved file!
+    // Use the "cached" file that was just saved rather than cause an action
+    // on the input RDD which may cause some expensive computation to re-occur.
+    if (app.genEdd)
+      util.DataSet.readFile(app.sqlContext, path).edd.persistBesideData(path)
+  }
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
     Try(util.DataSet.readFile(app.sqlContext, moduleCsvPath(prefix)))
@@ -600,33 +626,6 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     val paramMap: Map[SmvDataSet, DataFrame] =
       (resolvedRequiresDS map (dep => (dep, dep.rdd()))).toMap
     run(new runParams(paramMap))
-  }
-
-  /** Use Bytecode analysis to figure out dependency and check against
-   *  resolvedRequiresDS and requiresAnc. Could consider to totaly drop resolvedRequiresDS and
-   *  requiresAnc, and always use ASM to derive the dependency
-   **/
-  private def checkDependency(): Unit = {
-    val dep = DataSetDependency(this.getClass.getName)
-    dep.dependsAnc
-      .map { s =>
-        (s, SmvReflection.objectNameToInstance[SmvAncillary](s))
-      }
-      .filterNot { case (s, a) => requiresAnc().contains(a) }
-      .foreach {
-        case (s, a) =>
-          throw new SmvRuntimeException(s"SmvAncillary ${s} need to be specified in requiresAnc")
-      }
-    dep.dependsDS
-      .map { s =>
-        (s, SmvReflection.objectNameToInstance[SmvDataSet](s))
-      }
-      .filterNot { case (s, a) => resolvedRequiresDS.contains(a) }
-      .foreach {
-        case (s, a) =>
-          throw new SmvRuntimeException(
-            s"SmvDataSet ${s} need to be specified in requiresDS, ${a}")
-      }
   }
 
   /**
