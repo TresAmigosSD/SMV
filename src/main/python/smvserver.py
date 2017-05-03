@@ -33,6 +33,19 @@ TAB_SIZE = 4
 
 # ---------- Helper Functions ---------- #
 
+def getStagesInApp():
+    """returns list of all stages defined in app"""
+    return list(SmvApp.getInstance().stages)
+
+def getFqnsInApp():
+    """returns all known module FQNs in app. Note: excluded links"""
+    repo = DataSetRepoFactory(SmvApp.getInstance()).createRepo()
+    # generate list of URNs in a stage for each stage (list-of-list)
+    urnsLL = [repo.dataSetsForStage(s) for s in getStagesInApp()]
+    # flatten the list-of-list to simple list of urns and remove the "mod:" prefix
+    urns = [u.split(":")[1] for ul in urnsLL for u in ul]
+    return urns
+
 def indentation(tabbed_str):
     no_tabs_str = tabbed_str.expandtabs(TAB_SIZE)
     # if string has only whitespace, return 0 indentation.
@@ -460,6 +473,18 @@ JOB_SUCCESS = 'SUCCESS: Code updated!' # TODO: rename CODE_UPDATE_SUCCESS
 OK = ""
 
 MODULE_DOES_NOT_EXIST= 'MODULE_DOES_NOT_EXIST'
+
+@app.route("/api/get_app_info", methods = ['POST'])
+def get_app_info():
+    '''
+    body: empty
+    function: retrieve list of stages and fqns in app.
+    '''
+    res = {
+        "stages": getStagesInApp(),
+        "fqns": getFqnsInApp()
+    }
+    return ok_res(res)
 
 @app.route("/api/run_module", methods = ['POST'])
 def run_module():
