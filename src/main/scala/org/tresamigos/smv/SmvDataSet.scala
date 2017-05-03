@@ -301,13 +301,19 @@ abstract class SmvDataSet extends FilenamePart {
     } else {
       readPersistedFile().recoverWith {
         case e =>
-          val df = dqmValidator.attachTasks(doRun(dqmValidator))
-          // Delete outputs in case data was partially written previously
-          deleteOutputs
-          persist(df)
-          validationSet.validate(df, true, moduleValidPath()) // has already had action (from persist)
-          createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
-          readPersistedFile()
+          SmvLock.withLock(moduleCsvPath() + ".lock") {
+            // Another process may have persisted the data while we
+            // waited for the lock. So we read again before computing.
+            readPersistedFile().recoverWith { case x =>
+              val df = dqmValidator.attachTasks(doRun(dqmValidator))
+              // Delete outputs in case data was partially written previously
+              deleteOutputs
+              persist(df)
+              validationSet.validate(df, true, moduleValidPath()) // has already had action (from persist)
+              createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
+              readPersistedFile()
+            }
+          }
       }.get
     }
   }
