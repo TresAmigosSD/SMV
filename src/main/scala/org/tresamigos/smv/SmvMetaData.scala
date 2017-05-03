@@ -19,7 +19,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.SparkContext
 
 import org.joda.time.DateTime
-import java.text.SimpleDateFormat;
 
 
 /**
