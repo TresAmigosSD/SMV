@@ -21,6 +21,8 @@ import dqm.{DQMValidator, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 import scala.collection.JavaConversions._
 import scala.util.Try
 
+import org.joda.time.DateTime
+
 /** A module's file name part is stackable, e.g. with Using[SmvRunConfig] */
 trait FilenamePart {
   def fnpart: String
@@ -63,6 +65,15 @@ abstract class SmvDataSet extends FilenamePart {
 
   /** fixed list of SmvDataSet dependencies */
   var resolvedRequiresDS: Seq[SmvDataSet] = Seq.empty[SmvDataSet]
+
+  /**
+   * Timestamp which will be included in the metadata. Should be the timestamp
+   * of the transaction that loaded this module.
+   */
+  private var timestamp: Option[DateTime] = None
+
+  def setTimestamp(dt: DateTime) =
+    timestamp = Some(dt)
 
   lazy val ancestors: Seq[SmvDataSet] =
     (resolvedRequiresDS ++ resolvedRequiresDS.flatMap(_.ancestors)).distinct
@@ -277,14 +288,17 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def getMetadata: SmvMetadata =
     readPersistedMetadata().getOrElse(createMetadata(None))
 
+
   /**
-   * Create SmvMetadata object for this SmvDataSet. If a DataFrame is provided,
-   * its schema will be extracted and included in the metadata
+   * Create SmvMetadata for this SmvDataset. SmvMetadata will be more detailed if
+   * a DataFrame is provided
    */
   private[smv] def createMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
     val metadata = new SmvMetadata
     metadata.addFQN(fqn)
-    dfOpt foreach (df =>metadata.addSchemaMetadata(df))
+    metadata.addDependencyMetadata(resolvedRequiresDS)
+    dfOpt foreach (metadata.addSchemaMetadata(_))
+    timestamp foreach (metadata.addTimestamp(_))
     metadata
   }
 
@@ -318,8 +332,14 @@ abstract class SmvDataSet extends FilenamePart {
     }
   }
 
+  /** path to published output without file extension **/
+  private[smv] def publishPathNoExt(version: String) = s"${app.smvConfig.publishDir}/${version}/${fqn}"
+
   /** path of published data for a given version. */
-  private def publishPath(version: String) = s"${app.smvConfig.publishDir}/${version}/${fqn}.csv"
+  private[smv] def publishCsvPath(version: String) = publishPathNoExt(version) + ".csv"
+
+  /** path of published metadata for a given version */
+  private[smv] def publishMetaPath(version: String) = publishPathNoExt(version) + ".meta"
 
   /**
    * Publish the current module data to the publish directory.
@@ -328,14 +348,15 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def publish() = {
     val df      = rdd()
     val version = app.smvConfig.cmdLine.publish()
-    val handler = new FileIOHandler(app.sqlContext, publishPath(version))
+    val handler = new FileIOHandler(app.sqlContext, publishCsvPath(version))
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
+    createMetadata(Some(df)).saveToFile(app.sc, publishMetaPath(version))
 
     /* publish should also calculate edd if generarte Edd flag was turned on */
     if (app.genEdd)
-      df.edd.persistBesideData(publishPath(version))
+      df.edd.persistBesideData(publishCsvPath(version))
   }
 
   private[smv] lazy val parentStage: Option[String] = app.dsm.stageForUrn(urn)
@@ -347,7 +368,7 @@ abstract class SmvDataSet extends FilenamePart {
    */
   private[smv] def readPublishedData(): Option[DataFrame] = {
     stageVersion.map { v =>
-      val handler = new FileIOHandler(app.sqlContext, publishPath(v))
+      val handler = new FileIOHandler(app.sqlContext, publishCsvPath(v))
       handler.csvFileWithSchema(null)
     }
   }
@@ -648,6 +669,33 @@ class SmvModuleLink(val outputModule: SmvOutput)
 
   override def fqn = throw new SmvRuntimeException("SmvModuleLink fqn should never be called")
   override def urn = LinkURN(smvModule.fqn)
+
+  /** Returns the path for the module's csv output */
+  override def moduleCsvPath(prefix: String = ""): String =
+    throw new SmvRuntimeException("SmvModuleLink's moduleCsvPath should never be called")
+
+  /** Returns the path for the module's schema file */
+  private[smv] override def moduleSchemaPath(prefix: String = ""): String =
+    throw new SmvRuntimeException("SmvModuleLink's moduleSchemaPath should never be called")
+
+  /** Returns the path for the module's edd report output */
+  private[smv] override def moduleEddPath(prefix: String = ""): String =
+    throw new SmvRuntimeException("SmvModuleLink's moduleEddPath should never be called")
+
+  /** Returns the path for the module's reject report output */
+  private[smv] override def moduleValidPath(prefix: String = ""): String =
+    throw new SmvRuntimeException("SmvModuleLink's moduleValidPath should never be called")
+
+  /**
+   * Get the path of the metadata for the output csv this link will read from
+   * If using published data, get the target's published metadata path. Otherwise,
+   * use the target's peristed metadata path.
+   */
+  private[smv] override def moduleMetaPath(prefix: String = ""): String =
+    smvModule.stageVersion match {
+      case Some(v) => smvModule.publishMetaPath(v)
+      case _ => smvModule.moduleMetaPath()
+    }
 
   override lazy val ancestors = smvModule.ancestors
 
