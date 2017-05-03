@@ -107,11 +107,11 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
             # detect end of method
             if blockStartLine is not None and blockEndLine is None:
                 # check if eof or next block started
-                if i == (numLinesOfCode - 1):
+                if (not line.isspace()) and (indentation(line) <= blockIndentation):
+                    blockEndLine = lastNonEmptyLine
+                elif i == (numLinesOfCode - 1):
                     # if last line before eof is not empty space, current line is end of method, else last non empty
                     blockEndLine = i if not line.isspace() else lastNonEmptyLine
-                elif (not line.isspace()) and (indentation(line) <= blockIndentation):
-                    blockEndLine = lastNonEmptyLine
             # detect class end by start of another class (or block with eq or less indentation)
             if (not line.isspace()) and (classDefFound and (indentation(line) <= classIndentation)):
                 classEnd = lastNonEmptyLine
