@@ -288,21 +288,6 @@ we should query resolvedRequiresDS for dependencies.
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDSWithParser#createDsDqm" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="createDsDqm():org.tresamigos.smv.dqm.SmvDQM"></a>
-      <a id="createDsDqm():SmvDQM"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">createDsDqm</span><span class="params">()</span><span class="result">: <a href="dqm/SmvDQM.html" class="extype" name="org.tresamigos.smv.dqm.SmvDQM">SmvDQM</a></span>
-      </span>
-      </h4>
-      <p class="shortcomment cmt">createDsDqm could be overridden by smv internal SmvDataSet's sub-classes
-</p><div class="fullcomment"><div class="comment cmt"><p>createDsDqm could be overridden by smv internal SmvDataSet's sub-classes
-</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvDSWithParser">SmvDSWithParser</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="org.tresamigos.smv.SmvDataSet#datasetHash" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="datasetHash:Int"></a>
       <a id="datasetHash:Int"></a>
@@ -333,6 +318,20 @@ See <a href="dqm/package.html" class="extype" name="org.tresamigos.smv.dqm">org.
 for details on creating rules and fixes.</p><p>Concrete modules and files should override this method to define rules/fixes to apply.
 The default is to provide an empty set of DQM rules/fixes.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDSWithParser#dqmWithTypeSpecificPolicy" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="dqmWithTypeSpecificPolicy(userDQM:org.tresamigos.smv.dqm.SmvDQM):org.tresamigos.smv.dqm.SmvDQM"></a>
+      <a id="dqmWithTypeSpecificPolicy(SmvDQM):SmvDQM"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">dqmWithTypeSpecificPolicy</span><span class="params">(<span name="userDQM">userDQM: <a href="dqm/SmvDQM.html" class="extype" name="org.tresamigos.smv.dqm.SmvDQM">SmvDQM</a></span>)</span><span class="result">: <a href="dqm/SmvDQM.html" class="extype" name="org.tresamigos.smv.dqm.SmvDQM">SmvDQM</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt"> Add parser failure policy to any DataSets that use a parser (e.</p><div class="fullcomment"><div class="comment cmt"><p> Add parser failure policy to any DataSets that use a parser (e.g. csv files and hive tables)
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.tresamigos.smv.SmvDSWithParser">SmvDSWithParser</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -458,19 +457,6 @@ override this to name the proxied FQN.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.tresamigos.smv.SmvDataSet#getDqm" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="getDqm:org.tresamigos.smv.dqm.SmvDQM"></a>
-      <a id="getDqm:SmvDQM"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">getDqm</span><span class="result">: <a href="dqm/SmvDQM.html" class="extype" name="org.tresamigos.smv.dqm.SmvDQM">SmvDQM</a></span>
-      </span>
-      </h4>
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
     </li><li name="scala.AnyRef#hashCode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <a id="hashCode():Int"></a>
