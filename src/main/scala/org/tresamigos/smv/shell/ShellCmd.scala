@@ -44,7 +44,7 @@ object ShellCmd {
     """Here is a list of SMV-shell command
       |
       |Please refer to the API doc for details:
-      |http://tresamigossd.github.io/SMV/scaladocs/1.5.2.7/index.html#org.tresamigos.smv.shell.package
+      |http://tresamigossd.github.io/SMV/scaladocs/1.5.2.8/index.html#org.tresamigos.smv.shell.package
       |
       |* lsStage
       |* ls
