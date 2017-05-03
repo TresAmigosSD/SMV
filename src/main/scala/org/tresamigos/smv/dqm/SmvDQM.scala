@@ -102,8 +102,9 @@ class DQMValidator(dqm: SmvDQM) extends ValidationTask {
   /** Check for duplicated task names */
   require((ruleNames ++ fixNames).size == (ruleNames ++ fixNames).toSet.size)
 
-  private lazy val dqmState: DQMState =
+  private lazy val dqmState: DQMState = {
     new DQMState(app.sc, ruleNames, fixNames)
+  }
 
   /** create policies from tasks. Filter out NoOpDQMPolicy */
   private def policiesFromTasks(): Seq[DQMPolicy] = {
