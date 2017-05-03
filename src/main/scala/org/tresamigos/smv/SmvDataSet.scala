@@ -602,33 +602,6 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
     run(new runParams(paramMap))
   }
 
-  /** Use Bytecode analysis to figure out dependency and check against
-   *  resolvedRequiresDS and requiresAnc. Could consider to totaly drop resolvedRequiresDS and
-   *  requiresAnc, and always use ASM to derive the dependency
-   **/
-  private def checkDependency(): Unit = {
-    val dep = DataSetDependency(this.getClass.getName)
-    dep.dependsAnc
-      .map { s =>
-        (s, SmvReflection.objectNameToInstance[SmvAncillary](s))
-      }
-      .filterNot { case (s, a) => requiresAnc().contains(a) }
-      .foreach {
-        case (s, a) =>
-          throw new SmvRuntimeException(s"SmvAncillary ${s} need to be specified in requiresAnc")
-      }
-    dep.dependsDS
-      .map { s =>
-        (s, SmvReflection.objectNameToInstance[SmvDataSet](s))
-      }
-      .filterNot { case (s, a) => resolvedRequiresDS.contains(a) }
-      .foreach {
-        case (s, a) =>
-          throw new SmvRuntimeException(
-            s"SmvDataSet ${s} need to be specified in requiresDS, ${a}")
-      }
-  }
-
   /**
    * Create a snapshot in the current module at some result DataFrame.
    * This is useful for debugging a long SmvModule by creating snapshots along the way.
