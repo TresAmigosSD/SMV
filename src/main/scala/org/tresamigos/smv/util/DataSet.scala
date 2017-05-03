@@ -26,18 +26,6 @@ import org.joda.time._, format._
 object DataSet {
 
   /**
-   * Read a dataframe from a persisted file path, that is usually an
-   * input data set or the output of an upstream SmvModule.
-   *
-   * The default format is headerless CSV with '"' as the quote
-   * character
-   */
-  def readFile(sqlContext: SQLContext,
-               path: String,
-               attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
-    new FileIOHandler(sqlContext, path).csvFileWithSchema(attr)
-
-  /**
    * Exports a dataframe to a hive table.
    */
   def exportDataFrameToHive(sqlContext: SQLContext,

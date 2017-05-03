@@ -247,6 +247,17 @@ abstract class SmvDataSet extends FilenamePart {
     Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath())
   }
 
+  /**
+   * Read a dataframe from a persisted file path, that is usually an
+   * input data set or the output of an upstream SmvModule.
+   *
+   * The default format is headerless CSV with '"' as the quote
+   * character
+   */
+  def readFile(path: String,
+               attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
+    new FileIOHandler(app.sqlContext, path).csvFileWithSchema(attr)
+
   def persist(dataframe: DataFrame,
               prefix: String = ""): Unit = {
     val path = moduleCsvPath(prefix)
@@ -273,11 +284,11 @@ abstract class SmvDataSet extends FilenamePart {
     // Use the "cached" file that was just saved rather than cause an action
     // on the input RDD which may cause some expensive computation to re-occur.
     if (app.genEdd)
-      util.DataSet.readFile(app.sqlContext, path).edd.persistBesideData(path)
+      readFile(path).edd.persistBesideData(path)
   }
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
-    Try(util.DataSet.readFile(app.sqlContext, moduleCsvPath(prefix)))
+    Try(readFile(moduleCsvPath(prefix)))
 
   private[smv] def readPersistedMetadata(prefix: String = ""): Try[SmvMetadata] =
     Try {
