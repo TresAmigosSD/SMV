@@ -38,6 +38,14 @@ class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
     builder.putMetadataArray("columns", createSchemaMetadataArray(df))
 
   /**
+   * Add dependency-related metadata based on a list of dependencies
+   */
+  def addDependencyMetadata(deps: Seq[SmvDataSet]) = {
+    val dependencyPaths = deps map ( _.moduleMetaPath() )
+    builder.putStringArray("inputs", dependencyPaths.toArray)
+  }
+  
+  /**
    * Returns an array where each element is a metadata containing information
    * about one of the DataFrame's columns, including name, type, and format and
    * column-level metadata if any. Order of the array is the order of the columns.

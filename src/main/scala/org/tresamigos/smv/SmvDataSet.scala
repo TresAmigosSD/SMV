@@ -277,14 +277,11 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def getMetadata: SmvMetadata =
     readPersistedMetadata().getOrElse(createMetadata(None))
 
-  /**
-   * Create SmvMetadata object for this SmvDataSet. If a DataFrame is provided,
-   * its schema will be extracted and included in the metadata
-   */
   private[smv] def createMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
     val metadata = new SmvMetadata
     metadata.addFQN(fqn)
-    dfOpt foreach (df =>metadata.addSchemaMetadata(df))
+    metadata.addDependencyMetadata(resolvedRequiresDS)
+    dfOpt foreach (df => metadata.addSchemaMetadata(df))
     metadata
   }
 
@@ -649,6 +646,33 @@ class SmvModuleLink(val outputModule: SmvOutput)
 
   override def fqn = throw new SmvRuntimeException("SmvModuleLink fqn should never be called")
   override def urn = LinkURN(smvModule.fqn)
+
+  /** Returns the path for the module's csv output */
+  override def moduleCsvPath(prefix: String = ""): String =
+    throw new SmvRuntimeException("SmvModuleLink's moduleCsvPath should never be called")
+
+  /** Returns the path for the module's schema file */
+  private[smv] override def moduleSchemaPath(prefix: String = ""): String =
+    throw new SmvRuntimeException("SmvModuleLink's moduleSchemaPath should never be called")
+
+  /** Returns the path for the module's edd report output */
+  private[smv] override def moduleEddPath(prefix: String = ""): String =
+    throw new SmvRuntimeException("SmvModuleLink's moduleEddPath should never be called")
+
+  /** Returns the path for the module's reject report output */
+  private[smv] override def moduleValidPath(prefix: String = ""): String =
+    throw new SmvRuntimeException("SmvModuleLink's moduleValidPath should never be called")
+
+  /**
+   * Get the path of the metadata for the output csv this link will read from
+   * If using published data, get the target's published metadata path. Otherwise,
+   * use the target's peristed metadata path.
+   */
+  private[smv] override def moduleMetaPath(prefix: String = ""): String =
+    smvModule.stageVersion match {
+      case Some(v) => smvModule.publishMetaPath(v)
+      case _ => smvModule.moduleMetaPath()
+    }
 
   override lazy val ancestors = smvModule.ancestors
 
