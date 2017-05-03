@@ -355,7 +355,7 @@ def getDatasetInfo(fqn, baseName, stage):
 
 #build imports
 def buildImports(stages):
-    stagesList = ['stage1', 'stage2'] # TODO: get actual list of stages.. not hardcoded
+    stagesList = ['airlineapp.etl', 'airlineapp.datamodel', 'airlineapp.feature'] # TODO: get actual list of stages.. not hardcoded
     # importStages = "".join(map((lambda stage: "import {}\n".format(stage)), stages))
     importStages = "".join(map((lambda stage: "import {}\n".format(stage)), stagesList))  # TODO: remove when stages not hardcoded
     return "\
@@ -475,6 +475,13 @@ def run_module():
     run_result = SmvApp.getInstance().runModule("mod:{}".format(module_fqn))
     return ok_res(str(run_result))
 
+# TODO: move 
+def getFqnOfRequire(ds):
+    '''returns fqn of a dataset. If ds is a link, will return fqn of target'''
+    if getattr(ds, 'IsSmvModuleLink', None):
+        ds = ds.target()
+    return ds.fqn()
+
 # TODO: rename... should return all information about the module or create if not exists
 @app.route("/api/get_dataset_info", methods = ['POST'])
 def get_module_code():
@@ -530,7 +537,7 @@ def get_module_code():
             res["tableName"] = module.tableName()
         if not res["dsInputType"]: raise ValueError('dsInputType not supported')
     elif moduleDsType.lower() == "module":
-        res["requiresDS"] = map(lambda ds: ds.fqn(), module.requiresDS())
+        res["requiresDS"] = map(lambda ds: getFqnOfRequire(ds), module.requiresDS())
     else:
         raise ValueError("dsType not supported")
 
@@ -593,7 +600,7 @@ def updateModuleMetaData():
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
     except ImportError:
         # dataset does not exist.. create new module
-        stagesList = ['stage1', 'stage2'] # TODO: get actual list of stages.. not hardcoded
+        stagesList = ['airlineapp.etl', 'airlineapp.datamodel', 'airlineapp.feature']  # TODO: get actual list of stages.. not hardcoded
 
         newDsSrcCode = ''
         if dsType == 'module':
