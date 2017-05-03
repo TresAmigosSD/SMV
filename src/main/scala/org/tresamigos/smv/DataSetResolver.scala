@@ -83,10 +83,7 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
     val depViolations = depRules flatMap (_.check(ds))
     if (depViolations.size > 0) {
       println(msg.listDepViolations(ds, depViolations))
-      if (smvConfig.permitDependencyViolation)
-        println(msg.nonfatalDepViolation)
-      else
-        throw new IllegalStateException(msg.fatalDepViolation)
+      throw new IllegalStateException(msg.fatalDepViolation)
     }
   }
 
@@ -112,10 +109,8 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
    */
   object msg {
     def dsNotFound(urn: URN): String = s"SmvDataSet ${urn} not found"
-    def nonfatalDepViolation: String =
-      "Continuing module resolution as the app is configured to permit dependency rule violation"
     def fatalDepViolation: String =
-      s"Terminating module resolution when dependency rules are violated. To change this behavior, please run the app with option --${smvConfig.cmdLine.permitDependencyViolation.name}"
+      s"Terminating module resolution when dependency rules are violated."
     def dependencyCycle(ds: SmvDataSet, s: Seq[SmvDataSet]): String =
       s"cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}")
     def listDepViolations(ds: SmvDataSet, vis: Seq[DependencyViolation]) =
