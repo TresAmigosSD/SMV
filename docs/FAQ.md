@@ -1,4 +1,4 @@
-# FAQ 
+# FAQ
 
 ## What is SMV?
 SMV stands for "Spark Modularized View".
@@ -56,7 +56,7 @@ To create new variables (columns), you need to utilize Column operations. There 
 Spark you can find them: methods of Column class and functions object under sql package. You can find
 all the useful methods and functions on the Scala API doc from Spark.
 SMV extends both the methods and functions. The new methods and functions can be find in
-[SMV API Docs](http://tresamigossd.github.io/SMV/scaladocs/index.html#org.tresamigos.smv.package).
+[SMV API Docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.8/index.html#org.tresamigos.smv.package).
 
 For anything which is not covered above, you can create your own "udf", User Defined Function, through
 Scala functions. Here is a simple example

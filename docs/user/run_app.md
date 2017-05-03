@@ -91,6 +91,12 @@ graphvis must be used to convert the ".dot" file to an image or doc.  For exampl
 </tr>
 
 <tr>
+<td>--force-run-all</td>
+<td>off</td>
+<td>Remove <b>ALL</b> files in output directory that <b>are</b> the  current version of the outputs in the app, forcing all specified modules to run even if they have been run recently.
+</tr>
+
+<tr>
 <td>--publish version</td>
 <td>off</td>
 <td>publish the specified modules to the given version</td>

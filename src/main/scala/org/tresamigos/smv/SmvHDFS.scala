@@ -3,7 +3,7 @@ package org.tresamigos.smv
 import java.io.File
 import java.io.{BufferedWriter, StringWriter, OutputStreamWriter}
 
-import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.commons.io.IOUtils
 
 import scala.util.Try
@@ -21,6 +21,11 @@ private[smv] object SmvHDFS {
     val uri = java.net.URI.create(path)
     FileSystem.get(uri, hadoopConf)
   }
+
+  def exists(fileName: String): Boolean = getFileSystem(fileName).exists(new Path(fileName))
+
+  def createFileAtomic(fileName: String): Unit =
+    getFileSystem(fileName).create(new Path(fileName), false).close()
 
   /**
    * delete an HDFS file by given path.

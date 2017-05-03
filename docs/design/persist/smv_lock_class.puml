@@ -1,0 +1,32 @@
+@startuml
+
+class SmvLock {
+	-path: String
+	-timeout: Long
+	+lock(): Unit
+	+unlock(): Unit
+}
+
+note as lock_pseudocode
+	lock ():
+		obtained = false
+		enter_ts = current time
+		while (not obtained) {
+			try {
+				create file at path  // atomic operation
+				obtained = true
+			}
+			catch (exception) {
+				if (current time - enter_ts > timeout)
+					throw TimeoutException
+				sleep(interval)
+			}
+		}
+end note
+
+note as unlock_pseudocode
+	unlock ():
+		delete file at path
+end note
+
+@enduml
