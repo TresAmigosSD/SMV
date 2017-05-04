@@ -150,6 +150,24 @@ abstract class SmvDataSet extends FilenamePart {
    */
   def publishHiveSql: Option[String] = None
 
+  /**
+   * Exports a dataframe to a hive table.
+   */
+  def exportToHive = {
+    val dataframe = rdd()
+    // register the dataframe as a temp table.  Will be overwritten on next register.
+    dataframe.registerTempTable("dftable")
+
+    // if user provided a publish hive sql command, run it instead of default
+    // table creation from data frame result.
+    if (publishHiveSql.isDefined) {
+      app.sqlContext.sql(publishHiveSql.get)
+    } else {
+      app.sqlContext.sql(s"drop table if exists ${tableName}")
+      app.sqlContext.sql(s"create table ${tableName} as select * from dftable")
+    }
+  }
+
   /** do not persist validation result if isObjectInShell **/
   private[smv] def isPersistValidateResult = !isObjectInShell
 
