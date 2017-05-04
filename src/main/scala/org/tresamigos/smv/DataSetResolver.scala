@@ -39,7 +39,7 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
   def loadDataSet(urns: URN*): Seq[SmvDataSet] =
     urns map { urn =>
 
-      val found = smvConfig.stageNames.map( stage => urn.fqn.startsWith(stage + ".") ).foldLeft(false)(_ || _)
+      val found = smvConfig.stageNames.exists( stage => urn.fqn.startsWith(stage + ".") )
       if (!found) {
         throw new SmvRuntimeException(s"""Cannot find module with FQN [${urn.fqn}]. Is the stage name specified in the config?""")
       }
