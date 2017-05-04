@@ -26,7 +26,7 @@ Through the interface you can make the following queries:
 
 The interface also defines the following operations:
 
-* `getDqm(modUrn)` : returns the `DQM` policy for the named `SmvDataSet`
+* `dqmWithTypeSpecificPolicy(modUrn)` : returns the `DQM` policy for the named `SmvDataSet`
 * `getDataFrame(modUrn, dqmValidator, fqn~>dataframe)` : returns the result of running the `SmvDataSet`
 * `rerun(modUrn, dqmValidator, fqn~>dataframe)` : re-run the `SmvDataSet` after code change
 
