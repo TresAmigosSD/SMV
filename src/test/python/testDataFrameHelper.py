@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import unittest
+import sys
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp, SmvPyCsvFile
@@ -33,7 +34,7 @@ class T(SmvPyCsvFile):
 class DfHelperTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=testDataFrameHelper.T']
+        return ['--smv-props', 'smv.stages=testDataFrameHelper']
 
     def test_smvGroupBy(self):
         return "TODO implement"
@@ -127,6 +128,9 @@ class DfHelperTest(SmvBaseTest):
         self.should_be_same(expect, res)
 
     def test_smvExportCsv(self):
+        global oldmod
+        oldmod = sys.modules["testDataFrameHelper"]
+
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
         df.smvExportCsv(T.path())
 
