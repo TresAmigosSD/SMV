@@ -22,7 +22,7 @@ from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, lit
 from py4j.protocol import Py4JJavaError
-from smvframework.stage.modules import D1, D2, D3
+from smvframework.stage.modules import D1, D2, D3, D4
 
 
 class SmvFrameworkTest(SmvBaseTest):
@@ -72,24 +72,15 @@ class SmvFrameworkTest(SmvBaseTest):
 
     #TODO: add other SmvPyDataSet unittests
 
-class D4(SmvPyCsvStringData, SmvRunConfig):
-    def schemaStr(self):
-        return "a:String;b:Integer"
-    def dataStr(self):
-        if(self.smvGetRunConfig('s') == "s1"):
-            return "a,10;b,1"
-        else:
-            return "X,100;Y,200;"
-
 class SmvRunConfigTest1(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s1', 'smv.stages=testSmvFramework',
+        return ['--smv-props', 'smv.config.s=s1', 'smv.stages=smvframework.stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = self.__module__ + ".D4"
+        fqn = D4.fqn()
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer", "a,10;b,1")
         self.should_be_same(expect, df)
@@ -98,11 +89,11 @@ class SmvRunConfigTest2(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s2', 'smv.stages=testSmvFramework',
+        return ['--smv-props', 'smv.config.s=s2', 'smv.stages=smvframework.stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = self.__module__ + ".D4"
+        fqn = D4.fqn()
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer", "X,100;Y,200")
         self.should_be_same(expect, df)

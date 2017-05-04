@@ -38,3 +38,12 @@ class D3(SmvPyCsvStringData):
             DQMFix(col("a") < 1, lit(1).alias("a"), "a_lt_1_fix")).add(
             FailTotalRuleCountPolicy(2)).add(
             FailTotalFixCountPolicy(1))
+
+class D4(SmvPyCsvStringData, SmvRunConfig):
+    def schemaStr(self):
+        return "a:String;b:Integer"
+    def dataStr(self):
+        if(self.smvGetRunConfig('s') == "s1"):
+            return "a,10;b,1"
+        else:
+            return "X,100;Y,200;"
