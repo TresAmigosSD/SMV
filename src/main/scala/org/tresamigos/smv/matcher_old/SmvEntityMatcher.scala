@@ -33,7 +33,7 @@ case class SmvEntityMatcher(exactMatchFilter: AbstractExactMatchFilter,
 
     val ex = if (null == exactMatchFilter) NoOpExactMatchFilter else exactMatchFilter
     // TODO: is there a way to avoid having to leak out the '_' prefix to the expression in the caller?
-    val ExactMatchFilterResult(r1, r2, s1) = ex.extract(df1, df2.prefixFieldNames("_"))
+    val ExactMatchFilterResult(r1, r2, s1) = ex.extract(df1, df2.smvPrefixFieldNames("_"))
 
     val clm = if (null == commonLevelMatcher) CommonLevelMatcherNone else commonLevelMatcher
     val j0  = clm.join(r1, r2) // join leftover unmatched data from both data frames
