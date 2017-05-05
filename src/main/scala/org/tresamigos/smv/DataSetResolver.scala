@@ -29,12 +29,12 @@ import org.joda.time.DateTime
  * any SmvDataSet is only resolved once.
  */
 class DataSetResolver(val repos: Seq[DataSetRepo],
-                      smvConfig: SmvConfig,
-                      depRules: Seq[DependencyRule]) {
+                      smvConfig: SmvConfig) {
   /**
    * Timestamp which will be injected into the resolved SmvDataSets
    */
   val transactionTime = new DateTime
+
   // URN to resolved SmvDataSet
   var urn2res: Map[URN, SmvDataSet] = Map.empty
 
@@ -93,13 +93,19 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
    * and SMV isn't configured to ignore dependency violations, throw exception.
    */
   def validateDependencies(ds: SmvDataSet): Unit = {
-    val depViolations = depRules flatMap (_.check(ds))
-    if (depViolations.size > 0) {
-      println(msg.listDepViolations(ds, depViolations))
-      if (smvConfig.permitDependencyViolation)
-        println(msg.nonfatalDepViolation)
-      else
-        throw new IllegalStateException(msg.fatalDepViolation)
+    if (!ds.isInstanceOf[SmvModuleLink]) {
+      val dsStage = ds.parentStage.get
+      ds.resolvedRequiresDS foreach {dep =>
+        dep match {
+          case l: SmvModuleLink =>
+            if (dsStage == l.smvModule.parentStage.get)
+              throw new SmvRuntimeException(msg.sameStageLink(ds.urn, dsStage))
+          case _ =>
+            val depStage = dep.parentStage.get
+            if (dsStage != depStage)
+              throw new SmvRuntimeException(msg.crossStageDependency(ds.urn, dsStage, dep.urn, depStage))
+        }
+      }
     }
   }
 
@@ -125,18 +131,11 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
    */
   object msg {
     def dsNotFound(urn: URN): String = s"SmvDataSet ${urn} not found"
-    def nonfatalDepViolation: String =
-      "Continuing module resolution as the app is configured to permit dependency rule violation"
-    def fatalDepViolation: String =
-      s"Terminating module resolution when dependency rules are violated. To change this behavior, please run the app with option --${smvConfig.cmdLine.permitDependencyViolation.name}"
+    def crossStageDependency(dsUrn: URN, dsStage: String, depUrn: URN, depStage: String): String =
+      s"Module ${dsUrn} in ${dsStage} must use SmvModuleLink to depend on module ${depUrn} in ${depStage}"
+    def sameStageLink(linkUrn: URN, stage: String): String =
+      s"SmvModuleLink ${linkUrn} cannot link to ${linkUrn.toModURN} because they belong to the same stage"
     def dependencyCycle(ds: SmvDataSet, s: Seq[SmvDataSet]): String =
-      s"cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}")
-    def listDepViolations(ds: SmvDataSet, vis: Seq[DependencyViolation]) =
-      s"Module ${ds.urn} violates dependency rules" + mkViolationString(vis)
-    private def mkViolationString(violations: Seq[DependencyViolation]): String =
-      (for {
-        v <- violations
-        header = s".. ${v.description}"
-      } yield (header +: v.components.map(m => s".... ${m.urn}")).mkString("\n")).mkString("\n")
+      s"Cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}")
   }
 }

@@ -25,9 +25,9 @@ package org.tresamigos.smv
  * to run modules from the previous TX.
  */
 
-class TX(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
+class TX(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig) {
   val repos: Seq[DataSetRepo] = repoFactories map (_.createRepo)
-  val resolver = new DataSetResolver(repos, smvConfig, depRules)
+  val resolver = new DataSetResolver(repos, smvConfig)
 
   def load(urns: URN*): Seq[SmvDataSet] =
     resolver.loadDataSet(urns: _*)

@@ -20,47 +20,38 @@ package org.tresamigos.smv {
   /** A shortcut to save full SmvApp set-up during test.  Remove if it makes the tests too brittle */
   object DependencyTests {
     val TestStages = (1 to 4).map("org.tresamigos.smv.deptest%02d".format(_))
-    val smvConfig = new SmvConfig(
-      Seq("-m", "None", "--smv-props", "smv.stages=" + TestStages.mkString(":")))
-    val dsm = new DataSetMgr(smvConfig, SmvApp.DependencyRules)
-    def registerRepoFactory(factory: DataSetRepoFactory): Unit =
-      dsm.register(factory)
-    registerRepoFactory(new DataSetRepoFactoryScala(smvConfig))
-    def findStageForDataSet(ds: SmvDataSet): Option[String] = dsm.stageForUrn(ds.urn)
+    val smvArgs =
+      Seq("-m", "None", "--smv-props", "smv.stages=" + TestStages.mkString(":"))
   }
 
   abstract class DependencyTestModule(deps: Seq[SmvDataSet] = Seq.empty)
       extends SmvModule("Dependency test") {
-    final override lazy val parentStage  = DependencyTests.findStageForDataSet(this)
-    final override def requiresDS        = null
+    final override def requiresDS        = deps
     final override def run(i: runParams) = null
-    resolvedRequiresDS = deps
   }
 
-  abstract class DependencyTestModuleLink(output: SmvOutput) extends SmvModuleLink(output) {
-    final override lazy val parentStage = DependencyTests.findStageForDataSet(this)
-  }
+  abstract class DependencyTestModuleLink(output: SmvOutput) extends SmvModuleLink(output)
 
-  class SameStageDependencyTest extends FlatSpec with Matchers {
-    val target = SameStageDependency
+  class SameStageDependencyTest extends SmvTestUtil {
+    override def appArgs =
+       DependencyTests.smvArgs
 
-    "Same-stage rule" should "pass for non-dependent modules" in {
-      target.check(deptest01.input.I) shouldBe 'Empty
+    test("SmvModules with no dependencies should pass dependency checks") {
+      app.dsm.load(deptest01.input.I.urn)
     }
 
-    it should "pass for modules that only depend on modules in the same stage" in {
-      target.check(deptest01.A) shouldBe 'Empty
+    test("SmvModules that only depend on modules in the same stage should pass dependency checks") {
+      app.dsm.load(deptest01.A.urn)
     }
 
-    it should "fail for modules that depend other stage" in {
-      val res = target.check(deptest02.B)
-      res shouldNot be('Empty)
-      res.get shouldBe DependencyViolation(target.description, Seq(deptest01.A))
+    test("SmvModules that depend directly on SmvModules in another stage should fail dependency checks") {
+      intercept[SmvRuntimeException] {
+        app.dsm.load(deptest02.B.urn)
+      }
     }
 
-    it should "allow module link to output from another stage" in {
-      val res = target.check(deptest03.C)
-      res shouldBe 'Empty
+    test("SmvModules that depend on SmvModuleLinks should pass dependency checks") {
+      app.dsm.load(deptest03.C.urn)
     }
   }
 
@@ -91,18 +82,18 @@ package org.tresamigos.smv {
     object L extends DependencyTestModuleLink(deptest01.A)
   }
 
-  class LinkFromDiffStageTest extends FlatSpec with Matchers {
-    val target = LinkFromDiffStage
+  class LinkFromDiffStageTest extends SmvTestUtil {
+    override def appArgs =
+       DependencyTests.smvArgs
 
-    "ModuleLink rule" should "allow module link from another stage" in {
-      val res = target.check(deptest03.C)
-      res shouldBe 'Empty
+    test("SmvModuleLinks to modules in different stages should pass dependency checks") {
+      app.dsm.load(deptest03.C.urn)
     }
 
-    it should "fail module link to the same stage" in {
-      val res = target.check(deptest04.D)
-      res shouldNot be('Empty)
-      res.get shouldBe DependencyViolation(target.description, Seq(deptest04.L))
+    test("SmvModuleLinks to modules in same stages should fail dependency checks") {
+      intercept[SmvRuntimeException] {
+        app.dsm.load(deptest04.D.urn)
+      }
     }
   }
 
