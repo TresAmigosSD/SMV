@@ -22,37 +22,20 @@ from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, lit
 from py4j.protocol import Py4JJavaError
+from smvframework.stage.modules import D1, D2, D3, D4
 
-
-class D1(SmvPyCsvStringData):
-    def schemaStr(self):
-        return "a:String;b:Integer"
-    def dataStr(self):
-        return "x,10;y,1"
-
-class D2(SmvPyMultiCsvFiles):
-    def dir(self):
-        return "test3"
-
-class D3(SmvPyCsvStringData):
-    def schemaStr(self):
-        return "a:Integer;b:Double"
-    def dataStr(self):
-        return "1,0.3;0,0.2;3,0.5"
-    def dqm(self):
-        return SmvDQM().add(
-            DQMRule(col("b") < 0.4 , "b_lt_03")).add(
-            DQMFix(col("a") < 1, lit(1).alias("a"), "a_lt_1_fix")).add(
-            FailTotalRuleCountPolicy(2)).add(
-            FailTotalFixCountPolicy(1))
 
 class SmvFrameworkTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=smvframework.stage']
+
     def _escapeRegex(self, s):
         import re
         return re.sub(r"([\[\]\(\)])", r"\\\1", s)
 
     def test_SmvCsvStringData(self):
-        fqn = self.__module__ + ".D1"
+        fqn = D1.fqn()
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
@@ -62,13 +45,13 @@ class SmvFrameworkTest(SmvBaseTest):
         self.createTempFile("input/test3/f2", "col1\nb\n")
         self.createTempFile("input/test3.schema", "col1: String\n")
 
-        fqn = self.__module__ + ".D2"
+        fqn = D2.fqn()
         df = self.df(fqn)
         exp = self.createDF("col1: String", "a;b")
         self.should_be_same(df, exp)
 
     def test_SmvDQM(self):
-        fqn = self.__module__ + ".D3"
+        fqn = D3.fqn()
 
         msg =""": org.tresamigos.smv.SmvDqmValidationError: {
   "passed":false,
@@ -89,24 +72,15 @@ class SmvFrameworkTest(SmvBaseTest):
 
     #TODO: add other SmvPyDataSet unittests
 
-class D4(SmvPyCsvStringData, SmvRunConfig):
-    def schemaStr(self):
-        return "a:String;b:Integer"
-    def dataStr(self):
-        if(self.smvGetRunConfig('s') == "s1"):
-            return "a,10;b,1"
-        else:
-            return "X,100;Y,200;"
-
 class SmvRunConfigTest1(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s1',
+        return ['--smv-props', 'smv.config.s=s1', 'smv.stages=smvframework.stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = self.__module__ + ".D4"
+        fqn = D4.fqn()
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer", "a,10;b,1")
         self.should_be_same(expect, df)
@@ -115,11 +89,11 @@ class SmvRunConfigTest2(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s2',
+        return ['--smv-props', 'smv.config.s=s2', 'smv.stages=smvframework.stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = self.__module__ + ".D4"
+        fqn = D4.fqn()
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer", "X,100;Y,200")
         self.should_be_same(expect, df)
