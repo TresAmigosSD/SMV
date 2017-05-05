@@ -72,11 +72,6 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
   def inferDS(partialNames: String*): Seq[SmvDataSet] =
     withTX( _.inferDS(partialNames: _*) )
 
-  def stageForUrn(urn: URN): Option[String] =
-    allStageNames.find { stageName =>
-      urn.fqn.startsWith(stageName + ".")
-    }
-
   /**
    * Infer full stageName from a partial name
    */

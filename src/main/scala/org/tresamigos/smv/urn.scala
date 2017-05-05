@@ -23,6 +23,10 @@ package org.tresamigos.smv
  */
 sealed abstract class URN(prefix: String) {
   def fqn: String
+  def getStage(allStageNames: Seq[String]): Option[String] =
+    allStageNames.find { stageName =>
+      fqn.startsWith(stageName + ".")
+    }
   override def toString: String = s"${prefix}:${fqn}"
 }
 

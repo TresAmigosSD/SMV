@@ -26,7 +26,7 @@ package org.tresamigos.smv {
     def registerRepoFactory(factory: DataSetRepoFactory): Unit =
       dsm.register(factory)
     registerRepoFactory(new DataSetRepoFactoryScala(smvConfig))
-    def findStageForDataSet(ds: SmvDataSet): Option[String] = dsm.stageForUrn(ds.urn)
+    def findStageForDataSet(ds: SmvDataSet): Option[String] = ds.urn.getStage(smvConfig.stageNames)
   }
 
   abstract class DependencyTestModule(deps: Seq[SmvDataSet] = Seq.empty)
