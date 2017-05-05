@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SaveMode}
 
 import dqm.{DQMValidator, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 
@@ -412,6 +412,17 @@ abstract class SmvDataSet extends FilenamePart {
     /* publish should also calculate edd if generarte Edd flag was turned on */
     if (app.genEdd)
       df.edd.persistBesideData(publishCsvPath(version))
+  }
+
+  /**
+   * Publish DataFrame result using JDBC. Url will be user-specified.
+   *
+   * TODO: get url directly from the config
+   */
+  private[smv] def publishThroughJDBC(url: String) = {
+    val df = rdd()
+    val connectionProperties = new java.util.Properties()
+    df.write.jdbc(url, tableName, connectionProperties)
   }
 
   private[smv] lazy val parentStage: Option[String] = app.dsm.stageForUrn(urn)
