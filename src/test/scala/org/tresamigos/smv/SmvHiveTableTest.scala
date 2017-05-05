@@ -5,6 +5,12 @@ import java.io.File
 class SmvHiveTableTest extends SmvTestUtil {
   override def appArgs =
     Seq(
+      "-m",
+      "C",
+      "--data-dir",
+      testcaseTempDir,
+      "--input-dir",
+      testcaseTempDir,
       "--smv-props",
       "smv.stages=org.tresamigos.smv"
     )
