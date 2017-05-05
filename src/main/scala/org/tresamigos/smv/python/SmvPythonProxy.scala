@@ -192,11 +192,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
 
   def publishVersion: Option[String] = config.cmdLine.publish.get
-
-  /** Saves the dataframe to disk */
-  def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
-    util.DataSet.persist(j_smvApp.sqlContext, dataframe, path, generateEdd)
-
+  
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String,
                  path: String,
