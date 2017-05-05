@@ -3,6 +3,12 @@ package org.tresamigos.smv
 import java.io.File
 
 class SmvHiveTableTest extends SmvTestUtil {
+  override def appArgs =
+    Seq(
+      "--smv-props",
+      "smv.stages=org.tresamigos.smv"
+    )
+
   test("test SmvHiveTable read/write") {
     val be = app.dsm.load(HiveModules.BarExport.urn).head
     val bt = app.dsm.load(HiveModules.BarTable.urn).head
