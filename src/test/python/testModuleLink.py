@@ -30,7 +30,7 @@ class ModuleLinkTest(SmvBaseTest):
     def tearDownClass(cls):
         import shutil
         import os
-        shutil.rmtree(os.path.join(cls.DataDir, 'publish', cls.PublishDir), ignore_errors=True)
+        shutil.rmtree(os.path.join(cls.tmpTestDir(), 'publish', cls.PublishDir), ignore_errors=True)
 
     def setUp(self):
         super(ModuleLinkTest, self).setUp()
