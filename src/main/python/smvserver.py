@@ -305,7 +305,7 @@ def get_module_name_from_fqn(fqn):
 
 def getMsnFromFqn(fqn):
     fqn_split = fqn.split(".")
-    stage = fqn_split[0]
+    stage = ".".join(fqn_split[:-2])
     baseName = fqn_split[-1]
     return { "stage": stage, "baseName": baseName }
 
@@ -500,7 +500,7 @@ def run_module():
     run_result = SmvApp.getInstance().runModule("mod:{}".format(module_fqn))
     return ok_res(str(run_result))
 
-# TODO: move 
+# TODO: move
 def getFqnOfRequire(ds):
     '''returns fqn of a dataset. If ds is a link, will return fqn of target'''
     if getattr(ds, 'IsSmvModuleLink', None):
@@ -523,9 +523,9 @@ def get_module_code():
         module_stage = None
         if "." in module_name: # module_name is an fqn
             module_fqn = module_name
-            fqn_split = module_fqn.split(".")
-            module_stage = fqn_split[0] # => a.b.c.x.y.z => a is stage
-            module_name = fqn_split[-1]
+            msn = getMsnFromFqn(module_fqn)
+            module_stage = msn["stage"]
+            module_name = msn["baseName"]
         else: # if module_name is not an fqn, both name and stage must not be empty
             module_stage = request.form['stage'].encode("utf-8")
             if not module_name or not module_stage:
@@ -641,7 +641,7 @@ def updateModuleMetaData():
         print newDsSrcCode
 
         # full name of file to be created
-        newFile = "{}/src/main/python/{}/{}.py".format(os.getcwd(), msn["stage"], msn["baseName"])
+        newFile = get_filepath_from_moduleFqn(fqn)
         # create dir if not exists
         if not os.path.exists(os.path.dirname(newFile)):
             try:
