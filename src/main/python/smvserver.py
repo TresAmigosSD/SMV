@@ -53,14 +53,10 @@ def indentation(tabbed_str):
     return 0 if no_tabs_str.isspace() else len(no_tabs_str) - len(no_tabs_str.lstrip())
 
 def test_compile_for_errors(fullname):
-    print 'test_compile_for_errors, fullname: ', fullname
     error = None
     try:
         ok = py_compile.compile(fullname, None, None, True)
-        print 'ok: ', ok
     except py_compile.PyCompileError,err:
-        print 'Compiling', fullname, '...'
-        print err.msg
         error = err.msg
     except IOError, e:
         error = e
@@ -311,7 +307,6 @@ def getMsnFromFqn(fqn):
 
 # TODO: FIXME: test if works with new smv version
 def getDatasetInfo(fqn, baseName, stage):
-    print 'starting getDatasetInfo: ', fqn, ', ', baseName, ', ', stage
     try:
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
     except:
@@ -338,7 +333,6 @@ def getDatasetInfo(fqn, baseName, stage):
     elif moduleDsType.lower() == "module":
         res["requiresDS"] = map(lambda ds: ds.fqn(), module.requiresDS())
     else:
-        print 'value error'
         raise ValueError("dsType not supported")
 
     file_name = get_filepath_from_moduleFqn(fqn)
@@ -349,12 +343,10 @@ def getDatasetInfo(fqn, baseName, stage):
         lines_of_code_list = f.readlines()
     file_content = [line.rstrip() for line in lines_of_code_list]
     (run_start, run_end, _, _) = getCodeBlockStartEnd(lines_of_code_list, module_name, 'run')
-    print 'rm start, end: ', run_start, ', ', run_end
 
     # remove indentation from run method body
     raw_run_method_body = file_content[(run_start + 1):(run_end + 1)]
     run_body_indent = indentation(raw_run_method_body[0])
-    print 'run_body_indent: ', run_body_indent
     run_method_body = [line[run_body_indent:] for line in raw_run_method_body]
 
     res["srcFile"] = file_name,
@@ -392,7 +384,6 @@ def buildDescription(description, indentation="\t"):
 {1}{1}return \"{0}\"\n".format(description, indentation)
 
 def buildRun(dsType, body=None, indentation="\t"):
-    print 'body: ', str(body)
     if body is None:
         newBody = "{0}{0}return None\n".format(indentation)
     else: # give 2 level indentation to body
@@ -574,17 +565,15 @@ def get_module_code():
         lines_of_code_list = f.readlines()
     file_content = [line.rstrip() for line in lines_of_code_list]
     (run_start, run_end, _, _) = getCodeBlockStartEnd(lines_of_code_list, module_name, 'run')
-    print 'rm start, end: ', run_start, ', ', run_end
 
     run_method_body = [""]
     if run_start and run_end:
         # remove indentation from run method body
         raw_run_method_body = file_content[(run_start + 1):(run_end + 1)]
         run_body_indent = indentation(raw_run_method_body[0])
-        print 'run_body_indent: ', run_body_indent
         run_method_body = [line[run_body_indent:] for line in raw_run_method_body]
     else:
-        print 'run method not detected in dataset'
+        err_res('run method not detected in dataset')
 
     res["srcFile"] = file_name,
     res["srcCode"] = run_method_body
@@ -637,9 +626,6 @@ def updateModuleMetaData():
         else:
             raise ValueError('dsType {} not supported'.format(dsType))
 
-        print 'newDsSrcCode'
-        print newDsSrcCode
-
         # full name of file to be created
         newFile = get_filepath_from_moduleFqn(fqn)
         # create dir if not exists
@@ -655,13 +641,8 @@ def updateModuleMetaData():
 
         # compile duplicate
         compileHasErrors = test_compile_for_errors(newFile)
-        print "updateModuleMetaData compile_errors: " + str(compileHasErrors)
-
         # remove .pyc created by compilation
-        print 'b4 removing {}c'.format(newFile)
-        print os.path.isfile(newFile + 'c')
         if os.path.isfile(newFile + 'c'):
-            print 'will remove ' + newFile + 'c'
             os.remove(newFile + 'c')
 
         if compileHasErrors:
@@ -671,10 +652,7 @@ def updateModuleMetaData():
         # TODO: FIXME: fix and use getDatasetInfo function
         #dsProperties = getDatasetInfo(fqn, msn["baseName"], msn["stage"])
         # TODO: check if dsProperties is None... raise exception... could not get code from created ds
-
-        print 'printing dsProperties'
         dsProperties["srcFile"] = newFile,
-        print str(dsProperties)
 
         return ok_res({ "msg":"Dataset created", "dsProperties":dsProperties})
 
@@ -711,23 +689,17 @@ def updateDatasetInfo():
 
     if dsType == 'module':
         # requiresDS = request.form["requiresDS"]
-        print 'requires'
         try:
             requiresDS = ast.literal_eval(request.form["requiresDS"])
         except:   # TODO: use exception name instead of catch all
-            print 'requiresDS could not be loaded'
             pass
     if dsType == 'input':
         dsInputType = request.form["dsInputType"].encode("utf-8").lower()
-        print dsInputType
         # TODO: inputFile, filename should be renamed to path
         if dsInputType == 'csv': fileName = request.form["inputFile"].encode("utf-8") # TODO.. use same keys in req
-        print fileName
         if dsInputType == 'hive': tableName = request.form["tableName"].encode("utf-8")
         dsType = dsInputType
 
-
-    print 'dsProperties:'  # TODO: dsType should be module, csv, hive
     dsProperties = { "fqn":fqn, "description":description, "dsType":request.form["dsType"], "srcCode":srcCode, "ephemeral":isEphemeral}
     if dsType == 'input':
         if dsInputType == 'csv':
@@ -735,8 +707,6 @@ def updateDatasetInfo():
         if dsInputType == 'hive': test["tableName"] = tableName
     if dsType == 'module':
         dsProperties["requiresDS"] = requiresDS
-
-    print dsProperties
 
     try:
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
@@ -809,7 +779,6 @@ def updateDatasetInfo():
                      newFileContents[:tabClassEnd + 1] + ["\n"] + tabSection + newFileContents[tabClassEnd + 1:]
                      if tabStart is None else newFileContents[:tabStart] + tabSection + newFileContents[tabEnd + 1:])
 
-            print '\nwill update dataset file to:'
             for i, line in enumerate(newFileContents):
                 sys.stdout.write('{}  {}'.format(i,line))
 
@@ -821,7 +790,6 @@ def updateDatasetInfo():
                 fd.write(newFileContents[i])
         # compile duplicate
         compileHasErrors = test_compile_for_errors(duplicateFileName)
-        print "compile_errors: " + str(compileHasErrors)
         # remove duplicate and its .pyc
         os.remove(duplicateFileName)
         if os.path.isfile(duplicateFileName + 'c'):
@@ -899,7 +867,6 @@ def getDatasetSrc():
     fqn = request.form["fqn"].encode("utf-8").strip()
     # get filename from fqn
     fileName = get_filepath_from_moduleFqn(fqn)
-    print 'getting file: ', fileName
 
     try:
         with open(fileName, 'r') as f:
@@ -924,7 +891,6 @@ def updateDatasetSrc():
     # get filename from fqn
     fileName = get_filepath_from_moduleFqn(fqn)
     duplicateFileName = fileName[:-3] + "_smv_update_code_duplicate.py"
-    print 'dup: ', duplicateFileName
 
     # check if filename exists, else return error
     if not os.path.isfile(fileName):
@@ -937,11 +903,8 @@ def updateDatasetSrc():
 
         # compile duplicate
         compileHasErrors = test_compile_for_errors(duplicateFileName)
-        print "update full src code compile_errors: " + str(compileHasErrors)
-
         if os.path.isfile(duplicateFileName): os.remove(duplicateFileName)
         if os.path.isfile(duplicateFileName + 'c'):
-            print 'will remove ' + duplicateFileName + 'c'
             os.remove("{}c".format(duplicateFileName))
 
         if compileHasErrors:
