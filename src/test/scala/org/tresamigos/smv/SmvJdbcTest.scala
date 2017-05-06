@@ -32,7 +32,7 @@ class SmvJdbcTest extends SmvTestUtil {
   }
 
   test("Test module can publish through JDBC") {
-    JdbcModules.Publishable.publishThroughJDBC(url)
+    JdbcModules.Publishable.publishThroughJDBC
     val Mdf = JdbcModules.Publishable.rdd()
     val readDf =
       app.sqlContext.read

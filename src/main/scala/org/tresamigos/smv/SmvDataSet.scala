@@ -416,12 +416,11 @@ abstract class SmvDataSet extends FilenamePart {
 
   /**
    * Publish DataFrame result using JDBC. Url will be user-specified.
-   *
-   * TODO: get url directly from the config
    */
-  private[smv] def publishThroughJDBC(url: String) = {
+  private[smv] def publishThroughJDBC = {
     val df = rdd()
     val connectionProperties = new java.util.Properties()
+    val url = app.smvConfig.jdbcUrl
     df.write.jdbc(url, tableName, connectionProperties)
   }
 
@@ -486,13 +485,7 @@ class SmvJdbcTable(override val tableName: String)
   override def description = s"JDBC table ${tableName}"
 
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
-    val url = app.smvConfig.jdbcUrl match {
-      case Some(u) =>
-        u
-      case _ =>
-        throw new SmvRuntimeException("Cannot run SmvJdbcTable without JDBC url in the config")
-    }
-
+    val url = app.smvConfig.jdbcUrl
     val tableDf =
       app.sqlContext.read
         .format("jdbc")
