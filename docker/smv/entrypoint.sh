@@ -2,18 +2,6 @@
 
 set -e
 
-function start_server() {
-    # TODO: this should be an argument to start-server instead of an environment variable.
-    # ${PROJECT_DIR} is the pre-built project path name, "MyApp" by default
-    if [ -z ${PROJECT_DIR+x} ]; then
-        echo ">> No project defined. Start to use sample app..."
-        PROJECT_DIR="MyApp"
-    fi
-    cd /projects/${PROJECT_DIR}
-    smv-jupyter &
-    smv-server
-}
-
 # allow user to override smv user id when running image.
 USER_ID=1000
 if [[ "$1" == "-u" ]]; then
