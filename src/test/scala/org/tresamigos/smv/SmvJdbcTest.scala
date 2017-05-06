@@ -21,6 +21,9 @@ import java.sql.Types
 class SmvJdbcTest extends SmvTestUtil {
   val url = s"jdbc:derby:${testcaseTempDir}/derby;create=true"
 
+  override def appArgs =
+    super.appArgs ++ Seq("--smv-props", s"smv.jdbc.url=${url}")
+
   override def beforeAll = {
     super.beforeAll
     // This can be removed when we move to Spark 2.1. A Derby dialect is already
@@ -28,25 +31,34 @@ class SmvJdbcTest extends SmvTestUtil {
     JdbcDialects.registerDialect(DerbyDialect)
   }
 
-  test("Test module can publish to JDBC") {
-    JdbcModules.M.publishThroughJDBC(url)
-    val Mdf = JdbcModules.M.rdd()
+  test("Test module can publish through JDBC") {
+    JdbcModules.Publishable.publishThroughJDBC(url)
+    val Mdf = JdbcModules.Publishable.rdd()
     val readDf =
       app.sqlContext.read
         .format("jdbc")
         .option("url", url)
-        .option("dbtable",JdbcModules.M.tableName)
+        .option("dbtable", JdbcModules.Publishable.tableName)
         .load()
     assertDataFramesEqual(Mdf, readDf)
+  }
+
+  test("Test SmvJdbcTable can read table from JDBC") {
+    val df = app.createDF("k:String", "")
+    df.write.jdbc(url, JdbcModules.Readable.tableName, new java.util.Properties())
+    val tableDF = JdbcModules.Readable.rdd()
+    assertDataFramesEqual(tableDF, df)
   }
 }
 
 package JdbcModules {
-  object M extends SmvModule("M") {
-    override def tableName = "M"
+  object Publishable extends SmvModule("Publishable") with SmvOutput {
+    override def tableName = "Publishable"
     override def run(i: runParams) = app.createDF("k:String", "")
     override def requiresDS = Seq()
   }
+
+  object Readable extends SmvJdbcTable("Readable")
 }
 
 /**

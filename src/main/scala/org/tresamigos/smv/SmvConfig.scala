@@ -213,7 +213,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   val permitDependencyViolation: Boolean = cmdLine.permitDependencyViolation()
 
-  val jdbcUrl = None
+  val jdbcUrl: Option[String] = mergedProps.get("smv.jdbc.url")
 
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))

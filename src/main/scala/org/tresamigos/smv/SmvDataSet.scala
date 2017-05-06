@@ -477,6 +477,31 @@ case class SmvHiveTable(override val tableName: String, val userQuery: String = 
   }
 }
 
+/**
+ * Wrapper for a database table accessed via JDBC
+ */
+class SmvJdbcTable(override val tableName: String)
+  extends SmvInputDataSet {
+
+  override def description = s"JDBC table ${tableName}"
+
+  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
+    val url = app.smvConfig.jdbcUrl match {
+      case Some(u) =>
+        u
+      case _ =>
+        throw new SmvRuntimeException("Cannot run SmvJdbcTable without JDBC url in the config")
+    }
+
+    val tableDf =
+      app.sqlContext.read
+        .format("jdbc")
+        .option("url", url)
+        .option("dbtable",tableName)
+        .load()
+    run(tableDf)
+  }
+}
 
 /**
  * Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
