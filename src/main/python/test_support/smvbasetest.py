@@ -74,7 +74,7 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def tmpTestDir(cls):
-        return cls.PytestDir + cls.__name__
+        return cls.PytestDir + "/" + cls.__name__
 
     @classmethod
     def mkTmpTestDir(cls):
