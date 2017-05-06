@@ -421,7 +421,7 @@ abstract class SmvDataSet extends FilenamePart {
     val df = rdd()
     val connectionProperties = new java.util.Properties()
     val url = app.smvConfig.jdbcUrl
-    df.write.jdbc(url, tableName, connectionProperties)
+    df.write.mode(SaveMode.Append).jdbc(url, tableName, connectionProperties)
   }
 
   private[smv] lazy val parentStage: Option[String] = app.dsm.stageForUrn(urn)
