@@ -22,15 +22,13 @@ import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, struct
-
-class T(SmvPyCsvFile):
-    @classmethod
-    def path(cls):
-        return "./target/python-test-export-csv.csv"
-    def csvAttr(self):
-        return self.defaultCsvWithHeader()
+from dataframehelper.stage.modules import D1, T
 
 class DfHelperTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=dataframehelper.stage']
+
     def test_smvGroupBy(self):
         return "TODO implement"
 
@@ -123,10 +121,11 @@ class DfHelperTest(SmvBaseTest):
         self.should_be_same(expect, res)
 
     def test_smvExportCsv(self):
-        df = self.createDF("k:String;v:Integer", "a,1;b,2")
+        fqn = D1.fqn()
+        df = self.df(fqn)
         df.smvExportCsv(T.path())
 
-        res = self.smvApp.runModule("mod:" + self.__module__ + ".T")
+        res = self.smvApp.runModule("mod:" + "dataframehelper.stage.modules.T")
         self.should_be_same(df, res)
 
     def test_smvJoinByKey(self):

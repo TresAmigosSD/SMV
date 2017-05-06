@@ -22,6 +22,9 @@ import org.apache.spark.{SparkContext, SparkConf}
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 
+import org.joda.time.DateTime
+
+
 /**
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
@@ -191,7 +194,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
         case m: SmvOutput => Some(m)
         case _            => None
       } foreach (
-          m => util.DataSet.exportDataFrameToHive(sqlContext, m.rdd(), m.tableName, m.publishHiveSql)
+          m => m.exportToHive
       )
     }
 
@@ -266,7 +269,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     val ancestors = modulesToRun flatMap (_.ancestors)
     (modulesToRun ++ ancestors).distinct
   }
-  
+
   /**
    * The main entry point into the app.  This will parse the command line arguments
    * to determine which modules should be run/graphed/etc.

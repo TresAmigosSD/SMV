@@ -18,6 +18,9 @@ import org.apache.spark.sql.types.{Metadata, MetadataBuilder}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.SparkContext
 
+import org.joda.time.DateTime
+
+
 /**
  * Representation of module metadata which can be saved to file.
  *
@@ -36,6 +39,21 @@ class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
    */
   def addSchemaMetadata(df: DataFrame) =
     builder.putMetadataArray("columns", createSchemaMetadataArray(df))
+
+  /**
+   * Add dependency-related metadata based on a list of dependencies
+   */
+  def addDependencyMetadata(deps: Seq[SmvDataSet]) = {
+    val dependencyPaths = deps map ( _.moduleMetaPath() )
+    builder.putStringArray("inputs", dependencyPaths.toArray)
+  }
+
+  /**
+   * Add timestamp for running the application to metadata
+   */
+  def addTimestamp(dt: DateTime) = {
+    builder.putString("timestamp", dt.toString)
+  }
 
   /**
    * Returns an array where each element is a metadata containing information

@@ -17,6 +17,8 @@ package org.tresamigos.smv
 import scala.util.{Try, Success, Failure}
 import scala.collection.mutable
 
+import org.joda.time.DateTime
+
 /**
  * DataSetResolver (DSR) is the entrypoint through which the DataSetMgr acquires
  * SmvDataSets. A DSR object represent a single transaction. Each DSR creates a
@@ -29,6 +31,10 @@ import scala.collection.mutable
 class DataSetResolver(val repos: Seq[DataSetRepo],
                       smvConfig: SmvConfig,
                       depRules: Seq[DependencyRule]) {
+  /**
+   * Timestamp which will be injected into the resolved SmvDataSets
+   */
+  val transactionTime = new DateTime
   // URN to resolved SmvDataSet
   var urn2res: Map[URN, SmvDataSet] = Map.empty
 
@@ -38,6 +44,12 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
    */
   def loadDataSet(urns: URN*): Seq[SmvDataSet] =
     urns map { urn =>
+
+      val found = smvConfig.stageNames.exists( stage => urn.fqn.startsWith(stage + ".") )
+      if (!found) {
+        throw new SmvRuntimeException(s"""Cannot find module with FQN [${urn.fqn}]. Is the stage name specified in the config?""")
+      }
+
       urn2res.get(urn).getOrElse {
         val ds = urn match {
           case lUrn: LinkURN =>
@@ -68,6 +80,7 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
       urn2res.get(ds.urn).getOrElse {
         resolveStack = ds +: resolveStack
         val resolvedDs = ds.resolve(this)
+        resolvedDs.setTimestamp(transactionTime)
         urn2res = urn2res + (ds.urn -> resolvedDs)
         resolveStack = resolveStack.tail
         validateDependencies(resolvedDs)
