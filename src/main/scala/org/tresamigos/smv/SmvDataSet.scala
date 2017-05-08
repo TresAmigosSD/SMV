@@ -496,7 +496,7 @@ class SmvJdbcTable(override val tableName: String)
     if (userQuery == null){
       tableName
     } else {
-      // For Derby, tables must be aliased
+      // For Derby, subqueries must be aliased
       s"(${userQuery}) as TMP_${tableName}"
     }
   }
