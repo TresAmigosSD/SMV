@@ -171,7 +171,7 @@ case class EddResultFunctions(eddRes: DataFrame) {
     import eddRes.sqlContext.implicits._
 
     val cacheThis = eddRes.coalesce(1).cache()
-    val cacheThat = that.prefixFieldNames("_").coalesce(1).cache()
+    val cacheThat = that.smvPrefixFieldNames("_").coalesce(1).cache()
 
     val thisCnt = cacheThis.count
     val thatCnt = cacheThat.count
