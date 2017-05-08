@@ -484,13 +484,30 @@ class SmvJdbcTable(override val tableName: String)
 
   override def description = s"JDBC table ${tableName}"
 
+  /**
+   * Custom queries are not officially supported because the approach used here
+   * is not documented or officially supported by Spark. We will essentially
+   * substitute the user-query as a subquery in place of the table name, with
+   * the result a query like SELECT * FROM (USER_QUERY)
+   */
+  def userQuery: String = null
+
+  val tableNameOrQuery = {
+    if (userQuery == null){
+      tableName
+    } else {
+      // For Derby, tables must be aliased
+      s"(${userQuery}) as TMP_${tableName}"
+    }
+  }
+
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
     val url = app.smvConfig.jdbcUrl
     val tableDf =
       app.sqlContext.read
         .format("jdbc")
         .option("url", url)
-        .option("dbtable",tableName)
+        .option("dbtable", tableNameOrQuery)
         .load()
     run(tableDf)
   }

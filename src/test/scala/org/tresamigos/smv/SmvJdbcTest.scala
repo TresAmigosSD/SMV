@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.jdbc.JdbcDialects
+import org.apache.spark.sql.functions.col
 
 class SmvJdbcTest extends SmvTestUtil {
   val url = s"jdbc:derby:${testcaseTempDir}/derby;create=true"
@@ -67,6 +68,14 @@ class SmvJdbcTest extends SmvTestUtil {
     val tableDF = JdbcModules.ReadableMod.rdd()
     assertDataFramesEqual(tableDF, df)
   }
+
+  test("Test SmvJdbcTable can read table from JDBC with custom query") {
+    val df = app.createDF("j:String;k:String", "abc,abc;abc,def;def,def")
+    df.write.jdbc(url, JdbcModules.CustomQueryMod.tableName, new java.util.Properties())
+    val tableDF = JdbcModules.CustomQueryMod.rdd()
+    val expectedDF = df.where(col("k") === col("j"))
+    assertDataFramesEqual(tableDF.orderBy(col("j").asc), expectedDF.orderBy(col("j").asc))
+  }
 }
 
 package JdbcModules {
@@ -80,6 +89,10 @@ package JdbcModules {
     override def tableName = "AppendMod"
     override def run(i: runParams) = app.createDF("k:String", "row1")
     override def requiresDS = Seq()
+  }
+
+  object CustomQueryMod extends SmvJdbcTable("CustomQueryMod") with SmvOutput {
+    override def userQuery = "select * from CustomQueryMod where k like j"
   }
 
   object ReadableMod extends SmvJdbcTable("ReadableMod")
