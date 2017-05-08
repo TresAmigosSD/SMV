@@ -33,7 +33,7 @@ trait NameMatcherTestFixture extends SmvTestUtil {
       "3,Georje,Jetson,101 Skyway Drive,Metropolis,CA,90120,Georje Jetson"
   )
 
-  def dfPair: (DataFrame, DataFrame) = (createDF1, createDF2.prefixFieldNames("_"))
+  def dfPair: (DataFrame, DataFrame) = (createDF1, createDF2.smvPrefixFieldNames("_"))
 }
 
 class SmvEntityMatcherTest extends NameMatcherTestFixture {

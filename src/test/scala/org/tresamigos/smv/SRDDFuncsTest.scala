@@ -109,7 +109,7 @@ class smvRenameFieldTest extends SmvTestUtil {
   test("test prefixing field names") {
     val df = dfFrom("a:Integer; b:Double; c:String", "1,2.0,hello")
 
-    val result = df.prefixFieldNames("xx_")
+    val result = df.smvPrefixFieldNames("xx_")
 
     val fieldNames = result.schema.fieldNames
     assert(fieldNames === Seq("xx_a", "xx_b", "xx_c"))

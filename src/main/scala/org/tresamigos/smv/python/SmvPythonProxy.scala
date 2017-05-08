@@ -22,7 +22,6 @@ import java.util.ArrayList
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.types.DataType
-import org.tresamigos.smv.util.DataSet
 import matcher._
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
@@ -193,10 +192,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
 
   def publishVersion: Option[String] = config.cmdLine.publish.get
-
-  /** Saves the dataframe to disk */
-  def persist(dataframe: DataFrame, path: String, generateEdd: Boolean): Unit =
-    DataSet.persist(j_smvApp.sparkSession, dataframe, path, generateEdd)
 
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String,

@@ -64,7 +64,7 @@ class SmvLockTest extends SmvUnitSpec {
     val t2 = new Thread(new Runnable {
       override def run() = {
         val start = System.currentTimeMillis
-        try { withLock(path, time2)() } catch { case x: TimeoutException => except2 = x }
+        try { withLock(path, time2){} } catch { case x: TimeoutException => except2 = x }
         execTime2 = System.currentTimeMillis - start
       }
     }, "Second Thread")

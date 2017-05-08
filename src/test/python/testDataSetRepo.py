@@ -13,6 +13,7 @@
 import sys
 
 from test_support.smvbasetest import SmvBaseTest
+from test_support.extrapath import ExtraPath
 
 from smv.datasetrepo import DataSetRepo
 
@@ -21,26 +22,18 @@ class DataSetRepoTest(SmvBaseTest):
     def smvAppInitArgs(cls):
         return ["--smv-props", "smv.stages=stage"]
 
-    class ExtraPath(object):
-        def __init__(self, extra_path):
-            self.extra_path = extra_path
 
-        def __enter__(self):
-            sys.path.insert(1, self.extra_path)
-
-        def __exit__(self, type, value, traceback):
-            sys.path.remove(self.extra_path)
 
     def build_new_repo(self): return DataSetRepo(self.smvApp)
 
     def test_discover_new_module_in_file(self):
         """DataSetRepo should discover SmvModules added to an existing file
         """
-        with self.ExtraPath("src/test/python/data_set_repo_1"):
+        with ExtraPath("src/test/python/data_set_repo_1"):
             # File should already have been imported before module is added
             self.build_new_repo().dataSetsForStage("stage")
 
-        with self.ExtraPath("src/test/python/data_set_repo_2"):
+        with ExtraPath("src/test/python/data_set_repo_2"):
             modules = list( self.build_new_repo().dataSetsForStage("stage") )
 
         self.assertTrue( "mod:stage.modules.NewModule" in modules, "mod:stage.modules.NewModule not in " + str(modules) )
@@ -53,7 +46,7 @@ class DataSetRepoTest(SmvBaseTest):
             This applies even when loading different SmvDataSets from the same file.
         """
         dsr = self.build_new_repo()
-        with self.ExtraPath("src/test/python/data_set_repo_1"):
+        with ExtraPath("src/test/python/data_set_repo_1"):
             dsA1 = dsr.loadDataSet("stage.modules.CompileOnceA").__class__
             # load a different SmvDataSet from the same file
             dsr.loadDataSet("stage.modules.CompileOnceB")
@@ -73,10 +66,10 @@ class DataSetRepoTest(SmvBaseTest):
             first time in a transaction it should be recompiled, and it should also
             trigger the reload of the ABC even if the ABC lives in another file.
         """
-        with self.ExtraPath("src/test/python/data_set_repo_1"):
+        with ExtraPath("src/test/python/data_set_repo_1"):
             abcmod1 = self.build_new_repo().loadDataSet("stage.modules.ImplMod").__class__
 
-        with self.ExtraPath("src/test/python/data_set_repo_1"):
+        with ExtraPath("src/test/python/data_set_repo_1"):
             abcmod2 = self.build_new_repo().loadDataSet("stage.modules.ImplMod").__class__
 
         self.assertNotEqual(abcmod1, abcmod2)

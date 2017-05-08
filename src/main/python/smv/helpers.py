@@ -416,6 +416,21 @@ class DataFrameHelper(object):
         jdf = self._jDfHelper.smvSelectPlus(_to_seq(cols, _jcol))
         return DataFrame(jdf, self._sql_ctx)
 
+    def smvPrefixFieldNames(self, prefix):
+        """Apply a prefix to all column names in the given `DataFrame`.
+
+            Args:
+                prefix (string): prefix string to be added to all the column names
+            Example:
+                >>> df.smvPrefixFieldNames("x_")
+
+            Above will add "x_" to the beginning of every column name in the `DataFrame`.
+            Please note that if the renamed column names over lap with existing columns,
+            the method will error out.
+        """
+        jdf = self._jDfHelper.smvPrefixFieldNames(prefix)
+        return DataFrame(jdf, self._sql_ctx)
+
     def smvDedupByKey(self, *keys):
         """Remove duplicate records from the DataFrame by arbitrarly selecting the first record from a set of records with same primary key or key combo.
 
