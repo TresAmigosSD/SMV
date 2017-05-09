@@ -19,6 +19,7 @@
   * [Extended Data Dictionary (EDD)](edd.md)
   * [Adding a new CSV input file (with schema discovery)](schema_discovery.md)
   * [Runtime Configuration](run_config.md)
+  * [Metadata](smv_metadata.md)
 
 #### Smv Helper Functions and Libraries
   * [Smv Functions (Python)](smv_python_funcs.md)
