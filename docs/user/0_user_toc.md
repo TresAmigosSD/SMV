@@ -29,7 +29,8 @@
   * [Column level Description and Labels](smv_desc_label.md)
 
 #### Smv Best Practice
-  * [Applicatoin Deployment](deployment.md)
+  * [Using Abstract Base Classes To Avoid Code Duplication](abc.md)
+  * [Application Deployment](deployment.md)
   * [Atom - A Small Editor Works Well with SMV](atom.md)
 
 #### Known Issues
