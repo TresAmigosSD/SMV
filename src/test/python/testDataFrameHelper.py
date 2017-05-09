@@ -22,6 +22,7 @@ import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, struct
+from py4j.protocol import Py4JJavaError
 from dataframehelper.stage.modules import D1, T
 
 class DfHelperTest(SmvBaseTest):
@@ -271,6 +272,17 @@ class DfHelperTest(SmvBaseTest):
         r1 = df.smvSelectPlus((col('v') + 1).alias("v2"))
         expect = self.createDF("k:String;v:Integer;v2:Integer", "a,1,2;b,2,3")
         self.should_be_same(expect, r1)
+
+    def test_smvPrefixFieldNames(self):
+        df = self.createDF("k:String;v:Integer", "a,1;b,2")
+        r1 = df.smvPrefixFieldNames("_")
+        expect = self.createDF("_k:String;_v:Integer", "a,1;b,2")
+        self.should_be_same(expect, r1)
+
+    def test_smvPrefixFieldNames_with_exception(self):
+        df = self.createDF("k:String;_k:Integer", "a,1;b,2")
+        with self.assertRaisesRegexp(Py4JJavaError, "Rename to existing fields"):
+            r1 = df.smvPrefixFieldNames("_")
 
     def test_smvDesc(self):
         df = self.createDF("a:String", "a")

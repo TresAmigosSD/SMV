@@ -28,6 +28,8 @@ sealed abstract class URN(prefix: String) {
       fqn.startsWith(stageName + ".")
     }
   override def toString: String = s"${prefix}:${fqn}"
+  def toModURN: ModURN          = ModURN(fqn)
+  def toLinkURN: LinkURN        = LinkURN(fqn)
 }
 
 /*
@@ -36,12 +38,10 @@ sealed abstract class URN(prefix: String) {
  */
 case class LinkURN(fqn: String) extends URN("link") {
   override def toString: String = super.toString
-  def toModURN: ModURN          = ModURN(fqn)
 }
 
 case class ModURN(fqn: String) extends URN("mod") {
   override def toString: String = super.toString
-  def toLinkURN: LinkURN        = LinkURN(fqn)
 }
 
 /**

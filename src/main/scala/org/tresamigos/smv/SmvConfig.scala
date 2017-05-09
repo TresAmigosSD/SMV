@@ -104,12 +104,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                                noshort = true,
                                descr = "specify the publish directory (default: datadir/publish")
 
-  val permitDependencyViolation = toggle(
-    "permit-dependency-violation",
-    short = 'p',
-    descrYes = "allows module resolution even if the module violates dependency rules",
-    default = Some(false))
-
   val purgeOldOutput = toggle("purge-old-output",
                               noshort = true,
                               default = Some(false),
@@ -205,8 +199,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       .toMap
 
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
-
-  val permitDependencyViolation: Boolean = cmdLine.permitDependencyViolation()
 
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))

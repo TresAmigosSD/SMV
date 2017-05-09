@@ -24,7 +24,7 @@ package org.tresamigos.smv
  * arbitrary number of names so that all the target SmvDataSets
  * are loaded within the same transaction (which is much faster).
  */
-class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
+class DataSetMgr(smvConfig: SmvConfig) {
   private var dsRepoFactories: Seq[DataSetRepoFactory] = Seq.empty[DataSetRepoFactory]
   private var allStageNames                            = smvConfig.stageNames
 
@@ -40,7 +40,7 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
    * every time
    */
   private[this] def withTX[T](func: TX => T): T =
-    func(new TX(dsRepoFactories, smvConfig, depRules))
+    func(new TX(dsRepoFactories, smvConfig))
 
   def load(urns: URN*): Seq[SmvDataSet] =
     withTX ( _.load(urns: _*) )
@@ -71,6 +71,14 @@ class DataSetMgr(smvConfig: SmvConfig, depRules: Seq[DependencyRule]) {
 
   def inferDS(partialNames: String*): Seq[SmvDataSet] =
     withTX( _.inferDS(partialNames: _*) )
+
+  /**
+   * NOTE: This implementation thinks that SmvModuleLink lives in the stage of its target
+   */
+  def stageForUrn(urn: URN): Option[String] =
+    allStageNames.find { stageName =>
+      urn.fqn.startsWith(stageName + ".")
+    }
 
   /**
    * Infer full stageName from a partial name
