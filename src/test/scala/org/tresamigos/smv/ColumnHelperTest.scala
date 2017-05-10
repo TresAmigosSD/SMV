@@ -101,6 +101,17 @@ class ColumnHelperTest extends SmvTestUtil {
                           "2016-02-29 00:00:00.0")
   }
 
+  test("test smvPlusDays on column") {
+    import org.apache.spark.sql.functions._
+    val df   = dfFrom("t:Timestamp[yyyyMMdd];toadd:Integer", "19760131,10;20120229,32")
+    val res1 = df.select(col("t").smvPlusDays(col("toadd")))
+
+    assertSrddSchemaEqual(res1, "SmvPlusDays(t, toadd): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddDataEqual(res1,
+                        "1976-02-10 00:00:00.0;" +
+                        "2012-04-01 00:00:00.0")
+  }
+
   test("test smvDay70/smvMonth70") {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("t:Timestamp[yyyyMMdd]", "19760131;20120229")
