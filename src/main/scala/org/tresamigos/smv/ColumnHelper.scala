@@ -413,12 +413,12 @@ class ColumnHelper(column: Column) {
    *
    * @return The incremented `Timestamp` or `null` if input was `null`
    */
-  def smvPlusDays(col: Column) = {
-    val name = s"SmvPlusDays($column, $col)"
+  def smvPlusDays(days: Column) = {
+    val name = s"SmvPlusDays($column, $days)"
     val f = (t: Timestamp, days: Integer) =>
       if (t == null) null
       else new Timestamp((new DateTime(t)).plusDays(days).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+    udf(f).apply(column, days).alias(name)
   }
 
   /**
