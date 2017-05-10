@@ -16,7 +16,8 @@ from pyspark.sql import DataFrame
 
 from smv import CsvAttributes
 
-jvmShellCmd = SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
+def _jvmShellCmd():
+    return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
 def df(name, forceRun = False):
     """The DataFrame result of running the named module
@@ -39,7 +40,7 @@ def openHive(tableName):
         Returns:
             (DataFrame): The resulting DataFrame
     """
-    return DataFrame(jvmShellCmd.openHive(tableName), SmvApp.getInstance().sqlContext)
+    return DataFrame(_jvmShellCmd().openHive(tableName), SmvApp.getInstance().sqlContext)
 
 def openCsv(path):
     """Read in a CSV file as a DataFrame
@@ -50,7 +51,7 @@ def openCsv(path):
         Returns:
             (DataFrame): The resulting DataFrame
     """
-    return DataFrame(jvmShellCmd.openCsv(path), SmvApp.getInstance().sqlContext)
+    return DataFrame(_jvmShellCmd().openCsv(path), SmvApp.getInstance().sqlContext)
 
 def help():
     """Print a list of the SMV helper functions available in the shell
@@ -83,7 +84,7 @@ def help():
 def lsStage():
     """List all the stages
     """
-    print(jvmShellCmd.lsStage())
+    print(_jvmShellCmd().lsStage())
 
 def ls(stageName = None):
     """List all datasets in a stage
@@ -92,9 +93,9 @@ def ls(stageName = None):
             stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.
     """
     if(stageName is None):
-        print(jvmShellCmd.ls())
+        print(_jvmShellCmd().ls())
     else:
-        print(jvmShellCmd.ls(stageName))
+        print(_jvmShellCmd().ls(stageName))
 
 def lsDead(stageName = None):
     """List dead datasets in a stage
@@ -103,9 +104,9 @@ def lsDead(stageName = None):
             stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.
     """
     if(stageName is None):
-        print(jvmShellCmd.lsDead())
+        print(_jvmShellCmd().lsDead())
     else:
-        print(jvmShellCmd.lsDead(stageName))
+        print(_jvmShellCmd().lsDead(stageName))
 
 def lsDeadLeaf(stageName = None):
     """List 'deadLeaf' datasets in a stage
@@ -120,9 +121,9 @@ def lsDeadLeaf(stageName = None):
             stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.
     """
     if(stageName is None):
-        print(jvmShellCmd.lsDeadLeaf())
+        print(_jvmShellCmd().lsDeadLeaf())
     else:
-        print(jvmShellCmd.lsDeadLeaf(stageName))
+        print(_jvmShellCmd().lsDeadLeaf(stageName))
 
 def ancestors(dsname):
     """List all ancestors of a dataset
@@ -133,7 +134,7 @@ def ancestors(dsname):
         Args:
             dsname (str): The name of an SmvDataSet
     """
-    print(jvmShellCmd.ancestors(dsname))
+    print(_jvmShellCmd().ancestors(dsname))
 
 def descendants(dsname):
     """List all descendants of a dataset
@@ -144,7 +145,7 @@ def descendants(dsname):
         Args:
             dsname (str): The name of an SmvDataSet
     """
-    print(jvmShellCmd.descendants(dsname))
+    print(_jvmShellCmd().descendants(dsname))
 
 def graph(stageName = None):
     """Print ascii graph of all datasets in a given stage or all stages
@@ -153,21 +154,21 @@ def graph(stageName = None):
             dsname (str): The name of an SmvDataSet
     """
     if(stageName is None):
-        print(jvmShellCmd._graph())
+        print(_jvmShellCmd()._graph())
     else:
-        print(jvmShellCmd._graph(stageName))
+        print(_jvmShellCmd()._graph(stageName))
 
 def graphStage():
     """Print ascii graph of all stages (not datasets)
     """
-    print(jvmShellCmd._graphStage())
+    print(_jvmShellCmd()._graphStage())
 
 def now():
     """Print current time
     """
-    print(jvmShellCmd.now())
+    print(_jvmShellCmd().now())
 
-def discoverSchema(path, n=100000, ca=SmvApp.getInstance().defaultCsvWithHeader()):
+def discoverSchema(path, n=100000, ca=None):
     """Try best to discover Schema from raw Csv file
 
         Will save a schema file with postfix ".toBeReviewed" in local directory.
@@ -177,4 +178,4 @@ def discoverSchema(path, n=100000, ca=SmvApp.getInstance().defaultCsvWithHeader(
             n (int): Number of records to check for schema discovery, default 100k
             ca (CsvAttributes): Defaults to CsvWithHeader
     """
-    SmvApp.getInstance()._jvm.SmvPythonHelper.discoverSchema(path, n, ca)
+    SmvApp.getInstance()._jvm.SmvPythonHelper.discoverSchema(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
