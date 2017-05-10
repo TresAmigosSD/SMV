@@ -73,14 +73,6 @@ class DataSetMgr(smvConfig: SmvConfig) {
     withTX( _.inferDS(partialNames: _*) )
 
   /**
-   * NOTE: This implementation thinks that SmvModuleLink lives in the stage of its target
-   */
-  def stageForUrn(urn: URN): Option[String] =
-    allStageNames.find { stageName =>
-      urn.fqn.startsWith(stageName + ".")
-    }
-
-  /**
    * Infer full stageName from a partial name
    */
   def inferStageFullName(partialStageName: String): String = {
