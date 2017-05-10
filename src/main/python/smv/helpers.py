@@ -998,7 +998,7 @@ class ColumnHelper(object):
                     |   |   |
                     +---+---+
 
-                >>> df.select( array(col("k"), col("v")) ).smvIsAllIn("a", "b", "c").alias("isFound"))
+                >>> df.select(array(col("k"), col("v")).smvIsAllIn("a", "b", "c").alias("isFound"))
 
                 output DF:
 
@@ -1013,7 +1013,7 @@ class ColumnHelper(object):
                     +---------+
 
             Returns:
-                (DataFrame): result of smvIsAllIn
+                (Column): BooleanType
         """
         jc = self._jPythonHelper.smvIsAllIn(self._jc, _to_seq(vals))
         return Column(jc)
@@ -1037,7 +1037,7 @@ class ColumnHelper(object):
                     |   |   |
                     +---+---+
 
-                >>> df.select( array(col("k"), col("v")) ).smvIsAnyIn("a", "b", "c").alias("isFound"))
+                >>> df.select(array(col("k"), col("v")).smvIsAnyIn("a", "b", "c").alias("isFound"))
 
                 output DF:
 
@@ -1052,7 +1052,7 @@ class ColumnHelper(object):
                     +---------+
 
             Returns:
-                (DataFrame): result of smvIsAnyIn
+                (Column): BooleanType
         """
         jc = self._jPythonHelper.smvIsAnyIn(self._jc, _to_seq(vals))
         return Column(jc)
@@ -1064,7 +1064,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvMonth())
 
             Returns:
-                (integer): month component as integer, or null if input column is null
+                (Column): IntegerType. Month component as integer, or null if input column is null
         """
         jc = self._jColumnHelper.smvMonth()
         return Column(jc)
@@ -1076,7 +1076,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvYear())
 
             Returns:
-                (integer): year component as integer, or null if input column is null
+                (Column): IntegerType. Year component as integer, or null if input column is null
         """
         jc = self._jColumnHelper.smvYear()
         return Column(jc)
@@ -1088,7 +1088,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvQuarter())
 
             Returns:
-                (integer): quarter component as integer (1-based), or null if input column is null
+                (Column): IntegerType. Quarter component as integer (1-based), or null if input column is null
         """
         jc = self._jColumnHelper.smvQuarter()
         return Column(jc)
@@ -1100,7 +1100,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvDayOfMonth())
 
             Returns:
-                (integer): day of month component as integer (range 1-31), or null if input column is null
+                (Column): IntegerType. Day of month component as integer (range 1-31), or null if input column is null
         """
         jc = self._jColumnHelper.smvDayOfMonth()
         return Column(jc)
@@ -1112,7 +1112,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvDayOfWeek())
 
             Returns:
-                (integer): day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
+                (Column): IntegerType. Day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
         """
         jc = self._jColumnHelper.smvDayOfWeek()
         return Column(jc)
@@ -1124,7 +1124,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvHour())
 
             Returns:
-                (integer): hour component as integer, or null if input column is null
+                (Column): IntegerType. Hour component as integer, or null if input column is null
         """
         jc = self._jColumnHelper.smvHour()
         return Column(jc)
@@ -1139,7 +1139,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvPlusDays(3))
 
             Returns:
-                (Timestamp): the incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
         jc = self._jColumnHelper.smvPlusDays(delta)
         return Column(jc)
@@ -1154,7 +1154,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvPlusWeeks(3))
 
             Returns:
-                (Timestamp): the incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
         jc = self._jColumnHelper.smvPlusWeeks(delta)
         return Column(jc)
@@ -1172,7 +1172,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvPlusMonths(3))
 
             Returns:
-                (Timestamp): the incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
         jc = self._jColumnHelper.smvPlusMonths(delta)
         return Column(jc)
@@ -1187,7 +1187,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvPlusYears(3))
 
             Returns:
-                (Timestamp): the incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
         jc = self._jColumnHelper.smvPlusYears(delta)
         return Column(jc)
@@ -1202,7 +1202,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvStrToTimestamp("yyyy-MM-dd"))
 
             Returns:
-                (Timestamp): the converted Timestamp
+                (Column): TimestampType. The converted Timestamp
         """
         jc = self._jColumnHelper.smvStrToTimestamp(fmt)
         return Column(jc)
@@ -1214,7 +1214,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvDay70())
 
             Returns:
-                (integer): number of days from 1970-01-01 (start from 0)
+                (Column): IntegerType. Number of days from 1970-01-01 (start from 0)
         """
         jc = self._jColumnHelper.smvDay70()
         return Column(jc)
@@ -1226,7 +1226,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvMonth70())
 
             Returns:
-                (integer): number of months from 1970-01-01 (start from 0)
+                (Column): IntegerType. Number of months from 1970-01-01 (start from 0)
         """
         jc = self._jColumnHelper.smvMonth70()
         return Column(jc)
