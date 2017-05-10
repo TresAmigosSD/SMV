@@ -70,7 +70,7 @@ class DataSetRepo(object):
 
     def dataSetsForStage(self, stageName):
         try:
-            return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
+            return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvDataSet)
         except BaseException as e:
             traceback.print_exc()
             raise e

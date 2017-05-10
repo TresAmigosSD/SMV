@@ -86,7 +86,7 @@ class SmvOutput(object):
         """
         return None
 
-class SmvPyDataSet(object):
+class SmvDataSet(object):
     """Abstract base class for all SmvDataSets
     """
 
@@ -95,7 +95,7 @@ class SmvPyDataSet(object):
     # check, when the `abc` module is used as a metaclass, that we
     # don't yet quite understand.  So for a workaround we add the
     # typcheck in the Smv hierarchies themselves.
-    IsSmvPyDataSet = True
+    IsSmvDataSet = True
 
     __metaclass__ = abc.ABCMeta
 
@@ -165,7 +165,7 @@ class SmvPyDataSet(object):
             # include datasetHash of parent classes
             for m in inspect.getmro(cls):
                 try:
-                    if m.IsSmvPyDataSet and m != cls and not m.fqn().startswith("smv."):
+                    if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
                         res += m(self.smvApp).datasetHash()
                 except: pass
 
@@ -215,7 +215,7 @@ class SmvPyDataSet(object):
 
     @abc.abstractmethod
     def dsType(self):
-        """Return SmvPyDataSet's type"""
+        """Return SmvDataSet's type"""
 
     def dqmWithTypeSpecificPolicy(self):
         try:
@@ -228,7 +228,7 @@ class SmvPyDataSet(object):
 
     def dependencies(self):
         # Try/except block is a short-term solution (read: hack) to ensure that
-        # the user gets a full stack trace when SmvPyDataSet user-defined methods
+        # the user gets a full stack trace when SmvDataSet user-defined methods
         # causes errors
         try:
             arr = smv_copy_array(self.smvApp.sc, *[x.urn() for x in self.requiresDS()])
@@ -240,7 +240,7 @@ class SmvPyDataSet(object):
 
     def getDataFrame(self, validator, known):
         # Try/except block is a short-term solution (read: hack) to ensure that
-        # the user gets a full stack trace when SmvPyDataSet user-defined methods
+        # the user gets a full stack trace when SmvDataSet user-defined methods
         # causes errors
         try:
             df = self.doRun(validator, known)
@@ -257,7 +257,7 @@ class SmvPyDataSet(object):
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
 
-class SmvPyInput(SmvPyDataSet):
+class SmvPyInput(SmvDataSet):
     """SmvDataSet representing external input
     """
     def isEphemeral(self):
@@ -460,7 +460,7 @@ class SmvHiveTable(SmvPyInput):
     def doRun(self, validator, known):
         return self.run(DataFrame(self._smvHiveTable.rdd(False), self.smvApp.sqlContext))
 
-class SmvModule(SmvPyDataSet):
+class SmvModule(SmvDataSet):
     """Base class for SmvModules written in Python
     """
 
@@ -569,7 +569,7 @@ def SmvExtDataSet(refname):
     """
     if refname in PyExtDataSetCache:
         return PyExtDataSetCache[refname]
-    cls = type("SmvExtDataSet", (SmvPyDataSet,), {
+    cls = type("SmvExtDataSet", (SmvDataSet,), {
         "refname" : refname,
         "smvApp"   : SmvApp.getInstance(),
         "doRun"   : lambda self, validator, known: smvApp.runModule(self.urn)

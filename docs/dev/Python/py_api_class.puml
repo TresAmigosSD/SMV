@@ -52,11 +52,11 @@ package Scala {
 package Python {
 
   class PythonDataSetRepository extends Scala.SmvDataSetRepository
-  class SmvPyDataSet extends Scala.ISmvModule
+  class SmvDataSet extends Scala.ISmvModule
 
-  class SmvPyModule extends SmvPyDataSet
+  class SmvPyModule extends SmvDataSet
 
-  PythonDataSetRepository *-- "*" SmvPyDataSet : "cache"
+  PythonDataSetRepository *-- "*" SmvDataSet : "cache"
 }
 
 @enduml

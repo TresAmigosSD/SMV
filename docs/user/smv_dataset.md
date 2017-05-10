@@ -2,7 +2,7 @@
 
 We call our library **Spark Modularized View** is because the core of it is to put
 the data application development to a Modularized framework. This Module concept is captured in
-`SmvDataSet` (in *Scala* or `SmvPyDataSet` as in *Python*)
+`SmvDataSet` (in *Scala* or `SmvDataSet` as in *Python*)
 
 An `SmvDataSet` is
 > A group of Spark DataFrame operations which takes multiple input DataFrames and generates a SINGLE

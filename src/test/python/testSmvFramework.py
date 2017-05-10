@@ -70,7 +70,7 @@ class SmvFrameworkTest(SmvBaseTest):
             df = self.df(fqn)
             df.smvDumpDF()
 
-    #TODO: add other SmvPyDataSet unittests
+    #TODO: add other SmvDataSet unittests
 
 class SmvRunConfigTest1(SmvBaseTest):
 
