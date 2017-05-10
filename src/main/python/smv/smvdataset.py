@@ -257,7 +257,7 @@ class SmvDataSet(object):
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
 
-class SmvPyInput(SmvDataSet):
+class SmvInput(SmvDataSet):
     """SmvDataSet representing external input
     """
     def isEphemeral(self):
@@ -323,7 +323,7 @@ class WithParser(object):
 
 # Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
 # Otherwise we will pick methods up from SmvDataSet instead of WithParser.
-class SmvCsvFile(WithParser, SmvPyInput):
+class SmvCsvFile(WithParser, SmvInput):
     """Input from a file in CSV format
     """
 
@@ -355,7 +355,7 @@ class SmvCsvFile(WithParser, SmvPyInput):
 
 # Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
 # Otherwise we will pick methods up from SmvDataSet instead of WithParser.
-class SmvMultiCsvFiles(WithParser, SmvPyInput):
+class SmvMultiCsvFiles(WithParser, SmvInput):
     """Raw input from multiple csv files sharing single schema
 
         Instead of a single input file, specify a data dir with files which share
@@ -388,7 +388,7 @@ class SmvMultiCsvFiles(WithParser, SmvPyInput):
         jdf = self._smvMultiCsvFiles.doRun(validator)
         return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
-class SmvCsvStringData(SmvPyInput):
+class SmvCsvStringData(SmvInput):
     """Input data defined by a schema string and data string
     """
 
@@ -425,7 +425,7 @@ class SmvCsvStringData(SmvPyInput):
         return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
 
-class SmvHiveTable(SmvPyInput):
+class SmvHiveTable(SmvInput):
     """Input from a Hive table
     """
 
