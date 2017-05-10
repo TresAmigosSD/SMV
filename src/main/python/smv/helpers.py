@@ -1061,7 +1061,7 @@ class ColumnHelper(object):
         """Extract month component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvMonth()
+                >>> df.select(col("dob").smvMonth())
 
             Returns:
                 (integer): month component as integer, or null if input column is null
@@ -1073,7 +1073,7 @@ class ColumnHelper(object):
         """Extract year component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvYear()
+                >>> df.select(col("dob").smvYear())
 
             Returns:
                 (integer): year component as integer, or null if input column is null
@@ -1085,7 +1085,7 @@ class ColumnHelper(object):
         """Extract quarter component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvQuarter()
+                >>> df.select(col("dob").smvQuarter())
 
             Returns:
                 (integer): quarter component as integer (1-based), or null if input column is null
@@ -1097,7 +1097,7 @@ class ColumnHelper(object):
         """Extract day of month component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvDayOfMonth()
+                >>> df.select(col("dob").smvDayOfMonth())
 
             Returns:
                 (integer): day of month component as integer (range 1-31), or null if input column is null
@@ -1109,7 +1109,7 @@ class ColumnHelper(object):
         """Extract day of week component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvDayOfWeek()
+                >>> df.select(col("dob").smvDayOfWeek())
 
             Returns:
                 (integer): day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
@@ -1121,7 +1121,7 @@ class ColumnHelper(object):
         """Extract hour component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvHour()
+                >>> df.select(col("dob").smvHour())
 
             Returns:
                 (integer): hour component as integer, or null if input column is null
@@ -1136,7 +1136,7 @@ class ColumnHelper(object):
                 delta (integer): the number of days to add
 
             Example:
-                >>> df.select(col("dob")).smvPlusDays(3)
+                >>> df.select(col("dob").smvPlusDays(3))
 
             Returns:
                 (Timestamp): the incremented Timestamp, or null if input is null
@@ -1151,7 +1151,7 @@ class ColumnHelper(object):
                 delta (integer): the number of weeks to add
 
             Example:
-                >>> df.select(col("dob")).smvPlusWeeks(3)
+                >>> df.select(col("dob").smvPlusWeeks(3))
 
             Returns:
                 (Timestamp): the incremented Timestamp, or null if input is null
@@ -1169,7 +1169,7 @@ class ColumnHelper(object):
                 The calculation will do its best to only change the month field retaining the same day of month. However, in certain circumstances, it may be necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot result in 2007-04-31, so the day of month is adjusted to 2007-04-30.
 
             Example:
-                >>> df.select(col("dob")).smvPlusMonths(3)
+                >>> df.select(col("dob").smvPlusMonths(3))
 
             Returns:
                 (Timestamp): the incremented Timestamp, or null if input is null
@@ -1184,7 +1184,7 @@ class ColumnHelper(object):
                 delta (integer): the number of years to add
 
             Example:
-                >>> df.select(col("dob")).smvPlusYears(3)
+                >>> df.select(col("dob").smvPlusYears(3))
 
             Returns:
                 (Timestamp): the incremented Timestamp, or null if input is null
@@ -1199,7 +1199,7 @@ class ColumnHelper(object):
                 fmt (string): the format is the same as the Java `Date` format
 
             Example:
-                >>> df.select(col("dob")).smvStrToTimestamp("yyyy-MM-dd")
+                >>> df.select(col("dob").smvStrToTimestamp("yyyy-MM-dd"))
 
             Returns:
                 (Timestamp): the converted Timestamp
@@ -1211,7 +1211,7 @@ class ColumnHelper(object):
         """Convert a Timestamp to the number of days from 1970-01-01
 
             Example:
-                >>> df.select(col("dob")).smvDay70
+                >>> df.select(col("dob").smvDay70())
 
             Returns:
                 (integer): number of days from 1970-01-01 (start from 0)
@@ -1223,7 +1223,7 @@ class ColumnHelper(object):
         """Convert a Timestamp to the number of months from 1970-01-01
 
             Example:
-                >>> df.select(col("dob")).smvMonth70
+                >>> df.select(col("dob").smvMonth70())
 
             Returns:
                 (integer): number of months from 1970-01-01 (start from 0)
