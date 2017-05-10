@@ -416,8 +416,8 @@ class ColumnHelper(column: Column) {
   def smvPlusDays(days: Column) = {
     val name = s"SmvPlusDays($column, $days)"
     val f = (t: Timestamp, days: Integer) =>
-      if (t == null) null
-      else new Timestamp((new DateTime(t)).plusDays(days).getMillis())
+      if (t == null || days == null) None
+      else Option(new Timestamp((new DateTime(t)).plusDays(days).getMillis()))
     udf(f).apply(column, days).alias(name)
   }
 
@@ -436,6 +436,23 @@ class ColumnHelper(column: Column) {
       if (t == null) null
       else new Timestamp((new DateTime(t)).plusWeeks(n).getMillis())
     new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+  }
+
+  /**
+   * Add N weeks to `Timestamp` column.
+   *
+   * {{{
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvPlusWeeks($"ColumnName")
+   * }}}
+   *
+   * @return The incremented `Timestamp` or `null` if input was `null`
+   */
+  def smvPlusWeeks(weeks: Column) = {
+    val name = s"SmvPlusWeeks($column, $weeks)"
+    val f = (t: Timestamp, n: Integer) =>
+      if (t == null || n == null) None
+      else Option(new Timestamp((new DateTime(t)).plusWeeks(n).getMillis()))
+    udf(f).apply(column, weeks).alias(name)
   }
 
   /**
@@ -461,6 +478,28 @@ class ColumnHelper(column: Column) {
   }
 
   /**
+   * Add N months to `Timestamp` column.
+   *
+   * The calculation will do its best to only change the month field
+   * retaining the same day of month. However, in certain circumstances, it may be
+   * necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot
+   * result in 2007-04-31, so the day of month is adjusted to 2007-04-30.
+   *
+   * {{{
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvPlusMonths($"ColumnName")
+   * }}}
+   *
+   * @return The incremented `Timestamp` or `null` if input was `null`
+   */
+  def smvPlusMonths(months: Column) = {
+    val name = s"SmvPlusMonths($column, $months)"
+    val f = (t: Timestamp, n: Integer) =>
+      if (t == null || n == null) None
+      else Option(new Timestamp((new DateTime(t)).plusMonths(n).getMillis()))
+    udf(f).apply(column, months).alias(name)
+  }
+
+  /**
    * Add N years to `Timestamp` column.
    *
    * {{{
@@ -475,6 +514,23 @@ class ColumnHelper(column: Column) {
       if (t == null) null
       else new Timestamp((new DateTime(t)).plusYears(n).getMillis())
     new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+  }
+
+  /**
+   * Add N years to `Timestamp` column.
+   *
+   * {{{
+   * lit("2014-04-25").smvStrToTimestamp("yyyy-MM-dd").smvPlusYears($"ColumnName")
+   * }}}
+   *
+   * @return The incremented `Timestamp` or `null` if input was `null`
+   */
+  def smvPlusYears(years: Column) = {
+    val name = s"SmvPlusYears($column, $years)"
+    val f = (t: Timestamp, n: Integer) =>
+      if (t == null || n == null) None
+      else Option(new Timestamp((new DateTime(t)).plusYears(n).getMillis()))
+    udf(f).apply(column, years).alias(name)
   }
 
   /**
