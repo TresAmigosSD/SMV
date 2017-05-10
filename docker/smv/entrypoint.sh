@@ -40,7 +40,7 @@ elif [[ $1 == "--start-server" ]]; then
     # start smv server and jupyter server
     sudo -u ${USER_NAME} -i bash -c "
           cd ${SERVER_PROJ_DIR};
-          (smv-jupyter&);
+          (smv-jupyter --host ${JUPYTER_HOST} --port ${JUPYTER_PORT} &);
           smv-server --host ${SMV_HOST} --port ${SMV_PORT}"
 else
     # start command supplied by user.
