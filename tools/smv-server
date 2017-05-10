@@ -9,4 +9,4 @@ source ${SMV_TOOLS}/_pyenv.sh
 
 echo "START SMV SERVER =============================="
 
-run_pyspark_with ${SMV_TOOLS}/../src/main/python/smvserver.py
+run_pyspark_with ${SMV_TOOLS}/../src/main/python/scripts/smvserver.py
