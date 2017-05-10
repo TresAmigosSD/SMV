@@ -22,8 +22,8 @@ from smv.smvapp import DataSetRepoFactory
 from shutil import copyfile
 import py_compile
 import json
-from smv.smvpydataset import SmvCsvFile
-from smv.smvpydataset import SmvHiveTable
+from smv.smvdataset import SmvCsvFile
+from smv.smvdataset import SmvHiveTable
 import ast
 import errno
 
