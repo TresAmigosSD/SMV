@@ -65,8 +65,13 @@ class SmvBaseTest(unittest.TestCase):
     def should_be_same(self, expected, result):
         """Asserts that the two dataframes contain the same data, ignoring order
         """
+
+        # Since Python sort can't handle null values in DF, use DF's orderBy to sort
+        def sort_collect(df):
+            return df.coalesce(1).orderBy(*(df.columns)).collect()
+
         self.assertEqual(expected.columns, result.columns)
-        self.assertEqual(sorted(expected.collect()), sorted(result.collect()))
+        self.assertEqual(sort_collect(expected), sort_collect(result))
 
     def createTempFile(self, baseName, fileContents = "xxx"):
         """create a temp file in the data dir with the given contents"""
