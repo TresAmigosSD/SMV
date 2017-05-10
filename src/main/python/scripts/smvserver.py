@@ -372,7 +372,7 @@ from pyspark.sql.functions import *\n\
 ###---PLUTO_IMPORTS_END---###\n".format(importStages)
 
 # class start
-def buildClassStart(className, dsType): # what about SmvPyOutput?
+def buildClassStart(className, dsType): # what about SmvOutput?
     extendsByDsType = { "csv": "SmvCsvFile", "hive": "SmvHiveTable", "module": "SmvModule" }
     extends = extendsByDsType[dsType.lower()]
     return "class {}({}):\n".format(className, extends)

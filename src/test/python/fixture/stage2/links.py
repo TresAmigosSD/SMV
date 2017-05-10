@@ -11,13 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvPyModule, SmvPyModuleLink
+from smv import SmvModule, SmvModuleLink
 from fixture.stage1.output import A
 from pyspark.sql.functions import col, lit
 
-L = SmvPyModuleLink(A)
+L = SmvModuleLink(A)
 
-class B(SmvPyModule):
+class B(SmvModule):
 
     def requiresDS(self): return [L]
     def run(self, i):

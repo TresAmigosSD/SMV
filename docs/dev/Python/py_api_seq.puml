@@ -5,7 +5,7 @@ Actor User
 Participant SmvApp as app
 Participant SmvExtModule as extmod
 Participant PythonDataSetRepository as repo
-Participant SmvPyModule as pymod
+Participant SmvModule as pymod
 
 User -> app : dsForName(urn)
 activate app

@@ -76,7 +76,7 @@ class DataSetRepo(object):
             raise e
 
     def outputModsForStage(self, stageName):
-        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyModule and obj.IsSmvPyOutput)
+        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvModule and obj.IsSmvOutput)
 
     def _moduleUrnsForStage(self, stageName, fn):
         # `walk_packages` can generate AttributeError if the system has
