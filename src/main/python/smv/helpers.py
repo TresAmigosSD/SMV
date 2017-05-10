@@ -79,17 +79,80 @@ class SmvGroupedData(object):
         """
         return DataFrame(self.sgd.smvTopNRecs(maxElems, smv_copy_array(self.df._sc, *cols)), self.df.sql_ctx)
 
-    def smvPivotSum(self, pivotCols, valueCols, baseOutput):
-        """Perform SmvPivot, then sum the results
+    def smvPivot(self, pivotCols, valueCols, baseOutput):
+        """smvPivot adds the pivoted columns without additional aggregation. In other words
+            N records in, N records out
 
-            The user is required to supply the list of expected pivot column
-            output names to avoid extra action on the input DataFrame. If an
-            empty sequence is provided, then the base output columns will be
-            extracted from values in the pivot columns (will cause an action
-            on the entire DataFrame!)
+            SmvPivot for Pivot Operations:
+
+            Pivot Operation on DataFrame that transforms multiple rows per key into a columns so
+            they can be aggregated to a single row for a given key while preserving all the data
+            variance.
+
+            Example:
+                For input data below:
+
+                +-----+-------+---------+-------+
+                | id  | month | product | count |
+                +=====+=======+=========+=======+
+                | 1   | 5/14  |   A     |   100 |
+                +-----+-------+---------+-------+
+                | 1   | 6/14  |   B     |   200 |
+                +-----+-------+---------+-------+
+                | 1   | 5/14  |   B     |   300 |
+                +-----+-------+---------+-------+
+
+                We would like to generate a data set to be ready for aggregations.
+                The desired output is:
+
+                +-----+--------------+--------------+--------------+--------------+
+                | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+                +=====+==============+==============+==============+==============+
+                | 1   | 100          | NULL         | NULL         | NULL         |
+                +-----+--------------+--------------+--------------+--------------+
+                | 1   | NULL         | NULL         | NULL         | 200          |
+                +-----+--------------+--------------+--------------+--------------+
+                | 1   | NULL         | 300          | NULL         | NULL         |
+                +-----+--------------+--------------+--------------+--------------+
+
+                The raw input is divided into three parts.
+                    1. key column: part of the primary key that is preserved in the output.
+                        That would be the `id` column in the above example.
+                    2. pivot columns: the columns whose row values will become the new column names.
+                        The cross product of all unique values for *each* column is used to generate
+                        the output column names.
+                    3. value column: the value that will be copied/aggregated to corresponding output
+                        column. `count` in our example.
+
+                Example code:
+
+                >>> df.smvGroupBy("id").smvPivot([["month", "product"]], ["count"], ["5_14_A", "5_14_B", "6_14_A", "6_14_B"])
 
             Args:
-                pivotCols (list(list(str))): lists of names of column names to pivot
+                pivotCols (list(list(str))): specify the pivot columns, on above example, it is
+                    [['month, 'product]]. If [['month'], ['month', 'product']] is
+                    used, the output columns will have "count_5_14" and "count_6_14" as
+                    addition to the example.
+                valueCols (list(string)): names of value columns which will be prepared for
+                    aggregation
+                baseOutput (list(str)): expected names of the pivoted column
+                    In above example, it is ["5_14_A", "5_14_B", "6_14_A", "6_14_B"].
+                    The user is required to supply the list of expected pivot column output names to avoid
+                    and extra action on the input DataFrame just to extract the possible pivot columns.
+                    If an empty sequence is provided, the base output columns will be extracted from
+                    values in the pivot columns (will cause an action on the entire DataFrame!)
+
+            Returns:
+                (DataFrame): result of pivot operation
+        """
+        return DataFrame(self.sgd.smvPivot(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
+
+    def smvPivotSum(self, pivotCols, valueCols, baseOutput):
+        """Perform SmvPivot, then sum the results.
+            Please refer smvPivot's document for context and details of the SmvPivot operation.
+
+            Args:
+                pivotCols (list(list(str))): list of lists of column names to pivot
                 valueCols (list(string)): names of value columns to sum
                 baseOutput (list(str)): expected names pivoted column
 
@@ -108,7 +171,7 @@ class SmvGroupedData(object):
 
                 we can use
 
-                >>> df.smvGroupBy("id").smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+                >>> df.smvGroupBy("id").smvPivotSum([["month", "product"]], ["count"], ["5_14_A", "5_14_B", "6_14_A", "6_14_B"])
 
                 to produce the following output
 
