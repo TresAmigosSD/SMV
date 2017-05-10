@@ -16,9 +16,9 @@ This module provides the helper functions on DataFrame objects and Column object
 """
 
 from pyspark import SparkContext
-from pyspark.sql import HiveContext, DataFrame
+from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, lit
 from utils import smv_copy_array
 
 import sys
@@ -1141,7 +1141,13 @@ class ColumnHelper(object):
             Returns:
                 (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
-        jc = self._jColumnHelper.smvPlusDays(delta)
+        if (isinstance(delta, int)):
+            jdelta = delta
+        elif (isinstance(delta, Column)):
+            jdelta = delta._jc
+        else:
+            raise RuntimeError("delta parameter must be either an int or a Column")
+        jc = self._jColumnHelper.smvPlusDays(jdelta)
         return Column(jc)
 
     def smvPlusWeeks(self, delta):
@@ -1156,7 +1162,13 @@ class ColumnHelper(object):
             Returns:
                 (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
-        jc = self._jColumnHelper.smvPlusWeeks(delta)
+        if (isinstance(delta, int)):
+            jdelta = delta
+        elif (isinstance(delta, Column)):
+            jdelta = delta._jc
+        else:
+            raise RuntimeError("delta parameter must be either an int or a Column")
+        jc = self._jColumnHelper.smvPlusWeeks(jdelta)
         return Column(jc)
 
     def smvPlusMonths(self, delta):
@@ -1174,7 +1186,13 @@ class ColumnHelper(object):
             Returns:
                 (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
-        jc = self._jColumnHelper.smvPlusMonths(delta)
+        if (isinstance(delta, int)):
+            jdelta = delta
+        elif (isinstance(delta, Column)):
+            jdelta = delta._jc
+        else:
+            raise RuntimeError("delta parameter must be either an int or a Column")
+        jc = self._jColumnHelper.smvPlusMonths(jdelta)
         return Column(jc)
 
     def smvPlusYears(self, delta):
@@ -1189,7 +1207,13 @@ class ColumnHelper(object):
             Returns:
                 (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
-        jc = self._jColumnHelper.smvPlusYears(delta)
+        if (isinstance(delta, int)):
+            jdelta = delta
+        elif (isinstance(delta, Column)):
+            jdelta = delta._jc
+        else:
+            raise RuntimeError("delta parameter must be either an int or a Column")
+        jc = self._jColumnHelper.smvPlusYears(jdelta)
         return Column(jc)
 
     def smvStrToTimestamp(self, fmt):
