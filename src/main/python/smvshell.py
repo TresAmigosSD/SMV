@@ -21,12 +21,6 @@ jvmShellCmd = SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 def df(name, forceRun = False):
     return SmvApp.getInstance().runModuleByName(name, forceRun)
 
-def ddf(fqn):
-    print "ddf has been removed. df now runs modules dynamically. Use df instead of ddf."
-
-def pdf(fqn):
-    print "pdf has been removed. Run modules dynamically with df instead."
-
 openHive = lambda tableName: DataFrame(jvmShellCmd.openHive(tableName), SmvApp.getInstance().sqlContext)
 openCsv = lambda path: DataFrame(jvmShellCmd.openCsv(path), SmvApp.getInstance().sqlContext)
 
