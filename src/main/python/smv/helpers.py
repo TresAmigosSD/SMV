@@ -188,11 +188,36 @@ class SmvGroupedData(object):
 
     def smvPivotCoalesce(self, pivotCols, valueCols, baseOutput):
         """Perform SmvPivot, then coalesce the output
+            Please refer smvPivot's document for context and details of the SmvPivot operation.
 
             Args:
-                pivotCols (list(list(str))): lists of names of column names to pivot
+                pivotCols (list(list(str))): list of lists of column names to pivot
                 valueCols (list(string)): names of value columns to coalesce
                 baseOutput (list(str)): expected names pivoted column
+
+            Examples:
+                For example, given a DataFrame df that represents the table
+
+                +---+---+----+
+                |  k|  p|   v|
+                +===+===+====+
+                |  a|  c|   1|
+                |  a|  d|   2|
+                |  a|  e|null|
+                |  a|  f|   5|
+                +---+---+----+
+
+                we can use
+
+                >>> df.smvGroupBy("k").smvPivotCoalesce([['p']], ['v'], ['c', 'd', 'e', 'f'])
+
+                to produce the following output
+
+                +---+---+---+----+---+
+                |  k|v_c|v_d| v_e|v_f|
+                +===+===+===+====+===+
+                |  a|  1|  2|null|  5|
+                +---+---+---+----+---+
 
             Returns:
                 (Dataframe): result of pivot coalesce
