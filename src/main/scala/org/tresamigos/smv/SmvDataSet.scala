@@ -414,7 +414,7 @@ abstract class SmvDataSet extends FilenamePart {
       df.edd.persistBesideData(publishCsvPath(version))
   }
 
-  private[smv] lazy val parentStage: Option[String] = app.dsm.stageForUrn(urn)
+  private[smv] lazy val parentStage: Option[String] = urn.getStage
   private[smv] def stageVersion()                   = parentStage flatMap { app.smvConfig.stageVersions.get(_) }
 
   /**

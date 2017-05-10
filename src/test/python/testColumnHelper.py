@@ -88,6 +88,44 @@ class ColumnHelperTest(SmvBaseTest):
         self.should_be_same(e4, r4)
         self.should_be_same(e5, r5)
 
+    def test_smvPlusDateTime_Column(self):
+        df = self.createDF("t:Timestamp[yyyyMMdd];toadd:Integer", "19760131,10;20120229,32;19070101,")
+
+        r1 = df.select(col("t").smvPlusDays(col("toadd")).alias('ts'))
+        r2 = df.select(col("t").smvPlusWeeks(col("toadd")).alias('ts'))
+        r3 = df.select(col("t").smvPlusMonths(col("toadd")).alias('ts'))
+        r4 = df.select(col("t").smvPlusYears(col("toadd")).alias('ts'))
+
+        s = "ts: Timestamp[yyyy-MM-dd hh:mm:ss.S]"
+        e1 = self.createDF(
+            s,
+            """1976-02-10 00:00:00.0;
+               2012-04-01 00:00:00.0;
+            """
+            )
+        e2 = self.createDF(
+            s,
+            """1976-04-10 00:00:00.0;
+               2012-10-10 00:00:00.0;
+            """
+            )
+        e3 = self.createDF(
+            s,
+            """1976-11-30 00:00:00.0;
+               2014-10-29 00:00:00.0;
+            """
+            )
+        e4 = self.createDF(
+            s,
+            """1986-01-31 00:00:00.0;
+               2044-02-29 00:00:00.0;
+            """
+            )
+        self.should_be_same(e1, r1)
+        self.should_be_same(e2, r2)
+        self.should_be_same(e3, r3)
+        self.should_be_same(e4, r4)
+
     def test_smvDayMonth70(self):
         df = self.createDF("t:Timestamp[yyyyMMdd]", "19760131;20120229")
         r1 = df.select(col("t").smvDay70().alias("t_day70"))

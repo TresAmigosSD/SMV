@@ -152,7 +152,8 @@ source_profile_file() {
     echo >> $found_profile
     echo "#---SMV PROFILE----" >> $found_profile
     echo "source ${SMV_PROFILE}" >> $found_profile
-    echo "[INFO] sourced SMV profile in $found_profile"
+    echo "[INFO] SMV profile sourced in $found_profile"
+    echo "[INFO] Start a new shell or run \"source $found_profile\" to use SMV"
   fi
 }
 

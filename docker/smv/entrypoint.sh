@@ -41,7 +41,7 @@ elif [[ $1 == "--start-server" ]]; then
     sudo -u ${USER_NAME} -i bash -c "
           cd ${SERVER_PROJ_DIR};
           (smv-jupyter&);
-          smv-server"
+          smv-server --host ${SMV_HOST} --port ${SMV_PORT}"
 else
     # start command supplied by user.
     sudo -u ${USER_NAME} -i "$@"

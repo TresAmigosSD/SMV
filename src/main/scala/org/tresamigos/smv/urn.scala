@@ -23,6 +23,14 @@ package org.tresamigos.smv
  */
 sealed abstract class URN(prefix: String) {
   def fqn: String
+  def getStage: Option[String] = {
+    val allStageNames = SmvApp.app.smvConfig.stageNames
+
+    allStageNames.find { stageName =>
+      fqn.startsWith(stageName + ".")
+    }
+  }
+
   override def toString: String = s"${prefix}:${fqn}"
   def toModURN: ModURN          = ModURN(fqn)
   def toLinkURN: LinkURN        = LinkURN(fqn)
