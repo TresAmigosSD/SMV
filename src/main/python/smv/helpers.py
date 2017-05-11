@@ -204,8 +204,11 @@ class SmvGroupedData(object):
                 |  k|  p|   v|
                 +===+===+====+
                 |  a|  c|   1|
+                +---+---+----+
                 |  a|  d|   2|
+                +---+---+----+
                 |  a|  e|null|
+                +---+---+----+
                 |  a|  f|   5|
                 +---+---+----+
 
@@ -232,23 +235,35 @@ class SmvGroupedData(object):
             Examples:
                 Given DataFrame df representing the table
 
-                K, T, V
-                a, 1, null
-                a, 2, a
-                a, 3, b
-                a, 4, null
+                +---+---+------+
+                | K | T | V    |
+                +===+===+======+
+                | a | 1 | null |
+                +---+---+------+
+                | a | 2 | a    |
+                +---+---+------+
+                | a | 3 | b    |
+                +---+---+------+
+                | a | 4 | null |
+                +---+---+------+
 
                 we can use
 
                 >>> df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)("V")
 
-                to preduce the result
+                to produce the result
 
-                K, T, V
-                a, 1, null
-                a, 2, a
-                a, 3, b
-                a, 4, b
+                +---+---+------+
+                | K | T | V    |
+                +===+===+======+
+                | a | 1 | null |
+                +---+---+------+
+                | a | 2 | a    |
+                +---+---+------+
+                | a | 3 | b    |
+                +---+---+------+
+                | a | 4 | b    |
+                +---+---+------+
 
             Returns:
                 (Dataframe): result of fill nulls with previous value
@@ -433,7 +448,7 @@ class DataFrameHelper(object):
         return SmvMultiJoin(self._sql_ctx, jdf)
 
     def topNValsByFreq(self, n, col):
-        """Get top N most frequent values in Column c
+        """Get top N most frequent values in Column col
 
             Args:
                 n (int): maximum number of values
@@ -696,7 +711,7 @@ class DataFrameHelper(object):
                     +----+--------+-------+
                     |  1 |   Z    |   C   |
                     +----+--------+-------+
-                    | ...   ...      ...  |
+                    | ...|   ...  |  ...  |
                     +----+--------+-------+
                     |  3 |   Y    |   H   |
                     +----+--------+-------+
@@ -788,6 +803,9 @@ class DataFrameHelper(object):
                 It can be used with EDD to summarize on the flag:
 
                 >>> df1.smvOverlapCheck("key")(df2, df3).smvHist("flag")
+
+            Returns:
+                (DataFrame): the DataFrame with the key and flag columns
         """
         def _check(*dfothers):
             jdf = self._jPythonHelper.smvOverlapCheck(self._jdf, keyColName, smv_copy_array(self._sc, *dfothers))
@@ -836,6 +854,10 @@ class DataFrameHelper(object):
 
             Returns:
                 (string): description string of colName, if specified
+
+            or:
+
+            Returns:
                 (list(tuple)): a list of (colName, description) pairs for all columns
         """
         if (colName is not None):
@@ -1038,6 +1060,8 @@ class DataFrameHelper(object):
 
     def smvDiscoverPK(self, n=10000):
         """Find a column combination which uniquely identifies a row from the data
+
+            The resulting output is printed out
 
             Note:
                 The algorithm only looks for a set of keys which uniquely identifies the row. There could be more key combinations which can also be the primary key.
