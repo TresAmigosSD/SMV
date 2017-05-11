@@ -100,7 +100,7 @@ These 2 problems motivate the distinction of a new responsibility which we will 
 * Resolve its dependencies and populate `resolvedRequireDS`
 * Return its canonical instance
 
-By canonical class for an `SmvDataSet` we indicate the `SmvDataSet` class which is actually runnable, i.e. not an `SmvExtModule`. The canonical class of a subclass C of `SmvDataSet` is C itself _unless_ C is an `SmvExtModule`, in which case it is the `SmvExtModulePython` that corresponds to the same `SmvPyModule`.
+By canonical class for an `SmvDataSet` we indicate the `SmvDataSet` class which is actually runnable, i.e. not an `SmvExtModule`. The canonical class of a subclass C of `SmvDataSet` is C itself _unless_ C is an `SmvExtModule`, in which case it is the `SmvExtModulePython` that corresponds to the same `SmvModule`.
 
 `SmvDataSet`s are already well-suited to walk their own dependency trees recursively, and empowering `SmvDataSet`s to resolve their own dependencies while being agnostic of the mechanism to do so will also solve Problem 2. Therefore, `SmvDataSet` will provide a method `resolve(res: DataSetResolver)` that will resolve itself, where `DataSetResolver` is a class that loads and resolves for `SmvDataSet` each of its dependencies while keeping track of all `SmvDataSet`s loaded in this transaction. `DataSetResolver` can also be the entrypoint for `DataSetMgr` to load a module.
 

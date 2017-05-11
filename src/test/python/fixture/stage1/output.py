@@ -12,10 +12,10 @@
 # limitations under the License.
 
 from test_support.smvbasetest import SmvBaseTest
-from smv import SmvPyModule, SmvPyOutput
+from smv import SmvModule, SmvOutput
 from pyspark.sql import DataFrame
 
-class A(SmvPyModule, SmvPyOutput):
+class A(SmvModule, SmvOutput):
     def requiresDS(self): return []
     def run(self, i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")

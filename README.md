@@ -65,7 +65,7 @@ EMP: Long
 The `EmploymentByState` module is defined in `src/python/stage1/employment.py`:
 
 ```shell
-class EmploymentByState(SmvPyModule, SmvPyOutput):
+class EmploymentByState(SmvModule, SmvOutput):
     """Python ETL Example: employment by state"""
 
     def requiresDS(self):
@@ -117,7 +117,7 @@ EMP: Long
 If you would like to publish your module to a hive table, add a `tableName` method to EmploymentByState. It should return the name of the Hive table as a string.
 
 ```python
-class EmploymentByState(SmvPyModule, SmvPyOutput):
+class EmploymentByState(SmvModule, SmvOutput):
     ...
     def tableName(self):
         return "myTableName"

@@ -14,7 +14,7 @@
 import unittest
 
 from test_support.smvbasetest import SmvBaseTest
-from smv import SmvApp, SmvPyCsvFile
+from smv import SmvApp, SmvCsvFile
 
 from smv.helpers import DataFrameHelper as dfhelper
 

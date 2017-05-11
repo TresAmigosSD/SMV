@@ -11,14 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp, SmvPyModule, SmvPyOutput
+from smv import SmvApp, SmvModule, SmvOutput
 
-class A(SmvPyModule, SmvPyOutput):
+class A(SmvModule, SmvOutput):
     def requiresDS(self): return []
     def run(self, i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
 
-class B(SmvPyModule, SmvPyOutput):
+class B(SmvModule, SmvOutput):
     def requiresDS(self): return []
     def run(self, i):
         return self.smvApp.createDF("k:String;v:Integer", "c,3;d,4")

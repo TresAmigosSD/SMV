@@ -16,17 +16,17 @@ from smv.dqm import *
 from pyspark.sql.functions import col, lit
 
 
-class D1(SmvPyCsvStringData):
+class D1(SmvCsvStringData):
     def schemaStr(self):
         return "a:String;b:Integer"
     def dataStr(self):
         return "x,10;y,1"
 
-class D2(SmvPyMultiCsvFiles):
+class D2(SmvMultiCsvFiles):
     def dir(self):
         return "test3"
 
-class D3(SmvPyCsvStringData):
+class D3(SmvCsvStringData):
     def schemaStr(self):
         return "a:Integer;b:Double"
     def dataStr(self):
@@ -38,7 +38,7 @@ class D3(SmvPyCsvStringData):
             FailTotalRuleCountPolicy(2)).add(
             FailTotalFixCountPolicy(1))
 
-class D4(SmvPyCsvStringData, SmvRunConfig):
+class D4(SmvCsvStringData, SmvRunConfig):
     def schemaStr(self):
         return "a:String;b:Integer"
     def dataStr(self):

@@ -1,11 +1,11 @@
 # SMV Python Porting Progress Tracking
 
 ## Framework
-  * [x] SmvPyCsvFile
-  * [x] SmvPyHiveTable
-  * [x] SmvPyModule
-  * [x] SmvPyOutput
-  * [ ] SmvPyModuleLink
+  * [x] SmvCsvFile
+  * [x] SmvHiveTable
+  * [x] SmvModule
+  * [x] SmvOutput
+  * [ ] SmvModuleLink
 
 ## DataFrame Helpers
   * [x] `smvSelectPlus((col("a") + 1).alias("b"))`

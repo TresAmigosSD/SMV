@@ -827,7 +827,7 @@ case class SmvExtModuleLink(modFqn: String)
  * exclusively by DataSetRepoPython. Wraps an ISmvModule.
  */
 class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
-  override val description    = s"SmvPyModule ${target.fqn}"
+  override val description    = s"SmvModule ${target.fqn}"
   override val fqn            = target.fqn
   override def tableName      = target.tableName()
   override def isEphemeral    = target.isEphemeral()
@@ -856,7 +856,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
 
 /**
  * Factory for SmvExtModulePython. Creates an SmvExtModulePython with SmvOuptut
- * if the Python dataset is SmvPyOutput
+ * if the Python dataset is SmvOutput
  */
 object SmvExtModulePython {
   def apply(target: ISmvModule): SmvExtModulePython = {
