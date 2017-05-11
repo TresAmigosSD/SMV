@@ -4,7 +4,7 @@ Spark, specifically PySpark, uses py4j to provide access to JVM to code written 
 
 We follow the same design when it comes to invoking methods on JVM objects from the Python side.
 
-However, for Python SmvModules to work seamlessly with Scala SmvModules, JVM objects would sometimes need to invoke methods on Python objects as well.  In particular, `SmvApp` would need to be able to call `doRun` on Python `SmvPyDataSet` subclasses.
+However, for Python SmvModules to work seamlessly with Scala SmvModules, JVM objects would sometimes need to invoke methods on Python objects as well.  In particular, `SmvApp` would need to be able to call `doRun` on Python `SmvDataSet` subclasses.
 
 To accomplish this task, we rely on the callback server that's part of the py4j library.
 

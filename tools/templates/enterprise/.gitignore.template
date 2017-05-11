@@ -34,3 +34,6 @@ project/plugins/project/
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
+
+# IPython Notebook
+.ipynb_checkpoints

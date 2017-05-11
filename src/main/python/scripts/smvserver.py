@@ -22,8 +22,8 @@ from smv.smvapp import DataSetRepoFactory
 from shutil import copyfile
 import py_compile
 import json
-from smv.smvpydataset import SmvCsvFile
-from smv.smvpydataset import SmvHiveTable
+from smv.smvdataset import SmvCsvFile
+from smv.smvdataset import SmvHiveTable
 import ast
 import errno
 
@@ -372,7 +372,7 @@ from pyspark.sql.functions import *\n\
 ###---PLUTO_IMPORTS_END---###\n".format(importStages)
 
 # class start
-def buildClassStart(className, dsType): # what about SmvPyOutput?
+def buildClassStart(className, dsType): # what about SmvOutput?
     extendsByDsType = { "csv": "SmvCsvFile", "hive": "SmvHiveTable", "module": "SmvModule" }
     extends = extendsByDsType[dsType.lower()]
     return "class {}({}):\n".format(className, extends)
@@ -926,15 +926,15 @@ class Main(object):
         smvApp = SmvApp.createInstance([])
 
         # to reduce complexity in SmvApp, keep the rest server single-threaded
-        app.run(host=options.host, port=int(options.port), threaded=False, processes=1)
+        app.run(host=options.ip, port=int(options.port), threaded=False, processes=1)
 
     def parseArgs(self):
         from optparse import OptionParser
         parser = OptionParser()
         parser.add_option("--port", dest="port", type="int", default=5000,
                   help="smv-server port number [default=5000]")
-        parser.add_option("--host", dest="host", type="string", default="0.0.0.0",
-                  help="smv-server host name [default=0.0.0.0]")
+        parser.add_option("--ip", dest="ip", type="string", default="0.0.0.0",
+                  help="smv-server ip to bind to [default=0.0.0.0]")
 
         (options, args) = parser.parse_args()
         return options
