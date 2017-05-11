@@ -159,6 +159,11 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
   def smvTopNRecs(maxElems: Int, orders: Array[Column]): DataFrame =
     grouped.smvTopNRecs(maxElems, orders: _*)
 
+  def smvPivot(pivotCols: java.util.List[Array[String]],
+                  valueCols: Array[String],
+                  baseOutput: Array[String]): DataFrame =
+    grouped.smvPivot(pivotCols.map(_.toSeq).toSeq: _*)(valueCols: _*)(baseOutput: _*).toDF
+
   def smvPivotSum(pivotCols: java.util.List[Array[String]],
                   valueCols: Array[String],
                   baseOutput: Array[String]): DataFrame =
@@ -192,7 +197,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
 
   def publishVersion: Option[String] = config.cmdLine.publish.get
-  
+
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String,
                  path: String,

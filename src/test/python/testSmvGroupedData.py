@@ -33,6 +33,20 @@ class GroupedDataTest(SmvBaseTest):
         )
         self.should_be_same(expect, res)
 
+    def test_smvPivot_smvPivotSum(self):
+        df = self.createDF("id:String;month:String;product:String;count:Integer", "1,5/14,A,100;1,6/14,B,200;1,5/14,B,300")
+        r1 = df.smvGroupBy('id').smvPivot([['month', 'product']],['count'],["5_14_A", "5_14_B", "6_14_A", "6_14_B"])
+        r2 = df.smvGroupBy('id').smvPivotSum([['month', 'product']],['count'],["5_14_A", "5_14_B", "6_14_A", "6_14_B"])
+
+        e1 = self.createDF("id: String;count_5_14_A: Integer;count_5_14_B: Integer;count_6_14_A: Integer;count_6_14_B: Integer",
+                            """1,100,,,;
+                               1,,,,200;
+                               1,,300,,""")
+        e2 = self.createDF("id: String;count_5_14_A: Long;count_5_14_B: Long;count_6_14_A: Long;count_6_14_B: Long",
+                           "1,100,300,0,200")
+        self.should_be_same(r1, e1)
+        self.should_be_same(r2, e2)
+
     def test_smvPivotCoalesce(self):
         df = self.createDF("k:String; p:String; v:Integer", "a,c,1;a,d,2;a,e,;a,f,5")
         res = df.smvGroupBy("k").smvPivotCoalesce(
