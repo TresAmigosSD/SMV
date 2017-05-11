@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# smv-jupyter [--host hostname] [--port portnumber]
+# smv-jupyter [--ip bind_ip] [--port portnumber]
 set -e
 
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 
-# extract --host/--port options (must be in that order) from command line.
-# sets JUPYTER_HOST/JUPYTER_PORT which will be read in jupyter_notebook_config.py
-if [ "$1" = "--host" ]; then
-  export JUPYTER_HOST="$2"
+# extract --ip/--port options (must be in that order) from command line.
+# sets JUPYTER_IP/JUPYTER_PORT which will be read in jupyter_notebook_config.py
+if [ "$1" = "--ip" ]; then
+  export JUPYTER_IP="$2"
   shift; shift
 fi
 if [ "$1" = "--port" ]; then

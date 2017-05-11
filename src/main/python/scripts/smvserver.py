@@ -926,15 +926,15 @@ class Main(object):
         smvApp = SmvApp.createInstance([])
 
         # to reduce complexity in SmvApp, keep the rest server single-threaded
-        app.run(host=options.host, port=int(options.port), threaded=False, processes=1)
+        app.run(host=options.ip, port=int(options.port), threaded=False, processes=1)
 
     def parseArgs(self):
         from optparse import OptionParser
         parser = OptionParser()
         parser.add_option("--port", dest="port", type="int", default=5000,
                   help="smv-server port number [default=5000]")
-        parser.add_option("--host", dest="host", type="string", default="0.0.0.0",
-                  help="smv-server host name [default=0.0.0.0]")
+        parser.add_option("--ip", dest="ip", type="string", default="0.0.0.0",
+                  help="smv-server ip to bind to [default=0.0.0.0]")
 
         (options, args) = parser.parse_args()
         return options
