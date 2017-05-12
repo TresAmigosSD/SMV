@@ -66,8 +66,10 @@ class SmvGroupedData(object):
         """For each group, return the top N records according to a given ordering
 
             Example:
-                # This will keep the 3 largest amt records for each id
-                df.smvGroupBy("id").smvTopNRecs(3, col("amt").desc())
+
+                >>> df.smvGroupBy("id").smvTopNRecs(3, col("amt").desc())
+
+                This will keep the 3 largest amt records for each id
 
             Args:
                 maxElems (int): maximum number of records per group
@@ -202,8 +204,11 @@ class SmvGroupedData(object):
                 |  k|  p|   v|
                 +===+===+====+
                 |  a|  c|   1|
+                +---+---+----+
                 |  a|  d|   2|
+                +---+---+----+
                 |  a|  e|null|
+                +---+---+----+
                 |  a|  f|   5|
                 +---+---+----+
 
@@ -230,23 +235,35 @@ class SmvGroupedData(object):
             Examples:
                 Given DataFrame df representing the table
 
-                K, T, V
-                a, 1, null
-                a, 2, a
-                a, 3, b
-                a, 4, null
+                +---+---+------+
+                | K | T | V    |
+                +===+===+======+
+                | a | 1 | null |
+                +---+---+------+
+                | a | 2 | a    |
+                +---+---+------+
+                | a | 3 | b    |
+                +---+---+------+
+                | a | 4 | null |
+                +---+---+------+
 
                 we can use
 
                 >>> df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)("V")
 
-                to preduce the result
+                to produce the result
 
-                K, T, V
-                a, 1, null
-                a, 2, a
-                a, 3, b
-                a, 4, b
+                +---+---+------+
+                | K | T | V    |
+                +===+===+======+
+                | a | 1 | null |
+                +---+---+------+
+                | a | 2 | a    |
+                +---+---+------+
+                | a | 3 | b    |
+                +---+---+------+
+                | a | 4 | b    |
+                +---+---+------+
 
             Returns:
                 (Dataframe): result of fill nulls with previous value
@@ -285,7 +302,7 @@ class SmvMultiJoin(object):
                                      when true, the duplicated columns will be dropped
 
             Example:
-                joindf.doJoin()
+                >>> joindf.doJoin()
 
             Returns:
                 (DataFrame): result of executing the join operation
@@ -431,14 +448,16 @@ class DataFrameHelper(object):
         return SmvMultiJoin(self._sql_ctx, jdf)
 
     def topNValsByFreq(self, n, col):
-        """Get top N most frequent values in Column c
+        """Get top N most frequent values in Column col
 
             Args:
                 n (int): maximum number of values
                 col (Column): which column to get values from
 
-            Examples:
+            Example:
+
                 >>> df.topNValsByFreq(1, col("cid"))
+
                 will return the single most frequent value in the cid column
 
             Returns:
@@ -462,11 +481,14 @@ class DataFrameHelper(object):
                 key (str): key on which to join (also the Column with the skewed values)
 
             Example:
-                {{{
-                df.smvSkewJoinByKey(df2, SmvJoinType.Inner, Seq("9999999"), "cid")
-                }}}
-                will broadcast join the rows of df1 and df2 where col("cid") == "9999999"
+
+                >>> df.smvSkewJoinByKey(df2, "inner", [4], "cid")
+
+                will broadcast join the rows of df1 and df2 where col("cid") == "4"
                 and join the remaining rows of df1 and df2 without broadcast join.
+
+            Returns:
+                (DataFrame): the result of the join operation
         """
         jdf = self._jDfHelper.smvSkewJoinByKey(other._jdf, joinType, _to_seq(skewVals), key)
         return DataFrame(jdf, self._sql_ctx)
@@ -496,7 +518,7 @@ class DataFrameHelper(object):
                 cols (\*Column): expressions to add to the DataFrame
 
             Example:
-                >>> df.smvSelectPlus(col("price") * col("count") as "amt")
+                >>> df.smvSelectPlus((col("price") * col("count")).alias("amt"))
 
             Returns:
                 (DataFrame): the resulting DataFrame after removal of columns
@@ -512,15 +534,18 @@ class DataFrameHelper(object):
             Example:
                 >>> df.smvPrefixFieldNames("x_")
 
-            Above will add "x_" to the beginning of every column name in the `DataFrame`.
+            Above will add `x_` to the beginning of every column name in the `DataFrame`.
             Please note that if the renamed column names over lap with existing columns,
             the method will error out.
+
+            Returns:
+                (DataFrame)
         """
         jdf = self._jDfHelper.smvPrefixFieldNames(prefix)
         return DataFrame(jdf, self._sql_ctx)
 
     def smvDedupByKey(self, *keys):
-        """Remove duplicate records from the DataFrame by arbitrarly selecting the first record from a set of records with same primary key or key combo.
+        """Remove duplicate records from the DataFrame by arbitrarily selecting the first record from a set of records with same primary key or key combo.
 
             Args:
                 keys (\*string or \*Column): the column names or Columns on which to apply dedup
@@ -540,7 +565,7 @@ class DataFrameHelper(object):
                 | 2   | B       | C4      |
                 +-----+---------+---------+
 
-                >>> df.dedupByKey("id")
+                >>> df.smvDedupByKey("id")
 
                 output DataFrame:
 
@@ -552,7 +577,7 @@ class DataFrameHelper(object):
                 | 2   | B       | C3      |
                 +-----+---------+---------+
 
-                >>> df.dedupByKey("id", "product")
+                >>> df.smvDedupByKey("id", "product")
 
                 output DataFrame:
 
@@ -580,7 +605,7 @@ class DataFrameHelper(object):
             >>> def smvDedupByKeyWithOrder(self, *keys)(*orderCols)
 
             Note:
-                Same as the `dedupByKey` method, we use RDD groupBy in the implementation of this method to make sure we can handle large key space.
+                Same as the `smvDedupByKey` method, we use RDD groupBy in the implementation of this method to make sure we can handle large key space.
 
             Args:
                 keys (\*string or \*Column): the column names or Columns on which to apply dedup
@@ -600,7 +625,7 @@ class DataFrameHelper(object):
                 | 2   | B       | C4      |
                 +-----+---------+---------+
 
-                >>> df.dedupByKeyWithOrder(col("id"))(col("product").desc())
+                >>> df.smvDedupByKeyWithOrder(col("id"))(col("product").desc())
 
                 output DataFrame:
 
@@ -686,7 +711,7 @@ class DataFrameHelper(object):
                     +----+--------+-------+
                     |  1 |   Z    |   C   |
                     +----+--------+-------+
-                    | ...   ...      ...  |
+                    | ...|   ...  |  ...  |
                     +----+--------+-------+
                     |  3 |   Y    |   H   |
                     +----+--------+-------+
@@ -778,6 +803,9 @@ class DataFrameHelper(object):
                 It can be used with EDD to summarize on the flag:
 
                 >>> df1.smvOverlapCheck("key")(df2, df3).smvHist("flag")
+
+            Returns:
+                (DataFrame): the DataFrame with the key and flag columns
         """
         def _check(*dfothers):
             jdf = self._jPythonHelper.smvOverlapCheck(self._jdf, keyColName, smv_copy_array(self._sc, *dfothers))
@@ -826,6 +854,10 @@ class DataFrameHelper(object):
 
             Returns:
                 (string): description string of colName, if specified
+
+            or:
+
+            Returns:
                 (list(tuple)): a list of (colName, description) pairs for all columns
         """
         if (colName is not None):
@@ -1028,6 +1060,8 @@ class DataFrameHelper(object):
 
     def smvDiscoverPK(self, n=10000):
         """Find a column combination which uniquely identifies a row from the data
+
+            The resulting output is printed out
 
             Note:
                 The algorithm only looks for a set of keys which uniquely identifies the row. There could be more key combinations which can also be the primary key.

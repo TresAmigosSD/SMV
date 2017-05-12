@@ -122,8 +122,10 @@ def DQMRule(rule, name = None, taskPolicy = None):
     """DQMRule defines a requirement on the records of a DF
 
         Example:
-            # Require the sum of "a" and "b" columns less than 100
-            DQMRule(col('a') + col('b') < 100.0, 'a_b_sum_lt100', FailPercent(0.01))
+
+            Require the sum of "a" and "b" columns less than 100
+
+            >>> DQMRule(col('a') + col('b') < 100.0, 'a_b_sum_lt100', FailPercent(0.01))
 
         Args:
             rule (Column): boolean condition that defines the requirement on the records of a DF
@@ -140,9 +142,10 @@ def DQMFix(condition, fix, name = None, taskPolicy = None):
     """DQMFix will fix a column with a default value
 
         Example:
-            # If "age" greater than 100, make it 100
-            val f = DQMFix($"age" > 100, lit(100) as "age", "age_cap100", FailNone)
-            DQMFix(col('age') > 100, lit(100).alias('age'), 'age_cap100', FailNone)
+
+            If "age" greater than 100, make it 100
+
+            >>> DQMFix(col('age') > 100, lit(100).alias('age'), 'age_cap100', FailNone)
 
         Args:
             condition (Column): boolean condition that determines when the fix should occur on the records of a DF

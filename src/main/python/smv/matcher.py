@@ -118,9 +118,6 @@ class SmvEntityMatcher(object):
                         FuzzyLogic("Levenshtein_City", lit(True), normlevenshtein(col("city"),col("_city")), 0.9)
                     ]
                 )
-
-        Returns:
-            (XYZ)
     """
     def __init__(self,
         leftId,
