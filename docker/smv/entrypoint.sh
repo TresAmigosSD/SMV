@@ -28,8 +28,10 @@ mkdir -p ${USER_HOME}/.jupyter
 cp ${TEMPLATE_DIR}/jupyter_notebook_config.py ${USER_HOME}/.jupyter/jupyter_notebook_config.py
 chown -R ${USER_NAME}:${USER_NAME} ${USER_HOME}
 
-# ensure /projects is also owned by SMV user.
-chown -R ${USER_NAME}:${USER_NAME} /projects
+# ensure /projects is also owned by SMV user if it was not mounted by user.
+if [ -f /projects/.docker ]; then
+  chown -R ${USER_NAME}:${USER_NAME} /projects
+fi
 cd /projects
 
 if [[ $# == 0 ]]; then
@@ -40,8 +42,14 @@ elif [[ $1 == "--start-server" ]]; then
     # start smv server and jupyter server
     sudo -u ${USER_NAME} -i bash -c "
           cd ${SERVER_PROJ_DIR};
-          (smv-jupyter --ip ${JUPYTER_IP} --port ${JUPYTER_PORT} &);
-          smv-server --ip ${SMV_IP} --port ${SMV_PORT}"
+
+          (smv-jupyter \
+            --ip ${JUPYTER_IP:?error JUPYTER_IP not set} \
+            --port ${JUPYTER_PORT:?error JUPYTER_PORT not set} &);
+
+          smv-server \
+            --ip ${SMV_IP:?error SMV_IP not set} \
+            --port ${SMV_PORT:?error SMV_PORT not set}"
 else
     # start command supplied by user.
     sudo -u ${USER_NAME} -i "$@"

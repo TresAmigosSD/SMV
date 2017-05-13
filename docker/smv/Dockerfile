@@ -16,10 +16,13 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/
     apt-get install -y python "python-dev" "python-pip" &&\
     apt-get install -y graphviz
 
+# create the projects directory and create a flag (.docker) to indicate project is inside docker image.
+RUN mkdir /projects &&\
+    touch /projects/.docker
+
 # install sbt.  The real sbt will be downloaded the first time sbt is run.
 # Note: do not run "sbt exit" here to prime the download as we want to wait until user mounts /projects/.ivy2
-RUN mkdir /projects &&\
-    cd /projects &&\
+RUN cd /projects &&\
     wget https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz &&\
     tar -xzvf sbt-$SBT_VERSION.tgz &&\
     mv sbt /usr/lib/sbt &&\
