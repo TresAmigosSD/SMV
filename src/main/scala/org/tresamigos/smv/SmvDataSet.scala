@@ -421,8 +421,8 @@ abstract class SmvDataSet extends FilenamePart {
    * Read the published data of this module if the parent stage has specified a version.
    * @return Some(DataFrame) if the stage has a version specified, None otherwise.
    */
-  private[smv] def readPublishedData(): Option[DataFrame] = {
-    stageVersion.map { v =>
+  private[smv] def readPublishedData(version: Option[String] = stageVersion): Option[DataFrame] = {
+    version.map { v =>
       val handler = new FileIOHandler(app.sqlContext, publishCsvPath(v))
       handler.csvFileWithSchema(null)
     }

@@ -20,7 +20,7 @@ from smv import CsvAttributes
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
-def df(name, forceRun = False):
+def df(name, forceRun = False, version = None):
     """The DataFrame result of running the named module
 
         Args:
@@ -30,7 +30,7 @@ def df(name, forceRun = False):
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun)
+    return SmvApp.getInstance().runModuleByName(name, forceRun, version)
 
 def openHive(tableName):
     """Read in a Hive table as a DataFrame
