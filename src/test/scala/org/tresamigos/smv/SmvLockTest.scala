@@ -6,8 +6,7 @@ import java.util.concurrent.TimeoutException
 import SmvLock.withLock
 
 class SmvLockTest extends SmvUnitSpec {
-  def sp(prop: String): String = System.getProperty(prop)
-  val path = s"""${sp("java.io.tmpdir")}/${sp("user.name")}/smv/locktest.lock"""
+  val path = s"""${TmpDir}/locktest.lock"""
   val target = SmvLock(path)
 
   override def beforeEach = target.unlock()

@@ -16,10 +16,11 @@ This module provides the helper functions on DataFrame objects and Column object
 """
 
 from pyspark import SparkContext
-from pyspark.sql import HiveContext, DataFrame
+from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, lit
 from utils import smv_copy_array
+from error import SmvRuntimeError
 
 import sys
 import inspect
@@ -58,16 +59,19 @@ def _sparkContext():
 class SmvGroupedData(object):
     """The result of running `smvGroupBy` on a DataFrame. Implements special SMV aggregations.
     """
-    def __init__(self, df, sgd):
+    def __init__(self, df, keys, sgd):
         self.df = df
+        self.keys = keys
         self.sgd = sgd
 
     def smvTopNRecs(self, maxElems, *cols):
         """For each group, return the top N records according to a given ordering
 
             Example:
-                # This will keep the 3 largest amt records for each id
-                df.smvGroupBy("id").smvTopNRecs(3, col("amt").desc())
+
+                >>> df.smvGroupBy("id").smvTopNRecs(3, col("amt").desc())
+
+                This will keep the 3 largest amt records for each id
 
             Args:
                 maxElems (int): maximum number of records per group
@@ -79,17 +83,80 @@ class SmvGroupedData(object):
         """
         return DataFrame(self.sgd.smvTopNRecs(maxElems, smv_copy_array(self.df._sc, *cols)), self.df.sql_ctx)
 
-    def smvPivotSum(self, pivotCols, valueCols, baseOutput):
-        """Perform SmvPivot, then sum the results
+    def smvPivot(self, pivotCols, valueCols, baseOutput):
+        """smvPivot adds the pivoted columns without additional aggregation. In other words
+            N records in, N records out
 
-            The user is required to supply the list of expected pivot column
-            output names to avoid extra action on the input DataFrame. If an
-            empty sequence is provided, then the base output columns will be
-            extracted from values in the pivot columns (will cause an action
-            on the entire DataFrame!)
+            SmvPivot for Pivot Operations:
+
+            Pivot Operation on DataFrame that transforms multiple rows per key into a columns so
+            they can be aggregated to a single row for a given key while preserving all the data
+            variance.
+
+            Example:
+                For input data below:
+
+                +-----+-------+---------+-------+
+                | id  | month | product | count |
+                +=====+=======+=========+=======+
+                | 1   | 5/14  |   A     |   100 |
+                +-----+-------+---------+-------+
+                | 1   | 6/14  |   B     |   200 |
+                +-----+-------+---------+-------+
+                | 1   | 5/14  |   B     |   300 |
+                +-----+-------+---------+-------+
+
+                We would like to generate a data set to be ready for aggregations.
+                The desired output is:
+
+                +-----+--------------+--------------+--------------+--------------+
+                | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+                +=====+==============+==============+==============+==============+
+                | 1   | 100          | NULL         | NULL         | NULL         |
+                +-----+--------------+--------------+--------------+--------------+
+                | 1   | NULL         | NULL         | NULL         | 200          |
+                +-----+--------------+--------------+--------------+--------------+
+                | 1   | NULL         | 300          | NULL         | NULL         |
+                +-----+--------------+--------------+--------------+--------------+
+
+                The raw input is divided into three parts.
+                    1. key column: part of the primary key that is preserved in the output.
+                        That would be the `id` column in the above example.
+                    2. pivot columns: the columns whose row values will become the new column names.
+                        The cross product of all unique values for *each* column is used to generate
+                        the output column names.
+                    3. value column: the value that will be copied/aggregated to corresponding output
+                        column. `count` in our example.
+
+                Example code:
+
+                >>> df.smvGroupBy("id").smvPivot([["month", "product"]], ["count"], ["5_14_A", "5_14_B", "6_14_A", "6_14_B"])
 
             Args:
-                pivotCols (list(list(str))): lists of names of column names to pivot
+                pivotCols (list(list(str))): specify the pivot columns, on above example, it is
+                    [['month, 'product]]. If [['month'], ['month', 'product']] is
+                    used, the output columns will have "count_5_14" and "count_6_14" as
+                    addition to the example.
+                valueCols (list(string)): names of value columns which will be prepared for
+                    aggregation
+                baseOutput (list(str)): expected names of the pivoted column
+                    In above example, it is ["5_14_A", "5_14_B", "6_14_A", "6_14_B"].
+                    The user is required to supply the list of expected pivot column output names to avoid
+                    and extra action on the input DataFrame just to extract the possible pivot columns.
+                    If an empty sequence is provided, the base output columns will be extracted from
+                    values in the pivot columns (will cause an action on the entire DataFrame!)
+
+            Returns:
+                (DataFrame): result of pivot operation
+        """
+        return DataFrame(self.sgd.smvPivot(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
+
+    def smvPivotSum(self, pivotCols, valueCols, baseOutput):
+        """Perform SmvPivot, then sum the results.
+            Please refer smvPivot's document for context and details of the SmvPivot operation.
+
+            Args:
+                pivotCols (list(list(str))): list of lists of column names to pivot
                 valueCols (list(string)): names of value columns to sum
                 baseOutput (list(str)): expected names pivoted column
 
@@ -108,7 +175,7 @@ class SmvGroupedData(object):
 
                 we can use
 
-                >>> df.smvGroupBy("id").smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
+                >>> df.smvGroupBy("id").smvPivotSum([["month", "product"]], ["count"], ["5_14_A", "5_14_B", "6_14_A", "6_14_B"])
 
                 to produce the following output
 
@@ -125,11 +192,39 @@ class SmvGroupedData(object):
 
     def smvPivotCoalesce(self, pivotCols, valueCols, baseOutput):
         """Perform SmvPivot, then coalesce the output
+            Please refer smvPivot's document for context and details of the SmvPivot operation.
 
             Args:
-                pivotCols (list(list(str))): lists of names of column names to pivot
+                pivotCols (list(list(str))): list of lists of column names to pivot
                 valueCols (list(string)): names of value columns to coalesce
                 baseOutput (list(str)): expected names pivoted column
+
+            Examples:
+                For example, given a DataFrame df that represents the table
+
+                +---+---+----+
+                |  k|  p|   v|
+                +===+===+====+
+                |  a|  c|   1|
+                +---+---+----+
+                |  a|  d|   2|
+                +---+---+----+
+                |  a|  e|null|
+                +---+---+----+
+                |  a|  f|   5|
+                +---+---+----+
+
+                we can use
+
+                >>> df.smvGroupBy("k").smvPivotCoalesce([['p']], ['v'], ['c', 'd', 'e', 'f'])
+
+                to produce the following output
+
+                +---+---+---+----+---+
+                |  k|v_c|v_d| v_e|v_f|
+                +===+===+===+====+===+
+                |  a|  1|  2|null|  5|
+                +---+---+---+----+---+
 
             Returns:
                 (Dataframe): result of pivot coalesce
@@ -142,23 +237,35 @@ class SmvGroupedData(object):
             Examples:
                 Given DataFrame df representing the table
 
-                K, T, V
-                a, 1, null
-                a, 2, a
-                a, 3, b
-                a, 4, null
+                +---+---+------+
+                | K | T | V    |
+                +===+===+======+
+                | a | 1 | null |
+                +---+---+------+
+                | a | 2 | a    |
+                +---+---+------+
+                | a | 3 | b    |
+                +---+---+------+
+                | a | 4 | null |
+                +---+---+------+
 
                 we can use
 
                 >>> df.smvGroupBy("K").smvFillNullWithPrevValue($"T".asc)("V")
 
-                to preduce the result
+                to produce the result
 
-                K, T, V
-                a, 1, null
-                a, 2, a
-                a, 3, b
-                a, 4, b
+                +---+---+------+
+                | K | T | V    |
+                +===+===+======+
+                | a | 1 | null |
+                +---+---+------+
+                | a | 2 | a    |
+                +---+---+------+
+                | a | 3 | b    |
+                +---+---+------+
+                | a | 4 | b    |
+                +---+---+------+
 
             Returns:
                 (Dataframe): result of fill nulls with previous value
@@ -197,7 +304,7 @@ class SmvMultiJoin(object):
                                      when true, the duplicated columns will be dropped
 
             Example:
-                joindf.doJoin()
+                >>> joindf.doJoin()
 
             Returns:
                 (DataFrame): result of executing the join operation
@@ -266,8 +373,15 @@ class DataFrameHelper(object):
                 (SmvGroupedData): grouped data object
 
         """
+        if (isinstance(cols[0], Column)):
+            keys = [ColumnHelper(c).smvGetColName() for c in cols]
+        elif (isinstance(cols[0], basestring)):
+            keys = list(cols)
+        else:
+            raise SmvRuntimeError("smvGroupBy does not support type: " + type(cols[0]))
+
         jSgd = self._jPythonHelper.smvGroupBy(self._jdf, smv_copy_array(self._sc, *cols))
-        return SmvGroupedData(self.df, jSgd)
+        return SmvGroupedData(self.df, keys, jSgd)
 
     def smvHashSample(self, key, rate=0.01, seed=23):
         """Sample the df according to the hash of a column
@@ -343,14 +457,16 @@ class DataFrameHelper(object):
         return SmvMultiJoin(self._sql_ctx, jdf)
 
     def topNValsByFreq(self, n, col):
-        """Get top N most frequent values in Column c
+        """Get top N most frequent values in Column col
 
             Args:
                 n (int): maximum number of values
                 col (Column): which column to get values from
 
-            Examples:
+            Example:
+
                 >>> df.topNValsByFreq(1, col("cid"))
+
                 will return the single most frequent value in the cid column
 
             Returns:
@@ -374,11 +490,14 @@ class DataFrameHelper(object):
                 key (str): key on which to join (also the Column with the skewed values)
 
             Example:
-                {{{
-                df.smvSkewJoinByKey(df2, SmvJoinType.Inner, Seq("9999999"), "cid")
-                }}}
-                will broadcast join the rows of df1 and df2 where col("cid") == "9999999"
+
+                >>> df.smvSkewJoinByKey(df2, "inner", [4], "cid")
+
+                will broadcast join the rows of df1 and df2 where col("cid") == "4"
                 and join the remaining rows of df1 and df2 without broadcast join.
+
+            Returns:
+                (DataFrame): the result of the join operation
         """
         jdf = self._jDfHelper.smvSkewJoinByKey(other._jdf, joinType, _to_seq(skewVals), key)
         return DataFrame(jdf, self._sql_ctx)
@@ -408,7 +527,7 @@ class DataFrameHelper(object):
                 cols (\*Column): expressions to add to the DataFrame
 
             Example:
-                >>> df.smvSelectPlus(col("price") * col("count") as "amt")
+                >>> df.smvSelectPlus((col("price") * col("count")).alias("amt"))
 
             Returns:
                 (DataFrame): the resulting DataFrame after removal of columns
@@ -424,15 +543,18 @@ class DataFrameHelper(object):
             Example:
                 >>> df.smvPrefixFieldNames("x_")
 
-            Above will add "x_" to the beginning of every column name in the `DataFrame`.
+            Above will add `x_` to the beginning of every column name in the `DataFrame`.
             Please note that if the renamed column names over lap with existing columns,
             the method will error out.
+
+            Returns:
+                (DataFrame)
         """
         jdf = self._jDfHelper.smvPrefixFieldNames(prefix)
         return DataFrame(jdf, self._sql_ctx)
 
     def smvDedupByKey(self, *keys):
-        """Remove duplicate records from the DataFrame by arbitrarly selecting the first record from a set of records with same primary key or key combo.
+        """Remove duplicate records from the DataFrame by arbitrarily selecting the first record from a set of records with same primary key or key combo.
 
             Args:
                 keys (\*string or \*Column): the column names or Columns on which to apply dedup
@@ -452,7 +574,7 @@ class DataFrameHelper(object):
                 | 2   | B       | C4      |
                 +-----+---------+---------+
 
-                >>> df.dedupByKey("id")
+                >>> df.smvDedupByKey("id")
 
                 output DataFrame:
 
@@ -464,7 +586,7 @@ class DataFrameHelper(object):
                 | 2   | B       | C3      |
                 +-----+---------+---------+
 
-                >>> df.dedupByKey("id", "product")
+                >>> df.smvDedupByKey("id", "product")
 
                 output DataFrame:
 
@@ -492,7 +614,7 @@ class DataFrameHelper(object):
             >>> def smvDedupByKeyWithOrder(self, *keys)(*orderCols)
 
             Note:
-                Same as the `dedupByKey` method, we use RDD groupBy in the implementation of this method to make sure we can handle large key space.
+                Same as the `smvDedupByKey` method, we use RDD groupBy in the implementation of this method to make sure we can handle large key space.
 
             Args:
                 keys (\*string or \*Column): the column names or Columns on which to apply dedup
@@ -512,7 +634,7 @@ class DataFrameHelper(object):
                 | 2   | B       | C4      |
                 +-----+---------+---------+
 
-                >>> df.dedupByKeyWithOrder(col("id"))(col("product").desc())
+                >>> df.smvDedupByKeyWithOrder(col("id"))(col("product").desc())
 
                 output DataFrame:
 
@@ -598,7 +720,7 @@ class DataFrameHelper(object):
                     +----+--------+-------+
                     |  1 |   Z    |   C   |
                     +----+--------+-------+
-                    | ...   ...      ...  |
+                    | ...|   ...  |  ...  |
                     +----+--------+-------+
                     |  3 |   Y    |   H   |
                     +----+--------+-------+
@@ -690,6 +812,9 @@ class DataFrameHelper(object):
                 It can be used with EDD to summarize on the flag:
 
                 >>> df1.smvOverlapCheck("key")(df2, df3).smvHist("flag")
+
+            Returns:
+                (DataFrame): the DataFrame with the key and flag columns
         """
         def _check(*dfothers):
             jdf = self._jPythonHelper.smvOverlapCheck(self._jdf, keyColName, smv_copy_array(self._sc, *dfothers))
@@ -738,6 +863,10 @@ class DataFrameHelper(object):
 
             Returns:
                 (string): description string of colName, if specified
+
+            or:
+
+            Returns:
                 (list(tuple)): a list of (colName, description) pairs for all columns
         """
         if (colName is not None):
@@ -941,6 +1070,8 @@ class DataFrameHelper(object):
     def smvDiscoverPK(self, n=10000):
         """Find a column combination which uniquely identifies a row from the data
 
+            The resulting output is printed out
+
             Note:
                 The algorithm only looks for a set of keys which uniquely identifies the row. There could be more key combinations which can also be the primary key.
 
@@ -979,6 +1110,17 @@ class ColumnHelper(object):
         self._jPythonHelper = self._jvm.SmvPythonHelper
         self._jColumnHelper = self._jvm.ColumnHelper(self._jc)
 
+    def smvGetColName(self):
+        """Returns the name of a Column as a sting
+
+            Example:
+            >>> df.a.smvGetColName()
+
+            Returns:
+                (str)
+        """
+        return self._jColumnHelper.getName()
+
     def smvIsAllIn(self, *vals):
         """Returns true if ALL of the Array columns' elements are in the given parameter sequence
 
@@ -998,7 +1140,7 @@ class ColumnHelper(object):
                     |   |   |
                     +---+---+
 
-                >>> df.select( array(col("k"), col("v")) ).smvIsAllIn("a", "b", "c").alias("isFound"))
+                >>> df.select(array(col("k"), col("v")).smvIsAllIn("a", "b", "c").alias("isFound"))
 
                 output DF:
 
@@ -1013,7 +1155,7 @@ class ColumnHelper(object):
                     +---------+
 
             Returns:
-                (DataFrame): result of smvIsAllIn
+                (Column): BooleanType
         """
         jc = self._jPythonHelper.smvIsAllIn(self._jc, _to_seq(vals))
         return Column(jc)
@@ -1037,7 +1179,7 @@ class ColumnHelper(object):
                     |   |   |
                     +---+---+
 
-                >>> df.select( array(col("k"), col("v")) ).smvIsAnyIn("a", "b", "c").alias("isFound"))
+                >>> df.select(array(col("k"), col("v")).smvIsAnyIn("a", "b", "c").alias("isFound"))
 
                 output DF:
 
@@ -1052,7 +1194,7 @@ class ColumnHelper(object):
                     +---------+
 
             Returns:
-                (DataFrame): result of smvIsAnyIn
+                (Column): BooleanType
         """
         jc = self._jPythonHelper.smvIsAnyIn(self._jc, _to_seq(vals))
         return Column(jc)
@@ -1061,10 +1203,10 @@ class ColumnHelper(object):
         """Extract month component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvMonth()
+                >>> df.select(col("dob").smvMonth())
 
             Returns:
-                (integer): month component as integer, or null if input column is null
+                (Column): IntegerType. Month component as integer, or null if input column is null
         """
         jc = self._jColumnHelper.smvMonth()
         return Column(jc)
@@ -1073,10 +1215,10 @@ class ColumnHelper(object):
         """Extract year component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvYear()
+                >>> df.select(col("dob").smvYear())
 
             Returns:
-                (integer): year component as integer, or null if input column is null
+                (Column): IntegerType. Year component as integer, or null if input column is null
         """
         jc = self._jColumnHelper.smvYear()
         return Column(jc)
@@ -1085,10 +1227,10 @@ class ColumnHelper(object):
         """Extract quarter component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvQuarter()
+                >>> df.select(col("dob").smvQuarter())
 
             Returns:
-                (integer): quarter component as integer (1-based), or null if input column is null
+                (Column): IntegerType. Quarter component as integer (1-based), or null if input column is null
         """
         jc = self._jColumnHelper.smvQuarter()
         return Column(jc)
@@ -1097,10 +1239,10 @@ class ColumnHelper(object):
         """Extract day of month component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvDayOfMonth()
+                >>> df.select(col("dob").smvDayOfMonth())
 
             Returns:
-                (integer): day of month component as integer (range 1-31), or null if input column is null
+                (Column): IntegerType. Day of month component as integer (range 1-31), or null if input column is null
         """
         jc = self._jColumnHelper.smvDayOfMonth()
         return Column(jc)
@@ -1109,10 +1251,10 @@ class ColumnHelper(object):
         """Extract day of week component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvDayOfWeek()
+                >>> df.select(col("dob").smvDayOfWeek())
 
             Returns:
-                (integer): day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
+                (Column): IntegerType. Day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
         """
         jc = self._jColumnHelper.smvDayOfWeek()
         return Column(jc)
@@ -1121,10 +1263,10 @@ class ColumnHelper(object):
         """Extract hour component from a timestamp
 
             Example:
-                >>> df.select(col("dob")).smvHour()
+                >>> df.select(col("dob").smvHour())
 
             Returns:
-                (integer): hour component as integer, or null if input column is null
+                (Column): IntegerType. Hour component as integer, or null if input column is null
         """
         jc = self._jColumnHelper.smvHour()
         return Column(jc)
@@ -1136,12 +1278,18 @@ class ColumnHelper(object):
                 delta (integer): the number of days to add
 
             Example:
-                >>> df.select(col("dob")).smvPlusDays(3)
+                >>> df.select(col("dob").smvPlusDays(3))
 
             Returns:
-                (Timestamp): the incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
-        jc = self._jColumnHelper.smvPlusDays(delta)
+        if (isinstance(delta, int)):
+            jdelta = delta
+        elif (isinstance(delta, Column)):
+            jdelta = delta._jc
+        else:
+            raise RuntimeError("delta parameter must be either an int or a Column")
+        jc = self._jColumnHelper.smvPlusDays(jdelta)
         return Column(jc)
 
     def smvPlusWeeks(self, delta):
@@ -1151,12 +1299,18 @@ class ColumnHelper(object):
                 delta (integer): the number of weeks to add
 
             Example:
-                >>> df.select(col("dob")).smvPlusWeeks(3)
+                >>> df.select(col("dob").smvPlusWeeks(3))
 
             Returns:
-                (Timestamp): the incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
-        jc = self._jColumnHelper.smvPlusWeeks(delta)
+        if (isinstance(delta, int)):
+            jdelta = delta
+        elif (isinstance(delta, Column)):
+            jdelta = delta._jc
+        else:
+            raise RuntimeError("delta parameter must be either an int or a Column")
+        jc = self._jColumnHelper.smvPlusWeeks(jdelta)
         return Column(jc)
 
     def smvPlusMonths(self, delta):
@@ -1169,12 +1323,18 @@ class ColumnHelper(object):
                 The calculation will do its best to only change the month field retaining the same day of month. However, in certain circumstances, it may be necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot result in 2007-04-31, so the day of month is adjusted to 2007-04-30.
 
             Example:
-                >>> df.select(col("dob")).smvPlusMonths(3)
+                >>> df.select(col("dob").smvPlusMonths(3))
 
             Returns:
-                (Timestamp): the incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
-        jc = self._jColumnHelper.smvPlusMonths(delta)
+        if (isinstance(delta, int)):
+            jdelta = delta
+        elif (isinstance(delta, Column)):
+            jdelta = delta._jc
+        else:
+            raise RuntimeError("delta parameter must be either an int or a Column")
+        jc = self._jColumnHelper.smvPlusMonths(jdelta)
         return Column(jc)
 
     def smvPlusYears(self, delta):
@@ -1184,12 +1344,18 @@ class ColumnHelper(object):
                 delta (integer): the number of years to add
 
             Example:
-                >>> df.select(col("dob")).smvPlusYears(3)
+                >>> df.select(col("dob").smvPlusYears(3))
 
             Returns:
-                (Timestamp): the incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null
         """
-        jc = self._jColumnHelper.smvPlusYears(delta)
+        if (isinstance(delta, int)):
+            jdelta = delta
+        elif (isinstance(delta, Column)):
+            jdelta = delta._jc
+        else:
+            raise RuntimeError("delta parameter must be either an int or a Column")
+        jc = self._jColumnHelper.smvPlusYears(jdelta)
         return Column(jc)
 
     def smvStrToTimestamp(self, fmt):
@@ -1199,10 +1365,10 @@ class ColumnHelper(object):
                 fmt (string): the format is the same as the Java `Date` format
 
             Example:
-                >>> df.select(col("dob")).smvStrToTimestamp("yyyy-MM-dd")
+                >>> df.select(col("dob").smvStrToTimestamp("yyyy-MM-dd"))
 
             Returns:
-                (Timestamp): the converted Timestamp
+                (Column): TimestampType. The converted Timestamp
         """
         jc = self._jColumnHelper.smvStrToTimestamp(fmt)
         return Column(jc)
@@ -1211,10 +1377,10 @@ class ColumnHelper(object):
         """Convert a Timestamp to the number of days from 1970-01-01
 
             Example:
-                >>> df.select(col("dob")).smvDay70
+                >>> df.select(col("dob").smvDay70())
 
             Returns:
-                (integer): number of days from 1970-01-01 (start from 0)
+                (Column): IntegerType. Number of days from 1970-01-01 (start from 0)
         """
         jc = self._jColumnHelper.smvDay70()
         return Column(jc)
@@ -1223,10 +1389,10 @@ class ColumnHelper(object):
         """Convert a Timestamp to the number of months from 1970-01-01
 
             Example:
-                >>> df.select(col("dob")).smvMonth70
+                >>> df.select(col("dob").smvMonth70())
 
             Returns:
-                (integer): number of months from 1970-01-01 (start from 0)
+                (Column): IntegerType. Number of months from 1970-01-01 (start from 0)
         """
         jc = self._jColumnHelper.smvMonth70()
         return Column(jc)

@@ -179,42 +179,6 @@
         </executions>
       </plugin>
 
-        <!-- plugin to execute the following:
-                * run install-smvR.sh to install the SMV R package.
-                * gen_docs.sh script to generate the user guide (during site phase)
-        -->
-        <plugin>
-            <artifactId>exec-maven-plugin</artifactId>
-            <groupId>org.codehaus.mojo</groupId>
-            <version>1.4.0</version>
-            <executions>
-                <execution>
-                    <id>install SMV R package</id>
-                    <phase>compile</phase>
-                    <goals>
-                        <goal>exec</goal>
-                    </goals>
-                    <configuration>
-                        <executable>./R/install-smvR.sh</executable>
-                    </configuration>
-                </execution>
-                <execution>
-                    <id>gen-user-guide</id>
-                    <phase>site</phase>
-                    <goals>
-                        <goal>exec</goal>
-                    </goals>
-                    <configuration>
-                        <executable>./tools/gen_docs.py</executable>
-                        <arguments>
-                            <argument>./docs/user/0_user_toc.md</argument>
-                            <argument>./target/site/user</argument>
-                        </arguments>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-
         <!-- disable standard maven site plugin from trying to deploy (we are using github plugin instead) -->
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>

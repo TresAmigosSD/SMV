@@ -158,6 +158,10 @@ private[smv] class EddSummary(
           StringMaxLenTask(s),
           StringDistinctCountTask(s)
         )
+      case ArrayType(_,_) => {
+        println("Column \"" + df.schema(l).name + "\" has dataType ArrayType, no EDD will be built for it.")
+        Seq()
+      }
     }
   }
 

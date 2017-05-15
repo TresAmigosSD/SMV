@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp, SmvPyModule
+from smv import SmvApp, SmvModule
 
-class A(SmvPyModule):
+class A(SmvModule):
     def isEphemeral(self): return True
     def requiresDS(self): return []
     def run(self, i):

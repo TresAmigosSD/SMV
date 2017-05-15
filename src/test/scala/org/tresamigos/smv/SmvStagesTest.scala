@@ -103,25 +103,23 @@ package org.tresamigos.smv {
    */
   class SmvWhatModulesToRunTest extends SparkTestUtil {
     test("Test modules to run (non-output module)") {
-      object testApp
-          extends SmvApp(
-            testAppArgs.multiStage ++ Seq("-m", "org.tresamigos.smv.smvAppTestPkg3.T"),
-            Some(sparkSession)) {}
+      val args = testAppArgs.multiStage ++ Seq("-m", "org.tresamigos.smv.smvAppTestPkg3.T")
+      val testApp = SmvApp.init(args.toArray, Some(sparkSession))
       val mods = testApp.modulesToRun.map(_.fqn)
       assertUnorderedSeqEqual(mods, Seq("org.tresamigos.smv.smvAppTestPkg3.T"))
     }
 
     test("Test modules to run (mods in stage)") {
-      object testApp
-          extends SmvApp(testAppArgs.multiStage ++ Seq("-s", "smvAppTestPkg1"), Some(sparkSession)) {}
+      val args = testAppArgs.multiStage ++ Seq("-s", "smvAppTestPkg1")
+      val testApp = SmvApp.init(args.toArray, Some(sparkSession))
       val mods = testApp.modulesToRun.map(_.fqn)
       println(mods)
       assertUnorderedSeqEqual(mods, Seq("org.tresamigos.smv.smvAppTestPkg1.Y"))
     }
 
     test("Test modules to run (mods in app)") {
-      object testApp
-          extends SmvApp(testAppArgs.multiStage ++ Seq("--run-app"), Some(sparkSession)) {}
+      val args = testAppArgs.multiStage ++ Seq("--run-app")
+      val testApp = SmvApp.init(args.toArray, Some(sparkSession))
       val mods = testApp.modulesToRun.map(_.fqn)
       println(mods)
       assertUnorderedSeqEqual(mods,

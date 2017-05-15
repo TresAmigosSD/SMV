@@ -22,8 +22,8 @@ from smv.smvapp import DataSetRepoFactory
 from shutil import copyfile
 import py_compile
 import json
-from smv.smvpydataset import SmvCsvFile
-from smv.smvpydataset import SmvHiveTable
+from smv.smvdataset import SmvCsvFile
+from smv.smvdataset import SmvHiveTable
 import ast
 import errno
 
@@ -372,7 +372,7 @@ from pyspark.sql.functions import *\n\
 ###---PLUTO_IMPORTS_END---###\n".format(importStages)
 
 # class start
-def buildClassStart(className, dsType): # what about SmvPyOutput?
+def buildClassStart(className, dsType): # what about SmvOutput?
     extendsByDsType = { "csv": "SmvCsvFile", "hive": "SmvHiveTable", "module": "SmvModule" }
     extends = extendsByDsType[dsType.lower()]
     return "class {}({}):\n".format(className, extends)
@@ -917,27 +917,30 @@ def updateDatasetSrc():
     return ok_res({ "msg": "Dataset updated", "fullSrc": fullSrc })
 
 # Wrapper so that other python scripts can import and then call
-# smvserver.main()
+# smvserver.Main()
 class Main(object):
     def __init__(self):
-        # TODO: should be done by SmvApp (python) automatically.
-        codePath = os.path.abspath("src/main/python")
-        sys.path.insert(1, codePath)
+        options = self.parseArgs()
 
         # init Smv context
         smvApp = SmvApp.createInstance([])
 
-        # start server
-        host = os.environ.get('SMV_HOST', '0.0.0.0')
-        port = os.environ.get('SMV_PORT', '5000')
-        project_dir = 'sample_smv_project' #os.environ.get('PROJECT_DIR', './')  # TODO: ...why env var not visible?
-
         # to reduce complexity in SmvApp, keep the rest server single-threaded
-        app.run(host=host, port=int(port), threaded=False, processes=1)
+        app.run(host=options.ip, port=int(options.port), threaded=False, processes=1)
 
-main = Main
+    def parseArgs(self):
+        from optparse import OptionParser
+        parser = OptionParser()
+        parser.add_option("--port", dest="port", type="int", default=5000,
+                  help="smv-server port number [default=5000]")
+        parser.add_option("--ip", dest="ip", type="string", default="0.0.0.0",
+                  help="smv-server ip to bind to [default=0.0.0.0]")
+
+        (options, args) = parser.parse_args()
+        return options
+
 # temporary till module source control is implemented
 module_file_map = {}
 
 if __name__ == "__main__":
-    main()
+    Main()

@@ -2,7 +2,7 @@
 
 We call our library **Spark Modularized View** is because the core of it is to put
 the data application development to a Modularized framework. This Module concept is captured in
-`SmvDataSet` (in *Scala* or `SmvPyDataSet` as in *Python*)
+`SmvDataSet` (in *Scala* or `SmvDataSet` as in *Python*)
 
 An `SmvDataSet` is
 > A group of Spark DataFrame operations which takes multiple input DataFrames and generates a SINGLE
@@ -22,12 +22,12 @@ In this document we will cover the following basic `SmvDataSet`s,
 
  | Scala | Python
 --- | --- | ---
-**Input** | `SmvCsvFile` | `SmvPyCsvFile`
-          | `SmvMultiCsvFiles` | `SmvPyMultiCsvFiles`
-          | `SmvCsvStringData` | `SmvPyCsvStringData`
-          | `SmvHiveTable` | `SmvPyHiveTable`
-**Intermediate** | `SmvModule` | `SmvPyModule`
-**Output** (mix in) | `SmvOutput` | `SmvPyOutput`
+**Input** | `SmvCsvFile` | `SmvCsvFile`
+          | `SmvMultiCsvFiles` | `SmvMultiCsvFiles`
+          | `SmvCsvStringData` | `SmvCsvStringData`
+          | `SmvHiveTable` | `SmvHiveTable`
+**Intermediate** | `SmvModule` | `SmvModule`
+**Output** (mix in) | `SmvOutput` | `SmvOutput`
 
 
 ## Input SmvDataSet
@@ -39,7 +39,7 @@ In generall, all the Input types need to
 Some input can't guarantee data quality, so a Data Quality Module (dqm) also need to be
 specified.
 
-### SmvCsvFile (Python: *SmvPyCsvFile*)
+### SmvCsvFile (Python: *SmvCsvFile*)
 
 An `SmvCsvFile` is an input `SmvDataSet`, which user can point it to some Csv file and its schema
 file. Please refer [Csv File handling](smv_file.md) for details about the storage of the file,
@@ -54,7 +54,7 @@ object AcctDemo extends SmvCsvFile("accounts/acct_demo.csv", CA.caBar) {
 
 **Python**
 ```python
-class AcctDemo(SmvPyCsvFile):
+class AcctDemo(SmvCsvFile):
     def path(self):
         return "accounts/acct_demo.csv"
 
@@ -83,7 +83,7 @@ object AcctDemo extends SmvMultiCsvFiles("accounts/acct_demo"){
 
 **Python**
 ```python
-class AcctDemo(SmvPyMultiCsvFiles):
+class AcctDemo(SmvMultiCsvFiles):
     def dir(self):
         return "accounts/acct_demo"
 ```
@@ -101,7 +101,7 @@ object MyTmpDS extends SmvCsvStringData("a:String;b:Double;c:String", "aa,1.0,cc
 ```
 **Python**
 ```python
-class MyTmpDS(SmvPyCsvStringData):
+class MyTmpDS(SmvCsvStringData):
     def schemaStr(self): return "a:String;b:Double;c:String"
     def dataStr(self):
         return "aa,1.0,cc;aa2,3.5,CC"
@@ -120,7 +120,7 @@ object FooHiveTable extends SmvHiveTable("hiveschema.foo")
 
 **Python**
 ```python
-class FooHiveTable(SmvPyHiveTable):
+class FooHiveTable(SmvHiveTable):
     def tableName(self):
         return "hiveschema.foo"
 ```
@@ -137,7 +137,7 @@ object MyModule extends SmvModule("mod description") {
 ```
 **Python**
 ```python
-class MyModule(SmvPyModule):
+class MyModule(SmvModule):
     """mod description"""
 
     def requiresDS(self):
@@ -162,7 +162,7 @@ object MyModule extends SmvModule("this is my module") with SmvOutput {
 
 **Python**
 ```python
-class MyModule(SmvPyModule, SmvPyOutput):
+class MyModule(SmvModule, SmvOutput):
     """
     Mod discretion
     """

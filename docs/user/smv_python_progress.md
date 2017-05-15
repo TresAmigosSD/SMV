@@ -2,14 +2,10 @@
 
 ## Framework
   * [x] SmvCsvFile
-  * [x] SmvMultiCsvFile
-  * [x] SmvCsvStringData
   * [x] SmvHiveTable
   * [x] SmvModule
-  * [x] SmvModuleLink
-  * [x] SmvExtModuleLink
   * [x] SmvOutput
-  * [x] SmvExtDataSet
+  * [ ] SmvModuleLink
 
 ## DataFrame Helpers
   * [x] `smvSelectPlus((col("a") + 1).alias("b"))`

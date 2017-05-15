@@ -65,7 +65,7 @@ EMP: Long
 The `EmploymentByState` module is defined in `src/python/stage1/employment.py`:
 
 ```shell
-class EmploymentByState(SmvPyModule, SmvPyOutput):
+class EmploymentByState(SmvModule, SmvOutput):
     """Python ETL Example: employment by state"""
 
     def requiresDS(self):
@@ -117,7 +117,7 @@ EMP: Long
 If you would like to publish your module to a hive table, add a `tableName` method to EmploymentByState. It should return the name of the Hive table as a string.
 
 ```python
-class EmploymentByState(SmvPyModule, SmvPyOutput):
+class EmploymentByState(SmvModule, SmvOutput):
     ...
     def tableName(self):
         return "myTableName"
@@ -159,14 +159,4 @@ See the [user guide](docs/user/0_user_toc.md) for further examples and documenta
 
 # Contributions
 
-## Scalafmt
-
-The project uses [Scalafmt](http://scalameta.org/scalafmt/) to ensure that the committed code is formatted
-in a consistent manner. Follow instructions on the tool's [web](http://scalameta.org/scalafmt/#CLI) for the
-installation instructions. Before submitting a PR make sure that the result of
-
-```shell
-./scalafmt --test
-```
-
-returns no errors.
+Please see [SMV Development Best Practices](docs/dev/00_DevProcess/best_practice.md).

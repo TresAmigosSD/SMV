@@ -26,12 +26,6 @@ package org.tresamigos.smv {
     }
   }
 
-  object SmvTestFile extends SmvModule("") {
-    override def requiresDS()      = Seq.empty
-    override val isEphemeral       = true
-    override def run(i: runParams) = app.createDF("a:Integer", "1;2;3")
-  }
-
   class SmvNewAppTest extends SparkTestUtil {
     test("test newApp function") {
       val app = SmvApp.newApp(sparkSession, testDataDir)
@@ -49,8 +43,7 @@ package org.tresamigos.smv {
         "--input-dir",
         testcaseTempDir,
         "--smv-props",
-        "smv.stages=org.tresamigos.fixture.smvapptest",
-        "--permit-dependency-violation"
+        "smv.stages=org.tresamigos.fixture.smvapptest"
       )
 
     test("Test normal dependency execution") {
@@ -187,6 +180,12 @@ package org.tresamigos.fixture.smvapptest {
   object f1 extends TestFile("F1.csv")
   object f2 extends TestFile("F2.csv")
   object f3 extends TestFile("F1.csv")
+
+  object SmvTestFile extends SmvModule("") {
+    override def requiresDS()      = Seq.empty
+    override val isEphemeral       = true
+    override def run(i: runParams) = app.createDF("a:Integer", "1;2;3")
+  }
 
   object A extends SmvModule("A Module") {
     var moduleRunCount        = 0

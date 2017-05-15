@@ -81,7 +81,7 @@ package Scala {
 
 package Python {
   class PythonDataSetRepo extends IDataSetRepoPy4J
-  class SmvPyModule extends ISmvModulePy4J
+  class SmvModule extends ISmvModulePy4J
 }
 
 @enduml

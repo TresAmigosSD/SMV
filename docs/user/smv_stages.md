@@ -60,7 +60,7 @@ In the above example, the `model` stage may depend on the output of `etl` stage 
 
 ```python
 # In src/main/python/model/inputdata.py
-modelAccts = SmvPyModuleLink(etl.rawAccounts)
+modelAccts = SmvModuleLink(etl.rawAccounts)
 ```
 
 As described above, `modelAccts` will depend on the **output** of `rawAccounts`.  Normally, this would read the versioned output that is persisted in the output directory.
@@ -109,10 +109,10 @@ smv.stages = stage1, modeling
 Create the file `src/main/python/modeling/inputdata.py`
 
 ```python
-from smv import SmvPyModuleLink, SmvPyExtDataSet
+from smv import SmvModuleLink, SmvExtDataSet
 from stage1 import employment as emp
 
-EmploymentByStateLink = SmvPyModuleLink(emp.EmploymentByState)
+EmploymentByStateLink = SmvModuleLink(emp.EmploymentByState)
 
 ```
 
@@ -126,7 +126,7 @@ from pyspark.sql.functions import col, sum, lit
 
 from modeling import inputdata
 
-class EmploymentByStateCategory(SmvPyModule, SmvPyOutput):
+class EmploymentByStateCategory(SmvModule, SmvOutput):
 
     def requiresDS(self):
         return [inputdata.EmploymentByStateLink]
@@ -145,7 +145,7 @@ We can now run the `EmploymentByStateCategory` module by providing the module FQ
 ```bash
 $ smv-pyrun -m modeling.category.EmploymentByStateCategory
 ```
-or by making the module extend `SmvPyOutput` and running the entire stage ("-s modeling").
+or by making the module extend `SmvOutput` and running the entire stage ("-s modeling").
 See [Smv Modules](smv_module.md) for details.
 
 # Create a multi-stage application

@@ -21,6 +21,9 @@ function define_vars()
   PYDOC_DIR="$OUTPUT_DIR/pythondocs"
   SCALADOC_DIR="$OUTPUT_DIR/scaladocs"
 
+  # This will be used by sphinx-conf.py
+  export SMV_VERSION=$(cat "$SMV_TOOLS/../.smv_version")
+
   if [ -z $SPARK_HOME ]; then
     SPARK_HOME="$(dirname $(which spark-submit))/.."
   fi

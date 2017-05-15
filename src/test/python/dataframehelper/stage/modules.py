@@ -16,13 +16,13 @@ from smv.dqm import *
 from pyspark.sql.functions import col, lit
 
 
-class D1(SmvPyCsvStringData):
+class D1(SmvCsvStringData):
     def schemaStr(self):
         return "k:String;v:Integer"
     def dataStr(self):
         return "a,1;b,2"
 
-class T(SmvPyCsvFile):
+class T(SmvCsvFile):
     @classmethod
     def path(cls):
         return "./target/python-test-export-csv.csv"

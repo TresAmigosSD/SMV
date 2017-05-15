@@ -40,7 +40,7 @@ class SmvFrameworkTest(SmvBaseTest):
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
 
-    def test_SmvPyMultiCsvFiles(self):
+    def test_SmvMultiCsvFiles(self):
         self.createTempFile("input/test3/f1", "col1\na\n")
         self.createTempFile("input/test3/f2", "col1\nb\n")
         self.createTempFile("input/test3.schema", "col1: String\n")
@@ -70,7 +70,7 @@ class SmvFrameworkTest(SmvBaseTest):
             df = self.df(fqn)
             df.smvDumpDF()
 
-    #TODO: add other SmvPyDataSet unittests
+    #TODO: add other SmvDataSet unittests
 
 class SmvRunConfigTest1(SmvBaseTest):
 

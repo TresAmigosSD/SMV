@@ -53,7 +53,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   val sqlContext = sparkSession.sqlContext
 
   // dsm should be private but will be temporarily public to accomodate outside invocations
-  val dsm = new DataSetMgr(smvConfig, SmvApp.DependencyRules)
+  val dsm = new DataSetMgr(smvConfig)
   def registerRepoFactory(factory: DataSetRepoFactory): Unit =
     dsm.register(factory)
   registerRepoFactory(new DataSetRepoFactoryScala(smvConfig))
@@ -303,8 +303,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
  */
 object SmvApp {
   var app: SmvApp = _
-
-  val DependencyRules: Seq[DependencyRule] = Seq(SameStageDependency, LinkFromDiffStage)
 
   def init(args: Array[String], _spark: Option[SparkSession] = None) = {
     app = new SmvApp(args, _spark)
