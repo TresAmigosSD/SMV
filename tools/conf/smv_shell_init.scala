@@ -1,5 +1,5 @@
 import org.apache.spark.sql.functions._
-import org.tresamigos.smv._, shell._, smvfuncs._
+import org.tresamigos.smv._, shell._, smvfuncs._, util.Edd
 
 val sc = spark.sparkContext
 sc.setLogLevel("ERROR")
@@ -20,8 +20,8 @@ object i {
   // TODO: this should just be a direct helper on ds as it is probably common.
   def dumpEdd(ds: SmvDataSet) = df(ds).edd.summary().eddShow
 
-  def compEdds(f1: String, f2: String) = println(EddCompare.compareFiles(f1, f2))
-  def compEddDirs(d1: String, d2: String) = EddCompare.compareDirsReport(d1, d2)
+  def compEdds(f1: String, f2: String) = println(Edd.compareFiles(f1, f2))
+  def compEddDirs(d1: String, d2: String) = Edd.compareDirsReport(d1, d2)
 
 }
 
