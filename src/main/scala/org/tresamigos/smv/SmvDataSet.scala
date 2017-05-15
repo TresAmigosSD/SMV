@@ -161,7 +161,7 @@ abstract class SmvDataSet extends FilenamePart {
     // if user provided a publish hive sql command, run it instead of default
     // table creation from data frame result.
     if (publishHiveSql.isDefined) {
-      app.sqlContext.sql(publishHiveSql.get)
+      publishHiveSql.get.split(";").map {stmt => app.sqlContext.sql(stmt.trim)}
     } else {
       app.sqlContext.sql(s"drop table if exists ${tableName}")
       app.sqlContext.sql(s"create table ${tableName} as select * from dftable")
