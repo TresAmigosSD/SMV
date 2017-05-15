@@ -65,9 +65,27 @@ def test_compile_for_errors(fullname):
             error = 1
     return error
 
+def getPlutoImportsStartEnd(linesOfCodeList, importsSectionName):
+    print 'in getPlutoImportsStartEnd'
+    print 'importsSectionName: ', importsSectionName
+    blockStart = "###---{}_IMPORTS_START---###".format(importsSectionName)
+    blockEnd = "###---{}_IMPORTS_END---###".format(importsSectionName)
+
+    blockStartLine = None
+    blockEndLine = None
+    for i, line in enumerate(linesOfCodeList):
+        if not blockStartLine and line.lstrip().startswith(blockStart):
+            blockStartLine = i
+            continue
+        if blockStartLine is not None and line.lstrip().startswith(blockEnd):
+            blockEndLine = i
+            break
+    return (blockStartLine, blockEndLine)
+
+
 def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
     blockStartByName = {
-        "imports": "###---PLUTO_IMPORTS_START---###",
+        "imports": "###---GLOBAL_IMPORTS_START---###",  # TODO: Remove. use getPlutoImportsStartEnd
         "run": "def run(",
         "description": "def description(",
         "requiresDS": "def requiresDS(",
@@ -75,7 +93,7 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
         "path": "def path(",
         "tableName": "def tableName("
     }
-    blockEndByName = { "imports": "###---PLUTO_IMPORTS_END---###" }
+    blockEndByName = { "imports": "###---GLOBAL_IMPORTS_END---###" }
 
     testModuleClassDef = "class {}(".format(className)
     classDefFound = False
@@ -93,7 +111,7 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
 
     # detect module class def
     for i, line in enumerate(linesOfCodeList):
-        if blockName == "imports":
+        if blockName == "imports":  # TODO: remove. use getPlutoImportsStartEnd
             if not blockStartLine and line.lstrip().startswith(blockStartByName[blockName]):
                 blockStartLine = i
                 continue
@@ -358,18 +376,23 @@ def getDatasetInfo(fqn, baseName, stage):
 # ----- TODO: combine all build* functions into a single function-----
 # --------------------------------------------------------------------
 
-#build imports
-def buildImports(stages):
-    stagesList = ['airlineapp.etl', 'airlineapp.datamodel', 'airlineapp.feature'] # TODO: get actual list of stages.. not hardcoded
-    # importStages = "".join(map((lambda stage: "import {}\n".format(stage)), stages))
-    importStages = "".join(map((lambda stage: "import {}\n".format(stage)), stagesList))  # TODO: remove when stages not hardcoded
-    return "\
-###---PLUTO_IMPORTS_START---###\n\
-from smv import *\n\
-from pyspark.sql.functions import *\n\
-\n\
-{}\
-###---PLUTO_IMPORTS_END---###\n".format(importStages)
+def extractImportsFromFqns(fqns = []):
+    return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
+
+def buildImports(className = None, requiresDS = None):
+    if not className:
+        return """\
+###---GLOBAL_IMPORTS_START---###
+from smv import *
+from pyspark.sql.functions import *
+###---GLOBAL_IMPORTS_END---###\n"""
+
+    dependencies = extractImportsFromFqns(requiresDS)
+    importStatements = "\n".join(map(lambda dep: "import {}".format(dep), dependencies))
+    return """\
+###---{0}_IMPORTS_START---###
+{1}
+###---{0}_IMPORTS_END---###\n""".format(className, importStatements)
 
 # class start
 def buildClassStart(className, dsType): # what about SmvOutput?
@@ -421,7 +444,7 @@ def buildTableName(tableName, indentation="\t"):
 
 def generateModuleCode(stages, className, dsType, description, isEphemeral, run=None, requiresDS=None):
     return "{}\n{}{}\n{}\n{}\n{}\n".format(
-        buildImports(stages),  # should be list of stages, not hardcoded
+        buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
         buildRequiresDS(requiresDS),
@@ -430,7 +453,7 @@ def generateModuleCode(stages, className, dsType, description, isEphemeral, run=
 
 def generateCsvCode(stages, className, dsType, description, isEphemeral, run=None, path=None):
     return "{}\n{}{}\n{}\n{}\n{}\n".format(
-        buildImports(stages),  # should be list of stages, not hardcoded
+        buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
         buildPath(path),
@@ -439,7 +462,7 @@ def generateCsvCode(stages, className, dsType, description, isEphemeral, run=Non
 
 def generateHiveCode(stages, className, dsType, description, isEphemeral, run=None, tableName=None):
     return "{}\n{}{}\n{}\n{}\n{}\n".format(
-        buildImports(stages),  # should be list of stages, not hardcoded
+        buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
         buildTableName(tableName),
@@ -582,6 +605,8 @@ def get_module_code():
     #     return err_res(MODULE_NOT_FOUND_ERR)
 
 
+
+
 @app.route("/api/create_dataset", methods = ['POST']) # rename create_dataset
 def updateModuleMetaData():
     '''
@@ -619,6 +644,7 @@ def updateModuleMetaData():
         newDsSrcCode = ''
         if dsType == 'module':
             newDsSrcCode = generateModuleCode(stagesList, className, dsType, description, isEphemeral)
+            print '\n', newDsSrcCode
         elif dsType == 'csv':
             newDsSrcCode = generateCsvCode(stagesList, className, dsType, description, isEphemeral)
         elif dsType == 'hive':
@@ -728,16 +754,11 @@ def updateDatasetInfo():
             lines_of_code_list = fd.readlines()
             lines_of_code = len(lines_of_code_list)
 
-            importsStart, importsEnd, descStart, descEnd, ephemeralStart, ephemeralEnd, runStart, runEnd, \
-            reqStart, reqEnd, pathStart, pathEnd, tableNameStart, tableNameEnd = [None for _ in range(14)]
+            # placeholder for the updated code
+            newFileContents = lines_of_code_list
 
             # get indentation for class methods
             (_, _, methodIndent) = getDatasetClassStartEnd(lines_of_code_list, className)
-            # detect imports
-            (importsStart, importsEnd, _, _) = getCodeBlockStartEnd(lines_of_code_list, None, "imports")
-            importsSection = buildImports(None).splitlines(True) # TODO... should use stages list as argument
-            newFileContents = (importsSection + lines_of_code_list if importsStart is None
-                else lines_of_code_list[:importsStart] + importsSection + lines_of_code_list[importsEnd + 1:])
 
             ## desc
             (descStart, descEnd, _, dClassEnd) = getCodeBlockStartEnd(newFileContents, className, "description");
@@ -759,6 +780,16 @@ def updateDatasetInfo():
                 if rStart is None else newFileContents[:rStart] + runSection + newFileContents[rEnd + 1:]
 
             if dsType.lower() == 'module':
+                # detect class imports start, end
+                (classImportsStart, classImportsEnd) = getPlutoImportsStartEnd(lines_of_code_list, className)
+                print 'class imports start, end: ', classImportsStart, classImportsEnd
+
+                classImportsSection = buildImports(className, requiresDS).splitlines(True)
+                if classImportsStart:
+                    newFileContents = classImportsSection + newFileContents[:classImportsStart] + newFileContents[classImportsEnd + 1:]
+                else:
+                    newFileContents = classImportsSection + newFileContents
+
                 (reqStart, reqEnd, _, reqClassEnd) = getCodeBlockStartEnd(newFileContents, className, "requiresDS");
                 reqSection = buildRequiresDS(requiresDS, methodIndent).splitlines(True)
                 newFileContents = newFileContents[:reqClassEnd + 1] + ["\n"] + reqSection + newFileContents[reqClassEnd + 1:] \
@@ -778,6 +809,13 @@ def updateDatasetInfo():
                  newFileContents = (
                      newFileContents[:tabClassEnd + 1] + ["\n"] + tabSection + newFileContents[tabClassEnd + 1:]
                      if tabStart is None else newFileContents[:tabStart] + tabSection + newFileContents[tabEnd + 1:])
+
+            # detect global imports
+            (importsStart, importsEnd, _, _) = getCodeBlockStartEnd(newFileContents, None, "imports")
+            print 'imports start, end: ', importsStart, importsEnd
+            importsSection = buildImports(None).splitlines(True) # TODO... should use stages list as argument
+            newFileContents = (importsSection + newFileContents if importsStart is None
+                else importsSection + newFileContents[:importsStart] + newFileContents[importsEnd + 1:])
 
             for i, line in enumerate(newFileContents):
                 sys.stdout.write('{}  {}'.format(i,line))
@@ -805,7 +843,6 @@ def updateDatasetInfo():
         return ok_res(JOB_SUCCESS)
     else:
         return err_res(MODULE_NOT_FOUND_ERR)
-
 
 @app.route("/api/get_sample_output", methods = ['POST'])
 def get_sample_output():
