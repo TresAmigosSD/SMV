@@ -246,4 +246,7 @@ trait SmvTestUtil extends SparkTestUtil {
 }
 
 /** Base trait for unit tests that do not need a Spark test environment */
-trait SmvUnitSpec extends FlatSpec with BeforeAndAfterEach with BeforeAndAfterAll with Matchers
+trait SmvUnitSpec extends FlatSpec with BeforeAndAfterEach with BeforeAndAfterAll with Matchers {
+  def sp(prop: String): String = System.getProperty(prop)
+  val TmpDir = s"""${sp("java.io.tmpdir")}/${sp("user.name")}/smv"""
+}
