@@ -16,7 +16,7 @@ package org.tresamigos.smv
 package git
 
 import java.io.File
-import org.eclipse.jgit.lib.RepositoryBuilder
+import org.eclipse.jgit.lib.{Repository, RepositoryBuilder}
 import org.eclipse.jgit.api.Git
 import scala.collection.JavaConversions._
 
@@ -45,4 +45,11 @@ case class SmvGit(gitDir: String = ".") {
 object SmvGit {
   val Committer: String = "SMV"
   val CommitterEmail: String = "smv@smv.org"
+
+  def createRepo(gitDir: String): Repository = {
+    val dir = new File(gitDir)
+    val repo = new RepositoryBuilder().readEnvironment().setGitDir(dir).findGitDir(dir).build()
+    repo.create()
+    repo
+  }
 }
