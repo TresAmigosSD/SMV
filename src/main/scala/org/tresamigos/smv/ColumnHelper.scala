@@ -19,6 +19,7 @@ import org.apache.spark.sql.{Row, Column}
 import org.apache.spark.sql.contrib.smv.extractExpr
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.expressions.{Alias, Expression, ScalaUDF, NamedExpression}
+import org.apache.spark.sql.catalyst.util.usePrettyExpression
 import org.apache.spark.sql.types._
 
 import java.util.Calendar
@@ -58,7 +59,7 @@ class ColumnHelper(column: Column) {
    */
   def getName = expr match {
     case e: NamedExpression => e.name
-    case e: Expression      => e.prettyName
+    case e: Expression      => usePrettyExpression(expr).toString
   }
 
   /**
