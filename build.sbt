@@ -19,6 +19,7 @@ libraryDependencies ++= Seq(
   "org.joda"                     % "joda-convert"       % "1.7",
   "joda-time"                    % "joda-time"          % "2.7",
   "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.2",
+  "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
   "com.github.mdr"               %% "ascii-graphs"      % "0.0.6"
 )
 
