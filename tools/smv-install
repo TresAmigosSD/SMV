@@ -109,8 +109,8 @@ python_installation_validation() {
   fi
 
   PYTHON_VER=$(python --version 2>&1 | awk '{print $2}' | cut -f1-2 -d.)
-  if [ "$PYTHON_VER" != "2.7" ]; then
-    echo "[ERROR] SMV currently requires python v2.7.x"
+  if [ "$PYTHON_VER" != "2.7" -a "$PYTHON_VER" != "2.6" ]; then
+    echo "[ERROR] SMV currently requires python v2.7.x or v2.6.x"
     exit 1
   else
     echo "[INFO] python installation is correct"

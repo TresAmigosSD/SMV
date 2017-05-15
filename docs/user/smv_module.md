@@ -127,7 +127,7 @@ A more advanced alternative to the `tableName` method described above is to prov
 ### Scala
 ```scala
 object MyModule extends SmvModule("this is my module") with SmvOutput {
-  def publishHiveSql = Option("insert overwrite table foo ... select * from dftable")
+  def publishHiveSql = Some("insert overwrite table foo ... select * from dftable")
 ...
 }
 ```
@@ -136,5 +136,18 @@ object MyModule extends SmvModule("this is my module") with SmvOutput {
 class MyModule(SmvModule, SmvOutput):
   def publishHiveSql(self):
     return "insert overwrite table foo ... select * from dftable"
+  ...
+```
+
+**Note:** it is possible to specify multiple statements in `publishHiveSql`.  Just need to separate them by `';'`.  For example:
+
+```python
+# python example:
+class MyModule(SmvModule, SmvOutput):
+  def publishHiveSql(self):
+    return """
+      drop table if exists bar;
+      create table bar as select * from dftable
+    """
   ...
 ```

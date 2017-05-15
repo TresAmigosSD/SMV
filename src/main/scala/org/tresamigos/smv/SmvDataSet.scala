@@ -161,7 +161,7 @@ abstract class SmvDataSet extends FilenamePart {
     // if user provided a publish hive sql command, run it instead of default
     // table creation from data frame result.
     if (publishHiveSql.isDefined) {
-      app.sqlContext.sql(publishHiveSql.get)
+      publishHiveSql.get.split(";").map {stmt => app.sqlContext.sql(stmt.trim)}
     } else {
       app.sqlContext.sql(s"drop table if exists ${tableName}")
       app.sqlContext.sql(s"create table ${tableName} as select * from dftable")
@@ -421,8 +421,8 @@ abstract class SmvDataSet extends FilenamePart {
    * Read the published data of this module if the parent stage has specified a version.
    * @return Some(DataFrame) if the stage has a version specified, None otherwise.
    */
-  private[smv] def readPublishedData(): Option[DataFrame] = {
-    stageVersion.map { v =>
+  private[smv] def readPublishedData(version: Option[String] = stageVersion): Option[DataFrame] = {
+    version.map { v =>
       val handler = new FileIOHandler(app.sparkSession, publishCsvPath(v))
       handler.csvFileWithSchema(null)
     }

@@ -22,7 +22,10 @@ class HiveTest(SmvBaseTest):
     @classmethod
     def setUpClass(cls):
         super(HiveTest, cls).setUpClass()
-        cls.smvApp.sqlContext.setConf("hive.metastore.warehouse.dir", "file:///tmp/smv_hive_test")
+        import tempfile
+        import getpass
+        hivedir = "file://{0}/{1}/smv_hive_test".format(tempfile.gettempdir(), getpass.getuser())
+        cls.smvApp.sqlContext.setConf("hive.metastore.warehouse.dir", hivedir)
 
 # temporarily turn off the tests in this file. since we can't figure out
 # a way to specify the temp hive storage conf in 2.1. Specify
