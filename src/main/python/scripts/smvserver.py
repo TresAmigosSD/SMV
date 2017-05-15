@@ -66,8 +66,6 @@ def test_compile_for_errors(fullname):
     return error
 
 def getPlutoImportsStartEnd(linesOfCodeList, importsSectionName):
-    print 'in getPlutoImportsStartEnd'
-    print 'importsSectionName: ', importsSectionName
     blockStart = "###---{}_IMPORTS_START---###".format(importsSectionName)
     blockEnd = "###---{}_IMPORTS_END---###".format(importsSectionName)
 
@@ -644,7 +642,6 @@ def updateModuleMetaData():
         newDsSrcCode = ''
         if dsType == 'module':
             newDsSrcCode = generateModuleCode(stagesList, className, dsType, description, isEphemeral)
-            print '\n', newDsSrcCode
         elif dsType == 'csv':
             newDsSrcCode = generateCsvCode(stagesList, className, dsType, description, isEphemeral)
         elif dsType == 'hive':
@@ -782,8 +779,6 @@ def updateDatasetInfo():
             if dsType.lower() == 'module':
                 # detect class imports start, end
                 (classImportsStart, classImportsEnd) = getPlutoImportsStartEnd(lines_of_code_list, className)
-                print 'class imports start, end: ', classImportsStart, classImportsEnd
-
                 classImportsSection = buildImports(className, requiresDS).splitlines(True)
                 if classImportsStart:
                     newFileContents = classImportsSection + newFileContents[:classImportsStart] + newFileContents[classImportsEnd + 1:]
@@ -812,7 +807,6 @@ def updateDatasetInfo():
 
             # detect global imports
             (importsStart, importsEnd, _, _) = getCodeBlockStartEnd(newFileContents, None, "imports")
-            print 'imports start, end: ', importsStart, importsEnd
             importsSection = buildImports(None).splitlines(True) # TODO... should use stages list as argument
             newFileContents = (importsSection + newFileContents if importsStart is None
                 else importsSection + newFileContents[:importsStart] + newFileContents[importsEnd + 1:])
