@@ -20,6 +20,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col, lit
 from utils import smv_copy_array
+from error import SmvRuntimeError
 
 import sys
 import inspect
@@ -58,8 +59,9 @@ def _sparkContext():
 class SmvGroupedData(object):
     """The result of running `smvGroupBy` on a DataFrame. Implements special SMV aggregations.
     """
-    def __init__(self, df, sgd):
+    def __init__(self, df, keys, sgd):
         self.df = df
+        self.keys = keys
         self.sgd = sgd
 
     def smvTopNRecs(self, maxElems, *cols):
@@ -371,8 +373,15 @@ class DataFrameHelper(object):
                 (SmvGroupedData): grouped data object
 
         """
+        if (isinstance(cols[0], Column)):
+            keys = [ColumnHelper(c).smvGetColName() for c in cols]
+        elif (isinstance(cols[0], basestring)):
+            keys = list(cols)
+        else:
+            raise SmvRuntimeError("smvGroupBy does not support type: " + type(cols[0]))
+
         jSgd = self._jPythonHelper.smvGroupBy(self._jdf, smv_copy_array(self._sc, *cols))
-        return SmvGroupedData(self.df, jSgd)
+        return SmvGroupedData(self.df, keys, jSgd)
 
     def smvHashSample(self, key, rate=0.01, seed=23):
         """Sample the df according to the hash of a column
@@ -1100,6 +1109,17 @@ class ColumnHelper(object):
         self._jvm = _sparkContext()._jvm
         self._jPythonHelper = self._jvm.SmvPythonHelper
         self._jColumnHelper = self._jvm.ColumnHelper(self._jc)
+
+    def smvGetColName(self):
+        """Returns the name of a Column as a sting
+
+            Example:
+            >>> df.a.smvGetColName()
+
+            Returns:
+                (str)
+        """
+        return self._jColumnHelper.getName()
 
     def smvIsAllIn(self, *vals):
         """Returns true if ALL of the Array columns' elements are in the given parameter sequence
