@@ -92,7 +92,8 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
         "requiresDS": "def requiresDS(",
         "isEphemeral": "def isEphemeral(",
         "path": "def path(",
-        "tableName": "def tableName("
+        "tableName": "def tableName(",
+        "*": "def"
     }
     blockEndByName = { "imports": "###---GLOBAL_IMPORTS_END---###" }
 
@@ -179,6 +180,41 @@ def getDatasetClassStartEnd(lines_of_code_list, module_name):
     if start is not None and end is None:
         end = len(lines_of_code_list)
     return (start, end, methodIndentation)
+
+def getDatasetDescriptionStartEnd(linesOfCodeList, className):
+    '''
+    returns a datasets description start and end line numbers
+    '''
+    # detect first method definition and class
+    (mStart, _, cStart, cEnd) = getCodeBlockStartEnd(linesOfCodeList, className, "*")
+    if not cStart:
+        return (None, None)
+    (start, end) = (None, None) # placeholders for start and end of description
+    classDefinitionEnd = None
+    for i, line in enumerate(linesOfCodeList):
+        if not classDefinitionEnd:
+            # detect end of class definition, exclude comments after it
+            if line.startswith('#'): continue
+            lineSplitAtComment = line.split("#")
+            nonCommentStr = lineSplitAtComment[0]
+            if not classDefinitionEnd and nonCommentStr.rstrip().endswith(":"):
+                classDefinitionEnd = True
+                continue
+        lstrippedLine = line.lstrip()
+        if not start and (lstrippedLine.startswith("\"\"\"") or lstrippedLine.startswith("'''")):
+            start = i
+
+        if start:
+            uncommentedLine = line.split("#")[0].rstrip()
+            if uncommentedLine.endswith("\"\"\"") or uncommentedLine.endswith("'''"):
+                # if i is start, then """ must have two occurrences for i to be beginning and end
+                if start == i and not (uncommentedLine.count("\"\"\"") == 2 or uncommentedLine.count("'''") == 2):
+                    continue
+                end = i
+                break
+        # line is already at first method, so there is no docstring
+        if i >= mStart: return (None, None)
+    return (start, end)
 
 
 def get_filepath_from_moduleFqn(module_fqn):
@@ -503,6 +539,24 @@ JOB_SUCCESS = 'SUCCESS: Code updated!' # TODO: rename CODE_UPDATE_SUCCESS
 OK = ""
 
 MODULE_DOES_NOT_EXIST= 'MODULE_DOES_NOT_EXIST'
+
+@app.route("/api/test_description", methods = ['POST'])
+def testDescription():
+    fqn = request.form['fqn'].encode("utf-8")
+    fileName = get_filepath_from_moduleFqn(fqn)
+    msn = getMsnFromFqn(fqn)
+
+    try:
+        with open(fileName, 'r') as f:
+            linesOfCodeList = f.readlines()
+    except IOError:
+        return err_res("Failed to get src code")
+
+    (start, end) = getDatasetDescriptionStartEnd(linesOfCodeList, msn["baseName"])
+
+    return jsonify({ "start": start, "end": end})
+
+
 
 @app.route("/api/get_app_info", methods = ['POST'])
 def get_app_info():
