@@ -15,8 +15,14 @@
 package org.tresamigos.smv
 package git
 
-import sys.process._
 import java.io.File
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.treewalk.TreeWalk
+
+import scala.sys.process._
+import scala.collection.JavaConversions._
+
+import SmvGit._
 
 trait SmvGitTestFixture extends SmvUnitSpec {
   val TestDir = s"${TmpDir}/git"
@@ -35,17 +41,54 @@ class SmvGitTest extends SmvGitTestFixture {
 class SmvGitAddTest extends SmvGitTestFixture {
   override def beforeEach() = {
     super.beforeEach()
-    SmvGit.createRepo(GitDir)
+    withRepo(GitDir) { _.create() }
   }
 
   override def afterEach() = {
     s"rm -rf ${TestDir}".!!
   }
 
-  "SmvGit.addFile" should "be able to add a new file to the git repository" in {
-    ( "echo hi" #> new File(s"${TmpDir}/git/f1") ).!!
+  def createFile(filepath: String, content: String): Unit =
+    ( s"echo ${content}" #> new File(s"${TmpDir}/git/${filepath}") ).!!
 
-    SmvGit(GitDir).addFile("Author X", "author.x@example.com", "f1", "add file f1")
-    // TODO: check that file is committed
+  def assertGitFileContent(filepath: String, content: String): Unit = {
+    var paths = Seq.empty[String]
+    val buf = new java.io.ByteArrayOutputStream
+
+    withRepo(GitDir) { repo =>
+      val git = new Git(repo)
+      val lastCommitTree = git.log.setMaxCount(1).call().toSeq.apply(0).getTree
+      val walk = new TreeWalk(repo)
+      walk.reset(lastCommitTree)
+      while (walk.next()) {
+        paths = walk.getPathString +: paths
+        repo.open(walk.getObjectId(0)).copyTo(buf)
+      }
+      buf.close()
+    }
+
+    paths shouldBe Seq(filepath)
+    buf.toString shouldBe s"${content}\n"
+  }
+
+  "SmvGit.addFile" should "be able to add a new file to the git repository" in {
+    val path = "f1"
+    val content = "hi"
+    createFile(path, content)
+
+    SmvGit(GitDir).addFile("Author X", "author.x@example.com", path, "add file f1")
+
+    assertGitFileContent(path, content)
+  }
+
+  it should "be able to update an existing file content in the git repository" in {
+    val path = "f2"
+    val List(c1, c2) = List("first", "second")
+    createFile(path, c1)
+    SmvGit(GitDir).addFile("Author X", "author.x@example.com", path, "first commit")
+    createFile(path, c2)
+    SmvGit(GitDir).addFile("Author X", "author.x@example.com", path, "second commit")
+
+    assertGitFileContent(path, c2)
   }
 }

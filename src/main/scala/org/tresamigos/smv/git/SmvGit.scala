@@ -24,20 +24,21 @@ import scala.collection.JavaConversions._
  * Represents a local source control, backed by git, for user module code.
  */
 case class SmvGit(gitDir: String = ".") {
-  val dir = new File(gitDir)
-  val repo = new RepositoryBuilder().readEnvironment().setGitDir(dir).findGitDir(dir).build()
-  require(repo.findRef("HEAD") != null, s"${gitDir} does not have HEAD reference")
-  val git = new Git(repo)
-
   import SmvGit._
 
+  withRepo(gitDir) { repo =>
+    require(repo.findRef("HEAD") != null, s"${gitDir} does not have HEAD reference")
+  }
+
   /** Adds a new file or changes to an existing file to the source control */
-  def addFile(author: String, authorEmail: String, filePath: String, commitMessage: String): Unit = {
-    git.add.addFilepattern(filePath).call()
-    git.commit.setCommitter(Committer, CommitterEmail)
-      .setAuthor(author, authorEmail)
-      .setMessage(commitMessage)
-      .call()
+  def addFile(author: String, authorEmail: String, filePath: String, commitMessage: String): Unit =
+    withRepo(gitDir) { repo =>
+      val git = new Git(repo)
+      git.add.addFilepattern(filePath).call()
+      git.commit.setCommitter(Committer, CommitterEmail)
+        .setAuthor(author, authorEmail)
+        .setMessage(commitMessage)
+        .call()
   }
 
 }
@@ -46,10 +47,9 @@ object SmvGit {
   val Committer: String = "SMV"
   val CommitterEmail: String = "smv@smv.org"
 
-  def createRepo(gitDir: String): Repository = {
+  def withRepo[T](gitDir: String)(code: Repository => T) = {
     val dir = new File(gitDir)
     val repo = new RepositoryBuilder().readEnvironment().setGitDir(dir).findGitDir(dir).build()
-    repo.create()
-    repo
+    try { code(repo) } finally { repo.close() }
   }
 }
