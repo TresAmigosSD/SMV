@@ -7,7 +7,7 @@
 # $ ./tools/addlicense.sh
 #
 
-LICENSE_FILE="./tools/license_header.txt"
+LICENSE_FILE="./admin/license_header.txt"
 
 find src -name '*.scala' -print | while read f; do
   c=$(head -10 $f | grep -c "LICENSE-2.0")
