@@ -23,6 +23,7 @@ import java.util.ArrayList
 import org.apache.spark.sql._
 import org.apache.spark.sql.types.DataType
 import matcher._
+import org.tresamigos.smv.git.SmvGit
 
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
@@ -241,6 +242,10 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
     j_smvApp.registerRepoFactory(new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig))
+
+  /** For python scripts to add file to a local git repository */
+  def addFile(author: String, authorEmail: String, filePath: String, commitMessage: String, workDir: String = ".") =
+    SmvGit(workDir).addFile(author, authorEmail, filePath, commitMessage)
 }
 
 /** Not a companion object because we need to access it from Python */

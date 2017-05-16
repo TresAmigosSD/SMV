@@ -916,6 +916,12 @@ def updateDatasetSrc():
 
     return ok_res({ "msg": "Dataset updated", "fullSrc": fullSrc })
 
+# TODO: provide route
+# TODO: configure app-wide local git repository location
+def addFile(author, authorEmail, filePath, commitMessage, workDir="."):
+    j_smvPyClient = SmvApp.getInstance().j_smvPyClient
+    j_smvPyClient.addFile(author, authorEmail, filePath, commitMessage, workDir)
+
 # Wrapper so that other python scripts can import and then call
 # smvserver.Main()
 class Main(object):
