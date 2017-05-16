@@ -5,9 +5,9 @@ Start the shell with
 ```shell
 $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 ```
-**Note:**  The above command should be run from the project top level directory.
+**Note:**  The above command should be run from your project's top level directory.
 
-## Utility methods
+## SMV Utility methods
 * `df(dataset_name, force_run=False)` :  Load/Run the given dataset and return the resulting `DataFrame`. Force the module to rerun (ignoring cached data) if force_run is True
 * `help()`: List the following shell commands
 * `lsStage()` : list all the stages of the project
@@ -24,6 +24,9 @@ $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 * `graph()`: print dependency graph of all DS in the app
 * `now()`: current system time
 * `discoverSchema(path, n, csvAttr)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix ".schema.toBeReviewed"
+
+## User-defined utility methods
+Users may define their own utility methods in `conf/smv_shell_init.py`. If the file exists, everything in it will be imported when the shell starts.
 
 ## Examples
 
