@@ -47,12 +47,14 @@ def getFqnsInApp():
     return urns
 
 def indentation(tabbed_str):
+    '''returns the number of indentation spaces for a given string'''
     no_tabs_str = tabbed_str.expandtabs(TAB_SIZE)
     # if string has only whitespace, return 0 indentation.
     # else return length of string minus len of str with preceding whitespace stripped
     return 0 if no_tabs_str.isspace() else len(no_tabs_str) - len(no_tabs_str.lstrip())
 
 def test_compile_for_errors(fullname):
+    '''returns true if a given file has compilation errors. False otherwise'''
     error = None
     try:
         ok = py_compile.compile(fullname, None, None, True)
@@ -66,6 +68,7 @@ def test_compile_for_errors(fullname):
     return error
 
 def getPlutoImportsStartEnd(linesOfCodeList, importsSectionName):
+    '''retuns start and end lines of a given imports section'''
     blockStart = "###---{}_IMPORTS_START---###".format(importsSectionName)
     blockEnd = "###---{}_IMPORTS_END---###".format(importsSectionName)
 
@@ -82,6 +85,7 @@ def getPlutoImportsStartEnd(linesOfCodeList, importsSectionName):
 
 
 def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
+    '''returns start and end lines of a given method within a given class'''
     blockStartByName = {
         "imports": "###---GLOBAL_IMPORTS_START---###",  # TODO: Remove. use getPlutoImportsStartEnd
         "run": "def run(",
@@ -300,6 +304,7 @@ def get_module_code_file_mapping():
     return module_dict
 
 def err_res(err, err_msg="", res={}): # err, errmsg="", res={}
+    '''returns a json object with the default format for error responses'''
     retval = {}
     retval["err"] = err
     retval["err_msg"] = err_msg
@@ -307,15 +312,18 @@ def err_res(err, err_msg="", res={}): # err, errmsg="", res={}
     return jsonify(retval)
 
 def ok_res(res):
+    '''returns a json object with the default format for a successful response'''
     retval = {}
     retval["err"] = OK
     retval["res"] = res
     return jsonify(retval)
 
 def get_module_name_from_fqn(fqn):
+    '''Returns a string contaiting the basename for a given fqn'''
     return fqn.split(".")[-1:][0]   # a.b.c => [a,b,c] => [c] => c
 
 def getMsnFromFqn(fqn):
+    '''based on a fqn, returns an object with the basename, and stage for that given fqn'''
     fqn_split = fqn.split(".")
     stage = ".".join(fqn_split[:-2])
     baseName = fqn_split[-1]
@@ -323,6 +331,8 @@ def getMsnFromFqn(fqn):
 
 # TODO: FIXME: test if works with new smv version
 def getDatasetInfo(fqn, baseName, stage):
+    '''returns an object containing the properties of a dataset. Namely, fqn, name, stage, isEphemeral, dsType, description,
+        requiresDS (modules), tableName (Hive), csvFile (csv)'''
     try:
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
     except:
@@ -375,9 +385,12 @@ def getDatasetInfo(fqn, baseName, stage):
 # --------------------------------------------------------------------
 
 def extractImportsFromFqns(fqns = []):
+    '''Given a list of fqns, returns a list of file qualified names. E.g.:
+        for: fqns = ['a.b.c.d', 'x.y.z'], returns: ['a.b.c', 'x.y'], which are files located in a/b/c.py, and x/y.py
     return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
 
 def buildImports(className = None, requiresDS = None):
+    '''Template for generating the imports section of a dataset'''
     if not className:
         return """\
 ###---GLOBAL_IMPORTS_START---###
@@ -394,17 +407,20 @@ from pyspark.sql.functions import *
 
 # class start
 def buildClassStart(className, dsType): # what about SmvOutput?
+    '''Template for generating the class definition of a dataset'''
     extendsByDsType = { "csv": "SmvCsvFile", "hive": "SmvHiveTable", "module": "SmvModule" }
     extends = extendsByDsType[dsType.lower()]
     return "class {}({}):\n".format(className, extends)
 
 # build description
 def buildDescription(description, indentation="\t"):
+    '''Template for generating the description method\'s code'''
     return "\
 {1}def description(self):\n\
 {1}{1}return \"{0}\"\n".format(description, indentation)
 
 def buildRun(dsType, body=None, indentation="\t"):
+    '''Template for generating the run method code'''
     if body is None:
         newBody = "{0}{0}return None\n".format(indentation)
     else: # give 2 level indentation to body
@@ -414,12 +430,14 @@ def buildRun(dsType, body=None, indentation="\t"):
     return "{2}def run(self, {0}):\n{1}".format(arg, newBody, indentation)
 
 def buildIsEphemeral(ephemeral, indentation="\t"):
+    '''Template for generating isEphemeral function code'''
     return "\
 {1}def isEphemeral(self):\n\
 {1}{1}return {0}\n".format(ephemeral, indentation)
 
 # module
 def buildRequiresDS(requiresDS, indentation="\t"):
+    '''Template for generating requiresDS\' method code'''
     requires = "" if not requiresDS else ", ".join(map((lambda r: r.encode("utf-8")), requiresDS))
     return "\
 {1}def requiresDS(self):\n\
@@ -427,6 +445,7 @@ def buildRequiresDS(requiresDS, indentation="\t"):
 
 # csv
 def buildPath(path, indentation="\t"):
+    '''Template for generating path method code'''
     path = "" if path is None else path
     return "\
 {1}def path(self):\n\
@@ -434,6 +453,7 @@ def buildPath(path, indentation="\t"):
 
 # hive
 def buildTableName(tableName, indentation="\t"):
+    '''Template for generating tableName method code'''
     tableName = "" if tableName is None else tableName
     return "\
 {1}def tableName(self):\n\
@@ -441,6 +461,7 @@ def buildTableName(tableName, indentation="\t"):
 
 
 def generateModuleCode(stages, className, dsType, description, isEphemeral, run=None, requiresDS=None):
+    '''Basic template for generating datasets extending SmvModule'''
     return "{}\n{}{}\n{}\n{}\n{}\n".format(
         buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
@@ -450,6 +471,7 @@ def generateModuleCode(stages, className, dsType, description, isEphemeral, run=
         buildRun(dsType, run)).expandtabs(TAB_SIZE) # ...and turn tabs to spaces
 
 def generateCsvCode(stages, className, dsType, description, isEphemeral, run=None, path=None):
+    '''Basic template for generating datasets extending SmvCsvFile'''
     return "{}\n{}{}\n{}\n{}\n{}\n".format(
         buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
@@ -459,6 +481,7 @@ def generateCsvCode(stages, className, dsType, description, isEphemeral, run=Non
         buildRun(dsType, run)).expandtabs(TAB_SIZE) # ...and turn tabs to spaces
 
 def generateHiveCode(stages, className, dsType, description, isEphemeral, run=None, tableName=None):
+    '''Basic template for generating datasets extending SmvHiveTable'''
     return "{}\n{}{}\n{}\n{}\n{}\n".format(
         buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
