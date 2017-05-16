@@ -153,8 +153,8 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
 
     return (blockStartLine, blockEndLine, classStart, classEnd)
 
-# assumes class definition indentation is always 0  // TODO: remove once returning run method only
 def getDatasetClassStartEnd(lines_of_code_list, module_name):
+    '''returns beginning and end lines of a class, and the indentation of its first method'''
     test_module_class_def = "class {}(".format(module_name)
     start = None
     end = None
@@ -183,6 +183,7 @@ def getDatasetClassStartEnd(lines_of_code_list, module_name):
 
 
 def get_filepath_from_moduleFqn(module_fqn):
+    '''given a fqn, returns the fullname of its file'''
     # TODO: do not use hardcoded value... FIXME
     prefix = "/projects/sample_smv_project/src/main/python/"
     # dir1.dir2.file.class => [dir1, dir2, file]
@@ -192,6 +193,7 @@ def get_filepath_from_moduleFqn(module_fqn):
     return filepath
 
 def get_output_dir():
+    '''returns the smv app's output directory'''
     output_dir = SmvApp.getInstance().outputDir()
     if (output_dir.startswith('file://')):
         output_dir = output_dir[7:]
