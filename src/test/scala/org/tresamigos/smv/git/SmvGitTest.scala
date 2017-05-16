@@ -26,14 +26,13 @@ import SmvGit._
 
 trait SmvGitTestFixture extends SmvUnitSpec {
   val TestDir = s"${TmpDir}/git"
-  val GitDir = s"""${TestDir}/.git"""
 }
 
 class SmvGitTest extends SmvGitTestFixture {
   "SmvGit" should "fail if the current directory is not part of a git repository" in {
-    s"rm -rf ${GitDir}".!!
+    s"rm -rf ${TestDir}/.git".!!
 
-    intercept[IllegalArgumentException] { SmvGit(GitDir) }
+    intercept[IllegalArgumentException] { SmvGit(TestDir) }
   }
 
 }
@@ -41,7 +40,7 @@ class SmvGitTest extends SmvGitTestFixture {
 class SmvGitAddTest extends SmvGitTestFixture {
   override def beforeEach() = {
     super.beforeEach()
-    withRepo(GitDir) { _.create() }
+    withRepo(TestDir) { _.create() }
   }
 
   override def afterEach() = {
@@ -55,7 +54,7 @@ class SmvGitAddTest extends SmvGitTestFixture {
     var paths = Seq.empty[String]
     val buf = new java.io.ByteArrayOutputStream
 
-    withRepo(GitDir) { repo =>
+    withRepo(TestDir) { repo =>
       val git = new Git(repo)
       val lastCommitTree = git.log.setMaxCount(1).call().toSeq.apply(0).getTree
       val walk = new TreeWalk(repo)
@@ -76,7 +75,7 @@ class SmvGitAddTest extends SmvGitTestFixture {
     val content = "hi"
     createFile(path, content)
 
-    SmvGit(GitDir).addFile("Author X", "author.x@example.com", path, "add file f1")
+    SmvGit(TestDir).addFile("Author X", "author.x@example.com", path, "add file f1")
 
     assertGitFileContent(path, content)
   }
@@ -85,9 +84,9 @@ class SmvGitAddTest extends SmvGitTestFixture {
     val path = "f2"
     val List(c1, c2) = List("first", "second")
     createFile(path, c1)
-    SmvGit(GitDir).addFile("Author X", "author.x@example.com", path, "first commit")
+    SmvGit(TestDir).addFile("Author X", "author.x@example.com", path, "first commit")
     createFile(path, c2)
-    SmvGit(GitDir).addFile("Author X", "author.x@example.com", path, "second commit")
+    SmvGit(TestDir).addFile("Author X", "author.x@example.com", path, "second commit")
 
     assertGitFileContent(path, c2)
   }
