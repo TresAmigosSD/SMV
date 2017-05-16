@@ -83,9 +83,6 @@ def getPlutoImportsStartEnd(linesOfCodeList, importsSectionName):
             break
     return (blockStartLine, blockEndLine)
 
-def getDescriptionStartEnd(linesOfCodeList, className):
-
-
 def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
     '''returns start and end lines of a given method within a given class'''
     blockStartByName = {
