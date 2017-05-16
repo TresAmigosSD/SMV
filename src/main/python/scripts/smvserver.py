@@ -83,6 +83,8 @@ def getPlutoImportsStartEnd(linesOfCodeList, importsSectionName):
             break
     return (blockStartLine, blockEndLine)
 
+def getDescriptionStartEnd(linesOfCodeList, className):
+
 
 def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
     '''returns start and end lines of a given method within a given class'''
@@ -381,15 +383,13 @@ def getDatasetInfo(fqn, baseName, stage):
     res["srcCode"] = run_method_body
     return res
 
-# --------------------------------------------------------------------
-# --------------------------------------------------------------------
-# ----- TODO: combine all build* functions into a single function-----
-# --------------------------------------------------------------------
 
 def extractImportsFromFqns(fqns = []):
-    '''Given a list of fqns, returns a list of file qualified names. E.g.:
-        for: fqns = ['a.b.c.d', 'x.y.z'], returns: ['a.b.c', 'x.y'], which are files located in a/b/c.py, and x/y.py
+    '''
+    Given a list of fqns, returns a list of file qualified names. E.g.:
+    for: fqns = ['a.b.c.d', 'x.y.z'], returns: ['a.b.c', 'x.y'], which are files located in a/b/c.py, and x/y.py
     return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
+    '''
 
 def buildImports(className = None, requiresDS = None):
     '''Template for generating the imports section of a dataset'''
@@ -492,10 +492,6 @@ def generateHiveCode(stages, className, dsType, description, isEphemeral, run=No
         buildIsEphemeral(isEphemeral),
         buildRun(dsType, run)).expandtabs(TAB_SIZE) # ...and turn tabs to spaces
 
-# --------------------------------------------------------------------
-# ------TODO: combine fun above into single fun-----------------------
-# --------------------------------------------------------------------
-# --------------------------------------------------------------------
 
 # ---------- API Definition ---------- #
 
