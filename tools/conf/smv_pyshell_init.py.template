@@ -57,7 +57,7 @@ from smv.smvshell import *
 
 # Import user-defined helpers
 app.prepend_source("conf/")
-if os.path.exists("conf/smv_shell_init.py"):
+if os.path.exists("conf/smv_shell_app_init.py"):
   from smv_shell_init import *
 
 del os, atexit, readline, rlcompleter, save_history, historyPath

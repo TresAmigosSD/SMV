@@ -26,7 +26,7 @@ $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 * `discoverSchema(path, n, csvAttr)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix ".schema.toBeReviewed"
 
 ## User-defined utility methods
-Users may define their own utility methods in `conf/smv_shell_init.py`. If the file exists, everything in it will be imported when the shell starts.
+Users may define their own utility methods in `conf/smv_shell_app_init.py`. If the file exists, everything in it will be imported when the shell starts.
 
 ## Examples
 
