@@ -63,6 +63,13 @@ private[smv] object SmvHDFS {
     stream.close()
   }
 
+  def copyToLocalFile(hdfsPath: String, localPath: String) = {
+    val hdfs = getFileSystem(hdfsPath)
+    val pathHdfsPath = new org.apache.hadoop.fs.Path(hdfsPath)
+    val pathLocalPath = new org.apache.hadoop.fs.Path(localPath)
+    hdfs.copyToLocalFile(false, pathHdfsPath, pathLocalPath)
+  }
+
   /**
    * get modification time of a HDFS file
    **/
