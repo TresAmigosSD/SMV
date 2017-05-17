@@ -32,19 +32,13 @@ private[smv] object SmvReportIO {
     val outFile = new File(path)
     val filename = outFile.getName()
 
+    // Save report RDD to a temparory file on HDFS
     val tmpHdfsFile = "/tmp/smv_tmp_" + filename
-    report.coalesce(1).saveAsTextFile(tmpHdfsFile)
+    report.saveAsTextFile(tmpHdfsFile)
 
-    SmvHDFS.copyToLocalFile(tmpHdfsFile, path)
+    // copy merge the HDFS output to a local output
+    SmvHDFS.copyMerge(tmpHdfsFile, path)
     SmvHDFS.deleteFile(tmpHdfsFile)
-    // Since PrintWriter is not serializable, need to create 1 per partition
-    // Simply coalesce to 1 partition and only create 1 file to output
-    //report.coalesce(1).foreachPartition{rows => {
-    //  val outFile = new File(path)
-    //  val pw      = new PrintWriter(outFile)
-    //  rows.foreach{r => pw.write(r + "\n")}
-    //  pw.close
-    //}}
   }
 
   def readReport(path: String): String =

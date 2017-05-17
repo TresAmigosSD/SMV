@@ -3,7 +3,7 @@ package org.tresamigos.smv
 import java.io.File
 import java.io.{BufferedWriter, StringWriter, OutputStreamWriter}
 
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.{FileSystem, Path, FileUtil}
 import org.apache.commons.io.IOUtils
 
 import scala.util.Try
@@ -63,11 +63,16 @@ private[smv] object SmvHDFS {
     stream.close()
   }
 
-  def copyToLocalFile(hdfsPath: String, localPath: String) = {
+  /**
+   * Copy and merge file in HDFS to a single file in local file system
+   **/
+  def copyMerge(hdfsPath: String, localPath: String) = {
     val hdfs = getFileSystem(hdfsPath)
-    val pathHdfsPath = new org.apache.hadoop.fs.Path(hdfsPath)
-    val pathLocalPath = new org.apache.hadoop.fs.Path(localPath)
-    hdfs.copyToLocalFile(false, pathHdfsPath, pathLocalPath)
+    val lfs = FileSystem.getLocal(hadoopConf)
+
+    val pathHdfsPath = new Path(hdfsPath)
+    val pathLocalPath = new Path(localPath)
+    FileUtil.copyMerge(hdfs, pathHdfsPath, lfs, pathLocalPath, false, hadoopConf, "")
   }
 
   /**
