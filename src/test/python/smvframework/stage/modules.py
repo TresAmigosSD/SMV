@@ -43,6 +43,18 @@ class D4(SmvCsvStringData, SmvRunConfig):
         return "a:String;b:Integer"
     def dataStr(self):
         if(self.smvGetRunConfig('s') == "s1"):
-            return "a,10;b,1"
+            l1 = "test1_s1,1"
         else:
-            return "X,100;Y,200;"
+            l1 = "test1_not_s1,2"
+
+        if(self.smvGetRunConfigAsInt('i') == 2):
+            l2 = "test2_i2,3"
+        else:
+            l2 = "test2_not_i2,4"
+
+        if(self.smvGetRunConfigAsBool('b')):
+            l3 = "test3_b,5"
+        else:
+            l3 = "test3_not_b,6"
+
+        return l1 + ";" + l2 + ";" + l3
