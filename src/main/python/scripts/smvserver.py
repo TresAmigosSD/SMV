@@ -83,6 +83,8 @@ def getPlutoImportsStartEnd(linesOfCodeList, importsSectionName):
             break
     return (blockStartLine, blockEndLine)
 
+# TODO: getCodeBlockStartEnd, getDatasetClassStartEnd, getDatasetDescriptionStartEnd should return an Object
+# TODO: getCodeBlockStartEnd should use getDatasetClassStartEnd to get class start end and stay dry
 def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
     '''returns start and end lines of a given method within a given class'''
     blockStartByName = {
@@ -153,6 +155,7 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
 
     return (blockStartLine, blockEndLine, classStart, classEnd)
 
+# TODO: should also return line number of end of class definition
 def getDatasetClassStartEnd(lines_of_code_list, module_name):
     '''returns beginning and end lines of a class, and the indentation of its first method'''
     test_module_class_def = "class {}(".format(module_name)
@@ -178,43 +181,45 @@ def getDatasetClassStartEnd(lines_of_code_list, module_name):
                 break
         lastNonEmptyLine = i if (not line.isspace()) else lastNonEmptyLine
     if start is not None and end is None:
-        end = len(lines_of_code_list)
+        end = len(lines_of_code_list)  # TODO.. should be last non empty line
     return (start, end, methodIndentation)
 
 def getDatasetDescriptionStartEnd(linesOfCodeList, className):
     '''
     returns a datasets description start and end line numbers
     '''
+    (start, end, cDefEnd) = (None, None, None) # placeholders for start and end of description
+
     # detect first method definition and class
     (mStart, _, cStart, cEnd) = getCodeBlockStartEnd(linesOfCodeList, className, "*")
-    if not cStart:
-        return (None, None)
-    (start, end) = (None, None) # placeholders for start and end of description
-    classDefinitionEnd = None
-    for i, line in enumerate(linesOfCodeList):
-        if not classDefinitionEnd:
-            # detect end of class definition, exclude comments after it
-            if line.startswith('#'): continue
-            lineSplitAtComment = line.split("#")
-            nonCommentStr = lineSplitAtComment[0]
-            if not classDefinitionEnd and nonCommentStr.rstrip().endswith(":"):
-                classDefinitionEnd = True
-                continue
-        lstrippedLine = line.lstrip()
-        if not start and (lstrippedLine.startswith("\"\"\"") or lstrippedLine.startswith("'''")):
-            start = i
 
-        if start:
-            uncommentedLine = line.split("#")[0].rstrip()
-            if uncommentedLine.endswith("\"\"\"") or uncommentedLine.endswith("'''"):
-                # if i is start, then """ must have two occurrences for i to be beginning and end
-                if start == i and not (uncommentedLine.count("\"\"\"") == 2 or uncommentedLine.count("'''") == 2):
+    if cStart and cEnd:
+        for i, line in enumerate(linesOfCodeList):
+            if not cDefEnd:
+                # detect end of class definition, exclude comments after it
+                if line.startswith('#'): continue
+                lineSplitAtComment = line.split("#")
+                nonCommentStr = lineSplitAtComment[0]
+                if not cDefEnd and nonCommentStr.rstrip().endswith(":"):
+                    cDefEnd = i
                     continue
-                end = i
+            lstrippedLine = line.lstrip()
+            if not start and (lstrippedLine.startswith("\"\"\"") or lstrippedLine.startswith("'''")):
+                start = i
+
+            if start:
+                uncommentedLine = line.split("#")[0].rstrip()
+                if uncommentedLine.endswith("\"\"\"") or uncommentedLine.endswith("'''"):
+                    # if i is start, then """ must have two occurrences for i to be beginning and end
+                    if start == i and not (uncommentedLine.count("\"\"\"") == 2 or uncommentedLine.count("'''") == 2):
+                        continue
+                    end = i
+                    break
+            # line is already at first method, so there is no docstring
+            if i >= mStart:
+                (start, end) = (None, None)
                 break
-        # line is already at first method, so there is no docstring
-        if i >= mStart: return (None, None)
-    return (start, end, cStart, cEnd)
+    return (start, end, cDefEnd)
 
 
 def get_filepath_from_moduleFqn(module_fqn):
@@ -621,7 +626,7 @@ def get_module_code():
         "stage": module_stage,
         "ephemeral": module.isEphemeral(),
         "dsType": moduleDsType,
-        "description": module.description().strip()
+        "description": module.description().strip() if module.description() else ""
     }
 
     if moduleDsType.lower() == "input":
@@ -816,15 +821,12 @@ def updateDatasetInfo():
             # get indentation for class methods
             (_, _, methodIndent) = getDatasetClassStartEnd(lines_of_code_list, className)
 
-            ## desc
-            (descStart, descEnd, _, dClassEnd) = getDatasetDescriptionStartEnd(newFileContents, className);
+            ## description: get start, end of class definition
+            (descStart, descEnd, cDefEnd) = getDatasetDescriptionStartEnd(newFileContents, className);
             descriptionSection = buildDescription(description, methodIndent).splitlines(True)
 
-            newFileContents = newFileContents[:dClassEnd + 1] + descriptionSection + newFileContents[dClassEnd + 1:] \
+            newFileContents = newFileContents[:cDefEnd + 1] + descriptionSection + newFileContents[cDefEnd + 1:] \
                 if descStart is None else newFileContents[:descStart] + descriptionSection + newFileContents[descEnd + 1:]
-
-            for line in newFileContents:
-                sys.stdout.write(line)
 
             ## ephemeral
             (ephStart, ephEnd, _, ephClassEnd) = getCodeBlockStartEnd(newFileContents, className, "isEphemeral");
@@ -872,9 +874,6 @@ def updateDatasetInfo():
             importsSection = buildImports(None).splitlines(True) # TODO... should use stages list as argument
             newFileContents = (importsSection + newFileContents if importsStart is None
                 else importsSection + newFileContents[:importsStart] + newFileContents[importsEnd + 1:])
-
-            for i, line in enumerate(newFileContents):
-                sys.stdout.write('{}  {}'.format(i,line))
 
             # modify duplicate
             fd.seek(0)  # reset file stream
