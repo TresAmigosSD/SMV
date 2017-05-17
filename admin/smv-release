@@ -55,6 +55,7 @@ function parse_args()
 
   # version specific vars
   TGZ_IMAGE="${LOGDIR}/smv_${SMV_VERSION}.tgz"
+  DOCS_DIR="${LOGDIR}/docs"
 }
 
 function check_for_existing_tag()
@@ -253,21 +254,42 @@ function create_docker_image()
   docker push tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker push failed"
 }
 
+function  build_pydocs()
+{
+  info "generating python docs"
+  local smv_py_dir="/projects/SMV/src/main/python"
+  local spark_py_dir="/usr/lib/spark/python"
+  mkdir -p ${DOCS_DIR}/python
+
+  docker run --rm -it \
+    -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/python:/pydoc \
+    tresamigos/smv:latest \
+    -u $(id -u)\
+    sh -c "
+      cd $DOCKER_SMV_DIR;
+      export PYTHONPATH=\"${smv_py_dir}:${spark_py_dir}:${spark_py_dir}/lib/py4j-0.8.2.1-src.zip\";
+      sphinx-apidoc --full -o /pydoc ${smv_py_dir}/smv;
+      cd /pydoc;
+      make html" \
+    >> ${LOGFILE} 2>&1 || error "python doc generation failed"
+}
+
 
 # ---- MAIN ----
 create_logdir
 info "Start Release on: $(date)"
 parse_args "$@"
-check_for_existing_tag
+# check_for_existing_tag
 get_prev_smv_version
-find_gnu_tar
-find_release_msg_file
-check_git_repo
-build_smv
-update_version
-tag_release
-create_tar
-create_github_release
-attach_tar_to_github_release
-create_docker_image
+# find_gnu_tar
+# find_release_msg_file
+# check_git_repo
+# build_smv
+# update_version
+# tag_release
+# create_tar
+# create_github_release
+# attach_tar_to_github_release
+# create_docker_image
+build_pydocs
 info "Finish Release on: $(date)"
