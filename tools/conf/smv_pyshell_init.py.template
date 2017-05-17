@@ -38,7 +38,6 @@ if os.path.exists(historyPath):
     readline.read_history_file(historyPath)
 
 atexit.register(save_history)
-del os, atexit, readline, rlcompleter, save_history, historyPath
 
 # Get a random port for callback server
 import random;
@@ -58,8 +57,7 @@ from smv.smvshell import *
 
 # Import user-defined helpers
 app.prepend_source("conf/")
-try:
+if os.path.exists("conf/smv_shell_init.py"):
   from smv_shell_init import *
-# File may not exist
-except ImportError:
-  pass
+
+del os, atexit, readline, rlcompleter, save_history, historyPath
