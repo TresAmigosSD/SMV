@@ -30,10 +30,10 @@ class SmvRunConfig(object):
         return SmvApp.getInstance().j_smvPyClient.getRunConfig(key)
 
     def smvGetRunConfigAsInt(self, key):
-        return int(self.getRunConfig(key))
+        return int(self.smvGetRunConfig(key))
 
     def smvGetRunConfigAsBool(self, key):
-        sval = self.getRunConfig(key).strip().lower()
+        sval = self.smvGetRunConfig(key).strip().lower()
         return (sval == "1" or sval == "true")
 
     def _smvGetRunConfigHash(self):
