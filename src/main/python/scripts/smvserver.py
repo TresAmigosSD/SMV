@@ -214,7 +214,7 @@ def getDatasetDescriptionStartEnd(linesOfCodeList, className):
                 break
         # line is already at first method, so there is no docstring
         if i >= mStart: return (None, None)
-    return (start, end)
+    return (start, end, cStart, cEnd)
 
 
 def get_filepath_from_moduleFqn(module_fqn):
@@ -421,17 +421,21 @@ def extractImportsFromFqns(fqns = []):
     '''
     Given a list of fqns, returns a list of file qualified names. E.g.:
     for: fqns = ['a.b.c.d', 'x.y.z'], returns: ['a.b.c', 'x.y'], which are files located in a/b/c.py, and x/y.py
-    return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
     '''
+    return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
 
 def buildImports(className = None, requiresDS = None):
     '''Template for generating the imports section of a dataset'''
+    # classname not provided, then create global imports
     if not className:
         return """\
 ###---GLOBAL_IMPORTS_START---###
 from smv import *
 from pyspark.sql.functions import *
 ###---GLOBAL_IMPORTS_END---###\n"""
+
+    # class has no required datasets, no need to import anything
+    if not requiresDS: return "";
 
     dependencies = extractImportsFromFqns(requiresDS)
     importStatements = "\n".join(map(lambda dep: "import {}".format(dep), dependencies))
@@ -450,9 +454,10 @@ def buildClassStart(className, dsType): # what about SmvOutput?
 # build description
 def buildDescription(description, indentation="\t"):
     '''Template for generating the description method\'s code'''
-    return "\
-{1}def description(self):\n\
-{1}{1}return \"{0}\"\n".format(description, indentation)
+    return """\
+{1}\"\"\"
+{1}{0}
+{1}\"\"\"\n""".format(description, indentation)
 
 def buildRun(dsType, body=None, indentation="\t"):
     '''Template for generating the run method code'''
@@ -497,7 +502,7 @@ def buildTableName(tableName, indentation="\t"):
 
 def generateModuleCode(stages, className, dsType, description, isEphemeral, run=None, requiresDS=None):
     '''Basic template for generating datasets extending SmvModule'''
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
+    return "{}\n{}{}{}\n{}\n{}\n".format(
         buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
@@ -507,7 +512,7 @@ def generateModuleCode(stages, className, dsType, description, isEphemeral, run=
 
 def generateCsvCode(stages, className, dsType, description, isEphemeral, run=None, path=None):
     '''Basic template for generating datasets extending SmvCsvFile'''
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
+    return "{}\n{}{}{}\n{}\n{}\n".format(
         buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
@@ -517,7 +522,7 @@ def generateCsvCode(stages, className, dsType, description, isEphemeral, run=Non
 
 def generateHiveCode(stages, className, dsType, description, isEphemeral, run=None, tableName=None):
     '''Basic template for generating datasets extending SmvHiveTable'''
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
+    return "{}\n{}{}{}\n{}\n{}\n".format(
         buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
@@ -539,24 +544,6 @@ JOB_SUCCESS = 'SUCCESS: Code updated!' # TODO: rename CODE_UPDATE_SUCCESS
 OK = ""
 
 MODULE_DOES_NOT_EXIST= 'MODULE_DOES_NOT_EXIST'
-
-@app.route("/api/test_description", methods = ['POST'])
-def testDescription():
-    fqn = request.form['fqn'].encode("utf-8")
-    fileName = get_filepath_from_moduleFqn(fqn)
-    msn = getMsnFromFqn(fqn)
-
-    try:
-        with open(fileName, 'r') as f:
-            linesOfCodeList = f.readlines()
-    except IOError:
-        return err_res("Failed to get src code")
-
-    (start, end) = getDatasetDescriptionStartEnd(linesOfCodeList, msn["baseName"])
-
-    return jsonify({ "start": start, "end": end})
-
-
 
 @app.route("/api/get_app_info", methods = ['POST'])
 def get_app_info():
@@ -616,7 +603,7 @@ def get_module_code():
                 raise ValueError('TODO....')
             module_fqn = "{0}.{1}.{1}".format(module_stage, module_name)
     except:
-        return 'module name and stage not provided'
+        return err_res('module name and stage not provided')
 
     try:
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(module_fqn)
@@ -634,7 +621,7 @@ def get_module_code():
         "stage": module_stage,
         "ephemeral": module.isEphemeral(),
         "dsType": moduleDsType,
-        "description": module.description()
+        "description": module.description().strip()
     }
 
     if moduleDsType.lower() == "input":
@@ -830,16 +817,19 @@ def updateDatasetInfo():
             (_, _, methodIndent) = getDatasetClassStartEnd(lines_of_code_list, className)
 
             ## desc
-            (descStart, descEnd, _, dClassEnd) = getCodeBlockStartEnd(newFileContents, className, "description");
+            (descStart, descEnd, _, dClassEnd) = getDatasetDescriptionStartEnd(newFileContents, className);
             descriptionSection = buildDescription(description, methodIndent).splitlines(True)
 
-            newFileContents = newFileContents[:dClassEnd + 1] + ["\n"] + descriptionSection + newFileContents[dClassEnd + 1:] \
+            newFileContents = newFileContents[:dClassEnd + 1] + descriptionSection + newFileContents[dClassEnd + 1:] \
                 if descStart is None else newFileContents[:descStart] + descriptionSection + newFileContents[descEnd + 1:]
+
+            for line in newFileContents:
+                sys.stdout.write(line)
 
             ## ephemeral
             (ephStart, ephEnd, _, ephClassEnd) = getCodeBlockStartEnd(newFileContents, className, "isEphemeral");
             ephSection = buildIsEphemeral(isEphemeral, methodIndent).splitlines(True)
-            newFileContents = newFileContents[:ephClassEnd + 1] + ["\n"] + ephSection + newFileContents[ephClassEnd + 1:] \
+            newFileContents = newFileContents[:ephClassEnd + 1] + ephSection + newFileContents[ephClassEnd + 1:] \
                 if ephStart is None else newFileContents[:ephStart] + ephSection + newFileContents[ephEnd + 1:]
 
             ## run
