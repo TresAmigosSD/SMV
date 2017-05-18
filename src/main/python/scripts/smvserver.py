@@ -83,6 +83,8 @@ def getPlutoImportsStartEnd(linesOfCodeList, importsSectionName):
             break
     return (blockStartLine, blockEndLine)
 
+# TODO: getCodeBlockStartEnd, getDatasetClassStartEnd, getDatasetDescriptionStartEnd should return an Object
+# TODO: getCodeBlockStartEnd should use getDatasetClassStartEnd to get class start end and stay dry
 def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
     '''returns start and end lines of a given method within a given class'''
     blockStartByName = {
@@ -92,7 +94,8 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
         "requiresDS": "def requiresDS(",
         "isEphemeral": "def isEphemeral(",
         "path": "def path(",
-        "tableName": "def tableName("
+        "tableName": "def tableName(",
+        "*": "def"
     }
     blockEndByName = { "imports": "###---GLOBAL_IMPORTS_END---###" }
 
@@ -152,6 +155,7 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
 
     return (blockStartLine, blockEndLine, classStart, classEnd)
 
+# TODO: should also return line number of end of class definition
 def getDatasetClassStartEnd(lines_of_code_list, module_name):
     '''returns beginning and end lines of a class, and the indentation of its first method'''
     test_module_class_def = "class {}(".format(module_name)
@@ -177,8 +181,45 @@ def getDatasetClassStartEnd(lines_of_code_list, module_name):
                 break
         lastNonEmptyLine = i if (not line.isspace()) else lastNonEmptyLine
     if start is not None and end is None:
-        end = len(lines_of_code_list)
+        end = len(lines_of_code_list)  # TODO.. should be last non empty line
     return (start, end, methodIndentation)
+
+def getDatasetDescriptionStartEnd(linesOfCodeList, className):
+    '''
+    returns a datasets description start and end line numbers
+    '''
+    (start, end, cDefEnd) = (None, None, None) # placeholders for start and end of description
+
+    # detect first method definition and class
+    (mStart, _, cStart, cEnd) = getCodeBlockStartEnd(linesOfCodeList, className, "*")
+
+    if cStart and cEnd:
+        for i, line in enumerate(linesOfCodeList):
+            if not cDefEnd:
+                # detect end of class definition, exclude comments after it
+                if line.startswith('#'): continue
+                lineSplitAtComment = line.split("#")
+                nonCommentStr = lineSplitAtComment[0]
+                if not cDefEnd and nonCommentStr.rstrip().endswith(":"):
+                    cDefEnd = i
+                    continue
+            lstrippedLine = line.lstrip()
+            if not start and (lstrippedLine.startswith("\"\"\"") or lstrippedLine.startswith("'''")):
+                start = i
+
+            if start:
+                uncommentedLine = line.split("#")[0].rstrip()
+                if uncommentedLine.endswith("\"\"\"") or uncommentedLine.endswith("'''"):
+                    # if i is start, then """ must have two occurrences for i to be beginning and end
+                    if start == i and not (uncommentedLine.count("\"\"\"") == 2 or uncommentedLine.count("'''") == 2):
+                        continue
+                    end = i
+                    break
+            # line is already at first method, so there is no docstring
+            if i >= mStart:
+                (start, end) = (None, None)
+                break
+    return (start, end, cDefEnd)
 
 
 def get_filepath_from_moduleFqn(module_fqn):
@@ -385,17 +426,21 @@ def extractImportsFromFqns(fqns = []):
     '''
     Given a list of fqns, returns a list of file qualified names. E.g.:
     for: fqns = ['a.b.c.d', 'x.y.z'], returns: ['a.b.c', 'x.y'], which are files located in a/b/c.py, and x/y.py
-    return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
     '''
+    return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
 
 def buildImports(className = None, requiresDS = None):
     '''Template for generating the imports section of a dataset'''
+    # classname not provided, then create global imports
     if not className:
         return """\
 ###---GLOBAL_IMPORTS_START---###
 from smv import *
 from pyspark.sql.functions import *
 ###---GLOBAL_IMPORTS_END---###\n"""
+
+    # class has no required datasets, no need to import anything
+    if not requiresDS: return "";
 
     dependencies = extractImportsFromFqns(requiresDS)
     importStatements = "\n".join(map(lambda dep: "import {}".format(dep), dependencies))
@@ -414,9 +459,10 @@ def buildClassStart(className, dsType): # what about SmvOutput?
 # build description
 def buildDescription(description, indentation="\t"):
     '''Template for generating the description method\'s code'''
-    return "\
-{1}def description(self):\n\
-{1}{1}return \"{0}\"\n".format(description, indentation)
+    return """\
+{1}\"\"\"
+{1}{0}
+{1}\"\"\"\n""".format(description, indentation)
 
 def buildRun(dsType, body=None, indentation="\t"):
     '''Template for generating the run method code'''
@@ -461,7 +507,7 @@ def buildTableName(tableName, indentation="\t"):
 
 def generateModuleCode(stages, className, dsType, description, isEphemeral, run=None, requiresDS=None):
     '''Basic template for generating datasets extending SmvModule'''
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
+    return "{}\n{}{}{}\n{}\n{}\n".format(
         buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
@@ -471,7 +517,7 @@ def generateModuleCode(stages, className, dsType, description, isEphemeral, run=
 
 def generateCsvCode(stages, className, dsType, description, isEphemeral, run=None, path=None):
     '''Basic template for generating datasets extending SmvCsvFile'''
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
+    return "{}\n{}{}{}\n{}\n{}\n".format(
         buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
@@ -481,7 +527,7 @@ def generateCsvCode(stages, className, dsType, description, isEphemeral, run=Non
 
 def generateHiveCode(stages, className, dsType, description, isEphemeral, run=None, tableName=None):
     '''Basic template for generating datasets extending SmvHiveTable'''
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
+    return "{}\n{}{}{}\n{}\n{}\n".format(
         buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
@@ -562,7 +608,7 @@ def get_module_code():
                 raise ValueError('TODO....')
             module_fqn = "{0}.{1}.{1}".format(module_stage, module_name)
     except:
-        return 'module name and stage not provided'
+        return err_res('module name and stage not provided')
 
     try:
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(module_fqn)
@@ -580,7 +626,7 @@ def get_module_code():
         "stage": module_stage,
         "ephemeral": module.isEphemeral(),
         "dsType": moduleDsType,
-        "description": module.description()
+        "description": module.description().strip() if module.description() else ""
     }
 
     if moduleDsType.lower() == "input":
@@ -775,17 +821,17 @@ def updateDatasetInfo():
             # get indentation for class methods
             (_, _, methodIndent) = getDatasetClassStartEnd(lines_of_code_list, className)
 
-            ## desc
-            (descStart, descEnd, _, dClassEnd) = getCodeBlockStartEnd(newFileContents, className, "description");
+            ## description: get start, end of class definition
+            (descStart, descEnd, cDefEnd) = getDatasetDescriptionStartEnd(newFileContents, className);
             descriptionSection = buildDescription(description, methodIndent).splitlines(True)
 
-            newFileContents = newFileContents[:dClassEnd + 1] + ["\n"] + descriptionSection + newFileContents[dClassEnd + 1:] \
+            newFileContents = newFileContents[:cDefEnd + 1] + descriptionSection + newFileContents[cDefEnd + 1:] \
                 if descStart is None else newFileContents[:descStart] + descriptionSection + newFileContents[descEnd + 1:]
 
             ## ephemeral
             (ephStart, ephEnd, _, ephClassEnd) = getCodeBlockStartEnd(newFileContents, className, "isEphemeral");
             ephSection = buildIsEphemeral(isEphemeral, methodIndent).splitlines(True)
-            newFileContents = newFileContents[:ephClassEnd + 1] + ["\n"] + ephSection + newFileContents[ephClassEnd + 1:] \
+            newFileContents = newFileContents[:ephClassEnd + 1] + ephSection + newFileContents[ephClassEnd + 1:] \
                 if ephStart is None else newFileContents[:ephStart] + ephSection + newFileContents[ephEnd + 1:]
 
             ## run
@@ -828,9 +874,6 @@ def updateDatasetInfo():
             importsSection = buildImports(None).splitlines(True) # TODO... should use stages list as argument
             newFileContents = (importsSection + newFileContents if importsStart is None
                 else importsSection + newFileContents[:importsStart] + newFileContents[importsEnd + 1:])
-
-            for i, line in enumerate(newFileContents):
-                sys.stdout.write('{}  {}'.format(i,line))
 
             # modify duplicate
             fd.seek(0)  # reset file stream
