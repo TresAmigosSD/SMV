@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
 
-import dqm.{DQMValidator, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
+import dqm.{DQMValidator, ParserLogger, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 
 import scala.collection.JavaConversions._
 import scala.util.Try
@@ -486,7 +486,7 @@ trait SmvDSWithParser extends SmvDataSet {
 }
 
 
-abstract class SmvFile extends SmvInputDataSet {
+abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
   val path: String
   val schemaPath: String     = null
   override def description() = s"Input file: @${path}"
@@ -499,6 +499,9 @@ abstract class SmvFile extends SmvInputDataSet {
     else s"${app.smvConfig.inputDir}/${_path}"
   }
 
+  private[smv] def getHandler(csvPath: String, parserValidator: ParserLogger) =
+    new FileIOHandler(app.sqlContext, csvPath, fullSchemaPath, parserValidator)
+
   /* Historically we specify path in SmvFile respect to dataDir
    * instead of inputDir. However by convention we always put data
    * files in /data/input/ dir, so all the path strings in the projects
@@ -510,6 +513,15 @@ abstract class SmvFile extends SmvInputDataSet {
   private[smv] def fullSchemaPath = {
     if (schemaPath == null) None
     else Option(findFullPath(schemaPath))
+  }
+
+  private[smv] def readFromFile(parserLogger: ParserLogger): DataFrame
+
+  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
+    val parserValidator =
+      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
+    val df      = readFromFile(parserValidator)
+    run(df)
   }
 
   /* For SmvFile, the datasetHash should be based on
@@ -532,6 +544,14 @@ abstract class SmvFile extends SmvInputDataSet {
   }
 }
 
+abstract class SmvSingleFile extends SmvFile {
+  private[smv] def readSingleFile(handler: FileIOHandler): DataFrame
+  private[smv] override def readFromFile(parserValidator: ParserLogger): DataFrame = {
+    val handler = getHandler(fullPath, parserValidator)
+    readSingleFile(handler)
+  }
+}
+
 /**
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
@@ -540,16 +560,8 @@ case class SmvCsvFile(
     csvAttributes: CsvAttributes = null,
     override val schemaPath: String = null,
     override val isFullPath: Boolean = false
-) extends SmvFile
-    with SmvDSWithParser {
-
-  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
-    val parserValidator =
-      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
-    val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
-    val df      = handler.csvFileWithSchema(csvAttributes)
-    run(df)
-  }
+) extends SmvSingleFile {
+  def readSingleFile(handler: FileIOHandler) = handler.csvFileWithSchema(csvAttributes)
 }
 
 /**
@@ -564,8 +576,7 @@ class SmvMultiCsvFiles(
     dir: String,
     csvAttributes: CsvAttributes = null,
     override val schemaPath: String = null
-) extends SmvFile
-    with SmvDSWithParser {
+) extends SmvFile {
 
   override val path = dir
 
@@ -574,10 +585,7 @@ class SmvMultiCsvFiles(
     else Option(findFullPath(schemaPath))
   }
 
-  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
-    val parserValidator =
-      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
-
+  private[smv] override def readFromFile(parserValidator: ParserLogger): DataFrame = {
     val filesInDir = SmvHDFS.dirList(fullPath).map { n =>
       s"${fullPath}/${n}"
     }
@@ -586,13 +594,13 @@ class SmvMultiCsvFiles(
       throw new SmvRuntimeException(s"There are no data files in ${fullPath}")
 
     val df = filesInDir
-      .map { s =>
-        val handler = new FileIOHandler(app.sqlContext, s, fullSchemaPath, parserValidator)
+      .map { filePath =>
+        val handler =   getHandler(filePath, parserValidator)
         handler.csvFileWithSchema(csvAttributes)
       }
       .reduce(_ unionAll _)
 
-    run(df)
+    df
   }
 }
 
@@ -600,17 +608,9 @@ case class SmvFrlFile(
     override val path: String,
     override val schemaPath: String = null,
     override val isFullPath: Boolean = false
-) extends SmvFile
-    with SmvDSWithParser {
+) extends SmvSingleFile {
 
-  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
-    val parserValidator =
-      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
-    // TODO: this should use inputDir instead of dataDir
-    val handler = new FileIOHandler(app.sqlContext, fullPath, fullSchemaPath, parserValidator)
-    val df      = handler.frlFileWithSchema()
-    run(df)
-  }
+  def readSingleFile(handler: FileIOHandler) = handler.frlFileWithSchema()
 }
 
 /**
