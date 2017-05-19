@@ -39,7 +39,6 @@ class CsvTest extends SmvTestUtil {
   }
 
   test("Test reading CSV file with user-defined schema") {
-    println("BEFORE")
     val file =
       SmvCsvFile(
         "./" + testDataDir + "CsvTest/test1",
@@ -49,11 +48,7 @@ class CsvTest extends SmvTestUtil {
         Some("eman:String;di:integer")
       )
 
-    println("BEFORE RDD")
     val res = file.rdd()
-    println("AFTER")
-    println("TEST userSchema: ")
-    println(file.userSchema)
 
     assertSrddDataEqual(res, "Bob,1;Fred,2")
     assertSrddSchemaEqual(res, "eman:String;di:integer")

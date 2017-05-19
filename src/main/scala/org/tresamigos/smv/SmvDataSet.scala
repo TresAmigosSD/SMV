@@ -515,17 +515,16 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
     else Option(findFullPath(schemaPath))
   }
 
+  private def finalSchemaPath =
+    fullSchemaPath.getOrElse { SmvSchema.dataPathToSchemaPath(fullPath) }
+
   val userSchema: Option[String]
 
   val schema: SmvSchema =
     userSchema match {
       case Some(s) => SmvSchema.fromString(s)
-      case None =>
-        val inferredSchemaPath =
-          fullSchemaPath.getOrElse { SmvSchema.dataPathToSchemaPath(fullPath) }
-        SmvSchema.fromFile(app.sc, inferredSchemaPath)
+      case None => SmvSchema.fromFile(app.sc, finalSchemaPath)
     }
-
 
   private[smv] def readFromFile(parserLogger: ParserLogger): DataFrame
 
@@ -560,6 +559,7 @@ abstract class SmvSingleFile extends SmvFile {
   }
 }
 
+
 /**
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
@@ -570,11 +570,8 @@ case class SmvCsvFile(
     override val isFullPath: Boolean = false,
     override val userSchema: Option[String] = None
 ) extends SmvSingleFile {
-  def readSingleFile(handler: FileIOHandler) ={
-    println("readSingleFile")
-    println("userSchema: ")
-    println(userSchema)
-    handler.csvFileWithSchema(csvAttributes, userSchema)}
+  def readSingleFile(handler: FileIOHandler) =
+    handler.csvFileWithSchema(csvAttributes, Some(schema))
 }
 
 /**
@@ -610,7 +607,7 @@ class SmvMultiCsvFiles(
     val df = filesInDir
       .map { filePath =>
         val handler =   getHandler(filePath, parserValidator)
-        handler.csvFileWithSchema(csvAttributes, userSchema)
+        handler.csvFileWithSchema(csvAttributes, Some(schema))
       }
       .reduce(_ unionAll _)
 
@@ -624,7 +621,7 @@ case class SmvFrlFile(
     override val isFullPath: Boolean = false,
     override val userSchema: Option[String] = None
 ) extends SmvSingleFile {
-  def readSingleFile(handler: FileIOHandler) = handler.frlFileWithSchema(userSchema)
+  def readSingleFile(handler: FileIOHandler) = handler.frlFileWithSchema(Some(schema))
 }
 
 /**
