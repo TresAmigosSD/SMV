@@ -517,6 +517,16 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
 
   val userSchema: Option[String]
 
+  val schema: SmvSchema =
+    userSchema match {
+      case Some(s) => SmvSchema.fromString(s)
+      case None =>
+        val inferredSchemaPath =
+          fullSchemaPath.getOrElse { SmvSchema.dataPathToSchemaPath(fullPath) }
+        SmvSchema.fromFile(app.sc, inferredSchemaPath)
+    }
+
+
   private[smv] def readFromFile(parserLogger: ParserLogger): DataFrame
 
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
@@ -530,19 +540,15 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
    *  - raw class code crc
    *  - input csv file path
    *  - input csv file modified time
-   *  - input schema file path
-   *  - input schema file modified time
+   *  - input schema contents
    */
   override def datasetHash() = {
     val fileName = fullPath
     val mTime    = SmvHDFS.modificationTime(fileName)
 
-    val schemaPath  = fullSchemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(fullPath))
-    val schemaMTime = SmvHDFS.modificationTime(schemaPath)
-
     val crc = new java.util.zip.CRC32
-    crc.update((fileName + schemaPath).toCharArray.map(_.toByte))
-    (crc.getValue + mTime + schemaMTime + datasetCRC).toInt
+    crc.update(fileName.toCharArray.map(_.toByte))
+    (crc.getValue + mTime + schema.schemaHash + datasetCRC).toInt
   }
 }
 
