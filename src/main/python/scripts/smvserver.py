@@ -504,6 +504,13 @@ def buildRequiresDS(requiresDS, indentation="\t"):
 {1}{1}return [{0}]\n".format(requires, indentation)
 
 def getRequiredModulesWithLinks(currentFqn, fqns):
+    '''takes a fqn and a list of fqn as parameters, and returns an object containing:
+        linkVars: a list of objects containing a fqn, and a linkName (the var name that should represent
+                    the fqn when turned into a SmvModuleLink. Primarity, to be used as placeholders for SmvModuleLink objects
+                    created in the class imports section)
+        requiresDS: a list containing fqns and/or linkNames when a module with a given fqn is not in the same
+                    stage as the currentFqn (to be used to write the requiresDS method, and substite modules
+                    in a different stage as the current dataset for SmvModuleLink objects)'''
     linkVarsList = []
     requiresDSList = []
     currentStage = getStageFromFqn(currentFqn)
