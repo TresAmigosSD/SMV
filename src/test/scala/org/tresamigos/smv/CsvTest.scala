@@ -38,6 +38,27 @@ class CsvTest extends SmvTestUtil {
                           "Fred,2,Fred2")
   }
 
+  test("Test reading CSV file with user-defined schema") {
+    println("BEFORE")
+    val file =
+      SmvCsvFile(
+        "./" + testDataDir + "CsvTest/test1",
+        CsvAttributes.defaultCsvWithHeader,
+        null,
+        false,
+        Some("eman:String;di:integer")
+      )
+
+    println("BEFORE RDD")
+    val res = file.rdd()
+    println("AFTER")
+    println("TEST userSchema: ")
+    println(file.userSchema)
+
+    assertSrddDataEqual(res, "Bob,1;Fred,2")
+    assertSrddSchemaEqual(res, "eman:String;di:integer")
+  }
+
   test("Test reading CSV file with attributes in schema file.") {
     val file = SmvCsvFile("./" + testDataDir + "CsvTest/test2.csv")
     val df   = file.rdd()

@@ -515,6 +515,8 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
     else Option(findFullPath(schemaPath))
   }
 
+  val userSchema: Option[String]
+
   private[smv] def readFromFile(parserLogger: ParserLogger): DataFrame
 
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
@@ -559,9 +561,14 @@ case class SmvCsvFile(
     override val path: String,
     csvAttributes: CsvAttributes = null,
     override val schemaPath: String = null,
-    override val isFullPath: Boolean = false
+    override val isFullPath: Boolean = false,
+    override val userSchema: Option[String] = None
 ) extends SmvSingleFile {
-  def readSingleFile(handler: FileIOHandler) = handler.csvFileWithSchema(csvAttributes)
+  def readSingleFile(handler: FileIOHandler) ={
+    println("readSingleFile")
+    println("userSchema: ")
+    println(userSchema)
+    handler.csvFileWithSchema(csvAttributes, userSchema)}
 }
 
 /**
@@ -575,7 +582,8 @@ case class SmvCsvFile(
 class SmvMultiCsvFiles(
     dir: String,
     csvAttributes: CsvAttributes = null,
-    override val schemaPath: String = null
+    override val schemaPath: String = null,
+    override val userSchema: Option[String] = None
 ) extends SmvFile {
 
   override val path = dir
@@ -596,7 +604,7 @@ class SmvMultiCsvFiles(
     val df = filesInDir
       .map { filePath =>
         val handler =   getHandler(filePath, parserValidator)
-        handler.csvFileWithSchema(csvAttributes)
+        handler.csvFileWithSchema(csvAttributes, userSchema)
       }
       .reduce(_ unionAll _)
 
@@ -607,10 +615,10 @@ class SmvMultiCsvFiles(
 case class SmvFrlFile(
     override val path: String,
     override val schemaPath: String = null,
-    override val isFullPath: Boolean = false
+    override val isFullPath: Boolean = false,
+    override val userSchema: Option[String] = None
 ) extends SmvSingleFile {
-
-  def readSingleFile(handler: FileIOHandler) = handler.frlFileWithSchema()
+  def readSingleFile(handler: FileIOHandler) = handler.frlFileWithSchema(userSchema)
 }
 
 /**
