@@ -367,7 +367,8 @@ class SmvMultiCsvFiles(WithParser, SmvInput):
         self._smvMultiCsvFiles = smvApp._jvm.org.tresamigos.smv.SmvMultiCsvFiles(
             self.dir(),
             self.csvAttr(),
-            None
+            None,
+            smvApp.scalaNone()
         )
 
     def getRawScalaInputDS(self):

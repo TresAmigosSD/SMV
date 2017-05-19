@@ -520,7 +520,7 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
 
   val userSchema: Option[String]
 
-  val schema: SmvSchema =
+  def schema: SmvSchema =
     userSchema match {
       case Some(s) => SmvSchema.fromString(s)
       case None => SmvSchema.fromFile(app.sc, finalSchemaPath)
@@ -574,6 +574,15 @@ case class SmvCsvFile(
     handler.csvFileWithSchema(csvAttributes, Some(schema))
 }
 
+case class SmvFrlFile(
+    override val path: String,
+    override val schemaPath: String = null,
+    override val isFullPath: Boolean = false,
+    override val userSchema: Option[String] = None
+) extends SmvSingleFile {
+  def readSingleFile(handler: FileIOHandler) = handler.frlFileWithSchema(Some(schema))
+}
+
 /**
  * Instead of a single input file, specify a data dir with files which has
  * the same schema and CsvAttributes.
@@ -613,15 +622,6 @@ class SmvMultiCsvFiles(
 
     df
   }
-}
-
-case class SmvFrlFile(
-    override val path: String,
-    override val schemaPath: String = null,
-    override val isFullPath: Boolean = false,
-    override val userSchema: Option[String] = None
-) extends SmvSingleFile {
-  def readSingleFile(handler: FileIOHandler) = handler.frlFileWithSchema(Some(schema))
 }
 
 /**

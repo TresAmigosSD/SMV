@@ -70,14 +70,14 @@ package org.tresamigos.smv {
     test("Test SmvFile crc") {
       import org.tresamigos.smv.fixture.smvapptest._
       createTempFile("F1.csv")
-      createTempFile("F1.schema")
+      createTempFile("F1.schema", "foo:integer")
       createTempFile("F2.csv")
-      createTempFile("F2.schema")
+      createTempFile("F2.schema", "bar:string")
 
       assert(f1.datasetHash() !== f2.datasetHash)
 
       SmvHDFS.deleteFile("F1.schema")
-      createTempFile("F1.schema")
+      createTempFile("F1.schema", "foo:string")
 
       assert(f1.datasetHash() !== f3.datasetHash())
     }
