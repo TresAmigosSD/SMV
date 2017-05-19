@@ -141,3 +141,15 @@ class ColumnHelperTest(SmvBaseTest):
 
         self.should_be_same(e1, r1)
         self.should_be_same(e2, r2)
+
+    def test_smvTime_helpers(self):
+        df = self.createDF("smvTime:String", "D20120302;Q201203;M201203")
+        res = df.withColumn('type',
+            df.smvTime.smvTimeToType()
+        ).withColumn('index',
+            df.smvTime.smvTimeToIndex()
+        ).withColumn('label',
+            df.smvTime.smvTimeToLabel()
+        )
+
+        res.smvDumpDF()
