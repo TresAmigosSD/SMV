@@ -625,7 +625,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
   /**
-   * Apply aggregation on given keys and specified time panel peoriod
+   * Apply aggregation on given keys and specified time panel period
    * Example
    * {{{
    * val res = df.smvGroupBy("sku").smvTimePanelAgg("time", Day(2014, 1, 1), Day(2017,3,31))(
