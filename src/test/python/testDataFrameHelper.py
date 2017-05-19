@@ -128,6 +128,8 @@ class DfHelperTest(SmvBaseTest):
 
         res = self.smvApp.runModule("mod:" + "dataframehelper.stage.modules.T")
         self.should_be_same(df, res)
+        import os
+        os.remove(T.path())
 
     def test_smvJoinByKey(self):
         df1 = self.createDF(

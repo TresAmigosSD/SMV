@@ -34,6 +34,7 @@ private[smv] object SmvReportIO {
 
     // Save report RDD to a temparory file on HDFS
     val tmpHdfsFile = "/tmp/smv_tmp_" + filename
+    SmvHDFS.deleteFile(tmpHdfsFile)
     report.saveAsTextFile(tmpHdfsFile)
 
     // copy merge the HDFS output to a local output
