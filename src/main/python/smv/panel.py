@@ -20,11 +20,28 @@ from smvapp import SmvApp
 def Quarter(year, quarter):
     """Define an smv.panel.Quarter
 
-        As added to a DF as column `smvTime`, the value format will look like "Q201201"
+        Quarter extends smv.panel.PartialTime base class. It has the following methods,
+            * smvTime(): returns (str), will be the value of the `smvTime` column if added to a DF
+            * timeIndex(): returns (int), an integer incremental by one as the PartialTime increase
+                by one unit
+            * timeLabel(): returns (str), a human readable string
+            * timeType(): returns (str), the type of the PartialTime
 
         Args:
             year (int):
             quarter (int):
+
+        Example:
+
+            >>> q = Quarter(2012, 1)
+            >>> q.smvTime()
+            u'Q201201'
+            >>> q.timeIndex()
+            168
+            >>> q.timeLabel()
+            u'2012-Q1'
+            >>> q.timeType()
+            u'quarter'
 
         Returns:
             (java object smv.panel.Quarter)
@@ -34,11 +51,28 @@ def Quarter(year, quarter):
 def Month(year, month):
     """Define an smv.panel.Month
 
-        As added to a DF as column `smvTime`, the value format will look like "M201212"
+        Quarter extends smv.panel.PartialTime base class. It has the following methods,
+            * smvTime(): returns (str), will be the value of the `smvTime` column if added to a DF
+            * timeIndex(): returns (int), an integer incremental by one as the PartialTime increase
+                by one unit
+            * timeLabel(): returns (str), a human readable string
+            * timeType(): returns (str), the type of the PartialTime
 
         Args:
             year (int):
             month (int):
+
+        Example:
+
+            >>> m = Month(2012, 5)
+            >>> m.smvTime()
+            u'M201205'
+            >>> m.timeIndex()
+            508
+            >>> m.timeLabel()
+            u'2012-05'
+            >>> m.timeType()
+            u'month'
 
         Returns:
             (java object smv.panel.Month)
@@ -48,12 +82,29 @@ def Month(year, month):
 def Day(year, month, day):
     """Define an smv.panel.Day
 
-        As added to a DF as column `smvTime`, the value format will look like "D20121231"
+        Quarter extends smv.panel.PartialTime base class. It has the following methods,
+            * smvTime(): returns (str), will be the value of the `smvTime` column if added to a DF
+            * timeIndex(): returns (int), an integer incremental by one as the PartialTime increase
+                by one unit
+            * timeLabel(): returns (str), a human readable string
+            * timeType(): returns (str), the type of the PartialTime
 
         Args:
             year (int):
             month (int):
             day (int):
+
+        Example:
+
+            >>> d = Day(2012, 5, 31)
+            >>> d.smvTime()
+            u'D20120531'
+            >>> d.timeIndex()
+            15491
+            >>> d.timeLabel()
+            u'2012-05-31'
+            >>> d.timeType()
+            u'day'
 
         Returns:
             (java object smv.panel.Day)
