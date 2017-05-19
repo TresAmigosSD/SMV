@@ -501,14 +501,9 @@ def buildRequiresDS(requiresDS, indentation="\t"):
 {1}{1}return [{0}]\n".format(requires, indentation)
 
 def getRequiredModulesWithLinks(currentFqn, fqns):
-    '''takes a fqn and a list of fqn as parameters, and returns an object containing:
-        linkVars: a list of objects containing a fqn, and a linkName (the var name that should represent
-                    the fqn when turned into a SmvModuleLink. Primarity, to be used as placeholders for SmvModuleLink objects
-                    created in the class imports section)
-        requiresDS: a list containing fqns and/or linkNames when a module with a given fqn is not in the same
-                    stage as the currentFqn (to be used to write the requiresDS method, and substite modules
-                    in a different stage as the current dataset for SmvModuleLink objects)'''
-    linkVarsList = []
+    '''takes a fqn (currentFqn) and a list of fqns or SmvModuleLink(s) required by the currentFqn
+        if a required fqn is in the same stage, it will remain as a fqn in the returned list. If
+        the required fqn is in a different stage, it will be subtituted by a SmvModuleLink'''
     requiresDSList = []
     currentStage = getStageFromFqn(currentFqn)
 
@@ -520,9 +515,17 @@ def getRequiredModulesWithLinks(currentFqn, fqns):
         else:
             # link name
             linkName = fqn.replace(".", "_") + "_link"
-            linkVarsList.append({ "linkName": linkName, "fqn": fqn})
             requiresDSList.append(linkName)
-    return { "linkVars": linkVarsList, "requiresDS": requiresDSList }
+    return requiresDSList
+
+def getRequiredDSLinkVars(currentFqn, fqns):
+    linkVarsList = []
+    currentStage = getStageFromFqn(currentFqn)
+    for fqn in fqns:
+        if currentStage != getStageFromFqn(fqn):
+            linkName = fqn.replace(".", "_") + "_link"
+            linkVarsList.append({ "linkName": linkName, "fqn": fqn})
+    return linkVarsList
 
 # csv
 def buildPath(path, indentation="\t"):
@@ -585,6 +588,13 @@ JOB_SUCCESS = 'SUCCESS: Code updated!' # TODO: rename CODE_UPDATE_SUCCESS
 OK = ""
 
 MODULE_DOES_NOT_EXIST= 'MODULE_DOES_NOT_EXIST'
+
+@app.route("/api/test", methods = ['POST'])
+def test():
+    currentFqn = request.form["fqn"].encode("utf-8")
+    fqns = ast.literal_eval(request.form["requiresDS"])
+    return jsonify(getRequiredDSLinkVars(currentFqn, fqns))
+
 
 @app.route("/api/get_app_info", methods = ['POST'])
 def get_app_info():
@@ -881,14 +891,15 @@ def updateDatasetInfo():
                 (classImportsStart, classImportsEnd) = getPlutoImportsStartEnd(lines_of_code_list, className)
                 # process requiresDS, turn them into links, get link definitions
                 reqDSWLinks = getRequiredModulesWithLinks(fqn, requiresDS)
-                classImportsSection = buildImports(className, requiresDS, reqDSWLinks["linkVars"]).splitlines(True)
+                reqDSLinkVars = getRequiredDSLinkVars(fqn, requiresDS)
+                classImportsSection = buildImports(className, requiresDS, reqDSLinkVars).splitlines(True)
                 if classImportsStart:
                     newFileContents = classImportsSection + newFileContents[:classImportsStart] + newFileContents[classImportsEnd + 1:]
                 else:
                     newFileContents = classImportsSection + newFileContents
 
                 (reqStart, reqEnd, _, reqClassEnd) = getCodeBlockStartEnd(newFileContents, className, "requiresDS");
-                reqSection = buildRequiresDS(reqDSWLinks["requiresDS"], methodIndent).splitlines(True)
+                reqSection = buildRequiresDS(reqDSWLinks, methodIndent).splitlines(True)
                 newFileContents = newFileContents[:reqClassEnd + 1] + ["\n"] + reqSection + newFileContents[reqClassEnd + 1:] \
                     if reqStart is None else newFileContents[:reqStart] + reqSection + newFileContents[reqEnd + 1:]
 
