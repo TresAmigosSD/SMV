@@ -367,7 +367,7 @@ def get_module_name_from_fqn(fqn):
 def getMsnFromFqn(fqn):
     '''based on a fqn, returns an object with the basename, and stage for that given fqn'''
     fqn_split = fqn.split(".")
-    stage = ".".join(fqn_split[:-2])  # TODO: fix.. if stage a.b and fqn a.b.c.d.e.f, will return a wrong stage
+    stage = getStageFromFqn(fqn)
     baseName = fqn_split[-1]
     return { "stage": stage, "baseName": baseName }
 
@@ -375,9 +375,7 @@ def getStageFromFqn(fqn):
     '''returns the stage given a a dataset's fqn'''
     # constructing urn for dataset
     try:
-        urn = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn).urn()
-        # getting stage from URN factory in scala side
-        stage = SmvApp.getInstance()._jvm.org.tresamigos.smv.URN.apply(urn).getStage().get().encode("utf-8")
+        stage = SmvApp.getInstance().getStageFromFqn(fqn).encode("utf-8")
     except:
         raise ValueError("Could not retrive stage with the given fqn: " + str(fqn))
     return stage
@@ -440,7 +438,7 @@ def extractImportsFromFqns(fqns = []):
     '''
     return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
 
-def buildImports(className = None, requiresDS = None, linkFqnList = None):
+def buildImports(className = None, requiresDS = None, linkFqnList = []):
     '''Template for generating the imports section of a dataset'''
     # classname not provided, then create global imports
     if not className:
@@ -455,8 +453,7 @@ from pyspark.sql.functions import *
 
     dependencies = extractImportsFromFqns(requiresDS)
     importStatements = "\n".join(map(lambda dep: "import {}".format(dep), dependencies))
-    linkDefinitions = "" if not linkFqnList \
-        else "\n".join(map(lambda l: "{0} = SmvPyModuleLink({1})".format(l["linkName"], l["fqn"]), linkFqnList))
+    linkDefinitions = "\n".join(["{0} = SmvPyModuleLink({1})".format(l["linkName"], l["fqn"]) for l in linkFqnList])
     return """\
 ###---{0}_IMPORTS_START---###
 {1}

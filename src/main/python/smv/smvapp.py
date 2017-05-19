@@ -160,6 +160,14 @@ class SmvApp(object):
         """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged"""
         return self.j_smvPyClient.urn2fqn(urnOrFqn)
 
+    def fqn2urn(self, fqn):
+        """Returns urn string for a given fqn"""
+        return self._jvm.org.tresamigos.smv.ModURN(fqn).toString()
+
+    def getStageFromFqn(self, fqn):
+        """Returns the stage name for a given fqn"""
+        return self._jvm.org.tresamigos.smv.URN.apply(self.fqn2urn(fqn)).getStage().get()
+
     def outputDir(self):
         return self.j_smvPyClient.outputDir()
 
