@@ -20,6 +20,8 @@ from smvapp import SmvApp
 def Quarter(year, quarter):
     """Define an smv.panel.Quarter
 
+        As added to a DF as column `smvTime`, the value format will look like "Q201201"
+
         Args:
             year (int):
             quarter (int):
@@ -32,6 +34,8 @@ def Quarter(year, quarter):
 def Month(year, month):
     """Define an smv.panel.Month
 
+        As added to a DF as column `smvTime`, the value format will look like "M201212"
+
         Args:
             year (int):
             month (int):
@@ -43,6 +47,8 @@ def Month(year, month):
 
 def Day(year, month, day):
     """Define an smv.panel.Day
+
+        As added to a DF as column `smvTime`, the value format will look like "D20121231"
 
         Args:
             year (int):

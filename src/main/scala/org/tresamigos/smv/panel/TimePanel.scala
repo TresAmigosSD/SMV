@@ -183,10 +183,10 @@ object PartialTime {
  * "start" and "end" have to have the same timeType
  **/
 case class TimePanel(start: PartialTime, end: PartialTime) extends Serializable {
-  require(start.timeType == end.timeType)
+  require(start.timeType == end.timeType, "start and end of a TimePanel should be the same type")
   val timeType = start.timeType
 
-  private def smvTimeSeq(): Seq[String] = {
+  def smvTimeSeq(): Seq[String] = {
     val startIndex = start.timeIndex()
     val endIndex   = end.timeIndex()
     val range      = (startIndex to endIndex).toSeq
