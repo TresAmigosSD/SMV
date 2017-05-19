@@ -14,6 +14,7 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.functions._
 import panel._
 
 class TimePanelTest extends SmvTestUtil {
@@ -71,6 +72,27 @@ class TimePanelTest extends SmvTestUtil {
 1,2012-05-01 00:00:00.0,2.45,Q201202"""
     )
 
+  }
+
+  test("test smvTimePanelAgg") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df =
+      dfFrom("k:Integer; ts:String; v:Double",
+             "1,20120101,1.5;" +
+             "1,20120301,4.5;" +
+             "1,20120701,7.5;" +
+             "1,20120501,2.45").selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
+
+    val res = df
+      .smvGroupBy("k")
+      .smvTimePanelAgg("ts", Quarter(2012, 1), Quarter(2012, 2))(
+        sum($"v").as("v")
+      )
+    assertSrddDataEqual(
+      res,
+      """1,Q201201,6.0;
+1,Q201202,2.45"""
+    )
   }
 
   test("test timePanelValueFill DF helper") {
