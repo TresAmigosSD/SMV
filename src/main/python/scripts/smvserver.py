@@ -22,8 +22,8 @@ from smv.smvapp import DataSetRepoFactory
 from shutil import copyfile
 import py_compile
 import json
-from smv.smvpydataset import SmvCsvFile
-from smv.smvpydataset import SmvHiveTable
+from smv.smvdataset import SmvCsvFile
+from smv.smvdataset import SmvHiveTable
 import ast
 import errno
 
@@ -33,19 +33,32 @@ TAB_SIZE = 4
 
 # ---------- Helper Functions ---------- #
 
+def getStagesInApp():
+    """returns list of all stages defined in app"""
+    return list(SmvApp.getInstance().stages)
+
+def getFqnsInApp():
+    """returns all known module FQNs in app. Note: excluded links"""
+    repo = DataSetRepoFactory(SmvApp.getInstance()).createRepo()
+    # generate list of URNs in a stage for each stage (list-of-list)
+    urnsLL = [repo.dataSetsForStage(s) for s in getStagesInApp()]
+    # flatten the list-of-list to simple list of urns and remove the "mod:" prefix
+    urns = [u.split(":")[1] for ul in urnsLL for u in ul]
+    return urns
+
 def indentation(tabbed_str):
+    '''returns the number of indentation spaces for a given string'''
     no_tabs_str = tabbed_str.expandtabs(TAB_SIZE)
     # if string has only whitespace, return 0 indentation.
     # else return length of string minus len of str with preceding whitespace stripped
     return 0 if no_tabs_str.isspace() else len(no_tabs_str) - len(no_tabs_str.lstrip())
 
 def test_compile_for_errors(fullname):
+    '''returns true if a given file has compilation errors. False otherwise'''
     error = None
     try:
         ok = py_compile.compile(fullname, None, None, True)
     except py_compile.PyCompileError,err:
-        print 'Compiling', fullname, '...'
-        print err.msg
         error = err.msg
     except IOError, e:
         error = e
@@ -54,17 +67,37 @@ def test_compile_for_errors(fullname):
             error = 1
     return error
 
+def getPlutoImportsStartEnd(linesOfCodeList, importsSectionName):
+    '''retuns start and end lines of a given imports section'''
+    blockStart = "###---{}_IMPORTS_START---###".format(importsSectionName)
+    blockEnd = "###---{}_IMPORTS_END---###".format(importsSectionName)
+
+    blockStartLine = None
+    blockEndLine = None
+    for i, line in enumerate(linesOfCodeList):
+        if not blockStartLine and line.lstrip().startswith(blockStart):
+            blockStartLine = i
+            continue
+        if blockStartLine is not None and line.lstrip().startswith(blockEnd):
+            blockEndLine = i
+            break
+    return (blockStartLine, blockEndLine)
+
+# TODO: getCodeBlockStartEnd, getDatasetClassStartEnd, getDatasetDescriptionStartEnd should return an Object
+# TODO: getCodeBlockStartEnd should use getDatasetClassStartEnd to get class start end and stay dry
 def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
+    '''returns start and end lines of a given method within a given class'''
     blockStartByName = {
-        "imports": "###---PLUTO_IMPORTS_START---###",
+        "imports": "###---GLOBAL_IMPORTS_START---###",  # TODO: Remove. use getPlutoImportsStartEnd
         "run": "def run(",
         "description": "def description(",
         "requiresDS": "def requiresDS(",
         "isEphemeral": "def isEphemeral(",
         "path": "def path(",
-        "tableName": "def tableName("
+        "tableName": "def tableName(",
+        "*": "def"
     }
-    blockEndByName = { "imports": "###---PLUTO_IMPORTS_END---###" }
+    blockEndByName = { "imports": "###---GLOBAL_IMPORTS_END---###" }
 
     testModuleClassDef = "class {}(".format(className)
     classDefFound = False
@@ -82,7 +115,7 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
 
     # detect module class def
     for i, line in enumerate(linesOfCodeList):
-        if blockName == "imports":
+        if blockName == "imports":  # TODO: remove. use getPlutoImportsStartEnd
             if not blockStartLine and line.lstrip().startswith(blockStartByName[blockName]):
                 blockStartLine = i
                 continue
@@ -105,11 +138,11 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
             # detect end of method
             if blockStartLine is not None and blockEndLine is None:
                 # check if eof or next block started
-                if i == (numLinesOfCode - 1):
+                if (not line.isspace()) and (indentation(line) <= blockIndentation):
+                    blockEndLine = lastNonEmptyLine
+                elif i == (numLinesOfCode - 1):
                     # if last line before eof is not empty space, current line is end of method, else last non empty
                     blockEndLine = i if not line.isspace() else lastNonEmptyLine
-                elif (not line.isspace()) and (indentation(line) <= blockIndentation):
-                    blockEndLine = lastNonEmptyLine
             # detect class end by start of another class (or block with eq or less indentation)
             if (not line.isspace()) and (classDefFound and (indentation(line) <= classIndentation)):
                 classEnd = lastNonEmptyLine
@@ -122,8 +155,9 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
 
     return (blockStartLine, blockEndLine, classStart, classEnd)
 
-# assumes class definition indentation is always 0  // TODO: remove once returning run method only
+# TODO: should also return line number of end of class definition
 def getDatasetClassStartEnd(lines_of_code_list, module_name):
+    '''returns beginning and end lines of a class, and the indentation of its first method'''
     test_module_class_def = "class {}(".format(module_name)
     start = None
     end = None
@@ -147,13 +181,51 @@ def getDatasetClassStartEnd(lines_of_code_list, module_name):
                 break
         lastNonEmptyLine = i if (not line.isspace()) else lastNonEmptyLine
     if start is not None and end is None:
-        end = len(lines_of_code_list)
+        end = len(lines_of_code_list)  # TODO.. should be last non empty line
     return (start, end, methodIndentation)
+
+def getDatasetDescriptionStartEnd(linesOfCodeList, className):
+    '''
+    returns a datasets description start and end line numbers
+    '''
+    (start, end, cDefEnd) = (None, None, None) # placeholders for start and end of description
+
+    # detect first method definition and class
+    (mStart, _, cStart, cEnd) = getCodeBlockStartEnd(linesOfCodeList, className, "*")
+
+    if cStart and cEnd:
+        for i, line in enumerate(linesOfCodeList):
+            if not cDefEnd:
+                # detect end of class definition, exclude comments after it
+                if line.startswith('#'): continue
+                lineSplitAtComment = line.split("#")
+                nonCommentStr = lineSplitAtComment[0]
+                if not cDefEnd and nonCommentStr.rstrip().endswith(":"):
+                    cDefEnd = i
+                    continue
+            lstrippedLine = line.lstrip()
+            if not start and (lstrippedLine.startswith("\"\"\"") or lstrippedLine.startswith("'''")):
+                start = i
+
+            if start:
+                uncommentedLine = line.split("#")[0].rstrip()
+                if uncommentedLine.endswith("\"\"\"") or uncommentedLine.endswith("'''"):
+                    # if i is start, then """ must have two occurrences for i to be beginning and end
+                    if start == i and not (uncommentedLine.count("\"\"\"") == 2 or uncommentedLine.count("'''") == 2):
+                        continue
+                    end = i
+                    break
+            # line is already at first method, so there is no docstring
+            if i >= mStart:
+                (start, end) = (None, None)
+                break
+    return (start, end, cDefEnd)
 
 
 def get_filepath_from_moduleFqn(module_fqn):
-    # TODO: what env var for projects/ directory?
-    prefix = '/projects/' + project_dir + "/src/main/python/"
+    '''given a fqn, returns the fullname of its file'''
+    # TODO: do not use hardcoded value... FIXME
+    prefix = "/projects/sample_smv_project/src/main/python/"
     # dir1.dir2.file.class => [dir1, dir2, file]
     fqn_dirs_filename_list = module_fqn.split(".")[:-1]
     # concats fqn_dirs_filename_list into string with "/" intermezzo, appends .py, prepends prefix
@@ -161,6 +233,7 @@ def get_filepath_from_moduleFqn(module_fqn):
     return filepath
 
 def get_output_dir():
+    '''returns the smv app's output directory'''
     output_dir = SmvApp.getInstance().outputDir()
     if (output_dir.startswith('file://')):
         output_dir = output_dir[7:]
@@ -273,6 +346,7 @@ def get_module_code_file_mapping():
     return module_dict
 
 def err_res(err, err_msg="", res={}): # err, errmsg="", res={}
+    '''returns a json object with the default format for error responses'''
     retval = {}
     retval["err"] = err
     retval["err_msg"] = err_msg
@@ -280,23 +354,27 @@ def err_res(err, err_msg="", res={}): # err, errmsg="", res={}
     return jsonify(retval)
 
 def ok_res(res):
+    '''returns a json object with the default format for a successful response'''
     retval = {}
     retval["err"] = OK
     retval["res"] = res
     return jsonify(retval)
 
 def get_module_name_from_fqn(fqn):
+    '''Returns a string contaiting the basename for a given fqn'''
     return fqn.split(".")[-1:][0]   # a.b.c => [a,b,c] => [c] => c
 
 def getMsnFromFqn(fqn):
+    '''based on a fqn, returns an object with the basename, and stage for that given fqn'''
     fqn_split = fqn.split(".")
-    stage = fqn_split[0]
+    stage = ".".join(fqn_split[:-2])
     baseName = fqn_split[-1]
     return { "stage": stage, "baseName": baseName }
 
 # TODO: FIXME: test if works with new smv version
 def getDatasetInfo(fqn, baseName, stage):
-    print 'starting getDatasetInfo: ', fqn, ', ', baseName, ', ', stage
+    '''returns an object containing the properties of a dataset. Namely, fqn, name, stage, isEphemeral, dsType, description,
+        requiresDS (modules), tableName (Hive), csvFile (csv)'''
     try:
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
     except:
@@ -323,7 +401,6 @@ def getDatasetInfo(fqn, baseName, stage):
     elif moduleDsType.lower() == "module":
         res["requiresDS"] = map(lambda ds: ds.fqn(), module.requiresDS())
     else:
-        print 'value error'
         raise ValueError("dsType not supported")
 
     file_name = get_filepath_from_moduleFqn(fqn)
@@ -334,50 +411,61 @@ def getDatasetInfo(fqn, baseName, stage):
         lines_of_code_list = f.readlines()
     file_content = [line.rstrip() for line in lines_of_code_list]
     (run_start, run_end, _, _) = getCodeBlockStartEnd(lines_of_code_list, module_name, 'run')
-    print 'rm start, end: ', run_start, ', ', run_end
 
     # remove indentation from run method body
     raw_run_method_body = file_content[(run_start + 1):(run_end + 1)]
     run_body_indent = indentation(raw_run_method_body[0])
-    print 'run_body_indent: ', run_body_indent
     run_method_body = [line[run_body_indent:] for line in raw_run_method_body]
 
     res["srcFile"] = file_name,
     res["srcCode"] = run_method_body
     return res
 
-# --------------------------------------------------------------------
-# --------------------------------------------------------------------
-# ----- TODO: combine all build* functions into a single function-----
-# --------------------------------------------------------------------
 
-#build imports
-def buildImports(stages):
-    stagesList = ['stage1', 'stage2'] # TODO: get actual list of stages.. not hardcoded
-    # importStages = "".join(map((lambda stage: "import {}\n".format(stage)), stages))
-    importStages = "".join(map((lambda stage: "import {}\n".format(stage)), stagesList))  # TODO: remove when stages not hardcoded
-    return "\
-###---PLUTO_IMPORTS_START---###\n\
-from smv import *\n\
-from pyspark.sql.functions import *\n\
-\n\
-{}\
-###---PLUTO_IMPORTS_END---###\n".format(importStages)
+def extractImportsFromFqns(fqns = []):
+    '''
+    Given a list of fqns, returns a list of file qualified names. E.g.:
+    for: fqns = ['a.b.c.d', 'x.y.z'], returns: ['a.b.c', 'x.y'], which are files located in a/b/c.py, and x/y.py
+    '''
+    return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
+
+def buildImports(className = None, requiresDS = None):
+    '''Template for generating the imports section of a dataset'''
+    # classname not provided, then create global imports
+    if not className:
+        return """\
+###---GLOBAL_IMPORTS_START---###
+from smv import *
+from pyspark.sql.functions import *
+###---GLOBAL_IMPORTS_END---###\n"""
+
+    # class has no required datasets, no need to import anything
+    if not requiresDS: return "";
+
+    dependencies = extractImportsFromFqns(requiresDS)
+    importStatements = "\n".join(map(lambda dep: "import {}".format(dep), dependencies))
+    return """\
+###---{0}_IMPORTS_START---###
+{1}
+###---{0}_IMPORTS_END---###\n""".format(className, importStatements)
 
 # class start
-def buildClassStart(className, dsType): # what about SmvPyOutput?
+def buildClassStart(className, dsType): # what about SmvOutput?
+    '''Template for generating the class definition of a dataset'''
     extendsByDsType = { "csv": "SmvCsvFile", "hive": "SmvHiveTable", "module": "SmvModule" }
     extends = extendsByDsType[dsType.lower()]
     return "class {}({}):\n".format(className, extends)
 
 # build description
 def buildDescription(description, indentation="\t"):
-    return "\
-{1}def description(self):\n\
-{1}{1}return \"{0}\"\n".format(description, indentation)
+    '''Template for generating the description method\'s code'''
+    return """\
+{1}\"\"\"
+{1}{0}
+{1}\"\"\"\n""".format(description, indentation)
 
 def buildRun(dsType, body=None, indentation="\t"):
-    print 'body: ', str(body)
+    '''Template for generating the run method code'''
     if body is None:
         newBody = "{0}{0}return None\n".format(indentation)
     else: # give 2 level indentation to body
@@ -387,12 +475,14 @@ def buildRun(dsType, body=None, indentation="\t"):
     return "{2}def run(self, {0}):\n{1}".format(arg, newBody, indentation)
 
 def buildIsEphemeral(ephemeral, indentation="\t"):
+    '''Template for generating isEphemeral function code'''
     return "\
 {1}def isEphemeral(self):\n\
 {1}{1}return {0}\n".format(ephemeral, indentation)
 
 # module
 def buildRequiresDS(requiresDS, indentation="\t"):
+    '''Template for generating requiresDS\' method code'''
     requires = "" if not requiresDS else ", ".join(map((lambda r: r.encode("utf-8")), requiresDS))
     return "\
 {1}def requiresDS(self):\n\
@@ -400,6 +490,7 @@ def buildRequiresDS(requiresDS, indentation="\t"):
 
 # csv
 def buildPath(path, indentation="\t"):
+    '''Template for generating path method code'''
     path = "" if path is None else path
     return "\
 {1}def path(self):\n\
@@ -407,6 +498,7 @@ def buildPath(path, indentation="\t"):
 
 # hive
 def buildTableName(tableName, indentation="\t"):
+    '''Template for generating tableName method code'''
     tableName = "" if tableName is None else tableName
     return "\
 {1}def tableName(self):\n\
@@ -414,8 +506,9 @@ def buildTableName(tableName, indentation="\t"):
 
 
 def generateModuleCode(stages, className, dsType, description, isEphemeral, run=None, requiresDS=None):
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
-        buildImports(stages),  # should be list of stages, not hardcoded
+    '''Basic template for generating datasets extending SmvModule'''
+    return "{}\n{}{}{}\n{}\n{}\n".format(
+        buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
         buildRequiresDS(requiresDS),
@@ -423,8 +516,9 @@ def generateModuleCode(stages, className, dsType, description, isEphemeral, run=
         buildRun(dsType, run)).expandtabs(TAB_SIZE) # ...and turn tabs to spaces
 
 def generateCsvCode(stages, className, dsType, description, isEphemeral, run=None, path=None):
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
-        buildImports(stages),  # should be list of stages, not hardcoded
+    '''Basic template for generating datasets extending SmvCsvFile'''
+    return "{}\n{}{}{}\n{}\n{}\n".format(
+        buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
         buildPath(path),
@@ -432,18 +526,15 @@ def generateCsvCode(stages, className, dsType, description, isEphemeral, run=Non
         buildRun(dsType, run)).expandtabs(TAB_SIZE) # ...and turn tabs to spaces
 
 def generateHiveCode(stages, className, dsType, description, isEphemeral, run=None, tableName=None):
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
-        buildImports(stages),  # should be list of stages, not hardcoded
+    '''Basic template for generating datasets extending SmvHiveTable'''
+    return "{}\n{}{}{}\n{}\n{}\n".format(
+        buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
         buildTableName(tableName),
         buildIsEphemeral(isEphemeral),
         buildRun(dsType, run)).expandtabs(TAB_SIZE) # ...and turn tabs to spaces
 
-# --------------------------------------------------------------------
-# ------TODO: combine fun above into single fun-----------------------
-# --------------------------------------------------------------------
-# --------------------------------------------------------------------
 
 # ---------- API Definition ---------- #
 
@@ -459,6 +550,18 @@ OK = ""
 
 MODULE_DOES_NOT_EXIST= 'MODULE_DOES_NOT_EXIST'
 
+@app.route("/api/get_app_info", methods = ['POST'])
+def get_app_info():
+    '''
+    body: empty
+    function: retrieve list of stages and fqns in app.
+    '''
+    res = {
+        "stages": getStagesInApp(),
+        "fqns": getFqnsInApp()
+    }
+    return ok_res(res)
+
 @app.route("/api/run_module", methods = ['POST'])
 def run_module():
     '''
@@ -473,6 +576,13 @@ def run_module():
     run_result = SmvApp.getInstance().runModule("mod:{}".format(module_fqn))
     return ok_res(str(run_result))
 
+# TODO: move
+def getFqnOfRequire(ds):
+    '''returns fqn of a dataset. If ds is a link, will return fqn of target'''
+    if getattr(ds, 'IsSmvModuleLink', None):
+        ds = ds.target()
+    return ds.fqn()
+
 # TODO: rename... should return all information about the module or create if not exists
 @app.route("/api/get_dataset_info", methods = ['POST'])
 def get_module_code():
@@ -480,6 +590,7 @@ def get_module_code():
     body: fqn = 'xxx'
     function: return the module's code
     '''
+
     module_fqn = None
     module_name = None
     module_stage = None
@@ -488,16 +599,16 @@ def get_module_code():
         module_stage = None
         if "." in module_name: # module_name is an fqn
             module_fqn = module_name
-            fqn_split = module_fqn.split(".")
-            module_stage = fqn_split[0] # => a.b.c.x.y.z => a is stage
-            module_name = fqn_split[-1]
+            msn = getMsnFromFqn(module_fqn)
+            module_stage = msn["stage"]
+            module_name = msn["baseName"]
         else: # if module_name is not an fqn, both name and stage must not be empty
             module_stage = request.form['stage'].encode("utf-8")
             if not module_name or not module_stage:
                 raise ValueError('TODO....')
             module_fqn = "{0}.{1}.{1}".format(module_stage, module_name)
     except:
-        return 'module name and stage not provided'
+        return err_res('module name and stage not provided')
 
     try:
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(module_fqn)
@@ -515,7 +626,7 @@ def get_module_code():
         "stage": module_stage,
         "ephemeral": module.isEphemeral(),
         "dsType": moduleDsType,
-        "description": module.description()
+        "description": module.description().strip() if module.description() else ""
     }
 
     if moduleDsType.lower() == "input":
@@ -527,7 +638,7 @@ def get_module_code():
             res["tableName"] = module.tableName()
         if not res["dsInputType"]: raise ValueError('dsInputType not supported')
     elif moduleDsType.lower() == "module":
-        res["requiresDS"] = map(lambda ds: ds.fqn(), module.requiresDS())
+        res["requiresDS"] = map(lambda ds: getFqnOfRequire(ds), module.requiresDS())
     else:
         raise ValueError("dsType not supported")
 
@@ -539,19 +650,23 @@ def get_module_code():
         lines_of_code_list = f.readlines()
     file_content = [line.rstrip() for line in lines_of_code_list]
     (run_start, run_end, _, _) = getCodeBlockStartEnd(lines_of_code_list, module_name, 'run')
-    print 'rm start, end: ', run_start, ', ', run_end
 
-    # remove indentation from run method body
-    raw_run_method_body = file_content[(run_start + 1):(run_end + 1)]
-    run_body_indent = indentation(raw_run_method_body[0])
-    print 'run_body_indent: ', run_body_indent
-    run_method_body = [line[run_body_indent:] for line in raw_run_method_body]
+    run_method_body = [""]
+    if run_start and run_end:
+        # remove indentation from run method body
+        raw_run_method_body = file_content[(run_start + 1):(run_end + 1)]
+        run_body_indent = indentation(raw_run_method_body[0])
+        run_method_body = [line[run_body_indent:] for line in raw_run_method_body]
+    else:
+        err_res('run method not detected in dataset')
 
     res["srcFile"] = file_name,
     res["srcCode"] = run_method_body
     return ok_res(res)
     # except IOError:
     #     return err_res(MODULE_NOT_FOUND_ERR)
+
+
 
 
 @app.route("/api/create_dataset", methods = ['POST']) # rename create_dataset
@@ -569,11 +684,12 @@ def updateModuleMetaData():
     dsType = request.form["dsType"].encode("utf-8").lower()
     isEphemeral = ast.literal_eval(request.form["ephemeral"].encode("utf-8").capitalize())
 
+    # ----TODO: use getDatasetInfo() for dsProperties when working!!!!!!----
+    dsProperties = { "fqn":fqn, "description":description, "dsType":dsType, "srcCode":["return None\n"], "ephemeral":isEphemeral }
+
     if dsType == 'input':
         dsInputType = request.form["dsInputType"].encode("utf-8").lower()
 
-        # ----TODO: remove dsProperties when getDatasetInfo() working!!!!!!----
-        dsProperties = { "fqn":fqn, "description":description, "dsType":dsType, "srcCode":"return None", "ephemeral":isEphemeral }
         if dsType == 'input':
             if dsInputType == 'csv': dsProperties["fileName"] = ""
             if dsInputType == 'hive': dsProperties["tableName"] = ""
@@ -585,7 +701,7 @@ def updateModuleMetaData():
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
     except ImportError:
         # dataset does not exist.. create new module
-        stagesList = ['stage1', 'stage2'] # TODO: get actual list of stages.. not hardcoded
+        stagesList = ['airlineapp.etl', 'airlineapp.datamodel', 'airlineapp.feature']  # TODO: get actual list of stages.. not hardcoded
 
         newDsSrcCode = ''
         if dsType == 'module':
@@ -597,11 +713,8 @@ def updateModuleMetaData():
         else:
             raise ValueError('dsType {} not supported'.format(dsType))
 
-        print 'newDsSrcCode'
-        print newDsSrcCode
-
         # full name of file to be created
-        newFile = "{}/src/main/python/{}/{}.py".format(os.getcwd(), msn["stage"], msn["baseName"])
+        newFile = get_filepath_from_moduleFqn(fqn)
         # create dir if not exists
         if not os.path.exists(os.path.dirname(newFile)):
             try:
@@ -615,13 +728,8 @@ def updateModuleMetaData():
 
         # compile duplicate
         compileHasErrors = test_compile_for_errors(newFile)
-        print "updateModuleMetaData compile_errors: " + str(compileHasErrors)
-
         # remove .pyc created by compilation
-        print 'b4 removing {}c'.format(newFile)
-        print os.path.isfile(newFile + 'c')
         if os.path.isfile(newFile + 'c'):
-            print 'will remove ' + newFile + 'c'
             os.remove(newFile + 'c')
 
         if compileHasErrors:
@@ -631,9 +739,7 @@ def updateModuleMetaData():
         # TODO: FIXME: fix and use getDatasetInfo function
         #dsProperties = getDatasetInfo(fqn, msn["baseName"], msn["stage"])
         # TODO: check if dsProperties is None... raise exception... could not get code from created ds
-
-        print 'printing dsProperties'
-        print str(dsProperties)
+        dsProperties["srcFile"] = newFile,
 
         return ok_res({ "msg":"Dataset created", "dsProperties":dsProperties})
 
@@ -670,23 +776,17 @@ def updateDatasetInfo():
 
     if dsType == 'module':
         # requiresDS = request.form["requiresDS"]
-        print 'requires'
         try:
             requiresDS = ast.literal_eval(request.form["requiresDS"])
         except:   # TODO: use exception name instead of catch all
-            print 'requiresDS could not be loaded'
             pass
     if dsType == 'input':
         dsInputType = request.form["dsInputType"].encode("utf-8").lower()
-        print dsInputType
         # TODO: inputFile, filename should be renamed to path
         if dsInputType == 'csv': fileName = request.form["inputFile"].encode("utf-8") # TODO.. use same keys in req
-        print fileName
         if dsInputType == 'hive': tableName = request.form["tableName"].encode("utf-8")
         dsType = dsInputType
 
-
-    print 'dsProperties:'  # TODO: dsType should be module, csv, hive
     dsProperties = { "fqn":fqn, "description":description, "dsType":request.form["dsType"], "srcCode":srcCode, "ephemeral":isEphemeral}
     if dsType == 'input':
         if dsInputType == 'csv':
@@ -694,8 +794,6 @@ def updateDatasetInfo():
         if dsInputType == 'hive': test["tableName"] = tableName
     if dsType == 'module':
         dsProperties["requiresDS"] = requiresDS
-
-    print dsProperties
 
     try:
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
@@ -717,28 +815,23 @@ def updateDatasetInfo():
             lines_of_code_list = fd.readlines()
             lines_of_code = len(lines_of_code_list)
 
-            importsStart, importsEnd, descStart, descEnd, ephemeralStart, ephemeralEnd, runStart, runEnd, \
-            reqStart, reqEnd, pathStart, pathEnd, tableNameStart, tableNameEnd = [None for _ in range(14)]
+            # placeholder for the updated code
+            newFileContents = lines_of_code_list
 
             # get indentation for class methods
             (_, _, methodIndent) = getDatasetClassStartEnd(lines_of_code_list, className)
-            # detect imports
-            (importsStart, importsEnd, _, _) = getCodeBlockStartEnd(lines_of_code_list, None, "imports")
-            importsSection = buildImports(None).splitlines(True) # TODO... should use stages list as argument
-            newFileContents = (importsSection + lines_of_code_list if importsStart is None
-                else lines_of_code_list[:importsStart] + importsSection + lines_of_code_list[importsEnd + 1:])
 
-            ## desc
-            (descStart, descEnd, _, dClassEnd) = getCodeBlockStartEnd(newFileContents, className, "description");
+            ## description: get start, end of class definition
+            (descStart, descEnd, cDefEnd) = getDatasetDescriptionStartEnd(newFileContents, className);
             descriptionSection = buildDescription(description, methodIndent).splitlines(True)
 
-            newFileContents = newFileContents[:dClassEnd + 1] + ["\n"] + descriptionSection + newFileContents[dClassEnd + 1:] \
+            newFileContents = newFileContents[:cDefEnd + 1] + descriptionSection + newFileContents[cDefEnd + 1:] \
                 if descStart is None else newFileContents[:descStart] + descriptionSection + newFileContents[descEnd + 1:]
 
             ## ephemeral
             (ephStart, ephEnd, _, ephClassEnd) = getCodeBlockStartEnd(newFileContents, className, "isEphemeral");
             ephSection = buildIsEphemeral(isEphemeral, methodIndent).splitlines(True)
-            newFileContents = newFileContents[:ephClassEnd + 1] + ["\n"] + ephSection + newFileContents[ephClassEnd + 1:] \
+            newFileContents = newFileContents[:ephClassEnd + 1] + ephSection + newFileContents[ephClassEnd + 1:] \
                 if ephStart is None else newFileContents[:ephStart] + ephSection + newFileContents[ephEnd + 1:]
 
             ## run
@@ -748,6 +841,14 @@ def updateDatasetInfo():
                 if rStart is None else newFileContents[:rStart] + runSection + newFileContents[rEnd + 1:]
 
             if dsType.lower() == 'module':
+                # detect class imports start, end
+                (classImportsStart, classImportsEnd) = getPlutoImportsStartEnd(lines_of_code_list, className)
+                classImportsSection = buildImports(className, requiresDS).splitlines(True)
+                if classImportsStart:
+                    newFileContents = classImportsSection + newFileContents[:classImportsStart] + newFileContents[classImportsEnd + 1:]
+                else:
+                    newFileContents = classImportsSection + newFileContents
+
                 (reqStart, reqEnd, _, reqClassEnd) = getCodeBlockStartEnd(newFileContents, className, "requiresDS");
                 reqSection = buildRequiresDS(requiresDS, methodIndent).splitlines(True)
                 newFileContents = newFileContents[:reqClassEnd + 1] + ["\n"] + reqSection + newFileContents[reqClassEnd + 1:] \
@@ -768,9 +869,11 @@ def updateDatasetInfo():
                      newFileContents[:tabClassEnd + 1] + ["\n"] + tabSection + newFileContents[tabClassEnd + 1:]
                      if tabStart is None else newFileContents[:tabStart] + tabSection + newFileContents[tabEnd + 1:])
 
-            print '\nwill update dataset file to:'
-            for i, line in enumerate(newFileContents):
-                sys.stdout.write('{}  {}'.format(i,line))
+            # detect global imports
+            (importsStart, importsEnd, _, _) = getCodeBlockStartEnd(newFileContents, None, "imports")
+            importsSection = buildImports(None).splitlines(True) # TODO... should use stages list as argument
+            newFileContents = (importsSection + newFileContents if importsStart is None
+                else importsSection + newFileContents[:importsStart] + newFileContents[importsEnd + 1:])
 
             # modify duplicate
             fd.seek(0)  # reset file stream
@@ -780,7 +883,6 @@ def updateDatasetInfo():
                 fd.write(newFileContents[i])
         # compile duplicate
         compileHasErrors = test_compile_for_errors(duplicateFileName)
-        print "compile_errors: " + str(compileHasErrors)
         # remove duplicate and its .pyc
         os.remove(duplicateFileName)
         if os.path.isfile(duplicateFileName + 'c'):
@@ -796,7 +898,6 @@ def updateDatasetInfo():
         return ok_res(JOB_SUCCESS)
     else:
         return err_res(MODULE_NOT_FOUND_ERR)
-
 
 @app.route("/api/get_sample_output", methods = ['POST'])
 def get_sample_output():
@@ -849,29 +950,89 @@ def get_graph_json():
     res = SmvApp.getInstance().get_graph_json()
     return jsonify(graph=res)
 
+@app.route("/api/get_dataset_src", methods = ['POST'])
+def getDatasetSrc():
+    '''
+    fqn
+    '''
+    # get form values
+    fqn = request.form["fqn"].encode("utf-8").strip()
+    # get filename from fqn
+    fileName = get_filepath_from_moduleFqn(fqn)
+
+    try:
+        with open(fileName, 'r') as f:
+            linesOfCodeList = f.readlines()
+    except IOError:
+        return err_res("Failed to get src code")
+
+    fileContents = [line.rstrip() for line in linesOfCodeList]
+    res = { "fullSrc": fileContents }
+    return ok_res(res)
+
+@app.route("/api/update_dataset_src", methods = ['POST'])
+def updateDatasetSrc():
+    '''
+    fqn
+    '''
+
+    # get form values
+    fqn = request.form["fqn"].encode("utf-8").strip()
+    fullSrc = "".join(map((lambda c: c.encode("utf-8")), json.loads(request.form["fullSrc"])))
+
+    # get filename from fqn
+    fileName = get_filepath_from_moduleFqn(fqn)
+    duplicateFileName = fileName[:-3] + "_smv_update_code_duplicate.py"
+
+    # check if filename exists, else return error
+    if not os.path.isfile(fileName):
+        return err_res(MODULE_NOT_FOUND_ERR, "Source file for {} not found".format(fqn))
+
+    # create duplicate to write and compile
+    with open(duplicateFileName, 'w') as fd:
+        for i in xrange(len(fullSrc)):
+            fd.write(fullSrc[i])
+
+        # compile duplicate
+        compileHasErrors = test_compile_for_errors(duplicateFileName)
+        if os.path.isfile(duplicateFileName): os.remove(duplicateFileName)
+        if os.path.isfile(duplicateFileName + 'c'):
+            os.remove("{}c".format(duplicateFileName))
+
+        if compileHasErrors:
+            return err_res(COMPILATION_ERROR, "Dataset failed to compile", compileHasErrors)
+
+    with open(fileName, 'w') as fd:
+        for i in xrange(len(fullSrc)):
+            fd.write(fullSrc[i])
+
+    return ok_res({ "msg": "Dataset updated", "fullSrc": fullSrc })
 
 # Wrapper so that other python scripts can import and then call
-# smvserver.main()
+# smvserver.Main()
 class Main(object):
     def __init__(self):
-        # TODO: should be done by SmvApp (python) automatically.
-        codePath = os.path.abspath("src/main/python")
-        sys.path.insert(1, codePath)
+        options = self.parseArgs()
 
         # init Smv context
         smvApp = SmvApp.createInstance([])
 
-        # start server
-        host = os.environ.get('SMV_HOST', '0.0.0.0')
-        port = os.environ.get('SMV_PORT', '5000')
-        project_dir = os.environ.get('PROJECT_DIR', './')
-
         # to reduce complexity in SmvApp, keep the rest server single-threaded
-        app.run(host=host, port=int(port), threaded=False, processes=1)
+        app.run(host=options.ip, port=int(options.port), threaded=False, processes=1)
 
-main = Main
+    def parseArgs(self):
+        from optparse import OptionParser
+        parser = OptionParser()
+        parser.add_option("--port", dest="port", type="int", default=5000,
+                  help="smv-server port number [default=5000]")
+        parser.add_option("--ip", dest="ip", type="string", default="0.0.0.0",
+                  help="smv-server ip to bind to [default=0.0.0.0]")
+
+        (options, args) = parser.parse_args()
+        return options
+
 # temporary till module source control is implemented
 module_file_map = {}
 
 if __name__ == "__main__":
-    main()
+    Main()

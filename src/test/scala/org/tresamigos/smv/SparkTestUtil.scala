@@ -148,11 +148,9 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
   }
 
   def assertDataFramesEqual(df1: DataFrame, df2: DataFrame) = {
-    var mergedDF = (df1.collect, df2.collect).zipped
-    assert(
-      mergedDF
-        .flatMap((r1, r2) => (r1.toSeq, r2.toSeq).zipped.map((f1, f2) => (f1 == f2)))
-        .reduce(_ && _))
+    val df1lines = df1.collect.map(_.toString.stripPrefix("[").stripSuffix("]"))
+    val df2lines = df2.collect.map(_.toString.stripPrefix("[").stripSuffix("]"))
+    assertUnorderedSeqEqual(df1lines, df2lines)
   }
 
   /**
@@ -246,4 +244,7 @@ trait SmvTestUtil extends SparkTestUtil {
 }
 
 /** Base trait for unit tests that do not need a Spark test environment */
-trait SmvUnitSpec extends FlatSpec with BeforeAndAfterEach with BeforeAndAfterAll with Matchers
+trait SmvUnitSpec extends FlatSpec with BeforeAndAfterEach with BeforeAndAfterAll with Matchers {
+  def sp(prop: String): String = System.getProperty(prop)
+  val TmpDir = s"""${sp("java.io.tmpdir")}/${sp("user.name")}/smv"""
+}

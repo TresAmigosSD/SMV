@@ -65,7 +65,7 @@ object myfile extends SmvCsvFile("accounts/acct_demo.csv") {
 
 **Python**
 ```python
-class Myfile(SmvPyCsvFile):
+class Myfile(SmvCsvFile):
     def path(self):
         return "accounts/acct_demo.csv"
     def failAtParsingError(self):
@@ -94,7 +94,7 @@ object myfile extends SmvCsvFile("accounts/acct_demo.csv") {
 ```python
 from smv.dqm import *
 ...
-class Myfile(SmvPyCsvFile):
+class Myfile(SmvCsvFile):
     def path(self):
         return "accounts/acct_demo.csv"
     def failAtParsingError(self):
@@ -146,7 +146,7 @@ object MyModule extends SmvModule("example module with dqm") {
 
 **Python**
 ```python
-class MyModule(SmvPyModule):
+class MyModule(SmvModule):
     """example module with dqm"""
     ...
     def run(self, i):

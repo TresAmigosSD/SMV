@@ -40,10 +40,10 @@ class SmvFrameworkTest(SmvBaseTest):
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
 
-    def test_SmvPyMultiCsvFiles(self):
-        self.createTempFile("input/test3/f1", "col1\na\n")
-        self.createTempFile("input/test3/f2", "col1\nb\n")
-        self.createTempFile("input/test3.schema", "col1: String\n")
+    def test_SmvMultiCsvFiles(self):
+        self.createTempFile("multiCsvTest/f1", "col1\na\n")
+        self.createTempFile("multiCsvTest/f2", "col1\nb\n")
+        self.createTempFile("multiCsvTest.schema", "col1: String\n")
 
         fqn = D2.fqn()
         df = self.df(fqn)
@@ -70,30 +70,36 @@ class SmvFrameworkTest(SmvBaseTest):
             df = self.df(fqn)
             df.smvDumpDF()
 
-    #TODO: add other SmvPyDataSet unittests
+    #TODO: add other SmvDataSet unittests
 
 class SmvRunConfigTest1(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s1', 'smv.stages=smvframework.stage',
+        return ['--smv-props', 'smv.config.s=s1', 'smv.config.i=1', 'smv.config.b=True', 'smv.stages=smvframework.stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
         fqn = D4.fqn()
         df = self.df(fqn)
-        expect = self.createDF("a:String;b:Integer", "a,10;b,1")
+        expect = self.createDF("a: String;b: Integer",
+            """test1_s1,1;
+                test2_not_i2,4;
+                test3_b,5""")
         self.should_be_same(expect, df)
 
 class SmvRunConfigTest2(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s2', 'smv.stages=smvframework.stage',
+        return ['--smv-props', 'smv.config.s=s2', 'smv.config.i=2', 'smv.config.b=false', 'smv.stages=smvframework.stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
         fqn = D4.fqn()
         df = self.df(fqn)
-        expect = self.createDF("a:String;b:Integer", "X,100;Y,200")
+        expect = self.createDF("a:String;b:Integer",
+            """test1_not_s1,2;
+                test2_i2,3;
+                test3_not_b,6""")
         self.should_be_same(expect, df)

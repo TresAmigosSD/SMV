@@ -51,7 +51,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
 
   // dsm should be private but will be temporarily public to accomodate outside invocations
-  val dsm = new DataSetMgr(smvConfig, SmvApp.DependencyRules)
+  val dsm = new DataSetMgr(smvConfig)
   def registerRepoFactory(factory: DataSetRepoFactory): Unit =
     dsm.register(factory)
   registerRepoFactory(new DataSetRepoFactoryScala(smvConfig))
@@ -238,27 +238,40 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     modulesToRun.nonEmpty
   }
 
+  /**
+   * proceeds with the execution of an smvDS passed from runModule or runModuleByName
+   */
+  def runDS(ds: SmvDataSet, forceRun: Boolean, version: Option[String]): DataFrame = {
+    if (version.isDefined)
+      // if fails, error already handled since input path doesn't exist
+      ds.readPublishedData(version).get
+    else {
+      if (forceRun)
+        deletePersistedResults(Seq(ds))
+
+      ds.rdd(forceRun)
+    }
+  }
+
   /** Run a module by its fully qualified name in its respective language environment
    *  If force argument is true, any existing persisted results will be deleted
    *  and the module's DataFrame cache will be ignored, forcing the module to run again.
+   * If a version is specified, try to read the module from the published data for the given version
    */
-  def runModule(urn: URN, forceRun: Boolean = false): DataFrame = {
+  def runModule(urn: URN, forceRun: Boolean = false, version: Option[String] = None): DataFrame = {
     val ds = dsm.load(urn).head
-    if (forceRun)
-      deletePersistedResults(Seq(ds))
-    ds.rdd(forceRun)
+    runDS(ds, forceRun, version)
   }
 
   /**
    * Run a module based on the end of its name (must be unique). If force argument
    * is true, any existing persisted results will be deleted and the module's
    *  DataFrame cache will be ignored, forcing the module to run again.
+   * If a version is specified, try to read the module from the published data for the given version
    */
-  def runModuleByName(modName: String, forceRun: Boolean = false): DataFrame = {
+  def runModuleByName(modName: String, forceRun: Boolean = false, version: Option[String] = None): DataFrame = {
     val ds = dsm.inferDS(modName).head
-    if (forceRun)
-      deletePersistedResults(Seq(ds))
-    ds.rdd(forceRun)
+    runDS(ds, forceRun, version)
   }
 
   /**
@@ -313,8 +326,6 @@ class SmvApp(private val cmdLineArgs: Seq[String],
  */
 object SmvApp {
   var app: SmvApp = _
-
-  val DependencyRules: Seq[DependencyRule] = Seq(SameStageDependency, LinkFromDiffStage)
 
   def init(args: Array[String],
            _sc: Option[SparkContext] = None,

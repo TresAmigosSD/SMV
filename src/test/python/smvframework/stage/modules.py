@@ -15,18 +15,18 @@ from smv import *
 from smv.dqm import *
 from pyspark.sql.functions import col, lit
 
-
-class D1(SmvPyCsvStringData):
+class D1(SmvCsvStringData):
     def schemaStr(self):
         return "a:String;b:Integer"
     def dataStr(self):
         return "x,10;y,1"
 
-class D2(SmvPyMultiCsvFiles):
+class D2(SmvMultiCsvFiles):
     def dir(self):
-        return "test3"
+        from testSmvFramework import SmvFrameworkTest
+        return SmvFrameworkTest.tmpTestDir() + "/multiCsvTest"
 
-class D3(SmvPyCsvStringData):
+class D3(SmvCsvStringData):
     def schemaStr(self):
         return "a:Integer;b:Double"
     def dataStr(self):
@@ -38,11 +38,23 @@ class D3(SmvPyCsvStringData):
             FailTotalRuleCountPolicy(2)).add(
             FailTotalFixCountPolicy(1))
 
-class D4(SmvPyCsvStringData, SmvRunConfig):
+class D4(SmvCsvStringData, SmvRunConfig):
     def schemaStr(self):
         return "a:String;b:Integer"
     def dataStr(self):
         if(self.smvGetRunConfig('s') == "s1"):
-            return "a,10;b,1"
+            l1 = "test1_s1,1"
         else:
-            return "X,100;Y,200;"
+            l1 = "test1_not_s1,2"
+
+        if(self.smvGetRunConfigAsInt('i') == 2):
+            l2 = "test2_i2,3"
+        else:
+            l2 = "test2_not_i2,4"
+
+        if(self.smvGetRunConfigAsBool('b')):
+            l3 = "test3_b,5"
+        else:
+            l3 = "test3_not_b,6"
+
+        return l1 + ";" + l2 + ";" + l3

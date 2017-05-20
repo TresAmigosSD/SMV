@@ -213,15 +213,15 @@ class SmvDFHelper(df: DataFrame) {
    * Apply a prefix to all column names in the given `DataFrame`.
    * For Example:
    * {{{
-   *   df.prefixFieldNames("x_")
+   *   df.smvPrefixFieldNames("x_")
    * }}}
    * The above will add "x_" to the beginning of every column name in the `DataFrame`
    */
-  def prefixFieldNames(prefix: String): DataFrame = {
+  def smvPrefixFieldNames(prefix: String): DataFrame = {
     val renamedFields = df.columns.map { fn =>
-      df(fn) as (prefix + fn)
+      (fn, (prefix + fn))
     }
-    df.select(renamedFields: _*)
+    smvRenameField(renamedFields: _*)
   }
 
   /**

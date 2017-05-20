@@ -19,6 +19,8 @@
   * [Extended Data Dictionary (EDD)](edd.md)
   * [Adding a new CSV input file (with schema discovery)](schema_discovery.md)
   * [Runtime Configuration](run_config.md)
+  * [Metadata](smv_metadata.md)
+  * [SMV Server](smv_server.md)
 
 #### Smv Helper Functions and Libraries
   * [Smv Functions (Python)](smv_python_funcs.md)
@@ -28,7 +30,8 @@
   * [Column level Description and Labels](smv_desc_label.md)
 
 #### Smv Best Practice
-  * [Applicatoin Deployment](deployment.md)
+  * [Using Abstract Base Classes To Avoid Code Duplication](abc.md)
+  * [Application Deployment](deployment.md)
   * [Atom - A Small Editor Works Well with SMV](atom.md)
 
 #### Known Issues

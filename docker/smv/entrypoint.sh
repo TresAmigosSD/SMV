@@ -2,18 +2,6 @@
 
 set -e
 
-function start_server() {
-    # TODO: this should be an argument to start-server instead of an environment variable.
-    # ${PROJECT_DIR} is the pre-built project path name, "MyApp" by default
-    if [ -z ${PROJECT_DIR+x} ]; then
-        echo ">> No project defined. Start to use sample app..."
-        PROJECT_DIR="MyApp"
-    fi
-    cd /projects/${PROJECT_DIR}
-    smv-jupyter &
-    smv-server
-}
-
 # allow user to override smv user id when running image.
 USER_ID=1000
 if [[ "$1" == "-u" ]]; then
@@ -40,8 +28,10 @@ mkdir -p ${USER_HOME}/.jupyter
 cp ${TEMPLATE_DIR}/jupyter_notebook_config.py ${USER_HOME}/.jupyter/jupyter_notebook_config.py
 chown -R ${USER_NAME}:${USER_NAME} ${USER_HOME}
 
-# ensure /projects is also owned by SMV user.
-chown -R ${USER_NAME}:${USER_NAME} /projects
+# ensure /projects is also owned by SMV user if it was not mounted by user.
+if [ -f /projects/.docker ]; then
+  chown -R ${USER_NAME}:${USER_NAME} /projects
+fi
 cd /projects
 
 if [[ $# == 0 ]]; then
@@ -52,8 +42,14 @@ elif [[ $1 == "--start-server" ]]; then
     # start smv server and jupyter server
     sudo -u ${USER_NAME} -i bash -c "
           cd ${SERVER_PROJ_DIR};
-          (smv-jupyter&);
-          smv-server"
+
+          (smv-jupyter \
+            --ip ${JUPYTER_IP:?error JUPYTER_IP not set} \
+            --port ${JUPYTER_PORT:?error JUPYTER_PORT not set} &);
+
+          smv-server \
+            --ip ${SMV_IP:?error SMV_IP not set} \
+            --port ${SMV_PORT:?error SMV_PORT not set}"
 else
     # start command supplied by user.
     sudo -u ${USER_NAME} -i "$@"

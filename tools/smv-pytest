@@ -20,4 +20,4 @@ if [ "$1" = "-h" ]; then
   exit 0
 fi
 
-run_pyspark_with ${SMV_TOOLS}/../src/main/python/runtests.py
+run_pyspark_with ${SMV_TOOLS}/../src/main/python/scripts/runtests.py

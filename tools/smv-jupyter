@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
-
+# smv-jupyter [--ip bind_ip] [--port portnumber]
 set -e
 
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
+
+# extract --ip/--port options (must be in that order) from command line.
+# sets JUPYTER_IP/JUPYTER_PORT which will be read in jupyter_notebook_config.py
+if [ "$1" = "--ip" ]; then
+  export JUPYTER_IP="$2"
+  shift; shift
+fi
+if [ "$1" = "--port" ]; then
+  export JUPYTER_PORT="$2"
+  shift; shift
+fi
 
 export PYSPARK_DRIVER_PYTHON="$(which jupyter)"
 

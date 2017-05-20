@@ -29,14 +29,16 @@ private[smv] object SmvReportIO {
   }
 
   def saveLocalReportFromRdd(report: RDD[String], path: String): Unit = {
-    // Since PrintWriter is not serializable, need to create 1 per partition
-    // Simply coalesce to 1 partition and only create 1 file to output
-    report.coalesce(1).foreachPartition{rows => {
-      val outFile = new File(path)
-      val pw      = new PrintWriter(outFile)
-      rows.foreach{r => pw.write(r + "\n")}
-      pw.close
-    }}
+    val outFile = new File(path)
+    val filename = outFile.getName()
+
+    // Save report RDD to a temparory file on HDFS
+    val tmpHdfsFile = "/tmp/smv_tmp_" + filename
+    report.saveAsTextFile(tmpHdfsFile)
+
+    // copy merge the HDFS output to a local output
+    SmvHDFS.copyMerge(tmpHdfsFile, path)
+    SmvHDFS.deleteFile(tmpHdfsFile)
   }
 
   def readReport(path: String): String =

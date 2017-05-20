@@ -70,13 +70,13 @@ class DataSetRepo(object):
 
     def dataSetsForStage(self, stageName):
         try:
-            return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyDataSet)
+            return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvDataSet)
         except BaseException as e:
             traceback.print_exc()
             raise e
 
     def outputModsForStage(self, stageName):
-        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvPyModule and obj.IsSmvPyOutput)
+        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvModule and obj.IsSmvOutput)
 
     def _moduleUrnsForStage(self, stageName, fn):
         # `walk_packages` can generate AttributeError if the system has

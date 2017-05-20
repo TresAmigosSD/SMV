@@ -159,6 +159,11 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
   def smvTopNRecs(maxElems: Int, orders: Array[Column]): DataFrame =
     grouped.smvTopNRecs(maxElems, orders: _*)
 
+  def smvPivot(pivotCols: java.util.List[Array[String]],
+                  valueCols: Array[String],
+                  baseOutput: Array[String]): DataFrame =
+    grouped.smvPivot(pivotCols.map(_.toSeq).toSeq: _*)(valueCols: _*)(baseOutput: _*).toDF
+
   def smvPivotSum(pivotCols: java.util.List[Array[String]],
                   valueCols: Array[String],
                   baseOutput: Array[String]): DataFrame =
@@ -192,7 +197,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
 
   def publishVersion: Option[String] = config.cmdLine.publish.get
-  
+
   /** Create a SmvCsvFile for use in Python */
   def smvCsvFile(moduleName: String,
                  path: String,
@@ -219,11 +224,11 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(urn: String, forceRun: Boolean): DataFrame =
-    j_smvApp.runModule(URN(urn), forceRun)
+  def runModule(urn: String, forceRun: Boolean, version: Option[String]): DataFrame =
+    j_smvApp.runModule(URN(urn), forceRun, version)
 
   // TODO: The following method should be removed when Scala side can
-  // handle publish-hive SmvPyOutput tables
+  // handle publish-hive SmvOutput tables
   def moduleNames: java.util.List[String] = {
     val cl                      = j_smvApp.smvConfig.cmdLine
     val directMods: Seq[String] = cl.modsToRun()
