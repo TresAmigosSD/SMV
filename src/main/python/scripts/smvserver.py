@@ -438,7 +438,7 @@ def extractImportsFromFqns(fqns = []):
     '''
     return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
 
-def buildImports(className = None, requiresDS = None, linkFqnList = []):
+def buildImports(className = None, requiresDS = None, requiredDSLinks = []):
     '''Template for generating the imports section of a dataset'''
     # classname not provided, then create global imports
     if not className:
@@ -453,7 +453,7 @@ from pyspark.sql.functions import *
 
     dependencies = extractImportsFromFqns(requiresDS)
     importStatements = "\n".join(map(lambda dep: "import {}".format(dep), dependencies))
-    linkDefinitions = "\n".join(["{0} = SmvPyModuleLink({1})".format(l["linkName"], l["fqn"]) for l in linkFqnList])
+    linkDefinitions = "\n".join(["{0} = SmvModuleLink({1})".format(l.varName, l.fqn) for l in requiredDSLinks])
     return """\
 ###---{0}_IMPORTS_START---###
 {1}
@@ -513,18 +513,15 @@ def getRequiredModulesWithLinks(currentFqn, fqns):
             requiresDSList.append(fqn)
         # if different stage, wrap around link
         else:
-            # link name
-            linkName = fqn.replace(".", "_") + "_link"
-            requiresDSList.append(linkName)
+            requiresDSList.append(RequiredDSLink(fqn).varName)
     return requiresDSList
 
-def getRequiredDSLinkVars(currentFqn, fqns):
+def getRequiredDSLinks(currentFqn, fqns):
     linkVarsList = []
     currentStage = getStageFromFqn(currentFqn)
     for fqn in fqns:
         if currentStage != getStageFromFqn(fqn):
-            linkName = fqn.replace(".", "_") + "_link"
-            linkVarsList.append({ "linkName": linkName, "fqn": fqn})
+            linkVarsList.append(RequiredDSLink(fqn))
     return linkVarsList
 
 # csv
@@ -588,13 +585,6 @@ JOB_SUCCESS = 'SUCCESS: Code updated!' # TODO: rename CODE_UPDATE_SUCCESS
 OK = ""
 
 MODULE_DOES_NOT_EXIST= 'MODULE_DOES_NOT_EXIST'
-
-@app.route("/api/test", methods = ['POST'])
-def test():
-    currentFqn = request.form["fqn"].encode("utf-8")
-    fqns = ast.literal_eval(request.form["requiresDS"])
-    return jsonify(getRequiredDSLinkVars(currentFqn, fqns))
-
 
 @app.route("/api/get_app_info", methods = ['POST'])
 def get_app_info():
@@ -891,7 +881,7 @@ def updateDatasetInfo():
                 (classImportsStart, classImportsEnd) = getPlutoImportsStartEnd(lines_of_code_list, className)
                 # process requiresDS, turn them into links, get link definitions
                 reqDSWLinks = getRequiredModulesWithLinks(fqn, requiresDS)
-                reqDSLinkVars = getRequiredDSLinkVars(fqn, requiresDS)
+                reqDSLinkVars = getRequiredDSLinks(fqn, requiresDS)
                 classImportsSection = buildImports(className, requiresDS, reqDSLinkVars).splitlines(True)
                 if classImportsStart:
                     newFileContents = classImportsSection + newFileContents[:classImportsStart] + newFileContents[classImportsEnd + 1:]
@@ -1079,6 +1069,14 @@ class Main(object):
 
         (options, args) = parser.parse_args()
         return options
+
+class RequiredDSLink:
+    '''Instantiates a link object that contains a link variable name, and a fqn
+        The fqn is the fqn of a given dataset. The Link variable name is the string to be used as a
+        variable name when turning a dataset with the given fqn into a SmvModuleLink'''
+    def __init__(self, fqn):
+        self.fqn = fqn
+        self.varName = "{}_link".format(fqn.replace(".", "_"))
 
 # temporary till module source control is implemented
 module_file_map = {}
