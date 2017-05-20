@@ -189,34 +189,33 @@ def getDatasetDescriptionStartEnd(linesOfCodeList, className):
     returns a datasets description start and end line numbers
     '''
     (start, end, cDefEnd) = (None, None, None) # placeholders for start and end of description
-
     # detect first method definition and class
     (mStart, _, cStart, cEnd) = getCodeBlockStartEnd(linesOfCodeList, className, "*")
 
     if cStart and cEnd:
-        for i, line in enumerate(linesOfCodeList):
-            if not cDefEnd:
+        for i, line in enumerate(linesOfCodeList[cStart: cEnd + 1]):
+            if cDefEnd is None:
                 # detect end of class definition, exclude comments after it
                 if line.startswith('#'): continue
                 lineSplitAtComment = line.split("#")
                 nonCommentStr = lineSplitAtComment[0]
-                if not cDefEnd and nonCommentStr.rstrip().endswith(":"):
-                    cDefEnd = i
+                if nonCommentStr.rstrip().endswith(":"):
+                    cDefEnd = cStart + i
                     continue
             lstrippedLine = line.lstrip()
             if not start and (lstrippedLine.startswith("\"\"\"") or lstrippedLine.startswith("'''")):
-                start = i
+                start = cStart + i
 
             if start:
                 uncommentedLine = line.split("#")[0].rstrip()
                 if uncommentedLine.endswith("\"\"\"") or uncommentedLine.endswith("'''"):
                     # if i is start, then """ must have two occurrences for i to be beginning and end
-                    if start == i and not (uncommentedLine.count("\"\"\"") == 2 or uncommentedLine.count("'''") == 2):
+                    if start == (cStart + i) and not (uncommentedLine.count("\"\"\"") == 2 or uncommentedLine.count("'''") == 2):
                         continue
-                    end = i
+                    end = cStart + i
                     break
             # line is already at first method, so there is no docstring
-            if i >= mStart:
+            if (cStart + i) >= mStart:
                 (start, end) = (None, None)
                 break
     return (start, end, cDefEnd)
@@ -853,7 +852,6 @@ def updateDatasetInfo():
 
             # placeholder for the updated code
             newFileContents = lines_of_code_list
-
             # get indentation for class methods
             (_, _, methodIndent) = getDatasetClassStartEnd(lines_of_code_list, className)
 
