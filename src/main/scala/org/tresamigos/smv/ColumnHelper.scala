@@ -118,18 +118,9 @@ class ColumnHelper(column: Column) {
    */
   def smvMonth70 = {
     val name = s"SmvMonth70($column)"
-    val f = { ts: Any =>
-      ts match {
-        case null => null
-        case ts: Timestamp =>
-          panel.Month(ts).timeIndex
-        case ts: Date =>
-          panel.Month(ts).timeIndex
-        case _ => throw new SmvUnsupportedType("unsupported type")
-      }
-    }
+    val f = (y:Int, m: Int) => panel.Month(y, m).timeIndex
 
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)())
+    udf(f).apply(smvYear, smvMonth).alias(name)
   }
 
   /**
@@ -199,18 +190,8 @@ class ColumnHelper(column: Column) {
    */
   def smvDay70 = {
     val name = s"SmvDay70($column)"
-    val f = { ts: Any =>
-      ts match {
-        case null => null
-        case ts: Timestamp =>
-          panel.Day(ts).timeIndex
-        case ts: Date =>
-          panel.Day(ts).timeIndex
-        case _ => throw new SmvUnsupportedType("unsupported type")
-      }
-    }
-
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)())
+    val f = (y: Int, m: Int, d: Int) => panel.Day(y, m, d).timeIndex
+    udf(f).apply(smvYear, smvMonth, smvDayOfMonth).alias(name)
   }
 
   /**
