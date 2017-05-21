@@ -14,8 +14,81 @@
 
 package org.tresamigos.smv
 
+import org.scalatest._
 import org.apache.spark.sql.functions._
 import panel._
+
+class PartialTimeTest extends FunSuite {
+  test("test Week timeIndex") {
+    val w1 = Week(2017, 5, 19)
+    val w2 = Week(2017, 5, 21)
+    val w3 = Week(2017, 5, 22)
+    assert(w1.timeIndex === w2.timeIndex)
+    assert(w1.timeIndex + 1 === w3.timeIndex)
+  }
+
+  test("test Week with customized start") {
+    val w1 = Week(2017, 5, 19, "Saturday")
+    val w2 = Week(2017, 5, 21)
+    val w3 = Week(2017, 5, 21, "Sunday")
+
+    assert(w1.smvTime === "W(6)20170513")
+    assert(w2.smvTime === "W20170515")
+    assert(w3.smvTime === "W(7)20170521")
+  }
+
+  test("test Week compare") {
+    val w1 = Week(2017, 5, 19, "Saturday")
+    val w2 = Week(2017, 5, 21)
+    val w3 = Week(2017, 5, 18)
+    val w4 = Week(2017, 5, 22)
+
+    assert(w1 !== w2)
+    assert(w2 === w3)
+    assert(w3 < w4)
+    val e = intercept[java.lang.IllegalArgumentException] {
+      w1 < w2
+    }
+    assert(e.getMessage === "requirement failed: can't compare different time types: week_start_on_Saturday, week")
+  }
+
+  test("test construct Week from smvTime") {
+    val w1 = PartialTime("W20170515")
+    val w2 = PartialTime("W(7)20170521")
+    assert(w1 === Week(2017, 5, 20))
+    assert(w2 === Week(2017, 5, 22, "Sunday"))
+  }
+
+  test("test Week in TimePanel") {
+    val tp = TimePanel(Week(2017, 1, 1), Week(2017, 1, 31))
+    val ts = tp.smvTimeSeq()
+    assert(ts.mkString(", ") === "W20161226, W20170102, W20170109, W20170116, W20170123, W20170130")
+  }
+
+  test("test Day, Month, Quarter index") {
+    val d1 = Day(2016, 2, 19)
+    val d2 = Day(2016, 3, 1)
+    assert(d1.timeIndex + 11 === d2.timeIndex)
+
+    val m1 = Month(2017, 6)
+    val m2 = Month(2016, 12)
+    assert(m1.timeIndex - 6 === m2.timeIndex)
+
+    val q1 = Quarter(2017, 1)
+    val q2 = Quarter(2016, 3)
+    assert(q1.timeIndex - 2 === q2.timeIndex)
+  }
+
+  test("test construct Day, Month, Quarter from smvTime") {
+    val d = PartialTime("D20160107")
+    val m = PartialTime("M201604")
+    val q = PartialTime("Q201601")
+
+    assert(d === Day(2016, 1, 7))
+    assert(m === Month(2016, 4))
+    assert(q === Quarter(2016, 1))
+  }
+}
 
 class TimePanelTest extends SmvTestUtil {
 
