@@ -111,6 +111,49 @@ def Day(year, month, day):
     """
     return SmvApp.getInstance()._jvm.Day(year, month, day)
 
+def Week(year, month, day, start_on = "Monday"):
+    """Define an smv.panel.Week
+
+        Quarter extends smv.panel.PartialTime base class. It has the following methods,
+            * smvTime(): returns (str), will be the value of the `smvTime` column if added to a DF
+            * timeIndex(): returns (int), an integer incremental by one as the PartialTime increase
+                by one unit
+            * timeLabel(): returns (str), a human readable string
+            * timeType(): returns (str), the type of the PartialTime
+
+        Args:
+            year (int):
+            month (int):
+            day (int):
+            start_on (str): Week starts on, valid values: Monday, Tuesday, Wednesday,
+                Thursday, Friday, Saturday, Sunday. Default value is Monday
+
+        Example:
+            >>> w = Week(2012, 3, 4)
+            >>> w.smvTime()
+            u'W20120227'
+            >>> w.timeIndex()
+            2200
+            >>> w.timeLabel()
+            u'Week of 2012-02-27'
+            >>> w.timeType()
+            u'week'
+
+            >>> w = Week(2012, 3, 4, "Sunday")
+            >>> w.timeType()
+            u'week_start_on_Sunday'
+            >>> w.smvTime()
+            u'W(7)20120304'
+            >>> w.timeIndex()
+            2201
+            >>> w.timeLabel()
+            u'Week of 2012-03-04'
+
+        Returns:
+            (java object smv.panel.Week)
+    """
+    return SmvApp.getInstance()._jvm.Week(year, month, day, start_on)
+
 def TimePanel(start, end):
     """Define an smv.panel.TimePanel
 
