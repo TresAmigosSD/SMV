@@ -277,7 +277,27 @@ class SmvGroupedData(object):
     def smvTimePanelAgg(self, time_col, start, end):
         """Apply aggregation on given keys and specified time panel period
 
+            Args:
+                time_col (str): the column name in the data as the event timestamp
+                start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel
+                    package for details
+                end (panel.PartialTime): should be the same time type as the "start"
+
+            Both `start` and `end` PartialTime are inclusive.
+
             Example:
+
+            >>> df.smvGroupBy("K").smvTimePanelAgg("TS", Week(2012, 1, 1), Week(2012, 12, 31))(
+                    sum("V").alias("V")
+                )
+
+            Returns:
+                (DataFrame): a result data frame with keys, and a column with name `smvTime`, and
+                    aggregated values. Refer the panel package for the potential forms of different
+                    PartialTimes
+
+            Example with on data:
+
                 Given DataFrame df as
 
                 +---+------------+------+
@@ -294,8 +314,8 @@ class SmvGroupedData(object):
 
                 after applying
 
-                >>> df.smvGroupBy("K")\
-                    .smvTimePanelAgg("TS", Quarter(2012, 1), Quarter(2012, 2))(
+                >>> import smv.panel as P
+                >>> df.smvGroupBy("K").smvTimePanelAgg("TS", P.Quarter(2012, 1), P.Quarter(2012, 2))(
                         sum("V").alias("V")
                     )
 

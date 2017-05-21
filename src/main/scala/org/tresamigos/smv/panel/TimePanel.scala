@@ -117,6 +117,26 @@ case class Day(year: Int, month: Int, day: Int) extends PartialTime {
     format_string("D%04d%02d%02d", ts.smvYear, ts.smvMonth, ts.smvDayOfMonth)
 }
 
+/**
+ * Week PartialTime
+ *
+ * User can specify custom "startOn" day for a week, for example
+ * {{{
+ * val w = new Week(2012, 2, 1, "Sunday")
+ * }}}
+ *
+ * As a PartialTime, Week has the following attributes
+ *
+ * For default start day as Monday:
+ * - smvTime form: W20120227
+ * - timeType: "week"
+ * - timeIndex: week number from 1970-01-01, with week-0 always be the week 1970-1-1 is in
+ * - timeLabel form: "Week of 2012-02-27"
+ *
+ * For custom start day:a Week(2012, 3, 4, "Sunday")
+ * - smvTime form: W(7)20120304 - "(7)" here denotes the start day is a Sunday
+ * - timeType: "week_start_on_Sunday"
+ **/
 class Week(year: Int, month: Int, day: Int, startOn: String) extends PartialTime {
 
   // d70 = 0 is a Thursday
@@ -128,7 +148,7 @@ class Week(year: Int, month: Int, day: Int, startOn: String) extends PartialTime
     ((d70 - offset) / 7).toInt + 1
   }
 
-  // Get the start of the week (week start on Sunday)
+  // Get the date of the start of the week
   def getWeekStartDay(y: Int, m: Int, d: Int): (Int, Int, Int) = {
     PartialTime.day70To(toWeek70(y, m, d) * 7 - 7 + offset)
   }
@@ -161,7 +181,8 @@ class Week(year: Int, month: Int, day: Int, startOn: String) extends PartialTime
     weekStartUdf(ts.smvYear, ts.smvMonth, ts.smvDayOfMonth)
   }
 
-  // As long as 2 Week instances have the same week70, they are equal
+  // As long as 2 Week instances have the same start day and same week70, they are equal
+  // since different class parameter can create equal instance, Week can't be a case class
   override def equals(that: Any): Boolean =
     that match {
       case that: Week => this.timeType == that.timeType && this.hashCode == that.hashCode
