@@ -80,3 +80,25 @@ class GroupedDataTest(SmvBaseTest):
                     1,Q201202,2.45""")
 
         self.should_be_same(expect, res)
+
+    def test_smvTimePanelAgg_with_Week(self):
+        df = self.createDF("k:Integer; ts:String; v:Double",
+                 "1,20120301,1.5;" +
+                 "1,20120304,4.5;" +
+                 "1,20120308,7.5;" +
+                 "1,20120309,2.45"
+             ).withColumn("ts", col('ts').smvStrToTimestamp("yyyyMMdd"))
+
+        import smv.panel as p
+
+        res = df.smvGroupBy('k').smvTimePanelAgg(
+            'ts', p.Week(2012, 3, 1), p.Week(2012, 3, 10)
+        )(
+            sum('v').alias('v')
+        )
+
+        expect = self.createDF("k: Integer;smvTime: String;v: Double",
+            """1,W20120305,9.95;
+                1,W20120227,6.0""")
+
+        self.should_be_same(res, expect)
