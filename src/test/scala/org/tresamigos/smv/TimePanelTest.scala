@@ -118,6 +118,27 @@ class TimePanelTest extends SmvTestUtil {
     )
   }
 
+  test("test addToDF on Week") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df =
+      dfFrom("k:Integer; ts:String; v:Double",
+             "1,20120301,1.5;" +
+             "1,20120304,4.5;" +
+             "1,20120308,7.5;" +
+             "1,20120309,2.45").selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
+
+    val tp  = TimePanel(Week(2012, 3, 1), Week(2012, 3, 10))
+    val res = tp.addToDF(df, "ts", Seq("k"), false)
+
+    assertSrddDataEqual(
+      res,
+      """1,2012-03-01 00:00:00.0,1.5,W20120227;
+1,2012-03-04 00:00:00.0,4.5,W20120227;
+1,2012-03-08 00:00:00.0,7.5,W20120305;
+1,2012-03-09 00:00:00.0,2.45,W20120305"""
+    )
+  }
+
   test("test addTimePanels DF helper") {
     val ssc = sqlContext; import ssc.implicits._
     val df =

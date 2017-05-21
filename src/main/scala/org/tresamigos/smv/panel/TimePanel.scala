@@ -153,7 +153,10 @@ class Week(year: Int, month: Int, day: Int, startOn: String) extends PartialTime
     val wstart = wss
     val weekStartUdf = udf((y: Int, m: Int, d: Int) => {
       val (wsy, wsm, wsd) = getWeekStartDay(y, m, d)
-      f"W($wstart)$wsy%04d$wsm%02d$wsd%02d"
+      if (wstart == 1)
+        f"W$wsy%04d$wsm%02d$wsd%02d"
+      else
+        f"W($wstart)$wsy%04d$wsm%02d$wsd%02d"
     })
     weekStartUdf(ts.smvYear, ts.smvMonth, ts.smvDayOfMonth)
   }
