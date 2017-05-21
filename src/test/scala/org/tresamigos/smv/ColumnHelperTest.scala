@@ -38,7 +38,7 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddSchemaEqual(
       res,
       "SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer")
-    assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
+    assertSrddDataEqual(res, "2019,1,1,1,2,0;" + "null,null,null,null,null,null")
   }
 
   test("test DateType's smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek") {
@@ -53,7 +53,7 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddSchemaEqual(
       res,
       "SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer")
-    assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
+    assertSrddDataEqual(res, "2019,1,1,1,2,0;" + "null,null,null,null,null,null")
   }
 
   test("test smvAmtBin, smvNumericBin, smvCoarseGrain") {
