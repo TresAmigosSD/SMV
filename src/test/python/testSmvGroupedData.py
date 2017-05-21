@@ -19,7 +19,7 @@ from smv import SmvCsvFile
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
-from pyspark.sql.functions import col, struct
+from pyspark.sql.functions import col, struct, sum
 
 class GroupedDataTest(SmvBaseTest):
     def test_smvFillNullWithPrevValue(self):
@@ -57,4 +57,26 @@ class GroupedDataTest(SmvBaseTest):
         expect = self.createDF("k: String;v_c: Integer;v_d: Integer;v_e: Integer;v_f: Integer",
             "a,1,2,,5"
         )
+        self.should_be_same(expect, res)
+
+    def test_smvTimePanelAgg(self):
+        df = self.createDF("k:Integer; ts:String; v:Double",
+            """1,20120101,1.5;
+                1,20120301,4.5;
+                1,20120701,7.5;
+                1,20120501,2.45"""
+            ).withColumn("ts", col('ts').smvStrToTimestamp("yyyyMMdd"))
+
+        import smv.panel as p
+
+        res = df.smvGroupBy('k').smvTimePanelAgg(
+            'ts', p.Quarter(2012,1), p.Quarter(2012,2)
+        )(
+            sum('v').alias('v')
+        )
+
+        expect = self.createDF("k: Integer;smvTime: String;v: Double",
+                """1,Q201201,6.0;
+                    1,Q201202,2.45""")
+
         self.should_be_same(expect, res)
