@@ -368,8 +368,11 @@ class SmvMultiCsvFiles(WithParser, SmvInput):
             self.dir(),
             self.csvAttr(),
             None,
-            smvApp.scalaNone()
+            smvApp.scalaOption(self.userSchema())
         )
+
+    def userSchema(self):
+        return None
 
     def getRawScalaInputDS(self):
         return self._smvMultiCsvFiles

@@ -22,7 +22,7 @@ class D1(SmvCsvStringData):
     def dataStr(self):
         return "x,10;y,1"
 
-class D2(SmvMultiCsvFiles):
+class MultiCsv(SmvMultiCsvFiles):
     def dir(self):
         return "test3"
 
@@ -58,3 +58,10 @@ class D4(SmvCsvStringData, SmvRunConfig):
             l3 = "test3_not_b,6"
 
         return l1 + ";" + l2 + ";" + l3
+
+class MultiCsvWithUserSchema(SmvMultiCsvFiles):
+    def dir(self):
+        return "test3"
+
+    def userSchema(self):
+        return "1loc: String"
