@@ -22,7 +22,7 @@ from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, lit
 from py4j.protocol import Py4JJavaError
-from smvframework.stage.modules import D1, D3, D4, MultiCsv, MultiCsvWithUserSchema
+from smvframework.stage.modules import D1, D3, D4, MultiCsv, MultiCsvWithUserSchema, CsvFile
 
 
 class SmvFrameworkTest(SmvBaseTest):
@@ -50,6 +50,15 @@ class SmvFrameworkTest(SmvBaseTest):
         exp = self.createDF("col1: String", "a;b")
         self.should_be_same(df, exp)
 
+    def test_SmvCsvFileWithUserSchema(self):
+        self.createTempFile("input/test3.csv", "col1\na\nb\n")
+        self.createTempFile("input/test3.schema", "col1: String\n")
+
+        fqn = CsvFile.fqn()
+        df = self.df(fqn)
+        exp = self.createDF(CsvFile.UserSchema, "a;b")
+        self.should_be_same(df, exp)
+
     def test_SmvMultiCsvFilesWithUserSchema(self):
         self.createTempFile("input/test3/f1", "col1\na\n")
         self.createTempFile("input/test3/f2", "col1\nb\n")
@@ -57,7 +66,7 @@ class SmvFrameworkTest(SmvBaseTest):
 
         fqn = MultiCsvWithUserSchema.fqn()
         df = self.df(fqn)
-        exp = self.createDF("1loc: String", "a;b")
+        exp = self.createDF(CsvFile.UserSchema, "a;b")
         self.should_be_same(df, exp)
 
     def test_SmvDQM(self):

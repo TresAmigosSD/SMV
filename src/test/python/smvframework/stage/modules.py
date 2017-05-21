@@ -60,8 +60,19 @@ class D4(SmvCsvStringData, SmvRunConfig):
         return l1 + ";" + l2 + ";" + l3
 
 class MultiCsvWithUserSchema(SmvMultiCsvFiles):
+    UserSchema = "1loc: String"
+
     def dir(self):
         return "test3"
 
     def userSchema(self):
-        return "1loc: String"
+        return self.UserSchema
+
+class CsvFile(SmvCsvFile):
+    UserSchema = "1loc: String"
+
+    def path(self):
+        return "test3.csv"
+
+    def userSchema(self):
+        return self.UserSchema

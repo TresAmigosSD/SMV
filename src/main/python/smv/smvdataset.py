@@ -330,8 +330,16 @@ class SmvCsvFile(WithParser, SmvInput):
     def __init__(self, smvApp):
         super(SmvCsvFile, self).__init__(smvApp)
         self._smvCsvFile = smvApp.j_smvPyClient.smvCsvFile(
-            self.fqn(), self.path(), self.csvAttr(),
-            self.forceParserCheck(), self.failAtParsingError())
+            self.fqn(),
+            self.path(),
+            self.csvAttr(),
+            self.forceParserCheck(),
+            self.failAtParsingError(),
+            smvApp.scalaOption(self.userSchema())
+        )
+
+    def userSchema(self):
+        return None
 
     def getRawScalaInputDS(self):
         return self._smvCsvFile

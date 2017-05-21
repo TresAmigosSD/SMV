@@ -179,7 +179,7 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
 
 
   def smvTimePanelAgg(timeColName: String, start: panel.PartialTime, end: panel.PartialTime, aggCols: Array[Column]) =
-    grouped.smvTimePanelAgg(timeColName, start, end)(aggCols: _*) 
+    grouped.smvTimePanelAgg(timeColName, start, end)(aggCols: _*)
 }
 
 class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
@@ -207,12 +207,14 @@ class SmvPyClient(val j_smvApp: SmvApp) {
                  path: String,
                  csvAttr: CsvAttributes,
                  pForceParserCheck: Boolean,
-                 pFailAtParsingError: Boolean): SmvCsvFile = {
+                 pFailAtParsingError: Boolean,
+                 pUserSchema: Option[String]): SmvCsvFile = {
 
     new SmvCsvFile(path, csvAttr) {
       override def fqn                = moduleName
       override val forceParserCheck   = pForceParserCheck
       override val failAtParsingError = pFailAtParsingError
+      override val userSchema         = pUserSchema
     }
   }
 
