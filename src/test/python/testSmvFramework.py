@@ -41,9 +41,9 @@ class SmvFrameworkTest(SmvBaseTest):
         self.should_be_same(expect, df)
 
     def test_SmvMultiCsvFiles(self):
-        self.createTempFile("input/test3/f1", "col1\na\n")
-        self.createTempFile("input/test3/f2", "col1\nb\n")
-        self.createTempFile("input/test3.schema", "col1: String\n")
+        self.createTempFile("multiCsvTest/f1", "col1\na\n")
+        self.createTempFile("multiCsvTest/f2", "col1\nb\n")
+        self.createTempFile("multiCsvTest.schema", "col1: String\n")
 
         fqn = D2.fqn()
         df = self.df(fqn)

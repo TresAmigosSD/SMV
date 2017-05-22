@@ -424,6 +424,30 @@ class SmvCsvStringData(SmvInput):
         jdf = self._smvCsvStringData.doRun(validator)
         return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
+class SmvJdbcTable(SmvInput):
+    """Input from a table read through JDBC
+    """
+    def __init__(self, smvApp):
+        super(SmvJdbcTable, self).__init__(smvApp)
+        self._smvJdbcTable = self.smvApp._jvm.org.tresamigos.smv.SmvJdbcTable(self.tableName())
+
+    def description(self):
+        return self._smvJdbcTable.description()
+
+    @abc.abstractproperty
+    def tableName(self):
+        """User-specified name for the table to extract input from
+
+            Override this to specify your own table name.
+
+            Returns:
+                (str): table name
+        """
+
+    def doRun(self, validator, known):
+        jdf = self._smvJdbcTable.doRun(validator)
+        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
+
 
 class SmvHiveTable(SmvInput):
     """Input from a Hive table

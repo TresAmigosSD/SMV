@@ -109,6 +109,15 @@ graphvis must be used to convert the ".dot" file to an image or doc.  For exampl
 </tr>
 
 <tr>
+<td>--publish-jdbc</td>
+<td>off</td>
+<td>
+publish the specified modules through JDBC
+**NOTE:** You must specify the JDBC url to use via the config property `smv.jdbc.url`
+</td>
+</tr>
+
+<tr>
 <th colspan="3">What To Run/Publish
 <br>
 One of the options below must be specified.

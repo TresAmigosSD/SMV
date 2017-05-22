@@ -14,7 +14,7 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SaveMode}
 
 import dqm.{DQMValidator, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 
@@ -414,7 +414,18 @@ abstract class SmvDataSet extends FilenamePart {
       df.edd.persistBesideData(publishCsvPath(version))
   }
 
+  /**
+   * Publish DataFrame result using JDBC. Url will be user-specified.
+   */
+  private[smv] def publishThroughJDBC = {
+    val df = rdd()
+    val connectionProperties = new java.util.Properties()
+    val url = app.smvConfig.jdbcUrl
+    df.write.mode(SaveMode.Append).jdbc(url, tableName, connectionProperties)
+  }
+
   private[smv] lazy val parentStage: Option[String] = urn.getStage
+
   private[smv] def stageVersion()                   = parentStage flatMap { app.smvConfig.stageVersions.get(_) }
 
   /**
@@ -466,6 +477,42 @@ case class SmvHiveTable(override val tableName: String, val userQuery: String = 
   }
 }
 
+/**
+ * Wrapper for a database table accessed via JDBC
+ */
+class SmvJdbcTable(override val tableName: String)
+  extends SmvInputDataSet {
+
+  override def description = s"JDBC table ${tableName}"
+
+  /**
+   * Custom queries are not officially supported because the approach used here
+   * is not documented or officially supported by Spark. We will essentially
+   * substitute the user-query as a subquery in place of the table name, with
+   * the result a query like SELECT * FROM (USER_QUERY)
+   */
+  def userQuery: String = null
+
+  val tableNameOrQuery = {
+    if (userQuery == null){
+      tableName
+    } else {
+      // For Derby, subqueries must be aliased
+      s"(${userQuery}) as TMP_${tableName}"
+    }
+  }
+
+  override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
+    val url = app.smvConfig.jdbcUrl
+    val tableDf =
+      app.sqlContext.read
+        .format("jdbc")
+        .option("url", url)
+        .option("dbtable", tableNameOrQuery)
+        .load()
+    run(tableDf)
+  }
+}
 
 /**
  * Both SmvFile and SmvCsvStringData shared the parser validation part, extract the

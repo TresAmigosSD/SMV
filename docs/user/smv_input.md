@@ -340,5 +340,20 @@ class FooHiveTableWithQuery(SmvHiveTable):
     return "SELECT mycol FROM " + tableName
 ```
 
+# JDBC Inputs
+
+SMV supports reading data over a JDBC connection using `SmvJdbcTable`. This requires a proper configuration -  read more [here](smv_jdbc.md#configuration).
+
+## Scala
+```Scala
+object FooJdbcTable extends SmvJdbcTable("myTableName")
+```
+
+## Python
+```Python
+class FooJdbcTable(SmvJdbcTable):
+  def tableName(self):
+    return "myTableName"
+```
 
 *=This feature currently only available in Scala smv-shell
