@@ -39,7 +39,9 @@ private[smv] class FileIOHandler(
 
   /**
    * Create a DataFrame from the given data/schema path and CSV attributes.
-   * If CSV attributes are null, then they are extracted from the schema file directly.
+   * If CSV attributes are null, then they are extracted from the schema directly.
+   * Schema can be specified explicitly via schemaOpt; otherwise it will be read
+   * from file.
    */
   private[smv] def csvFileWithSchema(
       csvAttributes: CsvAttributes,

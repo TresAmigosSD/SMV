@@ -510,22 +510,36 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
    */
   private[smv] def fullPath = findFullPath(path)
 
+  /**
+   * Expanded version of user-specified schema path, if it exists
+   */
   private[smv] def fullSchemaPath = {
     if (schemaPath == null) None
     else Option(findFullPath(schemaPath))
   }
 
+  /**
+   * The schema that will actually be read from. If there is a user-specified
+   * schema path, this will be full path of that schema path. If not, this will
+   * be the default location for a schema relative to the file path.
+   */
   private def finalSchemaPath =
     fullSchemaPath.getOrElse { SmvSchema.dataPathToSchemaPath(fullPath) }
 
   val userSchema: Option[String]
 
+  /**
+   * TODO: make this a lazy val
+   */
   def schema: SmvSchema =
     userSchema match {
       case Some(s) => SmvSchema.fromString(s)
       case None => SmvSchema.fromFile(app.sc, finalSchemaPath)
     }
 
+  /**
+   * Read contents from file (without running the `run` method) as a DataFrame.
+   */
   private[smv] def readFromFile(parserLogger: ParserLogger): DataFrame
 
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
@@ -551,7 +565,13 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
   }
 }
 
+/**
+ * Represents a single raw input file with a given file path. E.g. SmvCsvFile or SmvFrlFile
+ */
 abstract class SmvSingleFile extends SmvFile {
+  /**
+   * Given a FileIOHandler, return the DataFrame that results from reading the file
+   */
   private[smv] def readSingleFile(handler: FileIOHandler): DataFrame
   private[smv] override def readFromFile(parserValidator: ParserLogger): DataFrame = {
     val handler = getHandler(fullPath, parserValidator)
@@ -580,7 +600,8 @@ case class SmvFrlFile(
     override val isFullPath: Boolean = false,
     override val userSchema: Option[String] = None
 ) extends SmvSingleFile {
-  def readSingleFile(handler: FileIOHandler) = handler.frlFileWithSchema(Some(schema))
+  def readSingleFile(handler: FileIOHandler) =
+    handler.frlFileWithSchema(Some(schema))
 }
 
 /**
