@@ -1313,7 +1313,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvDayOfWeek())
 
             Returns:
-                (Column): IntegerType. Day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
+                (Column): IntegerType. Day of week component as integer (range 1-7, 1 being Monday), or null if input column is null
         """
         jc = self._jColumnHelper.smvDayOfWeek()
         return Column(jc)

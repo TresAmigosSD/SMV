@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import unittest
+import os
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp, SmvCsvFile
@@ -122,14 +123,16 @@ class DfHelperTest(SmvBaseTest):
         self.should_be_same(expect, res)
 
     def test_smvExportCsv(self):
+        path = T.path()
+        if os.path.exists(path):
+            os.unlink(path)
+
         fqn = D1.fqn()
         df = self.df(fqn)
-        df.smvExportCsv(T.path())
+        df.smvExportCsv(path)
 
         res = self.smvApp.runModule("mod:" + "dataframehelper.stage.modules.T")
         self.should_be_same(df, res)
-        import os
-        os.remove(T.path())
 
     def test_smvJoinByKey(self):
         df1 = self.createDF(
