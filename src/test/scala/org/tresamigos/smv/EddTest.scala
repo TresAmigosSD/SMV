@@ -286,9 +286,9 @@ key                      count      Pct    cumCount   cumPct
       .toReport()
     assert(rep === """Histogram of d: Day of Week
 key                      count      Pct    cumCount   cumPct
-2                            2   50.00%           2   50.00%
-5                            1   25.00%           3   75.00%
-6                            1   25.00%           4  100.00%
+1                            2   50.00%           2   50.00%
+4                            1   25.00%           3   75.00%
+5                            1   25.00%           4  100.00%
 -------------------------------------------------""")
 
     val res2 = dfDate.agg(std.aggCol).select(std.resultCols: _*)
@@ -301,9 +301,9 @@ key                      count      Pct    cumCount   cumPct
 
     assert(rep2 === """Histogram of d: Day of Week
 key                      count      Pct    cumCount   cumPct
-2                            2   50.00%           2   50.00%
-5                            1   25.00%           3   75.00%
-6                            1   25.00%           4  100.00%
+1                            2   50.00%           2   50.00%
+4                            1   25.00%           3   75.00%
+5                            1   25.00%           4  100.00%
 -------------------------------------------------""")
   }
 
@@ -417,9 +417,9 @@ key                      count      Pct    cumCount   cumPct
 -------------------------------------------------
 Histogram of d: Day of Week
 key                      count      Pct    cumCount   cumPct
-2                            2   50.00%           2   50.00%
-5                            1   25.00%           3   75.00%
-6                            1   25.00%           4  100.00%
+1                            2   50.00%           2   50.00%
+4                            1   25.00%           3   75.00%
+5                            1   25.00%           4  100.00%
 -------------------------------------------------
 Histogram of d: Hour
 key                      count      Pct    cumCount   cumPct
