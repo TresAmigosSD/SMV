@@ -340,5 +340,20 @@ class FooHiveTableWithQuery(SmvHiveTable):
     return "SELECT mycol FROM " + tableName
 ```
 
+# JDBC Inputs
+
+SMV supports reading data over a JDBC connection using `SmvJdbcTable`. Note that this has not been tested across all connection types and drivers. You will need to include the correct JDBC driver for your connection in the classpath when you run the application. This can be accomplished using the Spark --jars option. You will also need to include the JDBC url through SMV properties, which can be specified in your app config or at the command line. E.g. `smv-pyrun --run-app --smv-props smv.jdbc.url="my-url" -- --jars my-jdbc-driver.jar`.
+
+## Scala
+```Scala
+object FooJdbcTable extends SmvJdbcTable("myTableName")
+```
+
+## Python
+```Python
+class FooJdbcTable(SmvJdbcTable):
+  def tableName(self):
+    return "myTableName"
+```
 
 *=This feature currently only available in Scala smv-shell
