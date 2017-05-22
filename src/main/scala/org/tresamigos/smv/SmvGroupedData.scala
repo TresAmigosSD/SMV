@@ -629,6 +629,35 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
   /**
+   * Apply aggregation on given keys and specified time panel period
+   * Example
+   * {{{
+   * val res = df.smvGroupBy("sku").smvTimePanelAgg("time", Day(2014, 1, 1), Day(2017,3,31))(
+   *   sum("amt").as("amt"),
+   *   sum("qty").as("qty")
+   * )
+   * }}}
+   *
+   * The input `df` of above example has a timestamp field "time", and the output aggregates on
+   * "sku" and the "Day" of the timestamp, from the start of 2014-1-1 to 2017-3-31.
+   *
+   * The output will have 4 columns in above example: "sku", "smvTime", "amt", "qty".
+   * The values of "smvTime" column will look like:
+   * {{{
+   * D20140101
+   * D20140102
+   * ...
+   * }}}
+   * For `PartialTime`s, please refer `smv.panel` package for details
+   **/
+  def smvTimePanelAgg(timeColName: String, start: panel.PartialTime, end: panel.PartialTime)(aggCols: Column*) = {
+    val tp = panel.TimePanel(start, end)
+    val withPanel = tp.addToDF(df, timeColName, keys, true)
+    val allkeys = keys :+ "smvTime"
+    withPanel.groupBy(allkeys.head, allkeys.tail: _*).agg(aggCols.head, aggCols.tail: _*)
+  }
+
+  /**
    * For a DF with `TimePanel` column already, fill the null values with previous peoriod value
    *
    * Example:

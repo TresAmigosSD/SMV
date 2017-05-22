@@ -76,24 +76,30 @@ class SmvRunConfigTest1(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s1', 'smv.stages=smvframework.stage',
+        return ['--smv-props', 'smv.config.s=s1', 'smv.config.i=1', 'smv.config.b=True', 'smv.stages=smvframework.stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
         fqn = D4.fqn()
         df = self.df(fqn)
-        expect = self.createDF("a:String;b:Integer", "a,10;b,1")
+        expect = self.createDF("a: String;b: Integer",
+            """test1_s1,1;
+                test2_not_i2,4;
+                test3_b,5""")
         self.should_be_same(expect, df)
 
 class SmvRunConfigTest2(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s2', 'smv.stages=smvframework.stage',
+        return ['--smv-props', 'smv.config.s=s2', 'smv.config.i=2', 'smv.config.b=false', 'smv.stages=smvframework.stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
         fqn = D4.fqn()
         df = self.df(fqn)
-        expect = self.createDF("a:String;b:Integer", "X,100;Y,200")
+        expect = self.createDF("a:String;b:Integer",
+            """test1_not_s1,2;
+                test2_i2,3;
+                test3_not_b,6""")
         self.should_be_same(expect, df)

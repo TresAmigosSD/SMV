@@ -42,7 +42,7 @@ class ColumnHelperTest(SmvBaseTest):
     def test_smvDateTimeFunctions(self):
         df = self.createDF("k:Timestamp[yyyyMMdd]; v:String;", "20190101,a;,b")
         res = df.select(col("k").smvYear(), col("k").smvMonth(), col("k").smvQuarter(), col("k").smvDayOfMonth(), col("k").smvDayOfWeek(), col("k").smvHour())
-        expected = self.createDF("SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer", "2019,1,1,1,3,0;" + ",,,,,")
+        expected = self.createDF("SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer", "2019,1,1,1,2,0;" + ",,,,,")
 
         if sys.version < '3':
             self.should_be_same(expected, res)
@@ -141,3 +141,15 @@ class ColumnHelperTest(SmvBaseTest):
 
         self.should_be_same(e1, r1)
         self.should_be_same(e2, r2)
+
+    def test_smvTime_helpers(self):
+        df = self.createDF("smvTime:String", "D20120302;Q201203;M201203")
+        res = df.withColumn('type',
+            df.smvTime.smvTimeToType()
+        ).withColumn('index',
+            df.smvTime.smvTimeToIndex()
+        ).withColumn('label',
+            df.smvTime.smvTimeToLabel()
+        )
+
+        res.smvDumpDF()

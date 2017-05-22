@@ -177,6 +177,10 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
 
   def smvFillNullWithPrevValue(orderCols: Array[Column], valueCols: Array[String]): DataFrame =
     grouped.smvFillNullWithPrevValue(orderCols: _*)(valueCols: _*)
+
+
+  def smvTimePanelAgg(timeColName: String, start: panel.PartialTime, end: panel.PartialTime, aggCols: Array[Column]) =
+    grouped.smvTimePanelAgg(timeColName, start, end)(aggCols: _*) 
 }
 
 class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {

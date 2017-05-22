@@ -274,6 +274,65 @@ class SmvGroupedData(object):
             return DataFrame(self.sgd.smvFillNullWithPrevValue(smv_copy_array(self.df._sc, *orderCols), smv_copy_array(self.df._sc, *valueCols)), self.df.sql_ctx)
         return __doFill
 
+    def smvTimePanelAgg(self, time_col, start, end):
+        """Apply aggregation on given keys and specified time panel period
+
+            Args:
+                time_col (str): the column name in the data as the event timestamp
+                start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel
+                    package for details
+                end (panel.PartialTime): should be the same time type as the "start"
+
+            Both `start` and `end` PartialTime are inclusive.
+
+            Example:
+
+            >>> df.smvGroupBy("K").smvTimePanelAgg("TS", Week(2012, 1, 1), Week(2012, 12, 31))(
+                    sum("V").alias("V")
+                )
+
+            Returns:
+                (DataFrame): a result data frame with keys, and a column with name `smvTime`, and
+                    aggregated values. Refer the panel package for the potential forms of different
+                    PartialTimes
+
+            Example with on data:
+
+                Given DataFrame df as
+
+                +---+------------+------+
+                | K | TS         | V    |
+                +===+============+======+
+                | 1 | 2012-01-01 | 1.5  |
+                +---+------------+------+
+                | 1 | 2012-03-01 | 4.5  |
+                +---+------------+------+
+                | 1 | 2012-07-01 | 7.5  |
+                +---+------------+------+
+                | 1 | 2012-05-01 | 2.45 |
+                +---+------------+------+
+
+                after applying
+
+                >>> import smv.panel as P
+                >>> df.smvGroupBy("K").smvTimePanelAgg("TS", P.Quarter(2012, 1), P.Quarter(2012, 2))(
+                        sum("V").alias("V")
+                    )
+
+                the result is
+
+                +---+---------+------+
+                | K | smvTime | V    |
+                +===+=========+======+
+                | 1 | Q201201 | 6.0  |
+                +---+---------+------+
+                | 1 | Q201202 | 2.45 |
+                +---+---------+------+
+        """
+        def __doAgg(*aggs):
+            return DataFrame(self.sgd.smvTimePanelAgg(time_col, start, end, smv_copy_array(self.df._sc, *aggs)), self.df.sql_ctx)
+        return __doAgg
+
 class SmvMultiJoin(object):
     """Wrapper around Scala's SmvMultiJoin"""
     def __init__(self, sqlContext, mj):
@@ -1254,7 +1313,7 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvDayOfWeek())
 
             Returns:
-                (Column): IntegerType. Day of week component as integer (range 1-7, 1 being Sunday), or null if input column is null
+                (Column): IntegerType. Day of week component as integer (range 1-7, 1 being Monday), or null if input column is null
         """
         jc = self._jColumnHelper.smvDayOfWeek()
         return Column(jc)
@@ -1272,16 +1331,17 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvPlusDays(self, delta):
-        """Add N days to `Timestamp` column
+        """Add N days to `Timestamp` or `Date` column
 
             Args:
-                delta (integer): the number of days to add
+                delta (int or Column): the number of days to add
 
             Example:
                 >>> df.select(col("dob").smvPlusDays(3))
 
             Returns:
-                (Column): TimestampType. The incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null.
+                    **Note** even if the input is DateType, the output is TimestampType
         """
         if (isinstance(delta, int)):
             jdelta = delta
@@ -1293,16 +1353,17 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvPlusWeeks(self, delta):
-        """Add N weeks to `Timestamp` column
+        """Add N weeks to `Timestamp` or `Date` column
 
             Args:
-                delta (integer): the number of weeks to add
+                delta (int or Column): the number of weeks to add
 
             Example:
                 >>> df.select(col("dob").smvPlusWeeks(3))
 
             Returns:
-                (Column): TimestampType. The incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null.
+                    **Note** even if the input is DateType, the output is TimestampType
         """
         if (isinstance(delta, int)):
             jdelta = delta
@@ -1314,10 +1375,10 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvPlusMonths(self, delta):
-        """Add N months to `Timestamp` column
+        """Add N months to `Timestamp` or `Date` column
 
             Args:
-                delta (integer): the number of months to add
+                delta (int or Column): the number of months to add
 
             Note:
                 The calculation will do its best to only change the month field retaining the same day of month. However, in certain circumstances, it may be necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot result in 2007-04-31, so the day of month is adjusted to 2007-04-30.
@@ -1326,7 +1387,8 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvPlusMonths(3))
 
             Returns:
-                (Column): TimestampType. The incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null.
+                    **Note** even if the input is DateType, the output is TimestampType
         """
         if (isinstance(delta, int)):
             jdelta = delta
@@ -1338,16 +1400,17 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvPlusYears(self, delta):
-        """Add N years to `Timestamp` column
+        """Add N years to `Timestamp` or `Date` column
 
             Args:
-                delta (integer): the number of years to add
+                delta (int or Column): the number of years to add
 
             Example:
                 >>> df.select(col("dob").smvPlusYears(3))
 
             Returns:
-                (Column): TimestampType. The incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null.
+                    **Note** even if the input is DateType, the output is TimestampType
         """
         if (isinstance(delta, int)):
             jdelta = delta
@@ -1397,5 +1460,31 @@ class ColumnHelper(object):
         jc = self._jColumnHelper.smvMonth70()
         return Column(jc)
 
+    def smvTimeToType(self):
+        """smvTime helper to convert `smvTime` column to time type string
+
+            Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+            Example output type "quarter", "month", "day"
+        """
+        jc = self._jColumnHelper.smvTimeToType()
+        return Column(jc)
+
+    def smvTimeToIndex(self):
+        """smvTime helper to convert `smvTime` column to time index integer
+
+            Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+            Example output 172, 551, 16405 (# of quarters, months, and days from 19700101)
+        """
+        jc = self._jColumnHelper.smvTimeToIndex()
+        return Column(jc)
+
+    def smvTimeToLabel(self):
+        """smvTime helper to convert `smvTime` column to human readable form
+
+             Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+             Example output "2013-Q1", "2015-12", "2014-12-01"
+        """
+        jc = self._jColumnHelper.smvTimeToLabel()
+        return Column(jc)
 
 _helpCls(Column, ColumnHelper)
