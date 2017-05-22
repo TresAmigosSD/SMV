@@ -540,13 +540,8 @@ class SmvModuleLink(object):
     def urn(self):
         return 'link:' + self.target.fqn()
 
-
-PyExtDataSetCache = {}
-
-from smvapp import SmvApp
-
-def SmvExtDataSet(refname):
-    """Creates an SmvDataSet representing an external (Scala) SmvDataSet
+class SmvExtDataSet(object):
+    """An SmvDataSet representing an external (Scala) SmvDataSet
 
         E.g. MyExtMod = SmvExtDataSet("the.scala.mod")
 
@@ -556,16 +551,14 @@ def SmvExtDataSet(refname):
         Returns:
             (SmvExtDataSet): external dataset with given fqn
     """
-    if refname in PyExtDataSetCache:
-        return PyExtDataSetCache[refname]
-    cls = type("SmvExtDataSet", (SmvDataSet,), {
-        "refname" : refname,
-        "smvApp"   : SmvApp.getInstance(),
-        "doRun"   : lambda self, validator, known: smvApp.runModule(self.urn)
-    })
-    cls.fqn = classmethod(lambda klass: refname)
-    PyExtDataSetCache[refname] = cls
-    return cls
+    def __init__(self, fqn):
+        self._fqn = fqn
+
+    def urn(self):
+        return 'mod:' + self._fqn
+
+    def fqn(self):
+        return self._fqn
 
 def SmvExtModuleLink(refname):
     """Creates a link to an external (Scala) SmvDataSet
