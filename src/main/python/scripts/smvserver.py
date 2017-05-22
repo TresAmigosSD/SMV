@@ -47,12 +47,14 @@ def getFqnsInApp():
     return urns
 
 def indentation(tabbed_str):
+    '''returns the number of indentation spaces for a given string'''
     no_tabs_str = tabbed_str.expandtabs(TAB_SIZE)
     # if string has only whitespace, return 0 indentation.
     # else return length of string minus len of str with preceding whitespace stripped
     return 0 if no_tabs_str.isspace() else len(no_tabs_str) - len(no_tabs_str.lstrip())
 
 def test_compile_for_errors(fullname):
+    '''returns true if a given file has compilation errors. False otherwise'''
     error = None
     try:
         ok = py_compile.compile(fullname, None, None, True)
@@ -65,17 +67,37 @@ def test_compile_for_errors(fullname):
             error = 1
     return error
 
+def getPlutoImportsStartEnd(linesOfCodeList, importsSectionName):
+    '''retuns start and end lines of a given imports section'''
+    blockStart = "###---{}_IMPORTS_START---###".format(importsSectionName)
+    blockEnd = "###---{}_IMPORTS_END---###".format(importsSectionName)
+
+    blockStartLine = None
+    blockEndLine = None
+    for i, line in enumerate(linesOfCodeList):
+        if not blockStartLine and line.lstrip().startswith(blockStart):
+            blockStartLine = i
+            continue
+        if blockStartLine is not None and line.lstrip().startswith(blockEnd):
+            blockEndLine = i
+            break
+    return (blockStartLine, blockEndLine)
+
+# TODO: getCodeBlockStartEnd, getDatasetClassStartEnd, getDatasetDescriptionStartEnd should return an Object
+# TODO: getCodeBlockStartEnd should use getDatasetClassStartEnd to get class start end and stay dry
 def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
+    '''returns start and end lines of a given method within a given class'''
     blockStartByName = {
-        "imports": "###---PLUTO_IMPORTS_START---###",
+        "imports": "###---GLOBAL_IMPORTS_START---###",  # TODO: Remove. use getPlutoImportsStartEnd
         "run": "def run(",
         "description": "def description(",
         "requiresDS": "def requiresDS(",
         "isEphemeral": "def isEphemeral(",
         "path": "def path(",
-        "tableName": "def tableName("
+        "tableName": "def tableName(",
+        "*": "def"
     }
-    blockEndByName = { "imports": "###---PLUTO_IMPORTS_END---###" }
+    blockEndByName = { "imports": "###---GLOBAL_IMPORTS_END---###" }
 
     testModuleClassDef = "class {}(".format(className)
     classDefFound = False
@@ -93,7 +115,7 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
 
     # detect module class def
     for i, line in enumerate(linesOfCodeList):
-        if blockName == "imports":
+        if blockName == "imports":  # TODO: remove. use getPlutoImportsStartEnd
             if not blockStartLine and line.lstrip().startswith(blockStartByName[blockName]):
                 blockStartLine = i
                 continue
@@ -133,8 +155,9 @@ def getCodeBlockStartEnd(linesOfCodeList, className, blockName):
 
     return (blockStartLine, blockEndLine, classStart, classEnd)
 
-# assumes class definition indentation is always 0  // TODO: remove once returning run method only
+# TODO: should also return line number of end of class definition
 def getDatasetClassStartEnd(lines_of_code_list, module_name):
+    '''returns beginning and end lines of a class, and the indentation of its first method'''
     test_module_class_def = "class {}(".format(module_name)
     start = None
     end = None
@@ -158,11 +181,49 @@ def getDatasetClassStartEnd(lines_of_code_list, module_name):
                 break
         lastNonEmptyLine = i if (not line.isspace()) else lastNonEmptyLine
     if start is not None and end is None:
-        end = len(lines_of_code_list)
+        end = len(lines_of_code_list)  # TODO.. should be last non empty line
     return (start, end, methodIndentation)
+
+def getDatasetDescriptionStartEnd(linesOfCodeList, className):
+    '''
+    returns a datasets description start and end line numbers
+    '''
+    (start, end, cDefEnd) = (None, None, None) # placeholders for start and end of description
+
+    # detect first method definition and class
+    (mStart, _, cStart, cEnd) = getCodeBlockStartEnd(linesOfCodeList, className, "*")
+
+    if cStart and cEnd:
+        for i, line in enumerate(linesOfCodeList):
+            if not cDefEnd:
+                # detect end of class definition, exclude comments after it
+                if line.startswith('#'): continue
+                lineSplitAtComment = line.split("#")
+                nonCommentStr = lineSplitAtComment[0]
+                if not cDefEnd and nonCommentStr.rstrip().endswith(":"):
+                    cDefEnd = i
+                    continue
+            lstrippedLine = line.lstrip()
+            if not start and (lstrippedLine.startswith("\"\"\"") or lstrippedLine.startswith("'''")):
+                start = i
+
+            if start:
+                uncommentedLine = line.split("#")[0].rstrip()
+                if uncommentedLine.endswith("\"\"\"") or uncommentedLine.endswith("'''"):
+                    # if i is start, then """ must have two occurrences for i to be beginning and end
+                    if start == i and not (uncommentedLine.count("\"\"\"") == 2 or uncommentedLine.count("'''") == 2):
+                        continue
+                    end = i
+                    break
+            # line is already at first method, so there is no docstring
+            if i >= mStart:
+                (start, end) = (None, None)
+                break
+    return (start, end, cDefEnd)
 
 
 def get_filepath_from_moduleFqn(module_fqn):
+    '''given a fqn, returns the fullname of its file'''
     # TODO: do not use hardcoded value... FIXME
     prefix = "/projects/sample_smv_project/src/main/python/"
     # dir1.dir2.file.class => [dir1, dir2, file]
@@ -172,6 +233,7 @@ def get_filepath_from_moduleFqn(module_fqn):
     return filepath
 
 def get_output_dir():
+    '''returns the smv app's output directory'''
     output_dir = SmvApp.getInstance().outputDir()
     if (output_dir.startswith('file://')):
         output_dir = output_dir[7:]
@@ -284,6 +346,7 @@ def get_module_code_file_mapping():
     return module_dict
 
 def err_res(err, err_msg="", res={}): # err, errmsg="", res={}
+    '''returns a json object with the default format for error responses'''
     retval = {}
     retval["err"] = err
     retval["err_msg"] = err_msg
@@ -291,15 +354,18 @@ def err_res(err, err_msg="", res={}): # err, errmsg="", res={}
     return jsonify(retval)
 
 def ok_res(res):
+    '''returns a json object with the default format for a successful response'''
     retval = {}
     retval["err"] = OK
     retval["res"] = res
     return jsonify(retval)
 
 def get_module_name_from_fqn(fqn):
+    '''Returns a string contaiting the basename for a given fqn'''
     return fqn.split(".")[-1:][0]   # a.b.c => [a,b,c] => [c] => c
 
 def getMsnFromFqn(fqn):
+    '''based on a fqn, returns an object with the basename, and stage for that given fqn'''
     fqn_split = fqn.split(".")
     stage = ".".join(fqn_split[:-2])
     baseName = fqn_split[-1]
@@ -307,6 +373,8 @@ def getMsnFromFqn(fqn):
 
 # TODO: FIXME: test if works with new smv version
 def getDatasetInfo(fqn, baseName, stage):
+    '''returns an object containing the properties of a dataset. Namely, fqn, name, stage, isEphemeral, dsType, description,
+        requiresDS (modules), tableName (Hive), csvFile (csv)'''
     try:
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
     except:
@@ -353,37 +421,51 @@ def getDatasetInfo(fqn, baseName, stage):
     res["srcCode"] = run_method_body
     return res
 
-# --------------------------------------------------------------------
-# --------------------------------------------------------------------
-# ----- TODO: combine all build* functions into a single function-----
-# --------------------------------------------------------------------
 
-#build imports
-def buildImports(stages):
-    stagesList = ['airlineapp.etl', 'airlineapp.datamodel', 'airlineapp.feature'] # TODO: get actual list of stages.. not hardcoded
-    # importStages = "".join(map((lambda stage: "import {}\n".format(stage)), stages))
-    importStages = "".join(map((lambda stage: "import {}\n".format(stage)), stagesList))  # TODO: remove when stages not hardcoded
-    return "\
-###---PLUTO_IMPORTS_START---###\n\
-from smv import *\n\
-from pyspark.sql.functions import *\n\
-\n\
-{}\
-###---PLUTO_IMPORTS_END---###\n".format(importStages)
+def extractImportsFromFqns(fqns = []):
+    '''
+    Given a list of fqns, returns a list of file qualified names. E.g.:
+    for: fqns = ['a.b.c.d', 'x.y.z'], returns: ['a.b.c', 'x.y'], which are files located in a/b/c.py, and x/y.py
+    '''
+    return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
+
+def buildImports(className = None, requiresDS = None):
+    '''Template for generating the imports section of a dataset'''
+    # classname not provided, then create global imports
+    if not className:
+        return """\
+###---GLOBAL_IMPORTS_START---###
+from smv import *
+from pyspark.sql.functions import *
+###---GLOBAL_IMPORTS_END---###\n"""
+
+    # class has no required datasets, no need to import anything
+    if not requiresDS: return "";
+
+    dependencies = extractImportsFromFqns(requiresDS)
+    importStatements = "\n".join(map(lambda dep: "import {}".format(dep), dependencies))
+    return """\
+###---{0}_IMPORTS_START---###
+{1}
+###---{0}_IMPORTS_END---###\n""".format(className, importStatements)
 
 # class start
 def buildClassStart(className, dsType): # what about SmvOutput?
+    '''Template for generating the class definition of a dataset'''
     extendsByDsType = { "csv": "SmvCsvFile", "hive": "SmvHiveTable", "module": "SmvModule" }
     extends = extendsByDsType[dsType.lower()]
     return "class {}({}):\n".format(className, extends)
 
 # build description
 def buildDescription(description, indentation="\t"):
-    return "\
-{1}def description(self):\n\
-{1}{1}return \"{0}\"\n".format(description, indentation)
+    '''Template for generating the description method\'s code'''
+    return """\
+{1}\"\"\"
+{1}{0}
+{1}\"\"\"\n""".format(description, indentation)
 
 def buildRun(dsType, body=None, indentation="\t"):
+    '''Template for generating the run method code'''
     if body is None:
         newBody = "{0}{0}return None\n".format(indentation)
     else: # give 2 level indentation to body
@@ -393,12 +475,14 @@ def buildRun(dsType, body=None, indentation="\t"):
     return "{2}def run(self, {0}):\n{1}".format(arg, newBody, indentation)
 
 def buildIsEphemeral(ephemeral, indentation="\t"):
+    '''Template for generating isEphemeral function code'''
     return "\
 {1}def isEphemeral(self):\n\
 {1}{1}return {0}\n".format(ephemeral, indentation)
 
 # module
 def buildRequiresDS(requiresDS, indentation="\t"):
+    '''Template for generating requiresDS\' method code'''
     requires = "" if not requiresDS else ", ".join(map((lambda r: r.encode("utf-8")), requiresDS))
     return "\
 {1}def requiresDS(self):\n\
@@ -406,6 +490,7 @@ def buildRequiresDS(requiresDS, indentation="\t"):
 
 # csv
 def buildPath(path, indentation="\t"):
+    '''Template for generating path method code'''
     path = "" if path is None else path
     return "\
 {1}def path(self):\n\
@@ -413,6 +498,7 @@ def buildPath(path, indentation="\t"):
 
 # hive
 def buildTableName(tableName, indentation="\t"):
+    '''Template for generating tableName method code'''
     tableName = "" if tableName is None else tableName
     return "\
 {1}def tableName(self):\n\
@@ -420,8 +506,9 @@ def buildTableName(tableName, indentation="\t"):
 
 
 def generateModuleCode(stages, className, dsType, description, isEphemeral, run=None, requiresDS=None):
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
-        buildImports(stages),  # should be list of stages, not hardcoded
+    '''Basic template for generating datasets extending SmvModule'''
+    return "{}\n{}{}{}\n{}\n{}\n".format(
+        buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
         buildRequiresDS(requiresDS),
@@ -429,8 +516,9 @@ def generateModuleCode(stages, className, dsType, description, isEphemeral, run=
         buildRun(dsType, run)).expandtabs(TAB_SIZE) # ...and turn tabs to spaces
 
 def generateCsvCode(stages, className, dsType, description, isEphemeral, run=None, path=None):
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
-        buildImports(stages),  # should be list of stages, not hardcoded
+    '''Basic template for generating datasets extending SmvCsvFile'''
+    return "{}\n{}{}{}\n{}\n{}\n".format(
+        buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
         buildPath(path),
@@ -438,18 +526,15 @@ def generateCsvCode(stages, className, dsType, description, isEphemeral, run=Non
         buildRun(dsType, run)).expandtabs(TAB_SIZE) # ...and turn tabs to spaces
 
 def generateHiveCode(stages, className, dsType, description, isEphemeral, run=None, tableName=None):
-    return "{}\n{}{}\n{}\n{}\n{}\n".format(
-        buildImports(stages),  # should be list of stages, not hardcoded
+    '''Basic template for generating datasets extending SmvHiveTable'''
+    return "{}\n{}{}{}\n{}\n{}\n".format(
+        buildImports(),  # should be list of stages, not hardcoded
         buildClassStart(className, dsType),
         buildDescription(description),
         buildTableName(tableName),
         buildIsEphemeral(isEphemeral),
         buildRun(dsType, run)).expandtabs(TAB_SIZE) # ...and turn tabs to spaces
 
-# --------------------------------------------------------------------
-# ------TODO: combine fun above into single fun-----------------------
-# --------------------------------------------------------------------
-# --------------------------------------------------------------------
 
 # ---------- API Definition ---------- #
 
@@ -523,7 +608,7 @@ def get_module_code():
                 raise ValueError('TODO....')
             module_fqn = "{0}.{1}.{1}".format(module_stage, module_name)
     except:
-        return 'module name and stage not provided'
+        return err_res('module name and stage not provided')
 
     try:
         module = DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(module_fqn)
@@ -541,7 +626,7 @@ def get_module_code():
         "stage": module_stage,
         "ephemeral": module.isEphemeral(),
         "dsType": moduleDsType,
-        "description": module.description()
+        "description": module.description().strip() if module.description() else ""
     }
 
     if moduleDsType.lower() == "input":
@@ -580,6 +665,8 @@ def get_module_code():
     return ok_res(res)
     # except IOError:
     #     return err_res(MODULE_NOT_FOUND_ERR)
+
+
 
 
 @app.route("/api/create_dataset", methods = ['POST']) # rename create_dataset
@@ -728,28 +815,23 @@ def updateDatasetInfo():
             lines_of_code_list = fd.readlines()
             lines_of_code = len(lines_of_code_list)
 
-            importsStart, importsEnd, descStart, descEnd, ephemeralStart, ephemeralEnd, runStart, runEnd, \
-            reqStart, reqEnd, pathStart, pathEnd, tableNameStart, tableNameEnd = [None for _ in range(14)]
+            # placeholder for the updated code
+            newFileContents = lines_of_code_list
 
             # get indentation for class methods
             (_, _, methodIndent) = getDatasetClassStartEnd(lines_of_code_list, className)
-            # detect imports
-            (importsStart, importsEnd, _, _) = getCodeBlockStartEnd(lines_of_code_list, None, "imports")
-            importsSection = buildImports(None).splitlines(True) # TODO... should use stages list as argument
-            newFileContents = (importsSection + lines_of_code_list if importsStart is None
-                else lines_of_code_list[:importsStart] + importsSection + lines_of_code_list[importsEnd + 1:])
 
-            ## desc
-            (descStart, descEnd, _, dClassEnd) = getCodeBlockStartEnd(newFileContents, className, "description");
+            ## description: get start, end of class definition
+            (descStart, descEnd, cDefEnd) = getDatasetDescriptionStartEnd(newFileContents, className);
             descriptionSection = buildDescription(description, methodIndent).splitlines(True)
 
-            newFileContents = newFileContents[:dClassEnd + 1] + ["\n"] + descriptionSection + newFileContents[dClassEnd + 1:] \
+            newFileContents = newFileContents[:cDefEnd + 1] + descriptionSection + newFileContents[cDefEnd + 1:] \
                 if descStart is None else newFileContents[:descStart] + descriptionSection + newFileContents[descEnd + 1:]
 
             ## ephemeral
             (ephStart, ephEnd, _, ephClassEnd) = getCodeBlockStartEnd(newFileContents, className, "isEphemeral");
             ephSection = buildIsEphemeral(isEphemeral, methodIndent).splitlines(True)
-            newFileContents = newFileContents[:ephClassEnd + 1] + ["\n"] + ephSection + newFileContents[ephClassEnd + 1:] \
+            newFileContents = newFileContents[:ephClassEnd + 1] + ephSection + newFileContents[ephClassEnd + 1:] \
                 if ephStart is None else newFileContents[:ephStart] + ephSection + newFileContents[ephEnd + 1:]
 
             ## run
@@ -759,6 +841,14 @@ def updateDatasetInfo():
                 if rStart is None else newFileContents[:rStart] + runSection + newFileContents[rEnd + 1:]
 
             if dsType.lower() == 'module':
+                # detect class imports start, end
+                (classImportsStart, classImportsEnd) = getPlutoImportsStartEnd(lines_of_code_list, className)
+                classImportsSection = buildImports(className, requiresDS).splitlines(True)
+                if classImportsStart:
+                    newFileContents = classImportsSection + newFileContents[:classImportsStart] + newFileContents[classImportsEnd + 1:]
+                else:
+                    newFileContents = classImportsSection + newFileContents
+
                 (reqStart, reqEnd, _, reqClassEnd) = getCodeBlockStartEnd(newFileContents, className, "requiresDS");
                 reqSection = buildRequiresDS(requiresDS, methodIndent).splitlines(True)
                 newFileContents = newFileContents[:reqClassEnd + 1] + ["\n"] + reqSection + newFileContents[reqClassEnd + 1:] \
@@ -779,8 +869,11 @@ def updateDatasetInfo():
                      newFileContents[:tabClassEnd + 1] + ["\n"] + tabSection + newFileContents[tabClassEnd + 1:]
                      if tabStart is None else newFileContents[:tabStart] + tabSection + newFileContents[tabEnd + 1:])
 
-            for i, line in enumerate(newFileContents):
-                sys.stdout.write('{}  {}'.format(i,line))
+            # detect global imports
+            (importsStart, importsEnd, _, _) = getCodeBlockStartEnd(newFileContents, None, "imports")
+            importsSection = buildImports(None).splitlines(True) # TODO... should use stages list as argument
+            newFileContents = (importsSection + newFileContents if importsStart is None
+                else importsSection + newFileContents[:importsStart] + newFileContents[importsEnd + 1:])
 
             # modify duplicate
             fd.seek(0)  # reset file stream
@@ -805,7 +898,6 @@ def updateDatasetInfo():
         return ok_res(JOB_SUCCESS)
     else:
         return err_res(MODULE_NOT_FOUND_ERR)
-
 
 @app.route("/api/get_sample_output", methods = ['POST'])
 def get_sample_output():

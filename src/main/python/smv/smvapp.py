@@ -83,6 +83,7 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.ColumnHelper")
         java_import(self._jvm, "org.tresamigos.smv.SmvDFHelper")
         java_import(self._jvm, "org.tresamigos.smv.dqm.*")
+        java_import(self._jvm, "org.tresamigos.smv.panel.*")
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
 
         self.j_smvPyClient = self.create_smv_pyclient(arglist)

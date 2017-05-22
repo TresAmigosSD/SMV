@@ -4,8 +4,8 @@
 
 set -e
 PROG_NAME=$(basename "$0")
-SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
-SMV_DIR="$(dirname "$SMV_TOOLS")"
+SMV_ADMIN="$(cd "`dirname "$0"`"; pwd)"
+SMV_DIR="$(dirname "$SMV_ADMIN")"
 SMV_DIR_BASE="$(basename $SMV_DIR)"
 DOCKER_SMV_DIR="/projects/${SMV_DIR_BASE}" # SMV dir inside the docker image.
 PROJ_DIR="$(dirname "$SMV_DIR")" # assume parent of SMV directory is the projects dir.
