@@ -193,7 +193,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    */
   private def dryRun(): Boolean = {
     if (smvConfig.cmdLine.dryRun()) {
-      val modsNotPersisted = modulesToRun.filterNot(_.isPersisted)
+      val modsNotPersisted = modulesToRun.filterNot(mod => mod.isPersisted || mod.isEphemeral)
       println("Dry run - modules not persisted:")
       println("----------------------")
       println(modsNotPersisted.mkString("\n"))
