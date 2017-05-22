@@ -126,6 +126,11 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                          default = Some(false),
                          descrYes = "run all output modules in all stages in app.")
 
+  val dryRun = toggle("dry-run",
+                      noshort = true,
+                      default = Some(false),
+                      descrYes = "determine which modules do not have persisted data and will need to be run.")
+
   // if user specified "edd-compare" command line, user should have supplied two file names.
   validateOpt(compareEdd) {
     case (Some(edds)) if edds.length != 2 => Left("edd-compare param requires two EDD file names")
