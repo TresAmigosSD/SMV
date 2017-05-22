@@ -368,9 +368,9 @@ class ColumnHelper(column: Column) {
   def smvPlusDays(n: Int) = {
     val name = s"SmvPlusDays($column, $n)"
     val f = (t: Timestamp) =>
-      if (t == null) null
-      else new Timestamp((new DateTime(t)).plusDays(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+      if (t == null) None
+      else Option(new Timestamp((new DateTime(t)).plusDays(n).getMillis()))
+    udf(f).apply(column).alias(name)
   }
 
   /**
@@ -402,9 +402,9 @@ class ColumnHelper(column: Column) {
   def smvPlusWeeks(n: Int) = {
     val name = s"SmvPlusWeeks($column, $n)"
     val f = (t: Timestamp) =>
-      if (t == null) null
-      else new Timestamp((new DateTime(t)).plusWeeks(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+      if (t == null) None
+      else Option(new Timestamp((new DateTime(t)).plusWeeks(n).getMillis()))
+    udf(f).apply(column).alias(name)
   }
 
   /**
@@ -442,8 +442,8 @@ class ColumnHelper(column: Column) {
     val name = s"SmvPlusMonths($column, $n)"
     val f = (t: Timestamp) =>
       if (t == null) null
-      else new Timestamp((new DateTime(t)).plusMonths(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+      else Option(new Timestamp((new DateTime(t)).plusMonths(n).getMillis()))
+    udf(f).apply(column).alias(name)
   }
 
   /**
@@ -480,9 +480,9 @@ class ColumnHelper(column: Column) {
   def smvPlusYears(n: Int) = {
     val name = s"SmvPlusYears($column, $n)"
     val f = (t: Timestamp) =>
-      if (t == null) null
-      else new Timestamp((new DateTime(t)).plusYears(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+      if (t == null) None
+      else Option(new Timestamp((new DateTime(t)).plusYears(n).getMillis()))
+    udf(f).apply(column).alias(name)
   }
 
   /**

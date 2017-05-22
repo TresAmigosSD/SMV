@@ -1331,16 +1331,17 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvPlusDays(self, delta):
-        """Add N days to `Timestamp` column
+        """Add N days to `Timestamp` or `Date` column
 
             Args:
-                delta (integer): the number of days to add
+                delta (int or Column): the number of days to add
 
             Example:
                 >>> df.select(col("dob").smvPlusDays(3))
 
             Returns:
-                (Column): TimestampType. The incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null.
+                    **Note** even if the input is DateType, the output is TimestampType
         """
         if (isinstance(delta, int)):
             jdelta = delta
@@ -1352,16 +1353,17 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvPlusWeeks(self, delta):
-        """Add N weeks to `Timestamp` column
+        """Add N weeks to `Timestamp` or `Date` column
 
             Args:
-                delta (integer): the number of weeks to add
+                delta (int or Column): the number of weeks to add
 
             Example:
                 >>> df.select(col("dob").smvPlusWeeks(3))
 
             Returns:
-                (Column): TimestampType. The incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null.
+                    **Note** even if the input is DateType, the output is TimestampType
         """
         if (isinstance(delta, int)):
             jdelta = delta
@@ -1373,10 +1375,10 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvPlusMonths(self, delta):
-        """Add N months to `Timestamp` column
+        """Add N months to `Timestamp` or `Date` column
 
             Args:
-                delta (integer): the number of months to add
+                delta (int or Column): the number of months to add
 
             Note:
                 The calculation will do its best to only change the month field retaining the same day of month. However, in certain circumstances, it may be necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot result in 2007-04-31, so the day of month is adjusted to 2007-04-30.
@@ -1385,7 +1387,8 @@ class ColumnHelper(object):
                 >>> df.select(col("dob").smvPlusMonths(3))
 
             Returns:
-                (Column): TimestampType. The incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null.
+                    **Note** even if the input is DateType, the output is TimestampType
         """
         if (isinstance(delta, int)):
             jdelta = delta
@@ -1397,16 +1400,17 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvPlusYears(self, delta):
-        """Add N years to `Timestamp` column
+        """Add N years to `Timestamp` or `Date` column
 
             Args:
-                delta (integer): the number of years to add
+                delta (int or Column): the number of years to add
 
             Example:
                 >>> df.select(col("dob").smvPlusYears(3))
 
             Returns:
-                (Column): TimestampType. The incremented Timestamp, or null if input is null
+                (Column): TimestampType. The incremented Timestamp, or null if input is null.
+                    **Note** even if the input is DateType, the output is TimestampType
         """
         if (isinstance(delta, int)):
             jdelta = delta
