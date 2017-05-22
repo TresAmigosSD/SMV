@@ -175,6 +175,15 @@ acct_id: String;  # this is the id
 user_id: String;
 ```
 
+## userSchema
+Alternatively, the schema can be specified by overriding the `userSchema` method, for example:
+```Python
+class acct_demo(SmvCsvFile):
+  ...
+  def userSchema(self):
+    return "acct_id:String;user_id:String;store_id:String[,null];amt:Double;income:Decimal[10]"
+```
+
 ## Supported schema types
 ### Native types
 `Integer`, `Long`, `Float`, `Double`, `Boolean`, and `String` types correspond to their corresponding JVM type.
