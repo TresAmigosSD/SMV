@@ -274,6 +274,45 @@ class SmvGroupedData(object):
             return DataFrame(self.sgd.smvFillNullWithPrevValue(smv_copy_array(self.df._sc, *orderCols), smv_copy_array(self.df._sc, *valueCols)), self.df.sql_ctx)
         return __doFill
 
+    def smvTimePanelAgg(self, time_col, start, end):
+        """Apply aggregation on given keys and specified time panel period
+
+            Example:
+                Given DataFrame df as
+
+                +---+------------+------+
+                | K | TS         | V    |
+                +===+============+======+
+                | 1 | 2012-01-01 | 1.5  |
+                +---+------------+------+
+                | 1 | 2012-03-01 | 4.5  |
+                +---+------------+------+
+                | 1 | 2012-07-01 | 7.5  |
+                +---+------------+------+
+                | 1 | 2012-05-01 | 2.45 |
+                +---+------------+------+
+
+                after applying
+
+                >>> df.smvGroupBy("K")\
+                    .smvTimePanelAgg("TS", Quarter(2012, 1), Quarter(2012, 2))(
+                        sum("V").alias("V")
+                    )
+
+                the result is
+
+                +---+---------+------+
+                | K | smvTime | V    |
+                +===+=========+======+
+                | 1 | Q201201 | 6.0  |
+                +---+---------+------+
+                | 1 | Q201202 | 2.45 |
+                +---+---------+------+
+        """
+        def __doAgg(*aggs):
+            return DataFrame(self.sgd.smvTimePanelAgg(time_col, start, end, smv_copy_array(self.df._sc, *aggs)), self.df.sql_ctx)
+        return __doAgg
+
 class SmvMultiJoin(object):
     """Wrapper around Scala's SmvMultiJoin"""
     def __init__(self, sqlContext, mj):
@@ -1397,5 +1436,31 @@ class ColumnHelper(object):
         jc = self._jColumnHelper.smvMonth70()
         return Column(jc)
 
+    def smvTimeToType(self):
+        """smvTime helper to convert `smvTime` column to time type string
+
+            Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+            Example output type "quarter", "month", "day"
+        """
+        jc = self._jColumnHelper.smvTimeToType()
+        return Column(jc)
+
+    def smvTimeToIndex(self):
+        """smvTime helper to convert `smvTime` column to time index integer
+
+            Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+            Example output 172, 551, 16405 (# of quarters, months, and days from 19700101)
+        """
+        jc = self._jColumnHelper.smvTimeToIndex()
+        return Column(jc)
+
+    def smvTimeToLabel(self):
+        """smvTime helper to convert `smvTime` column to human readable form
+
+             Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+             Example output "2013-Q1", "2015-12", "2014-12-01"
+        """
+        jc = self._jColumnHelper.smvTimeToLabel()
+        return Column(jc)
 
 _helpCls(Column, ColumnHelper)
