@@ -529,9 +529,10 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
   val userSchema: Option[String]
 
   /**
-   * TODO: make this a lazy val
+   * SmvSchema for this file. If a userSchema String is specified, the SmvSchema
+   * is read from that. If not, it is read from file.
    */
-  def schema: SmvSchema =
+  lazy val schema: SmvSchema =
     userSchema match {
       case Some(s) => SmvSchema.fromString(s)
       case None => SmvSchema.fromFile(app.sc, finalSchemaPath)
