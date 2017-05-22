@@ -26,6 +26,7 @@
   * [Smv Functions (Python)](smv_python_funcs.md)
   * [SMV Functions (Scala)](functions.md)
   * [Fuzzy matching between two datasets](smv_entity_matcher.md)
+  * [Time Period and Time Panel](smv_timepanel.md)
   * [Work on data with hierarchies](smv_hier.md)
   * [Column level Description and Labels](smv_desc_label.md)
 
