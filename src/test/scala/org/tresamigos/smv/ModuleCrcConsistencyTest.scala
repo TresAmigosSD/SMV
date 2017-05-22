@@ -12,9 +12,25 @@
  * limitations under the License.
  */
 
-package org.tresamigos
+package org.tresamigos.smv
 
 /** Hash calculation skips package org.tresamigos.smv, so we create a separate package for test modules */
+
+class ModuleCrcConsistencyTest extends SmvTestUtil {
+  // While working on unification of SmvDataSet loading schemes we will be changing
+  // SmvDataSet implementation several times, causing CRCs to change. Ignore CRC
+  // and datasetHash tests until this process is complete.
+
+  ignore("test moduleCrc changed or not") {
+    assert(fixture.Module1.datasetCRC === 476910372)
+  }
+
+  ignore("test moduleCrc on SmvFile") {
+    assert(fixture.file.datasetCRC === 24672138)
+  }
+}
+
+
 package fixture {
   import org.tresamigos.smv._
   // bring in testDataDir
@@ -29,22 +45,4 @@ package fixture {
   object file
       extends SmvCsvFile("./" + TestConf.testDataDir + "CsvTest/test1",
                          CsvAttributes.defaultCsvWithHeader)
-}
-
-package smv {
-
-  class ModuleCrcConsistencyTest extends SmvTestUtil {
-    // While working on unification of SmvDataSet loading schemes we will be changing
-    // SmvDataSet implementation several times, causing CRCs to change. Ignore CRC
-    // and datasetHash tests until this process is complete.
-
-    ignore("test moduleCrc changed or not") {
-      assert(fixture.Module1.datasetCRC === 476910372)
-    }
-
-    ignore("test moduleCrc on SmvFile") {
-      assert(fixture.file.datasetCRC === 24672138)
-    }
-  }
-
 }

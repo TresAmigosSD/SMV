@@ -323,15 +323,35 @@ class WithParser(object):
 
 # Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
 # Otherwise we will pick methods up from SmvDataSet instead of WithParser.
-class SmvCsvFile(WithParser, SmvInput):
+class SmvFile(WithParser, SmvInput):
+    def userSchema(self):
+        """Get user-defined schema
+
+            Override this method to define your own schema for the target file.
+            Schema declared in this way take priority over .schema files. Schema
+            should be specified in the format "colName1:colType1;colName2:colType2"
+
+            Returns:
+                (string):
+        """
+        return None
+
+
+class SmvCsvFile(SmvFile):
     """Input from a file in CSV format
     """
 
     def __init__(self, smvApp):
         super(SmvCsvFile, self).__init__(smvApp)
         self._smvCsvFile = smvApp.j_smvPyClient.smvCsvFile(
-            self.fqn(), self.path(), self.csvAttr(),
-            self.forceParserCheck(), self.failAtParsingError())
+            self.fqn(),
+            self.path(),
+            self.csvAttr(),
+            self.forceParserCheck(),
+            self.failAtParsingError(),
+            smvApp.scalaOption(self.userSchema())
+        )
+
 
     def getRawScalaInputDS(self):
         return self._smvCsvFile
@@ -353,9 +373,7 @@ class SmvCsvFile(WithParser, SmvInput):
         jdf = self._smvCsvFile.doRun(validator)
         return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
-# Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
-# Otherwise we will pick methods up from SmvDataSet instead of WithParser.
-class SmvMultiCsvFiles(WithParser, SmvInput):
+class SmvMultiCsvFiles(SmvFile):
     """Raw input from multiple csv files sharing single schema
 
         Instead of a single input file, specify a data dir with files which share
@@ -367,8 +385,12 @@ class SmvMultiCsvFiles(WithParser, SmvInput):
         self._smvMultiCsvFiles = smvApp._jvm.org.tresamigos.smv.SmvMultiCsvFiles(
             self.dir(),
             self.csvAttr(),
-            None
+            None,
+            smvApp.scalaOption(self.userSchema())
         )
+
+    def userSchema(self):
+        return None
 
     def getRawScalaInputDS(self):
         return self._smvMultiCsvFiles
