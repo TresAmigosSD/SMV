@@ -17,7 +17,6 @@ useradd -u $USER_ID -g $USER_ID -G sudo --create-home --home-dir ${USER_HOME} --
 echo "$USER_NAME ALL = NOPASSWD: ALL" >> /etc/sudoers
 
 # gave up on moving ivy dir using sbtopts.  Just link ~/.ivy2 to /projects/.ivy2
-mkdir -p /projects/.ivy2
 rm -rf ${USER_HOME}/.ivy2
 ln -s /projects/.ivy2 ${USER_HOME}/.ivy2
 
@@ -32,6 +31,9 @@ chown -R ${USER_NAME}:${USER_NAME} ${USER_HOME}
 if [ -f /projects/.docker ]; then
   chown -R ${USER_NAME}:${USER_NAME} /projects
 fi
+# We don't want to chown this directory as it could be quite large. Instead, if
+# we do create it we will create it under USER_NAME instea
+sudo -u ${USER_NAME} -i bash -c "mkdir -p /projects/.ivy2"
 cd /projects
 
 if [[ $# == 0 ]]; then
