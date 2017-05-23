@@ -374,7 +374,7 @@ def getStageFromFqn(fqn):
     '''returns the stage given a a dataset's fqn'''
     # constructing urn for dataset
     try:
-        stage = SmvApp.getInstance().getStageFromFqn(fqn).encode("utf-8")
+        stage = SmvApp.getInstance().getStageFromModuleFqn(fqn).encode("utf-8")
     except:
         raise ValueError("Could not retrive stage with the given fqn: " + str(fqn))
     return stage
