@@ -26,6 +26,7 @@ def df(name, forceRun = False, version = None):
         Args:
             name (str): The name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
+            version (str): The name of the persisted version to load from
 
         Returns:
             (DataFrame): The result of running the named module.
