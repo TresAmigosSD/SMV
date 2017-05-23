@@ -367,9 +367,18 @@ def get_module_name_from_fqn(fqn):
 def getMsnFromFqn(fqn):
     '''based on a fqn, returns an object with the basename, and stage for that given fqn'''
     fqn_split = fqn.split(".")
-    stage = ".".join(fqn_split[:-2])
+    stage = getStageFromFqn(fqn)
     baseName = fqn_split[-1]
     return { "stage": stage, "baseName": baseName }
+
+def getStageFromFqn(fqn):
+    '''returns the stage given a a dataset's fqn'''
+    # constructing urn for dataset
+    try:
+        stage = SmvApp.getInstance().getStageFromFqn(fqn).encode("utf-8")
+    except:
+        raise ValueError("Could not retrive stage with the given fqn: " + str(fqn))
+    return stage
 
 # TODO: FIXME: test if works with new smv version
 def getDatasetInfo(fqn, baseName, stage):
@@ -429,7 +438,7 @@ def extractImportsFromFqns(fqns = []):
     '''
     return list(map(lambda fqn: ".".join(fqn.split(".")[:-1]), fqns))
 
-def buildImports(className = None, requiresDS = None):
+def buildImports(className = None, requiresDS = None, requiredDSLinks = []):
     '''Template for generating the imports section of a dataset'''
     # classname not provided, then create global imports
     if not className:
@@ -444,10 +453,13 @@ from pyspark.sql.functions import *
 
     dependencies = extractImportsFromFqns(requiresDS)
     importStatements = "\n".join(map(lambda dep: "import {}".format(dep), dependencies))
+    linkDefinitions = "\n".join(["{0} = SmvModuleLink({1})".format(l.varName, l.fqn) for l in requiredDSLinks])
     return """\
 ###---{0}_IMPORTS_START---###
 {1}
-###---{0}_IMPORTS_END---###\n""".format(className, importStatements)
+
+{2}
+###---{0}_IMPORTS_END---###\n""".format(className, importStatements, linkDefinitions)
 
 # class start
 def buildClassStart(className, dsType): # what about SmvOutput?
@@ -487,6 +499,30 @@ def buildRequiresDS(requiresDS, indentation="\t"):
     return "\
 {1}def requiresDS(self):\n\
 {1}{1}return [{0}]\n".format(requires, indentation)
+
+def getRequiredModulesWithLinks(currentFqn, fqns):
+    '''takes a fqn (currentFqn) and a list of fqns or SmvModuleLink(s) required by the currentFqn
+        if a required fqn is in the same stage, it will remain as a fqn in the returned list. If
+        the required fqn is in a different stage, it will be subtituted by a SmvModuleLink'''
+    requiresDSList = []
+    currentStage = getStageFromFqn(currentFqn)
+
+    for fqn in fqns:
+        # if same stage, fqn
+        if currentStage == getStageFromFqn(fqn):
+            requiresDSList.append(fqn)
+        # if different stage, wrap around link
+        else:
+            requiresDSList.append(RequiredDSLink(fqn).varName)
+    return requiresDSList
+
+def getRequiredDSLinks(currentFqn, fqns):
+    linkVarsList = []
+    currentStage = getStageFromFqn(currentFqn)
+    for fqn in fqns:
+        if currentStage != getStageFromFqn(fqn):
+            linkVarsList.append(RequiredDSLink(fqn))
+    return linkVarsList
 
 # csv
 def buildPath(path, indentation="\t"):
@@ -843,14 +879,17 @@ def updateDatasetInfo():
             if dsType.lower() == 'module':
                 # detect class imports start, end
                 (classImportsStart, classImportsEnd) = getPlutoImportsStartEnd(lines_of_code_list, className)
-                classImportsSection = buildImports(className, requiresDS).splitlines(True)
+                # process requiresDS, turn them into links, get link definitions
+                reqDSWLinks = getRequiredModulesWithLinks(fqn, requiresDS)
+                reqDSLinkVars = getRequiredDSLinks(fqn, requiresDS)
+                classImportsSection = buildImports(className, requiresDS, reqDSLinkVars).splitlines(True)
                 if classImportsStart:
                     newFileContents = classImportsSection + newFileContents[:classImportsStart] + newFileContents[classImportsEnd + 1:]
                 else:
                     newFileContents = classImportsSection + newFileContents
 
                 (reqStart, reqEnd, _, reqClassEnd) = getCodeBlockStartEnd(newFileContents, className, "requiresDS");
-                reqSection = buildRequiresDS(requiresDS, methodIndent).splitlines(True)
+                reqSection = buildRequiresDS(reqDSWLinks, methodIndent).splitlines(True)
                 newFileContents = newFileContents[:reqClassEnd + 1] + ["\n"] + reqSection + newFileContents[reqClassEnd + 1:] \
                     if reqStart is None else newFileContents[:reqStart] + reqSection + newFileContents[reqEnd + 1:]
 
@@ -1030,6 +1069,14 @@ class Main(object):
 
         (options, args) = parser.parse_args()
         return options
+
+class RequiredDSLink:
+    '''Instantiates a link object that contains a link variable name, and a fqn
+        The fqn is the fqn of a given dataset. The Link variable name is the string to be used as a
+        variable name when turning a dataset with the given fqn into a SmvModuleLink'''
+    def __init__(self, fqn):
+        self.fqn = fqn
+        self.varName = "{}_link".format(fqn.replace(".", "_"))
 
 # temporary till module source control is implemented
 module_file_map = {}
