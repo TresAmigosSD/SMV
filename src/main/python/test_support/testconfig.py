@@ -16,6 +16,10 @@ from pyspark import SparkContext
 from pyspark.sql import HiveContext
 
 class TestConfig(object):
+    @classmethod
+    def withSparkContext(cls, sc):
+        cls.sc = sc
+
     # shared SparkContext
     @classmethod
     def sparkContext(cls):

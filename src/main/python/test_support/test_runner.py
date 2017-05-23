@@ -1,4 +1,3 @@
-#
 # This file is licensed under the Apache License, Version 2.0
 # (the "License"); you may not use this file except in compliance with
 # the License.  You may obtain a copy of the License at
@@ -13,13 +12,20 @@
 import sys
 from unittest import *
 
-from test_support.testconfig import TestConfig
-from test_support.test_runner import SmvTestRunner
+class SmvTestRunner(object):
+    def __init__(self, test_path):
+        self.test_path = test_path
 
-if __name__ == "__main__":
-    print("Testing with Python " + sys.version)
+    def run(self, test_names):
+        loader = TestLoader()
 
-    TestPath = "./src/test/python"
+        if len(test_names) == 0:
+            suite = loader.discover(self.test_path)
+        else:
+            sys.path.append(self.test_path)
+            suite = loader.loadTestsFromNames(test_names)
+            sys.path.pop(self.test_path)
 
-    runner = SmvTestRunner(TestPath)
-    runner.run(TestConfig.test_names())
+        result = TextTestRunner(verbosity=2).run(suite)
+        print("result is ", result)
+        exit(len(result.errors) + len(result.failures))
