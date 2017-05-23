@@ -499,14 +499,23 @@ def buildRequiresDS(requiresDS, indentation="\t"):
 {1}def requiresDS(self):\n\
 {1}{1}return [{0}]\n".format(requires, indentation)
 
-def getRequiredModulesWithLinks(currentFqn, fqns):
-    '''takes a fqn (currentFqn) and a list of fqns or SmvModuleLink(s) required by the currentFqn
-        if a required fqn is in the same stage, it will remain as a fqn in the returned list. If
-        the required fqn is in a different stage, it will be subtituted by a SmvModuleLink'''
+def getRequiredModulesWithLinks(currentFqn, requiredFqns):
+    '''takes as arguments a fqn (currentFqn) and a list of required fqns.
+        Returns a list as it should be consumed by the requiresDS method of a dataset.
+        The returned list contains:
+        - fqn: for every requiredFqn that is in the same stage as currentFqn
+        - SmvModuleLink variable name: for every requiredFqn in a different stage than currentFqn
+         E.g:
+        currentFqn = 'stage1.foo.foo'
+        requiredFqns= [stage1.bar.bar, stage2.baz.baz]
+        Will return: [
+            stage1.foo.foo, # it is in same stage as current fqn, so returns fqn
+            stage_2_baz_baz_link  # different stage.. returns variable name
+        ] '''
     requiresDSList = []
     currentStage = getStageFromFqn(currentFqn)
 
-    for fqn in fqns:
+    for fqn in requiredFqns:
         # if same stage, fqn
         if currentStage == getStageFromFqn(fqn):
             requiresDSList.append(fqn)
@@ -515,10 +524,19 @@ def getRequiredModulesWithLinks(currentFqn, fqns):
             requiresDSList.append(RequiredDSLink(fqn).varName)
     return requiresDSList
 
-def getRequiredDSLinks(currentFqn, fqns):
+def getRequiredDSLinks(currentFqn, requiredFqns):
+    '''takes as arguments a fqn (current fqn) and a list of requiredFqns.
+        Returns a list of RequiredDSLink objects for each fqn that is in a different started
+        than the currentFqn. Each object contains a fqn mapped to SmvModuleLink variable name.
+
+        E.g.:
+        currentFqn = 'stage1.foo.foo'
+        requiredFqns = [ stage1.bar.bar, stage2.baz.baz ]
+            returns [ (a RequiredDSLink object for stage2.baz.baz) ] '''
+
     linkVarsList = []
     currentStage = getStageFromFqn(currentFqn)
-    for fqn in fqns:
+    for fqn in requiredFqns:
         if currentStage != getStageFromFqn(fqn):
             linkVarsList.append(RequiredDSLink(fqn))
     return linkVarsList
