@@ -36,6 +36,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   val smvConfig   = new SmvConfig(cmdLineArgs)
   val genEdd      = smvConfig.cmdLine.genEdd()
   val publishHive = smvConfig.cmdLine.publishHive()
+  val publishJDBC = smvConfig.cmdLine.publishJDBC()
   val stages      = smvConfig.stageNames
   val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
 
@@ -202,6 +203,18 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
+   * Publish through JDBC if the --publish-jdbc flag is set
+   */
+  def publishOutputModulesThroughJDBC(): Boolean = {
+    if (publishJDBC) {
+      modulesToRun foreach (_.publishThroughJDBC)
+      true
+    } else {
+      false
+    }
+  }
+
+  /**
    * Publish the specified modules if the "--publish" flag was specified on command line.
    * @return true if modules were published, otherwise return false.
    */
@@ -304,7 +317,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     compareEddResults() ||
       generateDotDependencyGraph() || generateJsonDependencyGraph() ||
       publishModulesToHive() ||  publishOutputModules() ||
-      generateOutputModules()
+      publishOutputModulesThroughJDBC() || generateOutputModules()
   }
 }
 

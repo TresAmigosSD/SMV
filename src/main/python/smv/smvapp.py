@@ -172,6 +172,10 @@ class SmvApp(object):
         """Returns a Scala Option containing the value"""
         return self._jvm.scala.Option.apply(val)
 
+    def scalaNone(self):
+        """Returns a Scala None value"""
+        return self.scalaOption(None)
+
     def createDF(self, schema, data = None):
         return DataFrame(self.j_smvPyClient.dfFrom(schema, data), self.sqlContext)
 

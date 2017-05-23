@@ -54,6 +54,11 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                         default = Some(false),
                         descrYes = "ignore persisted data and force all modules to run")
 
+  val publishJDBC = toggle("publish-jdbc",
+                        noshort = true,
+                        default = Some(false),
+                        descrYes = "publish the given modules/stage/app through JDBC connection")
+
   val publishHive = toggle(
     "publish-hive",
     noshort = true,
@@ -199,6 +204,14 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       .toMap
 
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
+
+  def jdbcUrl: String =
+    mergedProps.get("smv.jdbc.url") match {
+      case Some(url) =>
+        url
+      case _ =>
+        throw new SmvRuntimeException("JDBC url not specified in SMV config")
+    }
 
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))

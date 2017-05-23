@@ -163,6 +163,14 @@ Can be overridden using <code>--publish-dir</code> command line option</td>
 </tr>
 </table>
 
+<tr>
+<td>smv.jdbc.url</td>
+<td>None</td>
+<td>Optional</td>
+<td>JDBC url to use for publishing and reading tables</td>
+</tr>
+</table>
+
 Please refer [Runtime User Configuration](run_config.md) for details and examples
 of how to use runtime user specified configuration.
 
