@@ -203,6 +203,21 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
+   * if the publish-local option is specified, then publish locally
+   */
+  def publishOutputModulesLocally: Boolean = {
+    if (smvConfig.cmdLine.publishLocal.isSupplied) {
+      val localDir = smvConfig.cmdLine.publishLocal()
+      modulesToRun map { m =>
+        val csvPath = s"${localDir}/${m.versionedFqn}.csv"
+        m.exportToCsv(csvPath)
+      }
+    }
+
+    smvConfig.cmdLine.publishLocal.isSupplied
+  }
+
+  /**
    * Publish through JDBC if the --publish-jdbc flag is set
    */
   def publishOutputModulesThroughJDBC(): Boolean = {
@@ -317,7 +332,8 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     compareEddResults() ||
       generateDotDependencyGraph() || generateJsonDependencyGraph() ||
       publishModulesToHive() ||  publishOutputModules() ||
-      publishOutputModulesThroughJDBC() || generateOutputModules()
+      publishOutputModulesThroughJDBC() || publishOutputModulesLocally ||
+      generateOutputModules()
   }
 }
 
