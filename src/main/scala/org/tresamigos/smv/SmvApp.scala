@@ -301,6 +301,9 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * to determine which modules should be run/graphed/etc.
    */
   def run() = {
+    purgeCurrentOutputFiles()
+    purgeOldOutputFiles()
+    
     val mods = modulesToRun
 
     if (mods.nonEmpty) {
@@ -309,9 +312,6 @@ class SmvApp(private val cmdLineArgs: Seq[String],
       println(mods.map(_.fqn).mkString("\n"))
       println("----------------------")
     }
-
-    purgeCurrentOutputFiles()
-    purgeOldOutputFiles()
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
     compareEddResults() ||
