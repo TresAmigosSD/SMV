@@ -932,7 +932,8 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
                           }
                           .toMap[String, DataFrame])
   }
-  override def datasetHash = target.datasetHash()
+  override def instanceValHash = target.instanceValHash()
+  override def sourceCodeHash = target.sourceCodeHash()
   override def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = {
     // ignore passed in userDQM as we want the user defined dqm from the python side.
     target.dqmWithTypeSpecificPolicy()

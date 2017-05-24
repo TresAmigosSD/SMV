@@ -67,10 +67,7 @@ public interface ISmvModule {
 	 */
 	DataFrame getDataFrame(DQMValidator validator,  Map<String, DataFrame> known);
 
-	/**
-	 * Calculate a hash for this module; can optionally include
-	 * the hash for all its super classes up to and excluding the base
-	 * class provided by SMV.
-	 */
-	int datasetHash();
+	int sourceCodeHash();
+
+	int instanceValHash();
 }

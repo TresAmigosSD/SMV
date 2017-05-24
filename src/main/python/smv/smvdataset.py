@@ -1,4 +1,3 @@
-#
 # This file is licensed under the Apache License, Version 2.0
 # (the "License"); you may not use this file except in compliance with
 # the License.  You may obtain a copy of the License at
@@ -59,7 +58,7 @@ def _disassemble(obj):
 def _smvhash(text):
     """Python's hash function will return different numbers from run to
     from, starting from 3.  Provide a deterministic hash function for
-    use to calculate datasetHash.
+    use to calculate sourceCodeHash.
     """
     import binascii
     return binascii.crc32(text)
@@ -144,7 +143,7 @@ class SmvDataSet(object):
     def isOutput(self):
         return isinstance(self, SmvOutput)
 
-    def datasetHash(self):
+    def sourceCodeHash(self):
         try:
             cls = self.__class__
             try:
@@ -162,11 +161,11 @@ class SmvDataSet(object):
                 message = "{0}({1!r})".format(type(err).__name__, err.args)
                 raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
 
-            # include datasetHash of parent classes
+            # include sourceCodeHash of parent classes
             for m in inspect.getmro(cls):
                 try:
                     if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
-                        res += m(self.smvApp).datasetHash()
+                        res += m(self.smvApp).sourceCodeHash()
                 except: pass
 
             # if module inherits from SmvRunConfig, then add hash of all config values to module hash
@@ -178,6 +177,9 @@ class SmvDataSet(object):
         except BaseException as e:
             traceback.print_exc()
             raise e
+
+    def instanceValHash(self):
+        return 0
 
     @classmethod
     def fqn(cls):
@@ -496,7 +498,7 @@ class SmvHiveTable(SmvInput):
         return "Hive Table: @" + self.tableName()
 
     def getRawScalaInputDS(self):
-        return self._smvHiveTable 
+        return self._smvHiveTable
 
     @abc.abstractproperty
     def tableName(self):

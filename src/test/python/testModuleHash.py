@@ -40,9 +40,9 @@ class ModuleHashTest(SmvBaseTest):
 
     def compare_resource_hash(self, fqn, assertion):
         with self.Resource(self.smvApp,self.ResourcePath1,fqn) as ds:
-            hash1 = ds.datasetHash()
+            hash1 = ds.sourceCodeHash()
         with self.Resource(self.smvApp,self.ResourcePath2,fqn) as ds:
-            hash2 = ds.datasetHash()
+            hash2 = ds.sourceCodeHash()
         assertion(hash1, hash2)
 
     def assert_hash_should_change(self, fqn):
