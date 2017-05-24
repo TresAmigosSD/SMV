@@ -290,6 +290,9 @@ class SmvInput(SmvDataSet):
         """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
            that is created in their init."""
 
+    def instanceValHash(self):
+        return self.getRawScalaInputDS().instanceValHash()
+
     def doRun(self, validator, known):
         jdf = self.getRawScalaInputDS().doRun(validator)
         return self.run(DataFrame(jdf, self.smvApp.sqlContext))
