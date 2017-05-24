@@ -276,6 +276,19 @@ abstract class SmvDataSet extends FilenamePart {
                attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
     new FileIOHandler(app.sqlContext, path).csvFileWithSchema(attr)
 
+  def exportToCsv(exportPath: String): Unit = {
+    if (isEphemeral) {
+      rdd().smvExportCsv(exportPath)
+    } else {
+      if (needsToRun)
+        rdd() // Force it to run
+
+      val persistPath = moduleCsvPath()
+      // copy merge the persisted output to a local output
+      SmvHDFS.copyMerge(persistPath, exportPath)
+    }
+  }
+
   def persist(dataframe: DataFrame,
               prefix: String = ""): Unit = {
     val path = moduleCsvPath(prefix)
