@@ -276,6 +276,12 @@ abstract class SmvDataSet extends FilenamePart {
                attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
     new FileIOHandler(app.sqlContext, path).csvFileWithSchema(attr)
 
+  /**
+   * Write the result of this module as a CSV file on the local filesystem. The
+   * DataFrameHelper smvExportCsv method will always write the DF to HDFS before
+   * writing copy-merging it to the local system, so this method skips that extra
+   * step by copy-merging the persisted files for non-ephemeral modules.
+   */
   def exportToCsv(exportPath: String): Unit = {
     if (isEphemeral) {
       rdd().smvExportCsv(exportPath)
