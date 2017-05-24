@@ -193,7 +193,20 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    */
   private def dryRun(): Boolean = {
     if (smvConfig.cmdLine.dryRun()) {
-      val modsNotPersisted = modulesToRun.filterNot(mod => mod.isPersisted || mod.isEphemeral)
+
+      // find all ancestors inclusive, and in case of SmvModuleLink, resolve its target module.
+      // filter the modules that are not yet persisted and not ephemeral.
+      // this yields all the modules that will need to be run with the given command
+      val modsNotPersisted = modulesToRun.flatMap( m =>
+        m +: m.ancestors
+      ).map(_ match {
+          case l: SmvModuleLink => l.smvModule
+          case m => m
+        }
+      ).filterNot(m =>
+        m.isPersisted || m.isEphemeral
+      ).distinct
+
       println("Dry run - modules not persisted:")
       println("----------------------")
       println(modsNotPersisted.mkString("\n"))
