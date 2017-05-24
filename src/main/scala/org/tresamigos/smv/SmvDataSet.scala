@@ -629,7 +629,6 @@ abstract class SmvSingleFile extends SmvFile {
   private[smv] override def readFromFile(parserValidator: ParserLogger): DataFrame = {
     val handler = getHandler(fullPath, parserValidator)
     readSingleFile(handler)
->>>>>>> master
   }
 }
 

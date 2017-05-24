@@ -260,6 +260,9 @@ class SmvDataSet(object):
 class SmvInput(SmvDataSet):
     """SmvDataSet representing external input
     """
+
+    __metaclass__ = abc.ABCMeta
+
     def isEphemeral(self):
         return True
 
@@ -280,6 +283,15 @@ class SmvInput(SmvDataSet):
         """
         return df
 
+    @abc.abstractproperty
+    def getRawScalaInputDS(self):
+        """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
+           that is created in their init."""
+
+    def doRun(self, validator, known):
+        jdf = self.getRawScalaInputDS().doRun(validator)
+        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
+
 class WithParser(object):
     """shared parser funcs"""
 
@@ -295,11 +307,6 @@ class WithParser(object):
             raise err
 
         return res
-
-    def getRawScalaInputDS(self):
-        """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
-           that is created in their init."""
-        return None
 
     def forceParserCheck(self):
         return True
@@ -422,6 +429,9 @@ class SmvCsvStringData(SmvInput):
             False
         )
 
+    def getRawScalaInputDS(self):
+        return self._smvCsvStringData
+
     @abc.abstractproperty
     def schemaStr(self):
         """Smv Schema string.
@@ -453,6 +463,9 @@ class SmvJdbcTable(SmvInput):
         super(SmvJdbcTable, self).__init__(smvApp)
         self._smvJdbcTable = self.smvApp._jvm.org.tresamigos.smv.SmvJdbcTable(self.tableName())
 
+    def getRawScalaInputDS(self):
+        return self._smvJdbcTable
+
     def description(self):
         return self._smvJdbcTable.description()
 
@@ -481,6 +494,9 @@ class SmvHiveTable(SmvInput):
 
     def description(self):
         return "Hive Table: @" + self.tableName()
+
+    def getRawScalaInputDS(self):
+        return self._smvHiveTable 
 
     @abc.abstractproperty
     def tableName(self):
