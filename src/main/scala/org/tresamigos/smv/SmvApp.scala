@@ -240,7 +240,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   def publishOutputModulesLocally: Boolean = {
     if (smvConfig.cmdLine.publishLocal.isSupplied) {
       val localDir = smvConfig.cmdLine.publishLocal()
-      modulesToRun map { m =>
+      modulesToRun foreach { m =>
         val csvPath = s"${localDir}/${m.versionedFqn}.csv"
         m.exportToCsv(csvPath)
       }
@@ -350,7 +350,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   def run() = {
     purgeCurrentOutputFiles()
     purgeOldOutputFiles()
-    
+
     val mods = modulesToRun
 
     if (mods.nonEmpty) {
