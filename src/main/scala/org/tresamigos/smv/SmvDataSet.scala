@@ -675,9 +675,11 @@ class SmvMultiCsvFiles(
   }
 
   private[smv] override def readFromFile(parserValidator: ParserLogger): DataFrame = {
-    val filesInDir = SmvHDFS.dirList(fullPath).map { n =>
-      s"${fullPath}/${n}"
-    }
+    val filesInDir = SmvHDFS.dirList(fullPath)
+      .filterNot(_.startsWith(".")) // ignore all hidden files in the data dir
+      .map { n =>
+        s"${fullPath}/${n}"
+      }
 
     if (filesInDir.isEmpty)
       throw new SmvRuntimeException(s"There are no data files in ${fullPath}")
