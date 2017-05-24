@@ -119,7 +119,11 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
-  def datasetHash: Int = datasetCRC.toInt
+  def datasetHash(): Int = instanceValHash + sourceCodeHash
+  /** Hash computed based on instance values of the dataset, such as the timestamp of an input file **/
+  def instanceValHash(): Int = 0
+  /** Hash computed based on the source code of the dataset's class **/
+  def sourceCodeHash(): Int = datasetCRC.toInt
 
   /**
    * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
@@ -603,13 +607,14 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
    *  - input csv file modified time
    *  - input schema contents
    */
-  override def datasetHash() = {
+  override def instanceValHash() = {
     val fileName = fullPath
     val mTime    = SmvHDFS.modificationTime(fileName)
 
     val crc = new java.util.zip.CRC32
+
     crc.update(fileName.toCharArray.map(_.toByte))
-    (crc.getValue + mTime + schema.schemaHash + datasetCRC).toInt
+    (crc.getValue + mTime + schema.schemaHash).toInt
   }
 }
 
@@ -840,7 +845,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
    * the hash should change if the target changes). Otherwise, depends on the
    * smvModule's hashOfHash
    **/
-  override def datasetHash() = {
+  override def instanceValHash() = {
     val dependedHash = smvModule.stageVersion
       .map { v =>
         val crc = new java.util.zip.CRC32
@@ -849,7 +854,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
       }
       .getOrElse(smvModule.hashOfHash)
 
-    (dependedHash + datasetCRC).toInt
+    (dependedHash).toInt
   }
 
   /**
@@ -929,7 +934,8 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
                           }
                           .toMap[String, DataFrame])
   }
-  override def datasetHash = target.datasetHash()
+  override def instanceValHash = target.instanceValHash()
+  override def sourceCodeHash = target.sourceCodeHash()
   override def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = {
     // ignore passed in userDQM as we want the user defined dqm from the python side.
     target.dqmWithTypeSpecificPolicy()
@@ -967,10 +973,10 @@ case class SmvCsvStringData(
 
   override def description() = s"Dummy module to create DF from strings"
 
-  override def datasetHash() = {
+  override def instanceValHash() = {
     val crc = new java.util.zip.CRC32
     crc.update((schemaStr + data).toCharArray.map(_.toByte))
-    (crc.getValue + datasetCRC).toInt
+    (crc.getValue).toInt
   }
 
   override def doRun(dqmValidator: DQMValidator): DataFrame = {
