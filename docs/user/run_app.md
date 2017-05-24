@@ -118,6 +118,13 @@ publish the specified modules through JDBC
 </tr>
 
 <tr>
+<td>--dry-run </td>
+<td>off</td>
+<td>Find which modules do not have persisted data, among the modules that need to be run. When specified, no modules are actually executed.
+</td>
+</tr>
+
+<tr>
 <th colspan="3">What To Run/Publish
 <br>
 One of the options below must be specified.

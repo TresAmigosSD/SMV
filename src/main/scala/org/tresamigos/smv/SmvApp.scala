@@ -186,6 +186,38 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
+   * execute as dry-run if the dry-run flag is specified.
+   * This will show which modules are not yet persisted that need to run, without
+   * actually running the modules.
+   * @return true if dry-run option was specified, otherwise false
+   */
+  private def dryRun(): Boolean = {
+    if (smvConfig.cmdLine.dryRun()) {
+
+      // find all ancestors inclusive, and in case of SmvModuleLink, resolve its target module.
+      // filter the modules that are not yet persisted and not ephemeral.
+      // this yields all the modules that will need to be run with the given command
+      val modsNotPersisted = modulesToRun.flatMap( m =>
+        m +: m.ancestors
+      ).map(_ match {
+          case l: SmvModuleLink => l.smvModule
+          case m => m
+        }
+      ).filterNot(m =>
+        m.isPersisted || m.isEphemeral
+      ).distinct
+
+      println("Dry run - modules not persisted:")
+      println("----------------------")
+      println(modsNotPersisted.mkString("\n"))
+      println("----------------------")
+      true
+    } else {
+      false
+    }
+  }
+
+  /**
    * if the publish to hive flag is setn, the publish
    */
   def publishModulesToHive(): Boolean = {
@@ -314,7 +346,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     }
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    compareEddResults() ||
+    dryRun() || compareEddResults() ||
       generateDotDependencyGraph() || generateJsonDependencyGraph() ||
       publishModulesToHive() ||  publishOutputModules() ||
       publishOutputModulesThroughJDBC() || generateOutputModules()
