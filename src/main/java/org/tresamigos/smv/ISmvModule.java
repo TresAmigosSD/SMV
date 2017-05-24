@@ -67,7 +67,14 @@ public interface ISmvModule {
 	 */
 	DataFrame getDataFrame(DQMValidator validator,  Map<String, DataFrame> known);
 
+	/**
+	 * Hash computed based on the source code of the dataset's class
+	 */
 	int sourceCodeHash();
 
+	/**
+	 * Hash computed based on instance values of the dataset, such as the timestamp
+	 * of an input file
+	 */
 	int instanceValHash();
 }

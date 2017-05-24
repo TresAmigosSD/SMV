@@ -143,7 +143,11 @@ class SmvDataSet(object):
     def isOutput(self):
         return isinstance(self, SmvOutput)
 
+    # Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash
+    # to compute datasetHash
     def sourceCodeHash(self):
+        """Hash computed based on the source code of the dataset's class
+        """
         try:
             cls = self.__class__
             try:
@@ -179,6 +183,8 @@ class SmvDataSet(object):
             raise e
 
     def instanceValHash(self):
+        """Hash computed based on instance values of the dataset, such as the timestamp of an input file
+        """
         return 0
 
     @classmethod
@@ -290,7 +296,9 @@ class SmvInput(SmvDataSet):
         """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
            that is created in their init."""
 
+
     def instanceValHash(self):
+        # Defer to Scala target for instanceValHash
         return self.getRawScalaInputDS().instanceValHash()
 
     def doRun(self, validator, known):
