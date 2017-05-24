@@ -11,19 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import *
-from smv.dqm import *
-from pyspark.sql.functions import col, lit
+from smv import SmvJdbcTable
 
-class D1(SmvCsvStringData):
-    def schemaStr(self):
-        return "k:String;v:Integer"
-    def dataStr(self):
-        return "a,1;b,2"
-
-class T(SmvCsvFile):
-    @classmethod
-    def path(cls):
-        return "./target/python-test-export-csv.csv"
-    def csvAttr(self):
-        return self.defaultCsvWithHeader()
+class MyJdbcTable(SmvJdbcTable):
+    def tableName(self):
+        return "MyJdbcTable"

@@ -8,7 +8,7 @@ $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 **Note:**  The above command should be run from your project's top level directory.
 
 ## SMV Utility methods
-* `df(dataset_name, force_run=False)` :  Load/Run the given dataset and return the resulting `DataFrame`. Force the module to rerun (ignoring cached data) if force_run is True
+* `df(dataset_name, force_run=False, version=None)` :  Load/Run the given dataset and return the resulting `DataFrame`. Force the module to rerun (ignoring cached data) if force_run is True.  If a version is specified, load the persisted data with the given version.
 * `help()`: List the following shell commands
 * `lsStage()` : list all the stages of the project
 * `ls(stage_name)`: list SmvDataSet in the given stage

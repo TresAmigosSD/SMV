@@ -350,6 +350,15 @@ class SmvSchema(val entries: Seq[SchemaEntry], val attributes: Map[String, Strin
   override def toString = "Schema: " + entries.mkString("; ")
 
   /**
+   * Used to determine if a file's schema has changed
+   */
+  def schemaHash = {
+    val crc = new java.util.zip.CRC32
+    crc.update(toString.toCharArray.map(_.toByte))
+    crc.getValue.toInt
+  }
+
+  /**
    * convert SmvSchema to StructType
    **/
   @DeveloperApi

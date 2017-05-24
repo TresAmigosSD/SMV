@@ -38,7 +38,7 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddSchemaEqual(
       res,
       "SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer")
-    assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
+    assertSrddDataEqual(res, "2019,1,1,1,2,0;" + "null,null,null,null,null,null")
   }
 
   test("test DateType's smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek") {
@@ -53,7 +53,7 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddSchemaEqual(
       res,
       "SmvYear(k): Integer; SmvMonth(k): Integer; SmvQuarter(k): Integer; SmvDayOfMonth(k): Integer; SmvDayOfWeek(k): Integer; SmvHour(k): Integer")
-    assertSrddDataEqual(res, "2019,1,1,1,3,0;" + "null,null,null,null,null,null")
+    assertSrddDataEqual(res, "2019,1,1,1,2,0;" + "null,null,null,null,null,null")
   }
 
   test("test smvAmtBin, smvNumericBin, smvCoarseGrain") {
@@ -77,6 +77,34 @@ class ColumnHelperTest extends SmvTestUtil {
     import org.apache.spark.sql.functions._
     val ssc  = sqlContext; import ssc.implicits._
     val df   = dfFrom("t:Timestamp[yyyyMMdd]", "19760131;20120229")
+    val res1 = df.select($"t".smvPlusDays(-10))
+    val res2 = df.select($"t".smvPlusMonths(1))
+    val res3 = df.select($"t".smvPlusWeeks(3))
+    val res4 = df.select($"t".smvPlusYears(2))
+    val res5 = df.select($"t".smvPlusYears(4))
+
+    assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddDataEqual(res1,
+                        "1976-01-21 00:00:00.0;" +
+                          "2012-02-19 00:00:00.0")
+    assertSrddDataEqual(res2,
+                        "1976-02-29 00:00:00.0;" +
+                          "2012-03-29 00:00:00.0")
+    assertSrddDataEqual(res3,
+                        "1976-02-21 00:00:00.0;" +
+                          "2012-03-21 00:00:00.0")
+    assertSrddDataEqual(res4,
+                        "1978-01-31 00:00:00.0;" +
+                          "2014-02-28 00:00:00.0")
+    assertSrddDataEqual(res5,
+                        "1980-01-31 00:00:00.0;" +
+                          "2016-02-29 00:00:00.0")
+  }
+
+  test("test smvPlusDays/smvPlusMonths/smvPlusWeeks/smvPlusYears on DateType") {
+    import org.apache.spark.sql.functions._
+    val ssc  = sqlContext; import ssc.implicits._
+    val df   = dfFrom("t:Date[yyyyMMdd]", "19760131;20120229")
     val res1 = df.select($"t".smvPlusDays(-10))
     val res2 = df.select($"t".smvPlusMonths(1))
     val res3 = df.select($"t".smvPlusWeeks(3))

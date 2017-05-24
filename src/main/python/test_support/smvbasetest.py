@@ -19,8 +19,11 @@ import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import *
 
+import os, shutil
+
 class SmvBaseTest(unittest.TestCase):
     DataDir = "./target/data"
+    PytestDir = "./target/pytest"
 
     @classmethod
     def smvAppInitArgs(cls):
@@ -38,6 +41,8 @@ class SmvBaseTest(unittest.TestCase):
         args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
         cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
+        cls.mkTmpTestDir()
+
     def setUp(self):
         """Patch for Python 2.6 without using unittest
         """
@@ -52,7 +57,6 @@ class SmvBaseTest(unittest.TestCase):
 
             args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
             cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
-
 
     @classmethod
     def createDF(cls, schema, data):
@@ -73,10 +77,19 @@ class SmvBaseTest(unittest.TestCase):
         self.assertEqual(expected.columns, result.columns)
         self.assertEqual(sort_collect(expected), sort_collect(result))
 
+    @classmethod
+    def tmpTestDir(cls):
+        return cls.PytestDir + "/" + cls.__name__
+
+    @classmethod
+    def mkTmpTestDir(cls):
+        shutil.rmtree(cls.tmpTestDir(), ignore_errors=True)
+        os.makedirs(cls.tmpTestDir())
+
     def createTempFile(self, baseName, fileContents = "xxx"):
         """create a temp file in the data dir with the given contents"""
         import os
-        fullPath = self.DataDir + "/" + baseName
+        fullPath = self.tmpTestDir() + "/" + baseName
         directory = os.path.dirname(fullPath)
         if not os.path.exists(directory):
             os.makedirs(directory)
