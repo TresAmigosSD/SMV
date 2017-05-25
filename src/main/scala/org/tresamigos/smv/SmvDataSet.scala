@@ -243,18 +243,8 @@ abstract class SmvDataSet extends FilenamePart {
    * delete the output(s) associated with this module (csv file and schema).
    * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
    */
-  private[smv] def deleteOutputs() = {
-    val csvPath    = moduleCsvPath()
-    val eddPath    = moduleEddPath()
-    val schemaPath = moduleSchemaPath()
-    val rejectPath = moduleValidPath()
-    val metaPath = moduleMetaPath()
-    SmvHDFS.deleteFile(csvPath)
-    SmvHDFS.deleteFile(schemaPath)
-    SmvHDFS.deleteFile(eddPath)
-    SmvHDFS.deleteFile(rejectPath)
-    SmvHDFS.deleteFile(metaPath)
-  }
+  private[smv] def deleteOutputs() =
+    currentModuleOutputFiles foreach { SmvHDFS.deleteFile(_) }
 
   /**
    * Delete just the metadata output
@@ -266,7 +256,7 @@ abstract class SmvDataSet extends FilenamePart {
    * Returns current valid outputs produced by this module.
    */
   private[smv] def currentModuleOutputFiles(): Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath())
   }
 
   /**
