@@ -28,4 +28,4 @@ class SmvTestRunner(object):
 
         result = TextTestRunner(verbosity=2).run(suite)
         print("result is ", result)
-        exit(len(result.errors) + len(result.failures))
+        return len(result.errors) + len(result.failures)

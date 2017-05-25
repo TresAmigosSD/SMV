@@ -22,4 +22,5 @@ if __name__ == "__main__":
     TestPath = "./src/test/python"
 
     runner = SmvTestRunner(TestPath)
-    runner.run(TestConfig.test_names())
+    num_failures = runner.run(TestConfig.test_names())
+    exit(num_failures)
