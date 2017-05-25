@@ -15,23 +15,27 @@ import sys
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
 
-class TestConfig(object):
-    @classmethod
-    def withSparkContext(cls, sc):
-        cls.sc = sc
+from smv.smvapp import SmvApp
 
+class TestConfig(object):
     # shared SparkContext
     @classmethod
     def sparkContext(cls):
         if not hasattr(cls, 'sc'):
-            cls.sc = SparkContext(appName="SMV Python Tests")
+            try:
+                cls.sc = SmvApp.getInstance().sc
+            except:
+                cls.sc = SparkContext(appName="SMV Python Tests")
         return cls.sc
 
     # shared HiveContext
     @classmethod
     def sqlContext(cls):
         if not hasattr(cls, 'sqlc'):
-            cls.sqlc = HiveContext(cls.sparkContext())
+            try:
+                cls.sqlc = SmvApp.getInstance().sqlContext
+            except:
+                cls.sqlc = HiveContext(cls.sparkContext())
         return cls.sqlc
 
     # smv args specified via command line

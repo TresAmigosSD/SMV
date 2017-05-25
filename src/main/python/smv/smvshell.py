@@ -16,6 +16,7 @@ from smv import SmvApp
 from pyspark.sql import DataFrame
 
 from smv import CsvAttributes
+from test_support.test_runner import SmvTestRunner
 
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
@@ -180,3 +181,6 @@ def discoverSchema(path, n=100000, ca=None):
             ca (CsvAttributes): Defaults to CsvWithHeader
     """
     SmvApp.getInstance()._jvm.SmvPythonHelper.discoverSchema(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
+
+def run_test(test_name):
+    SmvTestRunner("src/test/python").run([test_name])

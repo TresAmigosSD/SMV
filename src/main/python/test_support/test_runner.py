@@ -24,7 +24,7 @@ class SmvTestRunner(object):
         else:
             sys.path.append(self.test_path)
             suite = loader.loadTestsFromNames(test_names)
-            sys.path.pop(self.test_path)
+            sys.path.remove(self.test_path)
 
         result = TextTestRunner(verbosity=2).run(suite)
         print("result is ", result)
