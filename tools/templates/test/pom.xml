@@ -10,7 +10,7 @@
     <scala.version>2.10.4</scala.version>
     <scala.binary.version>2.10</scala.binary.version>
     <scala.compat.version>${scala.binary.version}</scala.compat.version>
-    <spark.version>1.5.2</spark.version>
+    <spark.version>1.6.2</spark.version>
     <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
   </properties>
 
@@ -53,7 +53,7 @@
     <dependency> <!-- smv dependency -->
       <groupId>org.tresamigos</groupId>
       <artifactId>smv</artifactId>
-      <version>1.5-SNAPSHOT</version>
+      <version>1.6.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.scala-lang</groupId>
