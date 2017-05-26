@@ -20,7 +20,7 @@ import org.apache.spark.sql.{Column, DataFrame, GroupedData, Row, ColumnName}
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.{Alias, AggregateExpression}
+import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.aggregate._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.Partitioner
@@ -491,87 +491,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val r1      = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
-
-  /**
-   * RunAgg will sort the records in the each group according to the specified ordering (syntax is the same
-   * as orderBy). For each record, it uses the current record as the reference record, and apply the CDS
-   * and aggregation on all the records "till this point". Here "till this point" means that ever record less
-   * than or equal current record according to the given ordering.
-   * For N records as input, runAgg will generate N records as output.
-   *
-   *  See SmvCDS document for details.
-   *
-   * Example:
-   * {{{
-   *   val res = df.smvGroupBy('k).runAgg($"t")(
-   *                    $"k",
-   *                    $"t",
-   *                    $"v",
-   *                    sum('v) from top2 from last3 as "nv1",
-   *                    sum('v) from last3 from top2 as "nv2",
-   *                    sum('v) as "nv3")
-   * }}}
-   **/
-  @Experimental
-  private[smv] def runAgg(orders: Column*)(aggCols: Column*): DataFrame = {
-    /* In Spark 1.5.2 WindowSpec handles aggregate functions through
-     * similar case matching as below. `first` and `last` are actually
-     * implemented using Hive `first_value` and `last_value`, which have
-     * different logic as `first` (non-null first) and `last` (non-null last)
-     * in regular aggregation function.
-     * We only try to use window to suppory Avg, Sum, Count, Min and Max
-     * for simple runAgg, all others will still use CDS approach
-     */
-    // In Spark 2.1 first and last aggregate functions take an
-    // ignoreNull argument and are supported in window spec.
-    val isSimpleRunAgg = aggCols
-      .map { a =>
-        a.toExpr match {
-          case Alias(Average(_), _) => true
-          case Alias(Sum(_), _)     => true
-          case Alias(Count(_), _)   => true
-          case Alias(Min(_), _)     => true
-          case Alias(Max(_), _)     => true
-          case _                    => false
-        }
-      }
-      .reduce(_ && _)
-
-    if (isSimpleRunAgg) {
-      val w = winspec.orderBy(orders: _*).rowsBetween(Long.MinValue, 0)
-      val cols = aggCols.map { aggCol =>
-        aggCol.toExpr match {
-          case Alias(e: AggregateExpression, n) => new Column(e) over w as n
-          case e: AggregateExpression           => new Column(e) over w
-          case e                                => new Column(e)
-        }
-      }
-      df.select(cols: _*)
-    } else
-      throw new UnsupportedOperationException("runAgg no longer supports CDS and GDO")
-  }
-
-  @Experimental
-  private[smv] def runAgg(order: String, others: String*)(aggCols: Column*): DataFrame =
-    runAgg((order +: others).map { s =>
-      new ColumnName(s)
-    }: _*)(aggCols: _*)
-
-  /**
-   * Same as `runAgg` but with all input column propagated to output.
-   **/
-  @Experimental
-  private[smv] def runAggPlus(orders: Column*)(aggCols: Column*): DataFrame = {
-    val inputCols = df.columns.map { c =>
-      new ColumnName(c)
-    }
-    runAgg(orders: _*)((inputCols ++ aggCols): _*)
-  }
-  @Experimental
-  private[smv] def runAggPlus(order: String, others: String*)(aggCols: Column*): DataFrame =
-    runAggPlus((order +: others).map { s =>
-      new ColumnName(s)
-    }: _*)(aggCols: _*)
 
   /**
    * Add `smvTime` column according to some `TimePanel`s
