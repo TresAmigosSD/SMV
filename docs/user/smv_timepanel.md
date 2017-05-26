@@ -156,3 +156,25 @@ val res = df.smvGroupBy("sku").smvTimePanelAgg("time", Day(2012, 1, 1), Day(2012
 ```
 
 This example aggregated the amount and quantity fields for each "sku" on each day of 2012.
+
+The output DataFrames has columns:
+* `sku`
+* `smvTime`
+* `amt`
+* `qty`
+
+The `smvTime` column has the `smvTime` value of the PartialTime. For our example, it will
+be the `smvTime` string of a `Day` object.
+
+
+## `smvTime` Column Helpers
+
+There is a group of Column helper functions on `smvTime` column,
+
+* `smvTimeToType`: Returns `timeType` attribute of the PartialTime as a String
+* `smvTimeToIndex`: Returns `timeIndex` attribute of the PartialTime as an Int. The index
+  is good for using in Window definition
+* `smvTimeToLabel`: Returns `timeLabel` attribute of the PartialTime as a String, good for
+  people to read
+* `smvTimeToTimestamp`: Returns a Timestamp as the starting point of the given PartialTime,
+  good for using with other column helpers such as `smvYear`, `smvMonth`, etc.
