@@ -19,18 +19,14 @@ object smvfuncs {
    * our version smvFirst which to retune the real first value, even if it's null.
    * The alternative form will try to return the first non-null value
    *
-   * @param c        the column
-   * @param nonNull  switches whether the function will try to find the first non-null value
+   * @param c            the column
+   * @param ignoreNulls  switches whether the function will try to find the first non-null value
    *
    * @group agg
    **/
-  def smvFirst(c: Column, nonNull: Boolean = false) = {
-    if (nonNull) first(c) // delegate to Spark's first for its non-null implementation (as of 1.5)
-    else new Column(SmvFirst(c.toExpr))
-
-    //Spark 1.6.x should use the following and remove SmvFirst
-    //import org.apache.spark.sql.catalyst.expressions.aggregate.First
-    //new Column(First(c.toExpr, lit(ignoreNulls).toExpr).toAggregateExpression(false))
+  def smvFirst(c: Column, ignoreNulls: Boolean = false) = {
+    import org.apache.spark.sql.catalyst.expressions.aggregate.First
+    new Column(First(c.toExpr, lit(ignoreNulls).toExpr).toAggregateExpression(false))
   }
 
   /**
