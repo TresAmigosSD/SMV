@@ -2,13 +2,13 @@ name := "smv"
 
 organization := "org.tresamigos"
 
-version := "1.5-SNAPSHOT"
+version := "1.6.2-SNAPSHOT"
 
 scalaVersion := "2.10.4"
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 
-val sparkVersion = "1.5.2"
+val sparkVersion = "1.6.2"
 
 libraryDependencies ++= Seq(
   "org.apache.spark"             %% "spark-sql"         % sparkVersion % "provided",
