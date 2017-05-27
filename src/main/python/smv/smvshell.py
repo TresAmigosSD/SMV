@@ -12,11 +12,14 @@
 # limitations under the License.
 """Helper functions available in SMV's Python shell
 """
+import sys
+
 from smv import SmvApp
 from pyspark.sql import DataFrame
 
 from smv import CsvAttributes
 from test_support.test_runner import SmvTestRunner
+from test_support.testconfig import TestConfig
 
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
@@ -183,4 +186,21 @@ def discoverSchema(path, n=100000, ca=None):
     SmvApp.getInstance()._jvm.SmvPythonHelper.discoverSchema(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
 
 def run_test(test_name):
+    TestConfig.setSmvApp(SmvApp.getInstance())
+
+    first_dot = test_name.find(".")
+    if first_dot == -1:
+        test_root_name = test_name
+    else:
+        test_root_name = test_name[:first_dot]
+
+    _clear_from_sys_modules(["smv", test_root_name])
+
     SmvTestRunner("src/test/python").run([test_name])
+
+def _clear_from_sys_modules(names_to_clear):
+    for name in sys.modules.keys():
+        for ntc in names_to_clear:
+            if name != "smv.smvshell" and (name.startswith(ntc + ".") or name == ntc):
+                sys.modules.pop(name)
+                break

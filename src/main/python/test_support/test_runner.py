@@ -11,35 +11,23 @@
 # limitations under the License.
 import sys
 from unittest import *
-from inspect import ismodule
 
-from smv.utils import for_name
 
 class SmvTestRunner(object):
     def __init__(self, test_path):
         self.test_path = test_path
 
-    def reload_test_mods(self, test_names):
-        for name in test_names:
-            test_obj = for_name(name)
-            if ismodule(test_obj):
-                test_mod = test_obj
-            else:
-                test_mod = sys.modules[obj.__module__]
-            reload(test_mod)
-
-
     def run(self, test_names):
         loader = TestLoader()
+        sys.path.append(self.test_path)
 
         if len(test_names) == 0:
             suite = loader.discover(self.test_path)
         else:
-            sys.path.append(self.test_path)
-            self.reload_test_mods(test_names)
             suite = loader.loadTestsFromNames(test_names)
-            sys.path.remove(self.test_path)
+
 
         result = TextTestRunner(verbosity=2).run(suite)
+        sys.path.remove(self.test_path)
         print("result is ", result)
         return len(result.errors) + len(result.failures)

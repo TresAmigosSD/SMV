@@ -13,7 +13,6 @@
 
 import unittest
 from test_support.testconfig import TestConfig
-from smv import SmvApp
 
 import pyspark
 from pyspark.context import SparkContext
@@ -28,6 +27,8 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        from smv.smvapp import SmvApp
+
         cls.sparkContext = TestConfig.sparkContext()
         cls.sqlContext = TestConfig.sqlContext()
         cls.sparkContext.setLogLevel("ERROR")
@@ -38,9 +39,15 @@ class SmvBaseTest(unittest.TestCase):
         args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
         cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
+    @classmethod
+    def tearDownClass(cls):
+        from smv.smvapp import SmvApp
+        SmvApp.setInstance(TestConfig.originalSmvApp())
+
     def setUp(self):
         """Patch for Python 2.6 without using unittest
         """
+        from smv import SmvApp
         cls = self.__class__
         if not hasattr(cls, 'smvApp'):
             cls.sparkContext = TestConfig.sparkContext()

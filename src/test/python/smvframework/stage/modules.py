@@ -15,7 +15,6 @@ from smv import *
 from smv.dqm import *
 from pyspark.sql.functions import col, lit
 
-
 class D1(SmvCsvStringData):
     def schemaStr(self):
         return "a:String;b:Integer"
