@@ -67,6 +67,13 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrNo = "Do not publish results to hive tables."
   )
 
+  val publishLocal = opt[String](
+    "publish-local",
+    noshort = true,
+    default = None,
+    descr = "publish|export given modules/stage/app to a CSV file at the given path on the local file system"
+  )
+
   val compareEdd = opt[List[String]]("edd-compare",
                                      noshort = true,
                                      default = None,
@@ -125,6 +132,11 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                          noshort = true,
                          default = Some(false),
                          descrYes = "run all output modules in all stages in app.")
+
+  val dryRun = toggle("dry-run",
+                      noshort = true,
+                      default = Some(false),
+                      descrYes = "determine which modules do not have persisted data and will need to be run.")
 
   // if user specified "edd-compare" command line, user should have supplied two file names.
   validateOpt(compareEdd) {

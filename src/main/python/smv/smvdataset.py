@@ -1,4 +1,3 @@
-#
 # This file is licensed under the Apache License, Version 2.0
 # (the "License"); you may not use this file except in compliance with
 # the License.  You may obtain a copy of the License at
@@ -59,7 +58,7 @@ def _disassemble(obj):
 def _smvhash(text):
     """Python's hash function will return different numbers from run to
     from, starting from 3.  Provide a deterministic hash function for
-    use to calculate datasetHash.
+    use to calculate sourceCodeHash.
     """
     import binascii
     return binascii.crc32(text)
@@ -144,7 +143,11 @@ class SmvDataSet(object):
     def isOutput(self):
         return isinstance(self, SmvOutput)
 
-    def datasetHash(self):
+    # Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash
+    # to compute datasetHash
+    def sourceCodeHash(self):
+        """Hash computed based on the source code of the dataset's class
+        """
         try:
             cls = self.__class__
             try:
@@ -162,11 +165,11 @@ class SmvDataSet(object):
                 message = "{0}({1!r})".format(type(err).__name__, err.args)
                 raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
 
-            # include datasetHash of parent classes
+            # include sourceCodeHash of parent classes
             for m in inspect.getmro(cls):
                 try:
                     if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
-                        res += m(self.smvApp).datasetHash()
+                        res += m(self.smvApp).sourceCodeHash()
                 except: pass
 
             # if module inherits from SmvRunConfig, then add hash of all config values to module hash
@@ -178,6 +181,11 @@ class SmvDataSet(object):
         except BaseException as e:
             traceback.print_exc()
             raise e
+
+    def instanceValHash(self):
+        """Hash computed based on instance values of the dataset, such as the timestamp of an input file
+        """
+        return 0
 
     @classmethod
     def fqn(cls):
@@ -260,6 +268,9 @@ class SmvDataSet(object):
 class SmvInput(SmvDataSet):
     """SmvDataSet representing external input
     """
+
+    __metaclass__ = abc.ABCMeta
+
     def isEphemeral(self):
         return True
 
@@ -280,6 +291,20 @@ class SmvInput(SmvDataSet):
         """
         return df
 
+    @abc.abstractproperty
+    def getRawScalaInputDS(self):
+        """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
+           that is created in their init."""
+
+
+    def instanceValHash(self):
+        # Defer to Scala target for instanceValHash
+        return self.getRawScalaInputDS().instanceValHash()
+
+    def doRun(self, validator, known):
+        jdf = self.getRawScalaInputDS().doRun(validator)
+        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
+
 class WithParser(object):
     """shared parser funcs"""
 
@@ -295,11 +320,6 @@ class WithParser(object):
             raise err
 
         return res
-
-    def getRawScalaInputDS(self):
-        """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
-           that is created in their init."""
-        return None
 
     def forceParserCheck(self):
         return True
@@ -422,6 +442,9 @@ class SmvCsvStringData(SmvInput):
             False
         )
 
+    def getRawScalaInputDS(self):
+        return self._smvCsvStringData
+
     @abc.abstractproperty
     def schemaStr(self):
         """Smv Schema string.
@@ -453,6 +476,9 @@ class SmvJdbcTable(SmvInput):
         super(SmvJdbcTable, self).__init__(smvApp)
         self._smvJdbcTable = self.smvApp._jvm.org.tresamigos.smv.SmvJdbcTable(self.tableName())
 
+    def getRawScalaInputDS(self):
+        return self._smvJdbcTable
+
     def description(self):
         return self._smvJdbcTable.description()
 
@@ -481,6 +507,9 @@ class SmvHiveTable(SmvInput):
 
     def description(self):
         return "Hive Table: @" + self.tableName()
+
+    def getRawScalaInputDS(self):
+        return self._smvHiveTable
 
     @abc.abstractproperty
     def tableName(self):

@@ -239,6 +239,20 @@ class ColumnHelper(column: Column) {
   }
 
   /**
+   *  smvTime helper to convert `smvTime` column to a timestamp at the beginning of
+   *  the given time pireod.
+   *  Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+   *  Example output "2013-01-01 00:00:00.0", "2015-12-01 00:00:00.0", "2014-12-01 00:00:00.0"
+   **/
+  def smvTimeToTimestamp = {
+    val name = s"smvTimeToTimestamp($column)"
+    val f = (s: String) => {
+      panel.PartialTime(s).startTimestamp
+    }
+
+    udf(f).apply(column).as(name)
+  }
+  /**
    * Pre-defined binning for dollar amount type of column.
    * It provides more granularity on small values. Pre-defined boundaries: 10, 200, 1000, 10000 ...
    *

@@ -39,6 +39,7 @@ abstract class PartialTime extends Ordered[PartialTime] with Serializable {
   def timeIndex(): Int
   def timeLabel(): String
   def smvTime(): String
+  def startTimestamp(): Timestamp
 
   def newInstance(timeIndex: Int): PartialTime
   def timeStampToSmvTime(c: Column): Column
@@ -64,6 +65,11 @@ case class Quarter(year: Int, quarter: Int) extends PartialTime {
   override val timeIndex = quarter70()
   override val timeLabel = f"$year%04d-Q$quarter%1d"
   override val smvTime   = f"Q$year%04d$quarter%02d"
+  override val startTimestamp = {
+    val m = (quarter - 1) * 3 + 1
+    val d = 1
+    PartialTime.dayToTimestamp(year, m, d)
+  }
   override def newInstance(i: Int) = {
     val y = i / 4 + 1970
     val q = i % 4 + 1
@@ -87,6 +93,10 @@ case class Month(year: Int, month: Int) extends PartialTime {
   override val timeIndex                      = month70()
   override val timeLabel                      = f"$year%04d-$month%02d"
   override val smvTime                        = f"M$year%04d$month%02d"
+  override val startTimestamp = {
+    val d = 1
+    PartialTime.dayToTimestamp(year, month, d)
+  }
   override def newInstance(i: Int) = {
     val y = i / 12 + 1970
     val m = i % 12 + 1
@@ -109,6 +119,9 @@ case class Day(year: Int, month: Int, day: Int) extends PartialTime {
   override val timeIndex = PartialTime.toDay70(year, month, day)
   override val timeLabel = f"$year%04d-$month%02d-$day%02d"
   override val smvTime   = f"D$year%04d$month%02d$day%02d"
+  override val startTimestamp = {
+    PartialTime.dayToTimestamp(year, month, day)
+  }
   override def newInstance(i: Int) = {
     val (y, m, d) = PartialTime.day70To(i)
     new Day(y, m, d)
@@ -163,6 +176,9 @@ class Week(year: Int, month: Int, day: Int, startOn: String) extends PartialTime
     val dstr = f"$wst_year%04d$wst_month%02d$wst_day%02d"
     if (startOn == "Monday") "W" + dstr
     else s"W($wss)" + dstr
+  }
+  override val startTimestamp = {
+    PartialTime.dayToTimestamp(wst_year, wst_month, wst_day)
   }
   override def newInstance(i: Int) = {
     val d70 = (i - 1) * 7 + offset
@@ -240,12 +256,20 @@ object PartialTime {
 
   val MILLIS_PER_DAY = 86400000
 
+  def dayToTimestamp(y: Int, m: Int, d: Int) =
+    // method toDateTimeAtStartOfDay without parameter will use local system TimeZone,
+    // since Timestamp also use local system TimeZone for date calculation
+    new Timestamp(new LocalDate(y, m, d).toDateTimeAtStartOfDay().getMillis)
+
   def toDay70(y: Int, m: Int, d: Int): Int =
+    // Have to use UTC here since the epic zero is from 1970-1-1 midnight UTC
     (new LocalDate(y, m, d)
       .toDateTimeAtStartOfDay(DateTimeZone.UTC)
       .getMillis / MILLIS_PER_DAY).toInt
 
   def day70To(timeIndex: Int): (Int, Int, Int) = {
+    // Without the "withZone" part, getYear, etc will use the system TimeZone, which is not
+    // what we want
     val dt = new DateTime(timeIndex.toLong * MILLIS_PER_DAY).withZone(DateTimeZone.UTC)
     val year  = dt.getYear
     val month = dt.getMonthOfYear

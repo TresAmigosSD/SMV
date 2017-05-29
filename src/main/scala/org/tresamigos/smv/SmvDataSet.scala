@@ -119,7 +119,11 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
-  def datasetHash: Int = datasetCRC.toInt
+  def datasetHash(): Int = instanceValHash + sourceCodeHash
+  /** Hash computed based on instance values of the dataset, such as the timestamp of an input file **/
+  def instanceValHash(): Int = 0
+  /** Hash computed based on the source code of the dataset's class **/
+  def sourceCodeHash(): Int = datasetCRC.toInt
 
   /**
    * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
@@ -239,18 +243,8 @@ abstract class SmvDataSet extends FilenamePart {
    * delete the output(s) associated with this module (csv file and schema).
    * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
    */
-  private[smv] def deleteOutputs() = {
-    val csvPath    = moduleCsvPath()
-    val eddPath    = moduleEddPath()
-    val schemaPath = moduleSchemaPath()
-    val rejectPath = moduleValidPath()
-    val metaPath = moduleMetaPath()
-    SmvHDFS.deleteFile(csvPath)
-    SmvHDFS.deleteFile(schemaPath)
-    SmvHDFS.deleteFile(eddPath)
-    SmvHDFS.deleteFile(rejectPath)
-    SmvHDFS.deleteFile(metaPath)
-  }
+  private[smv] def deleteOutputs() =
+    currentModuleOutputFiles foreach { SmvHDFS.deleteFile(_) }
 
   /**
    * Delete just the metadata output
@@ -262,7 +256,7 @@ abstract class SmvDataSet extends FilenamePart {
    * Returns current valid outputs produced by this module.
    */
   private[smv] def currentModuleOutputFiles(): Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath())
   }
 
   /**
@@ -275,6 +269,25 @@ abstract class SmvDataSet extends FilenamePart {
   def readFile(path: String,
                attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
     new FileIOHandler(app.sqlContext, path).csvFileWithSchema(attr)
+
+  /**
+   * Write the result of this module as a CSV file on the local filesystem. The
+   * DataFrameHelper smvExportCsv method will always write the DF to HDFS before
+   * writing copy-merging it to the local system, so this method skips that extra
+   * step by copy-merging the persisted files for non-ephemeral modules.
+   */
+  def exportToCsv(exportPath: String): Unit = {
+    if (isEphemeral) {
+      rdd().smvExportCsv(exportPath)
+    } else {
+      if (needsToRun)
+        rdd() // Force it to run
+
+      val persistPath = moduleCsvPath()
+      // copy merge the persisted output to a local output
+      SmvHDFS.copyMerge(persistPath, exportPath)
+    }
+  }
 
   def persist(dataframe: DataFrame,
               prefix: String = ""): Unit = {
@@ -603,13 +616,14 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
    *  - input csv file modified time
    *  - input schema contents
    */
-  override def datasetHash() = {
+  override def instanceValHash() = {
     val fileName = fullPath
     val mTime    = SmvHDFS.modificationTime(fileName)
 
     val crc = new java.util.zip.CRC32
+
     crc.update(fileName.toCharArray.map(_.toByte))
-    (crc.getValue + mTime + schema.schemaHash + datasetCRC).toInt
+    (crc.getValue + mTime + schema.schemaHash).toInt
   }
 }
 
@@ -675,9 +689,11 @@ class SmvMultiCsvFiles(
   }
 
   private[smv] override def readFromFile(parserValidator: ParserLogger): DataFrame = {
-    val filesInDir = SmvHDFS.dirList(fullPath).map { n =>
-      s"${fullPath}/${n}"
-    }
+    val filesInDir = SmvHDFS.dirList(fullPath)
+      .filterNot(_.startsWith(".")) // ignore all hidden files in the data dir
+      .map { n =>
+        s"${fullPath}/${n}"
+      }
 
     if (filesInDir.isEmpty)
       throw new SmvRuntimeException(s"There are no data files in ${fullPath}")
@@ -838,7 +854,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
    * the hash should change if the target changes). Otherwise, depends on the
    * smvModule's hashOfHash
    **/
-  override def datasetHash() = {
+  override def instanceValHash() = {
     val dependedHash = smvModule.stageVersion
       .map { v =>
         val crc = new java.util.zip.CRC32
@@ -847,7 +863,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
       }
       .getOrElse(smvModule.hashOfHash)
 
-    (dependedHash + datasetCRC).toInt
+    (dependedHash).toInt
   }
 
   /**
@@ -927,7 +943,8 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
                           }
                           .toMap[String, DataFrame])
   }
-  override def datasetHash = target.datasetHash()
+  override def instanceValHash = target.instanceValHash()
+  override def sourceCodeHash = target.sourceCodeHash()
   override def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = {
     // ignore passed in userDQM as we want the user defined dqm from the python side.
     target.dqmWithTypeSpecificPolicy()
@@ -965,10 +982,10 @@ case class SmvCsvStringData(
 
   override def description() = s"Dummy module to create DF from strings"
 
-  override def datasetHash() = {
+  override def instanceValHash() = {
     val crc = new java.util.zip.CRC32
     crc.update((schemaStr + data).toCharArray.map(_.toByte))
-    (crc.getValue + datasetCRC).toInt
+    (crc.getValue).toInt
   }
 
   override def doRun(dqmValidator: DQMValidator): DataFrame = {

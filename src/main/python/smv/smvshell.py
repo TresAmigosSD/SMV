@@ -26,7 +26,7 @@ def df(name, forceRun = False, version = None):
         Args:
             name (str): The name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
-            version (str): The name of the persisted version to load from
+            version (str): The name of the published version to load from
 
         Returns:
             (DataFrame): The result of running the named module.
@@ -54,6 +54,15 @@ def openCsv(path):
             (DataFrame): The resulting DataFrame
     """
     return DataFrame(_jvmShellCmd().openCsv(path), SmvApp.getInstance().sqlContext)
+
+def smvExportCsv(name, path):
+    """Export the result of a module to a CSV file at a local path
+
+        Args:
+            fqn (str): the name of the module
+            path (str): a path on the local file system
+    """
+    _jvmShellCmd().smvExportCsv(name, path)
 
 def help():
     """Print a list of the SMV helper functions available in the shell

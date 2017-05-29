@@ -189,34 +189,33 @@ def getDatasetDescriptionStartEnd(linesOfCodeList, className):
     returns a datasets description start and end line numbers
     '''
     (start, end, cDefEnd) = (None, None, None) # placeholders for start and end of description
-
     # detect first method definition and class
     (mStart, _, cStart, cEnd) = getCodeBlockStartEnd(linesOfCodeList, className, "*")
 
     if cStart and cEnd:
-        for i, line in enumerate(linesOfCodeList):
-            if not cDefEnd:
+        for i, line in enumerate(linesOfCodeList[cStart: cEnd + 1]):
+            if cDefEnd is None:
                 # detect end of class definition, exclude comments after it
                 if line.startswith('#'): continue
                 lineSplitAtComment = line.split("#")
                 nonCommentStr = lineSplitAtComment[0]
-                if not cDefEnd and nonCommentStr.rstrip().endswith(":"):
-                    cDefEnd = i
+                if nonCommentStr.rstrip().endswith(":"):
+                    cDefEnd = cStart + i
                     continue
             lstrippedLine = line.lstrip()
             if not start and (lstrippedLine.startswith("\"\"\"") or lstrippedLine.startswith("'''")):
-                start = i
+                start = cStart + i
 
             if start:
                 uncommentedLine = line.split("#")[0].rstrip()
                 if uncommentedLine.endswith("\"\"\"") or uncommentedLine.endswith("'''"):
                     # if i is start, then """ must have two occurrences for i to be beginning and end
-                    if start == i and not (uncommentedLine.count("\"\"\"") == 2 or uncommentedLine.count("'''") == 2):
+                    if start == (cStart + i) and not (uncommentedLine.count("\"\"\"") == 2 or uncommentedLine.count("'''") == 2):
                         continue
-                    end = i
+                    end = cStart + i
                     break
             # line is already at first method, so there is no docstring
-            if i >= mStart:
+            if (cStart + i) >= mStart:
                 (start, end) = (None, None)
                 break
     return (start, end, cDefEnd)
@@ -375,7 +374,7 @@ def getStageFromFqn(fqn):
     '''returns the stage given a a dataset's fqn'''
     # constructing urn for dataset
     try:
-        stage = SmvApp.getInstance().getStageFromFqn(fqn).encode("utf-8")
+        stage = SmvApp.getInstance().getStageFromModuleFqn(fqn).encode("utf-8")
     except:
         raise ValueError("Could not retrive stage with the given fqn: " + str(fqn))
     return stage
@@ -500,14 +499,23 @@ def buildRequiresDS(requiresDS, indentation="\t"):
 {1}def requiresDS(self):\n\
 {1}{1}return [{0}]\n".format(requires, indentation)
 
-def getRequiredModulesWithLinks(currentFqn, fqns):
-    '''takes a fqn (currentFqn) and a list of fqns or SmvModuleLink(s) required by the currentFqn
-        if a required fqn is in the same stage, it will remain as a fqn in the returned list. If
-        the required fqn is in a different stage, it will be subtituted by a SmvModuleLink'''
+def getRequiredModulesWithLinks(currentFqn, requiredFqns):
+    '''takes as arguments a fqn (currentFqn) and a list of required fqns.
+        Returns a list as it should be consumed by the requiresDS method of a dataset.
+        The returned list contains:
+        - fqn: for every requiredFqn that is in the same stage as currentFqn
+        - SmvModuleLink variable name: for every requiredFqn in a different stage than currentFqn
+         E.g:
+        currentFqn = 'stage1.foo.foo'
+        requiredFqns= [stage1.bar.bar, stage2.baz.baz]
+        Will return: [
+            stage1.foo.foo, # it is in same stage as current fqn, so returns fqn
+            stage_2_baz_baz_link  # different stage.. returns variable name
+        ] '''
     requiresDSList = []
     currentStage = getStageFromFqn(currentFqn)
 
-    for fqn in fqns:
+    for fqn in requiredFqns:
         # if same stage, fqn
         if currentStage == getStageFromFqn(fqn):
             requiresDSList.append(fqn)
@@ -516,10 +524,19 @@ def getRequiredModulesWithLinks(currentFqn, fqns):
             requiresDSList.append(RequiredDSLink(fqn).varName)
     return requiresDSList
 
-def getRequiredDSLinks(currentFqn, fqns):
+def getRequiredDSLinks(currentFqn, requiredFqns):
+    '''takes as arguments a fqn (current fqn) and a list of requiredFqns.
+        Returns a list of RequiredDSLink objects for each fqn that is in a different started
+        than the currentFqn. Each object contains a fqn mapped to SmvModuleLink variable name.
+
+        E.g.:
+        currentFqn = 'stage1.foo.foo'
+        requiredFqns = [ stage1.bar.bar, stage2.baz.baz ]
+            returns [ (a RequiredDSLink object for stage2.baz.baz) ] '''
+
     linkVarsList = []
     currentStage = getStageFromFqn(currentFqn)
-    for fqn in fqns:
+    for fqn in requiredFqns:
         if currentStage != getStageFromFqn(fqn):
             linkVarsList.append(RequiredDSLink(fqn))
     return linkVarsList
@@ -853,7 +870,6 @@ def updateDatasetInfo():
 
             # placeholder for the updated code
             newFileContents = lines_of_code_list
-
             # get indentation for class methods
             (_, _, methodIndent) = getDatasetClassStartEnd(lines_of_code_list, className)
 
