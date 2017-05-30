@@ -69,7 +69,7 @@ def _stripComments(code):
     code = str(code)
     return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
 
-class SmvOutput(object):
+class SmvOutput(WithStackTrace):
     """Mixin which marks an SmvModule as one of the output of its stage
 
         SmvOutputs are distinct from other SmvDataSets in that
@@ -78,6 +78,7 @@ class SmvOutput(object):
     """
     IsSmvOutput = True
 
+    @with_stacktrace
     def tableName(self):
         """The user-specified table name used when exporting data to Hive (optional)
 
@@ -106,6 +107,7 @@ class SmvDataSet(WithStackTrace):
         return self.__doc__
 
     @abc.abstractmethod
+    @with_stacktrace
     def requiresDS(self):
         """User-specified list of dependencies
 
@@ -115,6 +117,7 @@ class SmvDataSet(WithStackTrace):
                 (list(SmvDataSet)): a list of dependencies
         """
 
+    @with_stacktrace
     def dqm(self):
         """DQM policy
 
@@ -128,8 +131,9 @@ class SmvDataSet(WithStackTrace):
 
     @abc.abstractmethod
     def doRun(self, validator, known):
-        """Comput this dataset, and return the dataframe"""
+        """Compute this dataset, and return the dataframe"""
 
+    @with_stacktrace
     def version(self):
         """Version number
 
@@ -207,6 +211,7 @@ class SmvDataSet(WithStackTrace):
         """
         return False
 
+    @with_stacktrace
     def publishHiveSql(self):
         """An optional sql query to run to publish the results of this module when the
            --publish-hive command line is used.  The DataFrame result of running this
