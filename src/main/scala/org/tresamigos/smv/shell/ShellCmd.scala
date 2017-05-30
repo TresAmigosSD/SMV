@@ -168,6 +168,9 @@ object ShellCmd {
 
   def openCsv(path: String): DataFrame = openCsv(path, null, false)
 
+  def smvExportCsv(name: String, path: String) =
+    dsm.inferDS(name).head.exportToCsv(path)
+
   /**
    * Resolve SmvDataSet
    *
