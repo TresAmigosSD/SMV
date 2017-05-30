@@ -19,6 +19,7 @@ from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
 from utils import smv_copy_array
+from stacktrace_mixin import WithStackTrace, with_stacktrace
 
 import abc
 
@@ -85,7 +86,7 @@ class SmvOutput(object):
         """
         return None
 
-class SmvDataSet(object):
+class SmvDataSet(WithStackTrace):
     """Abstract base class for all SmvDataSets
     """
 
@@ -197,6 +198,7 @@ class SmvDataSet(object):
     def urn(cls):
         return "mod:" + cls.fqn()
 
+    @with_stacktrace
     def isEphemeral(self):
         """Should this SmvDataSet skip persisting its data?
 
