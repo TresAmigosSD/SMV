@@ -1487,4 +1487,14 @@ class ColumnHelper(object):
         jc = self._jColumnHelper.smvTimeToLabel()
         return Column(jc)
 
+    def smvTimeToTimestamp(self):
+        """smvTime helper to convert `smvTime` column to a timestamp at the beginning of
+            the given time pireod.
+
+             Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+             Example output "2013-01-01 00:00:00.0", "2015-12-01 00:00:00.0", "2014-12-01 00:00:00.0"
+        """
+        jc = self._jColumnHelper.smvTimeToTimestamp()
+        return Column(jc)
+
 _helpCls(Column, ColumnHelper)

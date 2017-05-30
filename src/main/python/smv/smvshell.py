@@ -55,6 +55,15 @@ def openCsv(path):
     """
     return DataFrame(_jvmShellCmd().openCsv(path), SmvApp.getInstance().sqlContext)
 
+def smvExportCsv(name, path):
+    """Export the result of a module to a CSV file at a local path
+
+        Args:
+            fqn (str): the name of the module
+            path (str): a path on the local file system
+    """
+    _jvmShellCmd().smvExportCsv(name, path)
+
 def help():
     """Print a list of the SMV helper functions available in the shell
     """
