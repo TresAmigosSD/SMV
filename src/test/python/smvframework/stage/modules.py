@@ -23,8 +23,7 @@ class D1(SmvCsvStringData):
 
 class MultiCsv(SmvMultiCsvFiles):
     def dir(self):
-        from testSmvFramework import SmvFrameworkTest
-        return SmvFrameworkTest.tmpTestDir() + "/multiCsvTest"
+        return "multiCsvTest"
 
 class D3(SmvCsvStringData):
     def schemaStr(self):
