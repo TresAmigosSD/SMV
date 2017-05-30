@@ -98,7 +98,7 @@ class SmvBaseTest(unittest.TestCase):
     def createTempInputFile(self, baseName, fileContents = "xxx"):
         """create a temp file in the input data dir with the given contents"""
         import os
-        fullPath = self.tmpInputDir() + "/input/" + baseName
+        fullPath = self.tmpInputDir() + "/" + baseName
         directory = os.path.dirname(fullPath)
         if not os.path.exists(directory):
             os.makedirs(directory)
