@@ -80,14 +80,17 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def tmpTestDir(cls):
+        """Temporary directory for each test to put the files it creates. Automatically cleaned up."""
         return cls.PytestDir + "/" + cls.__name__
 
     @classmethod
     def tmpDataDir(cls):
+        """Temporary directory for each test to put the data it creates. Automatically cleaned up."""
         return cls.tmpTestDir() + "/data"
 
     @classmethod
     def tmpInputDir(cls):
+        """Temporary directory for each test to put the input files it creates. Automatically cleaned up."""
         return cls.tmpDataDir() + "/input"
 
     @classmethod
