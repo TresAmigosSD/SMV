@@ -43,11 +43,8 @@ if [[ $# == 0 ]]; then
     sudo -u ${USER_NAME} -i bash
 elif [[ $1 == "--start-server" ]]; then
     SERVER_PROJ_DIR="${2:?must provide project directory}"
-
-    if [[ $# -gt 2 ]]; then
-      if [[ $3 == "-e" ]]; then
-        E_EXTENDED_SMV_SERVER_SCRIPT="-e ${4:?must provide extended smv server script fullname}"
-      fi
+    if [[ "$3" == "-e" ]]; then
+      E_EXTENDED_SMV_SERVER_SCRIPT="-e ${4:?must provide extended smv server script fullname}"
     fi
 
     # start smv server and jupyter server
