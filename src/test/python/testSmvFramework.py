@@ -22,7 +22,7 @@ from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, lit
 from py4j.protocol import Py4JJavaError
-from smvframework.stage.modules import D1, D3, D4, MultiCsv, MultiCsvWithUserSchema, CsvFile
+from smvframework.stage.modules import D1, D1WithError, D3, D4, MultiCsv, MultiCsvWithUserSchema, CsvFile
 
 
 class SmvFrameworkTest(SmvBaseTest):
@@ -39,6 +39,11 @@ class SmvFrameworkTest(SmvBaseTest):
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
+
+    def test_SmvCsvStringData_with_error(self):
+        fqn = D1WithError.fqn()
+        with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
+            df = self.df(fqn)
 
     def test_SmvMultiCsvFiles(self):
         self.createTempInputFile("multiCsvTest/f1", "col1\na\n")
