@@ -22,7 +22,7 @@ from pyspark.sql import *
 import os, shutil
 
 class SmvBaseTest(unittest.TestCase):
-    """DataDir value is deprecated. Use tmpDataDir instead."""
+    # DataDir value is deprecated. Use tmpDataDir instead
     DataDir = "./target/data"
     PytestDir = "./target/pytest"
 
