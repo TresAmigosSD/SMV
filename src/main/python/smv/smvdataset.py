@@ -430,7 +430,7 @@ class SmvMultiCsvFiles(SmvFile):
         jdf = self._smvMultiCsvFiles.doRun(validator)
         return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
-class SmvCsvStringData(SmvInput):
+class SmvCsvStringData(WithParser, SmvInput):
     """Input data defined by a schema string and data string
     """
 
