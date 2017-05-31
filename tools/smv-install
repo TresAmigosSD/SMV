@@ -12,7 +12,7 @@ function usage()
 function parse_args()
 {
   [ "$1" = "-h" ] && usage 0
-  [ $# -gt 2 ] && echo "ERROR: invalid arguments" && usage 1
+  [ $# -lt 1 -o $# -gt 2 ] && echo "ERROR: invalid arguments" && usage 1
 
   DO_INSTALL_SPARK=0
   if [ "$1" == "-spark" ]; then
@@ -22,7 +22,7 @@ function parse_args()
   SMV_VERSION="1.5.2.9"
 
   SMV_DIR="SMV_${SMV_VERSION}"
-  SPARK_DIR="spark-${SMV_VERSION}-bin-2.7.2"
+  SPARK_DIR="spark-1.5.2-bin-2.7.2"
   SMV_PROFILE_FILENAME="smv-profile.sh"
   SMV_PROFILE="${HOME}/.smv/${SMV_PROFILE_FILENAME}"
 
@@ -82,7 +82,7 @@ download_smv() {
 
 # Download prebuilt spark version with hive support.
 download_spark() {
-  "$SMV_HOME"/install_spark "$SPARK_DIR"
+  install_app "https://github.com/TresAmigosSD/spark/releases/download/1.5.2_hd/${SPARK_DIR}.tgz"
 }
 
 jre_installtion_validation() {
@@ -164,5 +164,5 @@ jre_installtion_validation
 python_installation_validation
 download_smv
 [ $DO_INSTALL_SPARK -eq 1 ] && download_spark
-#generate_profile_file
-#source_profile_file
+generate_profile_file
+source_profile_file
