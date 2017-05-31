@@ -13,11 +13,11 @@ class WithStackTrace(object):
 
     def __getattribute__(self, name):
         if name in FUNC_LIST:
-            obj_getattribute = object.__getattribute__(self, name)
+            func_needing_stacktrace = object.__getattribute__(self, name)
 
             def catche_errs(*pargs, **kwargs):
                 try:
-                    res = obj_getattribute(*pargs, **kwargs)
+                    res = func_needing_stacktrace(*pargs, **kwargs)
                 except BaseException as err:
                     traceback.print_exc()
                     raise err
