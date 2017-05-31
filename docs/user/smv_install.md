@@ -35,12 +35,12 @@ SMV installing requires either curl or wget to be available.  **Note:** The inst
 
 ## Install SMV using curl
 ```bash
-$ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.5.2.10/tools/smv-install | bash -s -- -spark
+$ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.6.2.1/tools/smv-install | bash -s -- -spark
 ```
 
 ## Install SMV using wget
 ```bash
-$ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.5.2.10/tools/smv-install | bash -s -- -spark
+$ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.6.2.1/tools/smv-install | bash -s -- -spark
 ```
 
 ## Updating paths.
