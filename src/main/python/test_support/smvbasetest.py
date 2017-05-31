@@ -18,8 +18,12 @@ import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import *
 
+import os, shutil
+
 class SmvBaseTest(unittest.TestCase):
+    # DataDir value is deprecated. Use tmpDataDir instead
     DataDir = "./target/data"
+    PytestDir = "./target/pytest"
 
     @classmethod
     def smvAppInitArgs(cls):
@@ -38,10 +42,12 @@ class SmvBaseTest(unittest.TestCase):
         import random;
         callback_server_port = random.randint(20000, 65535)
 
-        args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
+        args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.tmpDataDir()]
         # The test's SmvApp must be set as the singleton for correct results of some tests
         # The original SmvApp (if any) will be restored when the test is torn down
         cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
+
+        cls.mkTmpTestDir()
 
     @classmethod
     def tearDownClass(cls):
@@ -67,7 +73,6 @@ class SmvBaseTest(unittest.TestCase):
             args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
             cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
-
     @classmethod
     def createDF(cls, schema, data):
         return cls.smvApp.createDF(schema, data)
@@ -87,10 +92,30 @@ class SmvBaseTest(unittest.TestCase):
         self.assertEqual(expected.columns, result.columns)
         self.assertEqual(sort_collect(expected), sort_collect(result))
 
-    def createTempFile(self, baseName, fileContents = "xxx"):
-        """create a temp file in the data dir with the given contents"""
+    @classmethod
+    def tmpTestDir(cls):
+        """Temporary directory for each test to put the files it creates. Automatically cleaned up."""
+        return cls.PytestDir + "/" + cls.__name__
+
+    @classmethod
+    def tmpDataDir(cls):
+        """Temporary directory for each test to put the data it creates. Automatically cleaned up."""
+        return cls.tmpTestDir() + "/data"
+
+    @classmethod
+    def tmpInputDir(cls):
+        """Temporary directory for each test to put the input files it creates. Automatically cleaned up."""
+        return cls.tmpDataDir() + "/input"
+
+    @classmethod
+    def mkTmpTestDir(cls):
+        shutil.rmtree(cls.tmpTestDir(), ignore_errors=True)
+        os.makedirs(cls.tmpTestDir())
+
+    def createTempInputFile(self, baseName, fileContents = "xxx"):
+        """create a temp file in the input data dir with the given contents"""
         import os
-        fullPath = self.DataDir + "/" + baseName
+        fullPath = self.tmpInputDir() + "/" + baseName
         directory = os.path.dirname(fullPath)
         if not os.path.exists(directory):
             os.makedirs(directory)

@@ -20,8 +20,8 @@ class DiscoverSchemaTest(SmvBaseTest):
         from smv.smvshell import discoverSchema
         import os
 
-        self.createTempFile("schemaToBeDiscovered.csv", 'a,b,c\n1,2,"a"\n3,a,"f"\n')
-        discoverSchema(cls.DataDir + "/schemaToBeDiscovered.csv")
+        self.createTempInputFile("schemaToBeDiscovered.csv", 'a,b,c\n1,2,"a"\n3,a,"f"\n')
+        discoverSchema(cls.tmpInputDir() + "/schemaToBeDiscovered.csv")
 
         sf = open("schemaToBeDiscovered.schema.toBeReviewed", "r")
         res = sf.read()

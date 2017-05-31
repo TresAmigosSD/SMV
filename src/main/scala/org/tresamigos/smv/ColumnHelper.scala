@@ -24,7 +24,7 @@ import org.apache.spark.sql.types._
 import java.util.Calendar
 import java.sql.{Timestamp, Date}
 import com.rockymadden.stringmetric.phonetic.{MetaphoneAlgorithm}
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, LocalDate}
 import org.apache.spark.annotation.DeveloperApi
 
 import scala.collection.mutable
@@ -118,18 +118,9 @@ class ColumnHelper(column: Column) {
    */
   def smvMonth70 = {
     val name = s"SmvMonth70($column)"
-    val f = { ts: Any =>
-      ts match {
-        case null => null
-        case ts: Timestamp =>
-          panel.Month(ts).timeIndex
-        case ts: Date =>
-          panel.Month(ts).timeIndex
-        case _ => throw new SmvUnsupportedType("unsupported type")
-      }
-    }
+    val f = (y:Int, m: Int) => panel.Month(y, m).timeIndex
 
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)())
+    udf(f).apply(smvYear, smvMonth).alias(name)
   }
 
   /**
@@ -164,28 +155,16 @@ class ColumnHelper(column: Column) {
    * Extract day of the week component from a timestamp.
    *
    * {{{
-   * lit("2015-09-16").smvStrToTimestamp("yyyy-MM-dd").smvDayOfWeek // 4 (Wed)
+   * lit("2015-09-16").smvStrToTimestamp("yyyy-MM-dd").smvDayOfWeek // 3 (Wed)
    * }}}
    *
-   * @return The day of the week component as an integer (range 1-7, 1 being Sunday) or null if input column is null
+   * @return The day of the week component as an integer (range 1-7, 1 being Monday) or null if input column is null
    */
   def smvDayOfWeek = {
     val name          = s"SmvDayOfWeek($column)"
-    val cal: Calendar = Calendar.getInstance()
-    val f = { ts: Any =>
-      ts match {
-        case null => null
-        case ts: Timestamp =>
-          cal.setTimeInMillis(ts.getTime())
-          cal.get(Calendar.DAY_OF_WEEK)
-        case ts: Date =>
-          cal.setTimeInMillis(ts.getTime())
-          cal.get(Calendar.DAY_OF_WEEK)
-        case _ => throw new SmvUnsupportedType("unsupported type")
-      }
-    }
-
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)())
+    //Somehow "udf" helped converts Timestamp to Date, so this method can handle both
+    val f = {ts: Date => if (ts == null) None else Option(LocalDate.fromDateFields(ts).getDayOfWeek())}
+    udf(f).apply(column).alias(name)
   }
 
   /**
@@ -199,18 +178,8 @@ class ColumnHelper(column: Column) {
    */
   def smvDay70 = {
     val name = s"SmvDay70($column)"
-    val f = { ts: Any =>
-      ts match {
-        case null => null
-        case ts: Timestamp =>
-          panel.Day(ts).timeIndex
-        case ts: Date =>
-          panel.Day(ts).timeIndex
-        case _ => throw new SmvUnsupportedType("unsupported type")
-      }
-    }
-
-    new Column(Alias(ScalaUDF(f, IntegerType, Seq(expr)), name)())
+    val f = (y: Int, m: Int, d: Int) => panel.Day(y, m, d).timeIndex
+    udf(f).apply(smvYear, smvMonth, smvDayOfMonth).alias(name)
   }
 
   /**
@@ -269,6 +238,20 @@ class ColumnHelper(column: Column) {
     udf(f).apply(column).as(name)
   }
 
+  /**
+   *  smvTime helper to convert `smvTime` column to a timestamp at the beginning of
+   *  the given time pireod.
+   *  Example `smvTime` values (as String): "Q201301", "M201512", "D20141201"
+   *  Example output "2013-01-01 00:00:00.0", "2015-12-01 00:00:00.0", "2014-12-01 00:00:00.0"
+   **/
+  def smvTimeToTimestamp = {
+    val name = s"smvTimeToTimestamp($column)"
+    val f = (s: String) => {
+      panel.PartialTime(s).startTimestamp
+    }
+
+    udf(f).apply(column).as(name)
+  }
   /**
    * Pre-defined binning for dollar amount type of column.
    * It provides more granularity on small values. Pre-defined boundaries: 10, 200, 1000, 10000 ...
@@ -399,9 +382,9 @@ class ColumnHelper(column: Column) {
   def smvPlusDays(n: Int) = {
     val name = s"SmvPlusDays($column, $n)"
     val f = (t: Timestamp) =>
-      if (t == null) null
-      else new Timestamp((new DateTime(t)).plusDays(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+      if (t == null) None
+      else Option(new Timestamp((new DateTime(t)).plusDays(n).getMillis()))
+    udf(f).apply(column).alias(name)
   }
 
   /**
@@ -433,9 +416,9 @@ class ColumnHelper(column: Column) {
   def smvPlusWeeks(n: Int) = {
     val name = s"SmvPlusWeeks($column, $n)"
     val f = (t: Timestamp) =>
-      if (t == null) null
-      else new Timestamp((new DateTime(t)).plusWeeks(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+      if (t == null) None
+      else Option(new Timestamp((new DateTime(t)).plusWeeks(n).getMillis()))
+    udf(f).apply(column).alias(name)
   }
 
   /**
@@ -473,8 +456,8 @@ class ColumnHelper(column: Column) {
     val name = s"SmvPlusMonths($column, $n)"
     val f = (t: Timestamp) =>
       if (t == null) null
-      else new Timestamp((new DateTime(t)).plusMonths(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+      else Option(new Timestamp((new DateTime(t)).plusMonths(n).getMillis()))
+    udf(f).apply(column).alias(name)
   }
 
   /**
@@ -511,9 +494,9 @@ class ColumnHelper(column: Column) {
   def smvPlusYears(n: Int) = {
     val name = s"SmvPlusYears($column, $n)"
     val f = (t: Timestamp) =>
-      if (t == null) null
-      else new Timestamp((new DateTime(t)).plusYears(n).getMillis())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+      if (t == null) None
+      else Option(new Timestamp((new DateTime(t)).plusYears(n).getMillis()))
+    udf(f).apply(column).alias(name)
   }
 
   /**

@@ -39,13 +39,16 @@ private[smv] class FileIOHandler(
 
   /**
    * Create a DataFrame from the given data/schema path and CSV attributes.
-   * If CSV attributes are null, then they are extracted from the schema file directly.
+   * If CSV attributes are null, then they are extracted from the schema directly.
+   * Schema can be specified explicitly via schemaOpt; otherwise it will be read
+   * from file.
    */
   private[smv] def csvFileWithSchema(
-      csvAttributes: CsvAttributes
+      csvAttributes: CsvAttributes,
+      schemaOpt: Option[SmvSchema] = None
   ): DataFrame = {
     val sc     = sqlContext.sparkContext
-    val schema = readSchema()
+    val schema = schemaOpt.getOrElse { readSchema() }
 
     val ca = if (csvAttributes == null) schema.extractCsvAttributes() else csvAttributes
 
@@ -55,10 +58,11 @@ private[smv] class FileIOHandler(
     csvStringRDDToDF(noHeadRDD, schema, ca)
   }
 
-  private[smv] def frlFileWithSchema(): DataFrame = {
+  private[smv] def frlFileWithSchema(schemaOpt: Option[SmvSchema] = None): DataFrame = {
     val sc     = sqlContext.sparkContext
     val slices = SmvSchema.slicesFromFile(sc, fullSchemaPath)
-    val schema = readSchema()
+    val schema = schemaOpt.getOrElse { readSchema() }
+
     require(slices.size == schema.getSize)
 
     // TODO: show we allow header in Frl files?

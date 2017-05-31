@@ -86,7 +86,8 @@ function verify_hash_unchanged() {
 }
 
 function verify_hash_changed() {
-  if [ $(count_output) -le 1 ]; then
+  previous_num_outputs="$1"
+  if [ $(count_output) -le "$previous_num_outputs" ]; then
     echo "Changed module's hashOfHash didn't change"
     exit 1
   fi
@@ -111,7 +112,16 @@ echo "--------- RUN CHANGED MODULE -------------"
 ../../../tools/smv-pyrun -m hashtest.modules.M
 
 echo "--------- VERIFY HASH CHANGED -------------"
-verify_hash_changed
+verify_hash_changed 1
+
+echo "--------- TOUCH INPUT CSV -------------"
+touch data/input/hashtest/table.csv
+
+echo "--------- RUN MODULE WITH UPDATED CSV -------------"
+../../../tools/smv-pyrun -m hashtest.modules.M
+
+echo "--------- VERIFY HASH CHANGED -------------"
+verify_hash_changed 2
 )
 
 

@@ -39,14 +39,38 @@ class SmvFrameworkTest(SmvBaseTest):
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
 
-    def test_SmvMultiCsvFiles(self):
-        self.createTempFile("input/test3/f1", "col1\na\n")
-        self.createTempFile("input/test3/f2", "col1\nb\n")
-        self.createTempFile("input/test3.schema", "col1: String\n")
+    def test_SmvCsvStringData_with_error(self):
+        fqn = D1WithError.fqn()
+        with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
+            df = self.df(fqn)
 
-        fqn = "smvframework.stage.modules.D2"
+    def test_SmvMultiCsvFiles(self):
+        self.createTempInputFile("multiCsvTest/f1", "col1\na\n")
+        self.createTempInputFile("multiCsvTest/f2", "col1\nb\n")
+        self.createTempInputFile("multiCsvTest.schema", "col1: String\n")
+
+        fqn = "smvframework.stage.modules.MultiCsv"
         df = self.df(fqn)
         exp = self.createDF("col1: String", "a;b")
+        self.should_be_same(df, exp)
+
+    def test_SmvCsvFileWithUserSchema(self):
+        self.createTempInputFile("test3.csv", "col1\na\nb\n")
+        self.createTempInputFile("test3.schema", "col1: String\n")
+
+        fqn = "smvframework.stage.modules.CsvFile"
+        df = self.df(fqn)
+        exp = self.createDF(CsvFile.UserSchema, "a;b")
+        self.should_be_same(df, exp)
+
+    def test_SmvMultiCsvFilesWithUserSchema(self):
+        self.createTempInputFile("test3/f1", "col1\na\n")
+        self.createTempInputFile("test3/f2", "col1\nb\n")
+        self.createTempInputFile("test3.schema", "col1: String\n")
+
+        fqn = "smvframework.stage.modules.MultiCsvWithUserSchema"
+        df = self.df(fqn)
+        exp = self.createDF(CsvFile.UserSchema, "a;b")
         self.should_be_same(df, exp)
 
     def test_SmvDQM(self):
@@ -56,7 +80,8 @@ class SmvFrameworkTest(SmvBaseTest):
   "passed":false,
   "errorMessages": [
     {"FailTotalRuleCountPolicy(2)":"true"},
-    {"FailTotalFixCountPolicy(1)":"false"}
+    {"FailTotalFixCountPolicy(1)":"false"},
+    {"FailParserCountPolicy(1)":"true"}
   ],
   "checkLog": [
     "Rule: b_lt_03, total count: 1",
