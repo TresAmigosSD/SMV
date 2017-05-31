@@ -22,7 +22,6 @@ from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, lit
 from py4j.protocol import Py4JJavaError
-from smvframework.stage.modules import D1, D1WithError, D3, D4, MultiCsv, MultiCsvWithUserSchema, CsvFile
 
 
 class SmvFrameworkTest(SmvBaseTest):
@@ -35,7 +34,7 @@ class SmvFrameworkTest(SmvBaseTest):
         return re.sub(r"([\[\]\(\)])", r"\\\1", s)
 
     def test_SmvCsvStringData(self):
-        fqn = D1.fqn()
+        fqn = "smvframework.stage.modules.D1"
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
@@ -50,7 +49,7 @@ class SmvFrameworkTest(SmvBaseTest):
         self.createTempInputFile("multiCsvTest/f2", "col1\nb\n")
         self.createTempInputFile("multiCsvTest.schema", "col1: String\n")
 
-        fqn = MultiCsv.fqn()
+        fqn = "smvframework.stage.modules.MultiCsv"
         df = self.df(fqn)
         exp = self.createDF("col1: String", "a;b")
         self.should_be_same(df, exp)
@@ -59,7 +58,7 @@ class SmvFrameworkTest(SmvBaseTest):
         self.createTempInputFile("test3.csv", "col1\na\nb\n")
         self.createTempInputFile("test3.schema", "col1: String\n")
 
-        fqn = CsvFile.fqn()
+        fqn = "smvframework.stage.modules.CsvFile"
         df = self.df(fqn)
         exp = self.createDF(CsvFile.UserSchema, "a;b")
         self.should_be_same(df, exp)
@@ -69,13 +68,13 @@ class SmvFrameworkTest(SmvBaseTest):
         self.createTempInputFile("test3/f2", "col1\nb\n")
         self.createTempInputFile("test3.schema", "col1: String\n")
 
-        fqn = MultiCsvWithUserSchema.fqn()
+        fqn = "smvframework.stage.modules.MultiCsvWithUserSchema"
         df = self.df(fqn)
         exp = self.createDF(CsvFile.UserSchema, "a;b")
         self.should_be_same(df, exp)
 
     def test_SmvDQM(self):
-        fqn = D3.fqn()
+        fqn = "smvframework.stage.modules.D3"
 
         msg =""": org.tresamigos.smv.SmvDqmValidationError: {
   "passed":false,
@@ -105,7 +104,7 @@ class SmvRunConfigTest1(SmvBaseTest):
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = D4.fqn()
+        fqn = "smvframework.stage.modules.D4"
         df = self.df(fqn)
         expect = self.createDF("a: String;b: Integer",
             """test1_s1,1;
@@ -121,7 +120,7 @@ class SmvRunConfigTest2(SmvBaseTest):
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = D4.fqn()
+        fqn = "smvframework.stage.modules.D4"
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer",
             """test1_not_s1,2;

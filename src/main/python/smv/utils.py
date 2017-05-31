@@ -20,10 +20,13 @@ def for_name(name):
     Equivalent to Java's Class.forName
     """
     lastdot = name.rfind('.')
-    if (lastdot == -1):
-        return getattr(__import__('__main__'), name)
 
-    mod = __import__(name[:lastdot])
+    if lastdot == -1:
+        modname = name
+    else:
+        modname = name[:lastdot]
+
+    mod = __import__(modname)
     for comp in name.split('.')[1:]:
         mod = getattr(mod, comp)
     return mod

@@ -65,6 +65,12 @@ class SmvApp(object):
         cls._instance = cls(arglist, _sc, _sqlContext)
         return cls._instance
 
+    @classmethod
+    def setInstance(cls, app):
+        """Set the singleton instance.
+        """
+        cls._instance = app
+
     def __init__(self, arglist, _sc = None, _sqlContext = None):
         sc = SparkContext() if _sc is None else _sc
         sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
