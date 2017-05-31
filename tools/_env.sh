@@ -85,14 +85,15 @@ function set_spark_home() {
     if [ -n "$SPARK_HOME_OPT" ]; then
       SPARK_HOME="$SPARK_HOME_OPT"
     elif [ -z "$SPARK_HOME" ]; then
-        sparkSubmit=$(type -p spark-submit)
-        if [ -z "$sparkSubmit" ]; then
-            echo "Can not find spark-submit script"
-            exit 1
-        fi
-        export SPARK_HOME=$(cd $(dirname $sparkSubmit)/..; pwd)
+      sparkSubmit=$(type -p spark-submit)
+      if [ -z "$sparkSubmit" ]; then
+          echo "Can not find spark-submit script"
+          exit 1
+      fi
+      SPARK_HOME=$(cd $(dirname $sparkSubmit)/..; pwd)
     fi
 
+    export SPARK_HOME
     echo "Using Spark at $SPARK_HOME"
 }
 
