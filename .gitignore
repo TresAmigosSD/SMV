@@ -13,6 +13,7 @@ metastore_db/
 .DS_Store
 .ensime*
 /venv
+.python-version
 
 /R/lib
 /R/smvR/man

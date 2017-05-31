@@ -633,7 +633,7 @@ def run_module():
 def getFqnOfRequire(ds):
     '''returns fqn of a dataset. If ds is a link, will return fqn of target'''
     if getattr(ds, 'IsSmvModuleLink', None):
-        ds = ds.target()
+        ds = ds.target
     return ds.fqn()
 
 # TODO: rename... should return all information about the module or create if not exists
