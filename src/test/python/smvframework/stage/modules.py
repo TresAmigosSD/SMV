@@ -21,10 +21,15 @@ class D1(SmvCsvStringData):
     def dataStr(self):
         return "x,10;y,1"
 
+class D1WithError(SmvCsvStringData):
+    def schemaStr(self):
+        return "a:String;b:Integer"
+    def dataStr(self):
+        return "x,10;y,a"
+
 class MultiCsv(SmvMultiCsvFiles):
     def dir(self):
-        from testSmvFramework import SmvFrameworkTest
-        return SmvFrameworkTest.tmpTestDir() + "/multiCsvTest"
+        return "multiCsvTest"
 
 class D3(SmvCsvStringData):
     def schemaStr(self):

@@ -22,7 +22,7 @@ from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, lit
 from py4j.protocol import Py4JJavaError
-from smvframework.stage.modules import D1, D3, D4, MultiCsv, MultiCsvWithUserSchema, CsvFile
+from smvframework.stage.modules import D1, D1WithError, D3, D4, MultiCsv, MultiCsvWithUserSchema, CsvFile
 
 
 class SmvFrameworkTest(SmvBaseTest):
@@ -40,10 +40,15 @@ class SmvFrameworkTest(SmvBaseTest):
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
 
+    def test_SmvCsvStringData_with_error(self):
+        fqn = D1WithError.fqn()
+        with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
+            df = self.df(fqn)
+
     def test_SmvMultiCsvFiles(self):
-        self.createTempFile("multiCsvTest/f1", "col1\na\n")
-        self.createTempFile("multiCsvTest/f2", "col1\nb\n")
-        self.createTempFile("multiCsvTest.schema", "col1: String\n")
+        self.createTempInputFile("multiCsvTest/f1", "col1\na\n")
+        self.createTempInputFile("multiCsvTest/f2", "col1\nb\n")
+        self.createTempInputFile("multiCsvTest.schema", "col1: String\n")
 
         fqn = MultiCsv.fqn()
         df = self.df(fqn)
@@ -51,8 +56,8 @@ class SmvFrameworkTest(SmvBaseTest):
         self.should_be_same(df, exp)
 
     def test_SmvCsvFileWithUserSchema(self):
-        self.createTempFile("input/test3.csv", "col1\na\nb\n")
-        self.createTempFile("input/test3.schema", "col1: String\n")
+        self.createTempInputFile("test3.csv", "col1\na\nb\n")
+        self.createTempInputFile("test3.schema", "col1: String\n")
 
         fqn = CsvFile.fqn()
         df = self.df(fqn)
@@ -60,9 +65,9 @@ class SmvFrameworkTest(SmvBaseTest):
         self.should_be_same(df, exp)
 
     def test_SmvMultiCsvFilesWithUserSchema(self):
-        self.createTempFile("input/test3/f1", "col1\na\n")
-        self.createTempFile("input/test3/f2", "col1\nb\n")
-        self.createTempFile("input/test3.schema", "col1: String\n")
+        self.createTempInputFile("test3/f1", "col1\na\n")
+        self.createTempInputFile("test3/f2", "col1\nb\n")
+        self.createTempInputFile("test3.schema", "col1: String\n")
 
         fqn = MultiCsvWithUserSchema.fqn()
         df = self.df(fqn)
@@ -76,7 +81,8 @@ class SmvFrameworkTest(SmvBaseTest):
   "passed":false,
   "errorMessages": [
     {"FailTotalRuleCountPolicy(2)":"true"},
-    {"FailTotalFixCountPolicy(1)":"false"}
+    {"FailTotalFixCountPolicy(1)":"false"},
+    {"FailParserCountPolicy(1)":"true"}
   ],
   "checkLog": [
     "Rule: b_lt_03, total count: 1",
