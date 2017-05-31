@@ -19,6 +19,7 @@ function parse_args()
     DO_INSTALL_SPARK=1
     shift
   fi
+  # SMV version is updated automatically by smv-release
   SMV_VERSION="1.5.2.9"
 
   SMV_DIR="SMV_${SMV_VERSION}"
