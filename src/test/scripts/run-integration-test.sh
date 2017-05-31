@@ -57,6 +57,10 @@ for stage in $NEW_SCALA_MODULE_STAGES; do
   TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.M2_*.csv/part*)
   if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
     echo "Test failure: $stage"
+    echo "Expected output:"
+    echo $TEST_OUTPUT
+    echo "Got:"
+    echo $TEST_INPUT
     exit 1
   fi
 done
