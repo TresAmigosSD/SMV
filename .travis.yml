@@ -3,5 +3,5 @@ scala:
    - 2.10.4
 script:
   - tools/spark-install ./spark
-  - export PATH="$PATH:./spark/bin"
+  - export PATH="$PATH:$(pwd)/spark/bin"
   - sbt ++$TRAVIS_SCALA_VERSION alltest
