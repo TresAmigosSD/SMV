@@ -14,10 +14,21 @@ from unittest import *
 
 
 class SmvTestRunner(object):
+    """Runs SMV tests
+
+        DOES NOT reload code. If code needs to be reloaded before running tests
+        (as in smv-pyshell), this must happen before the run method is called.
+    """
     def __init__(self, test_path):
+        # The path where the test modules with be found
         self.test_path = test_path
 
     def run(self, test_names):
+        """Run the tests with the given names
+
+            Args:
+                test_names (arr(str)): Tests to run. If empty, all tests will be run.
+        """
         loader = TestLoader()
         sys.path.append(self.test_path)
 

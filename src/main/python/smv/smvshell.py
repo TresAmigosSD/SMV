@@ -179,13 +179,22 @@ def discoverSchema(path, n=100000, ca=None):
         Will save a schema file with postfix ".toBeReviewed" in local directory.
 
         Args:
-            path (str): Path to te CSV file
+            path (str): Path to the CSV file
             n (int): Number of records to check for schema discovery, default 100k
             ca (CsvAttributes): Defaults to CsvWithHeader
     """
     SmvApp.getInstance()._jvm.SmvPythonHelper.discoverSchema(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
 
 def run_test(test_name):
+    """Run a test with the given name without creating new Spark context
+
+        First reloads SMV and the test from source, then runs the test.
+
+        Args:
+            test_name (str): Name of the test to run
+    """
+    # Ensure TestConfig has a canonical SmvApp (this will eventually be used
+    # to restore the singleton SmvApp)
     TestConfig.setSmvApp(SmvApp.getInstance())
 
     first_dot = test_name.find(".")
@@ -199,6 +208,8 @@ def run_test(test_name):
     SmvTestRunner("src/test/python").run([test_name])
 
 def _clear_from_sys_modules(names_to_clear):
+    """Clear smv and the given names from sys.modules (don't clear this module)
+    """
     for name in sys.modules.keys():
         for ntc in names_to_clear:
             if name != "smv.smvshell" and (name.startswith(ntc + ".") or name == ntc):

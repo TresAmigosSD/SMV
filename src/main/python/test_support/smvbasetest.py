@@ -27,6 +27,8 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Import needs to happen during EVERY setup to ensure that we are
+        # using the most recently reloaded SmvApp
         from smv.smvapp import SmvApp
 
         cls.sparkContext = TestConfig.sparkContext()
@@ -37,11 +39,16 @@ class SmvBaseTest(unittest.TestCase):
         callback_server_port = random.randint(20000, 65535)
 
         args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
+        # The test's SmvApp must be set as the singleton for correct results of some tests
+        # The original SmvApp (if any) will be restored when the test is torn down
         cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
     @classmethod
     def tearDownClass(cls):
+        # Import needs to happen during EVERY setup to ensure that we are
+        # using the most recently reloaded SmvApp
         from smv.smvapp import SmvApp
+        # Restore SmvApp singleton
         SmvApp.setInstance(TestConfig.originalSmvApp())
 
     def setUp(self):
