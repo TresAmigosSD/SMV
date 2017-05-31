@@ -11,4 +11,4 @@ else
     echo
 fi
 
-spark-shell -deprecation "${SPARK_ARGS[@]}" --jars "$APP_JAR" -i "${SMV_TOOLS}/conf/smv_shell_init.scala" $APP_SHELL_INIT
+"$SPARK_HOME/bin/spark-shell" -deprecation "${SPARK_ARGS[@]}" --jars "$APP_JAR" -i "${SMV_TOOLS}/conf/smv_shell_init.scala" $APP_SHELL_INIT
