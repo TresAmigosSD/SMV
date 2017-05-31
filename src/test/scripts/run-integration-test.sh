@@ -129,8 +129,8 @@ verify_hash_changed 2
 )
 
 
-echo "--------- GENERATE ENTERPRISE APP APP -------------"
-../../../tools/smv-init -e $E_APP_NAME
+echo "--------- GENERATE ENTERPRISE APP -------------"
+../../tools/smv-init -e $E_APP_NAME
 
 (
 cd $E_APP_NAME
@@ -139,7 +139,7 @@ echo "--------- RUN ENTERPRISE APP -------------"
 )
 
 echo "--------- GENERATE SIMPLE APP -------------"
-../../../tools/smv-init -s $S_APP_NAME
+../../tools/smv-init -s $S_APP_NAME
 
 (
 cd $S_APP_NAME
