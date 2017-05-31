@@ -19,6 +19,7 @@ from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
 from utils import smv_copy_array
+from stacktrace_mixin import WithStackTrace, with_stacktrace
 
 import abc
 
@@ -68,7 +69,7 @@ def _stripComments(code):
     code = str(code)
     return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
 
-class SmvOutput(object):
+class SmvOutput(WithStackTrace):
     """Mixin which marks an SmvModule as one of the output of its stage
 
         SmvOutputs are distinct from other SmvDataSets in that
@@ -77,6 +78,7 @@ class SmvOutput(object):
     """
     IsSmvOutput = True
 
+    @with_stacktrace
     def tableName(self):
         """The user-specified table name used when exporting data to Hive (optional)
 
@@ -85,7 +87,7 @@ class SmvOutput(object):
         """
         return None
 
-class SmvDataSet(object):
+class SmvDataSet(WithStackTrace):
     """Abstract base class for all SmvDataSets
     """
 
@@ -105,6 +107,7 @@ class SmvDataSet(object):
         return self.__doc__
 
     @abc.abstractmethod
+    @with_stacktrace
     def requiresDS(self):
         """User-specified list of dependencies
 
@@ -114,6 +117,7 @@ class SmvDataSet(object):
                 (list(SmvDataSet)): a list of dependencies
         """
 
+    @with_stacktrace
     def dqm(self):
         """DQM policy
 
@@ -127,8 +131,9 @@ class SmvDataSet(object):
 
     @abc.abstractmethod
     def doRun(self, validator, known):
-        """Comput this dataset, and return the dataframe"""
+        """Compute this dataset, and return the dataframe"""
 
+    @with_stacktrace
     def version(self):
         """Version number
 
@@ -197,6 +202,7 @@ class SmvDataSet(object):
     def urn(cls):
         return "mod:" + cls.fqn()
 
+    @with_stacktrace
     def isEphemeral(self):
         """Should this SmvDataSet skip persisting its data?
 
@@ -205,6 +211,7 @@ class SmvDataSet(object):
         """
         return False
 
+    @with_stacktrace
     def publishHiveSql(self):
         """An optional sql query to run to publish the results of this module when the
            --publish-hive command line is used.  The DataFrame result of running this
