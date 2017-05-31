@@ -1,6 +1,8 @@
 language: scala
 scala:
    - 2.10.4
-#script:
-#  - sbt ++$TRAVIS_SCALA_VERSION assembly
-#  - sbt ++$TRAVIS_SCALA_VERSION alltest
+install:
+  - tools/spark-install ./spark
+  - export PATH="$PATH:$(pwd)/spark/bin"
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION alltest
