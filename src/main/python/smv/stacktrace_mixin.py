@@ -15,7 +15,7 @@ class WithStackTrace(object):
         if name in FUNC_LIST:
             func_needing_stacktrace = object.__getattribute__(self, name)
 
-            def catche_errs(*pargs, **kwargs):
+            def catch_errs(*pargs, **kwargs):
                 try:
                     res = func_needing_stacktrace(*pargs, **kwargs)
                 except BaseException as err:
@@ -24,7 +24,7 @@ class WithStackTrace(object):
 
                 return res
 
-            return catche_errs
+            return catch_errs
         else:
             return object.__getattribute__(self, name)
 
