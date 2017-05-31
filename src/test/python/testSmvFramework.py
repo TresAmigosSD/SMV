@@ -81,7 +81,8 @@ class SmvFrameworkTest(SmvBaseTest):
   "passed":false,
   "errorMessages": [
     {"FailTotalRuleCountPolicy(2)":"true"},
-    {"FailTotalFixCountPolicy(1)":"false"}
+    {"FailTotalFixCountPolicy(1)":"false"},
+    {"FailParserCountPolicy(1)":"true"}
   ],
   "checkLog": [
     "Rule: b_lt_03, total count: 1",
