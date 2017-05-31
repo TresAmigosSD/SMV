@@ -22,6 +22,7 @@ from pyspark.sql import *
 import os, shutil
 
 class SmvBaseTest(unittest.TestCase):
+    # DataDir value is deprecated. Use tmpDataDir instead
     DataDir = "./target/data"
     PytestDir = "./target/pytest"
 
@@ -38,7 +39,7 @@ class SmvBaseTest(unittest.TestCase):
         import random;
         callback_server_port = random.randint(20000, 65535)
 
-        args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
+        args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.tmpDataDir()]
         cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
         cls.mkTmpTestDir()
@@ -79,17 +80,28 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def tmpTestDir(cls):
+        """Temporary directory for each test to put the files it creates. Automatically cleaned up."""
         return cls.PytestDir + "/" + cls.__name__
+
+    @classmethod
+    def tmpDataDir(cls):
+        """Temporary directory for each test to put the data it creates. Automatically cleaned up."""
+        return cls.tmpTestDir() + "/data"
+
+    @classmethod
+    def tmpInputDir(cls):
+        """Temporary directory for each test to put the input files it creates. Automatically cleaned up."""
+        return cls.tmpDataDir() + "/input"
 
     @classmethod
     def mkTmpTestDir(cls):
         shutil.rmtree(cls.tmpTestDir(), ignore_errors=True)
         os.makedirs(cls.tmpTestDir())
 
-    def createTempFile(self, baseName, fileContents = "xxx"):
-        """create a temp file in the data dir with the given contents"""
+    def createTempInputFile(self, baseName, fileContents = "xxx"):
+        """create a temp file in the input data dir with the given contents"""
         import os
-        fullPath = self.tmpTestDir() + "/" + baseName
+        fullPath = self.tmpInputDir() + "/" + baseName
         directory = os.path.dirname(fullPath)
         if not os.path.exists(directory):
             os.makedirs(directory)
