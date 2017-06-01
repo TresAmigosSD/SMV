@@ -12,7 +12,7 @@ function usage()
 function parse_args()
 {
   [ "$1" = "-h" ] && usage 0
-  [ $# -lt 1 -o $# -gt 2 ] && echo "ERROR: invalid arguments" && usage 1
+  [ $# -gt 1 ] && echo "ERROR: invalid arguments" && usage 1
 
   DO_INSTALL_SPARK=0
   if [ "$1" == "-spark" ]; then
