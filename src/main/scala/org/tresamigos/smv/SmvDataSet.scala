@@ -473,7 +473,7 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
 /**
  * SMV Dataset Wrapper around a hive table.
  */
-case class SmvHiveTable(override val tableName: String, val userQuery: String = null)
+class SmvHiveTable(override val tableName: String, val userQuery: String = null)
     extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
 
@@ -487,6 +487,12 @@ case class SmvHiveTable(override val tableName: String, val userQuery: String = 
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
     val df = app.sqlContext.sql(query)
     run(df)
+  }
+}
+
+object SmvHiveTable {
+  def apply(tableName: String, userQuery: String = null): SmvHiveTable = {
+    new SmvHiveTable(tableName, userQuery)
   }
 }
 
@@ -645,7 +651,7 @@ abstract class SmvSingleFile extends SmvFile {
 /**
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
-case class SmvCsvFile(
+class SmvCsvFile(
     override val path: String,
     csvAttributes: CsvAttributes = null,
     override val schemaPath: String = null,
@@ -656,7 +662,19 @@ case class SmvCsvFile(
     handler.csvFileWithSchema(csvAttributes, Some(schema))
 }
 
-case class SmvFrlFile(
+object SmvCsvFile {
+  def apply(
+      path: String,
+      csvAttributes: CsvAttributes = null,
+      schemaPath: String = null,
+      isFullPath: Boolean = false,
+      userSchema: Option[String] = None
+  ): SmvCsvFile = {
+    new SmvCsvFile(path, csvAttributes, schemaPath, isFullPath, userSchema)
+  }
+}
+
+class SmvFrlFile(
     override val path: String,
     override val schemaPath: String = null,
     override val isFullPath: Boolean = false,
@@ -664,6 +682,17 @@ case class SmvFrlFile(
 ) extends SmvSingleFile {
   def readSingleFile(handler: FileIOHandler) =
     handler.frlFileWithSchema(Some(schema))
+}
+
+object SmvFrlFile {
+  def apply(
+    path: String,
+    schemaPath: String = null,
+    isFullPath: Boolean = false,
+    userSchema: Option[String] = None
+  ): SmvFrlFile = {
+    new SmvFrlFile(path, schemaPath, isFullPath, userSchema)
+  }
 }
 
 /**
@@ -973,7 +1002,7 @@ object SmvExtModulePython {
  * }}}
  *
  **/
-case class SmvCsvStringData(
+class SmvCsvStringData(
     schemaStr: String,
     data: String,
     override val isPersistValidateResult: Boolean = false
@@ -996,6 +1025,16 @@ case class SmvCsvStringData(
       if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
     val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
+  }
+}
+
+object SmvCsvStringData {
+  def apply(
+      schemaStr: String,
+      data: String,
+      isPersistValidateResult: Boolean = false
+  ): SmvCsvStringData = {
+    new SmvCsvStringData(schemaStr, data, isPersistValidateResult)
   }
 }
 
