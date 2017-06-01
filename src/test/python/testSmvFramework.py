@@ -40,7 +40,7 @@ class SmvFrameworkTest(SmvBaseTest):
         self.should_be_same(expect, df)
 
     def test_SmvCsvStringData_with_error(self):
-        fqn = D1WithError.fqn()
+        fqn = "smvframework.stage.modules.D1WithError"
         with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
             df = self.df(fqn)
 
@@ -60,7 +60,7 @@ class SmvFrameworkTest(SmvBaseTest):
 
         fqn = "smvframework.stage.modules.CsvFile"
         df = self.df(fqn)
-        exp = self.createDF(CsvFile.UserSchema, "a;b")
+        exp = self.createDF("1loc: String", "a;b")
         self.should_be_same(df, exp)
 
     def test_SmvMultiCsvFilesWithUserSchema(self):
@@ -70,7 +70,7 @@ class SmvFrameworkTest(SmvBaseTest):
 
         fqn = "smvframework.stage.modules.MultiCsvWithUserSchema"
         df = self.df(fqn)
-        exp = self.createDF(CsvFile.UserSchema, "a;b")
+        exp = self.createDF("1loc: String", "a;b")
         self.should_be_same(df, exp)
 
     def test_SmvDQM(self):
