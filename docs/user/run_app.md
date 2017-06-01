@@ -164,7 +164,7 @@ One of the options below must be specified.
 </tr>
 
 <tr>
-<td colspan="2">--run-app </td>
+<td colspan="2">--run-app, -r </td>
 <td>Run all output modules in all configured stages in current app.
 </td>
 </tr>
