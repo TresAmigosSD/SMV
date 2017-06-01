@@ -129,7 +129,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                                       default = Some(Nil),
                                       descr = "run all output modules in specified stages")
   val runAllApp = toggle("run-app",
-                         noshort = true,
                          default = Some(false),
                          descrYes = "run all output modules in all stages in app.")
 
