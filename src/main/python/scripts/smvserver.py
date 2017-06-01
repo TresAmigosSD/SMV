@@ -222,9 +222,8 @@ def getDatasetDescriptionStartEnd(linesOfCodeList, className):
 
 
 def get_filepath_from_moduleFqn(module_fqn):
-    '''given a fqn, returns the fullname of its file'''
-    # TODO: do not use hardcoded value... FIXME
-    prefix = "/projects/sample_smv_project/src/main/python/"
+    '''given a fqn, returns the fullname of its file relative to proj dir.'''
+    prefix = "./src/main/python/"
     # dir1.dir2.file.class => [dir1, dir2, file]
     fqn_dirs_filename_list = module_fqn.split(".")[:-1]
     # concats fqn_dirs_filename_list into string with "/" intermezzo, appends .py, prepends prefix

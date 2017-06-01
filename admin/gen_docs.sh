@@ -25,6 +25,7 @@ function define_vars()
   export SMV_VERSION=$(cat "$SMV_TOOLS/../.smv_version")
 
   if [ -z $SPARK_HOME ]; then
+    # might be able to use tools/_env.sh to set SPARK_HOME
     SPARK_HOME="$(dirname $(which spark-submit))/.."
   fi
 
