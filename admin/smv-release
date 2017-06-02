@@ -182,7 +182,7 @@ function create_tar()
   find "${SMV_DIR}/target" -name '*with-dependencies.jar' -prune -o -type f -exec rm -f \{\} +
 
   # create the tar image
-  ${TAR} zcvf "${TGZ_IMAGE}" -C "${PROJ_DIR}" --exclude=.git \
+  ${TAR} zcvf "${TGZ_IMAGE}" -C "${PROJ_DIR}" --exclude=.git --exclude="admin" \
     --transform "s/^${SMV_DIR_BASE}/SMV_${SMV_VERSION}/" \
     ${SMV_DIR_BASE} >> ${LOGFILE} 2>&1 || error "tar creation failed"
 }
