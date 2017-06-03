@@ -323,11 +323,8 @@ abstract class SmvDataSet extends FilenamePart {
       SmvMetadata.fromJson(json)
     }
 
-  private[smv] def readPersistedEdd(prefix: String = ""): Try[String] =
-    Try {
-      val summary = app.sqlContext.read.json(moduleEddPath(prefix))
-      EddResultFunctions(summary).createReport()
-    }
+  private[smv] def readPersistedEdd(prefix: String = ""): Try[DataFrame] =
+    Try { app.sqlContext.read.json(moduleEddPath(prefix)) }
 
   /** Has the result of this data set been persisted? */
   private[smv] def isPersisted: Boolean =
@@ -352,14 +349,27 @@ abstract class SmvDataSet extends FilenamePart {
   /**
    * Read EDD from disk if it exists, or create and persist it otherwise
    */
-  private[smv] def getEdd(): String =
-    readPersistedEdd().getOrElse {
-      // DON'T automatically persist edd. Edd is explicitly persisted on the next
-      // line. This is the simplest way to prevent EDD from being persisted twice.
-      val df = rdd(forceRun = false, genEdd = false)
+  private[smv] def getEdd(): String = {
+    // DON'T automatically persist edd. Edd is explicitly persisted on the next
+    // line. This is the simplest way to prevent EDD from being persisted twice.
+    val df = rdd(forceRun = false, genEdd = false)
+
+    val unorderedSummary = readPersistedEdd().getOrElse {
       persistEdd(df)
       readPersistedEdd().get
     }
+
+    // Summary rows will not have a reliable order after persisting to HDFS. Need
+    // to reorder according to the columns of the df. Original order of tasks will
+    // still most likely be lost
+    val orderedSummary = df.columns.map { dfColName =>
+      unorderedSummary.filter(unorderedSummary("colName") === dfColName)
+    }.reduce {
+      _.smvUnion(_)
+    }
+
+    EddResultFunctions(orderedSummary).createReport()
+  }
 
   private[smv] def persistEdd(df: DataFrame) =
     df.edd.persistBesideData(moduleCsvPath())

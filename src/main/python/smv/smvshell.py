@@ -195,6 +195,14 @@ def discoverSchema(path, n=100000, ca=None):
     """
     SmvApp.getInstance()._jvm.SmvPythonHelper.discoverSchema(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
 
+def edd(ds_name):
+    """Print edd report for the result of an SmvDataSet
+
+        Args:
+            ds_name (str): name of an SmvDataSet
+    """
+    _jvmShellCmd().edd(ds_name)
+
 def run_test(test_name):
     """Run a test with the given name without creating new Spark context
 
