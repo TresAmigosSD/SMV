@@ -21,6 +21,8 @@ import dqm.{DQMValidator, ParserLogger, SmvDQM, TerminateParserLogger, FailParse
 import scala.collection.JavaConversions._
 import scala.util.Try
 
+import edd.EddResultFunctions
+
 import org.joda.time._, format._
 
 /** A module's file name part is stackable, e.g. with Using[SmvRunConfig] */
@@ -200,9 +202,9 @@ abstract class SmvDataSet extends FilenamePart {
    * skip the cache.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */
-  def rdd(forceRun: Boolean = false) = {
+  def rdd(forceRun: Boolean = false, genEdd: Boolean = app.genEdd) = {
     if (forceRun || !app.dfCache.contains(versionedFqn)) {
-      app.dfCache = app.dfCache + (versionedFqn -> computeRDD)
+      app.dfCache = app.dfCache + (versionedFqn -> computeRDD(genEdd))
     }
     app.dfCache(versionedFqn)
   }
@@ -310,12 +312,6 @@ abstract class SmvDataSet extends FilenamePart {
     val n       = counter.value
 
     println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
-
-    // if EDD flag was specified, generate EDD for the just saved file!
-    // Use the "cached" file that was just saved rather than cause an action
-    // on the input RDD which may cause some expensive computation to re-occur.
-    if (app.genEdd)
-      readFile(path).edd.persistBesideData(path)
   }
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
@@ -325,6 +321,12 @@ abstract class SmvDataSet extends FilenamePart {
     Try {
       val json = app.sc.textFile(moduleMetaPath(prefix)).collect.head
       SmvMetadata.fromJson(json)
+    }
+
+  private[smv] def readPersistedEdd(prefix: String = ""): Try[String] =
+    Try {
+      val summary = app.sqlContext.read.json(moduleEddPath(prefix))
+      EddResultFunctions(summary).createReport()
     }
 
   /** Has the result of this data set been persisted? */
@@ -346,6 +348,21 @@ abstract class SmvDataSet extends FilenamePart {
     else
       !isPersisted
   }
+
+  /**
+   * Read EDD from disk if it exists, or create and persist it otherwise
+   */
+  private[smv] def getEdd(): String =
+    readPersistedEdd().getOrElse {
+      // DON'T automatically persist edd. Edd is explicitly persisted on the next
+      // line. This is the simplest way to prevent EDD from being persisted twice.
+      val df = rdd(forceRun = false, genEdd = false)
+      persistEdd(df)
+      readPersistedEdd().get
+    }
+
+  private[smv] def persistEdd(df: DataFrame) =
+    df.edd.persistBesideData(moduleCsvPath())
 
   /**
    * Get the most detailed metadata available without running this module. If
@@ -370,7 +387,7 @@ abstract class SmvDataSet extends FilenamePart {
     metadata
   }
 
-  private[smv] def computeRDD: DataFrame = {
+  private[smv] def computeRDD(genEdd: Boolean): DataFrame = {
     val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()))
     val validationSet = new ValidationSet(Seq(dqmValidator), isPersistValidateResult)
 
@@ -393,6 +410,10 @@ abstract class SmvDataSet extends FilenamePart {
               persist(df)
               validationSet.validate(df, true, moduleValidPath()) // has already had action (from persist)
               createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
+              // Generate and persist edd based on result of reading results from disk. Avoids
+              // a possibly expensive action on the result from before persisting.
+              if(genEdd)
+                persistEdd(df)
               readPersistedFile()
             }
           }
@@ -869,7 +890,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
   /**
    * SmvModuleLinks should not cache or validate their data
    */
-  override def computeRDD =
+  override def computeRDD(genEdd: Boolean) =
     throw new SmvRuntimeException("SmvModuleLink computeRDD should never be called")
   override private[smv] def doRun(dqmValidator: DQMValidator) =
     throw new SmvRuntimeException("SmvModuleLink doRun should never be called")
@@ -881,8 +902,8 @@ class SmvModuleLink(val outputModule: SmvOutput)
    * and run the DS, or "not-follow-the-link", which will try to read from the persisted data dir
    * and fail if not found.
    */
-  override def rdd(force: Boolean = false): DataFrame = {
-    // force argument is ignored (SmvModuleLink is rerun anyway)
+  override def rdd(forceRun: Boolean = false, genEdd: Boolean = false): DataFrame = {
+    // forceRun argument is ignored (SmvModuleLink is rerun anyway)
     if (isFollowLink) {
       smvModule.readPublishedData().getOrElse(smvModule.rdd())
     } else {

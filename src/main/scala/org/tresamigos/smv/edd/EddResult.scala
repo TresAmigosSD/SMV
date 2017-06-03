@@ -139,23 +139,25 @@ private[smv] class EddResult(
 }
 
 private[smv] object EddResult {
+  // Expected schema of EDD results. In some situations (such as reading EDD from
+  // Json) the results may be reordered
+  val resultSchema = Seq(
+    "colName",
+    "taskType",
+    "taskName",
+    "taskDesc",
+    "valueJSON"
+  )
+
   def apply(r: Row, precision: Int = 5) = {
-    r match {
-      case Row(
-          colName: String,
-          taskType: String,
-          taskName: String,
-          taskDesc: String,
-          valueJSON: String
-          ) =>
-        new EddResult(
-          colName,
-          taskType,
-          taskName,
-          taskDesc,
-          valueJSON
-        )(precision)
-    }
+    val rMap = r.getValuesMap[String](resultSchema)
+    new EddResult(
+      rMap("colName"),
+      rMap("taskType"),
+      rMap("taskName"),
+      rMap("taskDesc"),
+      rMap("valueJSON")
+    )(precision)
   }
 
   private def histSort(hist: Map[Any, Long], histSortByFreq: Boolean) = {
