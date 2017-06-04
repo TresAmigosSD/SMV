@@ -29,6 +29,11 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
   val DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
 
+  banner("""Usage: smv-pyrun -m ModuleToRun
+           |Usage: smv-pyrun --run-app
+           |""".stripMargin)
+  footer("\nFor additional usage information, please refer to the user guide and API docs at: \nhttp://tresamigossd.github.io/SMV")
+
   val smvProps = propsLong[String]("smv-props", "key=value command line props override")
   val smvAppDir =
     opt("smv-app-dir", noshort = true, default = Some("."), descr = "SMV app directory")
@@ -129,7 +134,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                                       default = Some(Nil),
                                       descr = "run all output modules in specified stages")
   val runAllApp = toggle("run-app",
-                         noshort = true,
                          default = Some(false),
                          descrYes = "run all output modules in all stages in app.")
 

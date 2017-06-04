@@ -222,9 +222,8 @@ def getDatasetDescriptionStartEnd(linesOfCodeList, className):
 
 
 def get_filepath_from_moduleFqn(module_fqn):
-    '''given a fqn, returns the fullname of its file'''
-    # TODO: do not use hardcoded value... FIXME
-    prefix = "/projects/sample_smv_project/src/main/python/"
+    '''given a fqn, returns the fullname of its file relative to proj dir.'''
+    prefix = "./src/main/python/"
     # dir1.dir2.file.class => [dir1, dir2, file]
     fqn_dirs_filename_list = module_fqn.split(".")[:-1]
     # concats fqn_dirs_filename_list into string with "/" intermezzo, appends .py, prepends prefix
@@ -633,7 +632,7 @@ def run_module():
 def getFqnOfRequire(ds):
     '''returns fqn of a dataset. If ds is a link, will return fqn of target'''
     if getattr(ds, 'IsSmvModuleLink', None):
-        ds = ds.target()
+        ds = ds.target
     return ds.fqn()
 
 # TODO: rename... should return all information about the module or create if not exists

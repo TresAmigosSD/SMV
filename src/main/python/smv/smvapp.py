@@ -65,6 +65,12 @@ class SmvApp(object):
         cls._instance = cls(arglist, _sparkSession)
         return cls._instance
 
+    @classmethod
+    def setInstance(cls, app):
+        """Set the singleton instance.
+        """
+        cls._instance = app
+
     def __init__(self, arglist, _sparkSession = None):
         self.sparkSession = SparkSession.builder.\
                     enableHiveSupport().\

@@ -16,7 +16,11 @@ from pyspark import SparkContext, SparkConf
 from pyspark.sql import HiveContext, SparkSession
 from pyspark.java_gateway import launch_gateway
 
+from smv.smvapp import SmvApp
+
 class TestConfig(object):
+    smvApp = None
+
     @classmethod
     def sparkSession(cls):
         if not hasattr(cls, "spark"):
@@ -43,6 +47,22 @@ class TestConfig(object):
             jss = sc._jvm.org.apache.spark.sql.hive.test.SmvTestHive.createContext(sc._jsc.sc())
             cls.spark = SparkSession(sc, jss.sparkSession())
         return cls.spark
+
+    @classmethod
+    def setSmvApp(cls, app):
+        """Set the canonical SmvApp
+
+            Spark context and sqlContext will be retrieved from this SmvApp.
+            This SmvApp will also be restored as the singleton after tests are
+            run.
+        """
+        cls.smvApp = app
+        cls.sqlc = app.sqlContext
+        cls.sc = app.sc
+
+    @classmethod
+    def originalSmvApp(cls):
+        return cls.smvApp
 
     # shared SparkContext
     @classmethod

@@ -36,10 +36,9 @@ RUN cd /projects &&\
     mv spark-* /usr/lib/spark
 
 # installs python packages.
-# TODO: use requirements.txt from image downloaded above once 1.5.2.7 is out.
-COPY ./requirements.txt /tmp/requirements.txt
+# TODO: use requirements.txt from image downloaded above once 1.5.2.10 is out.
 RUN pip install --upgrade pip
-RUN pip install -r /tmp/requirements.txt
+RUN pip install -r /usr/lib/SMV/docker/smv/requirements.txt
 
 # cleanup python dev tools and apt caches.
 RUN apt-get remove --purge -y python-dev &&\

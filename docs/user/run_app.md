@@ -133,6 +133,13 @@ publish the specified modules to the local file system
 </tr>
 
 <tr>
+<td>--spark-home</td>
+<td>SPARK_HOME environment variable or location of spark-submit</td>
+<td>Location where SMV should find Spark installation.
+</td>
+</tr>
+
+<tr>
 <th colspan="3">What To Run/Publish
 <br>
 One of the options below must be specified.
@@ -157,7 +164,7 @@ One of the options below must be specified.
 </tr>
 
 <tr>
-<td colspan="2">--run-app </td>
+<td colspan="2">--run-app, -r </td>
 <td>Run all output modules in all configured stages in current app.
 </td>
 </tr>

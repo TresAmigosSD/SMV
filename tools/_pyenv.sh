@@ -12,5 +12,5 @@ export PYTHONPATH="$SMV_HOME/src/main/python:$PYTHONPATH"
 export SPARK_PRINT_LAUNCH_COMMAND=1
 
 function run_pyspark_with () {
-  spark-submit "${SPARK_ARGS[@]}" --jars "$APP_JAR,$EXTRA_JARS" --driver-class-path "$APP_JAR" $1 "${SMV_ARGS[@]}"
+  "$SPARK_HOME/bin/spark-submit" "${SPARK_ARGS[@]}" --jars "$APP_JAR,$EXTRA_JARS" --driver-class-path "$APP_JAR" $1 "${SMV_ARGS[@]}"
 }
