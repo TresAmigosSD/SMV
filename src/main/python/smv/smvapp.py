@@ -22,7 +22,7 @@ import traceback
 from py4j.java_gateway import java_import, JavaObject
 
 from pyspark import SparkContext
-from pyspark.sql import HiveContext, DataFrame
+from pyspark.sql import SparkSession, DataFrame
 from utils import smv_copy_array, check_socket
 from error import SmvRuntimeError
 
