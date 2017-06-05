@@ -269,12 +269,16 @@ class ColumnHelperTest extends SmvTestUtil {
     import ssc.implicits._
 
     val df  = dfFrom("st:String", "Q201301;M201512;D20141201")
-    val res = df.select($"st".smvTimeToType, $"st".smvTimeToIndex, $"st".smvTimeToLabel)
+    val res = df.select(
+      $"st".smvTimeToType,
+      $"st".smvTimeToIndex,
+      $"st".smvTimeToLabel,
+      $"st".smvTimeToTimestamp)
 
     assertSrddDataEqual(res,
-                        "quarter,172,2013-Q1;" +
-                          "month,551,2015-12;" +
-                          "day,16405,2014-12-01")
+                        """quarter,172,2013-Q1,2013-01-01 00:00:00.0;
+month,551,2015-12,2015-12-01 00:00:00.0;
+day,16405,2014-12-01,2014-12-01 00:00:00.0""")
   }
 }
 

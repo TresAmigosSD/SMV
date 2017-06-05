@@ -17,7 +17,6 @@ useradd -u $USER_ID -g $USER_ID -G sudo --create-home --home-dir ${USER_HOME} --
 echo "$USER_NAME ALL = NOPASSWD: ALL" >> /etc/sudoers
 
 # gave up on moving ivy dir using sbtopts.  Just link ~/.ivy2 to /projects/.ivy2
-mkdir -p /projects/.ivy2
 rm -rf ${USER_HOME}/.ivy2
 ln -s /projects/.ivy2 ${USER_HOME}/.ivy2
 
@@ -32,13 +31,22 @@ chown -R ${USER_NAME}:${USER_NAME} ${USER_HOME}
 if [ -f /projects/.docker ]; then
   chown -R ${USER_NAME}:${USER_NAME} /projects
 fi
+# We don't want to chown this directory as it could be quite large. Instead, if
+# we do create it we will create it under USER_NAME instea
+sudo -u ${USER_NAME} -i bash -c "mkdir -p /projects/.ivy2"
 cd /projects
+
+E_EXTENDED_SMV_SERVER_SCRIPT=''
 
 if [[ $# == 0 ]]; then
     # start bash if user did not supply parameters.
     sudo -u ${USER_NAME} -i bash
 elif [[ $1 == "--start-server" ]]; then
     SERVER_PROJ_DIR="${2:?must provide project directory}"
+    if [[ "$3" == "-e" ]]; then
+      E_EXTENDED_SMV_SERVER_SCRIPT="-e ${4:?must provide extended smv server script fullname}"
+    fi
+
     # start smv server and jupyter server
     sudo -u ${USER_NAME} -i bash -c "
           cd ${SERVER_PROJ_DIR};
@@ -47,7 +55,7 @@ elif [[ $1 == "--start-server" ]]; then
             --ip ${JUPYTER_IP:?error JUPYTER_IP not set} \
             --port ${JUPYTER_PORT:?error JUPYTER_PORT not set} &);
 
-          smv-server \
+          smv-server ${E_EXTENDED_SMV_SERVER_SCRIPT}\
             --ip ${SMV_IP:?error SMV_IP not set} \
             --port ${SMV_PORT:?error SMV_PORT not set}"
 else

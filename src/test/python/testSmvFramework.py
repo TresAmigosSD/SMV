@@ -22,7 +22,6 @@ from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, lit
 from py4j.protocol import Py4JJavaError
-from smvframework.stage.modules import D1, D2, D3, D4
 
 
 class SmvFrameworkTest(SmvBaseTest):
@@ -35,29 +34,54 @@ class SmvFrameworkTest(SmvBaseTest):
         return re.sub(r"([\[\]\(\)])", r"\\\1", s)
 
     def test_SmvCsvStringData(self):
-        fqn = D1.fqn()
+        fqn = "smvframework.stage.modules.D1"
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
 
-    def test_SmvMultiCsvFiles(self):
-        self.createTempFile("input/test3/f1", "col1\na\n")
-        self.createTempFile("input/test3/f2", "col1\nb\n")
-        self.createTempFile("input/test3.schema", "col1: String\n")
+    def test_SmvCsvStringData_with_error(self):
+        fqn = "smvframework.stage.modules.D1WithError"
+        with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
+            df = self.df(fqn)
 
-        fqn = D2.fqn()
+    def test_SmvMultiCsvFiles(self):
+        self.createTempInputFile("multiCsvTest/f1", "col1\na\n")
+        self.createTempInputFile("multiCsvTest/f2", "col1\nb\n")
+        self.createTempInputFile("multiCsvTest.schema", "col1: String\n")
+
+        fqn = "smvframework.stage.modules.MultiCsv"
         df = self.df(fqn)
         exp = self.createDF("col1: String", "a;b")
         self.should_be_same(df, exp)
 
+    def test_SmvCsvFileWithUserSchema(self):
+        self.createTempInputFile("test3.csv", "col1\na\nb\n")
+        self.createTempInputFile("test3.schema", "col1: String\n")
+
+        fqn = "smvframework.stage.modules.CsvFile"
+        df = self.df(fqn)
+        exp = self.createDF("1loc: String", "a;b")
+        self.should_be_same(df, exp)
+
+    def test_SmvMultiCsvFilesWithUserSchema(self):
+        self.createTempInputFile("test3/f1", "col1\na\n")
+        self.createTempInputFile("test3/f2", "col1\nb\n")
+        self.createTempInputFile("test3.schema", "col1: String\n")
+
+        fqn = "smvframework.stage.modules.MultiCsvWithUserSchema"
+        df = self.df(fqn)
+        exp = self.createDF("1loc: String", "a;b")
+        self.should_be_same(df, exp)
+
     def test_SmvDQM(self):
-        fqn = D3.fqn()
+        fqn = "smvframework.stage.modules.D3"
 
         msg =""": org.tresamigos.smv.SmvDqmValidationError: {
   "passed":false,
   "errorMessages": [
     {"FailTotalRuleCountPolicy(2)":"true"},
-    {"FailTotalFixCountPolicy(1)":"false"}
+    {"FailTotalFixCountPolicy(1)":"false"},
+    {"FailParserCountPolicy(1)":"true"}
   ],
   "checkLog": [
     "Rule: b_lt_03, total count: 1",
@@ -80,7 +104,7 @@ class SmvRunConfigTest1(SmvBaseTest):
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = D4.fqn()
+        fqn = "smvframework.stage.modules.D4"
         df = self.df(fqn)
         expect = self.createDF("a: String;b: Integer",
             """test1_s1,1;
@@ -96,7 +120,7 @@ class SmvRunConfigTest2(SmvBaseTest):
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = D4.fqn()
+        fqn = "smvframework.stage.modules.D4"
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer",
             """test1_not_s1,2;

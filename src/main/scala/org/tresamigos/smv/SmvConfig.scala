@@ -29,6 +29,11 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
   val DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
 
+  banner("""Usage: smv-pyrun -m ModuleToRun
+           |Usage: smv-pyrun --run-app
+           |""".stripMargin)
+  footer("\nFor additional usage information, please refer to the user guide and API docs at: \nhttp://tresamigossd.github.io/SMV")
+
   val smvProps = propsLong[String]("smv-props", "key=value command line props override")
   val smvAppDir =
     opt("smv-app-dir", noshort = true, default = Some("."), descr = "SMV app directory")
@@ -54,12 +59,24 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                         default = Some(false),
                         descrYes = "ignore persisted data and force all modules to run")
 
+  val publishJDBC = toggle("publish-jdbc",
+                        noshort = true,
+                        default = Some(false),
+                        descrYes = "publish the given modules/stage/app through JDBC connection")
+
   val publishHive = toggle(
     "publish-hive",
     noshort = true,
     default = Some(false),
     descrYes = "publish|export given modules/stage/app to hive tables",
     descrNo = "Do not publish results to hive tables."
+  )
+
+  val publishLocal = opt[String](
+    "publish-local",
+    noshort = true,
+    default = None,
+    descr = "publish|export given modules/stage/app to a CSV file at the given path on the local file system"
   )
 
   val compareEdd = opt[List[String]]("edd-compare",
@@ -117,9 +134,13 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                                       default = Some(Nil),
                                       descr = "run all output modules in specified stages")
   val runAllApp = toggle("run-app",
-                         noshort = true,
                          default = Some(false),
                          descrYes = "run all output modules in all stages in app.")
+
+  val dryRun = toggle("dry-run",
+                      noshort = true,
+                      default = Some(false),
+                      descrYes = "determine which modules do not have persisted data and will need to be run.")
 
   // if user specified "edd-compare" command line, user should have supplied two file names.
   validateOpt(compareEdd) {
@@ -199,6 +220,19 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       .toMap
 
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
+
+  def jdbcUrl: String =
+    mergedProps.get("smv.jdbc.url") match {
+      case Some(url) =>
+        url
+      case _ =>
+        throw new SmvRuntimeException("JDBC url not specified in SMV config")
+    }
+
+  def jdbcDriver: String = mergedProps.get("smv.jdbc.driver") match {
+    case None => throw new SmvRuntimeException("JDBC driver is not specified in SMV config")
+    case Some(ret) => ret
+  }
 
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))

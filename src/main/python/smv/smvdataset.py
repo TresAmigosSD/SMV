@@ -1,4 +1,3 @@
-#
 # This file is licensed under the Apache License, Version 2.0
 # (the "License"); you may not use this file except in compliance with
 # the License.  You may obtain a copy of the License at
@@ -20,6 +19,7 @@ from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
 from utils import smv_copy_array
+from stacktrace_mixin import WithStackTrace, with_stacktrace
 
 import abc
 
@@ -59,7 +59,7 @@ def _disassemble(obj):
 def _smvhash(text):
     """Python's hash function will return different numbers from run to
     from, starting from 3.  Provide a deterministic hash function for
-    use to calculate datasetHash.
+    use to calculate sourceCodeHash.
     """
     import binascii
     return binascii.crc32(text)
@@ -69,7 +69,7 @@ def _stripComments(code):
     code = str(code)
     return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
 
-class SmvOutput(object):
+class SmvOutput(WithStackTrace):
     """Mixin which marks an SmvModule as one of the output of its stage
 
         SmvOutputs are distinct from other SmvDataSets in that
@@ -78,6 +78,7 @@ class SmvOutput(object):
     """
     IsSmvOutput = True
 
+    @with_stacktrace
     def tableName(self):
         """The user-specified table name used when exporting data to Hive (optional)
 
@@ -86,7 +87,7 @@ class SmvOutput(object):
         """
         return None
 
-class SmvDataSet(object):
+class SmvDataSet(WithStackTrace):
     """Abstract base class for all SmvDataSets
     """
 
@@ -106,6 +107,7 @@ class SmvDataSet(object):
         return self.__doc__
 
     @abc.abstractmethod
+    @with_stacktrace
     def requiresDS(self):
         """User-specified list of dependencies
 
@@ -115,6 +117,7 @@ class SmvDataSet(object):
                 (list(SmvDataSet)): a list of dependencies
         """
 
+    @with_stacktrace
     def dqm(self):
         """DQM policy
 
@@ -128,8 +131,9 @@ class SmvDataSet(object):
 
     @abc.abstractmethod
     def doRun(self, validator, known):
-        """Comput this dataset, and return the dataframe"""
+        """Compute this dataset, and return the dataframe"""
 
+    @with_stacktrace
     def version(self):
         """Version number
 
@@ -144,7 +148,11 @@ class SmvDataSet(object):
     def isOutput(self):
         return isinstance(self, SmvOutput)
 
-    def datasetHash(self):
+    # Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash
+    # to compute datasetHash
+    def sourceCodeHash(self):
+        """Hash computed based on the source code of the dataset's class
+        """
         try:
             cls = self.__class__
             try:
@@ -162,11 +170,11 @@ class SmvDataSet(object):
                 message = "{0}({1!r})".format(type(err).__name__, err.args)
                 raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
 
-            # include datasetHash of parent classes
+            # include sourceCodeHash of parent classes
             for m in inspect.getmro(cls):
                 try:
                     if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
-                        res += m(self.smvApp).datasetHash()
+                        res += m(self.smvApp).sourceCodeHash()
                 except: pass
 
             # if module inherits from SmvRunConfig, then add hash of all config values to module hash
@@ -179,6 +187,11 @@ class SmvDataSet(object):
             traceback.print_exc()
             raise e
 
+    def instanceValHash(self):
+        """Hash computed based on instance values of the dataset, such as the timestamp of an input file
+        """
+        return 0
+
     @classmethod
     def fqn(cls):
         """Returns the fully qualified name
@@ -189,6 +202,7 @@ class SmvDataSet(object):
     def urn(cls):
         return "mod:" + cls.fqn()
 
+    @with_stacktrace
     def isEphemeral(self):
         """Should this SmvDataSet skip persisting its data?
 
@@ -197,6 +211,7 @@ class SmvDataSet(object):
         """
         return False
 
+    @with_stacktrace
     def publishHiveSql(self):
         """An optional sql query to run to publish the results of this module when the
            --publish-hive command line is used.  The DataFrame result of running this
@@ -260,6 +275,9 @@ class SmvDataSet(object):
 class SmvInput(SmvDataSet):
     """SmvDataSet representing external input
     """
+
+    __metaclass__ = abc.ABCMeta
+
     def isEphemeral(self):
         return True
 
@@ -280,6 +298,20 @@ class SmvInput(SmvDataSet):
         """
         return df
 
+    @abc.abstractproperty
+    def getRawScalaInputDS(self):
+        """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
+           that is created in their init."""
+
+
+    def instanceValHash(self):
+        # Defer to Scala target for instanceValHash
+        return self.getRawScalaInputDS().instanceValHash()
+
+    def doRun(self, validator, known):
+        jdf = self.getRawScalaInputDS().doRun(validator)
+        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
+
 class WithParser(object):
     """shared parser funcs"""
 
@@ -295,11 +327,6 @@ class WithParser(object):
             raise err
 
         return res
-
-    def getRawScalaInputDS(self):
-        """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
-           that is created in their init."""
-        return None
 
     def forceParserCheck(self):
         return True
@@ -323,15 +350,35 @@ class WithParser(object):
 
 # Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
 # Otherwise we will pick methods up from SmvDataSet instead of WithParser.
-class SmvCsvFile(WithParser, SmvInput):
+class SmvFile(WithParser, SmvInput):
+    def userSchema(self):
+        """Get user-defined schema
+
+            Override this method to define your own schema for the target file.
+            Schema declared in this way take priority over .schema files. Schema
+            should be specified in the format "colName1:colType1;colName2:colType2"
+
+            Returns:
+                (string):
+        """
+        return None
+
+
+class SmvCsvFile(SmvFile):
     """Input from a file in CSV format
     """
 
     def __init__(self, smvApp):
         super(SmvCsvFile, self).__init__(smvApp)
         self._smvCsvFile = smvApp.j_smvPyClient.smvCsvFile(
-            self.fqn(), self.path(), self.csvAttr(),
-            self.forceParserCheck(), self.failAtParsingError())
+            self.fqn(),
+            self.path(),
+            self.csvAttr(),
+            self.forceParserCheck(),
+            self.failAtParsingError(),
+            smvApp.scalaOption(self.userSchema())
+        )
+
 
     def getRawScalaInputDS(self):
         return self._smvCsvFile
@@ -353,9 +400,7 @@ class SmvCsvFile(WithParser, SmvInput):
         jdf = self._smvCsvFile.doRun(validator)
         return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
-# Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
-# Otherwise we will pick methods up from SmvDataSet instead of WithParser.
-class SmvMultiCsvFiles(WithParser, SmvInput):
+class SmvMultiCsvFiles(SmvFile):
     """Raw input from multiple csv files sharing single schema
 
         Instead of a single input file, specify a data dir with files which share
@@ -367,8 +412,12 @@ class SmvMultiCsvFiles(WithParser, SmvInput):
         self._smvMultiCsvFiles = smvApp._jvm.org.tresamigos.smv.SmvMultiCsvFiles(
             self.dir(),
             self.csvAttr(),
-            None
+            None,
+            smvApp.scalaOption(self.userSchema())
         )
+
+    def userSchema(self):
+        return None
 
     def getRawScalaInputDS(self):
         return self._smvMultiCsvFiles
@@ -388,7 +437,7 @@ class SmvMultiCsvFiles(WithParser, SmvInput):
         jdf = self._smvMultiCsvFiles.doRun(validator)
         return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
-class SmvCsvStringData(SmvInput):
+class SmvCsvStringData(WithParser, SmvInput):
     """Input data defined by a schema string and data string
     """
 
@@ -399,6 +448,9 @@ class SmvCsvStringData(SmvInput):
             self.dataStr(),
             False
         )
+
+    def getRawScalaInputDS(self):
+        return self._smvCsvStringData
 
     @abc.abstractproperty
     def schemaStr(self):
@@ -424,6 +476,33 @@ class SmvCsvStringData(SmvInput):
         jdf = self._smvCsvStringData.doRun(validator)
         return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
+class SmvJdbcTable(SmvInput):
+    """Input from a table read through JDBC
+    """
+    def __init__(self, smvApp):
+        super(SmvJdbcTable, self).__init__(smvApp)
+        self._smvJdbcTable = self.smvApp._jvm.org.tresamigos.smv.SmvJdbcTable(self.tableName())
+
+    def getRawScalaInputDS(self):
+        return self._smvJdbcTable
+
+    def description(self):
+        return self._smvJdbcTable.description()
+
+    @abc.abstractproperty
+    def tableName(self):
+        """User-specified name for the table to extract input from
+
+            Override this to specify your own table name.
+
+            Returns:
+                (str): table name
+        """
+
+    def doRun(self, validator, known):
+        jdf = self._smvJdbcTable.doRun(validator)
+        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
+
 
 class SmvHiveTable(SmvInput):
     """Input from a Hive table
@@ -435,6 +514,9 @@ class SmvHiveTable(SmvInput):
 
     def description(self):
         return "Hive Table: @" + self.tableName()
+
+    def getRawScalaInputDS(self):
+        return self._smvHiveTable
 
     @abc.abstractproperty
     def tableName(self):
@@ -528,36 +610,20 @@ class SmvModule(SmvDataSet):
         i = self.RunParams(urn2df)
         return self.run(i)
 
-class SmvModuleLinkTemplate(SmvModule):
+class SmvModuleLink(object):
     """A module link provides access to data generated by modules from another stage
     """
 
     IsSmvModuleLink = True
 
-    @classmethod
-    def urn(cls):
-        return 'link:' + cls.target().fqn()
+    def __init__(self, target):
+        self.target = target
 
-    def isEphemeral(self):
-        return True
+    def urn(self):
+        return 'link:' + self.target.fqn()
 
-    def dsType(self):
-        return "Link"
-
-    def requiresDS(self):
-        return []
-
-    @classmethod
-    def target(cls):
-        """Returns the target SmvModule class from another stage to which this link points"""
-        raise ValueError('Expect to be implemented by subclass')
-
-PyExtDataSetCache = {}
-
-from smvapp import SmvApp
-
-def SmvExtDataSet(refname):
-    """Creates an SmvDataSet representing an external (Scala) SmvDataSet
+class SmvExtDataSet(object):
+    """An SmvDataSet representing an external (Scala) SmvDataSet
 
         E.g. MyExtMod = SmvExtDataSet("the.scala.mod")
 
@@ -567,42 +633,14 @@ def SmvExtDataSet(refname):
         Returns:
             (SmvExtDataSet): external dataset with given fqn
     """
-    if refname in PyExtDataSetCache:
-        return PyExtDataSetCache[refname]
-    cls = type("SmvExtDataSet", (SmvDataSet,), {
-        "refname" : refname,
-        "smvApp"   : SmvApp.getInstance(),
-        "doRun"   : lambda self, validator, known: smvApp.runModule(self.urn)
-    })
-    cls.fqn = classmethod(lambda klass: refname)
-    PyExtDataSetCache[refname] = cls
-    return cls
+    def __init__(self, fqn):
+        self._fqn = fqn
 
-def SmvModuleLink(target):
-    """Creates a link to an SmvDataSet
+    def urn(self):
+        return 'mod:' + self._fqn
 
-        When a module X in one stage depends on a module Y in a different stage,
-        it must do through through an SmvModuleLink (listing Y directly as a
-        dependency will lead to a runtime error). For example,::
-
-            # In stage s1
-            class Y(SmvModule):
-                ...
-
-            # In stage s2
-            class X(SmvModule)
-                def requiresDS(self): return [SmvModuleLink(Y)]
-                ...
-
-        Args:
-            ds (SmvDataSet): dataset to link to
-
-        Returns:
-            (SmvModuleLink): link to ds
-    """
-    cls = type("SmvModuleLink", (SmvModuleLinkTemplate,), {})
-    cls.target = classmethod(lambda klass: target)
-    return cls
+    def fqn(self):
+        return self._fqn
 
 def SmvExtModuleLink(refname):
     """Creates a link to an external (Scala) SmvDataSet

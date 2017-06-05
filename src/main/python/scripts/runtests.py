@@ -13,21 +13,13 @@
 import sys
 from unittest import *
 from test_support.testconfig import TestConfig
+from test_support.test_runner import SmvTestRunner
 
 if __name__ == "__main__":
     print("Testing with Python " + sys.version)
 
     TestPath = "./src/test/python"
-    SrcPath = "./src/main/python"
 
-    loader = TestLoader()
-
-    if (len(TestConfig.test_names()) == 0):
-        suite = loader.discover(TestPath)
-    else:
-        sys.path.append(TestPath)
-        suite = loader.loadTestsFromNames(TestConfig.test_names())
-
-    result = TextTestRunner(verbosity=2).run(suite)
-    print("result is ", result)
-    exit(len(result.errors) + len(result.failures))
+    runner = SmvTestRunner(TestPath)
+    num_failures = runner.run(TestConfig.test_names())
+    exit(num_failures)

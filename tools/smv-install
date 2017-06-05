@@ -5,23 +5,22 @@ PROG_NAME=$(basename "$0")
 
 function usage()
 {
-  echo "USAGE: ${PROG_NAME} [-spark] smv_version_to_release(n.n.n.n)"
-  LATEST_VERSION=$(curl https://raw.githubusercontent.com/TresAmigosSD/SMV/master/.smv_version)
-  echo "Latest SMV version is: ${LATEST_VERSION:-Could not parse version from Github API}"
+  echo "USAGE: ${PROG_NAME} [-spark]"
   exit $1
 }
 
 function parse_args()
 {
   [ "$1" = "-h" ] && usage 0
-  [ $# -lt 1 -o $# -gt 2 ] && echo "ERROR: invalid arguments" && usage 1
+  [ $# -gt 1 ] && echo "ERROR: invalid arguments" && usage 1
 
   DO_INSTALL_SPARK=0
   if [ "$1" == "-spark" ]; then
     DO_INSTALL_SPARK=1
     shift
   fi
-  SMV_VERSION="$1"
+  # SMV version is updated automatically by smv-release
+  SMV_VERSION="1.5.2.10"
 
   SMV_DIR="SMV_${SMV_VERSION}"
   SPARK_DIR="spark-2.1.0-bin-2.7"

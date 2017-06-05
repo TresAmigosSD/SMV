@@ -19,8 +19,15 @@ function split_smv_spark_args()
             shift
             break
         fi
-        SMV_ARGS=("${SMV_ARGS[@]}" "$1")
-        shift
+
+        if [ "$1" == "--spark-home" ]; then
+          shift
+          SPARK_HOME_OPT="$1"
+          shift
+        else
+          SMV_ARGS=("${SMV_ARGS[@]}" "$1")
+          shift
+        fi
     done
 
     # Need to extract the --jars option so we can concatenate those jars with
@@ -75,14 +82,19 @@ function find_fat_jar()
 }
 
 function set_spark_home() {
-    if [ -z "$SPARK_HOME" ]; then
-        sparkSubmit=$(type -p spark-submit)
-        if [ -z "$sparkSubmit" ]; then
-            echo "Can not find spark-submit script"
-            exit 1
-        fi
-        export SPARK_HOME=$(cd $(dirname $sparkSubmit)/..; pwd)
+    if [ -n "$SPARK_HOME_OPT" ]; then
+      SPARK_HOME="$SPARK_HOME_OPT"
+    elif [ -z "$SPARK_HOME" ]; then
+      sparkSubmit=$(type -p spark-submit)
+      if [ -z "$sparkSubmit" ]; then
+          echo "Can not find spark-submit script"
+          exit 1
+      fi
+      SPARK_HOME=$(cd $(dirname $sparkSubmit)/..; pwd)
     fi
+
+    export SPARK_HOME
+    echo "Using Spark at $SPARK_HOME"
 }
 
 function show_run_usage_message() {
@@ -98,10 +110,28 @@ function show_run_usage_message() {
   echo "    ..."
 }
 
+# We intercept --help (and -h) so that we can make a simple spark-submit for the
+# help message without running pyspark and creating a SparkContext
+function check_help_option() {
+  for opt in $SMV_ARGS; do
+    if [ $opt = "--help" ] || [ $opt = "-h" ]; then
+      print_help
+      exit 0
+    fi
+  done
+}
+
+function print_help() {
+  # Find but don't print the app jar
+  find_fat_jar > /dev/null
+  "$SPARK_HOME/bin/spark-submit" --class ${SMV_APP_CLASS}  "${APP_JAR}" --help
+}
 
 # --- MAIN ---
 declare -a SMV_ARGS SPARK_ARGS
 USER_CMD=`basename $0`
 SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
-find_fat_jar
 split_smv_spark_args "$@"
+set_spark_home
+check_help_option
+find_fat_jar

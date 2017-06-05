@@ -152,6 +152,9 @@ function update_version()
   # update version in Dockerfile
   perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" docker/smv/Dockerfile
 
+  # update version in smv-install
+  perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" tools/smv-install
+
   # add the smv version to the SMV directory.
   echo ${SMV_VERSION} > "${SMV_DIR}/.smv_version"
 
@@ -179,7 +182,7 @@ function create_tar()
   find "${SMV_DIR}/target" -name '*with-dependencies.jar' -prune -o -type f -exec rm -f \{\} +
 
   # create the tar image
-  ${TAR} zcvf "${TGZ_IMAGE}" -C "${PROJ_DIR}" --exclude=.git \
+  ${TAR} zcvf "${TGZ_IMAGE}" -C "${PROJ_DIR}" --exclude=.git --exclude="admin" \
     --transform "s/^${SMV_DIR_BASE}/SMV_${SMV_VERSION}/" \
     ${SMV_DIR_BASE} >> ${LOGFILE} 2>&1 || error "tar creation failed"
 }

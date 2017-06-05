@@ -57,6 +57,10 @@ for stage in $NEW_SCALA_MODULE_STAGES; do
   TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.M2_*.csv/part*)
   if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
     echo "Test failure: $stage"
+    echo "Expected output:"
+    echo $TEST_INPUT
+    echo "Got:"
+    echo $TEST_OUTPUT
     exit 1
   fi
 done
@@ -86,7 +90,8 @@ function verify_hash_unchanged() {
 }
 
 function verify_hash_changed() {
-  if [ $(count_output) -le 1 ]; then
+  previous_num_outputs="$1"
+  if [ $(count_output) -le "$previous_num_outputs" ]; then
     echo "Changed module's hashOfHash didn't change"
     exit 1
   fi
@@ -111,11 +116,20 @@ echo "--------- RUN CHANGED MODULE -------------"
 ../../../tools/smv-pyrun -m hashtest.modules.M
 
 echo "--------- VERIFY HASH CHANGED -------------"
-verify_hash_changed
+verify_hash_changed 1
+
+echo "--------- TOUCH INPUT CSV -------------"
+touch data/input/hashtest/table.csv
+
+echo "--------- RUN MODULE WITH UPDATED CSV -------------"
+../../../tools/smv-pyrun -m hashtest.modules.M
+
+echo "--------- VERIFY HASH CHANGED -------------"
+verify_hash_changed 2
 )
 
 
-echo "--------- GENERATE ENTERPRISE APP APP -------------"
+echo "--------- GENERATE ENTERPRISE APP -------------"
 ../../tools/smv-init -e $E_APP_NAME
 
 (

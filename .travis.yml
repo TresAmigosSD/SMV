@@ -7,3 +7,9 @@ dist: trusty
 
 jdk:
   - openjdk8
+
+install:
+  - tools/spark-install ./spark
+  - export PATH="$PATH:$(pwd)/spark/bin"
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION alltest

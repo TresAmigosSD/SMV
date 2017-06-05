@@ -13,14 +13,17 @@
 
 import unittest
 from test_support.testconfig import TestConfig
-from smv import SmvApp
 
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import *
 
+import os, shutil
+
 class SmvBaseTest(unittest.TestCase):
+    # DataDir value is deprecated. Use tmpDataDir instead
     DataDir = "./target/data"
+    PytestDir = "./target/pytest"
 
     @classmethod
     def smvAppInitArgs(cls):
@@ -28,6 +31,10 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Import needs to happen during EVERY setup to ensure that we are
+        # using the most recently reloaded SmvApp
+        from smv.smvapp import SmvApp
+
         cls.sparkSession = TestConfig.sparkSession()
         cls.sparkContext = TestConfig.sparkContext()
         cls.sparkContext.setLogLevel("ERROR")
@@ -35,12 +42,25 @@ class SmvBaseTest(unittest.TestCase):
         import random;
         callback_server_port = random.randint(20000, 65535)
 
-        args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.DataDir]
+        args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.tmpDataDir()]
+        # The test's SmvApp must be set as the singleton for correct results of some tests
+        # The original SmvApp (if any) will be restored when the test is torn down
         cls.smvApp = SmvApp.createInstance(args, cls.sparkSession)
+
+        cls.mkTmpTestDir()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Import needs to happen during EVERY setup to ensure that we are
+        # using the most recently reloaded SmvApp
+        from smv.smvapp import SmvApp
+        # Restore SmvApp singleton
+        SmvApp.setInstance(TestConfig.originalSmvApp())
 
     def setUp(self):
         """Patch for Python 2.6 without using unittest
         """
+        from smv import SmvApp
         cls = self.__class__
         if not hasattr(cls, 'smvApp'):
             cls.sparkSession = TestConfig.sparkSession()
@@ -52,15 +72,6 @@ class SmvBaseTest(unittest.TestCase):
 
             args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
             cls.smvApp = SmvApp.createInstance(args, cls.sparkSession)
-
-    @classmethod
-    def tearDownClass(cls):
-        # Temporarily don't shutdown Spark on every test suite class.
-        # See issue #588
-        # TestConfig.tearDown()
-        # del cls.sparkSession
-        # del cls.sparkContext
-        pass
 
     @classmethod
     def createDF(cls, schema, data):
@@ -81,10 +92,30 @@ class SmvBaseTest(unittest.TestCase):
         self.assertEqual(expected.columns, result.columns)
         self.assertEqual(sort_collect(expected), sort_collect(result))
 
-    def createTempFile(self, baseName, fileContents = "xxx"):
-        """create a temp file in the data dir with the given contents"""
+    @classmethod
+    def tmpTestDir(cls):
+        """Temporary directory for each test to put the files it creates. Automatically cleaned up."""
+        return cls.PytestDir + "/" + cls.__name__
+
+    @classmethod
+    def tmpDataDir(cls):
+        """Temporary directory for each test to put the data it creates. Automatically cleaned up."""
+        return cls.tmpTestDir() + "/data"
+
+    @classmethod
+    def tmpInputDir(cls):
+        """Temporary directory for each test to put the input files it creates. Automatically cleaned up."""
+        return cls.tmpDataDir() + "/input"
+
+    @classmethod
+    def mkTmpTestDir(cls):
+        shutil.rmtree(cls.tmpTestDir(), ignore_errors=True)
+        os.makedirs(cls.tmpTestDir())
+
+    def createTempInputFile(self, baseName, fileContents = "xxx"):
+        """create a temp file in the input data dir with the given contents"""
         import os
-        fullPath = self.DataDir + "/" + baseName
+        fullPath = self.tmpInputDir() + "/" + baseName
         directory = os.path.dirname(fullPath)
         if not os.path.exists(directory):
             os.makedirs(directory)

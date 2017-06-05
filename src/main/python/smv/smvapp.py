@@ -22,7 +22,7 @@ import traceback
 from py4j.java_gateway import java_import, JavaObject
 
 from pyspark import SparkContext
-from pyspark.sql import HiveContext, DataFrame
+from pyspark.sql import SparkSession, DataFrame
 from utils import smv_copy_array, check_socket
 from error import SmvRuntimeError
 
@@ -64,6 +64,12 @@ class SmvApp(object):
         """
         cls._instance = cls(arglist, _sparkSession)
         return cls._instance
+
+    @classmethod
+    def setInstance(cls, app):
+        """Set the singleton instance.
+        """
+        cls._instance = app
 
     def __init__(self, arglist, _sparkSession = None):
         self.sparkSession = SparkSession.builder.\
@@ -161,12 +167,20 @@ class SmvApp(object):
         """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged"""
         return self.j_smvPyClient.urn2fqn(urnOrFqn)
 
+    def getStageFromModuleFqn(self, fqn):
+        """Returns the stage name for a given fqn"""
+        return self._jvm.org.tresamigos.smv.ModURN(fqn).getStage().get()
+
     def outputDir(self):
         return self.j_smvPyClient.outputDir()
 
     def scalaOption(self, val):
         """Returns a Scala Option containing the value"""
         return self._jvm.scala.Option.apply(val)
+
+    def scalaNone(self):
+        """Returns a Scala None value"""
+        return self.scalaOption(None)
 
     def createDF(self, schema, data = None):
         return DataFrame(self.j_smvPyClient.dfFrom(schema, data), self.sqlContext)

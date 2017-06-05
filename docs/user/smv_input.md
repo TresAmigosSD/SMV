@@ -175,6 +175,15 @@ acct_id: String;  # this is the id
 user_id: String;
 ```
 
+## userSchema
+Alternatively, the schema can be specified by overriding the `userSchema` method, for example:
+```Python
+class acct_demo(SmvCsvFile):
+  ...
+  def userSchema(self):
+    return "acct_id:String;user_id:String;store_id:String[,null];amt:Double;income:Decimal[10]"
+```
+
 ## Supported schema types
 ### Native types
 `Integer`, `Long`, `Float`, `Double`, `Boolean`, and `String` types correspond to their corresponding JVM type.
@@ -340,5 +349,20 @@ class FooHiveTableWithQuery(SmvHiveTable):
     return "SELECT mycol FROM " + tableName
 ```
 
+# JDBC Inputs
+
+SMV supports reading data over a JDBC connection using `SmvJdbcTable`. This requires a proper configuration -  read more [here](smv_jdbc.md#configuration).
+
+## Scala
+```Scala
+object FooJdbcTable extends SmvJdbcTable("myTableName")
+```
+
+## Python
+```Python
+class FooJdbcTable(SmvJdbcTable):
+  def tableName(self):
+    return "myTableName"
+```
 
 *=This feature currently only available in Scala smv-shell
