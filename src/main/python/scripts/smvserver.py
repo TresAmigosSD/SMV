@@ -176,9 +176,11 @@ def getStageFromFqn(fqn):
     return stage
 
 def getDatasetInstance(fqn):
+    '''returns dataset object given a fqn'''
     return DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
 
 def runModule(fqn):
+    '''runs module of given fqn'''
     return SmvApp.getInstance().runModule("mod:{}".format(fqn))
 
 # ---------- API Definition ---------- #
