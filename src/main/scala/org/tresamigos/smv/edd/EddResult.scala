@@ -41,6 +41,8 @@ import org.json4s.jackson.JsonMethods.{compact, parse}
  * A histogram result represent as Map[Any, Long], where the key could be above 5 types.
  **/
 private[smv] class EddResult(
+    // This parameter list (the expected schema of an Edd result DataFrame) should
+    // track with EddResult.resultSchema
     val colName: String,
     val taskType: String,
     val taskName: String,
@@ -150,14 +152,22 @@ private[smv] object EddResult {
   )
 
   def apply(r: Row, precision: Int = 5) = {
-    val rMap = r.getValuesMap[String](resultSchema)
-    new EddResult(
-      rMap("colName"),
-      rMap("taskType"),
-      rMap("taskName"),
-      rMap("taskDesc"),
-      rMap("valueJSON")
-    )(precision)
+    r match {
+      case Row(
+          colName: String,
+          taskType: String,
+          taskName: String,
+          taskDesc: String,
+          valueJSON: String
+          ) =>
+        new EddResult(
+          colName,
+          taskType,
+          taskName,
+          taskDesc,
+          valueJSON
+        )(precision)
+    }
   }
 
   private def histSort(hist: Map[Any, Long], histSortByFreq: Boolean) = {

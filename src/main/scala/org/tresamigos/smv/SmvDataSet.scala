@@ -21,7 +21,7 @@ import dqm.{DQMValidator, ParserLogger, SmvDQM, TerminateParserLogger, FailParse
 import scala.collection.JavaConversions._
 import scala.util.Try
 
-import edd.EddResultFunctions
+import edd._
 
 import org.joda.time._, format._
 
@@ -357,9 +357,11 @@ abstract class SmvDataSet extends FilenamePart {
     val unorderedSummary = readPersistedEdd().getOrElse {
       persistEdd(df)
       readPersistedEdd().get
-    }
+      // The persisted df's columns will be ordered arbitrarily, and need to be
+      // reordered to be a valid edd result
+    }.select(EddResult.resultSchema.head, EddResult.resultSchema.tail: _*)
 
-    // Summary rows will not have a reliable order after persisting to HDFS. Need
+    // Summary rows will be ordered arbitrarily after persisting. Need
     // to reorder according to the columns of the df. Original order of tasks will
     // still most likely be lost
     val orderedSummary = df.columns.map { dfColName =>
