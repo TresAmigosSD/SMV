@@ -178,6 +178,9 @@ def getStageFromFqn(fqn):
 def getDatasetInstance(fqn):
     return DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
 
+def runModule(fqn):
+    return SmvApp.getInstance().runModule("mod:{}".format(fqn))
+
 # ---------- API Definition ---------- #
 
 @app.route("/api/run_module", methods = ['POST'])
@@ -190,9 +193,7 @@ def run_module():
         module_fqn = request.form['fqn'].encode("utf-8")
     except:
         raise err_res('MODULE_NOT_PROVIDED_ERR')
-
-    run_result = SmvApp.getInstance().runModule("mod:{}".format(module_fqn))
-    return ok_res(str(run_result))
+    return ok_res(str(runModule(module_fqn)))
 
 @app.route("/api/get_graph_json", methods = ['POST'])
 def get_graph_json():
