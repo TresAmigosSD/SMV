@@ -36,7 +36,7 @@ trait FilenamePart {
  */
 abstract class SmvDataSet extends FilenamePart {
 
-  lazy val app: SmvApp            = SmvApp.app
+  def app: SmvApp                 = SmvApp.app
   private var rddCache: DataFrame = null
 
   /**
@@ -437,7 +437,7 @@ abstract class SmvDataSet extends FilenamePart {
     df.write.mode(SaveMode.Append).jdbc(url, tableName, connectionProperties)
   }
 
-  private[smv] lazy val parentStage: Option[String] = urn.getStage
+  private[smv] def parentStage: Option[String] = urn.getStage
 
   private[smv] def stageVersion()                   = parentStage flatMap { app.smvConfig.stageVersions.get(_) }
 

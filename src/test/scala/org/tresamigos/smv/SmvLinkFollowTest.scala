@@ -27,30 +27,37 @@ package org.tresamigos.smv {
     // While working on unification of SmvDataSet loading schemes we will be changing
     // SmvDataSet implementation several times, causing CRCs to change. Ignore CRC
     // and datasetHash tests until this process is complete.
-    ignore("Test SmvModuleLink datasetHash follows linked module") {
-      assert(smvLinkTestPkg2.L.datasetHash() === 1702152846L) // when Y's version is 2
+    test("Test SmvModuleLink datasetHash follows linked module") {
+      assert(smvLinkTestPkg2.L.instanceValHash === smvLinkTestPkg2.L.smvModule.hashOfHash) // when Y's version is 2
     }
   }
 
-  class SmvLinkFollowWithVersionTest extends SmvTestUtil {
-    override val appArgs = Seq(
+  class SmvLinkFollowWithVersionTest extends SparkTestUtil {
+    val appArgsBase = Seq("-m",
+      "org.tresamigos.smv.smvLinkTestPkg2.T2",
+      "--data-dir",
+      testcaseTempDir,
+      "--publish-dir",
+      s"${testcaseTempDir}/publish"
+    ) ++ Seq(
       "--smv-props",
-      "smv.stages=org.tresamigos.smv.smvLinkTestPkg1:org.tresamigos.smv.smvLinkTestPkg2," +
-        "smv.stages.smvLinkTestPkg1.version=v1"
-    ) ++ Seq("-m",
-             "org.tresamigos.smv.smvLinkTestPkg2.T2",
-             "--data-dir",
-             testcaseTempDir,
-             "--publish-dir",
-             s"${testcaseTempDir}/publish")
+      "smv.stages=org.tresamigos.smv.smvLinkTestPkg1:org.tresamigos.smv.smvLinkTestPkg2,"
+    )
+
+    val v1AppArgs = appArgsBase ++ Seq("smv.stages.smvLinkTestPkg1.version=v1")
+    val v2AppArgs = appArgsBase ++ Seq("smv.stages.smvLinkTestPkg1.version=v2")
 
     /* Since DS will cache the resolved DF we need to use a separate Y for SmvLinkFollowWithVersionTest */
     test("Test SmvModuleLink datasetHash follow link version") {
-      val res = smvLinkTestPkg2.L2.datasetHash()
-      assert(res === -1657727345) // when version = v1
+      val app1 = SmvApp.init(v1AppArgs.toArray, Option(sc), Option(sqlContext))
+      val res1 = app1.dsm.load(smvLinkTestPkg2.L2.urn).head.instanceValHash()
+      val app2 = SmvApp.init(v2AppArgs.toArray, Option(sc), Option(sqlContext))
+      val res2 = app2.dsm.load(smvLinkTestPkg2.L2.urn).head.instanceValHash()
+      assert(res1 !== res2) // when version = v1
     }
 
     test("Test SmvModuleLink follow link with version config") {
+      val app = SmvApp.init(v1AppArgs.toArray, Option(sc), Option(sqlContext))
       intercept[org.apache.hadoop.mapred.InvalidInputException] {
         val res = app.runModule(smvLinkTestPkg2.T2.urn)
       }
