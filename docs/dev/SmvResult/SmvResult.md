@@ -4,8 +4,8 @@ There are circumstances in which it would be useful for an `SmvModule` to return
 
 ## Pickle & persist
 
-If possible, we would like to use the same mechanisms for persisting these generic results as we do for persisting `DataFrames`. We can accomplish this by serializing the user's result and saving the serialization as a single row `DataFrame`. Since this feature is only needed for Python `SmvModules`, we can use `pickle` for the serialization. Of course, this requires that the result is safely picklable.
+If possible, we would like to use the same mechanisms for persisting these generic results as we do for persisting `DataFrames`. We can accomplish this by serializing the user's result and saving the serialization as a single row `DataFrame`. Since this feature is only needed for Python `SmvModules`, we can use `pickle` for the serialization of arbitrary results. Of course, this requires that the result is safely picklable.
 
-## SmvModuleWithObjRes
+## SmvResultModule
 
-When the result is read back as an input, we need some indication that the `DataFrame` contains a pickled object. Modules that return generic results will inherit from `SmvModuleWithObjRes` (name will probably be updated upon further consideration).
+When the result is read back as an input, we need some indication that the `DataFrame` contains a pickled object. Modules that return generic results will inherit from `SmvResultModule` (name will probably be updated upon further consideration).
