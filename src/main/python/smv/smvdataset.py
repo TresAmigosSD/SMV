@@ -539,9 +539,6 @@ class SmvHiveTable(SmvInput):
         """
         return None
 
-    def doRun(self, validator, known):
-        return self.run(DataFrame(self._smvHiveTable.rdd(False), self.smvApp.sqlContext))
-
 class SmvModule(SmvDataSet):
     """Base class for SmvModules written in Python
     """
