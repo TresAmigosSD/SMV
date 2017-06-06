@@ -24,9 +24,6 @@ package org.tresamigos.smv {
       val res = app.runModule(smvLinkTestPkg2.T.urn)
     }
 
-    // While working on unification of SmvDataSet loading schemes we will be changing
-    // SmvDataSet implementation several times, causing CRCs to change. Ignore CRC
-    // and datasetHash tests until this process is complete.
     test("Test SmvModuleLink datasetHash follows linked module") {
       assert(smvLinkTestPkg2.L.instanceValHash === smvLinkTestPkg2.L.smvModule.hashOfHash) // when Y's version is 2
     }
