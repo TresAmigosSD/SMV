@@ -171,6 +171,12 @@ object ShellCmd {
   def smvExportCsv(name: String, path: String) =
     dsm.inferDS(name).head.exportToCsv(path)
 
+  def _edd(name: String): String =
+    dsm.inferDS(name).head.getEdd
+
+  def edd(name: String): Unit =
+    println(_edd(name))
+
   /**
    * Resolve SmvDataSet
    *

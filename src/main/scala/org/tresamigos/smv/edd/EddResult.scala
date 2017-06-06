@@ -41,6 +41,8 @@ import org.json4s.jackson.JsonMethods.{compact, parse}
  * A histogram result represent as Map[Any, Long], where the key could be above 5 types.
  **/
 private[smv] class EddResult(
+    // This parameter list (the expected schema of an Edd result DataFrame) should
+    // track with EddResult.resultSchema
     val colName: String,
     val taskType: String,
     val taskName: String,
@@ -139,6 +141,17 @@ private[smv] class EddResult(
 }
 
 private[smv] object EddResult {
+  // Expected schema of EDD results. In some situations (such as reading EDD from
+  // Json) the columns of the EDD DataFrame may lose their order and need to be
+  // reset to this order.
+  val resultSchema = Seq(
+    "colName",
+    "taskType",
+    "taskName",
+    "taskDesc",
+    "valueJSON"
+  )
+
   def apply(r: Row, precision: Int = 5) = {
     r match {
       case Row(
