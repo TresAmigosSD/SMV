@@ -171,10 +171,11 @@ object ShellCmd {
   def smvExportCsv(name: String, path: String) =
     dsm.inferDS(name).head.exportToCsv(path)
 
-  def edd(name: String): Unit = {
-    val ds = dsm.inferDS(name).head
-    println(ds.getEdd)
-  }
+  def _edd(name: String): String =
+    dsm.inferDS(name).head.getEdd
+
+  def edd(name: String): Unit =
+    println(_edd(name))
 
   /**
    * Resolve SmvDataSet

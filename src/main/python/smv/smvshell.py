@@ -201,7 +201,7 @@ def edd(ds_name):
         Args:
             ds_name (str): name of an SmvDataSet
     """
-    _jvmShellCmd().edd(ds_name)
+    print _jvmShellCmd()._edd(ds_name)
 
 def run_test(test_name):
     """Run a test with the given name without creating new Spark context
