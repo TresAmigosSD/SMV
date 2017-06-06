@@ -142,7 +142,8 @@ private[smv] class EddResult(
 
 private[smv] object EddResult {
   // Expected schema of EDD results. In some situations (such as reading EDD from
-  // Json) the results may be reordered
+  // Json) the columns of the EDD DataFrame may lose their order and need to be
+  // reset to this order.
   val resultSchema = Seq(
     "colName",
     "taskType",
