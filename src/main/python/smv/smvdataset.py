@@ -701,6 +701,10 @@ class SmvExtDataSet(object):
     def __init__(self, fqn):
         self._fqn = fqn
 
+    def df2result(self, df):
+        # non-DataFrame results are only supported for Python SmvResultModule
+        return df
+
     def urn(self):
         return 'mod:' + self._fqn
 
