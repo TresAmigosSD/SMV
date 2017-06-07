@@ -624,6 +624,13 @@ class SmvResultModule(SmvModule):
         res = cPickle.loads(pickled_res)
         return res
 
+    @classmethod
+    def result2df(cls, smvApp, res_obj):
+        pickled_res = cPickle.dumps(res_obj, -1)
+        encoded_pickle = binascii.hexlify(pickled_res)
+        df = smvApp.createDF("pickled_result: String", encoded_pickle)
+        return df
+
     @abc.abstractmethod
     def run(self, i):
         """User-specified definition of the operations of this SmvModule
@@ -647,9 +654,7 @@ class SmvResultModule(SmvModule):
 
     def doRun(self, validator, known):
         res_obj = super(SmvResultModule, self).doRun(validator, known)
-        pickled_res = cPickle.dumps(res_obj, -1)
-        encoded_pickle = binascii.hexlify(pickled_res)
-        df = self.smvApp.createDF("pickled_result: String", encoded_pickle)
+        df = self.result2df(self.smvApp, res_obj)
         return df
 
 
