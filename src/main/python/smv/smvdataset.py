@@ -681,7 +681,6 @@ class SmvModuleLink(object):
     def __init__(self, target):
         self.target = target
 
-    @classmethod
     def df2result(self, df):
         return self.target.df2result(df)
 
