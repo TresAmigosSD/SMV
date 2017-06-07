@@ -303,7 +303,7 @@ class SmvInput(SmvDataSet):
         """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
            that is created in their init."""
 
-
+    @with_stacktrace
     def instanceValHash(self):
         # Defer to Scala target for instanceValHash
         return self.getRawScalaInputDS().instanceValHash()
