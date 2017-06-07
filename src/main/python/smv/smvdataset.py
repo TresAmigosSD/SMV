@@ -613,12 +613,37 @@ class SmvModule(SmvDataSet):
         return self.run(i)
 
 class SmvResultModule(SmvModule):
+    """An SmvModule whose result is not a DataFrame
+
+        The result must be picklable - see https://docs.python.org/2/library/pickle.html#what-can-be-pickled-and-unpickled.
+    """
     @classmethod
     def df2result(self, df):
         encoded_pickle = df.collect()[0][0]
         pickled_res = binascii.unhexlify(encoded_pickle)
         res = cPickle.loads(pickled_res)
         return res
+
+    @abc.abstractmethod
+    def run(self, i):
+        """User-specified definition of the operations of this SmvModule
+
+            Override this method to define the output of this module, given a map
+            'i' from inputSmvDataSet to resulting DataFrame. 'i' will have a
+            mapping for each SmvDataSet listed in requiresDS. E.g.
+
+            def requiresDS(self):
+                return [MyDependency]
+
+            def run(self, i):
+                return i[MyDependency].select("importantColumn")
+
+            Args:
+                (RunParams): mapping from input SmvDataSet to DataFrame
+
+            Returns:
+                (object): picklable output of this SmvModule
+        """
 
     def doRun(self, validator, known):
         res_obj = super(SmvResultModule, self).doRun(validator, known)
