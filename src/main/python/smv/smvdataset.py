@@ -553,9 +553,6 @@ class SmvModule(SmvDataSet):
     def dsType(self):
         return "Module"
 
-    @classmethod
-    def hasObjectResult(cls):
-        return False
 
     class RunParams(object):
         """Map from SmvDataSet to resulting DataFrame
