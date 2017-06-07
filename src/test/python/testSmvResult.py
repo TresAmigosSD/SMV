@@ -19,7 +19,7 @@ from smv import SmvResultModule
 class SmvResultTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ["--smv-props", "smv.stages=stage"]
+        return ["--smv-props", "smv.stages=stage1:stage2"]
 
     def test_SmvResultModule_serialization(self):
         """Test serialization/deserialization of non-DataFrame results
@@ -33,5 +33,13 @@ class SmvResultTest(SmvBaseTest):
         """Test persistence of non-DataFrame results
         """
         with ExtraPath("src/test/python/smv_result"):
-            res = self.smvApp.getModuleResult("mod:stage.modules.RM")
+            res = self.smvApp.getModuleResult("mod:stage1.modules.RM")
         self.assertEqual(res, [100, "100", 100.0])
+
+    def test_link_to_SmvResultModule(self):
+        """Test that result of link to module with non-DataFrame result same as module's result
+        """
+        with ExtraPath("src/test/python/smv_result"):
+            RMres = self.smvApp.getModuleResult("mod:stage2.modules.RM")
+            Mdf = self.smvApp.getModuleResult("mod:stage2.modules.M")
+        self.assertEqual(str(RMres), Mdf.collect()[0][0])

@@ -11,14 +11,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvModule, SmvResultModule
+from smv import SmvModule, SmvModuleLink
+from stage1.modules import RM
 
-RESULT_VALS = [100, "100", 100.0]
-RESULT_SCHEMA = "res0: Integer; res1: String; res2: Float"
+RML = SmvModuleLink(RM)
 
-class RM(SmvResultModule):
+class M(SmvModule):
     def requiresDS(self):
-        return []
+        return [RML]
 
     def run(self, i):
-        return [100, "100", 100.0]
+        # [100, "100", 100.0]
+        res = i[RML]
+        df = self.smvApp.createDF("res: String", "\"{}\"".format(res))
+        return df
