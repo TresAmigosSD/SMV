@@ -994,7 +994,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
   override def requiresDS     =
     throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
-    resolvedRequiresDS = target.dependencies map (urn => resolver.loadDataSet(URN(urn)).head)
+    resolvedRequiresDS = target.dependencyUrns map (urn => resolver.loadDataSet(URN(urn)).head)
     this
   }
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {

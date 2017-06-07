@@ -59,7 +59,7 @@ public interface ISmvModule {
 	 * Python implementation of this method needs to return a Java array
 	 * using the accompanying smv_copy_array() method.
 	 */
-	String[] dependencies();
+	String[] dependencyUrns();
 
 	/**
 	 * Try to run the module by its fully-qualified name and return its
