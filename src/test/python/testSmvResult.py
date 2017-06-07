@@ -22,9 +22,8 @@ class SmvResultTest(SmvBaseTest):
         return ["--smv-props", "smv.stages=stage"]
 
     def test_SmvResultModule(self):
-        """Test serialization/deserialization of
+        """Test serialization/deserialization and persistence of non-DataFrame results
         """
         with ExtraPath("src/test/python/smv_result"):
-            resDf = self.smvApp.runModule("mod:stage.modules.RM")
-        res = SmvResultModule.df2result(resDf)
+            res = self.smvApp.getModuleResult("mod:stage.modules.RM")
         self.assertEqual(res, [100, "100", 100.0])

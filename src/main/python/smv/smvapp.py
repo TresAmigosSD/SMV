@@ -130,7 +130,8 @@ class SmvApp(object):
             # update the port of CallbackClient with real port
             gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
 
-        self.j_smvPyClient.registerRepoFactory('Python', DataSetRepoFactory(self))
+        self.repoFactory = DataSetRepoFactory(self)
+        self.j_smvPyClient.registerRepoFactory('Python', self.repoFactory)
 
         # Suppress creation of .pyc files. These cause complications with
         # reloading code and have led to discovering deleted modules (#612)
@@ -152,6 +153,12 @@ class SmvApp(object):
            TODO: need to add a stageName parameter to limit it to a single stage.
         """
         return self.j_smvApp.generateAllGraphJSON()
+
+    def getModuleResult(self, urn, forceRun = False, version = None):
+        fqn = urn[urn.find(":")+1:]
+        ds = self.repoFactory.createRepo().loadDataSet(fqn)
+        df = self.runModule(urn, forceRun, version)
+        return ds.df2result(df)
 
     def runModule(self, urn, forceRun = False, version = None):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
