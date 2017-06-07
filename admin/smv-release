@@ -254,7 +254,7 @@ function create_docker_image()
   docker push tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker push failed"
 }
 
-function  build_pydocs()
+function gen_pydocs()
 {
   info "generating python docs"
   local smv_py_dir="/projects/SMV/src/main/python"
@@ -274,6 +274,22 @@ function  build_pydocs()
     >> ${LOGFILE} 2>&1 || error "python doc generation failed"
 }
 
+function gen_scaladocs()
+{
+  info "generating scala docs"
+  mkdir -p ${DOCS_DIR}/scala
+
+  docker run --rm -it \
+    -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/scala:/scaladoc \
+    tresamigos/smv:latest \
+    -u $(id -u)\
+    sh -c "
+      cd $DOCKER_SMV_DIR;
+      sbt doc;
+      cp -R target/scala-*/api/* /scaladoc" \
+    >> ${LOGFILE} 2>&1 || error "scala doc generation failed"
+}
+
 
 # ---- MAIN ----
 create_logdir
@@ -291,5 +307,6 @@ get_prev_smv_version
 # create_github_release
 # attach_tar_to_github_release
 # create_docker_image
-build_pydocs
+gen_pydocs
+gen_scaladocs
 info "Finish Release on: $(date)"
