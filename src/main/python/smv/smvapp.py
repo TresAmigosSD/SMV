@@ -155,6 +155,8 @@ class SmvApp(object):
         return self.j_smvApp.generateAllGraphJSON()
 
     def getModuleResult(self, urn, forceRun = False, version = None):
+        """Run module and get its result, which may not be a DataFrame
+        """
         fqn = urn[urn.find(":")+1:]
         ds = self.repoFactory.createRepo().loadDataSet(fqn)
         df = self.runModule(urn, forceRun, version)

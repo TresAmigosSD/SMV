@@ -270,7 +270,12 @@ class SmvDataSet(WithStackTrace):
 
         return jdf
 
-    def df2result(self, df):
+    @classmethod
+    def df2result(cls, df):
+        """Given a datasets's persisted DataFrame, get the result object
+
+            In most cases, this is just the DataFrame itself. See SmvResultModule for the exception.
+        """
         return df
 
     class Java:
@@ -619,6 +624,8 @@ class SmvResultModule(SmvModule):
     """
     @classmethod
     def df2result(self, df):
+        """Unpickle and decode module result stored in DataFrame
+        """
         encoded_pickle = df.collect()[0][0]
         pickled_res = binascii.unhexlify(encoded_pickle)
         res = cPickle.loads(pickled_res)
@@ -626,8 +633,15 @@ class SmvResultModule(SmvModule):
 
     @classmethod
     def result2df(cls, smvApp, res_obj):
+        """Pick and encode module result, and store it in a DataFrame
+        """
+        # pickle the result object. this will use the most optimal pickling
+        # protocol available for this version of cPickle
         pickled_res = cPickle.dumps(res_obj, -1)
+        # pickle may contain problematic characters (like newlines), so we
+        # encode the pickle it as a hex string
         encoded_pickle = binascii.hexlify(pickled_res)
+        # insert the resulting serialization into a DataFrame
         df = smvApp.createDF("pickled_result: String", encoded_pickle)
         return df
 
