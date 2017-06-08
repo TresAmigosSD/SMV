@@ -650,14 +650,14 @@ class SmvResultModule(SmvModule):
         """User-specified definition of the operations of this SmvModule
 
             Override this method to define the output of this module, given a map
-            'i' from inputSmvDataSet to resulting DataFrame. 'i' will have a
+            'i' from input SmvDataSet to resulting DataFrame. 'i' will have a
             mapping for each SmvDataSet listed in requiresDS. E.g.
 
             def requiresDS(self):
                 return [MyDependency]
 
             def run(self, i):
-                return i[MyDependency].select("importantColumn")
+                return train_model(i[MyDependency])
 
             Args:
                 (RunParams): mapping from input SmvDataSet to DataFrame
