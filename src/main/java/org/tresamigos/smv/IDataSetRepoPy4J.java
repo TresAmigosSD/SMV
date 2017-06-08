@@ -22,19 +22,9 @@ package org.tresamigos.smv;
  */
 public interface IDataSetRepoPy4J {
 	/**
-	 * Does the named data set exist?
-	 */
-	boolean hasDataSet(String modUrn);
-
-	/**
 	 * Factory method for ISmvModule
 	 */
 	ISmvModule loadDataSet(String modUrn);
 
 	String[] dataSetsForStage(String modUrn);
-
-	/**
-	 * Get names of all output modules in a given stage
-	 */
-	String[] outputModsForStage(String stageName);
 }
