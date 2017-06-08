@@ -683,6 +683,7 @@ class SmvResultModule(SmvModule):
 class SmvModel(SmvResultModule):
     """SmvModule whose result is a data model
     """
+    # Exists only to be paired with SmvModelExec
 
 class SmvModelExec(SmvModule):
     """SmvModule that runs a model produced by an SmvModel
