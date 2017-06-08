@@ -128,13 +128,13 @@ h2,        12,         1.0
 h2,        13,         2.0
 ```
 
-Please note that first parameter of `levelRollup` is actually a `SmvDFWithKeys`, which
+Please note that first parameter of `levelRollup` is actually a `SmvGroupedData`, which
 a regular `DF` can implicitly convert to with empty list of keys. To specify keys on a
 `DF`, one can do
 ```scala
 val dfWithKey = df.smvWithKeys("k1")
 ```
-When `SmvDFWithKeys` is used in `levelRollup` the rollup will aggregate to each specified
+When `SmvGroupedData` is used in `levelRollup` the rollup will aggregate to each specified
 level within each "k1" group.
 
 #### levelSum
