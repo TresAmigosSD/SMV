@@ -15,7 +15,7 @@ from pyspark.sql.column import Column
 from pyspark.sql.functions import udf
 
 from smv.smvapp import SmvApp
-from smv.utils import smv_copy_array
+from smv.utils import smv_copy_array, is_string
 
 def nGram2(c1, c2):
     """2-gram UDF with formula (number of overlaped gramCnt)/max(c1.gramCnt, c2.gramCnt)
@@ -146,10 +146,10 @@ def smvStrCat(head, *others):
        Return:
            (col): a StringType column
     """
-    if (isinstance(head, basestring)):
+    if is_string(head):
         sep = head
         cols = list(others)
-    elif (isinstance(head, Column)):
+    elif isinstance(head, Column):
         sep = ""
         cols = [head] + list(others)
     else:
@@ -189,10 +189,10 @@ def smvHashKey(head, *others):
      (col): a StringType column as Prefix + MD5 Hex string
     """
 
-    if (isinstance(head, basestring)):
+    if is_string(head):
         pre = head
         cols = list(others)
-    elif (isinstance(head, Column)):
+    elif isinstance(head):
         pre = ""
         cols = [head] + list(others)
     else:

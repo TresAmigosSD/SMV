@@ -25,6 +25,7 @@ import inspect
 
 from smv.utils import smv_copy_array
 from smv.error import SmvRuntimeError
+from smv.utils import is_string
 
 # common converters to pass to _to_seq and _to_list
 def _jcol(c): return c._jc
@@ -433,9 +434,9 @@ class DataFrameHelper(object):
                 (SmvGroupedData): grouped data object
 
         """
-        if (isinstance(cols[0], Column)):
+        if isinstance(cols[0], Column):
             keys = [ColumnHelper(c).smvGetColName() for c in cols]
-        elif (isinstance(cols[0], basestring)):
+        elif is_string(cols[0]):
             keys = list(cols)
         else:
             raise SmvRuntimeError("smvGroupBy does not support type: " + type(cols[0]))
@@ -459,9 +460,9 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): sampled DF
         """
-        if (isinstance(key, basestring)):
+        if is_string(key):
             jkey = col(key)._jc
-        elif (isinstance(key, Column)):
+        elif isinstance(key, Column):
             jkey = key._jc
         else:
             raise RuntimeError("key parameter must be either a String or a Column")
@@ -1060,7 +1061,7 @@ class DataFrameHelper(object):
         self._println(self._smvFreqHist(*cols))
 
     def _smvCountHist(self, keys, binSize):
-        if isinstance(keys, basestring):
+        if is_string(keys):
             res = self._jDfHelper._smvCountHist(_to_seq([keys]), binSize)
         else:
             res = self._jDfHelper._smvCountHist(_to_seq(keys), binSize)

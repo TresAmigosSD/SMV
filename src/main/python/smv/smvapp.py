@@ -28,13 +28,6 @@ from smv.datasetrepo import DataSetRepoFactory
 from smv.utils import smv_copy_array, check_socket
 from smv.error import SmvRuntimeError
 
-if sys.version >= '3':
-    basestring = unicode = str
-    long = int
-    from io import StringIO
-    from importlib import reload
-else:
-    from cStringIO import StringIO
 
 class SmvApp(object):
     """The Python representation of SMV.

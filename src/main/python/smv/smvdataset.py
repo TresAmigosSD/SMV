@@ -29,13 +29,6 @@ from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array
 from smv.stacktrace_mixin import WithStackTrace, with_stacktrace
 
-if sys.version >= '3':
-    basestring = unicode = str
-    long = int
-    from io import StringIO
-    from importlib import reload
-else:
-    from cStringIO import StringIO
 
 def _disassemble(obj):
     """Disassembles a module and returns bytecode as a string.
