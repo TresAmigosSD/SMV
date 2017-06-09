@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp, SmvModule, SmvHiveTable
+from smv import SmvApp, SmvModule, SmvHiveTable, SmvCsvFile
 
 class ChangeCode(SmvModule):
     def requiresDS(self):
@@ -63,6 +63,14 @@ class HiveTableWithVersion(SmvHiveTable):
         return "HiveTableWithVersion"
     def version(self):
         return "1.1"
+
+class CsvFileWithRun(SmvCsvFile):
+    def requiresDS(self):
+        return []
+    def path(self):
+        return "foo"
+    def run(self, df):
+        return df.select("bar")
 
 class Child(Parent):
     pass

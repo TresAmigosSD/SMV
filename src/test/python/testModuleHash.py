@@ -79,3 +79,7 @@ class ModuleHashTest(SmvBaseTest):
     def test_change_hive_table_version_should_change_hash(self):
         """updating version of SmvHiveTable will force change of hash"""
         self.assert_hash_should_change("stage.modules.HiveTableWithVersion")
+
+    def test_change_csv_file_run_method_should_change_hash(self):
+        """updating run method of SmvCsvFile will change hash"""
+        self.assert_hash_should_change("stage.modules.CsvFileWithRun")
