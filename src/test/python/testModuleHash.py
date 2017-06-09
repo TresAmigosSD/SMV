@@ -18,12 +18,17 @@ from smv import SmvApp
 from smv.datasetrepo import DataSetRepo
 
 class ModuleHashTest(SmvBaseTest):
-    ResourcePath1 = 'src/test/python/datasethash1'
-    ResourcePath2 = 'src/test/python/datasethash2'
-
     @classmethod
     def smvAppInitArgs(cls):
         return ["--smv-props", "smv.stages=stage"]
+
+    @classmethod
+    def before_dir(cls):
+        return cls.testResourceDir() + "/before"
+
+    @classmethod
+    def after_dir(cls):
+        return cls.testResourceDir() + "/after"
 
     class Resource(object):
         def __init__(self, smvApp, path, fqn):
@@ -39,9 +44,9 @@ class ModuleHashTest(SmvBaseTest):
             sys.path.remove(self.path)
 
     def compare_resource_hash(self, fqn, assertion):
-        with self.Resource(self.smvApp,self.ResourcePath1,fqn) as ds:
+        with self.Resource(self.smvApp,self.before_dir(),fqn) as ds:
             hash1 = ds.sourceCodeHash()
-        with self.Resource(self.smvApp,self.ResourcePath2,fqn) as ds:
+        with self.Resource(self.smvApp,self.after_dir(),fqn) as ds:
             hash2 = ds.sourceCodeHash()
         assertion(hash1, hash2)
 
