@@ -54,7 +54,7 @@ def _smvhash(text):
     use to calculate sourceCodeHash.
     """
     import binascii
-    return binascii.crc32(text)
+    return binascii.crc32(text.encode())
 
 def _stripComments(code):
     import re
