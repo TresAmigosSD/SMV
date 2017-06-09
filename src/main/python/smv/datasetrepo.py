@@ -45,7 +45,7 @@ class DataSetRepo(object):
     def _clear_sys_modules(self):
         """Clear all client modules from sys.modules
         """
-        for fqn in sys.modules.keys():
+        for fqn in list(sys.modules.keys()):
             for stage_name in self.smvApp.stages:
                 if fqn == stage_name or fqn.startswith(stage_name + "."):
                     sys.modules.pop(fqn)
