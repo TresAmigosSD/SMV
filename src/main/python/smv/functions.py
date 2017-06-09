@@ -11,10 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp
 from pyspark.sql.column import Column
 from pyspark.sql.functions import udf
-from utils import smv_copy_array
+
+from smv.smvapp import SmvApp
+from smv.utils import smv_copy_array
 
 def nGram2(c1, c2):
     """2-gram UDF with formula (number of overlaped gramCnt)/max(c1.gramCnt, c2.gramCnt)

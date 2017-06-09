@@ -15,8 +15,8 @@ import traceback
 import pkgutil
 import inspect
 
-from error import SmvRuntimeError
-from utils import for_name, smv_copy_array
+from smv.error import SmvRuntimeError
+from smv.utils import for_name, smv_copy_array
 
 """Python implementations of IDataSetRepoPy4J and IDataSetRepoFactoryPy4J interfaces
 """

@@ -19,11 +19,12 @@ from pyspark import SparkContext
 from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col, lit
-from utils import smv_copy_array
-from error import SmvRuntimeError
 
 import sys
 import inspect
+
+from smv.utils import smv_copy_array
+from smv.error import SmvRuntimeError
 
 # common converters to pass to _to_seq and _to_list
 def _jcol(c): return c._jc

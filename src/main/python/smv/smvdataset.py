@@ -18,17 +18,16 @@ from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
-from utils import smv_copy_array
-from stacktrace_mixin import WithStackTrace, with_stacktrace
 
 import abc
-
 import inspect
 import sys
 import traceback
 
-from dqm import SmvDQM
-from error import SmvRuntimeError
+from smv.dqm import SmvDQM
+from smv.error import SmvRuntimeError
+from smv.utils import smv_copy_array
+from smv.stacktrace_mixin import WithStackTrace, with_stacktrace
 
 if sys.version >= '3':
     basestring = unicode = str

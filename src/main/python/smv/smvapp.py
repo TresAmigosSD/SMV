@@ -20,13 +20,13 @@ import sys
 import traceback
 
 from py4j.java_gateway import java_import, JavaObject
-
 from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
-from utils import smv_copy_array, check_socket
-from error import SmvRuntimeError
 
-from datasetrepo import DataSetRepoFactory
+
+from smv.datasetrepo import DataSetRepoFactory
+from smv.utils import smv_copy_array, check_socket
+from smv.error import SmvRuntimeError
 
 if sys.version >= '3':
     basestring = unicode = str
