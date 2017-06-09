@@ -534,7 +534,7 @@ class DataFrameHelper(object):
                 (list(object)): most frequent values (type depends on schema)
         """
         topNdf = DataFrame(self._jDfHelper._topNValsByFreq(n, col._jc), self._sql_ctx)
-        return map(lambda r: r.asDict().values()[0], topNdf.collect())
+        return [list(r)[0] for r in topNdf.collect()]
 
     def smvSkewJoinByKey(self, other, joinType, skewVals, key):
         """Join that leverages broadcast (map-side) join of rows with skewed (high-frequency) values
