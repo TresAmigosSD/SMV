@@ -16,23 +16,15 @@ package org.tresamigos.smv;
 
 /**
  * Repository methods used to query and instantiate modules
- * implemented in languages other than Scala.
+ * implemented in languages other than Scala. If you add a method here with
+ * a Python implementation *make sure* to use the @with_stacktrace
+ * decorator to ensure that errors that occur in callbacks don't get eaten.
  */
 public interface IDataSetRepoPy4J {
-	/**
-	 * Does the named data set exist?
-	 */
-	boolean hasDataSet(String modUrn);
-
 	/**
 	 * Factory method for ISmvModule
 	 */
 	ISmvModule loadDataSet(String modUrn);
 
 	String[] dataSetsForStage(String modUrn);
-
-	/**
-	 * Get names of all output modules in a given stage
-	 */
-	String[] outputModsForStage(String stageName);
 }
