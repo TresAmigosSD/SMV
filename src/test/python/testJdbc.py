@@ -25,10 +25,10 @@ class JdbcTest(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ["--smv-props", "smv.stages=jdbc.stage", "smv.jdbc.url=" + cls.url()]
+        return ["--smv-props", "smv.stages=stage", "smv.jdbc.url=" + cls.url()]
 
     def test_SmvJdbcTable(self):
-        from jdbc.stage.modules import MyJdbcTable
         df = self.createDF("K:String", "xxx")
         df.write.jdbc(self.url(), "MyJdbcTable")
-        self.should_be_same(self.df(MyJdbcTable.fqn()), df)
+        res = self.df("stage.modules.MyJdbcTable")
+        self.should_be_same(res, df)
