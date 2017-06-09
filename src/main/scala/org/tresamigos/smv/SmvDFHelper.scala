@@ -917,7 +917,7 @@ class SmvDFHelper(df: DataFrame) {
    * Just an alias to smvGroupBy to make client code more readable
    **/
   def smvWithKeys(cols: String*) = {
-    SmvDFWithKeys(df, cols)
+    SmvGroupedData(df, cols)
   }
 
   /**

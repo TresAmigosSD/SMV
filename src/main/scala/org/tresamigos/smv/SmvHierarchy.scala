@@ -325,7 +325,7 @@ class SmvHierarchies(
   /**
    * rollup aggregate within a single hierarchy sequence
    **/
-  private def rollupHier(dfWithKey: SmvDFWithKeys, hier: Seq[String], conf: SmvHierOpParam)(
+  private def rollupHier(dfWithKey: SmvGroupedData, hier: Seq[String], conf: SmvHierOpParam)(
       aggs: Seq[Column]) = {
     val df = dfWithKey.df
     import df.sqlContext.implicits._
@@ -391,7 +391,7 @@ class SmvHierarchies(
    * The result will have `parent_v` and `parent_v2` columns appended
    **/
   def appendParentValues(
-      dfWithKey: SmvDFWithKeys,
+      dfWithKey: SmvGroupedData,
       hierName: String,
       parentPrefix: String = "parent_"
   ): DataFrame = {
@@ -501,7 +501,7 @@ class SmvHierarchies(
    * is to have no name no parent columns. Please see `SmvHierOpParam`'s document
    * of other options.
    **/
-  def levelRollup(dfWithKey: SmvDFWithKeys, levels: String*)(aggregations: Column*)(
+  def levelRollup(dfWithKey: SmvGroupedData, levels: String*)(aggregations: Column*)(
       conf: SmvHierOpParam = SmvHierOpParam(false, None)
   ): DataFrame = {
     val df             = dfWithKey.df
@@ -523,7 +523,7 @@ class SmvHierarchies(
   /**
    * Same as `levelRollup` with summations on all `valueCols`
    **/
-  def levelSum(dfWithKey: SmvDFWithKeys, levels: String*)(valueCols: String*)(
+  def levelSum(dfWithKey: SmvGroupedData, levels: String*)(valueCols: String*)(
       conf: SmvHierOpParam = SmvHierOpParam(false, None)
   ): DataFrame = {
     val valSums = valueCols.map { s =>
