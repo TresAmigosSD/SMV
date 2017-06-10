@@ -22,25 +22,25 @@ class ChangeCode(SmvModule):
 class AddComment(SmvModule):
     # I ADDED A COMMENT, POP!
     def requiresDS(self):
-		return[]
+		return []
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,5")
 
 class DependencyB(SmvModule):
     def requiresDS(self):
-		return[]
+		return []
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,215")
 
 class Dependent(DependencyB):
     def requiresDS(self):
-		return[]
+		return []
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,7")
 
 class Upstream(SmvModule):
     def requiresDS(self):
-		return[]
+		return []
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,46")
 
