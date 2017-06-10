@@ -379,7 +379,8 @@ def _getUnboundMethod(helperCls, methodName):
     return method
 
 def _helpCls(receiverCls, helperCls):
-    for name, method in inspect.getmembers(helperCls, predicate=inspect.isfunction):
+    iscallable = lambda f: hasattr(f, "__call__")
+    for name, method in inspect.getmembers(helperCls, predicate=iscallable):
         # ignore special and private methods
         if not name.startswith("_"):
             newMethod = _getUnboundMethod(helperCls, name)
