@@ -7,7 +7,7 @@ matrix:
         - tools/spark-install ./spark
         - export PATH="$PATH:$(pwd)/spark/bin"
       script:
-        - sbt ++$TRAVIS_SCALA_VERSION test
+        - sbt ++2.10.4 test
 
     - dist: trusty
       scala:
@@ -19,5 +19,5 @@ matrix:
         - tools/spark-install ./spark
         - export PATH="$PATH:$(pwd)/spark/bin"
       script:
-        - sbt ++$TRAVIS_SCALA_VERSION pytest
-        - sbt ++$TRAVIS_SCALA_VERSION itest
+        - sbt ++2.10.4 pytest
+        - sbt ++2.10.4 itest
