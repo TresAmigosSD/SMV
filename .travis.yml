@@ -1,8 +1,23 @@
-language: scala
-scala:
-   - 2.10.4
-install:
-  - tools/spark-install ./spark
-  - export PATH="$PATH:$(pwd)/spark/bin"
-script:
-  - sbt ++$TRAVIS_SCALA_VERSION alltest
+matrix:
+  include:
+    - language: scala
+      scala:
+        - 2.10.4
+      install:
+        - tools/spark-install ./spark
+        - export PATH="$PATH:$(pwd)/spark/bin"
+      script:
+        - sbt ++$TRAVIS_SCALA_VERSION test
+
+    - dist: trusty
+      scala:
+        - 2.10.4
+      python:
+        - 3.5.2
+        - 2.7.10
+      install:
+        - tools/spark-install ./spark
+        - export PATH="$PATH:$(pwd)/spark/bin"
+      script:
+        - sbt ++$TRAVIS_SCALA_VERSION pytest
+        - sbt ++$TRAVIS_SCALA_VERSION itest
