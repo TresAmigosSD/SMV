@@ -26,24 +26,6 @@ class SmvFileTest extends SmvTestUtil {
     s"${testcaseTempDir}/input"
   )
 
-  test("test SmvFile full path") {
-    resetTestcaseTempDir()
-
-    new File(testcaseTempDir, "input").mkdir()
-
-    createTempFile("input/a.csv", "f1\na\n")
-    createTempFile("input/a.schema", "f1: String")
-
-    object File1 extends SmvCsvFile("a.csv")
-    val res1 = File1.rdd()
-
-    object File2 extends SmvCsvFile("input/a.csv")
-    val res2 = File2.rdd()
-
-    assertSrddDataEqual(res1, "a")
-    assertSrddDataEqual(res2, "a")
-  }
-
   test("test SmvModuleLink can link to an SmvFile") {
     resetTestcaseTempDir()
 
