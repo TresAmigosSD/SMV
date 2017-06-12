@@ -9,6 +9,7 @@
   * [SMV Input (Files/Tables)](smv_input.md)
   * [SMV Modules](smv_module.md)
   * [SMV Stages](smv_stages.md)
+  * [Modeling with Smv](smv_model.md)
   * [Validation & Data Quality Management (DQM)](dqm.md)
 
 #### Smv Run and Interactive Use

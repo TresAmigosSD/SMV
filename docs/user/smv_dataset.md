@@ -174,28 +174,3 @@ class MyModule(SmvModule, SmvOutput):
     def run(self, i):
         ...
 ```
-
-## SmvModel and SmvModelExec
-For modeling with SMV, you may want the result of a module to be a model and not a DataFrame. `SmvModel` handles any type of result, as long as it is serializable with `pickle`. Use `SmvModelExec` to execute the model.
-
-**Python only**
-```python
-class MyModel(SmvModel):
-  def requiresDS(self):
-    return [MyInput]
-
-  def run(self, i):
-    # train your model here
-    return train_model(i[MyInput])
-
-class MyModelExec(SmvModelExec):
-  def requiresDS(self):
-    return [MyOtherInput]
-
-  def requiresModel(self):
-    return MyModel
-
-  def run(self, i, model):
-    # score your data here. the `model` argument is the result of MyModel
-    return model.score(i[MyOtherInput])
-```
