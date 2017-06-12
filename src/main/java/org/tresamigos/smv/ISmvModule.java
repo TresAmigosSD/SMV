@@ -24,7 +24,9 @@ import org.tresamigos.smv.dqm.DQMValidator;
 /**
  * Methods that can be implemented by a remote object, such as a
  * Python class, to allow modules written in different languages to
- * work together in an SMV application.
+ * work together in an SMV application. If you add a method here with
+ * a Python implementation *make sure* to use the @with_stacktrace
+ * decorator to ensure that errors that occur in callbacks don't get eaten.
  */
 public interface ISmvModule {
 	/**

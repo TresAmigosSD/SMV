@@ -19,15 +19,16 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions._
 
 class EddTest extends SmvTestUtil {
+  override def appArgs = super.appArgs ++ Seq("--smv-props", "smv.stages=org.tresamigos.smv.EddModules")
   test("test EddResult Report") {
     val df1 =
-      dfFrom("a:String;b:String;c:String;d:String;f:String", "col_a,stat,avg,Average,13.75")
+      dfFrom("colName:String;taskType:String;taskName:String;taskDesc:String;valueJSON:String", "col_a,stat,avg,Average,13.75")
     val row1 = df1.rdd.first
     assert(EddResult(row1).toReport === "col_a                Average                13.75")
 
     val df2 =
-      dfFrom("a:String;b:String;c:String;d:String", """col_a,hist,key,by Key""").smvSelectPlus(
-        lit("""{"histSortByFreq":false,"hist":{"\"2\"":1,"\"5\"":1,"\"1\"":2}}""") as "f")
+      dfFrom("colName:String;taskType:String;taskName:String;taskDesc:String", """col_a,hist,key,by Key""").smvSelectPlus(
+        lit("""{"histSortByFreq":false,"hist":{"\"2\"":1,"\"5\"":1,"\"1\"":2}}""") as "valueJSON")
 
     assert(
       EddResult(df2.rdd.first).toReport === """Histogram of col_a: by Key
@@ -42,7 +43,7 @@ key                      count      Pct    cumCount   cumPct
   }
 
   test("Edd Report with groupKey") {
-    val df1 = dfFrom("groupKey:String;a:String;b:String;c:String;d:String;f:String",
+    val df1 = dfFrom("groupKey:String;colName:String;taskType:String;taskName:String;taskDesc:String;valueJSON:String",
                      """A,col_a,stat,avg,Average,13.75;
          B,col_b,stat,avg,Average,21.7""")
     val res = EddResultFunctions(df1).createReport()
@@ -54,7 +55,7 @@ col_b                Average                21.7""")
   }
 
   test("test EddResult equals") {
-    val df1 = dfFrom("a:String;b:String;c:String;d:String;f:String",
+    val df1 = dfFrom("colName:String;taskType:String;taskName:String;taskDesc:String;valueJSON:String",
                      "col_a,stat,avg,Average,13.75;col_a,stat,avg,Average,13.7501")
     val rows = df1.rdd.collect
     assert(EddResult(rows(0)) === EddResult(rows(1)))
@@ -95,6 +96,14 @@ col_b                Average                21.7""")
     assert(res1 === "/my/project/dir/data/dir/data1.edd")
     assert(res2 === "my/project/dir/data/dir/data1.edd")
     assert(res3 === "my/project/dir/data/dir/data1.edd")
+  }
+
+  test("test SmvModule can get EDD for result even if persisted without EDD") {
+    val ds = app.dsm.load(EddModules.M.urn).head
+    // persist without generating edd
+    ds.rdd()
+    // this will fail if the module doesn't persist EDD
+    ds.getEdd()
   }
 }
 
@@ -543,5 +552,12 @@ p                    Null Rate              0.0
 v                    Null Rate              0.0
 d                    Null Rate              0.0
 b                    Null Rate              0.3333333333333333""")
+  }
+}
+
+package EddModules {
+  object M extends SmvModule("M") {
+    def requiresDS = Seq()
+    def run(i: runParams) = app.createDF("k:String", "abc;def")
   }
 }

@@ -15,11 +15,11 @@ from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
 
 class RunModuleFromCmdLineTest(SmvBaseTest):
-    modUrn = 'mod:fixture.cmdline.runmod.stage1.modules.A'
+    modUrn = 'mod:runmod.stage1.modules.A'
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=fixture.cmdline.runmod.stage1',
+        return ['--smv-props', 'smv.stages=runmod.stage1',
                 '-m', "modules.A"]
 
     def test_can_run_module_from_cmdline(self):
@@ -29,11 +29,11 @@ class RunModuleFromCmdLineTest(SmvBaseTest):
         self.should_be_same(a, expected)
 
 class RunStageFromCmdLineTest(SmvBaseTest):
-    stageName = 'fixture.cmdline.runstage.stage1'
+    stageName = 'runstage.stage1'
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=fixture.cmdline.runstage.stage1',
+        return ['--smv-props', 'smv.stages=runstage.stage1',
                 '-s', cls.stageName]
 
     def test_can_run_stage_from_cmdline(self):

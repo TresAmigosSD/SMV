@@ -22,7 +22,6 @@ package org.tresamigos.smv {
   class SmvGraphUtilTest extends SmvTestUtil {
     override def appArgs = testAppArgs.multiStage ++ Seq("-m", "None")
 
-    // ignore faling graph util tests until ancestors/descendant is reimplemented
     test("Test list modules") {
       val gu  = new graph.SmvGraphUtil(app)
       val dsL = gu.createDSList()

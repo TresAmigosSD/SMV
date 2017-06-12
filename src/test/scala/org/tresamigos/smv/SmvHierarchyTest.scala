@@ -68,7 +68,7 @@ package org.tresamigos.smv {
           ) {
         override def applyToDf(df: DataFrame) = df
 
-        def allSum(dfWithKey: SmvDFWithKeys, cols: String*) =
+        def allSum(dfWithKey: SmvGroupedData, cols: String*) =
           levelSum(dfWithKey, "terr", "div")(cols: _*)()
       }
 

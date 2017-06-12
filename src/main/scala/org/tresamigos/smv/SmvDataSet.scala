@@ -21,6 +21,8 @@ import dqm.{DQMValidator, ParserLogger, SmvDQM, TerminateParserLogger, FailParse
 import scala.collection.JavaConversions._
 import scala.util.Try
 
+import edd._
+
 import org.joda.time._, format._
 
 /** A module's file name part is stackable, e.g. with Using[SmvRunConfig] */
@@ -36,7 +38,7 @@ trait FilenamePart {
  */
 abstract class SmvDataSet extends FilenamePart {
 
-  lazy val app: SmvApp            = SmvApp.app
+  def app: SmvApp                 = SmvApp.app
   private var rddCache: DataFrame = null
 
   /**
@@ -200,9 +202,9 @@ abstract class SmvDataSet extends FilenamePart {
    * skip the cache.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
    */
-  def rdd(forceRun: Boolean = false) = {
+  def rdd(forceRun: Boolean = false, genEdd: Boolean = app.genEdd) = {
     if (forceRun || !app.dfCache.contains(versionedFqn)) {
-      app.dfCache = app.dfCache + (versionedFqn -> computeRDD)
+      app.dfCache = app.dfCache + (versionedFqn -> computeRDD(genEdd))
     }
     app.dfCache(versionedFqn)
   }
@@ -310,12 +312,6 @@ abstract class SmvDataSet extends FilenamePart {
     val n       = counter.value
 
     println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
-
-    // if EDD flag was specified, generate EDD for the just saved file!
-    // Use the "cached" file that was just saved rather than cause an action
-    // on the input RDD which may cause some expensive computation to re-occur.
-    if (app.genEdd)
-      readFile(path).edd.persistBesideData(path)
   }
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
@@ -326,6 +322,9 @@ abstract class SmvDataSet extends FilenamePart {
       val json = app.sc.textFile(moduleMetaPath(prefix)).collect.head
       SmvMetadata.fromJson(json)
     }
+
+  private[smv] def readPersistedEdd(prefix: String = ""): Try[DataFrame] =
+    Try { app.sqlContext.read.json(moduleEddPath(prefix)) }
 
   /** Has the result of this data set been persisted? */
   private[smv] def isPersisted: Boolean =
@@ -346,6 +345,36 @@ abstract class SmvDataSet extends FilenamePart {
     else
       !isPersisted
   }
+
+  /**
+   * Read EDD from disk if it exists, or create and persist it otherwise
+   */
+  private[smv] def getEdd(): String = {
+    // DON'T automatically persist edd. Edd is explicitly persisted on the next
+    // line. This is the simplest way to prevent EDD from being persisted twice.
+    val df = rdd(forceRun = false, genEdd = false)
+
+    val unorderedSummary = readPersistedEdd().getOrElse {
+      persistEdd(df)
+      readPersistedEdd().get
+      // The persisted df's columns will be ordered arbitrarily, and need to be
+      // reordered to be a valid edd result
+    }.select(EddResult.resultSchema.head, EddResult.resultSchema.tail: _*)
+
+    // Summary rows will be ordered arbitrarily after persisting. Need
+    // to reorder according to the columns of the df. Original order of tasks will
+    // still most likely be lost
+    val orderedSummary = df.columns.map { dfColName =>
+      unorderedSummary.filter(unorderedSummary("colName") === dfColName)
+    }.reduce {
+      _.smvUnion(_)
+    }
+
+    EddResultFunctions(orderedSummary).createReport()
+  }
+
+  private[smv] def persistEdd(df: DataFrame) =
+    df.edd.persistBesideData(moduleCsvPath())
 
   /**
    * Get the most detailed metadata available without running this module. If
@@ -370,7 +399,7 @@ abstract class SmvDataSet extends FilenamePart {
     metadata
   }
 
-  private[smv] def computeRDD: DataFrame = {
+  private[smv] def computeRDD(genEdd: Boolean): DataFrame = {
     val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()))
     val validationSet = new ValidationSet(Seq(dqmValidator), isPersistValidateResult)
 
@@ -393,6 +422,10 @@ abstract class SmvDataSet extends FilenamePart {
               persist(df)
               validationSet.validate(df, true, moduleValidPath()) // has already had action (from persist)
               createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
+              // Generate and persist edd based on result of reading results from disk. Avoids
+              // a possibly expensive action on the result from before persisting.
+              if(genEdd)
+                persistEdd(df)
               readPersistedFile()
             }
           }
@@ -438,7 +471,7 @@ abstract class SmvDataSet extends FilenamePart {
     df.write.mode(SaveMode.Append).jdbc(url, tableName, connectionProperties)
   }
 
-  private[smv] lazy val parentStage: Option[String] = urn.getStage
+  private[smv] def parentStage: Option[String] = urn.getStage
 
   private[smv] def stageVersion()                   = parentStage flatMap { app.smvConfig.stageVersions.get(_) }
 
@@ -474,7 +507,7 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
 /**
  * SMV Dataset Wrapper around a hive table.
  */
-case class SmvHiveTable(override val tableName: String, val userQuery: String = null)
+class SmvHiveTable(override val tableName: String, val userQuery: String = null)
     extends SmvInputDataSet {
   override def description() = s"Hive Table: @${tableName}"
 
@@ -488,6 +521,12 @@ case class SmvHiveTable(override val tableName: String, val userQuery: String = 
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
     val df = app.sparkSession.sql(query)
     run(df)
+  }
+}
+
+object SmvHiveTable {
+  def apply(tableName: String, userQuery: String = null): SmvHiveTable = {
+    new SmvHiveTable(tableName, userQuery)
   }
 }
 
@@ -556,7 +595,6 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
 
   protected def findFullPath(_path: String) = {
     if (isFullPath || ("""^[\.\/]""".r).findFirstIn(_path) != None) _path
-    else if (_path.startsWith("input/")) s"${app.smvConfig.dataDir}/${_path}"
     else s"${app.smvConfig.inputDir}/${_path}"
   }
 
@@ -646,7 +684,7 @@ abstract class SmvSingleFile extends SmvFile {
 /**
  * Represents a raw input file with a given file path (can be local or hdfs) and CSV attributes.
  */
-case class SmvCsvFile(
+class SmvCsvFile(
     override val path: String,
     csvAttributes: CsvAttributes = null,
     override val schemaPath: String = null,
@@ -657,7 +695,19 @@ case class SmvCsvFile(
     handler.csvFileWithSchema(csvAttributes, Some(schema))
 }
 
-case class SmvFrlFile(
+object SmvCsvFile {
+  def apply(
+      path: String,
+      csvAttributes: CsvAttributes = null,
+      schemaPath: String = null,
+      isFullPath: Boolean = false,
+      userSchema: Option[String] = None
+  ): SmvCsvFile = {
+    new SmvCsvFile(path, csvAttributes, schemaPath, isFullPath, userSchema)
+  }
+}
+
+class SmvFrlFile(
     override val path: String,
     override val schemaPath: String = null,
     override val isFullPath: Boolean = false,
@@ -665,6 +715,17 @@ case class SmvFrlFile(
 ) extends SmvSingleFile {
   def readSingleFile(handler: FileIOHandler) =
     handler.frlFileWithSchema(Some(schema))
+}
+
+object SmvFrlFile {
+  def apply(
+    path: String,
+    schemaPath: String = null,
+    isFullPath: Boolean = false,
+    userSchema: Option[String] = None
+  ): SmvFrlFile = {
+    new SmvFrlFile(path, schemaPath, isFullPath, userSchema)
+  }
 }
 
 /**
@@ -870,7 +931,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
   /**
    * SmvModuleLinks should not cache or validate their data
    */
-  override def computeRDD =
+  override def computeRDD(genEdd: Boolean) =
     throw new SmvRuntimeException("SmvModuleLink computeRDD should never be called")
   override private[smv] def doRun(dqmValidator: DQMValidator) =
     throw new SmvRuntimeException("SmvModuleLink doRun should never be called")
@@ -882,8 +943,8 @@ class SmvModuleLink(val outputModule: SmvOutput)
    * and run the DS, or "not-follow-the-link", which will try to read from the persisted data dir
    * and fail if not found.
    */
-  override def rdd(force: Boolean = false): DataFrame = {
-    // force argument is ignored (SmvModuleLink is rerun anyway)
+  override def rdd(forceRun: Boolean = false, genEdd: Boolean = false): DataFrame = {
+    // forceRun argument is ignored (SmvModuleLink is rerun anyway)
     if (isFollowLink) {
       smvModule.readPublishedData().getOrElse(smvModule.rdd())
     } else {
@@ -974,7 +1035,7 @@ object SmvExtModulePython {
  * }}}
  *
  **/
-case class SmvCsvStringData(
+class SmvCsvStringData(
     schemaStr: String,
     data: String,
     override val isPersistValidateResult: Boolean = false
@@ -997,6 +1058,16 @@ case class SmvCsvStringData(
       if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
     val handler = new FileIOHandler(app.sparkSession, null, None, parserValidator)
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
+  }
+}
+
+object SmvCsvStringData {
+  def apply(
+      schemaStr: String,
+      data: String,
+      isPersistValidateResult: Boolean = false
+  ): SmvCsvStringData = {
+    new SmvCsvStringData(schemaStr, data, isPersistValidateResult)
   }
 }
 
