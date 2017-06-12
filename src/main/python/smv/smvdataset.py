@@ -614,10 +614,16 @@ class SmvModule(SmvDataSet):
                 (DataFrame): ouput of this SmvModule
         """
 
-    def _constructRunParams(self, known):
+    def _constructRunParams(self, urn2df):
+        """Given dict from urn to DataFrame, construct RunParams for module
+
+            A given module's result may not actually be a DataFrame. For each
+            dependency, apply its df2result method to its DataFrame to get its
+            actual result. Construct RunParams from the resulting dict.
+        """
         urn2res = {}
         for dep in self.dependencies():
-            df = DataFrame(known[dep.urn()], self.smvApp.sqlContext)
+            df = DataFrame(urn2df[dep.urn()], self.smvApp.sqlContext)
             urn2res[dep.urn()] = dep.df2result(df)
         i = self.RunParams(urn2res)
         return i
@@ -635,6 +641,7 @@ class SmvResultModule(SmvModule):
     def df2result(self, df):
         """Unpickle and decode module result stored in DataFrame
         """
+        # reverses result of applying result2df. see result2df for explanation.
         encoded_pickle = df.collect()[0][0]
         pickled_res = binascii.unhexlify(encoded_pickle)
         res = cPickle.loads(pickled_res)
