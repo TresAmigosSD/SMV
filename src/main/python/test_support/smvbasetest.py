@@ -18,12 +18,13 @@ import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import *
 
-import os, shutil
+import os, shutil, sys
 
 class SmvBaseTest(unittest.TestCase):
     # DataDir value is deprecated. Use tmpDataDir instead
     DataDir = "./target/data"
     PytestDir = "./target/pytest"
+    TestSrcDir = "./src/test/python"
 
     @classmethod
     def smvAppInitArgs(cls):
@@ -47,6 +48,8 @@ class SmvBaseTest(unittest.TestCase):
         # The original SmvApp (if any) will be restored when the test is torn down
         cls.smvApp = SmvApp.createInstance(args, cls.sparkSession)
 
+        sys.path.append(cls.testResourceDir())
+
         cls.mkTmpTestDir()
 
     @classmethod
@@ -56,6 +59,7 @@ class SmvBaseTest(unittest.TestCase):
         from smv.smvapp import SmvApp
         # Restore SmvApp singleton
         SmvApp.setInstance(TestConfig.originalSmvApp())
+        sys.path.remove(cls.testResourceDir())
 
     def setUp(self):
         """Patch for Python 2.6 without using unittest
@@ -91,6 +95,11 @@ class SmvBaseTest(unittest.TestCase):
 
         self.assertEqual(expected.columns, result.columns)
         self.assertEqual(sort_collect(expected), sort_collect(result))
+
+    @classmethod
+    def testResourceDir(cls):
+        """Directory where resources (like modules to run) for this test are expected."""
+        return cls.TestSrcDir + "/" + cls.__module__
 
     @classmethod
     def tmpTestDir(cls):

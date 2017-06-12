@@ -78,8 +78,8 @@ package object smv {
   /** implicitly convert `SmvGroupedData` to `GroupedData` */
   implicit def makeSmvGDCvrt(sgd: SmvGroupedData) = sgd.toGroupedData
 
-  /** implicitly convert `DataFrame` to `SmvDFWithKeys` */
-  implicit def makeSmvDFWithKeys(df: DataFrame) = SmvDFWithKeys(df, Nil)
+  /** implicitly convert `DataFrame` to `SmvGroupedData` */
+  implicit def makeSmvGroupedData(df: DataFrame) = SmvGroupedData(df, Nil)
 
   /** implicitly convert `StructField` to `StructFieldHelper` */
   private[smv] implicit def makeFieldHelper(field: StructField) = new StructFieldHelper(field)

@@ -1,3 +1,4 @@
 Flask
 jupyter
 graphviz
+sphinx

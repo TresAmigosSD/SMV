@@ -27,20 +27,20 @@ from py4j.protocol import Py4JJavaError
 class SmvFrameworkTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=smvframework.stage']
+        return ['--smv-props', 'smv.stages=stage']
 
     def _escapeRegex(self, s):
         import re
         return re.sub(r"([\[\]\(\)])", r"\\\1", s)
 
     def test_SmvCsvStringData(self):
-        fqn = "smvframework.stage.modules.D1"
+        fqn = "stage.modules.D1"
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer", "x,10;y,1")
         self.should_be_same(expect, df)
 
     def test_SmvCsvStringData_with_error(self):
-        fqn = "smvframework.stage.modules.D1WithError"
+        fqn = "stage.modules.D1WithError"
         with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
             df = self.df(fqn)
 
@@ -49,7 +49,7 @@ class SmvFrameworkTest(SmvBaseTest):
         self.createTempInputFile("multiCsvTest/f2", "col1\nb\n")
         self.createTempInputFile("multiCsvTest.schema", "col1: String\n")
 
-        fqn = "smvframework.stage.modules.MultiCsv"
+        fqn = "stage.modules.MultiCsv"
         df = self.df(fqn)
         exp = self.createDF("col1: String", "a;b")
         self.should_be_same(df, exp)
@@ -58,7 +58,7 @@ class SmvFrameworkTest(SmvBaseTest):
         self.createTempInputFile("test3.csv", "col1\na\nb\n")
         self.createTempInputFile("test3.schema", "col1: String\n")
 
-        fqn = "smvframework.stage.modules.CsvFile"
+        fqn = "stage.modules.CsvFile"
         df = self.df(fqn)
         exp = self.createDF("1loc: String", "a;b")
         self.should_be_same(df, exp)
@@ -68,13 +68,13 @@ class SmvFrameworkTest(SmvBaseTest):
         self.createTempInputFile("test3/f2", "col1\nb\n")
         self.createTempInputFile("test3.schema", "col1: String\n")
 
-        fqn = "smvframework.stage.modules.MultiCsvWithUserSchema"
+        fqn = "stage.modules.MultiCsvWithUserSchema"
         df = self.df(fqn)
         exp = self.createDF("1loc: String", "a;b")
         self.should_be_same(df, exp)
 
     def test_SmvDQM(self):
-        fqn = "smvframework.stage.modules.D3"
+        fqn = "stage.modules.D3"
 
         msg =""": org.tresamigos.smv.SmvDqmValidationError: {
   "passed":false,
@@ -100,11 +100,11 @@ class SmvRunConfigTest1(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s1', 'smv.config.i=1', 'smv.config.b=True', 'smv.stages=smvframework.stage',
+        return ['--smv-props', 'smv.config.s=s1', 'smv.config.i=1', 'smv.config.b=True', 'smv.stages=stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = "smvframework.stage.modules.D4"
+        fqn = "stage.modules.D4"
         df = self.df(fqn)
         expect = self.createDF("a: String;b: Integer",
             """test1_s1,1;
@@ -116,11 +116,11 @@ class SmvRunConfigTest2(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s2', 'smv.config.i=2', 'smv.config.b=false', 'smv.stages=smvframework.stage',
+        return ['--smv-props', 'smv.config.s=s2', 'smv.config.i=2', 'smv.config.b=false', 'smv.stages=stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = "smvframework.stage.modules.D4"
+        fqn = "stage.modules.D4"
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer",
             """test1_not_s1,2;

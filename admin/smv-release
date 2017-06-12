@@ -9,6 +9,8 @@ SMV_DIR="$(dirname "$SMV_ADMIN")"
 SMV_DIR_BASE="$(basename $SMV_DIR)"
 DOCKER_SMV_DIR="/projects/${SMV_DIR_BASE}" # SMV dir inside the docker image.
 PROJ_DIR="$(dirname "$SMV_DIR")" # assume parent of SMV directory is the projects dir.
+GHPAGES_DIR="${HOME}/.smv/ghpages"
+
 
 function info()
 {
@@ -26,7 +28,7 @@ function error()
 
 function usage()
 {
-  echo "USAGE: ${PROG_NAME} -g github_user:github_token -d docker_user docker_password smv_version_to_release(a.b.c.d)"
+  echo "USAGE: ${PROG_NAME} [--new-branch] -g github_user:github_token -d docker_user docker_password smv_version_to_release(a.b.c.d)"
   echo "See (https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) for auth tokens"
   exit $1
 }
@@ -43,6 +45,13 @@ function parse_args()
 {
   info "parsing command line args"
   [ "$1" = "-h" ] && usage 0
+
+  NEW_BRANCH=0
+  if [ "$1" = "--new-branch" ]; then
+    NEW_BRANCH=1
+    shift
+  fi
+
   [ $# -ne 6 ] && echo "ERROR: invalid number of arguments" && usage 1
   [ "$1" != "-g" ] && echo "ERROR: must supply github user name/token" && usage 1
   [ "$3" != "-d" ] && echo "ERROR: must supply dockerhub user name/password" && usage 1
@@ -55,6 +64,7 @@ function parse_args()
 
   # version specific vars
   TGZ_IMAGE="${LOGDIR}/smv_${SMV_VERSION}.tgz"
+  DOCS_DIR="${LOGDIR}/docs"
 }
 
 function check_for_existing_tag()
@@ -256,6 +266,100 @@ function create_docker_image()
   docker push tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker push failed"
 }
 
+function gen_pydocs()
+{
+  info "generating python docs"
+  local smv_py_dir="/projects/SMV/src/main/python"
+  local spark_py_dir="/usr/lib/spark/python"
+  mkdir -p ${DOCS_DIR}/python
+
+  # py4j lib dir version changes with spark version.  Must extract version used in spark.
+  py4j_lib=$(docker run --rm -it tresamigos/smv:latest -u $(id -u) \
+    sh -c "find ${spark_py_dir}/lib -maxdepth 1 -mindepth 1 -name 'py4j*-src.zip' -print")
+
+  docker run --rm -it \
+    -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/python:/pydoc \
+    tresamigos/smv:latest \
+    -u $(id -u)\
+    sh -c "
+      cd $DOCKER_SMV_DIR;
+      export PYTHONPATH=\"${smv_py_dir}:${spark_py_dir}:${py4j_lib}\";
+      sphinx-apidoc --full -o /pydoc ${smv_py_dir}/smv;
+      cd /pydoc;
+      make html" \
+    >> ${LOGFILE} 2>&1 || error "python doc generation failed"
+}
+
+function gen_scaladocs()
+{
+  info "generating scala docs"
+  mkdir -p ${DOCS_DIR}/scala
+
+  docker run --rm -it \
+    -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/scala:/scaladoc \
+    tresamigos/smv:latest \
+    -u $(id -u)\
+    sh -c "
+      cd $DOCKER_SMV_DIR;
+      sbt doc;
+      cp -R target/scala-*/api/* /scaladoc" \
+    >> ${LOGFILE} 2>&1 || error "scala doc generation failed"
+}
+
+# the gh-pages branch contains the static site docs.
+# the gh-pages branch will be cloned/pulled into ~/.smv/ghpages/SMV
+function get_latest_ghpages()
+{
+  info "fetching latest SMV gh-pages branch to ~/.smv/ghpages/SMV"
+
+  mkdir -p "${GHPAGES_DIR}"
+  cd "${GHPAGES_DIR}"
+
+  # clone repo if it does not exist, else just pull
+  if [ -d "SMV" ]; then
+    (cd "${GHPAGES_DIR}/SMV"; git pull) \
+      >> ${LOGFILE} 2>&1 || error "pulling latest SMV ghpages"
+  else
+    git clone -b gh-pages https://github.com/TresAmigosSD/SMV.git \
+      >> ${LOGFILE} 2>&1 || error "cloning SMV ghpages"
+  fi
+}
+
+# copy the generated py/scala docs to the ghpages dir under the current version.
+# update the links on the main index page to point to current version.
+function update_ghpages_docs()
+{
+  cd "${GHPAGES_DIR}/SMV"
+
+  info "copying pythondocs to ~/.smv/ghpages/SMV/pythondocs"
+  local py_ver_dir="pythondocs/${SMV_VERSION}"
+  mkdir -p $py_ver_dir
+  cp -R ${DOCS_DIR}/python/_build/html/* $py_ver_dir
+
+  info "copying scaladocs to ~/.smv/ghpages/SMV/scaladocs"
+  local scala_ver_dir="scaladocs/${SMV_VERSION}"
+  mkdir -p $scala_ver_dir
+  cp -R ${DOCS_DIR}/scala/* $scala_ver_dir
+
+  # do not update the index.html docs if this is the first branch release
+  # user will need to update the ghpages index to add the new entry.
+  if [ $NEW_BRANCH -eq 1 ]; then
+    info "WARNING!!!! need to update ghpages index.html manually"
+  else
+    info "updating version numbers in ghpages index.html"
+    sed -i '' "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" index.html
+  fi
+}
+
+function push_ghpages_docs()
+{
+  info "pushing doc updates to github SMV/gh-pages"
+  cd "${GHPAGES_DIR}/SMV"
+
+  git add .
+  git commit -a -m "updating docs to v${SMV_VERSION}"
+  git push >> ${LOGFILE} 2>&1 || error "pushing SMV ghpages"
+}
 
 # ---- MAIN ----
 create_logdir
@@ -267,10 +371,15 @@ find_gnu_tar
 find_release_msg_file
 check_git_repo
 build_smv
+gen_pydocs
+gen_scaladocs
 update_version
 tag_release
 create_tar
 create_github_release
 attach_tar_to_github_release
 create_docker_image
+get_latest_ghpages
+update_ghpages_docs
+push_ghpages_docs
 info "Finish Release on: $(date)"
