@@ -6,7 +6,7 @@ install:
   - export PATH="$PATH:$(pwd)/spark/bin"
   - pyenv install 2.7.10
   - pyenv install 3.5.2
-  - pyenv local 3.5.3 2.7.10
+  - pyenv local 3.5.2 2.7.10
   - sbt ++2.10.4 assembly
 script:
   - sbt ++2.10.4 test
