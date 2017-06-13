@@ -1,23 +1,14 @@
-matrix:
-  include:
-    - language: scala
-      scala:
-        - 2.10.4
-      install:
-        - tools/spark-install ./spark
-        - export PATH="$PATH:$(pwd)/spark/bin"
-      script:
-        - sbt ++2.10.4 test
-
-    - dist: trusty
-      scala:
-        - 2.10.4
-      python:
-        - 3.5.2
-        - 2.7.10
-      install:
-        - tools/spark-install ./spark
-        - export PATH="$PATH:$(pwd)/spark/bin"
-      script:
-        - sbt ++2.10.4 pytest
-        - sbt ++2.10.4 itest
+sudo: required
+dist: trusty
+language: python
+install:
+  - tools/spark-install ./spark
+  - export PATH="$PATH:$(pwd)/spark/bin"
+  - pyenv install 2.7.10
+  - pyenv install 3.5.2
+  - pyenv local 3.5.2 2.7.10
+  - pip install tox
+script:
+  - sbt ++2.10.4 test
+  - sbt ++2.10.4 publish-local
+  - tox
