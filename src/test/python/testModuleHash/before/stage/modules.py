@@ -15,49 +15,49 @@ from smv import SmvApp, SmvModule, SmvHiveTable, SmvCsvFile
 
 class ChangeCode(SmvModule):
     def requiresDS(self):
-		return []
+        return []
     def run(self, i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
 
 class AddComment(SmvModule):
     def requiresDS(self):
-		return []
+        return []
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,5")
 
 class DependencyA(SmvModule):
     def requiresDS(self):
-		return []
+        return []
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,6")
 
 class Dependent(DependencyA):
     def requiresDS(self):
-		return []
+        return []
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,7")
 
 class Upstream(SmvModule):
     def requiresDS(self):
-		return []
+        return []
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,45")
 
 class Downstream(SmvModule):
     def requiresDS(self):
-		return[Upstream]
+        return[Upstream]
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,30")
 
 class Parent(SmvModule):
     def requiresDS(self):
-		return[Upstream]
+        return[Upstream]
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,30")
 
 class HiveTableWithVersion(SmvHiveTable):
     def requiresDS(self):
-		return []
+        return []
     def tableName(self):
         return "HiveTableWithVersion"
     def version(self):
