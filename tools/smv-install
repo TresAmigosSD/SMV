@@ -20,7 +20,7 @@ function parse_args()
     shift
   fi
   # SMV version is updated automatically by smv-release
-  SMV_VERSION="1.5.2.10"
+  SMV_VERSION="1.5.2.11"
 
   SMV_DIR="SMV_${SMV_VERSION}"
   SPARK_DIR="spark-1.5.2-bin-2.7.2"
@@ -131,7 +131,7 @@ generate_profile_file() {
 
 # add a call in users "profile" file to source the generated SMV profile file
 source_profile_file() {
-  local user_profiles=".bash_profile .bash_login .profile .bashrc"
+  local user_profiles=".bash_profile .bash_login .bashrc .profile"
   local found_profile=""
   for up in $user_profiles; do
     if [ -f "${HOME}/${up}" ]; then

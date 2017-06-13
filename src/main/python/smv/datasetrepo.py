@@ -15,28 +15,26 @@ import traceback
 import pkgutil
 import inspect
 
-from error import SmvRuntimeError
-from utils import for_name, smv_copy_array
+from smv.error import SmvRuntimeError
+from smv.utils import for_name, smv_copy_array
+from smv.stacktrace_mixin import with_stacktrace, WithStackTrace
 
 """Python implementations of IDataSetRepoPy4J and IDataSetRepoFactoryPy4J interfaces
 """
 
-class DataSetRepoFactory(object):
+class DataSetRepoFactory(WithStackTrace):
     def __init__(self, smvApp):
         self.smvApp = smvApp
-        
+
+    @with_stacktrace
     def createRepo(self):
-        try:
-            return DataSetRepo(self.smvApp)
-        except BaseException as e:
-            traceback.print_exc()
-            raise e
+        return DataSetRepo(self.smvApp)
 
     class Java:
         implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
 
 
-class DataSetRepo(object):
+class DataSetRepo(WithStackTrace):
     def __init__(self, smvApp):
         self.smvApp = smvApp
         # Remove client modules from sys.modules to force reload of all client
@@ -46,7 +44,7 @@ class DataSetRepo(object):
     def _clear_sys_modules(self):
         """Clear all client modules from sys.modules
         """
-        for fqn in sys.modules.keys():
+        for fqn in list(sys.modules.keys()):
             for stage_name in self.smvApp.stages:
                 if fqn == stage_name or fqn.startswith(stage_name + "."):
                     sys.modules.pop(fqn)
@@ -54,30 +52,21 @@ class DataSetRepo(object):
 
     # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
     # from the most recent source
+    @with_stacktrace
     def loadDataSet(self, fqn):
-        try:
-            ds = for_name(fqn)(self.smvApp)
+        ds = for_name(fqn)(self.smvApp)
 
-            # Python issue https://bugs.python.org/issue1218234
-            # need to invalidate inspect.linecache to make dataset hash work
-            srcfile = inspect.getsourcefile(ds.__class__)
-            if srcfile:
-                inspect.linecache.checkcache(srcfile)
+        # Python issue https://bugs.python.org/issue1218234
+        # need to invalidate inspect.linecache to make dataset hash work
+        srcfile = inspect.getsourcefile(ds.__class__)
+        if srcfile:
+            inspect.linecache.checkcache(srcfile)
 
-            return ds
-        except BaseException as e:
-            traceback.print_exc()
-            raise e
+        return ds
 
+    @with_stacktrace
     def dataSetsForStage(self, stageName):
-        try:
-            return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvDataSet)
-        except BaseException as e:
-            traceback.print_exc()
-            raise e
-
-    def outputModsForStage(self, stageName):
-        return self.moduleUrnsForStage(stageName, lambda obj: obj.IsSmvModule and obj.IsSmvOutput)
+        return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvDataSet)
 
     def _moduleUrnsForStage(self, stageName, fn):
         # `walk_packages` can generate AttributeError if the system has

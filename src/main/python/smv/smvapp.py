@@ -20,21 +20,14 @@ import sys
 import traceback
 
 from py4j.java_gateway import java_import, JavaObject
-
 from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
-from utils import smv_copy_array, check_socket
-from error import SmvRuntimeError
 
-from datasetrepo import DataSetRepoFactory
 
-if sys.version >= '3':
-    basestring = unicode = str
-    long = int
-    from io import StringIO
-    from importlib import reload
-else:
-    from cStringIO import StringIO
+from smv.datasetrepo import DataSetRepoFactory
+from smv.utils import smv_copy_array, check_socket
+from smv.error import SmvRuntimeError
+
 
 class SmvApp(object):
     """The Python representation of SMV.
@@ -121,7 +114,7 @@ class SmvApp(object):
         _daemonize_callback_server()
 
         if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
-            print("Starting Py4j callback server on port {0}".format(cbs_port))
+            print("SMV starting Py4j callback server on port {0}".format(cbs_port))
             gw._shutdown_callback_server() # in case another has already started
             gw._start_callback_server(cbs_port)
             gw._python_proxy_port = gw._callback_server.port
@@ -132,10 +125,6 @@ class SmvApp(object):
 
         self.repoFactory = DataSetRepoFactory(self)
         self.j_smvPyClient.registerRepoFactory('Python', self.repoFactory)
-
-        # Suppress creation of .pyc files. These cause complications with
-        # reloading code and have led to discovering deleted modules (#612)
-        sys.dont_write_bytecode = True
 
     def appName(self):
         return self.j_smvApp.smvConfig().appName()

@@ -42,7 +42,7 @@ specified.
 ### SmvCsvFile (Python: *SmvCsvFile*)
 
 An `SmvCsvFile` is an input `SmvDataSet`, which user can point it to some Csv file and its schema
-file. Please refer [Csv File handling](smv_file.md) for details about the storage of the file,
+file. Please refer [Csv File handling](smv_input.md) for details about the storage of the file,
 associated schema file and CsvAttributes.
 
 **Scala**

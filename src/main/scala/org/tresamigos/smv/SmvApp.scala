@@ -119,6 +119,18 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   private[smv] def deletePersistedResults(dsList: Seq[SmvDataSet]) =
     dsList foreach (_.deleteOutputs)
 
+  def printDeadModules = {
+    if(smvConfig.cmdLine.printDeadModules()) {
+      val gu = new graph.SmvGraphUtil(this)
+      println("Dead modules by stage:")
+      println(gu.createDeadDSList())
+      println()
+      true
+    } else {
+      false
+    }
+  }
+
   /** Returns the app-level dependency graph as a dot string */
   def dependencyGraphDotString(stageNames: Seq[String] = stages): String =
     new graph.SmvGraphUtil(this, stageNames).createGraphvisCode(modulesToRun)
@@ -361,7 +373,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     }
 
     // either generate graphs, publish modules, or run output modules (only one will occur)
-    dryRun() || compareEddResults() ||
+    printDeadModules || dryRun() || compareEddResults() ||
       generateDotDependencyGraph() || generateJsonDependencyGraph() ||
       publishModulesToHive() ||  publishOutputModules() ||
       publishOutputModulesThroughJDBC() || publishOutputModulesLocally ||

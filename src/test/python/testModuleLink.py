@@ -14,8 +14,6 @@
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
 
-from fixture.stage2.links import L,B
-
 import unittest
 
 class ModuleLinkTest(SmvBaseTest):
@@ -23,7 +21,7 @@ class ModuleLinkTest(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=fixture.stage1:fixture.stage2',
+        return ['--smv-props', 'smv.stages=stage1:stage2',
                 '-m', 'output.A', '--publish', cls.PublishDir]
 
     @classmethod
@@ -36,11 +34,6 @@ class ModuleLinkTest(SmvBaseTest):
         super(ModuleLinkTest, self).setUp()
 
     def test_module_link_can_be_resolved(self):
-        self.smvApp.j_smvApp.run()
-        l = self.smvApp.runModule(L.urn())
-        lExpected = self.createDF("k:String;v:Integer", "a,;b,2")
-        self.should_be_same(lExpected, l) # link resolution
-
-        b = self.smvApp.runModule(B.urn())
+        b = self.df("stage2.links.B")
         bExpected = self.createDF("k:String;v:Integer;v2:Integer", "a,,;b,2,3")
         self.should_be_same(bExpected, b) # link as dependency

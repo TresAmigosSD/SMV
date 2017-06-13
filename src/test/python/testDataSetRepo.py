@@ -22,18 +22,24 @@ class DataSetRepoTest(SmvBaseTest):
     def smvAppInitArgs(cls):
         return ["--smv-props", "smv.stages=stage"]
 
+    @classmethod
+    def before_dir(cls):
+        return cls.testResourceDir() + "/before"
 
+    @classmethod
+    def after_dir(cls):
+        return cls.testResourceDir() + "/after"
 
     def build_new_repo(self): return DataSetRepo(self.smvApp)
 
     def test_discover_new_module_in_file(self):
         """DataSetRepo should discover SmvModules added to an existing file
         """
-        with ExtraPath("src/test/python/data_set_repo_1"):
+        with ExtraPath(self.before_dir()):
             # File should already have been imported before module is added
             self.build_new_repo().dataSetsForStage("stage")
 
-        with ExtraPath("src/test/python/data_set_repo_2"):
+        with ExtraPath(self.after_dir()):
             modules = list( self.build_new_repo().dataSetsForStage("stage") )
 
         self.assertTrue( "mod:stage.modules.NewModule" in modules, "mod:stage.modules.NewModule not in " + str(modules) )
@@ -46,7 +52,7 @@ class DataSetRepoTest(SmvBaseTest):
             This applies even when loading different SmvDataSets from the same file.
         """
         dsr = self.build_new_repo()
-        with ExtraPath("src/test/python/data_set_repo_1"):
+        with ExtraPath(self.before_dir()):
             dsA1 = dsr.loadDataSet("stage.modules.CompileOnceA").__class__
             # load a different SmvDataSet from the same file
             dsr.loadDataSet("stage.modules.CompileOnceB")
@@ -66,10 +72,10 @@ class DataSetRepoTest(SmvBaseTest):
             first time in a transaction it should be recompiled, and it should also
             trigger the reload of the ABC even if the ABC lives in another file.
         """
-        with ExtraPath("src/test/python/data_set_repo_1"):
+        with ExtraPath(self.before_dir()):
             abcmod1 = self.build_new_repo().loadDataSet("stage.modules.ImplMod").__class__
 
-        with ExtraPath("src/test/python/data_set_repo_1"):
+        with ExtraPath(self.before_dir()):
             abcmod2 = self.build_new_repo().loadDataSet("stage.modules.ImplMod").__class__
 
         self.assertNotEqual(abcmod1, abcmod2)

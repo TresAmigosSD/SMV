@@ -332,22 +332,32 @@ Reading from Hive tables is accomplished by wrapping the Hive table in an `SmvHi
 
 ### Scala
 ```scala
-object FooHiveTable extends SmvHiveTable("hiveschema.foo")
+object FooHiveTable extends SmvHiveTable("hiveschema.foo") {
+  def version = 1
+}
 
-object FooHiveTablWithQuery extends SmvHiveTable("hiveschema.foo", "SELECT mycol FROM hiveschema.foo")
+object FooHiveTablWithQuery extends SmvHiveTable("hiveschema.foo", "SELECT mycol FROM hiveschema.foo") {
+  def version = 2
+}
 ```
 ### Python
 ```Python
 class FooHiveTable(SmvHiveTable):
+  def version(self):
+    return "1"
   def tableName(self):
     return "hiveschema.foo"
 
 class FooHiveTableWithQuery(SmvHiveTable):
+  def version(self):
+    return "2"
   def tableName(self):
     return "hiveschema.foo"
   def tableQuery(self):
     return "SELECT mycol FROM " + tableName
 ```
+
+For other inputs like `SmvCsvFile`, we heuristically detect changes in data by checking things like the timestamp on the file. Unfortunately, we don't have a way to do this with `SmvHiveTables`. If the data changes and you want the table and its downstream modules to be run, just update your `SmvHiveTable's` version. 
 
 # JDBC Inputs
 
@@ -364,5 +374,7 @@ class FooJdbcTable(SmvJdbcTable):
   def tableName(self):
     return "myTableName"
 ```
+
+Like `SmvHiveTable`, you will need to update a `SmvJdbcTable's` version to force it and its downstream modules to rerun after the data changes.
 
 *=This feature currently only available in Scala smv-shell

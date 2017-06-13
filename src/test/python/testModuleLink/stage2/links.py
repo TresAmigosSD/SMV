@@ -10,8 +10,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from smv import SmvModule
 
-class ABCMod(SmvModule):
-    def requiresDS(self): return []
-    def run(self, i): return None
+from smv import SmvModule, SmvModuleLink
+from stage1.output import A
+from pyspark.sql.functions import col, lit
+
+L = SmvModuleLink(A)
+
+class B(SmvModule):
+
+    def requiresDS(self): return [L]
+    def run(self, i):
+        df = i[L]
+        return df.smvSelectPlus((col("v") + 1).alias("v2"))

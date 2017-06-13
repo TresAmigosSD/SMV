@@ -18,8 +18,6 @@ from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
-from utils import smv_copy_array
-from stacktrace_mixin import WithStackTrace, with_stacktrace
 
 import abc
 import inspect
@@ -28,16 +26,11 @@ import traceback
 import cPickle
 import binascii
 
-from dqm import SmvDQM
-from error import SmvRuntimeError
+from smv.dqm import SmvDQM
+from smv.error import SmvRuntimeError
+from smv.utils import smv_copy_array
+from smv.stacktrace_mixin import WithStackTrace, with_stacktrace
 
-if sys.version >= '3':
-    basestring = unicode = str
-    long = int
-    from io import StringIO
-    from importlib import reload
-else:
-    from cStringIO import StringIO
 
 def _disassemble(obj):
     """Disassembles a module and returns bytecode as a string.
@@ -63,7 +56,7 @@ def _smvhash(text):
     use to calculate sourceCodeHash.
     """
     import binascii
-    return binascii.crc32(text)
+    return binascii.crc32(text.encode())
 
 def _stripComments(code):
     import re
@@ -146,54 +139,54 @@ class SmvDataSet(WithStackTrace):
         """
         return "0";
 
+    @with_stacktrace
     def isOutput(self):
         return isinstance(self, SmvOutput)
 
     # Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash
     # to compute datasetHash
+    @with_stacktrace
     def sourceCodeHash(self):
         """Hash computed based on the source code of the dataset's class
         """
+        cls = self.__class__
         try:
-            cls = self.__class__
-            try:
-                src = inspect.getsource(cls)
-                src_no_comm = _stripComments(src)
-                # DO NOT use the compiled byte code for the hash computation as
-                # it doesn't change when constant values are changed.  For example,
-                # "a = 5" and "a = 6" compile to same byte code.
-                # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
-                res = _smvhash(src_no_comm)
-            except Exception as err: # `inspect` will raise error for classes defined in the REPL
-                # Instead of handle the case that module defined in REPL, just raise Exception here
-                # res = _smvhash(_disassemble(cls))
-                traceback.print_exc()
-                message = "{0}({1!r})".format(type(err).__name__, err.args)
-                raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
-
-            # include sourceCodeHash of parent classes
-            for m in inspect.getmro(cls):
-                try:
-                    if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
-                        res += m(self.smvApp).sourceCodeHash()
-                except: pass
-
-            # if module inherits from SmvRunConfig, then add hash of all config values to module hash
-            if hasattr(self, "_smvGetRunConfigHash"):
-                res += self._smvGetRunConfigHash()
-
-            # ensure python's numeric type can fit in a java.lang.Integer
-            return res & 0x7fffffff
-        except BaseException as e:
+            src = inspect.getsource(cls)
+            src_no_comm = _stripComments(src)
+            # DO NOT use the compiled byte code for the hash computation as
+            # it doesn't change when constant values are changed.  For example,
+            # "a = 5" and "a = 6" compile to same byte code.
+            # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
+            res = _smvhash(src_no_comm)
+        except Exception as err: # `inspect` will raise error for classes defined in the REPL
+            # Instead of handle the case that module defined in REPL, just raise Exception here
+            # res = _smvhash(_disassemble(cls))
             traceback.print_exc()
-            raise e
+            message = "{0}({1!r})".format(type(err).__name__, err.args)
+            raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
 
+        # include sourceCodeHash of parent classes
+        for m in inspect.getmro(cls):
+            try:
+                if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
+                    res += m(self.smvApp).sourceCodeHash()
+            except: pass
+
+        # if module inherits from SmvRunConfig, then add hash of all config values to module hash
+        if hasattr(self, "_smvGetRunConfigHash"):
+            res += self._smvGetRunConfigHash()
+
+        # ensure python's numeric type can fit in a java.lang.Integer
+        return res & 0x7fffffff
+
+    @with_stacktrace
     def instanceValHash(self):
         """Hash computed based on instance values of the dataset, such as the timestamp of an input file
         """
         return 0
 
     @classmethod
+    @with_stacktrace
     def fqn(cls):
         """Returns the fully qualified name
         """
@@ -230,49 +223,31 @@ class SmvDataSet(WithStackTrace):
         return None
 
     @abc.abstractmethod
+    @with_stacktrace
     def dsType(self):
         """Return SmvDataSet's type"""
 
+    @with_stacktrace
     def dqmWithTypeSpecificPolicy(self):
-        try:
-            res = self.dqm()
-        except BaseException as err:
-            traceback.print_exc()
-            raise err
-
-        return res
+        return self.dqm()
 
     def dependencies(self):
         """Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)
         """
         return self.requiresDS()
 
+    @with_stacktrace
     def dependencyUrns(self):
-        # Try/except block is a short-term solution (read: hack) to ensure that
-        # the user gets a full stack trace when SmvDataSet user-defined methods
-        # causes errors
-        try:
-            arr = smv_copy_array(self.smvApp.sc, *[x.urn() for x in self.dependencies()])
-        except BaseException as err:
-            traceback.print_exc()
-            raise err
+        arr = [x.urn() for x in self.requiresDS()]
+        return smv_copy_array(self.smvApp.sc, *arr)
 
-        return arr
-
+    @with_stacktrace
     def getDataFrame(self, validator, known):
-        # Try/except block is a short-term solution (read: hack) to ensure that
-        # the user gets a full stack trace when SmvDataSet user-defined methods
-        # causes errors
-        try:
-            df = self.doRun(validator, known)
-            if not isinstance(df, DataFrame):
-                raise SmvRuntimeError(self.fqn() + " produced " + type(df).__name__ + " in place of a DataFrame")
-            else:
-                jdf = df._jdf
-        except BaseException as err:
-            traceback.print_exc()
-            raise err
-
+        df = self.doRun(validator, known)
+        if not isinstance(df, DataFrame):
+            raise SmvRuntimeError(self.fqn() + " produced " + type(df).__name__ + " in place of a DataFrame")
+        else:
+            jdf = df._jdf
         return jdf
 
     @classmethod
@@ -317,7 +292,6 @@ class SmvInput(SmvDataSet):
         """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
            that is created in their init."""
 
-
     def instanceValHash(self):
         # Defer to Scala target for instanceValHash
         return self.getRawScalaInputDS().instanceValHash()
@@ -332,13 +306,9 @@ class WithParser(object):
     def dqmWithTypeSpecificPolicy(self):
         """for parsers we should get the type specific dqm policy from the
            concrete scala proxy class that is the actual input (e.g. SmvCsvFile)"""
-        try:
-            userDqm = self.dqm()
-            scalaInputDS = self.getRawScalaInputDS()
-            res = scalaInputDS.dqmWithTypeSpecificPolicy(userDqm)
-        except BaseException as err:
-            traceback.print_exc()
-            raise err
+        userDqm = self.dqm()
+        scalaInputDS = self.getRawScalaInputDS()
+        res = scalaInputDS.dqmWithTypeSpecificPolicy(userDqm)
 
         return res
 
@@ -504,6 +474,7 @@ class SmvJdbcTable(SmvInput):
         return self._smvJdbcTable.description()
 
     @abc.abstractproperty
+    @with_stacktrace
     def tableName(self):
         """User-specified name for the table to extract input from
 
@@ -533,6 +504,7 @@ class SmvHiveTable(SmvInput):
         return self._smvHiveTable
 
     @abc.abstractproperty
+    @with_stacktrace
     def tableName(self):
         """User-specified name Hive hive table to extract input from
 
