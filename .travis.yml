@@ -1,8 +1,15 @@
-language: scala
-scala:
-   - 2.10.4
+sudo: required
+dist: trusty
+language: python
 install:
   - tools/spark-install ./spark
   - export PATH="$PATH:$(pwd)/spark/bin"
+  - pyenv install 2.7.10
+  - pyenv install 3.5.2
+  - pyenv local 3.5.2 2.7.10
+  - pip install tox
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION alltest
+  - sbt ++2.10.4 assembly
+  - sbt ++2.10.4 publish-local
+  - sbt ++2.10.4 test
+  - tox

@@ -18,25 +18,17 @@ from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
-from utils import smv_copy_array
-from stacktrace_mixin import WithStackTrace, with_stacktrace
 
 import abc
-
 import inspect
 import sys
 import traceback
 
-from dqm import SmvDQM
-from error import SmvRuntimeError
+from smv.dqm import SmvDQM
+from smv.error import SmvRuntimeError
+from smv.utils import smv_copy_array
+from smv.stacktrace_mixin import WithStackTrace, with_stacktrace
 
-if sys.version >= '3':
-    basestring = unicode = str
-    long = int
-    from io import StringIO
-    from importlib import reload
-else:
-    from cStringIO import StringIO
 
 def _disassemble(obj):
     """Disassembles a module and returns bytecode as a string.
@@ -62,7 +54,7 @@ def _smvhash(text):
     use to calculate sourceCodeHash.
     """
     import binascii
-    return binascii.crc32(text)
+    return binascii.crc32(text.encode())
 
 def _stripComments(code):
     import re

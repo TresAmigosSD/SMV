@@ -74,7 +74,7 @@ def help():
     import re
     strip_margin = lambda text: re.sub('\n[ \t]*\|', '\n', text)
 
-    print strip_margin(
+    help_msg = strip_margin(
      """Here is a list of SMV-shell command
        |
        |Please refer to the API doc for details:
@@ -94,7 +94,9 @@ def help():
        |  * now()
        |  * discoverSchema(filePath)
        """
-   )
+    )
+
+    print(help_msg)
 
 def lsStage():
     """List all the stages
@@ -201,7 +203,8 @@ def edd(ds_name):
         Args:
             ds_name (str): name of an SmvDataSet
     """
-    print _jvmShellCmd()._edd(ds_name)
+    report = _jvmShellCmd()._edd(ds_name)
+    print(report)
 
 def run_test(test_name):
     """Run a test with the given name without creating new Spark context
