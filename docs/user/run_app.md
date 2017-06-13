@@ -133,6 +133,13 @@ publish the specified modules to the local file system
 </tr>
 
 <tr>
+<td>--dead</td>
+<td>off</td>
+<td>Print a list of the dead modules in this application
+</td>
+</tr>
+
+<tr>
 <td>--spark-home</td>
 <td>SPARK_HOME environment variable or location of spark-submit</td>
 <td>Location where SMV should find Spark installation.
