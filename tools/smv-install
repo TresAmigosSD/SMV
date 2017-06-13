@@ -20,7 +20,7 @@ function parse_args()
     shift
   fi
   # SMV version is updated automatically by smv-release
-  SMV_VERSION="1.5.2.10"
+  SMV_VERSION="2.1.0.0"
 
   SMV_DIR="SMV_${SMV_VERSION}"
   SPARK_DIR="spark-2.1.0-bin-2.7"
