@@ -5,4 +5,4 @@ __all__ = ['EmploymentByState']
 
 class input(SmvCsvFile):
     def path(self):
-        return "input/employment/CB1200CZ11.csv"
+        return "employment/CB1200CZ11.csv"

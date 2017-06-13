@@ -594,7 +594,6 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
 
   protected def findFullPath(_path: String) = {
     if (isFullPath || ("""^[\.\/]""".r).findFirstIn(_path) != None) _path
-    else if (_path.startsWith("input/")) s"${app.smvConfig.dataDir}/${_path}"
     else s"${app.smvConfig.inputDir}/${_path}"
   }
 

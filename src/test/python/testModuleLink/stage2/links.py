@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smv import SmvModule, SmvModuleLink
-from fixture.stage1.output import A
+from stage1.output import A
 from pyspark.sql.functions import col, lit
 
 L = SmvModuleLink(A)

@@ -5,7 +5,7 @@ __all__ = ['EmploymentByState']
 
 class Employment(SmvCsvFile):
     def path(self):
-        return "input/employment/CB1200CZ11.csv"
+        return "employment/CB1200CZ11.csv"
 
     def failAtParsingError(self):
         return False
