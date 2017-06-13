@@ -51,10 +51,10 @@ class ModuleHashTest(SmvBaseTest):
         assertion(hash1, hash2)
 
     def assert_hash_should_change(self, fqn):
-        self.compare_resource_hash(fqn,self.assertNotEqual)
+        self.compare_resource_hash(fqn, self.assertNotEqual)
 
     def assert_hash_should_not_change(self, fqn):
-        self.compare_resource_hash(fqn,self.assertEqual)
+        self.compare_resource_hash(fqn, self.assertEqual)
 
     def test_add_comment_should_not_change_hash(self):
         """hash will not change if we add a comment to its code"""
@@ -72,6 +72,14 @@ class ModuleHashTest(SmvBaseTest):
         """hash will change if we change code for class that module inherits from"""
         self.assert_hash_should_change("stage.modules.Child")
 
-    def test_change_upstream_module_should_not_change_datasethash(self):
+    def test_change_upstream_module_should_not_change_hash(self):
         """hash will not change if we change module that is listed in module's requiresDS"""
         self.assert_hash_should_not_change("stage.modules.Downstream")
+
+    def test_change_hive_table_version_should_change_hash(self):
+        """updating version of SmvHiveTable will force change of hash"""
+        self.assert_hash_should_change("stage.modules.HiveTableWithVersion")
+
+    def test_change_csv_file_run_method_should_change_hash(self):
+        """updating run method of SmvCsvFile will change hash"""
+        self.assert_hash_should_change("stage.modules.CsvFileWithRun")
