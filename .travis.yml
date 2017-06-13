@@ -11,4 +11,5 @@ install:
   - sbt ++2.10.4 assembly
 script:
   - sbt ++2.10.4 test
+  - sbt ++2.10.4 publish-local
   - tox
