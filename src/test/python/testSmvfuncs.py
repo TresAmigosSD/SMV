@@ -14,12 +14,12 @@
 import unittest
 import sys
 
-from test_support.smvbasetest import SmvBaseTest
-
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import *
+
+from test_support.smvbasetest import SmvBaseTest
 from smv.functions import *
 
 class SmvfuncsTest(SmvBaseTest):

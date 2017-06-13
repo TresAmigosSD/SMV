@@ -28,7 +28,7 @@ PartialTime has the following methods
     * timeType(): returns (str), the type of the PartialTime
 """
 
-from smvapp import SmvApp
+from smv.smvapp import SmvApp
 
 def Quarter(year, quarter):
     """Define an smv.panel.Quarter

@@ -12,7 +12,7 @@
 # limitations under the License.
 from smv import SmvModule
 
-from abcmod import ABCMod
+from stage.abcmod import ABCMod
 
 class OldModule(SmvModule):
     def requiresDS(self): return []

@@ -16,9 +16,9 @@ This module defined the SmvRunConfig class which can be mixed-in into an
 SmvModule to get user configuration parameters at run-time.
 """
 
-from smvapp import SmvApp
 import traceback
 
+from smv.smvapp import SmvApp
 
 class SmvRunConfig(object):
     """Mix-in class to SmvModules that enable the module to access user run

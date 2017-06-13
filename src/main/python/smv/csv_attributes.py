@@ -16,7 +16,7 @@ This module defined the SmvRunConfig class which can be mixed-in into an
 SmvModule to get user configuration parameters at run-time.
 """
 
-from smvapp import SmvApp
+from smv.smvapp import SmvApp
 
 def CsvAttributes(delimiter=',', quotechar='"', hasHeader=False):
     return SmvApp.getInstance()._mkCsvAttr(delimiter, quotechar, hasHeader)

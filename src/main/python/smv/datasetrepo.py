@@ -15,9 +15,9 @@ import traceback
 import pkgutil
 import inspect
 
-from error import SmvRuntimeError
-from utils import for_name, smv_copy_array
-from stacktrace_mixin import with_stacktrace, WithStackTrace
+from smv.error import SmvRuntimeError
+from smv.utils import for_name, smv_copy_array
+from smv.stacktrace_mixin import with_stacktrace, WithStackTrace
 
 """Python implementations of IDataSetRepoPy4J and IDataSetRepoFactoryPy4J interfaces
 """
@@ -44,7 +44,7 @@ class DataSetRepo(WithStackTrace):
     def _clear_sys_modules(self):
         """Clear all client modules from sys.modules
         """
-        for fqn in sys.modules.keys():
+        for fqn in list(sys.modules.keys()):
             for stage_name in self.smvApp.stages:
                 if fqn == stage_name or fqn.startswith(stage_name + "."):
                     sys.modules.pop(fqn)

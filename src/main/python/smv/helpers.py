@@ -19,11 +19,13 @@ from pyspark import SparkContext
 from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col, lit
-from utils import smv_copy_array
-from error import SmvRuntimeError
 
 import sys
 import inspect
+
+from smv.utils import smv_copy_array
+from smv.error import SmvRuntimeError
+from smv.utils import is_string
 
 # common converters to pass to _to_seq and _to_list
 def _jcol(c): return c._jc
@@ -377,7 +379,8 @@ def _getUnboundMethod(helperCls, methodName):
     return method
 
 def _helpCls(receiverCls, helperCls):
-    for name, method in inspect.getmembers(helperCls, predicate=inspect.ismethod):
+    iscallable = lambda f: hasattr(f, "__call__")
+    for name, method in inspect.getmembers(helperCls, predicate=iscallable):
         # ignore special and private methods
         if not name.startswith("_"):
             newMethod = _getUnboundMethod(helperCls, name)
@@ -432,9 +435,9 @@ class DataFrameHelper(object):
                 (SmvGroupedData): grouped data object
 
         """
-        if (isinstance(cols[0], Column)):
+        if isinstance(cols[0], Column):
             keys = [ColumnHelper(c).smvGetColName() for c in cols]
-        elif (isinstance(cols[0], basestring)):
+        elif is_string(cols[0]):
             keys = list(cols)
         else:
             raise SmvRuntimeError("smvGroupBy does not support type: " + type(cols[0]))
@@ -458,9 +461,9 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): sampled DF
         """
-        if (isinstance(key, basestring)):
+        if is_string(key):
             jkey = col(key)._jc
-        elif (isinstance(key, Column)):
+        elif isinstance(key, Column):
             jkey = key._jc
         else:
             raise RuntimeError("key parameter must be either a String or a Column")
@@ -532,7 +535,7 @@ class DataFrameHelper(object):
                 (list(object)): most frequent values (type depends on schema)
         """
         topNdf = DataFrame(self._jDfHelper._topNValsByFreq(n, col._jc), self._sql_ctx)
-        return map(lambda r: r.asDict().values()[0], topNdf.collect())
+        return [list(r)[0] for r in topNdf.collect()]
 
     def smvSkewJoinByKey(self, other, joinType, skewVals, key):
         """Join that leverages broadcast (map-side) join of rows with skewed (high-frequency) values
@@ -1059,7 +1062,7 @@ class DataFrameHelper(object):
         self._println(self._smvFreqHist(*cols))
 
     def _smvCountHist(self, keys, binSize):
-        if isinstance(keys, basestring):
+        if is_string(keys):
             res = self._jDfHelper._smvCountHist(_to_seq([keys]), binSize)
         else:
             res = self._jDfHelper._smvCountHist(_to_seq(keys), binSize)

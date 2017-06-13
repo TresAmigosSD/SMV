@@ -1,15 +1,15 @@
 # Smv DataSet Framework
-from smvdataset import *
+from smv.smvdataset import *
 
 # Smv DataFrame and Column helpers
-from helpers import *
+from smv.helpers import *
 
-from smvapp import SmvApp
+from smv.smvapp import SmvApp
 
-from runconfig import SmvRunConfig
-from csv_attributes import CsvAttributes
+from smv.runconfig import SmvRunConfig
+from smv.csv_attributes import CsvAttributes
 
-import dqm
+import smv.dqm
 
 # keep old py names for backwards compatibility
 SmvPyCsvFile = SmvCsvFile
