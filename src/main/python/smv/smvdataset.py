@@ -23,7 +23,6 @@ import abc
 import inspect
 import sys
 import traceback
-import cPickle
 import binascii
 
 from smv.dqm import SmvDQM
@@ -595,7 +594,8 @@ class SmvModule(SmvDataSet):
         """
         urn2res = {}
         for dep in self.dependencies():
-            df = DataFrame(urn2df[dep.urn()], self.smvApp.sqlContext)
+            jdf = urn2df[dep.urn()]
+            df = DataFrame(jdf, self.smvApp.sqlContext)
             urn2res[dep.urn()] = dep.df2result(df)
         i = self.RunParams(urn2res)
         return i
@@ -614,9 +614,9 @@ class SmvResultModule(SmvModule):
         """Unpickle and decode module result stored in DataFrame
         """
         # reverses result of applying result2df. see result2df for explanation.
-        encoded_pickle = df.collect()[0][0]
-        pickled_res = binascii.unhexlify(encoded_pickle)
-        res = cPickle.loads(pickled_res)
+        hex_encoded_pickle_as_str = df.collect()[0][0]
+        pickled_res_as_str = binascii.unhexlify(hex_encoded_pickle_as_str)
+        res = pickle_lib.loads(pickled_res_as_str)
         return res
 
     @classmethod
@@ -625,12 +625,15 @@ class SmvResultModule(SmvModule):
         """
         # pickle the result object. this will use the most optimal pickling
         # protocol available for this version of cPickle
-        pickled_res = cPickle.dumps(res_obj, -1)
-        # pickle may contain problematic characters (like newlines), so we
+        pickled_res = pickle_lib.dumps(res_obj, -1)
+        # pickle may contain problematic characters like newlines, so we
         # encode the pickle it as a hex string
-        encoded_pickle = binascii.hexlify(pickled_res)
+        hex_encoded_pickle = binascii.hexlify(pickled_res)
+        # encoding will be a bytestring object if in Python 3, so need to convert it to string
+        # str.decode converts string to utf8 in python 2 and bytes to str in Python 3
+        hex_encoded_pickle_as_str = hex_encoded_pickle.decode()
         # insert the resulting serialization into a DataFrame
-        df = smvApp.createDF("pickled_result: String", encoded_pickle)
+        df = smvApp.createDF("pickled_result: String", hex_encoded_pickle_as_str)
         return df
 
     @abc.abstractmethod
@@ -696,7 +699,7 @@ class SmvModelExec(SmvModule):
                 (SmvModel): the SmvModel this module depends on
         """
 
-    def doRun(self, validtor, known):
+    def doRun(self, validator, known):
         i = self._constructRunParams(known)
         model = i[self.requiresModel()]
         return self.run(i, model)
