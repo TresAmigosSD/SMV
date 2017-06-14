@@ -18,6 +18,9 @@ package dqm
 import scala.util.Try
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.udf
+import org.json4s.{JObject, JString, JBool, JArray}
+import org.json4s.jackson.JsonMethods.{parse}
+import org.apache.commons.lang.StringEscapeUtils.escapeJava
 
 /**
  * DQM class for data quality check and fix
@@ -158,25 +161,25 @@ class DQMValidator(dqm: SmvDQM, isPersist: Boolean) {
     df.rdd.count
   }
 
-  private def persist(res: ValidationResult, path: String) = {
+  private def persist(res: DqmValidationResult, path: String) = {
     SmvReportIO.saveReport(res.toJSON, path)
   }
 
-  private def toConsole(res: ValidationResult) = {
+  private def toConsole(res: DqmValidationResult) = {
     SmvReportIO.printReport(res.toJSON())
   }
 
-  private def terminateAtError(result: ValidationResult) = {
+  private def terminateAtError(result: DqmValidationResult) = {
     if (!result.passed) {
       val r = result.toJSON()
       throw new SmvDqmValidationError(r)
     }
   }
 
-  private def readPersistsedValidationFile(path: String): Try[ValidationResult] = {
+  private def readPersistsedValidationFile(path: String): Try[DqmValidationResult] = {
     Try({
       val json = SmvReportIO.readReport(path)
-      ValidationResult(json)
+      DqmValidationResult(json)
     })
   }
 
@@ -198,7 +201,7 @@ class DQMValidator(dqm: SmvDQM, isPersist: Boolean) {
       result
   }
 
-  def doValidate(df: DataFrame, forceAction: Boolean, path: String = ""): ValidationResult = {
+  def doValidate(df: DataFrame, forceAction: Boolean, path: String = ""): DqmValidationResult = {
     if (forceAction)
       doForceAction(df)
 
@@ -231,6 +234,76 @@ class DQMValidator(dqm: SmvDQM, isPersist: Boolean) {
     }
     val checkLog = dqmState.getAllLog()
 
-    new ValidationResult(passed, errorMessages, checkLog)
+    new DqmValidationResult(passed, errorMessages, checkLog)
+  }
+}
+
+/**
+ * DqmValidator will generate DqmValidationResult, which has
+ * @param passed whether the validation passed or not
+ * @param errorMessages detailed messages for sub results which the passed flag depends on
+ * @param checkLog useful logs for reporting
+ **/
+case class DqmValidationResult(
+    passed: Boolean,
+    errorMessages: Seq[(String, String)] = Nil,
+    checkLog: Seq[String] = Nil
+) {
+  def ++(that: DqmValidationResult) = {
+    new DqmValidationResult(
+      this.passed && that.passed,
+      this.errorMessages ++ that.errorMessages,
+      this.checkLog ++ that.checkLog
+    )
+  }
+
+  def toJSON() = {
+    def e(s: String) = escapeJava(s)
+
+    "{\n" ++
+      """  "passed":%s,""".format(passed) ++ "\n" ++
+      """  "errorMessages": [""" ++ "\n" ++
+      errorMessages
+        .map { case (k, m) => """    {"%s":"%s"}""".format(e(k), e(m)) }
+        .mkString(",\n") ++ "\n" ++
+      "  ],\n" ++
+      """  "checkLog": [""" ++ "\n" ++
+      checkLog
+        .map { l =>
+          """    "%s"""".format(e(l))
+        }
+        .mkString(",\n") ++ "\n" ++
+      "  ]\n" ++
+      "}"
+  }
+
+  def isEmpty() = passed && checkLog.isEmpty
+
+}
+
+/** construct DqmValidationResult from JSON string */
+private[smv] object DqmValidationResult {
+  def apply(jsonStr: String) = {
+    val json = parse(jsonStr)
+    val (passed, errorList, checkList) = json match {
+      case JObject(List((_, JBool(p)), (_, JArray(e)), (_, JArray(c)))) => (p, e, c)
+      case _                                                            => throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+    }
+    val errorMessages = errorList.map { e =>
+      e match {
+        case JObject(List((k, JString(v)))) => (k, v)
+        case _ =>
+          throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+      }
+    }
+    val checkLog = checkList.map { e =>
+      e match {
+        case JString(l) => l
+        case _ =>
+          throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+      }
+    }
+
+    new DqmValidationResult(passed, errorMessages, checkLog)
   }
 }

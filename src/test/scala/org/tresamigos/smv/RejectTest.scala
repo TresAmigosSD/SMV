@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.SparkException
-import dqm.{SmvDQM, FailParserCountPolicy}
+import dqm.{SmvDQM, DqmValidationResult, FailParserCountPolicy}
 
 class RejectTest extends SmvTestUtil {
   test("test csvFile loader rejection with NoOp") {
@@ -43,7 +43,7 @@ class RejectTest extends SmvTestUtil {
       val df = open(testDataDir + "RejectTest/test2")
     }
     val m   = e.getMessage
-    val res = ValidationResult(m)
+    val res = DqmValidationResult(m)
     assertUnorderedSeqEqual(
       res.checkLog,
       Seq(
@@ -63,7 +63,7 @@ class RejectTest extends SmvTestUtil {
       override def dqm()              = SmvDQM().add(FailParserCountPolicy(10))
     }
     val df  = file.rdd()
-    val res = ValidationResult(SmvReportIO.readReport(file.moduleValidPath()))
+    val res = DqmValidationResult(SmvReportIO.readReport(file.moduleValidPath()))
     assert(res.passed === true)
     assertUnorderedSeqEqual(res.errorMessages, Seq(("FailParserCountPolicy(10)", "true")))
   }

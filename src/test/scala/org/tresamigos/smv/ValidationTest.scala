@@ -15,11 +15,12 @@
 package org.tresamigos.smv
 
 import org.json4s.jackson.JsonMethods._
+import dqm.DqmValidationResult
 
 class ValidationTest extends SmvTestUtil {
 
-  test("Test ValidationResult json convertion test") {
-    val v = ValidationResult(
+  test("Test DqmValidationResult json convertion test") {
+    val v = DqmValidationResult(
       false,
       Seq(("p1", "many issues:\n Issue1: ...\n Issue2: ..."), ("p2", "Simpy issue")),
       Seq("log1", "log2")
@@ -38,23 +39,23 @@ class ValidationTest extends SmvTestUtil {
   "checkLog" : [ "log1", "log2" ]
 }""")
 
-    val v2 = ValidationResult(str)
+    val v2 = DqmValidationResult(str)
     assert(v === v2)
   }
 
-  test("Test ValidationResult ++ operator") {
-    val v1 = ValidationResult(
+  test("Test DqmValidationResult ++ operator") {
+    val v1 = DqmValidationResult(
       true,
       Nil,
       Seq("log1")
     )
-    val v2 = ValidationResult(
+    val v2 = DqmValidationResult(
       false,
       Seq(("p2", "issue message2")),
       Seq("log2")
     )
 
-    val v3 = ValidationResult(
+    val v3 = DqmValidationResult(
       false,
       Seq(("p2", "issue message2")),
       Seq("log1", "log2")
