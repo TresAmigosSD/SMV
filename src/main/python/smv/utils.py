@@ -94,3 +94,11 @@ def is_string(obj):
         return isinstance(obj, basestring)
     except:
         return isinstance(obj, str)
+
+# If using Python 2, prefer cPickle because it is faster
+# If using Python 3, there is no cPickle (cPickle is now the implementation of pickle)
+# see https://docs.python.org/3.1/whatsnew/3.0.html#library-changes
+try:
+    pickle_lib = __import__("cPickle")
+except ImportError:
+    pickle_lib = __import__("pickle")

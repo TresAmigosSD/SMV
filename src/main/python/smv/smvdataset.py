@@ -27,7 +27,7 @@ import binascii
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
-from smv.utils import smv_copy_array
+from smv.utils import smv_copy_array, pickle_lib
 from smv.stacktrace_mixin import WithStackTrace, with_stacktrace
 
 
