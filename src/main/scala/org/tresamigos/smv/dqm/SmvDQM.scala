@@ -249,14 +249,6 @@ case class DqmValidationResult(
     errorMessages: Seq[(String, String)] = Nil,
     checkLog: Seq[String] = Nil
 ) {
-  def ++(that: DqmValidationResult) = {
-    new DqmValidationResult(
-      this.passed && that.passed,
-      this.errorMessages ++ that.errorMessages,
-      this.checkLog ++ that.checkLog
-    )
-  }
-
   def toJSON() = {
     def e(s: String) = escapeJava(s)
 
@@ -278,7 +270,6 @@ case class DqmValidationResult(
   }
 
   def isEmpty() = passed && checkLog.isEmpty
-
 }
 
 /** construct DqmValidationResult from JSON string */

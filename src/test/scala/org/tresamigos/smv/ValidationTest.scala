@@ -42,25 +42,4 @@ class ValidationTest extends SmvTestUtil {
     val v2 = DqmValidationResult(str)
     assert(v === v2)
   }
-
-  test("Test DqmValidationResult ++ operator") {
-    val v1 = DqmValidationResult(
-      true,
-      Nil,
-      Seq("log1")
-    )
-    val v2 = DqmValidationResult(
-      false,
-      Seq(("p2", "issue message2")),
-      Seq("log2")
-    )
-
-    val v3 = DqmValidationResult(
-      false,
-      Seq(("p2", "issue message2")),
-      Seq("log1", "log2")
-    )
-
-    assert((v1 ++ v2) === v3)
-  }
 }
