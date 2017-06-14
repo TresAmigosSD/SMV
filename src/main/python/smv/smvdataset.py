@@ -237,7 +237,7 @@ class SmvDataSet(WithStackTrace):
 
     @with_stacktrace
     def dependencyUrns(self):
-        arr = [x.urn() for x in self.requiresDS()]
+        arr = [x.urn() for x in self.dependencies()]
         return smv_copy_array(self.smvApp.sc, *arr)
 
     @with_stacktrace
