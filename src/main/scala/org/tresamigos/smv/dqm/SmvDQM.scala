@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 package dqm
 
+import scala.util.Try
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.udf
 
@@ -93,7 +94,7 @@ object SmvDQM {
   def apply() = new SmvDQM()
 }
 
-class DQMValidator(dqm: SmvDQM) extends ValidationTask {
+class DQMValidator(dqm: SmvDQM, isPersist: Boolean) extends ValidationTask {
   private lazy val app: SmvApp = SmvApp.app
 
   private val ruleNames = dqm.rules.map { _.name }
@@ -149,6 +150,69 @@ class DQMValidator(dqm: SmvDQM) extends ValidationTask {
   }
 
   override def needAction = dqm.needAction
+
+  /** Since optimization can be done on a DF actions like count, we have to convert DF
+   *  to RDD and than apply an action
+   **/
+  private def doForceAction(df: DataFrame): Unit = {
+    df.rdd.count
+  }
+
+  private def persist(res: ValidationResult, path: String) = {
+    SmvReportIO.saveReport(res.toJSON, path)
+  }
+
+  private def toConsole(res: ValidationResult) = {
+    SmvReportIO.printReport(res.toJSON())
+  }
+
+  private def terminateAtError(result: ValidationResult) = {
+    if (!result.passed) {
+      val r = result.toJSON()
+      throw new SmvDqmValidationError(r)
+    }
+  }
+
+  private def readPersistsedValidationFile(path: String): Try[ValidationResult] = {
+    Try({
+      val json = SmvReportIO.readReport(path)
+      ValidationResult(json)
+    })
+  }
+
+  def runValidation(df: DataFrame, hadAction: Boolean, path: String = "") = {
+    val forceAction = needAction && !hadAction
+
+      val result = if (isPersist) {
+        // try to read from persisted validation file
+        readPersistsedValidationFile(path).recoverWith {
+          case e => {
+            Try(doValidate(df, forceAction, path))
+          }
+        }.get
+      } else {
+        doValidate(df, forceAction, path)
+      }
+
+      terminateAtError(result)
+      result
+  }
+
+  def doValidate(df: DataFrame, forceAction: Boolean, path: String = ""): ValidationResult = {
+    if (forceAction)
+      doForceAction(df)
+
+    val res = validate(df)
+
+    if(!res.isEmpty)
+      toConsole(res)
+
+    // persist if result is not empty or forced an action
+    if (isPersist && ((!res.isEmpty) || forceAction))
+      persist(res, path)
+
+    res
+  }
 
   override def validate(df: DataFrame) = {
 
