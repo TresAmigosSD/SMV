@@ -404,7 +404,7 @@ abstract class SmvDataSet extends FilenamePart {
 
     if (isEphemeral) {
       val df = dqmValidator.attachTasks(doRun(dqmValidator))
-      dqmValidator.runValidation(df, false, moduleValidPath()) // no action before this point
+      dqmValidator.validate(df, false, moduleValidPath()) // no action before this point
       deleteMetadataOutput
       createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
       df
@@ -419,7 +419,7 @@ abstract class SmvDataSet extends FilenamePart {
               // Delete outputs in case data was partially written previously
               deleteOutputs
               persist(df)
-              dqmValidator.runValidation(df, true, moduleValidPath()) // has already had action (from persist)
+              dqmValidator.validate(df, true, moduleValidPath()) // has already had action (from persist)
               createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
               // Generate and persist edd based on result of reading results from disk. Avoids
               // a possibly expensive action on the result from before persisting.

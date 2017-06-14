@@ -86,7 +86,7 @@ class DQMTest extends SmvTestUtil {
     val res = dqm.attachTasks(df)
     assert(res.count === 1)
 
-    val dqmRes = dqm.validate(res)
+    val dqmRes = dqm.applyPolicies(res)
     assert(dqmRes.toJSON() === """{
   "passed":false,
   "errorMessages": [
@@ -112,7 +112,7 @@ class DQMTest extends SmvTestUtil {
     val res = dqm.attachTasks(df)
     assertSrddDataEqual(res, "1,0.3;1,0.2")
 
-    val dqmRes = dqm.validate(res)
+    val dqmRes = dqm.applyPolicies(res)
     assert(dqmRes.toJSON() === """{
   "passed":false,
   "errorMessages": [
@@ -147,7 +147,7 @@ class DQMTest extends SmvTestUtil {
     //res.foreach(r => Unit)
     res.rdd.count
 
-    val dqmRes = dqm.validate(res)
+    val dqmRes = dqm.applyPolicies(res)
     assertUnorderedSeqEqual(
       dqmRes.errorMessages,
       Seq(

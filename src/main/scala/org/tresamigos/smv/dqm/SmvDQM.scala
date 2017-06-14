@@ -183,29 +183,29 @@ class DQMValidator(dqm: SmvDQM, isPersist: Boolean) {
     })
   }
 
-  def runValidation(df: DataFrame, hadAction: Boolean, path: String = "") = {
+  def validate(df: DataFrame, hadAction: Boolean, path: String = "") = {
     val forceAction = needAction && !hadAction
 
       val result = if (isPersist) {
         // try to read from persisted validation file
         readPersistsedValidationFile(path).recoverWith {
           case e => {
-            Try(doValidate(df, forceAction, path))
+            Try(runValidation(df, forceAction, path))
           }
         }.get
       } else {
-        doValidate(df, forceAction, path)
+        runValidation(df, forceAction, path)
       }
 
       terminateAtError(result)
       result
   }
 
-  def doValidate(df: DataFrame, forceAction: Boolean, path: String = ""): DqmValidationResult = {
+  def runValidation(df: DataFrame, forceAction: Boolean, path: String = ""): DqmValidationResult = {
     if (forceAction)
       doForceAction(df)
 
-    val res = validate(df)
+    val res = applyPolicies(df)
 
     if(!res.isEmpty)
       toConsole(res)
@@ -217,8 +217,7 @@ class DQMValidator(dqm: SmvDQM, isPersist: Boolean) {
     res
   }
 
-  def validate(df: DataFrame) = {
-
+  def applyPolicies(df: DataFrame) = {
     /** need to take a snapshot on the DQMState before validation, since validation step could
      * have actions on the DF, which will change the accumulators of the DQMState*/
     dqmState.snapshot()
