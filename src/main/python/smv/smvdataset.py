@@ -23,10 +23,11 @@ import abc
 import inspect
 import sys
 import traceback
+import binascii
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
-from smv.utils import smv_copy_array
+from smv.utils import smv_copy_array, pickle_lib
 from smv.stacktrace_mixin import WithStackTrace, with_stacktrace
 
 
@@ -229,10 +230,15 @@ class SmvDataSet(WithStackTrace):
     def dqmWithTypeSpecificPolicy(self):
         return self.dqm()
 
-    @with_stacktrace
     def dependencies(self):
-        arr = smv_copy_array(self.smvApp.sc, *[x.urn() for x in self.requiresDS()])
-        return arr
+        """Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)
+        """
+        return self.requiresDS()
+
+    @with_stacktrace
+    def dependencyUrns(self):
+        arr = [x.urn() for x in self.dependencies()]
+        return smv_copy_array(self.smvApp.sc, *arr)
 
     @with_stacktrace
     def getDataFrame(self, validator, known):
@@ -242,6 +248,14 @@ class SmvDataSet(WithStackTrace):
         else:
             jdf = df._jdf
         return jdf
+
+    @classmethod
+    def df2result(cls, df):
+        """Given a datasets's persisted DataFrame, get the result object
+
+            In most cases, this is just the DataFrame itself. See SmvResultModule for the exception.
+        """
+        return df
 
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
@@ -571,12 +585,146 @@ class SmvModule(SmvDataSet):
                 (DataFrame): ouput of this SmvModule
         """
 
+    def _constructRunParams(self, urn2df):
+        """Given dict from urn to DataFrame, construct RunParams for module
+
+            A given module's result may not actually be a DataFrame. For each
+            dependency, apply its df2result method to its DataFrame to get its
+            actual result. Construct RunParams from the resulting dict.
+        """
+        urn2res = {}
+        for dep in self.dependencies():
+            jdf = urn2df[dep.urn()]
+            df = DataFrame(jdf, self.smvApp.sqlContext)
+            urn2res[dep.urn()] = dep.df2result(df)
+        i = self.RunParams(urn2res)
+        return i
+
     def doRun(self, validator, known):
-        urn2df = {}
-        for dep in self.requiresDS():
-            urn2df[dep.urn()] = DataFrame(known[dep.urn()], self.smvApp.sqlContext)
-        i = self.RunParams(urn2df)
+        i = self._constructRunParams(known)
         return self.run(i)
+
+class SmvResultModule(SmvModule):
+    """An SmvModule whose result is not a DataFrame
+
+        The result must be picklable - see https://docs.python.org/2/library/pickle.html#what-can-be-pickled-and-unpickled.
+    """
+    @classmethod
+    def df2result(self, df):
+        """Unpickle and decode module result stored in DataFrame
+        """
+        # reverses result of applying result2df. see result2df for explanation.
+        hex_encoded_pickle_as_str = df.collect()[0][0]
+        pickled_res_as_str = binascii.unhexlify(hex_encoded_pickle_as_str)
+        res = pickle_lib.loads(pickled_res_as_str)
+        return res
+
+    @classmethod
+    def result2df(cls, smvApp, res_obj):
+        """Pick and encode module result, and store it in a DataFrame
+        """
+        # pickle the result object. this will use the most optimal pickling
+        # protocol available for this version of cPickle
+        pickled_res = pickle_lib.dumps(res_obj, -1)
+        # pickle may contain problematic characters like newlines, so we
+        # encode the pickle it as a hex string
+        hex_encoded_pickle = binascii.hexlify(pickled_res)
+        # encoding will be a bytestring object if in Python 3, so need to convert it to string
+        # str.decode converts string to utf8 in python 2 and bytes to str in Python 3
+        hex_encoded_pickle_as_str = hex_encoded_pickle.decode()
+        # insert the resulting serialization into a DataFrame
+        df = smvApp.createDF("pickled_result: String", hex_encoded_pickle_as_str)
+        return df
+
+    @abc.abstractmethod
+    def run(self, i):
+        """User-specified definition of the operations of this SmvModule
+
+            Override this method to define the output of this module, given a map
+            'i' from input SmvDataSet to resulting DataFrame. 'i' will have a
+            mapping for each SmvDataSet listed in requiresDS. E.g.
+
+            def requiresDS(self):
+                return [MyDependency]
+
+            def run(self, i):
+                return train_model(i[MyDependency])
+
+            Args:
+                (RunParams): mapping from input SmvDataSet to DataFrame
+
+            Returns:
+                (object): picklable output of this SmvModule
+        """
+
+    def doRun(self, validator, known):
+        res_obj = super(SmvResultModule, self).doRun(validator, known)
+        df = self.result2df(self.smvApp, res_obj)
+        return df
+
+class SmvModel(SmvResultModule):
+    """SmvModule whose result is a data model
+    """
+    # Exists only to be paired with SmvModelExec
+
+class SmvModelExec(SmvModule):
+    """SmvModule that runs a model produced by an SmvModel
+    """
+    def dependencies(self):
+        model_mod = self.requiresModel()
+        if not self._targetIsSmvModel(model_mod):
+            raise SmvRuntimeError("requiresModel method must return an SmvModel or a link to one")
+        return [model_mod] + self.requiresDS()
+
+    def _targetIsSmvModel(self, module):
+        if isinstance(module, SmvModuleLink):
+            target = module.target
+        else:
+            target = module
+
+        try:
+            if issubclass(target, SmvModel):
+                return True
+        except TypeError:
+            # if target is not a class or other type object, issubclass will raise TypeError
+            pass
+
+        return False
+
+    @abc.abstractmethod
+    def requiresModel():
+        """User-specified SmvModel module
+
+            Returns:
+                (SmvModel): the SmvModel this module depends on
+        """
+
+    def doRun(self, validator, known):
+        i = self._constructRunParams(known)
+        model = i[self.requiresModel()]
+        return self.run(i, model)
+
+    @abc.abstractmethod
+    def run(self, i, model):
+        """User-specified definition of the operations of this SmvModule
+
+            Override this method to define the output of this module, given a map
+            'i' from inputSmvDataSet to resulting DataFrame. 'i' will have a
+            mapping for each SmvDataSet listed in requiresDS. E.g.
+
+            def requiresDS(self):
+                return [MyDependency]
+
+            def run(self, i):
+                return i[MyDependency].select("importantColumn")
+
+            Args:
+                i (RunParams): mapping from input SmvDataSet to DataFrame
+                model (SmvModel): the model this module depends on
+
+            Returns:
+                (object): picklable output of this SmvModule
+        """
 
 class SmvModuleLink(object):
     """A module link provides access to data generated by modules from another stage
@@ -586,6 +734,9 @@ class SmvModuleLink(object):
 
     def __init__(self, target):
         self.target = target
+
+    def df2result(self, df):
+        return self.target.df2result(df)
 
     def urn(self):
         return 'link:' + self.target.fqn()
@@ -603,6 +754,10 @@ class SmvExtDataSet(object):
     """
     def __init__(self, fqn):
         self._fqn = fqn
+
+    def df2result(self, df):
+        # non-DataFrame results are only supported for Python SmvResultModule
+        return df
 
     def urn(self):
         return 'mod:' + self._fqn
