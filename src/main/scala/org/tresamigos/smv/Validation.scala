@@ -89,9 +89,3 @@ private[smv] object ValidationResult {
     new ValidationResult(passed, errorMessages, checkLog)
   }
 }
-
-
-private[smv] abstract class ValidationTask {
-  def needAction(): Boolean
-  def validate(df: DataFrame): ValidationResult
-}

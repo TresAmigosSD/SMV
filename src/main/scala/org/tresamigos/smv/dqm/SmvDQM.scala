@@ -94,7 +94,7 @@ object SmvDQM {
   def apply() = new SmvDQM()
 }
 
-class DQMValidator(dqm: SmvDQM, isPersist: Boolean) extends ValidationTask {
+class DQMValidator(dqm: SmvDQM, isPersist: Boolean) {
   private lazy val app: SmvApp = SmvApp.app
 
   private val ruleNames = dqm.rules.map { _.name }
@@ -149,7 +149,7 @@ class DQMValidator(dqm: SmvDQM, isPersist: Boolean) extends ValidationTask {
     new ParserValidation(dqmState)
   }
 
-  override def needAction = dqm.needAction
+  def needAction = dqm.needAction
 
   /** Since optimization can be done on a DF actions like count, we have to convert DF
    *  to RDD and than apply an action
@@ -214,7 +214,7 @@ class DQMValidator(dqm: SmvDQM, isPersist: Boolean) extends ValidationTask {
     res
   }
 
-  override def validate(df: DataFrame) = {
+  def validate(df: DataFrame) = {
 
     /** need to take a snapshot on the DQMState before validation, since validation step could
      * have actions on the DF, which will change the accumulators of the DQMState*/
