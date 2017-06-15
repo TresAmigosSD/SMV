@@ -199,7 +199,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
   def validate(df: DataFrame, hadAction: Boolean, path: String = "") = {
     val forceAction = needAction && !hadAction
 
-      val result = if (isPersist) {
+      val result = if (persistable) {
         // try to read from persisted validation file
         readPersistsedValidationFile(path).recoverWith {
           case e => {
@@ -230,7 +230,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
       toConsole(res)
 
     // persist if result is not empty or forced an action
-    if (isPersist && ((!res.isEmpty) || forceAction))
+    if (persistable && ((!res.isEmpty) || forceAction))
       persist(res, path)
 
     res
