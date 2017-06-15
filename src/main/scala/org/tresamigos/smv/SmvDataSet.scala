@@ -653,17 +653,15 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
    *  - input csv file path
    *  - input csv file modified time
    *  - input schema contents
-   *  - input schema file modified time (to handle attribute change)
    */
   override def instanceValHash() = {
     val fileName = fullPath
     val mTime    = SmvHDFS.modificationTime(fileName)
-    val smTime   = SmvHDFS.modificationTime(finalSchemaPath)
 
     val crc = new java.util.zip.CRC32
 
     crc.update(fileName.toCharArray.map(_.toByte))
-    (crc.getValue + mTime + smTime + schema.schemaHash).toInt
+    (crc.getValue + mTime + schema.schemaHash).toInt
   }
 }
 
