@@ -17,24 +17,34 @@ package org.tresamigos.smv
 import org.apache.spark.rdd.RDD
 import java.io.{PrintWriter, File}
 
+private[smv] class ReportWriter(path: String) {
+  val outFile = new File(path)
+  val parent = outFile.getParentFile
+  if (parent != null && !parent.exists)
+    throw new SmvRuntimeException(s"Cannot write to ${path}: directory ${parent} does not exist")
+  val pw      = new PrintWriter(outFile)
+
+  def write(s: String) = pw.write(s)
+
+  def close() = pw.close
+}
+
 private[smv] object SmvReportIO {
   def saveReport(report: String, path: String): Unit =
     SmvHDFS.writeToFile(report, path)
 
   def saveLocalReport(report: String, path: String): Unit = {
-    val outFile = new File(path)
-    val pw      = new PrintWriter(outFile)
-    pw.write(report)
-    pw.close
+    val rw = new ReportWriter(path)
+    rw.write(report)
+    rw.close
   }
 
   def saveLocalReportFromRdd(report: RDD[String], path: String): Unit = {
-    val outFile = new File(path)
-    val pw = new PrintWriter(outFile)
+    val rw = new ReportWriter(path)
     // According to Spark API doc, RDD.toLocalIterator will consume no more
     // memory than what is required for the largest partition
-    report.toLocalIterator foreach (s => pw.write(s + "\n"))
-    pw.close
+    report.toLocalIterator foreach (s => rw.write(s + "\n"))
+    rw.close
   }
 
   def readReport(path: String): String =
