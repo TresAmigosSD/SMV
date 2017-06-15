@@ -168,8 +168,13 @@ object ShellCmd {
 
   def openCsv(path: String): DataFrame = openCsv(path, null, false)
 
-  def smvExportCsv(name: String, path: String) =
-    dsm.inferDS(name).head.exportToCsv(path)
+  /**
+   * Deprecated
+   */
+  def smvExportCsv(name: String, path: String) = {
+    println("The smvExportCsv shell method is deprecated")
+    dsm.inferDS(name).head.rdd().smvExportCsv(path)
+  }
 
   def _edd(name: String): String =
     dsm.inferDS(name).head.getEdd
