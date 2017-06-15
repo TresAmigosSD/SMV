@@ -97,7 +97,13 @@ object SmvDQM {
   def apply() = new SmvDQM()
 }
 
-class DQMValidator(dqm: SmvDQM, isPersist: Boolean) {
+/**
+ * Validates data against DQM rules
+ * @param dqm
+ * @param persistable whether the results can be persisted. if true, validator will look.
+ *                    for persisted results before running, and persist its own results
+ */
+class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
   private lazy val app: SmvApp = SmvApp.app
 
   private val ruleNames = dqm.rules.map { _.name }
@@ -183,6 +189,13 @@ class DQMValidator(dqm: SmvDQM, isPersist: Boolean) {
     })
   }
 
+  /**
+   * Entrypoint for validating data. Runs validation UNLESS there is a persisted
+   * result, in which case returns that result
+   * @param df the data to validate
+   * @param hadAction whether df has already had an action (used to decide whether to force an action)
+   * @param path the path where the validation result will be persisted
+   */
   def validate(df: DataFrame, hadAction: Boolean, path: String = "") = {
     val forceAction = needAction && !hadAction
 
@@ -201,6 +214,12 @@ class DQMValidator(dqm: SmvDQM, isPersist: Boolean) {
       result
   }
 
+  /**
+   * Run validation aginst DataFrame and print results
+   * @param df the data to validate
+   * @param forceAction whether an action needs to be forced on df
+   * @param path the path where the validation result should be persisted
+   */
   def runValidation(df: DataFrame, forceAction: Boolean, path: String = ""): DqmValidationResult = {
     if (forceAction)
       doForceAction(df)
@@ -217,6 +236,10 @@ class DQMValidator(dqm: SmvDQM, isPersist: Boolean) {
     res
   }
 
+  /**
+   * Appl DQM policies to DataFrame and return result
+   * @param df the data to apply policies to
+   */
   def applyPolicies(df: DataFrame) = {
     /** need to take a snapshot on the DQMState before validation, since validation step could
      * have actions on the DF, which will change the accumulators of the DQMState*/
