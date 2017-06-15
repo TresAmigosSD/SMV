@@ -33,7 +33,7 @@ private[smv] object SmvReportIO {
     val pw = new PrintWriter(outFile)
     // According to Spark API doc, RDD.toLocalIterator will consume no more
     // memory than what is required for the largest partition
-    report.toLocalIterator foreach (r => pw.write(r.toString + "\n"))
+    report.toLocalIterator foreach (s => pw.write(s + "\n"))
     pw.close
   }
 
