@@ -30,16 +30,9 @@ private[smv] object SmvReportIO {
 
   def saveLocalReportFromRdd(report: RDD[String], path: String): Unit = {
     val outFile = new File(path)
-    val filename = outFile.getName()
-
-    // Save report RDD to a temparory file on HDFS
-    val tmpHdfsFile = "/tmp/smv_tmp_" + filename
-    SmvHDFS.deleteFile(tmpHdfsFile)
-    report.saveAsTextFile(tmpHdfsFile)
-
-    // copy merge the HDFS output to a local output
-    SmvHDFS.copyMerge(tmpHdfsFile, path)
-    SmvHDFS.deleteFile(tmpHdfsFile)
+    val pw = new PrintWriter(outFile)
+    report.toLocalIterator foreach (r => pw.write(r.toString + "\n"))
+    pw.close
   }
 
   def readReport(path: String): String =
