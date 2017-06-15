@@ -400,12 +400,11 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   private[smv] def computeRDD(genEdd: Boolean): DataFrame = {
-    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()))
-    val validationSet = new ValidationSet(Seq(dqmValidator), isPersistValidateResult)
+    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()), isPersistValidateResult)
 
     if (isEphemeral) {
       val df = dqmValidator.attachTasks(doRun(dqmValidator))
-      validationSet.validate(df, false, moduleValidPath()) // no action before this point
+      dqmValidator.validate(df, false, moduleValidPath()) // no action before this point
       deleteMetadataOutput
       createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
       df
@@ -420,7 +419,7 @@ abstract class SmvDataSet extends FilenamePart {
               // Delete outputs in case data was partially written previously
               deleteOutputs
               persist(df)
-              validationSet.validate(df, true, moduleValidPath()) // has already had action (from persist)
+              dqmValidator.validate(df, true, moduleValidPath()) // has already had action (from persist)
               createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
               // Generate and persist edd based on result of reading results from disk. Avoids
               // a possibly expensive action on the result from before persisting.
