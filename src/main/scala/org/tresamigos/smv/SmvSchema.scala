@@ -356,7 +356,7 @@ class SmvSchema(val entries: Seq[SchemaEntry], val attributes: Map[String, Strin
       ""
     }
 
-    "Schema: " + attrStr + entries.mkString("; ")
+    "Schema: " + toStringsWithMeta.mkString("; ")
   }
 
   /**
