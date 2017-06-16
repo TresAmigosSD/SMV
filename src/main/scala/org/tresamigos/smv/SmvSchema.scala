@@ -347,7 +347,7 @@ class SmvSchema(val entries: Seq[SchemaEntry], val attributes: Map[String, Strin
 
   private[smv] def toValue(ordinal: Int, sVal: String) = entries(ordinal).typeFormat.strToVal(sVal)
 
-  override def toString =  "Schema: " + toStringsWithMeta.mkString("; ")
+  override def toString = "Schema: " + toStringsWithMeta.mkString("; ")
 
   /**
    * Used to determine if a file's schema has changed
