@@ -17,10 +17,15 @@ package org.tresamigos.smv
 import org.apache.spark.rdd.RDD
 import java.io.{PrintWriter, File}
 
+/**
+ * Output handler for writing reports on the local file system. Verifies that
+ * the parent of the target path and is a directory. Otherwise, throws an errors
+ * @param path path on the local filesystem to write the report to 
+ */
 private[smv] class ReportWriter(path: String) {
   val outFile = new File(path)
   val parent = outFile.getParentFile
-  if (parent != null && !parent.exists)
+  if (parent != null && !parent.isDirectory)
     throw new SmvRuntimeException(s"Cannot write to ${path}: directory ${parent} does not exist")
   val pw      = new PrintWriter(outFile)
 
