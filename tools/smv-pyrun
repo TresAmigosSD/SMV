@@ -5,6 +5,9 @@
 #
 # user can specify optional spark args (such as --master, --executor-memory, etc)
 
+echo "---------------------------------------------------------------------------"
+echo "WARN: smv-pyrun is deprecated.  Please use smv-run in the same way instead."
+echo "---------------------------------------------------------------------------"
 set -e
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 source $SMV_TOOLS/_env.sh
