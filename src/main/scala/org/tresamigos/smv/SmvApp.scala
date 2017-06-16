@@ -254,7 +254,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
       val localDir = smvConfig.cmdLine.publishLocal()
       modulesToRun foreach { m =>
         val csvPath = s"${localDir}/${m.versionedFqn}.csv"
-        m.exportToCsv(csvPath)
+        m.rdd().smvExportCsv(csvPath)
       }
     }
 
