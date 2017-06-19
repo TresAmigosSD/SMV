@@ -45,7 +45,7 @@ class CsvTest extends SmvTestUtil {
         CsvAttributes.defaultCsvWithHeader,
         null,
         false,
-        Some("eman:String;di:integer")
+        Some("@quote-char=|;eman:String;di:integer")
       )
 
     val file2 =
@@ -57,7 +57,17 @@ class CsvTest extends SmvTestUtil {
         Some("@quote-char=';eman:String;di:integer")
       )
 
+    val file3 =
+      SmvCsvFile(
+        "./" + testDataDir + "CsvTest/test1",
+        CsvAttributes.defaultCsvWithHeader,
+        null,
+        false,
+        Some("@quote-char=';eman:String;di:integer")
+      )
+
     assert(file1.instanceValHash != file2.instanceValHash)
+    assert(file2.instanceValHash == file3.instanceValHash)
   }
 
   test("Test reading CSV file with user-defined schema") {
