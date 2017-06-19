@@ -52,6 +52,12 @@ function parse_args()
     shift
   fi
 
+  IS_LATEST=0
+  if [ "$1" = "--latest" ]; then
+    IS_LATEST=1
+    shift
+  fi
+
   [ $# -ne 6 ] && echo "ERROR: invalid number of arguments" && usage 1
   [ "$1" != "-g" ] && echo "ERROR: must supply github user name/token" && usage 1
   [ "$3" != "-d" ] && echo "ERROR: must supply dockerhub user name/password" && usage 1
@@ -150,7 +156,8 @@ function update_version()
 {
   info "updating version to $SMV_VERSION"
   cd "${SMV_DIR}"
-  git pull # update to latest before making any changes.
+  # update to latest before making any changes.
+  git pull >> ${LOGFILE} 2>&1 || error "git pull failed"
 
   # update version in user docs.
   find docs/user -name '*.md' \
@@ -168,8 +175,9 @@ function update_version()
   # add the smv version to the SMV directory.
   echo ${SMV_VERSION} > "${SMV_DIR}/.smv_version"
 
-  git commit -a -m "updated version to $SMV_VERSION"
-  git push origin
+  git commit -a -m "updated version to $SMV_VERSION" \
+    >> ${LOGFILE} 2>&1 || error "git commit failed"
+  git push origin >> ${LOGFILE} 2>&1 || error "git push failed"
 }
 
 function tag_release()
@@ -203,7 +211,7 @@ function create_github_release()
   info "Create github release"
   local body_file="${LOGDIR}/req1.body.json"
   local res_file="${LOGDIR}/res1.json"
-  local rel_doc_url="https://github.com/TresAmigosSD/SMV/blob/master/releases/v${SMV_VERSION}.md"
+  local rel_doc_url="https://github.com/TresAmigosSD/SMV/blob/v${SMV_VERSION}/releases/v${SMV_VERSION}.md"
 
   # create POST request body for creating the repo.
   # See https://developer.github.com/v3/repos/releases/ for details.
@@ -260,10 +268,11 @@ function create_docker_image()
   docker tag docker_build tresamigos/smv:${tag} >> ${LOGFILE} 2>&1 || error "docker tag failed"
   docker push tresamigos/smv:${tag} >> ${LOGFILE} 2>&1 || error "docker push failed"
 
-  # TODO: make this an option.
-  info "pushing docker image as latest"
-  docker tag docker_build tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker tag failed"
-  docker push tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker push failed"
+  if [ ${IS_LATEST} -eq 1 ]; then
+    info "pushing docker image as latest"
+    docker tag docker_build tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker tag failed"
+    docker push tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker push failed"
+  fi
 }
 
 function gen_pydocs()
@@ -275,17 +284,20 @@ function gen_pydocs()
 
   # py4j lib dir version changes with spark version.  Must extract version used in spark.
   py4j_lib=$(docker run --rm -it tresamigos/smv:latest -u $(id -u) \
-    sh -c "find ${spark_py_dir}/lib -maxdepth 1 -mindepth 1 -name 'py4j*-src.zip' -print")
+    sh -c "find ${spark_py_dir}/lib -maxdepth 1 -mindepth 1 -name 'py4j*-src.zip' -print" | tr -d '\r')
 
   docker run --rm -it \
     -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/python:/pydoc \
     tresamigos/smv:latest \
     -u $(id -u)\
     sh -c "
+      set -e;
       cd $DOCKER_SMV_DIR;
-      export PYTHONPATH=\"${smv_py_dir}:${spark_py_dir}:${py4j_lib}\";
+      export PYTHONPATH=\"${smv_py_dir}:${spark_py_dir}:${py4j_lib}:\";
+      export SMV_VERSION=${SMV_VERSION};
       sphinx-apidoc --full -o /pydoc ${smv_py_dir}/smv;
       cd /pydoc;
+      cp ${DOCKER_SMV_DIR}/admin/conf/sphinx-conf.py /pydoc/conf.py;
       make html" \
     >> ${LOGFILE} 2>&1 || error "python doc generation failed"
 }
@@ -320,7 +332,7 @@ function get_latest_ghpages()
     (cd "${GHPAGES_DIR}/SMV"; git pull) \
       >> ${LOGFILE} 2>&1 || error "pulling latest SMV ghpages"
   else
-    git clone -b gh-pages https://github.com/TresAmigosSD/SMV.git \
+    git clone -b gh-pages git@github.com:TresAmigosSD/SMV.git \
       >> ${LOGFILE} 2>&1 || error "cloning SMV ghpages"
   fi
 }
@@ -347,7 +359,8 @@ function update_ghpages_docs()
     info "WARNING!!!! need to update ghpages index.html manually"
   else
     info "updating version numbers in ghpages index.html"
-    sed -i '' "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" index.html
+    sed -i'.bak' "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" index.html
+    rm -f index.html.bak
   fi
 }
 
