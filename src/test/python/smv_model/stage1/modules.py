@@ -10,13 +10,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""SMV User Run Configuration Parameters
 
-This module defined the SmvRunConfig class which can be mixed-in into an
-SmvModule to get user configuration parameters at run-time.
-"""
+from smv import SmvModel, SmvModelExec, SmvOutput
 
-from smv.smvapp import SmvApp
+class Model(SmvModel, SmvOutput):
+    def requiresDS(self):
+        return []
 
-def CsvAttributes(delimiter=',', quotechar='"', hasHeader=False):
-    return SmvApp.getInstance()._mkCsvAttr(delimiter, quotechar, hasHeader)
+    def run(self, i):
+        x = [1,2,3]
+        return x
+
+class ModelExec(SmvModelExec):
+    def requiresDS(self):
+        return []
+
+    def requiresModel(self):
+        return Model
+
+    def run(self, i, model):
+        return self.smvApp.createDF("model: String", "\"{}\"".format(model))

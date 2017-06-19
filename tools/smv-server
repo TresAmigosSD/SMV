@@ -6,7 +6,7 @@ SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 
 # need to extract the -e option before source _env.sh!
 ENTRY_SCRIPT="${SMV_TOOLS}/../src/main/python/scripts/smvserver.py"
-if [ $1 = "-e" ]; then
+if [ "$1" = "-e" ]; then
   ENTRY_SCRIPT="$2"
   shift; shift
 fi

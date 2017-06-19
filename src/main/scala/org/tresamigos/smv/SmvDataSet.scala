@@ -272,24 +272,6 @@ abstract class SmvDataSet extends FilenamePart {
                attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
     new FileIOHandler(app.sparkSession, path).csvFileWithSchema(attr)
 
-  /**
-   * Write the result of this module as a CSV file on the local filesystem. The
-   * DataFrameHelper smvExportCsv method will always write the DF to HDFS before
-   * writing copy-merging it to the local system, so this method skips that extra
-   * step by copy-merging the persisted files for non-ephemeral modules.
-   */
-  def exportToCsv(exportPath: String): Unit = {
-    if (isEphemeral) {
-      rdd().smvExportCsv(exportPath)
-    } else {
-      if (needsToRun)
-        rdd() // Force it to run
-
-      val persistPath = moduleCsvPath()
-      // copy merge the persisted output to a local output
-      SmvHDFS.copyMerge(persistPath, exportPath)
-    }
-  }
 
   def persist(dataframe: DataFrame,
               prefix: String = ""): Unit = {
@@ -400,12 +382,11 @@ abstract class SmvDataSet extends FilenamePart {
   }
 
   private[smv] def computeRDD(genEdd: Boolean): DataFrame = {
-    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()))
-    val validationSet = new ValidationSet(Seq(dqmValidator), isPersistValidateResult)
+    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()), isPersistValidateResult)
 
     if (isEphemeral) {
       val df = dqmValidator.attachTasks(doRun(dqmValidator))
-      validationSet.validate(df, false, moduleValidPath()) // no action before this point
+      dqmValidator.validate(df, false, moduleValidPath()) // no action before this point
       deleteMetadataOutput
       createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
       df
@@ -420,7 +401,7 @@ abstract class SmvDataSet extends FilenamePart {
               // Delete outputs in case data was partially written previously
               deleteOutputs
               persist(df)
-              validationSet.validate(df, true, moduleValidPath()) // has already had action (from persist)
+              dqmValidator.validate(df, true, moduleValidPath()) // has already had action (from persist)
               createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
               // Generate and persist edd based on result of reading results from disk. Avoids
               // a possibly expensive action on the result from before persisting.
@@ -994,7 +975,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
   override def requiresDS     =
     throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
-    resolvedRequiresDS = target.dependencies map (urn => resolver.loadDataSet(URN(urn)).head)
+    resolvedRequiresDS = target.dependencyUrns map (urn => resolver.loadDataSet(URN(urn)).head)
     this
   }
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {

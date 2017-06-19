@@ -126,6 +126,15 @@ echo "--------- RUN MODULE WITH UPDATED CSV -------------"
 
 echo "--------- VERIFY HASH CHANGED -------------"
 verify_hash_changed 2
+
+echo "--------- CHANGE INPUT SCHEMA -------------"
+sed -i"" -e "s/String/Integer/" data/input/hashtest/table.schema
+
+echo "--------- RUN MODULE WITH UPDATED SCHEMA -------------"
+../../../tools/smv-pyrun -m hashtest.modules.M
+
+echo "--------- VERIFY HASH CHANGED -------------"
+verify_hash_changed 3
 )
 
 
