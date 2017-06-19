@@ -1,14 +1,5 @@
-language: scala
-
-scala:
-  - 2.11.8
-
-dist: trusty
-
-jdk:
-  - openjdk8
-
 sudo: required
+dist: trusty
 language: python
 install:
   - tools/spark-install ./spark
@@ -18,7 +9,7 @@ install:
   - pyenv local 3.5.2 2.7.10
   - pip install tox
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION assembly
-  - sbt ++$TRAVIS_SCALA_VERSION publish-local
-  - sbt ++$TRAVIS_SCALA_VERSION test
+  - sbt ++"$TRAVIS_SCALA_VERSION" assembly
+  - sbt ++"$TRAVIS_SCALA_VERSION" publish-local
+  - sbt ++"$TRAVIS_SCALA_VERSION" test
   - tox
