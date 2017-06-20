@@ -38,7 +38,8 @@ if os.path.exists(historyPath):
     try:
         readline.read_history_file(historyPath)
     except:
-        print "unable to read history."
+        os.remove(historyPath)
+        print "Unable to read history, deleting history file."
 
 atexit.register(save_history)
 
