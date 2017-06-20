@@ -230,7 +230,7 @@ class SmvSchemaTest extends SmvTestUtil {
     val df = dfFrom("""k:String; t:Integer @metadata={"smvDesc":"the time sequence"}; v:Double""",
                     "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
     val smvSchema = SmvSchema.fromDataFrame(df)
-    assert(smvSchema.toString === "Schema: k: String; t: Integer; v: Double")
+    assert(smvSchema.toString === """Schema: k: String; t: Integer @metadata={"smvDesc":"the time sequence"}; v: Double""")
     assertUnorderedSeqEqual(
       smvSchema.toStringsWithMeta,
       Seq("k: String", """t: Integer @metadata={"smvDesc":"the time sequence"}""", "v: Double"))
