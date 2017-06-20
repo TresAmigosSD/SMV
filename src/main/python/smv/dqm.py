@@ -15,8 +15,9 @@
 This module defines the abstract classes which formed the SmvDataSet Framework for clients' projects
 """
 
-from smvapp import SmvApp
 import traceback
+
+from smv.smvapp import SmvApp
 
 def SmvDQM():
     """Factory method for Scala SmvDQM"""

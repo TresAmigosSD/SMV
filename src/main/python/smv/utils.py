@@ -38,11 +38,11 @@ def smv_copy_array(sc, *cols):
         return sc._gateway.new_array(sc._jvm.java.lang.String, 0)
 
     elem = cols[0]
-    if (isinstance(elem, basestring)):
+    if is_string(elem):
         jcols = sc._gateway.new_array(sc._jvm.java.lang.String, len(cols))
         for i in range(0, len(jcols)):
             jcols[i] = cols[i]
-    elif (isinstance(elem, Column)):
+    elif isinstance(elem, Column):
         jcols = sc._gateway.new_array(sc._jvm.org.apache.spark.sql.Column, len(cols))
         for i in range(0, len(jcols)):
             jcols[i] = cols[i]._jc
@@ -50,14 +50,14 @@ def smv_copy_array(sc, *cols):
         jcols = sc._gateway.new_array(sc._jvm.org.apache.spark.sql.Dataset, len(cols))
         for i in range(0, len(jcols)):
             jcols[i] = cols[i]._jdf
-    elif (isinstance(elem, list)): # a list of list
+    elif isinstance(elem, list): # a list of list
         # use Java List as the outermost container; an Array[Array]
         # will not always work, because the inner list may be of
         # different lengths
         jcols = sc._jvm.java.util.ArrayList()
         for i in range(0, len(cols)):
             jcols.append(smv_copy_array(sc, *cols[i]))
-    elif (isinstance(elem, tuple)):
+    elif isinstance(elem, tuple):
         jcols = sc._jvm.java.util.ArrayList()
         for i in range(0, len(cols)):
             # Use Java List for tuple
@@ -85,3 +85,20 @@ def check_socket(port):
             res = True
 
     return res
+
+def is_string(obj):
+    """Check whether object is a string type with Python 2 and Python 3 compatibility
+    """
+    # See http://www.rfk.id.au/blog/entry/preparing-pyenchant-for-python-3/
+    try:
+        return isinstance(obj, basestring)
+    except:
+        return isinstance(obj, str)
+
+# If using Python 2, prefer cPickle because it is faster
+# If using Python 3, there is no cPickle (cPickle is now the implementation of pickle)
+# see https://docs.python.org/3.1/whatsnew/3.0.html#library-changes
+try:
+    pickle_lib = __import__("cPickle")
+except ImportError:
+    pickle_lib = __import__("pickle")

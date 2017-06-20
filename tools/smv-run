@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Run one or more SMV modules / stages / app.
 # USAGE: smv-run [-h] smv_app_args -- spark_args
@@ -8,6 +8,7 @@
 set -e
 SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
 source $SMV_TOOLS/_env.sh
+source $SMV_TOOLS/_pyenv.sh
 
 if [ "$1" = "-h" ]; then
   show_run_usage_message `basename $0`
@@ -17,7 +18,6 @@ fi
 echo "START RUN =============================="
 date
 
-export SPARK_PRINT_LAUNCH_COMMAND=1
-"$SPARK_HOME/bin/spark-submit" --class ${SMV_APP_CLASS} "${SPARK_ARGS[@]}" "${APP_JAR}" "${SMV_ARGS[@]}"
+run_pyspark_with ${SMV_TOOLS}/../src/main/python/scripts/runapp.py
 
 date

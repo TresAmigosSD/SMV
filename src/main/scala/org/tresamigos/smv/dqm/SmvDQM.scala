@@ -15,8 +15,12 @@
 package org.tresamigos.smv
 package dqm
 
+import scala.util.Try
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.udf
+import org.json4s.{JObject, JString, JBool, JArray}
+import org.json4s.jackson.JsonMethods.{parse}
+import org.apache.commons.lang.StringEscapeUtils.escapeJava
 
 /**
  * DQM class for data quality check and fix
@@ -93,7 +97,13 @@ object SmvDQM {
   def apply() = new SmvDQM()
 }
 
-class DQMValidator(dqm: SmvDQM) extends ValidationTask {
+/**
+ * Validates data against DQM rules
+ * @param dqm
+ * @param persistable whether the results can be persisted. if true, validator will look.
+ *                    for persisted results before running, and persist its own results
+ */
+class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
   private lazy val app: SmvApp = SmvApp.app
 
   private val ruleNames = dqm.rules.map { _.name }
@@ -148,10 +158,89 @@ class DQMValidator(dqm: SmvDQM) extends ValidationTask {
     new ParserValidation(dqmState)
   }
 
-  override def needAction = dqm.needAction
+  def needAction = dqm.needAction
 
-  override def validate(df: DataFrame) = {
+  /** Since optimization can be done on a DF actions like count, we have to convert DF
+   *  to RDD and than apply an action
+   **/
+  private def doForceAction(df: DataFrame): Unit = {
+    df.rdd.count
+  }
 
+  private def persist(res: DqmValidationResult, path: String) = {
+    SmvReportIO.saveReport(res.toJSON, path)
+  }
+
+  private def toConsole(res: DqmValidationResult) = {
+    SmvReportIO.printReport(res.toJSON())
+  }
+
+  private def terminateAtError(result: DqmValidationResult) = {
+    if (!result.passed) {
+      val r = result.toJSON()
+      throw new SmvDqmValidationError(r)
+    }
+  }
+
+  private def readPersistsedValidationFile(path: String): Try[DqmValidationResult] = {
+    Try({
+      val json = SmvReportIO.readReport(path)
+      DqmValidationResult(json)
+    })
+  }
+
+  /**
+   * Entrypoint for validating data. Runs validation UNLESS there is a persisted
+   * result, in which case returns that result
+   * @param df the data to validate
+   * @param hadAction whether df has already had an action (used to decide whether to force an action)
+   * @param path the path where the validation result will be persisted
+   */
+  def validate(df: DataFrame, hadAction: Boolean, path: String = "") = {
+    val forceAction = needAction && !hadAction
+
+      val result = if (persistable) {
+        // try to read from persisted validation file
+        readPersistsedValidationFile(path).recoverWith {
+          case e => {
+            Try(runValidation(df, forceAction, path))
+          }
+        }.get
+      } else {
+        runValidation(df, forceAction, path)
+      }
+
+      terminateAtError(result)
+      result
+  }
+
+  /**
+   * Run validation aginst DataFrame and print results
+   * @param df the data to validate
+   * @param forceAction whether an action needs to be forced on df
+   * @param path the path where the validation result should be persisted
+   */
+  def runValidation(df: DataFrame, forceAction: Boolean, path: String = ""): DqmValidationResult = {
+    if (forceAction)
+      doForceAction(df)
+
+    val res = applyPolicies(df)
+
+    if(!res.isEmpty)
+      toConsole(res)
+
+    // persist if result is not empty or forced an action
+    if (persistable && ((!res.isEmpty) || forceAction))
+      persist(res, path)
+
+    res
+  }
+
+  /**
+   * Appl DQM policies to DataFrame and return result
+   * @param df the data to apply policies to
+   */
+  def applyPolicies(df: DataFrame) = {
     /** need to take a snapshot on the DQMState before validation, since validation step could
      * have actions on the DF, which will change the accumulators of the DQMState*/
     dqmState.snapshot()
@@ -167,6 +256,67 @@ class DQMValidator(dqm: SmvDQM) extends ValidationTask {
     }
     val checkLog = dqmState.getAllLog()
 
-    new ValidationResult(passed, errorMessages, checkLog)
+    new DqmValidationResult(passed, errorMessages, checkLog)
+  }
+}
+
+/**
+ * DqmValidator will generate DqmValidationResult, which has
+ * @param passed whether the validation passed or not
+ * @param errorMessages detailed messages for sub results which the passed flag depends on
+ * @param checkLog useful logs for reporting
+ **/
+case class DqmValidationResult(
+    passed: Boolean,
+    errorMessages: Seq[(String, String)] = Nil,
+    checkLog: Seq[String] = Nil
+) {
+  def toJSON() = {
+    def e(s: String) = escapeJava(s)
+
+    "{\n" ++
+      """  "passed":%s,""".format(passed) ++ "\n" ++
+      """  "errorMessages": [""" ++ "\n" ++
+      errorMessages
+        .map { case (k, m) => """    {"%s":"%s"}""".format(e(k), e(m)) }
+        .mkString(",\n") ++ "\n" ++
+      "  ],\n" ++
+      """  "checkLog": [""" ++ "\n" ++
+      checkLog
+        .map { l =>
+          """    "%s"""".format(e(l))
+        }
+        .mkString(",\n") ++ "\n" ++
+      "  ]\n" ++
+      "}"
+  }
+
+  def isEmpty() = passed && checkLog.isEmpty
+}
+
+/** construct DqmValidationResult from JSON string */
+private[smv] object DqmValidationResult {
+  def apply(jsonStr: String) = {
+    val json = parse(jsonStr)
+    val (passed, errorList, checkList) = json match {
+      case JObject(List((_, JBool(p)), (_, JArray(e)), (_, JArray(c)))) => (p, e, c)
+      case _                                                            => throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+    }
+    val errorMessages = errorList.map { e =>
+      e match {
+        case JObject(List((k, JString(v)))) => (k, v)
+        case _ =>
+          throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+      }
+    }
+    val checkLog = checkList.map { e =>
+      e match {
+        case JString(l) => l
+        case _ =>
+          throw new IllegalArgumentException("JSON string is not a ValidationResult object")
+      }
+    }
+
+    new DqmValidationResult(passed, errorMessages, checkLog)
   }
 }

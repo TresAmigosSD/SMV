@@ -64,6 +64,11 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                         default = Some(false),
                         descrYes = "publish the given modules/stage/app through JDBC connection")
 
+  val printDeadModules = toggle("dead",
+                        noshort = true,
+                        default = Some(false),
+                        descrYes = "print a list of the dead modules in this application")
+
   val publishHive = toggle(
     "publish-hive",
     noshort = true,
