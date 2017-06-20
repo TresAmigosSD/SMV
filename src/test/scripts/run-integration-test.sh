@@ -110,7 +110,7 @@ verify_hash_unchanged
 echo "--------- CHANGE MODULE -------------"
 HASH_TEST_PKG=$(sed -e "s/\(.*\)\.[^.]*/\1/g" <<< "$HASH_TEST_MOD")
 HASH_TEST_MOD_FILE="src/main/python/$(sed -e "s/\./\//g" <<< "$HASH_TEST_PKG").py"
-sed -i "s/table1/table2/" $HASH_TEST_MOD_FILE
+sed -i"" -e "s/table1/table2/" $HASH_TEST_MOD_FILE
 
 echo "--------- RUN CHANGED MODULE -------------"
 ../../../tools/smv-pyrun -m hashtest.modules.M
