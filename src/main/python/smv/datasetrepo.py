@@ -45,6 +45,11 @@ class DataSetRepo(WithStackTrace):
         """Clear all client modules from sys.modules
         """
         for fqn in list(sys.modules.keys()):
+            # Somehow `org` is loaded from spark-core...jar as a Python module under Spark 2.1 and
+            # Python 3.5. Need to remove it so that when we try to load `org.tresamigos...` python
+            # can find them
+            if (fqn == 'org'):
+                sys.modules.pop(fqn)
             for stage_name in self.smvApp.stages:
                 if fqn == stage_name or fqn.startswith(stage_name + "."):
                     sys.modules.pop(fqn)
