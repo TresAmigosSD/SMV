@@ -74,11 +74,16 @@ function create_proj_dir()
     echo "-- creating project directory"
 
     if [ -d "$PROJ_DIR" ]; then
-      echo "$PROJ_DIR already exists"
-      exit 1
+      echo "   $PROJ_DIR already exists, converting to SMV project..."
+
+      # if creating SMV project from existing dir, it must not contain an smv-app-conf.props file
+      if [ -f "$PROJ_DIR/conf/smv-app-conf.props" ]; then
+        echo "   Error: $PROJ_DIR is already an SMV project. Quitting."
+        exit 1
+      fi
     fi
 
-    mkdir "$PROJ_DIR"
+    mkdir -p "$PROJ_DIR"
     export PROJ_DIR_FULL_PATH=$(cd $PROJ_DIR; /bin/pwd)
 }
 
