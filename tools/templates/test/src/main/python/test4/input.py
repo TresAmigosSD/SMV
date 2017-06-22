@@ -2,7 +2,7 @@ from smv import *
 import traceback
 
 try:
-    from org.tresamigos.smvtest.test4_1.modules import M1
+    from integration.test.test4_1.modules import M1
 
     M1Link = SmvModuleLink(M1)
 

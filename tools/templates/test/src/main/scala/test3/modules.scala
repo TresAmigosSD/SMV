@@ -1,4 +1,4 @@
-package org.tresamigos.smvtest.test3
+package integration.test.test3
 
 import org.tresamigos.smv._
 
