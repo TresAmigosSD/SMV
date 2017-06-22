@@ -1,6 +1,6 @@
 from smv import *
 
-from org.tresamigos.smvtest.hashtest import input
+from integration.test.hashtest import input
 
 class M(SmvModule, SmvOutput):
     def requiresDS(self):

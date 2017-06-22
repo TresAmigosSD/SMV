@@ -1,11 +1,5 @@
 #!/bin/bash
 
-QUITE_MODE=0
-if [ "$1" = "-q" ]; then
-    QUITE_MODE=1
-    shift
-fi
-
 TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/templates"
 TEMPLATE_DATA_DIR="$TEMPLATE_DIR/data"
 
@@ -14,32 +8,47 @@ TEMPLATE_DATA_DIR="$TEMPLATE_DIR/data"
 #  - enterprise
 #  - test
 PROJ_TYPE="simple"
+OVERRIDE=0
 
-if [ "$1" = "-s" ] || [ "$1" = "-simple" ]; then
-  PROJ_TYPE="simple"
-  shift
-fi
+while [[ $# -gt 1 ]]
+do
+FLAG=$1
 
-if [ "$1" = "-e" ] || [ "$1" = "-enterprise" ]; then
-  PROJ_TYPE="enterprise"
-  shift
-fi
-
-if [ "$1" = "-t" ] || [ "$1" = "-test" ]; then
-  PROJ_TYPE="test"
-  shift
-fi
-
-if [ "$1" = "-b" ] || [ "$1" = "-big" ]; then
-  PROJ_TYPE="big"
-  shift
-fi
+  case $FLAG in
+    -q)
+    QUITE_MODE=1
+    shift
+    ;;
+    -s|-simple)
+    PROJ_TYPE="simple"
+    shift
+    ;;
+    -e|-enterprise)
+    PROJ_TYPE="enterprise"
+    shift
+    ;;
+    -t|-test)
+    PROJ_TYPE="test"
+    shift
+    ;;
+    -b|-big)
+    PROJ_TYPE="big"
+    shift
+    ;;
+    -o)
+    OVERRIDE=1
+    shift
+    ;;
+    *)
+    ;;
+  esac
+done
 
 TEMPLATE_DIR+="/$PROJ_TYPE"
 
 if [ $# -ne 1 ]; then
     echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q] [-s|-e|-t] project_name"
+    echo "USAGE: $0 [-q][-o] [-s|-e|-t] project_name"
     echo "project types:"
     echo "  -s: simple (default)"
     echo "  -e: enterprise"
@@ -54,7 +63,7 @@ PROJ_CLASS=""
 
 # proj class hardcoded for smv integration tests
 if [ "$PROJ_TYPE" = "test" ]; then
-  PROJ_CLASS="org.tresamigos.smvtest"
+  PROJ_CLASS="integration.test"
 fi
 
 function extract_group_artifact_ids()
@@ -74,11 +83,21 @@ function create_proj_dir()
     echo "-- creating project directory"
 
     if [ -d "$PROJ_DIR" ]; then
-      echo "$PROJ_DIR already exists"
-      exit 1
+      if [ $OVERRIDE -eq 0 ]; then
+        echo "   $PROJ_DIR already exists, use the -o flag to authorize override."
+        exit 1
+      else
+        echo "   $PROJ_DIR already exists, converting to SMV project..."
+      fi
+
+      # if creating SMV project from existing dir, it must not contain an smv-app-conf.props file
+      if [ -f "$PROJ_DIR/conf/smv-app-conf.props" ]; then
+        echo "   Error: $PROJ_DIR is already an SMV project. Quitting."
+        exit 1
+      fi
     fi
 
-    mkdir "$PROJ_DIR"
+    mkdir -p "$PROJ_DIR"
     export PROJ_DIR_FULL_PATH=$(cd $PROJ_DIR; /bin/pwd)
 }
 

@@ -34,7 +34,7 @@ test7 \
 
 NEW_MODULE_STAGES="$NEW_PYTHON_MODULE_STAGES $NEW_SCALA_MODULE_STAGES"
 
-HASH_TEST_MOD="org.tresamigos.smvtest.hashtest.modules.M"
+HASH_TEST_MOD="integration.test.hashtest.modules.M"
 
 echo "--------- GENERATE INTEGRATION APP -------------"
 ../../tools/smv-init -test ${I_APP_NAME}
@@ -54,7 +54,7 @@ echo "--------- RUN INTEGRATION APP -------------"
 echo "--------- CHECK INTEGRATION APP OUTPUT -------------"
 for stage in $NEW_SCALA_MODULE_STAGES; do
   TEST_INPUT=$(< data/input/$stage/table.csv)
-  TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.M2_*.csv/part*)
+  TEST_OUTPUT=$(cat data/output/integration.test.$stage.M2_*.csv/part*)
   if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
     echo "Test failure: $stage"
     echo "Expected output:"
@@ -67,7 +67,7 @@ done
 
 for stage in $NEW_PYTHON_MODULE_STAGES; do
   TEST_INPUT=$(< data/input/$stage/table.csv)
-  TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.modules.M2_*.csv/part*)
+  TEST_OUTPUT=$(cat data/output/integration.test.$stage.modules.M2_*.csv/part*)
   if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
     echo "Test failure: $stage"
     echo "Expected output:"
