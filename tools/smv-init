@@ -54,7 +54,7 @@ PROJ_CLASS=""
 
 # proj class hardcoded for smv integration tests
 if [ "$PROJ_TYPE" = "test" ]; then
-  PROJ_CLASS="org.tresamigos.smvtest"
+  PROJ_CLASS="integration.test"
 fi
 
 function extract_group_artifact_ids()
