@@ -69,15 +69,14 @@ class SmvQuantileTest extends SmvTestUtil {
     val df = dfFrom("id:String;v:Integer","a,1;a,;a,4;a,1;a,1;a,2;a,;a,5")
     val res = df.smvGroupBy("id").smvQuantile("v", 4)
 
-    assertSrddSchemaEqual(res, "id: String;v: Integer;v_rsum: Long;v_quantile: Integer;v_total: Long")
-    assertUnorderedSeqEqual(res.collect.map(_.mkString(",")).mkString(";\n"),
-                            """a,null,null,1,14;
-                               a,null,null,1,14;
-                               a,1,3,2,14;
-                               a,1,3,2,14;
-                               a,1,3,2,14;
-                               a,2,5,3,14;
-                               a,4,9,4,14;
-                               a,5,14,4,14"""))
+    assertSrddSchemaEqual(res, "id: String;v: Integer;v_quantile: Integer")
+    assertSrddDataEqual(res, """a,null,1;
+                               a,null,1;
+                               a,1,2;
+                               a,1,2;
+                               a,1,2;
+                               a,2,3;
+                               a,4,4;
+                               a,5,4""")
   }
 }

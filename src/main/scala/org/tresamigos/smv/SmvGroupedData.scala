@@ -291,11 +291,8 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       Math.min(Math.floor(percentage * numBins + 1).toInt, numBins)
 
     require(numBins >= 2)
-    val total = df.groupBy(keys.head, keys.tail: _*).agg(sum(valueCol) as s"${valueCol}_total")
     val w     = winspec.orderBy(valueCol)
-    df.smvSelectPlus(sum(valueCol) over w as s"${valueCol}_rsum",
-                     udf(percent2nTile).apply((percentRank() over w)) as s"${valueCol}_quantile")
-      .smvJoinByKey(total, keys, SmvJoinType.Inner)
+    df.smvSelectPlus(udf(percent2nTile).apply((percentRank() over w)) as s"${valueCol}_quantile")
   }
 
   /** same as `smvQuantile(String, Integer)` but uses a `Column` type to specify the column name */
