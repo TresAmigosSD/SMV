@@ -65,6 +65,21 @@ class SmvQuantileTest extends SmvTestUtil {
     assertUnorderedSeqEqual(keyAndBin, expKeyAndBin)
   }
 
+  test("test smvPercentRank") {
+    val df = dfFrom("id:String;v:Integer","a,1;a,;a,4;a,1;a,1;a,2;a,;a,5")
+    val res = df.smvGroupBy("id").smvPercentRank(Seq("v"))
+
+    assertSrddSchemaEqual(res, "id: String;v: Integer;v_pctrnk: Double")
+    assertSrddDataEqual(res, """a,null,null;
+                                a,null,null;
+                                a,1,0.0;
+                                a,1,0.0;
+                                a,1,0.0;
+                                a,2,0.6;
+                                a,4,0.7999999999999999;
+                                a,5,1.0""")
+  }
+
   test("test smvQuantile with Nulls") {
     val df = dfFrom("id:String;v:Integer","a,1;a,;a,4;a,1;a,1;a,2;a,;a,5")
     val res = df.smvGroupBy("id").smvQuantile("v", 4)

@@ -28,7 +28,7 @@ import org.apache.spark.annotation.Experimental
 
 import cds.SmvGDO
 import edd.Edd
-import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.{StringType, DoubleType}
 
 /**
  * The result of running `smvGroupBy` on a DataFrame.
@@ -269,6 +269,51 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val cols = pivot.outCols map (n => smvfuncs.smvFirst($"$n", true) as n)
     pivotRes.agg(cols(0), cols.tail: _*)
   }
+
+
+  /**
+   * Compute the percent rank of a sequence of columns within a group in a given DataFrame.
+   *
+   * Example:
+   * {{{
+   *   df.smvGroupBy('g, 'g2).smvPercentRank(["v1", "v2", "v3"])
+   * }}}
+   *
+   * `smvPercentRank` takes another parameter `ignoreNull`. If it is set to true, null values's
+   * percent ranks will be nulls, otherwise, as Spark sort consider null smaller than any value,
+   * nulls percent ranks will be zero. Default value of `ignoreNull` is `true`.
+   *
+   * For each column for which the percent rank is computed (e.g. "v"), an additional column is
+   * added to the output, `v_pctrnk`
+   *
+   * All other columns in the input are untouched and propagated to the output.
+   **/
+  def smvPercentRank(valueCols: Seq[String], ignoreNull: Boolean = true): DataFrame = {
+    val windows = valueCols.map(winspec.orderBy(_))
+    val cols = df.columns
+    val c_rawpr = {c: String => mkUniq(cols, c + "_rawpr")}
+    val c_prmin = {c: String => mkUniq(cols, c + "_prmin")}
+    val c_pctrnk = {c: String => mkUniq(cols, c + "_pctrnk")}
+    if (ignoreNull) {
+      //Calculate raw percentRank for all cols, assign null for null values
+      val rawdf = df.smvSelectPlus(valueCols.zip(windows).map{
+        case (c, w) =>
+          when(col(c).isNull, lit(null).cast(DoubleType)).otherwise(percentRank().over(w)).alias(c_rawpr(c))
+      }: _*)
+
+      //Since min ignore nulls, "*_prmin" here are the min of the non-null percentRanks
+      val aggcols = valueCols.map{c => min(c_rawpr(c)).alias(c_prmin(c))}
+      val rawmin = rawdf.smvGroupBy(keys.map{col(_)}: _*).agg(aggcols.head, aggcols.tail: _*)
+
+      //Rescale the non-null percentRanks
+      rawdf.smvJoinByKey(rawmin, keys, "inner").smvSelectPlus(valueCols.map{
+        c => ((col(c_rawpr(c)) - col(c_prmin(c)))/(lit(1.0) - col(c_prmin(c)))).alias(c_pctrnk(c))
+      }: _*).smvSelectMinus(valueCols.map{c => Seq(c_rawpr(c), c_prmin(c))}.flatten.map{col(_)}: _*)
+    } else {
+      df.smvSelectPlus(valueCols.zip(windows).map{case (c, w) => percentRank().over(w).alias(c_pctrnk(c))}: _*)
+    }
+  }
+
 
   /**
    * Compute the quantile bin number within a group in a given DataFrame.
