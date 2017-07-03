@@ -94,4 +94,19 @@ class SmvQuantileTest extends SmvTestUtil {
                                a,4,4;
                                a,5,4""")
   }
+
+  test("test smvQuantile with multiple vars") {
+    val df = dfFrom("id:String;v1:Integer;v2:Double","a,1,1.0;a,,2.0;a,4,;a,1,1.1;a,1,2.3;a,2,5.0;a,,3.1;a,5,1.2")
+    val res = df.smvGroupBy("id").smvQuantile(Seq("v1", "v2"), 4)
+
+    assertSrddSchemaEqual(res, "id: String;v1: Integer;v2: Double;v1_quantile: Integer;v2_quantile: Integer")
+    assertSrddDataEqual(res, """a,null,2.0,null,3;
+                                a,null,3.1,null,4;
+                                a,1,1.0,1,1;
+                                a,1,1.1,1,1;
+                                a,1,2.3,1,3;
+                                a,2,5.0,3,4;
+                                a,4,null,4,null;
+                                a,5,1.2,4,2""")
+  }
 }

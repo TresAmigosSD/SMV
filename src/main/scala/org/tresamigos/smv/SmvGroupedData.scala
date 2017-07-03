@@ -315,6 +315,29 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
 
+  def smvQuantile(valueCols: Seq[String], numBins: Integer, ignoreNull: Boolean = true): DataFrame = {
+    val percent2nTile: Any => Option[Int] = {percentage =>
+      percentage match {
+        case null => None
+        case p: Double => Option(Math.min(Math.floor(p * numBins + 1).toInt, numBins))
+      }
+    }
+
+    val p2tUdf = udf(percent2nTile)
+
+    require(numBins >= 2)
+
+    val cols = df.columns
+    val c_pctrnk = {c: String => mkUniq(cols, c + "_pctrnk")}
+    val c_qntl = {c: String => mkUniq(cols, c + "_quantile")}
+
+    //smvPercentRank(valueCols, ignoreNull)
+    smvPercentRank(valueCols, ignoreNull).smvSelectPlus(
+      valueCols.map{c => p2tUdf(col(c_pctrnk(c))).alias(c_qntl(c))}: _*
+    ).smvSelectMinus(
+      valueCols.map{c => col(c_pctrnk(c))}: _*
+    )
+  }
   /**
    * Compute the quantile bin number within a group in a given DataFrame.
    *
