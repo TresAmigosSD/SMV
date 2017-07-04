@@ -192,7 +192,7 @@ def smvHashKey(head, *others):
     if is_string(head):
         pre = head
         cols = list(others)
-    elif isinstance(head):
+    elif isinstance(head, Column):
         pre = ""
         cols = [head] + list(others)
     else:
