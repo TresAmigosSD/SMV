@@ -274,6 +274,11 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   /**
    * Compute the percent rank of a sequence of columns within a group in a given DataFrame.
    *
+   * Used Spark's `percentRank` window function. The precent rank is defined as
+   * `R/(N-1)`, where `R` is the base 0 rank, and `N` is the population size. Under
+   * this definition, min value (R=0) has percent rank `0.0`, and max value has percent
+   * rank `1.0`.
+   *
    * Example:
    * {{{
    *   df.smvGroupBy('g, 'g2).smvPercentRank(["v1", "v2", "v3"])
@@ -316,6 +321,15 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
   /**
    * Compute the quantile bin number within a group in a given DataFrame.
+   *
+   * Estimate quantiles and quantile groups given a data with unknown distribution is
+   * quite arbitrary. There are multiple 'definitions' used different softwares. Please refer
+   * https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample
+   * fro details.
+   *
+   * `smvQuantile` calculated from Spark's `percentRank`. The algorithm is equavalent to the
+   * one labled as `R-7, Excel, SciPy-(1,1), Maple-6` in above wikipedia page. Please note it
+   * is slight different from SAS's default algorithm (labled as SAS-5).
    *
    * Example:
    * {{{

@@ -183,6 +183,9 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
 
   def smvQuantile(valueCols: Array[String], numBins: Integer, ignoreNull: Boolean) =
     grouped.smvQuantile(valueCols.toSeq, numBins, ignoreNull)
+
+  def smvPercentRank(valueCols: Array[String], ignoreNull: Boolean) =
+    grouped.smvPercentRank(valueCols.toSeq, ignoreNull)
 }
 
 class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {

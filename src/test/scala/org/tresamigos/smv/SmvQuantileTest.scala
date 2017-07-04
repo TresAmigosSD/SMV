@@ -80,7 +80,7 @@ class SmvQuantileTest extends SmvTestUtil {
                                 a,5,1.0""")
   }
 
-  test("test smvQuantile with Nulls") {
+  test("test smvQuantile with ignoreNull is false") {
     val df = dfFrom("id:String;v:Integer","a,1;a,;a,4;a,1;a,1;a,2;a,;a,5")
     val res = df.smvGroupBy("id").smvQuantile(Seq("v"), 4, ignoreNull=false)
 

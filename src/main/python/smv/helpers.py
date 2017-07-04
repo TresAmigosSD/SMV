@@ -335,9 +335,41 @@ class SmvGroupedData(object):
             return DataFrame(self.sgd.smvTimePanelAgg(time_col, start, end, smv_copy_array(self.df._sc, *aggs)), self.df.sql_ctx)
         return __doAgg
 
-    #TODO: add smvPercentRank
+    def smvPercentRank(self, value_cols, ignoreNull=True):
+        """Compute the percent rank of a sequence of columns within a group in a given DataFrame.
+
+            Used Spark's `percentRank` window function. The precent rank is defined as
+            `R/(N-1)`, where `R` is the base 0 rank, and `N` is the population size. Under
+            this definition, min value (R=0) has percent rank `0.0`, and max value has percent
+            rank `1.0`.
+
+            For each column for which the percent rank is computed (e.g. "v"), an additional column is
+            added to the output, `v_pctrnk`
+
+            All other columns in the input are untouched and propagated to the output.
+
+            Args:
+                value_cols (list(str)): columns to calculate percentRank on
+                ignoreNull (boolean): if true, null values's percent ranks will be nulls, otherwise,
+                    as Spark sort considers null smaller than any value, nulls percent ranks will be
+                    zeros. Default true.
+
+            Example:
+                >>> df.smvGroupBy('g, 'g2).smvPercentRank(["v1", "v2", "v3"])
+        """
+        return DataFrame(self.sgd.smvPercentRank(smv_copy_array(self.df._sc, *value_cols), ignoreNull), self.df.sql_ctx)
+
     def smvQuantile(self, value_cols, bin_num, ignoreNull=True):
         """Compute the quantile bin numbers within a group in a given DataFrame.
+
+            Estimate quantiles and quantile groups given a data with unknown distribution is
+            quite arbitrary. There are multiple 'definitions' used different softwares. Please refer
+            https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample
+            fro details.
+
+            `smvQuantile` calculated from Spark's `percentRank`. The algorithm is equavalent to the
+            one labled as `R-7, Excel, SciPy-(1,1), Maple-6` in above wikipedia page. Please note it
+            is slight different from SAS's default algorithm (labled as SAS-5).
 
             For each column for which the quantile is computed (e.g. "v"), an additional column is added to
             the output, "v_quantile".

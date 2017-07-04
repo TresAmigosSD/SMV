@@ -103,8 +103,33 @@ class GroupedDataTest(SmvBaseTest):
 
         self.should_be_same(res, expect)
 
+    def test_smvPercentRank(self):
+        df = self.createDF("id:String;v:Integer","a,1;a,;a,4;a,1;a,1;a,2;a,;a,5")
+        res = df.smvGroupBy('id').smvPercentRank(['v'])
+
+        exp = self.createDF("id: String;v: Integer;v_pctrnk: Double",
+                            """a,,;
+                            a,,;
+                            a,1,0.0;
+                            a,1,0.0;
+                            a,1,0.0;
+                            a,2,0.6;
+                            a,4,0.7999999999999999;
+                            a,5,1.0""")
+
+        self.should_be_same(res, exp)
+
     def test_smvQuantile(self):
         df = self.createDF("id:String;v1:Integer;v2:Double","a,1,1.0;a,,2.0;a,4,;a,1,1.1;a,1,2.3;a,2,5.0;a,,3.1;a,5,1.2")
         res = df.smvGroupBy("id").smvQuantile(["v1", "v2"], 4)
 
-        res.smvDumpDF()
+        exp = self.createDF("id: String;v1: Integer;v2: Double;v1_quantile: Integer;v2_quantile: Integer",
+                            """a,,2.0,,3;
+                            a,,3.1,,4;
+                            a,1,1.0,1,1;
+                            a,1,1.1,1,1;
+                            a,1,2.3,1,3;
+                            a,2,5.0,3,4;
+                            a,4,,4,;
+                            a,5,1.2,4,2""")
+        self.should_be_same(res, exp)
