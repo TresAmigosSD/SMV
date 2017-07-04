@@ -323,13 +323,16 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * Compute the quantile bin number within a group in a given DataFrame.
    *
    * Estimate quantiles and quantile groups given a data with unknown distribution is
-   * quite arbitrary. There are multiple 'definitions' used different softwares. Please refer
+   * quite arbitrary. There are multiple 'definitions' used in different softwares. Please refer
    * https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample
-   * fro details.
+   * for details.
    *
    * `smvQuantile` calculated from Spark's `percentRank`. The algorithm is equavalent to the
    * one labled as `R-7, Excel, SciPy-(1,1), Maple-6` in above wikipedia page. Please note it
    * is slight different from SAS's default algorithm (labled as SAS-5).
+   *
+   * Returned quantile bin numbers are 1 based. For example when `bin_num=10`, returned values are
+   * integers from 1 to 10, inclusively.
    *
    * Example:
    * {{{
