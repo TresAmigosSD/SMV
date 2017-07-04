@@ -280,7 +280,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    *
    * `smvPercentRank` takes another parameter `ignoreNull`. If it is set to true, null values's
-   * percent ranks will be nulls, otherwise, as Spark sort consider null smaller than any value,
+   * percent ranks will be nulls, otherwise, as Spark sort considers null smaller than any value,
    * nulls percent ranks will be zero. Default value of `ignoreNull` is `true`.
    *
    * For each column for which the percent rank is computed (e.g. "v"), an additional column is
@@ -314,7 +314,24 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     }
   }
 
-
+  /**
+   * Compute the quantile bin number within a group in a given DataFrame.
+   *
+   * Example:
+   * {{{
+   *   df.smvGroupBy('g, 'g2).smvQuantile(Seq("v"), 100)
+   * }}}
+   *
+   * For each column for which the quantile is computed (e.g. "v"), an additional column is added to
+   * the output, "v_quantile".
+   *
+   * All other columns in the input are untouched and propagated to the output.
+   *
+   * `smvQuantile` takes another parameter `ignoreNull`. If it is set to true, null values's
+   * percent ranks will be nulls, otherwise, as Spark sort considers null smaller than any value,
+   * nulls percent ranks will be zero. Default value of `ignoreNull` is `true`.
+   *
+   **/
   def smvQuantile(valueCols: Seq[String], numBins: Integer, ignoreNull: Boolean = true): DataFrame = {
     val percent2nTile: Any => Option[Int] = {percentage =>
       percentage match {
@@ -338,43 +355,13 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       valueCols.map{c => col(c_pctrnk(c))}: _*
     )
   }
-  /**
-   * Compute the quantile bin number within a group in a given DataFrame.
-   *
-   * Example:
-   * {{{
-   *   df.smvGroupBy('g, 'g2).smvQuantile("v", 100)
-   * }}}
-   *
-   * For each column for which the quantile is computed (e.g. "v"), 3 additional columns are added to the output
-   * ("v_total", "v_rsum", "v_quantile").
-   * <br/>`v_total` : the sum of "v" column within this group.
-   * <br/>`v_rsum` : the running sum of "v" column within this group (sorted from smallest to largest v value)
-   * <br/>`v_quantile` : the bin number in range [1,numBins]
-   *
-   * All other columns in the input are untouched and propagated to the output.
-   **/
-  def smvQuantile(valueCol: String, numBins: Integer): DataFrame = {
-    val percent2nTile: Double => Int = percentage =>
-      Math.min(Math.floor(percentage * numBins + 1).toInt, numBins)
-
-    require(numBins >= 2)
-    val w     = winspec.orderBy(valueCol)
-    df.smvSelectPlus(udf(percent2nTile).apply((percentRank() over w)) as s"${valueCol}_quantile")
-  }
-
-  /** same as `smvQuantile(String, Integer)` but uses a `Column` type to specify the column name */
-  def smvQuantile(valueCol: Column, numBins: Integer): DataFrame =
-    smvQuantile(valueCol.getName, numBins)
 
   /**
    * Compute the decile for a given column value with a DataFrame group.
    * Equivelant to `smvQuantile` with `numBins` set to 10.
    */
-  def smvDecile(valueCol: String): DataFrame = smvQuantile(valueCol, 10)
-
-  /** same as `smvDecile(String)` but uses a `Column` type to specify the column name */
-  def smvDecile(valueCol: Column): DataFrame = smvQuantile(valueCol, 10)
+  def smvDecile(valueCols: Seq[String], ignoreNull: Boolean = true): DataFrame =
+    smvQuantile(valueCols, 10, ignoreNull)
 
   /**
    * Scale a group of columns to given ranges

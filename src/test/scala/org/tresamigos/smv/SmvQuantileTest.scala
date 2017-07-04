@@ -30,7 +30,7 @@ class SmvQuantileTest extends SmvTestUtil {
       "g:String; g2:Integer; k:String; junk:String; v:Integer",
       testData_1to20_str + """;G2,0,x,J,10;G2,0,y,JJ,30""" + ";g3,0,w1,j,1;g3,0,w2,j,1;g3,0,w3,j,3")
 
-    val res = df.smvGroupBy("g", "g2").smvDecile("v")
+    val res = df.smvGroupBy("g", "g2").smvDecile(Seq("v"))
 
     val keyAndBin =
       res.select("k", "v_quantile").collect.map { case Row(k: String, b: Int) => (k, b) }
@@ -82,7 +82,7 @@ class SmvQuantileTest extends SmvTestUtil {
 
   test("test smvQuantile with Nulls") {
     val df = dfFrom("id:String;v:Integer","a,1;a,;a,4;a,1;a,1;a,2;a,;a,5")
-    val res = df.smvGroupBy("id").smvQuantile("v", 4)
+    val res = df.smvGroupBy("id").smvQuantile(Seq("v"), 4, ignoreNull=false)
 
     assertSrddSchemaEqual(res, "id: String;v: Integer;v_quantile: Integer")
     assertSrddDataEqual(res, """a,null,1;
