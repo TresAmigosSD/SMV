@@ -335,6 +335,41 @@ class SmvGroupedData(object):
             return DataFrame(self.sgd.smvTimePanelAgg(time_col, start, end, smv_copy_array(self.df._sc, *aggs)), self.df.sql_ctx)
         return __doAgg
 
+    #TODO: add smvPercentRank
+    def smvQuantile(self, value_cols, bin_num, ignoreNull=True):
+        """Compute the quantile bin numbers within a group in a given DataFrame.
+
+            For each column for which the quantile is computed (e.g. "v"), an additional column is added to
+            the output, "v_quantile".
+
+            All other columns in the input are untouched and propagated to the output.
+
+            Args:
+                value_cols (list(str)): columns to calculate quantiles on
+                bin_num (int): number of quantiles, e.g. 4 for quartile, 10 for decile
+                ignoreNull (boolean): if true, null values's percent ranks will be nulls, otherwise,
+                    as Spark sort considers null smaller than any value, nulls percent ranks will be
+                    zeros. Default true.
+
+            Example:
+                >>> df.smvGroupBy('g, 'g2).smvQuantile(["v"], 100)
+        """
+        return DataFrame(self.sgd.smvQuantile(smv_copy_array(self.df._sc, *value_cols), bin_num, ignoreNull), self.df.sql_ctx)
+
+    def smvDecile(self, value_cols, ignoreNull=True):
+        """Compute deciles of some columns on a grouped data
+
+            Simply an alias to `smvQuantile(value_cols, 10, ignoreNull)`
+
+            Args:
+                value_cols (list(str)): columns to calculate deciles on
+                ignoreNull (boolean): if true, null values's percent ranks will be nulls, otherwise,
+                    as Spark sort considers null smaller than any value, nulls percent ranks will be
+                    zeros. Default true.
+        """
+        return self.smvQuantile(value_cols, 10, ignoreNull)
+
+
 class SmvMultiJoin(object):
     """Wrapper around Scala's SmvMultiJoin"""
     def __init__(self, sqlContext, mj):

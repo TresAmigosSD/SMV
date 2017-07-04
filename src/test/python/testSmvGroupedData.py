@@ -102,3 +102,9 @@ class GroupedDataTest(SmvBaseTest):
                 1,W20120227,6.0""")
 
         self.should_be_same(res, expect)
+
+    def test_smvQuantile(self):
+        df = self.createDF("id:String;v1:Integer;v2:Double","a,1,1.0;a,,2.0;a,4,;a,1,1.1;a,1,2.3;a,2,5.0;a,,3.1;a,5,1.2")
+        res = df.smvGroupBy("id").smvQuantile(["v1", "v2"], 4)
+
+        res.smvDumpDF()
