@@ -224,6 +224,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
       s"""    "fqn": ${toName(m)},""" + "\n" +
       s"""    "type": "${nodeType}",""" + "\n" +
       s"""    "version": ${m.version},""" + "\n" +
+      s"""    "needsToRun": ${m.needsToRun},""" + "\n" +
       s"""    "description": "${m.description}"""" + "\n" +
       s"""  }"""
 
