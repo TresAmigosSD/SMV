@@ -247,18 +247,18 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
-   * if the publish-local option is specified, then publish locally
+   * if the export-csv option is specified, then publish locally
    */
   def publishOutputModulesLocally: Boolean = {
-    if (smvConfig.cmdLine.publishLocal.isSupplied) {
-      val localDir = smvConfig.cmdLine.publishLocal()
+    if (smvConfig.cmdLine.exportCsv.isSupplied) {
+      val localDir = smvConfig.cmdLine.exportCsv()
       modulesToRun foreach { m =>
         val csvPath = s"${localDir}/${m.versionedFqn}.csv"
         m.rdd().smvExportCsv(csvPath)
       }
     }
 
-    smvConfig.cmdLine.publishLocal.isSupplied
+    smvConfig.cmdLine.exportCsv.isSupplied
   }
 
   /**

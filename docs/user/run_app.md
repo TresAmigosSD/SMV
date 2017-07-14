@@ -118,7 +118,7 @@ publish the specified modules through JDBC
 </tr>
 
 <tr>
-<td>--publish-local</td>
+<td>--export-csv (previously --publish-local)</td>
 <td>None</td>
 <td>
 publish the specified modules to the local file system

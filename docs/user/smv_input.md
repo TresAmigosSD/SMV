@@ -75,7 +75,7 @@ object acct_demo extends SmvMultiCsvFiles("accounts/acct_demo")
 ```
 ### Python
 ```Python
-class acct_demo(SmvModule):
+class acct_demo(SmvMultiCsvFiles):
   def dir(self):
     return "accounts/acct_demo"
 ```

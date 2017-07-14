@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # Release the current version of SMV.  This will use the tresamigos:smv
 # docker container to maintain release consistency.
 
