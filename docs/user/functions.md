@@ -20,7 +20,7 @@ df.select(
   ...)
 ```
 
-See [SMV ColumnHelper API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.11/index.html#org.tresamigos.smv.ColumnHelper) for more details.
+See [SMV ColumnHelper API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.12/index.html#org.tresamigos.smv.ColumnHelper) for more details.
 
 ## Package level Column Functions
 A group of functions can be applied to multiple Columns are defined in the smv package level.
@@ -31,7 +31,7 @@ df.select(
 )
 ```
 
-See [SMV package API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.11/index.html#org.tresamigos.smv.package) for details.
+See [SMV package API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.12/index.html#org.tresamigos.smv.package) for details.
 
 ## DataFrame Helper Functions
 This set of functions can be applied to an existing `DataFrame`.
@@ -41,7 +41,7 @@ df.selectPlus( $"amt" * 2 as "double_amt")
 ```
 Can be used to add an additional column to a `DataFrame`.
 
-See [SmvDFHelper API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.11/index.html#org.tresamigos.smv.SmvDFHelper) for more details.
+See [SmvDFHelper API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.12/index.html#org.tresamigos.smv.SmvDFHelper) for more details.
 
 ## Grouped Helper Functions
 This set of functions are used to augment the standard Spark `groupBy` method to provide functions that operate on grouped data.
@@ -51,13 +51,13 @@ df.smvGroupBy("id").
    smvPivotSum(Seq("month", "product"))("count")("5_14_A", "5_14_B", "6_14_A", "6_14_B")
 ```
 
-See [SmvGroupedDataFunc API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.11/index.html#org.tresamigos.smv.SmvGroupedDataFunc) for more details.
+See [SmvGroupedDataFunc API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.12/index.html#org.tresamigos.smv.SmvGroupedDataFunc) for more details.
 
 ## Custom Data Selector (CDS) Functions
 A Custom Data Selector (CDS) defines a sub-set of a group of records within a GroupedData,
 and user can define aggregations on this sub-set of data.
 
-See [CDS API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.11/index.html#org.tresamigos.smv.cds.package) for details.
+See [CDS API docs](http://tresamigossd.github.io/SMV/scaladocs/1.5.2.12/index.html#org.tresamigos.smv.cds.package) for details.
 
 **Note** since Spark 1.4 introduced the `window` concept, there are significant function
 overlap between SMV cds and Spark `window`. When migrate to Spark 1.5, the entire CDS interface
