@@ -81,3 +81,27 @@ class CsvFile(SmvCsvFile):
 
     def userSchema(self):
         return self.UserSchema
+
+class SqlMod(SmvSqlModule):
+    def tables(self):
+        return {
+            "A": SqlInputA,
+            "B": SqlInputB
+        }
+
+    def query(self):
+        return "select a, b from A inner join B on A.ida = B.idb"
+
+class SqlInputA(SmvModule):
+    def requiresDS(self):
+        return []
+
+    def run(self, i):
+        return self.smvApp.createDF("ida: Integer; a: String", "1,def;2,ghi")
+
+class SqlInputB(SmvModule):
+    def requiresDS(self):
+        return []
+
+    def run(self, i):
+        return self.smvApp.createDF("idb: Integer; b: String", "2,jkl;1,mno")

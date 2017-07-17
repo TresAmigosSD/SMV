@@ -94,6 +94,18 @@ class SmvFrameworkTest(SmvBaseTest):
             df = self.df(fqn)
             df.smvDumpDF()
 
+    def test_SmvSqlModule(self):
+        fqn = "stage.modules.SqlMod"
+        exp = self.createDF("a: String; b: String", "def,mno;ghi,jkl")
+        df = self.df(fqn)
+        self.should_be_same(df, exp)
+
+        # verify that the tables have been dropped
+        tablesDF = self.smvApp.sqlContext.tables()
+        tableNames = [r.tableName for r in tablesDF.collect()]
+        self.assertNotIn("a", tableNames)
+        self.assertNotIn("b", tableNames)
+
     #TODO: add other SmvDataSet unittests
 
 class SmvRunConfigTest1(SmvBaseTest):
