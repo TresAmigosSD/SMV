@@ -219,7 +219,10 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
 
     def toName(ds: SmvDataSet) = s"""\"${ds.fqn}\""""
 
-    def toNodeStr(nodeType: String)(m: SmvDataSet) =
+    def toNodeStr(m: SmvDataSet) = {
+      val dsType = m.dsType
+      // convert the first character of dsType to lowercase
+      val nodeType = dsType.substring(0, 1).toLowerCase() + dsType.substring(1)
       s"""  {""" + "\n" +
       s"""    "fqn": ${toName(m)},""" + "\n" +
       s"""    "type": "${nodeType}",""" + "\n" +
@@ -227,10 +230,11 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
       s"""    "needsToRun": ${m.needsToRun},""" + "\n" +
       s"""    "description": "${m.description}"""" + "\n" +
       s"""  }"""
+    }
 
     val nodeString = Seq(
       s""""nodes": [""" + "\n" +
-      g.nodeString(toNodeStr("module")(_), toNodeStr("file")(_)).mkString(",\n") + "\n" +
+      g.nodeString(toNodeStr, toNodeStr).mkString(",\n") + "\n" +
       "]"
     )
 
