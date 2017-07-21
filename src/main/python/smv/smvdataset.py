@@ -708,10 +708,15 @@ class SmvModel(SmvResultModule):
     """SmvModule whose result is a data model
     """
     # Exists only to be paired with SmvModelExec
+    def dsType(self):
+        return "Model"
 
 class SmvModelExec(SmvModule):
     """SmvModule that runs a model produced by an SmvModel
     """
+    def dsType(self):
+        return "ModelExec"
+
     def dependencies(self):
         model_mod = self.requiresModel()
         if not self._targetIsSmvModel(model_mod):
