@@ -28,7 +28,7 @@ import org.apache.spark.annotation.Experimental
 
 import cds.SmvGDO
 import edd.Edd
-import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.{StringType, DoubleType}
 
 /**
  * The result of running `smvGroupBy` on a DataFrame.
@@ -270,46 +270,115 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     pivotRes.agg(cols(0), cols.tail: _*)
   }
 
+
   /**
-   * Compute the quantile bin number within a group in a given DataFrame.
+   * Compute the percent rank of a sequence of columns within a group in a given DataFrame.
+   *
+   * Used Spark's `percent_rank` window function. The precent rank is defined as
+   * `R/(N-1)`, where `R` is the base 0 rank, and `N` is the population size. Under
+   * this definition, min value (R=0) has percent rank `0.0`, and max value has percent
+   * rank `1.0`.
    *
    * Example:
    * {{{
-   *   df.smvGroupBy('g, 'g2).smvQuantile("v", 100)
+   *   df.smvGroupBy('g, 'g2).smvPercentRank(["v1", "v2", "v3"])
    * }}}
    *
-   * For each column for which the quantile is computed (e.g. "v"), 3 additional columns are added to the output
-   * ("v_total", "v_rsum", "v_quantile").
-   * <br/>`v_total` : the sum of "v" column within this group.
-   * <br/>`v_rsum` : the running sum of "v" column within this group (sorted from smallest to largest v value)
-   * <br/>`v_quantile` : the bin number in range [1,numBins]
+   * `smvPercentRank` takes another parameter `ignoreNull`. If it is set to true, null values's
+   * percent ranks will be nulls, otherwise, as Spark sort considers null smaller than any value,
+   * nulls percent ranks will be zero. Default value of `ignoreNull` is `true`.
+   *
+   * For each column for which the percent rank is computed (e.g. "v"), an additional column is
+   * added to the output, `v_pctrnk`
    *
    * All other columns in the input are untouched and propagated to the output.
    **/
-  def smvQuantile(valueCol: String, numBins: Integer): DataFrame = {
-    val percent2nTile: Double => Int = percentage =>
-      Math.min(Math.floor(percentage * numBins + 1).toInt, numBins)
+  def smvPercentRank(valueCols: Seq[String], ignoreNull: Boolean = true): DataFrame = {
+    val windows = valueCols.map(winspec.orderBy(_))
+    val cols = df.columns
+    val c_rawpr = {c: String => mkUniq(cols, c + "_rawpr")}
+    val c_prmin = {c: String => mkUniq(cols, c + "_prmin")}
+    val c_pctrnk = {c: String => mkUniq(cols, c + "_pctrnk")}
+    if (ignoreNull) {
+      //Calculate raw percent_rank for all cols, assign null for null values
+      val rawdf = df.smvSelectPlus(valueCols.zip(windows).map{
+        case (c, w) =>
+          when(col(c).isNull, lit(null).cast(DoubleType)).otherwise(percent_rank().over(w)).alias(c_rawpr(c))
+      }: _*)
 
-    require(numBins >= 2)
-    val total = df.groupBy(keys.head, keys.tail: _*).agg(sum(valueCol) as s"${valueCol}_total")
-    val w     = winspec.orderBy(valueCol)
-    df.smvSelectPlus(sum(valueCol) over w as s"${valueCol}_rsum",
-                     udf(percent2nTile).apply((percent_rank() over w)) as s"${valueCol}_quantile")
-      .smvJoinByKey(total, keys, SmvJoinType.Inner)
+      //Since min ignore nulls, "*_prmin" here are the min of the non-null percent_ranks
+      val aggcols = valueCols.map{c => min(c_rawpr(c)).alias(c_prmin(c))}
+      val rawmin = rawdf.smvGroupBy(keys.map{col(_)}: _*).agg(aggcols.head, aggcols.tail: _*)
+
+      //Rescale the non-null percent_ranks
+      rawdf.smvJoinByKey(rawmin, keys, "inner").smvSelectPlus(valueCols.map{
+        c => ((col(c_rawpr(c)) - col(c_prmin(c)))/(lit(1.0) - col(c_prmin(c)))).alias(c_pctrnk(c))
+      }: _*).smvSelectMinus(valueCols.map{c => Seq(c_rawpr(c), c_prmin(c))}.flatten.map{col(_)}: _*)
+    } else {
+      df.smvSelectPlus(valueCols.zip(windows).map{case (c, w) => percent_rank().over(w).alias(c_pctrnk(c))}: _*)
+    }
   }
 
-  /** same as `smvQuantile(String, Integer)` but uses a `Column` type to specify the column name */
-  def smvQuantile(valueCol: Column, numBins: Integer): DataFrame =
-    smvQuantile(valueCol.getName, numBins)
+  /**
+   * Compute the quantile bin number within a group in a given DataFrame.
+   *
+   * Estimate quantiles and quantile groups given a data with unknown distribution is
+   * quite arbitrary. There are multiple 'definitions' used in different softwares. Please refer
+   * https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample
+   * for details.
+   *
+   * `smvQuantile` calculated from Spark's `percent_rank`. The algorithm is equavalent to the
+   * one labled as `R-7, Excel, SciPy-(1,1), Maple-6` in above wikipedia page. Please note it
+   * is slight different from SAS's default algorithm (labled as SAS-5).
+   *
+   * Returned quantile bin numbers are 1 based. For example when `bin_num=10`, returned values are
+   * integers from 1 to 10, inclusively.
+   *
+   * Example:
+   * {{{
+   *   df.smvGroupBy('g, 'g2).smvQuantile(Seq("v"), 100)
+   * }}}
+   *
+   * For each column for which the quantile is computed (e.g. "v"), an additional column is added to
+   * the output, "v_quantile".
+   *
+   * All other columns in the input are untouched and propagated to the output.
+   *
+   * `smvQuantile` takes another parameter `ignoreNull`. If it is set to true, null values's
+   * percent ranks will be nulls, otherwise, as Spark sort considers null smaller than any value,
+   * nulls percent ranks will be zero. Default value of `ignoreNull` is `true`.
+   *
+   **/
+  def smvQuantile(valueCols: Seq[String], numBins: Integer, ignoreNull: Boolean = true): DataFrame = {
+    val percent2nTile: Any => Option[Int] = {percentage =>
+      percentage match {
+        case null => None
+        case p: Double => Option(Math.min(Math.floor(p * numBins + 1).toInt, numBins))
+      }
+    }
+
+    val p2tUdf = udf(percent2nTile)
+
+    require(numBins >= 2)
+
+    val cols = df.columns
+    val c_pctrnk = {c: String => mkUniq(cols, c + "_pctrnk")}
+    val c_qntl = {c: String => mkUniq(cols, c + "_quantile")}
+
+    //smvPercentRank(valueCols, ignoreNull)
+    smvPercentRank(valueCols, ignoreNull).smvSelectPlus(
+      valueCols.map{c => p2tUdf(col(c_pctrnk(c))).alias(c_qntl(c))}: _*
+    ).smvSelectMinus(
+      valueCols.map{c => col(c_pctrnk(c))}: _*
+    )
+  }
 
   /**
    * Compute the decile for a given column value with a DataFrame group.
    * Equivelant to `smvQuantile` with `numBins` set to 10.
    */
-  def smvDecile(valueCol: String): DataFrame = smvQuantile(valueCol, 10)
-
-  /** same as `smvDecile(String)` but uses a `Column` type to specify the column name */
-  def smvDecile(valueCol: Column): DataFrame = smvQuantile(valueCol, 10)
+  def smvDecile(valueCols: Seq[String], ignoreNull: Boolean = true): DataFrame =
+    smvQuantile(valueCols, 10, ignoreNull)
 
   /**
    * Scale a group of columns to given ranges

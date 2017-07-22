@@ -77,8 +77,8 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrNo = "Do not publish results to hive tables."
   )
 
-  val publishLocal = opt[String](
-    "publish-local",
+  val exportCsv = opt[String](
+    "export-csv",
     noshort = true,
     default = None,
     descr = "publish|export given modules/stage/app to a CSV file at the given path on the local file system"

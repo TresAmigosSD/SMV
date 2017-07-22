@@ -604,6 +604,48 @@ class SmvModule(SmvDataSet):
         i = self._constructRunParams(known)
         return self.run(i)
 
+class SmvSqlModule(SmvModule):
+    """An SMV module which executes a SQL query in place of a run method
+    """
+    # User must specify table names. We can't use FQN because the name can't
+    # can't contain '.', and defaulting to the module's base name would invite
+    # name collisions.
+    @abc.abstractmethod
+    def tables(self):
+        """Dict of dependencies by table name.
+        """
+
+    def requiresDS(self):
+        return list(self.tables().values())
+
+    @abc.abstractmethod
+    def query(self):
+        """User-specified SQL query defining the behavior of this module
+
+            Before the query is executed, all dependencies will be registered as
+            tables with the names specified in the tables method.
+        """
+
+    def run(self, i):
+        tbl_name_2_ds = self.tables()
+
+        # temporarily register DataFrame inputs as tables
+        for tbl_name in tbl_name_2_ds:
+            ds = tbl_name_2_ds[tbl_name]
+            i[ds].registerTempTable(tbl_name)
+
+        res = self.smvApp.sqlContext.sql(self.query())
+
+        #drop temporary tables
+        for tbl_name in tbl_name_2_ds:
+            # This currently causes an "error" to be reported saying "table does
+            # not exist". This happens even when using "drop table if exists ".
+            # It is annoying but can be safely ignored.
+            self.smvApp.sqlContext.sql("drop table " + tbl_name)
+
+        return res
+
+
 class SmvResultModule(SmvModule):
     """An SmvModule whose result is not a DataFrame
 
@@ -666,10 +708,15 @@ class SmvModel(SmvResultModule):
     """SmvModule whose result is a data model
     """
     # Exists only to be paired with SmvModelExec
+    def dsType(self):
+        return "Model"
 
 class SmvModelExec(SmvModule):
     """SmvModule that runs a model produced by an SmvModel
     """
+    def dsType(self):
+        return "ModelExec"
+
     def dependencies(self):
         model_mod = self.requiresModel()
         if not self._targetIsSmvModel(model_mod):

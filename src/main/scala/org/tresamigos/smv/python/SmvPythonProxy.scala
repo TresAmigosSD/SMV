@@ -180,6 +180,12 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
 
   def smvTimePanelAgg(timeColName: String, start: panel.PartialTime, end: panel.PartialTime, aggCols: Array[Column]) =
     grouped.smvTimePanelAgg(timeColName, start, end)(aggCols: _*)
+
+  def smvQuantile(valueCols: Array[String], numBins: Integer, ignoreNull: Boolean) =
+    grouped.smvQuantile(valueCols.toSeq, numBins, ignoreNull)
+
+  def smvPercentRank(valueCols: Array[String], ignoreNull: Boolean) =
+    grouped.smvPercentRank(valueCols.toSeq, ignoreNull)
 }
 
 class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
