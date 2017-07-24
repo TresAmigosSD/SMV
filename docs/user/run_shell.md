@@ -17,6 +17,7 @@ $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 * `lsDead(stage_name)`: list `dead` datasets in the stage
 * `lsDeadLead()`: list `dead leaf` datasets in the project, `dead leaf` is `dead` dataset with no module depends on it
 * `lsDeadLead(stage_name)`: list `dead leaf` datasets in the stage
+* `exportToHive(dataset_name)`: export the running result of the dataset to a hive table
 * `ancestors(dataset_name)`: list `ancestors` of the dataset, `ancestors` are all the datasets current dataset depends
 * `descendants(datasetName)`: list `descendants` of the dataset, `descendants` are all the datasets depend on the current dataset
 * `graphStage()`: print dependency graph of stages and inter-stage links

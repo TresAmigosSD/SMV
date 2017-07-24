@@ -87,6 +87,7 @@ def help():
        |  * lsDead(stageName)
        |  * lsDeadLeaf()
        |  * lsDeadLeaf(stageName)
+       |  * exportToHive(datasetName)
        |  * graph()
        |  * graph(stageName)
        |  * ancestors(datasetName)
@@ -141,6 +142,14 @@ def lsDeadLeaf(stageName = None):
         print(_jvmShellCmd().lsDeadLeaf())
     else:
         print(_jvmShellCmd().lsDeadLeaf(stageName))
+
+def exportToHive(dsname):
+    """Export dataset's running result to a Hive table
+
+        Args:
+            dsname (str): The name of an SmvDataSet
+    """
+    print(_jvmShellCmd().exportToHive(dsname))
 
 def ancestors(dsname):
     """List all ancestors of a dataset
