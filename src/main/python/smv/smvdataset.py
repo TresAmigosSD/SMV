@@ -29,6 +29,7 @@ from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, pickle_lib
 from smv.stacktrace_mixin import WithStackTrace, with_stacktrace
+from smv.py4j_interface import create_py4j_interface_method
 
 
 def _disassemble(obj):
@@ -79,21 +80,6 @@ class SmvOutput(WithStackTrace):
                 (string)
         """
         return None
-
-class SmvPy4JResponse:
-    def __init__(self, _successful, _response):
-        self._successful = _successful
-        self._response = _response
-
-    def successful(self):
-        return self._success
-
-    def response(self):
-        print "response: " + self._response
-        return self._response
-
-    class Java:
-        implements = ["org.tresamigos.smv.IPythonResponsePy4J"]
 
 class SmvDataSet(WithStackTrace):
     """Abstract base class for all SmvDataSets
@@ -203,17 +189,12 @@ class SmvDataSet(WithStackTrace):
 
     @classmethod
     @with_stacktrace
-    def getFqn(cls):
-        """Returns the fully qualified name
-        """
-        return SmvPy4JResponse(True, cls.fqn())
-
-    @classmethod
-    @with_stacktrace
     def fqn(cls):
         """Returns the fully qualified name
         """
         return cls.__module__ + "." + cls.__name__
+
+    getFqn = create_py4j_interface_method("getFqn", "fqn")
 
     @classmethod
     def urn(cls):
@@ -227,6 +208,8 @@ class SmvDataSet(WithStackTrace):
                 (bool): True if this SmvDataSet should not persist its data, false otherwise
         """
         return False
+
+    getIsEphemeral = create_py4j_interface_method("getIsEphemeral", "isEphemeral")
 
     @with_stacktrace
     def publishHiveSql(self):

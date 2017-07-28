@@ -964,11 +964,11 @@ case class SmvExtModuleLink(modFqn: String)
  * Concrete SmvDataSet representation of modules defined in Python. Created
  * exclusively by DataSetRepoPython. Wraps an ISmvModule.
  */
-class SmvExtModulePython(target: ISmvModule) extends SmvDataSet {
-  override val description    = s"SmvModule ${target.getFqn.response()}"
-  override val fqn            = target.getFqn.response()
-  override def tableName      = target.tableName()
-  override def isEphemeral    = target.isEphemeral()
+class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.InterfacesWithPy4J {
+  override val fqn            = getPy4JResult(target.getFqn)
+  override val description    = s"SmvModule ${fqn}"
+  override def tableName      = target.tableName
+  override def isEphemeral    = getPy4JResult(target.getIsEphemeral)
   override def publishHiveSql = Option(target.publishHiveSql())
   override def dsType         = target.dsType()
   override def requiresDS     =

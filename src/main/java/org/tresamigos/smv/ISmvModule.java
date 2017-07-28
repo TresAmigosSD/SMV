@@ -34,7 +34,7 @@ public interface ISmvModule {
 	 * Input datasets and simple filter and map modules typically don't
 	 * need to be persisted.
 	 */
-	boolean isEphemeral();
+	IPythonResponsePy4J<Boolean> getIsEphemeral();
 
   /**
    * override sql query to use when publishing to a hive table.
