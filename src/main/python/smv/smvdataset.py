@@ -80,6 +80,21 @@ class SmvOutput(WithStackTrace):
         """
         return None
 
+class SmvPy4JResponse:
+    def __init__(self, _successful, _response):
+        self._successful = _successful
+        self._response = _response
+
+    def successful(self):
+        return self._success
+
+    def response(self):
+        print "response: " + self._response
+        return self._response
+
+    class Java:
+        implements = ["org.tresamigos.smv.IPythonResponsePy4J"]
+
 class SmvDataSet(WithStackTrace):
     """Abstract base class for all SmvDataSets
     """
@@ -99,6 +114,7 @@ class SmvDataSet(WithStackTrace):
     def description(self):
         return self.__doc__
 
+    # this doesn't need stack trace protection
     @abc.abstractmethod
     @with_stacktrace
     def requiresDS(self):
@@ -110,6 +126,7 @@ class SmvDataSet(WithStackTrace):
                 (list(SmvDataSet)): a list of dependencies
         """
 
+    # this doesn't need stacktrace protection
     @with_stacktrace
     def dqm(self):
         """DQM policy
@@ -183,6 +200,13 @@ class SmvDataSet(WithStackTrace):
         """Hash computed based on instance values of the dataset, such as the timestamp of an input file
         """
         return 0
+
+    @classmethod
+    @with_stacktrace
+    def getFqn(cls):
+        """Returns the fully qualified name
+        """
+        return SmvPy4JResponse(True, cls.fqn())
 
     @classmethod
     @with_stacktrace

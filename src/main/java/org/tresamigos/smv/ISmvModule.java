@@ -48,7 +48,7 @@ public interface ISmvModule {
 
 	String tableName();
 
-	String fqn();
+	IPythonResponsePy4J<String> getFqn();
 
 	/**
 	 * The attached DQM policy + any type specific policies.
