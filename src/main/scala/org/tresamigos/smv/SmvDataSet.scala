@@ -967,29 +967,31 @@ case class SmvExtModuleLink(modFqn: String)
 class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.InterfacesWithPy4J {
   override val fqn            = getPy4JResult(target.getFqn)
   override val description    = s"SmvModule ${fqn}"
-  override def tableName      = target.tableName
+  override def tableName      = getPy4JResult(target.getTableName)
   override def isEphemeral    = getPy4JResult(target.getIsEphemeral)
-  override def publishHiveSql = Option(target.publishHiveSql())
-  override def dsType         = target.dsType()
+  override def publishHiveSql = Option(getPy4JResult(target.getPublishHiveSql))
+  override def dsType         = getPy4JResult(target.getDsType)
   override def requiresDS     =
     throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
-    resolvedRequiresDS = target.dependencyUrns map (urn => resolver.loadDataSet(URN(urn)).head)
+    val urns = getPy4JResult(target.getDependencyUrns)
+    resolvedRequiresDS = urns map (urn => resolver.loadDataSet(URN(urn)).head)
     this
   }
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
-    target.getDataFrame(dqmValidator,
-                        resolvedRequiresDS
-                          .map { ds =>
-                            (ds.urn.toString, ds.rdd())
-                          }
-                          .toMap[String, DataFrame])
+    val response =  target.getGetDataFrame(dqmValidator,
+                                        resolvedRequiresDS
+                                          .map { ds =>
+                                            (ds.urn.toString, ds.rdd())
+                                          }
+                                          .toMap[String, DataFrame])
+    return getPy4JResult(response)
   }
-  override def instanceValHash = target.instanceValHash()
-  override def sourceCodeHash = target.sourceCodeHash()
+  override def instanceValHash = getPy4JResult(target.getInstanceValHash)
+  override def sourceCodeHash = getPy4JResult(target.getSourceCodeHash)
   override def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = {
     // ignore passed in userDQM as we want the user defined dqm from the python side.
-    target.dqmWithTypeSpecificPolicy()
+    getPy4JResult(target.getDqmWithTypeSpecificPolicy)
   }
 }
 
@@ -997,9 +999,9 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
  * Factory for SmvExtModulePython. Creates an SmvExtModulePython with SmvOuptut
  * if the Python dataset is SmvOutput
  */
-object SmvExtModulePython {
+object SmvExtModulePython extends python.InterfacesWithPy4J {
   def apply(target: ISmvModule): SmvExtModulePython = {
-    if (target.isOutput)
+    if (getPy4JResult(target.getIsOutput))
       new SmvExtModulePython(target) with SmvOutput
     else
       new SmvExtModulePython(target)

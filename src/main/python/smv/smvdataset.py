@@ -81,6 +81,8 @@ class SmvOutput(WithStackTrace):
         """
         return None
 
+    getTableName = create_py4j_interface_method("getTableName", "tableName")
+
 class SmvDataSet(WithStackTrace):
     """Abstract base class for all SmvDataSets
     """
@@ -145,6 +147,8 @@ class SmvDataSet(WithStackTrace):
     def isOutput(self):
         return isinstance(self, SmvOutput)
 
+    getIsOutput = create_py4j_interface_method("getIsOutput", "isOutput")
+
     # Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash
     # to compute datasetHash
     @with_stacktrace
@@ -181,11 +185,15 @@ class SmvDataSet(WithStackTrace):
         # ensure python's numeric type can fit in a java.lang.Integer
         return res & 0x7fffffff
 
+    getSourceCodeHash = create_py4j_interface_method("getSourceCodeHash", "sourceCodeHash")
+
     @with_stacktrace
     def instanceValHash(self):
         """Hash computed based on instance values of the dataset, such as the timestamp of an input file
         """
         return 0
+
+    getInstanceValHash = create_py4j_interface_method("getInstanceValHash", "instanceValHash")
 
     @classmethod
     @with_stacktrace
@@ -228,14 +236,20 @@ class SmvDataSet(WithStackTrace):
         """
         return None
 
+    getPublishHiveSql = create_py4j_interface_method("getPublishHiveSql", "publishHiveSql")
+
     @abc.abstractmethod
     @with_stacktrace
     def dsType(self):
         """Return SmvDataSet's type"""
 
+    getDsType = create_py4j_interface_method("getDsType", "dsType")
+
     @with_stacktrace
     def dqmWithTypeSpecificPolicy(self):
         return self.dqm()
+
+    getDqmWithTypeSpecificPolicy = create_py4j_interface_method("getDqmWithTypeSpecificPolicy", "dqmWithTypeSpecificPolicy")
 
     def dependencies(self):
         """Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)
@@ -247,6 +261,8 @@ class SmvDataSet(WithStackTrace):
         arr = [x.urn() for x in self.dependencies()]
         return smv_copy_array(self.smvApp.sc, *arr)
 
+    getDependencyUrns = create_py4j_interface_method("getDependencyUrns", "dependencyUrns")
+
     @with_stacktrace
     def getDataFrame(self, validator, known):
         df = self.doRun(validator, known)
@@ -255,6 +271,8 @@ class SmvDataSet(WithStackTrace):
         else:
             jdf = df._jdf
         return jdf
+
+    getGetDataFrame = create_py4j_interface_method("getGetDataFrame", "getDataFrame")
 
     @classmethod
     def df2result(cls, df):

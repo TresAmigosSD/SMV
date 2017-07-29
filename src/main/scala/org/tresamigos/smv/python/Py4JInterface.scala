@@ -25,6 +25,6 @@ trait InterfacesWithPy4J {
     if(response.successful)
       return response.result
     else
-      throw new SmvRuntimeException("There was an error while executing Python code", new SmvPythonException(response.error))
+      throw new SmvRuntimeException("There was an error executing Python code", new SmvPythonException(response.error))
   }
 }
