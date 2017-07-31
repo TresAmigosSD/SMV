@@ -31,6 +31,8 @@ class DataSetRepoFactory(WithStackTrace):
     def createRepo(self):
         return DataSetRepo(self.smvApp)
 
+    getCreateRepo = create_py4j_interface_method("getCreateRepo", "createRepo")
+
     class Java:
         implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
 

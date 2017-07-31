@@ -25,5 +25,5 @@ public interface IDataSetRepoFactoryPy4J {
   /**
    * Factory method for IDataSetRepoPy4J
    */
-	IDataSetRepoPy4J createRepo();
+	IPythonResponsePy4J<IDataSetRepoPy4J> getCreateRepo();
 }

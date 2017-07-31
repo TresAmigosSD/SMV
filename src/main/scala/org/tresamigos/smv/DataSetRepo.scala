@@ -59,7 +59,9 @@ class DataSetRepoPython(iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends
 }
 
 class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J, smvConfig: SmvConfig)
-    extends DataSetRepoFactory {
-  def createRepo(): DataSetRepoPython =
-    new DataSetRepoPython(iDSRepoFactory.createRepo(), smvConfig)
+    extends DataSetRepoFactory with python.InterfacesWithPy4J {
+  def createRepo(): DataSetRepoPython = {
+    val iDsRepo = getPy4JResult(iDSRepoFactory.getCreateRepo)
+    new DataSetRepoPython(iDsRepo, smvConfig)
+  }
 }
