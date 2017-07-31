@@ -18,6 +18,7 @@ import inspect
 from smv.error import SmvRuntimeError
 from smv.utils import for_name, smv_copy_array
 from smv.stacktrace_mixin import with_stacktrace, WithStackTrace
+from smv.py4j_interface import create_py4j_interface_method
 
 """Python implementations of IDataSetRepoPy4J and IDataSetRepoFactoryPy4J interfaces
 """
@@ -64,9 +65,13 @@ class DataSetRepo(WithStackTrace):
 
         return ds
 
+    getLoadDataSet = create_py4j_interface_method("getLoadDataSet", "loadDataSet")
+
     @with_stacktrace
     def dataSetsForStage(self, stageName):
         return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvDataSet)
+
+    getDataSetsForStage = create_py4j_interface_method("getDataSetsForStage", "dataSetsForStage")
 
     def _moduleUrnsForStage(self, stageName, fn):
         # `walk_packages` can generate AttributeError if the system has
