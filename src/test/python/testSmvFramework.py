@@ -139,3 +139,24 @@ class SmvRunConfigTest2(SmvBaseTest):
                 test2_i2,3;
                 test3_not_b,6""")
         self.should_be_same(expect, df)
+
+class SmvNameErrorPropagationTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=stage', '-m', "None"]
+
+    def test_module_NameError_propagation(self):
+        fqn = "ModWithNameError"
+        with self.assertRaisesRegexp(Py4JJavaError, "NameError"):
+            self.df(fqn)
+
+
+class SmvSyntaxErrorPropagationTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=syntax_error_stage', '-m', "None"]
+
+    def test_module_SyntaxError_propagation(self):
+        fqn = "ModWithSyntaxError"
+        with self.assertRaisesRegexp(Py4JJavaError, "SyntaxError"):
+            self.df(fqn)
