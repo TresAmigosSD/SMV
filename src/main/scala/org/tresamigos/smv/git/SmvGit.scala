@@ -16,8 +16,10 @@ package org.tresamigos.smv
 package git
 
 import java.io.File
+import java.net.URL
 import org.eclipse.jgit.lib.{Repository, RepositoryBuilder}
-import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api._
+import org.eclipse.jgit.transport.{RemoteConfig, URIish}
 import scala.collection.JavaConversions._
 
 /**
@@ -41,15 +43,29 @@ case class SmvGit(workDir: String = ".") {
         .setAuthor(author, authorEmail)
         .setMessage(commitMessage)
         .call()
+    }
+
+  def addRemote(remoteName: String, remoteUrl: URL): Unit = {
+    val localConfig = withRepo(workDir) { _.getConfig }
+    val remoteConfig = new RemoteConfig(localConfig, remoteName)
+    val uri = new URIish(remoteUrl)
+    remoteConfig.addURI(uri)
+    remoteConfig.update(localConfig)
+    localConfig.save()
   }
 
+  def pushToRemote(remoteName: String = "origin"): Unit =
+    withRepo(workDir) { repo =>
+      val git = new Git(repo)
+      git.push.setRemote(remoteName).call()
+    }
 }
 
 object SmvGit {
   val Committer: String = "SMV"
   val CommitterEmail: String = "smv@smv.org"
 
-  def withRepo[T](workDir: String)(code: Repository => T) = {
+  def withRepo[T](workDir: String)(code: Repository => T): T = {
     val repo = new RepositoryBuilder().readEnvironment().setWorkTree(new File(workDir)).build()
     try { code(repo) } finally { repo.close() }
   }
