@@ -131,6 +131,12 @@ class SmvDataSet(WithStackTrace):
     def doRun(self, validator, known):
         """Compute this dataset, and return the dataframe"""
 
+    getDoRun = create_py4j_interface_method("getDoRun", "doRun")
+
+    def assert_result_is_dataframe(self, result):
+        if not isinstance(result, DataFrame):
+            raise SmvRuntimeError(self.fqn() + " produced " + type(result).__name__ + " in place of a DataFrame")
+
     @with_stacktrace
     def version(self):
         """Version number
@@ -263,17 +269,6 @@ class SmvDataSet(WithStackTrace):
 
     getDependencyUrns = create_py4j_interface_method("getDependencyUrns", "dependencyUrns")
 
-    @with_stacktrace
-    def getDataFrame(self, validator, known):
-        df = self.doRun(validator, known)
-        if not isinstance(df, DataFrame):
-            raise SmvRuntimeError(self.fqn() + " produced " + type(df).__name__ + " in place of a DataFrame")
-        else:
-            jdf = df._jdf
-        return jdf
-
-    getGetDataFrame = create_py4j_interface_method("getGetDataFrame", "getDataFrame")
-
     @classmethod
     def df2result(cls, df):
         """Given a datasets's persisted DataFrame, get the result object
@@ -322,7 +317,9 @@ class SmvInput(SmvDataSet):
 
     def doRun(self, validator, known):
         jdf = self.getRawScalaInputDS().doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
+        result = self.run(DataFrame(jdf, self.smvApp.sqlContext))
+        self.assert_result_is_dataframe(result)
+        return result._jdf
 
 class WithParser(object):
     """shared parser funcs"""
@@ -404,10 +401,6 @@ class SmvCsvFile(SmvFile):
                 (str): path
         """
 
-    def doRun(self, validator, known):
-        jdf = self._smvCsvFile.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
-
 class SmvMultiCsvFiles(SmvFile):
     """Raw input from multiple csv files sharing single schema
 
@@ -440,10 +433,6 @@ class SmvMultiCsvFiles(SmvFile):
             Returns:
                 (str): path
         """
-
-    def doRun(self, validator, known):
-        jdf = self._smvMultiCsvFiles.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
 class SmvCsvStringData(WithParser, SmvInput):
     """Input data defined by a schema string and data string
@@ -480,10 +469,6 @@ class SmvCsvStringData(WithParser, SmvInput):
                 (str): data
         """
 
-    def doRun(self, validator, known):
-        jdf = self._smvCsvStringData.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
-
 class SmvJdbcTable(SmvInput):
     """Input from a table read through JDBC
     """
@@ -507,10 +492,6 @@ class SmvJdbcTable(SmvInput):
             Returns:
                 (str): table name
         """
-
-    def doRun(self, validator, known):
-        jdf = self._smvJdbcTable.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
 
 class SmvHiveTable(SmvInput):
@@ -627,7 +608,9 @@ class SmvModule(SmvDataSet):
 
     def doRun(self, validator, known):
         i = self._constructRunParams(known)
-        return self.run(i)
+        result = self.run(i)
+        self.assert_result_is_dataframe(result)
+        return result._jdf
 
 class SmvSqlModule(SmvModule):
     """An SMV module which executes a SQL query in place of a run method
@@ -725,9 +708,10 @@ class SmvResultModule(SmvModule):
         """
 
     def doRun(self, validator, known):
-        res_obj = super(SmvResultModule, self).doRun(validator, known)
-        df = self.result2df(self.smvApp, res_obj)
-        return df
+        i = self._constructRunParams(known)
+        res_obj = self.run(i)
+        result = self.result2df(self.smvApp, res_obj)
+        return result._jdf
 
 class SmvModel(SmvResultModule):
     """SmvModule whose result is a data model
@@ -774,7 +758,9 @@ class SmvModelExec(SmvModule):
     def doRun(self, validator, known):
         i = self._constructRunParams(known)
         model = i[self.requiresModel()]
-        return self.run(i, model)
+        result = self.run(i, model)
+        self.assert_result_is_dataframe(result)
+        return result._jdf
 
     @abc.abstractmethod
     def run(self, i, model):

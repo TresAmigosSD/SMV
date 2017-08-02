@@ -979,12 +979,8 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
     this
   }
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
-    val response =  target.getGetDataFrame(dqmValidator,
-                                        resolvedRequiresDS
-                                          .map { ds =>
-                                            (ds.urn.toString, ds.rdd())
-                                          }
-                                          .toMap[String, DataFrame])
+    val urn2df = resolvedRequiresDS.map { ds =>(ds.urn.toString, ds.rdd())}.toMap[String, DataFrame]
+    val response =  target.getDoRun(dqmValidator, urn2df)
     return getPy4JResult(response)
   }
   override def instanceValHash = getPy4JResult(target.getInstanceValHash)

@@ -67,7 +67,7 @@ public interface ISmvModule {
 	 * Try to run the module by its fully-qualified name and return its
 	 * result in a DataFrame.
 	 */
-	IPythonResponsePy4J<DataFrame> getGetDataFrame(DQMValidator validator,  Map<String, DataFrame> known);
+	IPythonResponsePy4J<DataFrame> getDoRun(DQMValidator validator,  Map<String, DataFrame> known);
 
 	/**
 	 * Hash computed based on the source code of the dataset's class
