@@ -17,8 +17,9 @@ scApp -> dsm: inferDS("mod.with.bad.syntax")
 dsm -> tx: inferDS("mod.with.bad.syntax")
 tx -> dsr: loadDataSet("mod.with.bad.syntax")
 dsr -> dsrp: loadDataSet("mod.with.bad.syntax")
-dsrp -> dsr: SmvPyInterfaceResponse(err: "SyntaxError: blah blah blah")
-dsr -> pyshell: raise SmvPyError(err)
-pyshell -> user: (display error)
+dsrp -> dsr: IPythonReponsePy4J(err: "SyntaxError: blah newline stacktrace")
+dsrp -> dsrp: attempt to import mod.with.bad.syntax
+dsr -> pyshell: raise SmvPythonError(pythonStacktrace)
+pyshell -> user: (error displays with 3 stacks)
 
 @enduml
