@@ -17,6 +17,7 @@ package git
 
 import java.io.File
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.treewalk.TreeWalk
 
 import scala.sys.process._
@@ -89,5 +90,48 @@ class SmvGitAddTest extends SmvGitTestFixture {
     SmvGit(TestDir).addFile("Author X", "author.x@example.com", path, "second commit")
 
     assertGitFileContent(path, c2)
+  }
+}
+
+class SmvGitPushTest extends SmvGitTestFixture {
+  val localRepoDir: String = TestDir + "/local"
+  // for testing purposes the 'remote' repo will live on the local filesystem
+  val remoteishRepoDir: String = TestDir + "/remote"
+
+  override def beforeEach() = {
+    super.beforeEach()
+    withRepo(localRepoDir) { _.create }
+    withRepo(remoteishRepoDir) { _.create }
+  }
+
+  override def afterEach() = {
+    s"rm -rf ${localRepoDir} ${remoteishRepoDir}".!!
+  }
+
+  def createFile(filepath: String, content: String): Unit =
+    ( s"echo ${content}" #> new File(s"${TmpDir}/git/${filepath}") ).!!
+
+  def getMasterCommitId(repoDir: String): ObjectId =
+    withRepo(repoDir) { new Git(_).getRepository.resolve("refs/heads/master") }
+
+  def remoteShouldBeUpToDate(): Unit =
+    getMasterCommitId(localRepoDir) shouldBe getMasterCommitId(remoteishRepoDir)
+
+  def remoteShouldNotBeUpToDate(): Unit =
+    getMasterCommitId(localRepoDir) should not be getMasterCommitId(remoteishRepoDir)
+
+  it should "be able to push commits to the origin remote" in {
+    val smvGitLocal =   SmvGit(localRepoDir)
+    val remoteishUrl = withRepo(remoteishRepoDir) { _.getDirectory.toURI.toURL() }
+    smvGitLocal.addRemote("origin", remoteishUrl)
+
+    val file = "f"
+    val contents = "contents of f"
+    createFile(s"${localRepoDir}/${contents}", contents)
+    smvGitLocal.addFile("Author X", "author.x@example.com", file, "initial commit")
+    remoteShouldNotBeUpToDate()
+
+    smvGitLocal.pushToRemote()
+    remoteShouldBeUpToDate()
   }
 }
