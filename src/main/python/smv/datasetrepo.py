@@ -17,17 +17,15 @@ import inspect
 
 from smv.error import SmvRuntimeError
 from smv.utils import for_name, smv_copy_array
-from smv.stacktrace_mixin import with_stacktrace, WithStackTrace
 from smv.py4j_interface import create_py4j_interface_method
 
 """Python implementations of IDataSetRepoPy4J and IDataSetRepoFactoryPy4J interfaces
 """
 
-class DataSetRepoFactory(WithStackTrace):
+class DataSetRepoFactory(object):
     def __init__(self, smvApp):
         self.smvApp = smvApp
 
-    @with_stacktrace
     def createRepo(self):
         return DataSetRepo(self.smvApp)
 
@@ -37,7 +35,7 @@ class DataSetRepoFactory(WithStackTrace):
         implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
 
 
-class DataSetRepo(WithStackTrace):
+class DataSetRepo(object):
     def __init__(self, smvApp):
         self.smvApp = smvApp
         # Remove client modules from sys.modules to force reload of all client
@@ -55,7 +53,6 @@ class DataSetRepo(WithStackTrace):
 
     # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
     # from the most recent source
-    @with_stacktrace
     def loadDataSet(self, fqn):
         ds = for_name(fqn)(self.smvApp)
 
@@ -69,7 +66,7 @@ class DataSetRepo(WithStackTrace):
 
     getLoadDataSet = create_py4j_interface_method("getLoadDataSet", "loadDataSet")
 
-    @with_stacktrace
+
     def dataSetsForStage(self, stageName):
         return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvDataSet)
 

@@ -28,7 +28,6 @@ import binascii
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, pickle_lib
-from smv.stacktrace_mixin import WithStackTrace, with_stacktrace
 from smv.py4j_interface import create_py4j_interface_method
 
 
@@ -63,7 +62,7 @@ def _stripComments(code):
     code = str(code)
     return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
 
-class SmvOutput(WithStackTrace):
+class SmvOutput(object):
     """Mixin which marks an SmvModule as one of the output of its stage
 
         SmvOutputs are distinct from other SmvDataSets in that
@@ -72,7 +71,6 @@ class SmvOutput(WithStackTrace):
     """
     IsSmvOutput = True
 
-    @with_stacktrace
     def tableName(self):
         """The user-specified table name used when exporting data to Hive (optional)
 
@@ -83,7 +81,7 @@ class SmvOutput(WithStackTrace):
 
     getTableName = create_py4j_interface_method("getTableName", "tableName")
 
-class SmvDataSet(WithStackTrace):
+class SmvDataSet(object):
     """Abstract base class for all SmvDataSets
     """
 
@@ -104,7 +102,6 @@ class SmvDataSet(WithStackTrace):
 
     # this doesn't need stack trace protection
     @abc.abstractmethod
-    @with_stacktrace
     def requiresDS(self):
         """User-specified list of dependencies
 
@@ -115,7 +112,6 @@ class SmvDataSet(WithStackTrace):
         """
 
     # this doesn't need stacktrace protection
-    @with_stacktrace
     def dqm(self):
         """DQM policy
 
@@ -137,7 +133,6 @@ class SmvDataSet(WithStackTrace):
         if not isinstance(result, DataFrame):
             raise SmvRuntimeError(self.fqn() + " produced " + type(result).__name__ + " in place of a DataFrame")
 
-    @with_stacktrace
     def version(self):
         """Version number
 
@@ -149,7 +144,6 @@ class SmvDataSet(WithStackTrace):
         """
         return "0";
 
-    @with_stacktrace
     def isOutput(self):
         return isinstance(self, SmvOutput)
 
@@ -157,7 +151,6 @@ class SmvDataSet(WithStackTrace):
 
     # Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash
     # to compute datasetHash
-    @with_stacktrace
     def sourceCodeHash(self):
         """Hash computed based on the source code of the dataset's class
         """
@@ -193,7 +186,6 @@ class SmvDataSet(WithStackTrace):
 
     getSourceCodeHash = create_py4j_interface_method("getSourceCodeHash", "sourceCodeHash")
 
-    @with_stacktrace
     def instanceValHash(self):
         """Hash computed based on instance values of the dataset, such as the timestamp of an input file
         """
@@ -202,7 +194,6 @@ class SmvDataSet(WithStackTrace):
     getInstanceValHash = create_py4j_interface_method("getInstanceValHash", "instanceValHash")
 
     @classmethod
-    @with_stacktrace
     def fqn(cls):
         """Returns the fully qualified name
         """
@@ -214,7 +205,6 @@ class SmvDataSet(WithStackTrace):
     def urn(cls):
         return "mod:" + cls.fqn()
 
-    @with_stacktrace
     def isEphemeral(self):
         """Should this SmvDataSet skip persisting its data?
 
@@ -225,7 +215,6 @@ class SmvDataSet(WithStackTrace):
 
     getIsEphemeral = create_py4j_interface_method("getIsEphemeral", "isEphemeral")
 
-    @with_stacktrace
     def publishHiveSql(self):
         """An optional sql query to run to publish the results of this module when the
            --publish-hive command line is used.  The DataFrame result of running this
@@ -245,13 +234,11 @@ class SmvDataSet(WithStackTrace):
     getPublishHiveSql = create_py4j_interface_method("getPublishHiveSql", "publishHiveSql")
 
     @abc.abstractmethod
-    @with_stacktrace
     def dsType(self):
         """Return SmvDataSet's type"""
 
     getDsType = create_py4j_interface_method("getDsType", "dsType")
 
-    @with_stacktrace
     def dqmWithTypeSpecificPolicy(self):
         return self.dqm()
 
@@ -262,7 +249,6 @@ class SmvDataSet(WithStackTrace):
         """
         return self.requiresDS()
 
-    @with_stacktrace
     def dependencyUrns(self):
         arr = [x.urn() for x in self.dependencies()]
         return smv_copy_array(self.smvApp.sc, *arr)
@@ -483,7 +469,6 @@ class SmvJdbcTable(SmvInput):
         return self._smvJdbcTable.description()
 
     @abc.abstractproperty
-    @with_stacktrace
     def tableName(self):
         """User-specified name for the table to extract input from
 
@@ -509,7 +494,6 @@ class SmvHiveTable(SmvInput):
         return self._smvHiveTable
 
     @abc.abstractproperty
-    @with_stacktrace
     def tableName(self):
         """User-specified name Hive hive table to extract input from
 
