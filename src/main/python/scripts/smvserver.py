@@ -213,6 +213,11 @@ def addFile(author, authorEmail, filePath, commitMessage, workDir="."):
     j_smvPyClient = SmvApp.getInstance().j_smvPyClient
     j_smvPyClient.addFile(author, authorEmail, filePath, commitMessage, workDir)
 
+def pushToRemote(workDir=".", authToken=None):
+    app = SmvApp.getInstance()
+    authTokenOpt = app.scalaOption(authToken)
+    app.j_smvPyClient.pushToRemote(workDir, authTokenOpt)
+
 # Wrapper so that other python scripts can import and then call
 # smvserver.Main()
 class Main(object):

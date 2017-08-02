@@ -258,6 +258,10 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   /** For python scripts to add file to a local git repository */
   def addFile(author: String, authorEmail: String, filePath: String, commitMessage: String, workDir: String = ".") =
     SmvGit(workDir).addFile(author, authorEmail, filePath, commitMessage)
+
+  /** For python scripts to push code to a remote git repository */
+  def pushToRemote(workDir: String = ".", optAuthToken: Option[String]) =
+    SmvGit(workDir).pushToRemote("origin", optAuthToken)
 }
 
 /** Not a companion object because we need to access it from Python */

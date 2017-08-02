@@ -19,7 +19,7 @@ import java.io.File
 import java.net.URL
 import org.eclipse.jgit.lib.{Repository, RepositoryBuilder}
 import org.eclipse.jgit.api._
-import org.eclipse.jgit.transport.{RemoteConfig, URIish}
+import org.eclipse.jgit.transport.{RemoteConfig, URIish, UsernamePasswordCredentialsProvider}
 import scala.collection.JavaConversions._
 
 /**
@@ -54,10 +54,15 @@ case class SmvGit(workDir: String = ".") {
     localConfig.save()
   }
 
-  def pushToRemote(remoteName: String = "origin"): Unit =
+  def pushToRemote(remoteName: String = "origin", optAuthToken: Option[String] = None): Unit =
     withRepo(workDir) { repo =>
-      val git = new Git(repo)
-      git.push.setRemote(remoteName).call()
+      val push = new Git(repo).push()
+      push.setRemote(remoteName)
+      optAuthToken foreach { token =>
+        val credentialsProvider = new UsernamePasswordCredentialsProvider(token, "")
+        push.setCredentialsProvider(credentialsProvider)
+      }
+      push.call()
     }
 }
 
