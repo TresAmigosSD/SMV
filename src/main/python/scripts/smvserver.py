@@ -44,6 +44,7 @@ def getFqnsInApp():
     urns = [u.split(":")[1] for ul in urnsLL for u in ul]
     return urns
 
+# This probably shouldn't be here. It seems to be part of the logic of an client application.
 def get_filepath_from_moduleFqn(module_fqn):
     '''given a fqn, returns the fullname of its file relative to proj dir.'''
     prefix = "./src/main/python/"
