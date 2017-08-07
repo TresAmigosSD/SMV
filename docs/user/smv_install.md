@@ -20,7 +20,7 @@ $ java -version
 ```
 
 # Install Python
-SMV works best with python v2.7.x.  To verify the current version of python, run the following:
+SMV works best with Python >= v2.7.x.  To verify the current version of python, run the following:
 ```
 $ python --version
 ```
