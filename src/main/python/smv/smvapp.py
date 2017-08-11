@@ -129,6 +129,9 @@ class SmvApp(object):
     def appName(self):
         return self.j_smvApp.smvConfig().appName()
 
+    def config(self):
+        return self.j_smvApp.smvConfig()
+
     def create_smv_pyclient(self, arglist):
         '''
         return a smvPyClient instance
