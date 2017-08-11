@@ -80,7 +80,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     allDataSets.flatMap(_.currentModuleOutputFiles).map(SmvHDFS.baseName(_))
 
   /**
-   * list of all the files with specific suffix in the input directory
+   * list of all the files with specific suffix in the given directory
    **/
   def validFilesInInputDir(dirName: String, suffix: String): Seq[String] =
     SmvHDFS.dirList(dirName).filter(f => f.endsWith(suffix))
