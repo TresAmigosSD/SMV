@@ -21,6 +21,8 @@ import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
+import java.util.List
+import collection.JavaConverters._
 
 import org.joda.time.DateTime
 
@@ -82,8 +84,8 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   /**
    * list of all the files with specific suffix in the given directory
    **/
-  def validFilesInInputDir(dirName: String, suffix: String): Seq[String] =
-    SmvHDFS.dirList(dirName).filter(f => f.endsWith(suffix))
+  def validFilesInInputDir(dirName: String, suffix: String): List[String] =
+    SmvHDFS.dirList(dirName).filter(f => f.endsWith(suffix)).asJava
 
   /** remove all non-current files in the output directory */
   private[smv] def purgeOldOutputFiles() = {
