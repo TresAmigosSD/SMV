@@ -84,7 +84,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   /**
    * list of all the files with specific suffix in the given directory
    **/
-  def validFilesInInputDir(dirName: String, suffix: String): List[String] =
+  def getFileNamesByType(dirName: String, suffix: String): List[String] =
     SmvHDFS.dirList(dirName).filter(f => f.endsWith(suffix)).asJava
 
   /** remove all non-current files in the output directory */
