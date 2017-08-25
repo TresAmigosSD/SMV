@@ -1,11 +1,11 @@
-from smv import *
-from pyspark.sql.functions import col, sum, lit
+import smv
+import pyspark.sql.functions as f
 
 __all__ = ['EmploymentByState']
 
 from _PKG_NAME_ import _DEP_NAME_
 
-class _MOD_NAME_(SmvModule, SmvOutput):
+class _MOD_NAME_(smv.SmvModule, smv.SmvOutput):
     """Python ETL Example: employ by state"""
 
     def requiresDS(self):
@@ -13,4 +13,4 @@ class _MOD_NAME_(SmvModule, SmvOutput):
 
     def run(self, i):
         df = i[_DEP_NAME_]
-        return df.groupBy(col("ST")).agg(sum(col("EMP")).alias("EMP"))
+        return df.groupBy(f.col("ST")).agg(f.sum(f.col("EMP")).alias("EMP"))
