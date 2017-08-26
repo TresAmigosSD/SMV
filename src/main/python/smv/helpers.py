@@ -1232,8 +1232,6 @@ class DataFrameHelper(object):
         """
         self._println(self._jDfHelper._smvDumpDF())
 
-_helpCls(DataFrame, DataFrameHelper)
-
 class ColumnHelper(object):
     def __init__(self, col):
         self.col = col
@@ -1570,4 +1568,7 @@ class ColumnHelper(object):
         jc = self._jColumnHelper.smvTimeToTimestamp()
         return Column(jc)
 
-_helpCls(Column, ColumnHelper)
+# Initialize DataFrame and Column with helper methods. Called by SmvApp.
+def init_helpers():
+    _helpCls(Column, ColumnHelper)
+    _helpCls(DataFrame, DataFrameHelper)
