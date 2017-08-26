@@ -1,5 +1,5 @@
 import smv
-import pyspark.sql.functions as f
+import pyspark.sql.functions as F
 
 from stage2 import inputdata
 
@@ -13,4 +13,4 @@ class EmploymentByStateCategory(smv.SmvModule, smv.SmvOutput):
 
     def run(self, i):
         df = i[inputdata.EmploymentByStateLink]
-        return df.smvSelectPlus((f.col("EMP") > f.lit(1000000)).alias("cat_high_emp"))
+        return df.smvSelectPlus((F.col("EMP") > F.lit(1000000)).alias("cat_high_emp"))

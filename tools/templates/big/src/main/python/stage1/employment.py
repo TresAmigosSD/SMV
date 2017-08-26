@@ -1,5 +1,5 @@
 import smv
-import pyspark.sql.functions as f
+import pyspark.sql.functions as F
 
 __all__ = ['EmploymentByState']
 
@@ -13,4 +13,4 @@ class _MOD_NAME_(smv.SmvModule, smv.SmvOutput):
 
     def run(self, i):
         df = i[_DEP_NAME_]
-        return df.groupBy(f.col("ST")).agg(f.sum(f.col("EMP")).alias("EMP"))
+        return df.groupBy(F.col("ST")).agg(F.sum(F.col("EMP")).alias("EMP"))
