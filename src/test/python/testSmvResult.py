@@ -14,7 +14,7 @@
 from test_support.smvbasetest import SmvBaseTest
 from test_support.extrapath import ExtraPath
 
-from smv import SmvResultModule
+import smv.smvdataset
 
 class SmvResultTest(SmvBaseTest):
     @classmethod
@@ -25,8 +25,8 @@ class SmvResultTest(SmvBaseTest):
         """Test serialization/deserialization of non-DataFrame results
         """
         obj = [100, "100", 100.0]
-        df = SmvResultModule.result2df(self.smvApp, obj)
-        deserialized_obj = SmvResultModule.df2result(df)
+        df = smv.smvdataset.SmvResultModule.result2df(self.smvApp, obj)
+        deserialized_obj = smv.smvdataset.SmvResultModule.df2result(df)
         self.assertEqual(obj, deserialized_obj)
 
     def test_SmvResultModule_persistence(self):

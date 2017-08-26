@@ -11,12 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvModule, SmvModuleLink
+import smv
 from stage1.modules import RM
 
-RML = SmvModuleLink(RM)
+RML = smv.SmvModuleLink(RM)
 
-class M(SmvModule):
+class M(smv.smvdataset.SmvModule):
     def requiresDS(self):
         return [RML]
 
