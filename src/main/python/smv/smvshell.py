@@ -236,3 +236,23 @@ def _clear_from_sys_modules(names_to_clear):
             if name != "smv.smvshell" and (name.startswith(ntc + ".") or name == ntc):
                 sys.modules.pop(name)
                 break
+
+__all__ = [
+    'df',
+    'openHive',
+    'openCsv',
+    'smvExportCsv',
+    'help',
+    'lsStage',
+    'ls',
+    'lsDead',
+    'lsDeadLeaf',
+    'ancestors',
+    'descendants',
+    'graph',
+    'graphStage',
+    'now',
+    'discoverSchema',
+    'edd',
+    'run_test'
+]
