@@ -18,7 +18,7 @@ object Employment extends SmvCsvFile("input/employment/CB1200CZ11.csv")
 ```
 ```python
 # In src/main/python/stage1/inputdata.py
-class Employment(SmvCsvFile):
+class Employment(smv.SmvCsvFile):
     def path(self):
         return "input/employment/CB1200CZ11.csv"
 ...
@@ -42,7 +42,7 @@ val EmploymentByStateLink = SmvModuleLink(com.foo.bar.stage1.EmploymentByState)
 from smv import SmvModuleLink
 from stage1 import employment as emp
 
-EmploymentByStateLink = SmvModuleLink(emp.EmploymentByState)
+EmploymentByStateLink = smv.SmvModuleLink(emp.EmploymentByState)
 ```
 
 In the above example, `EmploymentByStateLink` is defined as an input in stage 2. Modules in stage 2 can depend on `EmploymentByStateLink` directly. `EmploymentByStateLink` is linked to the **output file** of `EmploymentByState` module and **not** to the module code. Therefore, stage 1 needs to be run first before Stage 2 can run (so that `EmploymentByState` output is there when stage Y is run)
@@ -60,7 +60,7 @@ In the above example, the `model` stage may depend on the output of `etl` stage 
 
 ```python
 # In src/main/python/model/inputdata.py
-modelAccts = SmvModuleLink(etl.rawAccounts)
+modelAccts = smv.SmvModuleLink(etl.rawAccounts)
 ```
 
 As described above, `modelAccts` will depend on the **output** of `rawAccounts`.  Normally, this would read the versioned output that is persisted in the output directory.
@@ -109,10 +109,9 @@ smv.stages = stage1, modeling
 Create the file `src/main/python/modeling/inputdata.py`
 
 ```python
-from smv import SmvModuleLink, SmvExtDataSet
 from stage1 import employment as emp
 
-EmploymentByStateLink = SmvModuleLink(emp.EmploymentByState)
+EmploymentByStateLink = smv.SmvModuleLink(emp.EmploymentByState)
 
 ```
 
@@ -121,19 +120,15 @@ EmploymentByStateLink = SmvModuleLink(emp.EmploymentByState)
 Create the file `src/main/python/modeling/category.py` which defines the `EmploymentByStateCategory` module.
 
 ```python
-from smv import *
-from pyspark.sql.functions import col, sum, lit
-
 from modeling import inputdata
 
-class EmploymentByStateCategory(SmvModule, SmvOutput):
-
+class EmploymentByStateCategory(smv.SmvModule, smv.SmvOutput):
     def requiresDS(self):
         return [inputdata.EmploymentByStateLink]
 
     def run(self, i):
         df = i[inputdata.EmploymentByStateLink]
-        return df.smvSelectPlus((col("EMP") > lit(1000000)).alias("cat_high_emp"))
+        return df.smvSelectPlus((F.col("EMP") > F.lit(1000000)).alias("cat_high_emp"))
 ```
 
 **4. add the `__init__.py` file to let Python build the module structure.**

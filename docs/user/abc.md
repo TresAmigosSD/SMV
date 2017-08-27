@@ -9,7 +9,7 @@ In keeping with the [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)
 The first step to creating the ABC is extracting the variant.  In the examples above, the variants are the file paths and grouping values.  Because SMV needs to instantiate modules using the default constructor, we shall use abstract methods to provide the variant values in the concrete classes rather than use constructor injection.  For example:
 ```python
 # WRONG WAY TO INJECT VARIANT
-class MyModule(SmvModule):
+class MyModule(smv.SmvModule):
   def __init__(self, file_path):
     self.file_path = file_path
 
@@ -18,7 +18,7 @@ class MyModule(SmvModule):
 instead, user should use abstract methods:
 ```python
 # CORRECT WAY TO INJECT VARIANT
-class MyModule(SmvModule):
+class MyModule(smv.SmvModule):
   def get_path(self):
     """concrete classes should provide path by overriding this method"""
     pass
@@ -33,7 +33,7 @@ The concrete implementations below only differ in their output column name.  In 
 
 ```python
 # Abstract Base Class (ABC) that implements the employment by state module.
-class EmploymentByStateBase(SmvModule):
+class EmploymentByStateBase(smv.SmvModule):
     """Python ETL Example: employ by state"""
 
     # derived classes should override this method to provide the column name.
@@ -44,9 +44,9 @@ class EmploymentByStateBase(SmvModule):
 
     def run(self, i):
         df = i[Employment]
-        return df.groupBy(col("ST")).agg(sum(col("EMP")).alias(self.getOutputColumnName()))
+        return df.groupBy(F.col("ST")).agg(F.sum(F.col("EMP")).alias(self.getOutputColumnName()))
 
-class EmploymentByStateX(EmploymentByStateBase, SmvOutput):
+class EmploymentByStateX(EmploymentByStateBase, smv.SmvOutput):
     # provide the variant here.
     def getOutputColumnName(self): return "EMPX"
 

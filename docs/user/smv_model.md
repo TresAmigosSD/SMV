@@ -3,7 +3,7 @@ For modeling with SMV, you may want the result of a module to be a data model an
 
 **Python only**
 ```python
-class MyModel(SmvModel):
+class MyModel(smv.SmvModel):
   def requiresDS(self):
     return [MyInput]
 
@@ -11,7 +11,7 @@ class MyModel(SmvModel):
     # train your model here
     return train_model(i[MyInput])
 
-class MyModelExec(SmvModelExec):
+class MyModelExec(smv.SmvModelExec):
   def requiresDS(self):
     return [MyOtherInput]
 
