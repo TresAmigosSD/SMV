@@ -54,7 +54,7 @@ object AcctDemo extends SmvCsvFile("accounts/acct_demo.csv", CA.caBar) {
 
 **Python**
 ```python
-class AcctDemo(SmvCsvFile):
+class AcctDemo(smv.SmvCsvFile):
     def path(self):
         return "accounts/acct_demo.csv"
 
@@ -83,7 +83,7 @@ object AcctDemo extends SmvMultiCsvFiles("accounts/acct_demo"){
 
 **Python**
 ```python
-class AcctDemo(SmvMultiCsvFiles):
+class AcctDemo(smv.SmvMultiCsvFiles):
     def dir(self):
         return "accounts/acct_demo"
 ```
@@ -101,8 +101,9 @@ object MyTmpDS extends SmvCsvStringData("a:String;b:Double;c:String", "aa,1.0,cc
 ```
 **Python**
 ```python
-class MyTmpDS(SmvCsvStringData):
-    def schemaStr(self): return "a:String;b:Double;c:String"
+class MyTmpDS(smv.SmvCsvStringData):
+    def schemaStr(self):
+        return "a:String;b:Double;c:String"
     def dataStr(self):
         return "aa,1.0,cc;aa2,3.5,CC"
 ```
@@ -120,7 +121,7 @@ object FooHiveTable extends SmvHiveTable("hiveschema.foo")
 
 **Python**
 ```python
-class FooHiveTable(SmvHiveTable):
+class FooHiveTable(smv.SmvHiveTable):
     def tableName(self):
         return "hiveschema.foo"
 ```
@@ -137,7 +138,7 @@ object MyModule extends SmvModule("mod description") {
 ```
 **Python**
 ```python
-class MyModule(SmvModule):
+class MyModule(smv.SmvModule):
     """mod description"""
 
     def requiresDS(self):
@@ -162,7 +163,7 @@ object MyModule extends SmvModule("this is my module") with SmvOutput {
 
 **Python**
 ```python
-class MyModule(SmvModule, SmvOutput):
+class MyModule(smv.SmvModule, smv.SmvOutput):
     """
     Mod discretion
     """

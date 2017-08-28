@@ -1,10 +1,5 @@
-from smv import *
-import traceback
+import smv
 
-try:
-    from integration.test.test4_1.modules import M1
+from integration.test.test4_1.modules import M1
 
-    M1Link = SmvModuleLink(M1)
-
-except:
-    traceback.print_exc()
+M1Link = smv.SmvModuleLink(M1)

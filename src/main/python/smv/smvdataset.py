@@ -824,3 +824,18 @@ def SmvExtModuleLink(refname):
             (SmvModuleLink): link to the Scala SmvDataSet
     """
     return SmvModuleLink(SmvExtDataSet(refname))
+
+__all__ = [
+    'SmvOutput',
+    'SmvMultiCsvFiles',
+    'SmvCsvFile',
+    'SmvCsvStringData',
+    'SmvJdbcTable',
+    'SmvHiveTable',
+    'SmvModule',
+    'SmvSqlModule',
+    'SmvModel',
+    'SmvModelExec',
+    'SmvModuleLink',
+    'SmvExtModuleLink'
+]
