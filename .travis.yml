@@ -1,13 +1,26 @@
+# Enable caching
+# http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html#Caching
+# https://docs.travis-ci.com/user/caching/
 sudo: required
 dist: trusty
 language: python
+before_cache:
+  # Cleanup the cached directories to avoid unnecessary cache updates
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
+  - find $HOME/.sbt        -name "*.lock"               -print -delete
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt
+    - $HOME/.pip-cache/
+    - $HOME/.pyenv/cache
 install:
   - tools/spark-install ./spark
   - export PATH="$PATH:$(pwd)/spark/bin"
   - pyenv install 2.7.10
   - pyenv install 3.5.2
   - pyenv local 3.5.2 2.7.10
-  - pip install tox
+  - pip install --cache-dir $HOME/.pip-cache tox
 script:
   - sbt ++2.10.4 assembly
   - sbt ++2.10.4 publish-local

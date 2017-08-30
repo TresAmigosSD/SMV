@@ -25,3 +25,8 @@ metastore_db/
 
 .sync-config.cson
 *.pyc
+
+.bashrc
+.ivy2
+.jupyter/
+.sbt/
