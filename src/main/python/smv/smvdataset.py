@@ -28,7 +28,7 @@ import binascii
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, pickle_lib
-from smv.stacktrace_mixin import WithStackTrace, with_stacktrace
+from smv.py4j_interface import create_py4j_interface_method
 
 
 def _disassemble(obj):
@@ -62,7 +62,7 @@ def _stripComments(code):
     code = str(code)
     return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
 
-class SmvOutput(WithStackTrace):
+class SmvOutput(object):
     """Mixin which marks an SmvModule as one of the output of its stage
 
         SmvOutputs are distinct from other SmvDataSets in that
@@ -71,7 +71,6 @@ class SmvOutput(WithStackTrace):
     """
     IsSmvOutput = True
 
-    @with_stacktrace
     def tableName(self):
         """The user-specified table name used when exporting data to Hive (optional)
 
@@ -80,7 +79,9 @@ class SmvOutput(WithStackTrace):
         """
         return None
 
-class SmvDataSet(WithStackTrace):
+    getTableName = create_py4j_interface_method("getTableName", "tableName")
+
+class SmvDataSet(object):
     """Abstract base class for all SmvDataSets
     """
 
@@ -99,8 +100,8 @@ class SmvDataSet(WithStackTrace):
     def description(self):
         return self.__doc__
 
+    # this doesn't need stack trace protection
     @abc.abstractmethod
-    @with_stacktrace
     def requiresDS(self):
         """User-specified list of dependencies
 
@@ -110,7 +111,7 @@ class SmvDataSet(WithStackTrace):
                 (list(SmvDataSet)): a list of dependencies
         """
 
-    @with_stacktrace
+    # this doesn't need stacktrace protection
     def dqm(self):
         """DQM policy
 
@@ -126,7 +127,12 @@ class SmvDataSet(WithStackTrace):
     def doRun(self, validator, known):
         """Compute this dataset, and return the dataframe"""
 
-    @with_stacktrace
+    getDoRun = create_py4j_interface_method("getDoRun", "doRun")
+
+    def assert_result_is_dataframe(self, result):
+        if not isinstance(result, DataFrame):
+            raise SmvRuntimeError(self.fqn() + " produced " + type(result).__name__ + " in place of a DataFrame")
+
     def version(self):
         """Version number
 
@@ -138,13 +144,13 @@ class SmvDataSet(WithStackTrace):
         """
         return "0";
 
-    @with_stacktrace
     def isOutput(self):
         return isinstance(self, SmvOutput)
 
+    getIsOutput = create_py4j_interface_method("getIsOutput", "isOutput")
+
     # Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash
     # to compute datasetHash
-    @with_stacktrace
     def sourceCodeHash(self):
         """Hash computed based on the source code of the dataset's class
         """
@@ -178,24 +184,27 @@ class SmvDataSet(WithStackTrace):
         # ensure python's numeric type can fit in a java.lang.Integer
         return res & 0x7fffffff
 
-    @with_stacktrace
+    getSourceCodeHash = create_py4j_interface_method("getSourceCodeHash", "sourceCodeHash")
+
     def instanceValHash(self):
         """Hash computed based on instance values of the dataset, such as the timestamp of an input file
         """
         return 0
 
+    getInstanceValHash = create_py4j_interface_method("getInstanceValHash", "instanceValHash")
+
     @classmethod
-    @with_stacktrace
     def fqn(cls):
         """Returns the fully qualified name
         """
         return cls.__module__ + "." + cls.__name__
 
+    getFqn = create_py4j_interface_method("getFqn", "fqn")
+
     @classmethod
     def urn(cls):
         return "mod:" + cls.fqn()
 
-    @with_stacktrace
     def isEphemeral(self):
         """Should this SmvDataSet skip persisting its data?
 
@@ -204,7 +213,8 @@ class SmvDataSet(WithStackTrace):
         """
         return False
 
-    @with_stacktrace
+    getIsEphemeral = create_py4j_interface_method("getIsEphemeral", "isEphemeral")
+
     def publishHiveSql(self):
         """An optional sql query to run to publish the results of this module when the
            --publish-hive command line is used.  The DataFrame result of running this
@@ -221,33 +231,29 @@ class SmvDataSet(WithStackTrace):
         """
         return None
 
+    getPublishHiveSql = create_py4j_interface_method("getPublishHiveSql", "publishHiveSql")
+
     @abc.abstractmethod
-    @with_stacktrace
     def dsType(self):
         """Return SmvDataSet's type"""
 
-    @with_stacktrace
+    getDsType = create_py4j_interface_method("getDsType", "dsType")
+
     def dqmWithTypeSpecificPolicy(self):
         return self.dqm()
+
+    getDqmWithTypeSpecificPolicy = create_py4j_interface_method("getDqmWithTypeSpecificPolicy", "dqmWithTypeSpecificPolicy")
 
     def dependencies(self):
         """Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)
         """
         return self.requiresDS()
 
-    @with_stacktrace
     def dependencyUrns(self):
         arr = [x.urn() for x in self.dependencies()]
         return smv_copy_array(self.smvApp.sc, *arr)
 
-    @with_stacktrace
-    def getDataFrame(self, validator, known):
-        df = self.doRun(validator, known)
-        if not isinstance(df, DataFrame):
-            raise SmvRuntimeError(self.fqn() + " produced " + type(df).__name__ + " in place of a DataFrame")
-        else:
-            jdf = df._jdf
-        return jdf
+    getDependencyUrns = create_py4j_interface_method("getDependencyUrns", "dependencyUrns")
 
     @classmethod
     def df2result(cls, df):
@@ -297,7 +303,9 @@ class SmvInput(SmvDataSet):
 
     def doRun(self, validator, known):
         jdf = self.getRawScalaInputDS().doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
+        result = self.run(DataFrame(jdf, self.smvApp.sqlContext))
+        self.assert_result_is_dataframe(result)
+        return result._jdf
 
 class WithParser(object):
     """shared parser funcs"""
@@ -379,10 +387,6 @@ class SmvCsvFile(SmvFile):
                 (str): path
         """
 
-    def doRun(self, validator, known):
-        jdf = self._smvCsvFile.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
-
 class SmvMultiCsvFiles(SmvFile):
     """Raw input from multiple csv files sharing single schema
 
@@ -415,10 +419,6 @@ class SmvMultiCsvFiles(SmvFile):
             Returns:
                 (str): path
         """
-
-    def doRun(self, validator, known):
-        jdf = self._smvMultiCsvFiles.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
 class SmvCsvStringData(WithParser, SmvInput):
     """Input data defined by a schema string and data string
@@ -455,10 +455,6 @@ class SmvCsvStringData(WithParser, SmvInput):
                 (str): data
         """
 
-    def doRun(self, validator, known):
-        jdf = self._smvCsvStringData.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
-
 class SmvJdbcTable(SmvInput):
     """Input from a table read through JDBC
     """
@@ -473,7 +469,6 @@ class SmvJdbcTable(SmvInput):
         return self._smvJdbcTable.description()
 
     @abc.abstractproperty
-    @with_stacktrace
     def tableName(self):
         """User-specified name for the table to extract input from
 
@@ -482,10 +477,6 @@ class SmvJdbcTable(SmvInput):
             Returns:
                 (str): table name
         """
-
-    def doRun(self, validator, known):
-        jdf = self._smvJdbcTable.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
 
 
 class SmvHiveTable(SmvInput):
@@ -503,7 +494,6 @@ class SmvHiveTable(SmvInput):
         return self._smvHiveTable
 
     @abc.abstractproperty
-    @with_stacktrace
     def tableName(self):
         """User-specified name Hive hive table to extract input from
 
@@ -602,7 +592,9 @@ class SmvModule(SmvDataSet):
 
     def doRun(self, validator, known):
         i = self._constructRunParams(known)
-        return self.run(i)
+        result = self.run(i)
+        self.assert_result_is_dataframe(result)
+        return result._jdf
 
 class SmvSqlModule(SmvModule):
     """An SMV module which executes a SQL query in place of a run method
@@ -700,9 +692,10 @@ class SmvResultModule(SmvModule):
         """
 
     def doRun(self, validator, known):
-        res_obj = super(SmvResultModule, self).doRun(validator, known)
-        df = self.result2df(self.smvApp, res_obj)
-        return df
+        i = self._constructRunParams(known)
+        res_obj = self.run(i)
+        result = self.result2df(self.smvApp, res_obj)
+        return result._jdf
 
 class SmvModel(SmvResultModule):
     """SmvModule whose result is a data model
@@ -749,7 +742,9 @@ class SmvModelExec(SmvModule):
     def doRun(self, validator, known):
         i = self._constructRunParams(known)
         model = i[self.requiresModel()]
-        return self.run(i, model)
+        result = self.run(i, model)
+        self.assert_result_is_dataframe(result)
+        return result._jdf
 
     @abc.abstractmethod
     def run(self, i, model):
