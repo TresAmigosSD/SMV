@@ -14,7 +14,8 @@
 
 package org.tresamigos.smv
 package graph
-
+import com.github.mdr.ascii.graph.{Graph => AsciiGraph}
+import com.github.mdr.ascii.layout.{GraphLayout => AsciiGraphLayout}
 /**
  * Arbitrary SmvDataSet graph
  * Nodes are SmvDataSets and edges are the dependency of DSs
@@ -129,13 +130,13 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
     val vertices = g.nodeString(toPrint, toPrint).toSet
     val edges    = g.edges.map { case (f, t) => toPrint(f) -> toPrint(t) }.toList
 
-    // val graphObj = AsciiGraph(vertices, edges)
+    val graphObj = AsciiGraph(vertices, edges)
 
     // /** Graph as a string */
-    // val graphStr = AsciiGraphLayout.renderGraph(graphObj)
+    val graphStr = AsciiGraphLayout.renderGraph(graphObj)
 
-    // graphStr
-    "TODO: waiting for asciigraph for scala 2.11"
+    graphStr
+
   }
 
   /**
