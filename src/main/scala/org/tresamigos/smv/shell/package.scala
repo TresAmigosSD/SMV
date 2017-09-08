@@ -110,6 +110,11 @@ package object shell {
   def openHive(tableName: String) = ShellCmd.openHive(tableName)
 
   /**
+   * Export dataset's running result to a Hive table
+   **/
+  def exportToHive(dsName: String) = ShellCmd.exportToHive(dsName)
+
+  /**
    * Read in a Csv file as DF
    **/
   def openCsv(path: String, ca: CsvAttributes = null, parserCheck: Boolean = false) =
