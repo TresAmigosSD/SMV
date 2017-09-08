@@ -374,9 +374,6 @@ class SmvCsvFile(SmvFile):
     def getRawScalaInputDS(self):
         return self._smvCsvFile
 
-    def description(self):
-        return "Input file: @" + self.path()
-
     @abc.abstractproperty
     def path(self):
         """User-specified path to the input csv file
@@ -486,9 +483,6 @@ class SmvHiveTable(SmvInput):
     def __init__(self, smvApp):
         super(SmvHiveTable, self).__init__(smvApp)
         self._smvHiveTable = self.smvApp._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName(), self.tableQuery())
-
-    def description(self):
-        return "Hive Table: @" + self.tableName()
 
     def getRawScalaInputDS(self):
         return self._smvHiveTable
