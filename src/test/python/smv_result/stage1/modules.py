@@ -11,12 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvResultModule, SmvOutput
+import smv
 
 RESULT_VALS = [100, "100", 100.0]
 RESULT_SCHEMA = "res0: Integer; res1: String; res2: Float"
 
-class RM(SmvResultModule, SmvOutput):
+class RM(smv.smvdataset.SmvResultModule, smv.SmvOutput):
     def requiresDS(self):
         return []
 

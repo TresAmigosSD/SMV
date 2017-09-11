@@ -12,18 +12,19 @@
  * limitations under the License.
  */
 
-package org.tresamigos.smv;
+package org.tresamigos.smv
+package python
 
-/**
- * Repository methods used to query and instantiate modules
- * implemented in languages other than Scala. If you add a method here with
- * a Python implementation *make sure* to use the @with_stacktrace
- * decorator to ensure that errors that occur in callbacks don't get eaten.
- */
-public interface IDataSetRepoFactoryPy4J {
+class SmvPythonException(pythonStacktrace: String)
+  extends SmvRuntimeException("The following error occurred whiling calling back to Python code\n" + pythonStacktrace) {
+    setStackTrace(Array.empty)
+}
 
-  /**
-   * Factory method for IDataSetRepoPy4J
-   */
-	IPythonResponsePy4J<IDataSetRepoPy4J> getCreateRepo();
+trait InterfacesWithPy4J {
+  def getPy4JResult[T](response: IPythonResponsePy4J[T]): T = {
+    if(response.successful)
+      return response.result
+    else
+      throw new SmvRuntimeException("There was an error executing Python code", new SmvPythonException(response.error))
+  }
 }

@@ -87,6 +87,7 @@ def help():
        |  * lsDead(stageName)
        |  * lsDeadLeaf()
        |  * lsDeadLeaf(stageName)
+       |  * exportToHive(datasetName)
        |  * graph()
        |  * graph(stageName)
        |  * ancestors(datasetName)
@@ -141,6 +142,14 @@ def lsDeadLeaf(stageName = None):
         print(_jvmShellCmd().lsDeadLeaf())
     else:
         print(_jvmShellCmd().lsDeadLeaf(stageName))
+
+def exportToHive(dsname):
+    """Export dataset's running result to a Hive table
+
+        Args:
+            dsname (str): The name of an SmvDataSet
+    """
+    print(_jvmShellCmd().exportToHive(dsname))
 
 def ancestors(dsname):
     """List all ancestors of a dataset
@@ -236,3 +245,23 @@ def _clear_from_sys_modules(names_to_clear):
             if name != "smv.smvshell" and (name.startswith(ntc + ".") or name == ntc):
                 sys.modules.pop(name)
                 break
+
+__all__ = [
+    'df',
+    'openHive',
+    'openCsv',
+    'smvExportCsv',
+    'help',
+    'lsStage',
+    'ls',
+    'lsDead',
+    'lsDeadLeaf',
+    'ancestors',
+    'descendants',
+    'graph',
+    'graphStage',
+    'now',
+    'discoverSchema',
+    'edd',
+    'run_test'
+]

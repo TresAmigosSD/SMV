@@ -61,6 +61,7 @@ object ShellCmd {
       |* peek(df: DataFrame, pos: Int = 1)
       |* openCsv(path: String, ca: CsvAttributes = null, parserCheck: Boolean = false)
       |* openHive(tabelName: String)
+      |* exportToHive(dsName: String)
       |* now
       |* df(ds: SmvDataSet)
       |* ddf(fqn: String)
@@ -151,6 +152,13 @@ object ShellCmd {
   **/
   def openHive(tableName: String) = {
     new SmvHiveTable(tableName).rdd()
+  }
+
+  /**
+   * Export dataset's running result to a Hive table
+  **/
+  def exportToHive(dsName: String) = {
+    dsm.inferDS(dsName).head.exportToHive
   }
 
   /**

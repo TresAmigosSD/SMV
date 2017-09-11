@@ -1,7 +1,7 @@
-from smv import *
-from smv.dqm import *
+import smv
+import smv.dqm as dqm
 
-class Employment(SmvCsvFile):
+class Employment(smv.SmvCsvFile):
     def path(self):
         return "employment/CB1200CZ11.csv"
 
@@ -10,4 +10,4 @@ class Employment(SmvCsvFile):
 
     def dqm(self):
         """An example DQM policy"""
-        return SmvDQM().add(FailParserCountPolicy(10))
+        return dqm.SmvDQM().add(dqm.FailParserCountPolicy(10))

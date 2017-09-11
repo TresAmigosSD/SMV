@@ -105,3 +105,10 @@ class SqlInputB(SmvModule):
 
     def run(self, i):
         return self.smvApp.createDF("idb: Integer; b: String", "2,jkl;1,mno")
+
+class ModWithNameError(SmvModule):
+    def requiresDS(self):
+        return [ModWhoseNameDoesntExist]
+
+    def run(self, i):
+        return self.smvApp.createDF("b: String", "xxx")

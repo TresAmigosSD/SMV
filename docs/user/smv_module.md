@@ -14,8 +14,9 @@ object MyModule extends SmvModule("mod description") {
 ```
 ### Python
 ```Python
-class MyModule(SmvModule):
-  def requiresDS(self): return [Mod1,Mod2]
+class MyModule(smv.SmvModule):
+  def requiresDS(self):
+    return [Mod1,Mod2]
 ```
 
 Note that `requiresDS` returns a sequence of the actual `SmvDataSet` objects that the module depends on, **not** the name. The dependency can be on any combination of `SmvDataSet`s which may be files, Hive tables, modules, etc. It is not limited to other `SmvModules`.
@@ -28,8 +29,9 @@ object MyModule extends SmvModule("mod description") {
 ```
 ### Python
 ```python
-class MyModule(SmvModule):
-  def requiresDS(self): return [File1,Hive2,Mod3]
+class MyModule(smv.SmvModule):
+  def requiresDS(self):
+    return [File1,Hive2,Mod3]
 ```
 
 ## Module Transformation Definition (run)
@@ -50,8 +52,9 @@ object MyModule extends SmvModule("mod description") {
 ```
 ### Python
 ```Python
-class MyModule(SmvModule):
-  def requiresDS(self): return [Mod1,Mod2]
+class MyModule(smv.SmvModule):
+  def requiresDS(self):
+    return [Mod1,Mod2]
   def run(self, i):
     m1df = i[Mod1]
     m2df = i[Mod2]
@@ -83,8 +86,8 @@ object MyModule extends SmvModule("mod description") {
 ```
 ### Python
 ```python
-class MyModule(SmvModule):
-  def isEphemeral(self): return True
+class MyModule(smv.SmvModule):
+  def isEphemeral(self): return False
   ....    
 ```
 
@@ -114,10 +117,11 @@ object MyFile extends SmvCsvFile("path/to/file/data.csv", CA.ca) with SmvOutput
 ```
 ### Python
 ```python
-class MyModule(SmvModule, SmvOutput):
-  def tableName(self): return "hiveschema.hivetable"
+class MyModule(smv.SmvModule, smv.SmvOutput):
+  def tableName(self):
+    return "hiveschema.hivetable"
   ...
-class MyFile(SmvCsvFile, SmvOutput):
+class MyFile(smv.SmvCsvFile, smv.SmvOutput):
   ...
 ```
 
@@ -133,7 +137,7 @@ object MyModule extends SmvModule("this is my module") with SmvOutput {
 ```
 ### Python
 ```python
-class MyModule(SmvModule, SmvOutput):
+class MyModule(smv.SmvModule, smv.SmvOutput):
   def publishHiveSql(self):
     return "insert overwrite table foo ... select * from dftable"
   ...
@@ -143,7 +147,7 @@ class MyModule(SmvModule, SmvOutput):
 
 ```python
 # python example:
-class MyModule(SmvModule, SmvOutput):
+class MyModule(smv.SmvModule, smv.SmvOutput):
   def publishHiveSql(self):
     return """
       drop table if exists bar;

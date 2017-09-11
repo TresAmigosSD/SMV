@@ -27,6 +27,7 @@ from pyspark.sql import SparkSession, DataFrame
 from smv.datasetrepo import DataSetRepoFactory
 from smv.utils import smv_copy_array, check_socket
 from smv.error import SmvRuntimeError
+import smv.helpers
 
 
 class SmvApp(object):
@@ -126,8 +127,14 @@ class SmvApp(object):
         self.repoFactory = DataSetRepoFactory(self)
         self.j_smvPyClient.registerRepoFactory('Python', self.repoFactory)
 
+        # Initialize DataFrame and Column with helper methods
+        smv.helpers.init_helpers()
+
     def appName(self):
         return self.j_smvApp.smvConfig().appName()
+
+    def config(self):
+        return self.j_smvApp.smvConfig()
 
     def create_smv_pyclient(self, arglist):
         '''

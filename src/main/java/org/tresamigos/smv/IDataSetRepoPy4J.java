@@ -24,7 +24,7 @@ public interface IDataSetRepoPy4J {
 	/**
 	 * Factory method for ISmvModule
 	 */
-	ISmvModule loadDataSet(String modUrn);
+	IPythonResponsePy4J<ISmvModule> getLoadDataSet(String modUrn);
 
-	String[] dataSetsForStage(String modUrn);
+	IPythonResponsePy4J<String[]> getDataSetsForStage(String modUrn);
 }
