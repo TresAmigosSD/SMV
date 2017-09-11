@@ -16,14 +16,12 @@ package org.tresamigos.smv
 
 import classloaders.SmvClassLoader
 
-import scala.util.Try
-
 /**
  * DataSetRepo is the entity responsible for discovering and loading the datasets
  * in a given language. A new repo is created for each new transaction.
  */
 abstract class DataSetRepo {
-  def loadDataSet(urn: ModURN): Option[SmvDataSet]
+  def loadDataSet(urn: ModURN): SmvDataSet
   def urnsForStage(stageName: String): Seq[URN]
 }
 
@@ -33,8 +31,8 @@ abstract class DataSetRepoFactory {
 
 class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   val cl = SmvClassLoader(smvConfig, getClass.getClassLoader)
-  def loadDataSet(urn: ModURN): Option[SmvDataSet] =
-    (new SmvReflection(cl)).objectNameToInstance[SmvDataSet](urn.fqn).toOption
+  def loadDataSet(urn: ModURN): SmvDataSet =
+    (new SmvReflection(cl)).objectNameToInstance[SmvDataSet](urn.fqn)
 
   def urnsForStage(stageName: String): Seq[URN] = {
     val packages = Seq(stageName, stageName + ".input")
@@ -49,10 +47,10 @@ class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {
   def createRepo(): DataSetRepoScala = new DataSetRepoScala(smvConfig)
 }
 
-class DataSetRepoPython(iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo {
-  def loadDataSet(urn: ModURN): Option[SmvDataSet] =
-    Try(iDSRepo.loadDataSet(urn.fqn)).toOption.map(SmvExtModulePython.apply)
 
+class DataSetRepoPython (iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo {
+  def loadDataSet(urn: ModURN): SmvDataSet =
+    SmvExtModulePython( iDSRepo.loadDataSet(urn.fqn) )
   def urnsForStage(stageName: String): Seq[URN] =
     iDSRepo.dataSetsForStage(stageName) map (URN(_))
 }

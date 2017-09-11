@@ -14,7 +14,8 @@
 
 package org.tresamigos.smv
 
-import scala.annotation.tailrec
+import scala.util.{Try, Success, Failure}
+import scala.collection.mutable
 
 import org.joda.time.DateTime
 
@@ -114,17 +115,15 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
    * before loading it would incur the same cost twice, so we simply Try loading
    * the SmvDataSet from each repo and move on to the next repo if it fails.
    */
-  @tailrec
-  private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet =
-    reposToTry match {
-      case head :: rest =>
-        head.loadDataSet(urn) match {
-          case Some(ds) => ds
-          case _        => findDataSetInRepo(urn, rest)
-        }
-      case _ =>
-        throw new SmvRuntimeException(msg.dsNotFound(urn))
-    }
+  private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet = {
+    if(reposToTry.isEmpty)
+      throw new SmvRuntimeException(msg.dsNotFound(urn))
+    else
+      Try(reposToTry.head.loadDataSet(urn)) match {
+        case Failure(_) => findDataSetInRepo(urn, reposToTry.tail)
+        case Success(ds) => ds
+      }
+  }
 
   /**
    * msg encapsulates the messages which will be thrown as errors or printed as
