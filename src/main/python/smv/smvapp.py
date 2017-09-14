@@ -164,6 +164,9 @@ class SmvApp(object):
         jdf = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version))
         return DataFrame(jdf, self.sqlContext)
 
+    def inferUrn(self, name):
+        return self.j_smvPyClient.inferUrn(name)
+
     def runModuleByName(self, name, forceRun = False, version = None):
         jdf = self.j_smvApp.runModuleByName(name, forceRun, self.scalaOption(version))
         return DataFrame(jdf, self.sqlContext)

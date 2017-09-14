@@ -37,6 +37,21 @@ def df(name, forceRun = False, version = None):
     """
     return SmvApp.getInstance().runModuleByName(name, forceRun, version)
 
+def getModel(name, forceRun = False, version = None):
+    """Get the result of running the named SmvModel module
+
+        Args:
+            name (str): The name of a module. Does not have to be the FQN.
+            forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
+            version (str): The name of the published version to load from
+
+        Returns:
+            (object): The result of running the named module
+    """
+    app = SmvApp.getInstance()
+    urn = app.inferUrn(name)
+    return app.getModuleResult(urn, forceRun, version)
+
 def openHive(tableName):
     """Read in a Hive table as a DataFrame
 
@@ -248,6 +263,7 @@ def _clear_from_sys_modules(names_to_clear):
 
 __all__ = [
     'df',
+    'getModel',
     'openHive',
     'openCsv',
     'smvExportCsv',
