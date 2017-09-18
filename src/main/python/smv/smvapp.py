@@ -136,6 +136,12 @@ class SmvApp(object):
     def config(self):
         return self.j_smvApp.smvConfig()
 
+    def inputDir(self):
+        return self.config().inputDir()
+
+    def getFileNamesByType(self, ftype):
+        return self.j_smvApp.getFileNamesByType(self.inputDir(), ftype)
+
     def create_smv_pyclient(self, arglist):
         '''
         return a smvPyClient instance

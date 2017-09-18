@@ -147,7 +147,7 @@ function check_git_repo()
 {
   info "checking repo for modified files"
   cd "${SMV_DIR}"
-  if ! git diff-index --quiet HEAD --; then
+  if [ -n "$(git diff-index --quiet HEAD -- | grep -v smv-release)" ]; then
     error "SMV git repo has locally modified files"
   fi
 }
