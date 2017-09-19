@@ -1,0 +1,1086 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>ColumnHelper - org.tresamigos.smv.ColumnHelper</title>
+          <meta name="description" content="ColumnHelper - org.tresamigos.smv.ColumnHelper" />
+          <meta name="keywords" content="ColumnHelper org.tresamigos.smv.ColumnHelper" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../index.html';
+            var hash = 'org.tresamigos.smv.ColumnHelper';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="type">
+      <div id="definition">
+        <img alt="Class" src="../../../lib/class_big.png" />
+        <p id="owner"><a href="../../package.html" class="extype" name="org">org</a>.<a href="../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
+        <h1>ColumnHelper</h1><h3><span class="morelinks"><div>Related Doc:
+            <a href="package.html" class="extype" name="org.tresamigos.smv">package smv</a>
+          </div></span></h3><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ColumnHelper</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>ColumnHelper class provides additional methods/operators on Column</p><p>import org.tresamigos.smv</p><p>will import the implicit convertion from Column to ColumnHelper
+</p></div><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol>
+                
+                <li class="alpha in"><span>Alphabetic</span></li>
+                <li class="inherit out"><span>By Inheritance</span></li>
+              </ol>
+            </div>
+        <div id="ancestors">
+                <span class="filtertype">Inherited<br />
+                </span>
+                <ol id="linearization">
+                  <li class="in" name="org.tresamigos.smv.ColumnHelper"><span>ColumnHelper</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                </ol>
+              </div><div id="ancestors">
+            <span class="filtertype"></span>
+            <ol>
+              <li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show All</span></li>
+            </ol>
+          </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        <div id="constructors" class="members">
+              <h3>Instance Constructors</h3>
+              <ol><li name="org.tresamigos.smv.ColumnHelper#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(column:org.apache.spark.sql.Column):org.tresamigos.smv.ColumnHelper"></a>
+      <a id="&lt;init&gt;:ColumnHelper"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ColumnHelper</span><span class="params">(<span name="column">column: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@&lt;init&gt;(column:org.apache.spark.sql.Column):org.tresamigos.smv.ColumnHelper" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="scala.AnyRef#!=" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!=(x$1:Any):Boolean"></a>
+      <a id="!=(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@!=(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef###" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="##():Int"></a>
+      <a id="##():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@##():Int" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#==" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="==(x$1:Any):Boolean"></a>
+      <a id="==(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@==(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asInstanceOf[T0]:T0"></a>
+      <a id="asInstanceOf[T0]:T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Any.asInstanceOf.T0">T0</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@asInstanceOf[T0]:T0" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="clone():Object"></a>
+      <a id="clone():AnyRef"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@clone():Object" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#containsAll" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="containsAll[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
+      <a id="containsAll[T](T*)(ClassTag[T]):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">containsAll</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.containsAll.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.containsAll.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@containsAll[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A boolean, which is true if ALL of the given parameters are contained in the
+Array column</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is true if ALL of the given parameters are contained in the
+Array column</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.containsAll(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
+    </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="eq(x$1:AnyRef):Boolean"></a>
+      <a id="eq(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@eq(x$1:AnyRef):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#equals" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="equals(x$1:Any):Boolean"></a>
+      <a id="equals(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@equals(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <a id="finalize():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@finalize():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#getClass" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getClass():Class[_]"></a>
+      <a id="getClass():Class[_]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@getClass():Class[_]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#getName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getName:String"></a>
+      <a id="getName:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getName</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@getName:String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Get the name of the column.</p><div class="fullcomment"><div class="comment cmt"><p>Get the name of the column.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>column alias for aliased columns, or expression string representation for unaliased columns</p></dd></dl></div>
+    </li><li name="scala.AnyRef#hashCode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="hashCode():Int"></a>
+      <a id="hashCode():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@hashCode():Int" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@isInstanceOf[T0]:Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ne(x$1:AnyRef):Boolean"></a>
+      <a id="ne(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@ne(x$1:AnyRef):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notify" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notify():Unit"></a>
+      <a id="notify():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@notify():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notifyAll" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notifyAll():Unit"></a>
+      <a id="notifyAll():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@notifyAll():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvBinMode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvBinMode():org.apache.spark.sql.Column"></a>
+      <a id="smvBinMode():Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvBinMode</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvBinMode():org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Compute the mode given a double bin histogram</p><div class="fullcomment"><div class="comment cmt"><p>Compute the mode given a double bin histogram</p><pre>df_with_double_histogram_bin.select('bin_histogram.smvBinMode())</pre></div></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvBinPercentile" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvBinPercentile(percentile:Double):org.apache.spark.sql.Column"></a>
+      <a id="smvBinPercentile(Double):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvBinPercentile</span><span class="params">(<span name="percentile">percentile: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvBinPercentile(percentile:Double):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Compute a given percentile given a double bin histogram</p><div class="fullcomment"><div class="comment cmt"><p>Compute a given percentile given a double bin histogram</p><pre>df_with_double_histogram_bin.select('bin_histogram.smvBinPercentile(<span class="num">50.0</span>))</pre></div></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvCoarseGrain" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvCoarseGrain(bin:Double):org.apache.spark.sql.Column"></a>
+      <a id="smvCoarseGrain(Double):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCoarseGrain</span><span class="params">(<span name="bin">bin: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvCoarseGrain(bin:Double):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Map double to the lower bound of bins with bin-size specified</p><div class="fullcomment"><div class="comment cmt"><p>Map double to the lower bound of bins with bin-size specified</p><pre>$<span class="lit">"amt"</span>.smvCoarseGrain(<span class="num">100</span>)  <span class="cmt">// 122.34 => 100.0, 2230.21 => 2200.0</span></pre><p>TODO: need to rename this function as this is just a special case of rounding!!!
+</p></div></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvDay70" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvDay70:org.apache.spark.sql.Column"></a>
+      <a id="smvDay70:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvDay70</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvDay70:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Convert a timestamp to the number of months from 1970-01-01.</p><div class="fullcomment"><div class="comment cmt"><p>Convert a timestamp to the number of months from 1970-01-01.</p><pre>lit(<span class="lit">"2012-02-29"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvDay70 <span class="cmt">// 15399</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>number of days from 1970-01-01 (start from 0)</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvDayOfMonth" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvDayOfMonth:org.apache.spark.sql.Column"></a>
+      <a id="smvDayOfMonth:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvDayOfMonth</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvDayOfMonth:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Extract day of month component from a timestamp.</p><div class="fullcomment"><div class="comment cmt"><p>Extract day of month component from a timestamp.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvDayOfMonth <span class="cmt">// 25</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The day of month component as an integer (range 1-31) or null if input column is null</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvDayOfWeek" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvDayOfWeek:org.apache.spark.sql.Column"></a>
+      <a id="smvDayOfWeek:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvDayOfWeek</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvDayOfWeek:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Extract day of the week component from a timestamp.</p><div class="fullcomment"><div class="comment cmt"><p>Extract day of the week component from a timestamp.</p><pre>lit(<span class="lit">"2015-09-16"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvDayOfWeek <span class="cmt">// 3 (Wed)</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The day of the week component as an integer (range 1-7, 1 being Monday) or null if input column is null</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvHour" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvHour:org.apache.spark.sql.Column"></a>
+      <a id="smvHour:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvHour</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvHour:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Extract hour component from a timestamp.</p><div class="fullcomment"><div class="comment cmt"><p>Extract hour component from a timestamp.</p><pre>lit(<span class="lit">"2014-04-25 13:45"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd HH:mm"</span>).smvHour <span class="cmt">// 13</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The hour component as an integer or null if input column is null</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvIsAllIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvIsAllIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
+      <a id="smvIsAllIn[T](T*)(ClassTag[T]):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvIsAllIn</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.smvIsAllIn.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.smvIsAllIn.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvIsAllIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A boolean, which is true if ALL of the Array column's elements are in the given
+paraneter sequence</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is true if ALL of the Array column's elements are in the given
+paraneter sequence</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.smvIsAllIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvIsAnyIn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvIsAnyIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column"></a>
+      <a id="smvIsAnyIn[T](T*)(ClassTag[T]):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvIsAnyIn</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="candidates">candidates: <span class="extype" name="org.tresamigos.smv.ColumnHelper.smvIsAnyIn.T">T</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="tt">tt: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="org.tresamigos.smv.ColumnHelper.smvIsAnyIn.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvIsAnyIn[T](candidates:T*)(implicittt:scala.reflect.ClassTag[T]):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A boolean, which is ture if ANY one of the Array column element is in the given parameter
+sequence</p><div class="fullcomment"><div class="comment cmt"><p>A boolean, which is ture if ANY one of the Array column element is in the given parameter
+sequence</p><pre>df.smvSelectPlus($<span class="lit">"arrayCol"</span>.smvIsAnyIn(seqVals: _*) as <span class="lit">"isFound"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvMetaphone" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvMetaphone:org.apache.spark.sql.Column"></a>
+      <a id="smvMetaphone:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvMetaphone</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvMetaphone:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Map a string to it's Metaphone
+</p>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvMonth" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvMonth:org.apache.spark.sql.Column"></a>
+      <a id="smvMonth:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvMonth</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvMonth:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Extract month component from a timestamp.</p><div class="fullcomment"><div class="comment cmt"><p>Extract month component from a timestamp.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvMonth <span class="cmt">//4</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The month component as an integer or null if input column is null</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvMonth70" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvMonth70:org.apache.spark.sql.Column"></a>
+      <a id="smvMonth70:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvMonth70</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvMonth70:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Convert a timestamp to the number of months from 1970-01.</p><div class="fullcomment"><div class="comment cmt"><p>Convert a timestamp to the number of months from 1970-01.</p><pre>lit(<span class="lit">"2012-02-29"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvMonth70 <span class="cmt">// 505</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>number of months from 1970-01 (start from 0)</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusDays" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPlusDays(days:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="smvPlusDays(Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPlusDays</span><span class="params">(<span name="days">days: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvPlusDays(days:org.apache.spark.sql.Column):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Add N days to <code>Timestamp</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Add N days to <code>Timestamp</code> column.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvPlusDays($<span class="lit">"ColumnName"</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The incremented <code>Timestamp</code> or <code>null</code> if input was <code>null</code></p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusDays" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPlusDays(n:Int):org.apache.spark.sql.Column"></a>
+      <a id="smvPlusDays(Int):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPlusDays</span><span class="params">(<span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvPlusDays(n:Int):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Add N days to <code>Timestamp</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Add N days to <code>Timestamp</code> column.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvPlusDays(<span class="num">3</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The incremented <code>Timestamp</code> or <code>null</code> if input was <code>null</code></p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusMonths" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPlusMonths(months:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="smvPlusMonths(Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPlusMonths</span><span class="params">(<span name="months">months: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvPlusMonths(months:org.apache.spark.sql.Column):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Add N months to <code>Timestamp</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Add N months to <code>Timestamp</code> column.</p><p>The calculation will do its best to only change the month field
+retaining the same day of month. However, in certain circumstances, it may be
+necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot
+result in 2007-04-31, so the day of month is adjusted to 2007-04-30.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvPlusMonths($<span class="lit">"ColumnName"</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The incremented <code>Timestamp</code> or <code>null</code> if input was <code>null</code></p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusMonths" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPlusMonths(n:Int):org.apache.spark.sql.Column"></a>
+      <a id="smvPlusMonths(Int):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPlusMonths</span><span class="params">(<span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvPlusMonths(n:Int):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Add N months to <code>Timestamp</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Add N months to <code>Timestamp</code> column.</p><p>The calculation will do its best to only change the month field
+retaining the same day of month. However, in certain circumstances, it may be
+necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot
+result in 2007-04-31, so the day of month is adjusted to 2007-04-30.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvPlusMonths(<span class="num">1</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The incremented <code>Timestamp</code> or <code>null</code> if input was <code>null</code></p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusWeeks" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPlusWeeks(weeks:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="smvPlusWeeks(Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPlusWeeks</span><span class="params">(<span name="weeks">weeks: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvPlusWeeks(weeks:org.apache.spark.sql.Column):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Add N weeks to <code>Timestamp</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Add N weeks to <code>Timestamp</code> column.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvPlusWeeks($<span class="lit">"ColumnName"</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The incremented <code>Timestamp</code> or <code>null</code> if input was <code>null</code></p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusWeeks" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPlusWeeks(n:Int):org.apache.spark.sql.Column"></a>
+      <a id="smvPlusWeeks(Int):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPlusWeeks</span><span class="params">(<span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvPlusWeeks(n:Int):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Add N weeks to <code>Timestamp</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Add N weeks to <code>Timestamp</code> column.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvPlusWeeks(<span class="num">2</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The incremented <code>Timestamp</code> or <code>null</code> if input was <code>null</code></p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusYears" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPlusYears(years:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="smvPlusYears(Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPlusYears</span><span class="params">(<span name="years">years: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvPlusYears(years:org.apache.spark.sql.Column):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Add N years to <code>Timestamp</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Add N years to <code>Timestamp</code> column.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvPlusYears($<span class="lit">"ColumnName"</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The incremented <code>Timestamp</code> or <code>null</code> if input was <code>null</code></p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvPlusYears" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPlusYears(n:Int):org.apache.spark.sql.Column"></a>
+      <a id="smvPlusYears(Int):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPlusYears</span><span class="params">(<span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvPlusYears(n:Int):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Add N years to <code>Timestamp</code> column.</p><div class="fullcomment"><div class="comment cmt"><p>Add N years to <code>Timestamp</code> column.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvPlusYears(<span class="num">2</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The incremented <code>Timestamp</code> or <code>null</code> if input was <code>null</code></p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvQuarter" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvQuarter:org.apache.spark.sql.Column"></a>
+      <a id="smvQuarter:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvQuarter</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvQuarter:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Extract quarter component from a timestamp.</p><div class="fullcomment"><div class="comment cmt"><p>Extract quarter component from a timestamp.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvQuarter <span class="cmt">// 2</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The quarter component as an integer (1 based) or null if input column is null</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvSafeDiv" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvSafeDiv(other:org.apache.spark.sql.Column,defaultv:Double):org.apache.spark.sql.Column"></a>
+      <a id="smvSafeDiv(Column,Double):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvSafeDiv</span><span class="params">(<span name="other">other: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="defaultv">defaultv: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvSafeDiv(other:org.apache.spark.sql.Column,defaultv:Double):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Safely divide one column value by a <code>Double</code> constant.</p>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvSafeDiv" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvSafeDiv(denom:org.apache.spark.sql.Column,defaultValue:org.apache.spark.sql.Column):org.apache.spark.sql.Column"></a>
+      <a id="smvSafeDiv(Column,Column):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvSafeDiv</span><span class="params">(<span name="denom">denom: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="defaultValue">defaultValue: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvSafeDiv(denom:org.apache.spark.sql.Column,defaultValue:org.apache.spark.sql.Column):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Safely divide one column value by another.</p><div class="fullcomment"><div class="comment cmt"><p>Safely divide one column value by another.
+<b>Note:</b> only applies to columns of type <code>Double</code></p><pre>lit(<span class="num">1.0</span>).smvSafeDiv(lit(<span class="num">0.0</span>), <span class="num">1000.0</span>) <span class="kw">=&gt;</span> <span class="num">1000.0</span>
+lit(<span class="num">1.0</span>).smvSafeDiv(lit(<span class="kw">null</span>), <span class="num">1000.0</span>) <span class="kw">=&gt;</span> <span class="kw">null</span>
+<span class="kw">null</span>.smvSafeDiv(?,?) <span class="kw">=&gt;</span> <span class="kw">null</span></pre></div><dl class="paramcmts block"><dt class="param">denom</dt><dd class="cmt"><p>The denomenator to divide by.</p></dd><dt class="param">defaultValue</dt><dd class="cmt"><p>Default value to use if <code>denom</code> is 0.0</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvStrToTimestamp" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvStrToTimestamp(fmt:String):org.apache.spark.sql.Column"></a>
+      <a id="smvStrToTimestamp(String):Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvStrToTimestamp</span><span class="params">(<span name="fmt">fmt: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvStrToTimestamp(fmt:String):org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Build a timestamp from a string.</p><div class="fullcomment"><div class="comment cmt"><p>Build a timestamp from a string.  The format is the same as the Java <code>Date</code> format.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>)</pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The timestamp or null if input string is null</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvTimeToIndex" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvTimeToIndex:org.apache.spark.sql.Column"></a>
+      <a id="smvTimeToIndex:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvTimeToIndex</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvTimeToIndex:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">smvTime helper to convert <code>smvTime</code> column to time index integer
+Example <code>smvTime</code> values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;
+Example output 172, 551, 16405 (# of quarters, months, and days from 19700101)
+</p>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvTimeToLabel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvTimeToLabel:org.apache.spark.sql.Column"></a>
+      <a id="smvTimeToLabel:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvTimeToLabel</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvTimeToLabel:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">smvTime helper to convert <code>smvTime</code> column to time index integer
+Example <code>smvTime</code> values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;
+Example output 172, 551, 16405 (# of quarters, months, and days from 19700101)
+</p>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvTimeToTimestamp" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvTimeToTimestamp:org.apache.spark.sql.Column"></a>
+      <a id="smvTimeToTimestamp:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvTimeToTimestamp</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvTimeToTimestamp:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt"> smvTime helper to convert <code>smvTime</code> column to a timestamp at the beginning of
+ the given time pireod.</p><div class="fullcomment"><div class="comment cmt"><p> smvTime helper to convert <code>smvTime</code> column to a timestamp at the beginning of
+ the given time pireod.
+ Example <code>smvTime</code> values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;
+ Example output &quot;2013-01-01 00:00:00.0&quot;, &quot;2015-12-01 00:00:00.0&quot;, &quot;2014-12-01 00:00:00.0&quot;
+</p></div></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvTimeToType" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvTimeToType:org.apache.spark.sql.Column"></a>
+      <a id="smvTimeToType:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvTimeToType</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvTimeToType:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">smvTime helper to convert <code>smvTime</code> column to time type string
+Example <code>smvTime</code> values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;
+Example output type &quot;quarter&quot;, &quot;month&quot;, &quot;day&quot;
+</p>
+    </li><li name="org.tresamigos.smv.ColumnHelper#smvYear" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvYear:org.apache.spark.sql.Column"></a>
+      <a id="smvYear:Column"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvYear</span><span class="result">: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@smvYear:org.apache.spark.sql.Column" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Extract year component from a timestamp.</p><div class="fullcomment"><div class="comment cmt"><p>Extract year component from a timestamp.</p><pre>lit(<span class="lit">"2014-04-25"</span>).smvStrToTimestamp(<span class="lit">"yyyy-MM-dd"</span>).smvYear <span class="cmt">// 2014</span></pre></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The year component as an integer or null if input column is null</p></dd></dl></div>
+    </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
+      <a id="synchronized[T0](⇒T0):T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">synchronized</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="params">(<span name="arg0">arg0: ⇒ <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>)</span><span class="result">: <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@synchronized[T0](x$1:=&gt;T0):T0" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.ColumnHelper#toExpr" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toExpr:org.apache.spark.sql.catalyst.expressions.Expression"></a>
+      <a id="toExpr:Expression"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toExpr</span><span class="result">: <span class="extype" name="org.apache.spark.sql.catalyst.expressions.Expression">Expression</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@toExpr:org.apache.spark.sql.catalyst.expressions.Expression" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Convert <code>Column</code> to catalyst <code>Expression</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Convert <code>Column</code> to catalyst <code>Expression</code>.
+This is needed here as the internal <code>Expression</code> in <code>Column</code> is marked spark private
+but we sometimes need access to the expression.</p><pre>($<span class="lit">"v"</span> * <span class="num">5</span>).toExpr</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@DeveloperApi</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toString():String"></a>
+      <a id="toString():String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@toString():String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <a id="wait():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@wait():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long,x$2:Int):Unit"></a>
+      <a id="wait(Long,Int):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>, <span name="arg1">arg1: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@wait(x$1:Long,x$2:Int):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long):Unit"></a>
+      <a id="wait(Long):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.ColumnHelper@wait(x$1:Long):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
