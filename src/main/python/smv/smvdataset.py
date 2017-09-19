@@ -384,6 +384,43 @@ class SmvCsvFile(SmvFile):
                 (str): path
         """
 
+class SmvSqlCsvFile(SmvCsvFile):
+    """Input from a file in CSV format and using a SQL query to access it
+    """
+
+    @abc.abstractmethod
+    def tableName(self):
+        """User-specified name for the table to extract input from the CSV file
+
+            Override this to specify your own table name.
+
+            Returns:
+                (str): table name
+        """
+
+    def tableQuery(self):
+        """Query used to extract data from the table which reads the CSV file
+
+            Override this to specify your own query (optional). Default is
+            equivalent to 'select * from ' + tableName().
+
+            Returns:
+                (str): query
+        """
+        return "select * from "+ self.tableName()
+
+    def run(self, df):
+        # temporarily register DataFrame of input CSV file as a table
+        df.registerTempTable(self.tableName())
+
+        # execute the table query
+        res = self.smvApp.sqlContext.sql(self.tableQuery())
+
+        # drop the temporary table
+        self.smvApp.sqlContext.sql("drop table " + self.tableName())
+
+        return res
+
 class SmvMultiCsvFiles(SmvFile):
     """Raw input from multiple csv files sharing single schema
 
@@ -818,6 +855,7 @@ __all__ = [
     'SmvOutput',
     'SmvMultiCsvFiles',
     'SmvCsvFile',
+    'SmvSqlCsvFile',
     'SmvCsvStringData',
     'SmvJdbcTable',
     'SmvHiveTable',

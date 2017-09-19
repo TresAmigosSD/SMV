@@ -82,6 +82,21 @@ class CsvFile(SmvCsvFile):
     def userSchema(self):
         return self.UserSchema
 
+class SqlCsvFile(SmvSqlCsvFile):
+    UserSchema = "a: String; b: Integer; c: String"
+
+    def path(self):
+        return "test3.csv"
+
+    def userSchema(self):
+        return self.UserSchema
+
+    def tableQuery(self):
+        return "select a, b from A"
+
+    def tableName(self):
+        return "A"
+
 class SqlMod(SmvSqlModule):
     def tables(self):
         return {
