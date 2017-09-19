@@ -91,11 +91,8 @@ class SqlCsvFile(SmvSqlCsvFile):
     def userSchema(self):
         return self.UserSchema
 
-    def tableQuery(self):
-        return "select a, b from A"
-
-    def tableName(self):
-        return "A"
+    def query(self):
+        return "select a, b from df"
 
 class SqlMod(SmvSqlModule):
     def tables(self):
