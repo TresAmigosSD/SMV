@@ -1,0 +1,251 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>matcher_old - org.tresamigos.smv.matcher_old</title>
+          <meta name="description" content="matcher old - org.tresamigos.smv.matcher old" />
+          <meta name="keywords" content="matcher old org.tresamigos.smv.matcher old" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'org.tresamigos.smv.matcher_old.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img alt="Package" src="../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="org">org</a>.<a href="../../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="../package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
+        <h1>matcher_old</h1><span class="permalink">
+      <a href="../../../../index.html#org.tresamigos.smv.matcher_old.package" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">matcher_old</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="org.tresamigos.smv.matcher_old.CommonLevelMatcherExpression" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="CommonLevelMatcherExpressionextendsCommonLevelMatcherwithProductwithSerializable"></a>
+      <a id="CommonLevelMatcherExpression:CommonLevelMatcherExpression"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="CommonLevelMatcherExpression.html"><span class="name">CommonLevelMatcherExpression</span></a><span class="params">(<span name="expr">expr: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher_old.CommonLevelMatcher">CommonLevelMatcher</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#org.tresamigos.smv.matcher_old.package@CommonLevelMatcherExpressionextendsCommonLevelMatcherwithProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Specify the shared matching condition of all the levels (except the top-level exact match)</p><div class="fullcomment"><div class="comment cmt"><p>Specify the shared matching condition of all the levels (except the top-level exact match)</p></div><dl class="paramcmts block"><dt class="param">expr</dt><dd class="cmt"><p>shared matching condition</p></dd></dl><dl class="attributes block"> <dt>Note</dt><dd><span class="cmt"><p><code>expr</code> should be in &quot;left === right&quot; form so that it can
+             really help on optimize the process by reducing searching space</p></span></dd></dl></div>
+    </li><li name="org.tresamigos.smv.matcher_old.ExactLevelMatcher" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ExactLevelMatcherextendsLevelMatcherwithProductwithSerializable"></a>
+      <a id="ExactLevelMatcher:ExactLevelMatcher"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ExactLevelMatcher.html"><span class="name">ExactLevelMatcher</span></a><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="exactMatchExpression">exactMatchExpression: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher_old.LevelMatcher">LevelMatcher</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#org.tresamigos.smv.matcher_old.package@ExactLevelMatcherextendsLevelMatcherwithProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Level match with exact logic</p><div class="fullcomment"><div class="comment cmt"><p>Level match with exact logic</p></div><dl class="paramcmts block"><dt class="param">colName</dt><dd class="cmt"><p>level name used in the output DF</p></dd><dt class="param">exactMatchExpression</dt><dd class="cmt"><p>match logic colName</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.matcher_old.ExactMatchFilter" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ExactMatchFilterextendsAbstractExactMatchFilterwithProductwithSerializable"></a>
+      <a id="ExactMatchFilter:ExactMatchFilter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ExactMatchFilter.html"><span class="name">ExactMatchFilter</span></a><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="expr">expr: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher_old.AbstractExactMatchFilter">AbstractExactMatchFilter</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#org.tresamigos.smv.matcher_old.package@ExactMatchFilterextendsAbstractExactMatchFilterwithProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Specify the top-level exact match</p><div class="fullcomment"><div class="comment cmt"><p>Specify the top-level exact match</p></div><dl class="paramcmts block"><dt class="param">colName</dt><dd class="cmt"><p>level name used in the output DF</p></dd><dt class="param">expr</dt><dd class="cmt"><p>match logic condition Column</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.matcher_old.FuzzyLevelMatcher" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="FuzzyLevelMatcherextendsLevelMatcherwithProductwithSerializable"></a>
+      <a id="FuzzyLevelMatcher:FuzzyLevelMatcher"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FuzzyLevelMatcher.html"><span class="name">FuzzyLevelMatcher</span></a><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="predicate">predicate: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="valueExpr">valueExpr: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="threshold">threshold: <span class="extype" name="scala.Float">Float</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher_old.LevelMatcher">LevelMatcher</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#org.tresamigos.smv.matcher_old.package@FuzzyLevelMatcherextendsLevelMatcherwithProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Level match with fuzzy logic</p><div class="fullcomment"><div class="comment cmt"><p>Level match with fuzzy logic</p></div><dl class="paramcmts block"><dt class="param">colName</dt><dd class="cmt"><p>level name used in the output DF</p></dd><dt class="param">predicate</dt><dd class="cmt"><p>a condition column, no match if this condition evaluated as false</p></dd><dt class="param">valueExpr</dt><dd class="cmt"><p>a value column, which typically return a score, higher score means higher chance of matching</p></dd><dt class="param">threshold</dt><dd class="cmt"><p>No match if the evaluated <code>valueExpr</code> &lt; this value</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.matcher_old.SmvEntityMatcher" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="SmvEntityMatcherextendsProductwithSerializable"></a>
+      <a id="SmvEntityMatcher:SmvEntityMatcher"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvEntityMatcher.html"><span class="name">SmvEntityMatcher</span></a><span class="params">(<span name="exactMatchFilter">exactMatchFilter: <span class="extype" name="org.tresamigos.smv.matcher_old.AbstractExactMatchFilter">AbstractExactMatchFilter</span></span>, <span name="commonLevelMatcher">commonLevelMatcher: <span class="extype" name="org.tresamigos.smv.matcher_old.CommonLevelMatcher">CommonLevelMatcher</span></span>, <span name="levelMatchers">levelMatchers: <span class="extype" name="scala.List">List</span>[<span class="extype" name="org.tresamigos.smv.matcher_old.LevelMatcher">LevelMatcher</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#org.tresamigos.smv.matcher_old.package@SmvEntityMatcherextendsProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">SmvEntityMatcher
+Perform multiple level entity matching with exact and/or fuzzy logic
+</p><div class="fullcomment"><div class="comment cmt"><p>SmvEntityMatcher
+Perform multiple level entity matching with exact and/or fuzzy logic
+</p></div><dl class="paramcmts block"><dt class="param">exactMatchFilter</dt><dd class="cmt"><p>top level exact match condition, if records matched no further tests will be performed</p></dd><dt class="param">commonLevelMatcher</dt><dd class="cmt"><p>for all levels (except top level) shared deterministic condition for narrow down the search space</p></dd><dt class="param">levelMatchers</dt><dd class="cmt"><p>a list of common match conditions, all of them will be tested</p></dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="org.tresamigos.smv.matcher_old.CommonLevelMatcherNone" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CommonLevelMatcherNone"></a>
+      <a id="CommonLevelMatcherNone:CommonLevelMatcherNone"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="CommonLevelMatcherNone$.html"><span class="name">CommonLevelMatcherNone</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher_old.CommonLevelMatcher">CommonLevelMatcher</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#org.tresamigos.smv.matcher_old.package@CommonLevelMatcherNone" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="org.tresamigos.smv.matcher_old.NoOpExactMatchFilter" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="NoOpExactMatchFilter"></a>
+      <a id="NoOpExactMatchFilter:NoOpExactMatchFilter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="NoOpExactMatchFilter$.html"><span class="name">NoOpExactMatchFilter</span></a><span class="result"> extends <span class="extype" name="org.tresamigos.smv.matcher_old.AbstractExactMatchFilter">AbstractExactMatchFilter</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#org.tresamigos.smv.matcher_old.package@NoOpExactMatchFilter" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="org.tresamigos.smv.matcher_old.StringMetricUDFs" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="StringMetricUDFs"></a>
+      <a id="StringMetricUDFs:StringMetricUDFs"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="StringMetricUDFs$.html"><span class="name">StringMetricUDFs</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#org.tresamigos.smv.matcher_old.package@StringMetricUDFs" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">StringMetricUDFs is a collection of string similarity measures
+Implemented using <a href="https://github.com/rockymadden/stringmetric" target="_blank">Scala StringMetrics lib</a></p><div class="fullcomment"><div class="comment cmt"><p>StringMetricUDFs is a collection of string similarity measures
+Implemented using <a href="https://github.com/rockymadden/stringmetric" target="_blank">Scala StringMetrics lib</a></p><h4>UDFs with Boolean returns</h4><p>- <code>soundexMatch</code>: ture if the Soundex of the strings matched exactly</p><h4>UDFs with Float returns</h4><h5>N-gram based measures</h5><p>- nGram2: 2-gram with formula (number of overlaped gramCnt)/max(s1.gramCnt, s2.gramCnt)
+- nGram3: 3-gram with the same formula above
+- diceSorensen: 2-gram with formula (2 * number of overlaped gramCnt)/(s1.gramCnt + s2.gramCnt)</p><h5>Editing distance measures</h5><p>- levenshtein
+- jaroWinkler
+</p></div></div>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
