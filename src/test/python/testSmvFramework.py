@@ -106,6 +106,22 @@ class SmvFrameworkTest(SmvBaseTest):
         self.assertNotIn("a", tableNames)
         self.assertNotIn("b", tableNames)
 
+    def test_SmvSqlCsvFile(self):
+        self.createTempInputFile("test3.csv", "a,b,c\na1,100,c1\na2,200,c2\n")
+        self.createTempInputFile("test3.schema", "a: String;b: Integer;c: String\n")
+
+        fqn = "stage.modules.SqlCsvFile"
+        df = self.df(fqn)
+        exp = self.createDF("a: String; b:Integer",
+             """a1,100;
+                a2,200""")
+        self.should_be_same(df, exp)
+
+        # verify that the table have been dropped
+        tablesDF = self.smvApp.sqlContext.tables()
+        tableNames = [r.tableName for r in tablesDF.collect()]
+        self.assertNotIn("a", tableNames)
+
     #TODO: add other SmvDataSet unittests
 
 class SmvRunConfigTest1(SmvBaseTest):
