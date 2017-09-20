@@ -1,0 +1,204 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.datasetrepo &#8212; Spark Modularized View 1.5.2.14 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.5.2.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 1.5.2.14 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.datasetrepo</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">pkgutil</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">for_name</span><span class="p">,</span> <span class="n">smv_copy_array</span>
+<span class="kn">from</span> <span class="nn">smv.py4j_interface</span> <span class="k">import</span> <span class="n">create_py4j_interface_method</span>
+
+<span class="sd">&quot;&quot;&quot;Python implementations of IDataSetRepoPy4J and IDataSetRepoFactoryPy4J interfaces</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DataSetRepoFactory"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepoFactory">[docs]</a><span class="k">class</span> <span class="nc">DataSetRepoFactory</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+
+<div class="viewcode-block" id="DataSetRepoFactory.createRepo"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepoFactory.createRepo">[docs]</a>    <span class="k">def</span> <span class="nf">createRepo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">DataSetRepo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">)</span></div>
+
+    <span class="n">getCreateRepo</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getCreateRepo&quot;</span><span class="p">,</span> <span class="s2">&quot;createRepo&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataSetRepoFactory.Java"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepoFactory.Java">[docs]</a>    <span class="k">class</span> <span class="nc">Java</span><span class="p">:</span>
+        <span class="n">implements</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;org.tresamigos.smv.IDataSetRepoFactoryPy4J&#39;</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="DataSetRepo"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepo">[docs]</a><span class="k">class</span> <span class="nc">DataSetRepo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+        <span class="c1"># Remove client modules from sys.modules to force reload of all client</span>
+        <span class="c1"># code in the new transaction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clear_sys_modules</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_clear_sys_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Clear all client modules from sys.modules</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">fqn</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">for</span> <span class="n">stage_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">stages</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fqn</span> <span class="o">==</span> <span class="n">stage_name</span> <span class="ow">or</span> <span class="n">fqn</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">stage_name</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">):</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">fqn</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+    <span class="c1"># Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset</span>
+    <span class="c1"># from the most recent source</span>
+<div class="viewcode-block" id="DataSetRepo.loadDataSet"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepo.loadDataSet">[docs]</a>    <span class="k">def</span> <span class="nf">loadDataSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">for_name</span><span class="p">(</span><span class="n">fqn</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">)</span>
+
+        <span class="c1"># Python issue https://bugs.python.org/issue1218234</span>
+        <span class="c1"># need to invalidate inspect.linecache to make dataset hash work</span>
+        <span class="n">srcfile</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsourcefile</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">srcfile</span><span class="p">:</span>
+            <span class="n">inspect</span><span class="o">.</span><span class="n">linecache</span><span class="o">.</span><span class="n">checkcache</span><span class="p">(</span><span class="n">srcfile</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ds</span></div>
+
+    <span class="n">getLoadDataSet</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getLoadDataSet&quot;</span><span class="p">,</span> <span class="s2">&quot;loadDataSet&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DataSetRepo.dataSetsForStage"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepo.dataSetsForStage">[docs]</a>    <span class="k">def</span> <span class="nf">dataSetsForStage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stageName</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleUrnsForStage</span><span class="p">(</span><span class="n">stageName</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">obj</span><span class="p">:</span> <span class="n">obj</span><span class="o">.</span><span class="n">IsSmvDataSet</span><span class="p">)</span></div>
+
+    <span class="n">getDataSetsForStage</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getDataSetsForStage&quot;</span><span class="p">,</span> <span class="s2">&quot;dataSetsForStage&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_moduleUrnsForStage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stageName</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+        <span class="c1"># `walk_packages` can generate AttributeError if the system has</span>
+        <span class="c1"># Gtk modules, which are not designed to use with reflection or</span>
+        <span class="c1"># introspection. Best action to take in this situation is probably</span>
+        <span class="c1"># to simply suppress the error.</span>
+        <span class="k">def</span> <span class="nf">err</span><span class="p">(</span><span class="n">name</span><span class="p">):</span> <span class="k">pass</span>
+        <span class="c1"># print(&quot;Error importing module %s&quot; % name)</span>
+        <span class="c1"># t, v, tb = sys.exc_info()</span>
+        <span class="c1"># print(&quot;type is {0}, value is {1}&quot;.format(t, v))</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># import the stage and only walk the packages in the path of that stage, recursively</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">stagemod</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">stageName</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c1"># may be a scala-only stage</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">loader</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">is_pkg</span> <span class="ow">in</span> <span class="n">pkgutil</span><span class="o">.</span><span class="n">walk_packages</span><span class="p">(</span><span class="n">stagemod</span><span class="o">.</span><span class="n">__path__</span><span class="p">,</span> <span class="n">stagemod</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="p">,</span> <span class="n">onerror</span><span class="o">=</span><span class="n">err</span><span class="p">):</span>
+                <span class="c1"># The additional &quot;.&quot; is necessary to prevent false positive, e.g. stage_2.M1 matches stage</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">stageName</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_pkg</span><span class="p">:</span>
+                    <span class="n">pymod</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]:</span>
+                        <span class="n">pymod</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pymod</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+                    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">pymod</span><span class="p">):</span>
+                        <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pymod</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="c1"># Class should have an fqn which begins with the stageName.</span>
+                            <span class="c1"># Each package will contain among other things all of</span>
+                            <span class="c1"># the modules that were imported into it, and we need</span>
+                            <span class="c1"># to exclude these (so that we only count each module once)</span>
+                            <span class="k">if</span> <span class="n">fn</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+                                <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">urn</span><span class="p">())</span>
+                        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                            <span class="k">continue</span>
+
+        <span class="k">return</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sc</span><span class="p">,</span> <span class="o">*</span><span class="n">buf</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataSetRepo.notFound"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepo.notFound">[docs]</a>    <span class="k">def</span> <span class="nf">notFound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modUrn</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;dataset [</span><span class="si">{0}</span><span class="s2">] is not found in </span><span class="si">{1}</span><span class="s2">: </span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">modUrn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">msg</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DataSetRepo.Java"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepo.Java">[docs]</a>    <span class="k">class</span> <span class="nc">Java</span><span class="p">:</span>
+        <span class="n">implements</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;org.tresamigos.smv.IDataSetRepoPy4J&#39;</span><span class="p">]</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 1.5.2.14 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>
