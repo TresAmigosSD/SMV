@@ -32,7 +32,7 @@ class SmvFrameworkTest(SmvBaseTest):
     def _escapeRegex(self, s):
         import re
         return re.sub(r"([\[\]\(\)])", r"\\\1", s)
-
+        
     def test_SmvCsvStringData(self):
         fqn = "stage.modules.D1"
         df = self.df(fqn)

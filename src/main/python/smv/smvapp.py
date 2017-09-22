@@ -171,14 +171,21 @@ class SmvApp(object):
         return DataFrame(jdf, self.sqlContext)
 
     def inferUrn(self, name):
-        return self.j_smvPyClient.inferUrn(name)
+        return self.j_smvPyClient.inferDS(name).urn().toString()
 
     def runModuleByName(self, name, forceRun = False, version = None):
         jdf = self.j_smvApp.runModuleByName(name, forceRun, self.scalaOption(version))
         return DataFrame(jdf, self.sqlContext)
 
+    def getDsHash(self, name):
+        """Get hashOfHash for named module as a hex string
+        """
+        return self.j_smvPyClient.inferDS(name).verHex()
+
+
     def urn2fqn(self, urnOrFqn):
-        """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged"""
+        """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged
+        """
         return self.j_smvPyClient.urn2fqn(urnOrFqn)
 
     def getStageFromModuleFqn(self, fqn):

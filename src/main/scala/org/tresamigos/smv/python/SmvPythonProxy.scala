@@ -229,8 +229,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def stages: Array[String] = j_smvApp.stages.toArray
 
-  def inferUrn(name: String): String =
-    j_smvApp.dsm.inferDS(name).head.urn.toString
+  def inferDS(name: String): SmvDataSet =
+    j_smvApp.dsm.inferDS(name).head
 
   /** Used to create small dataframes for testing */
   def dfFrom(schema: String, data: String): DataFrame =
