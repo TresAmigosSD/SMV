@@ -22,3 +22,10 @@ class MyModelExec(smv.SmvModelExec):
     # score your data here. the `model` argument is the result of MyModel
     return model.score(i[MyOtherInput])
 ```
+
+From `smv-pyshell`, you can see the result of your `SmvModel` with `getModel`:
+
+```python
+>>> m = getModel('MyModelExec')
+>>> m.show()
+```

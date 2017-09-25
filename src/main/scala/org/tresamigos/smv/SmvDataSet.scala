@@ -209,7 +209,7 @@ abstract class SmvDataSet extends FilenamePart {
     app.dfCache(versionedFqn)
   }
 
-  private def verHex = f"${hashOfHash}%08x"
+  def verHex: String = f"${hashOfHash}%08x"
   def versionedFqn   = s"${fqn}_${verHex}"
 
   /** The "versioned" module file base name. */
