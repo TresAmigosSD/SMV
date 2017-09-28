@@ -573,7 +573,7 @@ class SmvModule(SmvDataSet):
         def __getitem__(self, ds):
             """Called by the '[]' operator
             """
-            if !isinstance(ds, SmvDataSet):
+            if not isinstance(ds, SmvDataSet):
                 raise TypeError('Argument to RunParams must be an SmvDataSet')
             else:
                 return self.urn2df[ds.urn()]
