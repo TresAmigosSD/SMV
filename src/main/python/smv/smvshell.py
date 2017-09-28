@@ -284,6 +284,7 @@ __all__ = [
     'ls',
     'lsDead',
     'lsDeadLeaf',
+    'exportToHive',
     'ancestors',
     'descendants',
     'graph',
