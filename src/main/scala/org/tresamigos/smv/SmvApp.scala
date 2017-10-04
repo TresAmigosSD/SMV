@@ -89,8 +89,11 @@ class SmvApp(private val cmdLineArgs: Seq[String],
 
   /** remove all non-current files in the output directory */
   private[smv] def purgeOldOutputFiles() = {
-    if (smvConfig.cmdLine.purgeOldOutput())
-      SmvHDFS.purgeDirectory(smvConfig.outputDir, validFilesInOutputDir())
+    if (smvConfig.cmdLine.purgeOldOutput()) {
+      val results = SmvHDFS.purgeDirectory(smvConfig.outputDir, validFilesInOutputDir()).groupBy(_._2)
+      results(true) foreach { deleted => println(s"... Deleted ${deleted._1}") }
+      results(false) foreach { failed => println(s"... Unabled to delete ${failed._1}") }
+    }
   }
 
   /**
