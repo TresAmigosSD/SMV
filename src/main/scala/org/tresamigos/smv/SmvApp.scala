@@ -91,8 +91,13 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   private[smv] def purgeOldOutputFiles() = {
     if (smvConfig.cmdLine.purgeOldOutput()) {
       val results = SmvHDFS.purgeDirectory(smvConfig.outputDir, validFilesInOutputDir()).groupBy(_._2)
-      results(true) foreach { deleted => println(s"... Deleted ${deleted._1}") }
-      results(false) foreach { failed => println(s"... Unabled to delete ${failed._1}") }
+      results foreach {
+        case (k, fns) =>
+          if (k)
+            fns foreach { deleted => println(s"... Deleted ${deleted._1}") }
+          else
+            fns foreach { failed => println(s"... Unabled to delete ${failed._1}") }
+      }
     }
   }
 
