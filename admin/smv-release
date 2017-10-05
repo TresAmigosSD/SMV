@@ -35,7 +35,7 @@ function usage()
 
 function create_logdir()
 {
-  LOGDIR="/tmp/smv_release_$(date +%Y%m%d_%s)"
+  LOGDIR="${TMPDIR-/tmp}/smv_release_$(date +%Y%m%d_%s)"
   LOGFILE="${LOGDIR}/${PROG_NAME}.log"
   mkdir -p "${LOGDIR}"
   info "logs/assets can be found in: ${LOGDIR}"
@@ -197,7 +197,11 @@ function create_tar()
   # cleanup some unneeded binary files.
   rm -rf "${SMV_DIR}/project/target" "${SMV_DIR}/project/project"
   rm -rf "${SMV_DIR}/target/resolution-cache" "${SMV_DIR}/target/streams"
+  # use the `find ... -exec` variant instead of xargs
+  # because we don't want `rm` to execute if `find` returns nothing
   find "${SMV_DIR}/target" -name '*with-dependencies.jar' -prune -o -type f -exec rm -f \{\} +
+  find "${SMV_DIR}/src" -name '*.pyc' -exec rm -f \{\} +
+  find "${SMV_DIR}/src" -name '__pycache__' -exec rm -rf \{\} +
 
   # create the tar image
   ${TAR} zcvf "${TGZ_IMAGE}" -C "${PROJ_DIR}" --exclude=.git --exclude="admin" \
