@@ -37,7 +37,7 @@ class SmvChunkTest extends SmvTestUtil {
     // fields present in only one of the StructTypes with metadata {"_OPTIONAL_": true}.
     // See https://github.com/apache/spark/commit/4637fc08a3733ec313218fb7e4d05064d9a6262d
     assertSrddSchemaEqual(res2,
-      """k:String @metadata={"_OPTIONAL_":true}; v: String @metadata={"_OPTIONAL_":true}; vcat: String @metadata={"_OPTIONAL_":true}""")
+      """k: String; v: String; vcat: String""")
     assertUnorderedSeqEqual(res2.collect.map(_.toString),
                             Seq("[k1,a,a]", "[k1,b,ab]", "[k2,c,c]", "[k2,d,cd]"))
   }
