@@ -12,7 +12,7 @@ smv_tools="$(cd "`dirname "$0"`"; pwd)"
 spark_version=$(cat "$smv_tools"/../.spark_version)
 
 #remote_tarball="https://github.com/TresAmigosSD/spark/releases/download/${spark_version}_hd/spark-${spark_version}-bin-2.7.2.tgz"
-remote_tarball="https://d3kbcqa49mib13.cloudfront.net/spark-2.1.1-bin-hadoop2.7.tgz"
+remote_tarball="https://d3kbcqa49mib13.cloudfront.net/spark-${spark_version}-bin-hadoop2.7.tgz"
 local_tarball=$(basename $remote_tarball)
 echo "[INFO] Downloading $local_tarball."
 curl -L --progress-bar --fail "$remote_tarball" > "$local_tarball"
