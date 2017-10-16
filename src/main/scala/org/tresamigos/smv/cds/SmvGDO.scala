@@ -45,8 +45,8 @@ object SmvGDO {
                           orderCols: Seq[Expression]): Ordering[InternalRow] = {
     val keyOrderPair: Seq[(NamedExpression, SortDirection)] = orderCols.map { c =>
       c match {
-        case SortOrder(e: NamedExpression, direction, nullOrdering) => (e, direction)
-        case e: NamedExpression                                     => (e, Ascending)
+        case SortOrder(e: NamedExpression, direction, nullOrdering, sameOrderExpressions) => (e, direction)
+        case e: NamedExpression                                                           => (e, Ascending)
       }
     }
 
