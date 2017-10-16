@@ -15,7 +15,6 @@
 package org.apache.spark.sql.contrib
 
 import org.apache.spark.sql.{DataFrame, Row, Column}
-import org.apache.spark.sql.catalyst.plans.logical.BroadcastHint
 import org.apache.spark.sql.functions._
 
 import org.apache.spark.sql.types._
@@ -69,12 +68,12 @@ package object smv {
    *  BroadcastHints indicate that a DataFrame is small enough for a broadcast join.
    *  In some situations we will need to propagate the hint to downstream DataFrames.
    */
-  def hasBroadcastHint(df: DataFrame): Boolean =
-    df.logicalPlan match {
-      case _: BroadcastHint => true
-      case _                => false
+  def hasBroadcastHint(df: DataFrame): Boolean = {
+    df.logicalPlan.stats(df.sqlContext.conf).hints.isBroadcastable match {
+      case Some(bool) => bool
+      case _          => false
     }
-
+  }
   /** Give dfChild a BroadcastHint if and only if dfParent has a BroadcastHint
    *
    *  In SMV join methods (like smvJoinByKey), we may transform a DataFrame before
