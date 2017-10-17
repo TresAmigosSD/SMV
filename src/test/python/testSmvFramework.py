@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import unittest
+import json
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
@@ -178,3 +179,16 @@ class SmvSyntaxErrorPropagationTest(SmvBaseTest):
         fqn = "ModWithSyntaxError"
         with self.assertRaisesRegexp(Py4JJavaError, "SyntaxError"):
             self.df(fqn)
+
+class SmvMetadataTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=metadata_stage', '-m', "None"]
+
+    def test_metadata_includes_user_metadata(self):
+        fqn = "metadata_stage.modules.ModWithUserMeta"
+        self.df(fqn)
+        with open(self.tmpDataDir() + "/output/{}.meta/part-00000".format(fqn)) as f:
+            metadata_list = json.loads(f.read())
+            metadata = metadata_list['history'][0]
+        self.assertEqual(metadata['foo'], "bar")

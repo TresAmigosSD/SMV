@@ -24,6 +24,7 @@ import inspect
 import sys
 import traceback
 import binascii
+import json
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
@@ -262,6 +263,27 @@ class SmvDataSet(object):
             In most cases, this is just the DataFrame itself. See SmvResultModule for the exception.
         """
         return df
+
+    def userMetadata(self, df):
+        """User-defined metadata
+
+            Override this method to define metadata that will be logged with your module's results.
+            Defaults to empty dictionary.
+
+            Arguments:
+                df (DataFrame): result of running the module, used to generate metadata
+
+            Returns:
+                (dict): dictionary of serializable metadata
+        """
+        return {}
+
+    def userMetadataJson(self, jdf):
+        df = DataFrame(jdf, self.smvApp.sqlContext)
+        userMetadata = self.userMetadata(df)
+        return json.dumps(userMetadata)
+
+    getUserMetadataJson = create_py4j_interface_method("getUserMetadataJson", "userMetadataJson")
 
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']

@@ -1059,6 +1059,18 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
 
   override def dqm =
     getPy4JResult(target.getDqmWithTypeSpecificPolicy)
+
+  override def userMetadata(df: DataFrame) = {
+    val py4jRes = target.getUserMetadataJson(df)
+    val json = getPy4JResult(py4jRes)
+    SmvMetadata.fromJson(json)
+  }
+
+  // override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
+  //   val currentJson = current.toJson
+  //   val historyJson = history map (_.toJson)
+  //   getPy4JResult(target.getValidateMetadata(currentJson, historyJson))
+  // }
 }
 
 /**
