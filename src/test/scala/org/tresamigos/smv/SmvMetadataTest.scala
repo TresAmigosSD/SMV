@@ -68,7 +68,7 @@ class SmvMetadataTest extends SmvTestUtil {
   }
 
   test("SmvDataSet's metadata history is logged up to history size") {
-    for (i <- 1 to modules1.B.metadataHistorySize){
+    for (i <- 1 to modules1.B.metadataHistorySize + 1){
       app.runModule(modules1.B.urn, true)
     }
 
@@ -77,7 +77,7 @@ class SmvMetadataTest extends SmvTestUtil {
     val histMeta = b.getMetadataHistory
     val histSparkMeta = histMeta(0).builder.build
 
-    assert(histMeta.length === 2)
+    assert(histMeta.length === modules1.B.metadataHistorySize)
     assert(curSparkMeta.getString("foo") == histSparkMeta.getString("foo"))
   }
 

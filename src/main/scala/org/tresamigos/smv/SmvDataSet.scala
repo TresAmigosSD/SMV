@@ -419,6 +419,10 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def persistMetadata(metadata: SmvMetadata): Unit =
     metadata.saveToFile(app.sc, moduleMetaPath())
 
+  /**
+   * Maximum of the metadata history
+   * TODO: Verify that this is positive
+   */
   private[smv] def metadataHistorySize(): Integer = 5
 
   private[smv] def persistMetadataHistory(metadata: SmvMetadata, metadataHistory: SmvMetadataHistory): Unit =

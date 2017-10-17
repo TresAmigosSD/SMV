@@ -114,7 +114,7 @@ class SmvMetadataHistory(val historyList: Array[SmvMetadata]) {
     historyList(idx)
 
   def update(newMeta: SmvMetadata, maxSize: Integer): SmvMetadataHistory = {
-    new SmvMetadataHistory(newMeta +: historyList.take(maxSize))
+    new SmvMetadataHistory(newMeta +: historyList.take(maxSize - 1))
   }
   def toJson: String =
     new MetadataBuilder()
