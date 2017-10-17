@@ -309,6 +309,13 @@ class SmvDataSet(object):
 
     getValidateMetadataJson = create_py4j_interface_method("getValidateMetadataJson", "validateMetadataJson")
 
+    def metadataHistorySize(self):
+        """Override to define the maximum size of the metadata history for this module
+        """
+        return 5
+
+    getMetadataHistorySize = create_py4j_interface_method("getMetadataHistorySize", "metadataHistorySize")
+
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
 

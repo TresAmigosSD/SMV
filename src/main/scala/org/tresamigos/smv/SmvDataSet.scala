@@ -383,6 +383,7 @@ abstract class SmvDataSet extends FilenamePart {
 
   /**
    * Can be overridden to supply custom metadata
+   * TODO: make SmvMetadata more user friendly or find alternative format for user metadata
    */
   def userMetadata(df: DataFrame): SmvMetadata =
     new SmvMetadata()
@@ -1071,6 +1072,9 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
     val historyJson = history map (_.toJson)
     getPy4JResult(target.getValidateMetadataJson(currentJson, historyJson.toArray))
   }
+
+  override def metadataHistorySize() =
+    getPy4JResult(target.getMetadataHistorySize)
 }
 
 /**
