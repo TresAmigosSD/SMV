@@ -281,9 +281,33 @@ class SmvDataSet(object):
     def userMetadataJson(self, jdf):
         df = DataFrame(jdf, self.smvApp.sqlContext)
         userMetadata = self.userMetadata(df)
+        # TODO: verify metadata is a dict
         return json.dumps(userMetadata)
 
     getUserMetadataJson = create_py4j_interface_method("getUserMetadataJson", "userMetadataJson")
+
+    def validateMetadata(self, current, history):
+        """User-defined metadata validation
+
+            Override this method to define validation rules for metadata given
+            the current metadata and historical metadata.
+
+            Arguments:
+                current (dict): current metadata kv
+                history (list(dict)): list of historical metadata kv's
+
+            Returns:
+                (bool): True indicates success, False indicates failure
+        """
+        return True
+
+    def validateMetadataJson(self, currentJson, historyJson):
+        current = json.loads(currentJson)
+        history = [json.loads(j) for j in historyJson]
+        # TODO: verify result is a bool
+        return self.validateMetadata(current, history)
+
+    getValidateMetadataJson = create_py4j_interface_method("getValidateMetadataJson", "validateMetadataJson")
 
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']

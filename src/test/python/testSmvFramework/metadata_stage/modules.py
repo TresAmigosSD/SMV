@@ -22,4 +22,13 @@ class ModWithUserMeta(smv.SmvModule):
 
     def userMetadata(self, df):
         return {'foo': 'bar'}
-        
+
+class ModWithFailingValidation(smv.SmvModule):
+    def requiresDS(self):
+        return []
+
+    def run(self, i):
+        return self.smvApp.createDF("foo: Integer; bar: String", "2,jkl;1,mno")
+
+    def validateMetadata(self, current, history):
+        return False

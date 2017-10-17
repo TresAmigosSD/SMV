@@ -1066,11 +1066,11 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
     SmvMetadata.fromJson(json)
   }
 
-  // override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
-  //   val currentJson = current.toJson
-  //   val historyJson = history map (_.toJson)
-  //   getPy4JResult(target.getValidateMetadata(currentJson, historyJson))
-  // }
+  override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
+    val currentJson = current.toJson
+    val historyJson = history map (_.toJson)
+    getPy4JResult(target.getValidateMetadataJson(currentJson, historyJson.toArray))
+  }
 }
 
 /**

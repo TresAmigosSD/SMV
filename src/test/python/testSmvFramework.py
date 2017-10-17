@@ -192,3 +192,8 @@ class SmvMetadataTest(SmvBaseTest):
             metadata_list = json.loads(f.read())
             metadata = metadata_list['history'][0]
         self.assertEqual(metadata['foo'], "bar")
+
+    def test_metadata_validation_failure_causes_error(self):
+        fqn = "metadata_stage.modules.ModWithFailingValidation"
+        with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
+            self.df(fqn)
