@@ -185,14 +185,16 @@ abstract class SmvDataSet extends FilenamePart {
    * Concrete modules and files should override this method to define rules/fixes to apply.
    * The default is to provide an empty set of DQM rules/fixes.
    */
-  def dqm(): SmvDQM  = SmvDQM()
+  def dqm(): SmvDQM =
+    SmvDQM()
 
   /**
    * Allow internal SMV DataSet types to add additional policy checks to user specified DQM rules.
    * Note: we should accept the user DQM rules as param rather than call dqm() directly as
    * we may need to be passed the user defined DQM rules in python.
    */
-  private[smv] def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = userDQM
+  private[smv] def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) =
+    userDQM.add(new DQMMetadataPolicy(this))
 
   /**
    * returns the DataFrame from this dataset (file/module).
@@ -237,6 +239,8 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def moduleMetaPath(prefix: String = ""): String =
     versionedBasePath(prefix) + ".meta"
 
+  private[smv] def moduleMetaHistoryPath(prefix: String = ""): String =
+    s"""${app.smvConfig.outputDir}/${prefix}${fqn}.meta"""
 
   /** perform the actual run of this module to get the generated SRDD result. */
   private[smv] def doRun(dqmValidator: DQMValidator): DataFrame
@@ -245,19 +249,32 @@ abstract class SmvDataSet extends FilenamePart {
    * delete the output(s) associated with this module (csv file and schema).
    * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
    */
-  private[smv] def deleteOutputs() =
-    currentModuleOutputFiles foreach { SmvHDFS.deleteFile(_) }
+  private[smv] def deleteOutputs(files: Seq[String]) =
+     files foreach {SmvHDFS.deleteFile}
 
   /**
    * Delete just the metadata output
    */
-  private[smv] def deleteMetadataOutput =
-    SmvHDFS.deleteFile(moduleMetaPath())
+  private[smv] def deleteMetadataOutputs() =
+    deleteOutputs(metadataOutputFiles)
+
+  /**
+   * Files relateto metadata
+   */
+  private[smv] def metadataOutputFiles(): Seq[String] =
+    Seq(moduleMetaPath(), moduleMetaHistoryPath())
 
   /**
    * Returns current valid outputs produced by this module.
    */
-  private[smv] def currentModuleOutputFiles(): Seq[String] = {
+  private[smv] def allOutputFiles(): Seq[String] = {
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath(), moduleMetaHistoryPath())
+  }
+
+  /**
+   * Returns current versioned valid outputs produced by this module. Excludes metadata history
+   */
+  private[smv] def versionedOutputFiles(): Seq[String] = {
     Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath())
   }
 
@@ -303,6 +320,12 @@ abstract class SmvDataSet extends FilenamePart {
     Try {
       val json = app.sc.textFile(moduleMetaPath(prefix)).collect.head
       SmvMetadata.fromJson(json)
+    }
+
+  private[smv] def readMetadataHistory(prefix: String = ""): Try[SmvMetadataHistory] =
+    Try {
+      val json = app.sc.textFile(moduleMetaHistoryPath(prefix)).collect.head
+      SmvMetadataHistory.fromJson(json)
     }
 
   private[smv] def readPersistedEdd(prefix: String = ""): Try[DataFrame] =
@@ -359,21 +382,32 @@ abstract class SmvDataSet extends FilenamePart {
     df.edd.persistBesideData(moduleCsvPath())
 
   /**
+   * Can be overridden to supply custom metadata
+   */
+  def userMetadata(df: DataFrame): SmvMetadata =
+    new SmvMetadata()
+
+  /**
    * Get the most detailed metadata available without running this module. If
    * the modules has been run and hasn't been changed, this will be all the metadata
    * that was persisted. If the module hasn't been run since it was changed, this
    * will be a less detailed report.
    */
-  private[smv] def getMetadata: SmvMetadata =
+  private[smv] def getMetadata(): SmvMetadata =
     readPersistedMetadata().getOrElse(createMetadata(None))
 
+  private[smv] def getMetadataHistory(): SmvMetadataHistory =
+    readMetadataHistory().getOrElse(SmvMetadataHistory.empty)
 
   /**
    * Create SmvMetadata for this SmvDataset. SmvMetadata will be more detailed if
    * a DataFrame is provided
    */
   private[smv] def createMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
-    val metadata = new SmvMetadata
+    val metadata = dfOpt match {
+      case Some(df) => userMetadata(df)
+      case _        => new SmvMetadata()
+    }
     metadata.addFQN(fqn)
     metadata.addDependencyMetadata(resolvedRequiresDS)
     dfOpt foreach (metadata.addSchemaMetadata(_))
@@ -381,14 +415,37 @@ abstract class SmvDataSet extends FilenamePart {
     metadata
   }
 
+  private[smv] def persistMetadata(metadata: SmvMetadata): Unit =
+    metadata.saveToFile(app.sc, moduleMetaPath())
+
+  private[smv] def metadataHistorySize(): Integer = 5
+
+  private[smv] def persistMetadataHistory(metadata: SmvMetadata, metadataHistory: SmvMetadataHistory): Unit =
+    metadataHistory
+      .update(metadata, metadataHistorySize)
+      .saveToFile(app.sc, moduleMetaHistoryPath())
+
+  /**
+   * Override to validate module results based on current and historic metadata.
+   * If false, DQM will fail. Defaults to true (no-op).
+   */
+  def validateMetadata(metadata: SmvMetadata, history: Seq[SmvMetadata]): Boolean =
+    true
+
   private[smv] def computeRDD(genEdd: Boolean): DataFrame = {
     val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()), isPersistValidateResult)
 
     if (isEphemeral) {
       val df = dqmValidator.attachTasks(doRun(dqmValidator))
       dqmValidator.validate(df, false, moduleValidPath()) // no action before this point
-      deleteMetadataOutput
-      createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
+
+      val metadata = createMetadata(Some(df))
+      // must read metadata from file (if it exists) before deleting outputs
+      val metadataHistory = getMetadataHistory
+      deleteOutputs(metadataOutputFiles)
+      persistMetadata(metadata)
+      persistMetadataHistory(metadata, metadataHistory)
+
       df
     } else {
       readPersistedFile().recoverWith {
@@ -399,10 +456,17 @@ abstract class SmvDataSet extends FilenamePart {
             readPersistedFile().recoverWith { case x =>
               val df = dqmValidator.attachTasks(doRun(dqmValidator))
               // Delete outputs in case data was partially written previously
-              deleteOutputs
+              deleteOutputs(versionedOutputFiles)
               persist(df)
               dqmValidator.validate(df, true, moduleValidPath()) // has already had action (from persist)
-              createMetadata(Some(df)).saveToFile(app.sc, moduleMetaPath())
+
+              val metadata = createMetadata(Some(df))
+              // must read metadata from file (if it exists) before deleting outputs
+              val metadataHistory = getMetadataHistory
+              deleteOutputs(metadataOutputFiles)
+              persistMetadata(metadata)
+              persistMetadataHistory(metadata, metadataHistory)
+
               // Generate and persist edd based on result of reading results from disk. Avoids
               // a possibly expensive action on the result from before persisting.
               if(genEdd)
@@ -559,9 +623,10 @@ trait SmvDSWithParser extends SmvDataSet {
    *  Add parser failure policy to any DataSets that use a parser (e.g. csv files and hive tables)
    */
   override def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = {
-    if (failAtParsingError) userDQM.add(FailParserCountPolicy(1)).addAction()
-    else if (forceParserCheck) userDQM.addAction()
-    else userDQM
+    val baseDqm = super.dqmWithTypeSpecificPolicy(userDQM)
+    if (failAtParsingError) baseDqm.add(FailParserCountPolicy(1)).addAction()
+    else if (forceParserCheck) baseDqm.addAction()
+    else baseDqm
   }
 }
 
@@ -973,22 +1038,27 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
   override def dsType         = getPy4JResult(target.getDsType)
   override def requiresDS     =
     throw new SmvRuntimeException("SmvExtModulePython requiresDS should never be called")
+
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
     val urns = getPy4JResult(target.getDependencyUrns)
     resolvedRequiresDS = urns map (urn => resolver.loadDataSet(URN(urn)).head)
     this
   }
+
   override private[smv] def doRun(dqmValidator: DQMValidator): DataFrame = {
     val urn2df = resolvedRequiresDS.map { ds =>(ds.urn.toString, ds.rdd())}.toMap[String, DataFrame]
     val response =  target.getDoRun(dqmValidator, urn2df)
     return getPy4JResult(response)
   }
-  override def instanceValHash = getPy4JResult(target.getInstanceValHash)
-  override def sourceCodeHash = getPy4JResult(target.getSourceCodeHash)
-  override def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = {
-    // ignore passed in userDQM as we want the user defined dqm from the python side.
+
+  override def instanceValHash =
+    getPy4JResult(target.getInstanceValHash)
+
+  override def sourceCodeHash =
+    getPy4JResult(target.getSourceCodeHash)
+
+  override def dqm =
     getPy4JResult(target.getDqmWithTypeSpecificPolicy)
-  }
 }
 
 /**

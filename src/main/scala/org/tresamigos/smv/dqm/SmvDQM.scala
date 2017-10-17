@@ -90,7 +90,6 @@ class SmvDQM(
   def addAction(): SmvDQM = {
     new SmvDQM(rules, fixes, policies, true)
   }
-
 }
 
 object SmvDQM {

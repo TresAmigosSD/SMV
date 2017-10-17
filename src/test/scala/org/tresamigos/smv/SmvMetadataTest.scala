@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.DataFrame
+
 class SmvMetadataTest extends SmvTestUtil {
   override def appArgs = super.appArgs ++ Seq(
     "--smv-props",
@@ -57,9 +59,92 @@ class SmvMetadataTest extends SmvTestUtil {
     val x = app.dsm.load(modules1.V.urn).head
     assert( expectedPattern.findAllIn(x.getMetadata.toJson).hasNext )
   }
+
+  test("SmvDataSet's metadata includes custom metadata") {
+    app.runModule(modules1.A.urn)
+    val expectedPattern = "\"foo\":\"bar\"".r
+    val a = app.dsm.load(modules1.A.urn).head
+    assert( expectedPattern.findAllIn(a.getMetadata.toJson).hasNext )
+  }
+
+  test("SmvDataSet's metadata history is logged up to history size") {
+    for (i <- 1 to modules1.B.metadataHistorySize){
+      app.runModule(modules1.B.urn, true)
+    }
+
+    val b = app.dsm.load(modules1.B.urn).head
+    val curSparkMeta = b.getMetadata.builder.build
+    val histMeta = b.getMetadataHistory
+    val histSparkMeta = histMeta(0).builder.build
+
+    assert(histMeta.length === 2)
+    assert(curSparkMeta.getString("foo") == histSparkMeta.getString("foo"))
+  }
+
+  test("metadata validation fails iff user-defined validation fails") {
+    val succeeds = modules1.MetadataValidationSucceeds
+    // Validation should succeed because history is empty
+    app.runModule(succeeds.urn)
+    // Validation should succeed because metadata matches
+    app.runModule(succeeds.urn, true)
+
+    val fails = modules1.MetadataValidationFails
+    // Validation should succeed because history is empty
+    app.runModule(fails.urn)
+    // Validation should fail because metadata doesn't match
+    intercept[SmvDqmValidationError] {
+      app.runModule(fails.urn, true)
+    }
+  }
 }
 
 package modules1 {
+  object A extends SmvModule("") {
+    def requiresDS = Seq(Y)
+    def run(i: runParams) = {
+      i(Y)
+    }
+    override def userMetadata(df: DataFrame) = SmvMetadata.fromJson("{\"foo\": \"bar\"}")
+  }
+
+  object B extends SmvModule("") {
+    def requiresDS =
+      Seq(Y)
+    def run(i: runParams) = {
+      i(Y)
+    }
+    override def userMetadata(df: DataFrame) =
+      SmvMetadata.fromJson("{\"foo\": \"bar\"}")
+    override def metadataHistorySize() =
+      2
+  }
+
+  object MetadataValidationSucceeds extends SmvModule("") {
+    def requiresDS =
+      Seq(Y)
+    def run(i: runParams) = {
+      i(Y)
+    }
+    override def userMetadata(df: DataFrame) =
+      SmvMetadata.fromJson("{\"foo\": \"bar\"}")
+    override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) =
+      history.isEmpty || (current.builder.build.getString("foo") == history.head.builder.build.getString("foo"))
+    override def metadataHistorySize() =
+      1
+  }
+
+  object MetadataValidationFails extends SmvModule("") {
+    def requiresDS =
+      Seq(Y)
+    def run(i: runParams) = {
+      i(Y)
+    }
+    override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) =
+      history.isEmpty || current.builder.build.getString("timestamp") == history.head.builder.build.getString("timestamp")
+    override def metadataHistorySize() =
+      1
+  }
+
   object X extends SmvModule("") {
     def requiresDS = Seq(Y, ZL, WL)
     def run(i: runParams) = {

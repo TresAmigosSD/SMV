@@ -61,11 +61,17 @@ class RejectTest extends SmvTestUtil {
         extends SmvCsvFile("./" + testDataDir + "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
       override def dqm()              = SmvDQM().add(FailParserCountPolicy(10))
+      // override fqn because object defined in anonymous function has spaghetti fqn
+      override def fqn()              = "org.tresamigos.smv.RejectTest.file"
     }
     val df  = file.rdd()
     val res = DqmValidationResult(SmvReportIO.readReport(file.moduleValidPath()))
     assert(res.passed === true)
-    assertUnorderedSeqEqual(res.errorMessages, Seq(("FailParserCountPolicy(10)", "true")))
+    assertUnorderedSeqEqual(
+      res.errorMessages,
+      Seq(("org.tresamigos.smv.RejectTest.file metadata validation", "true"),
+          ("FailParserCountPolicy(10)", "true"))
+    )
   }
 
   test("test csvParser rejection with exception") {
@@ -79,6 +85,7 @@ class RejectTest extends SmvTestUtil {
       m === """{
   "passed":false,
   "errorMessages": [
+    {"org.tresamigos.smv.SmvCsvStringData metadata validation":"true"},
     {"FailParserCountPolicy(1)":"false"}
   ],
   "checkLog": [
@@ -90,9 +97,10 @@ class RejectTest extends SmvTestUtil {
   test("test csvParser rejection") {
     val data      = """231,67.21  ,20121009101621,"02122011"""
     val schemaStr = "a:String;b:Double;c:String;d:String"
-
+    // override fqn because object defined in anonymous function has spaghetti fqn
     object smvCF extends SmvCsvStringData(schemaStr, data, true) {
       override val failAtParsingError = false
+      override def fqn()              = "org.tresamigos.smv.RejectTest.smvCF"
     }
     val prdd = smvCF.rdd()
 
@@ -102,7 +110,7 @@ class RejectTest extends SmvTestUtil {
       res === """{
   "passed":true,
   "errorMessages": [
-
+    {"org.tresamigos.smv.RejectTest.smvCF metadata validation":"true"}
   ],
   "checkLog": [
     "java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011"

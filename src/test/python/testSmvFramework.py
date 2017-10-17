@@ -32,7 +32,7 @@ class SmvFrameworkTest(SmvBaseTest):
     def _escapeRegex(self, s):
         import re
         return re.sub(r"([\[\]\(\)])", r"\\\1", s)
-        
+
     def test_SmvCsvStringData(self):
         fqn = "stage.modules.D1"
         df = self.df(fqn)
@@ -81,7 +81,9 @@ class SmvFrameworkTest(SmvBaseTest):
   "errorMessages": [
     {"FailTotalRuleCountPolicy(2)":"true"},
     {"FailTotalFixCountPolicy(1)":"false"},
-    {"FailParserCountPolicy(1)":"true"}
+    {"org.tresamigos.smv.SmvCsvStringData metadata validation":"true"},
+    {"FailParserCountPolicy(1)":"true"},
+    {"stage.modules.D3 metadata validation":"true"}
   ],
   "checkLog": [
     "Rule: b_lt_03, total count: 1",
