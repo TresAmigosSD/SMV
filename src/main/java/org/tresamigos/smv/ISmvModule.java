@@ -88,7 +88,7 @@ public interface ISmvModule {
 	/**
 	 * Validate metadata given serialized as json
 	 */
-	IPythonResponsePy4J<Boolean> getValidateMetadataJson(String currentMetaJson, String[] historyMetaJson);
+	IPythonResponsePy4J<String> getValidateMetadataJson(String currentMetaJson, String[] historyMetaJson);
 
 	/**
 	 * Maximum of the metadata history

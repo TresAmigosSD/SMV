@@ -31,4 +31,4 @@ class ModWithFailingValidation(smv.SmvModule):
         return self.smvApp.createDF("foo: Integer; bar: String", "2,jkl;1,mno")
 
     def validateMetadata(self, current, history):
-        return False
+        return "FAILURE"

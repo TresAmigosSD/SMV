@@ -442,10 +442,10 @@ abstract class SmvDataSet extends FilenamePart {
 
   /**
    * Override to validate module results based on current and historic metadata.
-   * If false, DQM will fail. Defaults to true (no-op).
+   * If Some, DQM will fail. Defaults to None.
    */
-  def validateMetadata(metadata: SmvMetadata, history: Seq[SmvMetadata]): Boolean =
-    true
+  def validateMetadata(metadata: SmvMetadata, history: Seq[SmvMetadata]): Option[String] =
+    None
 
   private[smv] def computeRDD(genEdd: Boolean): DataFrame = {
     val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()), isPersistValidateResult)
@@ -1084,7 +1084,8 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
   override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
     val currentJson = current.toJson
     val historyJson = history map (_.toJson)
-    getPy4JResult(target.getValidateMetadataJson(currentJson, historyJson.toArray))
+    val res = getPy4JResult(target.getValidateMetadataJson(currentJson, historyJson.toArray))
+    Option[String](res)
   }
 
   override def metadataHistorySize() =

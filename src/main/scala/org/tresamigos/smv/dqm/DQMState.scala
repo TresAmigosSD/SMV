@@ -42,6 +42,7 @@ class DQMState(
   private val ruleLoggers: Map[String, RejectLogger] = ruleNames.map { n =>
     (n, new RejectLogger(sc, 10))
   }.toMap
+  private var miscLog: Seq[String] = Seq.empty
 
   private var concluded: Boolean                                = false
   private var recordCounterCopy: Long                           = _
@@ -70,6 +71,9 @@ class DQMState(
     val err = new DQMRuleError(name)
     ruleLoggers(name).add(s"${err} @FIELDS: ${log}")
   }
+
+  private[smv] def addMiscLog(entry: String) =
+    miscLog = miscLog :+ entry
 
   /**
    * take a snapshot of the counters of loggers and create a local copy
@@ -149,7 +153,7 @@ class DQMState(
         s"Fix: ${name}, total count: ${n}"
     }.toSeq
     val pLog = getParserLog()
-    rLog ++ fLog ++ pLog
+    rLog ++ fLog ++ pLog ++ miscLog
   }
 
   /** return the total number of times fixes get triggered */

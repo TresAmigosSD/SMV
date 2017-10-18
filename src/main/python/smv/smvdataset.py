@@ -299,12 +299,12 @@ class SmvDataSet(object):
             Returns:
                 (bool): True indicates success, False indicates failure
         """
-        return True
+        return None
 
     def validateMetadataJson(self, currentJson, historyJson):
         current = json.loads(currentJson)
         history = [json.loads(j) for j in historyJson]
-        # TODO: verify result is a bool
+        # TODO: verify result is a String or none
         return self.validateMetadata(current, history)
 
     getValidateMetadataJson = create_py4j_interface_method("getValidateMetadataJson", "validateMetadataJson")

@@ -170,6 +170,13 @@ class DQMMetadataPolicy(ds: SmvDataSet) extends dqm.DQMPolicy{
   def policy(df: DataFrame, state: dqm.DQMState) = {
     val metadata = ds.createMetadata(Some(df))
     val history = ds.getMetadataHistory()
-    ds.validateMetadata(metadata, history.historyList)
+    val result = ds.validateMetadata(metadata, history.historyList)
+    result match {
+      case Some(log) =>
+        state.addMiscLog(log)
+        false
+      case None      =>
+        true
+    }
   }
 }

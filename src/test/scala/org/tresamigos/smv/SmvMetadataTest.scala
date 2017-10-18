@@ -92,9 +92,13 @@ class SmvMetadataTest extends SmvTestUtil {
     // Validation should succeed because history is empty
     app.runModule(fails.urn)
     // Validation should fail because metadata doesn't match
-    intercept[SmvDqmValidationError] {
+    val dqmError = intercept[SmvDqmValidationError] {
       app.runModule(fails.urn, true)
     }
+
+    val expectedPattern = fails.validationFailureMessage.r
+
+    assert(expectedPattern.findAllIn(dqmError.getMessage).hasNext)
   }
 }
 
@@ -127,8 +131,13 @@ package modules1 {
     }
     override def userMetadata(df: DataFrame) =
       SmvMetadata.fromJson("{\"foo\": \"bar\"}")
-    override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) =
-      history.isEmpty || (current.builder.build.getString("foo") == history.head.builder.build.getString("foo"))
+    override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
+      if (history.isEmpty || current.builder.build.getString("foo") == history.head.builder.build.getString("foo"))
+        None
+      else
+        Some(validationFailureMessage)
+    }
+    def validationFailureMessage = "FOOS DON'T MATCH"
     override def metadataHistorySize() =
       1
   }
@@ -139,8 +148,13 @@ package modules1 {
     def run(i: runParams) = {
       i(Y)
     }
-    override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) =
-      history.isEmpty || current.builder.build.getString("timestamp") == history.head.builder.build.getString("timestamp")
+    override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
+      if (history.isEmpty || current.builder.build.getString("timestamp") == history.head.builder.build.getString("timestamp"))
+        None
+      else
+        Some(validationFailureMessage)
+    }
+    def validationFailureMessage = "TIMESTAMPS DON'T MATCH"
     override def metadataHistorySize() =
       1
   }
