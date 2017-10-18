@@ -241,7 +241,7 @@ abstract class SmvDataSet extends FilenamePart {
 
   /** Returns the path for the module's metadata history */
   private[smv] def moduleMetaHistoryPath(prefix: String = ""): String =
-    s"""${app.smvConfig.outputDir}/${prefix}${fqn}.meta"""
+    s"""${app.smvConfig.historyDir}/${prefix}${fqn}.hist"""
 
   /** perform the actual run of this module to get the generated SRDD result. */
   private[smv] def doRun(dqmValidator: DQMValidator): DataFrame

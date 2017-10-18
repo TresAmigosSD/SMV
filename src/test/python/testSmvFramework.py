@@ -188,7 +188,7 @@ class SmvMetadataTest(SmvBaseTest):
     def test_metadata_includes_user_metadata(self):
         fqn = "metadata_stage.modules.ModWithUserMeta"
         self.df(fqn)
-        with open(self.tmpDataDir() + "/output/{}.meta/part-00000".format(fqn)) as f:
+        with open(self.tmpDataDir() + "/history/{}.hist/part-00000".format(fqn)) as f:
             metadata_list = json.loads(f.read())
             metadata = metadata_list['history'][0]
         self.assertEqual(metadata['foo'], "bar")
