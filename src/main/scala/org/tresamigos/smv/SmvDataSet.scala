@@ -239,6 +239,7 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def moduleMetaPath(prefix: String = ""): String =
     versionedBasePath(prefix) + ".meta"
 
+  /** Returns the path for the module's metadata history */
   private[smv] def moduleMetaHistoryPath(prefix: String = ""): String =
     s"""${app.smvConfig.outputDir}/${prefix}${fqn}.meta"""
 
@@ -259,20 +260,20 @@ abstract class SmvDataSet extends FilenamePart {
     deleteOutputs(metadataOutputFiles)
 
   /**
-   * Files relateto metadata
+   * Files related to metadata
    */
   private[smv] def metadataOutputFiles(): Seq[String] =
     Seq(moduleMetaPath(), moduleMetaHistoryPath())
 
   /**
-   * Returns current valid outputs produced by this module.
+   * Returns current all outputs produced by this module.
    */
   private[smv] def allOutputFiles(): Seq[String] = {
     Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath(), moduleMetaHistoryPath())
   }
 
   /**
-   * Returns current versioned valid outputs produced by this module. Excludes metadata history
+   * Returns current versioned outputs produced by this module. Excludes metadata history
    */
   private[smv] def versionedOutputFiles(): Seq[String] = {
     Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath())
@@ -397,6 +398,9 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def getMetadata(): SmvMetadata =
     readPersistedMetadata().getOrElse(createMetadata(None))
 
+  /**
+   * Read metadata history from file if it exists, otherwise return empty metadata
+   */
   private[smv] def getMetadataHistory(): SmvMetadataHistory =
     readMetadataHistory().getOrElse(SmvMetadataHistory.empty)
 
@@ -416,6 +420,9 @@ abstract class SmvDataSet extends FilenamePart {
     metadata
   }
 
+  /**
+   * Persist versioned copy of metadata
+   */
   private[smv] def persistMetadata(metadata: SmvMetadata): Unit =
     metadata.saveToFile(app.sc, moduleMetaPath())
 
@@ -425,8 +432,11 @@ abstract class SmvDataSet extends FilenamePart {
    */
   private[smv] def metadataHistorySize(): Integer = 5
 
-  private[smv] def persistMetadataHistory(metadata: SmvMetadata, metadataHistory: SmvMetadataHistory): Unit =
-    metadataHistory
+  /**
+   * Save metadata history with new metadata
+   */
+  private[smv] def persistMetadataHistory(metadata: SmvMetadata, oldHistory: SmvMetadataHistory): Unit =
+    oldHistory
       .update(metadata, metadataHistorySize)
       .saveToFile(app.sc, moduleMetaHistoryPath())
 

@@ -106,16 +106,28 @@ object SmvMetadata {
 }
 
 /**
- * Interface for reading and updating metadata history.
+ * Interface for updating metadata history.
  * @param historyList Array of SmvMetadata in descending order of age
  */
 class SmvMetadataHistory(val historyList: Array[SmvMetadata]) {
   def apply(idx: Integer): SmvMetadata =
     historyList(idx)
 
+  /**
+   * Get new SmvMetadataHistory updated with new metadata
+   */
   def update(newMeta: SmvMetadata, maxSize: Integer): SmvMetadataHistory = {
     new SmvMetadataHistory(newMeta +: historyList.take(maxSize - 1))
   }
+
+  /**
+   * Serialize metadata as JSON string. Structure will be
+   * {
+   *    "history": [
+   *      ...
+   *    ]
+   * }
+   */
   def toJson: String =
     new MetadataBuilder()
       .putMetadataArray("history", historyList map (_.builder.build))
@@ -130,17 +142,27 @@ class SmvMetadataHistory(val historyList: Array[SmvMetadata]) {
 }
 
 object SmvMetadataHistory {
+  /**
+   * Read history from JSON string
+   */
   def fromJson(json: String): SmvMetadataHistory = {
     val metadataFromString = Metadata.fromJson(json)
     val smvMetadataArray = metadataFromString.getMetadataArray("history") map {SmvMetadata(_)}
     new SmvMetadataHistory(smvMetadataArray)
   }
 
+  /**
+   * Create a history with no entries
+   */
   def empty(): SmvMetadataHistory = {
     new SmvMetadataHistory(Array.empty)
   }
 }
 
+/**
+ * Policy for validating a module's current metadata against its historical
+ * metadata. This policty is added to every module's DQM
+ */
 class DQMMetadataPolicy(ds: SmvDataSet) extends dqm.DQMPolicy{
   def name(): String =
     s"${ds.fqn} metadata validation"
