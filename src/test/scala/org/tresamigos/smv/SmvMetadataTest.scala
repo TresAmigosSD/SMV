@@ -30,12 +30,12 @@ class SmvMetadataTest extends SmvTestUtil {
     // Note that type comes before name due to implementation details; the order
     // of dictionary pairs is arbitrary (under the hood they are in an unordered map)
     assert(
-      metadata.toJson === "{\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}")
+      metadata.toJson === "{\"_columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]}")
   }
 
   test("SmvDataSet getMetadata includes dependencies") {
     val expectedSubstring =
-      "\"inputs\":[\"" +
+      "\"_inputs\":[\"" +
       modules1.Y.moduleMetaPath() + "\",\"" +
       modules2.Z.moduleMetaPath() + "\",\"" +
       modules3.W.publishMetaPath("1") + "\"]"
@@ -47,7 +47,7 @@ class SmvMetadataTest extends SmvTestUtil {
     app.runModule(modules1.V.urn)
     // Need to run the module first to persist its metadata (otherwise won't get the full metadata)
     val expectedSubstring =
-      "\"columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]"
+      "\"_columns\":[{\"type\":\"String\",\"name\":\"a\"},{\"type\":\"Integer\",\"name\":\"b\"}]"
     val x = app.dsm.load(modules1.V.urn).head
     assert( x.getMetadata.toJson.contains(expectedSubstring) )
   }
@@ -55,7 +55,7 @@ class SmvMetadataTest extends SmvTestUtil {
   test("Persisted SmvDataSet's metadata include timestamp") {
     app.runModule(modules1.V.urn)
     // Need to run the module first to persist its metadata (otherwise won't get the full metadata)
-    val expectedPattern = "\"timestamp\":\".+\"".r
+    val expectedPattern = "\"_timestamp\":\".+\"".r
     val x = app.dsm.load(modules1.V.urn).head
     assert( expectedPattern.findAllIn(x.getMetadata.toJson).hasNext )
   }
@@ -149,7 +149,7 @@ package modules1 {
       i(Y)
     }
     override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
-      if (history.isEmpty || current.builder.build.getString("timestamp") == history.head.builder.build.getString("timestamp"))
+      if (history.isEmpty || current.builder.build.getString("_timestamp") == history.head.builder.build.getString("_timestamp"))
         None
       else
         Some(validationFailureMessage)

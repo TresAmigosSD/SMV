@@ -32,27 +32,27 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
    * Add FQN field
    */
   def addFQN(fqn: String) =
-    builder.putString("fqn", fqn)
+    builder.putString("_fqn", fqn)
 
   /**
    * Extract schema-related metadata from this DataFrame and add it
    */
   def addSchemaMetadata(df: DataFrame) =
-    builder.putMetadataArray("columns", createSchemaMetadataArray(df))
+    builder.putMetadataArray("_columns", createSchemaMetadataArray(df))
 
   /**
    * Add dependency-related metadata based on a list of dependencies
    */
   def addDependencyMetadata(deps: Seq[SmvDataSet]) = {
     val dependencyPaths = deps map ( _.moduleMetaPath() )
-    builder.putStringArray("inputs", dependencyPaths.toArray)
+    builder.putStringArray("_inputs", dependencyPaths.toArray)
   }
 
   /**
    * Add timestamp for running the application to metadata
    */
   def addTimestamp(dt: DateTime) = {
-    builder.putString("timestamp", dt.toString)
+    builder.putString("_timestamp", dt.toString)
   }
 
   /**
