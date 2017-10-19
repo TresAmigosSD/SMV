@@ -502,6 +502,9 @@ abstract class SmvDataSet extends FilenamePart {
   /** path of published metadata for a given version */
   private[smv] def publishMetaPath(version: String) = publishPathNoExt(version) + ".meta"
 
+  /** path of published metadata history for a given version */
+  private[smv] def publishHistoryPath(version: String) = publishPathNoExt(version) + ".hist"
+
   /**
    * Publish the current module data to the publish directory.
    * PRECONDITION: user must have specified the --publish command line option (that is where we get the version)
@@ -514,7 +517,7 @@ abstract class SmvDataSet extends FilenamePart {
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
     createMetadata(Some(df)).saveToFile(app.sc, publishMetaPath(version))
-
+    getMetadataHistory.saveToFile(app.sc, publishHistoryPath(version))
     /* publish should also calculate edd if generarte Edd flag was turned on */
     if (app.genEdd)
       df.edd.persistBesideData(publishCsvPath(version))
