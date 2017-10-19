@@ -13,29 +13,38 @@ package Scala {
     validateMetadata(curMeta: SmvMetaData, oldMeta: Seq[SmvMetaData]): Option[String]
   }
 
-  class SmvExtModulePython extends Scala.SmvDataSet {
-    metadataJson(df: DataFrame): String
-    metadata(df: DataFrame): String
-    validateMetadata(curMeta: SmvMetaData, oldMeta: Seq[SmvMetaData]): Option[String]
-  }
+  class SmvExtModulePython extends Scala.SmvDataSet
 
   class DQMMetadataPolicy extends DQMPolicy {
     ctor(ds: SmvDataSet)
-    metadataPolicy(curMeta: SmvMetaData, oldMeta: Seq[SmvMetaData]): Boolean
+  }
+
+  class ISmvModule <<Java interface>> {
+    IPythonResponsePy4J<String> getMetadataJson(DataFrame df)
+    IPythonResponsePy4J<String> getValidateMetadataJson(SmvMetaData current, SmvMetaData[] history)
   }
 
   Scala.SmvDataSet *-- SmvDQM
-  SmvDQM o-- DQMMetadataPolicy
+  SmvDQM *-- DQMMetadataPolicy
+  ISmvModule *-- SmvExtModulePython
+
+  class SmvMetadataHistory {
+    historyList: Seq[SmvMetadata]
+    fromJson(json: String): SmvMetadataHistory
+    update(newMetadata: SmvMetadata): SmvMetadataHistory
+    saveToFile(sqlContext: SQLContext, path: String)
+  }
 }
 
 package Python {
   class Python.SmvDataSet {
-    metadataJson(df): str
+    metadataJson(jdf): str
     metadata(df): dict
+    validateMetadataJson(cur_json, old_json): str
     validateMetadata(cur_meta, old_meta): str
-    metadata_hist_size(): int
+    metadataHistSize(): int
   }
-  Python.SmvDataSet *-- SmvExtModulePython
+  Python.SmvDataSet *-- ISmvModule
 }
 
 @enduml
