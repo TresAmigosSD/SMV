@@ -161,7 +161,7 @@ object SmvMetadataHistory {
 
 /**
  * Policy for validating a module's current metadata against its historical
- * metadata. This policty is added to every module's DQM
+ * metadata. This policy is added to every module's DQM
  */
 class DQMMetadataPolicy(ds: SmvDataSet) extends dqm.DQMPolicy{
   def name(): String =
@@ -172,10 +172,12 @@ class DQMMetadataPolicy(ds: SmvDataSet) extends dqm.DQMPolicy{
     val history = ds.getMetadataHistory()
     val result = ds.validateMetadata(metadata, history.historyList)
     result match {
-      case Some(log) =>
-        state.addMiscLog(log)
+      case Some(failMsg) =>
+        // existence of failMsg indicates failure
+        state.addMiscLog(failMsg)
         false
       case None      =>
+        // no failure indicates success
         true
     }
   }

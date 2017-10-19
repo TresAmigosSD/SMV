@@ -279,6 +279,8 @@ class SmvDataSet(object):
         return {}
 
     def metadataJson(self, jdf):
+        """Get user's metadata and jsonify it for py4j transport
+        """
         df = DataFrame(jdf, self.smvApp.sqlContext)
         metadata = self.metadata(df)
         if not isinstance(metadata, dict):
@@ -303,6 +305,8 @@ class SmvDataSet(object):
         return None
 
     def validateMetadataJson(self, currentJson, historyJson):
+        """Load metadata (jsonified for py4j transport) and run user's validation on it
+        """
         current = json.loads(currentJson)
         history = [json.loads(j) for j in historyJson]
         res = self.validateMetadata(current, history)
@@ -314,6 +318,9 @@ class SmvDataSet(object):
 
     def metadataHistorySize(self):
         """Override to define the maximum size of the metadata history for this module
+
+            Return:
+                (int): size
         """
         return 5
 
