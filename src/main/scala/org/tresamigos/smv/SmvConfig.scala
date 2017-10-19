@@ -124,7 +124,7 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                               descr = "specify the output directory (default: datadir/output")
   val historyDir = opt[String]("history-dir",
                               noshort = true,
-                              descr = "specify the output directory (default: datadir/output")
+                              descr = "specify the history directory (default: datadir/history")
   val publishDir = opt[String]("publish-dir",
                                noshort = true,
                                descr = "specify the publish directory (default: datadir/publish")
