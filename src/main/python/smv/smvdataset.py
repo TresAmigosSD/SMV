@@ -281,7 +281,8 @@ class SmvDataSet(object):
     def metadataJson(self, jdf):
         df = DataFrame(jdf, self.smvApp.sqlContext)
         metadata = self.metadata(df)
-        # TODO: verify metadata is a dict
+        if not isinstance(metadata, dict):
+            raise SmvRuntimeError("User metadata {} is not a dict".format(repr(metadata)))
         return json.dumps(metadata)
 
     getMetadataJson = create_py4j_interface_method("getMetadataJson", "metadataJson")
@@ -304,8 +305,10 @@ class SmvDataSet(object):
     def validateMetadataJson(self, currentJson, historyJson):
         current = json.loads(currentJson)
         history = [json.loads(j) for j in historyJson]
-        # TODO: verify result is a String or none
-        return self.validateMetadata(current, history)
+        res = self.validateMetadata(current, history)
+        if res is not None and not isinstance(res, (str, unicode)):
+            raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
+        return res
 
     getValidateMetadataJson = create_py4j_interface_method("getValidateMetadataJson", "validateMetadataJson")
 

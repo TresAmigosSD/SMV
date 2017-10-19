@@ -197,3 +197,13 @@ class SmvMetadataTest(SmvBaseTest):
         fqn = "metadata_stage.modules.ModWithFailingValidation"
         with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
             self.df(fqn)
+
+    def test_invalid_metadata_rejected_gracefully(self):
+        fqn = "metadata_stage.modules.ModWithInvalidMetadata"
+        with self.assertRaisesRegexp(Exception, r"metadata .* is not a dict"):
+            self.df(fqn)
+
+    def test_invalid_metadata_validation_rejected_gracefully(self):
+        fqn = "metadata_stage.modules.ModWithInvalidMetadataValidation"
+        with self.assertRaisesRegexp(Exception, r"message .* is not a string"):
+            self.df(fqn)

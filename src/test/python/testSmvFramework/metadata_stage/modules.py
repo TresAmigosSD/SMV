@@ -13,22 +13,27 @@
 
 import smv
 
-class ModWithUserMeta(smv.SmvModule):
+class BaseMod(smv.SmvModule):
     def requiresDS(self):
         return []
 
     def run(self, i):
         return self.smvApp.createDF("foo: Integer; bar: String", "2,jkl;1,mno")
 
+class ModWithUserMeta(BaseMod):
     def metadata(self, df):
         return {'foo': 'bar'}
 
-class ModWithFailingValidation(smv.SmvModule):
-    def requiresDS(self):
-        return []
-
-    def run(self, i):
-        return self.smvApp.createDF("foo: Integer; bar: String", "2,jkl;1,mno")
-
+class ModWithFailingValidation(BaseMod):
     def validateMetadata(self, current, history):
         return "FAILURE"
+
+class ModWithInvalidMetadata(BaseMod):
+    def metadata(self, df):
+        return "NOT A DICT"
+
+class ModWithInvalidMetadataValidation(BaseMod):
+    def validateMetadata(self, current, history):
+        x = lambda: 1
+        x.__name__ = "NOT_A_STRING"
+        return x
