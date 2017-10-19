@@ -28,7 +28,7 @@ import json
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
-from smv.utils import smv_copy_array, pickle_lib
+from smv.utils import smv_copy_array, pickle_lib, is_string
 from smv.py4j_interface import create_py4j_interface_method
 
 
@@ -310,7 +310,7 @@ class SmvDataSet(object):
         current = json.loads(currentJson)
         history = [json.loads(j) for j in historyJson]
         res = self.validateMetadata(current, history)
-        if res is not None and not isinstance(res, (str, unicode)):
+        if res is not None and not is_string(res):
             raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
         return res
 
