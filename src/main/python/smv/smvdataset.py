@@ -264,7 +264,7 @@ class SmvDataSet(object):
         """
         return df
 
-    def userMetadata(self, df):
+    def metadata(self, df):
         """User-defined metadata
 
             Override this method to define metadata that will be logged with your module's results.
@@ -278,13 +278,13 @@ class SmvDataSet(object):
         """
         return {}
 
-    def userMetadataJson(self, jdf):
+    def metadataJson(self, jdf):
         df = DataFrame(jdf, self.smvApp.sqlContext)
-        userMetadata = self.userMetadata(df)
+        metadata = self.metadata(df)
         # TODO: verify metadata is a dict
-        return json.dumps(userMetadata)
+        return json.dumps(metadata)
 
-    getUserMetadataJson = create_py4j_interface_method("getUserMetadataJson", "userMetadataJson")
+    getMetadataJson = create_py4j_interface_method("getMetadataJson", "metadataJson")
 
     def validateMetadata(self, current, history):
         """User-defined metadata validation

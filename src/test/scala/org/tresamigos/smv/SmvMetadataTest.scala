@@ -108,7 +108,7 @@ package modules1 {
     def run(i: runParams) = {
       i(Y)
     }
-    override def userMetadata(df: DataFrame) = SmvMetadata.fromJson("{\"foo\": \"bar\"}")
+    override def metadata(df: DataFrame) = SmvMetadata.fromJson("{\"foo\": \"bar\"}")
   }
 
   object B extends SmvModule("") {
@@ -117,7 +117,7 @@ package modules1 {
     def run(i: runParams) = {
       i(Y)
     }
-    override def userMetadata(df: DataFrame) =
+    override def metadata(df: DataFrame) =
       SmvMetadata.fromJson("{\"foo\": \"bar\"}")
     override def metadataHistorySize() =
       2
@@ -129,7 +129,7 @@ package modules1 {
     def run(i: runParams) = {
       i(Y)
     }
-    override def userMetadata(df: DataFrame) =
+    override def metadata(df: DataFrame) =
       SmvMetadata.fromJson("{\"foo\": \"bar\"}")
     override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
       if (history.isEmpty || current.builder.build.getString("foo") == history.head.builder.build.getString("foo"))

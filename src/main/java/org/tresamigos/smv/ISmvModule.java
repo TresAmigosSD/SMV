@@ -83,7 +83,7 @@ public interface ISmvModule {
 	/**
 	 * User metadata serialized as JSON
 	 */
-	IPythonResponsePy4J<String> getUserMetadataJson(DataFrame df);
+	IPythonResponsePy4J<String> getMetadataJson(DataFrame df);
 
 	/**
 	 * Validate metadata given serialized as json

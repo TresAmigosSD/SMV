@@ -386,7 +386,7 @@ abstract class SmvDataSet extends FilenamePart {
    * Can be overridden to supply custom metadata
    * TODO: make SmvMetadata more user friendly or find alternative format for user metadata
    */
-  def userMetadata(df: DataFrame): SmvMetadata =
+  def metadata(df: DataFrame): SmvMetadata =
     new SmvMetadata()
 
   /**
@@ -409,15 +409,15 @@ abstract class SmvDataSet extends FilenamePart {
    * a DataFrame is provided
    */
   private[smv] def createMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
-    val metadata = dfOpt match {
-      case Some(df) => userMetadata(df)
+    val resMetadata = dfOpt match {
+      case Some(df) => metadata(df)
       case _        => new SmvMetadata()
     }
-    metadata.addFQN(fqn)
-    metadata.addDependencyMetadata(resolvedRequiresDS)
-    dfOpt foreach (metadata.addSchemaMetadata(_))
-    timestamp foreach (metadata.addTimestamp(_))
-    metadata
+    resMetadata.addFQN(fqn)
+    resMetadata.addDependencyMetadata(resolvedRequiresDS)
+    dfOpt foreach {resMetadata.addSchemaMetadata}
+    timestamp foreach {resMetadata.addTimestamp}
+    resMetadata
   }
 
   /**
@@ -1078,8 +1078,8 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
   override def dqm =
     getPy4JResult(target.getDqmWithTypeSpecificPolicy)
 
-  override def userMetadata(df: DataFrame) = {
-    val py4jRes = target.getUserMetadataJson(df)
+  override def metadata(df: DataFrame) = {
+    val py4jRes = target.getMetadataJson(df)
     val json = getPy4JResult(py4jRes)
     SmvMetadata.fromJson(json)
   }

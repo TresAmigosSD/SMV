@@ -20,7 +20,7 @@ class ModWithUserMeta(smv.SmvModule):
     def run(self, i):
         return self.smvApp.createDF("foo: Integer; bar: String", "2,jkl;1,mno")
 
-    def userMetadata(self, df):
+    def metadata(self, df):
         return {'foo': 'bar'}
 
 class ModWithFailingValidation(smv.SmvModule):
