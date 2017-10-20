@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import unittest
+import json
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
@@ -32,7 +33,7 @@ class SmvFrameworkTest(SmvBaseTest):
     def _escapeRegex(self, s):
         import re
         return re.sub(r"([\[\]\(\)])", r"\\\1", s)
-        
+
     def test_SmvCsvStringData(self):
         fqn = "stage.modules.D1"
         df = self.df(fqn)
@@ -81,7 +82,9 @@ class SmvFrameworkTest(SmvBaseTest):
   "errorMessages": [
     {"FailTotalRuleCountPolicy(2)":"true"},
     {"FailTotalFixCountPolicy(1)":"false"},
-    {"FailParserCountPolicy(1)":"true"}
+    {"org.tresamigos.smv.SmvCsvStringData metadata validation":"true"},
+    {"FailParserCountPolicy(1)":"true"},
+    {"stage.modules.D3 metadata validation":"true"}
   ],
   "checkLog": [
     "Rule: b_lt_03, total count: 1",
@@ -175,4 +178,32 @@ class SmvSyntaxErrorPropagationTest(SmvBaseTest):
     def test_module_SyntaxError_propagation(self):
         fqn = "ModWithSyntaxError"
         with self.assertRaisesRegexp(Py4JJavaError, "SyntaxError"):
+            self.df(fqn)
+
+class SmvMetadataTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=metadata_stage', '-m', "None"]
+
+    def test_metadata_includes_user_metadata(self):
+        fqn = "metadata_stage.modules.ModWithUserMeta"
+        self.df(fqn)
+        with open(self.tmpDataDir() + "/history/{}.hist/part-00000".format(fqn)) as f:
+            metadata_list = json.loads(f.read())
+            metadata = metadata_list['history'][0]
+        self.assertEqual(metadata['foo'], "bar")
+
+    def test_metadata_validation_failure_causes_error(self):
+        fqn = "metadata_stage.modules.ModWithFailingValidation"
+        with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
+            self.df(fqn)
+
+    def test_invalid_metadata_rejected_gracefully(self):
+        fqn = "metadata_stage.modules.ModWithInvalidMetadata"
+        with self.assertRaisesRegexp(Exception, r"metadata .* is not a dict"):
+            self.df(fqn)
+
+    def test_invalid_metadata_validation_rejected_gracefully(self):
+        fqn = "metadata_stage.modules.ModWithInvalidMetadataValidation"
+        with self.assertRaisesRegexp(Exception, r"message .* is not a string"):
             self.df(fqn)

@@ -79,4 +79,19 @@ public interface ISmvModule {
 	 * of an input file
 	 */
 	IPythonResponsePy4J<Integer> getInstanceValHash();
+
+	/**
+	 * User metadata serialized as JSON
+	 */
+	IPythonResponsePy4J<String> getMetadataJson(DataFrame df);
+
+	/**
+	 * Validate metadata given serialized as json
+	 */
+	IPythonResponsePy4J<String> getValidateMetadataJson(String currentMetaJson, String[] historyMetaJson);
+
+	/**
+	 * Maximum of the metadata history
+	 */
+	IPythonResponsePy4J<Integer> getMetadataHistorySize();
 }

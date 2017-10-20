@@ -29,7 +29,8 @@ pol <- extmod: Option[String]
 val <- pol: Boolean
 extmod <- val:
 extmod -> extmod: persist versioned metadata
-extmod -> extmod: merge and persist versioned metadata
+extmod -> extmod: read then delete historical metadata
+extmod -> extmod: update and persist historical metadata
 extmod -> extmod: persist DataFrame
 app <-- extmod: DataFrame
 

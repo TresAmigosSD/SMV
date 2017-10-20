@@ -26,33 +26,33 @@ import org.joda.time.DateTime
  *
  * TODO: Add getter methods and more types of metadata (e.g. validation results)
  */
-class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
+class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
 
   /**
    * Add FQN field
    */
   def addFQN(fqn: String) =
-    builder.putString("fqn", fqn)
+    builder.putString("_fqn", fqn)
 
   /**
    * Extract schema-related metadata from this DataFrame and add it
    */
   def addSchemaMetadata(df: DataFrame) =
-    builder.putMetadataArray("columns", createSchemaMetadataArray(df))
+    builder.putMetadataArray("_columns", createSchemaMetadataArray(df))
 
   /**
    * Add dependency-related metadata based on a list of dependencies
    */
   def addDependencyMetadata(deps: Seq[SmvDataSet]) = {
     val dependencyPaths = deps map ( _.moduleMetaPath() )
-    builder.putStringArray("inputs", dependencyPaths.toArray)
+    builder.putStringArray("_inputs", dependencyPaths.toArray)
   }
 
   /**
    * Add timestamp for running the application to metadata
    */
   def addTimestamp(dt: DateTime) = {
-    builder.putString("timestamp", dt.toString)
+    builder.putString("_timestamp", dt.toString)
   }
 
   /**
@@ -82,7 +82,7 @@ class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
   /**
    * String representation is a minified json string
    */
-  def toJson =
+  def toJson: String =
     builder.build.json
 
   /**
@@ -93,9 +93,92 @@ class SmvMetadata(builder: MetadataBuilder = new MetadataBuilder) {
 }
 
 object SmvMetadata {
+  def apply(sparkMetadata: Metadata): SmvMetadata = {
+    val builder = new MetadataBuilder().withMetadata(sparkMetadata)
+    new SmvMetadata(builder)
+  }
+
   def fromJson(json: String): SmvMetadata = {
     val metadataFromString = Metadata.fromJson(json)
     val builder            = (new MetadataBuilder()).withMetadata(metadataFromString)
     new SmvMetadata(builder)
+  }
+}
+
+/**
+ * Interface for updating metadata history.
+ * @param historyList Array of SmvMetadata in descending order of age
+ */
+class SmvMetadataHistory(val historyList: Array[SmvMetadata]) {
+  def apply(idx: Integer): SmvMetadata =
+    historyList(idx)
+
+  /**
+   * Get new SmvMetadataHistory updated with new metadata
+   */
+  def update(newMeta: SmvMetadata, maxSize: Integer): SmvMetadataHistory = {
+    new SmvMetadataHistory(newMeta +: historyList.take(maxSize - 1))
+  }
+
+  /**
+   * Serialize metadata as JSON string. Structure will be
+   * {
+   *    "history": [
+   *      ...
+   *    ]
+   * }
+   */
+  def toJson: String =
+    new MetadataBuilder()
+      .putMetadataArray("history", historyList map (_.builder.build))
+      .build
+      .json
+
+  def length: Integer =
+    historyList.length
+
+  def saveToFile(sc: SparkContext, path: String) =
+    sc.makeRDD(Seq(toJson), 1).saveAsTextFile(path)
+}
+
+object SmvMetadataHistory {
+  /**
+   * Read history from JSON string
+   */
+  def fromJson(json: String): SmvMetadataHistory = {
+    val metadataFromString = Metadata.fromJson(json)
+    val smvMetadataArray = metadataFromString.getMetadataArray("history") map {SmvMetadata(_)}
+    new SmvMetadataHistory(smvMetadataArray)
+  }
+
+  /**
+   * Create a history with no entries
+   */
+  def empty(): SmvMetadataHistory = {
+    new SmvMetadataHistory(Array.empty)
+  }
+}
+
+/**
+ * Policy for validating a module's current metadata against its historical
+ * metadata. This policy is added to every module's DQM
+ */
+class DQMMetadataPolicy(ds: SmvDataSet) extends dqm.DQMPolicy{
+  def name(): String =
+    s"${ds.fqn} metadata validation"
+
+  def policy(df: DataFrame, state: dqm.DQMState) = {
+    val metadata = ds.createMetadata(Some(df))
+    val history = ds.getMetadataHistory()
+    val result = ds.validateMetadata(metadata, history.historyList)
+    result match {
+      case Some(failMsg) =>
+        // existence of failMsg indicates failure
+        state.addMiscLog(failMsg)
+        false
+      case None      =>
+        // no failure indicates success
+        true
+    }
   }
 }

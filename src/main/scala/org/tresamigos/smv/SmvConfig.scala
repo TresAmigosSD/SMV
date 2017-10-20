@@ -122,6 +122,9 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val outputDir = opt[String]("output-dir",
                               noshort = true,
                               descr = "specify the output directory (default: datadir/output")
+  val historyDir = opt[String]("history-dir",
+                              noshort = true,
+                              descr = "specify the history directory (default: datadir/history")
   val publishDir = opt[String]("publish-dir",
                                noshort = true,
                                descr = "specify the publish directory (default: datadir/publish")
@@ -264,6 +267,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   def outputDir: String = {
     cmdLine.outputDir.get.orElse(mergedProps.get("smv.outputDir")).getOrElse(dataDir + "/output")
+  }
+
+  def historyDir: String = {
+    cmdLine.historyDir.get.orElse(mergedProps.get("smv.historyDir")).getOrElse(dataDir + "/history")
   }
 
   def publishDir: String = {

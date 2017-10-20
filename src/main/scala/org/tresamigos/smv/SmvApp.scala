@@ -79,7 +79,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
 
   /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
   private[smv] def validFilesInOutputDir(): Seq[String] =
-    allDataSets.flatMap(_.currentModuleOutputFiles).map(SmvHDFS.baseName(_))
+    allDataSets.flatMap(_.allOutputFiles).map(SmvHDFS.baseName(_))
 
   /**
    * list of all the files with specific suffix in the given directory
@@ -132,7 +132,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    */
 
   private[smv] def deletePersistedResults(dsList: Seq[SmvDataSet]) =
-    dsList foreach (_.deleteOutputs)
+    dsList foreach (ds => ds.deleteOutputs(ds.versionedOutputFiles))
 
   def printDeadModules = {
     if(smvConfig.cmdLine.printDeadModules()) {
@@ -314,6 +314,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
 
   /**
    * proceeds with the execution of an smvDS passed from runModule or runModuleByName
+   * TODO: the name of this function should make its distinction from runModule clear (this is an implementation)
    */
   def runDS(ds: SmvDataSet, forceRun: Boolean, version: Option[String]): DataFrame = {
     if (version.isDefined)
