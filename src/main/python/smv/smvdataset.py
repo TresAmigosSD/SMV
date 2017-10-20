@@ -300,7 +300,7 @@ class SmvDataSet(object):
                 history (list(dict)): list of historical metadata kv's
 
             Returns:
-                (bool): True indicates success, False indicates failure
+                (str): Validation failure message. Return None (or omit a return statement) if successful.
         """
         return None
 
