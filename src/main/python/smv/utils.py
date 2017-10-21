@@ -13,23 +13,54 @@
 
 from pyspark.sql.column import Column
 from pyspark.sql import DataFrame
+import itertools
+import pkgutil
 
-def for_name(name):
-    """Dynamically load a class by its name.
+def iter_submodules(stages):
+    """Yield the names of all submodules of the packages corresponding to the given stages
+    """
+    file_iters_by_stage = (iter_submodules_in_stage(stage) for stage in stages)
+    file_iter = itertools.chain(*file_iters_by_stage)
+    return (name for (_, name, is_pkg) in file_iter if not is_pkg)
 
-    Equivalent to Java's Class.forName
+def iter_submodules_in_stage(stage):
+    """Yield info on the submodules of the package corresponding with a given stage
+    """
+    try:
+        stagemod = __import__(stage)
+    except:
+        return []
+    # `walk_packages` can generate AttributeError if the system has
+    # Gtk modules, which are not designed to use with reflection or
+    # introspection. Best action to take in this situation is probably
+    # to simply suppress the error.
+    def onerror(): pass
+    return pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=onerror)
+
+def for_name(name, stages):
+    """Dynamically load a module in a stage by its name.
+
+        Similar to Java's Class.forName, but only looks in configured stages.
     """
     lastdot = name.rfind('.')
+    file_name = name[ : lastdot]
+    mod_name = name[lastdot+1 : ]
 
-    if lastdot == -1:
-        modname = name
-    else:
-        modname = name[:lastdot]
+    mod = None
 
-    mod = __import__(modname)
-    for comp in name.split('.')[1:]:
-        mod = getattr(mod, comp)
+    # if file doesnt exist, module doesn't exist
+    if file_name in iter_submodules(stages):
+        # __import__ instantiates the module hierarchy but returns the root module
+        f = __import__(file_name)
+        # iterate to get the file that should contain the desired module
+        for subname in file_name.split('.')[1:]:
+            f = getattr(f, subname)
+        # leave mod as None if the file exists but doesnt have an attribute with tha name
+        if hasattr(f, mod_name):
+            mod = getattr(f, mod_name)
+
     return mod
+
 
 def smv_copy_array(sc, *cols):
     """Copy Python list to appropriate Java array
