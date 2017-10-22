@@ -165,7 +165,7 @@ class SmvNameErrorPropagationTest(SmvBaseTest):
         return ['--smv-props', 'smv.stages=stage', '-m', "None"]
 
     def test_module_NameError_propagation(self):
-        fqn = "ModWithNameError"
+        fqn = "stage.modules.ModWithBadName"
         with self.assertRaisesRegexp(Py4JJavaError, "NameError"):
             self.df(fqn)
 
@@ -176,7 +176,7 @@ class SmvSyntaxErrorPropagationTest(SmvBaseTest):
         return ['--smv-props', 'smv.stages=syntax_error_stage', '-m', "None"]
 
     def test_module_SyntaxError_propagation(self):
-        fqn = "ModWithSyntaxError"
+        fqn = "syntax_error_stage.modules.ModWithBadSyntax"
         with self.assertRaisesRegexp(Py4JJavaError, "SyntaxError"):
             self.df(fqn)
 

@@ -16,7 +16,7 @@ import pkgutil
 import inspect
 
 from smv.error import SmvRuntimeError
-from smv.utils import for_name, smv_copy_array
+from smv.utils import for_name, smv_copy_array, iter_submodules
 from smv.py4j_interface import create_py4j_interface_method
 
 """Python implementations of IDataSetRepoPy4J and IDataSetRepoFactoryPy4J interfaces
@@ -52,15 +52,22 @@ class DataSetRepo(object):
                     break
 
     # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
-    # from the most recent source
+    # from the most recent source. If the dataset does not exist, returns None.
+    # However, if there is an error (such as a SyntaxError) which prevents the
+    # user's file from being imported, the error will propagate back to the
+    # DataSetRepoPython.
     def loadDataSet(self, fqn):
-        ds = for_name(fqn)(self.smvApp)
+        ds = None
+        ds_class = for_name(fqn, self.smvApp.stages)
 
-        # Python issue https://bugs.python.org/issue1218234
-        # need to invalidate inspect.linecache to make dataset hash work
-        srcfile = inspect.getsourcefile(ds.__class__)
-        if srcfile:
-            inspect.linecache.checkcache(srcfile)
+        if ds_class is not None:
+            ds = ds_class(self.smvApp)
+
+            # Python issue https://bugs.python.org/issue1218234
+            # need to invalidate inspect.linecache to make dataset hash work
+            srcfile = inspect.getsourcefile(ds_class)
+            if srcfile:
+                inspect.linecache.checkcache(srcfile)
 
         return ds
 
@@ -83,15 +90,9 @@ class DataSetRepo(object):
         # print("type is {0}, value is {1}".format(t, v))
         buf = []
         # import the stage and only walk the packages in the path of that stage, recursively
-        try:
-            stagemod = __import__(stageName)
-        except:
-            # may be a scala-only stage
-            pass
-        else:
-            for loader, name, is_pkg in pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=err):
+        for name in iter_submodules([stageName]):
                 # The additional "." is necessary to prevent false positive, e.g. stage_2.M1 matches stage
-                if name.startswith(stageName + ".") and not is_pkg:
+                if name.startswith(stageName + "."):
                     pymod = __import__(name)
                     for c in name.split('.')[1:]:
                         pymod = getattr(pymod, c)

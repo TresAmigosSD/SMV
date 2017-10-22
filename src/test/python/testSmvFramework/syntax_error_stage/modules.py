@@ -1,7 +1,7 @@
 from smv import *
 
 # Missing colon on the next line
-class ModWithSyntaxError(object)
+class ModWithBadSyntax(object)
     def requiresDS(self):
         return []
 
