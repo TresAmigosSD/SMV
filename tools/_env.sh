@@ -9,6 +9,8 @@
 # APP_JAR : user specified --jar option or the discovered application fat jar.
 #
 
+source "${BASH_SOURCE[0]%/*}/functions.sh"
+
 # This function is used to split the command line arguments into SMV / Spark
 # arguments.  Everything before "--" are considered SMV arguments and everything
 # after "--" are considered spark arguments.
@@ -97,16 +99,11 @@ function set_spark_home() {
     echo "Using Spark at $SPARK_HOME"
 }
 
-function strip_dots() {
-  echo $(sed "s/\\.//g" <<< "$1")
-}
-
 function verify_spark_version() {
   local installed_version=$(${SPARK_HOME}/bin/spark-submit --version 2>&1 | grep version | head -1 | sed -e 's/.*version //')
   local required_version=$(cat "$SMV_TOOLS/../.spark_version")
-  local installed_version_int=$(strip_dots "$installed_version")
-  local required_version_int=$(strip_dots "$required_version")
-  if [ "$installed_version_int" -lt "$required_version_int" ]; then
+  local vcmp=$(ver_cmp "$installed_version" "$required_version")
+  if (( vcmp == -1 )); then
     echo "Spark $installed_version detected. Please install Spark $required_version."
     exit 1
   fi
