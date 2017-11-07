@@ -105,6 +105,10 @@ object SmvPythonHelper {
   def discoverSchema(path: String, nsamples: Int, csvattr: CsvAttributes): Unit =
     shell.discoverSchema(path, nsamples, csvattr)
 
+  def discoverSchemaReturnString(path: String, nsamples: Int): String = {
+    new SchemaDiscoveryHelper(SmvApp.app.sqlContext).discoverSchemaFromFile(path, nsamples).toString()
+  }
+
   /**
    * Update the port of callback client
    */
