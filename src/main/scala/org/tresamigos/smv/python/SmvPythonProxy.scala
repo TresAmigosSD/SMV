@@ -103,10 +103,10 @@ object SmvPythonHelper {
     (new ArrayList(res._1), res._2)
   }
 
-  def discoverSchema(path: String, nsamples: Int, csvattr: CsvAttributes): Unit =
-    shell.discoverSchema(path, nsamples, csvattr)
+  def smvDiscoverSchemaToFile(path: String, nsamples: Int, csvattr: CsvAttributes): Unit =
+    shell.smvDiscoverSchemaToFile(path, nsamples, csvattr)
 
-  def discoverSmvSchema(path: String, nsamples: Int, csvattr: CsvAttributes): SmvSchema = {
+  def discoverSchemaAsSmvSchema(path: String, nsamples: Int, csvattr: CsvAttributes): SmvSchema = {
     implicit val csvAttributes = csvattr
     new SchemaDiscoveryHelper(SmvApp.app.sqlContext).discoverSchemaFromFile(path, nsamples)
   }

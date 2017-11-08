@@ -136,13 +136,14 @@ class SmvApp(object):
     def config(self):
         return self.j_smvApp.smvConfig()
 
-    def discoverSmvSchema(self, path, csvAttributes, n=100000):
-        """Returns schema information of a csv file in json format
+    def discoverSchemaAsSmvSchema(self, path, csvAttributes, n=100000):
+        """Discovers the schema of a .csv file and returns a Scala SmvSchema instance
 
         path --- path to csvfile
-        n --- number of records used to discover schema
+        n --- number of records used to discover schema (optional)
+        csvAttributes --- Scala CsvAttributes instance (optional)
         """
-        return self._jvm.SmvPythonHelper.discoverSmvSchema(path, n, csvAttributes)
+        return self._jvm.SmvPythonHelper.discoverSchemaAsSmvSchema(path, n, csvAttributes)
 
     def inputDir(self):
         return self.config().inputDir()
