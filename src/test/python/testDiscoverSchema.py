@@ -17,11 +17,11 @@ from smv import SmvApp
 class DiscoverSchemaTest(SmvBaseTest):
     def test_discoverSchema(self):
         cls = self.__class__
-        from smv.smvshell import discoverSchema
+        from smv.smvshell import smvDiscoverSchemaToFile
         import os
 
         self.createTempInputFile("schemaToBeDiscovered.csv", 'a,b,c\n1,2,"a"\n3,a,"f"\n')
-        discoverSchema(cls.tmpInputDir() + "/schemaToBeDiscovered.csv")
+        smvDiscoverSchemaToFile(cls.tmpInputDir() + "/schemaToBeDiscovered.csv")
 
         sf = open("schemaToBeDiscovered.schema.toBeReviewed", "r")
         res = sf.read()

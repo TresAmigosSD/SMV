@@ -119,7 +119,7 @@ def help():
        |  * ancestors(datasetName)
        |  * descendants(datasetName)
        |  * now()
-       |  * discoverSchema(filePath)
+       |  * smvDiscoverSchemaToFile(filePath)
        """
     )
 
@@ -220,7 +220,7 @@ def now():
     """
     print(_jvmShellCmd().now())
 
-def discoverSchema(path, n=100000, ca=None):
+def smvDiscoverSchemaToFile(path, n=100000, ca=None):
     """Try best to discover Schema from raw Csv file
 
         Will save a schema file with postfix ".toBeReviewed" in local directory.
@@ -230,7 +230,7 @@ def discoverSchema(path, n=100000, ca=None):
             n (int): Number of records to check for schema discovery, default 100k
             ca (CsvAttributes): Defaults to CsvWithHeader
     """
-    SmvApp.getInstance()._jvm.SmvPythonHelper.discoverSchema(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
+    SmvApp.getInstance()._jvm.SmvPythonHelper.smvDiscoverSchemaToFile(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
 
 def edd(ds_name):
     """Print edd report for the result of an SmvDataSet
