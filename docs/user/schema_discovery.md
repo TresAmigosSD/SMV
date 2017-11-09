@@ -29,16 +29,16 @@ needed to setup the directory structures.
 ## Discover Schema from Shell
 
 Within the SMV Spark shell environment (see [Run Spark Shell](run_shell.md) for details), a
-`discoverSchema` command is provided.
+`smvDiscoverSchemaToFile` command is provided.
 
 **Scala**
 ```scala
-scala> discoverSchema("/path/to/file.csv")
+scala> smvDiscoverSchemaToFile("/path/to/file.csv")
 ```
 
 **Python**
 ```python
-> discoverSchema("/path/to/file.csv")
+> smvDiscoverSchemaToFile("/path/to/file.csv")
 ```
 
 For above case, the Csv file is assumed to be
@@ -49,12 +49,12 @@ You can specify the appropriate CsvAttributes for your file
 
 **Scala**
 ```scala
-scala> discoverSchema("/path/to/file.csv", ca = new CsvAttributes(delimiter = '|', hasHeader = true))
+scala> smvDiscoverSchemaToFile("/path/to/file.csv", ca = new CsvAttributes(delimiter = '|', hasHeader = true))
 ```
 
 **python**
 ```python
-> discoverSchema("/path/to/file.csv", ca = CsvAttributes(delimiter = '|', hasHeader = True))
+> smvDiscoverSchemaToFile("/path/to/file.csv", ca = CsvAttributes(delimiter = '|', hasHeader = True))
 ```
 
 Please see [SMV File](smv_input.md) for more CsvAttributes details.
@@ -62,14 +62,14 @@ Please see [SMV File](smv_input.md) for more CsvAttributes details.
 **Note** SMV currently can't handle Csv files with multiple lines of header. Other tools might be needed
 to remove extra header lines before try to discover schema.
 
-The shell `discoverSchema` method will create a schema file on the local running dir with name  `file.schema.toBeReviewed`. As
+The shell `smvDiscoverSchemaToFile` method will create a schema file on the local running dir with name  `file.schema.toBeReviewed`. As
 hinted by the file name, human need to review the schema file.
 
 Using the `CB1200CZ11.csv` file as an example,
 
 **Scala**
 ```scala
-scala> discoverSchema("data/input/employment/CB1200CZ11.csv", ca = new CsvAttributes(delimiter = '|', hasHeader = true))
+scala> smvDiscoverSchemaToFile("data/input/employment/CB1200CZ11.csv", ca = new CsvAttributes(delimiter = '|', hasHeader = true))
 ```
 The path here is relative to the project root dir, where I started the `smv-shell`.
 
