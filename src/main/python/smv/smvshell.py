@@ -290,7 +290,7 @@ __all__ = [
     'graph',
     'graphStage',
     'now',
-    'discoverSchema',
+    'smvDiscoverSchemaToFile',
     'edd',
     'run_test'
 ]
