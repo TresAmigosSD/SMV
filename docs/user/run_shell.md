@@ -207,7 +207,7 @@ When `smv-shell` is launched, it will source the file `conf/smv_shell_init.scala
 helper functions and create a default SMV dummy application (`app`)
 
 * `df(data_set)` :  Load/Run the given dataset and return the resulting `DataFrame`
-* `discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix
+* `smvDiscoverSchemaToFile(path, n, ca=CsvAttributes.defaultCsvWithHeader)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix
  ".schema.toBeReviewed"
 * `dumpEdd(data_set)` : Generate base EDD results for given `SmvDataSet` and dump the results to the screen.
 
