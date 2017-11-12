@@ -104,7 +104,8 @@ class DataSetRepo(object):
                             # Each package will contain among other things all of
                             # the modules that were imported into it, and we need
                             # to exclude these (so that we only count each module once)
-                            if fn(obj) and obj.fqn().startswith(name):
+                            # Also we need to exclude ABCs
+                            if fn(obj) and obj.fqn().startswith(name) and not inspect.isabstract(obj):
                                 buf.append(obj.urn())
                         except AttributeError:
                             continue
