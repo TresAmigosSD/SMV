@@ -126,7 +126,7 @@ function verify_spark_version() {
   local installed_version=$(${SPARK_HOME}/bin/spark-submit --version 2>&1 | grep version | head -1 | sed -e 's/.*version //')
   local required_version=$(cat "$SMV_TOOLS/../.spark_version")
   local vercmp=$(accept_version "$required_version" "$installed_version")
-  if [[ $vercmp == "0" ]]; then
+  if [[ $vercmp != "0" ]]; then
     echo "Spark $installed_version detected. Please install Spark $required_version."
     exit 1
   fi
