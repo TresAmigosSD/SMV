@@ -44,6 +44,14 @@ class DataSetRepoTest(SmvBaseTest):
 
         self.assertTrue( "mod:stage.modules.NewModule" in modules, "mod:stage.modules.NewModule not in " + str(modules) )
 
+    def test_repo_dslist_filter_abc(self):
+        """DataSetRepo's dataSetsForStage method should not return ABC Classes
+        """
+        with ExtraPath(self.before_dir()):
+            modules = self.build_new_repo().dataSetsForStage("stage")
+
+        self.assertNotIn("mod:stage.abcmod.ABCMod", modules, "mod:stage.abcmod.ABCMod is in " + str(modules) )
+
     def test_repo_compiles_module_only_once(self):
         """DataSetRepo should not recompile module twice in a transaction
 

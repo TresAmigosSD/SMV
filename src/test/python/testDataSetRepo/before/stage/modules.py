@@ -27,4 +27,4 @@ class CompileOnceB(SmvModule):
     def run(self, i): return None
 
 class ImplMod(ABCMod):
-    pass
+    def run(self, i): return None

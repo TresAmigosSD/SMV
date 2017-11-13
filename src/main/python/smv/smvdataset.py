@@ -31,6 +31,10 @@ from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, pickle_lib, is_string
 from smv.py4j_interface import create_py4j_interface_method
 
+if sys.version_info >= (3, 4):
+    ABC = abc.ABC
+else:
+    ABC = abc.ABCMeta('ABC', (), {})
 
 def _disassemble(obj):
     """Disassembles a module and returns bytecode as a string.
@@ -82,7 +86,7 @@ class SmvOutput(object):
 
     getTableName = create_py4j_interface_method("getTableName", "tableName")
 
-class SmvDataSet(object):
+class SmvDataSet(ABC):
     """Abstract base class for all SmvDataSets
     """
 
@@ -92,8 +96,6 @@ class SmvDataSet(object):
     # don't yet quite understand.  So for a workaround we add the
     # typcheck in the Smv hierarchies themselves.
     IsSmvDataSet = True
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, smvApp):
         self.smvApp = smvApp
@@ -329,11 +331,9 @@ class SmvDataSet(object):
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
 
-class SmvInput(SmvDataSet):
+class SmvInput(SmvDataSet, ABC):
     """SmvDataSet representing external input
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def isEphemeral(self):
         return True
