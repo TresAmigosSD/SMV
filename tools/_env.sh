@@ -97,16 +97,36 @@ function set_spark_home() {
     echo "Using Spark at $SPARK_HOME"
 }
 
-function strip_dots() {
-  echo $(sed "s/\\.//g" <<< "$1")
+# Remove trailing alphanum characters in dot-separated version text.
+function sanitize_version () {
+  # match a digit, followed by a letter, "+" or "_," and anything up to a "."
+  # keep just the digit -- essentially removing any trailing alphanum between dots
+  echo $(sed -E 's/([0-9])[_+a-zA-Z][^.]*/\1/g' <<< "$1")
+}
+
+# Compares the two versions (required, found) after sanitizing using
+# the function above. Versions are dot-separated text. The major and
+# minor parts must match exactly with required, and the patch part in
+# the found version must be no less than required.
+#
+# echoes 0 if the found version meets the criteria
+#        1 otherwise
+function accept_version () {
+  local sane=$(sanitize_version $2)
+  local IFS=.
+  local required=($1) found=($sane)
+  if [[ ${required[0]} == ${found[0]} ]] && [[ ${required[1]} == ${found[1]} ]] && ! (( ${found[2]} < ${required[2]} )); then
+    echo 0
+  else
+    echo 1
+  fi
 }
 
 function verify_spark_version() {
   local installed_version=$(${SPARK_HOME}/bin/spark-submit --version 2>&1 | grep version | head -1 | sed -e 's/.*version //')
   local required_version=$(cat "$SMV_TOOLS/../.spark_version")
-  local installed_version_int=$(strip_dots "$installed_version")
-  local required_version_int=$(strip_dots "$required_version")
-  if [ "$installed_version_int" -lt "$required_version_int" ]; then
+  local vercmp=$(accept_version "$required_version" "$installed_version")
+  if [[ $vercmp != "0" ]]; then
     echo "Spark $installed_version detected. Please install Spark $required_version."
     exit 1
   fi
