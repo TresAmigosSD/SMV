@@ -29,7 +29,8 @@ class DataSetMgr(smvConfig: SmvConfig) {
   private var allStageNames                            = smvConfig.stageNames
 
   def register(newRepoFactory: DataSetRepoFactory): Unit = {
-    dsRepoFactories = dsRepoFactories :+ newRepoFactory
+    // more recently registered repo factories are searched first
+    dsRepoFactories = newRepoFactory +: dsRepoFactories
   }
 
   /**
