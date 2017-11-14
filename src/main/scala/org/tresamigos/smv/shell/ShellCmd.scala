@@ -65,7 +65,7 @@ object ShellCmd {
       |* now
       |* df(ds: SmvDataSet)
       |* ddf(fqn: String)
-      |* discoverSchema(path: String, n: Int = 100000, ca: CsvAttributes = CsvWithHeader)
+      |* smvDiscoverSchemaToFile(path: String, n: Int = 100000, ca: CsvAttributes = CsvWithHeader)
       """.stripMargin
 
   /**
