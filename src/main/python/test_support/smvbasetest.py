@@ -13,18 +13,18 @@
 
 import unittest
 from test_support.testconfig import TestConfig
-from smv import SmvApp
 
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import *
 
-import os, shutil
+import os, shutil, sys
 
 class SmvBaseTest(unittest.TestCase):
     # DataDir value is deprecated. Use tmpDataDir instead
     DataDir = "./target/data"
     PytestDir = "./target/pytest"
+    TestSrcDir = "./src/test/python"
 
     @classmethod
     def smvAppInitArgs(cls):
@@ -32,6 +32,10 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Import needs to happen during EVERY setup to ensure that we are
+        # using the most recently reloaded SmvApp
+        from smv.smvapp import SmvApp
+
         cls.sparkContext = TestConfig.sparkContext()
         cls.sqlContext = TestConfig.sqlContext()
         cls.sparkContext.setLogLevel("ERROR")
@@ -40,13 +44,27 @@ class SmvBaseTest(unittest.TestCase):
         callback_server_port = random.randint(20000, 65535)
 
         args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.tmpDataDir()]
+        # The test's SmvApp must be set as the singleton for correct results of some tests
+        # The original SmvApp (if any) will be restored when the test is torn down
         cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
+        sys.path.append(cls.testResourceDir())
+
         cls.mkTmpTestDir()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Import needs to happen during EVERY setup to ensure that we are
+        # using the most recently reloaded SmvApp
+        from smv.smvapp import SmvApp
+        # Restore SmvApp singleton
+        SmvApp.setInstance(TestConfig.originalSmvApp())
+        sys.path.remove(cls.testResourceDir())
 
     def setUp(self):
         """Patch for Python 2.6 without using unittest
         """
+        from smv import SmvApp
         cls = self.__class__
         if not hasattr(cls, 'smvApp'):
             cls.sparkContext = TestConfig.sparkContext()
@@ -77,6 +95,11 @@ class SmvBaseTest(unittest.TestCase):
 
         self.assertEqual(expected.columns, result.columns)
         self.assertEqual(sort_collect(expected), sort_collect(result))
+
+    @classmethod
+    def testResourceDir(cls):
+        """Directory where resources (like modules to run) for this test are expected."""
+        return cls.TestSrcDir + "/" + cls.__module__
 
     @classmethod
     def tmpTestDir(cls):

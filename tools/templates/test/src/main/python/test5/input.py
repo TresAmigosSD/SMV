@@ -1,5 +1,5 @@
-from smv import *
+import smv
 
-class table(SmvCsvFile):
+class table(smv.SmvCsvFile):
     def path(self):
-        return "input/test5/table.csv"
+        return "test5/table.csv"

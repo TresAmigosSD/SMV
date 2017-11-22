@@ -61,10 +61,11 @@ object ShellCmd {
       |* peek(df: DataFrame, pos: Int = 1)
       |* openCsv(path: String, ca: CsvAttributes = null, parserCheck: Boolean = false)
       |* openHive(tabelName: String)
+      |* exportToHive(dsName: String)
       |* now
       |* df(ds: SmvDataSet)
       |* ddf(fqn: String)
-      |* discoverSchema(path: String, n: Int = 100000, ca: CsvAttributes = CsvWithHeader)
+      |* smvDiscoverSchemaToFile(path: String, n: Int = 100000, ca: CsvAttributes = CsvWithHeader)
       """.stripMargin
 
   /**
@@ -154,6 +155,13 @@ object ShellCmd {
   }
 
   /**
+   * Export dataset's running result to a Hive table
+  **/
+  def exportToHive(dsName: String) = {
+    dsm.inferDS(dsName).head.exportToHive
+  }
+
+  /**
    * Read in a Csv file as DF
   **/
   def openCsv(path: String, ca: CsvAttributes, parserCheck: Boolean): DataFrame = {
@@ -168,8 +176,19 @@ object ShellCmd {
 
   def openCsv(path: String): DataFrame = openCsv(path, null, false)
 
-  def smvExportCsv(name: String, path: String) =
-    dsm.inferDS(name).head.exportToCsv(path)
+  /**
+   * Deprecated
+   */
+  def smvExportCsv(name: String, path: String) = {
+    println("The smvExportCsv shell method is deprecated")
+    dsm.inferDS(name).head.rdd().smvExportCsv(path)
+  }
+
+  def _edd(name: String): String =
+    dsm.inferDS(name).head.getEdd
+
+  def edd(name: String): Unit =
+    println(_edd(name))
 
   /**
    * Resolve SmvDataSet

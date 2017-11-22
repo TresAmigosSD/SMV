@@ -1,15 +1,15 @@
-from smv import *
+import smv
 
-from org.tresamigos.smvtest.test2 import input
+from integration.test.test2 import input
 
-class M1(SmvModule):
+class M1(smv.SmvModule):
     def requiresDS(self):
         return [input.table]
 
     def run(self, i):
         return i[input.table]
 
-class M2(SmvModule, SmvOutput):
+class M2(smv.SmvModule, smv.SmvOutput):
     def requiresDS(self):
         return [M1]
 

@@ -98,8 +98,8 @@ import random;
 callback_server_port = random.randint(20000, 65535)
 
 # Import commonly used pyspark lib
-from pyspark.sql.functions import *
-from pyspark.sql.types import *
+import pyspark.sql.functions
+import pyspark.sql.types
 
 sc.setLogLevel("ERROR")
 

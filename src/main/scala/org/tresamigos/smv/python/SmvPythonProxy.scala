@@ -102,8 +102,13 @@ object SmvPythonHelper {
     (new ArrayList(res._1), res._2)
   }
 
-  def discoverSchema(path: String, nsamples: Int, csvattr: CsvAttributes): Unit =
-    shell.discoverSchema(path, nsamples, csvattr)
+  def smvDiscoverSchemaToFile(path: String, nsamples: Int, csvattr: CsvAttributes): Unit =
+    shell.smvDiscoverSchemaToFile(path, nsamples, csvattr)
+
+  def discoverSchemaAsSmvSchema(path: String, nsamples: Int, csvattr: CsvAttributes): SmvSchema = {
+    implicit val csvAttributes = csvattr
+    new SchemaDiscoveryHelper(SmvApp.app.sqlContext).discoverSchemaFromFile(path, nsamples)
+  }
 
   /**
    * Update the port of callback client
@@ -180,6 +185,12 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
 
   def smvTimePanelAgg(timeColName: String, start: panel.PartialTime, end: panel.PartialTime, aggCols: Array[Column]) =
     grouped.smvTimePanelAgg(timeColName, start, end)(aggCols: _*)
+
+  def smvQuantile(valueCols: Array[String], numBins: Integer, ignoreNull: Boolean) =
+    grouped.smvQuantile(valueCols.toSeq, numBins, ignoreNull)
+
+  def smvPercentRank(valueCols: Array[String], ignoreNull: Boolean) =
+    grouped.smvPercentRank(valueCols.toSeq, ignoreNull)
 }
 
 class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
@@ -222,6 +233,9 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def outputDir: String = j_smvApp.smvConfig.outputDir
 
   def stages: Array[String] = j_smvApp.stages.toArray
+
+  def inferDS(name: String): SmvDataSet =
+    j_smvApp.dsm.inferDS(name).head
 
   /** Used to create small dataframes for testing */
   def dfFrom(schema: String, data: String): DataFrame =

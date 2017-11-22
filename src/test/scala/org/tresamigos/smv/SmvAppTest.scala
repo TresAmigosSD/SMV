@@ -145,7 +145,7 @@ package org.tresamigos.smv {
       }
 
       object testApp
-          extends SmvApp(Seq("--purge-old-output", "--output-dir", testcaseTempDir),
+          extends SmvApp(Seq("--purge-old-output", "--history-dir", testcaseTempDir, "--output-dir", testcaseTempDir),
                          Option(sc),
                          Option(sqlContext)) {
         override lazy val allDataSets = Seq(m)

@@ -29,6 +29,11 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
   val DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
 
+  banner("""Usage: smv-pyrun -m ModuleToRun
+           |Usage: smv-pyrun --run-app
+           |""".stripMargin)
+  footer("\nFor additional usage information, please refer to the user guide and API docs at: \nhttp://tresamigossd.github.io/SMV")
+
   val smvProps = propsLong[String]("smv-props", "key=value command line props override")
   val smvAppDir =
     opt("smv-app-dir", noshort = true, default = Some("."), descr = "SMV app directory")
@@ -59,6 +64,11 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                         default = Some(false),
                         descrYes = "publish the given modules/stage/app through JDBC connection")
 
+  val printDeadModules = toggle("dead",
+                        noshort = true,
+                        default = Some(false),
+                        descrYes = "print a list of the dead modules in this application")
+
   val publishHive = toggle(
     "publish-hive",
     noshort = true,
@@ -67,8 +77,8 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrNo = "Do not publish results to hive tables."
   )
 
-  val publishLocal = opt[String](
-    "publish-local",
+  val exportCsv = opt[String](
+    "export-csv",
     noshort = true,
     default = None,
     descr = "publish|export given modules/stage/app to a CSV file at the given path on the local file system"
@@ -112,6 +122,9 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val outputDir = opt[String]("output-dir",
                               noshort = true,
                               descr = "specify the output directory (default: datadir/output")
+  val historyDir = opt[String]("history-dir",
+                              noshort = true,
+                              descr = "specify the history directory (default: datadir/history")
   val publishDir = opt[String]("publish-dir",
                                noshort = true,
                                descr = "specify the publish directory (default: datadir/publish")
@@ -129,7 +142,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                                       default = Some(Nil),
                                       descr = "run all output modules in specified stages")
   val runAllApp = toggle("run-app",
-                         noshort = true,
                          default = Some(false),
                          descrYes = "run all output modules in all stages in app.")
 
@@ -255,6 +267,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   def outputDir: String = {
     cmdLine.outputDir.get.orElse(mergedProps.get("smv.outputDir")).getOrElse(dataDir + "/output")
+  }
+
+  def historyDir: String = {
+    cmdLine.historyDir.get.orElse(mergedProps.get("smv.historyDir")).getOrElse(dataDir + "/history")
   }
 
   def publishDir: String = {

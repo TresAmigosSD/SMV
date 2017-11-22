@@ -118,7 +118,7 @@ publish the specified modules through JDBC
 </tr>
 
 <tr>
-<td>--publish-local</td>
+<td>--export-csv (previously --publish-local)</td>
 <td>None</td>
 <td>
 publish the specified modules to the local file system
@@ -129,6 +129,20 @@ publish the specified modules to the local file system
 <td>--dry-run </td>
 <td>off</td>
 <td>Find which modules do not have persisted data, among the modules that need to be run. When specified, no modules are actually executed.
+</td>
+</tr>
+
+<tr>
+<td>--dead</td>
+<td>off</td>
+<td>Print a list of the dead modules in this application
+</td>
+</tr>
+
+<tr>
+<td>--spark-home</td>
+<td>SPARK_HOME environment variable or location of spark-submit</td>
+<td>Location where SMV should find Spark installation.
 </td>
 </tr>
 
@@ -157,7 +171,7 @@ One of the options below must be specified.
 </tr>
 
 <tr>
-<td colspan="2">--run-app </td>
+<td colspan="2">--run-app, -r </td>
 <td>Run all output modules in all configured stages in current app.
 </td>
 </tr>

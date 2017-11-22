@@ -39,7 +39,7 @@ object acct_demo extends SmvCsvFile("accounts/acct_demo.csv")
 ### Python
 ```Python
 # In file src/main/python/stage1/inputdata.py
-class acct_demo(SmvCsvFile):
+class acct_demo(smv.SmvCsvFile):
   def path(self):
     return "accounts/acct_demo.csv"
 ```
@@ -63,8 +63,9 @@ object AcctsByZip extends SmvModule("...") {
 ```Python
 from stage1.inputdata import acct_demo
 
-class AcctsByZip(SmvModule):
-  def requiresDS(self): return [acct_demo]
+class AcctsByZip(smv.SmvModule):
+  def requiresDS(self):
+    return [acct_demo]
 ```
 
 If multiple CSV files in a directory share the same `schema` but with headers in all of the files,
@@ -75,7 +76,7 @@ object acct_demo extends SmvMultiCsvFiles("accounts/acct_demo")
 ```
 ### Python
 ```Python
-class acct_demo(SmvModule):
+class acct_demo(smv.SmvMultiCsvFiles):
   def dir(self):
     return "accounts/acct_demo"
 ```
@@ -111,11 +112,11 @@ object acct_demo extends SmvCsvFile("accounts/acct_demo.csv", CA.caBar) {
 ```Python
 #In file src/main/python/stage1/inputdata.py
 
-class acct_demo(SmvCsvFile):
+class acct_demo(smv.SmvCsvFile):
   def run(self, i):
     return i.select("acct_id", "amt")
   def dqm(self):
-    return SmvDQM().add(FailParserCountPolicy(10))
+    return dqm.SmvDQM().add(dqm.FailParserCountPolicy(10))
 ```
 
 We extended the previous example to override the `run()` and `dqm` methods.  The `run()` method will be used to transform the raw input (a simple projection in this case).
@@ -178,7 +179,7 @@ user_id: String;
 ## userSchema
 Alternatively, the schema can be specified by overriding the `userSchema` method, for example:
 ```Python
-class acct_demo(SmvCsvFile):
+class acct_demo(smv.SmvCsvFile):
   ...
   def userSchema(self):
     return "acct_id:String;user_id:String;store_id:String[,null];amt:Double;income:Decimal[10]"
@@ -300,7 +301,7 @@ scala> df.saveAsCsvWithSchema("/outdata/result.csv")
 SMV can discover data schema from CSV file and create a schema file.  Manual adjustment might be needed on the discovered schema file.  Example of using the Schema Discovery in the interactive shell*
 
 ```scala
-scala> discoverSchema("/path/to/file.csv")
+scala> smvDiscoverSchemaToFile("/path/to/file.csv")
 ```
 
 The schema file will be created in the current running dir.
@@ -316,8 +317,9 @@ object MyTmpDS extends SmvCsvStringData("a:String;b:Double;c:String", "aa,1.0,cc
 ```
 ### Python
 ```python
-class MyTmpDS(SmvCsvStringData):
-    def schemaStr(self): return "a:String;b:Double;c:String"
+class MyTmpDS(smv.SmvCsvStringData):
+    def schemaStr(self):
+        return "a:String;b:Double;c:String"
     def dataStr(self):
         return "aa,1.0,cc;aa2,3.5,CC"
 ```
@@ -332,22 +334,32 @@ Reading from Hive tables is accomplished by wrapping the Hive table in an `SmvHi
 
 ### Scala
 ```scala
-object FooHiveTable extends SmvHiveTable("hiveschema.foo")
+object FooHiveTable extends SmvHiveTable("hiveschema.foo") {
+  def version = 1
+}
 
-object FooHiveTablWithQuery extends SmvHiveTable("hiveschema.foo", "SELECT mycol FROM hiveschema.foo")
+object FooHiveTablWithQuery extends SmvHiveTable("hiveschema.foo", "SELECT mycol FROM hiveschema.foo") {
+  def version = 2
+}
 ```
 ### Python
 ```Python
-class FooHiveTable(SmvHiveTable):
+class FooHiveTable(smv.SmvHiveTable):
+  def version(self):
+    return "1"
   def tableName(self):
     return "hiveschema.foo"
 
-class FooHiveTableWithQuery(SmvHiveTable):
+class FooHiveTableWithQuery(smv.SmvHiveTable):
+  def version(self):
+    return "2"
   def tableName(self):
     return "hiveschema.foo"
   def tableQuery(self):
-    return "SELECT mycol FROM " + tableName
+    return "SELECT mycol FROM " + self.tableName()
 ```
+
+For other inputs like `SmvCsvFile`, we heuristically detect changes in data by checking things like the timestamp on the file. Unfortunately, we don't have a way to do this with `SmvHiveTables`. If the data changes and you want the table and its downstream modules to be run, just update your `SmvHiveTable's` version.
 
 # JDBC Inputs
 
@@ -360,9 +372,11 @@ object FooJdbcTable extends SmvJdbcTable("myTableName")
 
 ## Python
 ```Python
-class FooJdbcTable(SmvJdbcTable):
+class FooJdbcTable(smv.SmvJdbcTable):
   def tableName(self):
     return "myTableName"
 ```
+
+Like `SmvHiveTable`, you will need to update a `SmvJdbcTable's` version to force it and its downstream modules to rerun after the data changes.
 
 *=This feature currently only available in Scala smv-shell

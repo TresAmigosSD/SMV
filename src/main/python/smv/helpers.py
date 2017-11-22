@@ -19,11 +19,13 @@ from pyspark import SparkContext
 from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col, lit
-from utils import smv_copy_array
-from error import SmvRuntimeError
 
 import sys
 import inspect
+
+from smv.utils import smv_copy_array
+from smv.error import SmvRuntimeError
+from smv.utils import is_string
 
 # common converters to pass to _to_seq and _to_list
 def _jcol(c): return c._jc
@@ -333,6 +335,76 @@ class SmvGroupedData(object):
             return DataFrame(self.sgd.smvTimePanelAgg(time_col, start, end, smv_copy_array(self.df._sc, *aggs)), self.df.sql_ctx)
         return __doAgg
 
+    def smvPercentRank(self, value_cols, ignoreNull=True):
+        """Compute the percent rank of a sequence of columns within a group in a given DataFrame.
+
+            Used Spark's `percentRank` window function. The precent rank is defined as
+            `R/(N-1)`, where `R` is the base 0 rank, and `N` is the population size. Under
+            this definition, min value (R=0) has percent rank `0.0`, and max value has percent
+            rank `1.0`.
+
+            For each column for which the percent rank is computed (e.g. "v"), an additional column is
+            added to the output, `v_pctrnk`
+
+            All other columns in the input are untouched and propagated to the output.
+
+            Args:
+                value_cols (list(str)): columns to calculate percentRank on
+                ignoreNull (boolean): if true, null values's percent ranks will be nulls, otherwise,
+                    as Spark sort considers null smaller than any value, nulls percent ranks will be
+                    zeros. Default true.
+
+            Example:
+                >>> df.smvGroupBy('g, 'g2).smvPercentRank(["v1", "v2", "v3"])
+        """
+        return DataFrame(self.sgd.smvPercentRank(smv_copy_array(self.df._sc, *value_cols), ignoreNull), self.df.sql_ctx)
+
+    def smvQuantile(self, value_cols, bin_num, ignoreNull=True):
+        """Compute the quantile bin numbers within a group in a given DataFrame.
+
+            Estimate quantiles and quantile groups given a data with unknown distribution is
+            quite arbitrary. There are multiple 'definitions' used in different softwares. Please refer
+            https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample
+            for details.
+
+            `smvQuantile` calculated from Spark's `percentRank`. The algorithm is equavalent to the
+            one labled as `R-7, Excel, SciPy-(1,1), Maple-6` in above wikipedia page. Please note it
+            is slight different from SAS's default algorithm (labled as SAS-5).
+
+            Returned quantile bin numbers are 1 based. For example when `bin_num=10`, returned values are
+            integers from 1 to 10, inclusively.
+
+            For each column for which the quantile is computed (e.g. "v"), an additional column is added to
+            the output, "v_quantile".
+
+            All other columns in the input are untouched and propagated to the output.
+
+            Args:
+                value_cols (list(str)): columns to calculate quantiles on
+                bin_num (int): number of quantiles, e.g. 4 for quartile, 10 for decile
+                ignoreNull (boolean): if true, null values's percent ranks will be nulls, otherwise,
+                    as Spark sort considers null smaller than any value, nulls percent ranks will be
+                    zeros. Default true.
+
+            Example:
+                >>> df.smvGroupBy('g, 'g2).smvQuantile(["v"], 100)
+        """
+        return DataFrame(self.sgd.smvQuantile(smv_copy_array(self.df._sc, *value_cols), bin_num, ignoreNull), self.df.sql_ctx)
+
+    def smvDecile(self, value_cols, ignoreNull=True):
+        """Compute deciles of some columns on a grouped data
+
+            Simply an alias to `smvQuantile(value_cols, 10, ignoreNull)`
+
+            Args:
+                value_cols (list(str)): columns to calculate deciles on
+                ignoreNull (boolean): if true, null values's percent ranks will be nulls, otherwise,
+                    as Spark sort considers null smaller than any value, nulls percent ranks will be
+                    zeros. Default true.
+        """
+        return self.smvQuantile(value_cols, 10, ignoreNull)
+
+
 class SmvMultiJoin(object):
     """Wrapper around Scala's SmvMultiJoin"""
     def __init__(self, sqlContext, mj):
@@ -377,7 +449,8 @@ def _getUnboundMethod(helperCls, methodName):
     return method
 
 def _helpCls(receiverCls, helperCls):
-    for name, method in inspect.getmembers(helperCls, predicate=inspect.ismethod):
+    iscallable = lambda f: hasattr(f, "__call__")
+    for name, method in inspect.getmembers(helperCls, predicate=iscallable):
         # ignore special and private methods
         if not name.startswith("_"):
             newMethod = _getUnboundMethod(helperCls, name)
@@ -432,9 +505,9 @@ class DataFrameHelper(object):
                 (SmvGroupedData): grouped data object
 
         """
-        if (isinstance(cols[0], Column)):
+        if isinstance(cols[0], Column):
             keys = [ColumnHelper(c).smvGetColName() for c in cols]
-        elif (isinstance(cols[0], basestring)):
+        elif is_string(cols[0]):
             keys = list(cols)
         else:
             raise SmvRuntimeError("smvGroupBy does not support type: " + type(cols[0]))
@@ -458,9 +531,9 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): sampled DF
         """
-        if (isinstance(key, basestring)):
+        if is_string(key):
             jkey = col(key)._jc
-        elif (isinstance(key, Column)):
+        elif isinstance(key, Column):
             jkey = key._jc
         else:
             raise RuntimeError("key parameter must be either a String or a Column")
@@ -532,7 +605,7 @@ class DataFrameHelper(object):
                 (list(object)): most frequent values (type depends on schema)
         """
         topNdf = DataFrame(self._jDfHelper._topNValsByFreq(n, col._jc), self._sql_ctx)
-        return map(lambda r: r.asDict().values()[0], topNdf.collect())
+        return [list(r)[0] for r in topNdf.collect()]
 
     def smvSkewJoinByKey(self, other, joinType, skewVals, key):
         """Join that leverages broadcast (map-side) join of rows with skewed (high-frequency) values
@@ -1059,7 +1132,7 @@ class DataFrameHelper(object):
         self._println(self._smvFreqHist(*cols))
 
     def _smvCountHist(self, keys, binSize):
-        if isinstance(keys, basestring):
+        if is_string(keys):
             res = self._jDfHelper._smvCountHist(_to_seq([keys]), binSize)
         else:
             res = self._jDfHelper._smvCountHist(_to_seq(keys), binSize)
@@ -1158,8 +1231,6 @@ class DataFrameHelper(object):
                 (None)
         """
         self._println(self._jDfHelper._smvDumpDF())
-
-_helpCls(DataFrame, DataFrameHelper)
 
 class ColumnHelper(object):
     def __init__(self, col):
@@ -1497,4 +1568,7 @@ class ColumnHelper(object):
         jc = self._jColumnHelper.smvTimeToTimestamp()
         return Column(jc)
 
-_helpCls(Column, ColumnHelper)
+# Initialize DataFrame and Column with helper methods. Called by SmvApp.
+def init_helpers():
+    _helpCls(Column, ColumnHelper)
+    _helpCls(DataFrame, DataFrameHelper)

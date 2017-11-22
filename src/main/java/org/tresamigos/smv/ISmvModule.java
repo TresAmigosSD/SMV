@@ -23,7 +23,9 @@ import org.tresamigos.smv.dqm.DQMValidator;
 /**
  * Methods that can be implemented by a remote object, such as a
  * Python class, to allow modules written in different languages to
- * work together in an SMV application.
+ * work together in an SMV application. If you add a method here with
+ * a Python implementation *make sure* to use the @with_stacktrace
+ * decorator to ensure that errors that occur in callbacks don't get eaten.
  */
 public interface ISmvModule {
 	/**
@@ -32,26 +34,26 @@ public interface ISmvModule {
 	 * Input datasets and simple filter and map modules typically don't
 	 * need to be persisted.
 	 */
-	boolean isEphemeral();
+	IPythonResponsePy4J<Boolean> getIsEphemeral();
 
   /**
    * override sql query to use when publishing to a hive table.
    */
-  String publishHiveSql();
+  IPythonResponsePy4J<String> getPublishHiveSql();
 
   /** DataSet type: could be 3 values, Input, Link, Module */
-	String dsType();
+	IPythonResponsePy4J<String> getDsType();
 
-	boolean isOutput();
+	IPythonResponsePy4J<Boolean> getIsOutput();
 
-	String tableName();
+	IPythonResponsePy4J<String> getTableName();
 
-	String fqn();
+	IPythonResponsePy4J<String> getFqn();
 
 	/**
 	 * The attached DQM policy + any type specific policies.
 	 */
-	SmvDQM dqmWithTypeSpecificPolicy();
+	IPythonResponsePy4J<SmvDQM> getDqmWithTypeSpecificPolicy();
 
 	/**
 	 * Dependent module fqns or an empty array.
@@ -59,22 +61,37 @@ public interface ISmvModule {
 	 * Python implementation of this method needs to return a Java array
 	 * using the accompanying smv_copy_array() method.
 	 */
-	String[] dependencies();
+	IPythonResponsePy4J<String[]> getDependencyUrns();
 
 	/**
 	 * Try to run the module by its fully-qualified name and return its
 	 * result in a DataFrame.
 	 */
-	DataFrame getDataFrame(DQMValidator validator,  Map<String, DataFrame> known);
+	IPythonResponsePy4J<DataFrame> getDoRun(DQMValidator validator,  Map<String, DataFrame> known);
 
 	/**
 	 * Hash computed based on the source code of the dataset's class
 	 */
-	int sourceCodeHash();
+	IPythonResponsePy4J<Integer> getSourceCodeHash();
 
 	/**
 	 * Hash computed based on instance values of the dataset, such as the timestamp
 	 * of an input file
 	 */
-	int instanceValHash();
+	IPythonResponsePy4J<Integer> getInstanceValHash();
+
+	/**
+	 * User metadata serialized as JSON
+	 */
+	IPythonResponsePy4J<String> getMetadataJson(DataFrame df);
+
+	/**
+	 * Validate metadata given serialized as json
+	 */
+	IPythonResponsePy4J<String> getValidateMetadataJson(String currentMetaJson, String[] historyMetaJson);
+
+	/**
+	 * Maximum of the metadata history
+	 */
+	IPythonResponsePy4J<Integer> getMetadataHistorySize();
 }

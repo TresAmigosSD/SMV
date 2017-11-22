@@ -34,7 +34,7 @@ test7 \
 
 NEW_MODULE_STAGES="$NEW_PYTHON_MODULE_STAGES $NEW_SCALA_MODULE_STAGES"
 
-HASH_TEST_MOD="org.tresamigos.smvtest.hashtest.modules.M"
+HASH_TEST_MOD="integration.test.hashtest.modules.M"
 
 echo "--------- GENERATE INTEGRATION APP -------------"
 ../../tools/smv-init -test ${I_APP_NAME}
@@ -54,16 +54,20 @@ echo "--------- RUN INTEGRATION APP -------------"
 echo "--------- CHECK INTEGRATION APP OUTPUT -------------"
 for stage in $NEW_SCALA_MODULE_STAGES; do
   TEST_INPUT=$(< data/input/$stage/table.csv)
-  TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.M2_*.csv/part*)
+  TEST_OUTPUT=$(cat data/output/integration.test.$stage.M2_*.csv/part*)
   if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
     echo "Test failure: $stage"
+    echo "Expected output:"
+    echo $TEST_INPUT
+    echo "Got:"
+    echo $TEST_OUTPUT
     exit 1
   fi
 done
 
 for stage in $NEW_PYTHON_MODULE_STAGES; do
   TEST_INPUT=$(< data/input/$stage/table.csv)
-  TEST_OUTPUT=$(cat data/output/org.tresamigos.smvtest.$stage.modules.M2_*.csv/part*)
+  TEST_OUTPUT=$(cat data/output/integration.test.$stage.modules.M2_*.csv/part*)
   if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
     echo "Test failure: $stage"
     echo "Expected output:"
@@ -122,11 +126,20 @@ echo "--------- RUN MODULE WITH UPDATED CSV -------------"
 
 echo "--------- VERIFY HASH CHANGED -------------"
 verify_hash_changed 2
+
+echo "--------- CHANGE INPUT SCHEMA -------------"
+sed -i"" -e "s/String/Integer/" data/input/hashtest/table.schema
+
+echo "--------- RUN MODULE WITH UPDATED SCHEMA -------------"
+../../../tools/smv-pyrun -m hashtest.modules.M
+
+echo "--------- VERIFY HASH CHANGED -------------"
+verify_hash_changed 3
 )
 
 
-echo "--------- GENERATE ENTERPRISE APP APP -------------"
-smv-init -e $E_APP_NAME
+echo "--------- GENERATE ENTERPRISE APP -------------"
+../../tools/smv-init -e $E_APP_NAME
 
 (
 cd $E_APP_NAME
@@ -135,7 +148,7 @@ echo "--------- RUN ENTERPRISE APP -------------"
 )
 
 echo "--------- GENERATE SIMPLE APP -------------"
-smv-init -s $S_APP_NAME
+../../tools/smv-init -s $S_APP_NAME
 
 (
 cd $S_APP_NAME

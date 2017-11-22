@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import scala.util.Try
+
 import classloaders.SmvClassLoader
 
 /**
@@ -21,7 +23,7 @@ import classloaders.SmvClassLoader
  * in a given language. A new repo is created for each new transaction.
  */
 abstract class DataSetRepo {
-  def loadDataSet(urn: ModURN): SmvDataSet
+  def loadDataSet(urn: ModURN): Option[SmvDataSet]
   def urnsForStage(stageName: String): Seq[URN]
 }
 
@@ -31,14 +33,14 @@ abstract class DataSetRepoFactory {
 
 class DataSetRepoScala(smvConfig: SmvConfig) extends DataSetRepo {
   val cl = SmvClassLoader(smvConfig, getClass.getClassLoader)
-  def loadDataSet(urn: ModURN): SmvDataSet =
-    (new SmvReflection(cl)).objectNameToInstance[SmvDataSet](urn.fqn)
+  def loadDataSet(urn: ModURN): Option[SmvDataSet] =
+    Try {
+      new SmvReflection(cl).objectNameToInstance[SmvDataSet](urn.fqn)
+    }.toOption
 
   def urnsForStage(stageName: String): Seq[URN] = {
     val packages = Seq(stageName, stageName + ".input")
-    val allDatasets = packages.flatMap { p =>
-      SmvReflection.objectsInPackage[SmvDataSet](p)
-    }
+    val allDatasets = packages.flatMap {SmvReflection.objectsInPackage[SmvDataSet]}
     allDatasets.map(_.urn).filterNot(_.isInstanceOf[LinkURN])
   }
 }
@@ -47,15 +49,23 @@ class DataSetRepoFactoryScala(smvConfig: SmvConfig) extends DataSetRepoFactory {
   def createRepo(): DataSetRepoScala = new DataSetRepoScala(smvConfig)
 }
 
-class DataSetRepoPython(iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo {
-  def loadDataSet(urn: ModURN): SmvDataSet =
-    SmvExtModulePython(iDSRepo.loadDataSet(urn.fqn))
-  def urnsForStage(stageName: String): Seq[URN] =
-    iDSRepo.dataSetsForStage(stageName) map (URN(_))
+class DataSetRepoPython(iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo with python.InterfacesWithPy4J {
+  def loadDataSet(urn: ModURN): Option[SmvDataSet] = {
+    val py4jResponse = iDSRepo.getLoadDataSet(urn.fqn)
+    val moduleResult = getPy4JResult(py4jResponse)
+    Option(moduleResult) map {SmvExtModulePython(_)}
+  }
+  def urnsForStage(stageName: String): Seq[URN] = {
+    val py4jResponse = iDSRepo.getDataSetsForStage(stageName)
+    val urnResultAsStrings = getPy4JResult(py4jResponse)
+    urnResultAsStrings map (URN(_))
+  }
 }
 
 class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J, smvConfig: SmvConfig)
-    extends DataSetRepoFactory {
-  def createRepo(): DataSetRepoPython =
-    new DataSetRepoPython(iDSRepoFactory.createRepo(), smvConfig)
+    extends DataSetRepoFactory with python.InterfacesWithPy4J {
+  def createRepo(): DataSetRepoPython = {
+    val iDsRepo = getPy4JResult(iDSRepoFactory.getCreateRepo)
+    new DataSetRepoPython(iDsRepo, smvConfig)
+  }
 }

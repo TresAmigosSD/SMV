@@ -1,8 +1,8 @@
-from smv import *
+import smv
 
-from org.tresamigos.smvtest.test4 import input
+from integration.test.test4 import input
 
-class M2(SmvModule, SmvOutput):
+class M2(smv.SmvModule, smv.SmvOutput):
     def requiresDS(self):
         return [input.M1Link]
 

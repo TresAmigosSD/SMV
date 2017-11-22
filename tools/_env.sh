@@ -19,8 +19,15 @@ function split_smv_spark_args()
             shift
             break
         fi
-        SMV_ARGS=("${SMV_ARGS[@]}" "$1")
-        shift
+
+        if [ "$1" == "--spark-home" ]; then
+          shift
+          SPARK_HOME_OPT="$1"
+          shift
+        else
+          SMV_ARGS=("${SMV_ARGS[@]}" "$1")
+          shift
+        fi
     done
 
     # Need to extract the --jars option so we can concatenate those jars with
@@ -75,14 +82,54 @@ function find_fat_jar()
 }
 
 function set_spark_home() {
-    if [ -z "$SPARK_HOME" ]; then
-        sparkSubmit=$(type -p spark-submit)
-        if [ -z "$sparkSubmit" ]; then
-            echo "Can not find spark-submit script"
-            exit 1
-        fi
-        export SPARK_HOME=$(cd $(dirname $sparkSubmit)/..; pwd)
+    if [ -n "$SPARK_HOME_OPT" ]; then
+      SPARK_HOME="$SPARK_HOME_OPT"
+    elif [ -z "$SPARK_HOME" ]; then
+      sparkSubmit=$(type -p spark-submit)
+      if [ -z "$sparkSubmit" ]; then
+          echo "Can not find spark-submit script"
+          exit 1
+      fi
+      SPARK_HOME=$(cd $(dirname $sparkSubmit)/..; pwd)
     fi
+
+    export SPARK_HOME
+    echo "Using Spark at $SPARK_HOME"
+}
+
+# Remove trailing alphanum characters in dot-separated version text.
+function sanitize_version () {
+  # match a digit, followed by a letter, "+" or "_," and anything up to a "."
+  # keep just the digit -- essentially removing any trailing alphanum between dots
+  echo $(sed -E 's/([0-9])[_+a-zA-Z][^.]*/\1/g' <<< "$1")
+}
+
+# Compares the two versions (required, found) after sanitizing using
+# the function above. Versions are dot-separated text. The major and
+# minor parts must match exactly with required, and the patch part in
+# the found version must be no less than required.
+#
+# echoes 0 if the found version meets the criteria
+#        1 otherwise
+function accept_version () {
+  local sane=$(sanitize_version $2)
+  local IFS=.
+  local required=($1) found=($sane)
+  if [[ ${required[0]} == ${found[0]} ]] && [[ ${required[1]} == ${found[1]} ]] && ! (( ${found[2]} < ${required[2]} )); then
+    echo 0
+  else
+    echo 1
+  fi
+}
+
+function verify_spark_version() {
+  local installed_version=$(${SPARK_HOME}/bin/spark-submit --version 2>&1 | grep version | head -1 | sed -e 's/.*version //')
+  local required_version=$(cat "$SMV_TOOLS/../.spark_version")
+  local vercmp=$(accept_version "$required_version" "$installed_version")
+  if [[ $vercmp != "0" ]]; then
+    echo "Spark $installed_version detected. Please install Spark $required_version."
+    exit 1
+  fi
 }
 
 function show_run_usage_message() {
@@ -112,7 +159,7 @@ function check_help_option() {
 function print_help() {
   # Find but don't print the app jar
   find_fat_jar > /dev/null
-  spark-submit --class ${SMV_APP_CLASS}  "${APP_JAR}" --help
+  "$SPARK_HOME/bin/spark-submit" --class ${SMV_APP_CLASS}  "${APP_JAR}" --help
 }
 
 # --- MAIN ---
@@ -120,5 +167,7 @@ declare -a SMV_ARGS SPARK_ARGS
 USER_CMD=`basename $0`
 SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
 split_smv_spark_args "$@"
+set_spark_home
+verify_spark_version
 check_help_option
 find_fat_jar

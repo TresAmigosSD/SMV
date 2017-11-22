@@ -12,10 +12,14 @@
 # limitations under the License.
 """Helper functions available in SMV's Python shell
 """
+import sys
+
 from smv import SmvApp
 from pyspark.sql import DataFrame
 
 from smv import CsvAttributes
+from test_support.test_runner import SmvTestRunner
+from test_support.testconfig import TestConfig
 
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
@@ -24,7 +28,7 @@ def df(name, forceRun = False, version = None):
     """The DataFrame result of running the named module
 
         Args:
-            name (str): The name of a module. Does not have to be the FQN.
+            name (str): The unique name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
             version (str): The name of the published version to load from
 
@@ -32,6 +36,32 @@ def df(name, forceRun = False, version = None):
             (DataFrame): The result of running the named module.
     """
     return SmvApp.getInstance().runModuleByName(name, forceRun, version)
+
+def dshash(name):
+    """The current hashOfHash for the named module as a hex string
+
+        Args:
+            name (str): The uniquen name of a module. Does not have to be the FQN.
+
+        Returns:
+            (int): The hashOfHash of the named module
+    """
+    return SmvApp.getInstance().getDsHash(name)
+
+def getModel(name, forceRun = False, version = None):
+    """Get the result of running the named SmvModel module
+
+        Args:
+            name (str): The name of a module. Does not have to be the FQN.
+            forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
+            version (str): The name of the published version to load from
+
+        Returns:
+            (object): The result of running the named module
+    """
+    app = SmvApp.getInstance()
+    urn = app.inferUrn(name)
+    return app.getModuleResult(urn, forceRun, version)
 
 def openHive(tableName):
     """Read in a Hive table as a DataFrame
@@ -70,7 +100,7 @@ def help():
     import re
     strip_margin = lambda text: re.sub('\n[ \t]*\|', '\n', text)
 
-    print strip_margin(
+    help_msg = strip_margin(
      """Here is a list of SMV-shell command
        |
        |Please refer to the API doc for details:
@@ -83,14 +113,17 @@ def help():
        |  * lsDead(stageName)
        |  * lsDeadLeaf()
        |  * lsDeadLeaf(stageName)
+       |  * exportToHive(datasetName)
        |  * graph()
        |  * graph(stageName)
        |  * ancestors(datasetName)
        |  * descendants(datasetName)
        |  * now()
-       |  * discoverSchema(filePath)
+       |  * smvDiscoverSchemaToFile(filePath)
        """
-   )
+    )
+
+    print(help_msg)
 
 def lsStage():
     """List all the stages
@@ -136,6 +169,14 @@ def lsDeadLeaf(stageName = None):
     else:
         print(_jvmShellCmd().lsDeadLeaf(stageName))
 
+def exportToHive(dsname):
+    """Export dataset's running result to a Hive table
+
+        Args:
+            dsname (str): The name of an SmvDataSet
+    """
+    print(_jvmShellCmd().exportToHive(dsname))
+
 def ancestors(dsname):
     """List all ancestors of a dataset
 
@@ -179,14 +220,77 @@ def now():
     """
     print(_jvmShellCmd().now())
 
-def discoverSchema(path, n=100000, ca=None):
+def smvDiscoverSchemaToFile(path, n=100000, ca=None):
     """Try best to discover Schema from raw Csv file
 
         Will save a schema file with postfix ".toBeReviewed" in local directory.
 
         Args:
-            path (str): Path to te CSV file
+            path (str): Path to the CSV file
             n (int): Number of records to check for schema discovery, default 100k
             ca (CsvAttributes): Defaults to CsvWithHeader
     """
-    SmvApp.getInstance()._jvm.SmvPythonHelper.discoverSchema(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
+    SmvApp.getInstance()._jvm.SmvPythonHelper.smvDiscoverSchemaToFile(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
+
+def edd(ds_name):
+    """Print edd report for the result of an SmvDataSet
+
+        Args:
+            ds_name (str): name of an SmvDataSet
+    """
+    report = _jvmShellCmd()._edd(ds_name)
+    print(report)
+
+def run_test(test_name):
+    """Run a test with the given name without creating new Spark context
+
+        First reloads SMV and the test from source, then runs the test.
+
+        Args:
+            test_name (str): Name of the test to run
+    """
+    # Ensure TestConfig has a canonical SmvApp (this will eventually be used
+    # to restore the singleton SmvApp)
+    TestConfig.setSmvApp(SmvApp.getInstance())
+
+    first_dot = test_name.find(".")
+    if first_dot == -1:
+        test_root_name = test_name
+    else:
+        test_root_name = test_name[:first_dot]
+
+    _clear_from_sys_modules(["smv", test_root_name])
+
+    SmvTestRunner("src/test/python").run([test_name])
+
+def _clear_from_sys_modules(names_to_clear):
+    """Clear smv and the given names from sys.modules (don't clear this module)
+    """
+    for name in sys.modules.keys():
+        for ntc in names_to_clear:
+            if name != "smv.smvshell" and (name.startswith(ntc + ".") or name == ntc):
+                sys.modules.pop(name)
+                break
+
+__all__ = [
+    'df',
+    'dshash',
+    'getModel',
+    'openHive',
+    'openCsv',
+    'smvExportCsv',
+    'help',
+    'lsStage',
+    'ls',
+    'lsDead',
+    'lsDeadLeaf',
+    'exportToHive',
+    'ancestors',
+    'descendants',
+    'graph',
+    'graphStage',
+    'now',
+    'smvDiscoverSchemaToFile',
+    'edd',
+    'run_test'
+]

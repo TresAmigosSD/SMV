@@ -1,8 +1,8 @@
-from smv import *
+import smv
 
-from org.tresamigos.smvtest.hashtest import input
+from integration.test.hashtest import input
 
-class M(SmvModule, SmvOutput):
+class M(smv.SmvModule, smv.SmvOutput):
     def requiresDS(self):
         return [input.table1]
 

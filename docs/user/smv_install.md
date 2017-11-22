@@ -20,7 +20,7 @@ $ java -version
 ```
 
 # Install Python
-SMV works best with python v2.7.x.  To verify the current version of python, run the following:
+SMV works best with Python >= v2.7.x.  To verify the current version of python, run the following:
 ```
 $ python --version
 ```
@@ -42,6 +42,7 @@ $ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.6.2.1/tools/smv-ins
 ```bash
 $ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.6.2.1/tools/smv-install | bash -s -- -spark
 ```
+If curl/wget method doesn't work, we can use "sbt assembly" to build SMV by ourselves.
 
 ## Updating paths.
 The install script above will automatically update the user `.profile`, `.bash_profile`, or `.bashrc` files.  For the paths to take effect, user should log out, then log back in to update the paths in the shell.

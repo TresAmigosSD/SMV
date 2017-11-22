@@ -30,7 +30,7 @@ class SmvQuantileTest extends SmvTestUtil {
       "g:String; g2:Integer; k:String; junk:String; v:Integer",
       testData_1to20_str + """;G2,0,x,J,10;G2,0,y,JJ,30""" + ";g3,0,w1,j,1;g3,0,w2,j,1;g3,0,w3,j,3")
 
-    val res = df.smvGroupBy("g", "g2").smvDecile("v")
+    val res = df.smvGroupBy("g", "g2").smvDecile(Seq("v"))
 
     val keyAndBin =
       res.select("k", "v_quantile").collect.map { case Row(k: String, b: Int) => (k, b) }
@@ -63,5 +63,50 @@ class SmvQuantileTest extends SmvTestUtil {
     )
 
     assertUnorderedSeqEqual(keyAndBin, expKeyAndBin)
+  }
+
+  test("test smvPercentRank") {
+    val df = dfFrom("id:String;v:Integer","a,1;a,;a,4;a,1;a,1;a,2;a,;a,5")
+    val res = df.smvGroupBy("id").smvPercentRank(Seq("v"))
+
+    assertSrddSchemaEqual(res, "id: String;v: Integer;v_pctrnk: Double")
+    assertSrddDataEqual(res, """a,null,null;
+                                a,null,null;
+                                a,1,0.0;
+                                a,1,0.0;
+                                a,1,0.0;
+                                a,2,0.6;
+                                a,4,0.7999999999999999;
+                                a,5,1.0""")
+  }
+
+  test("test smvQuantile with ignoreNull is false") {
+    val df = dfFrom("id:String;v:Integer","a,1;a,;a,4;a,1;a,1;a,2;a,;a,5")
+    val res = df.smvGroupBy("id").smvQuantile(Seq("v"), 4, ignoreNull=false)
+
+    assertSrddSchemaEqual(res, "id: String;v: Integer;v_quantile: Integer")
+    assertSrddDataEqual(res, """a,null,1;
+                               a,null,1;
+                               a,1,2;
+                               a,1,2;
+                               a,1,2;
+                               a,2,3;
+                               a,4,4;
+                               a,5,4""")
+  }
+
+  test("test smvQuantile with multiple vars") {
+    val df = dfFrom("id:String;v1:Integer;v2:Double","a,1,1.0;a,,2.0;a,4,;a,1,1.1;a,1,2.3;a,2,5.0;a,,3.1;a,5,1.2")
+    val res = df.smvGroupBy("id").smvQuantile(Seq("v1", "v2"), 4)
+
+    assertSrddSchemaEqual(res, "id: String;v1: Integer;v2: Double;v1_quantile: Integer;v2_quantile: Integer")
+    assertSrddDataEqual(res, """a,null,2.0,null,3;
+                                a,null,3.1,null,4;
+                                a,1,1.0,1,1;
+                                a,1,1.1,1,1;
+                                a,1,2.3,1,3;
+                                a,2,5.0,3,4;
+                                a,4,null,4,null;
+                                a,5,1.2,4,2""")
   }
 }

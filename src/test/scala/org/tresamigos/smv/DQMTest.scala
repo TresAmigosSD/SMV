@@ -81,12 +81,12 @@ class DQMTest extends SmvTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("a:Integer;b:Double", "1,0.3;0,0.2")
 
-    val dqm = new DQMValidator(SmvDQM().add(DQMRule($"a" <= 0, "a_le_0", FailAny)))
+    val dqm = new DQMValidator(SmvDQM().add(DQMRule($"a" <= 0, "a_le_0", FailAny)), false)
 
     val res = dqm.attachTasks(df)
     assert(res.count === 1)
 
-    val dqmRes = dqm.validate(res)
+    val dqmRes = dqm.applyPolicies(res)
     assert(dqmRes.toJSON() === """{
   "passed":false,
   "errorMessages": [
@@ -106,12 +106,13 @@ class DQMTest extends SmvTestUtil {
     val dqm = new DQMValidator(
       SmvDQM()
         .add(DQMRule($"b" < 0.4, "b_lt_03", FailPercent(0.5)))
-        .add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix", FailPercent(0.3))))
+        .add(DQMFix($"a" < 1, lit(1) as "a", "a_lt_1_fix", FailPercent(0.3))),
+      false)
 
     val res = dqm.attachTasks(df)
     assertSrddDataEqual(res, "1,0.3;1,0.2")
 
-    val dqmRes = dqm.validate(res)
+    val dqmRes = dqm.applyPolicies(res)
     assert(dqmRes.toJSON() === """{
   "passed":false,
   "errorMessages": [
@@ -137,7 +138,8 @@ class DQMTest extends SmvTestUtil {
         .add(FailTotalRuleCountPolicy(2))
         .add(FailTotalFixCountPolicy(1))
         .add(FailTotalRulePercentPolicy(0.3))
-        .add(FailTotalFixPercentPolicy(0.3)))
+        .add(FailTotalFixPercentPolicy(0.3)),
+      false)
 
     val res = dqm.attachTasks(df)
 
@@ -145,7 +147,7 @@ class DQMTest extends SmvTestUtil {
     //res.foreach(r => Unit)
     res.rdd.count
 
-    val dqmRes = dqm.validate(res)
+    val dqmRes = dqm.applyPolicies(res)
     assertUnorderedSeqEqual(
       dqmRes.errorMessages,
       Seq(

@@ -1,9 +1,9 @@
-from smv import *
+import smv
 
-class table1(SmvCsvFile):
+class table1(smv.SmvCsvFile):
     def path(self):
-        return "input/hashtest/table.csv"
+        return "hashtest/table.csv"
 
-class table2(SmvCsvFile):
+class table2(smv.SmvCsvFile):
     def path(self):
-        return "input/hashtest/table.csv"
+        return "hashtest/table.csv"

@@ -14,8 +14,14 @@ For each assigned task, a new branch must be created and a Pull Request (PR) cre
   * `i705_fix_issue_with_datasetmgr_leaking_memory_when_called_twice_after_init` : waaaaay too long of a name.
   * `jdbc_connect` or `jdbc_connect_#105` : does not follow the format above.
 
+### Commits
+Commit messages must be of the form "#xxx: description" where `xxx` is the issue number on github.
+
+### Pull Requests
+Once development is complete on a branch, developers need to request a Pull Request (PR) on github.  The PR description should include the issue(s) numbers in the descriptions in the form "#xxx" so that the PR is linked to the issue(s).
+
 ### Merge vs Rebase
-Users should use `rebase` when merging changes from master into their local branch.  However, this should only be done on none-shared branches.  When multiple users are developing on a branch, merge strategy should be used.
+Users should use `rebase` when merging changes from master into their local branch.  However, this should only be done on none-shared branches.  When multiple users are developing on a branch, merge strategy should be used.  If the concept of merge vs rebase sounds foreign, just use the default merge strategy as it is safer.
 
 ## 2. Code Style
 ### Readability

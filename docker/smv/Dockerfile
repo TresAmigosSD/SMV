@@ -13,6 +13,7 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/
     apt-get install -y vim &&\
     apt-get install -y rsync &&\
     apt-get install -y git &&\
+    apt-get install -y bc &&\
     apt-get install -y python "python-dev" "python-pip" &&\
     apt-get install -y graphviz
 
@@ -30,16 +31,15 @@ RUN cd /projects &&\
 
 # install smv and spark and move them into /usr/lib dir.
 RUN cd /projects &&\
-    wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/master/tools/smv-install | bash -s -- -spark 1.6.2.1 &&\
+    wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.5.2.15/tools/smv-install | bash -s -- -spark &&\
     mkdir -p /usr/lib &&\
     mv SMV_* /usr/lib/SMV &&\
     mv spark-* /usr/lib/spark
 
 # installs python packages.
-# TODO: use requirements.txt from image downloaded above once 1.6.2.1 is out.
-COPY ./requirements.txt /tmp/requirements.txt
+# TODO: use requirements.txt from image downloaded above once 1.5.2.15 is out.
 RUN pip install --upgrade pip
-RUN pip install -r /tmp/requirements.txt
+RUN pip install -r /usr/lib/SMV/docker/smv/requirements.txt
 
 # cleanup python dev tools and apt caches.
 RUN apt-get remove --purge -y python-dev &&\

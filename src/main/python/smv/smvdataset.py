@@ -18,24 +18,23 @@ from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
-from utils import smv_copy_array
 
 import abc
-
 import inspect
 import sys
 import traceback
+import binascii
+import json
 
-from dqm import SmvDQM
-from error import SmvRuntimeError
+from smv.dqm import SmvDQM
+from smv.error import SmvRuntimeError
+from smv.utils import smv_copy_array, pickle_lib, is_string
+from smv.py4j_interface import create_py4j_interface_method
 
-if sys.version >= '3':
-    basestring = unicode = str
-    long = int
-    from io import StringIO
-    from importlib import reload
+if sys.version_info >= (3, 4):
+    ABC = abc.ABC
 else:
-    from cStringIO import StringIO
+    ABC = abc.ABCMeta('ABC', (), {})
 
 def _disassemble(obj):
     """Disassembles a module and returns bytecode as a string.
@@ -61,7 +60,7 @@ def _smvhash(text):
     use to calculate sourceCodeHash.
     """
     import binascii
-    return binascii.crc32(text)
+    return binascii.crc32(text.encode())
 
 def _stripComments(code):
     import re
@@ -85,7 +84,9 @@ class SmvOutput(object):
         """
         return None
 
-class SmvDataSet(object):
+    getTableName = create_py4j_interface_method("getTableName", "tableName")
+
+class SmvDataSet(ABC):
     """Abstract base class for all SmvDataSets
     """
 
@@ -96,14 +97,13 @@ class SmvDataSet(object):
     # typcheck in the Smv hierarchies themselves.
     IsSmvDataSet = True
 
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, smvApp):
         self.smvApp = smvApp
 
     def description(self):
         return self.__doc__
 
+    # this doesn't need stack trace protection
     @abc.abstractmethod
     def requiresDS(self):
         """User-specified list of dependencies
@@ -114,6 +114,7 @@ class SmvDataSet(object):
                 (list(SmvDataSet)): a list of dependencies
         """
 
+    # this doesn't need stacktrace protection
     def dqm(self):
         """DQM policy
 
@@ -127,7 +128,13 @@ class SmvDataSet(object):
 
     @abc.abstractmethod
     def doRun(self, validator, known):
-        """Comput this dataset, and return the dataframe"""
+        """Compute this dataset, and return the dataframe"""
+
+    getDoRun = create_py4j_interface_method("getDoRun", "doRun")
+
+    def assert_result_is_dataframe(self, result):
+        if not isinstance(result, DataFrame):
+            raise SmvRuntimeError(self.fqn() + " produced " + type(result).__name__ + " in place of a DataFrame")
 
     def version(self):
         """Version number
@@ -143,55 +150,59 @@ class SmvDataSet(object):
     def isOutput(self):
         return isinstance(self, SmvOutput)
 
+    getIsOutput = create_py4j_interface_method("getIsOutput", "isOutput")
+
     # Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash
     # to compute datasetHash
     def sourceCodeHash(self):
         """Hash computed based on the source code of the dataset's class
         """
+        cls = self.__class__
         try:
-            cls = self.__class__
-            try:
-                src = inspect.getsource(cls)
-                src_no_comm = _stripComments(src)
-                # DO NOT use the compiled byte code for the hash computation as
-                # it doesn't change when constant values are changed.  For example,
-                # "a = 5" and "a = 6" compile to same byte code.
-                # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
-                res = _smvhash(src_no_comm)
-            except Exception as err: # `inspect` will raise error for classes defined in the REPL
-                # Instead of handle the case that module defined in REPL, just raise Exception here
-                # res = _smvhash(_disassemble(cls))
-                traceback.print_exc()
-                message = "{0}({1!r})".format(type(err).__name__, err.args)
-                raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
-
-            # include sourceCodeHash of parent classes
-            for m in inspect.getmro(cls):
-                try:
-                    if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
-                        res += m(self.smvApp).sourceCodeHash()
-                except: pass
-
-            # if module inherits from SmvRunConfig, then add hash of all config values to module hash
-            if hasattr(self, "_smvGetRunConfigHash"):
-                res += self._smvGetRunConfigHash()
-
-            # ensure python's numeric type can fit in a java.lang.Integer
-            return res & 0x7fffffff
-        except BaseException as e:
+            src = inspect.getsource(cls)
+            src_no_comm = _stripComments(src)
+            # DO NOT use the compiled byte code for the hash computation as
+            # it doesn't change when constant values are changed.  For example,
+            # "a = 5" and "a = 6" compile to same byte code.
+            # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
+            res = _smvhash(src_no_comm)
+        except Exception as err: # `inspect` will raise error for classes defined in the REPL
+            # Instead of handle the case that module defined in REPL, just raise Exception here
+            # res = _smvhash(_disassemble(cls))
             traceback.print_exc()
-            raise e
+            message = "{0}({1!r})".format(type(err).__name__, err.args)
+            raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
+
+        # include sourceCodeHash of parent classes
+        for m in inspect.getmro(cls):
+            try:
+                if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
+                    res += m(self.smvApp).sourceCodeHash()
+            except: pass
+
+        # if module inherits from SmvRunConfig, then add hash of all config values to module hash
+        if hasattr(self, "_smvGetRunConfigHash"):
+            res += self._smvGetRunConfigHash()
+
+        # ensure python's numeric type can fit in a java.lang.Integer
+        return res & 0x7fffffff
+
+    getSourceCodeHash = create_py4j_interface_method("getSourceCodeHash", "sourceCodeHash")
 
     def instanceValHash(self):
         """Hash computed based on instance values of the dataset, such as the timestamp of an input file
         """
         return 0
 
+    getInstanceValHash = create_py4j_interface_method("getInstanceValHash", "instanceValHash")
+
     @classmethod
     def fqn(cls):
         """Returns the fully qualified name
         """
         return cls.__module__ + "." + cls.__name__
+
+    getFqn = create_py4j_interface_method("getFqn", "fqn")
 
     @classmethod
     def urn(cls):
@@ -204,6 +215,8 @@ class SmvDataSet(object):
                 (bool): True if this SmvDataSet should not persist its data, false otherwise
         """
         return False
+
+    getIsEphemeral = create_py4j_interface_method("getIsEphemeral", "isEphemeral")
 
     def publishHiveSql(self):
         """An optional sql query to run to publish the results of this module when the
@@ -221,55 +234,106 @@ class SmvDataSet(object):
         """
         return None
 
+    getPublishHiveSql = create_py4j_interface_method("getPublishHiveSql", "publishHiveSql")
+
     @abc.abstractmethod
     def dsType(self):
         """Return SmvDataSet's type"""
 
-    def dqmWithTypeSpecificPolicy(self):
-        try:
-            res = self.dqm()
-        except BaseException as err:
-            traceback.print_exc()
-            raise err
+    getDsType = create_py4j_interface_method("getDsType", "dsType")
 
-        return res
+    def dqmWithTypeSpecificPolicy(self):
+        return self.dqm()
+
+    getDqmWithTypeSpecificPolicy = create_py4j_interface_method("getDqmWithTypeSpecificPolicy", "dqmWithTypeSpecificPolicy")
 
     def dependencies(self):
-        # Try/except block is a short-term solution (read: hack) to ensure that
-        # the user gets a full stack trace when SmvDataSet user-defined methods
-        # causes errors
-        try:
-            arr = smv_copy_array(self.smvApp.sc, *[x.urn() for x in self.requiresDS()])
-        except BaseException as err:
-            traceback.print_exc()
-            raise err
+        """Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)
+        """
+        return self.requiresDS()
 
-        return arr
+    def dependencyUrns(self):
+        arr = [x.urn() for x in self.dependencies()]
+        return smv_copy_array(self.smvApp.sc, *arr)
 
-    def getDataFrame(self, validator, known):
-        # Try/except block is a short-term solution (read: hack) to ensure that
-        # the user gets a full stack trace when SmvDataSet user-defined methods
-        # causes errors
-        try:
-            df = self.doRun(validator, known)
-            if not isinstance(df, DataFrame):
-                raise SmvRuntimeError(self.fqn() + " produced " + type(df).__name__ + " in place of a DataFrame")
-            else:
-                jdf = df._jdf
-        except BaseException as err:
-            traceback.print_exc()
-            raise err
+    getDependencyUrns = create_py4j_interface_method("getDependencyUrns", "dependencyUrns")
 
-        return jdf
+    @classmethod
+    def df2result(cls, df):
+        """Given a datasets's persisted DataFrame, get the result object
+
+            In most cases, this is just the DataFrame itself. See SmvResultModule for the exception.
+        """
+        return df
+
+    def metadata(self, df):
+        """User-defined metadata
+
+            Override this method to define metadata that will be logged with your module's results.
+            Defaults to empty dictionary.
+
+            Arguments:
+                df (DataFrame): result of running the module, used to generate metadata
+
+            Returns:
+                (dict): dictionary of serializable metadata
+        """
+        return {}
+
+    def metadataJson(self, jdf):
+        """Get user's metadata and jsonify it for py4j transport
+        """
+        df = DataFrame(jdf, self.smvApp.sqlContext)
+        metadata = self.metadata(df)
+        if not isinstance(metadata, dict):
+            raise SmvRuntimeError("User metadata {} is not a dict".format(repr(metadata)))
+        return json.dumps(metadata)
+
+    getMetadataJson = create_py4j_interface_method("getMetadataJson", "metadataJson")
+
+    def validateMetadata(self, current, history):
+        """User-defined metadata validation
+
+            Override this method to define validation rules for metadata given
+            the current metadata and historical metadata.
+
+            Arguments:
+                current (dict): current metadata kv
+                history (list(dict)): list of historical metadata kv's
+
+            Returns:
+                (str): Validation failure message. Return None (or omit a return statement) if successful.
+        """
+        return None
+
+    def validateMetadataJson(self, currentJson, historyJson):
+        """Load metadata (jsonified for py4j transport) and run user's validation on it
+        """
+        current = json.loads(currentJson)
+        history = [json.loads(j) for j in historyJson]
+        res = self.validateMetadata(current, history)
+        if res is not None and not is_string(res):
+            raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
+        return res
+
+    getValidateMetadataJson = create_py4j_interface_method("getValidateMetadataJson", "validateMetadataJson")
+
+    def metadataHistorySize(self):
+        """Override to define the maximum size of the metadata history for this module
+
+            Return:
+                (int): size
+        """
+        return 5
+
+    getMetadataHistorySize = create_py4j_interface_method("getMetadataHistorySize", "metadataHistorySize")
 
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
 
-class SmvInput(SmvDataSet):
+class SmvInput(SmvDataSet, ABC):
     """SmvDataSet representing external input
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def isEphemeral(self):
         return True
@@ -296,14 +360,15 @@ class SmvInput(SmvDataSet):
         """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
            that is created in their init."""
 
-
     def instanceValHash(self):
         # Defer to Scala target for instanceValHash
         return self.getRawScalaInputDS().instanceValHash()
 
     def doRun(self, validator, known):
         jdf = self.getRawScalaInputDS().doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
+        result = self.run(DataFrame(jdf, self.smvApp.sqlContext))
+        self.assert_result_is_dataframe(result)
+        return result._jdf
 
 class WithParser(object):
     """shared parser funcs"""
@@ -311,13 +376,9 @@ class WithParser(object):
     def dqmWithTypeSpecificPolicy(self):
         """for parsers we should get the type specific dqm policy from the
            concrete scala proxy class that is the actual input (e.g. SmvCsvFile)"""
-        try:
-            userDqm = self.dqm()
-            scalaInputDS = self.getRawScalaInputDS()
-            res = scalaInputDS.dqmWithTypeSpecificPolicy(userDqm)
-        except BaseException as err:
-            traceback.print_exc()
-            raise err
+        userDqm = self.dqm()
+        scalaInputDS = self.getRawScalaInputDS()
+        res = scalaInputDS.dqmWithTypeSpecificPolicy(userDqm)
 
         return res
 
@@ -376,9 +437,6 @@ class SmvCsvFile(SmvFile):
     def getRawScalaInputDS(self):
         return self._smvCsvFile
 
-    def description(self):
-        return "Input file: @" + self.path()
-
     @abc.abstractproperty
     def path(self):
         """User-specified path to the input csv file
@@ -389,9 +447,35 @@ class SmvCsvFile(SmvFile):
                 (str): path
         """
 
-    def doRun(self, validator, known):
-        jdf = self._smvCsvFile.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
+class SmvSqlCsvFile(SmvCsvFile):
+    """Input from a file in CSV format and using a SQL query to access it
+    """
+
+    # temporary table name
+    tableName = "df"
+
+    def query(self):
+        """Query used to extract data from the table which reads the CSV file
+
+            Override this to specify your own query (optional). Default is
+            equivalent to 'select * from ' + tableName.
+
+            Returns:
+                (str): query
+        """
+        return "select * from " + self.tableName
+
+    def run(self, df):
+        # temporarily register DataFrame of input CSV file as a table
+        df.registerTempTable(self.tableName)
+
+        # execute the table query
+        res = self.smvApp.sqlContext.sql(self.query())
+
+        # drop the temporary table
+        self.smvApp.sqlContext.sql("drop table " + self.tableName)
+
+        return res
 
 class SmvMultiCsvFiles(SmvFile):
     """Raw input from multiple csv files sharing single schema
@@ -426,11 +510,7 @@ class SmvMultiCsvFiles(SmvFile):
                 (str): path
         """
 
-    def doRun(self, validator, known):
-        jdf = self._smvMultiCsvFiles.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
-
-class SmvCsvStringData(SmvInput):
+class SmvCsvStringData(WithParser, SmvInput):
     """Input data defined by a schema string and data string
     """
 
@@ -465,10 +545,6 @@ class SmvCsvStringData(SmvInput):
                 (str): data
         """
 
-    def doRun(self, validator, known):
-        jdf = self._smvCsvStringData.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
-
 class SmvJdbcTable(SmvInput):
     """Input from a table read through JDBC
     """
@@ -492,10 +568,6 @@ class SmvJdbcTable(SmvInput):
                 (str): table name
         """
 
-    def doRun(self, validator, known):
-        jdf = self._smvJdbcTable.doRun(validator)
-        return self.run(DataFrame(jdf, self.smvApp.sqlContext))
-
 
 class SmvHiveTable(SmvInput):
     """Input from a Hive table
@@ -504,9 +576,6 @@ class SmvHiveTable(SmvInput):
     def __init__(self, smvApp):
         super(SmvHiveTable, self).__init__(smvApp)
         self._smvHiveTable = self.smvApp._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName(), self.tableQuery())
-
-    def description(self):
-        return "Hive Table: @" + self.tableName()
 
     def getRawScalaInputDS(self):
         return self._smvHiveTable
@@ -531,9 +600,6 @@ class SmvHiveTable(SmvInput):
                 (str): query
         """
         return None
-
-    def doRun(self, validator, known):
-        return self.run(DataFrame(self._smvHiveTable.rdd(False), self.smvApp.sqlContext))
 
 class SmvModule(SmvDataSet):
     """Base class for SmvModules written in Python
@@ -570,7 +636,10 @@ class SmvModule(SmvDataSet):
         def __getitem__(self, ds):
             """Called by the '[]' operator
             """
-            return self.urn2df[ds.urn()]
+            if not hasattr(ds, 'urn'):
+                raise TypeError('Argument to RunParams must be an SmvDataSet')
+            else:
+                return self.urn2df[ds.urn()]
 
     def __init__(self, smvApp):
         super(SmvModule, self).__init__(smvApp)
@@ -596,12 +665,198 @@ class SmvModule(SmvDataSet):
                 (DataFrame): ouput of this SmvModule
         """
 
+    def _constructRunParams(self, urn2df):
+        """Given dict from urn to DataFrame, construct RunParams for module
+
+            A given module's result may not actually be a DataFrame. For each
+            dependency, apply its df2result method to its DataFrame to get its
+            actual result. Construct RunParams from the resulting dict.
+        """
+        urn2res = {}
+        for dep in self.dependencies():
+            jdf = urn2df[dep.urn()]
+            df = DataFrame(jdf, self.smvApp.sqlContext)
+            urn2res[dep.urn()] = dep.df2result(df)
+        i = self.RunParams(urn2res)
+        return i
+
     def doRun(self, validator, known):
-        urn2df = {}
-        for dep in self.requiresDS():
-            urn2df[dep.urn()] = DataFrame(known[dep.urn()], self.smvApp.sqlContext)
-        i = self.RunParams(urn2df)
-        return self.run(i)
+        i = self._constructRunParams(known)
+        result = self.run(i)
+        self.assert_result_is_dataframe(result)
+        return result._jdf
+
+class SmvSqlModule(SmvModule):
+    """An SMV module which executes a SQL query in place of a run method
+    """
+    # User must specify table names. We can't use FQN because the name can't
+    # can't contain '.', and defaulting to the module's base name would invite
+    # name collisions.
+    @abc.abstractmethod
+    def tables(self):
+        """Dict of dependencies by table name.
+        """
+
+    def requiresDS(self):
+        return list(self.tables().values())
+
+    @abc.abstractmethod
+    def query(self):
+        """User-specified SQL query defining the behavior of this module
+
+            Before the query is executed, all dependencies will be registered as
+            tables with the names specified in the tables method.
+        """
+
+    def run(self, i):
+        tbl_name_2_ds = self.tables()
+
+        # temporarily register DataFrame inputs as tables
+        for tbl_name in tbl_name_2_ds:
+            ds = tbl_name_2_ds[tbl_name]
+            i[ds].registerTempTable(tbl_name)
+
+        res = self.smvApp.sqlContext.sql(self.query())
+
+        #drop temporary tables
+        for tbl_name in tbl_name_2_ds:
+            # This currently causes an "error" to be reported saying "table does
+            # not exist". This happens even when using "drop table if exists ".
+            # It is annoying but can be safely ignored.
+            self.smvApp.sqlContext.sql("drop table " + tbl_name)
+
+        return res
+
+
+class SmvResultModule(SmvModule):
+    """An SmvModule whose result is not a DataFrame
+
+        The result must be picklable - see https://docs.python.org/2/library/pickle.html#what-can-be-pickled-and-unpickled.
+    """
+    @classmethod
+    def df2result(self, df):
+        """Unpickle and decode module result stored in DataFrame
+        """
+        # reverses result of applying result2df. see result2df for explanation.
+        hex_encoded_pickle_as_str = df.collect()[0][0]
+        pickled_res_as_str = binascii.unhexlify(hex_encoded_pickle_as_str)
+        res = pickle_lib.loads(pickled_res_as_str)
+        return res
+
+    @classmethod
+    def result2df(cls, smvApp, res_obj):
+        """Pick and encode module result, and store it in a DataFrame
+        """
+        # pickle the result object. this will use the most optimal pickling
+        # protocol available for this version of cPickle
+        pickled_res = pickle_lib.dumps(res_obj, -1)
+        # pickle may contain problematic characters like newlines, so we
+        # encode the pickle it as a hex string
+        hex_encoded_pickle = binascii.hexlify(pickled_res)
+        # encoding will be a bytestring object if in Python 3, so need to convert it to string
+        # str.decode converts string to utf8 in python 2 and bytes to str in Python 3
+        hex_encoded_pickle_as_str = hex_encoded_pickle.decode()
+        # insert the resulting serialization into a DataFrame
+        df = smvApp.createDF("pickled_result: String", hex_encoded_pickle_as_str)
+        return df
+
+    @abc.abstractmethod
+    def run(self, i):
+        """User-specified definition of the operations of this SmvModule
+
+            Override this method to define the output of this module, given a map
+            'i' from input SmvDataSet to resulting DataFrame. 'i' will have a
+            mapping for each SmvDataSet listed in requiresDS. E.g.
+
+            def requiresDS(self):
+                return [MyDependency]
+
+            def run(self, i):
+                return train_model(i[MyDependency])
+
+            Args:
+                (RunParams): mapping from input SmvDataSet to DataFrame
+
+            Returns:
+                (object): picklable output of this SmvModule
+        """
+
+    def doRun(self, validator, known):
+        i = self._constructRunParams(known)
+        res_obj = self.run(i)
+        result = self.result2df(self.smvApp, res_obj)
+        return result._jdf
+
+class SmvModel(SmvResultModule):
+    """SmvModule whose result is a data model
+    """
+    # Exists only to be paired with SmvModelExec
+    def dsType(self):
+        return "Model"
+
+class SmvModelExec(SmvModule):
+    """SmvModule that runs a model produced by an SmvModel
+    """
+    def dsType(self):
+        return "ModelExec"
+
+    def dependencies(self):
+        model_mod = self.requiresModel()
+        if not self._targetIsSmvModel(model_mod):
+            raise SmvRuntimeError("requiresModel method must return an SmvModel or a link to one")
+        return [model_mod] + self.requiresDS()
+
+    def _targetIsSmvModel(self, module):
+        if isinstance(module, SmvModuleLink):
+            target = module.target
+        else:
+            target = module
+
+        try:
+            if issubclass(target, SmvModel):
+                return True
+        except TypeError:
+            # if target is not a class or other type object, issubclass will raise TypeError
+            pass
+
+        return False
+
+    @abc.abstractmethod
+    def requiresModel():
+        """User-specified SmvModel module
+
+            Returns:
+                (SmvModel): the SmvModel this module depends on
+        """
+
+    def doRun(self, validator, known):
+        i = self._constructRunParams(known)
+        model = i[self.requiresModel()]
+        result = self.run(i, model)
+        self.assert_result_is_dataframe(result)
+        return result._jdf
+
+    @abc.abstractmethod
+    def run(self, i, model):
+        """User-specified definition of the operations of this SmvModule
+
+            Override this method to define the output of this module, given a map
+            'i' from inputSmvDataSet to resulting DataFrame. 'i' will have a
+            mapping for each SmvDataSet listed in requiresDS. E.g.
+
+            def requiresDS(self):
+                return [MyDependency]
+
+            def run(self, i):
+                return i[MyDependency].select("importantColumn")
+
+            Args:
+                i (RunParams): mapping from input SmvDataSet to DataFrame
+                model (SmvModel): the model this module depends on
+
+            Returns:
+                (object): picklable output of this SmvModule
+        """
 
 class SmvModuleLink(object):
     """A module link provides access to data generated by modules from another stage
@@ -611,6 +866,9 @@ class SmvModuleLink(object):
 
     def __init__(self, target):
         self.target = target
+
+    def df2result(self, df):
+        return self.target.df2result(df)
 
     def urn(self):
         return 'link:' + self.target.fqn()
@@ -628,6 +886,10 @@ class SmvExtDataSet(object):
     """
     def __init__(self, fqn):
         self._fqn = fqn
+
+    def df2result(self, df):
+        # non-DataFrame results are only supported for Python SmvResultModule
+        return df
 
     def urn(self):
         return 'mod:' + self._fqn
@@ -647,3 +909,19 @@ def SmvExtModuleLink(refname):
             (SmvModuleLink): link to the Scala SmvDataSet
     """
     return SmvModuleLink(SmvExtDataSet(refname))
+
+__all__ = [
+    'SmvOutput',
+    'SmvMultiCsvFiles',
+    'SmvCsvFile',
+    'SmvSqlCsvFile',
+    'SmvCsvStringData',
+    'SmvJdbcTable',
+    'SmvHiveTable',
+    'SmvModule',
+    'SmvSqlModule',
+    'SmvModel',
+    'SmvModelExec',
+    'SmvModuleLink',
+    'SmvExtModuleLink'
+]

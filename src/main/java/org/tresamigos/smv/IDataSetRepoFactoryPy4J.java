@@ -16,12 +16,14 @@ package org.tresamigos.smv;
 
 /**
  * Repository methods used to query and instantiate modules
- * implemented in languages other than Scala.
+ * implemented in languages other than Scala. If you add a method here with
+ * a Python implementation *make sure* to use the @with_stacktrace
+ * decorator to ensure that errors that occur in callbacks don't get eaten.
  */
 public interface IDataSetRepoFactoryPy4J {
 
   /**
    * Factory method for IDataSetRepoPy4J
    */
-	IDataSetRepoPy4J createRepo();
+	IPythonResponsePy4J<IDataSetRepoPy4J> getCreateRepo();
 }

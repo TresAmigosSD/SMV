@@ -42,6 +42,8 @@ Run the entire application with
 $ smv-pyrun --run-app
 ```
 
+This command must be run from the root of the project.
+
 The output csv file and schema can be found in the `data/output` directory. Note that 'XXXXXXXX' here substitutes for a number which is like the version of the module.
 
 ```shell

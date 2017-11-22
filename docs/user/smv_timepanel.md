@@ -142,8 +142,8 @@ Example:
 **Python**
 ```python
 res = df.smvGroupBy("sku").smvTimePanelAgg("time", Day(2012, 1, 1), Day(2012,12,31))(
-  sum("amt").alias("amt"),
-  sum("qty").alias("qty")
+  F.sum("amt").alias("amt"),
+  F.sum("qty").alias("qty")
 )
 ```
 

@@ -65,7 +65,7 @@ object myfile extends SmvCsvFile("accounts/acct_demo.csv") {
 
 **Python**
 ```python
-class Myfile(SmvCsvFile):
+class Myfile(smv.SmvCsvFile):
     def path(self):
         return "accounts/acct_demo.csv"
     def failAtParsingError(self):
@@ -92,15 +92,15 @@ object myfile extends SmvCsvFile("accounts/acct_demo.csv") {
 
 **Python**
 ```python
-from smv.dqm import *
+import smv.dqm
 ...
-class Myfile(SmvCsvFile):
+class Myfile(smv.SmvCsvFile):
     def path(self):
         return "accounts/acct_demo.csv"
     def failAtParsingError(self):
         return False
     def dqm(self):
-        return SmvDQM().add(FailParserCountPolicy(10))
+        return dqm.SmvDQM().add(dqm.FailParserCountPolicy(10))
 ```
 
 Please refer the `DQMPolicy` session below.
@@ -127,7 +127,7 @@ import org.tresamigos.smv.dqm._
 
 **Python**
 ```python
-from smv.dqm import *
+import smv.dqm
 ```
 
 Since both `SmvFile` and `SmvModule` provide a `dqm` method to define the rules, one can override
@@ -146,15 +146,15 @@ object MyModule extends SmvModule("example module with dqm") {
 
 **Python**
 ```python
-class MyModule(SmvModule):
+class MyModule(smv.SmvModule):
     """example module with dqm"""
     ...
     def run(self, i):
       ...
-    def dqm(self) = return SmvDQM().add(
-        DQMRule(col("Price") < 1000000.0, "rule1", FailAny())
+    def dqm(self) = return smv.SmvDQM().add(
+        dqm.DQMRule(F.col("Price") < 1000000.0, "rule1", dqm.FailAny())
     ).add(
-        DQMFix(col("age") > 120, lit(120) as "age", "fix1")
+        dqm.DQMFix(F.col("age") > 120, F.lit(120) as "age", "fix1")
     )
 ```
 
@@ -195,11 +195,11 @@ override def dqm() = SmvDQM().
 
 **Python**
 ```python
-def dqm() = SmvDQM().add(
-    DQMRule(col("Price") < 1000000.0, "rule1")).add(
-    DQMRule(col("Price") > 0.0, "rule2")).add(
-    DQMFix(col("age") > 120, lit(120) as "age", "fix1")).add(
-    FailTotalRuleCountPolicy(100))
+def dqm() = dqm.SmvDQM().add(
+    dqm.DQMRule(F.col("Price") < 1000000.0, "rule1")).add(
+    dqm.DQMRule(F.col("Price") > 0.0, "rule2")).add(
+    dqm.DQMFix(F.col("age") > 120, F.lit(120) as "age", "fix1")).add(
+    dqm.FailTotalRuleCountPolicy(100))
 ```
 
 Here `FailTotalRuleCountPolicy(...)` is a predefined `DQMPolicy`, which check the total count of

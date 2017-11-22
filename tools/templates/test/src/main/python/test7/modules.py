@@ -1,8 +1,8 @@
-from smv import *
+import smv
 
-class M2(SmvModule, SmvOutput):
+class M2(smv.SmvModule, smv.SmvOutput):
     def requiresDS(self):
-        return [ SmvExtModuleLink("org.tresamigos.smvtest.test7_1.M1") ]
+        return [ smv.SmvExtModuleLink("integration.test.test7_1.M1") ]
 
     def run(self, i):
-        return i[ SmvExtModuleLink("org.tresamigos.smvtest.test7_1.M1") ]
+        return i[ smv.SmvExtModuleLink("integration.test.test7_1.M1") ]

@@ -1,8 +1,7 @@
-from smv import *
-from pyspark.sql.functions import col, sum, lit
+import smv
 
 __all__ = ['EmploymentByState']
 
-class input(SmvCsvFile):
+class input(smv.SmvCsvFile):
     def path(self):
-        return "input/employment/CB1200CZ11.csv"
+        return "employment/CB1200CZ11.csv"

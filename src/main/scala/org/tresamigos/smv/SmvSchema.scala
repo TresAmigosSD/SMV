@@ -347,7 +347,12 @@ class SmvSchema(val entries: Seq[SchemaEntry], val attributes: Map[String, Strin
 
   private[smv] def toValue(ordinal: Int, sVal: String) = entries(ordinal).typeFormat.strToVal(sVal)
 
-  override def toString = "Schema: " + entries.mkString("; ")
+  override def toString = "Schema: " + toStringsWithMeta.mkString("; ")
+
+  /**
+   * Returns entries as an array of strings. Makes entries consumable by python side.
+   */
+  def getEntriesStr() : Array[String] = entries.toArray map (_.toString)
 
   /**
    * Used to determine if a file's schema has changed

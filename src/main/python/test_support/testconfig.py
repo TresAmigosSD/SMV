@@ -15,7 +15,27 @@ import sys
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
 
+from smv.smvapp import SmvApp
+
 class TestConfig(object):
+    smvApp = None
+
+    @classmethod
+    def setSmvApp(cls, app):
+        """Set the canonical SmvApp
+
+            Spark context and sqlContext will be retrieved from this SmvApp.
+            This SmvApp will also be restored as the singleton after tests are
+            run.
+        """
+        cls.smvApp = app
+        cls.sqlc = app.sqlContext
+        cls.sc = app.sc
+
+    @classmethod
+    def originalSmvApp(cls):
+        return cls.smvApp
+
     # shared SparkContext
     @classmethod
     def sparkContext(cls):
