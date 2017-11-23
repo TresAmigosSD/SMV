@@ -8,7 +8,10 @@ export SMV_HOME="$(cd "${SMV_TOOLS}/.."; pwd)"
 export SMV_APP_JAR="$SMV_APP_HOME/$APP_JAR"
 export R_PROFILE="${SMV_TOOLS}/conf/sparkR_init.r"
 
-set_spark_home
+# TODO: the r module "sparkR_init.r" expects SPARK_HOME to be set to add the
+# lib path for all the spark R modules.  Need to fix this once we need to
+# support R once again.
+set_smv_spark_paths
 
 if type rstudio &> /dev/null; then
   R_CMD="rstudio"

@@ -141,7 +141,7 @@ publish the specified modules to the local file system
 
 <tr>
 <td>--spark-home</td>
-<td>SPARK_HOME environment variable or location of spark-submit</td>
+<td>location of spark-submit</td>
 <td>Location where SMV should find Spark installation.
 </td>
 </tr>
