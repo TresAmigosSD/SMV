@@ -212,6 +212,17 @@ One of the options below must be specified.
 
 </table>
 
+### Spark commands override
+Users are able to override the name of the spark commands used to launch batch jobs and shell.  The two environment variables `SMV_SPARK_SUBMIT_CMD` and `SMV_PYSPARK_CMD` can be used to override the `spark-submit` and `pyspark` commands respectively.
+For example, on a cloudera system with both spark 1.6 and spark 2.2, user can set the following in their shell profile:
+```bash
+# user's .bash_profile
+export SMV_SPARK_SUBMIT_CMD="spark2-submit"
+export SMV_PYSPARK_CMD="pyspark2"
+```
+
+The above would ensure that SMV users the spark 2.2 version on the system.
+
 ### Examples
 Run modules `M1` and `M2` and all its dependencies.  Note the use of the module FQN.
 ```shell
