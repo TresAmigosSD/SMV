@@ -694,6 +694,52 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   }
 
   /**
+   * Add `smvTime` column according to some `TimePanel`s
+   * Example
+   * {{{
+   * val dfWithTP = df.smvGroupBy("k").smvWithTimePanel(timeColName, Month(2013,1), Month(2014, 2))
+   * }}}
+   *
+   * If there are no `smvTime` column in the input DF, the added column will
+   * be named `smvTime`, otherwise an underscore, "_" will be prepended to the name as
+   * the new column name.
+   *
+   * The values of the `smvTine` column are strings, e.g. "M201205", "Q201301", "D20140527".
+   *
+   * ColumnHelper `smvTimeToType`, `smvTineToIndex`, `smvTineToLabel` can be used to
+   * create other columns from `smvTime`.
+   *
+   * Since `TimePanel` defines a period of time, if for some group in the data
+   * there are missing Months (or Quarters), this function will add records with non-null keys and
+   * `smvTime` columns with all other columns null-valued.
+   *
+   * Example
+   * Input
+   * {{{
+   * k, time, v
+   * 1, 20140101, 1.2
+   * 1, 20140301, 4.5
+   * 1, 20140325, 10.3
+   * }}}
+   * Code
+   * {{{
+   * df.smvGroupBy("k").smvWithTimePanel("time", Month(2013,1), Month(2014, 2))
+   * }}}
+   * Output
+   * {{{
+   * k, time, v, smvTime
+   * 1, 20140101, 1.2, M201401
+   * 1, null, null, M201402
+   * 1, 20140301, 4.5, M201403
+   * 1, 20140325, 10.3, M201403
+   * }}}
+   **/
+  def smvWithTimePanel(timeColName: String, start: panel.PartialTime, end: panel.PartialTime) = {
+    val tp = panel.TimePanel(start, end)
+    tp.addToDF(df, timeColName, keys, true)
+  }
+
+  /**
    * Apply aggregation on given keys and specified time panel period
    * Example
    * {{{
