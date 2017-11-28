@@ -135,6 +135,18 @@ package org.tresamigos.smv {
       }
     }
 
+    test("default app id should be a randomly generated string") {
+      val conf = mkconfig()
+      conf.appId should not be 'Empty
+      val another = java.util.UUID.randomUUID.toString
+      conf.appId should not be another
+    }
+
+    test("app id can be set from the cmdline") {
+      val expectedAppId = "1"
+      val conf = mkconfig("--smv-props", "smv.appId=" + expectedAppId)
+      conf.appId shouldBe expectedAppId
+    }
   }
 
   /**
