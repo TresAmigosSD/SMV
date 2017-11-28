@@ -723,7 +723,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    * Code
    * {{{
-   * df.smvGroupBy("k").smvWithTimePanel("time", Month(2013,1), Month(2014, 2))
+   * df.smvGroupBy("k").smvWithTimePanel("time", Month(2014,1), Month(2014, 2))
    * }}}
    * Output
    * {{{
