@@ -685,7 +685,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * 1, 20140325, 10.3, M201403
    * }}}
    **/
-  def addTimePanels(timeColName: String, doFiltering: Boolean = true)(panels: panel.TimePanel*) = {
+  private[smv] def addTimePanels(timeColName: String, doFiltering: Boolean = true)(panels: panel.TimePanel*) = {
     panels
       .map { tp =>
         tp.addToDF(df, timeColName, keys, doFiltering)
