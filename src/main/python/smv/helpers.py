@@ -233,6 +233,25 @@ class SmvGroupedData(object):
         """
         return DataFrame(self.sgd.smvPivotCoalesce(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
 
+    def smvRePartition(self, numParts):
+        """Repartition SmvGroupedData using specified partitioner on the keys. A
+            HashPartitioner with the specified number of partitions will be used.
+
+            This method is used in the cases that the key-space is very large. In the
+            current Spark DF's groupBy method, the entire key-space is actually loaded
+            into executor's memory, which is very dangerous when the key space is big.
+            The regular DF's repartition function doesn't solve this issue since a random
+            repartition will not guaranteed to reduce the key-space on each executor.
+            In that case we need to use this function to linearly reduce the key-space.
+
+            Example:
+
+            >>> df.smvGroupBy("k1", "k2").smvRePartition(32).agg(sum("v") as "v")
+        """
+        jgd = self.sgd.smvRePartition(numParts)
+        df = DataFrame(jgd.toDF(), self.df.sql_ctx)
+        return SmvGroupedData(df, self.keys, jgd)
+
     def smvFillNullWithPrevValue(self, *orderCols):
         """Fill in Null values with "previous" value according to an ordering
 

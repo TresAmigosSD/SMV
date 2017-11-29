@@ -179,6 +179,9 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
                        baseOutput: Array[String]): DataFrame =
     grouped.smvPivotCoalesce(pivotCols.map(_.toSeq).toSeq: _*)(valueCols: _*)(baseOutput: _*)
 
+  def smvRePartition(numParts: Int): SmvGroupedData =
+    grouped.smvRePartition(numParts)
+
   def smvFillNullWithPrevValue(orderCols: Array[Column], valueCols: Array[String]): DataFrame =
     grouped.smvFillNullWithPrevValue(orderCols: _*)(valueCols: _*)
 
