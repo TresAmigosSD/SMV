@@ -22,6 +22,12 @@ from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, struct, sum
 
 class GroupedDataTest(SmvBaseTest):
+    def test_smvRePartition(self):
+        df = self.createDF("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+        res = df.smvGroupBy('k').smvRePartition(2).df
+        self.assertEqual(res.rdd.getNumPartitions(), 2)
+        self.should_be_same(df, res)
+
     def test_smvFillNullWithPrevValue(self):
         df = self.createDF("k:String; t:Integer; v:String", "a,1,;a,2,a;a,3,b;a,4,")
         res = df.smvGroupBy("k").smvFillNullWithPrevValue(col("t").asc())("v")
