@@ -248,9 +248,9 @@ class SmvGroupedData(object):
 
             >>> df.smvGroupBy("k1", "k2").smvRePartition(32).agg(sum("v") as "v")
         """
-        jgd = self.sgd.smvRePartition(numParts)
-        df = DataFrame(jgd.toDF(), self.df.sql_ctx)
-        return SmvGroupedData(df, self.keys, jgd)
+        jgdadp = self.sgd.smvRePartition(numParts)
+        df = DataFrame(jgdadp.toDF(), self.df.sql_ctx)
+        return SmvGroupedData(df, self.keys, jgdadp)
 
     def smvFillNullWithPrevValue(self, *orderCols):
         """Fill in Null values with "previous" value according to an ordering
