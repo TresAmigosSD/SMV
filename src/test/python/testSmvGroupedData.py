@@ -81,6 +81,8 @@ class GroupedDataTest(SmvBaseTest):
 
         expect = self.createDF("k: Integer;ts: String;v: Double;smvTime: String",
         """1,,,M201202;
+            1,,,M201201;
+            1,,,M201203;
             1,20120101,1.5,M201201;
             1,20120301,4.5,M201203""").withColumn("ts", col('ts').smvStrToTimestamp("yyyyMMdd"))
 

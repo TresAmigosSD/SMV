@@ -101,14 +101,17 @@ class TimePanelTest extends SmvTestUtil {
                "2,20120201,3.3").selectWithReplace($"ts".smvStrToTimestamp("yyyyMMdd") as "ts")
 
     val tp  = TimePanel(start = Month(2012, 1), end = Month(2012, 5))
-    val res = tp.addToDF(df, "ts", Seq("k"), false)
+    val res = tp.addToDF(df, "ts", Seq("k"), true)
 
     assertSrddDataEqual(
       res,
-      """1,null,null,M201202;
+      """1,null,null,M201201;
+1,null,null,M201202;
 1,null,null,M201203;
 1,null,null,M201204;
+1,null,null,M201205;
 2,null,null,M201201;
+2,null,null,M201202;
 2,null,null,M201203;
 2,null,null,M201205;
 2,null,null,M201204;
@@ -156,7 +159,9 @@ class TimePanelTest extends SmvTestUtil {
     assertSrddDataEqual(
       res,
       """1,null,null,M201206;
+1,null,null,M201201;
 1,null,null,M201202;
+1,null,null,M201205;
 1,null,null,M201203;
 1,null,null,M201204;
 1,2012-01-01 00:00:00.0,1.5,M201201;

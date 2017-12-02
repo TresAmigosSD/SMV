@@ -683,9 +683,14 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * 1, 20140325, 10.3, M201403
    * }}}
    **/
-  def smvWithTimePanel(timeColName: String, start: panel.PartialTime, end: panel.PartialTime) = {
+  def smvWithTimePanel(
+    timeColName: String,
+    start: panel.PartialTime,
+    end: panel.PartialTime,
+    addMissingTimeWithNull: Boolean = true
+  ) = {
     val tp = panel.TimePanel(start, end)
-    tp.addToDF(df, timeColName, keys, true)
+    tp.addToDF(df, timeColName, keys, addMissingTimeWithNull)
   }
 
   /**
@@ -710,9 +715,14 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    * For `PartialTime`s, please refer `smv.panel` package for details
    **/
-  def smvTimePanelAgg(timeColName: String, start: panel.PartialTime, end: panel.PartialTime)(aggCols: Column*) = {
+  def smvTimePanelAgg(
+    timeColName: String,
+    start: panel.PartialTime,
+    end: panel.PartialTime,
+    addMissingTimeWithNull: Boolean = true
+  )(aggCols: Column*) = {
     val tp = panel.TimePanel(start, end)
-    val withPanel = tp.addToDF(df, timeColName, keys, true)
+    val withPanel = tp.addToDF(df, timeColName, keys, addMissingTimeWithNull)
     val allkeys = keys :+ "smvTime"
     withPanel.groupBy(allkeys.head, allkeys.tail: _*).agg(aggCols.head, aggCols.tail: _*)
   }
@@ -770,6 +780,56 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     } else {
       res
     }
+  }
+
+  /**
+   * Add records within each group with expected values and all other columns nulls
+   * For now only works with StringType column.
+   *
+   * Example
+   * Input:
+   * {{{
+   * K, V, other
+   * 1, a, x
+   * 1, b, x
+   * }}}
+   *
+   * {{{
+   * df.smvGroupBy("K").addExpectedWithNull("V", Set("a", "b", "c"))
+   * }}}
+   *
+   * Output
+   * {{{
+   * K, V, other
+   * 1, a, x
+   * 1, b, x
+   * 1, a, null
+   * 1, b, null
+   * 1, c, null
+   * }}}
+   **/
+  private[smv] def addExpectedWithNull(
+      colName: String,
+      expected: Set[String],
+      doFiltering: Boolean
+  ): DataFrame = {
+    val dffiltered = if (doFiltering) {
+      df.where(col(colName).isin(expected.toSeq.map { lit }: _*))
+    } else {
+      df
+    }
+    val nullCols = dffiltered.columns.diff(keys :+ colName).map { s =>
+      lit(null).cast(dffiltered.schema(s).dataType) as s
+    }
+    val nullRows = dffiltered
+      .select(keys.head, keys.tail: _*)
+      .distinct()
+      .withColumn(colName, explode(array(expected.toSeq.map { lit }: _*)))
+      .smvSelectPlus(nullCols: _*)
+      .select(dffiltered.columns.map { s =>
+        col(s)
+      }: _*)
+    dffiltered.unionAll(nullRows)
   }
 
   /**
