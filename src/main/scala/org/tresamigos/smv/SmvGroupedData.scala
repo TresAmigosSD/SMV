@@ -653,14 +653,21 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * be named `smvTime`, otherwise an underscore, "_" will be prepended to the name as
    * the new column name.
    *
-   * The values of the `smvTine` column are strings, e.g. "M201205", "Q201301", "D20140527".
+   * The values of the `smvTime` column are strings, e.g. "M201205", "Q201301", "D20140527".
    *
    * ColumnHelper `smvTimeToType`, `smvTineToIndex`, `smvTineToLabel` can be used to
    * create other columns from `smvTime`.
    *
+   * @param timeColName name of the timestamp column of the input df
+   * @param start time-panel start PartialTime (inclusive)
+   * @param end time-panel end PartialTime (inclusive)
+   * @param addMissingTimeWithNull (default true) when some PartialTime is missing whether to
+   *   fill null records
+   *
    * Since `TimePanel` defines a period of time, if for some group in the data
-   * there are missing Months (or Quarters), this function will add records with non-null keys and
-   * `smvTime` columns with all other columns null-valued.
+   * there are missing Months (or Quarters), when addMissingTimeWithNull is true,
+   * this function will add records with non-null keys and
+   * all possible `smvTime` columns with all other columns null-valued.
    *
    * Example
    * Input
@@ -672,15 +679,17 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    * Code
    * {{{
-   * df.smvGroupBy("k").smvWithTimePanel("time", Month(2014,1), Month(2014, 2))
+   * df.smvGroupBy("k").smvWithTimePanel("time", Month(2014,1), Month(2014, 3))
    * }}}
    * Output
    * {{{
    * k, time, v, smvTime
    * 1, 20140101, 1.2, M201401
-   * 1, null, null, M201402
    * 1, 20140301, 4.5, M201403
    * 1, 20140325, 10.3, M201403
+   * 1, null, null, M201401
+   * 1, null, null, M201402
+   * 1, null, null, M201403
    * }}}
    **/
   def smvWithTimePanel(
@@ -714,6 +723,15 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * ...
    * }}}
    * For `PartialTime`s, please refer `smv.panel` package for details
+   *
+   * @param timeColName name of the timestamp column of the input df
+   * @param start time-panel start PartialTime (inclusive)
+   * @param end time-panel end PartialTime (inclusive)
+   * @param addMissingTimeWithNull (default true) when some PartialTime is missing whether to
+   *   fill null records
+   *
+   * When addMissingTimeWithNull is true, the aggregation should be always on the variables
+   * instead of on literals (should NOT be count(lit(1))).
    **/
   def smvTimePanelAgg(
     timeColName: String,
