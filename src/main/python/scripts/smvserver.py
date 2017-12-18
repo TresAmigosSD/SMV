@@ -176,6 +176,13 @@ def getStageFromFqn(fqn):
         raise ValueError("Could not retrive stage with the given fqn: " + str(fqn))
     return stage
 
+# Indicates whether getDatasetInstance raises an error when trying to load modules
+# that do not exist. DataSetRepo.loadDataSet recently changed to raise errors only
+# when a module exists but has an error that prevents it from loading. For now,
+# external applications that support older versions of SMV need to know which
+# behavior to expect.
+getDatasetInstance_raises_error_for_dne = False
+
 def getDatasetInstance(fqn):
     '''returns dataset object given a fqn'''
     return DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)

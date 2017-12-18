@@ -42,6 +42,7 @@ $ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/v2.1.1.3/tools/smv-ins
 ```bash
 $ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v2.1.1.3/tools/smv-install | bash -s -- -spark
 ```
+If curl/wget method doesn't work, we can use "sbt assembly" to build SMV by ourselves.
 
 ## Updating paths.
 The install script above will automatically update the user `.profile`, `.bash_profile`, or `.bashrc` files.  For the paths to take effect, user should log out, then log back in to update the paths in the shell.

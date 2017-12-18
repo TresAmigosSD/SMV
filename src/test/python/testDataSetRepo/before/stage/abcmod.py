@@ -15,4 +15,3 @@ from smv import SmvModule
 
 class ABCMod(SmvModule):
     def requiresDS(self): return []
-    def run(self, i): return None

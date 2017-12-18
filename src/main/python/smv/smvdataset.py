@@ -24,12 +24,17 @@ import inspect
 import sys
 import traceback
 import binascii
+import json
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
-from smv.utils import smv_copy_array, pickle_lib
+from smv.utils import smv_copy_array, pickle_lib, is_string
 from smv.py4j_interface import create_py4j_interface_method
 
+if sys.version_info >= (3, 4):
+    ABC = abc.ABC
+else:
+    ABC = abc.ABCMeta('ABC', (), {})
 
 def _disassemble(obj):
     """Disassembles a module and returns bytecode as a string.
@@ -81,7 +86,7 @@ class SmvOutput(object):
 
     getTableName = create_py4j_interface_method("getTableName", "tableName")
 
-class SmvDataSet(object):
+class SmvDataSet(ABC):
     """Abstract base class for all SmvDataSets
     """
 
@@ -91,8 +96,6 @@ class SmvDataSet(object):
     # don't yet quite understand.  So for a workaround we add the
     # typcheck in the Smv hierarchies themselves.
     IsSmvDataSet = True
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, smvApp):
         self.smvApp = smvApp
@@ -263,14 +266,74 @@ class SmvDataSet(object):
         """
         return df
 
+    def metadata(self, df):
+        """User-defined metadata
+
+            Override this method to define metadata that will be logged with your module's results.
+            Defaults to empty dictionary.
+
+            Arguments:
+                df (DataFrame): result of running the module, used to generate metadata
+
+            Returns:
+                (dict): dictionary of serializable metadata
+        """
+        return {}
+
+    def metadataJson(self, jdf):
+        """Get user's metadata and jsonify it for py4j transport
+        """
+        df = DataFrame(jdf, self.smvApp.sqlContext)
+        metadata = self.metadata(df)
+        if not isinstance(metadata, dict):
+            raise SmvRuntimeError("User metadata {} is not a dict".format(repr(metadata)))
+        return json.dumps(metadata)
+
+    getMetadataJson = create_py4j_interface_method("getMetadataJson", "metadataJson")
+
+    def validateMetadata(self, current, history):
+        """User-defined metadata validation
+
+            Override this method to define validation rules for metadata given
+            the current metadata and historical metadata.
+
+            Arguments:
+                current (dict): current metadata kv
+                history (list(dict)): list of historical metadata kv's
+
+            Returns:
+                (str): Validation failure message. Return None (or omit a return statement) if successful.
+        """
+        return None
+
+    def validateMetadataJson(self, currentJson, historyJson):
+        """Load metadata (jsonified for py4j transport) and run user's validation on it
+        """
+        current = json.loads(currentJson)
+        history = [json.loads(j) for j in historyJson]
+        res = self.validateMetadata(current, history)
+        if res is not None and not is_string(res):
+            raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
+        return res
+
+    getValidateMetadataJson = create_py4j_interface_method("getValidateMetadataJson", "validateMetadataJson")
+
+    def metadataHistorySize(self):
+        """Override to define the maximum size of the metadata history for this module
+
+            Return:
+                (int): size
+        """
+        return 5
+
+    getMetadataHistorySize = create_py4j_interface_method("getMetadataHistorySize", "metadataHistorySize")
+
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
 
-class SmvInput(SmvDataSet):
+class SmvInput(SmvDataSet, ABC):
     """SmvDataSet representing external input
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def isEphemeral(self):
         return True
@@ -573,7 +636,10 @@ class SmvModule(SmvDataSet):
         def __getitem__(self, ds):
             """Called by the '[]' operator
             """
-            return self.urn2df[ds.urn()]
+            if not hasattr(ds, 'urn'):
+                raise TypeError('Argument to RunParams must be an SmvDataSet')
+            else:
+                return self.urn2df[ds.urn()]
 
     def __init__(self, smvApp):
         super(SmvModule, self).__init__(smvApp)

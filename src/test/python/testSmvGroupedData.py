@@ -22,6 +22,12 @@ from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, struct, sum
 
 class GroupedDataTest(SmvBaseTest):
+    def test_smvRePartition(self):
+        df = self.createDF("k:String; t:Integer; v:Double", "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")
+        res = df.smvGroupBy('k').smvRePartition(2).df
+        self.assertEqual(res.rdd.getNumPartitions(), 2)
+        self.should_be_same(df, res)
+
     def test_smvFillNullWithPrevValue(self):
         df = self.createDF("k:String; t:Integer; v:String", "a,1,;a,2,a;a,3,b;a,4,")
         res = df.smvGroupBy("k").smvFillNullWithPrevValue(col("t").asc())("v")
@@ -57,6 +63,27 @@ class GroupedDataTest(SmvBaseTest):
         expect = self.createDF("k: String;v_c: Integer;v_d: Integer;v_e: Integer;v_f: Integer",
             "a,1,2,,5"
         )
+        self.should_be_same(expect, res)
+
+    def test_smvWithTimePanel(self):
+        df = self.createDF("k:Integer; ts:String; v:Double",
+            """1,20120101,1.5;
+                1,20120301,4.5;
+                1,20120701,7.5;
+                1,20120501,2.45"""
+            ).withColumn("ts", col('ts').smvStrToTimestamp("yyyyMMdd"))
+
+        import smv.panel as p
+
+        res = df.smvGroupBy('k').smvWithTimePanel(
+            'ts', p.Month(2012,1), p.Month(2012,3)
+        )
+
+        expect = self.createDF("k: Integer;ts: String;v: Double;smvTime: String",
+        """1,,,M201202;
+            1,20120101,1.5,M201201;
+            1,20120301,4.5,M201203""").withColumn("ts", col('ts').smvStrToTimestamp("yyyyMMdd"))
+
         self.should_be_same(expect, res)
 
     def test_smvTimePanelAgg(self):
