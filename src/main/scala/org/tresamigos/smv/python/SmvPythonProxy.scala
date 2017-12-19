@@ -179,9 +179,17 @@ class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
                        baseOutput: Array[String]): DataFrame =
     grouped.smvPivotCoalesce(pivotCols.map(_.toSeq).toSeq: _*)(valueCols: _*)(baseOutput: _*)
 
+  def toDF(): DataFrame =
+    grouped.toDF
+
+  def smvRePartition(numParts: Int): SmvGroupedDataAdaptor =
+    new SmvGroupedDataAdaptor(grouped.smvRePartition(numParts))
+
   def smvFillNullWithPrevValue(orderCols: Array[Column], valueCols: Array[String]): DataFrame =
     grouped.smvFillNullWithPrevValue(orderCols: _*)(valueCols: _*)
 
+  def smvWithTimePanel(timeColName: String, start: panel.PartialTime, end: panel.PartialTime) =
+    grouped.smvWithTimePanel(timeColName, start, end)
 
   def smvTimePanelAgg(timeColName: String, start: panel.PartialTime, end: panel.PartialTime, aggCols: Array[Column]) =
     grouped.smvTimePanelAgg(timeColName, start, end)(aggCols: _*)

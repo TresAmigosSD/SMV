@@ -194,6 +194,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
     "smv.appName"     -> "Smv Application",
+    "smv.appId"       -> java.util.UUID.randomUUID.toString,
     "smv.stages"      -> "",
     "smv.config.keys" -> "",
     "smv.class_dir"   -> "./target/classes"
@@ -204,6 +205,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // --- config params.  App should access configs through vals below rather than from props maps
   val appName    = mergedProps("smv.appName")
+  val appId      = mergedProps("smv.appId")
   val stageNames = splitProp("smv.stages").toSeq
 
   val classDir = mergedProps("smv.class_dir")

@@ -81,20 +81,33 @@ function find_fat_jar()
   fi
 }
 
-function set_spark_home() {
-    if [ -n "$SPARK_HOME_OPT" ]; then
-      SPARK_HOME="$SPARK_HOME_OPT"
-    elif [ -z "$SPARK_HOME" ]; then
-      sparkSubmit=$(type -p spark-submit)
-      if [ -z "$sparkSubmit" ]; then
-          echo "Can not find spark-submit script"
-          exit 1
-      fi
-      SPARK_HOME=$(cd $(dirname $sparkSubmit)/..; pwd)
-    fi
+# creates the SMV_SPARK_SUBMIT_FULLPATH and SMV_PYSPARK_FULLPATH from user
+# specified spark home and possibly overriden command names (for cloudera support).
+# users can specify SMV_SPARK_SUBMIT_CMD and SMV_PYSPARK_CMD to override the
+# executable used for spark-submit and pyspark respectively.
+function set_smv_spark_paths() {
+  # if user specified --spark-home, use that as prefix to all spark commands.
+  local prefix=""
+  if [ -n "$SPARK_HOME_OPT" ]; then
+    prefix="${SPARK_HOME_OPT}/bin/"
+  fi
 
-    export SPARK_HOME
-    echo "Using Spark at $SPARK_HOME"
+  # create the submit/pyspark full paths from spark home and override env vars.
+  export SMV_SPARK_SUBMIT_FULLPATH="${prefix}${SMV_SPARK_SUBMIT_CMD:-spark-submit}"
+  export SMV_PYSPARK_FULLPATH="${prefix}${SMV_PYSPARK_CMD:-pyspark}"
+
+  echo "Using $SMV_SPARK_SUBMIT_FULLPATH to submit jobs"
+  echo "Using $SMV_PYSPARK_FULLPATH to start shells"
+
+  # verify that the two paths are valid
+  local valid_paths=1
+  type -p "${SMV_SPARK_SUBMIT_FULLPATH}" > /dev/null || valid_paths=0
+  type -p "${SMV_PYSPARK_FULLPATH}" > /dev/null || valid_paths=0
+  if [ $valid_paths -eq 0 ]; then
+    echo "ERROR: The combination of --spark-home with spark commands override"
+    echo "produced invalid paths above!"
+    exit 1
+  fi
 }
 
 # Remove trailing alphanum characters in dot-separated version text.
@@ -123,7 +136,7 @@ function accept_version () {
 }
 
 function verify_spark_version() {
-  local installed_version=$(${SPARK_HOME}/bin/spark-submit --version 2>&1 | grep version | head -1 | sed -e 's/.*version //')
+  local installed_version=$(${SMV_SPARK_SUBMIT_FULLPATH} --version 2>&1 | grep version | head -1 | sed -e 's/.*version //')
   local required_version=$(cat "$SMV_TOOLS/../.spark_version")
   local vercmp=$(accept_version "$required_version" "$installed_version")
   if [[ $vercmp != "0" ]]; then
@@ -159,7 +172,7 @@ function check_help_option() {
 function print_help() {
   # Find but don't print the app jar
   find_fat_jar > /dev/null
-  "$SPARK_HOME/bin/spark-submit" --class ${SMV_APP_CLASS}  "${APP_JAR}" --help
+  "${SMV_SPARK_SUBMIT_FULLPATH}" --class ${SMV_APP_CLASS}  "${APP_JAR}" --help
 }
 
 # --- MAIN ---
@@ -167,7 +180,7 @@ declare -a SMV_ARGS SPARK_ARGS
 USER_CMD=`basename $0`
 SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
 split_smv_spark_args "$@"
-set_spark_home
+set_smv_spark_paths
 verify_spark_version
 check_help_option
 find_fat_jar

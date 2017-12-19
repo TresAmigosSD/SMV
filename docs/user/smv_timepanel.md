@@ -133,6 +133,56 @@ Please note that the start and end parameters should have the same `timeType`.
 
 ## Use TimePanel on DataFrames
 
+### `smvWithTimePanel`
+Adding a specified time panel period to the DF.
+
+
+Args:
+
+* time_col (str): the column name in the data as the event timestamp
+* start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel
+  package for details
+* end (panel.PartialTime): should be the same time type as the "start"
+
+Example:
+
+```python
+res = df.smvGroupBy("K").smvWithTimePanel("TS", Week(2012, 1, 1), Week(2012, 12, 31))
+```
+
+Returns (DataFrame): a result data frame with keys, and a column with name `smvTime`, and
+other input columns. Since `TimePanel` defines a period of time, if for some
+group in the data missing Months (or Quarters), this function will add records
+with non-null keys and `smvTime` columns while all other columns are
+null-valued.
+
+Example with on data:
+
+Given DataFrame df as
+
+| K | TS         | V    |
+|---|------------|------|
+| 1 | 2014-01-01 | 1.2  |
+| 1 | 2014-03-01 | 4.5  |
+| 1 | 2014-03-25 | 10.3 |
+
+after applying
+
+```python
+import smv.panel as P
+df.smvGroupBy("k").smvWithTimePanel("TS", Month(2014,1), Month(2014, 2))
+```
+
+the result is
+
+| K | TS         | V    | smvTime |
+|---|------------|------|---------|
+| 1 | 2014-01-01 | 1.2  | M201401 |
+| 1 | None       | None | M201402 |
+| 1 | 2014-03-01 | 4.5  | M201403 |
+| 1 | 2014-03-25 | 10.3 | M201403 |
+
+
 ### `smvTimePanelAgg`
 
 Aggregate transaction data along a `TimePanel`.

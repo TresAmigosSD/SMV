@@ -135,6 +135,9 @@ class SmvApp(object):
     def config(self):
         return self.j_smvApp.smvConfig()
 
+    def appId(self):
+        return self.config().appId()
+
     def discoverSchemaAsSmvSchema(self, path, csvAttributes, n=100000):
         """Discovers the schema of a .csv file and returns a Scala SmvSchema instance
 

@@ -139,7 +139,7 @@ class TimePanelTest extends SmvTestUtil {
     )
   }
 
-  test("test addTimePanels DF helper") {
+  test("test smvWithTimePanel DF helper") {
     val ssc = sqlContext; import ssc.implicits._
     val df =
       dfFrom("k:Integer; ts:String; v:Double",
@@ -149,9 +149,8 @@ class TimePanelTest extends SmvTestUtil {
 
     val res = df
       .smvGroupBy("k")
-      .addTimePanels("ts")(
-        TimePanel(Month(2012, 1), Month(2012, 6)),
-        TimePanel(Quarter(2012, 1), Quarter(2012, 2))
+      .smvWithTimePanel("ts",
+        Month(2012, 1), Month(2012, 6)
       )
 
     assertSrddDataEqual(
@@ -161,9 +160,7 @@ class TimePanelTest extends SmvTestUtil {
 1,null,null,M201203;
 1,null,null,M201204;
 1,2012-01-01 00:00:00.0,1.5,M201201;
-1,2012-05-01 00:00:00.0,2.45,M201205;
-1,2012-01-01 00:00:00.0,1.5,Q201201;
-1,2012-05-01 00:00:00.0,2.45,Q201202"""
+1,2012-05-01 00:00:00.0,2.45,M201205"""
     )
 
   }
