@@ -1,7 +1,10 @@
 package org.tresamigos.smv
 
+import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.InputStream
 import java.io.{BufferedWriter, StringWriter, OutputStreamWriter}
+import java.nio.charset.StandardCharsets
 
 import org.apache.hadoop.fs.{FileSystem, Path, FileUtil}
 import org.apache.commons.io.IOUtils
@@ -11,7 +14,7 @@ import scala.util.Try
 /**
  * Some helper HDFS functions.
  */
-private[smv] object SmvHDFS {
+object SmvHDFS {
 
   /** default hadoop configuration. */
   private val hadoopConf = new org.apache.hadoop.conf.Configuration()
@@ -51,16 +54,35 @@ private[smv] object SmvHDFS {
     writer.toString()
   }
 
-  def writeToFile(contents: String, fileName: String) = {
+  def writeToFile(contents: String, fileName: String): Long = {
+    val from = new ByteArrayInputStream(contents.getBytes(StandardCharsets.UTF_8))
+    try {
+      writeToFile(from, fileName)
+    } finally {
+      from.close()
+    }
+  }
+
+  def writeToFile(from: InputStream, fileName: String): Long = {
     val path = new org.apache.hadoop.fs.Path(fileName)
     val hdfs = getFileSystem(fileName)
 
     if (hdfs.exists(path)) hdfs.delete(path, true)
-    val stream = hdfs.create(path)
-    val writer = new BufferedWriter(new OutputStreamWriter(stream, "UTF-8"))
-    writer.write(contents);
-    writer.close()
-    stream.close()
+    val out = hdfs.create(path)
+
+    var count = 0
+    try {
+      val buf: Array[Byte] = new Array(8192)
+      var size = from.read(buf)
+      while (size != -1) {
+        out.write(buf, 0, size)
+        count += size
+        size = from.read(buf)
+      }
+    } finally {
+      out.close()
+    }
+    count
   }
 
   /**
