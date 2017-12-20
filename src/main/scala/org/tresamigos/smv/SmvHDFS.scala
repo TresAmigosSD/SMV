@@ -1,3 +1,17 @@
+/*
+ * This file is licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.tresamigos.smv
 
 import java.io.ByteArrayInputStream
@@ -14,7 +28,7 @@ import scala.util.Try
 /**
  * Some helper HDFS functions.
  */
-object SmvHDFS {
+private[smv] object SmvHDFS {
 
   /** default hadoop configuration. */
   private val hadoopConf = new org.apache.hadoop.conf.Configuration()
@@ -55,7 +69,7 @@ object SmvHDFS {
   }
 
   def writeToFile(contents: String, fileName: String): Long = {
-    val from = new ByteArrayInputStream(contents.getBytes(StandardCharsets.UTF_8))
+    val from = InputStreamAdapter(contents)
     try {
       writeToFile(from, fileName)
     } finally {
@@ -63,7 +77,7 @@ object SmvHDFS {
     }
   }
 
-  def writeToFile(from: InputStream, fileName: String): Long = {
+  def writeToFile(from: IAnyInputStream, fileName: String): Long = {
     val path = new org.apache.hadoop.fs.Path(fileName)
     val hdfs = getFileSystem(fileName)
 
@@ -141,4 +155,15 @@ object SmvHDFS {
       filename = s"${dirName}/${file}"
       r = deleteFile(filename)
     } yield (filename, r)
+}
+
+class InputStreamAdapter(in: InputStream) extends IAnyInputStream {
+  @Override def read(buf: Array[Byte]): Int = in.read(buf)
+  @Override def close(): Unit = in.close()
+}
+
+object InputStreamAdapter {
+  def apply(in: InputStream): InputStreamAdapter = new InputStreamAdapter(in)
+  def apply(content: String): InputStreamAdapter = new InputStreamAdapter(
+    new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)))
 }
