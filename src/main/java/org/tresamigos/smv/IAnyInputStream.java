@@ -18,6 +18,14 @@ package org.tresamigos.smv;
  * An input stream interface to bridge Python's file object and Java's InputStream.
  */
 public interface IAnyInputStream {
-	int read(byte[] buf);
+	/**
+	 * Attempts to read from this input stream at most max number of bytes.
+	 *
+	 * @param max the most number of bytes to read
+	 *
+	 * @return a tuple containing the number of bytes read and the content as a byte array
+	 */
+	scala.Tuple2<Integer, byte[]> read(int max);
+
 	void close();
 }

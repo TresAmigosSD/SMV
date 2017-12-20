@@ -17,6 +17,7 @@ package org.tresamigos.smv
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
+import java.io.OutputStream
 import java.io.{BufferedWriter, StringWriter, OutputStreamWriter}
 import java.nio.charset.StandardCharsets
 
@@ -68,7 +69,7 @@ private[smv] object SmvHDFS {
     writer.toString()
   }
 
-  def writeToFile(contents: String, fileName: String): Long = {
+  def writeToFile(contents: String, fileName: String): Unit = {
     val from = InputStreamAdapter(contents)
     try {
       writeToFile(from, fileName)
@@ -77,26 +78,27 @@ private[smv] object SmvHDFS {
     }
   }
 
-  def writeToFile(from: IAnyInputStream, fileName: String): Long = {
+  @scala.annotation.tailrec
+  def _copy(in: IAnyInputStream, out: OutputStream, chunksize: Int, buf: Array[Byte], size: Int): Unit =
+    if (size != -1) {
+      out.write(buf, 0, size)
+      val (nextsize, nextbuf) = in.read(chunksize)
+      _copy(in, out, chunksize, nextbuf, nextsize)
+    }
+
+  def writeToFile(from: IAnyInputStream, fileName: String): Unit = {
     val path = new org.apache.hadoop.fs.Path(fileName)
     val hdfs = getFileSystem(fileName)
 
     if (hdfs.exists(path)) hdfs.delete(path, true)
     val out = hdfs.create(path)
 
-    var count = 0
     try {
-      val buf: Array[Byte] = new Array(8192)
-      var size = from.read(buf)
-      while (size != -1) {
-        out.write(buf, 0, size)
-        count += size
-        size = from.read(buf)
-      }
+      val (size, buf) = from.read(8192)
+      _copy(from, out, 8192, buf, size)
     } finally {
       out.close()
     }
-    count
   }
 
   /**
@@ -158,7 +160,11 @@ private[smv] object SmvHDFS {
 }
 
 class InputStreamAdapter(in: InputStream) extends IAnyInputStream {
-  @Override def read(buf: Array[Byte]): Int = in.read(buf)
+  @Override def read(max: Int) = {
+    val buf = new Array[Byte](max)
+    val r = in.read(buf)
+    (r, buf)
+  }
   @Override def close(): Unit = in.close()
 }
 
