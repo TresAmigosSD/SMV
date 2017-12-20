@@ -255,6 +255,9 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def runModule(urn: String, forceRun: Boolean, version: Option[String]): DataFrame =
     j_smvApp.runModule(URN(urn), forceRun, version)
 
+  def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
+    SmvHDFS.writeToFile(in, dest)
+
   /** Returns metadata for a given urn*/
   def getMetadataJson(urn: String): String =
     j_smvApp.getMetadataJson(URN(urn))
