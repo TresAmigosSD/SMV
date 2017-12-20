@@ -126,6 +126,25 @@ def is_string(obj):
     except:
         return isinstance(obj, str)
 
+class FileObjInputStream(object):
+    """Wraps a Python binary file object to be used like a java.io.InputStream."""
+
+    def __init__(self, jvm, fileobj):
+        self.jvm = jvm
+        self.fileobj = fileobj
+
+    def read(self, maxsize):
+        buf = self.fileobj.read(maxsize)
+        if isinstance(buf, basestring): # we will get a string back if we are reading a text file
+            buf = bytearray(buf)
+        return buf
+
+    def close(self):
+        self.fileobj.close()
+
+    class Java:
+        implements = ['org.tresamigos.smv.IAnyInputStream']
+
 # If using Python 2, prefer cPickle because it is faster
 # If using Python 3, there is no cPickle (cPickle is now the implementation of pickle)
 # see https://docs.python.org/3.1/whatsnew/3.0.html#library-changes
