@@ -25,7 +25,7 @@ class HdfsBridgeTest(SmvBaseTest):
         """Helper method to copy a test resource to hdfs"""
 
         # invoke the hdfs copy method
-        srcpath = os.path.join(self.testResourceDir(), fn)
+        srcpath = os.path.join(self.resourceTestDir(), fn)
         destpath = os.path.join(self.tmpTestDir(), fn)
         with open(srcpath, 'rb') as f: self.smvApp.copyToHdfs(f, destpath)
 
