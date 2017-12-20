@@ -79,11 +79,11 @@ private[smv] object SmvHDFS {
   }
 
   @scala.annotation.tailrec
-  def _copy(in: IAnyInputStream, out: OutputStream, chunksize: Int, buf: Array[Byte], size: Int): Unit =
-    if (size != -1) {
-      out.write(buf, 0, size)
-      val (nextsize, nextbuf) = in.read(chunksize)
-      _copy(in, out, chunksize, nextbuf, nextsize)
+  def _copy(in: IAnyInputStream, out: OutputStream, chunksize: Int, buf: Array[Byte]): Unit =
+    if (!buf.isEmpty) {
+      out.write(buf, 0, buf.size)
+      val nextbuf = in.read(chunksize)
+      _copy(in, out, chunksize, nextbuf)
     }
 
   def writeToFile(from: IAnyInputStream, fileName: String): Unit = {
@@ -94,8 +94,8 @@ private[smv] object SmvHDFS {
     val out = hdfs.create(path)
 
     try {
-      val (size, buf) = from.read(8192)
-      _copy(from, out, 8192, buf, size)
+      val buf = from.read(8192)
+      _copy(from, out, 8192, buf)
     } finally {
       out.close()
     }
@@ -162,8 +162,11 @@ private[smv] object SmvHDFS {
 class InputStreamAdapter(in: InputStream) extends IAnyInputStream {
   @Override def read(max: Int) = {
     val buf = new Array[Byte](max)
-    val r = in.read(buf)
-    (r, buf)
+    in.read(buf) match {
+      case -1 => Array.empty
+      case 0 => read(max)
+      case size => buf.slice(0, size)
+    }
   }
   @Override def close(): Unit = in.close()
 }

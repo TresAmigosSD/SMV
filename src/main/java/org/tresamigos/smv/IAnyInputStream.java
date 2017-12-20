@@ -23,9 +23,10 @@ public interface IAnyInputStream {
 	 *
 	 * @param max the most number of bytes to read
 	 *
-	 * @return a tuple containing the number of bytes read and the content as a byte array
+	 * @return the content as a byte array
+	 *         EOF is indicated when an empty array is returned
 	 */
-	scala.Tuple2<Integer, byte[]> read(int max);
+	byte[] read(int max);
 
 	void close();
 }
