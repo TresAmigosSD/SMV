@@ -349,6 +349,15 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     runDS(ds, forceRun, version)
   }
 
+
+  /**
+   * Returns metadata for a given urn
+   */
+  def getMetadataJson(urn: URN): String = {
+    val ds = dsm.load(urn).head
+    ds.getMetadata().toJson
+  }
+
   /**
    * sequence of SmvModules to run based on the command line arguments.
    * Returns the union of -a/-m/-s command line flags.

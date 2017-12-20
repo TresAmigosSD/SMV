@@ -182,6 +182,10 @@ class SmvApp(object):
         jdf = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version))
         return DataFrame(jdf, self.sqlContext)
 
+    def getMetadataJson(self, urn):
+        """Returns the metadata for a given urn"""
+        return self.j_smvPyClient.getMetadataJson(urn)
+
     def inferUrn(self, name):
         return self.j_smvPyClient.inferDS(name).urn().toString()
 
