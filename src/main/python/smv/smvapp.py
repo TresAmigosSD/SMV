@@ -28,7 +28,7 @@ from smv.datasetrepo import DataSetRepoFactory
 from smv.utils import smv_copy_array, check_socket
 from smv.error import SmvRuntimeError
 import smv.helpers
-
+from smv.utils import FileObjInputStream
 
 class SmvApp(object):
     """The Python representation of SMV.
@@ -194,6 +194,23 @@ class SmvApp(object):
         """
         return self.j_smvPyClient.inferDS(name).verHex()
 
+    def copyToHdfs(self, fileobj, destination):
+        """Copies the content of a file object to an HDFS location.
+
+        Args:
+            fileobj (file object): a file-like object whose content is to be copied,
+                such as one returned by open(), or StringIO
+            destination (str): specifies the destination path in the hadoop file system
+
+        The file object is expected to have been opened in binary read
+        mode.  However, if the file object returns text from the
+        read() operation, some effort is still made to attempt to
+        convert that text to bytes, using 'utf-8' encoding.
+
+        The file object is closed when this function completes.
+        """
+        src = FileObjInputStream(fileobj)
+        self.j_smvPyClient.copyToHdfs(src, destination)
 
     def urn2fqn(self, urnOrFqn):
         """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged

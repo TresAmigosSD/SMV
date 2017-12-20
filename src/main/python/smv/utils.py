@@ -129,8 +129,7 @@ def is_string(obj):
 class FileObjInputStream(object):
     """Wraps a Python binary file object to be used like a java.io.InputStream."""
 
-    def __init__(self, jvm, fileobj):
-        self.jvm = jvm
+    def __init__(self, fileobj):
         self.fileobj = fileobj
 
     def read(self, maxsize):
