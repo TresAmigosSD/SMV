@@ -78,14 +78,6 @@ private[smv] object SmvHDFS {
     }
   }
 
-  @scala.annotation.tailrec
-  def _copy(in: IAnyInputStream, out: OutputStream, chunksize: Int, buf: Array[Byte]): Unit =
-    if (!buf.isEmpty) {
-      out.write(buf, 0, buf.size)
-      val nextbuf = in.read(chunksize)
-      _copy(in, out, chunksize, nextbuf)
-    }
-
   def writeToFile(from: IAnyInputStream, fileName: String): Unit = {
     val path = new org.apache.hadoop.fs.Path(fileName)
     val hdfs = getFileSystem(fileName)
@@ -94,8 +86,11 @@ private[smv] object SmvHDFS {
     val out = hdfs.create(path)
 
     try {
-      val buf = from.read(8192)
-      _copy(from, out, 8192, buf)
+      var buf = from.read(8192)
+      while (!buf.isEmpty) {
+        out.write(buf, 0, buf.size)
+        buf = from.read(8192)
+      }
     } finally {
       out.close()
     }
@@ -159,18 +154,23 @@ private[smv] object SmvHDFS {
     } yield (filename, r)
 }
 
+/**
+ * Adapts a java InputStream object to the IAnyInputStream interface,
+ * so it can be used in I/O methods that can work with input streams
+ * from both Java and Python sources.
+ */
 class InputStreamAdapter(in: InputStream) extends IAnyInputStream {
   @Override def read(max: Int) = {
     val buf = new Array[Byte](max)
-    in.read(buf) match {
-      case -1 => Array.empty
-      case 0 => read(max)
-      case size => buf.slice(0, size)
-    }
+    var size = 0
+    while (0 == size)
+      size = in.read(buf)
+    if (-1 == size) Array.empty else buf.slice(0, size)
   }
   @Override def close(): Unit = in.close()
 }
 
+/** Factory object to create InputStreamAdapters from input sources */
 object InputStreamAdapter {
   def apply(in: InputStream): InputStreamAdapter = new InputStreamAdapter(in)
   def apply(content: String): InputStreamAdapter = new InputStreamAdapter(
