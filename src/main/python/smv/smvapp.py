@@ -202,10 +202,7 @@ class SmvApp(object):
                 such as one returned by open(), or StringIO
             destination (str): specifies the destination path in the hadoop file system
 
-        The file object is expected to have been opened in binary read
-        mode.  However, if the file object returns text from the
-        read() operation, some effort is still made to attempt to
-        convert that text to bytes, using 'utf-8' encoding.
+        The file object is expected to have been opened in binary read mode.
 
         The file object is closed when this function completes.
         """

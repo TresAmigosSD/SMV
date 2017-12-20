@@ -134,8 +134,14 @@ class FileObjInputStream(object):
 
     def read(self, maxsize):
         buf = self.fileobj.read(maxsize)
-        if isinstance(buf, basestring): # we will get a string back if we are reading a text file
-            buf = bytearray(buf)
+        # The following should work in both Python 2.7 and 3.5.
+        #
+        # In 2.7, read() returns a str even in 'rb' mode, but calling
+        # bytearray converts it to the right type.
+        #
+        # In 3.5, read() returns a bytes in 'rb' mode, and calling
+        # bytearray does not require a specified encoding
+        buf = bytearray(buf)
         return buf
 
     def close(self):
