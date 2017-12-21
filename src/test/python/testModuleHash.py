@@ -24,11 +24,11 @@ class ModuleHashTest(SmvBaseTest):
 
     @classmethod
     def before_dir(cls):
-        return cls.testResourceDir() + "/before"
+        return cls.resourceTestDir() + "/before"
 
     @classmethod
     def after_dir(cls):
-        return cls.testResourceDir() + "/after"
+        return cls.resourceTestDir() + "/after"
 
     class Resource(object):
         def __init__(self, smvApp, path, fqn):

@@ -1,7 +1,25 @@
+/*
+ * This file is licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.tresamigos.smv
 
+import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import java.io.{BufferedWriter, StringWriter, OutputStreamWriter}
+import java.nio.charset.StandardCharsets
 
 import org.apache.hadoop.fs.{FileSystem, Path, FileUtil}
 import org.apache.commons.io.IOUtils
@@ -51,16 +69,31 @@ private[smv] object SmvHDFS {
     writer.toString()
   }
 
-  def writeToFile(contents: String, fileName: String) = {
+  def writeToFile(contents: String, fileName: String): Unit = {
+    val from = InputStreamAdapter(contents)
+    try {
+      writeToFile(from, fileName)
+    } finally {
+      from.close()
+    }
+  }
+
+  def writeToFile(from: IAnyInputStream, fileName: String): Unit = {
     val path = new org.apache.hadoop.fs.Path(fileName)
     val hdfs = getFileSystem(fileName)
 
     if (hdfs.exists(path)) hdfs.delete(path, true)
-    val stream = hdfs.create(path)
-    val writer = new BufferedWriter(new OutputStreamWriter(stream, "UTF-8"))
-    writer.write(contents);
-    writer.close()
-    stream.close()
+    val out = hdfs.create(path)
+
+    try {
+      var buf = from.read(8192)
+      while (!buf.isEmpty) {
+        out.write(buf, 0, buf.size)
+        buf = from.read(8192)
+      }
+    } finally {
+      out.close()
+    }
   }
 
   /**
@@ -119,4 +152,27 @@ private[smv] object SmvHDFS {
       filename = s"${dirName}/${file}"
       r = deleteFile(filename)
     } yield (filename, r)
+}
+
+/**
+ * Adapts a java InputStream object to the IAnyInputStream interface,
+ * so it can be used in I/O methods that can work with input streams
+ * from both Java and Python sources.
+ */
+class InputStreamAdapter(in: InputStream) extends IAnyInputStream {
+  @Override def read(max: Int) = {
+    val buf = new Array[Byte](max)
+    var size = 0
+    while (0 == size)
+      size = in.read(buf)
+    if (-1 == size) Array.empty else buf.slice(0, size)
+  }
+  @Override def close(): Unit = in.close()
+}
+
+/** Factory object to create InputStreamAdapters from input sources */
+object InputStreamAdapter {
+  def apply(in: InputStream): InputStreamAdapter = new InputStreamAdapter(in)
+  def apply(content: String): InputStreamAdapter = new InputStreamAdapter(
+    new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)))
 }

@@ -128,7 +128,7 @@ function accept_version () {
   local sane=$(sanitize_version $2)
   local IFS=.
   local required=($1) found=($sane)
-  if [[ ${required[0]} == ${found[0]} ]] && [[ ${required[1]} == ${found[1]} ]] && ! (( ${found[2]} < ${required[2]} )); then
+  if [[ ${required[0]} == ${found[0]} ]] && [[ ${required[1]} == ${found[1]} ]]; then
     echo 0
   else
     echo 1
