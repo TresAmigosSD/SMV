@@ -24,11 +24,11 @@ class DataSetRepoTest(SmvBaseTest):
 
     @classmethod
     def before_dir(cls):
-        return cls.testResourceDir() + "/before"
+        return cls.resourceTestDir() + "/before"
 
     @classmethod
     def after_dir(cls):
-        return cls.testResourceDir() + "/after"
+        return cls.resourceTestDir() + "/after"
 
     def build_new_repo(self): return DataSetRepo(self.smvApp)
 

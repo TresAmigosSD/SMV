@@ -29,7 +29,7 @@ from smv.datasetrepo import DataSetRepoFactory
 from smv.utils import smv_copy_array, check_socket
 from smv.error import SmvRuntimeError
 import smv.helpers
-
+from smv.utils import FileObjInputStream
 
 class SmvApp(object):
     """The Python representation of SMV.
@@ -181,6 +181,10 @@ class SmvApp(object):
         jdf = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version))
         return DataFrame(jdf, self.sqlContext)
 
+    def getMetadataJson(self, urn):
+        """Returns the metadata for a given urn"""
+        return self.j_smvPyClient.getMetadataJson(urn)
+
     def inferUrn(self, name):
         return self.j_smvPyClient.inferDS(name).urn().toString()
 
@@ -193,6 +197,20 @@ class SmvApp(object):
         """
         return self.j_smvPyClient.inferDS(name).verHex()
 
+    def copyToHdfs(self, fileobj, destination):
+        """Copies the content of a file object to an HDFS location.
+
+        Args:
+            fileobj (file object): a file-like object whose content is to be copied,
+                such as one returned by open(), or StringIO
+            destination (str): specifies the destination path in the hadoop file system
+
+        The file object is expected to have been opened in binary read mode.
+
+        The file object is closed when this function completes.
+        """
+        src = FileObjInputStream(fileobj)
+        self.j_smvPyClient.copyToHdfs(src, destination)
 
     def urn2fqn(self, urnOrFqn):
         """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged
