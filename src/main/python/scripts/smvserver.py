@@ -187,8 +187,8 @@ def getDatasetInstance(fqn):
     '''returns dataset object given a fqn'''
     return DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
 
-def runModule(fqn):
-    '''runs module of given fqn'''
+def runModule(fqn, run_config=None):
+    '''runs module of given fqn and runtime configuration'''
     return SmvApp.getInstance().runModule("mod:{}".format(fqn))
 
 def getMetadataJson(fqn):
@@ -200,14 +200,23 @@ def getMetadataJson(fqn):
 @app.route("/api/run_module", methods = ['POST'])
 def run_module():
     '''
-    body: fqn = 'xxx' (fqn)
-    function: run the module
+    body:
+        'fqn': module fqn
+        'run_config': runtime configuration(optional)
+    function: run the module of given fqn and runtime configuration
     '''
     try:
         module_fqn = request.form['fqn'].encode("utf-8")
     except:
         raise err_res('MODULE_NOT_PROVIDED_ERR')
-    return ok_res(str(runModule(module_fqn)))
+    try:
+        encoded_run_config = None
+        run_config = request.form['run_config']
+        if run_config is not None:
+            encoded_run_config = run_config.encode("utf-8")
+    except:
+        raise err_res('MODULE_RUN_CONFIGURATION_ERR')
+    return ok_res(str(runModule(module_fqn, encoded_run_config)))
 
 @app.route("/api/get_graph_json", methods = ['POST'])
 def get_graph_json():
