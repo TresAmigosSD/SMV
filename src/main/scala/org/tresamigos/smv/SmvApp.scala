@@ -313,16 +313,30 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
+   * set dynamic runtime configuration.
+   * this should be set before run operation.
+   */
+  private def setDynamicRunConfig(runConfig: Map[String, String]) = {
+    smvConfig.dynamicRunConfig = runConfig
+  }
+
+  /**
    * proceeds with the execution of an smvDS passed from runModule or runModuleByName
    * TODO: the name of this function should make its distinction from runModule clear (this is an implementation)
    */
-  def runDS(ds: SmvDataSet, forceRun: Boolean, version: Option[String]): DataFrame = {
+  def runDS(ds: SmvDataSet,
+            forceRun: Boolean,
+            version: Option[String],
+            runConfig: Map[String, String] = Map.empty): DataFrame = {
     if (version.isDefined)
       // if fails, error already handled since input path doesn't exist
       ds.readPublishedData(version).get
     else {
       if (forceRun)
         deletePersistedResults(Seq(ds))
+
+      // set dynamic runtime configuration before run
+      setDynamicRunConfig(runConfig)
 
       ds.rdd(forceRun)
     }
@@ -333,9 +347,12 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    *  and the module's DataFrame cache will be ignored, forcing the module to run again.
    * If a version is specified, try to read the module from the published data for the given version
    */
-  def runModule(urn: URN, forceRun: Boolean = false, version: Option[String] = None): DataFrame = {
+  def runModule(urn: URN,
+                forceRun: Boolean = false,
+                version: Option[String] = None,
+                runConfig: Map[String, String] = Map.empty): DataFrame = {
     val ds = dsm.load(urn).head
-    runDS(ds, forceRun, version)
+    runDS(ds, forceRun, version, runConfig)
   }
 
   /**

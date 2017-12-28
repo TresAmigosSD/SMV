@@ -239,14 +239,17 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
         throw new SmvRuntimeException("JDBC url not specified in SMV config")
     }
 
+  // ---------- Dynamic Run Config Parameters key/values ----------
+  var dynamicRunConfig: Map[String, String] = Map()
+
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
   // ---------- User Run Config Parameters key/values ----------
-  val runConfigKeys: Seq[String] = splitProp("smv.config.keys")
+  lazy val runConfigKeys: Seq[String] = splitProp("smv.config.keys") ++ dynamicRunConfig.keySet
 
   /** Get user run config parameter as a string. */
-  def getRunConfig(key: String): String = mergedProps("smv.config." + key).trim
+  def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, mergedProps("smv.config." + key).trim)
 
   /** compute hash of all key values defined in the app. */
   def getRunConfigHash(): Int = runConfigKeys.map(getRunConfig(_)).mkString(":").hashCode()

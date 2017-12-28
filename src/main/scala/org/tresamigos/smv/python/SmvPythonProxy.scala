@@ -252,8 +252,11 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(urn: String, forceRun: Boolean, version: Option[String]): DataFrame =
-    j_smvApp.runModule(URN(urn), forceRun, version)
+  def runModule(urn: String,
+                forceRun: Boolean,
+                version: Option[String],
+                runConfig: Map[String, String] = Map.empty): DataFrame =
+    j_smvApp.runModule(URN(urn), forceRun, version, runConfig)
 
   def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
     SmvHDFS.writeToFile(in, dest)
