@@ -12,8 +12,9 @@
 # limitations under the License.
 
 from smv import SmvApp, SmvModule
+from smv.runconfig import SmvRunConfig
 
-class A(SmvModule):
+class A(SmvModule, SmvRunConfig):
     def isEphemeral(self): return True
     def requiresDS(self): return []
     def run(self, i):
