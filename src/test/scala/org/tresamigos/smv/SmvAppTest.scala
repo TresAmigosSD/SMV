@@ -41,8 +41,23 @@ package org.tresamigos.smv {
         "--input-dir",
         testcaseTempDir,
         "--smv-props",
-        "smv.stages=org.tresamigos.smv.fixture.smvapptest"
+        "smv.stages=org.tresamigos.smv.fixture.smvapptest",
+        "smv.config.keys=sample",
+        "smv.config.sample=1pct"
       )
+
+    test("Test runtime configuration") {
+      import org.tresamigos.smv.fixture.smvapptest._
+      resetTestcaseTempDir()
+
+      assert(app.smvConfig.getRunConfig("sample") === "1pct")
+
+      app.runModule(C.urn, runConfig = Map("sample" -> "2pct"))
+      assert(app.smvConfig.getRunConfig("sample") === "2pct")
+
+      app.runModule(C.urn, runConfig = Map("sample" -> "3pct"))
+      assert(app.smvConfig.getRunConfig("sample") === "3pct")
+    }
 
     test("Test normal dependency execution") {
       import org.tresamigos.smv.fixture.smvapptest._
