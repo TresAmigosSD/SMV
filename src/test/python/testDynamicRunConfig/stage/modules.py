@@ -11,8 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp, SmvModule
-from smv.runconfig import SmvRunConfig
+from smv import SmvApp, SmvModule, SmvRunConfig
 
 class A(SmvModule, SmvRunConfig):
     def isEphemeral(self): return True

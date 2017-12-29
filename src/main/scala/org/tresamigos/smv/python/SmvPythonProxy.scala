@@ -255,8 +255,11 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def runModule(urn: String,
                 forceRun: Boolean,
                 version: Option[String],
-                runConfig: Map[String, String] = Map.empty): DataFrame =
-    j_smvApp.runModule(URN(urn), forceRun, version, runConfig)
+                runConfig: java.util.Map[String, String]): DataFrame = {
+      var dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+
+      j_smvApp.runModule(URN(urn), forceRun, version, dynamicRunConfig)
+    }
 
   def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
     SmvHDFS.writeToFile(in, dest)

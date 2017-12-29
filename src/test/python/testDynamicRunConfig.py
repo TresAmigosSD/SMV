@@ -14,20 +14,6 @@
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
 
-class RunModuleWithoutRunConfigTest(SmvBaseTest):
-    modUrn = 'mod:stage.modules.A'
-
-    @classmethod
-    def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=stage',
-                '-m', "modules.A"]
-
-    def test_run_module_without_run_config(self):
-        self.smvApp.j_smvApp.run()
-        res = self.smvApp.runModule(self.modUrn)
-        expected = self.createDF('src:String', '')
-        self.should_be_same(res, expected)
-
 class RunModuleWithRunConfigTest(SmvBaseTest):
     modUrn = 'mod:stage.modules.A'
 
@@ -49,3 +35,6 @@ class RunModuleWithRunConfigTest(SmvBaseTest):
         self.should_be_same(a, self.createDF('src:String', 'dynamic_a'))
         b = self.smvApp.runModule(self.modUrn, runConfig = {'src': 'dynamic_b'})
         self.should_be_same(b, self.createDF('src:String', 'dynamic_b'))
+
+        c = self.smvApp.runModule(self.modUrn)
+        self.should_be_same(c, self.createDF('src:String', 'cmd'))
