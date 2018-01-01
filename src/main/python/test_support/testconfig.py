@@ -13,7 +13,7 @@
 import sys
 
 from pyspark import SparkContext
-from pyspark.sql import HiveContext
+from pyspark.sql import HiveContext, SQLContext
 
 from smv.smvapp import SmvApp
 
@@ -47,7 +47,7 @@ class TestConfig(object):
     @classmethod
     def sqlContext(cls):
         if not hasattr(cls, 'sqlc'):
-            cls.sqlc = HiveContext(cls.sparkContext())
+            cls.sqlc = SQLContext(cls.sparkContext())
         return cls.sqlc
 
     # smv args specified via command line

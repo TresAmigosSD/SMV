@@ -314,7 +314,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
 
   /**
    * set dynamic runtime configuration.
-   * this should be set before run operation.
+   * this should be set before run dataset.
    */
   private def setDynamicRunConfig(runConfig: Map[String, String]) = {
     smvConfig.dynamicRunConfig = runConfig
@@ -345,7 +345,8 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   /** Run a module by its fully qualified name in its respective language environment
    *  If force argument is true, any existing persisted results will be deleted
    *  and the module's DataFrame cache will be ignored, forcing the module to run again.
-   * If a version is specified, try to read the module from the published data for the given version
+   *  If a version is specified, try to read the module from the published data for the given version.
+   *  If dynamic runtime configuration is specified, run the module with the configuration provided.
    */
   def runModule(urn: URN,
                 forceRun: Boolean = false,
