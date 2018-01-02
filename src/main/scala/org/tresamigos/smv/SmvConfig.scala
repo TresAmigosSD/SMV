@@ -246,13 +246,14 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
   // ---------- User Run Config Parameters key/values ----------
-  lazy val runConfigKeys: Seq[String] = splitProp("smv.config.keys") ++ dynamicRunConfig.keySet
-
   /** Get user run config parameter as a string. */
   def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, mergedProps("smv.config." + key).trim)
 
+  /** Get all run config keys. */
+  def getRunConfigKeys(): Seq[String] = splitProp("smv.config.keys") ++ dynamicRunConfig.keySet
+
   /** compute hash of all key values defined in the app. */
-  def getRunConfigHash(): Int = runConfigKeys.map(getRunConfig(_)).mkString(":").hashCode()
+  def getRunConfigHash(): Int = getRunConfigKeys().map(getRunConfig(_)).mkString(":").hashCode()
 
   // ---------- hierarchy of data / input / output directories
 

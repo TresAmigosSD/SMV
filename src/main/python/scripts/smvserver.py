@@ -205,13 +205,14 @@ def run_module():
         'run_config': runtime configuration(optional)
     function: run the module of given fqn and runtime configuration
     '''
+    json = request.get_json()
     try:
-        module_fqn = request.form['fqn'].encode("utf-8")
+        module_fqn = json['fqn'].encode("utf-8")
     except:
         raise err_res('MODULE_NOT_PROVIDED_ERR')
     try:
         encoded_run_config = None
-        run_config = request.form['run_config']
+        run_config = json['run_config']
         if run_config is not None:
             encoded_run_config = run_config.encode("utf-8")
     except:
