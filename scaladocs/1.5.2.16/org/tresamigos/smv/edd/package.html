@@ -1,0 +1,213 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>edd - org.tresamigos.smv.edd</title>
+          <meta name="description" content="edd - org.tresamigos.smv.edd" />
+          <meta name="keywords" content="edd org.tresamigos.smv.edd" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'org.tresamigos.smv.edd.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="org">org</a>.<a href="../../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="../package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
+        <h1>edd</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">edd</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Provides Extended Data Dictionary functions for ad hoc data analysis</p><pre>scala&gt; <span class="kw">val</span> res1 = df.edd.summary($<span class="lit">"amt"</span>, $<span class="lit">"time"</span>)
+scala&gt; res1.eddShow
+
+scala&gt; <span class="kw">val</span> res2 = df.edd.histogram(AmtHist($<span class="lit">"amt"</span>), $<span class="lit">"county"</span>, Hist($<span class="lit">"pop"</span>, binSize=<span class="num">1000</span>))
+scala&gt; res2.eddShow
+scala&gt; res2.saveReport(<span class="lit">"file/path"</span>)</pre><p>Depends on the data types of the columns, Edd summary method will perform different
+statistics.</p><p>The <code>histogram</code> method takes a group of <code>HistColumn</code> as parameters.
+Or when a group of <code>String</code> as the column names are given, it will use the default <code>HistColumn</code>
+parameters.
+Two types of <code>HistColumn</code>s are supported</p><ul><li><a href="Hist.html" class="extype" name="org.tresamigos.smv.edd.Hist">org.tresamigos.smv.edd.Hist</a></li><li><a href="AmtHist.html" class="extype" name="org.tresamigos.smv.edd.AmtHist">org.tresamigos.smv.edd.AmtHist</a></li></ul><p>The <code>eddShow</code> method will print report to the console, <code>saveReport</code> will save report as <code>RDD[String]</code>,
+The strings are JSON strings.
+</p></div><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol>
+                
+                <li class="alpha in"><span>Alphabetic</span></li>
+                <li class="inherit out"><span>By inheritance</span></li>
+              </ol>
+            </div>
+        <div id="ancestors">
+                <span class="filtertype">Inherited<br />
+                </span>
+                <ol id="linearization">
+                  <li class="in" name="org.tresamigos.smv.edd"><span>edd</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                </ol>
+              </div><div id="ancestors">
+            <span class="filtertype"></span>
+            <ol>
+              <li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show all</span></li>
+            </ol>
+            <a href="http://docs.scala-lang.org/overviews/scaladoc/usage.html#members" target="_blank">Learn more about member selection</a>
+          </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="org.tresamigos.smv.edd.AmtHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AmtHistextendsHistColumnwithProductwithSerializable"></a>
+      <a id="AmtHist:AmtHist"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="AmtHist.html"><span class="name">AmtHist</span></a><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.edd.HistColumn">HistColumn</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Specify an <b>Amount</b> binned histogram
+Pre-defined bins for amount-like column to best report on log-normal distributed amount fields</p>
+    </li><li name="org.tresamigos.smv.edd.Edd" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="EddextendsAnyRef"></a>
+      <a id="Edd:Edd"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Edd.html"><span class="name">Edd</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Implement the <code>edd</code> method of DFHelper</p>
+    </li><li name="org.tresamigos.smv.edd.EddResultFunctions" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="EddResultFunctionsextendsProductwithSerializable"></a>
+      <a id="EddResultFunctions:EddResultFunctions"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="EddResultFunctions.html"><span class="name">EddResultFunctions</span></a><span class="params">(<span name="eddRes">eddRes: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Implement methods on Edd results</p>
+    </li><li name="org.tresamigos.smv.edd.Hist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="HistextendsHistColumnwithProductwithSerializable"></a>
+      <a id="Hist:Hist"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Hist.html"><span class="name">Hist</span></a><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="binSize">binSize: <span class="extype" name="scala.Double">Double</span> = <span class="symbol">100.0</span></span>, <span name="sortByFreq">sortByFreq: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.edd.HistColumn">HistColumn</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Define histogram parameters for specified the column
+</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="org.tresamigos.smv.edd.Edd" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Edd"></a>
+      <a id="Edd:Edd"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Edd$.html"><span class="name">Edd</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.edd.package#makeEddDFCvrt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="makeEddDFCvrt(erf:org.tresamigos.smv.edd.EddResultFunctions):org.apache.spark.sql.DataFrame"></a>
+      <a id="makeEddDFCvrt(EddResultFunctions):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">makeEddDFCvrt</span><span class="params">(<span name="erf">erf: <a href="EddResultFunctions.html" class="extype" name="org.tresamigos.smv.edd.EddResultFunctions">EddResultFunctions</a></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+      <script defer="defer" type="text/javascript" id="jquery-js" src="../../../../lib/jquery.js"></script><script defer="defer" type="text/javascript" id="jquery-ui-js" src="../../../../lib/jquery-ui.js"></script><script defer="defer" type="text/javascript" id="tools-tooltip-js" src="../../../../lib/tools.tooltip.js"></script><script defer="defer" type="text/javascript" id="template-js" src="../../../../lib/template.js"></script>
+    </body>
+      </html>
