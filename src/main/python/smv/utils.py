@@ -34,7 +34,7 @@ def iter_submodules_in_stage(stage):
     # Gtk modules, which are not designed to use with reflection or
     # introspection. Best action to take in this situation is probably
     # to simply suppress the error.
-    def onerror(): pass
+    def onerror(n): pass
     return pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=onerror)
 
 def for_name(name, stages):
