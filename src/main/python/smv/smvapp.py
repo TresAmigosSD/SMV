@@ -175,10 +175,10 @@ class SmvApp(object):
         df = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
 
-    def runModule(self, urn, forceRun = False, version = None):
+    def runModule(self, urn, forceRun = False, version = None, runConfig = None):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version))
+        jdf = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
         return DataFrame(jdf, self.sqlContext)
 
     def getMetadataJson(self, urn):
