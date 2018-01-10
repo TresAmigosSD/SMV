@@ -7,7 +7,7 @@ from smv.runconfig import SmvRunConfig
 from smv.csv_attributes import CsvAttributes
 from smv.helpers import SmvGroupedData
 
-from smv.historical_validators import SmvHistoricalValidators
+from smv.historical_validators import SmvHistoricalValidator, SmvHistoricalValidators
 
 # keep old py names for backwards compatibility
 SmvPyCsvFile = SmvCsvFile

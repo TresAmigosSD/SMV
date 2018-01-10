@@ -187,7 +187,7 @@ class SmvDataSet(ABC):
         # if module has high order historical validation rules, add their hash to sum.
         # they key() of a validator should change if it's parameters change.
         if hasattr(cls, "_smvHistoricalValidatorsList"):
-            keys_hash = [_smvhash(v.key()) for v in cls._smvHistoricalValidatorsList]
+            keys_hash = [_smvhash(v._key()) for v in cls._smvHistoricalValidatorsList]
             res += sum(keys_hash)
 
         # ensure python's numeric type can fit in a java.lang.Integer

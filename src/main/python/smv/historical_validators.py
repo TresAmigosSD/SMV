@@ -1,28 +1,47 @@
-
-def metadataForAllValidators(validators, df):
-    """Given a seq of validators, return the union of all `metedata` results."""
-    all_metadata = {}
-
-    for v in validators:
-        m = v.metadata(df)
-        k = v.key()
-        print("storing metadata at key %s: %s" % (k, str(m)))
-        all_metadata[k] = m
-
-    return all_metadata
-
 def SmvHistoricalValidators(*validators):
-    """Decorator to specify set of validators to apply to an SmvDataSet
-    """
-    print("------------------------ inside smv validators: " + str(validators))
+    """Decorator to specify set of validators to apply to an SmvDataSet.
 
+        Each validator should specify the standard `metadata` and `validateMetadata`
+        methods.  In addition, each validator will have a unique key defined that
+        will determine how it is stored in the final metadata structure.  This
+        decorator will take care of composing the union of all metadata from validators
+        and decomposing the full metatdata structure into individual pieces for each
+        validator (hint: the _key() method of each validator is used to key into the
+        fine metadata structure)
+    """
     def metadata(self, df):
-        return metadataForAllValidators(validators, df)
+        """return the union of all `metedata` results from all validators."""
+        all_metadata = {}
+
+        for v in validators:
+            m = v.metadata(df)
+            k = v._key()
+            all_metadata[k] = m
+
+        return all_metadata
+
+    def validateMetadata(self, cur_metadata, hist_metadata):
+        """validate the results for all validators.  Fail if any validator failed."""
+        failed_list = []
+
+        for v in validators:
+            # extract the current/historical metadata for this validator
+            k = v._key()
+            v_cur_metadata = cur_metadata.get(k)
+            v_hist_metadata = [m[k] for m in hist_metadata if m.get(k)]
+
+            v_res = v.validateMetadata(v_cur_metadata, v_hist_metadata)
+            if v_res != None:
+                failed_list.append(v_res)
+
+        if len(failed_list) > 0:
+            return ";".join(failed_list)
+        return None
 
     def cls_wrapper(cls):
-        print("------------------------ inside smv cls_wrapper")
         cls._smvHistoricalValidatorsList = validators
         cls.metadata = metadata
+        cls.validateMetadata = validateMetadata
         return cls
 
     return cls_wrapper
@@ -33,11 +52,14 @@ class SmvHistoricalValidator(object):
         Derived classes must override the `key`, `metadata`, and `validateMetadata`
         methods.
     """
-    def key(self):
-        """Derived classes must provide a unique key based on the validator type
-            **and** instance arguments.  This is so two rules applied to the
-            same dataset will end up with two different metadata keys."""
-        raise NotImplementedError("missing key() method")
+    def __init__(self, *args):
+        self.args = args
+
+    def _key(self):
+        """computes a unique "key" for this instance of the validator based on
+           the validator arguments and type."""
+        key_args = [self.__class__.__name__] + [str(a) for a in self.args]
+        return (":".join(key_args))
 
     def metadata(self, df):
         """identical interface to standard dataset `metadata` method"""
@@ -47,17 +69,27 @@ class SmvHistoricalValidator(object):
         """identical interface to standard dataset `validateMetadata` method"""
         raise NotImplementedError("missing validateMetadata() method")
 
-class DummyRule(SmvHistoricalValidator):
-    def __init__(self, col, val):
-        self.col = col
-        self.val = val
 
-    def key(self):
-        return 'dummy:%s:%d' % (self.col, self.val)
+
+# TODO: delete these in the future!!!!
+
+class DistinctCountVariation(smv.SmvHistoricalValidator):
+    def __init__(self, col, threshold):
+        super(DistinctCountVariation, self).__init__(col, threshold)
+        self.col = col
+        self.threshold = threshold
 
     def metadata(self, df):
-        return {"c": self.col, "v": self.val}
+        count = df.select(self.col).distinct().count()
+        return {"d_count": count}
 
     def validateMetadata(self, cur, hist):
-        print ("===== calling dummy rule validate method")
+        if len(hist) == 0: return
+        hist_count_avg = float(sum([h["d_count"] for h in hist])) / len(hist)
+        cur_count = cur["d_count"]
+
+        #print ("hist_count_avg = " + str(hist_count_avg))
+        #print ("cur_count = " + str(cur_count))
+        if (float(abs(cur_count - hist_count_avg)) / hist_count_avg) > self.threshold:
+            return "DistinctCountVariation: count = %d, avg = %g" % (cur_count, hist_count_avg)
         return None
