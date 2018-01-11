@@ -70,8 +70,7 @@ class SmvHistoricalValidator(object):
         raise NotImplementedError("missing validateMetadata() method")
 
 
-
-# TODO: delete these in the future!!!!
+# TODO: move to other repo.
 
 class DistinctCountVariation(smv.SmvHistoricalValidator):
     def __init__(self, col, threshold):
@@ -84,7 +83,7 @@ class DistinctCountVariation(smv.SmvHistoricalValidator):
         return {"d_count": count}
 
     def validateMetadata(self, cur, hist):
-        if len(hist) == 0: return
+        if len(hist) == 0: return None
         hist_count_avg = float(sum([h["d_count"] for h in hist])) / len(hist)
         cur_count = cur["d_count"]
 
@@ -92,4 +91,56 @@ class DistinctCountVariation(smv.SmvHistoricalValidator):
         #print ("cur_count = " + str(cur_count))
         if (float(abs(cur_count - hist_count_avg)) / hist_count_avg) > self.threshold:
             return "DistinctCountVariation: count = %d, avg = %g" % (cur_count, hist_count_avg)
+        return None
+
+class AvgValueVariation(smv.SmvHistoricalValidator):
+    def __init__(self, col, threshold):
+        super(AvgValueVariation, self).__init__(col, threshold)
+        self.col = col
+        self.threshold = threshold
+
+    def metadata(self, df):
+        c_avg = df.agg(F.avg(self.col).alias("a")).collect()[0].a
+        return {"avg": c_avg}
+
+    def validateMetadata(self, cur, hist):
+        #print("AvgValueVariation.validate: %s ... %s" % (str(cur), str(hist)))
+        if len(hist) == 0: return None
+        hist_avg_avg = float(sum([h["avg"] for h in hist])) / len(hist)
+        cur_avg = cur["avg"]
+
+        #print ("hist_avg_avg = " + str(hist_avg_avg))
+        #print ("cur_avg = " + str(cur_avg))
+        if (float(abs(cur_avg - hist_avg_avg)) / hist_avg_avg) > self.threshold:
+            return "AvgValueVariation: curr avg = %g, hist avg = %g" % (cur_avg, hist_avg_avg)
+        return None
+
+class ValueRangeVariation(smv.SmvHistoricalValidator):
+    def __init__(self, col, threshold):
+        super(ValueRangeVariation, self).__init__(col, threshold)
+        self.col = col
+        self.threshold = threshold
+
+    def metadata(self, df):
+        min_max = df.agg(
+            F.min(self.col).alias("min"),
+            F.max(self.col).alias("max")).collect()[0]
+        return {"min": min_max.min, "max": min_max.max}
+
+    def validateMetadata(self, cur, hist):
+        print("ValueRangeVariation.validate: %s ... %s" % (str(cur), str(hist)))
+        if len(hist) == 0: return None
+        hist_avg_min = float(sum([h["min"] for h in hist])) / len(hist)
+        hist_avg_max = float(sum([h["max"] for h in hist])) / len(hist)
+        cur_min = cur["min"]
+        cur_max = cur["max"]
+
+        print ("hist_avg_min = " + str(hist_avg_min))
+        print ("hist_avg_max = " + str(hist_avg_max))
+        print ("cur_min = " + str(cur_min))
+        print ("cur_max = " + str(cur_max))
+        if ((float(abs(cur_min - hist_avg_min)) / hist_avg_min) > self.threshold) or \
+           ((float(abs(cur_max - hist_avg_max)) / hist_avg_max) > self.threshold) :
+            return "ValueRangeVariation: curr min = %d, hist avg min = %g, cur max = %g, hist avg max = %g" % \
+                (cur_min, hist_avg_min, cur_max, hist_avg_max)
         return None
