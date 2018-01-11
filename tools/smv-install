@@ -29,9 +29,11 @@ function parse_args()
 
   # SMV version is updated automatically by smv-release
   SMV_VERSION="1.6.2.2"
+  # Slice off last dot and number
+  SPARK_VERSION="${SMV_VERSION%.*}"
 
   SMV_DIR="SMV_${SMV_VERSION}"
-  SPARK_DIR="spark-1.6.2-bin-2.7.2"
+  SPARK_DIR="spark-${SPARK_VERSION}-bin-2.7.2"
   SMV_PROFILE_FILENAME="smv-profile.sh"
   SMV_PROFILE="${HOME}/.smv/${SMV_PROFILE_FILENAME}"
 
@@ -91,7 +93,7 @@ download_smv() {
 
 # Download prebuilt spark version with hive support.
 download_spark() {
-  install_app "https://github.com/TresAmigosSD/spark/releases/download/1.6.2_hd/${SPARK_DIR}.tgz"
+  install_app "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/${SPARK_DIR}.tgz"
 }
 
 jre_installtion_validation() {
