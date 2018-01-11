@@ -33,7 +33,7 @@ function parse_args()
   SPARK_VERSION="${SMV_VERSION%.*}"
 
   SMV_DIR="SMV_${SMV_VERSION}"
-  SPARK_DIR="spark-${SPARK_VERSION}-bin-2.7.2"
+  SPARK_DIR="spark-${SPARK_VERSION}-bin-hadoop2.6"
   SMV_PROFILE_FILENAME="smv-profile.sh"
   SMV_PROFILE="${HOME}/.smv/${SMV_PROFILE_FILENAME}"
 
