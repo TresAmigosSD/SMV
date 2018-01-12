@@ -116,9 +116,8 @@ function run_sbt_in_docker()
   info "Running sbt ${target}"
 
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
-  docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:latest \
-    -u $(id -u)\
-    sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 $target" \
+  docker run --rm -it -v ${PROJ_DIR}:/projects "tresamigos/smv:v$PREV_SMV_VERSION" \
+    -u $(id -u) sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 $target" \
     >> ${LOGFILE} 2>&1 || error "SMV sbt $target failed"
 }
 
