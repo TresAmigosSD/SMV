@@ -116,9 +116,8 @@ function run_sbt_in_docker()
   info "Running sbt ${target}"
 
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
-  docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:latest \
-    -u $(id -u)\
-    sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 $target" \
+  docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:v${PREV_SMV_VERSION} \
+    -u $(id -u) sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 $target" \
     >> ${LOGFILE} 2>&1 || error "SMV sbt $target failed"
 }
 
@@ -304,12 +303,12 @@ function gen_pydocs()
   mkdir -p ${DOCS_DIR}/python
 
   # py4j lib dir version changes with spark version.  Must extract version used in spark.
-  py4j_lib=$(docker run --rm -it tresamigos/smv:latest -u $(id -u) \
+  py4j_lib=$(docker run --rm -it tresamigos/smv:v${PREV_SMV_VERSION} -u $(id -u) \
     sh -c "find ${spark_py_dir}/lib -maxdepth 1 -mindepth 1 -name 'py4j*-src.zip' -print" | tr -d '\r')
 
   docker run --rm -it \
     -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/python:/pydoc \
-    tresamigos/smv:latest \
+    tresamigos/smv:v${PREV_SMV_VERSION} \
     -u $(id -u)\
     sh -c "
       set -e;
@@ -330,7 +329,7 @@ function gen_scaladocs()
 
   docker run --rm -it \
     -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/scala:/scaladoc \
-    tresamigos/smv:latest \
+    tresamigos/smv:v${PREV_SMV_VERSION} \
     -u $(id -u)\
     sh -c "
       cd $DOCKER_SMV_DIR;
