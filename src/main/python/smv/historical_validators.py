@@ -5,9 +5,9 @@ def SmvHistoricalValidators(*validators):
         methods.  In addition, each validator will have a unique key defined that
         will determine how it is stored in the final metadata structure.  This
         decorator will take care of composing the union of all metadata from validators
-        and decomposing the full metatdata structure into individual pieces for each
+        and decomposing the full metadata structure into individual pieces for each
         validator (hint: the _key() method of each validator is used to key into the
-        fine metadata structure)
+        final metadata structure)
     """
     def metadata(self, df):
         """return the union of all `metedata` results from all validators."""
@@ -46,11 +46,11 @@ def SmvHistoricalValidators(*validators):
 
     return cls_wrapper
 
+
 class SmvHistoricalValidator(object):
     """Base of all user defined historical validator rules.
 
-        Derived classes must override the `key`, `metadata`, and `validateMetadata`
-        methods.
+        Derived classes must override the metadata`, and `validateMetadata` methods.
     """
     def __init__(self, *args):
         self.args = args
