@@ -31,8 +31,8 @@ class SmvJdbcTest extends SmvTestUtil {
   }
 
   test("Test module can publish through JDBC") {
-    JdbcModules.PublishableMod.publishThroughJDBC
-    val publishableDf = JdbcModules.PublishableMod.rdd()
+    JdbcModules.PublishableMod.publishThroughJDBC(collector=new SmvRunInfoCollector)
+    val publishableDf = JdbcModules.PublishableMod.rdd(collector=new SmvRunInfoCollector)
     val readDf =
       app.sqlContext.read
         .format("jdbc")
@@ -45,14 +45,14 @@ class SmvJdbcTest extends SmvTestUtil {
   test("Test SmvJdbcTable can read table from JDBC") {
     val df = app.createDF("k:String", "")
     df.write.jdbc(url, JdbcModules.ReadableMod.tableName, new java.util.Properties())
-    val tableDF = JdbcModules.ReadableMod.rdd()
+    val tableDF = JdbcModules.ReadableMod.rdd(collector=new SmvRunInfoCollector)
     assertDataFramesEqual(tableDF, df)
   }
 
   test("Test SmvJdbcTable can read table from JDBC with custom query") {
     val df = app.createDF("j:String;k:String", "abc,abc;abc,def;def,def")
     df.write.jdbc(url, JdbcModules.CustomQueryMod.tableName, new java.util.Properties())
-    val tableDF = JdbcModules.CustomQueryMod.rdd()
+    val tableDF = JdbcModules.CustomQueryMod.rdd(collector=new SmvRunInfoCollector)
     val expectedDF = df.where(col("k") === col("j"))
     assertDataFramesEqual(tableDF.orderBy(col("j").asc), expectedDF.orderBy(col("j").asc))
   }

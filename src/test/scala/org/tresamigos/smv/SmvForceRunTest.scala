@@ -21,8 +21,8 @@ class SmvForceRunTest extends SmvTestUtil {
   }
 
   test("Test forcing module to run skips the DataFrame cache") {
-    val rdd1 = X.rdd()
-    val rdd2 = X.rdd(true)
+    val rdd1 = X.rdd(collector=new SmvRunInfoCollector)
+    val rdd2 = X.rdd(true, collector=new SmvRunInfoCollector)
     assert(rdd1 !== rdd2)
   }
 }
