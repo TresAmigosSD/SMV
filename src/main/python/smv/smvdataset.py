@@ -371,7 +371,7 @@ class SmvInput(SmvDataSet, ABC):
         return self.getRawScalaInputDS().instanceValHash()
 
     def doRun(self, validator, known):
-        jdf = self.getRawScalaInputDS().doRun(validator)
+        jdf = self.getRawScalaInputDS().doRun(validator, self.smvApp._jvm.SmvRunInfoCollector())
         result = self.run(DataFrame(jdf, self.smvApp.sqlContext))
         self.assert_result_is_dataframe(result)
         return result._jdf

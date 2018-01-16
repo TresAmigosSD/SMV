@@ -83,6 +83,7 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.dqm.*")
         java_import(self._jvm, "org.tresamigos.smv.panel.*")
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
+        java_import(self._jvm, "org.tresamigos.smv.SmvRunInfoCollector")
 
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
@@ -174,13 +175,15 @@ class SmvApp(object):
         fqn = urn[urn.find(":")+1:]
         ds = self.repoFactory.createRepo().loadDataSet(fqn)
         df = self.runModule(urn, forceRun, version)
+        # df, collector = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
 
     def runModule(self, urn, forceRun = False, version = None, runConfig = None):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
         """
-        jdf = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
-        return DataFrame(jdf, self.sqlContext)
+        result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
+        return DataFrame(result.df(), self.sqlContext)
+        # return DataFrame(result.df(), self.sqlContext), result.collector()
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
