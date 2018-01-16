@@ -17,6 +17,7 @@ from test_support.extrapath import ExtraPath
 
 from smv.datasetrepo import DataSetRepo
 
+
 class DataSetRepoTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
@@ -30,7 +31,8 @@ class DataSetRepoTest(SmvBaseTest):
     def after_dir(cls):
         return cls.resourceTestDir() + "/after"
 
-    def build_new_repo(self): return DataSetRepo(self.smvApp)
+    def build_new_repo(self):
+        return DataSetRepo(self.smvApp)
 
     def test_discover_new_module_in_file(self):
         """DataSetRepo should discover SmvModules added to an existing file
@@ -87,3 +89,23 @@ class DataSetRepoTest(SmvBaseTest):
             abcmod2 = self.build_new_repo().loadDataSet("stage.modules.ImplMod").__class__
 
         self.assertNotEqual(abcmod1, abcmod2)
+
+    def test_ignore_JavaObjects(self):
+        """When a file in a stage contains a Py4J JavaObject, DataSetRepo should ignore it
+
+            Users may utilize Py4J to interact with Java code, and in doing so
+            may create JavaObjects at the top level of a file. DataSetRepo should
+            not interpret these JavaObjects as SmvDataSets, despite the fact that
+            they have a truthy (not None) IsSmvDataSet attribute.
+
+            Note: the reason why JavaObjects have an IsSmvDataSet attribute is
+            that they override __getattr__ to **always** return something. The
+            same thing is true of PySpark Columns and classes from other Python
+            libraries.
+        """
+        # dir containing stage with module containing JavaObject
+        java_obj_dir = self.resourceTestDir() + "/java_obj"
+        with ExtraPath(java_obj_dir):
+            mods_in_dir = self.build_new_repo()._dataSetsForStage("stage")
+
+        self.assertEqual(mods_in_dir, ["mod:stage.modules.WhateverModule"])
