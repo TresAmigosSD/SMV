@@ -255,11 +255,12 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def runModule(urn: String,
                 forceRun: Boolean,
                 version: Option[String],
-                runConfig: java.util.Map[String, String]): DataFrame = {
-      var dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
-
-      j_smvApp.runModule(URN(urn), forceRun, version, dynamicRunConfig)
-    }
+                runConfig: java.util.Map[String, String]): RunModuleResult = {
+    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+    val collector = new SmvRunInfoCollector
+    val df =  j_smvApp.runModule(URN(urn), forceRun, version, dynamicRunConfig, collector)
+    RunModuleResult(df, collector)
+  }
 
   def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
     SmvHDFS.writeToFile(in, dest)
@@ -291,3 +292,6 @@ object SmvPyClientFactory {
   def init(args: Array[String], sqlContext: SQLContext): SmvPyClient =
     new SmvPyClient(SmvApp.init(args, Option(sqlContext.sparkContext), Option(sqlContext)))
 }
+
+/** For use by Python API to return a tuple */
+case class RunModuleResult(df: DataFrame, collector: SmvRunInfoCollector)

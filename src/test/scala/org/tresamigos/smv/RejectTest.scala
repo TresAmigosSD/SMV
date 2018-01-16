@@ -23,7 +23,7 @@ class RejectTest extends SmvTestUtil {
         extends SmvCsvFile("./" + testDataDir + "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
     }
-    val df = file.rdd()
+    val df = file.rdd(collector=new SmvRunInfoCollector)
 
     val res = df.collect.map(_.mkString(","))
     val exp = List(
@@ -64,7 +64,7 @@ class RejectTest extends SmvTestUtil {
       // override fqn because object defined in anonymous function has spaghetti fqn
       override def fqn()              = "org.tresamigos.smv.RejectTest.file"
     }
-    val df  = file.rdd()
+    val df  = file.rdd(collector=new SmvRunInfoCollector)
     val res = DqmValidationResult(SmvReportIO.readReport(file.moduleValidPath()))
     assert(res.passed === true)
     assertUnorderedSeqEqual(
@@ -102,7 +102,7 @@ class RejectTest extends SmvTestUtil {
       override val failAtParsingError = false
       override def fqn()              = "org.tresamigos.smv.RejectTest.smvCF"
     }
-    val prdd = smvCF.rdd()
+    val prdd = smvCF.rdd(collector=new SmvRunInfoCollector)
 
     val res = SmvReportIO.readReport(smvCF.moduleValidPath())
 

@@ -21,7 +21,8 @@ abstract class SmvAncillary {
   lazy val resolvedRequiresDS = requiresDS()
 
   protected def getDF(ds: SmvModuleLink): DataFrame = {
-    if (resolvedRequiresDS.contains(ds)) ds.rdd()
+    // FIXME: check if passing in a new collector here is correct
+    if (resolvedRequiresDS.contains(ds)) ds.rdd(collector=new SmvRunInfoCollector)
     else throw new SmvRuntimeException(s"${ds} does not defined in requiresDS")
   }
 }

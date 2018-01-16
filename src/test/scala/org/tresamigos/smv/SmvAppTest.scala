@@ -188,7 +188,7 @@ package org.tresamigos.smv.fixture.smvapptest {
 
   class TestFile(override val path: String) extends SmvFile {
     override def readFromFile(parserLogger: ParserLogger) = null
-    override def doRun(dsDqm: DQMValidator): DataFrame = null
+    override def doRun(dsDqm: DQMValidator, collector: SmvRunInfoCollector): DataFrame = null
     override val userSchema = None
   }
 

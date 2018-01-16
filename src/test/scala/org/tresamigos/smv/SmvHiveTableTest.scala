@@ -22,9 +22,9 @@ class SmvHiveTableTest extends SmvTestUtil {
     // point hive metastore to local file in test dir (instead of default "/user/hive/...")
     val warehouseDir = new File(testcaseTempDir).getAbsolutePath
     sqlContext.setConf("hive.metastore.warehouse.dir", "file://" + warehouseDir)
-    be.exportToHive
+    be.exportToHive(collector=new SmvRunInfoCollector)
 
-    assertDataFramesEqual(be.rdd(), bt.rdd())
+    assertDataFramesEqual(be.rdd(collector=new SmvRunInfoCollector), bt.rdd(collector=new SmvRunInfoCollector))
   }
 
   test("test SmvHiveTable publishHiveSql") {
@@ -34,9 +34,9 @@ class SmvHiveTableTest extends SmvTestUtil {
     // point hive metastore to local file in test dir (instead of default "/user/hive/...")
     val warehouseDir = new File(testcaseTempDir).getAbsolutePath
     sqlContext.setConf("hive.metastore.warehouse.dir", "file://" + warehouseDir)
-    be.exportToHive
+    be.exportToHive(collector=new SmvRunInfoCollector)
 
-    assertDataFramesEqual(be.rdd(), bt.rdd())
+    assertDataFramesEqual(be.rdd(collector=new SmvRunInfoCollector), bt.rdd(collector=new SmvRunInfoCollector))
   }
 }
 

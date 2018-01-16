@@ -20,7 +20,7 @@ class FrlTest extends SmvTestUtil {
       override val failAtParsingError = false
     }
 
-    val res = file.rdd()
+    val res = file.rdd(collector=new SmvRunInfoCollector)
 
     assertSrddSchemaEqual(res, "id: String; v: String")
     assertUnorderedSeqEqual(res.collect.map(_.toString),

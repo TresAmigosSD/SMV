@@ -150,28 +150,29 @@ object ShellCmd {
   /**
    * Read in a Hive table as DF
   **/
-  def openHive(tableName: String) = {
-    new SmvHiveTable(tableName).rdd()
+  def openHive(tableName: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
+    new SmvHiveTable(tableName).rdd(collector=collector)
   }
 
   /**
    * Export dataset's running result to a Hive table
   **/
-  def exportToHive(dsName: String) = {
-    dsm.inferDS(dsName).head.exportToHive
+  def exportToHive(dsName: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
+    dsm.inferDS(dsName).head.exportToHive(collector=collector)
   }
 
   /**
    * Read in a Csv file as DF
   **/
-  def openCsv(path: String, ca: CsvAttributes, parserCheck: Boolean): DataFrame = {
+  def openCsv(path: String, ca: CsvAttributes, parserCheck: Boolean,
+    collector: SmvRunInfoCollector=new SmvRunInfoCollector): DataFrame = {
 
     /** isFullPath = true to avoid prepending data_dir */
     object file extends SmvCsvFile(path, ca, null, true) {
       override val forceParserCheck   = false
       override val failAtParsingError = parserCheck
     }
-    file.rdd()
+    file.rdd(collector=collector)
   }
 
   def openCsv(path: String): DataFrame = openCsv(path, null, false)
@@ -179,13 +180,13 @@ object ShellCmd {
   /**
    * Deprecated
    */
-  def smvExportCsv(name: String, path: String) = {
+  def smvExportCsv(name: String, path: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
     println("The smvExportCsv shell method is deprecated")
-    dsm.inferDS(name).head.rdd().smvExportCsv(path)
+    dsm.inferDS(name).head.rdd(collector=collector).smvExportCsv(path)
   }
 
-  def _edd(name: String): String =
-    dsm.inferDS(name).head.getEdd
+  def _edd(name: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector): String =
+    dsm.inferDS(name).head.getEdd(collector=collector)
 
   def edd(name: String): Unit =
     println(_edd(name))
