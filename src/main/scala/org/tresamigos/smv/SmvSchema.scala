@@ -97,6 +97,12 @@ private[smv] case class BooleanTypeFormat(override val format: String = null) ex
   val dataType                          = BooleanType
 }
 
+private[smv] case class ByteTypeFormat(override val format: String = null) extends TypeFormat {
+  override def strToVal(s: String): Any = s.toByte
+  override val typeName                 = "Byte"
+  val dataType                          = ByteType
+}
+
 private[smv] case class StringTypeFormat(override val format: String = null,
                                          val nullValue: String = "")
     extends TypeFormat {
@@ -230,6 +236,7 @@ private[smv] object TypeFormat {
   private final val LongPattern         = "[lL]ong".r
   private final val IntegerPattern      = "[iI]nteger".r
   private final val BooleanPattern      = "[bB]oolean".r
+  private final val BytePattern         = "[bB]yte".r
   private final val TimestampPatternFmt = "[tT]imestamp\\[(.+)\\]".r
   private final val TimestampPattern    = "[tT]imestamp".r
   private final val DatePatternFmt      = "[dD]ate\\[(.+)\\]".r
@@ -251,6 +258,7 @@ private[smv] object TypeFormat {
       case LongPattern()            => LongTypeFormat()
       case IntegerPattern()         => IntegerTypeFormat()
       case BooleanPattern()         => BooleanTypeFormat()
+      case BytePattern()            => ByteTypeFormat()
       case TimestampPattern()       => TimestampTypeFormat()
       case TimestampPatternFmt(fmt) => TimestampTypeFormat(fmt)
       case DatePattern()            => DateTypeFormat()
@@ -276,6 +284,7 @@ private[smv] object TypeFormat {
       case LongType        => LongTypeFormat()
       case IntegerType     => IntegerTypeFormat()
       case BooleanType     => BooleanTypeFormat()
+      case ByteType        => ByteTypeFormat()
       case TimestampType   => TimestampTypeFormat()
       case DateType        => DateTypeFormat()
       case dt: DecimalType => DecimalTypeFormat(dt.precision, dt.scale)
