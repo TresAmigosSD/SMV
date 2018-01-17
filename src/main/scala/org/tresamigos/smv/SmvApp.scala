@@ -113,6 +113,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * Get the DataFrame associated with data set. The DataFrame plan (not data) is cached in
    * dfCache the to ensure only a single DataFrame exists for a given data set
    * (file/module).
+   * Note: this keyed by the "versioned" dataset FQN.
    */
   var dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
 
