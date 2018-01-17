@@ -43,7 +43,7 @@ class RejectTest extends SmvTestUtil {
       val df = open(testDataDir + "RejectTest/test2")
     }
     val m   = e.getMessage
-    val res = DqmValidationResult(m)
+    val res = DqmValidationResult.fromJson(m)
     assertUnorderedSeqEqual(
       res.checkLog,
       Seq(
@@ -65,7 +65,7 @@ class RejectTest extends SmvTestUtil {
       override def fqn()              = "org.tresamigos.smv.RejectTest.file"
     }
     val df  = file.rdd(collector=new SmvRunInfoCollector)
-    val res = DqmValidationResult(SmvReportIO.readReport(file.moduleValidPath()))
+    val res = DqmValidationResult.fromJson(SmvReportIO.readReport(file.moduleValidPath()))
     assert(res.passed === true)
     assertUnorderedSeqEqual(
       res.errorMessages,
