@@ -271,23 +271,21 @@ case class DqmValidationResult(
     checkLog: Seq[String] = Nil
 ) {
   def toJSON() = {
-    def e(s: String) = escapeJava(s)
+    val errorBlock: String = errorMessages.map{ case (k,m) =>
+      s"""    {"${escapeJava(k)}":"${escapeJava(m)}"}"""
+    }.mkString(",\n")
 
-    "{\n" ++
-      """  "passed":%s,""".format(passed) ++ "\n" ++
-      """  "errorMessages": [""" ++ "\n" ++
-      errorMessages
-        .map { case (k, m) => """    {"%s":"%s"}""".format(e(k), e(m)) }
-        .mkString(",\n") ++ "\n" ++
-      "  ],\n" ++
-      """  "checkLog": [""" ++ "\n" ++
-      checkLog
-        .map { l =>
-          """    "%s"""".format(e(l))
-        }
-        .mkString(",\n") ++ "\n" ++
-      "  ]\n" ++
-      "}"
+    val checkBlock: String = checkLog.map(escapeJava).map(x => s"""    "$x"""").mkString(",\n")
+
+    s"""{
+  "passed":${passed},
+  "errorMessages": [
+${errorBlock}
+  ],
+  "checkLog": [
+${checkBlock}
+  ]
+}"""
   }
 
   def isEmpty() = passed && checkLog.isEmpty
