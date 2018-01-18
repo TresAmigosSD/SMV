@@ -271,7 +271,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
  **/
 case class DqmValidationResult(
     passed: Boolean,
-    dqmStateSnapshot: DqmStateSnapshot = null,
+    dqmStateSnapshot: DqmStateSnapshot,
     errorMessages: Seq[(String, String)] = Nil,
     checkLog: Seq[String] = Nil
 ) {
