@@ -174,16 +174,22 @@ class SmvApp(object):
         """
         fqn = urn[urn.find(":")+1:]
         ds = self.repoFactory.createRepo().loadDataSet(fqn)
-        df = self.runModule(urn, forceRun, version)
-        # df, collector = self.runModule(urn, forceRun, version)
+        df, collector = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
 
     def runModule(self, urn, forceRun = False, version = None, runConfig = None):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
+
+        Use j_smvPyClient instead of j_smvApp directly so we don't
+        have to construct SmvRunCollector from the python side.
         """
         result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
-        return DataFrame(result.df(), self.sqlContext)
-        # return DataFrame(result.df(), self.sqlContext), result.collector()
+        return DataFrame(result.df(), self.sqlContext), result.collector()
+
+    def runModuleByName(self, name, forceRun = False, version = None):
+        """Runs a SmvModule by its name (can be partial FQN)"""
+        result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version))
+        return DataFrame(result.df(), self.sqlContext), result.collector()
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
@@ -191,10 +197,6 @@ class SmvApp(object):
 
     def inferUrn(self, name):
         return self.j_smvPyClient.inferDS(name).urn().toString()
-
-    def runModuleByName(self, name, forceRun = False, version = None):
-        jdf = self.j_smvApp.runModuleByName(name, forceRun, self.scalaOption(version))
-        return DataFrame(jdf, self.sqlContext)
 
     def getDsHash(self, name):
         """Get hashOfHash for named module as a hex string
