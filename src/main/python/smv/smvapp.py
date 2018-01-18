@@ -186,9 +186,9 @@ class SmvApp(object):
         result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
         return DataFrame(result.df(), self.sqlContext), result.collector()
 
-    def runModuleByName(self, name, forceRun = False, version = None):
+    def runModuleByName(self, name, forceRun = False, version = None, runConfig = None):
         """Runs a SmvModule by its name (can be partial FQN)"""
-        result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version))
+        result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig)
         return DataFrame(result.df(), self.sqlContext), result.collector()
 
     def getMetadataJson(self, urn):

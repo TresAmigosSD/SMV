@@ -265,9 +265,11 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   /** Runs an SmvModule written in either Python or Scala */
   def runModuleByName(name: String,
                 forceRun: Boolean,
-                version: Option[String]): RunModuleResult = {
+                version: Option[String],
+                runConfig: java.util.Map[String, String]): RunModuleResult = {
+    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
     val collector = new SmvRunInfoCollector
-    val df =  j_smvApp.runModuleByName(name, forceRun, version, collector)
+    val df =  j_smvApp.runModuleByName(name, forceRun, version, dynamicRunConfig, collector)
     RunModuleResult(df, collector)
   }
 

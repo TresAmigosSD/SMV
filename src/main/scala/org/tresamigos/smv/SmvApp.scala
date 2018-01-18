@@ -367,9 +367,10 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   def runModuleByName(modName: String,
                       forceRun: Boolean = false,
                       version: Option[String] = None,
+                      runConfig: Map[String, String] = Map.empty,
                       collector: SmvRunInfoCollector = new SmvRunInfoCollector): DataFrame = {
     val ds = dsm.inferDS(modName).head
-    runDS(ds, forceRun, version, collector=collector)
+    runDS(ds, forceRun, version, runConfig, collector=collector)
   }
 
   /**
