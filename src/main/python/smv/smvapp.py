@@ -182,12 +182,33 @@ class SmvApp(object):
 
         Use j_smvPyClient instead of j_smvApp directly so we don't
         have to construct SmvRunCollector from the python side.
+
+        Example:
+            To get just the dataframe of the module:
+                dataframe = smvApp.runModule('mod:package.module.SmvModuleClass')[0]
+            To get both the dataframe and the run info collector:
+                dataframe, collector = smvApp.runModule('mod:package.module.SmvModuleClass')
+
+        Returns:
+            (DataFrame, SmvRunInfoCollector) tuple
+            - DataFrame is the computed result of the module
+            - SmvRunInfoCollector contains additional information
+              about the run, such as validation results.
         """
         result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
         return DataFrame(result.df(), self.sqlContext), result.collector()
 
     def runModuleByName(self, name, forceRun = False, version = None, runConfig = None):
-        """Runs a SmvModule by its name (can be partial FQN)"""
+        """Runs a SmvModule by its name (can be partial FQN)
+
+        See the `runModule` method above
+
+        Returns:
+            (DataFrame, SmvRunInfoCollector) tuple
+            - DataFrame is the computed result of the module
+            - SmvRunInfoCollector contains additional information
+              about the run, such as validation results.
+        """
         result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig)
         return DataFrame(result.df(), self.sqlContext), result.collector()
 

@@ -43,8 +43,8 @@ if os.path.exists(historyPath):
 
 atexit.register(save_history)
 
-# temporary: inspect validation result
 def showRunCollector(collector):
+    """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
     print('datasets: %s' % collector.dsFqns().toString())
     if collector.dsFqns().isEmpty():
         print('collector is empty')
