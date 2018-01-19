@@ -49,8 +49,10 @@ def show_run_info(collector):
     print('datasets: %s' % collector.fqns())
     for fqn in collector.fqns():
         print('+ %s' % fqn)
-        print('`-- dqm validation:')
-        print('    '+ pformat(collector.dqm_validation(fqn), indent=4))
+        print('|- dqm validation:')
+        print('    ' + pformat(collector.dqm_validation(fqn), indent=5))
+        print('|- metadata:')
+        print('     ' + pformat(collector.metadata(fqn), indent=5))
 
 # Get a random port for callback server
 import random;
