@@ -20,6 +20,7 @@ Initializes Smv in Pyspark Shell
 
 import atexit
 import os
+from pprint import pprint, pformat
 try:
     import readline
 except ImportError:
@@ -43,31 +44,13 @@ if os.path.exists(historyPath):
 
 atexit.register(save_history)
 
-def showRunCollector(collector):
+def show_run_info(collector):
     """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
-    print('datasets: %s' % collector.dsFqns().toString())
-    if collector.dsFqns().isEmpty():
-        print('collector is empty')
-        return
-
-    fqn = collector.dsFqns().toSeq().apply(0)
-    print('first dataset: %s' % fqn)
-    print('dqm validation result is %s' % collector.getDqmValidationResult(fqn).toString())
-
-    validation = collector.getDqmValidationResult(fqn)
-    print('-- passed is %s' % validation.passed())
-
-    dqmstate = validation.dqmStateSnapshot()
-    print('-- dqm state is %s' % dqmstate.toString())
-    if (dqmstate):
-        print('---- dqmstate.totalrecords is %s' % dqmstate.totalRecords())
-        print('---- dqmstate.parsererror is %s' % dqmstate.parseError().toString())
-        print('---- dqmstate.fixcounts is %s' % dqmstate.fixCounts().toString())
-        print('---- dqmstate.ruleerrors is %s' % dqmstate.ruleErrors().toString())
-        pass
-
-    print('-- err msgs is %s' % validation.errorMessages().toString())
-    print('-- check log is %s' % validation.checkLog().toString())
+    print('datasets: %s' % collector.fqns())
+    for fqn in collector.fqns():
+        print('+ %s' % fqn)
+        print('`-- dqm validation:')
+        print('    '+ pformat(collector.dqm_validation(fqn), indent=4))
 
 # Get a random port for callback server
 import random;

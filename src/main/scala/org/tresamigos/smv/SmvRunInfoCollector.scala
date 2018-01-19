@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import scala.collection.JavaConverters._
+
 import dqm.DqmValidationResult
 
 class SmvRunInfoCollector {
@@ -34,6 +36,9 @@ class SmvRunInfoCollector {
 
   /** Returns the set of fqns of the datasets that ran */
   def dsFqns: Set[String] = results.keySet
+
+  /** For use by Python side */
+  def dsFqnsAsJava: java.util.List[String] = dsFqns.toSeq.asJava
 
   /**
    * Returns the DQM validation result for a given dataset
