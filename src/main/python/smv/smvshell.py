@@ -35,7 +35,7 @@ def df(name, forceRun = False, version = None):
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun, version)
+    return SmvApp.getInstance().runModuleByName(name, forceRun, version)[0]
 
 def dshash(name):
     """The current hashOfHash for the named module as a hex string

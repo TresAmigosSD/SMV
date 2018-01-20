@@ -43,6 +43,32 @@ if os.path.exists(historyPath):
 
 atexit.register(save_history)
 
+def showRunCollector(collector):
+    """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
+    print('datasets: %s' % collector.dsFqns().toString())
+    if collector.dsFqns().isEmpty():
+        print('collector is empty')
+        return
+
+    fqn = collector.dsFqns().toSeq().apply(0)
+    print('first dataset: %s' % fqn)
+    print('dqm validation result is %s' % collector.getDqmValidationResult(fqn).toString())
+
+    validation = collector.getDqmValidationResult(fqn)
+    print('-- passed is %s' % validation.passed())
+
+    dqmstate = validation.dqmStateSnapshot()
+    print('-- dqm state is %s' % dqmstate.toString())
+    if (dqmstate):
+        print('---- dqmstate.totalrecords is %s' % dqmstate.totalRecords())
+        print('---- dqmstate.parsererror is %s' % dqmstate.parseError().toString())
+        print('---- dqmstate.fixcounts is %s' % dqmstate.fixCounts().toString())
+        print('---- dqmstate.ruleerrors is %s' % dqmstate.ruleErrors().toString())
+        pass
+
+    print('-- err msgs is %s' % validation.errorMessages().toString())
+    print('-- check log is %s' % validation.checkLog().toString())
+
 # Get a random port for callback server
 import random;
 callback_server_port = random.randint(20000, 65535)

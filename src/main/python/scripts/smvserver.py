@@ -189,7 +189,7 @@ def getDatasetInstance(fqn):
 
 def runModule(fqn, run_config=None):
     '''runs module of given fqn and runtime configuration'''
-    return SmvApp.getInstance().runModule("mod:{}".format(fqn), runConfig=run_config)
+    return SmvApp.getInstance().runModule("mod:{}".format(fqn), runConfig=run_config)[0]
 
 def getMetadataJson(fqn):
     '''returns metadata given a fqn'''
