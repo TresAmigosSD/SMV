@@ -29,6 +29,7 @@ from smv.utils import smv_copy_array, check_socket
 from smv.error import SmvRuntimeError
 import smv.helpers
 from smv.utils import FileObjInputStream
+from smv.runinfo import SmvRunInfoCollector
 
 class SmvApp(object):
     """The Python representation of SMV.
@@ -195,8 +196,9 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
-        return DataFrame(result.df(), self.sqlContext), result.collector()
+        java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
+        return (DataFrame(java_result.df(), self.sqlContext),
+                SmvRunInfoCollector(java_result.collector()) )
 
     def runModuleByName(self, name, forceRun = False, version = None, runConfig = None):
         """Runs a SmvModule by its name (can be partial FQN)
@@ -209,8 +211,9 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig)
-        return DataFrame(result.df(), self.sqlContext), result.collector()
+        java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig)
+        return (DataFrame(java_result.df(), self.sqlContext),
+                SmvRunInfoCollector(java_result.collector()) )
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
