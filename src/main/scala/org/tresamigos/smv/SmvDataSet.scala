@@ -455,13 +455,13 @@ abstract class SmvDataSet extends FilenamePart {
       val validation = dqmValidator.validate(df, hasAction, moduleValidPath())
       val metadata = createMetadata(Some(df))
 
-      collector.addRunInfo(fqn, validation, metadata)
-
       // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
       deleteOutputs(metadataOutputFiles)
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
+
+      collector.addRunInfo(fqn, validation, metadata, metadataHistory)
     }
 
     if (isEphemeral) {

@@ -13,6 +13,7 @@
 """Helper functions available in SMV's Python shell
 """
 import sys
+from pprint import pformat
 
 from smv import SmvApp
 from pyspark.sql import DataFrame
@@ -272,6 +273,18 @@ def _clear_from_sys_modules(names_to_clear):
                 sys.modules.pop(name)
                 break
 
+def show_run_info(collector):
+    """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
+    print('datasets: %s' % collector.fqns())
+    for fqn in collector.fqns():
+        print('+ %s' % fqn)
+        print('|- dqm validation:')
+        print('    ' + pformat(collector.dqm_validation(fqn), indent=5))
+        print('|- metadata:')
+        print('     ' + pformat(collector.metadata(fqn), indent=5))
+        print('|- metadata history:')
+        print('     ' + pformat(collector.metadata_history(fqn), indent=5))
+
 __all__ = [
     'df',
     'dshash',
@@ -292,5 +305,6 @@ __all__ = [
     'now',
     'smvDiscoverSchemaToFile',
     'edd',
-    'run_test'
+    'run_test',
+    'show_run_info'
 ]

@@ -62,3 +62,18 @@ class SmvRunInfoCollector(object):
         """
         java_result = self.jcollector.getMetadata(dsFqn)
         return json.loads(java_result.toJson())
+
+    def metadata_history(self, dsFqn):
+        """Returns the metadata for a given dataset
+
+        Returns:
+            A dictionary representation of the metadata
+
+        Raises:
+            py4j.protocol.Py4JError: if there is java call error or
+                there is no metadata for the specified dataset
+                (e.g. caused by a typo in the name)
+
+        """
+        java_result = self.jcollector.getMetadataHistory(dsFqn)
+        return json.loads(java_result.toJson())

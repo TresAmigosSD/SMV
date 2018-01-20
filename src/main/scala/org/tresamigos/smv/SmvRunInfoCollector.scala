@@ -27,9 +27,12 @@ class SmvRunInfoCollector {
    * If a validation result already exists for a data set, the
    * previous result is replaced (last one wins).
    */
-  def addRunInfo(dsFqn: String, validation: DqmValidationResult, metadata: SmvMetadata): SmvRunInfoCollector = {
+  def addRunInfo(dsFqn: String,
+    validation: DqmValidationResult,
+    metadata: SmvMetadata,
+    metadataHistory: SmvMetadataHistory): SmvRunInfoCollector = {
     require(dsFqn != null && !dsFqn.isEmpty, s"Dataset FQN [$dsFqn] cannot be empty or null")
-    this.runInfo += dsFqn -> SmvRunInfo(validation, metadata)
+    this.runInfo += dsFqn -> SmvRunInfo(validation, metadata, metadataHistory)
     this
   }
 
@@ -52,6 +55,13 @@ class SmvRunInfoCollector {
    * @throws NoSuchElementException if the dataset is not known to the collector
    */
   def getMetadata(dsFqn: String): SmvMetadata = runInfo(dsFqn).metadata
+
+  /**
+   * Returns the metadata history for a given dataset
+   *
+   * @throws NoSuchElementException if the dataset is not known to the collector
+   */
+  def getMetadataHistory(dsFqn: String): SmvMetadataHistory = runInfo(dsFqn).metadataHistory
 }
 
-case class SmvRunInfo(validation: DqmValidationResult, metadata: SmvMetadata)
+case class SmvRunInfo(validation: DqmValidationResult, metadata: SmvMetadata, metadataHistory: SmvMetadataHistory)
