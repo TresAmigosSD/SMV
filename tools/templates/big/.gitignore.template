@@ -1,6 +1,7 @@
 conf/smv-user-conf.props
 
 data/output
+data/history
 
 .idea
 smv.iml
