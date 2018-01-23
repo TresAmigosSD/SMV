@@ -20,7 +20,7 @@ Initializes Smv in Pyspark Shell
 
 import atexit
 import os
-from pprint import pprint, pformat
+
 try:
     import readline
 except ImportError:
@@ -43,14 +43,6 @@ if os.path.exists(historyPath):
         print("Unable to read history, deleting history file.")
 
 atexit.register(save_history)
-
-def show_run_info(collector):
-    """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
-    print('datasets: %s' % collector.fqns())
-    for fqn in collector.fqns():
-        print('+ %s' % fqn)
-        print('`-- dqm validation:')
-        print('    '+ pformat(collector.dqm_validation(fqn), indent=4))
 
 # Get a random port for callback server
 import random;

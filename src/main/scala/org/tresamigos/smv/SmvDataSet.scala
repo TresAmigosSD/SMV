@@ -453,14 +453,15 @@ abstract class SmvDataSet extends FilenamePart {
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
       val validation = dqmValidator.validate(df, hasAction, moduleValidPath())
-      collector.addDqmValidationResult(fqn, validation)
-
       val metadata = createMetadata(Some(df))
+
       // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
       deleteOutputs(metadataOutputFiles)
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
+
+      collector.addRunInfo(fqn, validation, metadata, metadataHistory)
     }
 
     if (isEphemeral) {
