@@ -64,10 +64,10 @@ class SmvRunInfoCollector(object):
         return json.loads(java_result.toJson())
 
     def metadata_history(self, dsFqn):
-        """Returns the metadata for a given dataset
+        """Returns the metadata history for a given dataset
 
         Returns:
-            A dictionary representation of the metadata
+            A list of metadata dictionaries in reverse chronological order
 
         Raises:
             py4j.protocol.Py4JError: if there is java call error or
