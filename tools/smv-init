@@ -1,6 +1,32 @@
 #!/bin/bash
+<<<<<<< HEAD
+=======
+# Store the help message in a variable
+read -r -d '' HELP_MESSAGE <<EOF
+USAGE: $0 [-q] [-s|-e|-t] project_name
+project types:
+  -s: simple (default)
+  -e: enterprise
+  -t: test (for developers only)
+example:
+  \$ $0 MyProject
+EOF
 
-TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/templates"
+# No command line options, or more than our currently allowed
+# maximum optins of 2 (project flag + directory)
+if [ ${#} -lt 1 ] || [ ${#} -gt 2 ]; then
+    echo "ERROR: Invalid number of arguments" >&2
+    echo "${HELP_MESSAGE}"
+    exit 1
+fi
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "${HELP_MESSAGE}"
+    exit 0
+fi
+>>>>>>> Force user to provide a project name
+
+TEMPLATE_DIR="$(cd "`dirname "$0"`" && pwd)/templates"
 TEMPLATE_DATA_DIR="$TEMPLATE_DIR/data"
 
 # PROJ_TYPE:
@@ -8,62 +34,47 @@ TEMPLATE_DATA_DIR="$TEMPLATE_DIR/data"
 #  - enterprise
 #  - test
 PROJ_TYPE="simple"
-OVERRIDE=0
 
-while [[ $# -gt 1 ]]
-do
-FLAG=$1
+if [ "$1" = "-s" ] || [ "$1" = "-simple" ]; then
+  PROJ_TYPE="simple"
+  shift
+fi
 
-  case $FLAG in
-    -q)
-    QUITE_MODE=1
+if [ "$1" = "-e" ] || [ "$1" = "-enterprise" ]; then
+  PROJ_TYPE="enterprise"
+  shift
+fi
+
+if [ "$1" = "-t" ] || [ "$1" = "-test" ]; then
+  PROJ_TYPE="test"
+  shift
+fi
+
+if [ "$1" = "-b" ] || [ "$1" = "-big" ]; then
+  PROJ_TYPE="big"
+  shift
+fi
+
+if [ "$1" = "-q" ]; then
+    exec > /dev/null
     shift
-    ;;
-    -s|-simple)
-    PROJ_TYPE="simple"
-    shift
-    ;;
-    -e|-enterprise)
-    PROJ_TYPE="enterprise"
-    shift
-    ;;
-    -t|-test)
-    PROJ_TYPE="test"
-    shift
-    ;;
-    -b|-big)
-    PROJ_TYPE="big"
-    shift
-    ;;
-    -o)
-    OVERRIDE=1
-    shift
-    ;;
-    *)
-    ;;
-  esac
-done
+fi
+
+# If we don't have a project name, throw an error
+if [ ${#} -ne 1 ]; then
+  echo "ERROR: Invalid number of arguments. Expected a project name"
+  echo "${HELP_MESSAGE}"
+  exit 1
+fi
 
 TEMPLATE_DIR+="/$PROJ_TYPE"
-
-if [ $# -ne 1 ]; then
-    echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q][-o] [-s|-e|-t] project_name"
-    echo "project types:"
-    echo "  -s: simple (default)"
-    echo "  -e: enterprise"
-    echo "  -t: test (for developers only)"
-    echo "example:"
-    echo "  \$ $0 MyProject"
-    exit 1
-fi
 
 PROJ_DIR="$1"
 PROJ_CLASS=""
 
 # proj class hardcoded for smv integration tests
 if [ "$PROJ_TYPE" = "test" ]; then
-  PROJ_CLASS="integration.test"
+  PROJ_CLASS="org.tresamigos.smvtest"
 fi
 
 function extract_group_artifact_ids()
@@ -83,22 +94,13 @@ function create_proj_dir()
     echo "-- creating project directory"
 
     if [ -d "$PROJ_DIR" ]; then
-      if [ $OVERRIDE -eq 0 ]; then
-        echo "   $PROJ_DIR already exists, use the -o flag to authorize override."
-        exit 1
-      else
-        echo "   $PROJ_DIR already exists, converting to SMV project..."
-      fi
-
-      # if creating SMV project from existing dir, it must not contain an smv-app-conf.props file
-      if [ -f "$PROJ_DIR/conf/smv-app-conf.props" ]; then
-        echo "   Error: $PROJ_DIR is already an SMV project. Quitting."
-        exit 1
-      fi
+      echo "$PROJ_DIR already exists"
+      exit 1
     fi
 
-    mkdir -p "$PROJ_DIR"
-    export PROJ_DIR_FULL_PATH=$(cd $PROJ_DIR; /bin/pwd)
+    mkdir "$PROJ_DIR"
+    export PROJ_DIR_FULL_PATH
+    PROJ_DIR_FULL_PATH=$(readlink -f $PROJ_DIR)
 }
 
 function copy_with_inject()
@@ -158,7 +160,7 @@ function copy_src_dir()
     proj_cp=$2
     DST_DIR="${PROJ_DIR_FULL_PATH}/src/${subdir}/${proj_cp}"
 
-    (cd ${TEMPLATE_DIR}/src/${subdir}; find . -type f | while read f; do
+    (cd ${TEMPLATE_DIR}/src/${subdir} && find . -type f | while read f; do
       SRC_FILE="${TEMPLATE_DIR}/src/${subdir}/$f"
       DST_FILE="${DST_DIR}/$f"
       copy_with_inject "$SRC_FILE" "$DST_FILE"
