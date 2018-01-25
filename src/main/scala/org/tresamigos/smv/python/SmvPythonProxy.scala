@@ -292,6 +292,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def getRunConfig(key: String): String = j_smvApp.smvConfig.getRunConfig(key)
   def getRunConfigHash()                = j_smvApp.smvConfig.getRunConfigHash()
 
+  def getMergedProps(path: String): Map[String,String] = j_smvApp.getMergedProps(path)
+
   def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
     j_smvApp.registerRepoFactory(new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig))
 }
