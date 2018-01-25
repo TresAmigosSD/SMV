@@ -200,13 +200,18 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     "smv.class_dir"   -> "./target/classes"
   )
 
-  // merge order is important here.  Highest priority comes last as it will override all previous
-  private[smv] val mergedProps = defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps
+  // ---------- Dynamic Run Config Parameters key/values ----------
+  var dynamicRunConfig: Map[String, String] = Map.empty
 
-  // --- config params.  App should access configs through vals below rather than from props maps
+  // merge order is important here.  Highest priority comes last as it will override all previous
+  private[smv] def mergedProps = { defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps ++ dynamicRunConfig }
+
+  // --- static app config params.  App should access configs through vals below rather than from props maps
   val appName    = mergedProps("smv.appName")
   val appId      = mergedProps("smv.appId")
-  val stageNames = splitProp("smv.stages").toSeq
+
+  // --- stage names are a dynamic prop
+  private[smv] def stageNames = { splitProp("smv.stages").toSeq }
 
   val classDir = mergedProps("smv.class_dir")
 
@@ -238,9 +243,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       case _ =>
         throw new SmvRuntimeException("JDBC url not specified in SMV config")
     }
-
-  // ---------- Dynamic Run Config Parameters key/values ----------
-  var dynamicRunConfig: Map[String, String] = Map.empty
 
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
