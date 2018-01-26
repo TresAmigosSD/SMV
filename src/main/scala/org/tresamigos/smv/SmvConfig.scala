@@ -188,9 +188,9 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   val cmdLine = new CmdLineArgsConf(cmdLineArgs)
 
-  private val appConfProps  = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvAppConfFile()))
-  private val usrConfProps  = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvUserConfFile()))
-  private val homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
+  private def appConfProps  = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvAppConfFile()))
+  private def usrConfProps  = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvUserConfFile()))
+  private def homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
   private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
     "smv.appName"     -> "Smv Application",
@@ -203,8 +203,27 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   // ---------- Dynamic Run Config Parameters key/values ----------
   var dynamicRunConfig: Map[String, String] = Map.empty
 
-  // merge order is important here.  Highest priority comes last as it will override all previous
-  private[smv] def mergedProps = { defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps ++ dynamicRunConfig }
+  // computeMergedProps() is used as a cache to avoid expensive IO if appDir is unchanged
+  private[smv] def mergedProps = { computeMergedProps() ++ dynamicRunConfig }
+
+  // default the app dir to the cmdLine value. WARNING: this will be changed from smvApp by
+  // setRunCofig which will change all of these props dynamically.
+  var appConfPath: String = cmdLine.smvAppDir()
+  // used as a simple cache flag
+  private var lastAppConfPath: String = ""
+
+  private var lastMergedConf: Map[String,String] = Map.empty
+
+  /**
+   * This function is implemented as a stupid-simple cache to avoid doing IO to obtain props every time
+   */
+  private def computeMergedProps(): Map[String,String] = {
+    if (appConfPath == lastAppConfPath) return lastMergedConf;
+    // update the last value used to determine cache miss
+    lastAppConfPath = appConfPath;
+    lastMergedConf = defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps
+    lastMergedConf
+  }
 
   // --- static app config params.  App should access configs through vals below rather than from props maps
   val appName    = mergedProps("smv.appName")
