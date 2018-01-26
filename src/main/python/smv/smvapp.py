@@ -46,6 +46,9 @@ class SmvApp(object):
     # Singleton instance of SmvApp
     _instance = None
 
+    # default rel path for python sources from appDir
+    srcPathRel = "src/main/python"
+
     @classmethod
     def getInstance(cls):
         if cls._instance is None:
@@ -70,8 +73,6 @@ class SmvApp(object):
         sc = SparkContext() if _sc is None else _sc
         sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
 
-        self.prepend_source("src/main/python")
-
         sc.setLogLevel("ERROR")
 
         self.sqlContext = sqlContext
@@ -90,6 +91,10 @@ class SmvApp(object):
 
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
+
+        # AFTER app is available but BEFORE stages,
+        # use the dynamically configured app dir to set the source path
+        self.prepend_source()
 
         self.stages = self.j_smvPyClient.stages()
 
@@ -278,9 +283,11 @@ class SmvApp(object):
     def defaultTsvWithHeader(self):
         return self._mkCsvAttr(delimier='\t', hasHeader=True)
 
-    def prepend_source(self,source_dir):
+    def prepend_source(self,):
+        smvAppDir = self.j_smvApp.smvConfig().appConfPath()
+        codePath = os.path.abspath(os.path.join(smvAppDir, self.srcPathRel))
+
         # Source must be added to front of path to make sure it is found first
-        codePath = os.path.abspath(source_dir)
         sys.path.insert(1, codePath)
 
     def run(self):

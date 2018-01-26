@@ -318,17 +318,11 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * this should be set before run dataset.
    */
   private def setDynamicRunConfig(runConfig: Map[String, String]) = {
+    // watch carefully. This is changing an internal value of config
+    runConfig.get("smv.app.dir").foreach {k =>
+      smvConfig.appConfPath = k
+    }
     smvConfig.dynamicRunConfig = runConfig
-  }
-
-  /**
-   * Allow merged props/config to be inspected for an arbitrary project dir
-   */
-  def getMergedProps(path: String) = {
-    // new config without command line args ?
-    // make auxillary constructor that takes path instead? or pass "smv-app-dir" in Seq[String]
-    new SmvConfig(Seq(path))
-    smvConfig.mergedProps
   }
 
   /**
