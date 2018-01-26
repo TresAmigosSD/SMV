@@ -19,6 +19,7 @@ Todo:
 
 import json
 
+
 class SmvRunInfoCollector(object):
     """Python wrapper to its counterpart on the Scala side
 
@@ -47,6 +48,20 @@ class SmvRunInfoCollector(object):
         """
         java_result = self.jcollector.getDqmValidationResult(dsFqn)
         return json.loads(java_result.toJSON())
+
+    def dqm_state(self, dsFqn):
+        """Returns the DQM state for a given dataset
+
+        Returns:
+            A dictionary representation of the dqm state
+
+        Raises:
+            py4j.protocol.Py4JError: if there is java call error or
+                there is no validation result or dqm state for the
+                specified dataset (e.g. caused by a typo in the name)
+
+        """
+        return self.dqm_validation(dsFqn)['dqmStateSnapshot']
 
     def metadata(self, dsFqn):
         """Returns the metadata for a given dataset
