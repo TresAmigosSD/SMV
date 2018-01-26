@@ -19,6 +19,7 @@ Todo:
 
 import json
 
+
 class SmvRunInfoCollector(object):
     """Python wrapper to its counterpart on the Scala side
 
@@ -46,6 +47,8 @@ class SmvRunInfoCollector(object):
 
         """
         java_result = self.jcollector.getDqmValidationResult(dsFqn)
+        if java_result is None:
+            return None
         return json.loads(java_result.toJSON())
 
     def metadata(self, dsFqn):
@@ -61,6 +64,8 @@ class SmvRunInfoCollector(object):
 
         """
         java_result = self.jcollector.getMetadata(dsFqn)
+        if java_result is None:
+            return None
         return json.loads(java_result.toJson())
 
     def metadata_history(self, dsFqn):
@@ -76,4 +81,6 @@ class SmvRunInfoCollector(object):
 
         """
         java_result = self.jcollector.getMetadataHistory(dsFqn)
+        if java_result is None:
+            return None
         return json.loads(java_result.toJson())

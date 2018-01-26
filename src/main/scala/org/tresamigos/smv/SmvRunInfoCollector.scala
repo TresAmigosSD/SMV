@@ -30,9 +30,12 @@ class SmvRunInfoCollector {
   def addRunInfo(dsFqn: String,
     validation: DqmValidationResult,
     metadata: SmvMetadata,
-    metadataHistory: SmvMetadataHistory): SmvRunInfoCollector = {
+    metadataHistory: SmvMetadataHistory): SmvRunInfoCollector =
+    addRunInfo(dsFqn, SmvRunInfo(validation, metadata, metadataHistory))
+
+  def addRunInfo(dsFqn: String, runInfo: SmvRunInfo): SmvRunInfoCollector = {
     require(dsFqn != null && !dsFqn.isEmpty, s"Dataset FQN [$dsFqn] cannot be empty or null")
-    this.runInfo += dsFqn -> SmvRunInfo(validation, metadata, metadataHistory)
+    this.runInfo += dsFqn -> runInfo
     this
   }
 
