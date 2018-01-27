@@ -1049,7 +1049,7 @@ case class SmvExtModuleLink(modFqn: String)
  */
 class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.InterfacesWithPy4J {
   override val fqn            = getPy4JResult(target.getFqn)
-  override val description    = s"SmvModule ${fqn}"
+  override val description    = getPy4JResult(target.getDescription)
   override def tableName      = getPy4JResult(target.getTableName)
   override def isEphemeral    = getPy4JResult(target.getIsEphemeral)
   override def publishHiveSql = Option(getPy4JResult(target.getPublishHiveSql))

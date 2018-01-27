@@ -103,6 +103,8 @@ class SmvDataSet(ABC):
     def description(self):
         return self.__doc__
 
+    getDescription = create_py4j_interface_method("getDescription", "description")
+
     # this doesn't need stack trace protection
     @abc.abstractmethod
     def requiresDS(self):
