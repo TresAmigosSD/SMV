@@ -28,6 +28,7 @@ import org.tresamigos.smv.dqm.DQMValidator;
  * decorator to ensure that errors that occur in callbacks don't get eaten.
  */
 public interface ISmvModule {
+	IPythonResponsePy4J<String> getDescription();
 	/**
 	 * Does the result of this module need to be persisted?
 	 *
