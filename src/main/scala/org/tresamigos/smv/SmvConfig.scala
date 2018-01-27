@@ -19,6 +19,8 @@ import scala.util.Try
 import java.io.{IOException, InputStreamReader, FileInputStream, File}
 import java.util.Properties
 
+// Serialize scala map to json w/o reinventing any wheels
+import org.json4s.jackson.Serialization
 import org.rogach.scallop.ScallopConf
 
 /**
@@ -188,8 +190,12 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   val cmdLine = new CmdLineArgsConf(cmdLineArgs)
 
-  private def appConfProps  = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvAppConfFile()))
-  private def usrConfProps  = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvUserConfFile()))
+  // default the app dir to the cmdLine value. WARNING: this will be changed from smvApp by
+  // setRunCofig which will change all of these props dynamically.
+  var appConfPath: String = cmdLine.smvAppDir()
+
+  private def appConfProps  = _loadProps(pathJoin(appConfPath, cmdLine.smvAppConfFile()))
+  private def usrConfProps  = _loadProps(pathJoin(appConfPath, cmdLine.smvUserConfFile()))
   private def homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
   private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
@@ -206,9 +212,12 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   // computeMergedProps() is used as a cache to avoid expensive IO if appDir is unchanged
   private[smv] def mergedProps = { computeMergedProps() ++ dynamicRunConfig }
 
-  // default the app dir to the cmdLine value. WARNING: this will be changed from smvApp by
-  // setRunCofig which will change all of these props dynamically.
-  var appConfPath: String = cmdLine.smvAppDir()
+  // return merged props as json so its easier on the py, used to expose merged props
+  def mergedPropsJSON = {
+    implicit val formats = org.json4s.DefaultFormats
+    Serialization.write(mergedProps)
+  }
+
   // used as a simple cache flag
   private var lastAppConfPath: String = ""
 
@@ -314,6 +323,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
    */
   private def _loadProps(propsFileName: String): scala.collection.Map[String, String] = {
     import scala.collection.JavaConverters._
+
+    print("Loading props for: ")
+    println(propsFileName)
+    println("-------")
 
     val props     = new Properties()
     val propsFile = new File(propsFileName)

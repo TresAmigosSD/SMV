@@ -94,7 +94,7 @@ class SmvApp(object):
 
         # AFTER app is available but BEFORE stages,
         # use the dynamically configured app dir to set the source path
-        self.prepend_source()
+        self.prepend_source(self.srcPathRel)
 
         self.stages = self.j_smvPyClient.stages()
 
@@ -142,6 +142,13 @@ class SmvApp(object):
 
     def config(self):
         return self.j_smvApp.smvConfig()
+
+    def mergedPropsJSON(self):
+        """JSON utf-8 string of current mergedProps:
+            defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps ++ dynamicRunConfig
+            Where right wins out in map merge
+        """
+        return self.j_smvApp.smvConfig().mergedPropsJSON()
 
     def appId(self):
         return self.config().appId()
@@ -201,6 +208,8 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
+        # This allows discovery of py mods for dynamic appDirs passed on RC
+        self.prepend_source_if_needed(runConfig)
         java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
@@ -216,6 +225,8 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
+        # This allows discovery of py mods for dynamic appDirs passed on RC
+        self.prepend_source_if_needed(runConfig)
         java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
@@ -283,10 +294,16 @@ class SmvApp(object):
     def defaultTsvWithHeader(self):
         return self._mkCsvAttr(delimier='\t', hasHeader=True)
 
-    def prepend_source(self,):
-        smvAppDir = self.j_smvApp.smvConfig().appConfPath()
-        codePath = os.path.abspath(os.path.join(smvAppDir, self.srcPathRel))
+    def prepend_source_if_needed(self, runConfig):
+        """ Changes the python path if appDir "magic key" is included on rc """
+        if(runConfig["smv.app.dir"]):
+            self.prepend_source(self.srcPathRel, runConfig["smv.app.dir"])
 
+    def prepend_source(self, relPath, smvAppDir = None):
+        if (not smvAppDir):
+            smvAppDir = self.j_smvApp.smvConfig().appConfPath()
+        codePath = os.path.abspath(os.path.join(smvAppDir, relPath))
+        print "Prepending code path: " + codePath
         # Source must be added to front of path to make sure it is found first
         sys.path.insert(1, codePath)
 

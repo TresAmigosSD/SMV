@@ -39,7 +39,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   val genEdd      = smvConfig.cmdLine.genEdd()
   val publishHive = smvConfig.cmdLine.publishHive()
   val publishJDBC = smvConfig.cmdLine.publishJDBC()
-  // TODO verify this is correct way to make this dynamic?
+
   def stages      = smvConfig.stageNames
   val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
 

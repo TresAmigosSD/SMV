@@ -24,7 +24,7 @@ from test_support.testconfig import TestConfig
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
-def df(name, forceRun = False, version = None):
+def df(name, forceRun = False, version = None, runConfig = None):
     """The DataFrame result of running the named module
 
         Args:
@@ -35,7 +35,16 @@ def df(name, forceRun = False, version = None):
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun, version)[0]
+    return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig)[0]
+
+def props():
+    """The current app propertied used by SMV after the app, user, command-line
+        and dynamic props are merged. Formatted as JSON
+
+        Returns:
+            (JSON): The 'mergedProps' or final props used by SMV
+    """
+    return SmvApp.getInstance().mergedPropsJSON()
 
 def dshash(name):
     """The current hashOfHash for the named module as a hex string
@@ -113,6 +122,7 @@ def help():
        |  * lsDead(stageName)
        |  * lsDeadLeaf()
        |  * lsDeadLeaf(stageName)
+       |  * props()
        |  * exportToHive(datasetName)
        |  * graph()
        |  * graph(stageName)
@@ -284,6 +294,7 @@ __all__ = [
     'ls',
     'lsDead',
     'lsDeadLeaf',
+    'props',
     'exportToHive',
     'ancestors',
     'descendants',
