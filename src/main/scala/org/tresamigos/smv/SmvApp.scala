@@ -373,6 +373,23 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     runDS(ds, forceRun, version, runConfig, collector=collector)
   }
 
+  def getRunInfo(partialName: String): SmvRunInfoCollector =
+    getRunInfo(dsm.inferDS(partialName).head)
+
+  def getRunInfo(urn: URN): SmvRunInfoCollector =
+    getRunInfo(dsm.load(urn).head)
+
+  /**
+   * Returns the run information for a given dataset and all its
+   * dependencies (including transitive dependencies), from the last run
+   */
+  def getRunInfo(ds: SmvDataSet,
+    coll: SmvRunInfoCollector=new SmvRunInfoCollector()): SmvRunInfoCollector = {
+    coll.addRunInfo(ds.fqn, ds.runInfo)
+    ds.resolvedRequiresDS foreach (getRunInfo(_, coll))
+    coll
+  }
+
   /**
    * Returns metadata for a given urn
    */

@@ -107,6 +107,8 @@ object SmvDQM {
  *                    for persisted results before running, and persist its own results
  */
 class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
+  import DQMValidator._
+
   private lazy val app: SmvApp = SmvApp.app
 
   private val ruleNames = dqm.rules.map { _.name }
@@ -185,13 +187,6 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
     }
   }
 
-  private def readPersistsedValidationFile(path: String): Try[DqmValidationResult] = {
-    Try({
-      val json = SmvReportIO.readReport(path)
-      DqmValidationResult.fromJson(json)
-    })
-  }
-
   /**
    * Entrypoint for validating data. Runs validation UNLESS there is a persisted
    * result, in which case returns that result
@@ -204,7 +199,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
 
       val result = if (persistable) {
         // try to read from persisted validation file
-        readPersistsedValidationFile(path).recoverWith {
+        readPersistedValidationFile(path).recoverWith {
           case e => {
             Try(runValidation(df, forceAction, path))
           }
@@ -261,6 +256,11 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
 
     DqmValidationResult(passed, snapshot, errorMessages, checkLog)
   }
+}
+
+object DQMValidator {
+  def readPersistedValidationFile(path: String): Try[DqmValidationResult] =
+    Try(DqmValidationResult.fromJson(SmvReportIO.readReport(path)))
 }
 
 /**

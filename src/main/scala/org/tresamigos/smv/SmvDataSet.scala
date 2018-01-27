@@ -493,6 +493,19 @@ abstract class SmvDataSet extends FilenamePart {
     }
   }
 
+  /**
+   * Returns the run information from this dataset's last run.
+   *
+   * If the dataset has never been run, returns an empty run info with
+   * null for its components.
+   */
+  def runInfo: SmvRunInfo = {
+    val validation = DQMValidator.readPersistedValidationFile(moduleValidPath()).toOption.orNull
+    val meta = readPersistedMetadata(moduleMetaPath()).toOption.orNull
+    val mhistory = readMetadataHistory(moduleMetaHistoryPath()).toOption.orNull
+    SmvRunInfo(validation, meta, mhistory)
+  }
+
   /** path to published output without file extension **/
   private[smv] def publishPathNoExt(version: String) = s"${app.smvConfig.publishDir}/${version}/${fqn}"
 

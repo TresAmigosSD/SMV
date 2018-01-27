@@ -273,6 +273,16 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     RunModuleResult(df, collector)
   }
 
+  /**
+   * Returns the run information of a dataset and all its dependencies
+   * from the last run.
+   */
+  def getRunInfo(urn: String): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(URN(urn))
+
+  def getRunInfoByPartialName(partialName: String): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(partialName)
+
   def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
     SmvHDFS.writeToFile(in, dest)
 
