@@ -96,8 +96,6 @@ class SmvApp(object):
         # use the dynamically configured app dir to set the source path
         self.prepend_source(self.srcPathRel)
 
-        self.stages = self.j_smvPyClient.stages()
-
         # issue #429 set application name from smv config
         sc._conf.setAppName(self.appName())
 
@@ -149,6 +147,10 @@ class SmvApp(object):
             Where right wins out in map merge
         """
         return self.j_smvApp.smvConfig().mergedPropsJSON()
+
+    def stages(self):
+        """Stages is a function as they can be set dynamically on an SmvApp instance"""
+        return self.j_smvPyClient.stages()
 
     def appId(self):
         return self.config().appId()
@@ -343,7 +345,7 @@ class SmvApp(object):
 
     def prepend_source_if_needed(self, runConfig):
         """ Changes the python path if appDir "magic key" is included on rc """
-        if(runConfig["smv.app.dir"]):
+        if(runConfig and runConfig["smv.app.dir"]):
             self.prepend_source(self.srcPathRel, runConfig["smv.app.dir"])
 
     def prepend_source(self, relPath, smvAppDir = None):
@@ -351,8 +353,11 @@ class SmvApp(object):
             smvAppDir = self.j_smvApp.smvConfig().appConfPath()
         codePath = os.path.abspath(os.path.join(smvAppDir, relPath))
         print "Prepending code path: " + codePath
+        # Remove the code path if it's already there to not clutter the path...
+        if (codePath in sys.path):
+            sys.path.remove(codePath)
         # Source must be added to front of path to make sure it is found first
-        sys.path.insert(1, codePath)
+        sys.path.insert(0, codePath)
 
     def run(self):
         self.j_smvApp.run()

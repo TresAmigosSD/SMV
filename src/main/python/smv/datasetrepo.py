@@ -46,7 +46,7 @@ class DataSetRepo(object):
         """Clear all client modules from sys.modules
         """
         for fqn in list(sys.modules.keys()):
-            for stage_name in self.smvApp.stages:
+            for stage_name in self.smvApp.stages():
                 if fqn == stage_name or fqn.startswith(stage_name + "."):
                     sys.modules.pop(fqn)
                     break
@@ -58,7 +58,7 @@ class DataSetRepo(object):
     # DataSetRepoPython.
     def loadDataSet(self, fqn):
         ds = None
-        ds_class = for_name(fqn, self.smvApp.stages)
+        ds_class = for_name(fqn, self.smvApp.stages())
 
         if ds_class is not None:
             ds = ds_class(self.smvApp)
