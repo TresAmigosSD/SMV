@@ -39,6 +39,15 @@ def df(name, forceRun = False, version = None, runConfig = None):
     """
     return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig)[0]
 
+def props():
+    """The current app propertied used by SMV after the app, user, command-line
+        and dynamic props are merged. Formatted as JSON
+
+        Returns:
+            (JSON): The 'mergedProps' or final props used by SMV
+    """
+    return SmvApp.getInstance().mergedPropsJSON()
+
 def dshash(name):
     """The current hashOfHash for the named module as a hex string
 
@@ -115,6 +124,7 @@ def help():
        |  * lsDead(stageName)
        |  * lsDeadLeaf()
        |  * lsDeadLeaf(stageName)
+       |  * props()
        |  * exportToHive(datasetName)
        |  * graph()
        |  * graph(stageName)
@@ -295,6 +305,7 @@ __all__ = [
     'ls',
     'lsDead',
     'lsDeadLeaf',
+    'props',
     'exportToHive',
     'ancestors',
     'descendants',
