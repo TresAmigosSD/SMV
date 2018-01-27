@@ -386,7 +386,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   def getRunInfo(ds: SmvDataSet,
     coll: SmvRunInfoCollector=new SmvRunInfoCollector()): SmvRunInfoCollector = {
     coll.addRunInfo(ds.fqn, ds.runInfo)
-    ds.requiresDS foreach (getRunInfo(_, coll))
+    ds.resolvedRequiresDS foreach (getRunInfo(_, coll))
     coll
   }
 
