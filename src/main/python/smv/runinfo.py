@@ -51,6 +51,23 @@ class SmvRunInfoCollector(object):
             return {}
         return json.loads(java_result.toJSON())
 
+    def dqm_state(self, dsFqn):
+        """Returns the DQM state for a given dataset
+
+        Returns:
+            A dictionary representation of the dqm state
+
+        Raises:
+            py4j.protocol.Py4JError: if there is java call error or
+                there is no validation result or dqm state for the
+                specified dataset (e.g. caused by a typo in the name)
+
+        """
+        validation = self.dqm_validation(dsFqn)
+        if 'dqmStateSnapshot' in validation:
+            return validation['dqmStateSnapshot']
+        return {}
+
     def metadata(self, dsFqn):
         """Returns the metadata for a given dataset
 
