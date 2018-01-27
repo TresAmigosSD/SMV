@@ -33,7 +33,7 @@ app = Flask(__name__)
 
 def getStagesInApp():
     """returns list of all stages defined in app"""
-    return list(SmvApp.getInstance().stages)
+    return list(SmvApp.getInstance().stages())
 
 def getFqnsInApp():
     """returns all known module FQNs in app. Note: excluded links"""

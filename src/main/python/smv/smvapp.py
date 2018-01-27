@@ -96,8 +96,6 @@ class SmvApp(object):
         # use the dynamically configured app dir to set the source path
         self.prepend_source(self.srcPathRel)
 
-        self.stages = self.j_smvPyClient.stages()
-
         # issue #429 set application name from smv config
         sc._conf.setAppName(self.appName())
 
@@ -149,6 +147,10 @@ class SmvApp(object):
             Where right wins out in map merge
         """
         return self.j_smvApp.smvConfig().mergedPropsJSON()
+
+    def stages(self):
+        """Stages is a function as they can be set dynamically on an SmvApp instance"""
+        return self.j_smvPyClient.stages()
 
     def appId(self):
         return self.config().appId()
