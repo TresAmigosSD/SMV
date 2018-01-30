@@ -13,6 +13,8 @@
 
 import smv
 
+metadata_count = 0
+
 class BaseMod(smv.SmvModule):
     def requiresDS(self):
         return []
@@ -37,3 +39,10 @@ class ModWithInvalidMetadataValidation(BaseMod):
         x = lambda: 1
         x.__name__ = "NOT_A_STRING"
         return x
+
+class ModWithMetaCount(BaseMod):
+    def metadata(self, df):
+        # keep count of how many times `metadata` is called.
+        global metadata_count
+        metadata_count = metadata_count + 1
+        return {'foo': 'bar'}

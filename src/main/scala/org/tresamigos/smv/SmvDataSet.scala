@@ -38,8 +38,8 @@ trait FilenamePart {
  */
 abstract class SmvDataSet extends FilenamePart {
 
-  def app: SmvApp                 = SmvApp.app
-  private var rddCache: DataFrame = null
+  def app: SmvApp                            = SmvApp.app
+  private var userMetadataCache: Option[SmvMetadata] = None
 
   /**
    * The FQN of an SmvDataSet is its classname for Scala implementations.
@@ -396,7 +396,7 @@ abstract class SmvDataSet extends FilenamePart {
    * will be a less detailed report.
    */
   private[smv] def getMetadata(): SmvMetadata =
-    readPersistedMetadata().getOrElse(createMetadata(None))
+    readPersistedMetadata().getOrElse(getOrCreateMetadata(None))
 
   /**
    * Read metadata history from file if it exists, otherwise return empty metadata
@@ -407,11 +407,26 @@ abstract class SmvDataSet extends FilenamePart {
   /**
    * Create SmvMetadata for this SmvDataset. SmvMetadata will be more detailed if
    * a DataFrame is provided
+   *
+   * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
+   * to this `getOrCreateMetadata` method will only do a single evaluation of the user
+   * defined metadata method which could be quite expensive.
+   *
+   * Note: we only cache the `metadata(df)` result and not the entire `SmvMetadata`
+   * return incase this method is called multiple times in same run with/without
+   * the df argument.  We assume the df value is the same for all calls!
    */
-  private[smv] def createMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
+  private[smv] def getOrCreateMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
     val resMetadata = dfOpt match {
-      case Some(df) => metadata(df)
-      case _        => new SmvMetadata()
+      case Some(df) => {
+        // updated cached user metadata if it was not already computed.
+        userMetadataCache = userMetadataCache match {
+          case None => Option(metadata(df))
+          case _ => userMetadataCache
+        }
+        userMetadataCache.get
+      }
+      case _ => new SmvMetadata()
     }
     resMetadata.addFQN(fqn)
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
@@ -453,8 +468,7 @@ abstract class SmvDataSet extends FilenamePart {
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
       val validation = dqmValidator.validate(df, hasAction, moduleValidPath())
-      val metadata = createMetadata(Some(df))
-
+      val metadata = getOrCreateMetadata(Some(df))
       // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
       deleteOutputs(metadataOutputFiles)
@@ -529,7 +543,7 @@ abstract class SmvDataSet extends FilenamePart {
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
-    createMetadata(Some(df)).saveToFile(app.sc, publishMetaPath(version))
+    getOrCreateMetadata(Some(df)).saveToFile(app.sc, publishMetaPath(version))
     getMetadataHistory.saveToFile(app.sc, publishHistoryPath(version))
     /* publish should also calculate edd if generarte Edd flag was turned on */
     if (app.genEdd)
