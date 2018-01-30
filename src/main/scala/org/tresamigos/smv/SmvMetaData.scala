@@ -168,7 +168,7 @@ class DQMMetadataPolicy(ds: SmvDataSet) extends dqm.DQMPolicy{
     s"${ds.fqn} metadata validation"
 
   def policy(df: DataFrame, state: dqm.DQMState) = {
-    val metadata = ds.createMetadata(Some(df))
+    val metadata = ds.getOrCreateMetadata(Some(df))
     val history = ds.getMetadataHistory()
     val result = ds.validateMetadata(metadata, history.historyList)
     result match {

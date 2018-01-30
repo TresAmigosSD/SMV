@@ -166,6 +166,7 @@ class SmvSyntaxErrorPropagationTest(SmvBaseTest):
         with self.assertRaisesRegexp(Py4JJavaError, "SyntaxError"):
             self.df(fqn)
 
+# TODO: this should be moved into own file.
 class SmvMetadataTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
@@ -193,3 +194,13 @@ class SmvMetadataTest(SmvBaseTest):
         fqn = "metadata_stage.modules.ModWithInvalidMetadataValidation"
         with self.assertRaisesRegexp(Exception, r"message .* is not a string"):
             self.df(fqn)
+
+    def test_metadata_only_called_once(self):
+        # running the module will incr the global metadata count by 1 for each
+        # call to metadata
+        fqn = "metadata_stage.modules.ModWithMetaCount"
+        self.df(fqn)
+
+        # Note: must import AFTER `df` above to get latest instance of package!
+        from metadata_stage.modules import metadata_count
+        self.assertEqual(metadata_count, 1)
