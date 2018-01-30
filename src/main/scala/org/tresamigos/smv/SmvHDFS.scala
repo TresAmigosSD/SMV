@@ -109,13 +109,20 @@ private[smv] object SmvHDFS {
   }
 
   /**
-   * get modification time of a HDFS file
+   * get modification time of a HDFS file.
+   * If the file path contains a "*" glob pattern, 0 is returned.
+   * TODO: should come up with a hash of all modification times for which the
+   * glob patten matchs (and rename this method)
    **/
   def modificationTime(fileName: String): Long = {
-    val path = new org.apache.hadoop.fs.Path(fileName)
-    val hdfs = getFileSystem(fileName)
+    if (fileName contains "*") {
+      0
+    } else {
+      val path = new org.apache.hadoop.fs.Path(fileName)
+      val hdfs = getFileSystem(fileName)
 
-    hdfs.getFileStatus(path).getModificationTime()
+      hdfs.getFileStatus(path).getModificationTime()
+    }
   }
 
   /**
