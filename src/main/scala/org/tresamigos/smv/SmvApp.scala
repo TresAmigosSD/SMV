@@ -386,8 +386,17 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    */
   def getRunInfo(ds: SmvDataSet,
     coll: SmvRunInfoCollector=new SmvRunInfoCollector()): SmvRunInfoCollector = {
+    // get fqn from urn, because if ds is a link we want the fqn of its target
     coll.addRunInfo(ds.fqn, ds.runInfo)
-    ds.resolvedRequiresDS foreach (getRunInfo(_, coll))
+
+    ds.resolvedRequiresDS foreach { dep =>
+      val depTarget = dep match {
+        case link: SmvModuleLink => link.smvModule
+        case _                   => dep
+      }
+      getRunInfo(depTarget, coll)
+    }
+
     coll
   }
 
