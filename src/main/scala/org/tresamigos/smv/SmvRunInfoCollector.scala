@@ -14,31 +14,57 @@
 
 package org.tresamigos.smv
 
+import scala.collection.JavaConverters._
+
 import dqm.DqmValidationResult
 
 class SmvRunInfoCollector {
-  private var results: Map[String, DqmValidationResult] = Map.empty
+  private var runInfo: Map[String, SmvRunInfo] = Map.empty
 
   /**
-   * Adds a validation result for a smv module.
+   * Adds a validation result for an smv module.
    *
    * If a validation result already exists for a data set, the
    * previous result is replaced (last one wins).
    */
-  def addDqmValidationResult(dsFqn: String, validation: DqmValidationResult): SmvRunInfoCollector = {
-    require(validation != null, "Cannot add null as validation result")
+  def addRunInfo(dsFqn: String,
+    validation: DqmValidationResult,
+    metadata: SmvMetadata,
+    metadataHistory: SmvMetadataHistory): SmvRunInfoCollector =
+    addRunInfo(dsFqn, SmvRunInfo(validation, metadata, metadataHistory))
+
+  def addRunInfo(dsFqn: String, runInfo: SmvRunInfo): SmvRunInfoCollector = {
     require(dsFqn != null && !dsFqn.isEmpty, s"Dataset FQN [$dsFqn] cannot be empty or null")
-    results += dsFqn -> validation
+    this.runInfo += dsFqn -> runInfo
     this
   }
 
   /** Returns the set of fqns of the datasets that ran */
-  def dsFqns: Set[String] = results.keySet
+  def dsFqns: Set[String] = runInfo.keySet
+
+  /** For use by Python side */
+  def dsFqnsAsJava: java.util.List[String] = dsFqns.toSeq.asJava
 
   /**
    * Returns the DQM validation result for a given dataset
    *
-   * @throws NoSuchElementException if there is no result for the dataset
+   * @throws NoSuchElementException if the dataset is not known to the collector
    */
-  def getDqmValidationResult(dsFqn: String): DqmValidationResult = results(dsFqn)
+  def getDqmValidationResult(dsFqn: String): DqmValidationResult = runInfo(dsFqn).validation
+
+  /**
+   * Returns the metadata for a given dataset
+   *
+   * @throws NoSuchElementException if the dataset is not known to the collector
+   */
+  def getMetadata(dsFqn: String): SmvMetadata = runInfo(dsFqn).metadata
+
+  /**
+   * Returns the metadata history for a given dataset
+   *
+   * @throws NoSuchElementException if the dataset is not known to the collector
+   */
+  def getMetadataHistory(dsFqn: String): SmvMetadataHistory = runInfo(dsFqn).metadataHistory
 }
+
+case class SmvRunInfo(validation: DqmValidationResult, metadata: SmvMetadata, metadataHistory: SmvMetadataHistory)

@@ -74,43 +74,47 @@ class DataSetRepo(object):
     getLoadDataSet = create_py4j_interface_method("getLoadDataSet", "loadDataSet")
 
 
-    def dataSetsForStage(self, stageName):
-        return self._moduleUrnsForStage(stageName, lambda obj: obj.IsSmvDataSet)
-
-    getDataSetsForStage = create_py4j_interface_method("getDataSetsForStage", "dataSetsForStage")
-
-    def _moduleUrnsForStage(self, stageName, fn):
-        # `walk_packages` can generate AttributeError if the system has
-        # Gtk modules, which are not designed to use with reflection or
-        # introspection. Best action to take in this situation is probably
-        # to simply suppress the error.
-        def err(name): pass
-        # print("Error importing module %s" % name)
-        # t, v, tb = sys.exc_info()
-        # print("type is {0}, value is {1}".format(t, v))
-        buf = []
+    def _dataSetsForStage(self, stageName):
+        urns = []
         # import the stage and only walk the packages in the path of that stage, recursively
         for name in iter_submodules([stageName]):
                 # The additional "." is necessary to prevent false positive, e.g. stage_2.M1 matches stage
                 if name.startswith(stageName + "."):
+                    # __import__('a.b.c') returns the module a, just like import a.b.c
                     pymod = __import__(name)
+                    # after import 'a.b.c' we got a, traverse from a to b to c
                     for c in name.split('.')[1:]:
                         pymod = getattr(pymod, c)
 
+                    # iterate over the attributes of the module, looking for SmvDataSets
                     for n in dir(pymod):
                         obj = getattr(pymod, n)
+                        # We try to access the IsSmvDataSet attribute of the object.
+                        # if it does not exist, we will catch the the AttributeError
+                        # and skip the object, as it is not an SmvDataSet. We
+                        # specifically check that IsSmvDataSet is identical to
+                        # True, because some objects like Py4J's JavaObject override
+                        # __getattr__ to **always** return something (so IsSmvDataSet
+                        # maybe truthy even though the object is not an SmvDataSet).
                         try:
-                            # Class should have an fqn which begins with the stageName.
-                            # Each package will contain among other things all of
-                            # the modules that were imported into it, and we need
-                            # to exclude these (so that we only count each module once)
-                            # Also we need to exclude ABCs
-                            if fn(obj) and obj.fqn().startswith(name) and not inspect.isabstract(obj):
-                                buf.append(obj.urn())
+                            obj_is_smv_dataset = (obj.IsSmvDataSet is True)
                         except AttributeError:
                             continue
+                        # Class should have an fqn which begins with the stageName.
+                        # Each package will contain among other things all of
+                        # the modules that were imported into it, and we need
+                        # to exclude these (so that we only count each module once)
+                        # Also we need to exclude ABCs
+                        if obj_is_smv_dataset and obj.fqn().startswith(name) and not inspect.isabstract(obj):
+                            urns.append(obj.urn())
 
-        return smv_copy_array(self.smvApp.sc, *buf)
+        return urns
+
+    def dataSetsForStage(self, stageName):
+        urns = self._dataSetsForStage(stageName)
+        return smv_copy_array(self.smvApp.sc, *urns)
+
+    getDataSetsForStage = create_py4j_interface_method("getDataSetsForStage", "dataSetsForStage")
 
     def notFound(self, modUrn, msg):
         raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))

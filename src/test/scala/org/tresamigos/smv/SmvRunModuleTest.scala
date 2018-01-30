@@ -16,6 +16,7 @@ import org.apache.spark.sql.functions._
 
 package org.tresamigos.smv {
   import runmoduletest._
+  import dqm._
 
   class SmvRunModuleTest extends SmvTestUtil {
     override def appArgs =
@@ -28,38 +29,34 @@ package org.tresamigos.smv {
       // check all modules that are supposed to run actually did run
       assert(collector.dsFqns === Set(Mod1, Mod2, Mod3).map(_.fqn))
 
-      assert(collector.getDqmValidationResult(Mod1.fqn).toJSON === """{
-  "passed":true,
-  "errorMessages": [
-    {"org.tresamigos.smv.runmoduletest.Mod1 metadata validation":"true"}
-  ],
-  "checkLog": [
-    "Rule: a_le_0, total count: 1",
-    "org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @FIELDS: a=1"
-  ]
-}""")
+      assert(collector.getDqmValidationResult(Mod1.fqn) === DqmValidationResult(true,
+        DqmStateSnapshot(2, ErrorReport(0,Seq.empty),Map.empty,
+          Map("a_le_0" -> ErrorReport(1,
+            Seq("org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @FIELDS: a=1")))),
+        Seq(
+          ("org.tresamigos.smv.runmoduletest.Mod1 metadata validation", "true")
+        ),
+        Seq(
+          "Rule: a_le_0, total count: 1",
+          "org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @FIELDS: a=1"
+      )))
 
-      assert(collector.getDqmValidationResult(Mod2.fqn).toJSON === """{
-  "passed":true,
-  "errorMessages": [
-    {"a_lt_1_fix":"true"},
-    {"org.tresamigos.smv.runmoduletest.Mod2 metadata validation":"true"}
-  ],
-  "checkLog": [
-    "Fix: a_lt_1_fix, total count: 1"
-  ]
-}""")
+      assert(collector.getDqmValidationResult(Mod2.fqn) === DqmValidationResult(true,
+        DqmStateSnapshot(2,ErrorReport(0,List()),Map("a_lt_1_fix" -> 1),Map()),
+        Seq(
+          ("a_lt_1_fix", "true"),
+          ("org.tresamigos.smv.runmoduletest.Mod2 metadata validation", "true")
+        ),
+        Seq(
+          "Fix: a_lt_1_fix, total count: 1"
+      )))
 
-      assert(collector.getDqmValidationResult(Mod3.fqn).toJSON === """{
-  "passed":true,
-  "errorMessages": [
-    {"org.tresamigos.smv.runmoduletest.Mod3 metadata validation":"true"}
-  ],
-  "checkLog": [
-
-  ]
-}""")
-
+      assert(collector.getDqmValidationResult(Mod3.fqn) === DqmValidationResult(true,
+        DqmStateSnapshot(2,ErrorReport(0,List()),Map(),Map()),
+        Seq(
+          ("org.tresamigos.smv.runmoduletest.Mod3 metadata validation", "true")
+        ),
+        Seq.empty))
     }
   }
 }

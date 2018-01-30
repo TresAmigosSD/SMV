@@ -17,6 +17,8 @@ package graph
 
 import com.github.mdr.ascii.graph.{Graph => AsciiGraph}
 import com.github.mdr.ascii.layout.{GraphLayout => AsciiGraphLayout}
+import scala.reflect.runtime.universe.{Constant, Literal}
+
 /**
  * Arbitrary SmvDataSet graph
  * Nodes are SmvDataSets and edges are the dependency of DSs
@@ -221,6 +223,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
 
     def toNodeStr(m: SmvDataSet) = {
       val dsType = m.dsType
+      val escapedDescription = Literal(Constant(m.description)).toString()
       val nodeType = if (dsType == "Input") "file" else (
         // convert the first character of dsType to lowercase
         dsType.substring(0, 1).toLowerCase() + dsType.substring(1))
@@ -229,7 +232,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
       s"""    "type": "${nodeType}",""" + "\n" +
       s"""    "version": ${m.version},""" + "\n" +
       s"""    "needsToRun": ${m.needsToRun},""" + "\n" +
-      s"""    "description": "${m.description}"""" + "\n" +
+      s"""    "description": ${escapedDescription}""" + "\n" +
       s"""  }"""
     }
 

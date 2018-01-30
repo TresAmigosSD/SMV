@@ -19,8 +19,8 @@ import dqm.DqmValidationResult
 class SmvRunInfoCollectorSpec extends SmvUnitSpec {
   "SmvRunInfoCollector" should "store validation results per dataset" in {
     val target = new SmvRunInfoCollector
-    val r1 = new DqmValidationResult(true)
-    target.addDqmValidationResult("a", r1)
+    val r1 = new DqmValidationResult(true, null)
+    target.addRunInfo("a", r1, null, null)
 
     target.getDqmValidationResult("a") shouldBe r1
   }
@@ -34,19 +34,19 @@ class SmvRunInfoCollectorSpec extends SmvUnitSpec {
 
   it should "store only the last validation result for a given dataset" in {
     val target = new SmvRunInfoCollector
-    val r1 = new DqmValidationResult(true)
-    val r2 = new DqmValidationResult(false)
-    target.addDqmValidationResult("a", r1)
-    target.addDqmValidationResult("a", r2)
+    val r1 = new DqmValidationResult(true, null)
+    val r2 = new DqmValidationResult(false, null)
+    target.addRunInfo("a", r1, null, null)
+    target.addRunInfo("a", r2, null, null)
 
     target.getDqmValidationResult("a") shouldBe r2
   }
 
   it should "keep all datasets for which there is a validation result" in {
     val target = new SmvRunInfoCollector
-    target.addDqmValidationResult("a", new DqmValidationResult(true))
-    target.addDqmValidationResult("b", new DqmValidationResult(false))
-    target.addDqmValidationResult("c", new DqmValidationResult(false))
+    target.addRunInfo("a", new DqmValidationResult(true, null), null, null)
+    target.addRunInfo("b", new DqmValidationResult(false, null), null, null)
+    target.addRunInfo("c", new DqmValidationResult(false, null), null, null)
 
     target.dsFqns shouldBe Set("a", "b", "c")
   }
@@ -54,21 +54,14 @@ class SmvRunInfoCollectorSpec extends SmvUnitSpec {
   it should "not accept null for dataset fqn" in {
     val target = new SmvRunInfoCollector
     intercept[IllegalArgumentException] {
-      target.addDqmValidationResult(null, new DqmValidationResult(true))
+      target.addRunInfo(null, new DqmValidationResult(true, null), null, null)
     }
   }
 
   it should "not accept empty string for dataset fqn" in {
     val target = new SmvRunInfoCollector
     intercept[IllegalArgumentException] {
-      target.addDqmValidationResult("", new DqmValidationResult(true))
-    }
-  }
-
-  it should "not accept null for validation result" in {
-    val target = new SmvRunInfoCollector
-    intercept[IllegalArgumentException] {
-      target.addDqmValidationResult("a", null)
+      target.addRunInfo("", new DqmValidationResult(true, null), null, null)
     }
   }
 }

@@ -77,21 +77,7 @@ class SmvFrameworkTest(SmvBaseTest):
     def test_SmvDQM(self):
         fqn = "stage.modules.D3"
 
-        msg =""": org.tresamigos.smv.SmvDqmValidationError: {
-  "passed":false,
-  "errorMessages": [
-    {"FailTotalRuleCountPolicy(2)":"true"},
-    {"FailTotalFixCountPolicy(1)":"false"},
-    {"org.tresamigos.smv.SmvCsvStringData metadata validation":"true"},
-    {"FailParserCountPolicy(1)":"true"},
-    {"stage.modules.D3 metadata validation":"true"}
-  ],
-  "checkLog": [
-    "Rule: b_lt_03, total count: 1",
-    "org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5",
-    "Fix: a_lt_1_fix, total count: 1"
-  ]
-}"""
+        msg = """{"passed":false,"dqmStateSnapshot":{"totalRecords":3,"parseError":{"total":0,"firstN":[]},"fixCounts":{"a_lt_1_fix":1},"ruleErrors":{"b_lt_03":{"total":1,"firstN":["org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5"]}}},"errorMessages":[{"FailTotalRuleCountPolicy(2)":"true"},{"FailTotalFixCountPolicy(1)":"false"},{"org.tresamigos.smv.SmvCsvStringData metadata validation":"true"},{"FailParserCountPolicy(1)":"true"},{"stage.modules.D3 metadata validation":"true"}],"checkLog":["Rule: b_lt_03, total count: 1","org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5","Fix: a_lt_1_fix, total count: 1"]}"""
 
         with self.assertRaisesRegexp(Py4JJavaError, self._escapeRegex(msg)):
             df = self.df(fqn)

@@ -468,14 +468,14 @@ abstract class SmvDataSet extends FilenamePart {
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
       val validation = dqmValidator.validate(df, hasAction, moduleValidPath())
-      collector.addDqmValidationResult(fqn, validation)
-
       val metadata = getOrCreateMetadata(Some(df))
       // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
       deleteOutputs(metadataOutputFiles)
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
+
+      collector.addRunInfo(fqn, validation, metadata, metadataHistory)
     }
 
     if (isEphemeral) {
@@ -505,6 +505,19 @@ abstract class SmvDataSet extends FilenamePart {
           }
       }.get
     }
+  }
+
+  /**
+   * Returns the run information from this dataset's last run.
+   *
+   * If the dataset has never been run, returns an empty run info with
+   * null for its components.
+   */
+  def runInfo: SmvRunInfo = {
+    val validation = DQMValidator.readPersistedValidationFile(moduleValidPath()).toOption.orNull
+    val meta = readPersistedMetadata(moduleMetaPath()).toOption.orNull
+    val mhistory = readMetadataHistory(moduleMetaHistoryPath()).toOption.orNull
+    SmvRunInfo(validation, meta, mhistory)
   }
 
   /** path to published output without file extension **/
@@ -1063,7 +1076,7 @@ case class SmvExtModuleLink(modFqn: String)
  */
 class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.InterfacesWithPy4J {
   override val fqn            = getPy4JResult(target.getFqn)
-  override val description    = s"SmvModule ${fqn}"
+  override val description    = getPy4JResult(target.getDescription)
   override def tableName      = getPy4JResult(target.getTableName)
   override def isEphemeral    = getPy4JResult(target.getIsEphemeral)
   override def publishHiveSql = Option(getPy4JResult(target.getPublishHiveSql))

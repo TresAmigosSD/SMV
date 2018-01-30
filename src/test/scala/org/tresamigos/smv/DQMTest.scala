@@ -87,16 +87,15 @@ class DQMTest extends SmvTestUtil {
     assert(res.count === 1)
 
     val dqmRes = dqm.applyPolicies(res)
-    assert(dqmRes.toJSON() === """{
-  "passed":false,
-  "errorMessages": [
-    {"a_le_0":"false"}
-  ],
-  "checkLog": [
-    "Rule: a_le_0, total count: 1",
-    "org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @FIELDS: a=1"
-  ]
-}""")
+    assert(dqmRes === DqmValidationResult(false,
+      DqmStateSnapshot(2,ErrorReport(0, Seq.empty), Map.empty, Map(
+        "a_le_0" -> ErrorReport(1, Seq("org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @FIELDS: a=1")))),
+      Seq(
+        ("a_le_0", "false")
+      ),
+      Seq(
+        "Rule: a_le_0, total count: 1",
+        "org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @FIELDS: a=1")))
   }
 
   test("test FailPercent") {
@@ -113,18 +112,18 @@ class DQMTest extends SmvTestUtil {
     assertSrddDataEqual(res, "1,0.3;1,0.2")
 
     val dqmRes = dqm.applyPolicies(res)
-    assert(dqmRes.toJSON() === """{
-  "passed":false,
-  "errorMessages": [
-    {"b_lt_03":"true"},
-    {"a_lt_1_fix":"false"}
-  ],
-  "checkLog": [
-    "Rule: b_lt_03, total count: 1",
-    "org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5",
-    "Fix: a_lt_1_fix, total count: 1"
-  ]
-}""")
+    assert(dqmRes === DqmValidationResult(false,
+      DqmStateSnapshot(3,ErrorReport(0,Seq()),
+        Map("a_lt_1_fix" -> 1),
+        Map("b_lt_03" -> ErrorReport(1, Seq("org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5")))),
+      Seq(
+        ("b_lt_03", "true"),
+        ("a_lt_1_fix", "false")
+      ),
+      Seq(
+        "Rule: b_lt_03, total count: 1",
+        "org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5",
+        "Fix: a_lt_1_fix, total count: 1")))
   }
 
   test("test Total Policies") {
