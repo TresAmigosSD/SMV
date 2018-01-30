@@ -396,7 +396,7 @@ abstract class SmvDataSet extends FilenamePart {
    * will be a less detailed report.
    */
   private[smv] def getMetadata(): SmvMetadata =
-    readPersistedMetadata().getOrElse(createMetadata(None))
+    readPersistedMetadata().getOrElse(getOrCreateMetadata(None))
 
   /**
    * Read metadata history from file if it exists, otherwise return empty metadata
@@ -409,14 +409,14 @@ abstract class SmvDataSet extends FilenamePart {
    * a DataFrame is provided
    *
    * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
-   * to this `createMetadata` method will only do a single evaluation of the user
+   * to this `getOrCreateMetadata` method will only do a single evaluation of the user
    * defined metadata method which could be quite expensive.
    *
    * Note: we only cache the `metadata(df)` result and not the entire `SmvMetadata`
    * return incase this method is called multiple times in same run with/without
    * the df argument.  We assume the df value is the same for all calls!
    */
-  private[smv] def createMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
+  private[smv] def getOrCreateMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
     val resMetadata = dfOpt match {
       case Some(df) => {
         // updated cached user metadata if it was not already computed.
@@ -470,7 +470,7 @@ abstract class SmvDataSet extends FilenamePart {
       val validation = dqmValidator.validate(df, hasAction, moduleValidPath())
       collector.addDqmValidationResult(fqn, validation)
 
-      val metadata = createMetadata(Some(df))
+      val metadata = getOrCreateMetadata(Some(df))
       // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
       deleteOutputs(metadataOutputFiles)
@@ -530,7 +530,7 @@ abstract class SmvDataSet extends FilenamePart {
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
-    createMetadata(Some(df)).saveToFile(app.sc, publishMetaPath(version))
+    getOrCreateMetadata(Some(df)).saveToFile(app.sc, publishMetaPath(version))
     getMetadataHistory.saveToFile(app.sc, publishHistoryPath(version))
     /* publish should also calculate edd if generarte Edd flag was turned on */
     if (app.genEdd)
