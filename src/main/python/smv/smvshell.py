@@ -275,15 +275,12 @@ def _clear_from_sys_modules(names_to_clear):
 
 def show_run_info(collector):
     """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
-    print('datasets: %s' % collector.fqns())
-    for fqn in collector.fqns():
-        print('+ %s' % fqn)
-        print('|- dqm validation:')
-        print('    ' + pformat(collector.dqm_validation(fqn), indent=5))
-        print('|- metadata:')
-        print('     ' + pformat(collector.metadata(fqn), indent=5))
-        print('|- metadata history:')
-        print('     ' + pformat(collector.metadata_history(fqn), indent=5))
+    collector.show_report()
+
+def get_run_info(name):
+    """Get the SmvRunInfoCollector with full information about a module and its dependencies
+    """
+    return SmvApp.getInstance().getRunInfoByPartialName(name)
 
 __all__ = [
     'df',
@@ -306,5 +303,6 @@ __all__ = [
     'smvDiscoverSchemaToFile',
     'edd',
     'run_test',
-    'show_run_info'
+    'show_run_info',
+    'get_run_info'
 ]
