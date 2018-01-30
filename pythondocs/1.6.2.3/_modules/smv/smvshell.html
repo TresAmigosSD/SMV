@@ -1,0 +1,397 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.smvshell &#8212; Spark Modularized View 1.6.2.3 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.6.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 1.6.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smvshell</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;Helper functions available in SMV&#39;s Python shell</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="k">import</span> <span class="n">pformat</span>
+
+<span class="kn">from</span> <span class="nn">smv</span> <span class="k">import</span> <span class="n">SmvApp</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="k">import</span> <span class="n">DataFrame</span>
+
+<span class="kn">from</span> <span class="nn">smv</span> <span class="k">import</span> <span class="n">CsvAttributes</span>
+<span class="kn">from</span> <span class="nn">test_support.test_runner</span> <span class="k">import</span> <span class="n">SmvTestRunner</span>
+<span class="kn">from</span> <span class="nn">test_support.testconfig</span> <span class="k">import</span> <span class="n">TestConfig</span>
+
+<span class="k">def</span> <span class="nf">_jvmShellCmd</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">org</span><span class="o">.</span><span class="n">tresamigos</span><span class="o">.</span><span class="n">smv</span><span class="o">.</span><span class="n">shell</span><span class="o">.</span><span class="n">ShellCmd</span>
+
+<div class="viewcode-block" id="df"><a class="viewcode-back" href="../../smv.html#smv.smvshell.df">[docs]</a><span class="k">def</span> <span class="nf">df</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">forceRun</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">version</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The DataFrame result of running the named module</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str): The unique name of a module. Does not have to be the FQN.</span>
+<span class="sd">            forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.</span>
+<span class="sd">            version (str): The name of the published version to load from</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (DataFrame): The result of running the named module.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">runModuleByName</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">forceRun</span><span class="p">,</span> <span class="n">version</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="dshash"><a class="viewcode-back" href="../../smv.html#smv.smvshell.dshash">[docs]</a><span class="k">def</span> <span class="nf">dshash</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The current hashOfHash for the named module as a hex string</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str): The uniquen name of a module. Does not have to be the FQN.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (int): The hashOfHash of the named module</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">getDsHash</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="getModel"><a class="viewcode-back" href="../../smv.html#smv.smvshell.getModel">[docs]</a><span class="k">def</span> <span class="nf">getModel</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">forceRun</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">version</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the result of running the named SmvModel module</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str): The name of a module. Does not have to be the FQN.</span>
+<span class="sd">            forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.</span>
+<span class="sd">            version (str): The name of the published version to load from</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (object): The result of running the named module</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span>
+    <span class="n">urn</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">inferUrn</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">getModuleResult</span><span class="p">(</span><span class="n">urn</span><span class="p">,</span> <span class="n">forceRun</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="openHive"><a class="viewcode-back" href="../../smv.html#smv.smvshell.openHive">[docs]</a><span class="k">def</span> <span class="nf">openHive</span><span class="p">(</span><span class="n">tableName</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read in a Hive table as a DataFrame</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tableName (str): The name of the Hive table</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (DataFrame): The resulting DataFrame</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">openHive</span><span class="p">(</span><span class="n">tableName</span><span class="p">),</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="openCsv"><a class="viewcode-back" href="../../smv.html#smv.smvshell.openCsv">[docs]</a><span class="k">def</span> <span class="nf">openCsv</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read in a CSV file as a DataFrame</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path (str): The path of the CSV file</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (DataFrame): The resulting DataFrame</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">openCsv</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="smvExportCsv"><a class="viewcode-back" href="../../smv.html#smv.smvshell.smvExportCsv">[docs]</a><span class="k">def</span> <span class="nf">smvExportCsv</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Export the result of a module to a CSV file at a local path</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fqn (str): the name of the module</span>
+<span class="sd">            path (str): a path on the local file system</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">smvExportCsv</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="help"><a class="viewcode-back" href="../../smv.html#smv.smvshell.help">[docs]</a><span class="k">def</span> <span class="nf">help</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Print a list of the SMV helper functions available in the shell</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">re</span>
+    <span class="n">strip_margin</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[ </span><span class="se">\t</span><span class="s1">]*\|&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+
+    <span class="n">help_msg</span> <span class="o">=</span> <span class="n">strip_margin</span><span class="p">(</span>
+     <span class="sd">&quot;&quot;&quot;Here is a list of SMV-shell command</span>
+<span class="sd">       |</span>
+<span class="sd">       |Please refer to the API doc for details:</span>
+<span class="sd">       |https://github.com/TresAmigosSD/SMV/blob/master/docs/user/run_shell.md</span>
+<span class="sd">       |</span>
+<span class="sd">       |  * lsStage()</span>
+<span class="sd">       |  * ls()</span>
+<span class="sd">       |  * ls(stageName)</span>
+<span class="sd">       |  * lsDead()</span>
+<span class="sd">       |  * lsDead(stageName)</span>
+<span class="sd">       |  * lsDeadLeaf()</span>
+<span class="sd">       |  * lsDeadLeaf(stageName)</span>
+<span class="sd">       |  * exportToHive(datasetName)</span>
+<span class="sd">       |  * graph()</span>
+<span class="sd">       |  * graph(stageName)</span>
+<span class="sd">       |  * ancestors(datasetName)</span>
+<span class="sd">       |  * descendants(datasetName)</span>
+<span class="sd">       |  * now()</span>
+<span class="sd">       |  * smvDiscoverSchemaToFile(filePath)</span>
+<span class="sd">       &quot;&quot;&quot;</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">help_msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="lsStage"><a class="viewcode-back" href="../../smv.html#smv.smvshell.lsStage">[docs]</a><span class="k">def</span> <span class="nf">lsStage</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;List all the stages</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">lsStage</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="ls"><a class="viewcode-back" href="../../smv.html#smv.smvshell.ls">[docs]</a><span class="k">def</span> <span class="nf">ls</span><span class="p">(</span><span class="n">stageName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List all datasets in a stage</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">stageName</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">ls</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">stageName</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="lsDead"><a class="viewcode-back" href="../../smv.html#smv.smvshell.lsDead">[docs]</a><span class="k">def</span> <span class="nf">lsDead</span><span class="p">(</span><span class="n">stageName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List dead datasets in a stage</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">stageName</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">lsDead</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">lsDead</span><span class="p">(</span><span class="n">stageName</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="lsDeadLeaf"><a class="viewcode-back" href="../../smv.html#smv.smvshell.lsDeadLeaf">[docs]</a><span class="k">def</span> <span class="nf">lsDeadLeaf</span><span class="p">(</span><span class="n">stageName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List &#39;deadLeaf&#39; datasets in a stage</span>
+
+<span class="sd">        A &#39;deadLeaf&#39; dataset is dataset for which &quot;no modules in the stage depend</span>
+<span class="sd">        on it, excluding Output modules&quot;</span>
+
+<span class="sd">        Note: a `deadLeaf` dataset must be `dead`, but some `dead` datasets aren&#39;t</span>
+<span class="sd">        `leaves`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">stageName</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">lsDeadLeaf</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">lsDeadLeaf</span><span class="p">(</span><span class="n">stageName</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="exportToHive"><a class="viewcode-back" href="../../smv.html#smv.smvshell.exportToHive">[docs]</a><span class="k">def</span> <span class="nf">exportToHive</span><span class="p">(</span><span class="n">dsname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Export dataset&#39;s running result to a Hive table</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dsname (str): The name of an SmvDataSet</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">exportToHive</span><span class="p">(</span><span class="n">dsname</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="ancestors"><a class="viewcode-back" href="../../smv.html#smv.smvshell.ancestors">[docs]</a><span class="k">def</span> <span class="nf">ancestors</span><span class="p">(</span><span class="n">dsname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List all ancestors of a dataset</span>
+
+<span class="sd">        Ancestors of a dataset are the dataset it depends on, directly or</span>
+<span class="sd">        in-directly, including datasets from other stages.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dsname (str): The name of an SmvDataSet</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">ancestors</span><span class="p">(</span><span class="n">dsname</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="descendants"><a class="viewcode-back" href="../../smv.html#smv.smvshell.descendants">[docs]</a><span class="k">def</span> <span class="nf">descendants</span><span class="p">(</span><span class="n">dsname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List all descendants of a dataset</span>
+
+<span class="sd">        Descendants of a dataset are the datasets which depend on it directly or</span>
+<span class="sd">        in-directly, including datasets from other stages</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dsname (str): The name of an SmvDataSet</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">descendants</span><span class="p">(</span><span class="n">dsname</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="graph"><a class="viewcode-back" href="../../smv.html#smv.smvshell.graph">[docs]</a><span class="k">def</span> <span class="nf">graph</span><span class="p">(</span><span class="n">stageName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print ascii graph of all datasets in a given stage or all stages</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dsname (str): The name of an SmvDataSet</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">stageName</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">_graph</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">_graph</span><span class="p">(</span><span class="n">stageName</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="graphStage"><a class="viewcode-back" href="../../smv.html#smv.smvshell.graphStage">[docs]</a><span class="k">def</span> <span class="nf">graphStage</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Print ascii graph of all stages (not datasets)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">_graphStage</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="now"><a class="viewcode-back" href="../../smv.html#smv.smvshell.now">[docs]</a><span class="k">def</span> <span class="nf">now</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Print current time</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">now</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="smvDiscoverSchemaToFile"><a class="viewcode-back" href="../../smv.html#smv.smvshell.smvDiscoverSchemaToFile">[docs]</a><span class="k">def</span> <span class="nf">smvDiscoverSchemaToFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">ca</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Try best to discover Schema from raw Csv file</span>
+
+<span class="sd">        Will save a schema file with postfix &quot;.toBeReviewed&quot; in local directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path (str): Path to the CSV file</span>
+<span class="sd">            n (int): Number of records to check for schema discovery, default 100k</span>
+<span class="sd">            ca (CsvAttributes): Defaults to CsvWithHeader</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span><span class="o">.</span><span class="n">smvDiscoverSchemaToFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">ca</span> <span class="ow">or</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">defaultCsvWithHeader</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="edd"><a class="viewcode-back" href="../../smv.html#smv.smvshell.edd">[docs]</a><span class="k">def</span> <span class="nf">edd</span><span class="p">(</span><span class="n">ds_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print edd report for the result of an SmvDataSet</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ds_name (str): name of an SmvDataSet</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">_jvmShellCmd</span><span class="p">()</span><span class="o">.</span><span class="n">_edd</span><span class="p">(</span><span class="n">ds_name</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="run_test"><a class="viewcode-back" href="../../smv.html#smv.smvshell.run_test">[docs]</a><span class="k">def</span> <span class="nf">run_test</span><span class="p">(</span><span class="n">test_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Run a test with the given name without creating new Spark context</span>
+
+<span class="sd">        First reloads SMV and the test from source, then runs the test.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            test_name (str): Name of the test to run</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Ensure TestConfig has a canonical SmvApp (this will eventually be used</span>
+    <span class="c1"># to restore the singleton SmvApp)</span>
+    <span class="n">TestConfig</span><span class="o">.</span><span class="n">setSmvApp</span><span class="p">(</span><span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">())</span>
+
+    <span class="n">first_dot</span> <span class="o">=</span> <span class="n">test_name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">first_dot</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">test_root_name</span> <span class="o">=</span> <span class="n">test_name</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">test_root_name</span> <span class="o">=</span> <span class="n">test_name</span><span class="p">[:</span><span class="n">first_dot</span><span class="p">]</span>
+
+    <span class="n">_clear_from_sys_modules</span><span class="p">([</span><span class="s2">&quot;smv&quot;</span><span class="p">,</span> <span class="n">test_root_name</span><span class="p">])</span>
+
+    <span class="n">SmvTestRunner</span><span class="p">(</span><span class="s2">&quot;src/test/python&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">test_name</span><span class="p">])</span></div>
+
+<span class="k">def</span> <span class="nf">_clear_from_sys_modules</span><span class="p">(</span><span class="n">names_to_clear</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Clear smv and the given names from sys.modules (don&#39;t clear this module)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">ntc</span> <span class="ow">in</span> <span class="n">names_to_clear</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;smv.smvshell&quot;</span> <span class="ow">and</span> <span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">ntc</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="n">ntc</span><span class="p">):</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">break</span>
+
+<div class="viewcode-block" id="show_run_info"><a class="viewcode-back" href="../../smv.html#smv.smvshell.show_run_info">[docs]</a><span class="k">def</span> <span class="nf">show_run_info</span><span class="p">(</span><span class="n">collector</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Inspects the SmvRunInfoCollector object returned by smvApp.runModule&quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;datasets: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">collector</span><span class="o">.</span><span class="n">fqns</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">fqn</span> <span class="ow">in</span> <span class="n">collector</span><span class="o">.</span><span class="n">fqns</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;+ </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">fqn</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;|- dqm validation:&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;    &#39;</span> <span class="o">+</span> <span class="n">pformat</span><span class="p">(</span><span class="n">collector</span><span class="o">.</span><span class="n">dqm_validation</span><span class="p">(</span><span class="n">fqn</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;|- metadata:&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;     &#39;</span> <span class="o">+</span> <span class="n">pformat</span><span class="p">(</span><span class="n">collector</span><span class="o">.</span><span class="n">metadata</span><span class="p">(</span><span class="n">fqn</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;|- metadata history:&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;     &#39;</span> <span class="o">+</span> <span class="n">pformat</span><span class="p">(</span><span class="n">collector</span><span class="o">.</span><span class="n">metadata_history</span><span class="p">(</span><span class="n">fqn</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span></div>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;df&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;dshash&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;getModel&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;openHive&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;openCsv&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;smvExportCsv&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;help&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;lsStage&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ls&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;lsDead&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;lsDeadLeaf&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;exportToHive&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ancestors&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;descendants&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;graph&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;graphStage&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;now&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;smvDiscoverSchemaToFile&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;edd&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;run_test&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;show_run_info&#39;</span>
+<span class="p">]</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 1.6.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+    </div>
+  </body>
+</html>
