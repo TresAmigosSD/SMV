@@ -83,7 +83,7 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def df(cls, fqn):
-        return cls.smvApp.runModule("mod:" + fqn)
+        return cls.smvApp.runModule("mod:" + fqn)[0]
 
     def should_be_same(self, expected, result):
         """Asserts that the two dataframes contain the same data, ignoring order

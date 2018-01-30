@@ -14,32 +14,26 @@
 
 package org.tresamigos.smv
 
+import org.json4s.DefaultFormats
+import org.json4s._
+import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization.read
+
+import scala.reflect.ManifestFactory
+
 import dqm.DqmValidationResult
 
-class ValidationTest extends SmvTestUtil {
+class ValidationTest extends SmvUnitSpec {
 
-  test("Test DqmValidationResult json convertion test") {
+  "DqmValidationResult" should "be able to convert to and from json" in {
     val v = DqmValidationResult(
       false,
+      null,
       Seq(("p1", "many issues:\n Issue1: ...\n Issue2: ..."), ("p2", "Simpy issue")),
       Seq("log1", "log2")
     )
-    val str = v.toJSON
-    val res = pretty(parse(str))
-    assert(
-      res ===
-        """{
-  "passed" : false,
-  "errorMessages" : [ {
-    "p1" : "many issues:\n Issue1: ...\n Issue2: ..."
-  }, {
-    "p2" : "Simpy issue"
-  } ],
-  "checkLog" : [ "log1", "log2" ]
-}""")
 
-    val v2 = DqmValidationResult(str)
-    assert(v === v2)
+    DqmValidationResult.fromJson(v.toJSON) shouldBe v
   }
 }

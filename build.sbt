@@ -9,6 +9,7 @@ scalaVersion := "2.10.4"
 scalacOptions ++= Seq("-deprecation", "-feature")
 
 val sparkVersion = "1.6.2"
+javacOptions ++= Seq("-source", "1.6", "-target", "1.6")
 
 libraryDependencies ++= Seq(
   "org.apache.spark"             %% "spark-sql"         % sparkVersion % "provided",

@@ -12,10 +12,10 @@
 # limitations under the License.
 
 from test_support.smvbasetest import SmvBaseTest
-from smv import SmvApp
+
 
 class RunModuleFromCmdLineTest(SmvBaseTest):
-    modUrn = 'mod:runmod.stage1.modules.A'
+    modUrn = 'runmod.stage1.modules.A'
 
     @classmethod
     def smvAppInitArgs(cls):
@@ -24,9 +24,10 @@ class RunModuleFromCmdLineTest(SmvBaseTest):
 
     def test_can_run_module_from_cmdline(self):
         self.smvApp.j_smvApp.run()
-        a = self.smvApp.runModule(self.modUrn)
+        a = self.df(self.modUrn)
         expected = self.createDF("k:String;v:Integer", "a,;b,2")
         self.should_be_same(a, expected)
+
 
 class RunStageFromCmdLineTest(SmvBaseTest):
     stageName = 'runstage.stage1'
@@ -38,7 +39,7 @@ class RunStageFromCmdLineTest(SmvBaseTest):
 
     def test_can_run_stage_from_cmdline(self):
         self.smvApp.j_smvApp.run()
-        a = self.smvApp.runModule("mod:" + self.stageName + ".modules.A")
+        a = self.df(self.stageName + ".modules.A")
         self.should_be_same(a, self.createDF("k:String;v:Integer", "a,;b,2"))
-        b = self.smvApp.runModule("mod:" + self.stageName + ".modules.B")
+        b = self.df(self.stageName + ".modules.B")
         self.should_be_same(b, self.createDF("k:String;v:Integer", "c,3;d,4"))

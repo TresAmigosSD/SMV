@@ -103,6 +103,8 @@ class SmvDataSet(ABC):
     def description(self):
         return self.__doc__
 
+    getDescription = create_py4j_interface_method("getDescription", "description")
+
     # this doesn't need stack trace protection
     @abc.abstractmethod
     def requiresDS(self):
@@ -183,6 +185,12 @@ class SmvDataSet(ABC):
         # if module inherits from SmvRunConfig, then add hash of all config values to module hash
         if hasattr(self, "_smvGetRunConfigHash"):
             res += self._smvGetRunConfigHash()
+
+        # if module has high order historical validation rules, add their hash to sum.
+        # they key() of a validator should change if it's parameters change.
+        if hasattr(cls, "_smvHistoricalValidatorsList"):
+            keys_hash = [_smvhash(v._key()) for v in cls._smvHistoricalValidatorsList]
+            res += sum(keys_hash)
 
         # ensure python's numeric type can fit in a java.lang.Integer
         return res & 0x7fffffff
@@ -365,7 +373,7 @@ class SmvInput(SmvDataSet, ABC):
         return self.getRawScalaInputDS().instanceValHash()
 
     def doRun(self, validator, known):
-        jdf = self.getRawScalaInputDS().doRun(validator)
+        jdf = self.getRawScalaInputDS().doRun(validator, self.smvApp._jvm.SmvRunInfoCollector())
         result = self.run(DataFrame(jdf, self.smvApp.sqlContext))
         self.assert_result_is_dataframe(result)
         return result._jdf
