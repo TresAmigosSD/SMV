@@ -28,7 +28,7 @@ function parse_args()
   done
 
   # SMV version is updated automatically by smv-release
-  SMV_VERSION="1.6.2.2"
+  SMV_VERSION="1.6.2.3"
   # Slice off last dot and number
   SPARK_VERSION="${SMV_VERSION%.*}"
 
