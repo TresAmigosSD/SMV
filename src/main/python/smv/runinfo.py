@@ -16,8 +16,8 @@
 Todo:
     * document example use
 """
-
 import json
+from pprint import pformat
 
 
 class SmvRunInfoCollector(object):
@@ -101,3 +101,15 @@ class SmvRunInfoCollector(object):
         if java_result is None:
             return {}
         return json.loads(java_result.toJson())
+
+    def show_report(self):
+        msg = 'datasets: %s' % self.fqns()
+        for fqn in self.fqns():
+            msg += '\n+ %s' % fqn
+            msg += '\n|- dqm validation:'
+            msg += '\n     ' + pformat(self.dqm_validation(fqn), indent=5)
+            msg += '\n|- metadata:'
+            msg += '\n     ' + pformat(self.metadata(fqn), indent=5)
+            msg += '\n|- metadata history:'
+            msg += '\n     ' + pformat(self.metadata_history(fqn), indent=5)
+        print msg

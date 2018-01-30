@@ -515,8 +515,8 @@ abstract class SmvDataSet extends FilenamePart {
    */
   def runInfo: SmvRunInfo = {
     val validation = DQMValidator.readPersistedValidationFile(moduleValidPath()).toOption.orNull
-    val meta = readPersistedMetadata(moduleMetaPath()).toOption.orNull
-    val mhistory = readMetadataHistory(moduleMetaHistoryPath()).toOption.orNull
+    val meta = readPersistedMetadata().toOption.orNull
+    val mhistory = readMetadataHistory().toOption.orNull
     SmvRunInfo(validation, meta, mhistory)
   }
 
