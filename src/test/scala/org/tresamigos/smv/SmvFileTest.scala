@@ -50,7 +50,7 @@ class SmvFileTest extends SmvTestUtil {
 
     object Data1 extends SmvMultiCsvFiles("data1")
 
-    val res = Data1.rdd()
+    val res = Data1.rdd(collector=new SmvRunInfoCollector)
     assertSrddDataEqual(res, "a;b")
   }
 }

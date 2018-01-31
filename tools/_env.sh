@@ -136,7 +136,8 @@ function accept_version () {
 }
 
 function verify_spark_version() {
-  local installed_version=$(${SMV_SPARK_SUBMIT_FULLPATH} --version 2>&1 | grep version | head -1 | sed -e 's/.*version //')
+  local installed_version=$(${SMV_SPARK_SUBMIT_FULLPATH} --version 2>&1 | \
+    grep -v "Spark Command" | grep version | head -1 | sed -e 's/.*version //')
   local required_version=$(cat "$SMV_TOOLS/../.spark_version")
   local vercmp=$(accept_version "$required_version" "$installed_version")
   if [[ $vercmp != "0" ]]; then

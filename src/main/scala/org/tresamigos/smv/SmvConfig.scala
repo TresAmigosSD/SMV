@@ -243,18 +243,21 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     case None => throw new SmvRuntimeException("JDBC driver is not specified in SMV config")
     case Some(ret) => ret
   }
+  // ---------- Dynamic Run Config Parameters key/values ----------
+  var dynamicRunConfig: Map[String, String] = Map.empty
 
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
   // ---------- User Run Config Parameters key/values ----------
-  val runConfigKeys: Seq[String] = splitProp("smv.config.keys")
-
   /** Get user run config parameter as a string. */
-  def getRunConfig(key: String): String = mergedProps("smv.config." + key).trim
+  def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, mergedProps("smv.config." + key).trim)
+
+  /** Get all run config keys. */
+  def getRunConfigKeys(): Seq[String] = splitProp("smv.config.keys") ++ dynamicRunConfig.keySet
 
   /** compute hash of all key values defined in the app. */
-  def getRunConfigHash(): Int = runConfigKeys.map(getRunConfig(_)).mkString(":").hashCode()
+  def getRunConfigHash(): Int = getRunConfigKeys().map(getRunConfig(_)).mkString(":").hashCode()
 
   // ---------- hierarchy of data / input / output directories
 

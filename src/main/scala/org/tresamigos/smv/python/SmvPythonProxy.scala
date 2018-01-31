@@ -253,8 +253,36 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(urn: String, forceRun: Boolean, version: Option[String]): DataFrame =
-    j_smvApp.runModule(URN(urn), forceRun, version)
+  def runModule(urn: String,
+                forceRun: Boolean,
+                version: Option[String],
+                runConfig: java.util.Map[String, String]): RunModuleResult = {
+    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+    val collector = new SmvRunInfoCollector
+    val df =  j_smvApp.runModule(URN(urn), forceRun, version, dynamicRunConfig, collector)
+    RunModuleResult(df, collector)
+  }
+
+  /** Runs an SmvModule written in either Python or Scala */
+  def runModuleByName(name: String,
+                forceRun: Boolean,
+                version: Option[String],
+                runConfig: java.util.Map[String, String]): RunModuleResult = {
+    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+    val collector = new SmvRunInfoCollector
+    val df =  j_smvApp.runModuleByName(name, forceRun, version, dynamicRunConfig, collector)
+    RunModuleResult(df, collector)
+  }
+
+  /**
+   * Returns the run information of a dataset and all its dependencies
+   * from the last run.
+   */
+  def getRunInfo(urn: String): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(URN(urn))
+
+  def getRunInfoByPartialName(partialName: String): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(partialName)
 
   def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
     SmvHDFS.writeToFile(in, dest)
@@ -290,3 +318,6 @@ object SmvPyClientFactory {
   def init(args: Array[String], sparkSession: SparkSession): SmvPyClient =
     new SmvPyClient(SmvApp.init(args, Option(sparkSession)))
 }
+
+/** For use by Python API to return a tuple */
+case class RunModuleResult(df: DataFrame, collector: SmvRunInfoCollector)

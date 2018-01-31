@@ -15,11 +15,15 @@
 package org.tresamigos.smv
 package dqm
 
+import scala.reflect.ManifestFactory
 import scala.util.Try
+
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.udf
-import org.json4s.{JObject, JString, JBool, JArray}
-import org.json4s.jackson.JsonMethods.{parse}
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization.{read, write}
 import org.apache.commons.lang.StringEscapeUtils.escapeJava
 
 /**
@@ -103,6 +107,8 @@ object SmvDQM {
  *                    for persisted results before running, and persist its own results
  */
 class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
+  import DQMValidator._
+
   private lazy val app: SmvApp = SmvApp.app
 
   private val ruleNames = dqm.rules.map { _.name }
@@ -181,13 +187,6 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
     }
   }
 
-  private def readPersistsedValidationFile(path: String): Try[DqmValidationResult] = {
-    Try({
-      val json = SmvReportIO.readReport(path)
-      DqmValidationResult(json)
-    })
-  }
-
   /**
    * Entrypoint for validating data. Runs validation UNLESS there is a persisted
    * result, in which case returns that result
@@ -200,7 +199,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
 
       val result = if (persistable) {
         // try to read from persisted validation file
-        readPersistsedValidationFile(path).recoverWith {
+        readPersistedValidationFile(path).recoverWith {
           case e => {
             Try(runValidation(df, forceAction, path))
           }
@@ -239,10 +238,10 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
    * Appl DQM policies to DataFrame and return result
    * @param df the data to apply policies to
    */
-  def applyPolicies(df: DataFrame) = {
+  def applyPolicies(df: DataFrame): DqmValidationResult = {
     /** need to take a snapshot on the DQMState before validation, since validation step could
      * have actions on the DF, which will change the accumulators of the DQMState*/
-    dqmState.snapshot()
+    val snapshot = dqmState.snapshot()
 
     val allPolicies = policiesFromTasks() ++ dqm.policies
     val results = allPolicies.map { p =>
@@ -255,8 +254,13 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
     }
     val checkLog = dqmState.getAllLog()
 
-    new DqmValidationResult(passed, errorMessages, checkLog)
+    DqmValidationResult(passed, snapshot, errorMessages, checkLog)
   }
+}
+
+object DQMValidator {
+  def readPersistedValidationFile(path: String): Try[DqmValidationResult] =
+    Try(DqmValidationResult.fromJson(SmvReportIO.readReport(path)))
 }
 
 /**
@@ -267,55 +271,20 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
  **/
 case class DqmValidationResult(
     passed: Boolean,
+    dqmStateSnapshot: DqmStateSnapshot,
     errorMessages: Seq[(String, String)] = Nil,
     checkLog: Seq[String] = Nil
 ) {
-  def toJSON() = {
-    def e(s: String) = escapeJava(s)
-
-    "{\n" ++
-      """  "passed":%s,""".format(passed) ++ "\n" ++
-      """  "errorMessages": [""" ++ "\n" ++
-      errorMessages
-        .map { case (k, m) => """    {"%s":"%s"}""".format(e(k), e(m)) }
-        .mkString(",\n") ++ "\n" ++
-      "  ],\n" ++
-      """  "checkLog": [""" ++ "\n" ++
-      checkLog
-        .map { l =>
-          """    "%s"""".format(e(l))
-        }
-        .mkString(",\n") ++ "\n" ++
-      "  ]\n" ++
-      "}"
-  }
+  def toJSON() = write(this)(DefaultFormats)
 
   def isEmpty() = passed && checkLog.isEmpty
 }
 
 /** construct DqmValidationResult from JSON string */
 private[smv] object DqmValidationResult {
-  def apply(jsonStr: String) = {
-    val json = parse(jsonStr)
-    val (passed, errorList, checkList) = json match {
-      case JObject(List((_, JBool(p)), (_, JArray(e)), (_, JArray(c)))) => (p, e, c)
-      case _                                                            => throw new IllegalArgumentException("JSON string is not a ValidationResult object")
-    }
-    val errorMessages = errorList.map { e =>
-      e match {
-        case JObject(List((k, JString(v)))) => (k, v)
-        case _ =>
-          throw new IllegalArgumentException("JSON string is not a ValidationResult object")
-      }
-    }
-    val checkLog = checkList.map { e =>
-      e match {
-        case JString(l) => l
-        case _ =>
-          throw new IllegalArgumentException("JSON string is not a ValidationResult object")
-      }
-    }
-
-    new DqmValidationResult(passed, errorMessages, checkLog)
+  def fromJson(jsonStr: String) = {
+    // get the java class for the case class, instead of its companion object
+    val klass = new DqmValidationResult(true, null).getClass
+    read[DqmValidationResult](jsonStr)(DefaultFormats, ManifestFactory.classType(klass))
   }
 }

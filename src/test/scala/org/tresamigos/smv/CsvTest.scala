@@ -7,7 +7,7 @@ class CsvTest extends SmvTestUtil {
 
   test("Test loading of csv file with header") {
     val file = SmvCsvFile("./" + testDataDir + "CsvTest/test1", CsvAttributes.defaultCsvWithHeader)
-    val df   = file.rdd()
+    val df   = file.rdd(collector=new SmvRunInfoCollector)
     import df.sparkSession.implicits._
     val res = df.map(r => (r.getString(0), r.getInt(1))).collect.mkString(",")
     // TODO: should probably add a assertSRDDEqual() with expected rows instead of convert to string
@@ -33,7 +33,7 @@ class CsvTest extends SmvTestUtil {
         df.smvSelectPlus(smvfuncs.smvStrCat($"name", $"id") as "name_id")
       }
     }
-    val df = TestFile.rdd()
+    val df = TestFile.rdd(collector=new SmvRunInfoCollector)
     assertSrddDataEqual(df,
                         "Bob,1,Bob1;" +
                           "Fred,2,Fred2")
@@ -81,7 +81,7 @@ class CsvTest extends SmvTestUtil {
         Some("eman:String;di:integer")
       )
 
-    val res = file.rdd()
+    val res = file.rdd(collector=new SmvRunInfoCollector)
 
     assertSrddDataEqual(res, "Bob,1;Fred,2")
     assertSrddSchemaEqual(res, "eman:String;di:integer")
@@ -89,7 +89,7 @@ class CsvTest extends SmvTestUtil {
 
   test("Test reading CSV file with attributes in schema file.") {
     val file = SmvCsvFile("./" + testDataDir + "CsvTest/test2.csv")
-    val df   = file.rdd()
+    val df   = file.rdd(collector=new SmvRunInfoCollector)
 
     // take the sum of second column (age) to make sure csv was interpreted correctly.
     val res = df.agg(sum(df("age")))
@@ -130,7 +130,7 @@ class CsvTest extends SmvTestUtil {
       }
     }
 
-    val res = A.rdd()
+    val res = A.rdd(collector=new SmvRunInfoCollector)
     assertSrddDataEqual(res, """1,;null,;3,""")
     assertFileEqual(
       A.moduleCsvPath() + "/part-00000",
@@ -158,7 +158,7 @@ class CsvTest extends SmvTestUtil {
                     |Fred,24;
                     |"Joe,50""".stripMargin
               )
-    assertDataFramesEqual(file.rdd(), exp)
+    assertDataFramesEqual(file.rdd(collector=new SmvRunInfoCollector), exp)
   }
 
   test("Write file with \" as content instead of quote-char") {
@@ -171,7 +171,7 @@ class CsvTest extends SmvTestUtil {
     res.saveAsCsvWithSchema(csvPath)
 
     val fileOut = SmvCsvFile("./" + csvPath)
-    assertDataFramesEqual(fileOut.rdd(), res)
+    assertDataFramesEqual(fileOut.rdd(collector=new SmvRunInfoCollector), res)
   }
 
   test("Test escaping quotes in strings") {
@@ -206,7 +206,7 @@ class CsvTest extends SmvTestUtil {
 
     df.saveAsCsvWithSchema(csvPathCaret, ca)
     val file = SmvCsvFile("./" + csvPathCaret, ca)
-    dfOut = file.rdd()
+    dfOut = file.rdd(collector=new SmvRunInfoCollector)
 
     assertDataFramesEqual(df, dfOut)
 

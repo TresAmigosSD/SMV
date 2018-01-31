@@ -13,6 +13,7 @@
 """Helper functions available in SMV's Python shell
 """
 import sys
+from pprint import pformat
 
 from smv import SmvApp
 from pyspark.sql import DataFrame
@@ -24,18 +25,19 @@ from test_support.testconfig import TestConfig
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
-def df(name, forceRun = False, version = None):
+def df(name, forceRun = False, version = None, runConfig = None):
     """The DataFrame result of running the named module
 
         Args:
             name (str): The unique name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
             version (str): The name of the published version to load from
+            runConfig (dict): runtime configuration to use when running the module
 
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun, version)
+    return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig)[0]
 
 def dshash(name):
     """The current hashOfHash for the named module as a hex string
@@ -272,6 +274,15 @@ def _clear_from_sys_modules(names_to_clear):
                 sys.modules.pop(name)
                 break
 
+def show_run_info(collector):
+    """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
+    collector.show_report()
+
+def get_run_info(name):
+    """Get the SmvRunInfoCollector with full information about a module and its dependencies
+    """
+    return SmvApp.getInstance().getRunInfoByPartialName(name)
+
 __all__ = [
     'df',
     'dshash',
@@ -292,5 +303,7 @@ __all__ = [
     'now',
     'smvDiscoverSchemaToFile',
     'edd',
-    'run_test'
+    'run_test',
+    'show_run_info',
+    'get_run_info'
 ]
