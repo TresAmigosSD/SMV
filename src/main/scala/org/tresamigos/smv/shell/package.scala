@@ -141,7 +141,7 @@ package object shell {
    *
    * Will save a schema file with postfix ".toBeReviewed" in local directory.
    **/
-  def discoverSchema(
+  def smvDiscoverSchemaToFile(
       path: String,
       n: Int = 100000,
       ca: CsvAttributes = CsvAttributes.defaultCsvWithHeader

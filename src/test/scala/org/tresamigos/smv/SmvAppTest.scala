@@ -41,8 +41,23 @@ package org.tresamigos.smv {
         "--input-dir",
         testcaseTempDir,
         "--smv-props",
-        "smv.stages=org.tresamigos.smv.fixture.smvapptest"
+        "smv.stages=org.tresamigos.smv.fixture.smvapptest",
+        "smv.config.keys=sample",
+        "smv.config.sample=1pct"
       )
+
+    test("Test runtime configuration") {
+      import org.tresamigos.smv.fixture.smvapptest._
+      resetTestcaseTempDir()
+
+      assert(app.smvConfig.getRunConfig("sample") === "1pct")
+
+      app.runModule(C.urn, runConfig = Map("sample" -> "2pct"))
+      assert(app.smvConfig.getRunConfig("sample") === "2pct")
+
+      app.runModule(C.urn, runConfig = Map("sample" -> "3pct"))
+      assert(app.smvConfig.getRunConfig("sample") === "3pct")
+    }
 
     test("Test normal dependency execution") {
       import org.tresamigos.smv.fixture.smvapptest._
@@ -146,7 +161,7 @@ package org.tresamigos.smv {
       }
 
       object testApp
-          extends SmvApp(Seq("--purge-old-output", "--output-dir", testcaseTempDir),
+          extends SmvApp(Seq("--purge-old-output", "--history-dir", testcaseTempDir, "--output-dir", testcaseTempDir),
                          Option(sparkSession)) {
         override lazy val allDataSets = Seq(m)
       }
@@ -173,7 +188,7 @@ package org.tresamigos.smv.fixture.smvapptest {
 
   class TestFile(override val path: String) extends SmvFile {
     override def readFromFile(parserLogger: ParserLogger) = null
-    override def doRun(dsDqm: DQMValidator): DataFrame = null
+    override def doRun(dsDqm: DQMValidator, collector: SmvRunInfoCollector): DataFrame = null
     override val userSchema = None
   }
 

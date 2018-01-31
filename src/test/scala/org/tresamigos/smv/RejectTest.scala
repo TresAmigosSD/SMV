@@ -15,7 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.SparkException
-import dqm.{SmvDQM, DqmValidationResult, FailParserCountPolicy}
+import dqm._
 
 class RejectTest extends SmvTestUtil {
   test("test csvFile loader rejection with NoOp") {
@@ -23,7 +23,7 @@ class RejectTest extends SmvTestUtil {
         extends SmvCsvFile("./" + testDataDir + "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
     }
-    val df = file.rdd()
+    val df = file.rdd(collector=new SmvRunInfoCollector)
 
     val res = df.collect.map(_.mkString(","))
     val exp = List(
@@ -43,7 +43,7 @@ class RejectTest extends SmvTestUtil {
       val df = open(testDataDir + "RejectTest/test2")
     }
     val m   = e.getMessage
-    val res = DqmValidationResult(m)
+    val res = DqmValidationResult.fromJson(m)
     assertUnorderedSeqEqual(
       res.checkLog,
       Seq(
@@ -61,11 +61,17 @@ class RejectTest extends SmvTestUtil {
         extends SmvCsvFile("./" + testDataDir + "RejectTest/test2", CsvAttributes.defaultCsv) {
       override val failAtParsingError = false
       override def dqm()              = SmvDQM().add(FailParserCountPolicy(10))
+      // override fqn because object defined in anonymous function has spaghetti fqn
+      override def fqn()              = "org.tresamigos.smv.RejectTest.file"
     }
-    val df  = file.rdd()
-    val res = DqmValidationResult(SmvReportIO.readReport(file.moduleValidPath()))
+    val df  = file.rdd(collector=new SmvRunInfoCollector)
+    val res = DqmValidationResult.fromJson(SmvReportIO.readReport(file.moduleValidPath()))
     assert(res.passed === true)
-    assertUnorderedSeqEqual(res.errorMessages, Seq(("FailParserCountPolicy(10)", "true")))
+    assertUnorderedSeqEqual(
+      res.errorMessages,
+      Seq(("org.tresamigos.smv.RejectTest.file metadata validation", "true"),
+          ("FailParserCountPolicy(10)", "true"))
+    )
   }
 
   test("test csvParser rejection with exception") {
@@ -74,39 +80,34 @@ class RejectTest extends SmvTestUtil {
       val prdd    = dfFrom("a:String;b:Double;c:String;d:String", dataStr)
       println(prdd.collect.mkString("\n"))
     }
-    val m = e.getMessage
-    assert(
-      m === """{
-  "passed":false,
-  "errorMessages": [
-    {"FailParserCountPolicy(1)":"false"}
-  ],
-  "checkLog": [
-    "java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011"
-  ]
-}""")
+
+    val result = DqmValidationResult.fromJson(e.getMessage)
+    assert(result === DqmValidationResult(false,
+      DqmStateSnapshot(0, ErrorReport(1,
+        Seq("""java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,"02122011""")),Map.empty,Map.empty),
+      Seq(
+        ("org.tresamigos.smv.SmvCsvStringData metadata validation", "true"),
+        ("FailParserCountPolicy(1)", "false")),
+      Seq("java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011")))
   }
 
   test("test csvParser rejection") {
     val data      = """231,67.21  ,20121009101621,"02122011"""
     val schemaStr = "a:String;b:Double;c:String;d:String"
-
+    // override fqn because object defined in anonymous function has spaghetti fqn
     object smvCF extends SmvCsvStringData(schemaStr, data, true) {
       override val failAtParsingError = false
+      override def fqn()              = "org.tresamigos.smv.RejectTest.smvCF"
     }
-    val prdd = smvCF.rdd()
+    val prdd = smvCF.rdd(collector=new SmvRunInfoCollector)
 
-    val res = SmvReportIO.readReport(smvCF.moduleValidPath())
-
-    assert(
-      res === """{
-  "passed":true,
-  "errorMessages": [
-
-  ],
-  "checkLog": [
-    "java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011"
-  ]
-}""")
+    val res = DqmValidationResult.fromJson(SmvReportIO.readReport(smvCF.moduleValidPath()))
+    assert(res === DqmValidationResult(true,
+      DqmStateSnapshot(0, ErrorReport(1,
+        Seq("""java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,"02122011""")),Map.empty,Map.empty),
+      Seq(
+        ("org.tresamigos.smv.RejectTest.smvCF metadata validation", "true")
+      ),
+      Seq("java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011")))
   }
 }

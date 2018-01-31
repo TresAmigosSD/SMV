@@ -29,6 +29,7 @@ import org.tresamigos.smv.dqm.DQMValidator;
  * decorator to ensure that errors that occur in callbacks don't get eaten.
  */
 public interface ISmvModule {
+	IPythonResponsePy4J<String> getDescription();
 	/**
 	 * Does the result of this module need to be persisted?
 	 *
@@ -80,4 +81,19 @@ public interface ISmvModule {
 	 * of an input file
 	 */
 	IPythonResponsePy4J<Integer> getInstanceValHash();
+
+	/**
+	 * User metadata serialized as JSON
+	 */
+	IPythonResponsePy4J<String> getMetadataJson(Dataset<Row> df);
+
+	/**
+	 * Validate metadata given serialized as json
+	 */
+	IPythonResponsePy4J<String> getValidateMetadataJson(String currentMetaJson, String[] historyMetaJson);
+
+	/**
+	 * Maximum of the metadata history
+	 */
+	IPythonResponsePy4J<Integer> getMetadataHistorySize();
 }

@@ -24,7 +24,7 @@ $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 * `graph(stage_name)`: print dependency graph of all DS in this stage
 * `graph()`: print dependency graph of all DS in the app
 * `now()`: current system time
-* `discoverSchema(path, n, csvAttr)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix ".schema.toBeReviewed"
+* `smvDiscoverSchemaToFile(path, n, csvAttr)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix ".schema.toBeReviewed"
 
 ## User-defined utility methods
 Users may define their own utility methods in `conf/smv_shell_app_init.py`. If the file exists, everything in it will be imported when the shell starts.
@@ -207,7 +207,7 @@ When `smv-shell` is launched, it will source the file `conf/smv_shell_init.scala
 helper functions and create a default SMV dummy application (`app`)
 
 * `df(data_set)` :  Load/Run the given dataset and return the resulting `DataFrame`
-* `discoverSchema(path, n, ca=CsvAttributes.defaultCsvWithHeader)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix
+* `smvDiscoverSchemaToFile(path, n, ca=CsvAttributes.defaultCsvWithHeader)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix
  ".schema.toBeReviewed"
 * `dumpEdd(data_set)` : Generate base EDD results for given `SmvDataSet` and dump the results to the screen.
 

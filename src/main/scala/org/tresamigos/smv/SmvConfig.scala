@@ -122,6 +122,9 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val outputDir = opt[String]("output-dir",
                               noshort = true,
                               descr = "specify the output directory (default: datadir/output")
+  val historyDir = opt[String]("history-dir",
+                              noshort = true,
+                              descr = "specify the history directory (default: datadir/history")
   val publishDir = opt[String]("publish-dir",
                                noshort = true,
                                descr = "specify the publish directory (default: datadir/publish")
@@ -191,6 +194,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
     "smv.appName"     -> "Smv Application",
+    "smv.appId"       -> java.util.UUID.randomUUID.toString,
     "smv.stages"      -> "",
     "smv.config.keys" -> "",
     "smv.class_dir"   -> "./target/classes"
@@ -201,6 +205,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // --- config params.  App should access configs through vals below rather than from props maps
   val appName    = mergedProps("smv.appName")
+  val appId      = mergedProps("smv.appId")
   val stageNames = splitProp("smv.stages").toSeq
 
   val classDir = mergedProps("smv.class_dir")
@@ -233,23 +238,27 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       case _ =>
         throw new SmvRuntimeException("JDBC url not specified in SMV config")
     }
-
+  
   def jdbcDriver: String = mergedProps.get("smv.jdbc.driver") match {
     case None => throw new SmvRuntimeException("JDBC driver is not specified in SMV config")
     case Some(ret) => ret
   }
 
+  // ---------- Dynamic Run Config Parameters key/values ----------
+  var dynamicRunConfig: Map[String, String] = Map.empty
+
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
   // ---------- User Run Config Parameters key/values ----------
-  val runConfigKeys: Seq[String] = splitProp("smv.config.keys")
-
   /** Get user run config parameter as a string. */
-  def getRunConfig(key: String): String = mergedProps("smv.config." + key).trim
+  def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, mergedProps("smv.config." + key).trim)
+
+  /** Get all run config keys. */
+  def getRunConfigKeys(): Seq[String] = splitProp("smv.config.keys") ++ dynamicRunConfig.keySet
 
   /** compute hash of all key values defined in the app. */
-  def getRunConfigHash(): Int = runConfigKeys.map(getRunConfig(_)).mkString(":").hashCode()
+  def getRunConfigHash(): Int = getRunConfigKeys().map(getRunConfig(_)).mkString(":").hashCode()
 
   // ---------- hierarchy of data / input / output directories
 
@@ -269,6 +278,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   def outputDir: String = {
     cmdLine.outputDir.get.orElse(mergedProps.get("smv.outputDir")).getOrElse(dataDir + "/output")
+  }
+
+  def historyDir: String = {
+    cmdLine.historyDir.get.orElse(mergedProps.get("smv.historyDir")).getOrElse(dataDir + "/history")
   }
 
   def publishDir: String = {

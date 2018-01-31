@@ -301,7 +301,7 @@ scala> df.saveAsCsvWithSchema("/outdata/result.csv")
 SMV can discover data schema from CSV file and create a schema file.  Manual adjustment might be needed on the discovered schema file.  Example of using the Schema Discovery in the interactive shell*
 
 ```scala
-scala> discoverSchema("/path/to/file.csv")
+scala> smvDiscoverSchemaToFile("/path/to/file.csv")
 ```
 
 The schema file will be created in the current running dir.

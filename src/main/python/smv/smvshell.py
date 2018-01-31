@@ -13,6 +13,7 @@
 """Helper functions available in SMV's Python shell
 """
 import sys
+from pprint import pformat
 
 from smv import SmvApp
 from pyspark.sql import DataFrame
@@ -35,7 +36,7 @@ def df(name, forceRun = False, version = None):
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun, version)
+    return SmvApp.getInstance().runModuleByName(name, forceRun, version)[0]
 
 def dshash(name):
     """The current hashOfHash for the named module as a hex string
@@ -119,7 +120,7 @@ def help():
        |  * ancestors(datasetName)
        |  * descendants(datasetName)
        |  * now()
-       |  * discoverSchema(filePath)
+       |  * smvDiscoverSchemaToFile(filePath)
        """
     )
 
@@ -220,7 +221,7 @@ def now():
     """
     print(_jvmShellCmd().now())
 
-def discoverSchema(path, n=100000, ca=None):
+def smvDiscoverSchemaToFile(path, n=100000, ca=None):
     """Try best to discover Schema from raw Csv file
 
         Will save a schema file with postfix ".toBeReviewed" in local directory.
@@ -230,7 +231,7 @@ def discoverSchema(path, n=100000, ca=None):
             n (int): Number of records to check for schema discovery, default 100k
             ca (CsvAttributes): Defaults to CsvWithHeader
     """
-    SmvApp.getInstance()._jvm.SmvPythonHelper.discoverSchema(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
+    SmvApp.getInstance()._jvm.SmvPythonHelper.smvDiscoverSchemaToFile(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
 
 def edd(ds_name):
     """Print edd report for the result of an SmvDataSet
@@ -272,6 +273,15 @@ def _clear_from_sys_modules(names_to_clear):
                 sys.modules.pop(name)
                 break
 
+def show_run_info(collector):
+    """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
+    collector.show_report()
+
+def get_run_info(name):
+    """Get the SmvRunInfoCollector with full information about a module and its dependencies
+    """
+    return SmvApp.getInstance().getRunInfoByPartialName(name)
+
 __all__ = [
     'df',
     'dshash',
@@ -290,7 +300,9 @@ __all__ = [
     'graph',
     'graphStage',
     'now',
-    'discoverSchema',
+    'smvDiscoverSchemaToFile',
     'edd',
-    'run_test'
+    'run_test',
+    'show_run_info',
+    'get_run_info'
 ]

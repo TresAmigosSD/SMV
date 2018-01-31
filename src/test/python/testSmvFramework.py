@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import unittest
+import json
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
@@ -32,7 +33,7 @@ class SmvFrameworkTest(SmvBaseTest):
     def _escapeRegex(self, s):
         import re
         return re.sub(r"([\[\]\(\)])", r"\\\1", s)
-        
+
     def test_SmvCsvStringData(self):
         fqn = "stage.modules.D1"
         df = self.df(fqn)
@@ -76,19 +77,7 @@ class SmvFrameworkTest(SmvBaseTest):
     def test_SmvDQM(self):
         fqn = "stage.modules.D3"
 
-        msg =""": org.tresamigos.smv.SmvDqmValidationError: {
-  "passed":false,
-  "errorMessages": [
-    {"FailTotalRuleCountPolicy(2)":"true"},
-    {"FailTotalFixCountPolicy(1)":"false"},
-    {"FailParserCountPolicy(1)":"true"}
-  ],
-  "checkLog": [
-    "Rule: b_lt_03, total count: 1",
-    "org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5",
-    "Fix: a_lt_1_fix, total count: 1"
-  ]
-}"""
+        msg = """{"passed":false,"dqmStateSnapshot":{"totalRecords":3,"parseError":{"total":0,"firstN":[]},"fixCounts":{"a_lt_1_fix":1},"ruleErrors":{"b_lt_03":{"total":1,"firstN":["org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5"]}}},"errorMessages":[{"FailTotalRuleCountPolicy(2)":"true"},{"FailTotalFixCountPolicy(1)":"false"},{"org.tresamigos.smv.SmvCsvStringData metadata validation":"true"},{"FailParserCountPolicy(1)":"true"},{"stage.modules.D3 metadata validation":"true"}],"checkLog":["Rule: b_lt_03, total count: 1","org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5","Fix: a_lt_1_fix, total count: 1"]}"""
 
         with self.assertRaisesRegexp(Py4JJavaError, self._escapeRegex(msg)):
             df = self.df(fqn)
@@ -162,7 +151,7 @@ class SmvNameErrorPropagationTest(SmvBaseTest):
         return ['--smv-props', 'smv.stages=stage', '-m', "None"]
 
     def test_module_NameError_propagation(self):
-        fqn = "ModWithNameError"
+        fqn = "stage.modules.ModWithBadName"
         with self.assertRaisesRegexp(Py4JJavaError, "NameError"):
             self.df(fqn)
 
@@ -173,6 +162,45 @@ class SmvSyntaxErrorPropagationTest(SmvBaseTest):
         return ['--smv-props', 'smv.stages=syntax_error_stage', '-m', "None"]
 
     def test_module_SyntaxError_propagation(self):
-        fqn = "ModWithSyntaxError"
+        fqn = "syntax_error_stage.modules.ModWithBadSyntax"
         with self.assertRaisesRegexp(Py4JJavaError, "SyntaxError"):
             self.df(fqn)
+
+# TODO: this should be moved into own file.
+class SmvMetadataTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=metadata_stage', '-m', "None"]
+
+    def test_metadata_includes_user_metadata(self):
+        fqn = "metadata_stage.modules.ModWithUserMeta"
+        self.df(fqn)
+        with open(self.tmpDataDir() + "/history/{}.hist/part-00000".format(fqn)) as f:
+            metadata_list = json.loads(f.read())
+            metadata = metadata_list['history'][0]
+        self.assertEqual(metadata['foo'], "bar")
+
+    def test_metadata_validation_failure_causes_error(self):
+        fqn = "metadata_stage.modules.ModWithFailingValidation"
+        with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
+            self.df(fqn)
+
+    def test_invalid_metadata_rejected_gracefully(self):
+        fqn = "metadata_stage.modules.ModWithInvalidMetadata"
+        with self.assertRaisesRegexp(Exception, r"metadata .* is not a dict"):
+            self.df(fqn)
+
+    def test_invalid_metadata_validation_rejected_gracefully(self):
+        fqn = "metadata_stage.modules.ModWithInvalidMetadataValidation"
+        with self.assertRaisesRegexp(Exception, r"message .* is not a string"):
+            self.df(fqn)
+
+    def test_metadata_only_called_once(self):
+        # running the module will incr the global metadata count by 1 for each
+        # call to metadata
+        fqn = "metadata_stage.modules.ModWithMetaCount"
+        self.df(fqn)
+
+        # Note: must import AFTER `df` above to get latest instance of package!
+        from metadata_stage.modules import metadata_count
+        self.assertEqual(metadata_count, 1)

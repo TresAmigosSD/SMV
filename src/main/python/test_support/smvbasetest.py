@@ -48,7 +48,7 @@ class SmvBaseTest(unittest.TestCase):
         # The original SmvApp (if any) will be restored when the test is torn down
         cls.smvApp = SmvApp.createInstance(args, cls.sparkSession)
 
-        sys.path.append(cls.testResourceDir())
+        sys.path.append(cls.resourceTestDir())
 
         cls.mkTmpTestDir()
 
@@ -59,7 +59,7 @@ class SmvBaseTest(unittest.TestCase):
         from smv.smvapp import SmvApp
         # Restore SmvApp singleton
         SmvApp.setInstance(TestConfig.originalSmvApp())
-        sys.path.remove(cls.testResourceDir())
+        sys.path.remove(cls.resourceTestDir())
 
     def setUp(self):
         """Patch for Python 2.6 without using unittest
@@ -83,7 +83,7 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def df(cls, fqn):
-        return cls.smvApp.runModule("mod:" + fqn)
+        return cls.smvApp.runModule("mod:" + fqn)[0]
 
     def should_be_same(self, expected, result):
         """Asserts that the two dataframes contain the same data, ignoring order
@@ -97,7 +97,7 @@ class SmvBaseTest(unittest.TestCase):
         self.assertEqual(sort_collect(expected), sort_collect(result))
 
     @classmethod
-    def testResourceDir(cls):
+    def resourceTestDir(cls):
         """Directory where resources (like modules to run) for this test are expected."""
         return cls.TestSrcDir + "/" + cls.__module__
 

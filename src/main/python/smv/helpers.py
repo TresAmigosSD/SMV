@@ -233,6 +233,25 @@ class SmvGroupedData(object):
         """
         return DataFrame(self.sgd.smvPivotCoalesce(smv_copy_array(self.df._sc, *pivotCols), smv_copy_array(self.df._sc, *valueCols), smv_copy_array(self.df._sc, *baseOutput)), self.df.sql_ctx)
 
+    def smvRePartition(self, numParts):
+        """Repartition SmvGroupedData using specified partitioner on the keys. A
+            HashPartitioner with the specified number of partitions will be used.
+
+            This method is used in the cases that the key-space is very large. In the
+            current Spark DF's groupBy method, the entire key-space is actually loaded
+            into executor's memory, which is very dangerous when the key space is big.
+            The regular DF's repartition function doesn't solve this issue since a random
+            repartition will not guaranteed to reduce the key-space on each executor.
+            In that case we need to use this function to linearly reduce the key-space.
+
+            Example:
+
+            >>> df.smvGroupBy("k1", "k2").smvRePartition(32).agg(sum("v") as "v")
+        """
+        jgdadp = self.sgd.smvRePartition(numParts)
+        df = DataFrame(jgdadp.toDF(), self.df.sql_ctx)
+        return SmvGroupedData(df, self.keys, jgdadp)
+
     def smvFillNullWithPrevValue(self, *orderCols):
         """Fill in Null values with "previous" value according to an ordering
 
@@ -275,6 +294,62 @@ class SmvGroupedData(object):
         def __doFill(*valueCols):
             return DataFrame(self.sgd.smvFillNullWithPrevValue(smv_copy_array(self.df._sc, *orderCols), smv_copy_array(self.df._sc, *valueCols)), self.df.sql_ctx)
         return __doFill
+
+    def smvWithTimePanel(self, time_col, start, end):
+        """Adding a specified time panel period to the DF
+            Args:
+                time_col (str): the column name in the data as the event timestamp
+                start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel
+                    package for details
+                end (panel.PartialTime): should be the same time type as the "start"
+
+            Example:
+
+            >>> df.smvGroupBy("K").smvWithTimePanel("TS", Week(2012, 1, 1), Week(2012, 12, 31))
+
+            Returns:
+                (DataFrame): a result data frame with keys, and a column with name `smvTime`, and
+                    other input columns. Refer the panel package for the potential forms of
+                    different PartialTimes. Since `TimePanel` defines a period of time, if for some
+                    group in the data missing Months (or Quarters), this function will add records
+                    with non-null keys and `smvTime` columns while all other columns are
+                    null-valued.
+
+            Example with on data:
+
+                Given DataFrame df as
+
+                +---+------------+------+
+                | K | TS         | V    |
+                +===+============+======+
+                | 1 | 2014-01-01 | 1.2  |
+                +---+------------+------+
+                | 1 | 2014-03-01 | 4.5  |
+                +---+------------+------+
+                | 1 | 2014-03-25 | 10.3 |
+                +---+------------+------+
+
+                after applying
+
+                >>> import smv.panel as P
+                >>> df.smvGroupBy("k").smvWithTimePanel("TS", Month(2014,1), Month(2014, 2))
+
+                the result is
+
+                +---+------------+------+---------+
+                | K | TS         | V    | smvTime |
+                +===+============+======+=========+
+                | 1 | 2014-01-01 | 1.2  | M201401 |
+                +---+------------+------+---------|
+                | 1 | None       | None | M201402 |
+                +---+------------+------+---------|
+                | 1 | 2014-03-01 | 4.5  | M201403 |
+                +---+------------+------+---------|
+                | 1 | 2014-03-25 | 10.3 | M201403 |
+                +---+------------+------+---------|
+        """
+        return DataFrame(self.sgd.smvWithTimePanel(time_col, start, end), self.df.sql_ctx)
+
 
     def smvTimePanelAgg(self, time_col, start, end):
         """Apply aggregation on given keys and specified time panel period

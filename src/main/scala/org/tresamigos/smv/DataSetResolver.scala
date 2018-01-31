@@ -119,9 +119,9 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
     if(reposToTry.isEmpty)
       throw new SmvRuntimeException(msg.dsNotFound(urn))
     else
-      Try(reposToTry.head.loadDataSet(urn)) match {
-        case Failure(_) => findDataSetInRepo(urn, reposToTry.tail)
-        case Success(ds) => ds
+      reposToTry.head.loadDataSet(urn) match {
+        case None     => findDataSetInRepo(urn, reposToTry.tail)
+        case Some(ds) => ds
       }
   }
 

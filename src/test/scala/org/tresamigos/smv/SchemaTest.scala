@@ -173,6 +173,20 @@ class SmvSchemaTest extends SmvTestUtil {
     assertSrddDataEqual(df, "2011-09-03")
   }
 
+  test("Test Byte format") {
+    val df = dfFrom("b:Byte", "123")
+    val rows = df.collect()
+    val byte = rows(0)(0)
+    assert(byte === 123.toByte)
+  }
+
+  test("Test Short format") {
+    val df = dfFrom("s:Short", "12345")
+    val rows = df.collect()
+    val byte = rows(0)(0)
+    assert(byte === 12345.toShort)
+  }
+
   test("Test schema name derivation from data file path") {
     assert(SmvSchema.dataPathToSchemaPath("/a/b/c.csv") === "/a/b/c.schema")
     assert(SmvSchema.dataPathToSchemaPath("/a/b/c.tsv") === "/a/b/c.schema")

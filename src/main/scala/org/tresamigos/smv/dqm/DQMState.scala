@@ -44,12 +44,14 @@ class DQMState(
   private val ruleLoggers: Map[String, RejectLogger] = ruleNames.map { n =>
     (n, new RejectLogger(sc, 10, n))
   }.toMap
+  private var miscLog: Seq[String] = Seq.empty
 
   private var concluded: Boolean                                = false
   private var recordCounterCopy: Long                           = _
   private var parserLoggerCopy: (Int, List[String])             = _
   private var fixCountersCopy: Map[String, Int]                 = _
   private var ruleLoggersCopy: Map[String, (Int, List[String])] = _
+  @transient private var _my_snapshot: DqmStateSnapshot = null
 
   /** add one on the overall record counter */
   private[smv] def addRec(): Unit = {
@@ -73,6 +75,9 @@ class DQMState(
     ruleLoggers(name).add(s"${err} @FIELDS: ${log}")
   }
 
+  private[smv] def addMiscLog(entry: String) =
+    miscLog = miscLog :+ entry
+
   /**
    * take a snapshot of the counters of loggers and create a local copy
    *
@@ -80,7 +85,7 @@ class DQMState(
    * might keep updating, so we need to take a snapshot before we use the results in
    * the DQMState
    **/
-  private[smv] def snapshot(): Unit = {
+  private[smv] def snapshot(): DqmStateSnapshot = {
 
     /** snapshot need to run once and only once */
     if (!concluded) {
@@ -90,7 +95,14 @@ class DQMState(
       parserLoggerCopy = parserLogger.report
       fixCountersCopy = fixCounters.map { case (k, a) => (k, a.value) }.toMap
       ruleLoggersCopy = ruleLoggers.map { case (k, l) => (k, l.report) }.toMap
+
+      _my_snapshot = DqmStateSnapshot(recordCounterCopy,
+        ErrorReport(parserLoggerCopy._1, parserLoggerCopy._2),
+        fixCountersCopy,
+        ruleLoggersCopy.mapValues(x => ErrorReport(x._1, x._2)))
     }
+
+    _my_snapshot
   }
 
   /** get the overall record count */
@@ -151,7 +163,7 @@ class DQMState(
         s"Fix: ${name}, total count: ${n}"
     }.toSeq
     val pLog = getParserLog()
-    rLog ++ fLog ++ pLog
+    rLog ++ fLog ++ pLog ++ miscLog
   }
 
   /** return the total number of times fixes get triggered */
@@ -165,6 +177,18 @@ class DQMState(
     require(concluded)
     ruleLoggersCopy.values.map { _._1 }.reduce(_ + _)
   }
+}
+
+/** Error recorded by RejectLoggers */
+case class ErrorReport(total: Int, firstN: Seq[String]) extends Serializable
+
+/** A serializable snapshot of a DQMState */
+case class DqmStateSnapshot(totalRecords: Long,
+  parseError: ErrorReport,
+  fixCounts: Map[String, Int],
+  ruleErrors: Map[String, ErrorReport]
+) extends Serializable {
+  // TODO: move xxxCopy-related methods in DQMState here
 }
 
 class DQMRuleError(ruleName: String) extends Exception(ruleName) with Serializable
