@@ -1,4 +1,4 @@
-''# SMV Scala Helper Functions
+# SMV Scala Helper Functions
 
 SMV provides a variety of functions to aid in the development of applications.
 The provided functions come in one of three flavors.

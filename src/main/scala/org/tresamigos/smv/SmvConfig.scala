@@ -243,6 +243,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     case None => throw new SmvRuntimeException("JDBC driver is not specified in SMV config")
     case Some(ret) => ret
   }
+
   // ---------- Dynamic Run Config Parameters key/values ----------
   var dynamicRunConfig: Map[String, String] = Map.empty
 
