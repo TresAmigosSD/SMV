@@ -112,4 +112,4 @@ class SmvRunInfoCollector(object):
             msg += '\n     ' + pformat(self.metadata(fqn), indent=5)
             msg += '\n|- metadata history:'
             msg += '\n     ' + pformat(self.metadata_history(fqn), indent=5)
-        print msg
+        print(msg)

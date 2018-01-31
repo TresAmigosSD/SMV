@@ -25,18 +25,19 @@ from test_support.testconfig import TestConfig
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
-def df(name, forceRun = False, version = None):
+def df(name, forceRun = False, version = None, runConfig = None):
     """The DataFrame result of running the named module
 
         Args:
             name (str): The unique name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
             version (str): The name of the published version to load from
+            runConfig (dict): runtime configuration to use when running the module
 
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun, version)[0]
+    return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig)[0]
 
 def dshash(name):
     """The current hashOfHash for the named module as a hex string
