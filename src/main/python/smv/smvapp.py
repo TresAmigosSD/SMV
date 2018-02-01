@@ -18,6 +18,7 @@ It is equivalent to ``SmvApp`` on Scala side
 import os
 import sys
 import traceback
+import json
 
 from py4j.java_gateway import java_import, JavaObject
 from pyspark import SparkContext
@@ -157,12 +158,13 @@ class SmvApp(object):
     def setDynamicRunConfig(self, runConfig):
         self.j_smvPyClient.setDynamicRunConfig(runConfig)
 
-    def mergedPropsJSON(self):
-        """JSON utf-8 string of current mergedProps as JSON:
+    def getCurrentProperties(self, raw = False):
+        """ Python dict of current megred props
             defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps ++ dynamicRunConfig
-            Where right wins out in map merge
+            Where right wins out in map merge. Pass optional raw param = True to get json string instead
         """
-        return self.j_smvApp.smvConfig().mergedPropsJSON()
+        merged_json = self.j_smvPyClient.mergedPropsJSON()
+        return merged_json if raw else json.loads(merged_json)
 
     def stages(self):
         """Stages is a function as they can be set dynamically on an SmvApp instance"""

@@ -41,12 +41,12 @@ def df(name, forceRun = False, version = None, runConfig = None):
 
 def props():
     """The current app propertied used by SMV after the app, user, command-line
-        and dynamic props are merged. Formatted as JSON
+        and dynamic props are merged.
 
         Returns:
-            (JSON): The 'mergedProps' or final props used by SMV
+            (dict): The 'mergedProps' or final props used by SMV
     """
-    return SmvApp.getInstance().mergedPropsJSON()
+    return SmvApp.getInstance().getCurrentProperties()
 
 def dshash(name):
     """The current hashOfHash for the named module as a hex string

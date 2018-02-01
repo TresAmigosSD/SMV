@@ -19,8 +19,6 @@ import scala.util.Try
 import java.io.{IOException, InputStreamReader, FileInputStream, File}
 import java.util.Properties
 
-// Serialize scala map to json w/o reinventing any wheels
-import org.json4s.jackson.Serialization
 import org.rogach.scallop.ScallopConf
 
 /**
@@ -218,11 +216,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // computeMergedProps() is used as a cache to avoid expensive IO if appDir is unchanged
   private[smv] def mergedProps = { computeMergedProps(doIO = false) ++ dynamicRunConfig }
-
-  // return merged props as json so its easier on the py, used to expose merged props
-  def mergedPropsJSON = {
-    Serialization.write(mergedProps)(org.json4s.DefaultFormats)
-  }
 
   // initially, the merged props cache should do the io to read app conf
   private var mergedPropsCache: Map[String,String] = ioBasedConf

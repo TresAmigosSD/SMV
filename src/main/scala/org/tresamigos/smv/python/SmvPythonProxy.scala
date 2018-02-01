@@ -24,6 +24,9 @@ import org.apache.spark.sql.{Column, DataFrame, SQLContext}
 import org.apache.spark.sql.types.DataType
 import matcher._
 
+// Serialize scala map to json w/o reinventing any wheels
+import org.json4s.jackson.Serialization
+
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
   def peekStr(df: DataFrame, pos: Int, colRegex: String): String = df._peek(pos, colRegex)
@@ -236,6 +239,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
       override val userSchema         = pUserSchema
     }
   }
+
+  def mergedPropsJSON: String = Serialization.write(j_smvApp.smvConfig.mergedProps)(org.json4s.DefaultFormats)
 
   def setDynamicRunConfig(runConfig: java.util.Map[String, String]): Unit = {
     val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap

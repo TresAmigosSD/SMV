@@ -57,13 +57,7 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
         """ The intention of this test is to verify that the module is initially not avaiable because the project dir is
             a child of the cwd, and then that the module is avaiable and can be run once appDir is set to the project dir """
         # make sure running the module without setting the app dir fails and raises
-        err = None
-        try:
-            self.smvApp.runModule(self.modUrn)[0]
-        except Exception as e:
-            err = e
-
-        self.assertEqual(isinstance(err, Exception), True)
+        self.assertRaises(Exception, lambda: self.smvApp.runModule(self.modUrn))
 
         # set the app dir
         self.smvApp.setAppDir(self.proj_a_path)
@@ -84,7 +78,7 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
         #  tell the app to change dirs, which should cause the reload of conf for this project
         self.smvApp.setAppDir(self.proj_a_path)
 
-        current_conf = json.loads(self.smvApp.mergedPropsJSON())
+        current_conf = self.smvApp.getCurrentProperties()
 
         self.assertEqual(expected_props, current_conf)
 
