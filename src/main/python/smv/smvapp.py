@@ -361,7 +361,6 @@ class SmvApp(object):
         # Load dynamic app dir from scala
         smvAppDir = self.j_smvApp.smvConfig().appDir()
         codePath = os.path.abspath(os.path.join(smvAppDir, relPath))
-        print "Prepending code path: " + codePath
         # Remove the las code path if it's there so as to not clutter the path...
         if (self.lastCodePath in sys.path):
             sys.path.remove(self.lastCodePath)

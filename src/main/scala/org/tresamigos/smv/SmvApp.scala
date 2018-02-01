@@ -371,8 +371,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
     setDynamicRunConfig(runConfig)
     val ds = dsm.inferDS(modName).head
-    println("--- Infered DS")
-    println(ds)
+
     runDS(ds, forceRun, version, collector=collector)
   }
 

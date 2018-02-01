@@ -41,7 +41,7 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
         self.proj_b_path = os.path.abspath(os.path.join(resource_dir, self.projBDir))
 
         # capture the initial default app dir before each test. When the first test from this class
-        # is run, this will be 
+        # is run, this will be
         self.initial_app_dir = self.smvApp.config().appDir()
 
     def tearDown(self):
@@ -63,8 +63,6 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
         except Exception as e:
             err = e
 
-        print('--- Err type:')
-        print(type(err))
         self.assertEqual(isinstance(err, Exception), True)
 
         # set the app dir
@@ -78,8 +76,7 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
 
     def test_conf_reloaded(self):
         """ Test that app props were dynamically reloaded when appDir is set by the most direct means avaiable """
-        print('--- project a path')
-        print(self.proj_a_path)
+
         # contents of project-a/conf/smv-app-conf.props:
         expected_props = { "smv.class_dir": "./target/classes", "smv.appName": "App A", \
         "smv.config.keys": "", "smv.stages": "stage", "smv.appId": "PROJECT_A" }

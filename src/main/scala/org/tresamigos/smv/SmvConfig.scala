@@ -332,10 +332,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private def _loadProps(propsFileName: String): scala.collection.Map[String, String] = {
     import scala.collection.JavaConverters._
 
-    print("Loading props for: ")
-    println(propsFileName)
-    println("-------")
-
     val props     = new Properties()
     val propsFile = new File(propsFileName)
 
