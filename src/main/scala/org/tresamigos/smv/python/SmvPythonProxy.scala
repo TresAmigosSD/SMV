@@ -273,6 +273,13 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     RunModuleResult(df, collector)
   }
 
+  def publishModuleToHiveByName(name: String,
+                                runConfig: java.util.Map[String, String]) = {
+      val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+      val collector = new SmvRunInfoCollector
+      j_smvApp.publishModuleToHiveByName(name, dynamicRunConfig, collector)
+  }
+
   /**
    * Returns the run information of a dataset and all its dependencies
    * from the last run.

@@ -171,13 +171,13 @@ def lsDeadLeaf(stageName = None):
     else:
         print(_jvmShellCmd().lsDeadLeaf(stageName))
 
-def exportToHive(dsname):
+def exportToHive(dsname, runConfig=None):
     """Export dataset's running result to a Hive table
 
         Args:
             dsname (str): The name of an SmvDataSet
     """
-    print(_jvmShellCmd().exportToHive(dsname))
+    SmvApp.getInstance().publishModuleToHiveByName(dsname, runConfig)
 
 def ancestors(dsname):
     """List all ancestors of a dataset

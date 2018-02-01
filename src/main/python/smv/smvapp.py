@@ -262,6 +262,11 @@ class SmvApp(object):
         java_result = self.j_smvPyClient.getRunInfoByPartialName(name)
         return SmvRunInfoCollector(java_result)
 
+    def publishModuleToHiveByName(self, name, runConfig=None):
+        """Publish an SmvModule to Hive by its name (can be partial FQN)
+        """
+        return self.j_smvPyClient.publishModuleToHiveByName(name, runConfig)
+
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
         return self.j_smvPyClient.getMetadataJson(urn)
