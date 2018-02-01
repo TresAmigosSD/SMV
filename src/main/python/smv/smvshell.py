@@ -94,7 +94,7 @@ def smvExportCsv(name, path):
             fqn (str): the name of the module
             path (str): a path on the local file system
     """
-    _jvmShellCmd().smvExportCsv(name, path)
+    _jvmShellCmd().smvExportCsv(name, path, None)
 
 def help():
     """Print a list of the SMV helper functions available in the shell
