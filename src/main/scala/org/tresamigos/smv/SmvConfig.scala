@@ -190,12 +190,19 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   val cmdLine = new CmdLineArgsConf(cmdLineArgs)
 
-  // default the app dir to the cmdLine value. WARNING: this will be changed from smvApp by
-  // setRunCofig which will change all of these props dynamically.
-  var appDir: String = cmdLine.smvAppDir()
+  // default the app dir to the cmdLine value.
+  private var _appDir: String = cmdLine.smvAppDir()
 
-  private def appConfProps  = _loadProps(pathJoin(appDir, cmdLine.smvAppConfFile()))
-  private def usrConfProps  = _loadProps(pathJoin(appDir, cmdLine.smvUserConfFile()))
+  // getter and setter because we need to recompute merged props when appDir is set explicitly
+  def appDir : String = _appDir
+
+  def appDir_= (appDirPath: String): Unit = {
+    _appDir = appDirPath
+    computeMergedProps(doIO = true)
+  }
+
+  private def appConfProps  = _loadProps(pathJoin(_appDir, cmdLine.smvAppConfFile()))
+  private def usrConfProps  = _loadProps(pathJoin(_appDir, cmdLine.smvUserConfFile()))
   private def homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
   private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
@@ -210,33 +217,34 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   var dynamicRunConfig: Map[String, String] = Map.empty
 
   // computeMergedProps() is used as a cache to avoid expensive IO if appDir is unchanged
-  private[smv] def mergedProps = { computeMergedProps() ++ dynamicRunConfig }
+  private[smv] def mergedProps = { computeMergedProps(doIO = false) ++ dynamicRunConfig }
 
   // return merged props as json so its easier on the py, used to expose merged props
   def mergedPropsJSON = {
     Serialization.write(mergedProps)(org.json4s.DefaultFormats)
   }
 
-  // used as a simple cache flag
-  private var lastAppDir: String = ""
-
-  private var lastMergedConf: Map[String,String] = Map.empty
+  // initially, the merged props cache should do the io to read app conf
+  private var mergedPropsCache: Map[String,String] = ioBasedConf
 
   /**
    * This function is implemented as a stupid-simple cache to avoid doing IO to obtain props every time
    */
-  private def computeMergedProps(): Map[String,String] = {
-    if (appDir == lastAppDir) return lastMergedConf;
-    // update the last value used to determine cache miss
-    println("--- computing merged props...")
-    lastAppDir = appDir;
-    lastMergedConf = defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps
-    lastMergedConf
+  private def computeMergedProps(doIO: Boolean = false): Map[String,String] = {
+    if (!doIO) return mergedPropsCache;
+    // make the IO happen again
+    mergedPropsCache = ioBasedConf
+    mergedPropsCache
   }
 
-  // --- static app config params.  App should access configs through vals below rather than from props maps
-  val appName    = mergedProps("smv.appName")
-  val appId      = mergedProps("smv.appId")
+  // calling this performs the file io, hence the name
+  private def ioBasedConf: Map[String, String] = {
+    defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps
+  }
+
+  // --- App should access configs through vals below rather than from props maps
+  def appName    = mergedProps("smv.appName")
+  def appId      = mergedProps("smv.appId")
 
   // --- stage names are a dynamic prop
   private[smv] def stageNames = { splitProp("smv.stages").toSeq }
