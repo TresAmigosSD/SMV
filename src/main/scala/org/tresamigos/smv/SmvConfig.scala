@@ -192,10 +192,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // default the app dir to the cmdLine value. WARNING: this will be changed from smvApp by
   // setRunCofig which will change all of these props dynamically.
-  var appConfPath: String = cmdLine.smvAppDir()
+  var appDir: String = cmdLine.smvAppDir()
 
-  private def appConfProps  = _loadProps(pathJoin(appConfPath, cmdLine.smvAppConfFile()))
-  private def usrConfProps  = _loadProps(pathJoin(appConfPath, cmdLine.smvUserConfFile()))
+  private def appConfProps  = _loadProps(pathJoin(appDir, cmdLine.smvAppConfFile()))
+  private def usrConfProps  = _loadProps(pathJoin(appDir, cmdLine.smvUserConfFile()))
   private def homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
   private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
@@ -214,12 +214,11 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // return merged props as json so its easier on the py, used to expose merged props
   def mergedPropsJSON = {
-    implicit val formats = org.json4s.DefaultFormats
-    Serialization.write(mergedProps)
+    Serialization.write(mergedProps)(org.json4s.DefaultFormats)
   }
 
   // used as a simple cache flag
-  private var lastAppConfPath: String = ""
+  private var lastAppDir: String = ""
 
   private var lastMergedConf: Map[String,String] = Map.empty
 
@@ -227,9 +226,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
    * This function is implemented as a stupid-simple cache to avoid doing IO to obtain props every time
    */
   private def computeMergedProps(): Map[String,String] = {
-    if (appConfPath == lastAppConfPath) return lastMergedConf;
+    if (appDir == lastAppDir) return lastMergedConf;
     // update the last value used to determine cache miss
-    lastAppConfPath = appConfPath;
+    println("--- computing merged props...")
+    lastAppDir = appDir;
     lastMergedConf = defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps
     lastMergedConf
   }

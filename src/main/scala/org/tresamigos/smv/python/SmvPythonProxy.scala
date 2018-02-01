@@ -237,6 +237,19 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     }
   }
 
+  def setDynamicRunConfig(runConfig: java.util.Map[String, String]): Unit = {
+    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+    j_smvApp.smvConfig.dynamicRunConfig = dynamicRunConfig
+  }
+
+  def setAppDir(appDir: String): Unit = {
+    // set the scala smv app's app dir, will cause conf for that app to be loaded + reevaluated
+    // effectively changing SMV's working app directory
+    println("--- Setting app dir")
+    // TODO move out of proxy !
+    j_smvApp.smvConfig.appDir = appDir
+  }
+
   /** Output directory for files */
   def outputDir: String = j_smvApp.smvConfig.outputDir
 

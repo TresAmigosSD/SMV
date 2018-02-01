@@ -321,7 +321,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   private def setDynamicRunConfig(runConfig: Map[String, String]) = {
     // watch carefully. This is changing an internal value of config
     runConfig.get("smv.app.dir").foreach {k =>
-      smvConfig.appConfPath = k
+      smvConfig.appDir = k
     }
     smvConfig.dynamicRunConfig = runConfig
   }
@@ -375,6 +375,8 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
     setDynamicRunConfig(runConfig)
     val ds = dsm.inferDS(modName).head
+    println("--- Infered DS")
+    println(ds)
     runDS(ds, forceRun, version, collector=collector)
   }
 

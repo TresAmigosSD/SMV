@@ -49,6 +49,9 @@ class SmvApp(object):
     # default rel path for python sources from appDir
     srcPathRel = "src/main/python"
 
+    # keep track of the last appDir that was explicitly set
+    lastCodePath = None
+
     @classmethod
     def getInstance(cls):
         if cls._instance is None:
@@ -141,8 +144,19 @@ class SmvApp(object):
     def config(self):
         return self.j_smvApp.smvConfig()
 
+    def setAppDir(self, appDir):
+        print "Calling py set App Dir with"
+        print(appDir)
+        self.j_smvPyClient.setAppDir(appDir)
+        # this call will use the dynamic appDir that we just set ^
+        # to change sys.path, allowing py modules to be discovered
+        self.prepend_source(self.srcPathRel)
+
+    def setDynamicRunConfig(self, runConfig):
+        self.j_smvPyClient.setDynamicRunConfig(runConfig)
+
     def mergedPropsJSON(self):
-        """JSON utf-8 string of current mergedProps:
+        """JSON utf-8 string of current mergedProps as JSON:
             defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps ++ dynamicRunConfig
             Where right wins out in map merge
         """
@@ -210,8 +224,7 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        # This allows discovery of py mods for dynamic appDirs passed on RC
-        self.prepend_source_if_needed(runConfig)
+        # TODO call setDynamicRunConfig() here not on scala side
         java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
@@ -227,8 +240,7 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        # This allows discovery of py mods for dynamic appDirs passed on RC
-        self.prepend_source_if_needed(runConfig)
+        # TODO call setDynamicRunConfig() here not on scala side
         java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
@@ -343,21 +355,17 @@ class SmvApp(object):
     def defaultTsvWithHeader(self):
         return self._mkCsvAttr(delimier='\t', hasHeader=True)
 
-    def prepend_source_if_needed(self, runConfig):
-        """ Changes the python path if appDir "magic key" is included on rc """
-        if(runConfig and runConfig["smv.app.dir"]):
-            self.prepend_source(self.srcPathRel, runConfig["smv.app.dir"])
-
-    def prepend_source(self, relPath, smvAppDir = None):
-        if (not smvAppDir):
-            smvAppDir = self.j_smvApp.smvConfig().appConfPath()
+    def prepend_source(self, relPath):
+        # Load dynamic app dir from scala
+        smvAppDir = self.j_smvApp.smvConfig().appDir()
         codePath = os.path.abspath(os.path.join(smvAppDir, relPath))
         print "Prepending code path: " + codePath
-        # Remove the code path if it's already there to not clutter the path...
-        if (codePath in sys.path):
-            sys.path.remove(codePath)
+        # Remove the las code path if it's there so as to not clutter the path...
+        if (self.lastCodePath in sys.path):
+            sys.path.remove(self.lastCodePath)
         # Source must be added to front of path to make sure it is found first
-        sys.path.insert(0, codePath)
+        sys.path.insert(1, codePath)
+        self.lastCodePath = codePath
 
     def run(self):
         self.j_smvApp.run()
