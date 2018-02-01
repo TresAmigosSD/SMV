@@ -25,18 +25,19 @@ from test_support.testconfig import TestConfig
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
-def df(name, forceRun = False, version = None):
+def df(name, forceRun = False, version = None, runConfig = None):
     """The DataFrame result of running the named module
 
         Args:
             name (str): The unique name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
             version (str): The name of the published version to load from
+            runConfig (dict): runtime configuration to use when running the module
 
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun, version)[0]
+    return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig)[0]
 
 def dshash(name):
     """The current hashOfHash for the named module as a hex string
@@ -170,13 +171,13 @@ def lsDeadLeaf(stageName = None):
     else:
         print(_jvmShellCmd().lsDeadLeaf(stageName))
 
-def exportToHive(dsname):
+def exportToHive(dsname, runConfig=None):
     """Export dataset's running result to a Hive table
 
         Args:
             dsname (str): The name of an SmvDataSet
     """
-    print(_jvmShellCmd().exportToHive(dsname))
+    SmvApp.getInstance().publishModuleToHiveByName(dsname, runConfig)
 
 def ancestors(dsname):
     """List all ancestors of a dataset
@@ -275,15 +276,12 @@ def _clear_from_sys_modules(names_to_clear):
 
 def show_run_info(collector):
     """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
-    print('datasets: %s' % collector.fqns())
-    for fqn in collector.fqns():
-        print('+ %s' % fqn)
-        print('|- dqm validation:')
-        print('    ' + pformat(collector.dqm_validation(fqn), indent=5))
-        print('|- metadata:')
-        print('     ' + pformat(collector.metadata(fqn), indent=5))
-        print('|- metadata history:')
-        print('     ' + pformat(collector.metadata_history(fqn), indent=5))
+    collector.show_report()
+
+def get_run_info(name):
+    """Get the SmvRunInfoCollector with full information about a module and its dependencies
+    """
+    return SmvApp.getInstance().getRunInfoByPartialName(name)
 
 __all__ = [
     'df',
@@ -306,5 +304,6 @@ __all__ = [
     'smvDiscoverSchemaToFile',
     'edd',
     'run_test',
-    'show_run_info'
+    'show_run_info',
+    'get_run_info'
 ]

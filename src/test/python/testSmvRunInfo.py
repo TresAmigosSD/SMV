@@ -18,11 +18,12 @@ from test_support.smvbasetest import SmvBaseTest
 
 
 class SmvRunInfoTest(SmvBaseTest):
-    urn = 'mod:stage.modules.R4'
+    R4Urn = 'mod:stage1.modules.R4'
+    R5Urn = 'mod:stage2.modules.R5'
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=stage']
+        return ['--smv-props', 'smv.stages=stage1:stage2']
 
     def setUp(self):
         """Tests in this class needs clean data directories"""
@@ -31,17 +32,17 @@ class SmvRunInfoTest(SmvBaseTest):
 
     def test_run_info_is_empty_if_no_module_is_run(self):
         # the first time modules are run, information is collected
-        res, coll = self.smvApp.runModule(self.urn, forceRun=True)
+        res, coll = self.smvApp.runModule(self.R4Urn, forceRun=True)
         assert len(coll.fqns()) > 0
 
         # if we run again the collector should be empty because all
         # module results have been persisted so there would be no run
         # info collected
-        res, coll = self.smvApp.runModule(self.urn, forceRun=False)
+        res, coll = self.smvApp.runModule(self.R4Urn, forceRun=False)
         assert len(coll.fqns()) == 0
 
     def test_get_run_info_is_empty_if_no_module_is_run(self):
-        coll = self.smvApp.getRunInfo(self.urn)
+        coll = self.smvApp.getRunInfo(self.R4Urn)
         assert len(coll.fqns()) > 0  # still collected the dependencies
 
         for fqn in coll.fqns():
@@ -51,10 +52,17 @@ class SmvRunInfoTest(SmvBaseTest):
             assert len(coll.metadata_history(fqn)) == 0
 
     def test_get_run_info_should_return_info_from_last_run(self):
-        self.smvApp.runModule(self.urn, forceRun=True)
-        self.smvApp.runModule(self.urn, forceRun=False)
-        coll = self.smvApp.getRunInfo(self.urn)
+        self.smvApp.runModule(self.R4Urn, forceRun=True)
+        self.smvApp.runModule(self.R4Urn, forceRun=False)
+        coll = self.smvApp.getRunInfo(self.R4Urn)
         for fqn in coll.fqns():
             if 'R2' not in fqn:  # R2 module does not have validation
                 assert len(coll.dqm_validation(fqn)) > 0
                 assert len(coll.dqm_state(fqn)) > 0
+
+    # Target a bug that caused an error when getting run info for a module
+    # that depends on a link
+    def test_get_run_info_of_module_with_link_dependency(self):
+        self.smvApp.runModule(self.R5Urn, forceRun=True)
+        # This will fail if there is a problem due to link dependency
+        info = self.smvApp.getRunInfo(self.R5Urn)

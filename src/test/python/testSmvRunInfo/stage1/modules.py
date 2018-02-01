@@ -10,12 +10,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from smv import SmvCsvStringData
-from smv import SmvModule
+import smv
 
 
-class R0(SmvCsvStringData):
+class R0(smv.SmvCsvStringData):
     def schemaStr(self):
         return "a:String;b:Integer"
 
@@ -25,7 +23,7 @@ class R1(R0):
         return "x,1;y,2"
 
 
-class R2(SmvModule):
+class R2(smv.SmvModule, smv.SmvOutput):
     def requiresDS(self):
         return [R1]
 

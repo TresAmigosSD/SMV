@@ -45,7 +45,7 @@ function parse_args()
 
   [ $# -ne 6 ] && echo "ERROR: invalid number of arguments" && usage 1
 
-  BUILD_DIR="$1"
+  BUILD_DIR=$(cd "$1"; pwd)
   SMV_BRANCH="$2"
   GITHUB_USER_TOKEN="$3"
   DOCKERHUB_USER_NAME="$4"

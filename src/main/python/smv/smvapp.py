@@ -228,12 +228,43 @@ class SmvApp(object):
         SmvRunInfoCollector returned from this method would contain
         all latest run information about all dependent modules.
 
+        Args:
+            urn (str): urn of target module
+
         Returns:
             SmvRunInfoCollector
 
         """
         java_result = self.j_smvPyClient.getRunInfo(urn)
         return SmvRunInfoCollector(java_result)
+
+    def getRunInfoByPartialName(self, name):
+        """Returns the run information of a module and all its dependencies
+        from the last run.
+
+        Unlike the runModule() method, which returns the run
+        information just for that run, this method returns the run
+        information from the last run.
+
+        If no module was run (e.g. the code did not change, so the
+        data is read from persistent storage), the SmRunInfoCollector
+        returned from the runModule() method would be empty.  But the
+        SmvRunInfoCollector returned from this method would contain
+        all latest run information about all dependent modules.
+
+        Args:
+            name (str): unique suffix to fqn of target module
+
+        Returns:
+            SmvRunInfoCollector
+        """
+        java_result = self.j_smvPyClient.getRunInfoByPartialName(name)
+        return SmvRunInfoCollector(java_result)
+
+    def publishModuleToHiveByName(self, name, runConfig=None):
+        """Publish an SmvModule to Hive by its name (can be partial FQN)
+        """
+        return self.j_smvPyClient.publishModuleToHiveByName(name, runConfig)
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
