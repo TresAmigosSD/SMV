@@ -319,10 +319,6 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * this should be set before run dataset.
    */
   private def setDynamicRunConfig(runConfig: Map[String, String]) = {
-    // watch carefully. This is changing an internal value of config
-    runConfig.get("smv.app.dir").foreach {k =>
-      smvConfig.appDir = k
-    }
     smvConfig.dynamicRunConfig = runConfig
   }
 

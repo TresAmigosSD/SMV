@@ -49,7 +49,8 @@ class SmvApp(object):
     # default rel path for python sources from appDir
     srcPathRel = "src/main/python"
 
-    # keep track of the last appDir that was explicitly set
+    # keep track of the last appDir that was explicitly set so we can remove it
+    # from the sys.path when another one is to avoid cluttering the path
     lastCodePath = None
 
     @classmethod
@@ -145,11 +146,12 @@ class SmvApp(object):
         return self.j_smvApp.smvConfig()
 
     def setAppDir(self, appDir):
-        print "Calling py set App Dir with"
-        print(appDir)
+        """ SMV's equivalent of 'cd' for app dirs. """
+        # this call sets the scala side's picture of app dir and forces
+        # the app properties to be read from disk and reevaluated
         self.j_smvPyClient.setAppDir(appDir)
         # this call will use the dynamic appDir that we just set ^
-        # to change sys.path, allowing py modules to be discovered
+        # to change sys.path, allowing py modules to be discovered by python
         self.prepend_source(self.srcPathRel)
 
     def setDynamicRunConfig(self, runConfig):

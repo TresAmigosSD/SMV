@@ -19,7 +19,6 @@ import sys
 
 # TODO figure out why this kills all the successive tests
 class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
-    testDir = 'testDynamicConfigAppDir/'
     initial_app_dir = None
 
     # project A stuff
@@ -37,10 +36,12 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
         """ Setup the stuff needed for all test cases ONCE """
         # assemble proj abs paths
         path_here = os.path.dirname(os.path.realpath(__file__))
-        self.proj_a_path = os.path.join(path_here, self.testDir, self.projADir)
-        self.proj_b_path = os.path.join(path_here, self.testDir, self.projBDir)
+        resource_dir = self.__class__.resourceTestDir()
+        self.proj_a_path = os.path.abspath(os.path.join(resource_dir, self.projADir))
+        self.proj_b_path = os.path.abspath(os.path.join(resource_dir, self.projBDir))
 
-        # capture the initial default app dir BEFORE we've ran any test (the first time this is run)
+        # capture the initial default app dir before each test. When the first test from this class
+        # is run, this will be 
         self.initial_app_dir = self.smvApp.config().appDir()
 
     def tearDown(self):
@@ -77,6 +78,8 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
 
     def test_conf_reloaded(self):
         """ Test that app props were dynamically reloaded when appDir is set by the most direct means avaiable """
+        print('--- project a path')
+        print(self.proj_a_path)
         # contents of project-a/conf/smv-app-conf.props:
         expected_props = { "smv.class_dir": "./target/classes", "smv.appName": "App A", \
         "smv.config.keys": "", "smv.stages": "stage", "smv.appId": "PROJECT_A" }
