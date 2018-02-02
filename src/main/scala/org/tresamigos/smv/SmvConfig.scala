@@ -194,7 +194,7 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   // getter and setter because we need to recompute merged props when appDir is set explicitly
   def appDir : String = _appDir
 
-  def appDir_= (appDirPath: String): Unit = {
+  def setAppDir(appDirPath: String): Unit = {
     _appDir = appDirPath
     mergedPropsCache = readAppConf
   }

@@ -251,7 +251,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     // set the scala smv app's app dir, will cause conf for that app to be loaded + reevaluated
     // effectively changing SMV's working app directory
 
-    j_smvApp.smvConfig.appDir = appDir
+    j_smvApp.smvConfig.setAppDir(appDir)
   }
 
   /** Output directory for files */
