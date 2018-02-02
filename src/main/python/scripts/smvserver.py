@@ -44,16 +44,6 @@ def getFqnsInApp():
     urns = [u.split(":")[1] for ul in urnsLL for u in ul]
     return urns
 
-# This probably shouldn't be here. It seems to be part of the logic of an client application.
-def get_filepath_from_moduleFqn(module_fqn):
-    '''given a fqn, returns the fullname of its file relative to proj dir.'''
-    prefix = "./src/main/python/"
-    # dir1.dir2.file.class => [dir1, dir2, file]
-    fqn_dirs_filename_list = module_fqn.split(".")[:-1]
-    # concats fqn_dirs_filename_list into string with "/" intermezzo, appends .py, prepends prefix
-    filepath = prefix + "/".join(fqn_dirs_filename_list) + ".py"
-    return filepath
-
 def get_output_dir():
     '''returns the smv app's output directory'''
     output_dir = SmvApp.getInstance().outputDir()
