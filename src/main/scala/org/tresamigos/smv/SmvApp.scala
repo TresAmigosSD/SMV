@@ -72,7 +72,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    **/
   def createDF(schemaStr: String, data: String = null, isPersistValidateResult: Boolean = false) = {
     val smvCF = SmvCsvStringData(schemaStr, data, isPersistValidateResult)
-    smvCF.rdd()
+    smvCF.rdd(collector=new SmvRunInfoCollector)
   }
 
   lazy val allDataSets = dsm.allDataSets
@@ -113,6 +113,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * Get the DataFrame associated with data set. The DataFrame plan (not data) is cached in
    * dfCache the to ensure only a single DataFrame exists for a given data set
    * (file/module).
+   * Note: this keyed by the "versioned" dataset FQN.
    */
   var dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
 
@@ -247,14 +248,14 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   /**
    * if the publish to hive flag is setn, the publish
    */
-  def publishModulesToHive(): Boolean = {
+  def publishModulesToHive(collector: SmvRunInfoCollector): Boolean = {
     if (publishHive) {
       // filter out the outout modules and publish them
       modulesToRun flatMap {
         case m: SmvOutput => Some(m)
         case _            => None
       } foreach (
-          m => m.exportToHive
+          m => m.exportToHive(collector)
       )
     }
 
@@ -264,12 +265,12 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   /**
    * if the export-csv option is specified, then publish locally
    */
-  def publishOutputModulesLocally: Boolean = {
+  def publishOutputModulesLocally(collector: SmvRunInfoCollector): Boolean = {
     if (smvConfig.cmdLine.exportCsv.isSupplied) {
       val localDir = smvConfig.cmdLine.exportCsv()
       modulesToRun foreach { m =>
         val csvPath = s"${localDir}/${m.versionedFqn}.csv"
-        m.rdd().smvExportCsv(csvPath)
+        m.rdd(collector=collector).smvExportCsv(csvPath)
       }
     }
 
@@ -279,9 +280,9 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   /**
    * Publish through JDBC if the --publish-jdbc flag is set
    */
-  def publishOutputModulesThroughJDBC(): Boolean = {
+  def publishOutputModulesThroughJDBC(collector: SmvRunInfoCollector): Boolean = {
     if (publishJDBC) {
-      modulesToRun foreach (_.publishThroughJDBC)
+      modulesToRun foreach (_.publishThroughJDBC(collector))
       true
     } else {
       false
@@ -292,10 +293,10 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * Publish the specified modules if the "--publish" flag was specified on command line.
    * @return true if modules were published, otherwise return false.
    */
-  private def publishOutputModules(): Boolean = {
+  private def publishOutputModules(collector: SmvRunInfoCollector): Boolean = {
     if (smvConfig.cmdLine.publish.isDefined) {
       modulesToRun foreach { module =>
-        module.publish()
+        module.publish(collector=collector)
       }
       true
     } else {
@@ -307,16 +308,28 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * run the specified output modules.
    * @return true if modules were generated, otherwise false.
    */
-  private def generateOutputModules(): Boolean = {
-    modulesToRun foreach (_.rdd())
+  private def generateOutputModules(collector: SmvRunInfoCollector): Boolean = {
+    modulesToRun foreach (_.rdd(collector=collector))
     modulesToRun.nonEmpty
+  }
+
+  /**
+   * set dynamic runtime configuration.
+   * this should be set before run dataset.
+   */
+  private def setDynamicRunConfig(runConfig: Map[String, String]) = {
+    smvConfig.dynamicRunConfig = runConfig
   }
 
   /**
    * proceeds with the execution of an smvDS passed from runModule or runModuleByName
    * TODO: the name of this function should make its distinction from runModule clear (this is an implementation)
    */
-  def runDS(ds: SmvDataSet, forceRun: Boolean, version: Option[String]): DataFrame = {
+  def runDS(ds: SmvDataSet,
+            forceRun: Boolean,
+            version: Option[String],
+            runConfig: Map[String, String] = Map.empty,
+            collector: SmvRunInfoCollector): DataFrame = {
     if (version.isDefined)
       // if fails, error already handled since input path doesn't exist
       ds.readPublishedData(version).get
@@ -324,18 +337,26 @@ class SmvApp(private val cmdLineArgs: Seq[String],
       if (forceRun)
         deletePersistedResults(Seq(ds))
 
-      ds.rdd(forceRun)
+      // set dynamic runtime configuration before run
+      setDynamicRunConfig(runConfig)
+
+      ds.rdd(forceRun, collector=collector)
     }
   }
 
   /** Run a module by its fully qualified name in its respective language environment
    *  If force argument is true, any existing persisted results will be deleted
    *  and the module's DataFrame cache will be ignored, forcing the module to run again.
-   * If a version is specified, try to read the module from the published data for the given version
+   *  If a version is specified, try to read the module from the published data for the given version.
+   *  If dynamic runtime configuration is specified, run the module with the configuration provided.
    */
-  def runModule(urn: URN, forceRun: Boolean = false, version: Option[String] = None): DataFrame = {
+  def runModule(urn: URN,
+                forceRun: Boolean = false,
+                version: Option[String] = None,
+                runConfig: Map[String, String] = Map.empty,
+                collector: SmvRunInfoCollector = new SmvRunInfoCollector): DataFrame = {
     val ds = dsm.load(urn).head
-    runDS(ds, forceRun, version)
+    runDS(ds, forceRun, version, runConfig, collector)
   }
 
   /**
@@ -344,9 +365,54 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    *  DataFrame cache will be ignored, forcing the module to run again.
    * If a version is specified, try to read the module from the published data for the given version
    */
-  def runModuleByName(modName: String, forceRun: Boolean = false, version: Option[String] = None): DataFrame = {
+  def runModuleByName(modName: String,
+                      forceRun: Boolean = false,
+                      version: Option[String] = None,
+                      runConfig: Map[String, String] = Map.empty,
+                      collector: SmvRunInfoCollector = new SmvRunInfoCollector): DataFrame = {
     val ds = dsm.inferDS(modName).head
-    runDS(ds, forceRun, version)
+    runDS(ds, forceRun, version, runConfig, collector=collector)
+  }
+
+  def publishModuleToHiveByName(modName: String,
+                                runConfig: Map[String, String],
+                                collector: SmvRunInfoCollector): Unit = {
+      setDynamicRunConfig(runConfig)
+      dsm.inferDS(modName).head.exportToHive(collector)
+  }
+
+  def getRunInfo(partialName: String): SmvRunInfoCollector =
+    getRunInfo(dsm.inferDS(partialName).head)
+
+  def getRunInfo(urn: URN): SmvRunInfoCollector =
+    getRunInfo(dsm.load(urn).head)
+
+  /**
+   * Returns the run information for a given dataset and all its
+   * dependencies (including transitive dependencies), from the last run
+   */
+  def getRunInfo(ds: SmvDataSet,
+    coll: SmvRunInfoCollector=new SmvRunInfoCollector()): SmvRunInfoCollector = {
+    // get fqn from urn, because if ds is a link we want the fqn of its target
+    coll.addRunInfo(ds.fqn, ds.runInfo)
+
+    ds.resolvedRequiresDS foreach { dep =>
+      val depTarget = dep match {
+        case link: SmvModuleLink => link.smvModule
+        case _                   => dep
+      }
+      getRunInfo(depTarget, coll)
+    }
+
+    coll
+  }
+
+  /**
+   * Returns metadata for a given urn
+   */
+  def getMetadataJson(urn: URN): String = {
+    val ds = dsm.load(urn).head
+    ds.getMetadata().toJson
   }
 
   /**
@@ -388,12 +454,14 @@ class SmvApp(private val cmdLineArgs: Seq[String],
       println("----------------------")
     }
 
+    val collector = new SmvRunInfoCollector
+
     // either generate graphs, publish modules, or run output modules (only one will occur)
     printDeadModules || dryRun() || compareEddResults() ||
       generateDotDependencyGraph() || generateJsonDependencyGraph() ||
-      publishModulesToHive() ||  publishOutputModules() ||
-      publishOutputModulesThroughJDBC() || publishOutputModulesLocally ||
-      generateOutputModules()
+      publishModulesToHive(collector) ||  publishOutputModules(collector) ||
+      publishOutputModulesThroughJDBC(collector) || publishOutputModulesLocally(collector) ||
+      generateOutputModules(collector)
   }
 }
 

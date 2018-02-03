@@ -101,9 +101,9 @@ col_b                Average                21.7""")
   test("test SmvModule can get EDD for result even if persisted without EDD") {
     val ds = app.dsm.load(EddModules.M.urn).head
     // persist without generating edd
-    ds.rdd()
+    ds.rdd(collector=new SmvRunInfoCollector)
     // this will fail if the module doesn't persist EDD
-    ds.getEdd()
+    ds.getEdd(collector=new SmvRunInfoCollector)
   }
 }
 

@@ -34,7 +34,7 @@ def iter_submodules_in_stage(stage):
     # Gtk modules, which are not designed to use with reflection or
     # introspection. Best action to take in this situation is probably
     # to simply suppress the error.
-    def onerror(): pass
+    def onerror(n): pass
     return pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=onerror)
 
 def for_name(name, stages):
@@ -125,6 +125,30 @@ def is_string(obj):
         return isinstance(obj, basestring)
     except:
         return isinstance(obj, str)
+
+class FileObjInputStream(object):
+    """Wraps a Python binary file object to be used like a java.io.InputStream."""
+
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+
+    def read(self, maxsize):
+        buf = self.fileobj.read(maxsize)
+        # The following should work in both Python 2.7 and 3.5.
+        #
+        # In 2.7, read() returns a str even in 'rb' mode, but calling
+        # bytearray converts it to the right type.
+        #
+        # In 3.5, read() returns a bytes in 'rb' mode, and calling
+        # bytearray does not require a specified encoding
+        buf = bytearray(buf)
+        return buf
+
+    def close(self):
+        self.fileobj.close()
+
+    class Java:
+        implements = ['org.tresamigos.smv.IAnyInputStream']
 
 # If using Python 2, prefer cPickle because it is faster
 # If using Python 3, there is no cPickle (cPickle is now the implementation of pickle)

@@ -166,7 +166,7 @@ we don't need to run `checkDQM` or `checkParserLogger` anymore.
 
 Let's modify the `checkResult` part of the `computeRDD` method
 ```scala
-val checkResult = readPersistsedCheckFile() recoverWith {case e =>
+val checkResult = readPersistedCheckFile() recoverWith {case e =>
   if(!hasAction) df.count
   val res = checkParserLogger ++ df.checkDQM
   res.persist
@@ -218,7 +218,7 @@ The `validate` method of `ValidationSet` will looks like:
 ```scala
 def validate(df: DataFrame, hasActionYet: Boolean) = {
   val needAction = tasks.map{t => t.needAction}.reduce(_ || _)
-  val result = readPersistsedCheckFile() recover with {case e =>
+  val result = readPersistedCheckFile() recover with {case e =>
     if((!hasActionYet) && needAction) forceAction(df)
     val res = tasks.map{t => t.validate(df)}.reduce(_ ++ _)
     persiste(res)

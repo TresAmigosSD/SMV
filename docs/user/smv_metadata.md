@@ -34,3 +34,83 @@ class MyMod(smv.SmvModule):
   def metadataHistorySize(self):
     return 10
 ```
+
+# Mix-in metadata validators
+It is somewhat onerous on the dataset developer to maintain the `metadata`/`validateMetadata`
+pairing for each dataset.  This is especially true when multiple rules need to be
+applied on a dataset.
+
+SMV provides a higher order metadata validation interface that allows the dataset
+author to "mix-in" pre-defined validation rules.  The validation rules have a
+similar interface to the raw `metadata`/`validateMetadata` interface.  Except that
+they can be mixed in into dataset definitions.
+
+## Defining a validator
+Mix-in validators need to inherit from `SmvHistoricalValidator` base class.  Each
+validator should then define a `metadata` and `validateMetadata` methods as before.
+
+**Note:** It is essential that the derived validator class call the super `__init__`
+method with the parameters of the validators.  This will determine the "key" of the
+validator instance.  The "key" will be used to store the validator instance metadata
+results in the full dataset metadata.
+
+```python
+import smv
+
+class DistinctCountVariation(smv.SmvHistoricalValidator):
+    """Check the distinct count of a given column against average historical count.
+       Parameters:
+         col : column name to compute distinct count.
+         threshold : percent variation allowed.  Range [0,1]
+    """
+    def __init__(self, col, threshold):
+        super(DistinctCountVariation, self).__init__(col, threshold)
+        self.col = col
+        self.threshold = threshold
+
+    def metadata(self, df):
+        count = df.select(self.col).distinct().count()
+        return {"d_count": count}
+
+    def validateMetadata(self, cur, hist):
+        if len(hist) == 0: return None
+        hist_count_avg = float(sum([h["d_count"] for h in hist])) / len(hist)
+        cur_count = cur["d_count"]
+
+        #print ("hist_count_avg = " + str(hist_count_avg))
+        #print ("cur_count = " + str(cur_count))
+        if (float(abs(cur_count - hist_count_avg)) / hist_count_avg) > self.threshold:
+            return "DistinctCountVariation: count = %d, avg = %g" % (cur_count, hist_count_avg)
+        return None
+```
+
+## Using a custom validator
+Once the custom validators have been defined, they can be "mixed-in" into an `SmvDataset`.
+Multiple instances of a validator class can be mixed-in into the same dataset.
+For example, the same distinct count variation validator above can be mixed in for
+different columns.
+
+The validators are "mixed-in" using the `SmvHistoricalValidators` decorator on the
+dataset class.  One or more validators can be passed as parameters to `SmvHistoricalValidators`.
+
+```python
+@smv.SmvHistoricalValidators(
+    DistinctCountVariation("ST", 0.25),
+    ValueRangeVariation("EMP", 0.10)
+)
+class EmploymentByState(smv.SmvModule, smv.SmvOutput):
+    """Python ETL Example: employ by state"""
+
+    def requiresDS(self):
+        return [Employment]
+
+    def run(self, i):
+        df = i[Employment]
+        return df.groupBy(F.col("ST")).agg(F.sum(F.col("EMP")).alias("EMP"))
+
+```
+
+In the above example, the `EmploymentByState` module will have two additional validators
+added to it.  The `"ST"` column will be checked against variation in distinct count
+(up to %25 variation will be acceptable).  Whereas the min/max of the `"EMP"` column
+will be check for variation up to %10.

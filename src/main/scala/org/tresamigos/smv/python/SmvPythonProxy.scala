@@ -254,8 +254,50 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(urn: String, forceRun: Boolean, version: Option[String]): DataFrame =
-    j_smvApp.runModule(URN(urn), forceRun, version)
+  def runModule(urn: String,
+                forceRun: Boolean,
+                version: Option[String],
+                runConfig: java.util.Map[String, String]): RunModuleResult = {
+    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+    val collector = new SmvRunInfoCollector
+    val df =  j_smvApp.runModule(URN(urn), forceRun, version, dynamicRunConfig, collector)
+    RunModuleResult(df, collector)
+  }
+
+  /** Runs an SmvModule written in either Python or Scala */
+  def runModuleByName(name: String,
+                forceRun: Boolean,
+                version: Option[String],
+                runConfig: java.util.Map[String, String]): RunModuleResult = {
+    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+    val collector = new SmvRunInfoCollector
+    val df =  j_smvApp.runModuleByName(name, forceRun, version, dynamicRunConfig, collector)
+    RunModuleResult(df, collector)
+  }
+
+  def publishModuleToHiveByName(name: String,
+                                runConfig: java.util.Map[String, String]) = {
+      val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+      val collector = new SmvRunInfoCollector
+      j_smvApp.publishModuleToHiveByName(name, dynamicRunConfig, collector)
+  }
+
+  /**
+   * Returns the run information of a dataset and all its dependencies
+   * from the last run.
+   */
+  def getRunInfo(urn: String): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(URN(urn))
+
+  def getRunInfoByPartialName(partialName: String): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(partialName)
+
+  def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
+    SmvHDFS.writeToFile(in, dest)
+
+  /** Returns metadata for a given urn*/
+  def getMetadataJson(urn: String): String =
+    j_smvApp.getMetadataJson(URN(urn))
 
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvOutput tables
@@ -305,3 +347,6 @@ object SmvPyClientFactory {
   def init(args: Array[String], sqlContext: SQLContext): SmvPyClient =
     new SmvPyClient(SmvApp.init(args, Option(sqlContext.sparkContext), Option(sqlContext)))
 }
+
+/** For use by Python API to return a tuple */
+case class RunModuleResult(df: DataFrame, collector: SmvRunInfoCollector)

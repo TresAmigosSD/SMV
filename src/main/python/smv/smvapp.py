@@ -29,7 +29,8 @@ from smv.datasetrepo import DataSetRepoFactory
 from smv.utils import smv_copy_array, check_socket
 from smv.error import SmvRuntimeError
 import smv.helpers
-
+from smv.utils import FileObjInputStream
+from smv.runinfo import SmvRunInfoCollector
 
 class SmvApp(object):
     """The Python representation of SMV.
@@ -84,6 +85,7 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.dqm.*")
         java_import(self._jvm, "org.tresamigos.smv.panel.*")
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
+        java_import(self._jvm, "org.tresamigos.smv.SmvRunInfoCollector")
 
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
@@ -184,27 +186,124 @@ class SmvApp(object):
         """
         fqn = urn[urn.find(":")+1:]
         ds = self.repoFactory.createRepo().loadDataSet(fqn)
-        df = self.runModule(urn, forceRun, version)
+        df, collector = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
 
-    def runModule(self, urn, forceRun = False, version = None):
+    def runModule(self, urn, forceRun = False, version = None, runConfig = None):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
+
+        Use j_smvPyClient instead of j_smvApp directly so we don't
+        have to construct SmvRunCollector from the python side.
+
+        Example:
+            To get just the dataframe of the module:
+                dataframe = smvApp.runModule('mod:package.module.SmvModuleClass')[0]
+            To get both the dataframe and the run info collector:
+                dataframe, collector = smvApp.runModule('mod:package.module.SmvModuleClass')
+
+        Returns:
+            (DataFrame, SmvRunInfoCollector) tuple
+            - DataFrame is the computed result of the module
+            - SmvRunInfoCollector contains additional information
+              about the run, such as validation results.
         """
-        jdf = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version))
-        return DataFrame(jdf, self.sqlContext)
+        java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
+        return (DataFrame(java_result.df(), self.sqlContext),
+                SmvRunInfoCollector(java_result.collector()) )
+
+    def runModuleByName(self, name, forceRun = False, version = None, runConfig = None):
+        """Runs a SmvModule by its name (can be partial FQN)
+
+        See the `runModule` method above
+
+        Returns:
+            (DataFrame, SmvRunInfoCollector) tuple
+            - DataFrame is the computed result of the module
+            - SmvRunInfoCollector contains additional information
+              about the run, such as validation results.
+        """
+        java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig)
+        return (DataFrame(java_result.df(), self.sqlContext),
+                SmvRunInfoCollector(java_result.collector()) )
+
+    def getRunInfo(self, urn):
+        """Returns the run information of a module and all its dependencies
+        from the last run.
+
+        Unlike the runModule() method, which returns the run
+        information just for that run, this method returns the run
+        information from the last run.
+
+        If no module was run (e.g. the code did not change, so the
+        data is read from persistent storage), the SmRunInfoCollector
+        returned from the runModule() method would be empty.  But the
+        SmvRunInfoCollector returned from this method would contain
+        all latest run information about all dependent modules.
+
+        Args:
+            urn (str): urn of target module
+
+        Returns:
+            SmvRunInfoCollector
+
+        """
+        java_result = self.j_smvPyClient.getRunInfo(urn)
+        return SmvRunInfoCollector(java_result)
+
+    def getRunInfoByPartialName(self, name):
+        """Returns the run information of a module and all its dependencies
+        from the last run.
+
+        Unlike the runModule() method, which returns the run
+        information just for that run, this method returns the run
+        information from the last run.
+
+        If no module was run (e.g. the code did not change, so the
+        data is read from persistent storage), the SmRunInfoCollector
+        returned from the runModule() method would be empty.  But the
+        SmvRunInfoCollector returned from this method would contain
+        all latest run information about all dependent modules.
+
+        Args:
+            name (str): unique suffix to fqn of target module
+
+        Returns:
+            SmvRunInfoCollector
+        """
+        java_result = self.j_smvPyClient.getRunInfoByPartialName(name)
+        return SmvRunInfoCollector(java_result)
+
+    def publishModuleToHiveByName(self, name, runConfig=None):
+        """Publish an SmvModule to Hive by its name (can be partial FQN)
+        """
+        return self.j_smvPyClient.publishModuleToHiveByName(name, runConfig)
+
+    def getMetadataJson(self, urn):
+        """Returns the metadata for a given urn"""
+        return self.j_smvPyClient.getMetadataJson(urn)
 
     def inferUrn(self, name):
         return self.j_smvPyClient.inferDS(name).urn().toString()
-
-    def runModuleByName(self, name, forceRun = False, version = None):
-        jdf = self.j_smvApp.runModuleByName(name, forceRun, self.scalaOption(version))
-        return DataFrame(jdf, self.sqlContext)
 
     def getDsHash(self, name):
         """Get hashOfHash for named module as a hex string
         """
         return self.j_smvPyClient.inferDS(name).verHex()
 
+    def copyToHdfs(self, fileobj, destination):
+        """Copies the content of a file object to an HDFS location.
+
+        Args:
+            fileobj (file object): a file-like object whose content is to be copied,
+                such as one returned by open(), or StringIO
+            destination (str): specifies the destination path in the hadoop file system
+
+        The file object is expected to have been opened in binary read mode.
+
+        The file object is closed when this function completes.
+        """
+        src = FileObjInputStream(fileobj)
+        self.j_smvPyClient.copyToHdfs(src, destination)
 
     def urn2fqn(self, urnOrFqn):
         """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged

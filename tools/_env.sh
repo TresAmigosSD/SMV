@@ -128,7 +128,7 @@ function accept_version () {
   local sane=$(sanitize_version $2)
   local IFS=.
   local required=($1) found=($sane)
-  if [[ ${required[0]} == ${found[0]} ]] && [[ ${required[1]} == ${found[1]} ]] && ! (( ${found[2]} < ${required[2]} )); then
+  if [[ ${required[0]} == ${found[0]} ]] && [[ ${required[1]} == ${found[1]} ]]; then
     echo 0
   else
     echo 1
@@ -136,7 +136,8 @@ function accept_version () {
 }
 
 function verify_spark_version() {
-  local installed_version=$(${SMV_SPARK_SUBMIT_FULLPATH} --version 2>&1 | grep version | head -1 | sed -e 's/.*version //')
+  local installed_version=$(${SMV_SPARK_SUBMIT_FULLPATH} --version 2>&1 | \
+    grep -v "Spark Command" | grep version | head -1 | sed -e 's/.*version //')
   local required_version=$(cat "$SMV_TOOLS/../.spark_version")
   local vercmp=$(accept_version "$required_version" "$installed_version")
   if [[ $vercmp != "0" ]]; then
