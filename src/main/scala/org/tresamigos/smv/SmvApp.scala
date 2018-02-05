@@ -39,7 +39,8 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   val genEdd      = smvConfig.cmdLine.genEdd()
   val publishHive = smvConfig.cmdLine.publishHive()
   val publishJDBC = smvConfig.cmdLine.publishJDBC()
-  val stages      = smvConfig.stageNames
+
+  def stages      = smvConfig.stageNames
   val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
 
   /** Register Kryo Classes
@@ -325,10 +326,9 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * proceeds with the execution of an smvDS passed from runModule or runModuleByName
    * TODO: the name of this function should make its distinction from runModule clear (this is an implementation)
    */
-  def runDS(ds: SmvDataSet,
+  private def runDS(ds: SmvDataSet,
             forceRun: Boolean,
             version: Option[String],
-            runConfig: Map[String, String] = Map.empty,
             collector: SmvRunInfoCollector): DataFrame = {
     if (version.isDefined)
       // if fails, error already handled since input path doesn't exist
@@ -336,10 +336,6 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     else {
       if (forceRun)
         deletePersistedResults(Seq(ds))
-
-      // set dynamic runtime configuration before run
-      setDynamicRunConfig(runConfig)
-
       ds.rdd(forceRun, collector=collector)
     }
   }
@@ -355,8 +351,10 @@ class SmvApp(private val cmdLineArgs: Seq[String],
                 version: Option[String] = None,
                 runConfig: Map[String, String] = Map.empty,
                 collector: SmvRunInfoCollector = new SmvRunInfoCollector): DataFrame = {
+    // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
+    setDynamicRunConfig(runConfig)
     val ds = dsm.load(urn).head
-    runDS(ds, forceRun, version, runConfig, collector)
+    runDS(ds, forceRun, version, collector)
   }
 
   /**
@@ -370,8 +368,11 @@ class SmvApp(private val cmdLineArgs: Seq[String],
                       version: Option[String] = None,
                       runConfig: Map[String, String] = Map.empty,
                       collector: SmvRunInfoCollector = new SmvRunInfoCollector): DataFrame = {
+    // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
+    setDynamicRunConfig(runConfig)
     val ds = dsm.inferDS(modName).head
-    runDS(ds, forceRun, version, runConfig, collector=collector)
+
+    runDS(ds, forceRun, version, collector=collector)
   }
 
   def publishModuleToHiveByName(modName: String,
