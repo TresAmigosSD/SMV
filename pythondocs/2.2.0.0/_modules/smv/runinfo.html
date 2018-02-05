@@ -1,0 +1,202 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.runinfo &#8212; Spark Modularized View 2.2.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 2.2.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.runinfo</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Easy Python access to SmvRunInfoCollector and related Scala classes.</span>
+
+<span class="sd">Todo:</span>
+<span class="sd">    * document example use</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="k">import</span> <span class="n">pformat</span>
+
+
+<div class="viewcode-block" id="SmvRunInfoCollector"><a class="viewcode-back" href="../../smv.html#smv.runinfo.SmvRunInfoCollector">[docs]</a><span class="k">class</span> <span class="nc">SmvRunInfoCollector</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper to its counterpart on the Scala side</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        df, coll = smvApp.runModule(...)</span>
+<span class="sd">        coll.dsFqns  # returns</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jcollector</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jcollector</span> <span class="o">=</span> <span class="n">jcollector</span>
+
+<div class="viewcode-block" id="SmvRunInfoCollector.fqns"><a class="viewcode-back" href="../../smv.html#smv.runinfo.SmvRunInfoCollector.fqns">[docs]</a>    <span class="k">def</span> <span class="nf">fqns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list of FQNs for all datasets that ran&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">jcollector</span><span class="o">.</span><span class="n">dsFqnsAsJava</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvRunInfoCollector.dqm_validation"><a class="viewcode-back" href="../../smv.html#smv.runinfo.SmvRunInfoCollector.dqm_validation">[docs]</a>    <span class="k">def</span> <span class="nf">dqm_validation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dsFqn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the DQM validation result for a given dataset</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dictionary representation of the dqm validation result</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            py4j.protocol.Py4JError: if there is java call error or</span>
+<span class="sd">                there is no validation result for the specified dataset</span>
+<span class="sd">                (e.g. caused by a typo in the name)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">java_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jcollector</span><span class="o">.</span><span class="n">getDqmValidationResult</span><span class="p">(</span><span class="n">dsFqn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">java_result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">java_result</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvRunInfoCollector.dqm_state"><a class="viewcode-back" href="../../smv.html#smv.runinfo.SmvRunInfoCollector.dqm_state">[docs]</a>    <span class="k">def</span> <span class="nf">dqm_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dsFqn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the DQM state for a given dataset</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dictionary representation of the dqm state</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            py4j.protocol.Py4JError: if there is java call error or</span>
+<span class="sd">                there is no validation result or dqm state for the</span>
+<span class="sd">                specified dataset (e.g. caused by a typo in the name)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">validation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dqm_validation</span><span class="p">(</span><span class="n">dsFqn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;dqmStateSnapshot&#39;</span> <span class="ow">in</span> <span class="n">validation</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">validation</span><span class="p">[</span><span class="s1">&#39;dqmStateSnapshot&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{}</span></div>
+
+<div class="viewcode-block" id="SmvRunInfoCollector.metadata"><a class="viewcode-back" href="../../smv.html#smv.runinfo.SmvRunInfoCollector.metadata">[docs]</a>    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dsFqn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the metadata for a given dataset</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dictionary representation of the metadata</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            py4j.protocol.Py4JError: if there is java call error or</span>
+<span class="sd">                there is no metadata for the specified dataset</span>
+<span class="sd">                (e.g. caused by a typo in the name)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">java_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jcollector</span><span class="o">.</span><span class="n">getMetadata</span><span class="p">(</span><span class="n">dsFqn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">java_result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">java_result</span><span class="o">.</span><span class="n">toJson</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvRunInfoCollector.metadata_history"><a class="viewcode-back" href="../../smv.html#smv.runinfo.SmvRunInfoCollector.metadata_history">[docs]</a>    <span class="k">def</span> <span class="nf">metadata_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dsFqn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the metadata history for a given dataset</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of metadata dictionaries in reverse chronological order</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            py4j.protocol.Py4JError: if there is java call error or</span>
+<span class="sd">                there is no metadata for the specified dataset</span>
+<span class="sd">                (e.g. caused by a typo in the name)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">java_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jcollector</span><span class="o">.</span><span class="n">getMetadataHistory</span><span class="p">(</span><span class="n">dsFqn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">java_result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">java_result</span><span class="o">.</span><span class="n">toJson</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvRunInfoCollector.show_report"><a class="viewcode-back" href="../../smv.html#smv.runinfo.SmvRunInfoCollector.show_report">[docs]</a>    <span class="k">def</span> <span class="nf">show_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;datasets: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqns</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">fqn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqns</span><span class="p">():</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">+ </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">fqn</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">|- dqm validation:&#39;</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">     &#39;</span> <span class="o">+</span> <span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dqm_validation</span><span class="p">(</span><span class="n">fqn</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">|- metadata:&#39;</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">     &#39;</span> <span class="o">+</span> <span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">(</span><span class="n">fqn</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">|- metadata history:&#39;</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">     &#39;</span> <span class="o">+</span> <span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata_history</span><span class="p">(</span><span class="n">fqn</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 2.2.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

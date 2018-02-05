@@ -1,0 +1,1066 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>SmvGroupedDataFunc - org.tresamigos.smv.SmvGroupedDataFunc</title>
+          <meta name="description" content="SmvGroupedDataFunc - org.tresamigos.smv.SmvGroupedDataFunc" />
+          <meta name="keywords" content="SmvGroupedDataFunc org.tresamigos.smv.SmvGroupedDataFunc" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../index.html';
+            var hash = 'org.tresamigos.smv.SmvGroupedDataFunc';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="type">
+      <div id="definition">
+        <img alt="Class" src="../../../lib/class_big.png" />
+        <p id="owner"><a href="../../package.html" class="extype" name="org">org</a>.<a href="../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
+        <h1>SmvGroupedDataFunc</h1><h3><span class="morelinks"><div>Related Doc:
+            <a href="package.html" class="extype" name="org.tresamigos.smv">package smv</a>
+          </div></span></h3><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <span class="name">SmvGroupedDataFunc</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>SMV operations that can be applied to grouped data.
+For example:</p><pre>df.smvGroupBy(<span class="lit">"k"</span>).smvDecile(<span class="lit">"amt"</span>)</pre><p>We can not use the standard Spark <code>GroupedData</code> because the internal DataFrame and keys are not exposed.
+</p></div><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol>
+                
+                <li class="alpha in"><span>Alphabetic</span></li>
+                <li class="inherit out"><span>By Inheritance</span></li>
+              </ol>
+            </div>
+        <div id="ancestors">
+                <span class="filtertype">Inherited<br />
+                </span>
+                <ol id="linearization">
+                  <li class="in" name="org.tresamigos.smv.SmvGroupedDataFunc"><span>SmvGroupedDataFunc</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                </ol>
+              </div><div id="ancestors">
+            <span class="filtertype"></span>
+            <ol>
+              <li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show All</span></li>
+            </ol>
+          </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        <div id="constructors" class="members">
+              <h3>Instance Constructors</h3>
+              <ol><li name="org.tresamigos.smv.SmvGroupedDataFunc#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(smvGD:org.tresamigos.smv.SmvGroupedData):org.tresamigos.smv.SmvGroupedDataFunc"></a>
+      <a id="&lt;init&gt;:SmvGroupedDataFunc"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">SmvGroupedDataFunc</span><span class="params">(<span name="smvGD">smvGD: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>)</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@&lt;init&gt;(smvGD:org.tresamigos.smv.SmvGroupedData):org.tresamigos.smv.SmvGroupedDataFunc" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="scala.AnyRef#!=" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!=(x$1:Any):Boolean"></a>
+      <a id="!=(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@!=(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef###" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="##():Int"></a>
+      <a id="##():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@##():Int" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#==" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="==(x$1:Any):Boolean"></a>
+      <a id="==(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@==(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#addTimePanelsWithValueFill" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="addTimePanelsWithValueFill(timeColName:String,doFiltering:Boolean,backwardFill:Boolean)(panels:org.tresamigos.smv.panel.TimePanel*)(values:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="addTimePanelsWithValueFill(String,Boolean,Boolean)(TimePanel*)(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">addTimePanelsWithValueFill</span><span class="params">(<span name="timeColName">timeColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="doFiltering">doFiltering: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>, <span name="backwardFill">backwardFill: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="params">(<span name="panels">panels: <a href="panel/TimePanel.html" class="extype" name="org.tresamigos.smv.panel.TimePanel">TimePanel</a>*</span>)</span><span class="params">(<span name="values">values: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@addTimePanelsWithValueFill(timeColName:String,doFiltering:Boolean,backwardFill:Boolean)(panels:org.tresamigos.smv.panel.TimePanel*)(values:String*):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Same as <code>addTimePanels</code> with specified value columns filled with previous perioud value.</p><div class="fullcomment"><div class="comment cmt"><p>Same as <code>addTimePanels</code> with specified value columns filled with previous perioud value.</p><p>Example
+Input:</p><pre>k, ts, v
+<span class="num">1</span>,<span class="num">20120201</span>,<span class="num">1.5</span>
+<span class="num">1</span>,<span class="num">20120701</span>,<span class="num">7.5</span>
+<span class="num">1</span>,<span class="num">20120501</span>,<span class="num">2.45</span></pre><pre>f.smvGroupBy(<span class="lit">"k"</span>).addTimePanelsWithValueFill(<span class="lit">"ts"</span>)(TimePanel(Month(<span class="num">2012</span>, <span class="num">1</span>), Month(<span class="num">2012</span>, <span class="num">6</span>)))(<span class="lit">"v"</span>)</pre><p>Output:</p><pre>k, ts, v, smvTime
+<span class="num">1</span>,<span class="kw">null</span>,<span class="num">1.5</span>,M201201
+<span class="num">1</span>,<span class="num">2012</span>-<span class="num">02</span>-<span class="num">01</span> <span class="num">00</span>:<span class="num">00</span>:<span class="num">00.0</span>,<span class="num">1.5</span>,M201202
+<span class="num">1</span>,<span class="kw">null</span>,<span class="num">1.5</span>,M201203
+<span class="num">1</span>,<span class="kw">null</span>,<span class="num">1.5</span>,M201204
+<span class="num">1</span>,<span class="num">2012</span>-<span class="num">05</span>-<span class="num">01</span> <span class="num">00</span>:<span class="num">00</span>:<span class="num">00.0</span>,<span class="num">2.45</span>,M201205
+<span class="num">1</span>,<span class="kw">null</span>,<span class="num">2.45</span>,M201206</pre></div></div>
+    </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asInstanceOf[T0]:T0"></a>
+      <a id="asInstanceOf[T0]:T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Any.asInstanceOf.T0">T0</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@asInstanceOf[T0]:T0" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="clone():Object"></a>
+      <a id="clone():AnyRef"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@clone():Object" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#edd" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="edd():org.tresamigos.smv.edd.Edd"></a>
+      <a id="edd():Edd"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">edd</span><span class="params">()</span><span class="result">: <a href="edd/Edd.html" class="extype" name="org.tresamigos.smv.edd.Edd">Edd</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@edd():org.tresamigos.smv.edd.Edd" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Create an Edd on SmvGroupedData.</p><div class="fullcomment"><div class="comment cmt"><p>Create an Edd on SmvGroupedData.
+See <a href="edd/Edd.html" class="extype" name="org.tresamigos.smv.edd.Edd">org.tresamigos.smv.edd.Edd</a> for details.</p><p>Example:</p><pre>scala&gt; df.smvGroupBy(<span class="lit">"k"</span>).edd.summary().eddShow</pre></div></div>
+    </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="eq(x$1:AnyRef):Boolean"></a>
+      <a id="eq(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@eq(x$1:AnyRef):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#equals" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="equals(x$1:Any):Boolean"></a>
+      <a id="equals(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@equals(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <a id="finalize():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@finalize():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#getClass" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getClass():Class[_]"></a>
+      <a id="getClass():Class[_]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@getClass():Class[_]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#hashCode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="hashCode():Int"></a>
+      <a id="hashCode():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@hashCode():Int" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@isInstanceOf[T0]:Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ne(x$1:AnyRef):Boolean"></a>
+      <a id="ne(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@ne(x$1:AnyRef):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notify" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notify():Unit"></a>
+      <a id="notify():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@notify():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notifyAll" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notifyAll():Unit"></a>
+      <a id="notifyAll():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@notifyAll():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvConcatHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvConcatHist(cols:Seq[String]*):Unit"></a>
+      <a id="smvConcatHist(Seq[String]*):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvConcatHist</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvConcatHist(cols:Seq[String]*):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Print EDD histogram of a group of cols (joint distribution)
+</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvConcatHistSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvConcatHistSave(cols:Seq[String]*)(path:String):Unit"></a>
+      <a id="smvConcatHistSave(Seq[String]*)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvConcatHistSave</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvConcatHistSave(cols:Seq[String]*)(path:String):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Save Edd histogram of a group of cols (joint distribution)
+</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvCube(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvCube(Column*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCube</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvCube(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Same as <code>smvCube(String*)</code> but using <code>Column</code> to define the input columns</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvCube" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvCube(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvCube(String,String*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvCube</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvCube(col:String,others:String*):org.tresamigos.smv.SmvGroupedData" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">implement the cube operations on a given DF and a set of columns.</p><div class="fullcomment"><div class="comment cmt"><p>implement the cube operations on a given DF and a set of columns.
+See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.
+Rather than using nulls as the pig version, a sentinel value of &quot;*&quot; will be used</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"year"</span>).smvCube(<span class="lit">"zip"</span>, <span class="lit">"month"</span>).agg(<span class="lit">"year"</span>, <span class="lit">"zip"</span>, <span class="lit">"month"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre><p>For zip &amp; month columns with input values:</p><pre><span class="num">90001</span>, <span class="num">201401</span>
+<span class="num">10001</span>, <span class="num">201501</span></pre><p>The &quot;cubed&quot; values on those 2 columns are:</p><pre><span class="num">90001</span>, *
+<span class="num">10001</span>, *
+*, <span class="num">201401</span>
+*, <span class="num">201501</span>
+<span class="num">90001</span>, <span class="num">201401</span>
+<span class="num">10001</span>, <span class="num">201501</span>
+*, *</pre><p>where <code>*</code> stand for &quot;any&quot;</p><p>Also have a version on <code>DataFrame</code>.
+</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvDecile" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvDecile(valueCols:Seq[String],ignoreNull:Boolean):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvDecile(Seq[String],Boolean):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvDecile</span><span class="params">(<span name="valueCols">valueCols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="ignoreNull">ignoreNull: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvDecile(valueCols:Seq[String],ignoreNull:Boolean):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Compute the decile for a given column value with a DataFrame group.</p><div class="fullcomment"><div class="comment cmt"><p>Compute the decile for a given column value with a DataFrame group.
+Equivelant to <code>smvQuantile</code> with <code>numBins</code> set to 10.
+</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvFillNullWithPrevValue" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvFillNullWithPrevValue(orders:org.apache.spark.sql.Column*)(values:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvFillNullWithPrevValue(Column*)(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvFillNullWithPrevValue</span><span class="params">(<span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="params">(<span name="values">values: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvFillNullWithPrevValue(orders:org.apache.spark.sql.Column*)(values:String*):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Fill in Null values with &quot;previous&quot; value according to an ordering</p><div class="fullcomment"><div class="comment cmt"><p>Fill in Null values with &quot;previous&quot; value according to an ordering</p><p>Example:
+Input:</p><pre>K, T, V
+a, <span class="num">1</span>, <span class="kw">null</span>
+a, <span class="num">2</span>, a
+a, <span class="num">3</span>, b
+a, <span class="num">4</span>, <span class="kw">null</span></pre><pre>df.smvGroupBy(<span class="lit">"K"</span>).smvFillNullWithPrevValue($<span class="lit">"T"</span>.asc)(<span class="lit">"V"</span>)</pre><p>Output:</p><pre>K, T, V
+a, <span class="num">1</span>, <span class="kw">null</span>
+a, <span class="num">2</span>, a
+a, <span class="num">3</span>, b
+a, <span class="num">4</span>, b</pre><p>This methods only fill forward, which means that at T=1, V is still
+null as in above example. In case one need all the null filled and
+allow fill backward at the beginning of the sequence, you can apply
+this method again with reverse ordering:</p><pre>df.smvGroupBy(<span class="lit">"K"</span>).smvFillNullWithPrevValue($<span class="lit">"T"</span>.asc)(<span class="lit">"V"</span>).
+  smvGroupBy(<span class="lit">"K"</span>).smvFillNullWithPrevValue($<span class="lit">"T"</span>.desc)(<span class="lit">"V"</span>)</pre><p>Output:</p><pre>K, T, V
+a, <span class="num">1</span>, a
+a, <span class="num">2</span>, a
+a, <span class="num">3</span>, b
+a, <span class="num">4</span>, b</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvHist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvHist(cols:String*):Unit"></a>
+      <a id="smvHist(String*):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvHist</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvHist(cols:String*):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Print EDD histogram (each col's histogram prints separately)
+</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvHistSave" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvHistSave(cols:String*)(path:String):Unit"></a>
+      <a id="smvHistSave(String*)(String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvHistSave</span><span class="params">(<span name="cols">cols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvHistSave(cols:String*)(path:String):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Save Edd histogram
+</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvMapGroup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvMapGroup(gdo:org.tresamigos.smv.cds.SmvGDO,needConvert:Boolean):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvMapGroup(SmvGDO,Boolean):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvMapGroup</span><span class="params">(<span name="gdo">gdo: <a href="cds/SmvGDO.html" class="extype" name="org.tresamigos.smv.cds.SmvGDO">SmvGDO</a></span>, <span name="needConvert">needConvert: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvMapGroup(gdo:org.tresamigos.smv.cds.SmvGDO,needConvert:Boolean):org.tresamigos.smv.SmvGroupedData" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData</p><div class="fullcomment"><div class="comment cmt"><p>smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData</p><p>Example:</p><pre><span class="kw">val</span> res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum(<span class="lit">'v) as '</span>sumv, sum('v2) as 'sumv2)
+<span class="kw">val</span> res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@Experimental</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvPercentRank" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPercentRank(valueCols:Seq[String],ignoreNull:Boolean):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvPercentRank(Seq[String],Boolean):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPercentRank</span><span class="params">(<span name="valueCols">valueCols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="ignoreNull">ignoreNull: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvPercentRank(valueCols:Seq[String],ignoreNull:Boolean):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Compute the percent rank of a sequence of columns within a group in a given DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Compute the percent rank of a sequence of columns within a group in a given DataFrame.</p><p>Used Spark's <code>percent_rank</code> window function. The precent rank is defined as
+<code>R/(N-1)</code>, where <code>R</code> is the base 0 rank, and <code>N</code> is the population size. Under
+this definition, min value (R=0) has percent rank <code>0.0</code>, and max value has percent
+rank <code>1.0</code>.</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">'g, '</span>g2).smvPercentRank([<span class="lit">"v1"</span>, <span class="lit">"v2"</span>, <span class="lit">"v3"</span>])</pre><p><code>smvPercentRank</code> takes another parameter <code>ignoreNull</code>. If it is set to true, null values's
+percent ranks will be nulls, otherwise, as Spark sort considers null smaller than any value,
+nulls percent ranks will be zero. Default value of <code>ignoreNull</code> is <code>true</code>.</p><p>For each column for which the percent rank is computed (e.g. &quot;v&quot;), an additional column is
+added to the output, <code>v_pctrnk</code></p><p>All other columns in the input are untouched and propagated to the output.
+</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvPivot" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPivot(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvPivot(Seq[String]*)(String*)(String*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPivot</span><span class="params">(<span name="pivotCols">pivotCols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="params">(<span name="valueCols">valueCols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="baseOutput">baseOutput: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvPivot(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.tresamigos.smv.SmvGroupedData" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">smvPivot on SmvGroupedData is similar to smvPivot on DF with the keys being provided in the <code>smvGroupBy</code> method instead of to the method directly.</p><div class="fullcomment"><div class="comment cmt"><p>smvPivot on SmvGroupedData is similar to smvPivot on DF with the keys being provided in the <code>smvGroupBy</code> method instead of to the method directly.
+See <a href="SmvDFHelper.html#smvPivot(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.apache.spark.sql.DataFrame" class="extmbr" name="org.tresamigos.smv.SmvDFHelper#smvPivot">org.tresamigos.smv.SmvDFHelper#smvPivot</a> for details</p><p>For example:</p><pre>df.smvGroupBy(<span class="lit">"id"</span>).smvPivot(<span class="std">Seq</span>(<span class="lit">"month"</span>, <span class="lit">"product"</span>))(<span class="lit">"count"</span>)(
+   <span class="lit">"5_14_A"</span>, <span class="lit">"5_14_B"</span>, <span class="lit">"6_14_A"</span>, <span class="lit">"6_14_B"</span>)</pre><p>and the following input:</p><pre>Input
+ | id  | month | product | count |
+ | --- | ----- | ------- | ----- |
+ | <span class="num">1</span>   | <span class="num">5</span>/<span class="num">14</span>  |   A     |   <span class="num">100</span> |
+ | <span class="num">1</span>   | <span class="num">6</span>/<span class="num">14</span>  |   B     |   <span class="num">200</span> |
+ | <span class="num">1</span>   | <span class="num">5</span>/<span class="num">14</span>  |   B     |   <span class="num">300</span> |</pre><p>will produce the following output:</p><pre>Output:
+ | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+ | --- | ------------ | ------------ | ------------ | ------------ |
+ | <span class="num">1</span>   | <span class="num">100</span>          | NULL         | NULL         | NULL         |
+ | <span class="num">1</span>   | NULL         | NULL         | NULL         | <span class="num">200</span>          |
+ | <span class="num">1</span>   | NULL         | <span class="num">300</span>          | NULL         | NULL         |</pre></div><dl class="paramcmts block"><dt class="param">pivotCols</dt><dd class="cmt"><p>The sequence of column names whose values will be used as the output pivot column names.</p></dd><dt class="param">valueCols</dt><dd class="cmt"><p>The columns whose value will be copied to the pivoted output columns.</p></dd><dt class="param">baseOutput</dt><dd class="cmt"><p>The expected base output column names (without the value column prefix).
+                  The user is required to supply the list of expected pivot column output names to avoid
+                  and extra action on the input DataFrame just to extract the possible pivot columns.
+                  if an empty sequence is provided, then the base output columns will be extracted from
+                  values in the pivot columns (will cause an action on the entire DataFrame!)</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvPivotCoalesce" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvPivotCoalesce(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvPivotCoalesce(Seq[String]*)(String*)(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPivotCoalesce</span><span class="params">(<span name="pivotCols">pivotCols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="params">(<span name="valueCols">valueCols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="baseOutput">baseOutput: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvPivotCoalesce(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Same as smvPivotSum except that, instead of summing, we coalesce the pivot or grouped columns.</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvPivotSum" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvPivotSum(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvPivotSum(Seq[String]*)(String*)(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvPivotSum</span><span class="params">(<span name="pivotCols">pivotCols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]*</span>)</span><span class="params">(<span name="valueCols">valueCols: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="params">(<span name="baseOutput">baseOutput: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvPivotSum(pivotCols:Seq[String]*)(valueCols:String*)(baseOutput:String*):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Perform a normal <code>SmvPivot</code> operation followed by a sum on all the output pivot columns.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a normal <code>SmvPivot</code> operation followed by a sum on all the output pivot columns.</p><p>For example:</p><pre>df.smvGroupBy(<span class="lit">"id"</span>).smvPivotSum(<span class="std">Seq</span>(<span class="lit">"month"</span>, <span class="lit">"product"</span>))(<span class="lit">"count"</span>)(<span class="lit">"5_14_A"</span>, <span class="lit">"5_14_B"</span>, <span class="lit">"6_14_A"</span>, <span class="lit">"6_14_B"</span>)</pre><p>and the following input:</p><pre>Input
+ | id  | month | product | count |
+ | --- | ----- | ------- | ----- |
+ | <span class="num">1</span>   | <span class="num">5</span>/<span class="num">14</span>  |   A     |   <span class="num">100</span> |
+ | <span class="num">1</span>   | <span class="num">6</span>/<span class="num">14</span>  |   B     |   <span class="num">200</span> |
+ | <span class="num">1</span>   | <span class="num">5</span>/<span class="num">14</span>  |   B     |   <span class="num">300</span> |</pre><p>will produce the following output:</p><pre>| id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |
+| --- | ------------ | ------------ | ------------ | ------------ |
+| <span class="num">1</span>   | <span class="num">100</span>          | <span class="num">300</span>          | NULL         | <span class="num">200</span>          |</pre></div><dl class="paramcmts block"><dt class="param">pivotCols</dt><dd class="cmt"><p>The sequence of column names whose values will be used as the output pivot column names.</p></dd><dt class="param">valueCols</dt><dd class="cmt"><p>The columns whose value will be copied to the pivoted output columns.</p></dd><dt class="param">baseOutput</dt><dd class="cmt"><p>The expected base output column names (without the value column prefix).
+                  The user is required to supply the list of expected pivot column output names to avoid
+                  and extra action on the input DataFrame just to extract the possible pivot columns.
+                  if an empty sequence is provided, then the base output columns will be extracted from
+                  values in the pivot columns (will cause an action on the entire DataFrame!)</p></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvQuantile" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvQuantile(valueCols:Seq[String],numBins:Integer,ignoreNull:Boolean):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvQuantile(Seq[String],Integer,Boolean):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvQuantile</span><span class="params">(<span name="valueCols">valueCols: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="numBins">numBins: <span class="extype" name="java.lang.Integer">Integer</span></span>, <span name="ignoreNull">ignoreNull: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvQuantile(valueCols:Seq[String],numBins:Integer,ignoreNull:Boolean):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Compute the quantile bin number within a group in a given DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Compute the quantile bin number within a group in a given DataFrame.</p><p>Estimate quantiles and quantile groups given a data with unknown distribution is
+quite arbitrary. There are multiple 'definitions' used in different softwares. Please refer
+https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample
+for details.</p><p><code>smvQuantile</code> calculated from Spark's <code>percent_rank</code>. The algorithm is equavalent to the
+one labled as <code>R-7, Excel, SciPy-(1,1), Maple-6</code> in above wikipedia page. Please note it
+is slight different from SAS's default algorithm (labled as SAS-5).</p><p>Returned quantile bin numbers are 1 based. For example when <code>bin_num=10</code>, returned values are
+integers from 1 to 10, inclusively.</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">'g, '</span>g2).smvQuantile(<span class="std">Seq</span>(<span class="lit">"v"</span>), <span class="num">100</span>)</pre><p>For each column for which the quantile is computed (e.g. &quot;v&quot;), an additional column is added to
+the output, &quot;v_quantile&quot;.</p><p>All other columns in the input are untouched and propagated to the output.</p><p><code>smvQuantile</code> takes another parameter <code>ignoreNull</code>. If it is set to true, null values's
+percent ranks will be nulls, otherwise, as Spark sort considers null smaller than any value,
+nulls percent ranks will be zero. Default value of <code>ignoreNull</code> is <code>true</code>.</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRePartition" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvRePartition(numParts:Int):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvRePartition(Int):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvRePartition</span><span class="params">(<span name="numParts">numParts: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvRePartition(numParts:Int):org.tresamigos.smv.SmvGroupedData" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Repartition SmvGroupedData using specified partitioner on the keys.</p><div class="fullcomment"><div class="comment cmt"><p>Repartition SmvGroupedData using specified partitioner on the keys. A
+HashPartitioner with the specified number of partitions will be used.</p><p>This method is used in the cases that the key-space is very large. In the
+current Spark DF's groupBy method, the entire key-space is actually loaded
+into executor's memory, which is very dangerous when the key space is big.
+The regular DF's repartition function doesn't solve this issue since a random
+repartition will not guaranteed to reduce the key-space on each executor.
+In that case we need to use this function to linearly reduce the key-space.</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"k1"</span>, <span class="lit">"k2"</span>).smvRePartition(<span class="num">32</span>).aggWithKeys(sum($<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRollup" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="smvRollup(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvRollup(Column*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvRollup</span><span class="params">(<span name="cols">cols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvRollup(cols:org.apache.spark.sql.Column*):org.tresamigos.smv.SmvGroupedData" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Same as <code>smvRollup(String*)</code> but using <code>Column</code> to define the input columns</p>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvRollup" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvRollup(col:String,others:String*):org.tresamigos.smv.SmvGroupedData"></a>
+      <a id="smvRollup(String,String*):SmvGroupedData"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvRollup</span><span class="params">(<span name="col">col: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="others">others: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvGroupedData">SmvGroupedData</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvRollup(col:String,others:String*):org.tresamigos.smv.SmvGroupedData" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">implement the rollup operations on a given DF and a set of columns.</p><div class="fullcomment"><div class="comment cmt"><p>implement the rollup operations on a given DF and a set of columns.
+See http://joshualande.com/cube-rollup-pig-data-science/ for the pig implementation.</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"year"</span>).smvRollup(<span class="lit">"county"</span>, <span class="lit">"zip"</span>).agg(<span class="lit">"year"</span>, <span class="lit">"county"</span>, <span class="lit">"zip"</span>, sum(<span class="lit">"v"</span>) as <span class="lit">"v"</span>)</pre><p>For county &amp; zip with input values:</p><pre><span class="num">10234</span>, <span class="num">92101</span>
+<span class="num">10234</span>, <span class="num">10019</span></pre><p>The &quot;rolluped&quot; values are:</p><pre>*, *
+<span class="num">10234</span>, *
+<span class="num">10234</span>, <span class="num">92101</span>
+<span class="num">10234</span>, <span class="num">10019</span></pre><p>Also have a version on DF.
+</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvScale" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvScale(ranges:(org.apache.spark.sql.Column,(Double,Double))*)(withZeroPivot:Boolean,doDropRange:Boolean):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvScale((Column,(Double,Double))*)(Boolean,Boolean):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvScale</span><span class="params">(<span name="ranges">ranges: (<span class="extype" name="org.apache.spark.sql.Column">Column</span>, (<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>))*</span>)</span><span class="params">(<span name="withZeroPivot">withZeroPivot: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>, <span name="doDropRange">doDropRange: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvScale(ranges:(org.apache.spark.sql.Column,(Double,Double))*)(withZeroPivot:Boolean,doDropRange:Boolean):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Scale a group of columns to given ranges</p><div class="fullcomment"><div class="comment cmt"><p>Scale a group of columns to given ranges</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"k"</span>).smvScale($<span class="lit">"v1"</span> -&gt; ((<span class="num">0.0</span>, <span class="num">100.0</span>)), $<span class="lit">"v2"</span> -&gt; ((<span class="num">100.0</span>, <span class="num">200.0</span>)))()</pre><p>Note that the range tuple needs to be wrapped inside another pair
+of parenthesis for the compiler to constructed the nested tuple.</p><p>In this example, &quot;v1&quot; column within each k-group, the lowest value is scaled to 0.0 and
+highest value is scaled to 100.0. The scaled column is called &quot;v1_scaled&quot;.</p><p>Two optional parameters can be provided by the user:
+<br/><code>withZeroPivot</code>: Boolean = false
+<br/><code>doDropRange</code>: Boolean = true</p><p>When &quot;withZeroPivot&quot; is set, the scaling ensures that the zero point pivot is maintained.
+For example, if the input range is [-5,15] and the desired output ranges are [-100,100],
+then instead of mapping -5 -&gt; -100 and 15 -&gt; 100, we would maintain the zero pivot by mapping
+[-15,15] to [-100,100] so a zero input will map to a zero output. Basically we extend the input
+range to the abs max of the low/high values.</p><p>When &quot;doDropRange&quot; is set, the upper and lower bound of the unscaled value will be dropped
+from the output. Otherwise, the lower and upper bound of the unscaled value will be names as
+&quot;v1_min&quot; and &quot;v1_max&quot; as for the example. Please note that is &quot;withZeroPivot&quot; also set, the
+lower and upper bounds will be the abs max.
+</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvTimePanelAgg" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvTimePanelAgg(timeColName:String,start:org.tresamigos.smv.panel.PartialTime,end:org.tresamigos.smv.panel.PartialTime)(aggCols:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvTimePanelAgg(String,PartialTime,PartialTime)(Column*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvTimePanelAgg</span><span class="params">(<span name="timeColName">timeColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="start">start: <a href="panel/PartialTime.html" class="extype" name="org.tresamigos.smv.panel.PartialTime">PartialTime</a></span>, <span name="end">end: <a href="panel/PartialTime.html" class="extype" name="org.tresamigos.smv.panel.PartialTime">PartialTime</a></span>)</span><span class="params">(<span name="aggCols">aggCols: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvTimePanelAgg(timeColName:String,start:org.tresamigos.smv.panel.PartialTime,end:org.tresamigos.smv.panel.PartialTime)(aggCols:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Apply aggregation on given keys and specified time panel period
+Example</p><div class="fullcomment"><div class="comment cmt"><p>Apply aggregation on given keys and specified time panel period
+Example</p><pre><span class="kw">val</span> res = df.smvGroupBy(<span class="lit">"sku"</span>).smvTimePanelAgg(<span class="lit">"time"</span>, Day(<span class="num">2014</span>, <span class="num">1</span>, <span class="num">1</span>), Day(<span class="num">2017</span>,<span class="num">3</span>,<span class="num">31</span>))(
+  sum(<span class="lit">"amt"</span>).as(<span class="lit">"amt"</span>),
+  sum(<span class="lit">"qty"</span>).as(<span class="lit">"qty"</span>)
+)</pre><p>The input <code>df</code> of above example has a timestamp field &quot;time&quot;, and the output aggregates on
+&quot;sku&quot; and the &quot;Day&quot; of the timestamp, from the start of 2014-1-1 to 2017-3-31.</p><p>The output will have 4 columns in above example: &quot;sku&quot;, &quot;smvTime&quot;, &quot;amt&quot;, &quot;qty&quot;.
+The values of &quot;smvTime&quot; column will look like:</p><pre>D20140101
+D20140102
+...</pre><p>For <code>PartialTime</code>s, please refer <code>smv.panel</code> package for details
+</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvTopNRecs" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvTopNRecs(maxElems:Int,orders:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvTopNRecs(Int,Column*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvTopNRecs</span><span class="params">(<span name="maxElems">maxElems: <span class="extype" name="scala.Int">Int</span></span>, <span name="orders">orders: <span class="extype" name="org.apache.spark.sql.Column">Column</span>*</span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvTopNRecs(maxElems:Int,orders:org.apache.spark.sql.Column*):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">For each group, return the top N records according to an ordering</p><div class="fullcomment"><div class="comment cmt"><p>For each group, return the top N records according to an ordering</p><p>Example:</p><pre>df.smvGroupBy(<span class="lit">"id"</span>).smvTopNRecs(<span class="num">3</span>, $<span class="lit">"amt"</span>.desc)</pre><p>Will keep the 3 largest amt records for each id
+</p></div></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#smvWithTimePanel" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smvWithTimePanel(timeColName:String,start:org.tresamigos.smv.panel.PartialTime,end:org.tresamigos.smv.panel.PartialTime):org.apache.spark.sql.DataFrame"></a>
+      <a id="smvWithTimePanel(String,PartialTime,PartialTime):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">smvWithTimePanel</span><span class="params">(<span name="timeColName">timeColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="start">start: <a href="panel/PartialTime.html" class="extype" name="org.tresamigos.smv.panel.PartialTime">PartialTime</a></span>, <span name="end">end: <a href="panel/PartialTime.html" class="extype" name="org.tresamigos.smv.panel.PartialTime">PartialTime</a></span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@smvWithTimePanel(timeColName:String,start:org.tresamigos.smv.panel.PartialTime,end:org.tresamigos.smv.panel.PartialTime):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Add <code>smvTime</code> column according to some <code>TimePanel</code>s
+Example</p><div class="fullcomment"><div class="comment cmt"><p>Add <code>smvTime</code> column according to some <code>TimePanel</code>s
+Example</p><pre><span class="kw">val</span> dfWithTP = df.smvGroupBy(<span class="lit">"k"</span>).smvWithTimePanel(timeColName, Month(<span class="num">2013</span>,<span class="num">1</span>), Month(<span class="num">2014</span>, <span class="num">2</span>))</pre><p>If there are no <code>smvTime</code> column in the input DF, the added column will
+be named <code>smvTime</code>, otherwise an underscore, &quot;_&quot; will be prepended to the name as
+the new column name.</p><p>The values of the <code>smvTine</code> column are strings, e.g. &quot;M201205&quot;, &quot;Q201301&quot;, &quot;D20140527&quot;.</p><p>ColumnHelper <code>smvTimeToType</code>, <code>smvTineToIndex</code>, <code>smvTineToLabel</code> can be used to
+create other columns from <code>smvTime</code>.</p><p>Since <code>TimePanel</code> defines a period of time, if for some group in the data
+there are missing Months (or Quarters), this function will add records with non-null keys and
+<code>smvTime</code> columns with all other columns null-valued.</p><p>Example
+Input</p><pre>k, time, v
+<span class="num">1</span>, <span class="num">20140101</span>, <span class="num">1.2</span>
+<span class="num">1</span>, <span class="num">20140301</span>, <span class="num">4.5</span>
+<span class="num">1</span>, <span class="num">20140325</span>, <span class="num">10.3</span></pre><p>Code</p><pre>df.smvGroupBy(<span class="lit">"k"</span>).smvWithTimePanel(<span class="lit">"time"</span>, Month(<span class="num">2014</span>,<span class="num">1</span>), Month(<span class="num">2014</span>, <span class="num">2</span>))</pre><p>Output</p><pre>k, time, v, smvTime
+<span class="num">1</span>, <span class="num">20140101</span>, <span class="num">1.2</span>, M201401
+<span class="num">1</span>, <span class="kw">null</span>, <span class="kw">null</span>, M201402
+<span class="num">1</span>, <span class="num">20140301</span>, <span class="num">4.5</span>, M201403
+<span class="num">1</span>, <span class="num">20140325</span>, <span class="num">10.3</span>, M201403</pre></div></div>
+    </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
+      <a id="synchronized[T0](⇒T0):T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">synchronized</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="params">(<span name="arg0">arg0: ⇒ <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>)</span><span class="result">: <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@synchronized[T0](x$1:=&gt;T0):T0" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvGroupedDataFunc#timePanelValueFill" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="timePanelValueFill(smvTimeColName:String,backwardFill:Boolean)(values:String*):org.apache.spark.sql.DataFrame"></a>
+      <a id="timePanelValueFill(String,Boolean)(String*):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">timePanelValueFill</span><span class="params">(<span name="smvTimeColName">smvTimeColName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="backwardFill">backwardFill: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span><span class="params">(<span name="values">values: <span class="extype" name="scala.Predef.String">String</span>*</span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@timePanelValueFill(smvTimeColName:String,backwardFill:Boolean)(values:String*):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">For a DF with <code>TimePanel</code> column already, fill the null values with previous peoriod value</p><div class="fullcomment"><div class="comment cmt"><p>For a DF with <code>TimePanel</code> column already, fill the null values with previous peoriod value</p><p>Example:
+Input:</p><pre>K, T, V
+a, <span class="num">1</span>, <span class="kw">null</span>
+a, <span class="num">2</span>, a
+a, <span class="num">3</span>, b
+a, <span class="num">4</span>, <span class="kw">null</span></pre><pre>df.smvGroupBy(<span class="lit">"K"</span>).timePanelValueFill(<span class="lit">"T"</span>)(<span class="lit">"V"</span>)</pre><p>Output:</p><pre>K, T, V
+a, <span class="num">1</span>, a
+a, <span class="num">2</span>, a
+a, <span class="num">3</span>, b
+a, <span class="num">4</span>, b</pre></div><dl class="paramcmts block"><dt class="param">backwardFill</dt><dd class="cmt"><p>- default &quot;true&quot;</p></dd><dt class="param">values</dt><dd class="cmt"><p>- list of column names which need to be null-filled
+By default, the leeding nulls of each group in the time sequece are filled with the
+earlist non-null value. In the example, V and T=1 was filed as &quot;a&quot;, which is the T=2 value.
+One can change that behavior by passing in <code>backwardFill = false</code>, which will leave V = null
+at T=1.</p></dd></dl></div>
+    </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toString():String"></a>
+      <a id="toString():String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@toString():String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <a id="wait():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@wait():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long,x$2:Int):Unit"></a>
+      <a id="wait(Long,Int):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>, <span name="arg1">arg1: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@wait(x$1:Long,x$2:Int):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long):Unit"></a>
+      <a id="wait(Long):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvGroupedDataFunc@wait(x$1:Long):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
