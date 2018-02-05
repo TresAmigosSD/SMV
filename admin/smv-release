@@ -110,13 +110,22 @@ function validate_version()
   fi
 }
 
+function build_local_docker_image()
+{
+  info "building local docker image"
+
+  cd "${SMV_DIR}/docker/smv"
+  # build local docker image tag as `local_docker_build`
+  docker build -t local_docker_build . >> ${LOGFILE} 2>&1 || error "local docker build failed"
+}
+
 function run_sbt_in_docker()
 {
   local target="$1"
   info "Running sbt ${target}"
 
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
-  docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:v${PREV_SMV_VERSION} \
+  docker run --rm -it -v ${PROJ_DIR}:/projects local_docker_build \
     -u $(id -u) sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 $target" \
     >> ${LOGFILE} 2>&1 || error "SMV sbt $target failed"
 }
@@ -402,6 +411,7 @@ check_for_existing_tag
 get_prev_smv_version
 find_gnu_tar
 find_release_msg_file
+build_local_docker_image
 build_smv
 test_smv
 gen_pydocs
