@@ -90,7 +90,7 @@ class SmvApp(object):
 
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
-
+        self.log = self.j_smvApp.log()
         self.stages = self.j_smvPyClient.stages()
 
         # issue #429 set application name from smv config

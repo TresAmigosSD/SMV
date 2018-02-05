@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.apache.log4j.LogManager
+
 import org.tresamigos.smv.util.Edd
 
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -34,7 +36,7 @@ import org.joda.time.DateTime
 class SmvApp(private val cmdLineArgs: Seq[String],
              _sc: Option[SparkContext] = None,
              _sql: Option[SQLContext] = None) {
-
+  val log         = LogManager.getLogger("smv")
   val smvConfig   = new SmvConfig(cmdLineArgs)
   val genEdd      = smvConfig.cmdLine.genEdd()
   val publishHive = smvConfig.cmdLine.publishHive()
