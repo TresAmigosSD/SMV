@@ -214,7 +214,9 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
 /**
  * Provide app-level methods for use in Python.
  *
- * The collection types should be accessible through the py4j gateway.
+ * All returned collection types should be declared in the method
+ * signature as their Java counterparts so that they are accessible
+ * through the py4j gateway.
  */
 class SmvPyClient(val j_smvApp: SmvApp) {
   val config      = j_smvApp.smvConfig
@@ -320,6 +322,31 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     val cl                      = j_smvApp.smvConfig.cmdLine
     val directMods: Seq[String] = cl.modsToRun()
     directMods
+  }
+
+  /**
+   * Returns the lock file status, if any, for a given module in a
+   * java.util.Map.  The file modification time will be a String
+   * representation of the datetime in milliseconds, under the key
+   * 'lockTime'.
+   *
+   * Returns an empty map if the lock is not found for the module.
+   *
+   * If the module is not found, the call to inferDS() would throw an
+   * SmvRuntimeException.
+   *
+   * @param modName a name that uniquely identifies a module, typically its FQN
+   * @return a map with the key "lockTime" and the file modification time in milliseconds
+   */
+  def getLockfileStatusForModule(modName: String): java.util.Map[String, String] = {
+    j_smvApp.dsm.inferDS(modName) match {
+      case Nil => java.util.Collections.emptyMap()
+      case ds::_ =>
+        ds.lockfileStatus match {
+          case None => java.util.Collections.emptyMap()
+          case Some(fs) => Map("lockTime" -> fs.getModificationTime.toString)
+        }
+    }
   }
 
   // ---- User Run Configuration Parameters proxy funcs.

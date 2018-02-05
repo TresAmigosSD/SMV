@@ -15,6 +15,7 @@
 This module provides the main SMV Python entry point ``SmvPy`` class and a singleton `smvApp`.
 It is equivalent to ``SmvApp`` on Scala side
 """
+from datetime import datetime
 import os
 import sys
 import traceback
@@ -187,6 +188,16 @@ class SmvApp(object):
 
     def getFileNamesByType(self, ftype):
         return self.j_smvApp.getFileNamesByType(self.inputDir(), ftype)
+
+    def getLockStatusForModule(self, name):
+        """Returns a dictionary that, if the lock exists for a given module,
+        contains the lock file modification time as a datetime object
+        under the key 'lockTime'
+        """
+        retval = dict(self.j_smvPyClient.getLockfileStatusForModule(name))
+        if retval.get('lockTime') is not None:
+            retval['lockTime'] = datetime.fromtimestamp(long(retva['lockTime'])/1000.0)
+        return retval
 
     def create_smv_pyclient(self, arglist):
         '''
