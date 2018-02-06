@@ -646,57 +646,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * Add `smvTime` column according to some `TimePanel`s
    * Example
    * {{{
-   * val mp = TimePanel(Month(2013,1), Month(2014,12))
-   * val qp = TimePanel(Quarter(2013,1), Quarter(2014,4))
-   * val dfWithTP = df.smvGroupBy("k").addTimePanels(timeColName)(mp, qp)
-   * }}}
-   *
-   * If there are no `smvTime` column in the input DF, the added column will
-   * be named `smvTime`, otherwise an underscore, "_" will be prepended to the name as
-   * the new column name.
-   *
-   * The values of the `smvTine` column are strings, e.g. "M201205", "Q201301", "D20140527".
-   *
-   * ColumnHelper `smvTimeToType`, `smvTineToIndex`, `smvTineToLabel` can be used to
-   * create other columns from `smvTime`.
-   *
-   * Since `TimePanel` defines a perioud of time, if for some group in the data
-   * there are missing Months (or Quarters), this function will add records with keys and
-   * `smvTine` columns with all other collumns null-valued.
-   *
-   * Example
-   * Input
-   * {{{
-   * k, time, v
-   * 1, 20140101, 1.2
-   * 1, 20140301, 4.5
-   * 1, 20140325, 10.3
-   * }}}
-   * Code
-   * {{{
-   * df.smvGroupBy("k").addTimePanels("time")(TimePanel(Month(2013,1), Month(2014, 2)))
-   * }}}
-   * Output
-   * {{{
-   * k, time, v, smvTime
-   * 1, 20140101, 1.2, M201401
-   * 1, null, null, M201402
-   * 1, 20140301, 4.5, M201403
-   * 1, 20140325, 10.3, M201403
-   * }}}
-   **/
-  private[smv] def addTimePanels(timeColName: String, doFiltering: Boolean = true)(panels: panel.TimePanel*) = {
-    panels
-      .map { tp =>
-        tp.addToDF(df, timeColName, keys, doFiltering)
-      }
-      .reduce(_.unionAll(_))
-  }
-
-  /**
-   * Add `smvTime` column according to some `TimePanel`s
-   * Example
-   * {{{
    * val dfWithTP = df.smvGroupBy("k").smvWithTimePanel(timeColName, Month(2013,1), Month(2014, 2))
    * }}}
    *
@@ -704,14 +653,21 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * be named `smvTime`, otherwise an underscore, "_" will be prepended to the name as
    * the new column name.
    *
-   * The values of the `smvTine` column are strings, e.g. "M201205", "Q201301", "D20140527".
+   * The values of the `smvTime` column are strings, e.g. "M201205", "Q201301", "D20140527".
    *
    * ColumnHelper `smvTimeToType`, `smvTineToIndex`, `smvTineToLabel` can be used to
    * create other columns from `smvTime`.
    *
+   * @param timeColName name of the timestamp column of the input df
+   * @param start time-panel start PartialTime (inclusive)
+   * @param end time-panel end PartialTime (inclusive)
+   * @param addMissingTimeWithNull (default true) when some PartialTime is missing whether to
+   *   fill null records
+   *
    * Since `TimePanel` defines a period of time, if for some group in the data
-   * there are missing Months (or Quarters), this function will add records with non-null keys and
-   * `smvTime` columns with all other columns null-valued.
+   * there are missing Months (or Quarters), when addMissingTimeWithNull is true,
+   * this function will add records with non-null keys and
+   * all possible `smvTime` columns with all other columns null-valued.
    *
    * Example
    * Input
@@ -723,20 +679,27 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    * Code
    * {{{
-   * df.smvGroupBy("k").smvWithTimePanel("time", Month(2014,1), Month(2014, 2))
+   * df.smvGroupBy("k").smvWithTimePanel("time", Month(2014,1), Month(2014, 3))
    * }}}
    * Output
    * {{{
    * k, time, v, smvTime
    * 1, 20140101, 1.2, M201401
-   * 1, null, null, M201402
    * 1, 20140301, 4.5, M201403
    * 1, 20140325, 10.3, M201403
+   * 1, null, null, M201401
+   * 1, null, null, M201402
+   * 1, null, null, M201403
    * }}}
    **/
-  def smvWithTimePanel(timeColName: String, start: panel.PartialTime, end: panel.PartialTime) = {
+  def smvWithTimePanel(
+    timeColName: String,
+    start: panel.PartialTime,
+    end: panel.PartialTime,
+    addMissingTimeWithNull: Boolean = true
+  ) = {
     val tp = panel.TimePanel(start, end)
-    tp.addToDF(df, timeColName, keys, true)
+    tp.addToDF(df, timeColName, keys, addMissingTimeWithNull)
   }
 
   /**
@@ -760,110 +723,26 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * ...
    * }}}
    * For `PartialTime`s, please refer `smv.panel` package for details
+   *
+   * @param timeColName name of the timestamp column of the input df
+   * @param start time-panel start PartialTime (inclusive)
+   * @param end time-panel end PartialTime (inclusive)
+   * @param addMissingTimeWithNull (default true) when some PartialTime is missing whether to
+   *   fill null records
+   *
+   * When addMissingTimeWithNull is true, the aggregation should be always on the variables
+   * instead of on literals (should NOT be count(lit(1))).
    **/
-  def smvTimePanelAgg(timeColName: String, start: panel.PartialTime, end: panel.PartialTime)(aggCols: Column*) = {
+  def smvTimePanelAgg(
+    timeColName: String,
+    start: panel.PartialTime,
+    end: panel.PartialTime,
+    addMissingTimeWithNull: Boolean = true
+  )(aggCols: Column*) = {
     val tp = panel.TimePanel(start, end)
-    val withPanel = tp.addToDF(df, timeColName, keys, true)
+    val withPanel = tp.addToDF(df, timeColName, keys, addMissingTimeWithNull)
     val allkeys = keys :+ "smvTime"
     withPanel.groupBy(allkeys.head, allkeys.tail: _*).agg(aggCols.head, aggCols.tail: _*)
-  }
-
-  /**
-   * For a DF with `TimePanel` column already, fill the null values with previous peoriod value
-   *
-   * Example:
-   * Input:
-   * {{{
-   * K, T, V
-   * a, 1, null
-   * a, 2, a
-   * a, 3, b
-   * a, 4, null
-   * }}}
-   *
-   * {{{
-   * df.smvGroupBy("K").timePanelValueFill("T")("V")
-   * }}}
-   *
-   * Output:
-   * {{{
-   * K, T, V
-   * a, 1, a
-   * a, 2, a
-   * a, 3, b
-   * a, 4, b
-   * }}}
-   *
-   * @param smvTimeColName
-   * @param backwardFill - default "true"
-   * @param values - list of column names which need to be null-filled
-   *
-   * By default, the leeding nulls of each group in the time sequece are filled with the
-   * earlist non-null value. In the example, V and T=1 was filed as "a", which is the T=2 value.
-   * One can change that behavior by passing in `backwardFill = false`, which will leave V = null
-   * at T=1.
-   **/
-  def timePanelValueFill(smvTimeColName: String, backwardFill: Boolean = true)(values: String*) = {
-    import df.sqlContext.implicits._
-    val foreward = smvFillNullWithPrevValue($"$smvTimeColName".asc)(values: _*)
-
-    if (backwardFill)
-      foreward
-        .smvGroupBy(keys.map { k =>
-          $"${k}"
-        }: _*)
-        .smvFillNullWithPrevValue($"$smvTimeColName".desc)(values: _*)
-    else
-      foreward
-  }
-
-  /**
-   * Same as `addTimePanels` with specified value columns filled with previous perioud value.
-   *
-   * Example
-   * Input:
-   * {{{
-   * k, ts, v
-   * 1,20120201,1.5
-   * 1,20120701,7.5
-   * 1,20120501,2.45
-   * }}}
-   *
-   * {{{
-   * f.smvGroupBy("k").addTimePanelsWithValueFill("ts")(TimePanel(Month(2012, 1), Month(2012, 6)))("v")
-   * }}}
-   *
-   * Output:
-   * {{{
-   * k, ts, v, smvTime
-   * 1,null,1.5,M201201
-   * 1,2012-02-01 00:00:00.0,1.5,M201202
-   * 1,null,1.5,M201203
-   * 1,null,1.5,M201204
-   * 1,2012-05-01 00:00:00.0,2.45,M201205
-   * 1,null,2.45,M201206
-   * }}}
-   **/
-  def addTimePanelsWithValueFill(
-      timeColName: String,
-      doFiltering: Boolean = true,
-      backwardFill: Boolean = true
-  )(
-      panels: panel.TimePanel*
-  )(
-      values: String*
-  ) = {
-    import df.sqlContext.implicits._
-    val smvTimeName = mkUniq(df.columns, "smvTime")
-    panels
-      .map { tp =>
-        tp.addToDF(df, timeColName, keys, doFiltering)
-          .smvGroupBy(keys.map { k =>
-            $"${k}"
-          }: _*)
-          .timePanelValueFill(smvTimeName, backwardFill)(values: _*)
-      }
-      .reduce(_.unionAll(_))
   }
 
   /**
@@ -919,6 +798,60 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     } else {
       res
     }
+  }
+
+  /**
+   * Add records within each group with expected values and all other columns nulls
+   * For now only works with StringType column.
+   *
+   * @param colName name of the column which need to add the expected values
+   * @param expected set of expected values
+   * @param doFiltering a boolean, if true only keep the values within the expected set
+   *
+   * Example
+   * Input:
+   * {{{
+   * K, V, other
+   * 1, a, x
+   * 1, b, x
+   * }}}
+   *
+   * {{{
+   * df.smvGroupBy("K").addExpectedWithNull("V", Set("a", "b", "c"))
+   * }}}
+   *
+   * Output
+   * {{{
+   * K, V, other
+   * 1, a, x
+   * 1, b, x
+   * 1, a, null
+   * 1, b, null
+   * 1, c, null
+   * }}}
+   **/
+  private[smv] def addExpectedWithNull(
+      colName: String,
+      expected: Set[String],
+      doFiltering: Boolean
+  ): DataFrame = {
+    val dffiltered = if (doFiltering) {
+      df.where(col(colName).isin(expected.toSeq.map { lit }: _*))
+    } else {
+      df
+    }
+    val nullCols = dffiltered.columns.diff(keys :+ colName).map { s =>
+      lit(null).cast(dffiltered.schema(s).dataType) as s
+    }
+    val nullRows = dffiltered
+      .select(keys.head, keys.tail: _*)
+      .distinct()
+      .withColumn(colName, explode(array(expected.toSeq.map { lit }: _*)))
+      .smvSelectPlus(nullCols: _*)
+      .select(dffiltered.columns.map { s =>
+        col(s)
+      }: _*)
+    dffiltered.unionAll(nullRows)
   }
 
   /**
