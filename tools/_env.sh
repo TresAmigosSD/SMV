@@ -32,17 +32,33 @@ function split_smv_spark_args()
 
     # Need to extract the --jars option so we can concatenate those jars with
     # the APP_JAR when we run the spark-submit. Spark will not accept 2 separate
-    # --jars options
+    # --jars options. Also need to handle the case when user uses equal signs (--jars=xyz.jar)
+    # Same for --driver-class-path
     while [ $# -ne 0 ]; do
         if [ "$1" == "--jars" ]; then
             shift
             EXTRA_JARS="$1"
+            shift
+        # See http://wiki.bash-hackers.org/syntax/pe#search_and_replace for bash string parsing
+        # tricks
+        elif [ ${1%%=*} == "--jars" ]; then
+            local ACTUAL_JARS_PORTION="${1#*=}"
+            EXTRA_JARS="${ACTUAL_JARS_PORTION}"
+            # Only need to shift once since we dont have a space separator
+            shift
+        elif [ "$1" == "--driver-class-path" ]; then
+            EXTRA_DRIVER_CLASSPATHS="$1"
+        elif [ ${1%%=*} == "--driver-class-path" ]; then
+            local ACTUAL_CLASSPATHS_PORTION="${1#*=}"
+            EXTRA_DRIVER_CLASSPATHS="${ACTUAL_CLASSPATHS_PORTION}"
+            # Only need to shift once since we dont have a space separator
             shift
         else
           SPARK_ARGS=("${SPARK_ARGS[@]}" "$1")
           shift
         fi
     done
+
 }
 
 function find_file_in_dir()
