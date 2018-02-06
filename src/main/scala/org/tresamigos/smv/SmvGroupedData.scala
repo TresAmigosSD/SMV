@@ -804,6 +804,10 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * Add records within each group with expected values and all other columns nulls
    * For now only works with StringType column.
    *
+   * @param colName name of the column which need to add the expected values
+   * @param expected set of expected values
+   * @param doFiltering a boolean, if true only keep the values within the expected set
+   *
    * Example
    * Input:
    * {{{
