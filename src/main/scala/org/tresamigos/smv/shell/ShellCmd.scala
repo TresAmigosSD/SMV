@@ -179,6 +179,7 @@ object ShellCmd {
 
   /**
    * Deprecated
+   * ShellCmd.smvExportCsv should use SmvDFHelper.smvExportCsv (#884)
    */
   def smvExportCsv(name: String, path: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
     println("The smvExportCsv shell method is deprecated")
