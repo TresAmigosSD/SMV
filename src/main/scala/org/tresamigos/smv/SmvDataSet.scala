@@ -161,17 +161,24 @@ abstract class SmvDataSet extends FilenamePart {
    */
   def exportToHive(collector: SmvRunInfoCollector) = {
     val dataframe = rdd(collector=collector)
+    
     // register the dataframe as a temp table.  Will be overwritten on next register.
     dataframe.registerTempTable("dftable")
 
     // if user provided a publish hive sql command, run it instead of default
     // table creation from data frame result.
-    if (publishHiveSql.isDefined) {
-      publishHiveSql.get.split(";").map {stmt => app.sqlContext.sql(stmt.trim)}
-    } else {
-      app.sqlContext.sql(s"drop table if exists ${tableName}")
-      app.sqlContext.sql(s"create table ${tableName} as select * from dftable")
+    val queries: Seq[String] = publishHiveSql match {
+      case Some(query) => query.split(";") map (_.trim)
+      case None        => Seq(s"drop table if exists ${tableName}",
+                              s"create table ${tableName} as select * from dftable")
     }
+
+    def _export = { () =>
+      queries foreach {app.sqlContext.sql(_)}
+    }
+
+    logAction(f"PUBLISHING ${fqn}: ${queries.mkString(";")}", _export)
+
   }
 
   /** do not persist validation result if isObjectInShell **/
@@ -290,28 +297,30 @@ abstract class SmvDataSet extends FilenamePart {
                attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
     new FileIOHandler(app.sqlContext, path).csvFileWithSchema(attr)
 
+  def logAction(desc: String, action: () => Unit): Unit = {
+    app.log.info(f"${desc}")
+    val before  = DateTime.now()
+
+    action()
+
+    val after   = DateTime.now()
+    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
+    app.log.info(s"RunTime: ${runTime}")
+  }
 
   def persist(dataframe: DataFrame,
               prefix: String = ""): Unit = {
     val path = moduleCsvPath(prefix)
-    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
-
     val counter = app.sqlContext.sparkContext.accumulator(0l)
-    val before  = DateTime.now()
-    println(s"${fmt.print(before)} PERSISTING: ${path}")
-
     val df      = dataframe.smvPipeCount(counter)
     val handler = new FileIOHandler(app.sqlContext, path)
 
-    //Always persist null string as a special value with assumption that it's not
-    //a valid data value
-    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
+    def _persist = () => handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
 
-    val after   = DateTime.now()
-    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
+    logAction(f"PERSISTING: ${path}", _persist)
+
     val n       = counter.value
-
-    println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
+    app.log.info(f"N: ${n}")
   }
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
