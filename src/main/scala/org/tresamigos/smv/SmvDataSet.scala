@@ -177,7 +177,7 @@ abstract class SmvDataSet extends FilenamePart {
       queries foreach {app.sqlContext.sql(_)}
     }
 
-    logAction(f"PUBLISHING ${fqn}: ${queries.mkString(";")}", _export)
+    logAction(f"PUBLISHING ${fqn} TO HIVE: ${queries.mkString(";")}", _export)
 
   }
 
@@ -317,7 +317,7 @@ abstract class SmvDataSet extends FilenamePart {
 
     def _persist = () => handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
 
-    logAction(f"PERSISTING: ${path}", _persist)
+    logAction(f"PERSISTING OUTPUT: ${path}", _persist)
 
     val n       = counter.value
     app.log.info(f"N: ${n}")
@@ -447,9 +447,11 @@ abstract class SmvDataSet extends FilenamePart {
   /**
    * Persist versioned copy of metadata
    */
-  private[smv] def persistMetadata(metadata: SmvMetadata): Unit =
-    metadata.saveToFile(app.sc, moduleMetaPath())
-
+  private[smv] def persistMetadata(metadata: SmvMetadata): Unit = {
+    val metaPath =  moduleMetaPath()
+    def _persistMetadata() = metadata.saveToFile(app.sc, metaPath)
+    logAction(f"PERSISTING METADATA: ${metaPath}", _persistMetadata)
+  }
   /**
    * Maximum of the metadata history
    * TODO: Verify that this is positive
@@ -459,11 +461,14 @@ abstract class SmvDataSet extends FilenamePart {
   /**
    * Save metadata history with new metadata
    */
-  private[smv] def persistMetadataHistory(metadata: SmvMetadata, oldHistory: SmvMetadataHistory): Unit =
-    oldHistory
-      .update(metadata, metadataHistorySize)
-      .saveToFile(app.sc, moduleMetaHistoryPath())
-
+  private[smv] def persistMetadataHistory(metadata: SmvMetadata, oldHistory: SmvMetadataHistory): Unit = {
+    val metaHistoryPath = moduleMetaHistoryPath()
+    def _peristMetaHistory() =
+      oldHistory
+        .update(metadata, metadataHistorySize)
+        .saveToFile(app.sc, metaHistoryPath)
+    logAction(f"PERSISTING METADATA HISTORY: ${metaHistoryPath}", _peristMetaHistory)
+  }
   /**
    * Override to validate module results based on current and historic metadata.
    * If Some, DQM will fail. Defaults to None.
