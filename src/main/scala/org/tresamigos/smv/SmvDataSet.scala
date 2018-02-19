@@ -18,7 +18,7 @@ import org.apache.spark.sql.{DataFrame, SaveMode}
 
 import org.apache.hadoop.fs.FileStatus
 
-import dqm.{DQMValidator, ParserLogger, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
+import dqm.{DQMValidator, DqmValidationResult, ParserLogger, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 
 import scala.collection.JavaConversions._
 import scala.util.Try
@@ -42,8 +42,10 @@ trait FilenamePart {
  */
 abstract class SmvDataSet extends FilenamePart {
 
-  def app: SmvApp                            = SmvApp.app
-  private var userMetadataCache: Option[SmvMetadata] = None
+  def app: SmvApp                                                = SmvApp.app
+
+  private var userMetadataCache: Option[SmvMetadata]             = None
+  private var validationResultCache: Option[DqmValidationResult]      = None
 
   /**
    * The FQN of an SmvDataSet is its classname for Scala implementations.
@@ -449,6 +451,7 @@ abstract class SmvDataSet extends FilenamePart {
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
     dfOpt foreach {resMetadata.addSchemaMetadata}
     timestamp foreach {resMetadata.addTimestamp}
+    validationResultCache foreach {resMetadata.addValidationResult}
     resMetadata
   }
 
@@ -484,7 +487,8 @@ abstract class SmvDataSet extends FilenamePart {
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
-      val validation = dqmValidator.validate(df, hasAction, moduleValidPath())
+      val validationResult = dqmValidator.validate(df, hasAction, moduleValidPath())
+      validationResultCache = Some(validationResult)
       val metadata = getOrCreateMetadata(Some(df))
       // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
@@ -492,7 +496,7 @@ abstract class SmvDataSet extends FilenamePart {
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
 
-      collector.addRunInfo(fqn, validation, metadata, metadataHistory)
+      collector.addRunInfo(fqn, validationResult, metadata, metadataHistory)
     }
 
     if (isEphemeral) {
