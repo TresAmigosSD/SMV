@@ -270,6 +270,9 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
+  def getDsHash(name: String, runConfig: java.util.Map[String, String]): String =
+    j_smvApp.getDsHash(name, javaMapToImmutableMap(runConfig))
+
   /** Runs an SmvModule written in either Python or Scala */
   def runModule(urn: String,
                 forceRun: Boolean,

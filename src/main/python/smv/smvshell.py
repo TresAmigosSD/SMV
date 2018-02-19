@@ -48,16 +48,19 @@ def props():
     """
     return SmvApp.getInstance().getCurrentProperties()
 
-def dshash(name):
+def dshash(name, runConfig=None):
     """The current hashOfHash for the named module as a hex string
 
         Args:
             name (str): The uniquen name of a module. Does not have to be the FQN.
+            runConfig (dict): runConfig to apply when collecting info. If module
+                              was run with a config, the same config needs to be
+                              specified here to retrieve the correct hash.
 
         Returns:
             (int): The hashOfHash of the named module
     """
-    return SmvApp.getInstance().getDsHash(name)
+    return SmvApp.getInstance().getDsHash(name, runConfig)
 
 def getModel(name, forceRun = False, version = None):
     """Get the result of running the named SmvModel module
