@@ -215,7 +215,7 @@ def graph(stageName = None):
     """Print ascii graph of all datasets in a given stage or all stages
 
         Args:
-            dsname (str): The name of an SmvDataSet
+            stageName (str): Optional name of stage to graph. Do not
     """
     if(stageName is None):
         print(_jvmShellCmd()._graph())
@@ -288,10 +288,16 @@ def show_run_info(collector):
     """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
     collector.show_report()
 
-def get_run_info(name):
+def get_run_info(name, runConfig=None):
     """Get the SmvRunInfoCollector with full information about a module and its dependencies
+
+        Args:
+            name (str): name of the module whose information to collect
+            runConfig (dict): runConfig to apply when collecting info. If module
+                              was run with a config, the same config needs to be
+                              specified here to retrieve the info.
     """
-    return SmvApp.getInstance().getRunInfoByPartialName(name)
+    return SmvApp.getInstance().getRunInfoByPartialName(name, runConfig)
 
 __all__ = [
     'df',

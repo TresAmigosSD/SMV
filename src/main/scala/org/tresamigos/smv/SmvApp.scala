@@ -382,11 +382,15 @@ class SmvApp(private val cmdLineArgs: Seq[String],
       dsm.inferDS(modName).head.exportToHive(collector)
   }
 
-  def getRunInfo(partialName: String): SmvRunInfoCollector =
+  def getRunInfo(partialName: String, runConfig: Map[String, String]): SmvRunInfoCollector = {
+    setDynamicRunConfig(runConfig)
     getRunInfo(dsm.inferDS(partialName).head)
+  }
 
-  def getRunInfo(urn: URN): SmvRunInfoCollector =
+  def getRunInfo(urn: URN, runConfig: Map[String, String]): SmvRunInfoCollector = {
+    setDynamicRunConfig(runConfig)
     getRunInfo(dsm.load(urn).head)
+  }
 
   /**
    * Returns the run information for a given dataset and all its
