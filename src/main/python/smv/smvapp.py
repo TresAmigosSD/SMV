@@ -49,11 +49,7 @@ class SmvApp(object):
     _instance = None
 
     # default rel path for python sources from appDir
-    srcPathRel = "src/main/python"
-
-    # keep track of the last appDir that was explicitly set so we can remove it
-    # from the sys.path when another one is to avoid cluttering the path
-    lastCodePath = None
+    SRC_PROJECT_PATH = "src/main/python"
 
     @classmethod
     def getInstance(cls):
@@ -100,7 +96,7 @@ class SmvApp(object):
 
         # AFTER app is available but BEFORE stages,
         # use the dynamically configured app dir to set the source path
-        self.prepend_source(self.srcPathRel)
+        self.prepend_source(self.SRC_PROJECT_PATH)
 
         # issue #429 set application name from smv config
         sc._conf.setAppName(self.appName())
@@ -149,12 +145,20 @@ class SmvApp(object):
 
     def setAppDir(self, appDir):
         """ SMV's equivalent of 'cd' for app dirs. """
+        try:
+            self.remove_source(self.SRC_PROJECT_PATH)
+        except ValueError:
+            # ValueError will be raised if the project path was not previously
+            # added to the sys.path
+            pass
+
         # this call sets the scala side's picture of app dir and forces
         # the app properties to be read from disk and reevaluated
         self.j_smvPyClient.setAppDir(appDir)
+
         # this call will use the dynamic appDir that we just set ^
         # to change sys.path, allowing py modules to be discovered by python
-        self.prepend_source(self.srcPathRel)
+        self.prepend_source(self.SRC_PROJECT_PATH)
 
     def setDynamicRunConfig(self, runConfig):
         self.j_smvPyClient.setDynamicRunConfig(runConfig)
@@ -375,16 +379,19 @@ class SmvApp(object):
     def defaultTsvWithHeader(self):
         return self._mkCsvAttr(delimier='\t', hasHeader=True)
 
-    def prepend_source(self, relPath):
+    def abs_path_for_project_path(self, project_path):
         # Load dynamic app dir from scala
         smvAppDir = self.j_smvApp.smvConfig().appDir()
-        codePath = os.path.abspath(os.path.join(smvAppDir, relPath))
-        # Remove the las code path if it's there so as to not clutter the path...
-        if (self.lastCodePath in sys.path):
-            sys.path.remove(self.lastCodePath)
+        return os.path.abspath(os.path.join(smvAppDir, project_path))
+
+    def prepend_source(self, project_path):
+        abs_path = self.abs_path_for_project_path(project_path)
         # Source must be added to front of path to make sure it is found first
-        sys.path.insert(1, codePath)
-        self.lastCodePath = codePath
+        sys.path.insert(1, abs_path)
+
+    def remove_source(self, project_path):
+        abs_path = self.abs_path_for_project_path(project_path)
+        sys.path.remove(abs_path)
 
     def run(self):
         self.j_smvApp.run()
