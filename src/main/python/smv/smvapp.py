@@ -264,7 +264,7 @@ class SmvApp(object):
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
 
-    def getRunInfo(self, urn):
+    def getRunInfo(self, urn, runConfig=None):
         """Returns the run information of a module and all its dependencies
         from the last run.
 
@@ -280,15 +280,18 @@ class SmvApp(object):
 
         Args:
             urn (str): urn of target module
+            runConfig (dict): runConfig to apply when collecting info. If module
+                              was run with a config, the same config needs to be
+                              specified here to retrieve the info.
 
         Returns:
             SmvRunInfoCollector
 
         """
-        java_result = self.j_smvPyClient.getRunInfo(urn)
+        java_result = self.j_smvPyClient.getRunInfo(urn, runConfig)
         return SmvRunInfoCollector(java_result)
 
-    def getRunInfoByPartialName(self, name):
+    def getRunInfoByPartialName(self, name, runConfig):
         """Returns the run information of a module and all its dependencies
         from the last run.
 
@@ -304,11 +307,14 @@ class SmvApp(object):
 
         Args:
             name (str): unique suffix to fqn of target module
+            runConfig (dict): runConfig to apply when collecting info. If module
+                              was run with a config, the same config needs to be
+                              specified here to retrieve the info.
 
         Returns:
             SmvRunInfoCollector
         """
-        java_result = self.j_smvPyClient.getRunInfoByPartialName(name)
+        java_result = self.j_smvPyClient.getRunInfoByPartialName(name, runConfig)
         return SmvRunInfoCollector(java_result)
 
     def publishModuleToHiveByName(self, name, runConfig=None):
@@ -323,10 +329,19 @@ class SmvApp(object):
     def inferUrn(self, name):
         return self.j_smvPyClient.inferDS(name).urn().toString()
 
-    def getDsHash(self, name):
-        """Get hashOfHash for named module as a hex string
+    def getDsHash(self, name, runConfig):
+        """The current hashOfHash for the named module as a hex string
+
+            Args:
+                name (str): The uniquen name of a module. Does not have to be the FQN.
+                runConfig (dict): runConfig to apply when collecting info. If module
+                                  was run with a config, the same config needs to be
+                                  specified here to retrieve the correct hash.
+
+            Returns:
+                (str): The hashOfHash of the named module
         """
-        return self.j_smvPyClient.inferDS(name).verHex()
+        return self.j_smvPyClient.getDsHash(name, runConfig)
 
     def copyToHdfs(self, fileobj, destination):
         """Copies the content of a file object to an HDFS location.
