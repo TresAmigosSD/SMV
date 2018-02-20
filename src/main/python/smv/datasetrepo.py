@@ -43,13 +43,21 @@ class DataSetRepo(object):
         self._clear_sys_modules()
 
     def _clear_sys_modules(self):
-        """Clear all client modules from sys.modules
         """
-        for fqn in list(sys.modules.keys()):
-            for stage_name in self.smvApp.stages():
-                if fqn == stage_name or fqn.startswith(stage_name + "."):
-                    sys.modules.pop(fqn)
-                    break
+            Clear all client modules from sys.modules
+            If modules have names like 'stage1.stage2.file.mod', then we have to clear all of
+            set( 'stage1', 'stage1.stage2', 'stage1.stage2.file', 'stage1.stage2.file.mod' )
+            from the sys.modules dictionary to avoid getting cached modules from python when
+            we contruct a new DSR.
+        """
+        # { 'stage1' } from our example
+        fqn_stubs_to_remove = { fqn.split('.')[0] for fqn in self.smvApp.stages() }
+
+        for loaded_mod_fqn in list(sys.modules.keys()):
+            for stubbed_fqn in fqn_stubs_to_remove:
+                if loaded_mod_fqn == stubbed_fqn or loaded_mod_fqn.startswith(stubbed_fqn + '.'):
+                    sys.modules.pop(loaded_mod_fqn)
+
 
     # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
     # from the most recent source. If the dataset does not exist, returns None.
