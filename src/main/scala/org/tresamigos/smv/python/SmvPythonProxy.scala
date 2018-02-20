@@ -270,6 +270,9 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
+  def getDsHash(name: String, runConfig: java.util.Map[String, String]): String =
+    j_smvApp.getDsHash(name, javaMapToImmutableMap(runConfig))
+
   /** Runs an SmvModule written in either Python or Scala */
   def runModule(urn: String,
                 forceRun: Boolean,
@@ -303,11 +306,11 @@ class SmvPyClient(val j_smvApp: SmvApp) {
    * Returns the run information of a dataset and all its dependencies
    * from the last run.
    */
-  def getRunInfo(urn: String): SmvRunInfoCollector =
-    j_smvApp.getRunInfo(URN(urn))
+  def getRunInfo(urn: String, runConfig: java.util.Map[String, String]): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(URN(urn), javaMapToImmutableMap(runConfig))
 
-  def getRunInfoByPartialName(partialName: String): SmvRunInfoCollector =
-    j_smvApp.getRunInfo(partialName)
+  def getRunInfoByPartialName(partialName: String, runConfig: java.util.Map[String, String]): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(partialName, javaMapToImmutableMap(runConfig))
 
   def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
     SmvHDFS.writeToFile(in, dest)
@@ -355,6 +358,9 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
     j_smvApp.registerRepoFactory(new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig))
+
+  def javaMapToImmutableMap(javaMap: java.util.Map[String, String]): Map[String, String] =
+    if (javaMap == null) Map.empty else mapAsScalaMap(javaMap).toMap
 }
 
 /** Not a companion object because we need to access it from Python */
@@ -364,6 +370,7 @@ object SmvPyClientFactory {
   def init(args: Array[String], sqlContext: SQLContext): SmvPyClient =
     new SmvPyClient(SmvApp.init(args, Option(sqlContext.sparkContext), Option(sqlContext)))
 }
+
 
 /** For use by Python API to return a tuple */
 case class RunModuleResult(df: DataFrame, collector: SmvRunInfoCollector)
