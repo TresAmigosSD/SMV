@@ -43,27 +43,21 @@ class DataSetRepo(object):
         self._clear_sys_modules()
 
     def _clear_sys_modules(self):
-        """Clear all client modules from sys.modules
         """
-        # First, we assemble a list of fqn stubs we want to clear from the sys.modules
-        # If stage name is like appname.stagename, we want list('appname', 'appname.stagename')
+            Clear all client modules from sys.modules
+            If modules have names like 'stage1.stage2.file.mod', then we have to clear all of
+            set( 'stage1', 'stage1.stage2', 'stage1.stage2.file', 'stage1.stage2.file.mod' )
+            from the sys.modules dictionary to avoid getting cached modules from python when
+            we contruct a new DSR.
+        """
+        # { 'stage1' } from our example
+        fqn_stubs_to_remove = { fqn.split('.')[0] for fqn in self.smvApp.stages() }
 
-        # this adds the full stage names to the list
-        fqn_stubs_to_remove = list(self.smvApp.stages())
-
-        # now iterate through full names like 'airlineapp.etl', 'foo.bar' and append the prefix ie: 'foo'
-        # to our list of py modules to remove
-        for stage_name in self.smvApp.stages():
-            stage_name_stub = stage_name.split('.')[0]
-            if stage_name_stub not in fqn_stubs_to_remove:
-                fqn_stubs_to_remove.append(stage_name_stub)
-
-        # iterate through the loaded modules and remove them if there's a match in the above list
         for loaded_mod_fqn in list(sys.modules.keys()):
-            for stage_name_or_stub in fqn_stubs_to_remove:
-                if loaded_mod_fqn == stage_name_or_stub or loaded_mod_fqn.startswith(stage_name_or_stub + "."):
+            for stubbed_fqn in fqn_stubs_to_remove:
+                if loaded_mod_fqn == stubbed_fqn or loaded_mod_fqn.startswith(stubbed_fqn + '.'):
                     sys.modules.pop(loaded_mod_fqn)
-                    break
+
 
     # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
     # from the most recent source. If the dataset does not exist, returns None.
