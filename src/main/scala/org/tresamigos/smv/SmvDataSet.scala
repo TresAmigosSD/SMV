@@ -181,7 +181,7 @@ abstract class SmvDataSet extends FilenamePart {
       queries foreach {app.sqlContext.sql(_)}
     }
 
-    logAction(f"PUBLISHING ${fqn} TO HIVE: ${queries.mkString(";")}", _export)
+    doAction(f"PUBLISHING ${fqn} TO HIVE: ${queries.mkString(";")}", _export)
 
   }
 
@@ -314,7 +314,10 @@ abstract class SmvDataSet extends FilenamePart {
                attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
     new FileIOHandler(app.sqlContext, path).csvFileWithSchema(attr)
 
-  def logAction(desc: String, action: () => Unit): Unit = {
+  /**
+   * Perform an action and log the amount of time it took
+   */
+  def doAction(desc: String, action: () => Unit): Unit = {
     app.log.info(f"${desc}")
     val before  = DateTime.now()
 
@@ -334,7 +337,7 @@ abstract class SmvDataSet extends FilenamePart {
 
     def _persist = () => handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
 
-    logAction(f"PERSISTING OUTPUT: ${path}", _persist)
+    doAction(f"PERSISTING OUTPUT: ${path}", _persist)
 
     val n       = counter.value
     app.log.info(f"N: ${n}")
@@ -470,7 +473,7 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def persistMetadata(metadata: SmvMetadata): Unit = {
     val metaPath =  moduleMetaPath()
     def _persistMetadata() = metadata.saveToFile(app.sc, metaPath)
-    logAction(f"PERSISTING METADATA: ${metaPath}", _persistMetadata)
+    doAction(f"PERSISTING METADATA: ${metaPath}", _persistMetadata)
   }
   /**
    * Maximum of the metadata history
@@ -487,7 +490,7 @@ abstract class SmvDataSet extends FilenamePart {
       oldHistory
         .update(metadata, metadataHistorySize)
         .saveToFile(app.sc, metaHistoryPath)
-    logAction(f"PERSISTING METADATA HISTORY: ${metaHistoryPath}", _peristMetaHistory)
+    doAction(f"PERSISTING METADATA HISTORY: ${metaHistoryPath}", _peristMetaHistory)
   }
   /**
    * Override to validate module results based on current and historic metadata.
