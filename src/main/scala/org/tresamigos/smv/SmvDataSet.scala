@@ -161,7 +161,7 @@ abstract class SmvDataSet extends FilenamePart {
    */
   def exportToHive(collector: SmvRunInfoCollector) = {
     val dataframe = rdd(collector=collector)
-    
+
     // register the dataframe as a temp table.  Will be overwritten on next register.
     dataframe.registerTempTable("dftable")
 
@@ -429,11 +429,14 @@ abstract class SmvDataSet extends FilenamePart {
     val resMetadata = dfOpt match {
       case Some(df) => {
         // updated cached user metadata if it was not already computed.
-        userMetadataCache = userMetadataCache match {
-          case None => Option(metadata(df))
-          case _ => userMetadataCache
+        userMetadataCache match {
+          case Some(meta) => meta
+          case None => {
+            app.log.info(f"GENERATING USER METADATA: ${fqn}")
+            userMetadataCache = Some(metadata(df))
+            userMetadataCache.get
+          }
         }
-        userMetadataCache.get
       }
       case _ => new SmvMetadata()
     }
