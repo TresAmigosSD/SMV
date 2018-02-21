@@ -125,19 +125,19 @@ class DataSetRepo(object):
     def _dataSetsForStage(self, stageName):
         urns = []
 
+        self.smvApp.log.debug("Searching for SmvDataSets in stage " + stageName)
+        self.smvApp.log.debug("sys.path=" + repr(sys.path))
+
         for pymod_name in self._iter_submodules([stageName]):
             # The additional "." is necessary to prevent false positive, e.g. stage_2.M1 matches stage
             if pymod_name.startswith(stageName + "."):
-                self.smvApp.log.debug("Search for SmvDataSets in " + pymod_name)
-
                 # __import__('a.b.c') returns the module a, just like import a.b.c
                 pymod = __import__(pymod_name)
                 # After import a.b.c we got a. Now we traverse from a to b to c
                 for c in pymod_name.split('.')[1:]:
                     pymod = getattr(pymod, c)
 
-                self.smvApp.log.debug("Searching for SmvDataSets in {} which is "
-                                      "located at {}".format(pymod_name, pymod.__file__))
+                self.smvApp.log.debug("Searching for SmvDataSets in " + repr(pymod))
 
                 # iterate over the attributes of the module, looking for SmvDataSets
                 for obj_name in dir(pymod):
