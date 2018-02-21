@@ -93,6 +93,7 @@ class SmvApp(object):
 
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
+        self.log = self.j_smvApp.log()
 
         # AFTER app is available but BEFORE stages,
         # use the dynamically configured app dir to set the source path
@@ -403,10 +404,12 @@ class SmvApp(object):
         abs_path = self.abs_path_for_project_path(project_path)
         # Source must be added to front of path to make sure it is found first
         sys.path.insert(1, abs_path)
+        self.log.debug("Prepended {} to sys.path".format(abs_path))
 
     def remove_source(self, project_path):
         abs_path = self.abs_path_for_project_path(project_path)
         sys.path.remove(abs_path)
+        self.log.debug("Removed {} from sys.path".format(abs_path))
 
     def run(self):
         self.j_smvApp.run()
