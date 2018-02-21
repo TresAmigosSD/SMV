@@ -404,10 +404,12 @@ class SmvApp(object):
         abs_path = self.abs_path_for_project_path(project_path)
         # Source must be added to front of path to make sure it is found first
         sys.path.insert(1, abs_path)
+        self.log.debug("Prepended {} to sys.path".format(abs_path))
 
     def remove_source(self, project_path):
         abs_path = self.abs_path_for_project_path(project_path)
         sys.path.remove(abs_path)
+        self.log.debug("Removed {} from sys.path".format(abs_path))
 
     def run(self):
         self.j_smvApp.run()
