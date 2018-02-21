@@ -15,9 +15,11 @@
 This module provides the main SMV Python entry point ``SmvPy`` class and a singleton `smvApp`.
 It is equivalent to ``SmvApp`` on Scala side
 """
+from datetime import datetime
 import os
 import sys
 import traceback
+import json
 
 from py4j.java_gateway import java_import, JavaObject
 from pyspark import SparkContext
@@ -46,6 +48,9 @@ class SmvApp(object):
     # Singleton instance of SmvApp
     _instance = None
 
+    # default rel path for python sources from appDir
+    SRC_PROJECT_PATH = "src/main/python"
+
     @classmethod
     def getInstance(cls):
         if cls._instance is None:
@@ -70,8 +75,6 @@ class SmvApp(object):
         sc = SparkContext() if _sc is None else _sc
         sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
 
-        self.prepend_source("src/main/python")
-
         sc.setLogLevel("ERROR")
 
         self.sqlContext = sqlContext
@@ -91,7 +94,10 @@ class SmvApp(object):
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
         self.log = self.j_smvApp.log()
-        self.stages = self.j_smvPyClient.stages()
+
+        # AFTER app is available but BEFORE stages,
+        # use the dynamically configured app dir to set the source path
+        self.prepend_source(self.SRC_PROJECT_PATH)
 
         # issue #429 set application name from smv config
         sc._conf.setAppName(self.appName())
@@ -138,6 +144,38 @@ class SmvApp(object):
     def config(self):
         return self.j_smvApp.smvConfig()
 
+    def setAppDir(self, appDir):
+        """ SMV's equivalent of 'cd' for app dirs. """
+        try:
+            self.remove_source(self.SRC_PROJECT_PATH)
+        except ValueError:
+            # ValueError will be raised if the project path was not previously
+            # added to the sys.path
+            pass
+
+        # this call sets the scala side's picture of app dir and forces
+        # the app properties to be read from disk and reevaluated
+        self.j_smvPyClient.setAppDir(appDir)
+
+        # this call will use the dynamic appDir that we just set ^
+        # to change sys.path, allowing py modules to be discovered by python
+        self.prepend_source(self.SRC_PROJECT_PATH)
+
+    def setDynamicRunConfig(self, runConfig):
+        self.j_smvPyClient.setDynamicRunConfig(runConfig)
+
+    def getCurrentProperties(self, raw = False):
+        """ Python dict of current megred props
+            defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps ++ dynamicRunConfig
+            Where right wins out in map merge. Pass optional raw param = True to get json string instead
+        """
+        merged_json = self.j_smvPyClient.mergedPropsJSON()
+        return merged_json if raw else json.loads(merged_json)
+
+    def stages(self):
+        """Stages is a function as they can be set dynamically on an SmvApp instance"""
+        return self.j_smvPyClient.stages()
+
     def appId(self):
         return self.config().appId()
 
@@ -155,6 +193,16 @@ class SmvApp(object):
 
     def getFileNamesByType(self, ftype):
         return self.j_smvApp.getFileNamesByType(self.inputDir(), ftype)
+
+    def getLockStatusForModule(self, name):
+        """Returns a dictionary that, if the lock exists for a given module,
+        contains the lock file modification time as a datetime object
+        under the key 'lockTime'
+        """
+        retval = dict(self.j_smvPyClient.getLockfileStatusForModule(name))
+        if retval.get('lockTime') is not None:
+            retval['lockTime'] = datetime.fromtimestamp(long(retva['lockTime'])/1000.0)
+        return retval
 
     def create_smv_pyclient(self, arglist):
         '''
@@ -196,6 +244,7 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
+        # TODO call setDynamicRunConfig() here not on scala side
         java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
@@ -211,11 +260,12 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
+        # TODO call setDynamicRunConfig() here not on scala side
         java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
 
-    def getRunInfo(self, urn):
+    def getRunInfo(self, urn, runConfig=None):
         """Returns the run information of a module and all its dependencies
         from the last run.
 
@@ -231,15 +281,18 @@ class SmvApp(object):
 
         Args:
             urn (str): urn of target module
+            runConfig (dict): runConfig to apply when collecting info. If module
+                              was run with a config, the same config needs to be
+                              specified here to retrieve the info.
 
         Returns:
             SmvRunInfoCollector
 
         """
-        java_result = self.j_smvPyClient.getRunInfo(urn)
+        java_result = self.j_smvPyClient.getRunInfo(urn, runConfig)
         return SmvRunInfoCollector(java_result)
 
-    def getRunInfoByPartialName(self, name):
+    def getRunInfoByPartialName(self, name, runConfig):
         """Returns the run information of a module and all its dependencies
         from the last run.
 
@@ -255,11 +308,14 @@ class SmvApp(object):
 
         Args:
             name (str): unique suffix to fqn of target module
+            runConfig (dict): runConfig to apply when collecting info. If module
+                              was run with a config, the same config needs to be
+                              specified here to retrieve the info.
 
         Returns:
             SmvRunInfoCollector
         """
-        java_result = self.j_smvPyClient.getRunInfoByPartialName(name)
+        java_result = self.j_smvPyClient.getRunInfoByPartialName(name, runConfig)
         return SmvRunInfoCollector(java_result)
 
     def publishModuleToHiveByName(self, name, runConfig=None):
@@ -274,10 +330,19 @@ class SmvApp(object):
     def inferUrn(self, name):
         return self.j_smvPyClient.inferDS(name).urn().toString()
 
-    def getDsHash(self, name):
-        """Get hashOfHash for named module as a hex string
+    def getDsHash(self, name, runConfig):
+        """The current hashOfHash for the named module as a hex string
+
+            Args:
+                name (str): The uniquen name of a module. Does not have to be the FQN.
+                runConfig (dict): runConfig to apply when collecting info. If module
+                                  was run with a config, the same config needs to be
+                                  specified here to retrieve the correct hash.
+
+            Returns:
+                (str): The hashOfHash of the named module
         """
-        return self.j_smvPyClient.inferDS(name).verHex()
+        return self.j_smvPyClient.getDsHash(name, runConfig)
 
     def copyToHdfs(self, fileobj, destination):
         """Copies the content of a file object to an HDFS location.
@@ -330,10 +395,19 @@ class SmvApp(object):
     def defaultTsvWithHeader(self):
         return self._mkCsvAttr(delimier='\t', hasHeader=True)
 
-    def prepend_source(self,source_dir):
+    def abs_path_for_project_path(self, project_path):
+        # Load dynamic app dir from scala
+        smvAppDir = self.j_smvApp.smvConfig().appDir()
+        return os.path.abspath(os.path.join(smvAppDir, project_path))
+
+    def prepend_source(self, project_path):
+        abs_path = self.abs_path_for_project_path(project_path)
         # Source must be added to front of path to make sure it is found first
-        codePath = os.path.abspath(source_dir)
-        sys.path.insert(1, codePath)
+        sys.path.insert(1, abs_path)
+
+    def remove_source(self, project_path):
+        abs_path = self.abs_path_for_project_path(project_path)
+        sys.path.remove(abs_path)
 
     def run(self):
         self.j_smvApp.run()

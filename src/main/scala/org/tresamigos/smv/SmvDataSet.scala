@@ -16,10 +16,14 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.{DataFrame, SaveMode}
 
+import org.apache.hadoop.fs.FileStatus
+
 import dqm.{DQMValidator, ParserLogger, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 
 import scala.collection.JavaConversions._
 import scala.util.Try
+
+import java.io.FileNotFoundException
 
 import edd._
 
@@ -229,6 +233,19 @@ abstract class SmvDataSet extends FilenamePart {
   /** Returns the path for the module's csv output */
   def moduleCsvPath(prefix: String = ""): String =
     versionedBasePath(prefix) + ".csv"
+
+  def lockfilePath(prefix: String = ""): String =
+    moduleCsvPath(prefix) + ".lock"
+
+  /** Returns the file status for the lockfile if found */
+  def lockfileStatus: Option[FileStatus] =
+    // use try/catch instead of Try because we want to handle only
+    // FileNotFoundException and let other errors bubble up
+    try {
+      Some(SmvHDFS.getFileStatus(lockfilePath()))
+    } catch {
+      case e: FileNotFoundException => None
+    }
 
   /** Returns the path for the module's schema file */
   private[smv] def moduleSchemaPath(prefix: String = ""): String =
@@ -502,7 +519,7 @@ abstract class SmvDataSet extends FilenamePart {
     } else {
       readPersistedFile().recoverWith {
         case e =>
-          SmvLock.withLock(moduleCsvPath() + ".lock") {
+          SmvLock.withLock(lockfilePath()) {
             // Another process may have persisted the data while we
             // waited for the lock. So we read again before computing.
             readPersistedFile().recoverWith { case x =>

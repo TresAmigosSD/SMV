@@ -47,7 +47,7 @@ class DataSetRepo(object):
         """Clear all client modules from sys.modules
         """
         for fqn in list(sys.modules.keys()):
-            for stage_name in self.smvApp.stages:
+            for stage_name in self.smvApp.stages():
                 if fqn == stage_name or fqn.startswith(stage_name + "."):
                     sys.modules.pop(fqn)
                     break
@@ -87,7 +87,7 @@ class DataSetRepo(object):
         mod = None
 
         # if file doesnt exist, module doesn't exist
-        if file_name in self._iter_submodules(self.smvApp.stages):
+        if file_name in self._iter_submodules(self.smvApp.stages()):
             # __import__ instantiates the module hierarchy but returns the root module
             f = __import__(file_name)
             # iterate to get the file that should contain the desired module
