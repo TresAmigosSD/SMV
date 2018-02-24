@@ -67,7 +67,7 @@ private[smv] abstract class EddTaskGroup {
       else
         df.agg(aggNews.head, aggNews.tail: _*)
           .coalesce(1)
-          .crossJoin(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
+          .join(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
     } else {
       // on row per group
       val dfGd = df

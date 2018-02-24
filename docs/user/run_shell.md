@@ -8,7 +8,7 @@ $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 **Note:**  The above command should be run from your project's top level directory.
 
 ## SMV Utility methods
-* `df(dataset_name, force_run=False, version=None)` :  Load/Run the given dataset and return the resulting `DataFrame`. Force the module to rerun (ignoring cached data) if force_run is True.  If a version is specified, load the published data with the given version.
+* `df(dataset_name, force_run=False, version=None, runConfig=None)` :  Load/Run the given dataset and return the resulting `DataFrame`. Force the module to rerun (ignoring cached data) if force_run is True.  If a version is specified, load the published data with the given version.
 * `help()`: List the following shell commands
 * `lsStage()` : list all the stages of the project
 * `ls(stage_name)`: list SmvDataSet in the given stage
@@ -17,6 +17,7 @@ $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 * `lsDead(stage_name)`: list `dead` datasets in the stage
 * `lsDeadLead()`: list `dead leaf` datasets in the project, `dead leaf` is `dead` dataset with no module depends on it
 * `lsDeadLead(stage_name)`: list `dead leaf` datasets in the stage
+* `props()`: Dump json of the final configuration properties used by the running app (includes dynamic runConfig)
 * `exportToHive(dataset_name)`: export the running result of the dataset to a hive table
 * `ancestors(dataset_name)`: list `ancestors` of the dataset, `ancestors` are all the datasets current dataset depends
 * `descendants(datasetName)`: list `descendants` of the dataset, `descendants` are all the datasets depend on the current dataset

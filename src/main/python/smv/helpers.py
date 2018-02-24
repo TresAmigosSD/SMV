@@ -302,6 +302,8 @@ class SmvGroupedData(object):
                 start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel
                     package for details
                 end (panel.PartialTime): should be the same time type as the "start"
+                addMissingTimeWithNull (boolean): Default True. when some PartialTime is missing whether to
+                    fill null records
 
             Example:
 
@@ -310,10 +312,12 @@ class SmvGroupedData(object):
             Returns:
                 (DataFrame): a result data frame with keys, and a column with name `smvTime`, and
                     other input columns. Refer the panel package for the potential forms of
-                    different PartialTimes. Since `TimePanel` defines a period of time, if for some
-                    group in the data missing Months (or Quarters), this function will add records
-                    with non-null keys and `smvTime` columns while all other columns are
-                    null-valued.
+                    different PartialTimes.
+
+                    Since `TimePanel` defines a period of time, if for some group in the data
+                    there are missing Months (or Quarters), when addMissingTimeWithNull is true,
+                    this function will add records with non-null keys and
+                    all possible `smvTime` columns with all other columns null-valued.
 
             Example with on data:
 
@@ -332,7 +336,7 @@ class SmvGroupedData(object):
                 after applying
 
                 >>> import smv.panel as P
-                >>> df.smvGroupBy("k").smvWithTimePanel("TS", Month(2014,1), Month(2014, 2))
+                >>> df.smvGroupBy("k").smvWithTimePanel("TS", Month(2014,1), Month(2014, 3))
 
                 the result is
 
@@ -341,11 +345,15 @@ class SmvGroupedData(object):
                 +===+============+======+=========+
                 | 1 | 2014-01-01 | 1.2  | M201401 |
                 +---+------------+------+---------|
-                | 1 | None       | None | M201402 |
-                +---+------------+------+---------|
                 | 1 | 2014-03-01 | 4.5  | M201403 |
                 +---+------------+------+---------|
                 | 1 | 2014-03-25 | 10.3 | M201403 |
+                +---+------------+------+---------|
+                | 1 | None       | None | M201401 |
+                +---+------------+------+---------|
+                | 1 | None       | None | M201402 |
+                +---+------------+------+---------|
+                | 1 | None       | None | M201403 |
                 +---+------------+------+---------|
         """
         return DataFrame(self.sgd.smvWithTimePanel(time_col, start, end), self.df.sql_ctx)
@@ -359,6 +367,8 @@ class SmvGroupedData(object):
                 start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel
                     package for details
                 end (panel.PartialTime): should be the same time type as the "start"
+                addMissingTimeWithNull (default true) when some PartialTime is missing whether to
+                    fill null records
 
             Both `start` and `end` PartialTime are inclusive.
 
@@ -372,6 +382,9 @@ class SmvGroupedData(object):
                 (DataFrame): a result data frame with keys, and a column with name `smvTime`, and
                     aggregated values. Refer the panel package for the potential forms of different
                     PartialTimes
+
+            When addMissingTimeWithNull is true, the aggregation should be always on the variables
+            instead of on literals (should NOT be count(lit(1))).
 
             Example with on data:
 

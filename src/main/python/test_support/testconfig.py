@@ -38,11 +38,15 @@ class TestConfig(object):
             import tempfile
             import getpass
             hivedir = "file://{0}/{1}/smv_hive_test".format(tempfile.gettempdir(), getpass.getuser())
-            sConf = SparkConf(False, _jvm=jvm).set("spark.sql.test", "")\
-                                              .set("spark.sql.hive.metastore.barrierPrefixes",
-                                                   "org.apache.spark.sql.hive.execution.PairSerDe")\
-                                              .set("spark.sql.warehouse.dir", hivedir)\
-                                              .set("spark.ui.enabled", "false")
+            sConf = (SparkConf(False, _jvm=jvm)
+                     .set("spark.sql.test", "")
+                     .set("spark.sql.hive.metastore.barrierPrefixes",
+                          "org.apache.spark.sql.hive.execution.PairSerDe")
+                     .set("spark.sql.warehouse.dir", hivedir)
+                     .set("spark.ui.enabled", "false")
+                     .set("spark.sql.crossJoin.enabled", "true")
+                     .set("spark.sql.crossJoin.enabled", "true"))
+
             sc = SparkContext(master="local[1]", appName="SMV Python Test", conf=sConf, gateway=jgw).getOrCreate()
             jss = sc._jvm.org.apache.spark.sql.hive.test.SmvTestHive.createContext(sc._jsc.sc())
             cls.spark = SparkSession(sc, jss.sparkSession())

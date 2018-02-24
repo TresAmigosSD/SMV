@@ -19,6 +19,7 @@ import java.util.concurrent.TimeoutException
  */
 case class SmvLock(path: String, timeout: Long = Long.MaxValue) {
   private var obtained = false
+  private var attempts = 0;
 
   /** Tries to acquire the lock if it is available within the given timeout, block untill successful */
   def lock(): Unit = {
@@ -26,6 +27,7 @@ case class SmvLock(path: String, timeout: Long = Long.MaxValue) {
 
     val start = System.currentTimeMillis
     while (! obtained) {
+      attempts += 1
       try {
         SmvHDFS.createFileAtomic(path)
         obtained = true
@@ -34,6 +36,9 @@ case class SmvLock(path: String, timeout: Long = Long.MaxValue) {
         case _: Exception =>
           if (System.currentTimeMillis - start > timeout)
             throw new TimeoutException(s"Cannot obtain lock [${path}] within ${timeout/1000} seconds")
+
+          if (1 == attempts)
+            System.out.println(f"Found lock file [${path}] created on ${new java.util.Date()}")
 
           try {
             // TODO: implement truncated exponential backoff in sleep time

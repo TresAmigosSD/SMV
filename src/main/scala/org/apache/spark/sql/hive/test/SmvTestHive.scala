@@ -16,6 +16,7 @@ package org.apache.spark.sql.hive.test
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.util.{Utils}
 
 /**
  * Provides an entry to TestHiveContext
@@ -26,10 +27,13 @@ import org.apache.spark.sql.SparkSession
 object SmvTestHive {
   //Each run should only have one HiveContext, and therefore one SparkSession
   private[this] var _hc: TestHiveContext = null
+  val hiveWarehouseLocation = Utils.createTempDir()
 
   def createContext(_sc: SparkContext): TestHiveContext = {
     if(_hc == null) {
       val sc = if (_sc == null) {
+
+
         new SparkContext(
           System.getProperty("spark.sql.test.master", "local[1]"),
           "TestSQLContext",
@@ -37,9 +41,12 @@ object SmvTestHive {
             .set("spark.sql.test", "")
             .set("spark.sql.hive.metastore.barrierPrefixes",
                  "org.apache.spark.sql.hive.execution.PairSerDe")
-            .set("spark.sql.warehouse.dir", TestHiveContext.makeWarehouseDir().toURI.getPath)
+            .set("spark.sql.warehouse.dir", hiveWarehouseLocation.toString)
             // SPARK-8910
             .set("spark.ui.enabled", "false")
+            // Need to explictly allow cross join in Spark 2.0
+            // https://stackoverflow.com/questions/38999140/spark-sql-crossjoin-enabled-for-spark-2-x
+            .set("spark.sql.crossJoin.enabled", "true")
         )
       } else {
         _sc
@@ -52,6 +59,7 @@ object SmvTestHive {
   }
 
   def destroyContext(): Unit = {
+    Utils.deleteRecursively(hiveWarehouseLocation)
     _hc.reset()
     _hc.sparkSession.stop()
     _hc = null

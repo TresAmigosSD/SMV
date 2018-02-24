@@ -2,13 +2,13 @@ name := "smv"
 
 organization := "org.tresamigos"
 
-version := "2.1-SNAPSHOT"
+version := "2.0-SNAPSHOT"
 
 scalaVersion := "2.11.8"
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 
-val sparkVersion = "2.1.1"
+val sparkVersion = "2.0.2"
 javacOptions ++= Seq("-source", "1.6", "-target", "1.6")
 
 libraryDependencies ++= Seq(

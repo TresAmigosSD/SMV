@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.apache.log4j.{LogManager, Level}
+
 /**
  * Abstraction of the transaction boundary for loading SmvDataSets. A TX object
  * will instantiate a set of repos when it is it self instantiated and will
@@ -27,7 +29,8 @@ package org.tresamigos.smv
 
 class TX(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig) {
   val repos: Seq[DataSetRepo] = repoFactories map (_.createRepo)
-  val resolver = new DataSetResolver(repos, smvConfig)
+  val resolver                = new DataSetResolver(repos, smvConfig)
+  val log                     = LogManager.getLogger("smv")
 
   def load(urns: URN*): Seq[SmvDataSet] =
     resolver.loadDataSet(urns: _*)
@@ -35,8 +38,11 @@ class TX(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig) {
   def urnsForStage(stageNames: String*): Seq[URN] =
     repos flatMap (repo => stageNames flatMap (repo.urnsForStage(_)))
 
-  def allUrns(): Seq[URN] =
+  def allUrns(): Seq[URN] = {
+    if (smvConfig.stageNames.isEmpty)
+      log.warn("No stage names configured. Unable to discover any modules.")
     urnsForStage(smvConfig.stageNames: _*)
+  }
 
   def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] =
     load(urnsForStage(stageNames: _*): _*)

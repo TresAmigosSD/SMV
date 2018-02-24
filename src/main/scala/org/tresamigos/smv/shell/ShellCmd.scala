@@ -157,8 +157,10 @@ object ShellCmd {
   /**
    * Export dataset's running result to a Hive table
   **/
-  def exportToHive(dsName: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
-    dsm.inferDS(dsName).head.exportToHive(collector=collector)
+  def exportToHive(dsName: String,
+                   runConfig: Map[String, String] = Map.empty,
+                   collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
+    SmvApp.app.publishModuleToHiveByName(dsName, runConfig, collector)
   }
 
   /**
@@ -179,6 +181,7 @@ object ShellCmd {
 
   /**
    * Deprecated
+   * ShellCmd.smvExportCsv should use SmvDFHelper.smvExportCsv (#884)
    */
   def smvExportCsv(name: String, path: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
     println("The smvExportCsv shell method is deprecated")

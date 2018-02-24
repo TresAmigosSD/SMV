@@ -1,11 +1,10 @@
 package org.tresamigos.smv
 package matcher
 
-import org.apache.spark.sql.{Column, Row}
+import org.apache.spark.sql.{Column, DataFrame, Row}
 import org.apache.spark.sql.types.{BooleanType, StructType}
-import org.apache.spark.sql.functions.{col, lit, coalesce}
+import org.apache.spark.sql.functions.{coalesce, col, lit}
 import org.apache.spark.sql.catalyst.expressions.EqualTo
-import org.apache.spark.sql.DataFrame
 import smvfuncs._
 
 /**
@@ -147,13 +146,14 @@ private[smv] sealed abstract class AbstractGroupCondition {
 case class GroupCondition(expr: Column) extends AbstractGroupCondition {
   expr.toExpr match {
     case EqualTo(_, _) => Unit
-    case _             => throw new SmvUnsupportedType("Expression should be in left === right form")
+    case _ => throw new SmvUnsupportedType("Expression should be in left === right form")
   }
+
   private[smv] override def join(df1: DataFrame, df2: DataFrame): DataFrame = df1.join(df2, expr)
 }
 
 case object NoOpGroupCondition extends AbstractGroupCondition {
-  private[smv] override def join(df1: DataFrame, df2: DataFrame): DataFrame = df1.crossJoin(df2)
+  private[smv] override def join(df1: DataFrame, df2: DataFrame): DataFrame = df1.join(df2)
 }
 
 private[smv] sealed abstract class LevelLogic {

@@ -13,6 +13,12 @@ export PYTHONPATH="$SMV_HOME/src/main/python:$PYTHONPATH"
 export PYTHONDONTWRITEBYTECODE=1
 export SPARK_PRINT_LAUNCH_COMMAND=1
 
+# We eagerly add the basename of the APP_JAR so that this same command
+# works in YARN Cluster mode, where the JAR gets added to the root directory
+# of the container. Also note the colon separator
 function run_pyspark_with () {
-  "${SMV_SPARK_SUBMIT_FULLPATH}" "${SPARK_ARGS[@]}" --jars "$APP_JAR,$EXTRA_JARS" --driver-class-path "$APP_JAR" $1 "${SMV_ARGS[@]}"
+  "${SMV_SPARK_SUBMIT_FULLPATH}" "${SPARK_ARGS[@]}" \
+    --jars "$APP_JAR,$EXTRA_JARS" \
+    --driver-class-path "$APP_JAR:$(basename ${APP_JAR}):$EXTRA_DRIVER_CLASSPATHS" \
+    $1 "${SMV_ARGS[@]}"
 }

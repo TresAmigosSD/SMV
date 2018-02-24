@@ -188,9 +188,20 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   val cmdLine = new CmdLineArgsConf(cmdLineArgs)
 
-  private val appConfProps  = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvAppConfFile()))
-  private val usrConfProps  = _loadProps(pathJoin(cmdLine.smvAppDir(), cmdLine.smvUserConfFile()))
-  private val homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
+  // default the app dir to the cmdLine value.
+  private var _appDir: String = cmdLine.smvAppDir()
+
+  // getter and setter because we need to recompute merged props when appDir is set explicitly
+  def appDir : String = _appDir
+
+  def setAppDir(appDirPath: String): Unit = {
+    _appDir = appDirPath
+    mergedPropsCache = readAppConf
+  }
+
+  private def appConfProps  = _loadProps(pathJoin(_appDir, cmdLine.smvAppConfFile()))
+  private def usrConfProps  = _loadProps(pathJoin(_appDir, cmdLine.smvUserConfFile()))
+  private def homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
   private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
     "smv.appName"     -> "Smv Application",
@@ -200,13 +211,28 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     "smv.class_dir"   -> "./target/classes"
   )
 
-  // merge order is important here.  Highest priority comes last as it will override all previous
-  private[smv] val mergedProps = defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps
+  // ---------- Dynamic Run Config Parameters key/values ----------
+  var dynamicRunConfig: Map[String, String] = Map.empty
 
-  // --- config params.  App should access configs through vals below rather than from props maps
-  val appName    = mergedProps("smv.appName")
-  val appId      = mergedProps("smv.appId")
-  val stageNames = splitProp("smv.stages").toSeq
+  // initially, the merged props cache should do the io to read app conf
+  private var mergedPropsCache: Map[String,String] = readAppConf
+
+  private[smv] def mergedProps = { mergedPropsCache ++ dynamicRunConfig }
+
+  // calling this performs the file io, hence the name
+  private def readAppConf: Map[String, String] = {
+    val confFromFiles = appConfProps ++ homeConfProps ++ usrConfProps
+
+    // merge the project props over defaults but lose to cmdLine
+    defaultProps ++ confFromFiles ++ cmdLineProps
+  }
+
+  // --- App should access configs through vals below rather than from props maps
+  def appName    = mergedProps("smv.appName")
+  def appId      = mergedProps("smv.appId")
+
+  // --- stage names are a dynamic prop
+  private[smv] def stageNames = { splitProp("smv.stages").toSeq }
 
   val classDir = mergedProps("smv.class_dir")
 
@@ -243,9 +269,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     case None => throw new SmvRuntimeException("JDBC driver is not specified in SMV config")
     case Some(ret) => ret
   }
-
-  // ---------- Dynamic Run Config Parameters key/values ----------
-  var dynamicRunConfig: Map[String, String] = Map.empty
 
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))

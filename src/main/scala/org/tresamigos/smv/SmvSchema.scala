@@ -98,13 +98,13 @@ private[smv] case class BooleanTypeFormat(override val format: String = null) ex
 }
 
 private[smv] case class ByteTypeFormat(override val format: String = null) extends TypeFormat {
-  override def strToVal(s: String): Any = s.toByte
+  override def strToVal(s: String): Any = if (s.isEmpty) null else s.toByte
   override val typeName                 = "Byte"
   val dataType                          = ByteType
 }
 
 private[smv] case class ShortTypeFormat(override val format: String = null) extends TypeFormat {
-  override def strToVal(s: String): Any = s.toShort
+  override def strToVal(s: String): Any = if (s.isEmpty) null else s.toShort
   override val typeName                 = "Short"
   val dataType                          = ShortType
 }
@@ -460,7 +460,7 @@ class SmvSchema(val entries: Seq[SchemaEntry], val attributes: Map[String, Strin
     def strToChar(s: String): Char = {
       s match {
         case "\\t" => '\t' // map \t to tab
-        case "\\0" => '\0' // map \0 to null
+        case "\\0" => '\u0000' // map \0 to null
         case x     => x(0)
       }
     }
@@ -481,7 +481,7 @@ class SmvSchema(val entries: Seq[SchemaEntry], val attributes: Map[String, Strin
     def charToStr(c: Char): String = {
       c match {
         case '\t' => "\\t"
-        case '\0' => "\\0"
+        case '\u0000' => "\\0"
         case x    => x.toString
       }
     }

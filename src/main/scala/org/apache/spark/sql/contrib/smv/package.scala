@@ -17,6 +17,7 @@ package org.apache.spark.sql.contrib
 import org.apache.spark.sql.{DataFrame, Row, Column}
 import org.apache.spark.sql.catalyst.plans.logical.BroadcastHint
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.catalyst.expressions
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.{InternalRow, CatalystTypeConverters}
@@ -27,6 +28,13 @@ import org.apache.spark.sql.catalyst.{InternalRow, CatalystTypeConverters}
  **/
 package object smv {
   def extractExpr(c: Column) = c.expr
+
+  def isAggregateExpression(e: expressions.Expression): Boolean = {
+    e match {
+      case _: expressions.aggregate.AggregateExpression => true
+      case _ => false
+    }
+  }
 
   /** return Ordering[Any] to compare values of Any */
   def getOrdering[T <: DataType](t: T): Ordering[Any] = {

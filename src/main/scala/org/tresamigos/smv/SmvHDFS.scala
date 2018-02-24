@@ -16,12 +16,13 @@ package org.tresamigos.smv
 
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.{BufferedWriter, StringWriter, OutputStreamWriter}
 import java.nio.charset.StandardCharsets
 
-import org.apache.hadoop.fs.{FileSystem, Path, FileUtil}
+import org.apache.hadoop.fs.{FileSystem, Path, FileUtil, FileStatus}
 import org.apache.commons.io.IOUtils
 
 import scala.util.Try
@@ -42,8 +43,14 @@ private[smv] object SmvHDFS {
 
   def exists(fileName: String): Boolean = getFileSystem(fileName).exists(new Path(fileName))
 
+  /** Atomically creates a file in the hadoop fs, useful for creating a lockfile */
   def createFileAtomic(fileName: String): Unit =
     getFileSystem(fileName).create(new Path(fileName), false).close()
+
+  /** Returns the file status, may throw FileNotFoundException */
+  @throws(classOf[FileNotFoundException])
+  def getFileStatus(fileName: String): FileStatus =
+    getFileSystem(fileName).getFileStatus(new Path(fileName))
 
   /**
    * delete an HDFS file by given path.

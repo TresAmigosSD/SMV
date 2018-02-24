@@ -33,7 +33,7 @@ app = Flask(__name__)
 
 def getStagesInApp():
     """returns list of all stages defined in app"""
-    return list(SmvApp.getInstance().stages)
+    return list(SmvApp.getInstance().stages())
 
 def getFqnsInApp():
     """returns all known module FQNs in app. Note: excluded links"""
@@ -43,16 +43,6 @@ def getFqnsInApp():
     # flatten the list-of-list to simple list of urns and remove the "mod:" prefix
     urns = [u.split(":")[1] for ul in urnsLL for u in ul]
     return urns
-
-# This probably shouldn't be here. It seems to be part of the logic of an client application.
-def get_filepath_from_moduleFqn(module_fqn):
-    '''given a fqn, returns the fullname of its file relative to proj dir.'''
-    prefix = "./src/main/python/"
-    # dir1.dir2.file.class => [dir1, dir2, file]
-    fqn_dirs_filename_list = module_fqn.split(".")[:-1]
-    # concats fqn_dirs_filename_list into string with "/" intermezzo, appends .py, prepends prefix
-    filepath = prefix + "/".join(fqn_dirs_filename_list) + ".py"
-    return filepath
 
 def get_output_dir():
     '''returns the smv app's output directory'''

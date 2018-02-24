@@ -100,7 +100,14 @@ class SmvRunInfoCollector(object):
         java_result = self.jcollector.getMetadataHistory(dsFqn)
         if java_result is None:
             return {}
-        return json.loads(java_result.toJson())
+        # note that the json is an object with the structure
+        # {
+        #   "history": [
+        #     {...},
+        #     ...   
+        #   ]
+        # }
+        return json.loads(java_result.toJson())['history']
 
     def show_report(self):
         msg = 'datasets: %s' % self.fqns()

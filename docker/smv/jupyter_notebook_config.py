@@ -1,9 +1,9 @@
 import os
 
-## The IP address the notebook server will listen on.
+## Default value for IP address the notebook server will listen on. Will be overriden by command line
 c.NotebookApp.ip = os.environ.get('JUPYTER_IP', '*')
 
-## The port the notebook server will listen on.
+## Deafult port for the notebook server will listen on. Will be overriden by command line
 c.NotebookApp.port = int(os.environ.get('JUPYTER_PORT', '8888'))
 
 ## Disable authentication

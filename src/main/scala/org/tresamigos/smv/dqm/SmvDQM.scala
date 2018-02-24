@@ -122,9 +122,10 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
   }
 
   /** create policies from tasks. Filter out NoOpDQMPolicy */
-  private def policiesFromTasks(): Seq[DQMPolicy] = {
+  private lazy val policiesFromTasks: Seq[DQMPolicy] =
     (dqm.rules ++ dqm.fixes).map { _.createPolicy() }.filter(_ != NoOpDQMPolicy)
-  }
+
+  private lazy val allPolicies = policiesFromTasks ++ dqm.policies
 
   /** since rule need to log the reference columns, need to plus them before check and remove after*/
   private def attachRules(df: DataFrame): DataFrame = {
@@ -228,7 +229,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
       toConsole(res)
 
     // persist if result is not empty or forced an action
-    if (persistable && ((!res.isEmpty) || forceAction))
+    if (persistable && allPolicies.length > 0)
       persist(res, path)
 
     res
@@ -243,7 +244,6 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
      * have actions on the DF, which will change the accumulators of the DQMState*/
     val snapshot = dqmState.snapshot()
 
-    val allPolicies = policiesFromTasks() ++ dqm.policies
     val results = allPolicies.map { p =>
       (p.name, p.policy(df, dqmState))
     }
