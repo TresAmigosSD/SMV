@@ -126,6 +126,10 @@ function set_smv_spark_paths() {
   fi
 }
 
+function set_smv_home() {
+  export SMV_HOME="$(cd "`dirname "$0"/`/.."; pwd)"
+}
+
 # Remove trailing alphanum characters in dot-separated version text.
 function sanitize_version () {
   # match a digit, followed by a letter, "+" or "_," and anything up to a "."
@@ -198,6 +202,7 @@ USER_CMD=`basename $0`
 SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
 split_smv_spark_args "$@"
 set_smv_spark_paths
+set_smv_home
 verify_spark_version
 check_help_option
 find_fat_jar
