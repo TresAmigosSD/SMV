@@ -14,6 +14,8 @@
 
 package org.tresamigos.smv
 
+import org.apache.log4j.LogManager
+
 import org.tresamigos.smv.util.Edd
 
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -34,7 +36,7 @@ import org.joda.time.DateTime
 class SmvApp(private val cmdLineArgs: Seq[String],
              _sc: Option[SparkContext] = None,
              _sql: Option[SQLContext] = None) {
-
+  val log         = LogManager.getLogger("smv")
   val smvConfig   = new SmvConfig(cmdLineArgs)
   val genEdd      = smvConfig.cmdLine.genEdd()
   val publishHive = smvConfig.cmdLine.publishHive()
@@ -382,11 +384,20 @@ class SmvApp(private val cmdLineArgs: Seq[String],
       dsm.inferDS(modName).head.exportToHive(collector)
   }
 
-  def getRunInfo(partialName: String): SmvRunInfoCollector =
-    getRunInfo(dsm.inferDS(partialName).head)
+  def getDsHash(name: String, runConfig: Map[String, String]): String = {
+    setDynamicRunConfig(runConfig)
+    dsm.inferDS(name).head.verHex
+  }
 
-  def getRunInfo(urn: URN): SmvRunInfoCollector =
+  def getRunInfo(partialName: String, runConfig: Map[String, String]): SmvRunInfoCollector = {
+    setDynamicRunConfig(runConfig)
+    getRunInfo(dsm.inferDS(partialName).head)
+  }
+
+  def getRunInfo(urn: URN, runConfig: Map[String, String]): SmvRunInfoCollector = {
+    setDynamicRunConfig(runConfig)
     getRunInfo(dsm.load(urn).head)
+  }
 
   /**
    * Returns the run information for a given dataset and all its

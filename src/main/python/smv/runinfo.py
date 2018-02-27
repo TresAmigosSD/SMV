@@ -25,7 +25,7 @@ class SmvRunInfoCollector(object):
 
     Example:
         df, coll = smvApp.runModule(...)
-        coll.dsFqns  # returns
+        coll.ds_names  # returns
     """
     def __init__(self, jcollector):
         self.jcollector = jcollector
@@ -34,7 +34,7 @@ class SmvRunInfoCollector(object):
         """Returns a list of FQNs for all datasets that ran"""
         return self.jcollector.dsFqnsAsJava()
 
-    def dqm_validation(self, dsFqn):
+    def dqm_validation(self, ds_name):
         """Returns the DQM validation result for a given dataset
 
         Returns:
@@ -46,12 +46,12 @@ class SmvRunInfoCollector(object):
                 (e.g. caused by a typo in the name)
 
         """
-        java_result = self.jcollector.getDqmValidationResult(dsFqn)
+        java_result = self.jcollector.getDqmValidationResult(ds_name)
         if java_result is None:
             return {}
         return json.loads(java_result.toJSON())
 
-    def dqm_state(self, dsFqn):
+    def dqm_state(self, ds_name):
         """Returns the DQM state for a given dataset
 
         Returns:
@@ -63,12 +63,12 @@ class SmvRunInfoCollector(object):
                 specified dataset (e.g. caused by a typo in the name)
 
         """
-        validation = self.dqm_validation(dsFqn)
+        validation = self.dqm_validation(ds_name)
         if 'dqmStateSnapshot' in validation:
             return validation['dqmStateSnapshot']
         return {}
 
-    def metadata(self, dsFqn):
+    def metadata(self, ds_name):
         """Returns the metadata for a given dataset
 
         Returns:
@@ -80,12 +80,12 @@ class SmvRunInfoCollector(object):
                 (e.g. caused by a typo in the name)
 
         """
-        java_result = self.jcollector.getMetadata(dsFqn)
+        java_result = self.jcollector.getMetadata(ds_name)
         if java_result is None:
             return {}
         return json.loads(java_result.toJson())
 
-    def metadata_history(self, dsFqn):
+    def metadata_history(self, ds_name):
         """Returns the metadata history for a given dataset
 
         Returns:
@@ -97,26 +97,31 @@ class SmvRunInfoCollector(object):
                 (e.g. caused by a typo in the name)
 
         """
-        java_result = self.jcollector.getMetadataHistory(dsFqn)
+        java_result = self.jcollector.getMetadataHistory(ds_name)
         if java_result is None:
             return {}
         # note that the json is an object with the structure
         # {
         #   "history": [
         #     {...},
-        #     ...   
+        #     ...
         #   ]
         # }
         return json.loads(java_result.toJson())['history']
 
-    def show_report(self):
-        msg = 'datasets: %s' % self.fqns()
-        for fqn in self.fqns():
-            msg += '\n+ %s' % fqn
+    def show_report(self, ds_name=None, show_history=False):
+        if ds_name is None:
+            fqns = self.fqns()
+        else:
+            fqns = [self.jcollector.inferFqn(ds_name)]
+        msg = 'datasets: %s' % fqns
+        for fqn_to_report in fqns:
+            msg += '\n+ %s' % fqn_to_report
             msg += '\n|- dqm validation:'
-            msg += '\n     ' + pformat(self.dqm_validation(fqn), indent=5)
+            msg += '\n     ' + pformat(self.dqm_validation(fqn_to_report), indent=5)
             msg += '\n|- metadata:'
-            msg += '\n     ' + pformat(self.metadata(fqn), indent=5)
-            msg += '\n|- metadata history:'
-            msg += '\n     ' + pformat(self.metadata_history(fqn), indent=5)
+            msg += '\n     ' + pformat(self.metadata(fqn_to_report), indent=5)
+            if show_history:
+                msg += '\n|- metadata history:'
+                msg += '\n     ' + pformat(self.metadata_history(fqn_to_report), indent=5)
         print(msg)
