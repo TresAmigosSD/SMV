@@ -109,14 +109,19 @@ class SmvRunInfoCollector(object):
         # }
         return json.loads(java_result.toJson())['history']
 
-    def show_report(self):
-        msg = 'datasets: %s' % self.fqns()
-        for fqn in self.fqns():
-            msg += '\n+ %s' % fqn
+    def show_report(self, ds_name=None, show_history=False):
+        if ds_name is None:
+            fqns = self.fqns()
+        else:
+            fqns = [self.jcollector.inferFqn(ds_name)]
+        msg = 'datasets: %s' % fqns
+        for fqn_to_report in fqns:
+            msg += '\n+ %s' % fqn_to_report
             msg += '\n|- dqm validation:'
-            msg += '\n     ' + pformat(self.dqm_validation(fqn), indent=5)
+            msg += '\n     ' + pformat(self.dqm_validation(fqn_to_report), indent=5)
             msg += '\n|- metadata:'
-            msg += '\n     ' + pformat(self.metadata(fqn), indent=5)
-            msg += '\n|- metadata history:'
-            msg += '\n     ' + pformat(self.metadata_history(fqn), indent=5)
+            msg += '\n     ' + pformat(self.metadata(fqn_to_report), indent=5)
+            if show_history:
+                msg += '\n|- metadata history:'
+                msg += '\n     ' + pformat(self.metadata_history(fqn_to_report), indent=5)
         print(msg)

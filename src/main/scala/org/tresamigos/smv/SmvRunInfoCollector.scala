@@ -71,17 +71,23 @@ class SmvRunInfoCollector {
    *
    * @throws SmvRuntimeException if no dataset or multiple dataset fqns ends with dsName
    */
-  def inferRunInfo(dsName: String): SmvRunInfo = {
+  def inferFqn(dsName: String): String = {
     val candidates = dsFqns filter (_.endsWith(dsName))
-    val fqn = candidates.size match {
+    candidates.size match {
       case 0 =>
         throw new SmvRuntimeException(s"""No run info collected for module named [${dsName}]""")
       case 1 => candidates.head
       case _ =>
         throw new SmvRuntimeException(s"[${dsName}] could refer to [${candidates.mkString(", ")}]")
     }
-    runInfo(fqn)
   }
+
+  /**
+   * Returns the unique runInfo with fqn ending with @param dsName from the datasets collected
+   *
+   * @throws SmvRuntimeException if no dataset or multiple dataset fqns ends with dsName
+   */
+  def inferRunInfo(dsName: String): SmvRunInfo = runInfo(inferFqn(dsName))
 }
 
 case class SmvRunInfo(validation: DqmValidationResult, metadata: SmvMetadata, metadataHistory: SmvMetadataHistory)
