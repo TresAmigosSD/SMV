@@ -14,19 +14,20 @@
 
 package org.tresamigos.smv
 
+
+import collection.JavaConverters._
+import java.util.List
+import scala.collection.mutable
+import scala.io.Source
+import scala.util.{Try, Success, Failure}
+
 import org.apache.log4j.LogManager
+import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.{SparkContext, SparkConf}
+import org.joda.time.DateTime
 
 import org.tresamigos.smv.util.Edd
 
-import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.apache.spark.{SparkContext, SparkConf}
-
-import scala.collection.mutable
-import scala.util.{Try, Success, Failure}
-import java.util.List
-import collection.JavaConverters._
-
-import org.joda.time.DateTime
 
 
 /**
@@ -44,6 +45,13 @@ class SmvApp(private val cmdLineArgs: Seq[String],
 
   def stages      = smvConfig.stageNames
   val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
+
+  val smvVersion  = {
+    val versionFile = Source.fromFile(f"${sys.env("SMV_HOME")}/.smv_version")
+    val nextLine = versionFile.getLines.next
+    versionFile.close
+  }
+
 
   /** Register Kryo Classes
    * Since none of the SMV classes will be put in an RDD, register them or not does not make
