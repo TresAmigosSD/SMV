@@ -110,18 +110,38 @@ class SmvRunInfoCollector(object):
         return json.loads(java_result.toJson())['history']
 
     def show_report(self, ds_name=None, show_history=False):
+        """Print detailed report of information collected
+
+            Args:
+                ds_name (str): report only of named ds if not None
+                show_history (bool): include metadata history in report if True (default False)
+        """
         if ds_name is None:
             fqns = self.fqns()
         else:
             fqns = [self.jcollector.inferFqn(ds_name)]
         msg = 'datasets: %s' % fqns
+
+        def items_to_report(fqn):
+            validation = self.dqm_validation(fqn)
+            metadata = self.metadata(fqn)
+            # Remove validation results from metadata (if they exist) as we are reporting it above
+            try:
+                del metadata['_validation']
+            except:
+                pass
+
+            items = [("dqm validation", validation), ("metadata", metadata)]
+            if show_history:
+                history = self.metadata_history(fqn)
+                items.append(("metadata history", history))
+
+            return items
+
         for fqn_to_report in fqns:
             msg += '\n+ %s' % fqn_to_report
-            msg += '\n|- dqm validation:'
-            msg += '\n     ' + pformat(self.dqm_validation(fqn_to_report), indent=5)
-            msg += '\n|- metadata:'
-            msg += '\n     ' + pformat(self.metadata(fqn_to_report), indent=5)
-            if show_history:
-                msg += '\n|- metadata history:'
-                msg += '\n     ' + pformat(self.metadata_history(fqn_to_report), indent=5)
+            for name, value in items_to_report(fqn_to_report):
+                msg += '\n|- {}:'.format(name)
+                msg += '\n     ' + pformat(value, indent=5)
+
         print(msg)

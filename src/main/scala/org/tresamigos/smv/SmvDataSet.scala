@@ -18,7 +18,7 @@ import org.apache.spark.sql.{DataFrame, SaveMode}
 
 import org.apache.hadoop.fs.FileStatus
 
-import dqm.{DQMValidator, ParserLogger, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
+import dqm.{DQMValidator, DqmValidationResult, ParserLogger, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 
 import scala.collection.JavaConversions._
 import scala.util.Try
@@ -42,8 +42,10 @@ trait FilenamePart {
  */
 abstract class SmvDataSet extends FilenamePart {
 
-  def app: SmvApp                            = SmvApp.app
-  private var userMetadataCache: Option[SmvMetadata] = None
+  def app: SmvApp                                                = SmvApp.app
+
+  /** Cache metadata so we can reuse it between validation and persistence */
+  private var userMetadataCache: Option[SmvMetadata]             = None
 
   /**
    * The FQN of an SmvDataSet is its classname for Scala implementations.
@@ -422,10 +424,10 @@ abstract class SmvDataSet extends FilenamePart {
    * Get the most detailed metadata available without running this module. If
    * the modules has been run and hasn't been changed, this will be all the metadata
    * that was persisted. If the module hasn't been run since it was changed, this
-   * will be a less detailed report.
+   * report will exclude the DQM validation result and user metadata.
    */
   private[smv] def getMetadata(): SmvMetadata =
-    readPersistedMetadata().getOrElse(getOrCreateMetadata(None))
+    readPersistedMetadata().getOrElse(getOrCreateMetadata(None, None))
 
   /**
    * Read metadata history from file if it exists, otherwise return empty metadata
@@ -434,8 +436,9 @@ abstract class SmvDataSet extends FilenamePart {
     readMetadataHistory().getOrElse(SmvMetadataHistory.empty)
 
   /**
-   * Create SmvMetadata for this SmvDataset. SmvMetadata will be more detailed if
-   * a DataFrame is provided
+   * Create SmvMetadata for this SmvDataset. SmvMetadata will include user metadata
+   * if dfOpt is not None, and will contain a jsonification of the DqmValidationResult
+   * (including DqmState) if validResOpt is not None.
    *
    * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
    * to this `getOrCreateMetadata` method will only do a single evaluation of the user
@@ -445,7 +448,8 @@ abstract class SmvDataSet extends FilenamePart {
    * return incase this method is called multiple times in same run with/without
    * the df argument.  We assume the df value is the same for all calls!
    */
-  private[smv] def getOrCreateMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
+  private[smv] def getOrCreateMetadata(dfOpt:       Option[DataFrame],
+                                       validResOpt: Option[DqmValidationResult]): SmvMetadata = {
     val resMetadata = dfOpt match {
       case Some(df) => {
         // updated cached user metadata if it was not already computed.
@@ -464,6 +468,7 @@ abstract class SmvDataSet extends FilenamePart {
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
     dfOpt foreach {resMetadata.addSchemaMetadata}
     timestamp foreach {resMetadata.addTimestamp}
+    validResOpt foreach {resMetadata.addDqmValidationResult}
     resMetadata
   }
 
@@ -504,15 +509,15 @@ abstract class SmvDataSet extends FilenamePart {
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
-      val validation = dqmValidator.validate(df, hasAction, moduleValidPath())
-      val metadata = getOrCreateMetadata(Some(df))
+      val validationResult = dqmValidator.validate(df, hasAction, moduleValidPath())
+      val metadata = getOrCreateMetadata(Some(df), Some(validationResult))
       // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
       deleteOutputs(metadataOutputFiles)
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
 
-      collector.addRunInfo(fqn, validation, metadata, metadataHistory)
+      collector.addRunInfo(fqn, validationResult, metadata, metadataHistory)
     }
 
     if (isEphemeral) {
@@ -580,7 +585,12 @@ abstract class SmvDataSet extends FilenamePart {
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
-    getOrCreateMetadata(Some(df)).saveToFile(app.sc, publishMetaPath(version))
+    // Read persisted metadata and metadata history, and publish it with the output.
+    // Note that the metadata will have been persisted, because either
+    // 1. the metadata was persisted before publish was started
+    // 2. the module had not been run successully yet, so the module was run
+    //    when rdd was called above, persisting the metadata.
+    getMetadata.saveToFile(app.sc, publishMetaPath(version))
     getMetadataHistory.saveToFile(app.sc, publishHistoryPath(version))
     /* publish should also calculate edd if generarte Edd flag was turned on */
     if (app.genEdd)

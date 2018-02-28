@@ -20,6 +20,8 @@ import org.apache.spark.SparkContext
 
 import org.joda.time.DateTime
 
+import dqm.DqmValidationResult
+
 
 /**
  * Representation of module metadata which can be saved to file.
@@ -54,6 +56,19 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
   def addTimestamp(dt: DateTime) = {
     builder.putString("_timestamp", dt.toString)
   }
+
+  /**
+   * Add validation result (including DQM state) to metadata
+   */
+   def addDqmValidationResult(result: DqmValidationResult) = {
+     /**TODO: this is roundabout, since we are just going to re-jsonify the
+      * the metadata when we write it. It will do for now, and we should probably
+      * rewrite SmvMetadata to omit Spark Metadata anyway, seeing as it doesn't
+      * support null values (issue #1138).
+      */
+     val validationMeta = Metadata.fromJson(result.toJSON)
+     builder.putMetadata("_validation", validationMeta)
+   }
 
   /**
    * Returns an array where each element is a metadata containing information
@@ -168,7 +183,10 @@ class DQMMetadataPolicy(ds: SmvDataSet) extends dqm.DQMPolicy{
     s"${ds.fqn} metadata validation"
 
   def policy(df: DataFrame, state: dqm.DQMState) = {
-    val metadata = ds.getOrCreateMetadata(Some(df))
+    // Metadata to be validated includes user metadata but excludes
+    // DqmValidationResult - there is no validation result yet as, we are in the
+    // middle of validation!
+    val metadata = ds.getOrCreateMetadata(Some(df), None)
     val history = ds.getMetadataHistory()
     val result = ds.validateMetadata(metadata, history.historyList)
     result match {
