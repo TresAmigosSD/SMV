@@ -424,7 +424,7 @@ abstract class SmvDataSet extends FilenamePart {
    * Get the most detailed metadata available without running this module. If
    * the modules has been run and hasn't been changed, this will be all the metadata
    * that was persisted. If the module hasn't been run since it was changed, this
-   * will be a less detailed report.
+   * report will exclude the DQM validation result and user metadata.
    */
   private[smv] def getMetadata(): SmvMetadata =
     readPersistedMetadata().getOrElse(getOrCreateMetadata(None, None))
@@ -436,8 +436,9 @@ abstract class SmvDataSet extends FilenamePart {
     readMetadataHistory().getOrElse(SmvMetadataHistory.empty)
 
   /**
-   * Create SmvMetadata for this SmvDataset. SmvMetadata will be more detailed if
-   * a DataFrame and DqmValidationResult is provided
+   * Create SmvMetadata for this SmvDataset. SmvMetadata will include user metadata
+   * if dfOpt is not None, and will contain a jsonification of the DqmValidationResult
+   * (including DqmState) if validResOpt is not None.
    *
    * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
    * to this `getOrCreateMetadata` method will only do a single evaluation of the user
@@ -467,9 +468,7 @@ abstract class SmvDataSet extends FilenamePart {
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
     dfOpt foreach {resMetadata.addSchemaMetadata}
     timestamp foreach {resMetadata.addTimestamp}
-    // note that validation result will be *excluded* from metadata provided to
-    // validateMetadata, as the validation result doesn't exist yet!
-    validResOpt foreach {resMetadata.addValidationResult}
+    validResOpt foreach {resMetadata.addDqmValidationResult}
     resMetadata
   }
 
@@ -586,6 +585,11 @@ abstract class SmvDataSet extends FilenamePart {
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
+    // Read persisted metadata and metadata history, and publish it with the output.
+    // Note that the metadata will have been persisted, because either
+    // 1. the metadata was persisted before publish was started
+    // 2. the module had not been run successully yet, so the module was run
+    //    when rdd was called above, persisting the metadata.
     getMetadata.saveToFile(app.sc, publishMetaPath(version))
     getMetadataHistory.saveToFile(app.sc, publishHistoryPath(version))
     /* publish should also calculate edd if generarte Edd flag was turned on */
