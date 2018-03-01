@@ -214,16 +214,15 @@ def descendants(dsname):
     """
     print(_jvmShellCmd().descendants(dsname))
 
-def graph(stageName = None):
-    """Print ascii graph of all datasets in a given stage or all stages
+def graph(pattern=None):
+    """Print ascii graph of all datasets in project
 
         Args:
-            stageName (str): Optional name of stage to graph. Do not
+            pattern (str): graph only datasets whose fqns contain pattern (and their dependencies)
     """
-    if(stageName is None):
-        print(_jvmShellCmd()._graph())
-    else:
-        print(_jvmShellCmd()._graph(stageName))
+    _graph = SmvApp.getInstance().j_smvPyClient.getDsAsciiGraph(pattern)
+    print(_graph)
+
 
 def graphStage():
     """Print ascii graph of all stages (not datasets)

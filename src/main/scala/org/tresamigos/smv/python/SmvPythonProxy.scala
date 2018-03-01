@@ -356,6 +356,23 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def getRunConfig(key: String): String = j_smvApp.smvConfig.getRunConfig(key)
   def getRunConfigHash()                = j_smvApp.smvConfig.getRunConfigHash()
 
+  /**
+   * Get graph of the ancestors of a single dataset
+   */
+  def getDsAsciiGraph(pattern: String): String = {
+    val allDataSets = j_smvApp.dsm.allDataSets()
+    val datasetsToGraph =
+      if (pattern == null)
+        allDataSets
+      else
+        allDataSets filter (_.fqn.contains(pattern))
+
+    if (datasetsToGraph.isEmpty)
+      f"No datasets found matching pattern ${pattern}"
+    else
+      new graph.SmvGraphUtil(j_smvApp).createDSAsciiGraph(datasetsToGraph)
+  }
+
   def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
     j_smvApp.registerRepoFactory(new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig))
 
