@@ -319,6 +319,10 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def getMetadataJson(urn: String): String =
     j_smvApp.getMetadataJson(URN(urn))
 
+  /** Returns metadata history for a given urn*/
+  def getMetadataHistoryJson(urn: String): String =
+    j_smvApp.getMetadataHistoryJson(URN(urn))
+
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvOutput tables
   def moduleNames: java.util.List[String] = {
