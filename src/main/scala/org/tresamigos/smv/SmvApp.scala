@@ -428,11 +428,11 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
-   * Returns the latest metadata history for a given urn
+   * Returns metadata history for a given urn
    */
-  def getLatestMetadataHistoryJson(urn: URN): String = {
+  def getMetadataHistoryJson(urn: URN): String = {
     val ds = dsm.load(urn).head
-    ds.getMetadataHistory().latestHistorytoJson()
+    ds.getMetadataHistory().toJson
   }
 
   /**

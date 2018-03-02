@@ -144,22 +144,10 @@ class SmvMetadataHistory(val historyList: Array[SmvMetadata]) {
    * }
    */
   def toJson: String =
-    toJsonFromHistory(historyList)
-
-  private def toJsonFromHistory(history: Array[SmvMetadata]): String =
     new MetadataBuilder()
-      .putMetadataArray("history", history map (_.builder.build))
+      .putMetadataArray("history", historyList map (_.builder.build))
       .build
       .json
-
-  /**
-    * Serialize the latest history metadata as JSON string.
-    * Since the history is in descending order of age,
-    * we can just use the first item in the array.
-    * If there is no history, we return an empty array.
-    */
-  def latestHistorytoJson(): String =
-    toJsonFromHistory(historyList.slice(0,1))
 
   def length: Integer =
     historyList.length
