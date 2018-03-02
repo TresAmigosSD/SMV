@@ -327,6 +327,10 @@ class SmvApp(object):
         """Returns the metadata for a given urn"""
         return self.j_smvPyClient.getMetadataJson(urn)
 
+    def getLatestMetadataHistoryJson(self, urn):
+        """Returns the latest metadata history for a given urn"""
+        return self.j_smvPyClient.getLatestMetadataHistoryJson(urn)
+
     def inferUrn(self, name):
         return self.j_smvPyClient.inferDS(name).urn().toString()
 

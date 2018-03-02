@@ -428,6 +428,14 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   }
 
   /**
+   * Returns the latest metadata history for a given urn
+   */
+  def getLatestMetadataHistoryJson(urn: URN): String = {
+    val ds = dsm.load(urn).head
+    ds.getMetadataHistory().latestHistorytoJson()
+  }
+
+  /**
    * sequence of SmvModules to run based on the command line arguments.
    * Returns the union of -a/-m/-s command line flags.
    */

@@ -185,6 +185,10 @@ def getMetadataJson(fqn):
     '''returns metadata given a fqn'''
     return SmvApp.getInstance().getMetadataJson("mod:{}".format(fqn))
 
+def getLatestMetadataHistoryJson(fqn):
+    '''returns the latest metadata history given a fqn'''
+    return SmvApp.getInstance().getLatestMetadataHistoryJson("mod:{}".format(fqn))
+
 # ---------- API Definition ---------- #
 
 @app.route("/api/run_module", methods = ['POST'])
