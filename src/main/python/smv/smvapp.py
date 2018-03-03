@@ -50,6 +50,8 @@ class SmvApp(object):
 
     # default rel path for python sources from appDir
     SRC_PROJECT_PATH = "src/main/python"
+    # default location for py UDL's in smv projects
+    SRC_LIB_PATH = "library"
 
     @classmethod
     def getInstance(cls):
@@ -96,8 +98,8 @@ class SmvApp(object):
         self.log = self.j_smvApp.log()
 
         # AFTER app is available but BEFORE stages,
-        # use the dynamically configured app dir to set the source path
-        self.prepend_source(self.SRC_PROJECT_PATH)
+        # use the dynamically configured app dir to set the source path, library path
+        self.prependDefaultDirs()
 
         # issue #429 set application name from smv config
         sc._conf.setAppName(self.appName())
@@ -138,6 +140,19 @@ class SmvApp(object):
         # Initialize DataFrame and Column with helper methods
         smv.helpers.init_helpers()
 
+    def prependDefaultDirs(self):
+        """ Ensure that mods in src/main/python and library/ are discoverable.
+            If we add more default dirs, we'll make this a set
+        """
+        self.prepend_source(self.SRC_LIB_PATH)
+        self.prepend_source(self.SRC_PROJECT_PATH)
+
+    def removeDefaultDirs(self):
+        """ The cleanup version of prependDefaultDirs
+        """
+        self.remove_source(self.SRC_PROJECT_PATH)
+        self.remove_source(self.SRC_LIB_PATH)
+
     def appName(self):
         return self.j_smvApp.smvConfig().appName()
 
@@ -146,20 +161,15 @@ class SmvApp(object):
 
     def setAppDir(self, appDir):
         """ SMV's equivalent of 'cd' for app dirs. """
-        try:
-            self.remove_source(self.SRC_PROJECT_PATH)
-        except ValueError:
-            # ValueError will be raised if the project path was not previously
-            # added to the sys.path
-            pass
+        self.removeDefaultDirs()
 
         # this call sets the scala side's picture of app dir and forces
         # the app properties to be read from disk and reevaluated
         self.j_smvPyClient.setAppDir(appDir)
 
         # this call will use the dynamic appDir that we just set ^
-        # to change sys.path, allowing py modules to be discovered by python
-        self.prepend_source(self.SRC_PROJECT_PATH)
+        # to change sys.path, allowing py modules, UDL's to be discovered by python
+        self.prependDefaultDirs()
 
     def setDynamicRunConfig(self, runConfig):
         self.j_smvPyClient.setDynamicRunConfig(runConfig)
@@ -411,9 +421,14 @@ class SmvApp(object):
         self.log.debug("Prepended {} to sys.path".format(abs_path))
 
     def remove_source(self, project_path):
-        abs_path = self.abs_path_for_project_path(project_path)
-        sys.path.remove(abs_path)
-        self.log.debug("Removed {} from sys.path".format(abs_path))
+        try:
+            abs_path = self.abs_path_for_project_path(project_path)
+            sys.path.remove(abs_path)
+            self.log.debug("Removed {} from sys.path".format(abs_path))
+        except ValueError:
+            # ValueError will be raised if the project path was not previously
+            # added to the sys.path
+            pass
 
     def run(self):
         self.j_smvApp.run()
