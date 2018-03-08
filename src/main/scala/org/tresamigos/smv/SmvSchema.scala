@@ -98,13 +98,13 @@ private[smv] case class BooleanTypeFormat(override val format: String = null) ex
 }
 
 private[smv] case class ByteTypeFormat(override val format: String = null) extends TypeFormat {
-  override def strToVal(s: String): Any = s.toByte
+  override def strToVal(s: String): Any = if (s.isEmpty) null else s.toByte
   override val typeName                 = "Byte"
   val dataType                          = ByteType
 }
 
 private[smv] case class ShortTypeFormat(override val format: String = null) extends TypeFormat {
-  override def strToVal(s: String): Any = s.toShort
+  override def strToVal(s: String): Any = if (s.isEmpty) null else s.toShort
   override val typeName                 = "Short"
   val dataType                          = ShortType
 }

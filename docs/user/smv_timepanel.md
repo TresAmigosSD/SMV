@@ -143,6 +143,8 @@ Args:
 * start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel
   package for details
 * end (panel.PartialTime): should be the same time type as the "start"
+* addMissingTimeWithNull (boolean): Default True. when some PartialTime is missing whether to
+  fill null records
 
 Example:
 
@@ -151,10 +153,12 @@ res = df.smvGroupBy("K").smvWithTimePanel("TS", Week(2012, 1, 1), Week(2012, 12,
 ```
 
 Returns (DataFrame): a result data frame with keys, and a column with name `smvTime`, and
-other input columns. Since `TimePanel` defines a period of time, if for some
-group in the data missing Months (or Quarters), this function will add records
-with non-null keys and `smvTime` columns while all other columns are
-null-valued.
+other input columns.
+
+Since `TimePanel` defines a period of time, if for some group in the data
+there are missing Months (or Quarters), when addMissingTimeWithNull is true,
+this function will add records with non-null keys and
+all possible `smvTime` columns with all other columns null-valued.
 
 Example with on data:
 
@@ -170,7 +174,7 @@ after applying
 
 ```python
 import smv.panel as P
-df.smvGroupBy("k").smvWithTimePanel("TS", Month(2014,1), Month(2014, 2))
+df.smvGroupBy("k").smvWithTimePanel("TS", Month(2014,1), Month(2014, 3))
 ```
 
 the result is
@@ -178,14 +182,25 @@ the result is
 | K | TS         | V    | smvTime |
 |---|------------|------|---------|
 | 1 | 2014-01-01 | 1.2  | M201401 |
-| 1 | None       | None | M201402 |
 | 1 | 2014-03-01 | 4.5  | M201403 |
 | 1 | 2014-03-25 | 10.3 | M201403 |
+| 1 | None       | None | M201401 |
+| 1 | None       | None | M201402 |
+| 1 | None       | None | M201403 |
 
 
 ### `smvTimePanelAgg`
 
 Aggregate transaction data along a `TimePanel`.
+
+Args:
+
+* time_col (str): the column name in the data as the event timestamp
+* start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel
+  package for details
+* end (panel.PartialTime): should be the same time type as the "start"
+* addMissingTimeWithNull (boolean): Default True. when some PartialTime is missing whether to
+  fill null records
 
 Example:
 
@@ -216,6 +231,8 @@ The output DataFrames has columns:
 The `smvTime` column has the `smvTime` value of the PartialTime. For our example, it will
 be the `smvTime` string of a `Day` object.
 
+**NOTE:** when addMissingTimeWithNull is true, the aggregation should be always on the variables
+instead of on literals (should NOT be count(lit(1))).
 
 ## `smvTime` Column Helpers
 
