@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Run one or more SMV modules / stages / app.
-# USAGE: smv-run [-h] smv_app_args -- spark_args
+# USAGE: smv-run [-h] [--script <script-path> [--script-opt <option>]*] <smv_app_args> [-- spark_args]
 #
 # user can specify optional spark args (such as --master, --executor-memory, etc)
 
@@ -18,6 +18,11 @@ fi
 echo "START RUN =============================="
 date
 
-run_pyspark_with ${SMV_TOOLS}/../src/main/python/scripts/runapp.py
+SMV_SCRIPT="${SMV_USER_SCRIPT:-${SMV_TOOLS}/../src/main/python/scripts/runapp.py}"
+if [ -n "${SMV_USER_SCRIPT}" ]; then
+  SMV_SCRIPT_OPTS="${SMV_USER_SCRIPT_OPTS[@]}"
+fi
+
+run_pyspark_with "$SMV_SCRIPT $SMV_SCRIPT_OPTS"
 
 date
