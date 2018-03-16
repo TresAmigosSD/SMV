@@ -76,11 +76,6 @@ function find_file_in_dir()
 # find latest fat jar in target directory.
 function find_fat_jar()
 {
-  # SMV_TOOLS should have been set by caller.
-  if [ -z "$SMV_TOOLS" ]; then
-    echo "ERROR: SMV_TOOLS not set by calling script!"
-    exit 1
-  fi
   SMV_FAT_JAR="${SMV_TOOLS}/../target/scala-2.10"
 
   # try sbt-build location first if not found try mvn-build location next.
@@ -194,6 +189,11 @@ function print_help() {
 
 # --- MAIN ---
 declare -a SMV_ARGS SPARK_ARGS
+# SMV_TOOLS should have been set by caller.
+if [ -z "$SMV_TOOLS" ]; then
+    echo "ERROR: SMV_TOOLS not set by calling script!"
+    exit 1
+fi
 USER_CMD=`basename $0`
 SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
 split_smv_spark_args "$@"
