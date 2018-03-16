@@ -8,7 +8,6 @@
 # SMV_APP_CLASS : user specified --class name to use for spark-submit or SmvApp as default
 # APP_JAR : user specified --jar option or the discovered application fat jar.
 # SMV_USER_SCRIPT : optional user-defined launch script
-# SMV_USER_SCRIPT_OPTS : user-defined launch script options
 #
 
 # This function is used to split the command line arguments into SMV / Spark
@@ -29,10 +28,6 @@ function split_smv_spark_args()
         elif [ "$1" == "--script" ]; then
           shift
           SMV_USER_SCRIPT="$1"
-          shift
-        elif [ "$1" == "--script-opt" ]; then
-          shift
-          SMV_USER_SCRIPT_OPTS=("${SMV_USER_SCRIPT_OPTS[@]}" "$1")
           shift
         else
           SMV_ARGS=("${SMV_ARGS[@]}" "$1")
@@ -198,7 +193,7 @@ function print_help() {
 }
 
 # --- MAIN ---
-declare -a SMV_ARGS SPARK_ARGS SMV_USER_SCRIPT_OPTS
+declare -a SMV_ARGS SPARK_ARGS
 # SMV_TOOLS should have been set by caller.
 if [ -z "$SMV_TOOLS" ]; then
     echo "ERROR: SMV_TOOLS not set by calling script!"

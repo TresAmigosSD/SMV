@@ -18,11 +18,8 @@ fi
 echo "START RUN =============================="
 date
 
-SMV_SCRIPT="${SMV_USER_SCRIPT:-${SMV_TOOLS}/../src/main/python/scripts/runapp.py}"
-if [ -n "${SMV_USER_SCRIPT}" ]; then
-  SMV_SCRIPT_OPTS="${SMV_USER_SCRIPT_OPTS[@]}"
-fi
+LAUNCH_SCRIPT="${SMV_USER_SCRIPT:-${SMV_TOOLS}/../src/main/python/scripts/runapp.py}"
 
-run_pyspark_with "$SMV_SCRIPT $SMV_SCRIPT_OPTS"
+run_pyspark_with "$LAUNCH_SCRIPT"
 
 date
