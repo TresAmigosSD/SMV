@@ -25,6 +25,15 @@ $ smv-pyrun [smv-options] [what-to-run] -- [standard spark-submit-options]
 </tr>
 
 <tr>
+<td>--script</td>
+<td>None</td>
+<td>allow user to specify a script to launch instead of default `runapp.py`
+<br>
+<code>$ ... --script myapp.py</code>
+</td>
+</tr>
+
+<tr>
 <td>--smv-props</td>
 <td>None</td>
 <td>allow user to specify a set of config properties on the command line.

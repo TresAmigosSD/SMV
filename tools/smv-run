@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Run one or more SMV modules / stages / app.
-# USAGE: smv-run [-h] [--script <script-path> [--script-opt <option>]*] <smv_app_args> [-- spark_args]
+# USAGE: smv-run [-h] [--script <script-path>] <smv_app_args> [-- spark_args]
 #
 # user can specify optional spark args (such as --master, --executor-memory, etc)
 
