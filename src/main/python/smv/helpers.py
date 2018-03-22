@@ -1501,6 +1501,13 @@ class ColumnHelper(object):
             Returns:
                 (Column): TimestampType. The incremented Timestamp, or null if input is null.
                     **Note** even if the input is DateType, the output is TimestampType
+
+            Please note that although Spark's `date_add` function does the similar
+            thing, they are actually different.
+
+            - Both can act on both `Timestamp` and `Date` types
+            - `smvPlusDays` always returns `Timestamp`, while `F.date_add` always returns
+              `Date`
         """
         if (isinstance(delta, int)):
             jdelta = delta
@@ -1548,6 +1555,13 @@ class ColumnHelper(object):
             Returns:
                 (Column): TimestampType. The incremented Timestamp, or null if input is null.
                     **Note** even if the input is DateType, the output is TimestampType
+
+            Please note that although Spark's `add_months` function does the similar
+            thing, they are actually different.
+
+            - Both can act on both `Timestamp` and `Date` types
+            - `smvPlusMonths` always returns `Timestamp`, while `F.add_months` always returns
+              `Date`
         """
         if (isinstance(delta, int)):
             jdelta = delta
