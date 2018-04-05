@@ -46,7 +46,7 @@ abstract class SmvDataSet extends FilenamePart {
 
   /** Cache metadata so we can reuse it between validation and persistence */
   private var userMetadataCache: Option[SmvMetadata]             = None
-  
+
   /**
     * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
     * to this `getOrCreateMetadata` method will only do a single evaluation of the user
@@ -204,11 +204,7 @@ abstract class SmvDataSet extends FilenamePart {
                               s"create table ${tableName} as select * from dftable")
     }
 
-    def _export = { () =>
-      queries foreach {app.sqlContext.sql(_)}
-    }
-
-    doAction(f"PUBLISHING ${fqn} TO HIVE: ${queries.mkString(";")}")(_export)
+    doAction(f"PUBLISHING ${fqn} TO HIVE: ${queries.mkString(";")}") {queries foreach {app.sqlContext.sql}}
 
   }
 
@@ -363,7 +359,6 @@ abstract class SmvDataSet extends FilenamePart {
     val runTimeStr = PeriodFormat.getDefault().print(duration.toPeriod)
     app.log.info(s"COMPLETED ${desc}")
     app.log.info(s"RunTime: ${runTimeStr}")
-    println(secondsElapsed)
 
     (res, secondsElapsed)
   }
