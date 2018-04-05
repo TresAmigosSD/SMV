@@ -46,7 +46,7 @@ abstract class SmvDataSet extends FilenamePart {
 
   /** Cache metadata so we can reuse it between validation and persistence */
   private var userMetadataCache: Option[SmvMetadata]             = None
-
+  
   /**
     * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
     * to this `getOrCreateMetadata` method will only do a single evaluation of the user
