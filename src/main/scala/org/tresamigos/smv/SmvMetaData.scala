@@ -32,10 +32,17 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
   // Durations of task involved in running a module, by bame
   var task2duration: Map[String, Double] = Map.empty
 
-  def getDurationMeta: Metadata = {
-    val durationBuilder = new MetadataBuilder
-    task2duration foreach {case (task, duration) => durationBuilder.putDouble(task, duration)}
-    durationBuilder.build
+  def getDurationMeta: Option[Metadata] = {
+    if (task2duration.size > 0) {
+      val durationBuilder = new MetadataBuilder
+      task2duration foreach {case (task, duration) => durationBuilder.putDouble(task, duration)}
+      Some(durationBuilder.build)
+    } else {
+      // exclude duration entry from metadata if there are no task durations to include
+      // this will happen when the module has not been run
+      None
+    }
+
   }
 
   /**
@@ -113,7 +120,7 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
    * String representation is a minified json string
    */
   def toJson: String = {
-    builder.putMetadata("duration", getDurationMeta)
+    getDurationMeta foreach {builder.putMetadata("_duration", _)}
     builder.build.json
   }
 
