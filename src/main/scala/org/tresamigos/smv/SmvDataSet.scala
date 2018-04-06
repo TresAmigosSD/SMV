@@ -16,10 +16,14 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.{DataFrame, SaveMode}
 
-import dqm.{DQMValidator, ParserLogger, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
+import org.apache.hadoop.fs.FileStatus
+
+import dqm.{DQMValidator, DqmValidationResult, ParserLogger, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 
 import scala.collection.JavaConversions._
 import scala.util.Try
+
+import java.io.FileNotFoundException
 
 import edd._
 
@@ -38,8 +42,10 @@ trait FilenamePart {
  */
 abstract class SmvDataSet extends FilenamePart {
 
-  def app: SmvApp                            = SmvApp.app
-  private var userMetadataCache: Option[SmvMetadata] = None
+  def app: SmvApp                                                = SmvApp.app
+
+  /** Cache metadata so we can reuse it between validation and persistence */
+  private var userMetadataCache: Option[SmvMetadata]             = None
 
   /**
    * The FQN of an SmvDataSet is its classname for Scala implementations.
@@ -161,17 +167,24 @@ abstract class SmvDataSet extends FilenamePart {
    */
   def exportToHive(collector: SmvRunInfoCollector) = {
     val dataframe = rdd(collector=collector)
+
     // register the dataframe as a temp table.  Will be overwritten on next register.
     dataframe.createOrReplaceTempView("dftable")
 
     // if user provided a publish hive sql command, run it instead of default
     // table creation from data frame result.
-    if (publishHiveSql.isDefined) {
-      publishHiveSql.get.split(";").map {stmt => app.sqlContext.sql(stmt.trim)}
-    } else {
-      app.sqlContext.sql(s"drop table if exists ${tableName}")
-      app.sqlContext.sql(s"create table ${tableName} as select * from dftable")
+    val queries: Seq[String] = publishHiveSql match {
+      case Some(query) => query.split(";") map (_.trim)
+      case None        => Seq(s"drop table if exists ${tableName}",
+                              s"create table ${tableName} as select * from dftable")
     }
+
+    def _export = { () =>
+      queries foreach {app.sqlContext.sql(_)}
+    }
+
+    doAction(f"PUBLISHING ${fqn} TO HIVE: ${queries.mkString(";")}", _export)
+
   }
 
   /** do not persist validation result if isObjectInShell **/
@@ -222,6 +235,19 @@ abstract class SmvDataSet extends FilenamePart {
   /** Returns the path for the module's csv output */
   def moduleCsvPath(prefix: String = ""): String =
     versionedBasePath(prefix) + ".csv"
+
+  def lockfilePath(prefix: String = ""): String =
+    moduleCsvPath(prefix) + ".lock"
+
+  /** Returns the file status for the lockfile if found */
+  def lockfileStatus: Option[FileStatus] =
+    // use try/catch instead of Try because we want to handle only
+    // FileNotFoundException and let other errors bubble up
+    try {
+      Some(SmvHDFS.getFileStatus(lockfilePath()))
+    } catch {
+      case e: FileNotFoundException => None
+    }
 
   /** Returns the path for the module's schema file */
   private[smv] def moduleSchemaPath(prefix: String = ""): String =
@@ -290,6 +316,19 @@ abstract class SmvDataSet extends FilenamePart {
                attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
     new FileIOHandler(app.sparkSession, path).csvFileWithSchema(attr)
 
+  /**
+   * Perform an action and log the amount of time it took
+   */
+  def doAction(desc: String, action: () => Unit): Unit = {
+    app.log.info(f"${desc}")
+    val before  = DateTime.now()
+
+    action()
+
+    val after   = DateTime.now()
+    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
+    app.log.info(s"RunTime: ${runTime}")
+  }
 
   def persist(dataframe: DataFrame,
               prefix: String = ""): Unit = {
@@ -303,15 +342,12 @@ abstract class SmvDataSet extends FilenamePart {
     val df      = dataframe.smvPipeCount(counter)
     val handler = new FileIOHandler(app.sparkSession, path)
 
-    //Always persist null string as a special value with assumption that it's not
-    //a valid data value
-    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
+    def _persist = () => handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
 
-    val after   = DateTime.now()
-    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
+    doAction(f"PERSISTING OUTPUT: ${path}", _persist)
+
     val n       = counter.value
-
-    println(s"${fmt.print(after)} RunTime: ${runTime}, N: ${n}")
+    app.log.info(f"N: ${n}")
   }
 
   private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
@@ -393,10 +429,10 @@ abstract class SmvDataSet extends FilenamePart {
    * Get the most detailed metadata available without running this module. If
    * the modules has been run and hasn't been changed, this will be all the metadata
    * that was persisted. If the module hasn't been run since it was changed, this
-   * will be a less detailed report.
+   * report will exclude the DQM validation result and user metadata.
    */
   private[smv] def getMetadata(): SmvMetadata =
-    readPersistedMetadata().getOrElse(getOrCreateMetadata(None))
+    readPersistedMetadata().getOrElse(getOrCreateMetadata(None, None))
 
   /**
    * Read metadata history from file if it exists, otherwise return empty metadata
@@ -405,8 +441,9 @@ abstract class SmvDataSet extends FilenamePart {
     readMetadataHistory().getOrElse(SmvMetadataHistory.empty)
 
   /**
-   * Create SmvMetadata for this SmvDataset. SmvMetadata will be more detailed if
-   * a DataFrame is provided
+   * Create SmvMetadata for this SmvDataset. SmvMetadata will include user metadata
+   * if dfOpt is not None, and will contain a jsonification of the DqmValidationResult
+   * (including DqmState) if validResOpt is not None.
    *
    * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
    * to this `getOrCreateMetadata` method will only do a single evaluation of the user
@@ -416,15 +453,19 @@ abstract class SmvDataSet extends FilenamePart {
    * return incase this method is called multiple times in same run with/without
    * the df argument.  We assume the df value is the same for all calls!
    */
-  private[smv] def getOrCreateMetadata(dfOpt: Option[DataFrame]): SmvMetadata = {
+  private[smv] def getOrCreateMetadata(dfOpt:       Option[DataFrame],
+                                       validResOpt: Option[DqmValidationResult]): SmvMetadata = {
     val resMetadata = dfOpt match {
       case Some(df) => {
         // updated cached user metadata if it was not already computed.
-        userMetadataCache = userMetadataCache match {
-          case None => Option(metadata(df))
-          case _ => userMetadataCache
+        userMetadataCache match {
+          case Some(meta) => meta
+          case None => {
+            app.log.info(f"GENERATING USER METADATA: ${fqn}")
+            userMetadataCache = Some(metadata(df))
+            userMetadataCache.get
+          }
         }
-        userMetadataCache.get
       }
       case _ => new SmvMetadata()
     }
@@ -432,15 +473,18 @@ abstract class SmvDataSet extends FilenamePart {
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
     dfOpt foreach {resMetadata.addSchemaMetadata}
     timestamp foreach {resMetadata.addTimestamp}
+    validResOpt foreach {resMetadata.addDqmValidationResult}
     resMetadata
   }
 
   /**
    * Persist versioned copy of metadata
    */
-  private[smv] def persistMetadata(metadata: SmvMetadata): Unit =
-    metadata.saveToFile(app.sc, moduleMetaPath())
-
+  private[smv] def persistMetadata(metadata: SmvMetadata): Unit = {
+    val metaPath =  moduleMetaPath()
+    def _persistMetadata() = metadata.saveToFile(app.sc, metaPath)
+    doAction(f"PERSISTING METADATA: ${metaPath}", _persistMetadata)
+  }
   /**
    * Maximum of the metadata history
    * TODO: Verify that this is positive
@@ -450,11 +494,14 @@ abstract class SmvDataSet extends FilenamePart {
   /**
    * Save metadata history with new metadata
    */
-  private[smv] def persistMetadataHistory(metadata: SmvMetadata, oldHistory: SmvMetadataHistory): Unit =
-    oldHistory
-      .update(metadata, metadataHistorySize)
-      .saveToFile(app.sc, moduleMetaHistoryPath())
-
+  private[smv] def persistMetadataHistory(metadata: SmvMetadata, oldHistory: SmvMetadataHistory): Unit = {
+    val metaHistoryPath = moduleMetaHistoryPath()
+    def _peristMetaHistory() =
+      oldHistory
+        .update(metadata, metadataHistorySize)
+        .saveToFile(app.sc, metaHistoryPath)
+    doAction(f"PERSISTING METADATA HISTORY: ${metaHistoryPath}", _peristMetaHistory)
+  }
   /**
    * Override to validate module results based on current and historic metadata.
    * If Some, DQM will fail. Defaults to None.
@@ -467,15 +514,15 @@ abstract class SmvDataSet extends FilenamePart {
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
-      val validation = dqmValidator.validate(df, hasAction, moduleValidPath())
-      val metadata = getOrCreateMetadata(Some(df))
+      val validationResult = dqmValidator.validate(df, hasAction, moduleValidPath())
+      val metadata = getOrCreateMetadata(Some(df), Some(validationResult))
       // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
       deleteOutputs(metadataOutputFiles)
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
 
-      collector.addRunInfo(fqn, validation, metadata, metadataHistory)
+      collector.addRunInfo(fqn, validationResult, metadata, metadataHistory)
     }
 
     if (isEphemeral) {
@@ -485,7 +532,7 @@ abstract class SmvDataSet extends FilenamePart {
     } else {
       readPersistedFile().recoverWith {
         case e =>
-          SmvLock.withLock(moduleCsvPath() + ".lock") {
+          SmvLock.withLock(lockfilePath()) {
             // Another process may have persisted the data while we
             // waited for the lock. So we read again before computing.
             readPersistedFile().recoverWith { case x =>
@@ -543,7 +590,12 @@ abstract class SmvDataSet extends FilenamePart {
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
-    getOrCreateMetadata(Some(df)).saveToFile(app.sc, publishMetaPath(version))
+    // Read persisted metadata and metadata history, and publish it with the output.
+    // Note that the metadata will have been persisted, because either
+    // 1. the metadata was persisted before publish was started
+    // 2. the module had not been run successully yet, so the module was run
+    //    when rdd was called above, persisting the metadata.
+    getMetadata.saveToFile(app.sc, publishMetaPath(version))
     getMetadataHistory.saveToFile(app.sc, publishHistoryPath(version))
     /* publish should also calculate edd if generarte Edd flag was turned on */
     if (app.genEdd)

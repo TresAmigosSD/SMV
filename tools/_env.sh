@@ -7,6 +7,7 @@
 # USER_CMD : name of the script that was launched (caller of this script)
 # SMV_APP_CLASS : user specified --class name to use for spark-submit or SmvApp as default
 # APP_JAR : user specified --jar option or the discovered application fat jar.
+# SMV_USER_SCRIPT : optional user-defined launch script
 #
 
 # This function is used to split the command line arguments into SMV / Spark
@@ -24,6 +25,10 @@ function split_smv_spark_args()
           shift
           SPARK_HOME_OPT="$1"
           shift
+        elif [ "$1" == "--script" ]; then
+          shift
+          SMV_USER_SCRIPT="$1"
+          shift
         else
           SMV_ARGS=("${SMV_ARGS[@]}" "$1")
           shift
@@ -32,17 +37,33 @@ function split_smv_spark_args()
 
     # Need to extract the --jars option so we can concatenate those jars with
     # the APP_JAR when we run the spark-submit. Spark will not accept 2 separate
-    # --jars options
+    # --jars options. Also need to handle the case when user uses equal signs (--jars=xyz.jar)
+    # Same for --driver-class-path
     while [ $# -ne 0 ]; do
         if [ "$1" == "--jars" ]; then
             shift
             EXTRA_JARS="$1"
+            shift
+        # See http://wiki.bash-hackers.org/syntax/pe#search_and_replace for bash string parsing
+        # tricks
+        elif [ ${1%%=*} == "--jars" ]; then
+            local ACTUAL_JARS_PORTION="${1#*=}"
+            EXTRA_JARS="${ACTUAL_JARS_PORTION}"
+            # Only need to shift once since we dont have a space separator
+            shift
+        elif [ "$1" == "--driver-class-path" ]; then
+            EXTRA_DRIVER_CLASSPATHS="$1"
+        elif [ ${1%%=*} == "--driver-class-path" ]; then
+            local ACTUAL_CLASSPATHS_PORTION="${1#*=}"
+            EXTRA_DRIVER_CLASSPATHS="${ACTUAL_CLASSPATHS_PORTION}"
+            # Only need to shift once since we dont have a space separator
             shift
         else
           SPARK_ARGS=("${SPARK_ARGS[@]}" "$1")
           shift
         fi
     done
+
 }
 
 function find_file_in_dir()
@@ -178,6 +199,11 @@ function print_help() {
 
 # --- MAIN ---
 declare -a SMV_ARGS SPARK_ARGS
+# SMV_TOOLS should have been set by caller.
+if [ -z "$SMV_TOOLS" ]; then
+    echo "ERROR: SMV_TOOLS not set by calling script!"
+    exit 1
+fi
 USER_CMD=`basename $0`
 SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
 split_smv_spark_args "$@"

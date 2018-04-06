@@ -50,21 +50,44 @@ class SmvRunInfoCollector {
    *
    * @throws NoSuchElementException if the dataset is not known to the collector
    */
-  def getDqmValidationResult(dsFqn: String): DqmValidationResult = runInfo(dsFqn).validation
+  def getDqmValidationResult(dsName: String): DqmValidationResult = inferRunInfo(dsName).validation
 
   /**
    * Returns the metadata for a given dataset
    *
    * @throws NoSuchElementException if the dataset is not known to the collector
    */
-  def getMetadata(dsFqn: String): SmvMetadata = runInfo(dsFqn).metadata
+  def getMetadata(dsName: String): SmvMetadata = inferRunInfo(dsName).metadata
 
   /**
    * Returns the metadata history for a given dataset
    *
    * @throws NoSuchElementException if the dataset is not known to the collector
    */
-  def getMetadataHistory(dsFqn: String): SmvMetadataHistory = runInfo(dsFqn).metadataHistory
+  def getMetadataHistory(dsName: String): SmvMetadataHistory = inferRunInfo(dsName).metadataHistory
+
+  /**
+   * Returns the unique fqn ending with @param dsName from the datasets collected
+   *
+   * @throws SmvRuntimeException if no dataset or multiple dataset fqns ends with dsName
+   */
+  def inferFqn(dsName: String): String = {
+    val candidates = dsFqns filter (_.endsWith(dsName))
+    candidates.size match {
+      case 0 =>
+        throw new SmvRuntimeException(s"""No run info collected for module named [${dsName}]""")
+      case 1 => candidates.head
+      case _ =>
+        throw new SmvRuntimeException(s"[${dsName}] could refer to [${candidates.mkString(", ")}]")
+    }
+  }
+
+  /**
+   * Returns the unique runInfo with fqn ending with @param dsName from the datasets collected
+   *
+   * @throws SmvRuntimeException if no dataset or multiple dataset fqns ends with dsName
+   */
+  def inferRunInfo(dsName: String): SmvRunInfo = runInfo(inferFqn(dsName))
 }
 
 case class SmvRunInfo(validation: DqmValidationResult, metadata: SmvMetadata, metadataHistory: SmvMetadataHistory)
