@@ -15,7 +15,7 @@ SMV includes the following fields in all module metadata:
 - `_timestamp`: the time at which the module was run (all modules run in one transaction will share a timestamp)
 - `_duration`: the amount of time in seconds spent on different tasks while running the module
     - `metadata`: time spent generating user metadata
-    - `dqm`: time spent running dqm validation. If the module is ephemeral, this should be close to 0s, as the rules and fixes are applied while persisting the module. Otherwise, the time will be dominated by time spent counting rule failures and fixes.
+    - `dqm`: time spent running dqm validation. This should be close to 0s if the module isn't ephemeral, as the rules and fixes are applied while persisting the module. Otherwise, the time will be dominated by time spent counting rule failures and fixes.
     - `persisting`: time spent persisting output to csv. This field will be omitted if the module is ephemeral, as output will not be persisted. Otherwise, this will include time spent counting rule failures, which is simultaneous with persisting.
 
 # Custom metadata
