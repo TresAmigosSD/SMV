@@ -48,6 +48,26 @@ abstract class SmvDataSet extends FilenamePart {
   private var userMetadataCache: Option[SmvMetadata]             = None
 
   /**
+    * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
+    * to this `getOrCreateMetadata` method will only do a single evaluation of the user
+    * defined metadata method which could be quite expensive.
+    */
+  def getOrCreateUserMetadata(df: DataFrame): SmvMetadata = {
+    userMetadataCache match {
+      // use cached metadata if it exists
+      case Some(meta) => meta
+      // calculate and cache user metadata otherwise
+      case None => {
+        def _createUserMetadata() = metadata(df)
+        val (userMetadata, elapsed) = doAction(f"GENERATING USER METADATA: ${fqn}")(_createUserMetadata)
+        userMetadataCache = Some(userMetadata)
+        userMetadataTimeElapsed = Some(elapsed)
+        userMetadata
+      }
+    }
+  }
+
+  /**
    * The FQN of an SmvDataSet is its classname for Scala implementations.
    *
    * Scala proxies for implementations in other languages must
@@ -82,6 +102,11 @@ abstract class SmvDataSet extends FilenamePart {
 
   def setTimestamp(dt: DateTime) =
     timestamp = Some(dt)
+
+  private var userMetadataTimeElapsed: Option[Double] = None
+  private var persistingTimeElapsed: Option[Double]   = None
+  private var totalTimeElapsed: Option[Double]        = None
+  private var dqmTimeElapsed: Option[Double]          = None
 
   lazy val ancestors: Seq[SmvDataSet] =
     (resolvedRequiresDS ++ resolvedRequiresDS.flatMap(_.ancestors)).distinct
@@ -179,11 +204,7 @@ abstract class SmvDataSet extends FilenamePart {
                               s"create table ${tableName} as select * from dftable")
     }
 
-    def _export = { () =>
-      queries foreach {app.sqlContext.sql(_)}
-    }
-
-    doAction(f"PUBLISHING ${fqn} TO HIVE: ${queries.mkString(";")}", _export)
+    doAction(f"PUBLISHING ${fqn} TO HIVE: ${queries.mkString(";")}") {queries foreach {app.sqlContext.sql}}
 
   }
 
@@ -207,7 +228,13 @@ abstract class SmvDataSet extends FilenamePart {
    * we may need to be passed the user defined DQM rules in python.
    */
   private[smv] def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) =
-    userDQM.add(new DQMMetadataPolicy(this))
+    userDQM
+
+  /**
+   * DQM inlcuding user policies, type specific policies, and metadata policy
+   */
+  private[smv] def completeDQM =
+    dqmWithTypeSpecificPolicy(dqm()).add(new DQMMetadataPolicy(this))
 
   /**
    * returns the DataFrame from this dataset (file/module).
@@ -319,15 +346,21 @@ abstract class SmvDataSet extends FilenamePart {
   /**
    * Perform an action and log the amount of time it took
    */
-  def doAction(desc: String, action: () => Unit): Unit = {
+  def doAction[T](desc: String)(action: => T): (T, Double)= {
     app.log.info(f"${desc}")
     val before  = DateTime.now()
 
-    action()
+    val res: T = action
 
     val after   = DateTime.now()
-    val runTime = PeriodFormat.getDefault().print(new Period(before, after))
-    app.log.info(s"RunTime: ${runTime}")
+    val duration = new Duration(before, after)
+    val secondsElapsed = duration.getMillis() / 1000.0
+
+    val runTimeStr = PeriodFormat.getDefault().print(duration.toPeriod)
+    app.log.info(s"COMPLETED ${desc}")
+    app.log.info(s"RunTime: ${runTimeStr}")
+
+    (res, secondsElapsed)
   }
 
   def persist(dataframe: DataFrame,
@@ -337,9 +370,9 @@ abstract class SmvDataSet extends FilenamePart {
     val df      = dataframe.smvPipeCount(counter)
     val handler = new FileIOHandler(app.sqlContext, path)
 
-    def _persist = () => handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
-
-    doAction(f"PERSISTING OUTPUT: ${path}", _persist)
+    val (_, elapsed) =
+      doAction(f"PERSISTING OUTPUT: ${path}"){handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")}
+    persistingTimeElapsed = Some(elapsed)
 
     val n       = counter.value
     app.log.info(f"N: ${n}")
@@ -440,35 +473,26 @@ abstract class SmvDataSet extends FilenamePart {
    * if dfOpt is not None, and will contain a jsonification of the DqmValidationResult
    * (including DqmState) if validResOpt is not None.
    *
-   * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
-   * to this `getOrCreateMetadata` method will only do a single evaluation of the user
-   * defined metadata method which could be quite expensive.
-   *
-   * Note: we only cache the `metadata(df)` result and not the entire `SmvMetadata`
+   * Note: we only cache the user metadata result and not the entire `SmvMetadata`
    * return incase this method is called multiple times in same run with/without
    * the df argument.  We assume the df value is the same for all calls!
    */
   private[smv] def getOrCreateMetadata(dfOpt:       Option[DataFrame],
                                        validResOpt: Option[DqmValidationResult]): SmvMetadata = {
     val resMetadata = dfOpt match {
-      case Some(df) => {
-        // updated cached user metadata if it was not already computed.
-        userMetadataCache match {
-          case Some(meta) => meta
-          case None => {
-            app.log.info(f"GENERATING USER METADATA: ${fqn}")
-            userMetadataCache = Some(metadata(df))
-            userMetadataCache.get
-          }
-        }
-      }
-      case _ => new SmvMetadata()
+      // if df provided, get user metadata (which may be cached)
+      case Some(df) => getOrCreateUserMetadata(df)
+      // otherwise, skip user metadata - none can be evaluated if there if we haven't run the module
+      case _        => new SmvMetadata()
     }
     resMetadata.addFQN(fqn)
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
     dfOpt foreach {resMetadata.addSchemaMetadata}
     timestamp foreach {resMetadata.addTimestamp}
     validResOpt foreach {resMetadata.addDqmValidationResult}
+    userMetadataTimeElapsed foreach {resMetadata.addDuration("metadata", _)}
+    persistingTimeElapsed foreach {resMetadata.addDuration("persisting", _)}
+    dqmTimeElapsed foreach {resMetadata.addDuration("dqm", _)}
     resMetadata
   }
 
@@ -477,8 +501,7 @@ abstract class SmvDataSet extends FilenamePart {
    */
   private[smv] def persistMetadata(metadata: SmvMetadata): Unit = {
     val metaPath =  moduleMetaPath()
-    def _persistMetadata() = metadata.saveToFile(app.sc, metaPath)
-    doAction(f"PERSISTING METADATA: ${metaPath}", _persistMetadata)
+    doAction(f"PERSISTING METADATA: ${metaPath}") {metadata.saveToFile(app.sc, metaPath)}
   }
   /**
    * Maximum of the metadata history
@@ -491,11 +514,11 @@ abstract class SmvDataSet extends FilenamePart {
    */
   private[smv] def persistMetadataHistory(metadata: SmvMetadata, oldHistory: SmvMetadataHistory): Unit = {
     val metaHistoryPath = moduleMetaHistoryPath()
-    def _peristMetaHistory() =
+    doAction(f"PERSISTING METADATA HISTORY: ${metaHistoryPath}") {
       oldHistory
         .update(metadata, metadataHistorySize)
         .saveToFile(app.sc, metaHistoryPath)
-    doAction(f"PERSISTING METADATA HISTORY: ${metaHistoryPath}", _peristMetaHistory)
+    }
   }
   /**
    * Override to validate module results based on current and historic metadata.
@@ -505,11 +528,16 @@ abstract class SmvDataSet extends FilenamePart {
     None
 
   private[smv] def computeRDD(genEdd: Boolean, collector: SmvRunInfoCollector): DataFrame = {
-    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()), isPersistValidateResult)
+    val dqmValidator  = new DQMValidator(completeDQM, isPersistValidateResult)
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
-      val validationResult = dqmValidator.validate(df, hasAction, moduleValidPath())
+      // Populate user metadata cache to isolate time spent on DQM from time spent on metadata
+      getOrCreateUserMetadata(df)
+      val (validationResult, validationDuration) =
+        doAction(f"VALIDATING DATA QUALITY: ${fqn}") {dqmValidator.validate(df, hasAction, moduleValidPath())}
+      dqmTimeElapsed = Some(validationDuration)
+
       val metadata = getOrCreateMetadata(Some(df), Some(validationResult))
       // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory

@@ -29,6 +29,21 @@ import dqm.DqmValidationResult
  * TODO: Add getter methods and more types of metadata (e.g. validation results)
  */
 class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
+  // Durations of task involved in running a module, by bame
+  var task2duration: Map[String, Double] = Map.empty
+
+  def getDurationMeta: Option[Metadata] = {
+    if (task2duration.size > 0) {
+      val durationBuilder = new MetadataBuilder
+      task2duration foreach {case (task, duration) => durationBuilder.putDouble(task, duration)}
+      Some(durationBuilder.build)
+    } else {
+      // exclude duration entry from metadata if there are no task durations to include
+      // this will happen when the module has not been run
+      None
+    }
+
+  }
 
   /**
    * Add FQN field
@@ -55,6 +70,13 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
    */
   def addTimestamp(dt: DateTime) = {
     builder.putString("_timestamp", dt.toString)
+  }
+
+  /**
+   * Add description of how many seconds a task took to run
+   */
+  def addDuration(name: String, duration: Double) = {
+    task2duration = task2duration + (name -> duration)
   }
 
   /**
@@ -97,8 +119,10 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
   /**
    * String representation is a minified json string
    */
-  def toJson: String =
+  def toJson: String = {
+    getDurationMeta foreach {builder.putMetadata("_duration", _)}
     builder.build.json
+  }
 
   /**
    * Saves the string representation to file as a single row RDD

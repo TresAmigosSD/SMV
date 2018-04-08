@@ -86,8 +86,8 @@ class RejectTest extends SmvTestUtil {
       DqmStateSnapshot(0, ErrorReport(1,
         Seq("""java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,"02122011""")),Map.empty,Map.empty),
       Seq(
-        ("org.tresamigos.smv.SmvCsvStringData metadata validation", "true"),
-        ("FailParserCountPolicy(1)", "false")),
+        ("FailParserCountPolicy(1)", "false"),
+        ("org.tresamigos.smv.SmvCsvStringData metadata validation", "true")),
       Seq("java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011")))
   }
 
