@@ -216,10 +216,18 @@ abstract class SmvDataSet extends FilenamePart {
    * dynamically loading the same SmvDataSet. If force argument is true, the we
    * skip the cache.
    * Note: the RDD graph is cached and NOT the data (i.e. rdd.cache is NOT called here)
+   *
+   * @param forceRun skip the module cache and for the module to run
+   * @param genEdd if true, compute and persist EDD to file
+   * @param collector recepticle for info about running the module
+   * @param quickRun skip computing metadata+validation and persisting output
    */
-  def rdd(forceRun: Boolean = false, genEdd: Boolean = app.genEdd, collector: SmvRunInfoCollector) = {
+  def rdd(forceRun: Boolean = false,
+          genEdd: Boolean = app.genEdd,
+          collector: SmvRunInfoCollector,
+          quickRun: Boolean = false) = {
     if (forceRun || !app.dfCache.contains(versionedFqn)) {
-      app.dfCache = app.dfCache + (versionedFqn -> computeRDD(genEdd, collector))
+      app.dfCache = app.dfCache + (versionedFqn -> computeDataFrame(genEdd, collector, quickRun))
     }
     app.dfCache(versionedFqn)
   }
@@ -270,7 +278,7 @@ abstract class SmvDataSet extends FilenamePart {
     s"""${app.smvConfig.historyDir}/${prefix}${fqn}.hist"""
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector): DataFrame
+  private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame
 
   /**
    * delete the output(s) associated with this module (csv file and schema).
@@ -504,7 +512,17 @@ abstract class SmvDataSet extends FilenamePart {
   def validateMetadata(metadata: SmvMetadata, history: Seq[SmvMetadata]): Option[String] =
     None
 
-  private[smv] def computeRDD(genEdd: Boolean, collector: SmvRunInfoCollector): DataFrame = {
+  /**
+   * Compute, and return the output DataFrame. Also, compute metadata and validate
+   * DQ. Persist all results.
+   *
+   * @param genEdd if true, compute and persist EDD to file
+   * @param collector recepticle for info about running the module
+   * @param quickRun skip computing metadata+validation and persisting output
+   */
+  private[smv] def computeDataFrame(genEdd: Boolean,
+                                    collector: SmvRunInfoCollector,
+                                    quickRun: Boolean): DataFrame = {
     val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm()), isPersistValidateResult)
 
     // shared logic when running ephemeral and non-ephemeral modules
@@ -520,8 +538,10 @@ abstract class SmvDataSet extends FilenamePart {
       collector.addRunInfo(fqn, validationResult, metadata, metadataHistory)
     }
 
-    if (isEphemeral) {
-      val df = dqmValidator.attachTasks(doRun(dqmValidator, collector))
+    if (quickRun) {
+      doRun(dqmValidator, collector, quickRun)
+    } else if (isEphemeral) {
+      val df = dqmValidator.attachTasks(doRun(dqmValidator, collector, quickRun))
       runDqmAndMeta(df, false) // no action before this point
       df
     } else {
@@ -531,7 +551,7 @@ abstract class SmvDataSet extends FilenamePart {
             // Another process may have persisted the data while we
             // waited for the lock. So we read again before computing.
             readPersistedFile().recoverWith { case x =>
-              val df = dqmValidator.attachTasks(doRun(dqmValidator, collector))
+              val df = dqmValidator.attachTasks(doRun(dqmValidator, collector, quickRun))
               // Delete outputs in case data was partially written previously
               deleteOutputs(versionedOutputFiles)
               persist(df)
@@ -654,7 +674,7 @@ class SmvHiveTable(override val tableName: String, val userQuery: String = null)
       userQuery
   }
 
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector): DataFrame = {
+  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
     val df = app.sqlContext.sql(query)
     run(df)
   }
@@ -691,7 +711,7 @@ class SmvJdbcTable(override val tableName: String)
     }
   }
 
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector): DataFrame = {
+  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
     val url = app.smvConfig.jdbcUrl
     val tableDf =
       app.sqlContext.read
@@ -779,7 +799,7 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
    */
   private[smv] def readFromFile(parserLogger: ParserLogger): DataFrame
 
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector): DataFrame = {
+  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
     val parserValidator =
       if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
     val df      = readFromFile(parserValidator)
@@ -946,9 +966,9 @@ abstract class SmvModule(val description: String) extends SmvDataSet {
   def run(inputs: runParams): DataFrame
 
   /** perform the actual run of this module to get the generated SRDD result. */
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector): DataFrame = {
+  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
     val paramMap: Map[SmvDataSet, DataFrame] =
-      (resolvedRequiresDS map (dep => (dep, dep.rdd(collector=collector)))).toMap
+      (resolvedRequiresDS map (dep => (dep, dep.rdd(collector=collector, quickRun=quickRun)))).toMap
     run(new runParams(paramMap))
   }
 
@@ -1068,9 +1088,9 @@ class SmvModuleLink(val outputModule: SmvOutput)
   /**
    * SmvModuleLinks should not cache or validate their data
    */
-  override def computeRDD(genEdd: Boolean, collector: SmvRunInfoCollector) =
-    throw new SmvRuntimeException("SmvModuleLink computeRDD should never be called")
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector) =
+  override def computeDataFrame(genEdd: Boolean, collector: SmvRunInfoCollector, quickRun: Boolean) =
+    throw new SmvRuntimeException("SmvModuleLink computeDataFrame should never be called")
+  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean) =
     throw new SmvRuntimeException("SmvModuleLink doRun should never be called")
 
   /**
@@ -1080,7 +1100,10 @@ class SmvModuleLink(val outputModule: SmvOutput)
    * and run the DS, or "not-follow-the-link", which will try to read from the persisted data dir
    * and fail if not found.
    */
-  override def rdd(forceRun: Boolean = false, genEdd: Boolean = false, collector: SmvRunInfoCollector): DataFrame = {
+  override def rdd(forceRun: Boolean = false,
+                   genEdd: Boolean = false,
+                   collector: SmvRunInfoCollector,
+                   quickRun: Boolean = false): DataFrame = {
     // forceRun argument is ignored (SmvModuleLink is rerun anyway)
     if (isFollowLink) {
       smvModule.readPublishedData().getOrElse(smvModule.rdd(collector=collector))
@@ -1137,8 +1160,11 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
     this
   }
 
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector): DataFrame = {
-    val urn2df = resolvedRequiresDS.map { ds =>(ds.urn.toString, ds.rdd(collector=collector))}.toMap
+  override private[smv] def doRun(dqmValidator: DQMValidator,
+                                  collector: SmvRunInfoCollector,
+                                  quickRun: Boolean): DataFrame = {
+    val urn2df: Map[String, DataFrame] =
+      resolvedRequiresDS.map { ds => (ds.urn.toString, ds.rdd(collector=collector, quickRun=quickRun))}.toMap
     val response =  target.getDoRun(dqmValidator, urn2df)
     return getPy4JResult(response)
   }
@@ -1206,7 +1232,7 @@ class SmvCsvStringData(
     (crc.getValue).toInt
   }
 
-  override def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector): DataFrame = {
+  override def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
     val schema    = SmvSchema.fromString(schemaStr)
     val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
 
