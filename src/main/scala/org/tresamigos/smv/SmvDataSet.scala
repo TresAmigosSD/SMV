@@ -21,7 +21,7 @@ import org.apache.hadoop.fs.FileStatus
 import dqm.{DQMValidator, DqmValidationResult, ParserLogger, SmvDQM, TerminateParserLogger, FailParserCountPolicy}
 
 import scala.collection.JavaConversions._
-import scala.util.Try
+import scala.util.{Try, Success, Failure}
 
 import java.io.FileNotFoundException
 
@@ -521,31 +521,45 @@ abstract class SmvDataSet extends FilenamePart {
     }
 
     if (isEphemeral) {
+      app.log.info(f"${fqn} is not cached, because it is ephemeral")
       val df = dqmValidator.attachTasks(doRun(dqmValidator, collector))
       runDqmAndMeta(df, false) // no action before this point
       df
     } else {
-      readPersistedFile().recoverWith {
-        case e =>
+      readPersistedFile() match {
+        // Output was persisted, so return a DF which consists of reading from
+        // that persisted result
+        case Success(df) =>
+          app.log.info(f"Relying on cached result ${moduleCsvPath()} for ${fqn}")
+          df
+        // Output was not persisted (or something else went wrong), run module, persist output,
+        // and return DFn which consists of reading from that persisted result
+        case _ =>
+          // Acquire lock on output CSV to ensure write is atomic
           SmvLock.withLock(lockfilePath()) {
             // Another process may have persisted the data while we
             // waited for the lock. So we read again before computing.
-            readPersistedFile().recoverWith { case x =>
-              val df = dqmValidator.attachTasks(doRun(dqmValidator, collector))
-              // Delete outputs in case data was partially written previously
-              deleteOutputs(versionedOutputFiles)
-              persist(df)
+            readPersistedFile() match {
+              case Success(df) =>
+                app.log.info(f"Relying on cached result ${moduleCsvPath()} for ${fqn} found after lock acquired")
+                df
+              case _ =>
+                app.log.info(f"No cached result found for ${fqn}. Caching result at ${moduleCsvPath()}")
+                val df = dqmValidator.attachTasks(doRun(dqmValidator, collector))
+                // Delete outputs in case data was partially written previously
+                deleteOutputs(versionedOutputFiles)
+                persist(df)
 
-              runDqmAndMeta(df, true) // has already had action (from persist)
+                runDqmAndMeta(df, true) // has already had action (from persist)
 
-              // Generate and persist edd based on result of reading results from disk. Avoids
-              // a possibly expensive action on the result from before persisting.
-              if(genEdd)
-                persistEdd(df)
-              readPersistedFile()
+                // Generate and persist edd based on result of reading results from disk. Avoids
+                // a possibly expensive action on the result from before persisting.
+                if(genEdd)
+                  persistEdd(df)
+                readPersistedFile().get
             }
           }
-      }.get
+      }
     }
   }
 
