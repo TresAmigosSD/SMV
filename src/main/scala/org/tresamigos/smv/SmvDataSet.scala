@@ -59,7 +59,7 @@ abstract class SmvDataSet extends FilenamePart {
       // calculate and cache user metadata otherwise
       case None => {
         def _createUserMetadata() = metadata(df)
-        val (userMetadata, elapsed) = doAction(f"GENERATING USER METADATA: ${fqn}")(_createUserMetadata)
+        val (userMetadata, elapsed) = doAction(f"GENERATE USER METADATA")(_createUserMetadata)
         userMetadataCache = Some(userMetadata)
         userMetadataTimeElapsed = Some(elapsed)
         userMetadata
@@ -203,9 +203,8 @@ abstract class SmvDataSet extends FilenamePart {
       case None        => Seq(s"drop table if exists ${tableName}",
                               s"create table ${tableName} as select * from dftable")
     }
-
-    doAction(f"PUBLISHING ${fqn} TO HIVE: ${queries.mkString(";")}") {queries foreach {app.sqlContext.sql}}
-
+    app.log.info(f"Hive publish query: ${queries.mkString(";")}")
+    doAction(f"PUBLISH TO HIVE") {queries foreach {app.sqlContext.sql}}
   }
 
   /** do not persist validation result if isObjectInShell **/
@@ -347,7 +346,9 @@ abstract class SmvDataSet extends FilenamePart {
    * Perform an action and log the amount of time it took
    */
   def doAction[T](desc: String)(action: => T): (T, Double)= {
-    app.log.info(f"${desc}")
+    val fullDesc = f"${desc}: ${fqn}"
+    app.log.info(f"STARTING ${fullDesc}")
+    app.sc.setJobGroup(groupId=fqn, description=desc)
     val before  = DateTime.now()
 
     val res: T = action
@@ -357,7 +358,8 @@ abstract class SmvDataSet extends FilenamePart {
     val secondsElapsed = duration.getMillis() / 1000.0
 
     val runTimeStr = PeriodFormat.getDefault().print(duration.toPeriod)
-    app.log.info(s"COMPLETED ${desc}")
+    app.sc.clearJobGroup()
+    app.log.info(s"COMPLETED ${fullDesc}")
     app.log.info(s"RunTime: ${runTimeStr}")
 
     (res, secondsElapsed)
@@ -371,7 +373,8 @@ abstract class SmvDataSet extends FilenamePart {
     val handler = new FileIOHandler(app.sqlContext, path)
 
     val (_, elapsed) =
-      doAction(f"PERSISTING OUTPUT: ${path}"){handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")}
+      doAction("PERSIST OUTPUT"){handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")}
+    app.log.info(f"Output path: ${path}")
     persistingTimeElapsed = Some(elapsed)
 
     val n       = counter.value
@@ -501,7 +504,8 @@ abstract class SmvDataSet extends FilenamePart {
    */
   private[smv] def persistMetadata(metadata: SmvMetadata): Unit = {
     val metaPath =  moduleMetaPath()
-    doAction(f"PERSISTING METADATA: ${metaPath}") {metadata.saveToFile(app.sc, metaPath)}
+    doAction(f"PERSIST METADATA") {metadata.saveToFile(app.sc, metaPath)}
+    app.log.info(f"Metadata path: ${metaPath}")
   }
   /**
    * Maximum of the metadata history
@@ -514,11 +518,12 @@ abstract class SmvDataSet extends FilenamePart {
    */
   private[smv] def persistMetadataHistory(metadata: SmvMetadata, oldHistory: SmvMetadataHistory): Unit = {
     val metaHistoryPath = moduleMetaHistoryPath()
-    doAction(f"PERSISTING METADATA HISTORY: ${metaHistoryPath}") {
+    doAction(f"PERSIST METADATA HISTORY") {
       oldHistory
         .update(metadata, metadataHistorySize)
         .saveToFile(app.sc, metaHistoryPath)
     }
+    app.log.info(f"Metadata history path: ${metaHistoryPath}")
   }
   /**
    * Override to validate module results based on current and historic metadata.
@@ -535,7 +540,7 @@ abstract class SmvDataSet extends FilenamePart {
       // Populate user metadata cache to isolate time spent on DQM from time spent on metadata
       getOrCreateUserMetadata(df)
       val (validationResult, validationDuration) =
-        doAction(f"VALIDATING DATA QUALITY: ${fqn}") {dqmValidator.validate(df, hasAction, moduleValidPath())}
+        doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction, moduleValidPath())}
       dqmTimeElapsed = Some(validationDuration)
 
       val metadata = getOrCreateMetadata(Some(df), Some(validationResult))
