@@ -227,6 +227,8 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     defaultProps ++ confFromFiles ++ cmdLineProps
   }
 
+  def quickRun = mergedProps.getOrElse("smv.quickRun", false)
+
   // --- App should access configs through vals below rather than from props maps
   def appName    = mergedProps("smv.appName")
   def appId      = mergedProps("smv.appId")

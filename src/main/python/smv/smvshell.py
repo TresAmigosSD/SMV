@@ -25,7 +25,7 @@ from test_support.testconfig import TestConfig
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
-def df(name, forceRun = False, version = None, runConfig = None):
+def df(name, forceRun=False, version=None, runConfig=None, quickRun=False):
     """The DataFrame result of running the named module
 
         Args:
@@ -33,11 +33,12 @@ def df(name, forceRun = False, version = None, runConfig = None):
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
             version (str): The name of the published version to load from
             runConfig (dict): runtime configuration to use when running the module
+            quickRun (bool): skip computing dqm+metadata and persisting csv
 
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig)[0]
+    return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig, quickRun)[0]
 
 def props():
     """The current app propertied used by SMV after the app, user, command-line
