@@ -28,6 +28,8 @@ parallelExecution in Test := false
 
 publishArtifact in Test := true
 
+envVars in Test := Map("SMV_HOME" -> ".")
+
 // Create itest task that runs integration tests
 val itest = TaskKey[Unit]("itest", "Run Integration Test")
 itest := {
