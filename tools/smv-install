@@ -5,7 +5,7 @@ PROG_NAME=$(basename "$0")
 
 function usage()
 {
-  echo "USAGE: ${PROG_NAME} [-spark] [--no-profile]"
+  echo "USAGE: ${PROG_NAME} [-w] [-spark] [--no-profile]"
   exit $1
 }
 
@@ -15,6 +15,10 @@ function parse_args()
 
   while [[ $# -gt 0 ]]; do
     case $1 in
+      -w)
+        USE_WGET=1
+        shift
+        ;;
       --no-profile)
         NO_PROFILE=1
         shift
@@ -70,10 +74,10 @@ install_app() {
     wget_opts="--progress=bar:force ${wget_opts}"
   fi
 
-  if [ $(type -p curl) ]; then
+  if [ "$(type -p curl)" -a -z "${USE_WGET}" ]; then
     echo "[INFO] exec: curl ${curl_opts} ${remote_tarball}"
     curl ${curl_opts} "${remote_tarball}" > "${local_tarball}"
-  elif [ $(type -p wget) ]; then
+  elif [ "$(type -p wget)" ]; then
     echo "[INFO] exec: wget ${wget_opts} ${remote_tarball}"
     wget ${wget_opts} -O "${local_tarball}" "${remote_tarball}"
   else

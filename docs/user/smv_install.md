@@ -46,6 +46,7 @@ If curl/wget method doesn't work, we can use "sbt assembly" to build SMV by ours
 
 ## Updating paths.
 The install script above will automatically update the user `.profile`, `.bash_profile`, or `.bashrc` files.  For the paths to take effect, user should log out, then log back in to update the paths in the shell.
+Users can specify `--no-profile` to stop the update of the profile files.
 
 ## Verify SMV installation
 To verify that SMV was installed correctly, run the following command:

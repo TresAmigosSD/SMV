@@ -25,7 +25,7 @@ class SmvRunInfoCollector(object):
 
     Example:
         df, coll = smvApp.runModule(...)
-        coll.dsFqns  # returns
+        coll.ds_names  # returns
     """
     def __init__(self, jcollector):
         self.jcollector = jcollector
@@ -34,7 +34,7 @@ class SmvRunInfoCollector(object):
         """Returns a list of FQNs for all datasets that ran"""
         return self.jcollector.dsFqnsAsJava()
 
-    def dqm_validation(self, dsFqn):
+    def dqm_validation(self, ds_name):
         """Returns the DQM validation result for a given dataset
 
         Returns:
@@ -46,12 +46,12 @@ class SmvRunInfoCollector(object):
                 (e.g. caused by a typo in the name)
 
         """
-        java_result = self.jcollector.getDqmValidationResult(dsFqn)
+        java_result = self.jcollector.getDqmValidationResult(ds_name)
         if java_result is None:
             return {}
         return json.loads(java_result.toJSON())
 
-    def dqm_state(self, dsFqn):
+    def dqm_state(self, ds_name):
         """Returns the DQM state for a given dataset
 
         Returns:
@@ -63,12 +63,12 @@ class SmvRunInfoCollector(object):
                 specified dataset (e.g. caused by a typo in the name)
 
         """
-        validation = self.dqm_validation(dsFqn)
+        validation = self.dqm_validation(ds_name)
         if 'dqmStateSnapshot' in validation:
             return validation['dqmStateSnapshot']
         return {}
 
-    def metadata(self, dsFqn):
+    def metadata(self, ds_name):
         """Returns the metadata for a given dataset
 
         Returns:
@@ -80,12 +80,12 @@ class SmvRunInfoCollector(object):
                 (e.g. caused by a typo in the name)
 
         """
-        java_result = self.jcollector.getMetadata(dsFqn)
+        java_result = self.jcollector.getMetadata(ds_name)
         if java_result is None:
             return {}
         return json.loads(java_result.toJson())
 
-    def metadata_history(self, dsFqn):
+    def metadata_history(self, ds_name):
         """Returns the metadata history for a given dataset
 
         Returns:
@@ -97,26 +97,51 @@ class SmvRunInfoCollector(object):
                 (e.g. caused by a typo in the name)
 
         """
-        java_result = self.jcollector.getMetadataHistory(dsFqn)
+        java_result = self.jcollector.getMetadataHistory(ds_name)
         if java_result is None:
             return {}
         # note that the json is an object with the structure
         # {
         #   "history": [
         #     {...},
-        #     ...   
+        #     ...
         #   ]
         # }
         return json.loads(java_result.toJson())['history']
 
-    def show_report(self):
-        msg = 'datasets: %s' % self.fqns()
-        for fqn in self.fqns():
-            msg += '\n+ %s' % fqn
-            msg += '\n|- dqm validation:'
-            msg += '\n     ' + pformat(self.dqm_validation(fqn), indent=5)
-            msg += '\n|- metadata:'
-            msg += '\n     ' + pformat(self.metadata(fqn), indent=5)
-            msg += '\n|- metadata history:'
-            msg += '\n     ' + pformat(self.metadata_history(fqn), indent=5)
+    def show_report(self, ds_name=None, show_history=False):
+        """Print detailed report of information collected
+
+            Args:
+                ds_name (str): report only of named ds if not None
+                show_history (bool): include metadata history in report if True (default False)
+        """
+        if ds_name is None:
+            fqns = self.fqns()
+        else:
+            fqns = [self.jcollector.inferFqn(ds_name)]
+        msg = 'datasets: %s' % fqns
+
+        def items_to_report(fqn):
+            validation = self.dqm_validation(fqn)
+            metadata = self.metadata(fqn)
+            # Remove validation results from metadata (if they exist) as we are reporting it above
+            try:
+                del metadata['_validation']
+            except:
+                pass
+
+            items = [("dqm validation", validation), ("metadata", metadata)]
+            if show_history:
+                history = self.metadata_history(fqn)
+                items.append(("metadata history", history))
+
+            return items
+
+        for fqn_to_report in fqns:
+            msg += '\n+ %s' % fqn_to_report
+            for name, value in items_to_report(fqn_to_report):
+                msg += '\n|- {}:'.format(name)
+                msg += '\n     ' + pformat(value, indent=5)
+
         print(msg)

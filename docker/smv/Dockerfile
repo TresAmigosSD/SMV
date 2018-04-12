@@ -39,7 +39,7 @@ RUN cd /projects &&\
     mv spark-* /usr/lib/spark
 
 # installs python packages.
-# TODO: use requirements.txt from image downloaded above once 1.5.2.18 is out.
+# TODO: use requirements.txt from image downloaded above once 1.5.2.19 is out.
 RUN pip install --upgrade pip
 RUN pip install -r /usr/lib/SMV/docker/smv/requirements.txt
 

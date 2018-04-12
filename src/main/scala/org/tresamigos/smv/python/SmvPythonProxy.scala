@@ -24,6 +24,9 @@ import org.apache.spark.sql.{Column, DataFrame, SQLContext}
 import org.apache.spark.sql.types.DataType
 import matcher._
 
+// Serialize scala map to json w/o reinventing any wheels
+import org.json4s.jackson.Serialization
+
 /** Provides access to enhanced methods on DataFrame, Column, etc */
 object SmvPythonHelper {
   def peekStr(df: DataFrame, pos: Int, colRegex: String): String = df._peek(pos, colRegex)
@@ -211,7 +214,9 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
 /**
  * Provide app-level methods for use in Python.
  *
- * The collection types should be accessible through the py4j gateway.
+ * All returned collection types should be declared in the method
+ * signature as their Java counterparts so that they are accessible
+ * through the py4j gateway.
  */
 class SmvPyClient(val j_smvApp: SmvApp) {
   val config      = j_smvApp.smvConfig
@@ -237,6 +242,20 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     }
   }
 
+  def mergedPropsJSON: String = Serialization.write(j_smvApp.smvConfig.mergedProps)(org.json4s.DefaultFormats)
+
+  def setDynamicRunConfig(runConfig: java.util.Map[String, String]): Unit = {
+    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+    j_smvApp.smvConfig.dynamicRunConfig = dynamicRunConfig
+  }
+
+  def setAppDir(appDir: String): Unit = {
+    // set the scala smv app's app dir, will cause conf for that app to be loaded + reevaluated
+    // effectively changing SMV's working app directory
+
+    j_smvApp.smvConfig.setAppDir(appDir)
+  }
+
   /** Output directory for files */
   def outputDir: String = j_smvApp.smvConfig.outputDir
 
@@ -251,14 +270,18 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
+  def getDsHash(name: String, runConfig: java.util.Map[String, String]): String =
+    j_smvApp.getDsHash(name, javaMapToImmutableMap(runConfig))
+
   /** Runs an SmvModule written in either Python or Scala */
   def runModule(urn: String,
                 forceRun: Boolean,
                 version: Option[String],
-                runConfig: java.util.Map[String, String]): RunModuleResult = {
+                runConfig: java.util.Map[String, String],
+                quickCompute: Boolean = false): RunModuleResult = {
     val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
     val collector = new SmvRunInfoCollector
-    val df =  j_smvApp.runModule(URN(urn), forceRun, version, dynamicRunConfig, collector)
+    val df =  j_smvApp.runModule(URN(urn), forceRun, version, dynamicRunConfig, collector, quickCompute)
     RunModuleResult(df, collector)
   }
 
@@ -266,10 +289,11 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def runModuleByName(name: String,
                 forceRun: Boolean,
                 version: Option[String],
-                runConfig: java.util.Map[String, String]): RunModuleResult = {
+                runConfig: java.util.Map[String, String],
+                quickCompute: Boolean = false): RunModuleResult = {
     val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
     val collector = new SmvRunInfoCollector
-    val df =  j_smvApp.runModuleByName(name, forceRun, version, dynamicRunConfig, collector)
+    val df =  j_smvApp.runModuleByName(name, forceRun, version, dynamicRunConfig, collector, quickCompute)
     RunModuleResult(df, collector)
   }
 
@@ -284,11 +308,11 @@ class SmvPyClient(val j_smvApp: SmvApp) {
    * Returns the run information of a dataset and all its dependencies
    * from the last run.
    */
-  def getRunInfo(urn: String): SmvRunInfoCollector =
-    j_smvApp.getRunInfo(URN(urn))
+  def getRunInfo(urn: String, runConfig: java.util.Map[String, String]): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(URN(urn), javaMapToImmutableMap(runConfig))
 
-  def getRunInfoByPartialName(partialName: String): SmvRunInfoCollector =
-    j_smvApp.getRunInfo(partialName)
+  def getRunInfoByPartialName(partialName: String, runConfig: java.util.Map[String, String]): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(partialName, javaMapToImmutableMap(runConfig))
 
   def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
     SmvHDFS.writeToFile(in, dest)
@@ -296,6 +320,10 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   /** Returns metadata for a given urn*/
   def getMetadataJson(urn: String): String =
     j_smvApp.getMetadataJson(URN(urn))
+
+  /** Returns metadata history for a given urn*/
+  def getMetadataHistoryJson(urn: String): String =
+    j_smvApp.getMetadataHistoryJson(URN(urn))
 
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvOutput tables
@@ -305,12 +333,40 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     directMods
   }
 
+  /**
+   * Returns the lock file status, if any, for a given module in a
+   * java.util.Map.  The file modification time will be a String
+   * representation of the datetime in milliseconds, under the key
+   * 'lockTime'.
+   *
+   * Returns an empty map if the lock is not found for the module.
+   *
+   * If the module is not found, the call to inferDS() would throw an
+   * SmvRuntimeException.
+   *
+   * @param modName a name that uniquely identifies a module, typically its FQN
+   * @return a map with the key "lockTime" and the file modification time in milliseconds
+   */
+  def getLockfileStatusForModule(modName: String): java.util.Map[String, String] = {
+    j_smvApp.dsm.inferDS(modName) match {
+      case Nil => java.util.Collections.emptyMap()
+      case ds::_ =>
+        ds.lockfileStatus match {
+          case None => java.util.Collections.emptyMap()
+          case Some(fs) => Map("lockTime" -> fs.getModificationTime.toString)
+        }
+    }
+  }
+
   // ---- User Run Configuration Parameters proxy funcs.
   def getRunConfig(key: String): String = j_smvApp.smvConfig.getRunConfig(key)
   def getRunConfigHash()                = j_smvApp.smvConfig.getRunConfigHash()
 
   def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
     j_smvApp.registerRepoFactory(new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig))
+
+  def javaMapToImmutableMap(javaMap: java.util.Map[String, String]): Map[String, String] =
+    if (javaMap == null) Map.empty else mapAsScalaMap(javaMap).toMap
 }
 
 /** Not a companion object because we need to access it from Python */
@@ -320,6 +376,7 @@ object SmvPyClientFactory {
   def init(args: Array[String], sqlContext: SQLContext): SmvPyClient =
     new SmvPyClient(SmvApp.init(args, Option(sqlContext.sparkContext), Option(sqlContext)))
 }
+
 
 /** For use by Python API to return a tuple */
 case class RunModuleResult(df: DataFrame, collector: SmvRunInfoCollector)

@@ -25,7 +25,7 @@ from test_support.testconfig import TestConfig
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
-def df(name, forceRun = False, version = None, runConfig = None):
+def df(name, forceRun=False, version=None, runConfig=None, quickRun=False):
     """The DataFrame result of running the named module
 
         Args:
@@ -33,22 +33,35 @@ def df(name, forceRun = False, version = None, runConfig = None):
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
             version (str): The name of the published version to load from
             runConfig (dict): runtime configuration to use when running the module
+            quickRun (bool): skip computing dqm+metadata and persisting csv
 
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig)[0]
+    return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig, quickRun)[0]
 
-def dshash(name):
+def props():
+    """The current app propertied used by SMV after the app, user, command-line
+        and dynamic props are merged.
+
+        Returns:
+            (dict): The 'mergedProps' or final props used by SMV
+    """
+    return SmvApp.getInstance().getCurrentProperties()
+
+def dshash(name, runConfig=None):
     """The current hashOfHash for the named module as a hex string
 
         Args:
             name (str): The uniquen name of a module. Does not have to be the FQN.
+            runConfig (dict): runConfig to apply when collecting info. If module
+                              was run with a config, the same config needs to be
+                              specified here to retrieve the correct hash.
 
         Returns:
             (int): The hashOfHash of the named module
     """
-    return SmvApp.getInstance().getDsHash(name)
+    return SmvApp.getInstance().getDsHash(name, runConfig)
 
 def getModel(name, forceRun = False, version = None):
     """Get the result of running the named SmvModel module
@@ -94,7 +107,7 @@ def smvExportCsv(name, path):
             fqn (str): the name of the module
             path (str): a path on the local file system
     """
-    _jvmShellCmd().smvExportCsv(name, path)
+    _jvmShellCmd().smvExportCsv(name, path, None)
 
 def help():
     """Print a list of the SMV helper functions available in the shell
@@ -115,6 +128,7 @@ def help():
        |  * lsDead(stageName)
        |  * lsDeadLeaf()
        |  * lsDeadLeaf(stageName)
+       |  * props()
        |  * exportToHive(datasetName)
        |  * graph()
        |  * graph(stageName)
@@ -205,7 +219,7 @@ def graph(stageName = None):
     """Print ascii graph of all datasets in a given stage or all stages
 
         Args:
-            dsname (str): The name of an SmvDataSet
+            stageName (str): Optional name of stage to graph. Do not
     """
     if(stageName is None):
         print(_jvmShellCmd()._graph())
@@ -278,10 +292,16 @@ def show_run_info(collector):
     """Inspects the SmvRunInfoCollector object returned by smvApp.runModule"""
     collector.show_report()
 
-def get_run_info(name):
+def get_run_info(name, runConfig=None):
     """Get the SmvRunInfoCollector with full information about a module and its dependencies
+
+        Args:
+            name (str): name of the module whose information to collect
+            runConfig (dict): runConfig to apply when collecting info. If module
+                              was run with a config, the same config needs to be
+                              specified here to retrieve the info.
     """
-    return SmvApp.getInstance().getRunInfoByPartialName(name)
+    return SmvApp.getInstance().getRunInfoByPartialName(name, runConfig)
 
 __all__ = [
     'df',
@@ -295,6 +315,7 @@ __all__ = [
     'ls',
     'lsDead',
     'lsDeadLeaf',
+    'props',
     'exportToHive',
     'ancestors',
     'descendants',

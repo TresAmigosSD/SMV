@@ -27,7 +27,7 @@ class SmvRunInfoCollectorSpec extends SmvUnitSpec {
 
   it should "throw when asked for a non-existent validation result" in {
     val target = new SmvRunInfoCollector
-    intercept[NoSuchElementException] {
+    intercept[SmvRuntimeException] {
       target.getDqmValidationResult("a")
     }
   }
