@@ -534,7 +534,9 @@ class SmvMultiJoin(object):
 def _getUnboundMethod(helperCls, oldMethod):
     def newMethod(_oldMethod, self, *args, **kwargs):
         return _oldMethod(helperCls(self), *args, **kwargs)
-    return decorator.decorate(oldMethod, newMethod)
+    # decorator.decorate won't accept an unbound method but will accept its
+    # implementing function.
+    return decorator.decorate(oldMethod.__func__, newMethod)
 
 
 def _helpCls(receiverCls, helperCls):
