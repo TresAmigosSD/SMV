@@ -223,8 +223,7 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
 
     def toNodeStr(m: SmvDataSet) = {
       val dsType = m.dsType
-      //val escapedDescription = Literal(Constant(m.description)).toString()
-      val escapedDescription = toName(m)
+      val escapedDescription = Literal(Constant(m.description)).toString()
       val nodeType = if (dsType == "Input") "file" else (
         // convert the first character of dsType to lowercase
         dsType.substring(0, 1).toLowerCase() + dsType.substring(1))

@@ -19,6 +19,7 @@ from pyspark import SparkContext
 from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col, lit
+from pyspark.sql.types import DataType
 
 import sys
 import inspect
@@ -1669,6 +1670,22 @@ class ColumnHelper(object):
         """
         jc = self._jColumnHelper.smvTimeToTimestamp()
         return Column(jc)
+
+    def smvArrayFlatten(self, elemType):
+        if (isinstance(elemType, str)):
+            elemTypeJson = elemType
+        elif(isinstance(elemType, DataType)):
+            elemTypeJson = elemType.json()
+        elif(isinstance(elemType, DataFrame)):
+            elemTypeJson = elemType.select(self.col)\
+                .schema.fields[0].dataType.elementType.elementType.json()
+        else:
+            raise SmvRuntimeError("smvArrayFlatten does not support type: {}".format(type(elemType)))
+
+        jc = self._jColumnHelper.smvArrayFlatten(elemTypeJson)
+        return Column(jc)
+
+
 
 # Initialize DataFrame and Column with helper methods. Called by SmvApp.
 def init_helpers():
