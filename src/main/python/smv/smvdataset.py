@@ -363,6 +363,18 @@ class SmvInput(SmvDataSet, ABC):
         """
         return df
 
+    @abc.abstractmethod
+    def reader(self):
+        """User defined data reader. Returns a DataFrame"""
+
+    def doRun(self, validator, known):
+        result = self.run(self.reader())
+        self.assert_result_is_dataframe(result)
+        return result._jdf
+
+
+class SmvInputWithScalaDS(SmvInput):
+
     @abc.abstractproperty
     def getRawScalaInputDS(self):
         """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
@@ -371,6 +383,9 @@ class SmvInput(SmvDataSet, ABC):
     def instanceValHash(self):
         # Defer to Scala target for instanceValHash
         return self.getRawScalaInputDS().instanceValHash()
+
+    def reader(self):
+        return None
 
     def doRun(self, validator, known):
         jdf = self.getRawScalaInputDS().doRun(validator, self.smvApp._jvm.SmvRunInfoCollector(), False)
@@ -410,9 +425,6 @@ class WithParser(object):
         """
         return None
 
-# Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
-# Otherwise we will pick methods up from SmvDataSet instead of WithParser.
-class SmvFile(WithParser, SmvInput):
     def userSchema(self):
         """Get user-defined schema
 
@@ -426,7 +438,9 @@ class SmvFile(WithParser, SmvInput):
         return None
 
 
-class SmvCsvFile(SmvFile):
+# Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
+# Otherwise we will pick methods up from SmvDataSet instead of WithParser.
+class SmvCsvFile(WithParser, SmvInputWithScalaDS):
     """Input from a file in CSV format
     """
 
@@ -485,7 +499,7 @@ class SmvSqlCsvFile(SmvCsvFile):
 
         return res
 
-class SmvMultiCsvFiles(SmvFile):
+class SmvMultiCsvFiles(WithParser, SmvInputWithScalaDS):
     """Raw input from multiple csv files sharing single schema
 
         Instead of a single input file, specify a data dir with files which share
@@ -518,7 +532,7 @@ class SmvMultiCsvFiles(SmvFile):
                 (str): path
         """
 
-class SmvCsvStringData(WithParser, SmvInput):
+class SmvCsvStringData(WithParser, SmvInputWithScalaDS):
     """Input data defined by a schema string and data string
     """
 
@@ -553,7 +567,7 @@ class SmvCsvStringData(WithParser, SmvInput):
                 (str): data
         """
 
-class SmvJdbcTable(SmvInput):
+class SmvJdbcTable(SmvInputWithScalaDS):
     """Input from a table read through JDBC
     """
     def __init__(self, smvApp):
@@ -577,7 +591,7 @@ class SmvJdbcTable(SmvInput):
         """
 
 
-class SmvHiveTable(SmvInput):
+class SmvHiveTable(SmvInputWithScalaDS):
     """Input from a Hive table
     """
 
@@ -920,6 +934,7 @@ def SmvExtModuleLink(refname):
 
 __all__ = [
     'SmvOutput',
+    'SmvInput',
     'SmvMultiCsvFiles',
     'SmvCsvFile',
     'SmvSqlCsvFile',
