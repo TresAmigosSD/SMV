@@ -179,11 +179,8 @@ class ColumnHelperTest(SmvBaseTest):
             |1|1|2|;
             |2|2|3|4""")
 
-        res2 = df1.select(F.col('aa').smvArrayFlatten(StringType().json()).alias('a'))\
-            .select(SF.smvArrayCat('|', F.col('a')).alias('k'))
-        res3 = df1.select(F.col('aa').smvArrayFlatten(df1).alias('a'))\
+        res2 = df1.select(F.col('aa').smvArrayFlatten(df1).alias('a'))\
             .select(SF.smvArrayCat('|', F.col('a')).alias('k'))
 
         self.should_be_same(res1, exp)
         self.should_be_same(res2, exp)
-        self.should_be_same(res3, exp)

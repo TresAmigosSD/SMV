@@ -1679,13 +1679,11 @@ class ColumnHelper(object):
                 >>> df.select(col('arrayOfArrayOfStr').smvArrayFlatten(StringType()))
 
             Args:
-                elemType (DataType or String or DataFram): array element's data type,
-                    in object form or JSON string form, or then DataFrame to infer the 
+                elemType (DataType or DataFram): array element's data type,
+                    in object form or the DataFrame to infer the
                     element data type
         """
-        if (isinstance(elemType, str)):
-            elemTypeJson = elemType
-        elif(isinstance(elemType, DataType)):
+        if(isinstance(elemType, DataType)):
             elemTypeJson = elemType.json()
         elif(isinstance(elemType, DataFrame)):
             elemTypeJson = elemType.select(self.col)\
