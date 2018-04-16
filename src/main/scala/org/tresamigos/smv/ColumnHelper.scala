@@ -672,13 +672,18 @@ class ColumnHelper(column: Column) {
     udf(f).apply(column) as name
   }
 
+  /**
+   * Act on Array[Array[T]] type column and return Array[T]
+   * equavalent to scala's flatten
+   *
+   * {{{
+   * df.withColumn("flattenArray", $"aa".smvArrayFlatten(StringType))
+   * }}}
+   *
+   * @param elemType the data type of the array element.
+   **/
   def smvArrayFlatten(elemType: DataType): Column = {
     val name = s"SmvArrayFlatten($column)"
-    /*
-    val dt = df.select(column).schema.fields(0).dataType
-      .asInstanceOf[ArrayType].elementType
-      .asInstanceOf[ArrayType].elementType
-      */
     val f: Any=>Option[Any] = a => {a match {
       case e:Seq[_] => {
         val e0 = e.filter(_ != null)
@@ -689,6 +694,16 @@ class ColumnHelper(column: Column) {
     new Column(Alias(ScalaUDF(f, ArrayType(elemType, true), Seq(expr)), name)())
   }
 
+  /**
+   * Act on Array[Array[T]] type column and return Array[T]
+   * equavalent to scala's flatten
+   *
+   * {{{
+   * df.withColumn("flattenArray", $"aa".smvArrayFlatten("string"))
+   * }}}
+   *
+   * @param elemTypeJson the data type of the array element as a JSON string
+   **/
   def smvArrayFlatten(elemTypeJson: String): Column = {
     smvArrayFlatten(DataType.fromJson(elemTypeJson))
   }
