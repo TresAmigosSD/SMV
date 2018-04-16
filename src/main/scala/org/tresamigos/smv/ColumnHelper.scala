@@ -699,7 +699,7 @@ class ColumnHelper(column: Column) {
    * equavalent to scala's flatten
    *
    * {{{
-   * df.withColumn("flattenArray", $"aa".smvArrayFlatten("string"))
+   * df.withColumn("flattenArray", $"aa".smvArrayFlatten(StringType.json))
    * }}}
    *
    * @param elemTypeJson the data type of the array element as a JSON string
