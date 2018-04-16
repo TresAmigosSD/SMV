@@ -671,4 +671,25 @@ class ColumnHelper(column: Column) {
     }
     udf(f).apply(column) as name
   }
+
+  def smvArrayFlatten(elemType: DataType): Column = {
+    val name = s"SmvArrayFlatten($column)"
+    /*
+    val dt = df.select(column).schema.fields(0).dataType
+      .asInstanceOf[ArrayType].elementType
+      .asInstanceOf[ArrayType].elementType
+      */
+    val f: Any=>Option[Any] = a => {a match {
+      case e:Seq[_] => {
+        val e0 = e.filter(_ != null)
+        Some(e0.asInstanceOf[Seq[Seq[Any]]].flatten)
+      }
+      case _ => None
+    }}
+    new Column(Alias(ScalaUDF(f, ArrayType(elemType, true), Seq(expr)), name)())
+  }
+
+  def smvArrayFlatten(elemTypeJson: String): Column = {
+    smvArrayFlatten(DataType.fromJson(elemTypeJson))
+  }
 }
