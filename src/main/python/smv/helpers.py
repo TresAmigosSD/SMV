@@ -1672,6 +1672,17 @@ class ColumnHelper(object):
         return Column(jc)
 
     def smvArrayFlatten(self, elemType):
+        """smvArrayFlatten helper applies flatten operation on an Array of Array
+            column.
+
+            Example:
+                >>> df.select(col('arrayOfArrayOfStr').smvArrayFlatten(StringType()))
+
+            Args:
+                elemType (DataType or String or DataFram): array element's data type,
+                    in object form or JSON string form, or then DataFrame to infer the 
+                    element data type
+        """
         if (isinstance(elemType, str)):
             elemTypeJson = elemType
         elif(isinstance(elemType, DataType)):
