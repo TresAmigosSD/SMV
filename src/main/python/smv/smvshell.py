@@ -12,15 +12,15 @@
 # limitations under the License.
 """Helper functions available in SMV's Python shell
 """
+from inspect import formatargspec, getargspec
 import sys
-from pprint import pformat
 
 from smv import SmvApp
-from pyspark.sql import DataFrame
-
-from smv import CsvAttributes
 from test_support.test_runner import SmvTestRunner
 from test_support.testconfig import TestConfig
+
+from pyspark.sql import DataFrame
+
 
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
@@ -112,32 +112,18 @@ def smvExportCsv(name, path):
 def help():
     """Print a list of the SMV helper functions available in the shell
     """
-    import re
-    strip_margin = lambda text: re.sub('\n[ \t]*\|', '\n', text)
+    this_mod = sys.modules[__name__]
 
-    help_msg = strip_margin(
-     """Here is a list of SMV-shell command
-       |
-       |Please refer to the API doc for details:
-       |https://github.com/TresAmigosSD/SMV/blob/master/docs/user/run_shell.md
-       |
-       |  * lsStage()
-       |  * ls()
-       |  * ls(stageName)
-       |  * lsDead()
-       |  * lsDead(stageName)
-       |  * lsDeadLeaf()
-       |  * lsDeadLeaf(stageName)
-       |  * props()
-       |  * exportToHive(datasetName)
-       |  * graph()
-       |  * graph(stageName)
-       |  * ancestors(datasetName)
-       |  * descendants(datasetName)
-       |  * now()
-       |  * smvDiscoverSchemaToFile(filePath)
-       """
-    )
+    help_msg = "SMV shell commands:"
+    for func_name in __all__:
+        func = getattr(this_mod, func_name)
+        signature = formatargspec(*getargspec(func))
+        help_msg += "\n* {}{}".format(func_name, signature)
+
+    smv_version = SmvApp.getInstance().j_smvApp.smvVersion()
+    doc_url = ("http://tresamigossd.github.io/SMV/pythondocs/{}/smv.html#module-smv.smvshell"
+                .format(smv_version))
+    help_msg += "\nDocumentation may be found at " + doc_url
 
     print(help_msg)
 
