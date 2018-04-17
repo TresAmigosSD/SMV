@@ -12,8 +12,9 @@ class SmvModule extends SmvDataSet
 class SmvOutputBase extends SmvDataSet
 
 class SmvInputWithScalaDS extends SmvInputBase
+class SmvInputFromFile extends SmvInputBase
 class UserDefinedInput #A1FFFF extends SmvInputBase
-class FutureSmvInput #A1FFFF extends SmvInputBase
+class SmvXmlFile #A1FFFF extends SmvInputFromFile
 class WithParser
 
 class SmvCsvFile extends WithParser, SmvInputWithScalaDS
@@ -25,4 +26,5 @@ class SmvHiveTable extends SmvInputWithScalaDS
 class SmvModel extends SmvModule
 class SmvModelExec extends SmvModule
 
+class SmvHiveOutput #A1FFFF extends SmvOutputBase
 @enduml
