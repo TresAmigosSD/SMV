@@ -341,6 +341,9 @@ class SmvDataSet(ABC):
 
 class SmvInput(SmvDataSet, ABC):
     """SmvDataSet representing external input
+        Concrete class need to provide:
+          - readAsDF
+          - instanceValHash (optional)
     """
 
     def isEphemeral(self):
@@ -364,11 +367,11 @@ class SmvInput(SmvDataSet, ABC):
         return df
 
     @abc.abstractmethod
-    def reader(self):
+    def readAsDF(self):
         """User defined data reader. Returns a DataFrame"""
 
     def doRun(self, validator, known):
-        result = self.run(self.reader())
+        result = self.run(self.readAsDF())
         self.assert_result_is_dataframe(result)
         return result._jdf
 
@@ -384,7 +387,7 @@ class SmvInputWithScalaDS(SmvInput):
         # Defer to Scala target for instanceValHash
         return self.getRawScalaInputDS().instanceValHash()
 
-    def reader(self):
+    def readAsDF(self):
         return None
 
     def doRun(self, validator, known):
