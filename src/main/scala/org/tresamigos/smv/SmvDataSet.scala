@@ -1280,14 +1280,17 @@ class SmvCsvStringData(
     (crc.getValue).toInt
   }
 
-  override def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
+  private[smv] def readFromFile(parserValidator: ParserLogger): DataFrame = {
     val schema    = SmvSchema.fromString(schemaStr)
     val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
-
-    val parserValidator =
-      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
     val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
     handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
+  }
+
+  override def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
+    val parserValidator =
+      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
+    readFromFile(parserValidator)
   }
 }
 
