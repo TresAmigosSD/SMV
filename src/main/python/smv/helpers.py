@@ -534,17 +534,25 @@ class SmvMultiJoin(object):
 def _getUnboundMethod(helperCls, oldMethod):
     def newMethod(_oldMethod, self, *args, **kwargs):
         return _oldMethod(helperCls(self), *args, **kwargs)
-    # decorator.decorate won't accept an unbound method but will accept its
-    # implementing function.
-    return decorator.decorate(oldMethod.__func__, newMethod)
+
+    return decorator.decorate(oldMethod, newMethod)
 
 
 def _helpCls(receiverCls, helperCls):
     iscallable = lambda f: hasattr(f, "__call__")
     for name, oldMethod in inspect.getmembers(helperCls, predicate=iscallable):
-        # ignore special and private methods
+        # We will use decorator.decorate to ensure that attributes of oldMethod, like
+        # docstring and signature, are inherited by newMethod. decorator.decorate
+        # won't accept an unbound method, so for Python 2 we extract oldMethod's
+        # implementing function __func__. In Python 3, inspect.getmembers will return
+        # the implementing functions insead of unbound method - this is due to
+        # Python 3's data model.
+        try:
+            impl = oldMethod.__func__
+        except:
+            impl = oldMethod
         if not name.startswith("_"):
-            newMethod = _getUnboundMethod(helperCls, oldMethod)
+            newMethod = _getUnboundMethod(helperCls, impl)
             setattr(receiverCls, name, newMethod)
 
 
