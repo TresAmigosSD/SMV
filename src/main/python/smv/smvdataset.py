@@ -376,6 +376,34 @@ class SmvInput(SmvDataSet, ABC):
         return result._jdf
 
 
+class SmvInputFromFile(SmvInput):
+    """Base class for any input based on files on HDFS or local
+        Concrete class need to provide:
+            - fullpath (str): file full path with protocol
+            - readAsDF (DataFrame): file reading method 
+            - schema (StructType): optional
+    """
+    @abc.abstractproperty
+    def fullpath(self):
+        """Full path to the input (file/dir or glob pattern)"""
+
+    def schema(self):
+        """User specified schema
+            Returns:
+                (StructType): input data's schema
+        """
+        return None
+
+    def instanceValHash(self):
+        mTime = self.smvApp._jvm.SmvHDFS.modificationTime(self.fullpath())
+        pathHash = _smvhash(self.fullpath())
+        if (self.schema() is not None):
+            schemaHash = _smvhash(self.schema().simpleString())
+        else:
+            schemaHash = 0
+        return int(mTime + pathHash + schemaHash)
+
+
 class SmvInputWithScalaDS(SmvInput):
 
     @abc.abstractproperty
