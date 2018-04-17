@@ -1,4 +1,3 @@
-#
 # This file is licensed under the Apache License, Version 2.0
 # (the "License"); you may not use this file except in compliance with
 # the License.  You may obtain a copy of the License at
@@ -12,21 +11,22 @@
 # limitations under the License.
 """SMV DataFrame Helpers and Column Helpers
 
-This module provides the helper functions on DataFrame objects and Column objects
+    This module provides the helper functions on DataFrame objects and Column objects
 """
+import sys
+import inspect
 
+import decorator
 from pyspark import SparkContext
 from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col, lit
 from pyspark.sql.types import DataType
 
-import sys
-import inspect
-
 from smv.utils import smv_copy_array
 from smv.error import SmvRuntimeError
 from smv.utils import is_string
+
 
 # common converters to pass to _to_seq and _to_list
 def _jcol(c): return c._jc
@@ -531,19 +531,31 @@ class SmvMultiJoin(object):
         """
         return DataFrame(self.mj.doJoin(dropextra), self.sqlContext)
 
-def _getUnboundMethod(helperCls, methodName):
-    def method(self, *args, **kwargs):
-        return getattr(helperCls(self), methodName)(*args, **kwargs)
-    method.__name__ = methodName
-    return method
+
+def _getUnboundMethod(helperCls, oldMethod):
+    def newMethod(_oldMethod, self, *args, **kwargs):
+        return _oldMethod(helperCls(self), *args, **kwargs)
+
+    return decorator.decorate(oldMethod, newMethod)
+
 
 def _helpCls(receiverCls, helperCls):
     iscallable = lambda f: hasattr(f, "__call__")
-    for name, method in inspect.getmembers(helperCls, predicate=iscallable):
-        # ignore special and private methods
+    for name, oldMethod in inspect.getmembers(helperCls, predicate=iscallable):
+        # We will use decorator.decorate to ensure that attributes of oldMethod, like
+        # docstring and signature, are inherited by newMethod. decorator.decorate
+        # won't accept an unbound method, so for Python 2 we extract oldMethod's
+        # implementing function __func__. In Python 3, inspect.getmembers will return
+        # the implementing functions insead of unbound method - this is due to
+        # Python 3's data model.
+        try:
+            impl = oldMethod.__func__
+        except:
+            impl = oldMethod
         if not name.startswith("_"):
-            newMethod = _getUnboundMethod(helperCls, name)
+            newMethod = _getUnboundMethod(helperCls, impl)
             setattr(receiverCls, name, newMethod)
+
 
 class DataFrameHelper(object):
     def __init__(self, df):

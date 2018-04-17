@@ -2,3 +2,4 @@ Flask
 jupyter
 graphviz
 sphinx
+decorator
