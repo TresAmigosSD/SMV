@@ -339,7 +339,7 @@ class SmvDataSet(ABC):
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
 
-class SmvInput(SmvDataSet, ABC):
+class SmvInputBase(SmvDataSet, ABC):
     """SmvDataSet representing external input
         Concrete class need to provide:
           - readAsDF
@@ -376,11 +376,11 @@ class SmvInput(SmvDataSet, ABC):
         return result._jdf
 
 
-class SmvInputFromFile(SmvInput):
+class SmvInputFromFile(SmvInputBase):
     """Base class for any input based on files on HDFS or local
         Concrete class need to provide:
             - fullpath (str): file full path with protocol
-            - readAsDF (DataFrame): file reading method 
+            - readAsDF (DataFrame): file reading method
             - schema (StructType): optional
     """
     @abc.abstractproperty
@@ -404,7 +404,7 @@ class SmvInputFromFile(SmvInput):
         return int(mTime + pathHash + schemaHash)
 
 
-class SmvInputWithScalaDS(SmvInput):
+class SmvInputWithScalaDS(SmvInputBase):
 
     @abc.abstractproperty
     def getRawScalaInputDS(self):
@@ -965,7 +965,8 @@ def SmvExtModuleLink(refname):
 
 __all__ = [
     'SmvOutput',
-    'SmvInput',
+    'SmvInputBase',
+    'SmvInputFromFile',
     'SmvMultiCsvFiles',
     'SmvCsvFile',
     'SmvSqlCsvFile',
