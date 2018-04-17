@@ -367,11 +367,16 @@ class SmvInputBase(SmvDataSet, ABC):
         return df
 
     @abc.abstractmethod
-    def readAsDF(self, validator):
+    def readAsDF(self, readerLogger):
         """User defined data reader. Returns a DataFrame"""
 
     def doRun(self, validator, known):
-        result = self.run(self.readAsDF(validator))
+        if (validator == None):
+            readerLogger = self.smvApp._jvm.TerminateParserLogger()
+        else:
+            print("hahahaha")
+            readerLogger = validator.createParserValidator()
+        result = self.run(self.readAsDF(readerLogger))
         self.assert_result_is_dataframe(result)
         return result._jdf
 
@@ -415,14 +420,9 @@ class SmvInputWithScalaDS(SmvInputBase):
         # Defer to Scala target for instanceValHash
         return self.getRawScalaInputDS().instanceValHash()
 
-    def readAsDF(self, validator):
-        return None
-
-    def doRun(self, validator, known):
-        jdf = self.getRawScalaInputDS().doRun(validator, self.smvApp._jvm.SmvRunInfoCollector(), False)
-        result = self.run(DataFrame(jdf, self.smvApp.sqlContext))
-        self.assert_result_is_dataframe(result)
-        return result._jdf
+    def readAsDF(self, readerLogger):
+        jdf = self.getRawScalaInputDS().readFromFile(readerLogger)
+        result = DataFrame(jdf, self.smvApp.sqlContext)
 
 class WithParser(object):
     """shared parser funcs"""
@@ -608,7 +608,7 @@ class SmvJdbcTable(SmvInputBase):
         """User can override this, default use the jdbcUrl setting in smvConfig"""
         return self.smvApp.config().jdbcUrl()
 
-    def readAsDF(self, validator):
+    def readAsDF(self, readerLogger):
         if (self.tableQuery() is None):
             tableNameOrQuery = self.tableName()
         else:
@@ -649,7 +649,7 @@ class SmvHiveTable(SmvInputBase):
     """Input from a Hive table
     """
 
-    def readAsDF(self, validator):
+    def readAsDF(self, readerLogger):
         if (self.tableQuery() is None):
             query = "select * from {}".format(self.tableName())
         else:
