@@ -20,8 +20,8 @@ class WithParser
 class SmvCsvFile extends WithParser, SmvInputWithScalaDS
 class SmvMultiCsvFiles extends WithParser, SmvInputWithScalaDS
 class SmvCsvStringData extends WithParser, SmvInputWithScalaDS
-class SmvJdbcTable extends SmvInputWithScalaDS
-class SmvHiveTable extends SmvInputWithScalaDS
+class SmvJdbcTable extends SmvInputBase
+class SmvHiveTable extends SmvInputBase
 
 class SmvModel extends SmvModule
 class SmvModelExec extends SmvModule

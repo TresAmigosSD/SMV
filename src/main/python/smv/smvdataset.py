@@ -367,11 +367,11 @@ class SmvInputBase(SmvDataSet, ABC):
         return df
 
     @abc.abstractmethod
-    def readAsDF(self):
+    def readAsDF(self, validator):
         """User defined data reader. Returns a DataFrame"""
 
     def doRun(self, validator, known):
-        result = self.run(self.readAsDF())
+        result = self.run(self.readAsDF(validator))
         self.assert_result_is_dataframe(result)
         return result._jdf
 
@@ -415,7 +415,7 @@ class SmvInputWithScalaDS(SmvInputBase):
         # Defer to Scala target for instanceValHash
         return self.getRawScalaInputDS().instanceValHash()
 
-    def readAsDF(self):
+    def readAsDF(self, validator):
         return None
 
     def doRun(self, validator, known):
@@ -598,18 +598,30 @@ class SmvCsvStringData(WithParser, SmvInputWithScalaDS):
                 (str): data
         """
 
-class SmvJdbcTable(SmvInputWithScalaDS):
+class SmvJdbcTable(SmvInputBase):
     """Input from a table read through JDBC
     """
-    def __init__(self, smvApp):
-        super(SmvJdbcTable, self).__init__(smvApp)
-        self._smvJdbcTable = self.smvApp._jvm.org.tresamigos.smv.SmvJdbcTable(self.tableName())
-
-    def getRawScalaInputDS(self):
-        return self._smvJdbcTable
-
     def description(self):
-        return self._smvJdbcTable.description()
+        return "JDBC table {}".format(self.tableName())
+
+    def jdbcUrl(self):
+        """User can override this, default use the jdbcUrl setting in smvConfig"""
+        return self.smvApp.config().jdbcUrl()
+
+    def readAsDF(self, validator):
+        if (self.tableQuery() is None):
+            tableNameOrQuery = self.tableName()
+        else:
+            tableNameOrQuery = "({}) as TMP_{}".format(
+                self.tableQuery(), self.tableName()
+            )
+
+        print(tableNameOrQuery)
+        return self.smvApp.sqlContext.read\
+            .format('jdbc')\
+            .option('url', self.jdbcUrl())\
+            .option('dbtable', tableNameOrQuery)\
+            .load()
 
     @abc.abstractproperty
     def tableName(self):
@@ -621,17 +633,28 @@ class SmvJdbcTable(SmvInputWithScalaDS):
                 (str): table name
         """
 
+    def tableQuery(self):
+        """Query used to extract data from Hive table
 
-class SmvHiveTable(SmvInputWithScalaDS):
+            Override this to specify your own query (optional). Default is
+            equivalent to 'select * from ' + tableName().
+
+            Returns:
+                (str): query
+        """
+        return None
+
+
+class SmvHiveTable(SmvInputBase):
     """Input from a Hive table
     """
 
-    def __init__(self, smvApp):
-        super(SmvHiveTable, self).__init__(smvApp)
-        self._smvHiveTable = self.smvApp._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName(), self.tableQuery())
-
-    def getRawScalaInputDS(self):
-        return self._smvHiveTable
+    def readAsDF(self, validator):
+        if (self.tableQuery() is None):
+            query = "select * from {}".format(self.tableName())
+        else:
+            query = self.tableQuery()
+        return self.smvApp.sqlContext.sql(query)
 
     @abc.abstractproperty
     def tableName(self):
