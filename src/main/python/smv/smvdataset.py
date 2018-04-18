@@ -399,6 +399,10 @@ class SmvInputFromFile(SmvInputBase):
         return None
 
     def instanceValHash(self):
+        """Hash computed based on instance values of the dataset
+            Based on timestamp of an input file, it's name and
+            schema
+        """
         mTime = self.smvApp._jvm.SmvHDFS.modificationTime(self.fullpath())
         pathHash = _smvhash(self.fullpath())
         if (self.schema() is not None):
@@ -409,6 +413,11 @@ class SmvInputFromFile(SmvInputBase):
 
 
 class SmvInputWithScalaDS(SmvInputBase):
+    """Base class for all CSV input modules
+        Still referring the Scala side implementations of the CSV input
+        modules. Will be removed when we removed dependency to scala side
+        for all the CSV input modules
+    """
 
     @abc.abstractproperty
     def getRawScalaInputDS(self):
