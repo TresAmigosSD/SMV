@@ -374,7 +374,6 @@ class SmvInputBase(SmvDataSet, ABC):
         if (validator == None):
             readerLogger = self.smvApp._jvm.TerminateParserLogger()
         else:
-            print("hahahaha")
             readerLogger = validator.createParserValidator()
         result = self.run(self.readAsDF(readerLogger))
         self.assert_result_is_dataframe(result)
@@ -421,8 +420,8 @@ class SmvInputWithScalaDS(SmvInputBase):
         return self.getRawScalaInputDS().instanceValHash()
 
     def readAsDF(self, readerLogger):
-        jdf = self.getRawScalaInputDS().readFromFile(readerLogger)
-        result = DataFrame(jdf, self.smvApp.sqlContext)
+        jdf = self.getRawScalaInputDS().readFromSrc(readerLogger)
+        return DataFrame(jdf, self.smvApp.sqlContext)
 
 class WithParser(object):
     """shared parser funcs"""

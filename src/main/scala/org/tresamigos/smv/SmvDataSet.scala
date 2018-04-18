@@ -775,7 +775,7 @@ class SmvJdbcTable(override val tableName: String)
  * Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
  * common part to the new ABC: SmvDSWithParser
  */
-trait SmvDSWithParser extends SmvDataSet {
+private[smv] abstract class SmvDSWithParser extends SmvInputDataSet {
   val forceParserCheck   = true
   val failAtParsingError = true
 
@@ -788,10 +788,22 @@ trait SmvDSWithParser extends SmvDataSet {
     else if (forceParserCheck) baseDqm.addAction()
     else baseDqm
   }
+
+  /**
+   * Read contents from file (without running the `run` method) as a DataFrame.
+   */
+  private[smv] def readFromSrc(parserLogger: ParserLogger): DataFrame
+
+  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
+    val parserValidator =
+      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
+    val df      = readFromSrc(parserValidator)
+    run(df)
+  }
 }
 
 
-abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
+abstract class SmvFile extends SmvDSWithParser {
   val path: String
   val schemaPath: String     = null
   override def description() = s"Input file: @${path}"
@@ -842,18 +854,6 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
       case None => SmvSchema.fromFile(app.sc, finalSchemaPath)
     }
 
-  /**
-   * Read contents from file (without running the `run` method) as a DataFrame.
-   */
-  private[smv] def readFromFile(parserLogger: ParserLogger): DataFrame
-
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val parserValidator =
-      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
-    val df      = readFromFile(parserValidator)
-    run(df)
-  }
-
   /* For SmvFile, the datasetHash should be based on
    *  - raw class code crc
    *  - input csv file path
@@ -879,7 +879,7 @@ abstract class SmvSingleFile extends SmvFile {
    * Given a FileIOHandler, return the DataFrame that results from reading the file
    */
   private[smv] def readSingleFile(handler: FileIOHandler): DataFrame
-  private[smv] override def readFromFile(parserValidator: ParserLogger): DataFrame = {
+  private[smv] override def readFromSrc(parserValidator: ParserLogger): DataFrame = {
     val handler = getHandler(fullPath, parserValidator)
     readSingleFile(handler)
   }
@@ -955,7 +955,7 @@ class SmvMultiCsvFiles(
     else Option(findFullPath(schemaPath))
   }
 
-  private[smv] override def readFromFile(parserValidator: ParserLogger): DataFrame = {
+  private[smv] override def readFromSrc(parserValidator: ParserLogger): DataFrame = {
     val filesInDir = SmvHDFS.dirList(fullPath)
       .filterNot(_.startsWith(".")) // ignore all hidden files in the data dir
       .map { n =>
@@ -1269,8 +1269,7 @@ class SmvCsvStringData(
     schemaStr: String,
     data: String,
     override val isPersistValidateResult: Boolean = false
-) extends SmvInputDataSet
-    with SmvDSWithParser {
+) extends SmvDSWithParser {
 
   override def description() = s"Dummy module to create DF from strings"
 
@@ -1280,7 +1279,7 @@ class SmvCsvStringData(
     (crc.getValue).toInt
   }
 
-  private[smv] def readFromFile(parserValidator: ParserLogger): DataFrame = {
+  private[smv] def readFromSrc(parserValidator: ParserLogger): DataFrame = {
     val schema    = SmvSchema.fromString(schemaStr)
     val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
     val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
@@ -1290,7 +1289,7 @@ class SmvCsvStringData(
   override def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
     val parserValidator =
       if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
-    readFromFile(parserValidator)
+    readFromSrc(parserValidator)
   }
 }
 
