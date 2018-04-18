@@ -409,7 +409,9 @@ class SmvInputFromFile(SmvInputBase):
             schemaHash = _smvhash(self.schema().simpleString())
         else:
             schemaHash = 0
-        return int(mTime + pathHash + schemaHash)
+        res = mTime + pathHash + schemaHash
+        # ensure python's numeric type can fit in a java.lang.Integer
+        return res & 0x7fffffff
 
 
 class SmvInputWithScalaDS(SmvInputBase):
