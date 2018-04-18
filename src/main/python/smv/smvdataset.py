@@ -626,7 +626,6 @@ class SmvJdbcTable(SmvInputBase):
                 self.tableQuery(), self.tableName()
             )
 
-        print(tableNameOrQuery)
         return self.smvApp.sqlContext.read\
             .format('jdbc')\
             .option('url', self.jdbcUrl())\

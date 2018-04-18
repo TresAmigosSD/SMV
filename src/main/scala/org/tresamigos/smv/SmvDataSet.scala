@@ -790,7 +790,7 @@ private[smv] abstract class SmvDSWithParser extends SmvInputDataSet {
   }
 
   /**
-   * Read contents from file (without running the `run` method) as a DataFrame.
+   * Read contents from file, dir or data string (without running the `run` method) as a DataFrame.
    */
   private[smv] def readFromSrc(parserLogger: ParserLogger): DataFrame
 
