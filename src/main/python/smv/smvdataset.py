@@ -18,6 +18,7 @@ from pyspark import SparkContext
 from pyspark.sql import HiveContext, DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col
+from pyspark.sql.types import StructType
 
 import abc
 import inspect
@@ -384,12 +385,12 @@ class SmvInputBase(SmvDataSet, ABC):
 class SmvInputFromFile(SmvInputBase):
     """Base class for any input based on files on HDFS or local
         Concrete class need to provide:
-            - fullpath (str): file full path with protocol
+            - fullPath (str): file full path with protocol
             - readAsDF (DataFrame): file reading method
             - schema (StructType): optional
     """
     @abc.abstractproperty
-    def fullpath(self):
+    def fullPath(self):
         """Full path to the input (file/dir or glob pattern)"""
         pass
 
@@ -405,15 +406,56 @@ class SmvInputFromFile(SmvInputBase):
             Based on timestamp of an input file, it's name and
             schema
         """
-        mTime = self.smvApp._jvm.SmvHDFS.modificationTime(self.fullpath())
-        pathHash = _smvhash(self.fullpath())
+        mTime = self.smvApp._jvm.SmvHDFS.modificationTime(self.fullPath())
+        pathHash = _smvhash(self.fullPath())
         if (self.schema() is not None):
             schemaHash = _smvhash(self.schema().simpleString())
         else:
             schemaHash = 0
         res = mTime + pathHash + schemaHash
         # ensure python's numeric type can fit in a java.lang.Integer
-        return res & 0x7fffffff
+        return int(res) & 0x7fffffff
+
+class SmvXmlFile(SmvInputFromFile):
+    """Input from file in XML format
+        Concrete class need to provide:
+            - fullPath (str): file full path with protocol
+            - fullSchemaPath (str): full path of the schema JSON file (optional)
+            - rowTag (str): XML tag for identifying a row
+    """
+    def fullSchemaPath(self):
+        """Full path to schema json
+            Default to None, in that case the schema is inferred by the reader
+        """
+        return None
+
+    @abc.abstractproperty
+    def rowTag(self):
+        """XML tag for identifying a record (row)"""
+        pass
+
+    def schema(self):
+        """load schema from the json file"""
+        if (self.fullSchemaPath() is None):
+            return None
+        else:
+            with open (self.fullSchemaPath(), "r") as sj:
+                schema_st = sj.read()
+            return StructType.fromJson(json.loads(schema_st))
+
+    def readAsDF(self, readerLogger):
+        """readin xml data"""
+
+        # TODO: look for possibilities to feed to readerLogger
+        reader = self.smvApp.sqlContext\
+            .read.format('com.databricks.spark.xml')\
+            .options(rowTag=self.rowTag())
+
+        # If no schema specified, infer from data
+        if (self.schema() is not None):
+            return reader.load(self.fullPath(), schema=self.schema())
+        else:
+            return reader.load(self.fullPath())
 
 
 class SmvInputWithScalaDS(SmvInputBase):
@@ -1004,6 +1046,7 @@ __all__ = [
     'SmvOutput',
     'SmvInputBase',
     'SmvInputFromFile',
+    'SmvXmlFile',
     'SmvMultiCsvFiles',
     'SmvCsvFile',
     'SmvSqlCsvFile',
