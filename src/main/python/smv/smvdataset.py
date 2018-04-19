@@ -1045,7 +1045,6 @@ def SmvExtModuleLink(refname):
 __all__ = [
     'SmvOutput',
     'SmvInputBase',
-    'SmvInputFromFile',
     'SmvXmlFile',
     'SmvMultiCsvFiles',
     'SmvCsvFile',
