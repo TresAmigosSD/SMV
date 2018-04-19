@@ -104,11 +104,13 @@ object smvfuncs {
   /** For an Array column create a String column with the Array values */
   def smvArrayCat(sep: String, col: Column, fn: Any => String): Column = {
     val catF = { a: Seq[Any] =>
-      a.map {
-          case null => ""
-          case s    => fn(s)
-        }
-        .mkString(sep)
+      if (a != null) {
+        val res = a.map {
+            case null => ""
+            case s    => fn(s)
+          }.mkString(sep)
+        Option(res)
+      } else None
     }
 
     udf(catF).apply(col).as(s"smvArrayCat(${col})")
