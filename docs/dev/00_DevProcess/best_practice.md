@@ -37,6 +37,10 @@ We use `scalafmt` for scala code formatting.  Once PR #668 (https://github.com/T
 #### Python
 We should follow PEP8 for python styling (See https://www.python.org/dev/peps/pep-0008/).  One exception is use of CamelCase for function names to match the function names on the Scala side.
 
+When using Atom as editor, please install `linter-flake8` package. It will automatically
+install dependencies. Also it need you to install flake8 on Python, so need to do
+`pip install flake8` in terminal.
+
 ## Testing
 TBD
 ### Scala Unit Test
