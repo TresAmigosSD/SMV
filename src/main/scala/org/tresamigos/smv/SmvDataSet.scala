@@ -1154,7 +1154,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
                    quickRun: Boolean = false): DataFrame = {
     // forceRun argument is ignored (SmvModuleLink is rerun anyway)
     if (isFollowLink) {
-      smvModule.readPublishedData().getOrElse(smvModule.rdd(collector=collector))
+      smvModule.readPublishedData().getOrElse(smvModule.rdd(collector=collector, quickRun=quickRun))
     } else {
       smvModule
         .readPublishedData()

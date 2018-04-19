@@ -348,7 +348,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     else {
       if (forceRun)
         deletePersistedResults(Seq(ds))
-      ds.rdd(forceRun, collector=collector)
+      ds.rdd(forceRun, collector=collector, quickRun=quickRun)
     }
   }
 
