@@ -369,6 +369,7 @@ class SmvInputBase(SmvDataSet, ABC):
     @abc.abstractmethod
     def readAsDF(self, readerLogger):
         """User defined data reader. Returns a DataFrame"""
+        pass
 
     def doRun(self, validator, known):
         if (validator == None):
@@ -390,6 +391,7 @@ class SmvInputFromFile(SmvInputBase):
     @abc.abstractproperty
     def fullpath(self):
         """Full path to the input (file/dir or glob pattern)"""
+        pass
 
     def schema(self):
         """User specified schema
@@ -425,6 +427,7 @@ class SmvInputWithScalaDS(SmvInputBase):
     def getRawScalaInputDS(self):
         """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
            that is created in their init."""
+        pass
 
     def instanceValHash(self):
         # Defer to Scala target for instanceValHash
@@ -641,6 +644,7 @@ class SmvJdbcTable(SmvInputBase):
             Returns:
                 (str): table name
         """
+        pass
 
     def tableQuery(self):
         """Query used to extract data from Hive table
@@ -674,6 +678,7 @@ class SmvHiveTable(SmvInputBase):
             Returns:
                 (str): table name
         """
+        pass
 
     def tableQuery(self):
         """Query used to extract data from Hive table
