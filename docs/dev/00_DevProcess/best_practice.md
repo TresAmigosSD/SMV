@@ -41,6 +41,20 @@ When using Atom as editor, please install `linter-flake8` package. It will autom
 install dependencies. Also it need you to install flake8 on Python, so need to do
 `pip install flake8` in terminal.
 
+### Abstract decorators
+Python's `abc` package provides both `abstractmethod` and `abstractproperty` decorators.
+When we define user-interface abstract classes (`SmvDataSet`), we should always use
+`abstractmethod` to decorate mandatory interface methods.
+
+For example:
+```python
+class SmvCsvFile(...):
+  @abstractmethod
+  def path(self):
+    pass
+```
+
+
 ## Testing
 TBD
 ### Scala Unit Test
