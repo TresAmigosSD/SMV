@@ -367,8 +367,8 @@ class SmvInputBase(SmvDataSet, ABC):
         pass
 
     def doRun(self, validator, known):
-        if (validator is not None):
-            readerLogger = self.smvApp._jvm.TerminateParserLogger()
+        if (validator is None):
+            readerLogger = self.smvApp._jvm.TerminateParserLogger
         else:
             readerLogger = validator.createParserValidator()
         result = self.run(self.readAsDF(readerLogger))
