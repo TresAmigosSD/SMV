@@ -380,9 +380,11 @@ class SmvInputBase(SmvDataSet, ABC):
 class SmvInputFromFile(SmvInputBase):
     """Base class for any input based on files on HDFS or local
         Concrete class need to provide:
-            - fullPath (str): file full path with protocol
+            - path (str): path relative to smv.inputDir, or
+                - fullPath (str): file full path with protocol
+                - fullSchemaPath (str): schema file's full path, or
+            - schema (StructType): schema object
             - readAsDF (DataFrame): file reading method
-            - schema (StructType): optional
     """
     def path(self):
         """Relative path to smv.dataDir config parameter"""
