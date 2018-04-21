@@ -392,12 +392,14 @@ class SmvInputFromFile(SmvInputBase):
 
     def fullPath(self):
         """Full path to the input (file/dir or glob pattern)"""
-        return "{}/{}".format(self.smvApp.inputDir(), self.path()) 
+        return "{}/{}".format(self.smvApp.inputDir(), self.path())
 
     def fullSchemaPath(self):
         """Full path to the schema file"""
         know_types = ['.gz', '.csv', '.tsv', '.xml']
-        base = reduce(lambda s, p: re.sub(p + '$', '', s), [self.fullPath()] + know_types)
+        base = self.fullPath()
+        for t in know_types:
+            base = re.sub(t + '$', '', base)
         return base + '.schema'
 
     def schema(self):
