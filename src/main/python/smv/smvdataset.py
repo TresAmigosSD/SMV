@@ -424,15 +424,11 @@ class SmvInputFromFile(SmvInputBase):
 class SmvXmlFile(SmvInputFromFile):
     """Input from file in XML format
         Concrete class need to provide:
-            - fullPath (str): file full path with protocol
-            - fullSchemaPath (str): full path of the schema JSON file (optional)
             - rowTag (str): XML tag for identifying a row
+            - path (str): File path relative to smv.InputDir. Or
+              - fullPath (str): file full path with protocol
+              - fullSchemaPath (str): full path of the schema JSON file or None (infer schema)
     """
-    def fullSchemaPath(self):
-        """Full path to schema json
-            Default to None, in that case the schema is inferred by the reader
-        """
-        return None
 
     @abc.abstractmethod
     def rowTag(self):

@@ -17,6 +17,8 @@ from smv.smvdataset import SmvInputFromFile
 class Xml1(SmvXmlFile):
     def fullPath(self):
         return self.smvApp.inputDir() + '/' + 'xmltest/f1.xml'
+    def fullSchemaPath(self):
+        return None
     def rowTag(self):
         return 'ROW'
 
@@ -25,6 +27,12 @@ class Xml2(SmvXmlFile):
         return self.smvApp.inputDir() + '/' + 'xmltest/f1.xml'
     def fullSchemaPath(self):
         return self.smvApp.inputDir() + '/' + 'xmltest/f1.xml.json'
+    def rowTag(self):
+        return 'ROW'
+
+class Xml3(SmvXmlFile):
+    def path(self):
+        return 'xmltest/f1.xml'
     def rowTag(self):
         return 'ROW'
 
