@@ -23,6 +23,7 @@ import sys
 import traceback
 import binascii
 import json
+import re
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
@@ -383,10 +384,19 @@ class SmvInputFromFile(SmvInputBase):
             - readAsDF (DataFrame): file reading method
             - schema (StructType): optional
     """
-    @abc.abstractmethod
+    def path(self):
+        """Relative path to smv.dataDir config parameter"""
+        pass
+
     def fullPath(self):
         """Full path to the input (file/dir or glob pattern)"""
-        pass
+        return "{}/{}".format(self.smvApp.inputDir(), self.path()) 
+
+    def fullSchemaPath(self):
+        """Full path to the schema file"""
+        know_types = ['.gz', '.csv', '.tsv', '.xml']
+        base = reduce(lambda s, p: re.sub(p + '$', '', s), [self.fullPath()] + know_types)
+        return base + '.schema'
 
     def schema(self):
         """User specified schema

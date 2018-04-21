@@ -123,3 +123,9 @@ class SmvInputTest(SmvBaseTest):
         with self.Resource(self.smvApp, fqn) as ds:
             hash2 = ds.instanceValHash()
         self.assertNotEqual(hash1, hash2)
+
+    def test_SmvInputFromFile_schemaPath(self):
+        fqn = "stage.modules.IFF1"
+        with self.Resource(self.smvApp, fqn) as ds:
+            spath = ds.fullSchemaPath()
+        print(spath)
