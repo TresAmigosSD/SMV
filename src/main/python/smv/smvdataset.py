@@ -23,6 +23,7 @@ import sys
 import traceback
 import binascii
 import json
+import re
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
@@ -379,14 +380,27 @@ class SmvInputBase(SmvDataSet, ABC):
 class SmvInputFromFile(SmvInputBase):
     """Base class for any input based on files on HDFS or local
         Concrete class need to provide:
-            - fullPath (str): file full path with protocol
+            - path (str): path relative to smv.inputDir, or
+                - fullPath (str): file full path with protocol
+                - fullSchemaPath (str): schema file's full path, or
+            - schema (StructType): schema object
             - readAsDF (DataFrame): file reading method
-            - schema (StructType): optional
     """
-    @abc.abstractmethod
+    def path(self):
+        """Relative path to smv.dataDir config parameter"""
+        pass
+
     def fullPath(self):
         """Full path to the input (file/dir or glob pattern)"""
-        pass
+        return "{}/{}".format(self.smvApp.inputDir(), self.path())
+
+    def fullSchemaPath(self):
+        """Full path to the schema file"""
+        know_types = ['.gz', '.csv', '.tsv', '.xml']
+        base = self.fullPath()
+        for t in know_types:
+            base = re.sub(t + '$', '', base)
+        return base + '.schema'
 
     def schema(self):
         """User specified schema
@@ -414,15 +428,11 @@ class SmvInputFromFile(SmvInputBase):
 class SmvXmlFile(SmvInputFromFile):
     """Input from file in XML format
         Concrete class need to provide:
-            - fullPath (str): file full path with protocol
-            - fullSchemaPath (str): full path of the schema JSON file (optional)
             - rowTag (str): XML tag for identifying a row
+            - path (str): File path relative to smv.InputDir. Or
+              - fullPath (str): file full path with protocol
+              - fullSchemaPath (str): full path of the schema JSON file or None (infer schema)
     """
-    def fullSchemaPath(self):
-        """Full path to schema json
-            Default to None, in that case the schema is inferred by the reader
-        """
-        return None
 
     @abc.abstractmethod
     def rowTag(self):

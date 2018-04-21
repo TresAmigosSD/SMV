@@ -34,8 +34,8 @@ class SmvInputTest(SmvBaseTest):
         def __exit__(self, type, value, traceback):
             pass
 
-    def _create_xml_file(self):
-        self.createTempInputFile("xmltest/f1.xml",
+    def _create_xml_file(self, name):
+        self.createTempInputFile(name,
         """<?xml version="1.0"?>
 <ROWSET>
     <ROW>
@@ -51,7 +51,9 @@ class SmvInputTest(SmvBaseTest):
         <comment><!--A comment before a value-->Go get one now they are going fast</comment>
     </ROW>
 </ROWSET>""")
-        self.createTempInputFile("xmltest/f1.xml.json",
+
+    def _create_xml_schema(self, name):
+        self.createTempInputFile(name,
         """{
   "fields": [
     {
@@ -94,7 +96,8 @@ class SmvInputTest(SmvBaseTest):
 
     def test_SmvXmvFile_infer_schema(self):
         fqn = "stage.modules.Xml1"
-        self._create_xml_file()
+        self._create_xml_file('xmltest/f1.xml')
+        self._create_xml_schema('xmltest/f1.xml.json')
         df = self.df(fqn)
         expect = self.createDF("comment: String;make: String;model: String;year: Long",
             """No comment,Tesla,S,2012;
@@ -103,7 +106,18 @@ class SmvInputTest(SmvBaseTest):
 
     def test_SmvXmvFile_given_schema(self):
         fqn = "stage.modules.Xml2"
-        self._create_xml_file()
+        self._create_xml_file('xmltest/f1.xml')
+        self._create_xml_schema('xmltest/f1.xml.json')
+        df = self.df(fqn)
+        expect = self.createDF("comment: String;make: String;model: String;year: Long",
+            """No comment,Tesla,S,2012;
+                Go get one now they are going fast,Ford,E350,1997""")
+        self.should_be_same(expect, df)
+
+    def test_SmvXmvFile_path_only(self):
+        fqn = "stage.modules.Xml3"
+        self._create_xml_file('xmltest/f1.xml')
+        self._create_xml_schema('xmltest/f1.schema')
         df = self.df(fqn)
         expect = self.createDF("comment: String;make: String;model: String;year: Long",
             """No comment,Tesla,S,2012;
@@ -112,14 +126,24 @@ class SmvInputTest(SmvBaseTest):
 
     def test_SmvInputFromFile_instanceValHash_mtime(self):
         fqn = "stage.modules.Xml1"
-        self._create_xml_file()
+        self._create_xml_file('xmltest/f1.xml')
+        self._create_xml_schema('xmltest/f1.xml.json')
         with self.Resource(self.smvApp, fqn) as ds:
             hash1 = ds.instanceValHash()
 
         # Need to sleep to make sure mtime changes
         import time
         time.sleep(1)
-        self._create_xml_file()
+        self._create_xml_file('xmltest/f1.xml')
+        self._create_xml_schema('xmltest/f1.xml.json')
         with self.Resource(self.smvApp, fqn) as ds:
             hash2 = ds.instanceValHash()
         self.assertNotEqual(hash1, hash2)
+
+    def test_SmvInputFromFile_schemaPath(self):
+        fqn = "stage.modules.IFF1"
+        with self.Resource(self.smvApp, fqn) as ds:
+            spath = ds.fullSchemaPath()
+        expected = self.tmpInputDir() + "/xmltest/f1.schema"
+        self.assertEqual(spath, expected)
+
