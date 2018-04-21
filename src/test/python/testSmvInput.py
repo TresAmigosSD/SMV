@@ -128,4 +128,5 @@ class SmvInputTest(SmvBaseTest):
         fqn = "stage.modules.IFF1"
         with self.Resource(self.smvApp, fqn) as ds:
             spath = ds.fullSchemaPath()
-        print(spath)
+        expected = self.tmpInputDir() + "/xmltest/f1.schema"
+        self.assertEqual(spath, expected)
