@@ -25,7 +25,7 @@ import binascii
 import json
 import re
 
-from smv.dqm import SmvDQM
+from smv.dqm import SmvDQM, FailParserCountPolicy
 from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, pickle_lib, is_string
 from smv.py4j_interface import create_py4j_interface_method
@@ -492,9 +492,13 @@ class WithParser(object):
         """for parsers we should get the type specific dqm policy from the
            concrete scala proxy class that is the actual input (e.g. SmvCsvFile)"""
         userDqm = self.dqm()
-        scalaInputDS = self.getRawScalaInputDS()
-        res = scalaInputDS.dqmWithTypeSpecificPolicy(userDqm)
 
+        if (self.failAtParsingError()):
+            res = userDqm.add(FailParserCountPolicy(1)).addAction()
+        elif (self.forceParserCheck()):
+            res = userDqm.addAction()
+        else:
+            res = userDqm
         return res
 
     def forceParserCheck(self):
@@ -627,20 +631,14 @@ class SmvMultiCsvFiles(WithParser, SmvInputWithScalaDS):
         """
 
 
-class SmvCsvStringData(WithParser, SmvInputWithScalaDS):
+class SmvCsvStringData(WithParser, SmvInputBase):
     """Input data defined by a schema string and data string
     """
 
-    def __init__(self, smvApp):
-        super(SmvCsvStringData, self).__init__(smvApp)
-        self._smvCsvStringData = self.smvApp._jvm.org.tresamigos.smv.SmvCsvStringData(
-            self.schemaStr(),
-            self.dataStr(),
-            False
-        )
-
-    def getRawScalaInputDS(self):
-        return self._smvCsvStringData
+    def readAsDF(self, readerLogger):
+        return DataFrame(self.smvApp.j_smvApp.createDFWithLogger(
+            self.schemaStr(), self.dataStr(), readerLogger
+        ), self.smvApp.sqlContext)
 
     @abc.abstractmethod
     def schemaStr(self):
