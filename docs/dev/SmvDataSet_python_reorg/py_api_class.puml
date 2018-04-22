@@ -11,15 +11,14 @@ class SmvInputBase extends SmvDataSet
 class SmvModule extends SmvDataSet
 class SmvOutputBase extends SmvDataSet
 
-class SmvInputWithScalaDS extends SmvInputBase
 class SmvInputFromFile extends SmvInputBase
+class WithParser extends SmvInputBase
 class UserDefinedInput #A1FFFF extends SmvInputBase
 class SmvXmlFile #A1FFFF extends SmvInputFromFile
-class WithParser
 
-class SmvCsvFile extends WithParser, SmvInputWithScalaDS
-class SmvMultiCsvFiles extends WithParser, SmvInputWithScalaDS
-class SmvCsvStringData extends WithParser, SmvInputWithScalaDS
+class SmvCsvFile extends WithParser, SmvInputFromFile
+class SmvMultiCsvFiles extends SmvCsvFile
+class SmvCsvStringData extends WithParser
 class SmvJdbcTable extends SmvInputBase
 class SmvHiveTable extends SmvInputBase
 

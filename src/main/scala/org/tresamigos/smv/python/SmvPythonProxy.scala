@@ -382,6 +382,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     handler.csvFileWithSchema(csvAttr, Some(schema))
   }
 
+  def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
 }
 
 /** Not a companion object because we need to access it from Python */
