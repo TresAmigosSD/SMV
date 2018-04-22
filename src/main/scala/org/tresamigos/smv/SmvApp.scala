@@ -77,6 +77,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
 
+  // Used by smvApp.createDF and SmvCsvStringData (both scala and python)
   private[smv] def createDFWithLogger(schemaStr: String, data: String, parserLogger: ParserLogger) = {
     val schema    = SmvSchema.fromString(schemaStr)
     val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
@@ -84,7 +85,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
     handler.csvStringRDDToDF(sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
   }
 
-  /**
+    /**
    * Create a DataFrame from string for temporary use (in test or shell)
    * By default, don't persist validation result
    *
