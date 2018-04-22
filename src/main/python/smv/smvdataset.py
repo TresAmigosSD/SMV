@@ -536,12 +536,12 @@ class WithParser(object):
 
 # Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
 # Otherwise we will pick methods up from SmvDataSet instead of WithParser.
-class SmvCsvFile(WithParser, SmvInputWithScalaDS):
+class SmvCsvFile0(WithParser, SmvInputWithScalaDS):
     """Input from a file in CSV format
     """
 
     def __init__(self, smvApp):
-        super(SmvCsvFile, self).__init__(smvApp)
+        super(SmvCsvFile0, self).__init__(smvApp)
         self._smvCsvFile = smvApp.j_smvPyClient.smvCsvFile(
             self.fqn(),
             self.path(),
@@ -565,6 +565,34 @@ class SmvCsvFile(WithParser, SmvInputWithScalaDS):
                 (str): path
         """
 
+
+class SmvCsvFile(WithParser, SmvInputFromFile):
+    """Will replace SmvCsvFile when finished and tested"""
+    
+    def smvSchema(self):
+        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
+        if (self.userSchema() is not None):
+            return smvSchemaObj.fromString(self.userSchema())
+        else:
+            return smvSchemaObj.fromFile(self.smvApp.j_smvApp.sc, self.fullSchemaPath())
+        
+    def schema(self):
+        j_schema = self.smvSchema().toStructType()
+        return StructType.fromJson(json.loads(j_schema.json()))
+ 
+    def readAsDF(self, readerLogger):
+        if (self.csvAttr() is not None):
+            csvAttr = self.csvAttr()
+        else:
+            csvAttr = self.smvSchema().extractCsvAttributes()
+
+        jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
+            self.fullPath(),
+            self.smvSchema(),
+            csvAttr,
+            readerLogger
+        )
+        return DataFrame(jdf, self.smvApp.sqlContext)
 
 class SmvSqlCsvFile(SmvCsvFile):
     """Input from a file in CSV format and using a SQL query to access it
