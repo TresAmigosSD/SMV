@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smv import *
-from smv.smvdataset import SmvInputFromFile
+
 
 class Xml1(SmvXmlFile):
     def fullPath(self):
