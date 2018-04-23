@@ -28,6 +28,11 @@ if [ "$1" = "--port" ]; then
   extra_args+=" --NotebookApp.port=$jupyter_port --NotebookApp.port_retries=0"
   shift; shift
 fi
+if [ "$1" = "--base-url" ]; then
+  base_url="$2"
+  extra_args+=" --NotebookApp.base_url=$base_url"
+  shift; shift
+fi
 
 export PYSPARK_DRIVER_PYTHON_OPTS="$pyspark_driver_python_opts $extra_args"
 echo "Exporting $PYSPARK_DRIVER_PYTHON_OPTS"
