@@ -77,7 +77,8 @@ class RejectTest extends SmvTestUtil {
   test("test csvParser rejection with exception") {
     val e = intercept[SmvDqmValidationError] {
       val dataStr = """231,67.21  ,20121009101621,"02122011"""
-      val prdd    = dfFrom("a:String;b:Double;c:String;d:String", dataStr)
+      val file = SmvCsvStringData("a:String;b:Double;c:String;d:String", dataStr)
+      val prdd = file.rdd(collector=new SmvRunInfoCollector)
       println(prdd.collect.mkString("\n"))
     }
 
