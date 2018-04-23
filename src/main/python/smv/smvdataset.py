@@ -493,9 +493,9 @@ class WithParser(object):
            concrete scala proxy class that is the actual input (e.g. SmvCsvFile)"""
         userDqm = self.dqm()
 
-        if (self.failAtParsingError()):
+        if self.failAtParsingError():
             res = userDqm.add(FailParserCountPolicy(1)).addAction()
-        elif (self.forceParserCheck()):
+        elif self.forceParserCheck():
             res = userDqm.addAction()
         else:
             res = userDqm
