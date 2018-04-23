@@ -25,5 +25,6 @@ Pipfile.lock
 .Rhistory
 .RData
 
+.vscode/
 .sync-config.cson
 *.pyc

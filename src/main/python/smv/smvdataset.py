@@ -14,10 +14,8 @@
 This module defines the abstract classes which formed the SmvDataSet Framework for clients' projects
 """
 
-from pyspark import SparkContext
-from pyspark.sql import HiveContext, DataFrame
-from pyspark.sql.column import Column
-from pyspark.sql.functions import col
+from pyspark.sql import DataFrame
+from pyspark.sql.types import StructType
 
 import abc
 import inspect
@@ -25,6 +23,7 @@ import sys
 import traceback
 import binascii
 import json
+import re
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
@@ -36,23 +35,6 @@ if sys.version_info >= (3, 4):
 else:
     ABC = abc.ABCMeta('ABC', (), {})
 
-def _disassemble(obj):
-    """Disassembles a module and returns bytecode as a string.
-    """
-    mod = obj if (isinstance(obj, type)) else obj.__class__
-
-    buf = StringIO()
-    import dis
-    if sys.version >= '3':
-        dis.dis(mod, file=buf)
-    else:
-        stdout = sys.stdout
-        sys.stdout = buf
-        dis.dis(mod)
-        sys.stdout = stdout
-    ret = buf.getvalue()
-    buf.close()
-    return ret
 
 def _smvhash(text):
     """Python's hash function will return different numbers from run to
@@ -62,10 +44,12 @@ def _smvhash(text):
     import binascii
     return binascii.crc32(text.encode())
 
+
 def _stripComments(code):
     import re
     code = str(code)
     return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
+
 
 class SmvOutput(object):
     """Mixin which marks an SmvModule as one of the output of its stage
@@ -85,6 +69,7 @@ class SmvOutput(object):
         return None
 
     getTableName = create_py4j_interface_method("getTableName", "tableName")
+
 
 class SmvDataSet(ABC):
     """Abstract base class for all SmvDataSets
@@ -136,7 +121,10 @@ class SmvDataSet(ABC):
 
     def assert_result_is_dataframe(self, result):
         if not isinstance(result, DataFrame):
-            raise SmvRuntimeError(self.fqn() + " produced " + type(result).__name__ + " in place of a DataFrame")
+            raise SmvRuntimeError(
+                self.fqn() + " produced " +
+                type(result).__name__ + " in place of a DataFrame"
+            )
 
     def version(self):
         """Version number
@@ -147,7 +135,7 @@ class SmvDataSet(ABC):
             Returns:
                 (str): version number of this SmvDataSet
         """
-        return "0";
+        return "0"
 
     def isOutput(self):
         return isinstance(self, SmvOutput)
@@ -168,19 +156,22 @@ class SmvDataSet(ABC):
             # "a = 5" and "a = 6" compile to same byte code.
             # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
             res = _smvhash(src_no_comm)
-        except Exception as err: # `inspect` will raise error for classes defined in the REPL
+        except Exception as err:  # `inspect` will raise error for classes defined in the REPL
             # Instead of handle the case that module defined in REPL, just raise Exception here
             # res = _smvhash(_disassemble(cls))
             traceback.print_exc()
             message = "{0}({1!r})".format(type(err).__name__, err.args)
-            raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
+            raise Exception(
+                message + "\n" + "SmvDataSet " +
+                self.urn() + " defined in shell can't be persisted"
+            )
 
         # include sourceCodeHash of parent classes
         for m in inspect.getmro(cls):
             try:
                 if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
                     res += m(self.smvApp).sourceCodeHash()
-            except: pass
+            except: pass  # noqa: E701
 
         # if module inherits from SmvRunConfig, then add hash of all config values to module hash
         if hasattr(self, "_smvGetRunConfigHash"):
@@ -235,7 +226,8 @@ class SmvDataSet(ABC):
                 >>> return "insert overwrite table mytable select * from dftable"
 
             Note:
-                If this method is not specified, the default is to just create the table specified by tableName() with the results of the module.
+                If this method is not specified, the default is to just create the
+                table specified by tableName() with the results of the module.
 
            Returns:
                (string): the query to run.
@@ -253,7 +245,9 @@ class SmvDataSet(ABC):
     def dqmWithTypeSpecificPolicy(self):
         return self.dqm()
 
-    getDqmWithTypeSpecificPolicy = create_py4j_interface_method("getDqmWithTypeSpecificPolicy", "dqmWithTypeSpecificPolicy")
+    getDqmWithTypeSpecificPolicy = create_py4j_interface_method(
+        "getDqmWithTypeSpecificPolicy", "dqmWithTypeSpecificPolicy"
+    )
 
     def dependencies(self):
         """Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)
@@ -310,7 +304,8 @@ class SmvDataSet(ABC):
                 history (list(dict)): list of historical metadata kv's
 
             Returns:
-                (str): Validation failure message. Return None (or omit a return statement) if successful.
+                (str): Validation failure message. Return None (or omit a return statement) if
+                successful.
         """
         return None
 
@@ -339,8 +334,12 @@ class SmvDataSet(ABC):
     class Java:
         implements = ['org.tresamigos.smv.ISmvModule']
 
-class SmvInput(SmvDataSet, ABC):
+
+class SmvInputBase(SmvDataSet, ABC):
     """SmvDataSet representing external input
+        Concrete class need to provide:
+          - readAsDF
+          - instanceValHash (optional)
     """
 
     def isEphemeral(self):
@@ -363,20 +362,128 @@ class SmvInput(SmvDataSet, ABC):
         """
         return df
 
-    @abc.abstractproperty
+    @abc.abstractmethod
+    def readAsDF(self, readerLogger):
+        """User defined data reader. Returns a DataFrame"""
+        pass
+
+    def doRun(self, validator, known):
+        if (validator is None):
+            readerLogger = self.smvApp._jvm.TerminateParserLogger
+        else:
+            readerLogger = validator.createParserValidator()
+        result = self.run(self.readAsDF(readerLogger))
+        self.assert_result_is_dataframe(result)
+        return result._jdf
+
+
+class SmvInputFromFile(SmvInputBase):
+    """Base class for any input based on files on HDFS or local
+        Concrete class need to provide:
+            - path (str): path relative to smv.inputDir, or
+                - fullPath (str): file full path with protocol
+                - fullSchemaPath (str): schema file's full path, or
+            - schema (StructType): schema object
+            - readAsDF (DataFrame): file reading method
+    """
+    def path(self):
+        """Relative path to smv.dataDir config parameter"""
+        pass
+
+    def fullPath(self):
+        """Full path to the input (file/dir or glob pattern)"""
+        return "{}/{}".format(self.smvApp.inputDir(), self.path())
+
+    def fullSchemaPath(self):
+        """Full path to the schema file"""
+        know_types = ['.gz', '.csv', '.tsv', '.xml']
+        base = self.fullPath()
+        for t in know_types:
+            base = re.sub(t + '$', '', base)
+        return base + '.schema'
+
+    def schema(self):
+        """User specified schema
+            Returns:
+                (StructType): input data's schema
+        """
+        return None
+
+    def instanceValHash(self):
+        """Hash computed based on instance values of the dataset
+            Based on timestamp of an input file, it's name and
+            schema
+        """
+        mTime = self.smvApp._jvm.SmvHDFS.modificationTime(self.fullPath())
+        pathHash = _smvhash(self.fullPath())
+        if (self.schema() is not None):
+            schemaHash = _smvhash(self.schema().simpleString())
+        else:
+            schemaHash = 0
+        res = mTime + pathHash + schemaHash
+        # ensure python's numeric type can fit in a java.lang.Integer
+        return int(res) & 0x7fffffff
+
+
+class SmvXmlFile(SmvInputFromFile):
+    """Input from file in XML format
+        Concrete class need to provide:
+            - rowTag (str): XML tag for identifying a row
+            - path (str): File path relative to smv.InputDir. Or
+              - fullPath (str): file full path with protocol
+              - fullSchemaPath (str): full path of the schema JSON file or None (infer schema)
+    """
+
+    @abc.abstractmethod
+    def rowTag(self):
+        """XML tag for identifying a record (row)"""
+        pass
+
+    def schema(self):
+        """load schema from the json file"""
+        if (self.fullSchemaPath() is None):
+            return None
+        else:
+            with open(self.fullSchemaPath(), "r") as sj:
+                schema_st = sj.read()
+            return StructType.fromJson(json.loads(schema_st))
+
+    def readAsDF(self, readerLogger):
+        """readin xml data"""
+
+        # TODO: look for possibilities to feed to readerLogger
+        reader = self.smvApp.sqlContext\
+            .read.format('com.databricks.spark.xml')\
+            .options(rowTag=self.rowTag())
+
+        # If no schema specified, infer from data
+        if (self.schema() is not None):
+            return reader.load(self.fullPath(), schema=self.schema())
+        else:
+            return reader.load(self.fullPath())
+
+
+class SmvInputWithScalaDS(SmvInputBase):
+    """Base class for all CSV input modules
+        Still referring the Scala side implementations of the CSV input
+        modules. Will be removed when we removed dependency to scala side
+        for all the CSV input modules
+    """
+
+    @abc.abstractmethod
     def getRawScalaInputDS(self):
         """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
            that is created in their init."""
+        pass
 
     def instanceValHash(self):
         # Defer to Scala target for instanceValHash
         return self.getRawScalaInputDS().instanceValHash()
 
-    def doRun(self, validator, known):
-        jdf = self.getRawScalaInputDS().doRun(validator, self.smvApp._jvm.SmvRunInfoCollector(), False)
-        result = self.run(DataFrame(jdf, self.smvApp.sqlContext))
-        self.assert_result_is_dataframe(result)
-        return result._jdf
+    def readAsDF(self, readerLogger):
+        jdf = self.getRawScalaInputDS().readFromSrc(readerLogger)
+        return DataFrame(jdf, self.smvApp.sqlContext)
+
 
 class WithParser(object):
     """shared parser funcs"""
@@ -410,9 +517,6 @@ class WithParser(object):
         """
         return None
 
-# Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
-# Otherwise we will pick methods up from SmvDataSet instead of WithParser.
-class SmvFile(WithParser, SmvInput):
     def userSchema(self):
         """Get user-defined schema
 
@@ -426,7 +530,9 @@ class SmvFile(WithParser, SmvInput):
         return None
 
 
-class SmvCsvFile(SmvFile):
+# Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
+# Otherwise we will pick methods up from SmvDataSet instead of WithParser.
+class SmvCsvFile(WithParser, SmvInputWithScalaDS):
     """Input from a file in CSV format
     """
 
@@ -445,7 +551,7 @@ class SmvCsvFile(SmvFile):
     def getRawScalaInputDS(self):
         return self._smvCsvFile
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def path(self):
         """User-specified path to the input csv file
 
@@ -454,6 +560,7 @@ class SmvCsvFile(SmvFile):
             Returns:
                 (str): path
         """
+
 
 class SmvSqlCsvFile(SmvCsvFile):
     """Input from a file in CSV format and using a SQL query to access it
@@ -485,7 +592,8 @@ class SmvSqlCsvFile(SmvCsvFile):
 
         return res
 
-class SmvMultiCsvFiles(SmvFile):
+
+class SmvMultiCsvFiles(WithParser, SmvInputWithScalaDS):
     """Raw input from multiple csv files sharing single schema
 
         Instead of a single input file, specify a data dir with files which share
@@ -510,7 +618,7 @@ class SmvMultiCsvFiles(SmvFile):
     def description(self):
         return "Input dir: @" + self.dir()
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def dir(self):
         """Path to the directory containing the csv files and their schema
 
@@ -518,7 +626,8 @@ class SmvMultiCsvFiles(SmvFile):
                 (str): path
         """
 
-class SmvCsvStringData(WithParser, SmvInput):
+
+class SmvCsvStringData(WithParser, SmvInputWithScalaDS):
     """Input data defined by a schema string and data string
     """
 
@@ -533,7 +642,7 @@ class SmvCsvStringData(WithParser, SmvInput):
     def getRawScalaInputDS(self):
         return self._smvCsvStringData
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def schemaStr(self):
         """Smv Schema string.
 
@@ -543,7 +652,7 @@ class SmvCsvStringData(WithParser, SmvInput):
                 (str): schema
         """
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def dataStr(self):
         """Smv data string.
 
@@ -553,20 +662,32 @@ class SmvCsvStringData(WithParser, SmvInput):
                 (str): data
         """
 
-class SmvJdbcTable(SmvInput):
+
+class SmvJdbcTable(SmvInputBase):
     """Input from a table read through JDBC
     """
-    def __init__(self, smvApp):
-        super(SmvJdbcTable, self).__init__(smvApp)
-        self._smvJdbcTable = self.smvApp._jvm.org.tresamigos.smv.SmvJdbcTable(self.tableName())
-
-    def getRawScalaInputDS(self):
-        return self._smvJdbcTable
-
     def description(self):
-        return self._smvJdbcTable.description()
+        return "JDBC table {}".format(self.tableName())
 
-    @abc.abstractproperty
+    def jdbcUrl(self):
+        """User can override this, default use the jdbcUrl setting in smvConfig"""
+        return self.smvApp.config().jdbcUrl()
+
+    def readAsDF(self, readerLogger):
+        if (self.tableQuery() is None):
+            tableNameOrQuery = self.tableName()
+        else:
+            tableNameOrQuery = "({}) as TMP_{}".format(
+                self.tableQuery(), self.tableName()
+            )
+
+        return self.smvApp.sqlContext.read\
+            .format('jdbc')\
+            .option('url', self.jdbcUrl())\
+            .option('dbtable', tableNameOrQuery)\
+            .load()
+
+    @abc.abstractmethod
     def tableName(self):
         """User-specified name for the table to extract input from
 
@@ -575,28 +696,7 @@ class SmvJdbcTable(SmvInput):
             Returns:
                 (str): table name
         """
-
-
-class SmvHiveTable(SmvInput):
-    """Input from a Hive table
-    """
-
-    def __init__(self, smvApp):
-        super(SmvHiveTable, self).__init__(smvApp)
-        self._smvHiveTable = self.smvApp._jvm.org.tresamigos.smv.SmvHiveTable(self.tableName(), self.tableQuery())
-
-    def getRawScalaInputDS(self):
-        return self._smvHiveTable
-
-    @abc.abstractproperty
-    def tableName(self):
-        """User-specified name Hive hive table to extract input from
-
-            Override this to specify your own table name.
-
-            Returns:
-                (str): table name
-        """
+        pass
 
     def tableQuery(self):
         """Query used to extract data from Hive table
@@ -608,6 +708,41 @@ class SmvHiveTable(SmvInput):
                 (str): query
         """
         return None
+
+
+class SmvHiveTable(SmvInputBase):
+    """Input from a Hive table
+    """
+
+    def readAsDF(self, readerLogger):
+        if (self.tableQuery() is None):
+            query = "select * from {}".format(self.tableName())
+        else:
+            query = self.tableQuery()
+        return self.smvApp.sqlContext.sql(query)
+
+    @abc.abstractmethod
+    def tableName(self):
+        """User-specified name Hive hive table to extract input from
+
+            Override this to specify your own table name.
+
+            Returns:
+                (str): table name
+        """
+        pass
+
+    def tableQuery(self):
+        """Query used to extract data from Hive table
+
+            Override this to specify your own query (optional). Default is
+            equivalent to 'select * from ' + tableName().
+
+            Returns:
+                (str): query
+        """
+        return None
+
 
 class SmvModule(SmvDataSet):
     """Base class for SmvModules written in Python
@@ -694,6 +829,7 @@ class SmvModule(SmvDataSet):
         self.assert_result_is_dataframe(result)
         return result._jdf
 
+
 class SmvSqlModule(SmvModule):
     """An SMV module which executes a SQL query in place of a run method
     """
@@ -726,7 +862,7 @@ class SmvSqlModule(SmvModule):
 
         res = self.smvApp.sqlContext.sql(self.query())
 
-        #drop temporary tables
+        # drop temporary tables
         for tbl_name in tbl_name_2_ds:
             # This currently causes an "error" to be reported saying "table does
             # not exist". This happens even when using "drop table if exists ".
@@ -739,7 +875,8 @@ class SmvSqlModule(SmvModule):
 class SmvResultModule(SmvModule):
     """An SmvModule whose result is not a DataFrame
 
-        The result must be picklable - see https://docs.python.org/2/library/pickle.html#what-can-be-pickled-and-unpickled.
+        The result must be picklable - see
+        https://docs.python.org/2/library/pickle.html#what-can-be-pickled-and-unpickled.
     """
     @classmethod
     def df2result(self, df):
@@ -795,12 +932,14 @@ class SmvResultModule(SmvModule):
         result = self.result2df(self.smvApp, res_obj)
         return result._jdf
 
+
 class SmvModel(SmvResultModule):
     """SmvModule whose result is a data model
     """
     # Exists only to be paired with SmvModelExec
     def dsType(self):
         return "Model"
+
 
 class SmvModelExec(SmvModule):
     """SmvModule that runs a model produced by an SmvModel
@@ -866,6 +1005,7 @@ class SmvModelExec(SmvModule):
                 (object): picklable output of this SmvModule
         """
 
+
 class SmvModuleLink(object):
     """A module link provides access to data generated by modules from another stage
     """
@@ -880,6 +1020,7 @@ class SmvModuleLink(object):
 
     def urn(self):
         return 'link:' + self.target.fqn()
+
 
 class SmvExtDataSet(object):
     """An SmvDataSet representing an external (Scala) SmvDataSet
@@ -905,6 +1046,7 @@ class SmvExtDataSet(object):
     def fqn(self):
         return self._fqn
 
+
 def SmvExtModuleLink(refname):
     """Creates a link to an external (Scala) SmvDataSet
 
@@ -918,8 +1060,11 @@ def SmvExtModuleLink(refname):
     """
     return SmvModuleLink(SmvExtDataSet(refname))
 
+
 __all__ = [
     'SmvOutput',
+    'SmvInputBase',
+    'SmvXmlFile',
     'SmvMultiCsvFiles',
     'SmvCsvFile',
     'SmvSqlCsvFile',
