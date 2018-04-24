@@ -390,7 +390,7 @@ class SmvInputBase(SmvDataSet, ABC):
 
     def instanceValHash(self):
         """Hash computed based on instance values of the dataset
-            Based on timestamp of an input file, it's name and schema
+            Default to dataSrcHash + schemaHash
         """
         res = self.dataSrcHash() + self.schemaHash()
         # ensure python's numeric type can fit in a java.lang.Integer
@@ -518,7 +518,8 @@ class WithParser(SmvInputBase):
 
     @abc.abstractmethod
     def smvSchema(self):
-        """Returns SmvSchema"""
+        """Returns SmvSchema, as the Scala SmvSchema class
+        """
         pass
 
     def schema(self):
@@ -527,6 +528,10 @@ class WithParser(SmvInputBase):
 
     def csvAttr(self):
         """Specifies the csv file format.  Corresponds to the CsvAttributes case class in Scala.
+            Derive from smvSchema if not specified by user.
+
+            Override this method if user want to specify CsvAttributes which is different from
+            the one can be derived from smvSchema
         """
         return self.smvSchema().extractCsvAttributes()
 
@@ -543,6 +548,8 @@ class WithParser(SmvInputBase):
         return None
 
     def schemaHash(self):
+        # when smvSchema is provided, use it to calculate hash, since it also 
+        # includes CsvAttributes info
         return self.smvSchema().schemaHash()
 
 
@@ -634,6 +641,9 @@ class SmvMultiCsvFiles(SmvCsvFile):
             combinedJdf = jdf if (combinedJdf is None) else combinedJdf.unionAll(jdf)
 
         return DataFrame(combinedJdf, self.smvApp.sqlContext)
+
+    def description(self):
+        return "Input dir: @" + self.dir()
 
     @abc.abstractmethod
     def dir(self):
