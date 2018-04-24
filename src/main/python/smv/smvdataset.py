@@ -339,7 +339,8 @@ class SmvInputBase(SmvDataSet, ABC):
     """SmvDataSet representing external input
         Concrete class need to provide:
           - readAsDF
-          - instanceValHash (optional)
+          - dataSrcHash (optional)
+          - schemaHash (optional)
     """
 
     def isEphemeral(self):
@@ -364,8 +365,36 @@ class SmvInputBase(SmvDataSet, ABC):
 
     @abc.abstractmethod
     def readAsDF(self, readerLogger):
-        """User defined data reader. Returns a DataFrame"""
+        """User defined data reader
+        
+            Returns:
+                (DataFrame): data from raw input
+        """
         pass
+
+    def dataSrcHash(self):
+        """Hash computed on data source
+
+            Returns:
+                (int): user defined hash derived from raw data (default: 0)
+        """
+        return 0
+
+    def schemaHash(self):
+        """Hash computed from schema
+
+            Returns:
+                (int): user defined hash derived from input schema (default: 0)
+        """
+        return 0
+
+    def instanceValHash(self):
+        """Hash computed based on instance values of the dataset
+            Default to dataSrcHash + schemaHash
+        """
+        res = self.dataSrcHash() + self.schemaHash()
+        # ensure python's numeric type can fit in a java.lang.Integer
+        return int(res) & 0x7fffffff
 
     def doRun(self, validator, known):
         if (validator is None):
@@ -409,20 +438,22 @@ class SmvInputFromFile(SmvInputBase):
         """
         return None
 
-    def instanceValHash(self):
-        """Hash computed based on instance values of the dataset
-            Based on timestamp of an input file, it's name and
-            schema
+    def dataSrcHash(self):
+        """Hash computed on data source
+            Based on file's mtime, and file's full path
         """
         mTime = self.smvApp._jvm.SmvHDFS.modificationTime(self.fullPath())
         pathHash = _smvhash(self.fullPath())
+        return mTime + pathHash
+
+    def schemaHash(self):
+        """Hash computed from schema
+            Based on input schema as a StructType
+        """
         if (self.schema() is not None):
-            schemaHash = _smvhash(self.schema().simpleString())
+            return _smvhash(self.schema().simpleString())
         else:
-            schemaHash = 0
-        res = mTime + pathHash + schemaHash
-        # ensure python's numeric type can fit in a java.lang.Integer
-        return int(res) & 0x7fffffff
+            return 0
 
 
 class SmvXmlFile(SmvInputFromFile):
@@ -463,30 +494,8 @@ class SmvXmlFile(SmvInputFromFile):
             return reader.load(self.fullPath())
 
 
-class SmvInputWithScalaDS(SmvInputBase):
-    """Base class for all CSV input modules
-        Still referring the Scala side implementations of the CSV input
-        modules. Will be removed when we removed dependency to scala side
-        for all the CSV input modules
-    """
-
-    @abc.abstractmethod
-    def getRawScalaInputDS(self):
-        """derived classes should provide the raw scala proxy input dataset (e.g. SmvCsvFile)
-           that is created in their init."""
-        pass
-
-    def instanceValHash(self):
-        # Defer to Scala target for instanceValHash
-        return self.getRawScalaInputDS().instanceValHash()
-
-    def readAsDF(self, readerLogger):
-        jdf = self.getRawScalaInputDS().readFromSrc(readerLogger)
-        return DataFrame(jdf, self.smvApp.sqlContext)
-
-
-class WithParser(object):
-    """shared parser funcs"""
+class WithParser(SmvInputBase):
+    """Input uses SmvSchema and Csv parser"""
 
     def dqmWithTypeSpecificPolicy(self):
         """for parsers we should get the type specific dqm policy from the
@@ -507,19 +516,24 @@ class WithParser(object):
     def failAtParsingError(self):
         return True
 
-    def defaultCsvWithHeader(self):
-        return self.smvApp.defaultCsvWithHeader()
+    @abc.abstractmethod
+    def smvSchema(self):
+        """Returns SmvSchema, as the Scala SmvSchema class
+        """
+        pass
 
-    def defaultTsv(self):
-        return self.smvApp.defaultTsv()
-
-    def defaultTsvWithHeader(self):
-        return self.smvApp.defaultTsvWithHeader()
+    def schema(self):
+        j_schema = self.smvSchema().toStructType()
+        return StructType.fromJson(json.loads(j_schema.json()))
 
     def csvAttr(self):
         """Specifies the csv file format.  Corresponds to the CsvAttributes case class in Scala.
+            Derive from smvSchema if not specified by user.
+
+            Override this method if user want to specify CsvAttributes which is different from
+            the one can be derived from smvSchema
         """
-        return None
+        return self.smvSchema().extractCsvAttributes()
 
     def userSchema(self):
         """Get user-defined schema
@@ -533,37 +547,39 @@ class WithParser(object):
         """
         return None
 
+    def schemaHash(self):
+        # when smvSchema is provided, use it to calculate hash, since it also 
+        # includes CsvAttributes info
+        return self.smvSchema().schemaHash()
 
-# Note: due to python MRO, WithParser MUST come first in inheritance hierarchy.
-# Otherwise we will pick methods up from SmvDataSet instead of WithParser.
-class SmvCsvFile(WithParser, SmvInputWithScalaDS):
+
+class SmvCsvFile(WithParser, SmvInputFromFile):
     """Input from a file in CSV format
+        Base class for CSV file input.
+        User need to define path method.
+
+        Example:
+        >>> class MyCsvFile(SmvCsvFile):
+        >>>     def path(self):
+        >>>         return "path/relative/to/smvInputDir/file.csv"
     """
 
-    def __init__(self, smvApp):
-        super(SmvCsvFile, self).__init__(smvApp)
-        self._smvCsvFile = smvApp.j_smvPyClient.smvCsvFile(
-            self.fqn(),
-            self.path(),
+    def smvSchema(self):
+        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
+        if (self.userSchema() is not None):
+            return smvSchemaObj.fromString(self.userSchema())
+        else:
+            return smvSchemaObj.fromFile(self.smvApp.j_smvApp.sc(), self.fullSchemaPath())
+
+
+    def readAsDF(self, readerLogger):
+        jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
+            self.fullPath(),
+            self.smvSchema(),
             self.csvAttr(),
-            self.forceParserCheck(),
-            self.failAtParsingError(),
-            smvApp.scalaOption(self.userSchema())
+            readerLogger
         )
-
-
-    def getRawScalaInputDS(self):
-        return self._smvCsvFile
-
-    @abc.abstractmethod
-    def path(self):
-        """User-specified path to the input csv file
-
-            Override this to specify the path to the csv file.
-
-            Returns:
-                (str): path
-        """
+        return DataFrame(jdf, self.smvApp.sqlContext)
 
 
 class SmvSqlCsvFile(SmvCsvFile):
@@ -597,27 +613,34 @@ class SmvSqlCsvFile(SmvCsvFile):
         return res
 
 
-class SmvMultiCsvFiles(WithParser, SmvInputWithScalaDS):
+class SmvMultiCsvFiles(SmvCsvFile):
     """Raw input from multiple csv files sharing single schema
 
         Instead of a single input file, specify a data dir with files which share
         the same schema.
     """
+    def path(self):
+        return self.dir()
 
-    def __init__(self, smvApp):
-        super(SmvMultiCsvFiles, self).__init__(smvApp)
-        self._smvMultiCsvFiles = smvApp._jvm.org.tresamigos.smv.SmvMultiCsvFiles(
-            self.dir(),
-            self.csvAttr(),
-            None,
-            smvApp.scalaOption(self.userSchema())
-        )
+    def readAsDF(self, readerLogger):
+        flist = self.smvApp.j_smvPyClient.getDirList(self.fullPath())
+        # ignore all hidden files in the data dir
+        filesInDir = ["{}/{}".format(self.fullPath(), n) for n in flist if not n.startswith(".")]
 
-    def userSchema(self):
-        return None
+        if (not filesInDir):
+            raise SmvRuntimeError("There are no data files in {}".format(self.fullPath()))
 
-    def getRawScalaInputDS(self):
-        return self._smvMultiCsvFiles
+        combinedJdf = None
+        for filePath in filesInDir:
+            jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
+                filePath,
+                self.smvSchema(),
+                self.csvAttr(),
+                readerLogger
+            )
+            combinedJdf = jdf if (combinedJdf is None) else combinedJdf.unionAll(jdf)
+
+        return DataFrame(combinedJdf, self.smvApp.sqlContext)
 
     def description(self):
         return "Input dir: @" + self.dir()
@@ -631,14 +654,21 @@ class SmvMultiCsvFiles(WithParser, SmvInputWithScalaDS):
         """
 
 
-class SmvCsvStringData(WithParser, SmvInputBase):
+class SmvCsvStringData(WithParser):
     """Input data defined by a schema string and data string
     """
+
+    def smvSchema(self):
+        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
+        return smvSchemaObj.fromString(self.schemaStr())
 
     def readAsDF(self, readerLogger):
         return DataFrame(self.smvApp.j_smvApp.createDFWithLogger(
             self.schemaStr(), self.dataStr(), readerLogger
         ), self.smvApp.sqlContext)
+
+    def dataSrcHash(self):
+        return _smvhash(self.dataStr())
 
     @abc.abstractmethod
     def schemaStr(self):
@@ -1062,6 +1092,7 @@ def SmvExtModuleLink(refname):
 __all__ = [
     'SmvOutput',
     'SmvInputBase',
+    'SmvInputFromFile',
     'SmvXmlFile',
     'SmvMultiCsvFiles',
     'SmvCsvFile',
