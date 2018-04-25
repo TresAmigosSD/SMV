@@ -14,19 +14,21 @@
 
 package org.tresamigos.smv
 
+
+import collection.JavaConverters._
+import java.util.List
+import scala.collection.mutable
+import scala.io.Source
+import scala.util.{Try, Success, Failure}
+
 import org.apache.log4j.LogManager
-
-import org.tresamigos.smv.util.Edd
-
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.{SparkContext, SparkConf}
-
-import scala.collection.mutable
-import scala.util.{Try, Success, Failure}
-import java.util.List
-import collection.JavaConverters._
-
 import org.joda.time.DateTime
+
+import org.tresamigos.smv.util.Edd
+import org.tresamigos.smv.dqm.{ParserLogger, TerminateParserLogger}
+
 
 
 /**
@@ -42,6 +44,14 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
 
   def stages      = smvConfig.stageNames
   val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
+
+  val smvVersion  = {
+    val smvHome = sys.env("SMV_HOME")
+    val versionFile = Source.fromFile(f"${smvHome}/.smv_version")
+    val nextLine = versionFile.getLines.next
+    versionFile.close
+  }
+
 
   /** Register Kryo Classes
    * Since none of the SMV classes will be put in an RDD, register them or not does not make
@@ -71,16 +81,22 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
 
-  /**
+  // Used by smvApp.createDF and SmvCsvStringData (both scala and python)
+  private[smv] def createDFWithLogger(schemaStr: String, data: String, parserLogger: ParserLogger) = {
+    val schema    = SmvSchema.fromString(schemaStr)
+    val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
+    val handler = new FileIOHandler(sqlContext, null, None, parserLogger)
+    handler.csvStringRDDToDF(sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
+  }
+
+    /**
    * Create a DataFrame from string for temporary use (in test or shell)
    * By default, don't persist validation result
    *
    * Passing null for data will create an empty dataframe with a specified schema.
    **/
-  def createDF(schemaStr: String, data: String = null, isPersistValidateResult: Boolean = false) = {
-    val smvCF = SmvCsvStringData(schemaStr, data, isPersistValidateResult)
-    smvCF.rdd(collector=new SmvRunInfoCollector)
-  }
+  def createDF(schemaStr: String, data: String = null) =
+    createDFWithLogger(schemaStr, data, TerminateParserLogger)
 
   lazy val allDataSets = dsm.allDataSets
 
@@ -333,16 +349,17 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
    * TODO: the name of this function should make its distinction from runModule clear (this is an implementation)
    */
   private def runDS(ds: SmvDataSet,
-            forceRun: Boolean,
-            version: Option[String],
-            collector: SmvRunInfoCollector): DataFrame = {
+                    forceRun: Boolean,
+                    version: Option[String],
+                    collector: SmvRunInfoCollector,
+                    quickRun: Boolean): DataFrame = {
     if (version.isDefined)
       // if fails, error already handled since input path doesn't exist
       ds.readPublishedData(version).get
     else {
       if (forceRun)
         deletePersistedResults(Seq(ds))
-      ds.rdd(forceRun, collector=collector)
+      ds.rdd(forceRun, collector=collector, quickRun=quickRun)
     }
   }
 
@@ -353,14 +370,15 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
    *  If dynamic runtime configuration is specified, run the module with the configuration provided.
    */
   def runModule(urn: URN,
-                forceRun: Boolean = false,
-                version: Option[String] = None,
+                forceRun: Boolean              = false,
+                version: Option[String]        = None,
                 runConfig: Map[String, String] = Map.empty,
-                collector: SmvRunInfoCollector = new SmvRunInfoCollector): DataFrame = {
+                collector: SmvRunInfoCollector = new SmvRunInfoCollector,
+                quickRun: Boolean              = false): DataFrame = {
     // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
     setDynamicRunConfig(runConfig)
     val ds = dsm.load(urn).head
-    runDS(ds, forceRun, version, collector)
+    runDS(ds, forceRun, version, collector, quickRun)
   }
 
   /**
@@ -370,15 +388,16 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
    * If a version is specified, try to read the module from the published data for the given version
    */
   def runModuleByName(modName: String,
-                      forceRun: Boolean = false,
-                      version: Option[String] = None,
+                      forceRun: Boolean              = false,
+                      version: Option[String]        = None,
                       runConfig: Map[String, String] = Map.empty,
-                      collector: SmvRunInfoCollector = new SmvRunInfoCollector): DataFrame = {
+                      collector: SmvRunInfoCollector = new SmvRunInfoCollector,
+                      quickRun: Boolean              = false): DataFrame = {
     // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
     setDynamicRunConfig(runConfig)
     val ds = dsm.inferDS(modName).head
 
-    runDS(ds, forceRun, version, collector=collector)
+    runDS(ds, forceRun, version, collector, quickRun)
   }
 
   def publishModuleToHiveByName(modName: String,

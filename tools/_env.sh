@@ -7,6 +7,7 @@
 # USER_CMD : name of the script that was launched (caller of this script)
 # SMV_APP_CLASS : user specified --class name to use for spark-submit or SmvApp as default
 # APP_JAR : user specified --jar option or the discovered application fat jar.
+# SMV_USER_SCRIPT : optional user-defined launch script
 #
 
 # This function is used to split the command line arguments into SMV / Spark
@@ -23,6 +24,10 @@ function split_smv_spark_args()
         if [ "$1" == "--spark-home" ]; then
           shift
           SPARK_HOME_OPT="$1"
+          shift
+        elif [ "$1" == "--script" ]; then
+          shift
+          SMV_USER_SCRIPT="$1"
           shift
         else
           SMV_ARGS=("${SMV_ARGS[@]}" "$1")
@@ -126,6 +131,10 @@ function set_smv_spark_paths() {
   fi
 }
 
+function set_smv_home() {
+  export SMV_HOME="$(cd "`dirname "$0"/`/.."; pwd)"
+}
+
 # Remove trailing alphanum characters in dot-separated version text.
 function sanitize_version () {
   # match a digit, followed by a letter, "+" or "_," and anything up to a "."
@@ -194,10 +203,16 @@ function print_help() {
 
 # --- MAIN ---
 declare -a SMV_ARGS SPARK_ARGS
+# SMV_TOOLS should have been set by caller.
+if [ -z "$SMV_TOOLS" ]; then
+    echo "ERROR: SMV_TOOLS not set by calling script!"
+    exit 1
+fi
 USER_CMD=`basename $0`
 SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
 split_smv_spark_args "$@"
 set_smv_spark_paths
+set_smv_home
 verify_spark_version
 check_help_option
 find_fat_jar

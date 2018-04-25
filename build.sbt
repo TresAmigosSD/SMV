@@ -21,14 +21,19 @@ libraryDependencies ++= Seq(
   "org.joda"                     % "joda-convert"       % "1.7",
   "joda-time"                    % "joda-time"          % "2.7",
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
-  "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4"
+  "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4",
+  "com.databricks"               %% "spark-xml"         % "0.4.1"
 )
 
 parallelExecution in Test := false
 
 publishArtifact in Test := true
 
-// fork in Test := true
+// Tests must be forked in order to export env vars
+fork in Test := true
+// SMV_HOME would normally be set by _env.sh when starting SMV, so for testing we
+// explicitly set it to the current directory.
+envVars in Test := Map("SMV_HOME" -> ".")
 
 // Create itest task that runs integration tests
 val itest = TaskKey[Unit]("itest", "Run Integration Test")

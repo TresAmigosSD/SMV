@@ -77,7 +77,8 @@ class RejectTest extends SmvTestUtil {
   test("test csvParser rejection with exception") {
     val e = intercept[SmvDqmValidationError] {
       val dataStr = """231,67.21  ,20121009101621,"02122011"""
-      val prdd    = dfFrom("a:String;b:Double;c:String;d:String", dataStr)
+      val file = SmvCsvStringData("a:String;b:Double;c:String;d:String", dataStr)
+      val prdd = file.rdd(collector=new SmvRunInfoCollector)
       println(prdd.collect.mkString("\n"))
     }
 
@@ -86,8 +87,8 @@ class RejectTest extends SmvTestUtil {
       DqmStateSnapshot(0, ErrorReport(1,
         Seq("""java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,"02122011""")),Map.empty,Map.empty),
       Seq(
-        ("org.tresamigos.smv.SmvCsvStringData metadata validation", "true"),
-        ("FailParserCountPolicy(1)", "false")),
+        ("FailParserCountPolicy(1)", "false"),
+        ("org.tresamigos.smv.SmvCsvStringData metadata validation", "true")),
       Seq("java.io.IOException: Un-terminated quoted field at end of CSV line @RECORD: 231,67.21  ,20121009101621,\"02122011")))
   }
 

@@ -9,7 +9,7 @@ namespace smv {
     dqm(): SmvDQM
     dataValidationSet(): ValidationSet
     doRun(): DataFrame
-    computeRDD(): DataFrame
+    computeDataFrame(): DataFrame
   }
 
   class ValidationSet {

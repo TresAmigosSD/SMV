@@ -11,7 +11,7 @@ There are various contexts in which it would be useful to save metadata associat
 
 # Saving metadata
 
-Metadata should be saved at the time that the module is run, but this cannot be part of `SmvModule's` persist operation because `SmvInputs` can also have metadata associated with them. Saving metadata will be part of `SmvDataSets'` `computeRDD` method. The Json string can be saved to file as a single line RDD, similar to what's done today with the schema.
+Metadata should be saved at the time that the module is run, but this cannot be part of `SmvModule's` persist operation because `SmvInputs` can also have metadata associated with them. Saving metadata will be part of `SmvDataSets'` `computeDataFrame` method. The Json string can be saved to file as a single line RDD, similar to what's done today with the schema.
 
 # Configuration
 
