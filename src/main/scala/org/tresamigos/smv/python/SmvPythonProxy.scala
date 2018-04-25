@@ -383,7 +383,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     parserLogger: ParserLogger
   ) = {
     // Python side always provide schema instead of schemaPath
-    val handler = new FileIOHandler(j_smvApp.sqlContext, fullPath, None, parserLogger)
+    val handler = new FileIOHandler(j_smvApp.sparkSession, fullPath, None, parserLogger)
     handler.csvFileWithSchema(csvAttr, Some(schema))
   }
 

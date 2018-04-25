@@ -85,7 +85,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   private[smv] def createDFWithLogger(schemaStr: String, data: String, parserLogger: ParserLogger) = {
     val schema    = SmvSchema.fromString(schemaStr)
     val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
-    val handler = new FileIOHandler(sqlContext, null, None, parserLogger)
+    val handler = new FileIOHandler(sparkSession, null, None, parserLogger)
     handler.csvStringRDDToDF(sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
   }
 
