@@ -1626,8 +1626,9 @@ class ColumnHelper(object):
         """Build a string from a timestamp and timezone
 
             Args:
-                timezone (string or Column): the timezone follows the rules in https://www.joda.org/joda-time/apidocs/org/joda/time/DateTimeZone.html#forID-java.lang.String-
-                                             It can be a string like "America/Los_Angeles" or "+1000". If it is null, use current system time zone.
+                timezone (string or Column): the timezone follows the rules in 
+                    https://www.joda.org/joda-time/apidocs/org/joda/time/DateTimeZone.html#forID-java.lang.String-
+                    It can be a string like "America/Los_Angeles" or "+1000". If it is null, use current system time zone.
                 fmt (string): the format is the same as the Java `Date` format
 
             Example:
