@@ -184,3 +184,14 @@ class ColumnHelperTest(SmvBaseTest):
 
         self.should_be_same(res1, exp)
         self.should_be_same(res2, exp)
+
+    def test_smvTimestampToStr(self):
+        df = self.createDF("ts:Timestamp[yyyyMMdd'T'HHmmssZ];tz:String", "20180428T025800+1000,+0000;,America/Los_Angeles;20180428T025800+1000,Australia/Sydney")
+        r1 = df.select(col("ts").smvTimestampToStr("+10:00","yyyyMMdd:HHmmssz").alias("localDT"))
+        r2 = df.select(col("ts").smvTimestampToStr(col("tz"),"yyyy-MM-dd HH:mm:ssz").alias("localDT2"))
+
+        e1 = self.createDF("localDT: String", "20180428:025800+10:00;;20180428:025800+10:00")
+        e2 = self.createDF("localDT2: String", "2018-04-27 16:58:00+00:00;;2018-04-28 02:58:00+10:00")
+
+        self.should_be_same(e1, r1)
+        self.should_be_same(e2, r2)

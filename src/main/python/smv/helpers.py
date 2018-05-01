@@ -1622,6 +1622,30 @@ class ColumnHelper(object):
         jc = self._jColumnHelper.smvStrToTimestamp(fmt)
         return Column(jc)
 
+    def smvTimestampToStr(self, timezone, fmt):
+        """Build a string from a timestamp and timezone
+
+            Args:
+                timezone (string or Column): the timezone follows the rules in 
+                    https://www.joda.org/joda-time/apidocs/org/joda/time/DateTimeZone.html#forID-java.lang.String-
+                    It can be a string like "America/Los_Angeles" or "+1000". If it is null, use current system time zone.
+                fmt (string): the format is the same as the Java `Date` format
+
+            Example:
+                >>> df.select(col("ts").smvTimestampToStr("America/Los_Angeles","yyyy-MM-dd HH:mm:ss"))
+
+            Returns:
+                (Column): StringType. The converted String with given format
+        """
+        if is_string(timezone):
+            jtimezone = timezone
+        elif isinstance(timezone, Column):
+            jtimezone = timezone._jc
+        else:
+            raise RuntimeError("timezone parameter must be either an string or a Column")
+        jc = self._jColumnHelper.smvTimestampToStr(jtimezone, fmt)
+        return Column(jc)
+
     def smvDay70(self):
         """Convert a Timestamp to the number of days from 1970-01-01
 
