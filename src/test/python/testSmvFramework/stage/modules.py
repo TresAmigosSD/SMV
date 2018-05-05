@@ -27,6 +27,14 @@ class D1WithError(SmvCsvStringData):
     def dataStr(self):
         return "x,10;y,a"
 
+class D1WithError2(SmvCsvStringData):
+    def schemaStr(self):
+        return "a:String;b:Integer"
+    def dataStr(self):
+        return "x,10;y,a;z,z"
+    def failAtParsingError(self):
+        return False
+
 class MultiCsv(SmvMultiCsvFiles):
     def dir(self):
         return "multiCsvTest"

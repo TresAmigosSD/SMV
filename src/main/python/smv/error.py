@@ -13,7 +13,18 @@
 """
 Errors thrown by SMV
 """
+import json
 
 class SmvRuntimeError(RuntimeError):
     def __init__(self,msg):
         super(SmvRuntimeError,self).__init__(msg)
+
+class SmvDqmValidationError(SmvRuntimeError):
+    """ This class takes the DqmValidationResult(JSON String) msg, transfers it to a dict,
+        and then set self attributes to contains all the information from the dict.
+    """
+    def __init__(self,msg):
+        super(SmvRuntimeError,self).__init__(msg)
+        error_dict = json.loads(msg)
+        for key in error_dict:
+            setattr(self, key, error_dict[key])
