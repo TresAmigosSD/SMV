@@ -20,11 +20,8 @@ class SmvRuntimeError(RuntimeError):
         super(SmvRuntimeError,self).__init__(msg)
 
 class SmvDqmValidationError(SmvRuntimeError):
-    """ This class takes the DqmValidationResult(JSON String) msg, transfers it to a dict,
-        and then set self attributes to contains all the information from the dict.
+    """ This class has an instance of dqmValidationResult(dict)
     """
-    def __init__(self,msg):
-        super(SmvRuntimeError,self).__init__(msg)
-        error_dict = json.loads(msg)
-        for key in error_dict:
-            setattr(self, key, error_dict[key])
+    def __init__(self, dqmValidationResult):
+        super(SmvDqmValidationError,self).__init__(json.dumps(dqmValidationResult))
+        self.dqmValidationResult = dqmValidationResult

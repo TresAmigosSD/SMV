@@ -144,14 +144,15 @@ class SmvApp(object):
 
     def exception_handling(func):
         """ Decorator function to catch Exception and raise SmvDqmValidationError if any.
-            Otherwise just pass the original exception
+            Otherwise just pass through the original exception
         """
         def func_wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                if(e.java_exception and e.java_exception.getClass().getName() == "org.tresamigos.smv.SmvDqmValidationError"):
-                    raise SmvDqmValidationError(e.java_exception.getMessage())
+                if (e.java_exception and e.java_exception.getClass().getName() == "org.tresamigos.smv.dqm.SmvDqmValidationError"):
+                    dqmValidationResult = json.loads(e.java_exception.getMessage())
+                    raise SmvDqmValidationError(dqmValidationResult)
                 else:
                     raise e
         return func_wrapper

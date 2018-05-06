@@ -39,17 +39,12 @@ class SmvFrameworkTest(SmvBaseTest):
 
     def test_SmvCsvStringData_with_error(self):
         fqn = "stage.modules.D1WithError"
-        with self.assertRaisesRegexp(SmvDqmValidationError, "dqmStateSnapshot"):
-            df = self.df(fqn)
-
-    def test_SmvDqmValidationError(self):
-        fqn = "stage.modules.D1WithError2"
         try:
             df = self.df(fqn)
         except SmvDqmValidationError as e:
-            self.assertEqual(e.passed, False)
-            self.assertEqual(e.dqmStateSnapshot["totalRecords"], 3)
-            self.assertEqual(e.dqmStateSnapshot["parseError"]["total"],2)
+            self.assertEqual(e.dqmValidationResult["passed"], False)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["totalRecords"], 3)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["parseError"]["total"],2)
 
     def test_SmvMultiCsvFiles(self):
         self.createTempInputFile("multiCsvTest/f1", "col1\na\n")
@@ -86,11 +81,11 @@ class SmvFrameworkTest(SmvBaseTest):
             df = self.df(fqn)
             df.smvDumpDF()
         except SmvDqmValidationError as e:
-            self.assertEqual(e.passed, False)
-            self.assertEqual(e.dqmStateSnapshot["totalRecords"], 3)
-            self.assertEqual(e.dqmStateSnapshot["parseError"]["total"],0)
-            self.assertEqual(e.dqmStateSnapshot["fixCounts"]["a_lt_1_fix"],1)
-            self.assertEqual(e.dqmStateSnapshot["ruleErrors"]["b_lt_03"]["total"],1)
+            self.assertEqual(e.dqmValidationResult["passed"], False)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["totalRecords"], 3)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["parseError"]["total"],0)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["fixCounts"]["a_lt_1_fix"],1)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["ruleErrors"]["b_lt_03"]["total"],1)
 
     def test_SmvSqlModule(self):
         fqn = "stage.modules.SqlMod"
@@ -191,8 +186,14 @@ class SmvMetadataTest(SmvBaseTest):
 
     def test_metadata_validation_failure_causes_error(self):
         fqn = "metadata_stage.modules.ModWithFailingValidation"
-        with self.assertRaisesRegexp(SmvDqmValidationError, "dqmStateSnapshot"):
+        try:
             self.df(fqn)
+        except SmvDqmValidationError as e:
+            self.assertEqual(e.dqmValidationResult["passed"], False)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["totalRecords"], 2)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["parseError"]["total"],0)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["ruleErrors"],{})
+            self.assertEqual(e.dqmValidationResult["errorMessages"][0][fqn + " metadata validation"],"false")
 
     def test_invalid_metadata_rejected_gracefully(self):
         fqn = "metadata_stage.modules.ModWithInvalidMetadata"
