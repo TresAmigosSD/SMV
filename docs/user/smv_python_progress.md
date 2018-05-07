@@ -42,6 +42,7 @@
   * [x] `smvIsAllIn("value 1", "value 2")`
   * [x] `smvIsAnyIn("value 1", "value 2")`
   * [x] `smvStrToTimestamp("yyyyMMdd")`
+  * [x] `smvTimestampToStr("timezone:String","yyyy-MM-dd HH:mm:ssZ")`
   * [x] `smvMonth`
   * [x] `smvYear`
   * [x] `smvQuarter`

@@ -1,0 +1,29 @@
+@startuml
+
+title Python SmvDataSet Class Diagram
+
+hide empty methods
+hide empty fields
+hide circle
+
+class SmvDataSet
+class SmvInputBase extends SmvDataSet
+class SmvModule extends SmvDataSet
+class SmvOutputBase #A1FFFF extends SmvDataSet
+
+class SmvInputFromFile extends SmvInputBase
+class WithParser extends SmvInputBase
+class UserDefinedInput #A1FFFF extends SmvInputBase
+class SmvXmlFile extends SmvInputFromFile
+
+class SmvCsvFile extends WithParser, SmvInputFromFile
+class SmvMultiCsvFiles extends SmvCsvFile
+class SmvCsvStringData extends WithParser
+class SmvJdbcTable extends SmvInputBase
+class SmvHiveTable extends SmvInputBase
+
+class SmvModel extends SmvModule
+class SmvModelExec extends SmvModule
+
+class SmvHiveOutput #A1FFFF extends SmvOutputBase
+@enduml

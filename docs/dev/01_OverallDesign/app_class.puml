@@ -8,7 +8,7 @@ package SMV {
   class SmvDataSet <<Abstract>>{
     -app: SmvApp
     +{abstract} requiresDS() : Seq[SmvDataSet]
-    +{abstract} computeRDD(): DataFrame
+    +{abstract} computeDataFrame(): DataFrame
     +rdd(): SRDD
     +name: String
     +version: Int

@@ -25,7 +25,8 @@ import org.apache.spark.sql.types._
 import java.util.Calendar
 import java.sql.{Timestamp, Date}
 import com.rockymadden.stringmetric.phonetic.{MetaphoneAlgorithm}
-import org.joda.time.{DateTime, LocalDate}
+import org.joda.time.{DateTime, LocalDate, DateTimeZone}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.apache.spark.annotation.DeveloperApi
 
 import scala.collection.mutable
@@ -78,6 +79,60 @@ class ColumnHelper(column: Column) {
       if (s == null) null
       else new Timestamp(fmtObj.parse(s).getTime())
     new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+  }
+
+  /**
+    * Build a string from a timestamp and timezone String. The `timezone` follows the rules in
+    * https://www.joda.org/joda-time/apidocs/org/joda/time/DateTimeZone.html#forID-java.lang.String-
+    * It can be a string like "America/Los_Angeles" or "+1000". If it is null, use current system time zone.
+    *
+    * The `format` is the same as the Java `Date` format.
+    *
+    * Example: Suppose `ts` is a timestamp column represents "20180428T025800+1000", then
+    * {{{
+    * ts.smvTimestampToStr("America/Los_Angeles", "yyyy-MM-dd HH:mm:ss") // 2018-04-27 09:58:00
+    * }}}
+    *
+    * @return The string or `null` if input is `null`
+    */
+  def smvTimestampToStr(timezone: String, fmt: String) = {
+    val name = s"smvTimestampToStr($column,$timezone, $fmt)"
+    val f = (ts: Timestamp) => {
+      if (ts == null) null
+      else {
+        val dt = new DateTime(ts.getTime, DateTimeZone.forID(timezone))
+        val dtFormatter: DateTimeFormatter = DateTimeFormat.forPattern(fmt)
+        dtFormatter.print(dt)
+      }
+    }
+    udf(f).apply(column).alias(name)
+  }
+
+  /**
+    * Build a string from a timestamp and timezone Column. The `timezone` follows the rules in
+    * https://www.joda.org/joda-time/apidocs/org/joda/time/DateTimeZone.html#forID-java.lang.String-
+    * It can be a string Column with value like "America/Los_Angeles" or "+1000". If it is null, use current system time zone.
+    * The `format` is the same as the Java `Date` format.
+    *
+    * Example: Suppose `ts` is a timestamp column represents "20180428T025800+1000",
+    * and `timezoneColumn` has value "-0700", then
+    * {{{
+    * ts.smvTimestampToStr($"timezoneColumn", "yyyy-MM-dd HH:mm:ss") // 2018-04-27 09:58:00
+    * }}}
+    *
+    * @return The string or `null` if input is `null`
+    */
+  def smvTimestampToStr(timezone: Column, fmt: String) = {
+    val name = s"smvTimestampToStr($column,$timezone, $fmt)"
+    val f = (ts: Timestamp, timezone: String) => {
+      if (ts == null) null
+      else {
+        val dt = new DateTime(ts.getTime, DateTimeZone.forID(timezone))
+        val dtFormatter: DateTimeFormatter = DateTimeFormat.forPattern(fmt)
+        dtFormatter.print(dt)
+      }
+    }
+    udf(f).apply(column, timezone).alias(name)
   }
 
   /**
@@ -671,5 +726,41 @@ class ColumnHelper(column: Column) {
           .reduce(_ && _)
     }
     udf(f).apply(column) as name
+  }
+
+  /**
+   * Act on Array[Array[T]] type column and return Array[T]
+   * equavalent to scala's flatten
+   *
+   * {{{
+   * df.withColumn("flattenArray", $"aa".smvArrayFlatten(StringType))
+   * }}}
+   *
+   * @param elemType the data type of the array element.
+   **/
+  def smvArrayFlatten(elemType: DataType): Column = {
+    val name = s"SmvArrayFlatten($column)"
+    val f: Any=>Option[Any] = a => {a match {
+      case e:Seq[_] => {
+        val e0 = e.filter(_ != null)
+        Some(e0.asInstanceOf[Seq[Seq[Any]]].flatten)
+      }
+      case _ => None
+    }}
+    new Column(Alias(ScalaUDF(f, ArrayType(elemType, true), Seq(expr)), name)())
+  }
+
+  /**
+   * Act on Array[Array[T]] type column and return Array[T]
+   * equavalent to scala's flatten
+   *
+   * {{{
+   * df.withColumn("flattenArray", $"aa".smvArrayFlatten(StringType.json))
+   * }}}
+   *
+   * @param elemTypeJson the data type of the array element as a JSON string
+   **/
+  def smvArrayFlatten(elemTypeJson: String): Column = {
+    smvArrayFlatten(DataType.fromJson(elemTypeJson))
   }
 }

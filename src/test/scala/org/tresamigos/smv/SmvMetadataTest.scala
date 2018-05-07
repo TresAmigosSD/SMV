@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
+import org.tresamigos.smv.dqm.SmvDqmValidationError
 
 class SmvMetadataTest extends SmvTestUtil {
   override def appArgs = super.appArgs ++ Seq(

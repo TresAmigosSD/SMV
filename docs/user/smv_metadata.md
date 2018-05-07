@@ -6,6 +6,18 @@ After an `SmvModule` is run, it can be helpful to have a record of what its inpu
 # cat data/output/my.smv.module_123abcd.meta/* | python -m json.tool
 ```
 
+# Built-in metadata
+
+SMV includes the following fields in all module metadata:
+- `_fqn`: fully qualfied name of the module
+- `_columns`: the name, data type, and metadata of each column of the module's output
+- `_inputs`: all of the immediate dependencies of the module
+- `_timestamp`: the time at which the module was run (all modules run in one transaction will share a timestamp)
+- `_duration`: the amount of time in seconds spent on different tasks while running the module
+    - `metadata`: time spent generating user metadata
+    - `dqm`: time spent running dqm validation. This should be close to 0s if the module isn't ephemeral, as the rules and fixes are applied while persisting the module. Otherwise, the time will be dominated by time spent counting rule failures and fixes.
+    - `persisting`: time spent persisting output to csv. This field will be omitted if the module is ephemeral, as output will not be persisted. Otherwise, this will include time spent counting rule failures, which is simultaneous with persisting.
+
 # Custom metadata
 
 SMV's Python API gives you the option to add custom metadata to your module's automatically generated metadata. To do so, override your module's `metadata` method to return a `dict` of metadata. `metadata` takes the result of your module as an argument

@@ -11,19 +11,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+
+from test_support.smvbasetest import SmvBaseTest
 from smv import *
-from smv.dqm import *
-from pyspark.sql.functions import col, lit
 
-class D1(SmvCsvStringData):
-    def schemaStr(self):
-        return "k:String;v:Integer"
-    def dataStr(self):
-        return "a,1;b,2"
-
-class T(SmvCsvFile):
+class SmvGraphJsonTest(SmvBaseTest):
     @classmethod
-    def fullPath(cls):
-        return "./target/python-test-export-csv.csv"
-    def csvAttr(self):
-        return self.smvApp.defaultCsvWithHeader()
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=stage']
+
+    def test_graph_json_docstr(self):
+        j_str = self.smvApp.get_graph_json()
+        j_obj = json.loads(j_str)
+        res = j_obj['nodes'][0]['description']
+
+        exp = """This is the test DS X's docstring
+        It is multi lines.
+        with "double" quotes and 'single' quote
+    """
+        assert (res == exp)

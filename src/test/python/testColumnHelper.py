@@ -20,6 +20,9 @@ import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import array, col
+import pyspark.sql.functions as F
+from pyspark.sql.types import StringType
+import smv.functions as SF
 
 class ColumnHelperTest(SmvBaseTest):
     def test_smvGetColName(self):
@@ -160,3 +163,35 @@ class ColumnHelperTest(SmvBaseTest):
                             M201203,month,506,2012-03,2012-03-01 00:00:00.0;
                             W20170522,week,2473,Week of 2017-05-22,2017-05-22 00:00:00.0""")
         self.should_be_same(e, res)
+
+    def test_smvArrayFlatten(self):
+        df = self.createDF('a:String;b:String;c:String', ',,;1,2,;2,3,4')
+        df1 = df.select(F.array(
+            F.array(F.lit(None), F.col('a')),
+            F.array(F.col('a'), F.col('b'), F.col('c'))
+        ).alias('aa'))
+
+        res1 = df1.select(F.col('aa').smvArrayFlatten(StringType()).alias('a'))\
+            .select(SF.smvArrayCat('|', F.col('a')).alias('k'))
+
+        exp = self.createDF("k: String",
+        """||||;
+            |1|1|2|;
+            |2|2|3|4""")
+
+        res2 = df1.select(F.col('aa').smvArrayFlatten(df1).alias('a'))\
+            .select(SF.smvArrayCat('|', F.col('a')).alias('k'))
+
+        self.should_be_same(res1, exp)
+        self.should_be_same(res2, exp)
+
+    def test_smvTimestampToStr(self):
+        df = self.createDF("ts:Timestamp[yyyyMMdd'T'HHmmssZ];tz:String", "20180428T025800+1000,+0000;,America/Los_Angeles;20180428T025800+1000,Australia/Sydney")
+        r1 = df.select(col("ts").smvTimestampToStr("+10:00","yyyyMMdd:HHmmssz").alias("localDT"))
+        r2 = df.select(col("ts").smvTimestampToStr(col("tz"),"yyyy-MM-dd HH:mm:ssz").alias("localDT2"))
+
+        e1 = self.createDF("localDT: String", "20180428:025800+10:00;;20180428:025800+10:00")
+        e2 = self.createDF("localDT2: String", "2018-04-27 16:58:00+00:00;;2018-04-28 02:58:00+10:00")
+
+        self.should_be_same(e1, r1)
+        self.should_be_same(e2, r2)

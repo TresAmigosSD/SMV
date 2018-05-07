@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
 class ColumnHelperTest extends SmvTestUtil {
   test("test smvStrToTimestamp") {
@@ -24,6 +25,22 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddDataEqual(res,
                         "2019-01-01 00:00:00.0;" +
                           "null")
+  }
+
+  test("test smvTimestampToStr") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df  = dfFrom("ts:Timestamp[yyyyMMdd'T'HHmmssZ]; tz:String; v:String;",
+                      "20180428T025800+1000,UTC,a;" +
+                      "20180428T025800+1000,America/Los_Angeles,b;" +
+                      "20180428T025800+1000,-07:00,c;" +
+                      ",Australia/Sydney,d")
+    val res = df.select($"ts".smvTimestampToStr($"tz","yyyyMMdd'T'HHmmssZ"),
+                        $"ts".smvTimestampToStr("+1000","yyyy-MM-dd"))
+    assertSrddDataEqual(res,
+        "20180427T165800+0000,2018-04-28;" +
+        "20180427T095800-0700,2018-04-28;" +
+        "20180427T095800-0700,2018-04-28;" +
+        "null,null")
   }
 
   test("test smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek") {
@@ -279,6 +296,30 @@ class ColumnHelperTest extends SmvTestUtil {
                         """quarter,172,2013-Q1,2013-01-01 00:00:00.0;
 month,551,2015-12,2015-12-01 00:00:00.0;
 day,16405,2014-12-01,2014-12-01 00:00:00.0""")
+  }
+
+  test("test smvArrayFlatten helper") {
+    val df = dfFrom("a:String;b:String", "1,2;,2;,;3,4")
+    val df1 = df.select(array(
+      array(col("a"), col("b")),
+      array(col("b"), col("a")),
+      lit(null)
+    ).as("aa"))
+
+    import org.tresamigos.smv.smvfuncs._
+    val res = df1.select(col("aa").smvArrayFlatten(StringType).as("f"))
+      .select(smvArrayCat("|", col("f")).as("f"))
+
+    val res2 = df1.select(col("aa").smvArrayFlatten(StringType.json).as("f"))
+      .select(smvArrayCat("|", col("f")).as("f"))
+
+    val exp = """1|2|2|1;
+                |2|2|;
+                |||;
+                3|4|4|3"""
+
+    assertSrddDataEqual(res, exp)
+    assertSrddDataEqual(res2, exp)
   }
 }
 

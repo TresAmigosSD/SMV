@@ -31,4 +31,6 @@ class JdbcTest(SmvBaseTest):
         df = self.createDF("K:String", "xxx")
         df.write.jdbc(self.url(), "MyJdbcTable", properties={"driver": "org.apache.derby.jdbc.EmbeddedDriver"})
         res = self.df("stage.modules.MyJdbcTable")
+        res2 = self.df("stage.modules.MyJdbcWithQuery")
         self.should_be_same(res, df)
+        self.should_be_same(res2, df)

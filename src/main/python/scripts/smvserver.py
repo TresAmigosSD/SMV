@@ -15,25 +15,19 @@ import os
 import fnmatch
 import re
 import glob
-import json
 from flask import Flask, request, jsonify
 from smv import SmvApp
 from smv.smvapp import DataSetRepoFactory
-from shutil import copyfile
-import py_compile
-import json
-from smv.smvdataset import SmvCsvFile
-from smv.smvdataset import SmvHiveTable
-import ast
-import errno
 
 app = Flask(__name__)
 
 # ---------- Helper Functions ---------- #
 
+
 def getStagesInApp():
     """returns list of all stages defined in app"""
     return list(SmvApp.getInstance().stages())
+
 
 def getFqnsInApp():
     """returns all known module FQNs in app. Note: excluded links"""
@@ -44,12 +38,14 @@ def getFqnsInApp():
     urns = [u.split(":")[1] for ul in urnsLL for u in ul]
     return urns
 
+
 def get_output_dir():
     '''returns the smv app's output directory'''
     output_dir = SmvApp.getInstance().outputDir()
     if (output_dir.startswith('file://')):
         output_dir = output_dir[7:]
     return output_dir
+
 
 def get_latest_file_dir(output_dir, module_name, suffix):
     '''
@@ -63,6 +59,7 @@ def get_latest_file_dir(output_dir, module_name, suffix):
         if f.startswith(module_name) and f.endswith(suffix)], \
         key=lambda f: os.path.getctime(os.path.join(output_dir, f)))
     return os.path.join(output_dir, latest_file_dir)
+
 
 def read_file_dir(file_dir, limit=999999999):
     '''
@@ -81,6 +78,7 @@ def read_file_dir(file_dir, limit=999999999):
         if len(lines) >= limit:
             break
     return lines
+
 
 def get_module_code_file_mapping():
     '''
@@ -157,6 +155,7 @@ def get_module_code_file_mapping():
     module_dict = get_module_file_mapping(files, patterns)
     return module_dict
 
+
 def getStageFromFqn(fqn):
     '''returns the stage given a a dataset's fqn'''
     # constructing urn for dataset
@@ -173,55 +172,25 @@ def getStageFromFqn(fqn):
 # behavior to expect.
 getDatasetInstance_raises_error_for_dne = False
 
+
 def getDatasetInstance(fqn):
     '''returns dataset object given a fqn'''
     return DataSetRepoFactory(SmvApp.getInstance()).createRepo().loadDataSet(fqn)
+
 
 def runModule(fqn, run_config=None):
     '''runs module of given fqn and runtime configuration'''
     return SmvApp.getInstance().runModule("mod:{}".format(fqn), runConfig=run_config)[0]
 
+
 def getMetadataJson(fqn):
     '''returns metadata given a fqn'''
     return SmvApp.getInstance().getMetadataJson("mod:{}".format(fqn))
 
+
 def getMetadataHistoryJson(fqn):
     '''returns metadata history given a fqn'''
     return SmvApp.getInstance().getMetadataHistoryJson("mod:{}".format(fqn))
-
-# ---------- API Definition ---------- #
-
-@app.route("/api/run_module", methods = ['POST'])
-def run_module():
-    '''
-    body:
-        'fqn': module fqn
-        'run_config': runtime configuration(optional)
-    function: run the module of given fqn and runtime configuration
-    '''
-    json = request.get_json()
-    try:
-        module_fqn = json['fqn'].encode("utf-8")
-    except:
-        raise err_res('MODULE_NOT_PROVIDED_ERR')
-    try:
-        encoded_run_config = None
-        run_config = json['run_config']
-        if run_config is not None:
-            encoded_run_config = run_config.encode("utf-8")
-    except:
-        raise err_res('MODULE_RUN_CONFIGURATION_ERR')
-    return ok_res(str(runModule(module_fqn, encoded_run_config)))
-
-@app.route("/api/get_graph_json", methods = ['POST'])
-def get_graph_json():
-    '''
-    body: none
-    function: return the json file of the entire dependency graph
-    '''
-    res = SmvApp.getInstance().get_graph_json()
-    return jsonify(graph=res)
-
 
 # TODO: provide route
 # TODO: configure app-wide local git repository location
