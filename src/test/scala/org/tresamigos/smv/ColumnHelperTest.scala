@@ -27,6 +27,22 @@ class ColumnHelperTest extends SmvTestUtil {
                           "null")
   }
 
+  test("test smvTimestampToStr") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df  = dfFrom("ts:Timestamp[yyyyMMdd'T'HHmmssZ]; tz:String; v:String;",
+                      "20180428T025800+1000,UTC,a;" +
+                      "20180428T025800+1000,America/Los_Angeles,b;" +
+                      "20180428T025800+1000,-07:00,c;" +
+                      ",Australia/Sydney,d")
+    val res = df.select($"ts".smvTimestampToStr($"tz","yyyyMMdd'T'HHmmssZ"),
+                        $"ts".smvTimestampToStr("+1000","yyyy-MM-dd"))
+    assertSrddDataEqual(res,
+        "20180427T165800+0000,2018-04-28;" +
+        "20180427T095800-0700,2018-04-28;" +
+        "20180427T095800-0700,2018-04-28;" +
+        "null,null")
+  }
+
   test("test smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek") {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("k:Timestamp[yyyyMMdd]; v:String;", "20190101,a;,b")
