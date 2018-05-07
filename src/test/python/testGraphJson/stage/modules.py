@@ -12,18 +12,13 @@
 # limitations under the License.
 
 from smv import *
-from smv.dqm import *
-from pyspark.sql.functions import col, lit
 
-class D1(SmvCsvStringData):
-    def schemaStr(self):
-        return "k:String;v:Integer"
-    def dataStr(self):
-        return "a,1;b,2"
-
-class T(SmvCsvFile):
-    @classmethod
-    def fullPath(cls):
-        return "./target/python-test-export-csv.csv"
-    def csvAttr(self):
-        return self.smvApp.defaultCsvWithHeader()
+class X(SmvModule):
+    """This is the test DS X's docstring
+        It is multi lines.
+        with "double" quotes and 'single' quote
+    """
+    def requiresDS(self):
+        return []
+    def run(self, i):
+        return None
