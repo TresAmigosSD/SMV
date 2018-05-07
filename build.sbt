@@ -22,7 +22,6 @@ libraryDependencies ++= Seq(
   "joda-time"                    % "joda-time"          % "2.7",
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
   "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4",
-  "com.github.mdr"               %% "ascii-graphs"      % "0.0.6",
   "com.databricks"               %% "spark-xml"         % "0.4.1"
 )
 
