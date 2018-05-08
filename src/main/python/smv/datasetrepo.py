@@ -72,6 +72,8 @@ class DataSetRepo(object):
         """
         try:
             stagemod = __import__(stage)
+            for name in stage.split('.')[1:]:
+                stagemod = getattr(stagemod, name)
         except:
             self.smvApp.log.warn("Package does not exist for stage: " + stage)
             return []
@@ -81,7 +83,8 @@ class DataSetRepo(object):
         # to simply suppress the error.
         def onerror(name):
             self.smvApp.log.error("Skipping due to error during walk_packages: " + name)
-        return pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=onerror)
+        res = list(pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.'))
+        return res
 
     def _for_name(self, name):
         """Dynamically load a module in a stage by its name.

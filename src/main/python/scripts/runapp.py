@@ -11,9 +11,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp
 import sys
 
-app = SmvApp.createInstance(sys.argv[1:])
+from smv import SmvApp
+
 # skip the first argument, which is this program
-app.run()
+args = sys.argv[1:]
+
+def parse_args(args):
+    for idx,arg in enumerate(args):
+        if arg.endswith(".py"):
+            driver_script = arg
+            driver_args = args[idx+1:]
+            smv_args = args[:iadx]
+            return (driver_script, driver_args, smv_args)
+    return (None, None, args)
+
+driver_script, driver_args, smv_args = parse_args(args)
+
+app = SmvApp.createInstance(smv_args)
+
+if driver_script is None:
+    app.run()
+else:
+    execfile(driver_script)

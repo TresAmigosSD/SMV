@@ -7,7 +7,6 @@
 # USER_CMD : name of the script that was launched (caller of this script)
 # SMV_APP_CLASS : user specified --class name to use for spark-submit or SmvApp as default
 # APP_JAR : user specified --jar option or the discovered application fat jar.
-# SMV_USER_SCRIPT : optional user-defined launch script
 #
 
 # This function is used to split the command line arguments into SMV / Spark
@@ -24,10 +23,6 @@ function split_smv_spark_args()
         if [ "$1" == "--spark-home" ]; then
           shift
           SPARK_HOME_OPT="$1"
-          shift
-        elif [ "$1" == "--script" ]; then
-          shift
-          SMV_USER_SCRIPT="$1"
           shift
         else
           SMV_ARGS=("${SMV_ARGS[@]}" "$1")
@@ -81,6 +76,11 @@ function find_file_in_dir()
 # find latest fat jar in target directory.
 function find_fat_jar()
 {
+  # SMV_TOOLS should have been set by caller.
+  if [ -z "$SMV_TOOLS" ]; then
+    echo "ERROR: SMV_TOOLS not set by calling script!"
+    exit 1
+  fi
   SMV_FAT_JAR="${SMV_TOOLS}/../target/scala-2.10"
 
   # try sbt-build location first if not found try mvn-build location next.
@@ -198,11 +198,6 @@ function print_help() {
 
 # --- MAIN ---
 declare -a SMV_ARGS SPARK_ARGS
-# SMV_TOOLS should have been set by caller.
-if [ -z "$SMV_TOOLS" ]; then
-    echo "ERROR: SMV_TOOLS not set by calling script!"
-    exit 1
-fi
 USER_CMD=`basename $0`
 SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
 split_smv_spark_args "$@"
