@@ -47,7 +47,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   def stages      = smvConfig.stageNames
   val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
 
-  val smvVersion  = {
+  lazy val smvVersion  = {
     val smvHome = sys.env("SMV_HOME")
     val versionFile = Source.fromFile(f"${smvHome}/.smv_version")
     val nextLine = versionFile.getLines.next
