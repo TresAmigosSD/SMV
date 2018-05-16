@@ -33,6 +33,7 @@ from smv.error import SmvRuntimeError, SmvDqmValidationError
 import smv.helpers
 from smv.utils import FileObjInputStream
 from smv.runinfo import SmvRunInfoCollector
+from py4j.protocol import Py4JJavaError
 
 class SmvApp(object):
     """The Python representation of SMV.
@@ -142,13 +143,13 @@ class SmvApp(object):
 
 
     def exception_handling(func):
-        """ Decorator function to catch Exception and raise SmvDqmValidationError if any.
+        """ Decorator function to catch Py4JJavaError and raise SmvDqmValidationError if any.
             Otherwise just pass through the original exception
         """
         def func_wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Py4JJavaError as e:
                 if (e.java_exception and e.java_exception.getClass().getName() == "org.tresamigos.smv.dqm.SmvDqmValidationError"):
                     dqmValidationResult = json.loads(e.java_exception.getMessage())
                     raise SmvDqmValidationError(dqmValidationResult)
