@@ -23,7 +23,7 @@ def parse_args(args):
         if arg.endswith(".py"):
             driver_script = arg
             driver_args = args[idx+1:]
-            smv_args = args[:iadx]
+            smv_args = args[:idx]
             return (driver_script, driver_args, smv_args)
     return (None, None, args)
 
