@@ -163,21 +163,8 @@ object ShellCmd {
     SmvApp.app.publishModuleToHiveByName(dsName, runConfig, collector)
   }
 
-  /**
-   * Read in a Csv file as DF
-  **/
-  def openCsv(path: String, ca: CsvAttributes, parserCheck: Boolean,
-    collector: SmvRunInfoCollector=new SmvRunInfoCollector): DataFrame = {
-
-    /** isFullPath = true to avoid prepending data_dir */
-    object file extends SmvCsvFile(path, ca, null, true) {
-      override val forceParserCheck   = false
-      override val failAtParsingError = parserCheck
-    }
-    file.rdd(collector=collector)
-  }
-
-  def openCsv(path: String): DataFrame = openCsv(path, null, false)
+  def openCsv(path: String, ca: CsvAttributes, validate: Boolean): DataFrame = 
+    SmvApp.app.openCsv(path, ca, validate)
 
   /**
    * Deprecated

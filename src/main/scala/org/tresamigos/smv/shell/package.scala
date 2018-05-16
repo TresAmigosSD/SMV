@@ -117,8 +117,8 @@ package object shell {
   /**
    * Read in a Csv file as DF
    **/
-  def openCsv(path: String, ca: CsvAttributes = null, parserCheck: Boolean = false) =
-    ShellCmd.openCsv(path, ca, parserCheck)
+  def openCsv(path: String, ca: CsvAttributes = null, validate: Boolean = false) =
+    ShellCmd.openCsv(path, ca, validate)
 
   /**
    * Resolve SmvDataSet

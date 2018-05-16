@@ -89,16 +89,19 @@ def openHive(tableName):
     """
     return DataFrame(_jvmShellCmd().openHive(tableName), SmvApp.getInstance().sqlContext)
 
-def openCsv(path):
+def openCsv(path, validate=False):
     """Read in a CSV file as a DataFrame
 
         Args:
             path (str): The path of the CSV file
+            validate (bool): If true, validate the CSV before return DataFrame (raise error if malformatted)
 
         Returns:
             (DataFrame): The resulting DataFrame
     """
-    return DataFrame(_jvmShellCmd().openCsv(path), SmvApp.getInstance().sqlContext)
+    app = SmvApp.getInstance()
+    jdf = app.j_smvPyClient.shellOpenCsv(path, validate)
+    return DataFrame(jdf, SmvApp.getInstance().sqlContext)
 
 def smvExportCsv(name, path):
     """Export the result of a module to a CSV file at a local path
