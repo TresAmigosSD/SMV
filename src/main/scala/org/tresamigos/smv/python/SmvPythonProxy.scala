@@ -382,6 +382,12 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     handler.csvFileWithSchema(csvAttr, Some(schema))
   }
 
+  /**
+   * Alias to ShellCmd openCsv function
+   */
+  def shellOpenCsv(path: String, validate: Boolean): DataFrame =
+    shell.openCsv(path, null, validate)
+
   def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
 }
 
