@@ -69,7 +69,7 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
 
         # contents of project-a/conf/smv-app-conf.props:
         expected_props = { "smv.class_dir": "./target/classes", "smv.appName": "App A", \
-        "smv.config.keys": "", "smv.stages": "stage", "smv.appId": "PROJECT_A" }
+        "smv.config.keys": "", "smv.stages": "stage", "smv.appId": "PROJECT_A", "smv.user_libraries": "core" }
 
         #  tell the app to change dirs, which should cause the reload of conf for this project
         self.smvApp.setAppDir(self.proj_a_path)

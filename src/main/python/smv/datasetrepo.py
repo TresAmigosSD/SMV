@@ -51,8 +51,10 @@ class DataSetRepo(object):
             from the sys.modules dictionary to avoid getting cached modules from python when
             we contruct a new DSR.
         """
+        # The set of all user-defined code that needs to be decached
         # { 'stage1' } from our example
-        fqn_stubs_to_remove = { fqn.split('.')[0] for fqn in self.smvApp.stages() }
+        user_code_fqns = set(self.smvApp.stages()).union(self.smvApp.userLibs())
+        fqn_stubs_to_remove = {fqn.split('.')[0] for fqn in user_code_fqns}
 
         for loaded_mod_fqn in list(sys.modules.keys()):
             for stubbed_fqn in fqn_stubs_to_remove:
