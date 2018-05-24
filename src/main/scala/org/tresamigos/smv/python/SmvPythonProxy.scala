@@ -261,6 +261,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def outputDir: String = j_smvApp.smvConfig.outputDir
 
   def stages: Array[String] = j_smvApp.stages.toArray
+  
+  def userLibs: Array[String] = j_smvApp.userLibs.toArray
 
   def inferDS(name: String): SmvDataSet =
     j_smvApp.dsm.inferDS(name).head

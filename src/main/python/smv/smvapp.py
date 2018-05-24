@@ -203,6 +203,10 @@ class SmvApp(object):
     def stages(self):
         """Stages is a function as they can be set dynamically on an SmvApp instance"""
         return self.j_smvPyClient.stages()
+    
+    def userLibs(self):
+        """Return dynamically set smv.user_libraries from conf"""
+        return self.j_smvPyClient.userLibs()
 
     def appId(self):
         return self.config().appId()
