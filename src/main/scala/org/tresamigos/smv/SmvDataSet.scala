@@ -555,8 +555,6 @@ abstract class SmvDataSet extends FilenamePart {
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
-      // Populate user metadata cache to isolate time spent on DQM from time spent on metadata
-      getOrCreateUserMetadata(df)
       val (validationResult, validationDuration) =
         doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction, moduleValidPath())}
       dqmTimeElapsed = Some(validationDuration)
@@ -576,9 +574,14 @@ abstract class SmvDataSet extends FilenamePart {
       doRun(dqmValidator, collector, quickRun)
     } else if (isEphemeral) {
       app.log.info(f"${fqn} is not cached, because it is ephemeral")
-      val df = dqmValidator.attachTasks(doRun(dqmValidator, collector, quickRun))
-      runDqmAndMeta(df, false) // no action before this point
-      df
+      val df = doRun(dqmValidator, collector, quickRun)
+      // Populate user metadata cache to isolate time spent on DQM from time spent on metadata
+      getOrCreateUserMetadata(df)
+
+      val dfWithDqm = dqmValidator.attachTasks(df)
+      runDqmAndMeta(dfWithDqm, false) // no action before this point
+
+      dfWithDqm
     } else {
       readPersistedFile() match {
         // Output was persisted, so return a DF which consists of reading from
@@ -599,12 +602,16 @@ abstract class SmvDataSet extends FilenamePart {
                 df
               case _ =>
                 app.log.info(f"No cached result found for ${fqn}. Caching result at ${moduleCsvPath()}")
-                val df = dqmValidator.attachTasks(doRun(dqmValidator, collector, quickRun))
+                val df = doRun(dqmValidator, collector, quickRun)
+                // Populate user metadata cache to isolate time spent on DQM from time spent on metadata
+                getOrCreateUserMetadata(df)
+
+                val dfWithDqm = dqmValidator.attachTasks(df)
                 // Delete outputs in case data was partially written previously
                 deleteOutputs(versionedOutputFiles)
-                persist(df)
+                persist(dfWithDqm)
 
-                runDqmAndMeta(df, true) // has already had action (from persist)
+                runDqmAndMeta(dfWithDqm, true) // has already had action (from persist)
 
                 // Generate and persist edd based on result of reading results from disk. Avoids
                 // a possibly expensive action on the result from before persisting.
