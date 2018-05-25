@@ -130,14 +130,17 @@ class SmvRunConfigTest1(SmvBaseTest):
         expect = self.createDF("a: String;b: Integer",
             """test1_s1,1;
                 test2_not_i2,4;
-                test3_b,5""")
+                test3_b,5;
+                test4_c,7;
+                test5_c,9;
+                test6_c,11""")
         self.should_be_same(expect, df)
 
 class SmvRunConfigTest2(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s2', 'smv.config.i=2', 'smv.config.b=false', 'smv.stages=stage',
+        return ['--smv-props', 'smv.config.s=s2', 'smv.config.i=2', 'smv.config.b=false', 'smv.config.c=8', 'smv.stages=stage',
                 '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
@@ -146,7 +149,10 @@ class SmvRunConfigTest2(SmvBaseTest):
         expect = self.createDF("a:String;b:Integer",
             """test1_not_s1,2;
                 test2_i2,3;
-                test3_not_b,6""")
+                test3_not_b,6;
+                test4_not_c,8;
+                test5_not_c,10;
+                test6_not_c,12""")
         self.should_be_same(expect, df)
 
 class SmvNameErrorPropagationTest(SmvBaseTest):

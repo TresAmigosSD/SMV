@@ -62,7 +62,23 @@ class D4(SmvCsvStringData, SmvRunConfig):
         else:
             l3 = "test3_not_b,6"
 
-        return l1 + ";" + l2 + ";" + l3
+        # Tests to make sure that if the runconfig doesn't exist, None is returned
+        if(self.smvGetRunConfig('c') is None):
+            l4 = "test4_c,7"
+        else:
+            l4 = "test4_not_c,8"
+
+        if(self.smvGetRunConfigAsInt('c') is None):
+            l5 = "test5_c,9"
+        else:
+            l5 = "test5_not_c,10"
+
+        if(self.smvGetRunConfigAsBool('c') is None):
+            l6 = "test6_c,11"
+        else:
+            l6 = "test6_not_c,12"
+
+        return l1 + ";" + l2 + ";" + l3 + ";" + l4 + ";" + l5 + ";" + l6
 
 class MultiCsvWithUserSchema(SmvMultiCsvFiles):
     UserSchema = "1loc: String"
