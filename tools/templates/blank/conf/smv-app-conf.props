@@ -1,0 +1,5 @@
+# application name
+smv.appName = _PROJ_NAME_
+
+# stage definitions
+smv.stages = _STAGE_NAME_

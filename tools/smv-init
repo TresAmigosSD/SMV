@@ -10,56 +10,82 @@ TEMPLATE_DATA_DIR="$TEMPLATE_DIR/data"
 PROJ_TYPE="simple"
 OVERRIDE=0
 
+
 while [[ $# -gt 1 ]]
 do
 FLAG=$1
 
   case $FLAG in
     -q)
-    QUITE_MODE=1
-    shift
-    ;;
+        QUITE_MODE=1
+        shift
+        ;;
+    -b|-blank)
+        PROJ_TYPE="blank"
+        shift
+        ;;
     -s|-simple)
-    PROJ_TYPE="simple"
-    shift
-    ;;
+        PROJ_TYPE="simple"
+        shift
+        ;;
     -e|-enterprise)
-    PROJ_TYPE="enterprise"
-    shift
-    ;;
+        PROJ_TYPE="enterprise"
+        shift
+        ;;
     -t|-test)
-    PROJ_TYPE="test"
-    shift
-    ;;
+        PROJ_TYPE="test"
+        shift
+        ;;
     -b|-big)
-    PROJ_TYPE="big"
-    shift
-    ;;
+        PROJ_TYPE="big"
+        shift
+        ;;
+    -dd|-dataDir)
+        PROJ_DATA_DIR="$2"
+        shift
+        shift
+        ;;
+    -n|-name)
+        PROJ_NAME="$2"
+        shift
+        shift
+        ;;
     -o)
     OVERRIDE=1
-    shift
-    ;;
+        shift
+        ;;
     *)
-    ;;
+        ;;
   esac
 done
+
+echo 'after parsing args'
+echo num args: $#
 
 TEMPLATE_DIR+="/$PROJ_TYPE"
 
 if [ $# -ne 1 ]; then
     echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q][-o] [-s|-e|-t] project_name"
+    echo "USAGE: $0 [-q][-o] [-s|-e|-t|-b] [-dd] [-n]  project_path"
     echo "project types:"
     echo "  -s: simple (default)"
     echo "  -e: enterprise"
     echo "  -t: test (for developers only)"
+    echo "  -b: blank/empty project"
+    echo "  -dd: data directory"
+    echo "  -n: project name"
+    echo # TODO
     echo "example:"
-    echo "  \$ $0 MyProject"
+    echo "    simple:     \$ ./tools/smv-init /project/path"
+    echo "    blank:      \$ ./tools/smv-init -b -n projec_name -dd /data/dir /project/path"
+    echo "    enterprise: \$ ./tools/smv-init -e /project/path"
     exit 1
 fi
 
 PROJ_DIR="$1"
 PROJ_CLASS=""
+STAGE_NAME="`echo $PROJ_NAME | tr '[:upper:]' '[:lower:]'`"
+PROJ_DATA_DIR=${PROJ_DATA_DIR:="${PROJ_DIR}/data"} # default data dir is /data in project dir
 
 # proj class hardcoded for smv integration tests
 if [ "$PROJ_TYPE" = "test" ]; then
@@ -103,17 +129,20 @@ function create_proj_dir()
 
 function copy_with_inject()
 {
+    ESCAPED_FULL_PATH=$(echo ${PROJ_DIR_FULL_PATH} | sed -e 's/[\/&]/\\&/g')
+    ESCAPED_DATA_DIR=$(echo ${PROJ_DATA_DIR} | sed -e 's/[\/&]/\\&/g')
+
     SRC="$1"
     DST="$2"
-    echo "-- copying `basename "$DST"`"
-
-    ESCAPED_FULL_PATH=$(echo ${PROJ_DIR_FULL_PATH}|sed -e 's/[\/&]/\\&/g')
 
     mkdir -p "$(dirname "$DST")"
     sed -e "s/_GROUP_ID_/$PROJ_GROUP_ID/" \
         -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
         -e "s/_PROJ_CLASS_/$PROJ_CLASS/g" \
         -e "s/_PROJ_DIR_FULL_PATH_/${ESCAPED_FULL_PATH}/g" \
+        -e "s/_PROJ_NAME_/$PROJ_NAME/g" \
+        -e "s/_STAGE_NAME_/$STAGE_NAME/g" \
+        -e "s/_PROJ_DATA_DIR_/$ESCAPED_DATA_DIR/g" \
         < "$SRC" > "$DST"
 }
 
@@ -138,18 +167,19 @@ function copy_conf_files()
       done
     fi
 
-
     # .gitignore was postfixed with .template so it does not affect SMV's git repo
     mv "$PROJ_DIR/.gitignore.template" "$PROJ_DIR/.gitignore"
 }
 
 function copy_data_files()
 {
-    data_dir=$1
+    if [ "$PROJ_TYPE" != "empty" ]; then
+        data_dir=$1
 
-    echo "-- copying data files"
+        echo "-- copying data files"
 
-    cp -R "$data_dir" "$PROJ_DIR"
+        cp -R "$data_dir" "$PROJ_DIR"
+    fi
 }
 
 function copy_src_dir()
@@ -171,26 +201,30 @@ function copy_src_files()
 
     PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
 
-    if [ "$PROJ_TYPE" = "simple" ] || [ "$PROJ_TYPE" = "enterprise" ] || [ "$PROJ_TYPE" = "big" ]; then
-      for subdir in main/python; do
+    if [ "$PROJ_TYPE" = "test" ]; then
+      for subdir in main/scala main/python; do
           copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
       done
     else
-      for subdir in main/scala main/python; do
-          copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
+      STAGE_NAME_PATH="`echo $STAGE_NAME | sed -e 's/\./\//g'`"
+
+      for subdir in main/python; do
+          copy_src_dir ${subdir} ${STAGE_NAME_PATH}
       done
     fi
 }
 
 function create_python_packages()
 {
+    echo '-- creating python packages'
     for dir in $(ls -d ${PROJ_DIR_FULL_PATH}/src/main/python/*/); do
         find ${dir} -type d -print0 | xargs -0 -I\{\} touch \{\}/__init__.py
     done
 }
 
 # --- MAIN ---
-# only test proj has PROJ_CLASS
+
+#  only test proj has PROJ_CLASS
 if [ "$PROJ_TYPE" = "test" ] ; then
   extract_group_artifact_ids
 fi
