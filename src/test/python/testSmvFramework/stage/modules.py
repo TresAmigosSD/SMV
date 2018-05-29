@@ -47,38 +47,39 @@ class D4(SmvCsvStringData, SmvRunConfig):
     def schemaStr(self):
         return "a:String;b:Integer"
     def dataStr(self):
-        if(self.smvGetRunConfig('s') == "s1"):
-            l1 = "test1_s1,1"
+        testVals = [];
+        if (self.smvGetRunConfig('s') == "s1"):
+            testVals.append("test1_s1,1")
         else:
-            l1 = "test1_not_s1,2"
+            testVals.append("test1_not_s1,2")
 
-        if(self.smvGetRunConfigAsInt('i') == 2):
-            l2 = "test2_i2,3"
+        if (self.smvGetRunConfigAsInt('i') == 2):
+            testVals.append("test2_i2,3")
         else:
-            l2 = "test2_not_i2,4"
+            testVals.append("test2_not_i2,4")
 
-        if(self.smvGetRunConfigAsBool('b')):
-            l3 = "test3_b,5"
+        if (self.smvGetRunConfigAsBool('b')):
+            testVals.append("test3_b,5")
         else:
-            l3 = "test3_not_b,6"
+            testVals.append("test3_not_b,6")
 
         # Tests to make sure that if the runconfig doesn't exist, None is returned
-        if(self.smvGetRunConfig('c') is None):
-            l4 = "test4_undefined_c,7"
+        if (self.smvGetRunConfig('c') is None):
+            testVals.append("test4_undefined_c,7")
         else:
-            l4 = "test4_defined_c,8"
+            testVals.append("test4_defined_c,8")
 
-        if(self.smvGetRunConfigAsInt('one') is None):
-            l5 = "test5_undefined_one,9"
+        if (self.smvGetRunConfigAsInt('one') is None):
+            testVals.append("test5_undefined_one,9")
         else:
-            l5 = "test5_defined_one,10"
+            testVals.append("test5_defined_one,10")
 
-        if(self.smvGetRunConfigAsBool('bool') is None):
-            l6 = "test6_undefined_bool,11"
+        if (self.smvGetRunConfigAsBool('bool') is None):
+            testVals.append("test6_undefined_bool,11")
         else:
-            l6 = "test6_defined_bool,12"
+            testVals.append("test6_defined_bool,12")
 
-        return l1 + ";" + l2 + ";" + l3 + ";" + l4 + ";" + l5 + ";" + l6
+        return ";".join(testVals)
 
 class MultiCsvWithUserSchema(SmvMultiCsvFiles):
     UserSchema = "1loc: String"
