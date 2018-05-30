@@ -224,13 +224,6 @@ function create_python_packages()
     done
 }
 
-function create_notebooks_folder()
-{
-  echo "--  creating notebooks folder"
-
-  cd ${PROJ_DIR_FULL_PATH} && mkdir notebooks && touch notebooks/_jupyter_notebooks_
-}
-
 function create_library_folder()
 {
     echo "-- creating library folder"
@@ -256,13 +249,7 @@ fi
 
 create_proj_dir
 copy_conf_files
-
-if [ "$PROJ_TYPE" = "test" ]; then
-  copy_data_files "$TEMPLATE_DIR/data"
-else
-  copy_data_files $TEMPLATE_DATA_DIR
-fi
-
+copy_data_files $TEMPLATE_DATA_DIR
 copy_src_files
 create_python_packages
 
@@ -271,6 +258,5 @@ if [ "$PROJ_TYPE" = "big" ] ; then
   rm $PROJ_DIR/src/main/python/stage1/employment.py
 fi
 
-create_notebooks_folder
 create_library_folder
 create_git_structure
