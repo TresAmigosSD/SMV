@@ -10,7 +10,7 @@ scalacOptions ++= Seq("-deprecation", "-feature")
 
 javacOptions ++= Seq("-source", "1.6", "-target", "1.6")
 
-val sparkVersion = "2.2.1"
+val sparkVersion = "2.3.0"
 
 libraryDependencies ++= Seq(
   "org.apache.spark"             %% "spark-sql"         % sparkVersion % "provided",

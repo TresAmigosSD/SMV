@@ -11,7 +11,7 @@ fi
 smv_tools="$(cd "`dirname "$0"`"; pwd)"
 spark_version=$(cat "$smv_tools"/../.spark_version)
 
-remote_tarball="http://www-us.apache.org/dist/spark/spark-2.2.1/spark-2.2.1-bin-hadoop2.7.tgz"
+remote_tarball="http://www-us.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz"
 local_tarball=$(basename $remote_tarball)
 echo "[INFO] Downloading $remote_tarball to $local_tarball."
 curl -OL --progress-bar --fail "$remote_tarball" > "$local_tarball"
