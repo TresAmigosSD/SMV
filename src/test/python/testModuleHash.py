@@ -20,7 +20,7 @@ from smv.datasetrepo import DataSetRepo
 class ModuleHashTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ["--smv-props", "smv.stages=stage", "smv.user_libraries=udl"]
+        return ["--smv-props", "smv.stages=stage", "smv.user_libraries=udl:same"]
 
     @classmethod
     def before_dir(cls):
@@ -34,20 +34,18 @@ class ModuleHashTest(SmvBaseTest):
         def __init__(self, smvApp, path, fqn):
             self.dsr = DataSetRepo(smvApp)
             self.path = path
+            self.app = smvApp
+            self.initial_app_dir = ''
             self.fqn = fqn
-        
-        def lib_path(self):
-            # use a realistic library dir, which we'll also add to py path
-            return self.path + "/library"
 
         def __enter__(self):
-            sys.path.insert(1,self.path)
-            sys.path.insert(1,self.lib_path())
+            # capture app dir on enter so we can set it back on exit
+            self.initial_app_dir = self.app.config().appDir()
+            self.app.setAppDir(self.path)
             return self.dsr.loadDataSet(self.fqn)
 
         def __exit__(self, type, value, traceback):
-            sys.path.remove(self.path)
-            sys.path.remove(self.lib_path())
+            self.app.setAppDir(self.initial_app_dir)
 
     def compare_resource_hash(self, fqn, assertion):
         with self.Resource(self.smvApp,self.before_dir(),fqn) as ds:
@@ -74,9 +72,21 @@ class ModuleHashTest(SmvBaseTest):
         """hash will change if we change module's requiresDS"""
         self.assert_hash_should_change("stage.modules.Dependent")
     
+    def test_unchanged_lib_same_hash(self):
+        """verify that the same library source will produce the same hash"""
+        self.assert_hash_should_not_change("stage.modules.SameLibrary")
+    
     def test_change_required_lib_should_change_hash(self):
         """hash will change if we modify the source code of a depended-on library"""
-        self.assert_hash_should_change("stage.modules.RequiresALibrary")
+        self.assert_hash_should_change("stage.modules.DifferentLibrary")
+    
+    def test_unchanged_func_same_hash(self):
+        """verify hash is the same if a function in requiresLib is"""
+        self.assert_hash_should_not_change("stage.modules.SameFunc")
+    
+    def test_change_func_should_change_hash(self):
+        """verify that changing the source of a required function changes hash"""
+        self.assert_hash_should_change("stage.modules.DifferentFunc")
 
     def test_change_baseclass_should_change_hash(self):
         """hash will change if we change code for class that module inherits from"""
