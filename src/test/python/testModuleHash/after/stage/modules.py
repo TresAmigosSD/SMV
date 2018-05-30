@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import udl as lib
 from smv import SmvApp, SmvModule, SmvHiveTable, SmvCsvFile
 
 class ChangeCode(SmvModule):
@@ -43,6 +43,15 @@ class Upstream(SmvModule):
         return []
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,46")
+
+class RequiresALibrary(SmvModule):
+    def requiresDS(self):
+        return []
+    def requiresLib(self):
+        return [lib]
+    def run(self, i):
+        number = lib.getNumber()
+        return self.smvApp.createDF("k:String;v:Integer", "a,1;b,2;c:3").limit(number)
 
 class Downstream(SmvModule):
     def requiresDS(self):
