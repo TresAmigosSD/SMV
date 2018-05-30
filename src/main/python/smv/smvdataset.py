@@ -145,13 +145,14 @@ class SmvDataSet(ABC):
         """
     
     def requiresLib(self):
-        """User-specified list of user-defined (not external) library dependencies
+        """User-specified list of 'library' dependencies. These are code, other than
+            the DataSet's run method that impact its output or behaviour.
 
             Override this method to assist in re-running this module based on changes
-            in other python files.
+            in other python objects (functions, classes, packages).
 
             Returns:
-                (list(Module)): a list of library dependencies
+                (list(module)): a list of library dependencies
         """
         return []
 
