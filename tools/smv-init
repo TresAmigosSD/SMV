@@ -9,6 +9,7 @@ TEMPLATE_DATA_DIR="$TEMPLATE_DIR/data"
 #  - test
 PROJ_TYPE="simple"
 OVERRIDE=0
+DO_GIT_INIT=0
 
 
 while [[ $# -gt 1 ]]
