@@ -275,8 +275,13 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
   // ---------- User Run Config Parameters key/values ----------
-  /** Get user run config parameter as a string. */
-  def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, mergedProps("smv.config." + key).trim)
+  def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, getRunConfigFromConf(key))
+
+  def getRunConfigFromConf(key: String): String  = {
+    val runConfig = mergedProps.getOrElse("smv.config." + key, null);
+    if (runConfig == null) return null
+    return runConfig.trim
+  }
 
   /** Get all run config keys. */
   def getRunConfigKeys(): Seq[String] = splitProp("smv.config.keys") ++ dynamicRunConfig.keySet
