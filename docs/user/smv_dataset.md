@@ -20,15 +20,42 @@ directly, instead, they will use all the detailed types of `SmvDataSet`.
 
 In this document we will cover the following basic `SmvDataSet`s,
 
- | Scala | Python
---- | --- | ---
-**Input** | `SmvCsvFile` | `SmvCsvFile`
-          | `SmvMultiCsvFiles` | `SmvMultiCsvFiles`
-          | `SmvCsvStringData` | `SmvCsvStringData`
-          | `SmvHiveTable` | `SmvHiveTable`
-**Intermediate** | `SmvModule` | `SmvModule`
-**Output** (mix in) | `SmvOutput` | `SmvOutput`
+|                     | Scala              | Python             |
+|---------------------|--------------------|--------------------|
+| **Input**           | `SmvCsvFile`       | `SmvCsvFile`       |
+|                     | `SmvMultiCsvFiles` | `SmvMultiCsvFiles` |
+|                     | `SmvCsvStringData` | `SmvCsvStringData` |
+|                     | `SmvHiveTable`     | `SmvHiveTable`     |
+| **Intermediate**    | `SmvModule`        | `SmvModule`        |
+| **Output (mix in)** | `SmvOutput`        | `SmvOutput`        |
+|                     |                    |                    |
 
+### External Code Dependency (python only)
+
+Any of the classes listed above can implement a `requiresLib()` function to define code that isn't SMV DataSets (like an external or user-defined library) that should be considered like it is part of the source of the DataSet itself.
+
+This means cached data will be invalidated if the external code is changed, etc.
+
+**Python**
+
+```py
+import some_library as lib
+import pandas
+
+class MyModule(smv.SmvModule):
+    """mod description"""
+    # define dependency on other SmvDataset(s)
+    def requiresDS(self):
+        return [Mod1, Mod2]
+
+    # define dependency on arbitary external code
+    # ie: libraries defined in your project or from pip
+    def requiresLib(self):
+        return [lib, pandas]
+
+    def run(self, i):
+        ...
+```
 
 ## Input SmvDataSet
 

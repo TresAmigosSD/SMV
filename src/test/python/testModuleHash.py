@@ -20,7 +20,7 @@ from smv.datasetrepo import DataSetRepo
 class ModuleHashTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ["--smv-props", "smv.stages=stage"]
+        return ["--smv-props", "smv.stages=stage", "smv.user_libraries=udl"]
 
     @classmethod
     def before_dir(cls):
@@ -35,13 +35,19 @@ class ModuleHashTest(SmvBaseTest):
             self.dsr = DataSetRepo(smvApp)
             self.path = path
             self.fqn = fqn
+        
+        def lib_path(self):
+            # use a realistic library dir, which we'll also add to py path
+            return self.path + "/library"
 
         def __enter__(self):
             sys.path.insert(1,self.path)
+            sys.path.insert(1,self.lib_path())
             return self.dsr.loadDataSet(self.fqn)
 
         def __exit__(self, type, value, traceback):
             sys.path.remove(self.path)
+            sys.path.remove(self.lib_path())
 
     def compare_resource_hash(self, fqn, assertion):
         with self.Resource(self.smvApp,self.before_dir(),fqn) as ds:
@@ -67,6 +73,10 @@ class ModuleHashTest(SmvBaseTest):
     def test_change_dependency_should_change_hash(self):
         """hash will change if we change module's requiresDS"""
         self.assert_hash_should_change("stage.modules.Dependent")
+    
+    def test_change_required_lib_should_change_hash(self):
+        """hash will change if we modify the source code of a depended-on library"""
+        self.assert_hash_should_change("stage.modules.RequiresALibrary")
 
     def test_change_baseclass_should_change_hash(self):
         """hash will change if we change code for class that module inherits from"""
