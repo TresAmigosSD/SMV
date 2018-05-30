@@ -6,3 +6,6 @@ smv.stages = stage
 
 # static appId for testing
 smv.appId = PROJECT_A
+
+# dummy user_libraries key
+smv.user_libraries = core

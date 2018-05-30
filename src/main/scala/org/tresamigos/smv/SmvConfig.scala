@@ -204,11 +204,12 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private def homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
   private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
-    "smv.appName"     -> "Smv Application",
-    "smv.appId"       -> java.util.UUID.randomUUID.toString,
-    "smv.stages"      -> "",
-    "smv.config.keys" -> "",
-    "smv.class_dir"   -> "./target/classes"
+    "smv.appName"         -> "Smv Application",
+    "smv.appId"           -> java.util.UUID.randomUUID.toString,
+    "smv.stages"          -> "",
+    "smv.config.keys"     -> "",
+    "smv.class_dir"       -> "./target/classes",
+    "smv.user_libraries"  -> ""
   )
 
   // ---------- Dynamic Run Config Parameters key/values ----------
@@ -235,6 +236,9 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // --- stage names are a dynamic prop
   private[smv] def stageNames = { splitProp("smv.stages").toSeq }
+
+  // --- user libraries are dynamic as well
+  private[smv] def userLibs = { splitProp("smv.user_libraries").toSeq }
 
   val classDir = mergedProps("smv.class_dir")
 
