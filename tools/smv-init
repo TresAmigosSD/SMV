@@ -54,13 +54,14 @@ FLAG=$1
     OVERRIDE=1
         shift
         ;;
+    -gi|-gitinit)
+        DO_GIT_INIT=1
+        shift
+        ;;
     *)
         ;;
   esac
 done
-
-echo 'after parsing args'
-echo num args: $#
 
 TEMPLATE_DIR+="/$PROJ_TYPE"
 
@@ -74,7 +75,8 @@ if [ $# -ne 1 ]; then
     echo "  -b: blank/empty project"
     echo "  -dd: data directory"
     echo "  -n: project name"
-    echo # TODO
+    echo "  -gi: initializes git repo in project directory"
+    echo
     echo "example:"
     echo "    simple:     \$ ./tools/smv-init /project/path"
     echo "    blank:      \$ ./tools/smv-init -b -n projec_name -dd /data/dir /project/path"
@@ -173,7 +175,7 @@ function copy_conf_files()
 
 function copy_data_files()
 {
-    if [ "$PROJ_TYPE" != "empty" ]; then
+    if [ "$PROJ_TYPE" != "blank" ]; then
         data_dir=$1
 
         echo "-- copying data files"
@@ -222,6 +224,29 @@ function create_python_packages()
     done
 }
 
+function create_notebooks_folder()
+{
+  echo "--  creating notebooks folder"
+
+  cd ${PROJ_DIR_FULL_PATH} && mkdir notebooks && touch notebooks/_jupyter_notebooks_
+}
+
+function create_library_folder()
+{
+    echo "-- creating library folder"
+
+    cd ${PROJ_DIR_FULL_PATH} && mkdir library
+}
+
+function create_git_structure()
+{
+    if [ "$DO_GIT_INIT" = 1 ]; then
+        echo "-- initializing git repository"
+
+        cd ${PROJ_DIR_FULL_PATH} && git init && git add . && git commit -m "init commit"
+    fi
+}
+
 # --- MAIN ---
 
 #  only test proj has PROJ_CLASS
@@ -245,3 +270,7 @@ if [ "$PROJ_TYPE" = "big" ] ; then
   $TEMPLATE_DIR/dupMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ 1000
   rm $PROJ_DIR/src/main/python/stage1/employment.py
 fi
+
+create_notebooks_folder
+create_library_folder
+create_git_structure
