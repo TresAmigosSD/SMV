@@ -55,7 +55,7 @@ FLAG=$1
     OVERRIDE=1
         shift
         ;;
-    -gi|-gitinit)
+    -g|-git)
         DO_GIT_INIT=1
         shift
         ;;
