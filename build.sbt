@@ -30,6 +30,8 @@ parallelExecution in Test := false
 
 publishArtifact in Test := true
 
+testOptions in Test += Tests.Argument("-oF")
+
 // Tests must be forked in order to export env vars
 fork in Test := true
 // SMV_HOME would normally be set by _env.sh when starting SMV, so for testing we
