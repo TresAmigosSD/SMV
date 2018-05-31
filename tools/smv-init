@@ -21,7 +21,7 @@ FLAG=$1
         QUITE_MODE=1
         shift
         ;;
-    -b|-blank)
+    -b|--blank)
         PROJ_TYPE="blank"
         shift
         ;;
@@ -41,12 +41,12 @@ FLAG=$1
         PROJ_TYPE="big"
         shift
         ;;
-    -dd|-dataDir)
+    -d|--dataDir)
         PROJ_DATA_DIR="$2"
         shift
         shift
         ;;
-    -n|-name)
+    -n|--name)
         PROJ_NAME="$2"
         shift
         shift
@@ -55,7 +55,7 @@ FLAG=$1
     OVERRIDE=1
         shift
         ;;
-    -g|-git)
+    -g|--git)
         DO_GIT_INIT=1
         shift
         ;;
@@ -74,9 +74,9 @@ if [ $# -ne 1 ]; then
     echo "  -e: enterprise"
     echo "  -t: test (for developers only)"
     echo "  -b: blank/empty project"
-    echo "  -dd: data directory"
+    echo "  -d: data directory"
     echo "  -n: project name"
-    echo "  -gi: initializes git repo in project directory"
+    echo "  -g: initializes git repo in project directory"
     echo
     echo "example:"
     echo "    simple:     \$ ./tools/smv-init /project/path"
