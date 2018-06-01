@@ -14,6 +14,7 @@ import itertools
 import inspect
 import pkgutil
 import sys
+import os
 import traceback
 
 from smv.error import SmvRuntimeError
@@ -43,24 +44,75 @@ class DataSetRepo(object):
         # code in the new transaction
         self._clear_sys_modules()
 
+    def _is_app_code(self, mod_path):
+        """Given the path to an arbitrary module, this function is a test of whether or not
+           it is considered part of the application source code by SMV.
+        """
+        src_path_abs = os.path.join(self._project_path_abs, self.smvApp.SRC_PROJECT_PATH)
+        lib_path_abs = os.path.join(self._project_path_abs, self.smvApp.SRC_LIB_PATH)
+
+        mod_path_canon = os.path.realpath(mod_path) # follows symlinks, etc
+
+        print('Comparing: {} and {}'.format(src_path_abs, mod_path_canon))
+        
+        if (os.path.commonprefix([mod_path_canon, src_path_abs]) == src_path_abs):
+            print('Adding mod with relpath {}'.format(mod_path_canon))
+            # module is from src/main/python
+            return True
+
+        if (os.path.commonprefix([mod_path_canon, lib_path_abs]) == lib_path_abs):
+            # module is from library/
+            print('Adding lib with relpath {}'.format(mod_path_canon))
+            return True
+        
+        return False
+
+    
     def _clear_sys_modules(self):
         """
-            Clear all client modules from sys.modules
+            Clear all client modules from sys.modules.
+
             If modules have names like 'stage1.stage2.file.mod', then we have to clear all of
-            set( 'stage1', 'stage1.stage2', 'stage1.stage2.file', 'stage1.stage2.file.mod' )
-            from the sys.modules dictionary to avoid getting cached modules from python when
-            we contruct a new DSR.
+            set( 'stage1', 'stage1.stage2', 'stage1.stage2.file' ) from the sys.modules
+            dictionary to avoid getting cached modules from python when we contruct a new DSR.
         """
-        # The set of all user-defined code that needs to be decached
-        # { 'stage1' } from our example
-        user_code_fqns = set(self.smvApp.stages()).union(self.smvApp.userLibs())
-        fqn_stubs_to_remove = {fqn.split('.')[0] for fqn in user_code_fqns}
+        # this will contain the fqns of modules we need to pop from sys to 'decache' at the python level
+        decache_cand = set()
 
-        for loaded_mod_fqn in list(sys.modules.keys()):
-            for stubbed_fqn in fqn_stubs_to_remove:
-                if loaded_mod_fqn == stubbed_fqn or loaded_mod_fqn.startswith(stubbed_fqn + '.'):
-                    sys.modules.pop(loaded_mod_fqn)
+        # set this so it doesn't have to be done repeatedly in the loop below
+        self._project_path_abs = os.path.abspath(self.smvApp.appDir())
 
+        # print(sys.modules.get('stage.modules'))
+        print(self._project_path_abs)
+
+        # iterate over all python modules we have loaded
+        for (sys_mod_fqn, sys_mod) in list(sys.modules.items()):
+            # filter out C dependencies, other modules with no path
+            if (sys_mod and hasattr(sys_mod, '__file__')):
+               if (self._is_app_code(sys_mod.__file__)):
+                   decache_cand.add((sys_mod_fqn, sys_mod))
+
+        print('Done with first pass and assembled set to remove of: {}'.format(decache_cand))
+        
+        diff_set = set()
+
+        # second pass - iterate over 'decache candidates' and check for do_not_reload var
+        for (fqn, mod) in decache_cand:
+            # magic flag that we add to either files or __ini__.py in packages to prevent
+            # this exact decaching on transaction boundaries
+            if (hasattr(mod, 'smv_do_not_reload') and mod.smv_do_not_reload):
+                discovered_no_rel_mod_fqn = fqn
+                for (no_rel_fqn, no_rel_mod) in decache_cand:
+                    if (no_rel_fqn == discovered_no_rel_mod_fqn or no_rel_fqn.startswith(discovered_no_rel_mod_fqn + '.')):
+                        diff_set.add((fqn, mod))
+
+        to_decache = decache_cand.difference(diff_set)
+        print('decache cand size: {}, diff set size: {}'.format(decache_cand.__len__(), to_decache.__len__()))
+
+        for (fqn, mod) in to_decache:
+            # print('trying to pop mod {}'.format(fqn))
+            sys.modules.pop(fqn)
+            
 
     def _iter_submodules(self, stages):
         """Yield the names of all submodules of the packages corresponding to the given stages

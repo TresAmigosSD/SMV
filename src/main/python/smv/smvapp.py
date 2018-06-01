@@ -177,6 +177,10 @@ class SmvApp(object):
     def config(self):
         return self.j_smvApp.smvConfig()
 
+    def appDir(self):
+        """Get the current app dir for this app instance"""
+        return self.j_smvApp.smvConfig().appDir()
+
     def setAppDir(self, appDir):
         """ SMV's equivalent of 'cd' for app dirs. """
         self.removeDefaultDirs()
@@ -204,10 +208,6 @@ class SmvApp(object):
         """Stages is a function as they can be set dynamically on an SmvApp instance"""
         return self.j_smvPyClient.stages()
     
-    def userLibs(self):
-        """Return dynamically set smv.user_libraries from conf"""
-        return self.j_smvPyClient.userLibs()
-
     def appId(self):
         return self.config().appId()
 

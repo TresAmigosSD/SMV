@@ -48,7 +48,9 @@ class SmvBaseTest(unittest.TestCase):
         # The original SmvApp (if any) will be restored when the test is torn down
         cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
-        sys.path.append(cls.resourceTestDir())
+        sys.path.insert(1, cls.resourceTestDir())
+        cls.smvApp.SRC_PROJECT_PATH = '.'
+        cls.smvApp.setAppDir(cls.resourceTestDir())
 
         cls.mkTmpTestDir()
 
@@ -59,7 +61,7 @@ class SmvBaseTest(unittest.TestCase):
         from smv.smvapp import SmvApp
         # Restore SmvApp singleton
         SmvApp.setInstance(TestConfig.originalSmvApp())
-        sys.path.remove(cls.resourceTestDir())
+
 
     def setUp(self):
         """Patch for Python 2.6 without using unittest

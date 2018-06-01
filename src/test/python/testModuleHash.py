@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import sys
+import os
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
@@ -20,7 +21,7 @@ from smv.datasetrepo import DataSetRepo
 class ModuleHashTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ["--smv-props", "smv.stages=stage", "smv.user_libraries=udl:same"]
+        return ["--smv-props", "smv.stages=stage"]
 
     @classmethod
     def before_dir(cls):
@@ -32,20 +33,22 @@ class ModuleHashTest(SmvBaseTest):
 
     class Resource(object):
         def __init__(self, smvApp, path, fqn):
-            self.dsr = DataSetRepo(smvApp)
-            self.path = path
+            # capture app dir on enter so we can set it back on exit
+            self.initial_app_dir = smvApp.appDir()
+            self.path = os.path.abspath(path)
             self.app = smvApp
-            self.initial_app_dir = ''
             self.fqn = fqn
 
         def __enter__(self):
-            # capture app dir on enter so we can set it back on exit
-            self.initial_app_dir = self.app.config().appDir()
             self.app.setAppDir(self.path)
-            return self.dsr.loadDataSet(self.fqn)
+            print(self.app.appDir())
+            self.app.SRC_PROJECT_PATH = "src/main/python"
+            dsr = DataSetRepo(self.app)
+            return dsr.loadDataSet(self.fqn)
 
         def __exit__(self, type, value, traceback):
-            self.app.setAppDir(self.initial_app_dir)
+            print('exit')
+            # self.app.setAppDir
 
     def compare_resource_hash(self, fqn, assertion):
         with self.Resource(self.smvApp,self.before_dir(),fqn) as ds:

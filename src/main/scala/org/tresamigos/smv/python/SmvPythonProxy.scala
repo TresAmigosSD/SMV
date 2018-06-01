@@ -257,13 +257,13 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     j_smvApp.smvConfig.setAppDir(appDir)
   }
 
+  def getAppDir: String = j_smvApp.smvConfig.appDir
+
   /** Output directory for files */
   def outputDir: String = j_smvApp.smvConfig.outputDir
 
   def stages: Array[String] = j_smvApp.stages.toArray
   
-  def userLibs: Array[String] = j_smvApp.userLibs.toArray
-
   def inferDS(name: String): SmvDataSet =
     j_smvApp.dsm.inferDS(name).head
 
