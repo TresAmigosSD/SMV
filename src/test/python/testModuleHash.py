@@ -41,14 +41,10 @@ class ModuleHashTest(SmvBaseTest):
 
         def __enter__(self):
             self.smvApp.setAppDir(self.target_path)
-            sys.path.insert(1, self.target_path)
-            sys.path.insert(1, self.lib_path())
             return self.dsr.loadDataSet(self.fqn)
 
         def __exit__(self, type, value, traceback):
             self.smvApp.setAppDir(self.orig_path)
-            sys.path.remove(self.target_path)
-            sys.path.remove(self.lib_path())
 
     def compare_resource_hash(self, fqn, assertion):
         with self.Resource(self.smvApp,self.before_dir(),fqn) as ds:
