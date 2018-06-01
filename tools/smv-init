@@ -1,7 +1,6 @@
 #!/bin/bash
 
-TEMPLATE_DIR="$(cd "`dirname "$0"`"; pwd)/templates"
-TEMPLATE_DATA_DIR="$TEMPLATE_DIR/data"
+ALL_TEMPLATES_DIR="$(cd "`dirname "$0"`"; pwd)/templates"
 
 # PROJ_TYPE:
 #  - simple (default)
@@ -64,7 +63,12 @@ FLAG=$1
   esac
 done
 
-TEMPLATE_DIR+="/$PROJ_TYPE"
+TEMPLATE_DIR="$ALL_TEMPLATES_DIR/$PROJ_TYPE"
+if [ "$PROJ_TYPE" = "test" ] ; then 
+    TEMPLATE_DATA_DIR="$TEMPLATE_DIR/data"
+else
+    TEMPLATE_DATA_DIR="$ALL_TEMPLATES_DIR/data"
+fi
 
 if [ $# -ne 1 ]; then
     echo "ERROR: Invalid number of arguments"
@@ -245,18 +249,18 @@ function create_git_structure()
 
 #  only test proj has PROJ_CLASS
 if [ "$PROJ_TYPE" = "test" ] ; then
-  extract_group_artifact_ids
+    extract_group_artifact_ids
 fi
 
 create_proj_dir
 copy_conf_files
-copy_data_files $TEMPLATE_DATA_DIR
+copy_data_files "$TEMPLATE_DATA_DIR"
 copy_src_files
 create_python_packages
 
 if [ "$PROJ_TYPE" = "big" ] ; then
-  $TEMPLATE_DIR/dupMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ 1000
-  rm $PROJ_DIR/src/main/python/stage1/employment.py
+    $TEMPLATE_DIR/dupMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ 1000
+    rm $PROJ_DIR/src/main/python/stage1/employment.py
 fi
 
 create_library_folder
