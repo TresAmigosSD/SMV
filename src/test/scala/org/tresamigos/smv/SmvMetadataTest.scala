@@ -18,6 +18,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 
 import org.tresamigos.smv.dqm.{DQMRule, SmvDQM}
+import org.tresamigos.smv.dqm.SmvDqmValidationError
 
 class SmvMetadataTest extends SmvTestUtil {
   override def appArgs = super.appArgs ++ Seq(

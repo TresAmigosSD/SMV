@@ -261,6 +261,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def outputDir: String = j_smvApp.smvConfig.outputDir
 
   def stages: Array[String] = j_smvApp.stages.toArray
+  
+  def userLibs: Array[String] = j_smvApp.userLibs.toArray
 
   def inferDS(name: String): SmvDataSet =
     j_smvApp.dsm.inferDS(name).head
@@ -381,6 +383,12 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     val handler = new FileIOHandler(j_smvApp.sqlContext, fullPath, None, parserLogger)
     handler.csvFileWithSchema(csvAttr, Some(schema))
   }
+
+  /**
+   * Alias to ShellCmd openCsv function
+   */
+  def shellOpenCsv(path: String, validate: Boolean): DataFrame =
+    shell.openCsv(path, null, validate)
 
   def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
 }

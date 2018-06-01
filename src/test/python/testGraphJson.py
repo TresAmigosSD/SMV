@@ -10,18 +10,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Errors thrown by SMV
-"""
+
 import json
 
-class SmvRuntimeError(RuntimeError):
-    def __init__(self,msg):
-        super(SmvRuntimeError,self).__init__(msg)
+from test_support.smvbasetest import SmvBaseTest
+from smv import *
 
-class SmvDqmValidationError(SmvRuntimeError):
-    """ This class has an instance of dqmValidationResult(dict)
+class SmvGraphJsonTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=stage']
+
+    def test_graph_json_docstr(self):
+        j_str = self.smvApp.get_graph_json()
+        j_obj = json.loads(j_str)
+        res = j_obj['nodes'][0]['description']
+
+        exp = """This is the test DS X's docstring
+        It is multi lines.
+        with "double" quotes and 'single' quote
     """
-    def __init__(self, dqmValidationResult):
-        super(SmvDqmValidationError,self).__init__(json.dumps(dqmValidationResult))
-        self.dqmValidationResult = dqmValidationResult
+        assert (res == exp)

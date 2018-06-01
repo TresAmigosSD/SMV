@@ -183,8 +183,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
 
   private def terminateAtError(result: DqmValidationResult) = {
     if (!result.passed) {
-      val r = result.toJSON()
-      throw new SmvDqmValidationError(r)
+      throw new SmvDqmValidationError(result)
     }
   }
 
@@ -288,3 +287,6 @@ private[smv] object DqmValidationResult {
     read[DqmValidationResult](jsonStr)(DefaultFormats, ManifestFactory.classType(klass))
   }
 }
+
+class SmvDqmValidationError(dqmValidationResult: DqmValidationResult, cause: Throwable = null)
+  extends SmvRuntimeException(dqmValidationResult.toJSON(), cause)

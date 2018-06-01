@@ -192,42 +192,6 @@ def getMetadataHistoryJson(fqn):
     '''returns metadata history given a fqn'''
     return SmvApp.getInstance().getMetadataHistoryJson("mod:{}".format(fqn))
 
-# ---------- API Definition ---------- #
-
-
-@app.route("/api/run_module", methods = ['POST'])
-def run_module():
-    '''
-    body:
-        'fqn': module fqn
-        'run_config': runtime configuration(optional)
-    function: run the module of given fqn and runtime configuration
-    '''
-    json = request.get_json()
-    try:
-        module_fqn = json['fqn'].encode("utf-8")
-    except:
-        raise err_res('MODULE_NOT_PROVIDED_ERR')
-    try:
-        encoded_run_config = None
-        run_config = json['run_config']
-        if run_config is not None:
-            encoded_run_config = run_config.encode("utf-8")
-    except:
-        raise err_res('MODULE_RUN_CONFIGURATION_ERR')
-    return ok_res(str(runModule(module_fqn, encoded_run_config)))
-
-
-@app.route("/api/get_graph_json", methods = ['POST'])
-def get_graph_json():
-    '''
-    body: none
-    function: return the json file of the entire dependency graph
-    '''
-    res = SmvApp.getInstance().get_graph_json()
-    return jsonify(graph=res)
-
-
 # Wrapper so that other python scripts can import and then call
 # smvserver.Main()
 class Main(object):

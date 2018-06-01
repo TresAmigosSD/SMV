@@ -17,6 +17,7 @@ import json
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
 from smv.dqm import *
+from smv.error import SmvDqmValidationError
 
 import pyspark
 from pyspark.context import SparkContext
@@ -30,10 +31,6 @@ class SmvFrameworkTest(SmvBaseTest):
     def smvAppInitArgs(cls):
         return ['--smv-props', 'smv.stages=stage']
 
-    def _escapeRegex(self, s):
-        import re
-        return re.sub(r"([\[\]\(\)])", r"\\\1", s)
-
     def test_SmvCsvStringData(self):
         fqn = "stage.modules.D1"
         df = self.df(fqn)
@@ -42,8 +39,12 @@ class SmvFrameworkTest(SmvBaseTest):
 
     def test_SmvCsvStringData_with_error(self):
         fqn = "stage.modules.D1WithError"
-        with self.assertRaisesRegexp(Py4JJavaError, "SmvDqmValidationError"):
+        try:
             df = self.df(fqn)
+        except SmvDqmValidationError as e:
+            self.assertEqual(e.dqmValidationResult["passed"], False)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["totalRecords"], 3)
+            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["parseError"]["total"],2)
 
     def test_SmvMultiCsvFiles(self):
         self.createTempInputFile("multiCsvTest/f1", "col1\na\n")
@@ -79,9 +80,16 @@ class SmvFrameworkTest(SmvBaseTest):
 
         msg = """{"passed":false,"dqmStateSnapshot":{"totalRecords":3,"parseError":{"total":0,"firstN":[]},"fixCounts":{"a_lt_1_fix":1},"ruleErrors":{"b_lt_03":{"total":1,"firstN":["org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5"]}}},"errorMessages":[{"FailTotalRuleCountPolicy(2)":"true"},{"FailTotalFixCountPolicy(1)":"false"},{"FailParserCountPolicy(1)":"true"}],"checkLog":["Rule: b_lt_03, total count: 1","org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5","Fix: a_lt_1_fix, total count: 1"]}"""
 
-        with self.assertRaisesRegexp(Py4JJavaError, self._escapeRegex(msg)):
+        with self.assertRaises(SmvDqmValidationError) as cm:
             df = self.df(fqn)
             df.smvDumpDF()
+        
+        e = cm.exception
+        self.assertEqual(e.dqmValidationResult["passed"], False)
+        self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["totalRecords"], 3)
+        self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["parseError"]["total"],0)
+        self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["fixCounts"]["a_lt_1_fix"],1)
+        self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["ruleErrors"]["b_lt_03"]["total"],1)
 
     def test_SmvSqlModule(self):
         fqn = "stage.modules.SqlMod"

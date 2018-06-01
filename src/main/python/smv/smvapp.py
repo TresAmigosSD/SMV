@@ -28,10 +28,11 @@ from pyspark.sql import HiveContext, DataFrame
 
 from smv.datasetrepo import DataSetRepoFactory
 from smv.utils import smv_copy_array, check_socket
-from smv.error import SmvRuntimeError
+from smv.error import SmvRuntimeError, SmvDqmValidationError
 import smv.helpers
 from smv.utils import FileObjInputStream
 from smv.runinfo import SmvRunInfoCollector
+from py4j.protocol import Py4JJavaError
 
 class SmvApp(object):
     """The Python representation of SMV.
@@ -141,6 +142,22 @@ class SmvApp(object):
         # Initialize DataFrame and Column with helper methods
         smv.helpers.init_helpers()
 
+
+    def exception_handling(func):
+        """ Decorator function to catch Py4JJavaError and raise SmvDqmValidationError if any.
+            Otherwise just pass through the original exception
+        """
+        def func_wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Py4JJavaError as e:
+                if (e.java_exception and e.java_exception.getClass().getName() == "org.tresamigos.smv.dqm.SmvDqmValidationError"):
+                    dqmValidationResult = json.loads(e.java_exception.getMessage())
+                    raise SmvDqmValidationError(dqmValidationResult)
+                else:
+                    raise e
+        return func_wrapper
+
     def prependDefaultDirs(self):
         """ Ensure that mods in src/main/python and library/ are discoverable.
             If we add more default dirs, we'll make this a set
@@ -186,6 +203,10 @@ class SmvApp(object):
     def stages(self):
         """Stages is a function as they can be set dynamically on an SmvApp instance"""
         return self.j_smvPyClient.stages()
+    
+    def userLibs(self):
+        """Return dynamically set smv.user_libraries from conf"""
+        return self.j_smvPyClient.userLibs()
 
     def appId(self):
         return self.config().appId()
@@ -237,6 +258,7 @@ class SmvApp(object):
         df, collector = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
 
+    @exception_handling
     def runModule(self, urn, forceRun=False, version=None, runConfig=None, quickRun=False):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
 
@@ -267,6 +289,7 @@ class SmvApp(object):
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
 
+    @exception_handling
     def runModuleByName(self, name, forceRun=False, version=None, runConfig=None, quickRun=False):
         """Runs a SmvModule by its name (can be partial FQN)
 
@@ -343,6 +366,7 @@ class SmvApp(object):
         java_result = self.j_smvPyClient.getRunInfoByPartialName(name, runConfig)
         return SmvRunInfoCollector(java_result)
 
+    @exception_handling
     def publishModuleToHiveByName(self, name, runConfig=None):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
