@@ -65,13 +65,13 @@ package org.tresamigos.smv.runmoduletest {
   import org.tresamigos.smv._, dqm._
 
   object Mod1 extends SmvModule("module passes dqm validation") {
-    override def dqm = SmvDQM().add(DQMRule((new Column("a")) <= 0, "a_le_0", FailNone))
+    override def dqm = SmvDQM().add(DQMRule(new Column("a") <= 0, "a_le_0", FailNone))
     override def requiresDS() = Nil
     override def run(i: runParams) = app.createDF("a:Integer;b:Double", "1,0.3;0,0.2")
   }
 
   object Mod2 extends SmvModule("module with fix rule depends on Mod1") {
-    override def dqm = SmvDQM().add(DQMFix((new Column("a")) < 1, lit(1) as "a", "a_lt_1_fix", FailPercent(50)))
+    override def dqm = SmvDQM().add(DQMFix(new Column("a") < 1, lit(1) as "a", "a_lt_1_fix", FailPercent(50)))
     override def requiresDS() = Seq(Mod1)
     override def run(i: runParams) = app.createDF("a:Integer;b:Double", "1,0.3;0,0.2")
   }
