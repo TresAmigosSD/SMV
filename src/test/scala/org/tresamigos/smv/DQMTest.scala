@@ -223,14 +223,15 @@ class DQMTest extends SmvTestUtil {
       file.rdd(collector=new SmvRunInfoCollector)
     }
   }
+  
   test("DQM failures only counted once") {
     // Will fail with an error if the DQMRule is double-counted
-    app.runModuleByName("stage1.SomeModule")
+    app.runModuleByName("stage1.ModWithDQMAndMetadata")
   }
 }
 
 package stage1 {
-  object SomeModule extends SmvModule("A module with metadata") {
+  object ModWithDQMAndMetadata extends SmvModule("A module with metadata") {
     def requiresDS = Seq()
     def run(i: RunParams) = app.createDF(
       """a:String;b:String""", """"a","b";,"d""""

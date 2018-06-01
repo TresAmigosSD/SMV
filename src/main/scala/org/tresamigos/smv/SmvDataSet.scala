@@ -229,7 +229,7 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) =
     userDQM
 
-  /*
+  /**
    * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly. The cache is
    * external to SmvDataSet so that it we will not recalculate the DF even after
@@ -558,7 +558,7 @@ abstract class SmvDataSet extends FilenamePart {
       val metadataHistory = getMetadataHistory
 
       val validationRes: Option[String] = validateMetadata(metadata, metadataHistory.historyList)
-      validationRes foreach {msg: String => throw new SmvMetadataValidationError(msg)}
+      validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
       
 
       deleteOutputs(metadataOutputFiles)
