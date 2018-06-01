@@ -45,7 +45,6 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   val publishJDBC = smvConfig.cmdLine.publishJDBC()
 
   def stages      = smvConfig.stageNames
-  def userLibs    = smvConfig.userLibs
 
   val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
 

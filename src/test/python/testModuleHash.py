@@ -20,7 +20,7 @@ from smv.datasetrepo import DataSetRepo
 class ModuleHashTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ["--smv-props", "smv.stages=stage", "smv.user_libraries=udl:same"]
+        return ["--smv-props", "smv.stages=stage"]
 
     @classmethod
     def before_dir(cls):
