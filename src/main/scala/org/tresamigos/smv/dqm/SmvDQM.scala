@@ -229,7 +229,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
       toConsole(res)
 
     // persist if result is not empty or forced an action
-    if (persistable && allPolicies.length > 0)
+    if (persistable)
       persist(res, path)
 
     res

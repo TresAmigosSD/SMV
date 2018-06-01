@@ -22,3 +22,7 @@ class SmvUnsupportedType(message: String, cause: Throwable = null)
 
 class SmvDqmValidationError(message: String, cause: Throwable = null)
     extends SmvRuntimeException(message, cause)
+
+
+class SmvMetadataValidationError(message: String, cause: Throwable = null)
+    extends SmvRuntimeException(message, cause)

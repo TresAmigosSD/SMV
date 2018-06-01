@@ -95,7 +95,7 @@ class SmvMetadataTest extends SmvTestUtil {
     // Validation should succeed because history is empty
     app.runModule(fails.urn)
     // Validation should fail because metadata doesn't match
-    val dqmError = intercept[SmvDqmValidationError] {
+    val dqmError = intercept[SmvMetadataValidationError] {
       app.runModule(fails.urn, true)
     }
 
