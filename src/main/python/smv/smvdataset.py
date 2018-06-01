@@ -151,6 +151,12 @@ class SmvDataSet(ABC):
             Override this method to assist in re-running this module based on changes
             in other python objects (functions, classes, packages).
 
+            Limitations: For python modules and packages, the 'requiresLib()' method is
+            limited to registering changes on the main file of the package (for module
+            'foo', that's 'foo.py', for package 'bar', that's 'bar/__init__.py'). This
+            means that if a module or package imports other modules, the imported
+            module's changes will not impact DataSet hashes.
+
             Returns:
                 (list(module)): a list of library dependencies
         """

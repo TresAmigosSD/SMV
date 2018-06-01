@@ -40,7 +40,7 @@ This means cached data will be invalidated if the external code is changed, etc.
 
 There are two steps to setting this up for your project:
 
-1. Add the library to your app conf via either of the files under `conf/` or the command line under the `smv.user_libraries` property.
+1. Add the `smv.user_libraries` prop to your [app configuration](./app_config.md).
 
 2. Import the library in all files that depend on it (like `import udl as lib`) and then in the class defs of DataSets that depend on it, implement the `requiresLib()` method and make it return an array of the libraries that that DataSet depends on (for the first example, `requiresLib()` would return `[lib]`).
 
