@@ -86,13 +86,13 @@ function find_fat_jar()
     echo "ERROR: SMV_TOOLS not set by calling script!"
     exit 1
   fi
-  SMV_FAT_JAR="${SMV_TOOLS}/../target/scala-2.11"
+  SMV_FAT_JAR="${SMV_TOOLS}/../target/scala-2.10"
 
   # try sbt-build location first if not found try mvn-build location next.
   # then repeat from the parent directory, because the shell is
   # sometimes run from a notebook subdirectory of a data project
 
-  dirs=("target/scala-2.11" "target" "../target/scala-2.11" "../target" "$SMV_FAT_JAR")
+  dirs=("target/scala-2.10" "target" "../target/scala-2.10" "../target" "$SMV_FAT_JAR")
   find_file_in_dir "*jar-with-dependencies.jar" "${dirs[@]}"
   echo APP_JAR = $APP_JAR
 

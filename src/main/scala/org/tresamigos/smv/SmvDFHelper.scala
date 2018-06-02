@@ -283,7 +283,8 @@ class SmvDFHelper(df: DataFrame) {
       otherPlan: DataFrame,
       on: Column,
       joinType: String = "inner",
-      postfix: String = null
+      postfix: String = null,
+      broadcastOther: Boolean = false
   ): DataFrame = {
     val namesLower = df.columns.map { c =>
       c.toLowerCase
@@ -296,7 +297,9 @@ class SmvDFHelper(df: DataFrame) {
 
     val renamedOther = otherPlan.smvRenameField(renamedFields: _*)
 
-    df.join(renamedOther, on: Column, joinType)
+    val otherToJoin = if (broadcastOther) broadcast(renamedOther) else renamedOther
+
+    df.join(otherToJoin, on: Column, joinType)
   }
 
   /**
@@ -344,13 +347,11 @@ class SmvDFHelper(df: DataFrame) {
     import df.sqlContext.implicits._
     val joinOpt       = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
 
-    val otherToJoin = if (broadcastOther) broadcast(renamedOther) else renamedOther
-
-    val dfJoined = df.joinUniqFieldNames(otherToJoin,
+    val dfJoined = df.joinUniqFieldNames(renamedOther,
                                          joinOpt,
                                          joinType,
-                                         postfix)
-                                         
+                                         postfix,
+                                         broadcastOther)
     val dfCoalescedKeys = joinType match {
       case SmvJoinType.Outer | SmvJoinType.RightOuter =>
         // for each key used in the outer-join, coalesce key value from left to right

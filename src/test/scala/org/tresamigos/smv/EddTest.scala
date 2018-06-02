@@ -470,7 +470,7 @@ t                    Max                    5.0""")
     assert(res.createReport() === """v                    Non-Null Count         4
 v                    Null Count             0
 v                    Average                65.77225
-v                    Standard Deviation     65.94038595769666
+v                    Standard Deviation     65.94038595769668
 v                    Min                    5.0
 v                    Max                    123.134""")
   }

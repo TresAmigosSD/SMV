@@ -13,7 +13,7 @@
 import sys
 
 from pyspark import SparkContext, SparkConf
-from pyspark.sql import HiveContext, SparkSession
+from pyspark.sql import HiveContext
 from pyspark.java_gateway import launch_gateway
 
 from smv.smvapp import SmvApp
@@ -22,31 +22,16 @@ class TestConfig(object):
     smvApp = None
 
     @classmethod
-    def sparkSession(cls):
-        if not hasattr(cls, "spark"):
-            # We can't use the SparkSession Builder here, since we need to call
-            # Scala side's SmvTestHive.createContext to create the HiveTestContext's
-            # SparkSession.
-            # So we need to
-            #   * Create a java_gateway
-            #   * Create a SparkConf using the jgw (since without it SparkContext will ignore the given conf)
-            #   * Create python SparkContext using the SparkConf (so we can specify the warehouse.dir)
-            #   * Create Scala side HiveTestContext SparkSession
-            #   * Create python SparkSession
-            jgw = launch_gateway(None)
-            jvm = jgw.jvm
-            import tempfile
-            import getpass
-            hivedir = "file://{0}/{1}/smv_hive_test".format(tempfile.gettempdir(), getpass.getuser())
-            sConf = SparkConf(False, _jvm=jvm).set("spark.sql.test", "")\
-                                              .set("spark.sql.hive.metastore.barrierPrefixes",
-                                                   "org.apache.spark.sql.hive.execution.PairSerDe")\
-                                              .set("spark.sql.warehouse.dir", hivedir)\
-                                              .set("spark.ui.enabled", "false")
-            sc = SparkContext(master="local[1]", appName="SMV Python Test", conf=sConf, gateway=jgw).getOrCreate()
-            jss = sc._jvm.org.apache.spark.sql.hive.test.SmvTestHive.createContext(sc._jsc.sc())
-            cls.spark = SparkSession(sc, jss.sparkSession())
-        return cls.spark
+    def sparkContext(cls):
+        if not hasattr(cls, '_sc'):
+            cls._sc = SparkContext(appName="SMV Python Tests")
+        return cls._sc
+
+    @classmethod
+    def sqlContext(cls):
+        if not hasattr(cls, "_sqlc"):
+            cls._sqlc = HiveContext(cls.sparkContext())
+        return cls._sqlc
 
     @classmethod
     def setSmvApp(cls, app):
@@ -57,24 +42,12 @@ class TestConfig(object):
             run.
         """
         cls.smvApp = app
-        cls.sqlc = app.sqlContext
-        cls.sc = app.sc
+        cls._sqlc = app.sqlContext
+        cls._sc = app.sc
 
     @classmethod
     def originalSmvApp(cls):
         return cls.smvApp
-
-    # shared SparkContext
-    @classmethod
-    def sparkContext(cls):
-        return cls.sparkSession().sparkContext
-
-    # shared HiveContext
-    @classmethod
-    def sqlContext(cls):
-        if not hasattr(cls, 'sqlc'):
-            cls.sqlc = HiveContext(cls.sparkContext())
-        return cls.sqlc
 
     # smv args specified via command line
     @classmethod

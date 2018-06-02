@@ -59,7 +59,7 @@ class ColumnHelper(column: Column) {
    */
   def getName = expr match {
     case e: NamedExpression => e.name
-    case e: Expression      => e.prettyName
+    case e: Expression      => e.prettyString
   }
 
   /**

@@ -9,7 +9,7 @@ install:
   - pyenv local 3.5.2 2.7.10
   - pip install tox
 script:
-  - sbt ++2.11.8 assembly
-  - sbt ++2.11.8 publish-local
-  - sbt ++2.11.8 test
+  - sbt ++2.10.5 assembly
+  - sbt ++2.10.5 publish-local
+  - sbt ++2.10.5 test
   - tox

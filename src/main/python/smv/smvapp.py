@@ -23,8 +23,8 @@ import json
 
 from py4j.java_gateway import java_import, JavaObject, CallbackServerParameters
 
-from pyspark import SparkContext
-from pyspark.sql import SparkSession, DataFrame
+from pyspark import SparkContext, HiveContext
+from pyspark.sql import DataFrame
 
 
 from smv.datasetrepo import DataSetRepoFactory
@@ -63,10 +63,10 @@ class SmvApp(object):
             return cls._instance
 
     @classmethod
-    def createInstance(cls, arglist, _sparkSession = None):
+    def createInstance(cls, arglist, _sc = None, _sqlContext = None):
         """Create singleton instance. Also returns the instance.
         """
-        cls._instance = cls(arglist, _sparkSession)
+        cls._instance = cls(arglist, _sc, _sqlContext)
         return cls._instance
 
     @classmethod
@@ -75,18 +75,15 @@ class SmvApp(object):
         """
         cls._instance = app
 
-    def __init__(self, arglist, _sparkSession = None):
-        self.sparkSession = SparkSession.builder.\
-                    enableHiveSupport().\
-                    getOrCreate() if _sparkSession is None else _sparkSession
+    def __init__(self, arglist, _sc = None, _sqlContext = None):
+        sc = SparkContext() if _sc is None else _sc
+        sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
 
         #self.prepend_source("src/main/python")
-
-        sc = self.sparkSession.sparkContext
         sc.setLogLevel("ERROR")
 
         self.sc = sc
-        self.sqlContext = self.sparkSession._wrapped
+        self.sqlContext = sqlContext
         self._jvm = sc._jvm
 
         from py4j.java_gateway import java_import
@@ -245,7 +242,7 @@ class SmvApp(object):
         '''
         # convert python arglist to java String array
         java_args =  smv_copy_array(self.sc, *arglist)
-        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sparkSession._jsparkSession)
+        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
 
     def get_graph_json(self):
         """Generate a json string representing the dependency graph.

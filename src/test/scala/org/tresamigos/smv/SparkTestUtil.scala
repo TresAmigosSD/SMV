@@ -69,13 +69,7 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
     // Don't clean up Spark on every test suite until we figure out
     // what's wrong with #588.
     // We should provide a slow and fast path, where the latter properly
-    // shutsdown SparkSession at the end of every testsuite.
-
-    // SmvTestHive.destroyContext()
-    // _hiveContext = null
-    // System.clearProperty("spark.master.port")
-    // re-enable normal logging for next test if we disabled logging here.
-    // if (disableLogging) SparkTestUtil.setLoggingLevel(Level.ERROR)
+    // shutsdown SparkContext at the end of every testsuite.
     super.afterAll()
   }
 

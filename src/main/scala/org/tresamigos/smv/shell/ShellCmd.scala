@@ -200,7 +200,7 @@ object ShellCmd {
     import scala.reflect.runtime.universe
 
     val mir  = universe.runtimeMirror(cl).reflect(SmvApp.app.sc)
-    val meth = mir.symbol.typeSignature.member(universe.TermName("hotdeploy"))
+    val meth = mir.symbol.typeSignature.member(universe.newTermName("hotdeploy"))
 
     if (meth.isMethod) {
       mir.reflectMethod(meth.asMethod)()

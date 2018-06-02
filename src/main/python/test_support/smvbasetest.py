@@ -36,8 +36,8 @@ class SmvBaseTest(unittest.TestCase):
         # using the most recently reloaded SmvApp
         from smv.smvapp import SmvApp
 
-        cls.sparkSession = TestConfig.sparkSession()
         cls.sparkContext = TestConfig.sparkContext()
+        cls.sqlContext = TestConfig.sqlContext()
         cls.sparkContext.setLogLevel("ERROR")
 
         import random;
@@ -46,7 +46,7 @@ class SmvBaseTest(unittest.TestCase):
         args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port), '--data-dir', cls.tmpDataDir()]
         # The test's SmvApp must be set as the singleton for correct results of some tests
         # The original SmvApp (if any) will be restored when the test is torn down
-        cls.smvApp = SmvApp.createInstance(args, cls.sparkSession)
+        cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
         sys.path.append(cls.resourceTestDir())
 
@@ -75,7 +75,7 @@ class SmvBaseTest(unittest.TestCase):
             callback_server_port = random.randint(20000, 65535)
 
             args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--cbs-port', str(callback_server_port)]
-            cls.smvApp = SmvApp.createInstance(args, cls.sparkSession)
+            cls.smvApp = SmvApp.createInstance(args, cls.sparkContext, cls.sqlContext)
 
     @classmethod
     def createDF(cls, schema, data):
