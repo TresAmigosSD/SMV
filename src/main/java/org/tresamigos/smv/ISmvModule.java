@@ -17,6 +17,7 @@ package org.tresamigos.smv;
 import java.util.List;
 import java.util.Map;
 import org.apache.spark.sql.DataFrame;
+import org.apache.spark.sql.Row;
 import org.tresamigos.smv.dqm.SmvDQM;
 import org.tresamigos.smv.dqm.DQMValidator;
 

@@ -70,7 +70,7 @@ case class SmvHierarchy(
           )
           .dedupByKey(hierCols.typeName, hierCols.valueName)
     }
-    .reduce(_.unionAll(_))
+    .reduce(_ unionAll _)
 
   //TODO: this and the following method access deeply to SmvHierarchyColumns, should extract the need
   // implement methods in SmvHierarchyColumns

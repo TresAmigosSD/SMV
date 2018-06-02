@@ -376,7 +376,12 @@ abstract class SmvDataSet extends FilenamePart {
   def persist(dataframe: DataFrame,
               prefix: String = ""): Unit = {
     val path = moduleCsvPath(prefix)
-    val counter = app.sqlContext.sparkContext.accumulator(0l)
+    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
+
+    val counter = app.sc.accumulator(0L)
+    val before  = DateTime.now()
+    println(s"${fmt.print(before)} PERSISTING: ${path}")
+
     val df      = dataframe.smvPipeCount(counter)
     val handler = new FileIOHandler(app.sqlContext, path)
 
@@ -671,6 +676,7 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def publishThroughJDBC(collector: SmvRunInfoCollector) = {
     val df = rdd(collector=collector)
     val connectionProperties = new java.util.Properties()
+    connectionProperties.put("driver", app.smvConfig.jdbcDriver)
     val url = app.smvConfig.jdbcUrl
     df.write.mode(SaveMode.Append).jdbc(url, tableName, connectionProperties)
   }

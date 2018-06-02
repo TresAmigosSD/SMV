@@ -14,11 +14,8 @@
 
 package org.apache.spark.sql.contrib
 
-import org.apache.spark.sql.{Row, Column, DataFrame, SQLContext}
-import org.apache.spark.sql.catalyst.plans.logical.BroadcastHint
+import org.apache.spark.sql.{DataFrame, Row, Column}
 import org.apache.spark.sql.functions._
-
-import org.apache.spark.rdd.RDD
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.{InternalRow, CatalystTypeConverters}
@@ -65,25 +62,4 @@ package object smv {
     val converter = CatalystTypeConverters.createToCatalystConverter(dt)
     converter(sv)
   }
-
-  /** Check if DataFrame's logical plan is a BroadcastHint.
-   *
-   *  BroadcastHints indicate that a DataFrame is small enough for a broadcast join.
-   *  In some situations we will need to propagate the hint to downstream DataFrames.
-   */
-  def hasBroadcastHint(df: DataFrame): Boolean =
-    df.logicalPlan match {
-      case _: BroadcastHint => true
-      case _                => false
-    }
-
-  /** Give dfChild a BroadcastHint if and only if dfParent has a BroadcastHint
-   *
-   *  In SMV join methods (like smvJoinByKey), we may transform a DataFrame before
-   *  performing the join, in which case the transformed DataFrame's logical plans
-   *  will not have a BroadcastHint even if the original DataFrame did. The hint
-   *  will need to be propagated to the result to cause a broadcast jpin.
-   */
-  def propagateBroadcastHint(dfParent: DataFrame, dfChild: DataFrame): DataFrame =
-    if (hasBroadcastHint(dfParent)) broadcast(dfChild) else dfChild
 }

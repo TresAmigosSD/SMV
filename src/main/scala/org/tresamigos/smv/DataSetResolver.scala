@@ -116,7 +116,7 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
    * the SmvDataSet from each repo and move on to the next repo if it fails.
    */
   private def findDataSetInRepo(urn: ModURN, reposToTry: Seq[DataSetRepo] = repos): SmvDataSet = {
-    if (reposToTry.isEmpty)
+    if(reposToTry.isEmpty)
       throw new SmvRuntimeException(msg.dsNotFound(urn))
     else
       reposToTry.head.loadDataSet(urn) match {

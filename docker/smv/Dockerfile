@@ -1,7 +1,7 @@
-FROM openjdk:7-jdk
+FROM openjdk:8-jdk
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SBT_VERSION=0.13.11
+ARG SBT_VERSION=0.13.15
 ENV PATH=$PATH:/usr/lib/SMV/tools:/usr/lib/spark/bin:/usr/lib/sbt/bin
 
 RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/source.list &&\
@@ -39,7 +39,6 @@ RUN cd /projects &&\
     mv spark-* /usr/lib/spark
 
 # installs python packages.
-# TODO: use requirements.txt from image downloaded above once 1.5.2.19 is out.
 RUN pip install --upgrade pip
 RUN pip install -r /usr/lib/SMV/docker/smv/requirements.txt
 

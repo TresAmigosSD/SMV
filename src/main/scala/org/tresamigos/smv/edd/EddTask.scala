@@ -16,7 +16,7 @@ package org.tresamigos.smv
 package edd
 
 import org.apache.spark.sql.types.{LongType, DoubleType, StringType}
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{stddev=>_, _}
 import org.apache.spark.sql.Column
 
 import org.json4s.jackson.JsonMethods.{render, compact}

@@ -35,9 +35,9 @@ import org.tresamigos.smv.dqm.{ParserLogger, TerminateParserLogger}
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp(private val cmdLineArgs: Seq[String],
-             _sc: Option[SparkContext] = None,
-             _sql: Option[SQLContext] = None) {
+class SmvApp(private val cmdLineArgs: Seq[String], 
+              _sc: Option[SparkContext] = None,
+              _sql: Option[SQLContext] = None) {
   val log         = LogManager.getLogger("smv")
   val smvConfig   = new SmvConfig(cmdLineArgs)
   val genEdd      = smvConfig.cmdLine.genEdd()
@@ -45,13 +45,16 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   val publishJDBC = smvConfig.cmdLine.publishJDBC()
 
   def stages      = smvConfig.stageNames
+  def userLibs    = smvConfig.userLibs
+
   val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
 
-  val smvVersion  = {
+  lazy val smvVersion  = {
     val smvHome = sys.env("SMV_HOME")
     val versionFile = Source.fromFile(f"${smvHome}/.smv_version")
     val nextLine = versionFile.getLines.next
     versionFile.close
+    nextLine
   }
 
 
@@ -91,8 +94,25 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    *
    * Passing null for data will create an empty dataframe with a specified schema.
    **/
-  def createDF(schemaStr: String, data: String = null) = 
+  def createDF(schemaStr: String, data: String = null) =
     createDFWithLogger(schemaStr, data, TerminateParserLogger)
+
+  /**
+   * Read in a Csv file as DF
+   * @param path path where the *executors* will find the CSV file (generally HDFS if deployed with YARN)
+   * @param ca attributes describing the schema and formatting of the CSV file
+   * @param validate if true, validate the CSV file before returning DataFrame (will raise error if malformatted)
+   **/
+  def openCsv(path: String, ca: CsvAttributes, validate: Boolean,
+    collector: SmvRunInfoCollector=new SmvRunInfoCollector): DataFrame = {
+
+    /** isFullPath = true to avoid prepending data_dir */
+    object file extends SmvCsvFile(path, ca, null, true) {
+      override val forceParserCheck   = validate
+      override val failAtParsingError = validate
+    }
+    file.rdd(collector=collector)
+  }
 
   lazy val allDataSets = dsm.allDataSets
 
@@ -509,10 +529,10 @@ class SmvApp(private val cmdLineArgs: Seq[String],
  */
 object SmvApp {
   var app: SmvApp = _
-
-  def init(args: Array[String],
-           _sc: Option[SparkContext] = None,
-           _sql: Option[SQLContext] = None) = {
+  
+  def init(args: Array[String], 
+            _sc: Option[SparkContext] = None,
+            _sql: Option[SQLContext] = None) = {
     app = new SmvApp(args, _sc, _sql)
     app
   }

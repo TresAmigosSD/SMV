@@ -14,7 +14,6 @@ import smvfuncs._
  *
  * @param leftId id column name of left DF (df1)
  * @param rightId id column name of right DF (df2)
- * @param exactMatchFilter exact match condition, if records matched no further tests will be performed
  * @param groupCondition for exact match leftovers, a deterministic condition for narrow down the search space
  * @param levelLogics a list of level match conditions (always weaker than exactMatchFilter), all of them will be tested
  */
