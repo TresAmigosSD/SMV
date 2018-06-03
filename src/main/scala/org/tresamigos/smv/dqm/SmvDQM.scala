@@ -219,15 +219,18 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
    * @param path the path where the validation result should be persisted
    */
   def runValidation(df: DataFrame, forceAction: Boolean, path: String = ""): DqmValidationResult = {
+    // If necessary, force action of dataframe with DQM tasks attached in order to trigger the accumulators
+    // that count task failures
     if (forceAction)
       doForceAction(df)
 
     val res = applyPolicies(df)
 
+    // print report to console if any policies were failed
     if(!res.isEmpty)
       toConsole(res)
 
-    // persist if result is not empty or forced an action
+    // persist if result is persistable
     if (persistable)
       persist(res, path)
 
