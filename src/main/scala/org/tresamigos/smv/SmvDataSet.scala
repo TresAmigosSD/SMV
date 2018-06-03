@@ -554,9 +554,8 @@ abstract class SmvDataSet extends FilenamePart {
       dqmTimeElapsed = Some(validationDuration)
 
       val metadata = getOrCreateMetadata(Some(df), Some(validationResult))
-      // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
-
+      // Metadata is complete at time of validation, including user metadata and validation result
       val validationRes: Option[String] = validateMetadata(metadata, metadataHistory.historyList)
       validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
       
