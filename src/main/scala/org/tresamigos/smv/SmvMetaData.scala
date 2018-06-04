@@ -197,30 +197,3 @@ object SmvMetadataHistory {
     new SmvMetadataHistory(Array.empty)
   }
 }
-
-/**
- * Policy for validating a module's current metadata against its historical
- * metadata. This policy is added to every module's DQM
- */
-class DQMMetadataPolicy(ds: SmvDataSet) extends dqm.DQMPolicy{
-  def name(): String =
-    s"${ds.fqn} metadata validation"
-
-  def policy(df: DataFrame, state: dqm.DQMState) = {
-    // Metadata to be validated includes user metadata but excludes
-    // DqmValidationResult - there is no validation result yet as, we are in the
-    // middle of validation!
-    val metadata = ds.getOrCreateMetadata(Some(df), None)
-    val history = ds.getMetadataHistory()
-    val result = ds.validateMetadata(metadata, history.historyList)
-    result match {
-      case Some(failMsg) =>
-        // existence of failMsg indicates failure
-        state.addMiscLog(failMsg)
-        false
-      case None      =>
-        // no failure indicates success
-        true
-    }
-  }
-}

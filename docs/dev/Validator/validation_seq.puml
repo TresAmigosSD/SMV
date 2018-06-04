@@ -5,7 +5,6 @@ Participant "SmvApp" as app
 Participant "SmvExtModulePython" as extmod
 Participant "DQMValidator" as val
 Participant "SmvDQM" as dqm
-Participant "DQMMetadataPolicy" as pol
 Participant "Python SmvModule" as pymod
 
 app --> extmod: rdd()
@@ -13,7 +12,6 @@ extmod -> pymod: getDoRun()
 extmod <- pymod: DataFrame result
 extmod -> val: validate()
 val -> SmvDQM: policies()
-val <- SmvDQM: Seq containing DQMMetadataPolicy
 val -> pol: policy
 pol -> extmod: getMetadata()
 extmod -> pymod: metadataJson()
