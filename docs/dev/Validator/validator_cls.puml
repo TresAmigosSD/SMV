@@ -15,17 +15,12 @@ package Scala {
 
   class SmvExtModulePython extends Scala.SmvDataSet
 
-  class DQMMetadataPolicy extends DQMPolicy {
-    ctor(ds: SmvDataSet)
-  }
-
   class ISmvModule <<Java interface>> {
     IPythonResponsePy4J<String> getMetadataJson(DataFrame df)
     IPythonResponsePy4J<String> getValidateMetadataJson(SmvMetaData current, SmvMetaData[] history)
   }
 
   Scala.SmvDataSet *-- SmvDQM
-  SmvDQM *-- DQMMetadataPolicy
   ISmvModule *-- SmvExtModulePython
 
   class SmvMetadataHistory {
