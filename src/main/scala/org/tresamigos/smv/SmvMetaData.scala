@@ -97,8 +97,7 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
       * rewrite SmvMetadata to omit Spark Metadata anyway, seeing as it doesn't
       * support null values (issue #1138).
       */
-     val validationMeta = Metadata.fromJson(result.toJSON)
-     builder.putMetadata("_validation", validationMeta)
+     addJson("_validation", result.toJSON)
    }
 
   /**
@@ -124,6 +123,22 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
         colBuilder.build
       }
       .toArray
+
+  /**
+   * Add jsonified SmvConfig
+   */
+
+  def addSmvConfig(config: SmvConfig) = {
+    addJson("_smvConfig", config.toJson())
+  }
+
+  /**
+   * Add a Metadata object based on a json string
+   */
+  private def addJson(key: String, json: String) = {
+    val metadata = Metadata.fromJson(json)
+    builder.putMetadata(key, metadata)
+  }
 
   /**
    * String representation is a minified json string
