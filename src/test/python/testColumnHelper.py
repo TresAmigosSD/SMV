@@ -68,7 +68,7 @@ class ColumnHelperTest(SmvBaseTest):
         r4 = df.select(col("t").smvPlusYears(2).alias("ts"))
         r5 = df.select(col("t").smvPlusYears(4).alias("ts"))
 
-        s = "ts: Timestamp[yyyy-MM-dd hh:mm:ss.S]"
+        s = "ts: Timestamp[yyyy-MM-dd HH:mm:ss.S]"
         e1 = self.createDF(
             s,
             "1976-01-21 00:00:00.0;" +
@@ -104,7 +104,7 @@ class ColumnHelperTest(SmvBaseTest):
         r3 = df.select(col("t").smvPlusMonths(col("toadd")).alias('ts'))
         r4 = df.select(col("t").smvPlusYears(col("toadd")).alias('ts'))
 
-        s = "ts: Timestamp[yyyy-MM-dd hh:mm:ss.S]"
+        s = "ts: Timestamp[yyyy-MM-dd HH:mm:ss.S]"
         e1 = self.createDF(
             s,
             """1976-02-10 00:00:00.0;
@@ -157,7 +157,7 @@ class ColumnHelperTest(SmvBaseTest):
             df.smvTime.smvTimeToTimestamp()
         )
 
-        e = self.createDF("smvTime: String;type: String;index: Integer;label: String;timestamp: Timestamp[yyyy-MM-dd hh:mm:ss.S]",
+        e = self.createDF("smvTime: String;type: String;index: Integer;label: String;timestamp: Timestamp[yyyy-MM-dd HH:mm:ss.S]",
                         """D20120302,day,15401,2012-03-02,2012-03-02 00:00:00.0;
                             Q201203,quarter,170,2012-Q3,2012-07-01 00:00:00.0;
                             M201203,month,506,2012-03,2012-03-01 00:00:00.0;

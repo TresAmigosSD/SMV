@@ -100,7 +100,7 @@ class ColumnHelperTest extends SmvTestUtil {
     val res4 = df.select($"t".smvPlusYears(2))
     val res5 = df.select($"t".smvPlusYears(4))
 
-    assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res1,
                         "1976-01-21 00:00:00.0;" +
                           "2012-02-19 00:00:00.0")
@@ -128,7 +128,7 @@ class ColumnHelperTest extends SmvTestUtil {
     val res4 = df.select($"t".smvPlusYears(2))
     val res5 = df.select($"t".smvPlusYears(4))
 
-    assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res1,
                         "1976-01-21 00:00:00.0;" +
                           "2012-02-19 00:00:00.0")
@@ -154,25 +154,25 @@ class ColumnHelperTest extends SmvTestUtil {
     val res3 = df.select(col("t").smvPlusMonths(col("toadd")))
     val res4 = df.select(col("t").smvPlusYears(col("toadd")))
 
-    assertSrddSchemaEqual(res1, "SmvPlusDays(t, toadd): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res1, "SmvPlusDays(t, toadd): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res1,
                         """1976-02-10 00:00:00.0;
                            2012-04-01 00:00:00.0;
                            null"""
                        )
-    assertSrddSchemaEqual(res2, "SmvPlusWeeks(t, toadd): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res2, "SmvPlusWeeks(t, toadd): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res2,
                         """1976-04-10 00:00:00.0;
                            2012-10-10 00:00:00.0;
                            null"""
                        )
-    assertSrddSchemaEqual(res3, "SmvPlusMonths(t, toadd): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res3, "SmvPlusMonths(t, toadd): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res3,
                         """1976-11-30 00:00:00.0;
                            2014-10-29 00:00:00.0;
                            null"""
                        )
-    assertSrddSchemaEqual(res4, "SmvPlusYears(t, toadd): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res4, "SmvPlusYears(t, toadd): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res4,
                         """1986-01-31 00:00:00.0;
                            2044-02-29 00:00:00.0;
