@@ -500,6 +500,7 @@ abstract class SmvDataSet extends FilenamePart {
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
     resMetadata.addApplicationId(app.sc.applicationId)
     resMetadata.addSmvConfig(app.smvConfig)
+    resMetadata.addSparkConfig(app.sc.getConf)
     dfOpt foreach {resMetadata.addSchemaMetadata}
     timestamp foreach {resMetadata.addTimestamp}
     validResOpt foreach {resMetadata.addDqmValidationResult}

@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.types.{Metadata, MetadataBuilder}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkContext, SparkConf}
 
 import org.joda.time.DateTime
 
@@ -125,11 +125,26 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
       .toArray
 
   /**
-   * Add jsonified SmvConfig
+   * Add SmvConfig as Json object of KVs
    */
-
   def addSmvConfig(config: SmvConfig) = {
-    addJson("_smvConfig", config.toJson())
+    addConfigMap("_smvConfig", config.mergedProps)
+  }
+
+  /**
+   * Add SparkConfig as Json object of KVs
+   */
+  def addSparkConfig(config: SparkConf) = {
+    val configTuples: Array[(String, String)] = config.getAll
+    val configMap = Map[String, String](configTuples: _*)
+    addConfigMap("_sparkConfig", configMap)
+  }
+
+  def addConfigMap(key: String, config: Map[String, String]) = {
+    val configMetaBuilder = new MetadataBuilder
+    config foreach { case ((k, v)) => configMetaBuilder.putString(k, v) }
+    val configMeta = configMetaBuilder.build
+    builder.putMetadata(key, configMeta)
   }
 
   /**

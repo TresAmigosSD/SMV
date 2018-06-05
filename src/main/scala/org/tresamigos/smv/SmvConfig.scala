@@ -373,13 +373,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       Try(s.toInt).toOption
     }
   }
-
-  private[smv] def toJson(): String = {
-    // NOTE: splitProp is a no-op for strings without delimiters
-    val kvToJson: ((String, String)) => String = { case (k, v) => f""""${k}":"${v}"""" }
-    val objContents = mergedProps map { kvToJson } mkString(",")
-    f"{${objContents}}"
-  }
 }
 
 object SmvConfig {
