@@ -125,9 +125,10 @@ private[smv] case class StringTypeFormat(override val format: String = null,
 }
 
 /**
-  * @param format date and time pattern strings defined in Java SimpleDateFormat. See details in
-  *               https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
-  *               Note we are using HH(Hour in day (0-23)) rather than hh(Hour in am/pm (1-12)) in default format
+  * @param format date and time pattern strings defined in Java SimpleDateFormat.
+  *        Note we are using HH(Hour in day (0-23)) rather than hh(Hour in am/pm (1-12)) in default format.
+  *        SimpleDateFormat("yyyy-MM-dd hh:mm:ss.S").parse("2011-09-03 12:13:58.0") returns "2011-09-03 00:13:58"
+  *        SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").parse("2011-09-03 12:13:58.0") returns "2011-09-03 12:13:58"
   */
 private[smv] case class TimestampTypeFormat(override val format: String = "yyyy-MM-dd HH:mm:ss.S")
     extends TypeFormat {
