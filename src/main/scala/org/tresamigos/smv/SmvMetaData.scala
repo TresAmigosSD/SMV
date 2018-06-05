@@ -80,6 +80,15 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
   }
 
   /**
+   * Add ID of application in the resource manager - this is provided by Spark, and
+   * the format varies between local, standalone, YARN, and Mesos
+   * see TODO: add link to spark api doc
+   */
+  def addApplicationId(applicationId: String) = {
+    builder.putString("_applicationId", applicationId)
+  }
+
+  /**
    * Add validation result (including DQM state) to metadata
    */
    def addDqmValidationResult(result: DqmValidationResult) = {

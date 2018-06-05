@@ -498,6 +498,7 @@ abstract class SmvDataSet extends FilenamePart {
     }
     resMetadata.addFQN(fqn)
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
+    resMetadata.addApplicationId(app.sc.applicationId)
     dfOpt foreach {resMetadata.addSchemaMetadata}
     timestamp foreach {resMetadata.addTimestamp}
     validResOpt foreach {resMetadata.addDqmValidationResult}
