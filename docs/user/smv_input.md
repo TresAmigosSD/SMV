@@ -212,8 +212,10 @@ other: Decimal[10];
 ### Timestamp type
 The `Timestamp` type can be used to hold a date/timestamp field value.
 An optional format string can be used when defining a field of type `timestamp`.
-The field format is the standard java `java.sql.Timestamp` format string.
+The field format is the standard [`java.text.SimpleDateFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html)
+
 If a format string is not specified, it defaults to `"yyyy-MM-dd HH:mm:ss.S"`.
+Please note the difference between `HH`(Hour in day (0-23)) and `hh`(Hour in am/pm (1-12))
 ```scala
 std_date: Timestamp;
 evt_time: Timestamp[yyyy-MM-dd HH:mm:ss];
