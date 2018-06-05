@@ -213,7 +213,7 @@ other: Decimal[10];
 The `Timestamp` type can be used to hold a date/timestamp field value.
 An optional format string can be used when defining a field of type `timestamp`.
 The field format is the standard java `java.sql.Timestamp` format string.
-If a format string is not specified, it defaults to `"yyyy-MM-dd hh:mm:ss.S"`.
+If a format string is not specified, it defaults to `"yyyy-MM-dd HH:mm:ss.S"`.
 ```scala
 std_date: Timestamp;
 evt_time: Timestamp[yyyy-MM-dd HH:mm:ss];

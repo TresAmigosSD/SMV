@@ -124,7 +124,7 @@ private[smv] case class StringTypeFormat(override val format: String = null,
   val dataType          = StringType
 }
 
-private[smv] case class TimestampTypeFormat(override val format: String = "yyyy-MM-dd hh:mm:ss.S")
+private[smv] case class TimestampTypeFormat(override val format: String = "yyyy-MM-dd HH:mm:ss.S")
     extends TypeFormat {
   // `SimpleDateFormat` is not thread-safe.
   val fmtObj = SmvSchema.threadLocalDateFormat(format).get()
