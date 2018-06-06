@@ -42,23 +42,57 @@ class DataSetRepo(object):
         # Remove client modules from sys.modules to force reload of all client
         # code in the new transaction
         self._clear_sys_modules()
+    
+    def _is_smv_dataset_predicate(self, potentialDS):
+        if (not inspect.isclass(potentialDS)):
+            return False
+        try:
+            return (getattr(potentialDS, 'IsSmvDataSet') == True)
+        except:
+            return False
 
     def _clear_sys_modules(self):
         """
-            Clear all client modules from sys.modules
+            Clear all client modules from sys.modules.
+
             If modules have names like 'stage1.stage2.file.mod', then we have to clear all of
-            set( 'stage1', 'stage1.stage2', 'stage1.stage2.file', 'stage1.stage2.file.mod' )
-            from the sys.modules dictionary to avoid getting cached modules from python when
-            we contruct a new DSR.
+            set( 'stage1', 'stage1.stage2', 'stage1.stage2.file' ) from the sys.modules
+            dictionary to avoid getting cached modules from python when we contruct a new DSR.
         """
         # The set of all user-defined code that needs to be decached
         # { 'stage1' } from our example
-        user_code_fqns = set(self.smvApp.stages()).union(self.smvApp.userLibs())
-        fqn_stubs_to_remove = {fqn.split('.')[0] for fqn in user_code_fqns}
+        fqn_stubs_to_remove = {fqn.split('.')[0] for fqn in self.smvApp.stages()}
 
-        for loaded_mod_fqn in list(sys.modules.keys()):
+        # this will be a set of all modules depended on by all DataSets in py modules we're decaching
+        lib_py_mods = set()
+
+        # iterate over all python modules we have loaded
+        for (sys_mod_fqn, sys_mod) in list(sys.modules.items()):
             for stubbed_fqn in fqn_stubs_to_remove:
-                if loaded_mod_fqn == stubbed_fqn or loaded_mod_fqn.startswith(stubbed_fqn + '.'):
+            # iterate over stages 
+                if sys_mod_fqn == stubbed_fqn or sys_mod_fqn.startswith(stubbed_fqn + '.'):
+
+                    # check the python mod we're going to de-cache for py classes (potential SmvDataSets)
+                    mod_smv_datasets = inspect.getmembers(sys_mod, predicate=self._is_smv_dataset_predicate)
+                    for (cls_name, cls_obj) in mod_smv_datasets:
+                        # iterate through the (potential) datasets defined in this module and add the
+                        # libraries they depend on to a separate set to decache next
+                        try:
+                            potential_ds_fqn = sys_mod_fqn + "." + cls_name
+                            old_dataset = self.loadDataSet(potential_ds_fqn)
+                            mod_libs = set(old_dataset.requiresLib())
+                            lib_py_mods = lib_py_mods.union(mod_libs)
+                        except:
+                            pass
+                    
+                    # then pop it to decache
+                    sys.modules.pop(sys_mod_fqn)
+    
+        # do the same loop, check if match, pop logic.
+        for loaded_mod_fqn in list(sys.modules.keys()):
+            for lib_mod in lib_py_mods:
+                lib_fqn_stub = lib_mod.__name__
+                if (loaded_mod_fqn == lib_fqn_stub or loaded_mod_fqn.startswith(lib_fqn_stub + '.')):
                     sys.modules.pop(loaded_mod_fqn)
 
 
