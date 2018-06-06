@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp
 import sys
 
-app = SmvApp.createInstance(sys.argv[1:])
-# skip the first argument, which is this program
-app.run()
+from scripts.smvdriver import SmvDriver
+
+if __name__ == "__main__":
+    SmvDriver().run()
