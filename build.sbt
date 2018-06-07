@@ -29,12 +29,6 @@ parallelExecution in Test := false
 
 publishArtifact in Test := true
 
-// Tests must be forked in order to export env vars
-fork in Test := true
-// SMV_HOME would normally be set by _env.sh when starting SMV, so for testing we
-// explicitly set it to the current directory.
-envVars in Test := Map("SMV_HOME" -> ".")
-
 // Create itest task that runs integration tests
 val itest = TaskKey[Unit]("itest", "Run Integration Test")
 itest := {
