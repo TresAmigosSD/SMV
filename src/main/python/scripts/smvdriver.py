@@ -18,7 +18,7 @@ class SmvDriver(object):
             smv_args_end = len(args)
 
         smv_args = args[:smv_args_end]
-        driver_args = args[smv_args_end+1:]
+        driver_args = args[smv_args_end+2:]
 
         app = self.create_smv_app(smv_args, driver_args)
         self.main(app, driver_args)
