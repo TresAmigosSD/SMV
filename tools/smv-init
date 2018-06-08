@@ -134,6 +134,11 @@ function copy_proj_dir()
 
 function substitute_tokens()
 {
+    #  only test proj has artifact id
+    if [ "$PROJ_TYPE" = "test" ] ; then
+        extract_group_artifact_ids
+    fi
+    
     local files="$(cd $TEMPLATE_DIR; find . -type f)"
     local ESCAPED_FULL_PATH=$(echo ${PROJ_DIR_FULL_PATH} | sed -e 's/[\/&]/\\&/g')
     local ESCAPED_DATA_DIR=$(echo ${PROJ_DATA_DIR} | sed -e 's/[\/&]/\\&/g')
@@ -141,7 +146,6 @@ function substitute_tokens()
     for f in $files; do
         sed  -e "s/_GROUP_ID_/$PROJ_GROUP_ID/" \
              -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
-             -e "s/_PROJ_CLASS_/$PROJ_CLASS/g" \
              -e "s/_PROJ_DIR_FULL_PATH_/${ESCAPED_FULL_PATH}/g" \
              -e "s/_PROJ_NAME_/$PROJ_NAME/g" \
              -e "s/_STAGE_NAME_/$STAGE_NAME/g" \
@@ -183,22 +187,19 @@ function copy_data_files() {
     fi
 }
 
-# --- MAIN ---
+function augment_module_count() {
+    if [ "$PROJ_TYPE" = "big" ] ; then
+        $TEMPLATE_DIR/dupMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ 1000
+        rm $PROJ_DIR/src/main/python/stage1/employment.py
+    fi
+}
 
-#  only test proj has PROJ_CLASS
-if [ "$PROJ_TYPE" = "test" ] ; then
-    extract_group_artifact_ids
-fi
+# --- MAIN ---
 
 copy_proj_dir
 substitute_tokens
 copy_data_files
 create_python_packages
-
-if [ "$PROJ_TYPE" = "big" ] ; then
-    $TEMPLATE_DIR/dupMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ 1000
-    rm $PROJ_DIR/src/main/python/stage1/employment.py
-fi
-
+augment_module_count
 create_library_folder
 create_git_structure
