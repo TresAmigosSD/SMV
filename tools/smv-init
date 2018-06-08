@@ -130,6 +130,8 @@ function copy_proj_dir()
     PROJ_DIR_FULL_PATH=$(cd $PROJ_DIR; /bin/pwd)
     # copy all contents of template (including hidden files)
     cp -r "$TEMPLATE_DIR/." "$PROJ_DIR"
+    # .gitignore is named .gitignore.template to prevent influencing git's behavior in SMV repo
+    mv "${PROJ_DIR_FULL_PATH}/.gitignore.template" "${PROJ_DIR_FULL_PATH}/.gitignore"
 }
 
 function substitute_tokens()
@@ -139,7 +141,7 @@ function substitute_tokens()
         extract_group_artifact_ids
     fi
     
-    local files="$(cd $TEMPLATE_DIR; find . -type f)"
+    local files="$(cd $PROJ_DIR; find . -type f)"
     local ESCAPED_FULL_PATH=$(echo ${PROJ_DIR_FULL_PATH} | sed -e 's/[\/&]/\\&/g')
     local ESCAPED_DATA_DIR=$(echo ${PROJ_DATA_DIR} | sed -e 's/[\/&]/\\&/g')
 
@@ -150,7 +152,8 @@ function substitute_tokens()
              -e "s/_PROJ_NAME_/$PROJ_NAME/g" \
              -e "s/_STAGE_NAME_/$STAGE_NAME/g" \
              -e "s/_PROJ_DATA_DIR_/$ESCAPED_DATA_DIR/g" \
-             < "$TEMPLATE_DIR/$f" > "$PROJ_DIR/$f"
+             < "$PROJ_DIR/$f" > "$PROJ_DIR/$f.tmp"
+        mv "$PROJ_DIR/$f.tmp" "$PROJ_DIR/$f"
     done
 }
 
