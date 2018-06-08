@@ -12,9 +12,8 @@
 # limitations under the License.
 import sys
 
-from pyspark import SparkContext, SparkConf
+from pyspark import SparkContext
 from pyspark.sql import HiveContext
-from pyspark.java_gateway import launch_gateway
 
 from smv.smvapp import SmvApp
 
