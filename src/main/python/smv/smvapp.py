@@ -79,7 +79,6 @@ class SmvApp(object):
         sc = SparkContext() if _sc is None else _sc
         sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
 
-        #self.prepend_source("src/main/python")
         sc.setLogLevel("ERROR")
 
         self.sc = sc
