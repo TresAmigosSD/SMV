@@ -64,11 +64,7 @@ FLAG=$1
 done
 
 TEMPLATE_DIR="$ALL_TEMPLATES_DIR/$PROJ_TYPE"
-if [ "$PROJ_TYPE" = "test" ] ; then 
-    TEMPLATE_DATA_DIR="$TEMPLATE_DIR/data"
-else
-    TEMPLATE_DATA_DIR="$ALL_TEMPLATES_DIR/data"
-fi
+TEMPLATE_DATA_DIR="$ALL_TEMPLATES_DIR/data"
 
 if [ $# -ne 1 ]; then
     echo "ERROR: Invalid number of arguments"
@@ -111,7 +107,7 @@ function extract_group_artifact_ids()
     fi
 }
 
-function create_proj_dir()
+function copy_proj_dir()
 {
     echo "-- creating project directory"
 
@@ -131,94 +127,27 @@ function create_proj_dir()
     fi
 
     mkdir -p "$PROJ_DIR"
-    export PROJ_DIR_FULL_PATH=$(cd $PROJ_DIR; /bin/pwd)
+    PROJ_DIR_FULL_PATH=$(cd $PROJ_DIR; /bin/pwd)
+    # copy all contents of template (including hidden files)
+    cp -r "$TEMPLATE_DIR/." "$PROJ_DIR"
 }
 
-function copy_with_inject()
+function substitute_tokens()
 {
-    ESCAPED_FULL_PATH=$(echo ${PROJ_DIR_FULL_PATH} | sed -e 's/[\/&]/\\&/g')
-    ESCAPED_DATA_DIR=$(echo ${PROJ_DATA_DIR} | sed -e 's/[\/&]/\\&/g')
+    local files="$(cd $TEMPLATE_DIR; find . -type f)"
+    local ESCAPED_FULL_PATH=$(echo ${PROJ_DIR_FULL_PATH} | sed -e 's/[\/&]/\\&/g')
+    local ESCAPED_DATA_DIR=$(echo ${PROJ_DATA_DIR} | sed -e 's/[\/&]/\\&/g')
 
-    SRC="$1"
-    DST="$2"
-
-    mkdir -p "$(dirname "$DST")"
-    sed -e "s/_GROUP_ID_/$PROJ_GROUP_ID/" \
-        -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
-        -e "s/_PROJ_CLASS_/$PROJ_CLASS/g" \
-        -e "s/_PROJ_DIR_FULL_PATH_/${ESCAPED_FULL_PATH}/g" \
-        -e "s/_PROJ_NAME_/$PROJ_NAME/g" \
-        -e "s/_STAGE_NAME_/$STAGE_NAME/g" \
-        -e "s/_PROJ_DATA_DIR_/$ESCAPED_DATA_DIR/g" \
-        < "$SRC" > "$DST"
-}
-
-function copy_conf_files()
-{
-    # copy appropriate files based on project type
-    PYTHON_FILES="README.md notebooks/Untitled.ipynb .gitignore.template log4j.properties conf/smv-app-conf.props conf/smv-user-conf.props"
-    SCALA_FILES="$PYTHON_FILES build.sbt pom.xml project/assembly.sbt project/build.properties"
-    ENTERPRISE_FILES="$PYTHON_FILES conf/smv-user-conf.props.template"
-
-    if [ "$PROJ_TYPE" = "test" ] ; then
-      for f in $SCALA_FILES; do
-          copy_with_inject "$TEMPLATE_DIR/$f" "$PROJ_DIR/$f"
-      done
-    elif [ "$PROJ_TYPE" = "enterprise" ] ; then
-      for f in $ENTERPRISE_FILES; do
-          copy_with_inject "$TEMPLATE_DIR/$f" "$PROJ_DIR/$f"
-      done
-    else
-      for f in $PYTHON_FILES; do
-          copy_with_inject "$TEMPLATE_DIR/$f" "$PROJ_DIR/$f"
-      done
-    fi
-
-    # .gitignore was postfixed with .template so it does not affect SMV's git repo
-    mv "$PROJ_DIR/.gitignore.template" "$PROJ_DIR/.gitignore"
-}
-
-function copy_data_files()
-{
-    if [ "$PROJ_TYPE" != "blank" ]; then
-        data_dir=$1
-
-        echo "-- copying data files"
-
-        cp -R "$data_dir" "$PROJ_DIR"
-    fi
-}
-
-function copy_src_dir()
-{
-    subdir=$1
-    proj_cp=$2
-    DST_DIR="${PROJ_DIR_FULL_PATH}/src/${subdir}/${proj_cp}"
-
-    (cd ${TEMPLATE_DIR}/src/${subdir}; find . -type f | while read f; do
-      SRC_FILE="${TEMPLATE_DIR}/src/${subdir}/$f"
-      DST_FILE="${DST_DIR}/$f"
-      copy_with_inject "$SRC_FILE" "$DST_FILE"
-    done)
-}
-
-function copy_src_files()
-{
-    echo "-- copying source files"
-
-    PROJ_CLASS_PATH="`echo $PROJ_CLASS | sed -e 's/\./\//g'`"
-
-    if [ "$PROJ_TYPE" = "test" ]; then
-      for subdir in main/scala main/python; do
-          copy_src_dir ${subdir} ${PROJ_CLASS_PATH}
-      done
-    else
-      STAGE_NAME_PATH="`echo $STAGE_NAME | sed -e 's/\./\//g'`"
-
-      for subdir in main/python; do
-          copy_src_dir ${subdir} ${STAGE_NAME_PATH}
-      done
-    fi
+    for f in $files; do
+        sed  -e "s/_GROUP_ID_/$PROJ_GROUP_ID/" \
+             -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
+             -e "s/_PROJ_CLASS_/$PROJ_CLASS/g" \
+             -e "s/_PROJ_DIR_FULL_PATH_/${ESCAPED_FULL_PATH}/g" \
+             -e "s/_PROJ_NAME_/$PROJ_NAME/g" \
+             -e "s/_STAGE_NAME_/$STAGE_NAME/g" \
+             -e "s/_PROJ_DATA_DIR_/$ESCAPED_DATA_DIR/g" \
+             < "$TEMPLATE_DIR/$f" > "$PROJ_DIR/$f"
+    done
 }
 
 function create_python_packages()
@@ -245,6 +174,15 @@ function create_git_structure()
     fi
 }
 
+function copy_data_files() {
+    # integration test project has its own data already in the template
+    # other projects share the same data, so it is stored outside of the template
+    if [ "$PROJ_TYPE" != "test" ]; then
+        echo "-- copying template data"
+        cp -r "$TEMPLATE_DATA_DIR" "$PROJ_DIR_FULL_PATH/data"
+    fi
+}
+
 # --- MAIN ---
 
 #  only test proj has PROJ_CLASS
@@ -252,10 +190,9 @@ if [ "$PROJ_TYPE" = "test" ] ; then
     extract_group_artifact_ids
 fi
 
-create_proj_dir
-copy_conf_files
-copy_data_files "$TEMPLATE_DATA_DIR"
-copy_src_files
+copy_proj_dir
+substitute_tokens
+copy_data_files
 create_python_packages
 
 if [ "$PROJ_TYPE" = "big" ] ; then
