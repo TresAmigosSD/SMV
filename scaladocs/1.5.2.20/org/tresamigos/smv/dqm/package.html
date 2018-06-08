@@ -1,0 +1,551 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>dqm - org.tresamigos.smv.dqm</title>
+          <meta name="description" content="dqm - org.tresamigos.smv.dqm" />
+          <meta name="keywords" content="dqm org.tresamigos.smv.dqm" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'org.tresamigos.smv.dqm.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="org">org</a>.<a href="../../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="../package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
+        <h1>dqm</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">dqm</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>DQM (Data Quality Module) providing classes for DF data quality assurance</p><p>Main class <a href="SmvDQM.html" class="extype" name="org.tresamigos.smv.dqm.SmvDQM">org.tresamigos.smv.dqm.SmvDQM</a> can be used with the SmvApp/Module
+Framework or on stand-alone DF.
+With the SmvApp/Module framework, a <code>dqm</code> method is defined on the
+<a href="../SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">org.tresamigos.smv.SmvDataSet</a> level, and can be overridden to define DQM rules,
+fixes and policies, which then will be automatically checked when the SmvDataSet
+gets resolved.</p><p>For working on a stand-alone DF, please refer the SmvDQM class's documentation.
+</p></div><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol>
+                
+                <li class="alpha in"><span>Alphabetic</span></li>
+                <li class="inherit out"><span>By inheritance</span></li>
+              </ol>
+            </div>
+        <div id="ancestors">
+                <span class="filtertype">Inherited<br />
+                </span>
+                <ol id="linearization">
+                  <li class="in" name="org.tresamigos.smv.dqm"><span>dqm</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                </ol>
+              </div><div id="ancestors">
+            <span class="filtertype"></span>
+            <ol>
+              <li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show all</span></li>
+            </ol>
+            <a href="http://docs.scala-lang.org/overviews/scaladoc/usage.html#members" target="_blank">Learn more about member selection</a>
+          </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="org.tresamigos.smv.dqm.DQMFix" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DQMFixextendsDQMTaskwithProductwithSerializable"></a>
+      <a id="DQMFix:DQMFix"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMFix.html"><span class="name">DQMFix</span></a><span class="params">(<span name="condition">condition: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="fix">fix: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="fixName">fixName: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="taskPolicy">taskPolicy: <a href="DQMTaskPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMTaskPolicy">DQMTaskPolicy</a> = <span class="symbol">FailNone</span></span>)</span><span class="result"> extends <a href="DQMTask.html" class="extype" name="org.tresamigos.smv.dqm.DQMTask">DQMTask</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">DQMFix will fix a column with a default value</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMPolicy" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DQMPolicyextendsAnyRef"></a>
+      <a id="DQMPolicy:DQMPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMPolicy.html"><span class="name">DQMPolicy</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">DQMPolicy defines a requirement on an entire DF
+</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMRule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DQMRuleextendsDQMTaskwithProductwithSerializable"></a>
+      <a id="DQMRule:DQMRule"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMRule.html"><span class="name">DQMRule</span></a><span class="params">(<span name="rule">rule: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="ruleName">ruleName: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="taskPolicy">taskPolicy: <a href="DQMTaskPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMTaskPolicy">DQMTaskPolicy</a> = <span class="symbol">FailNone</span></span>)</span><span class="result"> extends <a href="DQMTask.html" class="extype" name="org.tresamigos.smv.dqm.DQMTask">DQMTask</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">DQMRule defines a requirement on the records of a DF</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMRuleError" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DQMRuleErrorextendsExceptionwithSerializable"></a>
+      <a id="DQMRuleError:DQMRuleError"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMRuleError.html"><span class="name">DQMRuleError</span></a><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.dqm.DQMState" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DQMStateextendsSerializable"></a>
+      <a id="DQMState:DQMState"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMState.html"><span class="name">DQMState</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">DQMState keeps tracking of <a href="DQMTask.html" class="extype" name="org.tresamigos.smv.dqm.DQMTask">org.tresamigos.smv.dqm.DQMTask</a> behavior on a DF</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMTask" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DQMTaskextendsAnyRef"></a>
+      <a id="DQMTask:DQMTask"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMTask.html"><span class="name">DQMTask</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.dqm.DQMTaskPolicy" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DQMTaskPolicyextendsAnyRef"></a>
+      <a id="DQMTaskPolicy:DQMTaskPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMTaskPolicy.html"><span class="name">DQMTaskPolicy</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Each DQMTask (DQMRule/DQMFix) need to have a DQMTaskPolicy</p>
+    </li><li name="org.tresamigos.smv.dqm.DQMValidator" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DQMValidatorextendsAnyRef"></a>
+      <a id="DQMValidator:DQMValidator"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMValidator.html"><span class="name">DQMValidator</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Validates data against DQM rules</p>
+    </li><li name="org.tresamigos.smv.dqm.DqmStateSnapshot" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DqmStateSnapshotextendsSerializablewithProduct"></a>
+      <a id="DqmStateSnapshot:DqmStateSnapshot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="DqmStateSnapshot.html"><span class="name">DqmStateSnapshot</span></a><span class="params">(<span name="totalRecords">totalRecords: <span class="extype" name="scala.Long">Long</span></span>, <span name="parseError">parseError: <a href="ErrorReport.html" class="extype" name="org.tresamigos.smv.dqm.ErrorReport">ErrorReport</a></span>, <span name="fixCounts">fixCounts: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Int">Int</span>]</span>, <span name="ruleErrors">ruleErrors: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="ErrorReport.html" class="extype" name="org.tresamigos.smv.dqm.ErrorReport">ErrorReport</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span> with <span class="extype" name="scala.Product">Product</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A serializable snapshot of a DQMState</p>
+    </li><li name="org.tresamigos.smv.dqm.DqmValidationResult" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DqmValidationResultextendsProductwithSerializable"></a>
+      <a id="DqmValidationResult:DqmValidationResult"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="DqmValidationResult.html"><span class="name">DqmValidationResult</span></a><span class="params">(<span name="passed">passed: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="dqmStateSnapshot">dqmStateSnapshot: <a href="DqmStateSnapshot.html" class="extype" name="org.tresamigos.smv.dqm.DqmStateSnapshot">DqmStateSnapshot</a></span>, <span name="errorMessages">errorMessages: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>)] = <span class="symbol">immutable.this.Nil</span></span>, <span name="checkLog">checkLog: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">immutable.this.Nil</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">DqmValidator will generate DqmValidationResult, which has</p>
+    </li><li name="org.tresamigos.smv.dqm.ErrorReport" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ErrorReportextendsSerializablewithProduct"></a>
+      <a id="ErrorReport:ErrorReport"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ErrorReport.html"><span class="name">ErrorReport</span></a><span class="params">(<span name="total">total: <span class="extype" name="scala.Int">Int</span></span>, <span name="firstN">firstN: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span> with <span class="extype" name="scala.Product">Product</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Error recorded by RejectLoggers</p>
+    </li><li name="org.tresamigos.smv.dqm.FailCount" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FailCountextendsDQMTaskPolicywithProductwithSerializable"></a>
+      <a id="FailCount:FailCount"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FailCount.html"><span class="name">FailCount</span></a><span class="params">(<span name="threshold">threshold: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="DQMTaskPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMTaskPolicy">DQMTaskPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Tasks with FailCount(n) will fail the DF if the task is triggered &gt;= n times</p>
+    </li><li name="org.tresamigos.smv.dqm.FailParserCountPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FailParserCountPolicyextendsDQMPolicywithProductwithSerializable"></a>
+      <a id="FailParserCountPolicy:FailParserCountPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FailParserCountPolicy.html"><span class="name">FailParserCountPolicy</span></a><span class="params">(<span name="threshold">threshold: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="DQMPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMPolicy">DQMPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">If the total time of parser fails &gt;= threshold, fail the DF
+</p>
+    </li><li name="org.tresamigos.smv.dqm.FailPercent" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FailPercentextendsDQMTaskPolicywithProductwithSerializable"></a>
+      <a id="FailPercent:FailPercent"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FailPercent.html"><span class="name">FailPercent</span></a><span class="params">(<span name="threshold">threshold: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result"> extends <a href="DQMTaskPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMTaskPolicy">DQMTaskPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Tasks with FailPercent(r) will fail the DF if the task is triggered &gt;= r percent of the
+ total number of records in the DF.</p>
+    </li><li name="org.tresamigos.smv.dqm.FailTotalFixCountPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FailTotalFixCountPolicyextendsDQMPolicywithProductwithSerializable"></a>
+      <a id="FailTotalFixCountPolicy:FailTotalFixCountPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FailTotalFixCountPolicy.html"><span class="name">FailTotalFixCountPolicy</span></a><span class="params">(<span name="threshold">threshold: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="DQMPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMPolicy">DQMPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">For all the fixes in a DQM, if the total time of them be triggered is &gt;= threshold, the DF will Fail
+</p>
+    </li><li name="org.tresamigos.smv.dqm.FailTotalFixPercentPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FailTotalFixPercentPolicyextendsDQMPolicywithProductwithSerializable"></a>
+      <a id="FailTotalFixPercentPolicy:FailTotalFixPercentPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FailTotalFixPercentPolicy.html"><span class="name">FailTotalFixPercentPolicy</span></a><span class="params">(<span name="threshold">threshold: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result"> extends <a href="DQMPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMPolicy">DQMPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">For all the fixes in a DQM, if the total time of them be triggered is &gt;= threshold * total Records,
+the DF will Fail.</p>
+    </li><li name="org.tresamigos.smv.dqm.FailTotalRuleCountPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FailTotalRuleCountPolicyextendsDQMPolicywithProductwithSerializable"></a>
+      <a id="FailTotalRuleCountPolicy:FailTotalRuleCountPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FailTotalRuleCountPolicy.html"><span class="name">FailTotalRuleCountPolicy</span></a><span class="params">(<span name="threshold">threshold: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="DQMPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMPolicy">DQMPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">For all the rules in a DQM, if the total time of them be triggered is &gt;= threshold, the DF will Fail
+</p>
+    </li><li name="org.tresamigos.smv.dqm.FailTotalRulePercentPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FailTotalRulePercentPolicyextendsDQMPolicywithProductwithSerializable"></a>
+      <a id="FailTotalRulePercentPolicy:FailTotalRulePercentPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FailTotalRulePercentPolicy.html"><span class="name">FailTotalRulePercentPolicy</span></a><span class="params">(<span name="threshold">threshold: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result"> extends <a href="DQMPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMPolicy">DQMPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">For all the rules in a DQM, if the total time of them be triggered is &gt;= threshold * total Records,
+the DF will Fail.</p>
+    </li><li name="org.tresamigos.smv.dqm.SmvDQM" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvDQMextendsAnyRef"></a>
+      <a id="SmvDQM:SmvDQM"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvDQM.html"><span class="name">SmvDQM</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">DQM class for data quality check and fix</p>
+    </li><li name="org.tresamigos.smv.dqm.SmvDqmValidationError" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvDqmValidationErrorextendsSmvRuntimeException"></a>
+      <a id="SmvDqmValidationError:SmvDqmValidationError"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvDqmValidationError.html"><span class="name">SmvDqmValidationError</span></a><span class="result"> extends <a href="../SmvRuntimeException.html" class="extype" name="org.tresamigos.smv.SmvRuntimeException">SmvRuntimeException</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.dqm.UDPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="UDPolicyextendsDQMPolicywithProductwithSerializable"></a>
+      <a id="UDPolicy:UDPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="UDPolicy.html"><span class="name">UDPolicy</span></a><span class="params">(<span name="_policy">_policy: (<span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span>, <a href="DQMState.html" class="extype" name="org.tresamigos.smv.dqm.DQMState">DQMState</a>) ⇒ <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="DQMPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMPolicy">DQMPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="org.tresamigos.smv.dqm.package#BoundRule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BoundRule[T](col:org.apache.spark.sql.Column,lower:T,upper:T)(implicitevidence$1:Ordering[T]):org.tresamigos.smv.dqm.DQMRule"></a>
+      <a id="BoundRule[T](Column,T,T)(Ordering[T]):DQMRule"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">BoundRule</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="lower">lower: <span class="extype" name="org.tresamigos.smv.dqm.BoundRule.T">T</span></span>, <span name="upper">upper: <span class="extype" name="org.tresamigos.smv.dqm.BoundRule.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.Ordering">Ordering</span>[<span class="extype" name="org.tresamigos.smv.dqm.BoundRule.T">T</span>]</span>)</span><span class="result">: <a href="DQMRule.html" class="extype" name="org.tresamigos.smv.dqm.DQMRule">DQMRule</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">BoundRule requires <code>lower &lt;= col &lt; upper</code></p>
+    </li><li name="org.tresamigos.smv.dqm.DQMPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DQMPolicy"></a>
+      <a id="DQMPolicy:DQMPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMPolicy$.html"><span class="name">DQMPolicy</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.dqm.DQMValidator" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DQMValidator"></a>
+      <a id="DQMValidator:DQMValidator"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DQMValidator$.html"><span class="name">DQMValidator</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="org.tresamigos.smv.dqm.DqmTaskPolicies" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DqmTaskPolicies"></a>
+      <a id="DqmTaskPolicies:DqmTaskPolicies"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DqmTaskPolicies$.html"><span class="name">DqmTaskPolicies</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">For access by Python modules</p>
+    </li><li name="org.tresamigos.smv.dqm.FailAny" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FailAny"></a>
+      <a id="FailAny:FailAny"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="FailAny$.html"><span class="name">FailAny</span></a><span class="result"> extends <a href="DQMTaskPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMTaskPolicy">DQMTaskPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Any rule fail or fix with FailAny will cause the entire DF fail</p>
+    </li><li name="org.tresamigos.smv.dqm.FailNone" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FailNone"></a>
+      <a id="FailNone:FailNone"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="FailNone$.html"><span class="name">FailNone</span></a><span class="result"> extends <a href="DQMTaskPolicy.html" class="extype" name="org.tresamigos.smv.dqm.DQMTaskPolicy">DQMTaskPolicy</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Task with FailNone will not trigger any DF level policy</p>
+    </li><li name="org.tresamigos.smv.dqm.package#FormatFix" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FormatFix(col:org.apache.spark.sql.Column,fmt:String,default:Any):org.tresamigos.smv.dqm.DQMFix"></a>
+      <a id="FormatFix(Column,String,Any):DQMFix"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">FormatFix</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="fmt">fmt: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="default">default: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <a href="DQMFix.html" class="extype" name="org.tresamigos.smv.dqm.DQMFix">DQMFix</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">FormatFix to assign <code>default</code> if <code>col does not match fmt</code></p>
+    </li><li name="org.tresamigos.smv.dqm.package#FormatRule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FormatRule(col:org.apache.spark.sql.Column,fmt:String):org.tresamigos.smv.dqm.DQMRule"></a>
+      <a id="FormatRule(Column,String):DQMRule"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">FormatRule</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="fmt">fmt: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="DQMRule.html" class="extype" name="org.tresamigos.smv.dqm.DQMRule">DQMRule</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">FormatRule requires <code>col matches fmt</code></p>
+    </li><li name="org.tresamigos.smv.dqm.package#SetFix" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SetFix(col:org.apache.spark.sql.Column,set:Set[Any],default:Any):org.tresamigos.smv.dqm.DQMFix"></a>
+      <a id="SetFix(Column,Set[Any],Any):DQMFix"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">SetFix</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="set">set: <span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="scala.Any">Any</span>]</span>, <span name="default">default: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <a href="DQMFix.html" class="extype" name="org.tresamigos.smv.dqm.DQMFix">DQMFix</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">SetFix to assign <code>default</code> if <code>col not in set</code></p>
+    </li><li name="org.tresamigos.smv.dqm.package#SetRule" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SetRule(col:org.apache.spark.sql.Column,set:Set[Any]):org.tresamigos.smv.dqm.DQMRule"></a>
+      <a id="SetRule(Column,Set[Any]):DQMRule"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">SetRule</span><span class="params">(<span name="col">col: <span class="extype" name="org.apache.spark.sql.Column">Column</span></span>, <span name="set">set: <span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="scala.Any">Any</span>]</span>)</span><span class="result">: <a href="DQMRule.html" class="extype" name="org.tresamigos.smv.dqm.DQMRule">DQMRule</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">SetRule requires <code>col in set</code></p>
+    </li><li name="org.tresamigos.smv.dqm.SmvDQM" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SmvDQM"></a>
+      <a id="SmvDQM:SmvDQM"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SmvDQM$.html"><span class="name">SmvDQM</span></a>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+      <script defer="defer" type="text/javascript" id="jquery-js" src="../../../../lib/jquery.js"></script><script defer="defer" type="text/javascript" id="jquery-ui-js" src="../../../../lib/jquery-ui.js"></script><script defer="defer" type="text/javascript" id="tools-tooltip-js" src="../../../../lib/tools.tooltip.js"></script><script defer="defer" type="text/javascript" id="template-js" src="../../../../lib/template.js"></script>
+    </body>
+      </html>
