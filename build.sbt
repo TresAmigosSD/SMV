@@ -29,6 +29,7 @@ parallelExecution in Test := false
 
 publishArtifact in Test := true
 
+// Print full stacktrace when test errors
 testOptions in Test += Tests.Argument("-oF")
 
 // Tests must be forked in order to export env vars
