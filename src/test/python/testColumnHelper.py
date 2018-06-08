@@ -187,6 +187,9 @@ class ColumnHelperTest(SmvBaseTest):
 
     def test_smvTimestampToStr(self):
         df = self.createDF("ts:Timestamp[yyyyMMdd'T'HHmmssZ];tz:String", "20180428T025800+1000,+0000;,America/Los_Angeles;20180428T025800+1000,Australia/Sydney")
+        # Use `Z`(RFC 822 time zone) in the SimpleDateFormat because it has only a single valid way to represent a given offset.
+        # Avoid to use `z`(General Time Zone) because it may have different result in different platforms(e.g. UTC and +00:00).
+        # Details in https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
         r1 = df.select(col("ts").smvTimestampToStr("+10:00","yyyyMMdd:HHmmssZ").alias("localDT"))
         r2 = df.select(col("ts").smvTimestampToStr(col("tz"),"yyyy-MM-dd HH:mm:ssZ").alias("localDT2"))
 
