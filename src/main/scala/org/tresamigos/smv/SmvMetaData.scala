@@ -125,6 +125,16 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
       .toArray
 
   /**
+   * Add config and version information which is part of application context
+   */
+  def addApplicationContext(smvApp: SmvApp) = {
+    addSmvConfig(smvApp.smvConfig)
+    addSparkConfig(smvApp.sc.getConf)
+    addSparkVersion(smvApp.sc.version)
+    addApplicationId(smvApp.sc.applicationId)
+  }
+
+  /**
    * Add SmvConfig as Json object of KVs
    */
   def addSmvConfig(config: SmvConfig) = {
@@ -138,6 +148,13 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
     val configTuples: Array[(String, String)] = config.getAll
     val configMap = Map[String, String](configTuples: _*)
     addConfigMap("_sparkConfig", configMap)
+  }
+
+  /**
+   * Add version of Spark which SMV is deployed with
+   */
+  def addSparkVersion(version: String) = {
+    builder.putString("_sparkVersion", version)
   }
 
   def addConfigMap(key: String, config: Map[String, String]) = {
