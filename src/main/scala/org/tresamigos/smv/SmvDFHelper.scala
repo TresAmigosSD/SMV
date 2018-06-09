@@ -506,6 +506,8 @@ class SmvDFHelper(df: DataFrame) {
   /** Same as `dedupByKeyWithOrder(Column*)(Column*)` but use `String` as key **/
   def dedupByKeyWithOrder(k1: String, krest: String*)(orderCol: Column*): DataFrame = {
     val w = Window.partitionBy(k1, krest: _*).orderBy(orderCol: _*)
+    // Due to a spark bug: https://issues.apache.org/jira/browse/SPARK-16418
+    // We can't filter on window function directly. Creating a temp var
     val tmpCol = mkUniq(df.columns, "_dedupByKeyWithOrder_rank", ignoreCase = true, "_")
     df.withColumn(tmpCol, row_number().over(w))
       .where(col(tmpCol) === 1)
