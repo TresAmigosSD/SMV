@@ -841,7 +841,9 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   def smvFillNullWithPrevValue(orders: Column*)(values: String*): DataFrame = {
-    val w = winspec.orderBy(orders: _*).rowsBetween(Window.unboundedPreceding, Window.currentRow)
+    // Window.currentRow and Window.unboundedPreceding were introduce after Spark 2.1
+    // To make the code work under Spark 2.0, still use 0, and Long.MinValue
+    val w = winspec.orderBy(orders: _*).rowsBetween(Long.MinValue, 0)
     values.foldLeft(df) {
       (_df, c) => _df.withColumn(c, last(c, ignoreNulls = true).over(w))
     }
