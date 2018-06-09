@@ -505,10 +505,11 @@ class SmvDFHelper(df: DataFrame) {
 
   /** Same as `dedupByKeyWithOrder(Column*)(Column*)` but use `String` as key **/
   def dedupByKeyWithOrder(k1: String, krest: String*)(orderCol: Column*): DataFrame = {
-    val gdo = new cds.DedupWithOrderGDO(orderCol.map { o =>
-      o.toExpr
-    }.toList)
-    df.smvGroupBy(k1, krest: _*).smvMapGroup(gdo).toDF
+    val w = Window.partitionBy(k1, krest: _*).orderBy(orderCol: _*)
+    val tmpCol = mkUniq(df.columns, "_dedupByKeyWithOrder_rank", ignoreCase = true, "_")
+    df.withColumn(tmpCol, row_number().over(w))
+      .where(col(tmpCol) === 1)
+      .drop(tmpCol)
   }
 
   /**
