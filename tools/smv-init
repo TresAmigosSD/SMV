@@ -88,14 +88,7 @@ fi
 PROJ_DIR="$1"
 PROJ_SRC_DIR="${PROJ_DIR}/src/main/python"
 PROJ_CLASS=""
-PROJ_NAME="${PROJ_NAME:=${PROJ_DIR}}"
-STAGE_NAME="`echo $PROJ_NAME | tr '[:upper:]' '[:lower:]'`"
 PROJ_DATA_DIR=${PROJ_DATA_DIR:="${PROJ_DIR}/data"} # default data dir is /data in project dir
-
-# proj class hardcoded for smv integration tests
-if [ "$PROJ_TYPE" = "test" ]; then
-  PROJ_CLASS="integration.test"
-fi
 
 function extract_group_artifact_ids()
 {
@@ -139,11 +132,12 @@ function copy_proj_dir()
 function create_stage() {
     # blank project doesn't have stage built in. It is created based on project name.
     if [ "$PROJ_TYPE" = "blank" ] ; then
-        echo "-- creating stage \"$STAGE_NAME\""
-        local stage_dir="$PROJ_SRC_DIR/$STAGE_NAME"
+        local stage_name="`echo $PROJ_NAME | tr '[:upper:]' '[:lower:]'`"
+        local stage_dir="$PROJ_SRC_DIR/$stage_name"
+        echo "-- creating stage \"$stage_name\" in $stage_dir"
         mkdir -p "$stage_dir"
         local app_conf="$PROJ_DIR/conf/smv-app-conf.props"
-        sed -e "s/_STAGE_NAME_/$STAGE_NAME/g" < "$app_conf" > "$app_conf.tmp"
+        sed -e "s/_STAGE_NAME_/$stage_name/g" < "$app_conf" > "$app_conf.tmp"
         mv "$app_conf.tmp" "$app_conf"
     fi
 }
@@ -152,6 +146,7 @@ function substitute_tokens()
 {
     #  only test proj has artifact id
     if [ "$PROJ_TYPE" = "test" ] ; then
+        PROJ_CLASS="integration.test"
         extract_group_artifact_ids
     fi
     
