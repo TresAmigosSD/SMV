@@ -86,7 +86,9 @@ if [ $# -ne 1 ]; then
 fi
 
 PROJ_DIR="$1"
+PROJ_SRC_DIR="${PROJ_DIR}/src/main/python"
 PROJ_CLASS=""
+PROJ_NAME="${PROJ_NAME:=${PROJ_DIR}}"
 STAGE_NAME="`echo $PROJ_NAME | tr '[:upper:]' '[:lower:]'`"
 PROJ_DATA_DIR=${PROJ_DATA_DIR:="${PROJ_DIR}/data"} # default data dir is /data in project dir
 
@@ -134,6 +136,18 @@ function copy_proj_dir()
     mv "${PROJ_DIR_FULL_PATH}/.gitignore.template" "${PROJ_DIR_FULL_PATH}/.gitignore"
 }
 
+function create_stage() {
+    # blank project doesn't have stage built in. It is created based on project name.
+    if [ "$PROJ_TYPE" = "blank" ] ; then
+        echo "-- creating stage \"$STAGE_NAME\""
+        local stage_dir="$PROJ_SRC_DIR/$STAGE_NAME"
+        mkdir -p "$stage_dir"
+        local app_conf="$PROJ_DIR/conf/smv-app-conf.props"
+        sed -e "s/_STAGE_NAME_/$STAGE_NAME/g" < "$app_conf" > "$app_conf.tmp"
+        mv "$app_conf.tmp" "$app_conf"
+    fi
+}
+
 function substitute_tokens()
 {
     #  only test proj has artifact id
@@ -141,6 +155,8 @@ function substitute_tokens()
         extract_group_artifact_ids
     fi
     
+    echo "-- substituting tokens with project info"
+
     local files="$(cd $PROJ_DIR; find . -type f)"
     local ESCAPED_FULL_PATH=$(echo ${PROJ_DIR_FULL_PATH} | sed -e 's/[\/&]/\\&/g')
     local ESCAPED_DATA_DIR=$(echo ${PROJ_DATA_DIR} | sed -e 's/[\/&]/\\&/g')
@@ -150,7 +166,6 @@ function substitute_tokens()
              -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
              -e "s/_PROJ_DIR_FULL_PATH_/${ESCAPED_FULL_PATH}/g" \
              -e "s/_PROJ_NAME_/$PROJ_NAME/g" \
-             -e "s/_STAGE_NAME_/$STAGE_NAME/g" \
              -e "s/_PROJ_DATA_DIR_/$ESCAPED_DATA_DIR/g" \
              < "$PROJ_DIR/$f" > "$PROJ_DIR/$f.tmp"
         mv "$PROJ_DIR/$f.tmp" "$PROJ_DIR/$f"
@@ -201,6 +216,7 @@ function augment_module_count() {
 
 copy_proj_dir
 substitute_tokens
+create_stage
 copy_data_files
 create_python_packages
 augment_module_count
