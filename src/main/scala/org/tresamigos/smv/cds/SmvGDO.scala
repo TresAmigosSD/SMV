@@ -73,59 +73,6 @@ object SmvGDO {
   }
 }
 
-/**
- * Compute the quantile bin number within a group in a given DataFrame.
- * The algorithm assumes there are three columns in the input.
- * The value column is the column that the quantile bins will be computed.
- * The value column must be numeric (int, long, float, double).
- * The output will contain all the input columns plus value_total, value_rsum, and
- * value_quantile column with a value in the range 1 to num_bins.
- */
-private[smv] class SmvQuantile(valueCol: String, numBins: Int) extends SmvGDO {
-
-  override val inGroupKeys = Nil
-
-  override def createOutSchema(inSchema: StructType) = {
-    val oldFields = inSchema.fields
-    val newFields = List(StructField(valueCol + "_total", DoubleType, true),
-                         StructField(valueCol + "_rsum", DoubleType, true),
-                         StructField(valueCol + "_quantile", IntegerType, true))
-    StructType(oldFields ++ newFields)
-  }
-
-  /** bound bin number value to range [1,numBins] */
-  private def binBound(binNum: Int) = {
-    if (binNum < 1) 1 else if (binNum > numBins) numBins else binNum
-  }
-
-  /**
-   * compute the quantile for a given group of rows (all rows are assumed to have the same group id)
-   * Input: Array[Row(groupids*, keyid, value, value_double)]
-   * Output: Array[Row(groupids*, keyid, value, value_total, value_rsum, value_quantile)]
-   */
-  override def createInGroupMapping(inSchema: StructType) = {
-    val ordinal    = inSchema.getIndices(valueCol)(0)
-    val valueField = inSchema(valueCol)
-    val getValueAsDouble: InternalRow => Double = { r =>
-      val elems = r.toSeq(inSchema)
-      valueField.numeric.toDouble(elems(ordinal))
-    }
-
-    { it: Iterable[InternalRow] =>
-      val inGroup        = it.toSeq
-      val valueTotal     = inGroup.map(getValueAsDouble).sum
-      val binSize        = valueTotal / numBins
-      var runSum: Double = 0.0
-      inGroup.sortBy(r => getValueAsDouble(r)).map { r =>
-        runSum = runSum + getValueAsDouble(r)
-        val bin           = binBound(scala.math.floor(runSum / binSize).toInt + 1)
-        val newValsDouble = Seq(valueTotal, runSum)
-        val newValsInt    = Seq(bin)
-        new GenericInternalRow(Array[Any](r.toSeq(inSchema) ++ newValsDouble ++ newValsInt: _*))
-      }
-    }
-  }
-}
 
 /**
  * User defined "chuck" mapping function
