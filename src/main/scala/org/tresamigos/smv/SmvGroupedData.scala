@@ -903,10 +903,10 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   def smvFillNullWithPrevValue(orders: Column*)(values: String*): DataFrame = {
-    val gdo = new cds.FillNullWithPrev(orders.map { o =>
-      o.toExpr
-    }.toList, values)
-    smvMapGroup(gdo).toDF
+    val w = winspec.orderBy(orders: _*).rowsBetween(Window.unboundedPreceding, Window.currentRow)
+    values.foldLeft(df) {
+      (_df, c) => _df.withColumn(c, last(c, ignoreNulls = true).over(w))
+    }
   }
 
   private[smv] def smvRePartition(partitioner: Partitioner): SmvGroupedData = {
