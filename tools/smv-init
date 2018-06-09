@@ -193,8 +193,9 @@ function create_git_structure()
 
 function copy_data_files() {
     # integration test project has its own data already in the template
+    # blank project has no data
     # other projects share the same data, so it is stored outside of the template
-    if [ "$PROJ_TYPE" != "test" ]; then
+    if [ "$PROJ_TYPE" != "test" ] && [ "$PROJ_TYPE" != "blank" ]; then
         echo "-- copying template data"
         cp -r "$TEMPLATE_DATA_DIR" "$PROJ_DIR_FULL_PATH/data"
     fi
