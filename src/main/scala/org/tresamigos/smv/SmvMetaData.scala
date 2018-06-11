@@ -138,16 +138,16 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
    * Add SmvConfig as Json object of KVs
    */
   def addSmvConfig(config: SmvConfig) = {
-    addConfigMap("_smvConfig", config.mergedProps)
+    val tuples = config.mergedProps.toSeq
+    addConfig("_smvConfig", tuples)
   }
 
   /**
    * Add SparkConfig as Json object of KVs
    */
   def addSparkConfig(config: SparkConf) = {
-    val configTuples: Array[(String, String)] = config.getAll
-    val configMap = Map[String, String](configTuples: _*)
-    addConfigMap("_sparkConfig", configMap)
+    val tuples = config.getAll
+    addConfig("_sparkConfig", tuples)
   }
 
   /**
@@ -157,7 +157,10 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
     builder.putString("_sparkVersion", version)
   }
 
-  def addConfigMap(key: String, config: Map[String, String]) = {
+  /**
+   * Add KV config as json object
+   */
+  def addConfig(key: String, config: Seq[(String, String)]) = {
     val configMetaBuilder = new MetadataBuilder
     config foreach { case ((k, v)) => configMetaBuilder.putString(k, v) }
     val configMeta = configMetaBuilder.build
