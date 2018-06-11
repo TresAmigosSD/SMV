@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.types.{Metadata, MetadataBuilder}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkContext, SparkConf}
 
 import org.joda.time.DateTime
 
@@ -80,6 +80,15 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
   }
 
   /**
+   * Add ID of application in the resource manager - this is provided by Spark, and
+   * the format varies between local, standalone, YARN, and Mesos
+   * see TODO: add link to spark api doc
+   */
+  def addApplicationId(applicationId: String) = {
+    builder.putString("_applicationId", applicationId)
+  }
+
+  /**
    * Add validation result (including DQM state) to metadata
    */
    def addDqmValidationResult(result: DqmValidationResult) = {
@@ -88,8 +97,7 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
       * rewrite SmvMetadata to omit Spark Metadata anyway, seeing as it doesn't
       * support null values (issue #1138).
       */
-     val validationMeta = Metadata.fromJson(result.toJSON)
-     builder.putMetadata("_validation", validationMeta)
+     addJson("_validation", result.toJSON)
    }
 
   /**
@@ -115,6 +123,57 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
         colBuilder.build
       }
       .toArray
+
+  /**
+   * Add config and version information which is part of application context
+   */
+  def addApplicationContext(smvApp: SmvApp) = {
+    addSmvConfig(smvApp.smvConfig)
+    addSparkConfig(smvApp.sc.getConf)
+    addSparkVersion(smvApp.sc.version)
+    addApplicationId(smvApp.sc.applicationId)
+  }
+
+  /**
+   * Add SmvConfig as Json object of KVs
+   */
+  def addSmvConfig(config: SmvConfig) = {
+    val tuples = config.mergedProps.toSeq
+    addConfig("_smvConfig", tuples)
+  }
+
+  /**
+   * Add SparkConfig as Json object of KVs
+   */
+  def addSparkConfig(config: SparkConf) = {
+    val tuples = config.getAll
+    addConfig("_sparkConfig", tuples)
+  }
+
+  /**
+   * Add version of Spark which SMV is deployed with
+   */
+  def addSparkVersion(version: String) = {
+    builder.putString("_sparkVersion", version)
+  }
+
+  /**
+   * Add KV config as json object
+   */
+  def addConfig(key: String, config: Seq[(String, String)]) = {
+    val configMetaBuilder = new MetadataBuilder
+    config foreach { case ((k, v)) => configMetaBuilder.putString(k, v) }
+    val configMeta = configMetaBuilder.build
+    builder.putMetadata(key, configMeta)
+  }
+
+  /**
+   * Add a Metadata object based on a json string
+   */
+  private def addJson(key: String, json: String) = {
+    val metadata = Metadata.fromJson(json)
+    builder.putMetadata(key, metadata)
+  }
 
   /**
    * String representation is a minified json string
