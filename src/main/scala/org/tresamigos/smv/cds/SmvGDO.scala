@@ -115,6 +115,16 @@ private[smv] class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends Sm
       } else {
         output.map(InternalRow.fromSeq)
       }
+/* For dedupByKeyWithOrder method */
+private[smv] class DedupWithOrderGDO(orders: Seq[Expression]) extends SmvGDO {
+  override val inGroupKeys                           = Nil
+  override def createOutSchema(inSchema: StructType) = inSchema
+
+  override def createInGroupMapping(inSchema: StructType) = {
+    val rowOrdering = SmvGDO.orderColsToOrdering(inSchema, orders);
+
+    { it: Iterable[InternalRow] =>
+      List(it.toSeq.min(rowOrdering))
     }
   }
 }
