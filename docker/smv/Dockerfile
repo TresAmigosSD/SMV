@@ -31,13 +31,13 @@ RUN cd /projects &&\
 
 # install smv and spark and move them into /usr/lib dir.
 RUN cd /projects &&\
-    wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.5.2.19/tools/smv-install | bash -s -- -spark &&\
+    wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.5.2.20/tools/smv-install | bash -s -- -spark &&\
     mkdir -p /usr/lib &&\
     mv SMV_* /usr/lib/SMV &&\
     mv spark-* /usr/lib/spark
 
 # installs python packages.
-# TODO: use requirements.txt from image downloaded above once 1.5.2.19 is out.
+# TODO: use requirements.txt from image downloaded above once 1.5.2.20 is out.
 RUN pip install --upgrade pip
 RUN pip install -r /usr/lib/SMV/docker/smv/requirements.txt
 

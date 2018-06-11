@@ -162,9 +162,17 @@ class SmvSchemaTest extends SmvTestUtil {
   }
 
   test("Test Timestamp default format") {
-    val df = dfFrom("a:Timestamp", "2011-09-03 10:13:58.0")
-    assert(df.collect()(0)(0).toString === "2011-09-03 10:13:58.0")
-    assert(SmvSchema.fromDataFrame(df).toString === "Schema: a: Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    val df = dfFrom("a:Timestamp", "2011-09-03 00:13:58.0;2011-09-03 01:13:58.0;2011-09-03 11:13:58.0;" +
+      "2011-09-03 12:13:58.0;2011-09-03 13:13:58.0;2011-09-03 23:13:58.0;2011-09-03 24:13:58.0")
+
+    assert(df.collect()(0)(0).toString === "2011-09-03 00:13:58.0")
+    assert(df.collect()(1)(0).toString === "2011-09-03 01:13:58.0")
+    assert(df.collect()(2)(0).toString === "2011-09-03 11:13:58.0")
+    assert(df.collect()(3)(0).toString === "2011-09-03 12:13:58.0")
+    assert(df.collect()(4)(0).toString === "2011-09-03 13:13:58.0")
+    assert(df.collect()(5)(0).toString === "2011-09-03 23:13:58.0")
+    assert(df.collect()(6)(0).toString === "2011-09-04 00:13:58.0")
+    assert(SmvSchema.fromDataFrame(df).toString === "Schema: a: Timestamp[yyyy-MM-dd HH:mm:ss.S]")
   }
 
   test("Test Date default format") {
