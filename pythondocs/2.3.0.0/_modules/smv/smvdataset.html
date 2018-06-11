@@ -1,0 +1,748 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.smvdataset &#8212; Spark Modularized View 2.3.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.3.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 2.3.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smvdataset</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;SMV DataSet Framework interface</span>
+
+<span class="sd">This module defines the abstract classes which formed the SmvDataSet Framework for clients&#39; projects</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="k">import</span> <span class="n">DataFrame</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">binascii</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">smv.dqm</span> <span class="k">import</span> <span class="n">SmvDQM</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">smv_copy_array</span><span class="p">,</span> <span class="n">pickle_lib</span><span class="p">,</span> <span class="n">is_string</span>
+<span class="kn">from</span> <span class="nn">smv.py4j_interface</span> <span class="k">import</span> <span class="n">create_py4j_interface_method</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+    <span class="n">ABC</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABC</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">ABC</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">(</span><span class="s1">&#39;ABC&#39;</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{})</span>
+
+
+<span class="k">def</span> <span class="nf">_smvhash</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python&#39;s hash function will return different numbers from run to</span>
+<span class="sd">    from, starting from 3.  Provide a deterministic hash function for</span>
+<span class="sd">    use to calculate sourceCodeHash.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">binascii</span>
+    <span class="k">return</span> <span class="n">binascii</span><span class="o">.</span><span class="n">crc32</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">_stripComments</span><span class="p">(</span><span class="n">code</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">re</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(?m)^ *(#.*\n?|[ \t]*\n)&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SmvOutput"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvOutput">[docs]</a><span class="k">class</span> <span class="nc">SmvOutput</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mixin which marks an SmvModule as one of the output of its stage</span>
+
+<span class="sd">        SmvOutputs are distinct from other SmvDataSets in that</span>
+<span class="sd">            * SmvModuleLinks can *only* link to SmvOutputs</span>
+<span class="sd">            * The -s and --run-app options of smv-pyrun only run SmvOutputs and their dependencies.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">IsSmvOutput</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="SmvOutput.tableName"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvOutput.tableName">[docs]</a>    <span class="k">def</span> <span class="nf">tableName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The user-specified table name used when exporting data to Hive (optional)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (string)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="n">getTableName</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getTableName&quot;</span><span class="p">,</span> <span class="s2">&quot;tableName&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">SmvDataSet</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Abstract base class for all SmvDataSets</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Python&#39;s issubclass() check does not work well with dynamically</span>
+    <span class="c1"># loaded modules.  In addition, there are some issues with the</span>
+    <span class="c1"># check, when the `abc` module is used as a metaclass, that we</span>
+    <span class="c1"># don&#39;t yet quite understand.  So for a workaround we add the</span>
+    <span class="c1"># typcheck in the Smv hierarchies themselves.</span>
+    <span class="n">IsSmvDataSet</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+
+    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span>
+
+    <span class="n">getDescription</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getDescription&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">)</span>
+
+    <span class="c1"># this doesn&#39;t need stack trace protection</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">requiresDS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified list of dependencies</span>
+
+<span class="sd">            Override this method to specify the SmvDataSets needed as inputs.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (list(SmvDataSet)): a list of dependencies</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="c1"># this doesn&#39;t need stacktrace protection</span>
+    <span class="k">def</span> <span class="nf">dqm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;DQM policy</span>
+
+<span class="sd">            Override this method to define your own DQM policy (optional).</span>
+<span class="sd">            Default is an empty policy.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (SmvDQM): a DQM policy</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SmvDQM</span><span class="p">()</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validator</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute this dataset, and return the dataframe&quot;&quot;&quot;</span>
+
+    <span class="n">getDoRun</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getDoRun&quot;</span><span class="p">,</span> <span class="s2">&quot;doRun&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">assert_result_is_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">DataFrame</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot; produced &quot;</span> <span class="o">+</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s2">&quot; in place of a DataFrame&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Version number</span>
+
+<span class="sd">            Each SmvDataSet is versioned with a numeric string, so it and its result</span>
+<span class="sd">            can be tracked together.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): version number of this SmvDataSet</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;0&quot;</span>
+
+    <span class="k">def</span> <span class="nf">isOutput</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">SmvOutput</span><span class="p">)</span>
+
+    <span class="n">getIsOutput</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getIsOutput&quot;</span><span class="p">,</span> <span class="s2">&quot;isOutput&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash</span>
+    <span class="c1"># to compute datasetHash</span>
+    <span class="k">def</span> <span class="nf">sourceCodeHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash computed based on the source code of the dataset&#39;s class</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+            <span class="n">src_no_comm</span> <span class="o">=</span> <span class="n">_stripComments</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+            <span class="c1"># DO NOT use the compiled byte code for the hash computation as</span>
+            <span class="c1"># it doesn&#39;t change when constant values are changed.  For example,</span>
+            <span class="c1"># &quot;a = 5&quot; and &quot;a = 6&quot; compile to same byte code.</span>
+            <span class="c1"># co_code = compile(src, inspect.getsourcefile(cls), &#39;exec&#39;).co_code</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">_smvhash</span><span class="p">(</span><span class="n">src_no_comm</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>  <span class="c1"># `inspect` will raise error for classes defined in the REPL</span>
+            <span class="c1"># Instead of handle the case that module defined in REPL, just raise Exception here</span>
+            <span class="c1"># res = _smvhash(_disassemble(cls))</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">(</span><span class="si">{1!r}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">err</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="n">message</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;SmvDataSet &quot;</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">urn</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot; defined in shell can&#39;t be persisted&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># include sourceCodeHash of parent classes</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmro</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">IsSmvDataSet</span> <span class="ow">and</span> <span class="n">m</span> <span class="o">!=</span> <span class="bp">cls</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">m</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;smv.&quot;</span><span class="p">):</span>
+                    <span class="n">res</span> <span class="o">+=</span> <span class="n">m</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">)</span><span class="o">.</span><span class="n">sourceCodeHash</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span> <span class="k">pass</span>  <span class="c1"># noqa: E701</span>
+
+        <span class="c1"># if module inherits from SmvRunConfig, then add hash of all config values to module hash</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_smvGetRunConfigHash&quot;</span><span class="p">):</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smvGetRunConfigHash</span><span class="p">()</span>
+
+        <span class="c1"># if module has high order historical validation rules, add their hash to sum.</span>
+        <span class="c1"># they key() of a validator should change if it&#39;s parameters change.</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_smvHistoricalValidatorsList&quot;</span><span class="p">):</span>
+            <span class="n">keys_hash</span> <span class="o">=</span> <span class="p">[</span><span class="n">_smvhash</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">_key</span><span class="p">())</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_smvHistoricalValidatorsList</span><span class="p">]</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">keys_hash</span><span class="p">)</span>
+
+        <span class="c1"># ensure python&#39;s numeric type can fit in a java.lang.Integer</span>
+        <span class="k">return</span> <span class="n">res</span> <span class="o">&amp;</span> <span class="mh">0x7fffffff</span>
+
+    <span class="n">getSourceCodeHash</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getSourceCodeHash&quot;</span><span class="p">,</span> <span class="s2">&quot;sourceCodeHash&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">instanceValHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash computed based on instance values of the dataset, such as the timestamp of an input file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="n">getInstanceValHash</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getInstanceValHash&quot;</span><span class="p">,</span> <span class="s2">&quot;instanceValHash&quot;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">fqn</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the fully qualified name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>
+
+    <span class="n">getFqn</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getFqn&quot;</span><span class="p">,</span> <span class="s2">&quot;fqn&quot;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">urn</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;mod:&quot;</span> <span class="o">+</span> <span class="bp">cls</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">isEphemeral</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Should this SmvDataSet skip persisting its data?</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (bool): True if this SmvDataSet should not persist its data, false otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">getIsEphemeral</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getIsEphemeral&quot;</span><span class="p">,</span> <span class="s2">&quot;isEphemeral&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">publishHiveSql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;An optional sql query to run to publish the results of this module when the</span>
+<span class="sd">           --publish-hive command line is used.  The DataFrame result of running this</span>
+<span class="sd">           module will be available to the query as the &quot;dftable&quot; table.</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; return &quot;insert overwrite table mytable select * from dftable&quot;</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                If this method is not specified, the default is to just create the</span>
+<span class="sd">                table specified by tableName() with the results of the module.</span>
+
+<span class="sd">           Returns:</span>
+<span class="sd">               (string): the query to run.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">getPublishHiveSql</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getPublishHiveSql&quot;</span><span class="p">,</span> <span class="s2">&quot;publishHiveSql&quot;</span><span class="p">)</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return SmvDataSet&#39;s type&quot;&quot;&quot;</span>
+
+    <span class="n">getDsType</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getDsType&quot;</span><span class="p">,</span> <span class="s2">&quot;dsType&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">dqmWithTypeSpecificPolicy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dqm</span><span class="p">()</span>
+
+    <span class="n">getDqmWithTypeSpecificPolicy</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span>
+        <span class="s2">&quot;getDqmWithTypeSpecificPolicy&quot;</span><span class="p">,</span> <span class="s2">&quot;dqmWithTypeSpecificPolicy&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresDS</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">dependencyUrns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">urn</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sc</span><span class="p">,</span> <span class="o">*</span><span class="n">arr</span><span class="p">)</span>
+
+    <span class="n">getDependencyUrns</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getDependencyUrns&quot;</span><span class="p">,</span> <span class="s2">&quot;dependencyUrns&quot;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">df2result</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given a datasets&#39;s persisted DataFrame, get the result object</span>
+
+<span class="sd">            In most cases, this is just the DataFrame itself. See SmvResultModule for the exception.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-defined metadata</span>
+
+<span class="sd">            Override this method to define metadata that will be logged with your module&#39;s results.</span>
+<span class="sd">            Defaults to empty dictionary.</span>
+
+<span class="sd">            Arguments:</span>
+<span class="sd">                df (DataFrame): result of running the module, used to generate metadata</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (dict): dictionary of serializable metadata</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">metadataJson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jdf</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get user&#39;s metadata and jsonify it for py4j transport</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">)</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;User metadata </span><span class="si">{}</span><span class="s2"> is not a dict&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">metadata</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+
+    <span class="n">getMetadataJson</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getMetadataJson&quot;</span><span class="p">,</span> <span class="s2">&quot;metadataJson&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validateMetadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current</span><span class="p">,</span> <span class="n">history</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-defined metadata validation</span>
+
+<span class="sd">            Override this method to define validation rules for metadata given</span>
+<span class="sd">            the current metadata and historical metadata.</span>
+
+<span class="sd">            Arguments:</span>
+<span class="sd">                current (dict): current metadata kv</span>
+<span class="sd">                history (list(dict)): list of historical metadata kv&#39;s</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): Validation failure message. Return None (or omit a return statement) if</span>
+<span class="sd">                successful.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">validateMetadataJson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">currentJson</span><span class="p">,</span> <span class="n">historyJson</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load metadata (jsonified for py4j transport) and run user&#39;s validation on it</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">currentJson</span><span class="p">)</span>
+        <span class="n">history</span> <span class="o">=</span> <span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">historyJson</span><span class="p">]</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validateMetadata</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">history</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_string</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Validation failure message </span><span class="si">{}</span><span class="s2"> is not a string&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">res</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="n">getValidateMetadataJson</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getValidateMetadataJson&quot;</span><span class="p">,</span> <span class="s2">&quot;validateMetadataJson&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">metadataHistorySize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override to define the maximum size of the metadata history for this module</span>
+
+<span class="sd">            Return:</span>
+<span class="sd">                (int): size</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">5</span>
+
+    <span class="n">getMetadataHistorySize</span> <span class="o">=</span> <span class="n">create_py4j_interface_method</span><span class="p">(</span><span class="s2">&quot;getMetadataHistorySize&quot;</span><span class="p">,</span> <span class="s2">&quot;metadataHistorySize&quot;</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Java</span><span class="p">:</span>
+        <span class="n">implements</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;org.tresamigos.smv.ISmvModule&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="SmvModule"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModule">[docs]</a><span class="k">class</span> <span class="nc">SmvModule</span><span class="p">(</span><span class="n">SmvDataSet</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for SmvModules written in Python</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">IsSmvModule</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="SmvModule.dsType"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModule.dsType">[docs]</a>    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Module&quot;</span></div>
+
+
+<div class="viewcode-block" id="SmvModule.RunParams"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModule.RunParams">[docs]</a>    <span class="k">class</span> <span class="nc">RunParams</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Map from SmvDataSet to resulting DataFrame</span>
+
+<span class="sd">            We need to simulate a dict from ds to df where the same object can be</span>
+<span class="sd">            keyed by different datasets with the same urn. For example, in the</span>
+<span class="sd">            module</span>
+
+<span class="sd">            class X(SmvModule):</span>
+<span class="sd">                def requiresDS(self): return [SmvModuleLink(&quot;foo&quot;)]</span>
+<span class="sd">                def run(self, i): return i[SmvModuleLink(&quot;foo&quot;)]</span>
+
+<span class="sd">            the i argument of the run method should map SmvModuleLink(&quot;foo&quot;) to</span>
+<span class="sd">            the correct DataFrame.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                (dict): a map from urn to DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">urn2df</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">urn2df</span> <span class="o">=</span> <span class="n">urn2df</span>
+
+        <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ds</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Called by the &#39;[]&#39; operator</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="s1">&#39;urn&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Argument to RunParams must be an SmvDataSet&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">urn2df</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">urn</span><span class="p">()]</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SmvModule</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">smvApp</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SmvModule.run"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModule.run">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified definition of the operations of this SmvModule</span>
+
+<span class="sd">            Override this method to define the output of this module, given a map</span>
+<span class="sd">            &#39;i&#39; from inputSmvDataSet to resulting DataFrame. &#39;i&#39; will have a</span>
+<span class="sd">            mapping for each SmvDataSet listed in requiresDS. E.g.</span>
+
+<span class="sd">            def requiresDS(self):</span>
+<span class="sd">                return [MyDependency]</span>
+
+<span class="sd">            def run(self, i):</span>
+<span class="sd">                return i[MyDependency].select(&quot;importantColumn&quot;)</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                (RunParams): mapping from input SmvDataSet to DataFrame</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): ouput of this SmvModule</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+    <span class="k">def</span> <span class="nf">_constructRunParams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">urn2df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given dict from urn to DataFrame, construct RunParams for module</span>
+
+<span class="sd">            A given module&#39;s result may not actually be a DataFrame. For each</span>
+<span class="sd">            dependency, apply its df2result method to its DataFrame to get its</span>
+<span class="sd">            actual result. Construct RunParams from the resulting dict.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">urn2res</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span><span class="p">():</span>
+            <span class="n">jdf</span> <span class="o">=</span> <span class="n">urn2df</span><span class="p">[</span><span class="n">dep</span><span class="o">.</span><span class="n">urn</span><span class="p">()]</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">)</span>
+            <span class="n">urn2res</span><span class="p">[</span><span class="n">dep</span><span class="o">.</span><span class="n">urn</span><span class="p">()]</span> <span class="o">=</span> <span class="n">dep</span><span class="o">.</span><span class="n">df2result</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RunParams</span><span class="p">(</span><span class="n">urn2res</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">i</span>
+
+<div class="viewcode-block" id="SmvModule.doRun"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModule.doRun">[docs]</a>    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validator</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constructRunParams</span><span class="p">(</span><span class="n">known</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assert_result_is_dataframe</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">_jdf</span></div></div>
+
+
+<div class="viewcode-block" id="SmvSqlModule"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvSqlModule">[docs]</a><span class="k">class</span> <span class="nc">SmvSqlModule</span><span class="p">(</span><span class="n">SmvModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An SMV module which executes a SQL query in place of a run method</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># User must specify table names. We can&#39;t use FQN because the name can&#39;t</span>
+    <span class="c1"># can&#39;t contain &#39;.&#39;, and defaulting to the module&#39;s base name would invite</span>
+    <span class="c1"># name collisions.</span>
+<div class="viewcode-block" id="SmvSqlModule.tables"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvSqlModule.tables">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">tables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dict of dependencies by table name.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvSqlModule.requiresDS"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvSqlModule.requiresDS">[docs]</a>    <span class="k">def</span> <span class="nf">requiresDS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvSqlModule.query"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvSqlModule.query">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified SQL query defining the behavior of this module</span>
+
+<span class="sd">            Before the query is executed, all dependencies will be registered as</span>
+<span class="sd">            tables with the names specified in the tables method.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvSqlModule.run"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvSqlModule.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="n">tbl_name_2_ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="p">()</span>
+
+        <span class="c1"># temporarily register DataFrame inputs as tables</span>
+        <span class="k">for</span> <span class="n">tbl_name</span> <span class="ow">in</span> <span class="n">tbl_name_2_ds</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">tbl_name_2_ds</span><span class="p">[</span><span class="n">tbl_name</span><span class="p">]</span>
+            <span class="n">i</span><span class="p">[</span><span class="n">ds</span><span class="p">]</span><span class="o">.</span><span class="n">registerTempTable</span><span class="p">(</span><span class="n">tbl_name</span><span class="p">)</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">())</span>
+
+        <span class="c1"># drop temporary tables</span>
+        <span class="k">for</span> <span class="n">tbl_name</span> <span class="ow">in</span> <span class="n">tbl_name_2_ds</span><span class="p">:</span>
+            <span class="c1"># This currently causes an &quot;error&quot; to be reported saying &quot;table does</span>
+            <span class="c1"># not exist&quot;. This happens even when using &quot;drop table if exists &quot;.</span>
+            <span class="c1"># It is annoying but can be safely ignored.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="s2">&quot;drop table &quot;</span> <span class="o">+</span> <span class="n">tbl_name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">res</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">SmvResultModule</span><span class="p">(</span><span class="n">SmvModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An SmvModule whose result is not a DataFrame</span>
+
+<span class="sd">        The result must be picklable - see</span>
+<span class="sd">        https://docs.python.org/2/library/pickle.html#what-can-be-pickled-and-unpickled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">df2result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Unpickle and decode module result stored in DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># reverses result of applying result2df. see result2df for explanation.</span>
+        <span class="n">hex_encoded_pickle_as_str</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">collect</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pickled_res_as_str</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">hex_encoded_pickle_as_str</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">pickle_lib</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickled_res_as_str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">result2df</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">res_obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Pick and encode module result, and store it in a DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># pickle the result object. this will use the most optimal pickling</span>
+        <span class="c1"># protocol available for this version of cPickle</span>
+        <span class="n">pickled_res</span> <span class="o">=</span> <span class="n">pickle_lib</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">res_obj</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># pickle may contain problematic characters like newlines, so we</span>
+        <span class="c1"># encode the pickle it as a hex string</span>
+        <span class="n">hex_encoded_pickle</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">pickled_res</span><span class="p">)</span>
+        <span class="c1"># encoding will be a bytestring object if in Python 3, so need to convert it to string</span>
+        <span class="c1"># str.decode converts string to utf8 in python 2 and bytes to str in Python 3</span>
+        <span class="n">hex_encoded_pickle_as_str</span> <span class="o">=</span> <span class="n">hex_encoded_pickle</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+        <span class="c1"># insert the resulting serialization into a DataFrame</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">smvApp</span><span class="o">.</span><span class="n">createDF</span><span class="p">(</span><span class="s2">&quot;pickled_result: String&quot;</span><span class="p">,</span> <span class="n">hex_encoded_pickle_as_str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified definition of the operations of this SmvModule</span>
+
+<span class="sd">            Override this method to define the output of this module, given a map</span>
+<span class="sd">            &#39;i&#39; from input SmvDataSet to resulting DataFrame. &#39;i&#39; will have a</span>
+<span class="sd">            mapping for each SmvDataSet listed in requiresDS. E.g.</span>
+
+<span class="sd">            def requiresDS(self):</span>
+<span class="sd">                return [MyDependency]</span>
+
+<span class="sd">            def run(self, i):</span>
+<span class="sd">                return train_model(i[MyDependency])</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                (RunParams): mapping from input SmvDataSet to DataFrame</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (object): picklable output of this SmvModule</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validator</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constructRunParams</span><span class="p">(</span><span class="n">known</span><span class="p">)</span>
+        <span class="n">res_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">result2df</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">,</span> <span class="n">res_obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">_jdf</span>
+
+
+<div class="viewcode-block" id="SmvModel"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModel">[docs]</a><span class="k">class</span> <span class="nc">SmvModel</span><span class="p">(</span><span class="n">SmvResultModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;SmvModule whose result is a data model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Exists only to be paired with SmvModelExec</span>
+<div class="viewcode-block" id="SmvModel.dsType"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModel.dsType">[docs]</a>    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Model&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="SmvModelExec"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModelExec">[docs]</a><span class="k">class</span> <span class="nc">SmvModelExec</span><span class="p">(</span><span class="n">SmvModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;SmvModule that runs a model produced by an SmvModel</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvModelExec.dsType"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModelExec.dsType">[docs]</a>    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;ModelExec&quot;</span></div>
+
+<div class="viewcode-block" id="SmvModelExec.dependencies"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModelExec.dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model_mod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresModel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_targetIsSmvModel</span><span class="p">(</span><span class="n">model_mod</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;requiresModel method must return an SmvModel or a link to one&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">model_mod</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresDS</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_targetIsSmvModel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">SmvModuleLink</span><span class="p">):</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">target</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">module</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">SmvModel</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="c1"># if target is not a class or other type object, issubclass will raise TypeError</span>
+            <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="SmvModelExec.requiresModel"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModelExec.requiresModel">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">requiresModel</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;User-specified SmvModel module</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (SmvModel): the SmvModel this module depends on</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvModelExec.doRun"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModelExec.doRun">[docs]</a>    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validator</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constructRunParams</span><span class="p">(</span><span class="n">known</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">requiresModel</span><span class="p">()]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assert_result_is_dataframe</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">_jdf</span></div>
+
+<div class="viewcode-block" id="SmvModelExec.run"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModelExec.run">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified definition of the operations of this SmvModule</span>
+
+<span class="sd">            Override this method to define the output of this module, given a map</span>
+<span class="sd">            &#39;i&#39; from inputSmvDataSet to resulting DataFrame. &#39;i&#39; will have a</span>
+<span class="sd">            mapping for each SmvDataSet listed in requiresDS. E.g.</span>
+
+<span class="sd">            def requiresDS(self):</span>
+<span class="sd">                return [MyDependency]</span>
+
+<span class="sd">            def run(self, i):</span>
+<span class="sd">                return i[MyDependency].select(&quot;importantColumn&quot;)</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                i (RunParams): mapping from input SmvDataSet to DataFrame</span>
+<span class="sd">                model (SmvModel): the model this module depends on</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (object): picklable output of this SmvModule</span>
+<span class="sd">        &quot;&quot;&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="SmvModuleLink"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModuleLink">[docs]</a><span class="k">class</span> <span class="nc">SmvModuleLink</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A module link provides access to data generated by modules from another stage</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">IsSmvModuleLink</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">target</span>
+
+<div class="viewcode-block" id="SmvModuleLink.df2result"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModuleLink.df2result">[docs]</a>    <span class="k">def</span> <span class="nf">df2result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">df2result</span><span class="p">(</span><span class="n">df</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvModuleLink.urn"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvModuleLink.urn">[docs]</a>    <span class="k">def</span> <span class="nf">urn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;link:&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">SmvExtDataSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An SmvDataSet representing an external (Scala) SmvDataSet</span>
+
+<span class="sd">        E.g. MyExtMod = SmvExtDataSet(&quot;the.scala.mod&quot;)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fqn (str): fqn of the Scala SmvDataSet</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (SmvExtDataSet): external dataset with given fqn</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fqn</span> <span class="o">=</span> <span class="n">fqn</span>
+
+    <span class="k">def</span> <span class="nf">df2result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="c1"># non-DataFrame results are only supported for Python SmvResultModule</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">def</span> <span class="nf">urn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;mod:&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fqn</span>
+
+    <span class="k">def</span> <span class="nf">fqn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fqn</span>
+
+
+<div class="viewcode-block" id="SmvExtModuleLink"><a class="viewcode-back" href="../../smv.html#smv.smvdataset.SmvExtModuleLink">[docs]</a><span class="k">def</span> <span class="nf">SmvExtModuleLink</span><span class="p">(</span><span class="n">refname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a link to an external (Scala) SmvDataSet</span>
+
+<span class="sd">        SmvExtModuleLink(fqn) is equivalent to SmvModuleLink(SmvExtDataSet(fqn))</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fqn (str): fqn of the the Scala SmvDataSet</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (SmvModuleLink): link to the Scala SmvDataSet</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SmvModuleLink</span><span class="p">(</span><span class="n">SmvExtDataSet</span><span class="p">(</span><span class="n">refname</span><span class="p">))</span></div>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;SmvOutput&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvModule&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvSqlModule&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvModel&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvModelExec&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvModuleLink&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvExtModuleLink&#39;</span>
+<span class="p">]</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 2.3.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.7.
+    </div>
+  </body>
+</html>
