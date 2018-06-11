@@ -23,6 +23,7 @@
   * [Metadata](smv_metadata.md)
   * [SMV Server](smv_server.md)
   * [SMV with JDBC](smv_jdbc.md)
+  * [SmvDriver](smv_driver.md)
 
 #### Smv Helper Functions and Libraries
   * [Smv Functions (Python)](smv_python_funcs.md)
