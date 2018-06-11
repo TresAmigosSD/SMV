@@ -13,7 +13,7 @@
 
 import sys
 
-from scripts.smvdriver import SmvDriver
+from smv.smvdriver import SmvDriver
 
 if __name__ == "__main__":
     SmvDriver().run()

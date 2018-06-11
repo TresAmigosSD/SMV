@@ -1,4 +1,4 @@
-from scripts.smvdriver import SmvDriver
+from smv.smvdriver import SmvDriver
 
 class CustomDriver(SmvDriver):
     def main(self, smvApp, driver_args):
