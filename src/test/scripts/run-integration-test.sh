@@ -16,6 +16,10 @@ rm -rf ${TEST_DIR}
 mkdir -p ${TEST_DIR}
 cd ${TEST_DIR}
 
+function clear_data_dir() {
+  rm -rf data/output/*
+}
+
 # Test stages containing a dependency scenario with a Scala output module
 NEW_SCALA_MODULE_STAGES="\
 test1 \
@@ -98,7 +102,7 @@ function verify_hash_changed() {
 }
 
 echo "--------- RUN HASH TEST MODULE -------------"
-rm -rf data/output/*
+clear_data_dir
 ../../../tools/smv-pyrun -m $HASH_TEST_MOD
 
 echo "--------- RERUN UNCHANGED TEST MODULE -------------"
@@ -135,8 +139,16 @@ echo "--------- RUN MODULE WITH UPDATED SCHEMA -------------"
 
 echo "--------- VERIFY HASH CHANGED -------------"
 verify_hash_changed 3
-)
 
+echo "--------- RUN APPLICATION WITH CUSTOM DRIVER -------------"
+clear_data_dir
+../../../tools/smv-run --smv-props smv.config.keys=custom_key --smv-props smv.config.custom_key=custom_value \
+    --script src/main/runners/custom_driver.py arg1 arg2 arg3
+if [ $(count_output) == 0 ]; then
+  echo "Driver script wasn't exectuted!"
+  exit 1
+fi
+)
 
 echo "--------- GENERATE ENTERPRISE APP -------------"
 ../../tools/smv-init -e $E_APP_NAME

@@ -156,6 +156,13 @@ publish the specified modules to the local file system
 </tr>
 
 <tr>
+<td>--script</td>
+<td>run driver script instead of runapp.py</td>
+<td>Location of driver script.
+</td>
+</tr>
+
+<tr>
 <th colspan="3">What To Run/Publish
 <br>
 One of the options below must be specified.
