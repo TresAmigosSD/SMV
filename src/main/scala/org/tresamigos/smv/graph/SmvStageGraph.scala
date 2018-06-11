@@ -14,7 +14,6 @@
 
 package org.tresamigos.smv
 package graph
-
 import com.github.mdr.ascii.graph.{Graph => AsciiGraph}
 import com.github.mdr.ascii.layout.{GraphLayout => AsciiGraphLayout}
 import org.apache.commons.lang.StringEscapeUtils
@@ -133,15 +132,13 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
     val vertices = g.nodeString(toPrint, toPrint).toSet
     val edges    = g.edges.map { case (f, t) => toPrint(f) -> toPrint(t) }.toList
 
-    // NOTE: "IllegalArgumentException: requirements" failed may mean that
-    // an edges includes a vertex which is not listed in vertices
-
     val graphObj = AsciiGraph(vertices, edges)
 
-    /** Graph as a string */
+    // /** Graph as a string */
     val graphStr = AsciiGraphLayout.renderGraph(graphObj)
 
     graphStr
+
   }
 
   /**
@@ -160,12 +157,13 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
     val vertices = g.nodeString(printStage, printInterface).toSet
     val edges    = g.edgeStringPair(printStage, printInterface).toList
 
-    val graphObj = AsciiGraph(vertices, edges)
+    // val graphObj = AsciiGraph(vertices, edges)
 
-    /** Graph as a string */
-    val graphStr = AsciiGraphLayout.renderGraph(graphObj)
+    // /** Graph as a string */
+    // val graphStr = AsciiGraphLayout.renderGraph(graphObj)
 
-    graphStr
+    // graphStr
+    "TODO: waiting for asciigraph for scala 2.11"
   }
 
   /**

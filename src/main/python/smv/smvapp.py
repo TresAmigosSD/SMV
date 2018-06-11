@@ -23,8 +23,8 @@ import json
 
 from py4j.java_gateway import java_import, JavaObject, CallbackServerParameters
 
-from pyspark import SparkContext
-from pyspark.sql import HiveContext, DataFrame
+from pyspark import SparkContext, HiveContext
+from pyspark.sql import DataFrame
 
 
 from smv.datasetrepo import DataSetRepoFactory
@@ -81,8 +81,8 @@ class SmvApp(object):
 
         sc.setLogLevel("ERROR")
 
-        self.sqlContext = sqlContext
         self.sc = sc
+        self.sqlContext = sqlContext
         self._jvm = sc._jvm
 
         from py4j.java_gateway import java_import
@@ -202,6 +202,10 @@ class SmvApp(object):
     def stages(self):
         """Stages is a function as they can be set dynamically on an SmvApp instance"""
         return self.j_smvPyClient.stages()
+    
+    def userLibs(self):
+        """Return dynamically set smv.user_libraries from conf"""
+        return self.j_smvPyClient.userLibs()
 
     def appId(self):
         return self.config().appId()

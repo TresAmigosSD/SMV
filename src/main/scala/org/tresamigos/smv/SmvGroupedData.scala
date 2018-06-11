@@ -16,7 +16,7 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.contrib.smv.{convertToCatalyst, convertToScala}
 
-import org.apache.spark.sql.{Column, DataFrame, GroupedData, Row, ColumnName}
+import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
@@ -35,7 +35,7 @@ import org.apache.spark.sql.types.{StringType, DoubleType}
  */
 @Experimental
 private[smv] case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
-  def toDF: DataFrame            = df
+  def toDF: DataFrame                         = df
   def toGroupedData: GroupedData = df.groupBy(keys(0), keys.tail: _*)
 }
 
@@ -252,7 +252,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
           }: _*)
           .orderBy(orders: _*)
         val r1 =
-          df.select((keys ++ valueCols map (c => $"$c")) :+ (rowNumber() over w as pcol): _*)
+          df.select((keys ++ valueCols map (c => $"$c")) :+ (row_number() over w as pcol): _*)
         // in-group ranking starting value is 0
         val r2 = r1.selectWithReplace(r1(pcol) - 1 as pcol)
         (r2, Seq(Seq(pcol)))
@@ -274,7 +274,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   /**
    * Compute the percent rank of a sequence of columns within a group in a given DataFrame.
    *
-   * Used Spark's `percentRank` window function. The precent rank is defined as
+   * Used Spark's `percent_rank` window function. The precent rank is defined as
    * `R/(N-1)`, where `R` is the base 0 rank, and `N` is the population size. Under
    * this definition, min value (R=0) has percent rank `0.0`, and max value has percent
    * rank `1.0`.
@@ -300,22 +300,22 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val c_prmin = {c: String => mkUniq(cols, c + "_prmin")}
     val c_pctrnk = {c: String => mkUniq(cols, c + "_pctrnk")}
     if (ignoreNull) {
-      //Calculate raw percentRank for all cols, assign null for null values
+      //Calculate raw percent_rank for all cols, assign null for null values
       val rawdf = df.smvSelectPlus(valueCols.zip(windows).map{
         case (c, w) =>
-          when(col(c).isNull, lit(null).cast(DoubleType)).otherwise(percentRank().over(w)).alias(c_rawpr(c))
+          when(col(c).isNull, lit(null).cast(DoubleType)).otherwise(percent_rank().over(w)).alias(c_rawpr(c))
       }: _*)
 
-      //Since min ignore nulls, "*_prmin" here are the min of the non-null percentRanks
+      //Since min ignore nulls, "*_prmin" here are the min of the non-null percent_ranks
       val aggcols = valueCols.map{c => min(c_rawpr(c)).alias(c_prmin(c))}
       val rawmin = rawdf.smvGroupBy(keys.map{col(_)}: _*).agg(aggcols.head, aggcols.tail: _*)
 
-      //Rescale the non-null percentRanks
+      //Rescale the non-null percent_ranks
       rawdf.smvJoinByKey(rawmin, keys, "inner").smvSelectPlus(valueCols.map{
         c => ((col(c_rawpr(c)) - col(c_prmin(c)))/(lit(1.0) - col(c_prmin(c)))).alias(c_pctrnk(c))
       }: _*).smvSelectMinus(valueCols.map{c => Seq(c_rawpr(c), c_prmin(c))}.flatten.map{col(_)}: _*)
     } else {
-      df.smvSelectPlus(valueCols.zip(windows).map{case (c, w) => percentRank().over(w).alias(c_pctrnk(c))}: _*)
+      df.smvSelectPlus(valueCols.zip(windows).map{case (c, w) => percent_rank().over(w).alias(c_pctrnk(c))}: _*)
     }
   }
 
@@ -327,7 +327,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample
    * for details.
    *
-   * `smvQuantile` calculated from Spark's `percentRank`. The algorithm is equavalent to the
+   * `smvQuantile` calculated from Spark's `percent_rank`. The algorithm is equavalent to the
    * one labled as `R-7, Excel, SciPy-(1,1), Maple-6` in above wikipedia page. Please note it
    * is slight different from SAS's default algorithm (labled as SAS-5).
    *
@@ -557,7 +557,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val w       = winspec.orderBy(orders: _*)
     val rankcol = mkUniq(df.columns, "rank")
     val rownum  = mkUniq(df.columns, "rownum")
-    val r1      = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    val r1      = df.smvSelectPlus(rank() over w as rankcol, row_number() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 

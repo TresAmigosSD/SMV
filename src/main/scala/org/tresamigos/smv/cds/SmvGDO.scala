@@ -45,8 +45,7 @@ object SmvGDO {
                           orderCols: Seq[Expression]): Ordering[InternalRow] = {
     val keyOrderPair: Seq[(NamedExpression, SortDirection)] = orderCols.map { c =>
       c match {
-        //For 2.1: case SortOrder(e: NamedExpression, direction, nullOrdering) => (e, direction)
-        case SortOrder(e: NamedExpression, dircation: SortDirection) => (e, dircation)
+        case SortOrder(e: NamedExpression, direction: SortDirection) => (e, direction)
         case e: NamedExpression                                      => (e, Ascending)
       }
     }
@@ -139,6 +138,7 @@ case class SmvChunkUDF(
 )
 
 /* Add back chunkByPlus for project migration */
+@deprecated("will remove after 1.3", "1.3")
 private[smv] class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends SmvGDO {
   override val inGroupKeys = Nil
 

@@ -14,17 +14,17 @@
 
 package org.tresamigos.smv
 
-import java.io.{PrintWriter, File}
+import java.io.{File, PrintWriter}
 
-import org.apache.log4j.{LogManager, Logger, Level}
+import org.apache.log4j.{Level, LogManager, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.hive.test.TestHive
 import org.scalatest._
 
 trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
-  var sc: SparkContext       = _
-  var sqlContext: SQLContext = _
+  var sqlContext: SQLContext        = _
+  var sc: SparkContext              = _
 
   def disableLogging = false
 
@@ -66,11 +66,10 @@ trait SparkTestUtil extends FunSuite with BeforeAndAfterAll with Matchers {
   }
 
   override def afterAll() = {
-    sqlContext = null
-    sc = null
-    System.clearProperty("spark.master.port")
-    // re-enable normal logging for next test if we disabled logging here.
-    if (disableLogging) SparkTestUtil.setLoggingLevel(Level.ERROR)
+    // Don't clean up Spark on every test suite until we figure out
+    // what's wrong with #588.
+    // We should provide a slow and fast path, where the latter properly
+    // shutsdown SparkContext at the end of every testsuite.
     super.afterAll()
   }
 

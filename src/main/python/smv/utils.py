@@ -32,7 +32,7 @@ def smv_copy_array(sc, *cols):
         jcols = sc._gateway.new_array(sc._jvm.org.apache.spark.sql.Column, len(cols))
         for i in range(0, len(jcols)):
             jcols[i] = cols[i]._jc
-    elif isinstance(elem, DataFrame):
+    elif (isinstance(elem, DataFrame)):
         jcols = sc._gateway.new_array(sc._jvm.org.apache.spark.sql.DataFrame, len(cols))
         for i in range(0, len(jcols)):
             jcols[i] = cols[i]._jdf

@@ -14,14 +14,11 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.GenericRow
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
-
-import dqm.{ParserLogger, TerminateParserLogger}
+import org.tresamigos.smv.dqm._
 
 /**
  * A class to convert Csv strings to DF
@@ -32,7 +29,6 @@ private[smv] class FileIOHandler(
     schemaPath: Option[String] = None,
     parserValidator: ParserLogger = TerminateParserLogger
 ) {
-
   private def fullSchemaPath = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
 
   def readSchema(): SmvSchema = SmvSchema.fromFile(sqlContext.sparkContext, fullSchemaPath)
@@ -132,7 +128,7 @@ private[smv] class FileIOHandler(
       csvAttributes: CsvAttributes = CsvAttributes.defaultCsv,
       strNullValue: String = ""
   ) {
-
+    val sc = sqlContext.sparkContext
     val schema = if (schemaWithMeta == null) { SmvSchema.fromDataFrame(df, strNullValue) } else {
       schemaWithMeta
     }
@@ -144,7 +140,7 @@ private[smv] class FileIOHandler(
     val headerStr =
       fieldNames.map(_.trim).map(fn => qc + fn + qc).mkString(csvAttributes.delimiter.toString)
 
-    val csvHeaderRDD = df.sqlContext.sparkContext.parallelize(Array(headerStr), 1)
+    val csvHeaderRDD = sc.parallelize(Array(headerStr), 1)
     val csvBodyRDD   = df.map(schema.rowToCsvString(_, csvAttributes))
 
     //As far as I know the union maintain the order. So the header will end up being the
@@ -156,7 +152,7 @@ private[smv] class FileIOHandler(
 
     //Need to save schema last, because the schema file is treated as a success marker
     csvRDD.saveAsTextFile(dataPath)
-    schemaWithAttributes.saveToFile(df.sqlContext.sparkContext, fullSchemaPath)
+    schemaWithAttributes.saveToFile(sc, fullSchemaPath)
   }
 
 }

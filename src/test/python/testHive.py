@@ -26,7 +26,10 @@ class HiveTest(SmvBaseTest):
         hivedir = "file://{0}/{1}/smv_hive_test".format(tempfile.gettempdir(), getpass.getuser())
         cls.smvApp.sqlContext.setConf("hive.metastore.warehouse.dir", hivedir)
 
-
+# temporarily turn off the tests in this file. since we can't figure out
+# a way to specify the temp hive storage conf in 2.1. Specify
+# spark.sql.warehouse.dir doesn't solve the problem. The only way to
+# make the tests pass is to create /user/warehouse/m dir on the building machine
 class PublishModuleToHiveTest(HiveTest):
     @classmethod
     def smvAppInitArgs(cls):

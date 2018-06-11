@@ -38,9 +38,9 @@ SMV and Spark perform various types of caching to minimize calculations and also
 Currently, the DataFrame cache for each `SmvDataSet` is internal to the `SmvDataSet`. This means that we lose its cache _each time it's reloaded_. This is acceptable under the assumption that the user reloads the `SmvDataSet` (by running the module dynamically) only when they have made changes and want to see the result. However, if the `SmvDataSet` will be reloaded every time it is resolved by name we will need to move the cache somewhere that is persistent when the `SmvDataSet` reloads so that the `DataFrame` can be reused if no changes have been made. The cache can be keyed using `SmvDataSet's` `versionedFqn`, which combines the FQN and `hashOfHash` of the `SmvDataSet`.
 
 
-# External Dependencies and requireDS()
+# External Dependencies and requiresDS()
 
-Dependencies for an `SmvModule` are specified by the user through the module's `requiresDS()`. This method is then called internally e.g. in the `SmvModule`'s `doRun()`. If the user lists an `SmvExtModule` as a dependency, e.g. `requireDS = Seq(SmvExtModule('a.b.c'))`, a new `SmvExtModule` is instantiated _every time_ `requireDS()` is invoked - note that the user is in fact supplying a function, not a static value. This presents problems for our design:
+Dependencies for an `SmvModule` are specified by the user through the module's `requiresDS()`. This method is then called internally e.g. in the `SmvModule`'s `doRun()`. If the user lists an `SmvExtModule` as a dependency, e.g. `requiresDS = Seq(SmvExtModule('a.b.c'))`, a new `SmvExtModule` is instantiated _every time_ `requiresDS()` is invoked - note that the user is in fact supplying a function, not a static value. This presents problems for our design:
 
 ### Problem 1:
 
@@ -52,13 +52,13 @@ Consider a simple dependency scenario
 ```
 where `x` is a Scala modules and `y` is a Python module. For simplicity's sake, assume neither of them is ephemeral. Suppose the user runs `x` through any entrypoint.
 
-First, `SmvApp` asks `DataSetMgr` to load `'x'`. `DataSetMgr` delegates to `DataSetRepoScala` to load `x`, then asks `x` for its dependencies through `requireDS()`, which returns a single `SmvExtModule` of `y`. Then, `DataSetMgr` delegates to `DataSetRepoPython` to load the `ISmvModulePy4J` for `y`, presumably wraps it in an `SmvExtModule` (the current wrapper for external modules) we will call `y1`, and returns `y1` to `DataSetMgr`.
+First, `SmvApp` asks `DataSetMgr` to load `'x'`. `DataSetMgr` delegates to `DataSetRepoScala` to load `x`, then asks `x` for its dependencies through `requiresDS()`, which returns a single `SmvExtModule` of `y`. Then, `DataSetMgr` delegates to `DataSetRepoPython` to load the `ISmvModulePy4J` for `y`, presumably wraps it in an `SmvExtModule` (the current wrapper for external modules) we will call `y1`, and returns `y1` to `DataSetMgr`.
 
-Fast-forwarding a bit, `DataSetMgr` returns `x` to `SmvApp`, which runs `x` using `x.rdd()`. When `x` tries to compute its `DataFrame`, it will first try to read its cache on disk, invoking its `hashOfHash()` in the process. `hashOfHash()` recursively calls the `hashOfHash()` of each of `x`'s dependencies as discovered through `requireDS()`, including a _new_ `SmvExtModule` `y2` of `y`. Invoking `y2`'s `hashOfHash()` causes `y2` to resolve its `ISmvModulePy4J` by asking `DataSetMgr` to load `'y'`.
+Fast-forwarding a bit, `DataSetMgr` returns `x` to `SmvApp`, which runs `x` using `x.rdd()`. When `x` tries to compute its `DataFrame`, it will first try to read its cache on disk, invoking its `hashOfHash()` in the process. `hashOfHash()` recursively calls the `hashOfHash()` of each of `x`'s dependencies as discovered through `requiresDS()`, including a _new_ `SmvExtModule` `y2` of `y`. Invoking `y2`'s `hashOfHash()` causes `y2` to resolve its `ISmvModulePy4J` by asking `DataSetMgr` to load `'y'`.
 
 Modules should be singletons, but `y` has now loaded twice. This will occur again when `x` resolves the RDDs of its dependencies. Also, each time this occurs, the entire dependency tree of `y` (which may be quite large) is reloaded.
 
-Solution: For backwards compatibility's sake, we can't change how users specify dependencies. However, we can change how internals of SMV access a module's dependencies. We will differentiate between `requireDS()`, which will remain a function defined by the user to specify a module's dependencies, and `resolvedRequireDS`, the module's (fixed) canonical list of dependencies. `resolvedRequireDS` would be set by a single call to `requireDS()`. Thus we will neither instantiate new `SmvExtModule`s nor reload the external module when inspecting a module's dependencies.
+Solution: For backwards compatibility's sake, we can't change how users specify dependencies. However, we can change how internals of SMV access a module's dependencies. We will differentiate between `requiresDS()`, which will remain a function defined by the user to specify a module's dependencies, and `resolvedrequiresDS`, the module's (fixed) canonical list of dependencies. `resolvedrequiresDS` would be set by a single call to `requiresDS()`. Thus we will neither instantiate new `SmvExtModule`s nor reload the external module when inspecting a module's dependencies.
 
 
 ### Problem 2
@@ -75,7 +75,7 @@ where Scala module `x` depends on Scala module `z` and both depend on Python mod
 
 Note that when we call `x` and `z`'s respective `requiresDS()`, each will still instantiate a distinct new `SmvExtModule` of `y`. This is the problematic for the same reasons as before.
 
-Solution: Separate the declarative functionality of `SmvExtModule` needed by the user and the external module interface functionality needed internally. `SmvExtModule` will continue to be a declarative sugar for the user, but will no longer wrap `ISmvModulePy4J`. Instead, a new class `SmvExtModulePython` will take over this responsibility. `SmvExtModulePython` will be created only by `DataSetRepoPython`. Thus, although 2 `SmvExtModule`s of `y` are created when while loading `x`, neither of them forces a load of the Python module. In fact, `DataSetMgr` will load a `SmvExtModulePython` of `y` just once (using the same mechanism that prevents duplication of Scala modules) and this will be inserted in `x`'s `resolvedRequireDS`. When `DataSetMgr` returns `x` to the app, its `resolvedRequireDS` will include not an `SmvExtModule` but an `SmvExtModulePython`.
+Solution: Separate the declarative functionality of `SmvExtModule` needed by the user and the external module interface functionality needed internally. `SmvExtModule` will continue to be a declarative sugar for the user, but will no longer wrap `ISmvModulePy4J`. Instead, a new class `SmvExtModulePython` will take over this responsibility. `SmvExtModulePython` will be created only by `DataSetRepoPython`. Thus, although 2 `SmvExtModule`s of `y` are created when while loading `x`, neither of them forces a load of the Python module. In fact, `DataSetMgr` will load a `SmvExtModulePython` of `y` just once (using the same mechanism that prevents duplication of Scala modules) and this will be inserted in `x`'s `resolvedrequiresDS`. When `DataSetMgr` returns `x` to the app, its `resolvedrequiresDS` will include not an `SmvExtModule` but an `SmvExtModulePython`.
 
 
 # Module Resolution
@@ -89,7 +89,7 @@ y(p)  z(s)
 ```
 where `x` and `z` are both Scala modules and `y` is a Python module.
 
-When `DataSetMgr` loads `x`, it must ensure that the classes of `x`'s dependencies `y` and `z` are also loaded. Because of the way the Java `Classloader` work, when a `Classloader` loads the class of `x` it will also load the class of `x`'s Scala (but not Python) dependencies, and if `DataSetMgr` invokes `x.requireDS()` it will create an instance of `z` and an instance of `SmvExtModule`; however, it will not create an instance of `y` on the Python side. Thus, we must ensure that `y` is loaded now, but `z` is not loaded a second time.
+When `DataSetMgr` loads `x`, it must ensure that the classes of `x`'s dependencies `y` and `z` are also loaded. Because of the way the Java `Classloader` work, when a `Classloader` loads the class of `x` it will also load the class of `x`'s Scala (but not Python) dependencies, and if `DataSetMgr` invokes `x.requiresDS()` it will create an instance of `z` and an instance of `SmvExtModule`; however, it will not create an instance of `y` on the Python side. Thus, we must ensure that `y` is loaded now, but `z` is not loaded a second time.
 
 ### Problem 2
 `DataSetMgr` must facilitate `SmvModule` in loading its Python dependencies and resolving them as `SmvExtModulePython`s, but it is desirable that `SmvModule` know nothing about the `DataSetRepo`s or the `DataSetMgr`.
@@ -97,7 +97,7 @@ When `DataSetMgr` loads `x`, it must ensure that the classes of `x`'s dependenci
 These 2 problems motivate the distinction of a new responsibility which we will term resolution of `SmvDataSet`s. Within a single `DataSetMgr.load`, to resolve an `SmvDataSet` is to
 
 * Load its canonical class if it has not already been loaded in this transaction
-* Resolve its dependencies and populate `resolvedRequireDS`
+* Resolve its dependencies and populate `resolvedrequiresDS`
 * Return its canonical instance
 
 By canonical class for an `SmvDataSet` we indicate the `SmvDataSet` class which is actually runnable, i.e. not an `SmvExtModule`. The canonical class of a subclass C of `SmvDataSet` is C itself _unless_ C is an `SmvExtModule`, in which case it is the `SmvExtModulePython` that corresponds to the same `SmvModule`.
@@ -118,7 +118,7 @@ We will create a new class hierarchy for repo factories. `DataSetRepoFactory` wi
 
 # runParams
 
-Since `SmvExtModule`s for the same dataset will not be unique, `runParams` cannot be a simple map from `SmvDataSet` to `DataFrame` (the `SmvExtModule` used as a key by the user will not be the same created by `requireDS()`). `runParams` will internally map `SmvDataSet` to `DataFrame` by name.
+Since `SmvExtModule`s for the same dataset will not be unique, `runParams` cannot be a simple map from `SmvDataSet` to `DataFrame` (the `SmvExtModule` used as a key by the user will not be the same created by `requiresDS()`). `runParams` will internally map `SmvDataSet` to `DataFrame` by name.
 
 
 # Module links

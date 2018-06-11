@@ -21,6 +21,18 @@ class TestConfig(object):
     smvApp = None
 
     @classmethod
+    def sparkContext(cls):
+        if not hasattr(cls, '_sc'):
+            cls._sc = SparkContext(appName="SMV Python Tests")
+        return cls._sc
+
+    @classmethod
+    def sqlContext(cls):
+        if not hasattr(cls, "_sqlc"):
+            cls._sqlc = HiveContext(cls.sparkContext())
+        return cls._sqlc
+
+    @classmethod
     def setSmvApp(cls, app):
         """Set the canonical SmvApp
 
@@ -29,26 +41,12 @@ class TestConfig(object):
             run.
         """
         cls.smvApp = app
-        cls.sqlc = app.sqlContext
-        cls.sc = app.sc
+        cls._sqlc = app.sqlContext
+        cls._sc = app.sc
 
     @classmethod
     def originalSmvApp(cls):
         return cls.smvApp
-
-    # shared SparkContext
-    @classmethod
-    def sparkContext(cls):
-        if not hasattr(cls, 'sc'):
-            cls.sc = SparkContext(appName="SMV Python Tests")
-        return cls.sc
-
-    # shared HiveContext
-    @classmethod
-    def sqlContext(cls):
-        if not hasattr(cls, 'sqlc'):
-            cls.sqlc = HiveContext(cls.sparkContext())
-        return cls.sqlc
 
     # smv args specified via command line
     @classmethod

@@ -18,7 +18,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, Column}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.contrib.smv.{hasBroadcastHint, propagateBroadcastHint}
 import org.apache.spark.sql.types.{StructType, StringType, StructField, LongType}
 import org.apache.spark.sql.catalyst.expressions.{NamedExpression, GenericRow}
 import org.apache.spark.annotation.Experimental
@@ -284,7 +283,8 @@ class SmvDFHelper(df: DataFrame) {
       otherPlan: DataFrame,
       on: Column,
       joinType: String = "inner",
-      postfix: String = null
+      postfix: String = null,
+      broadcastOther: Boolean = false
   ): DataFrame = {
     val namesLower = df.columns.map { c =>
       c.toLowerCase
@@ -297,7 +297,9 @@ class SmvDFHelper(df: DataFrame) {
 
     val renamedOther = otherPlan.smvRenameField(renamedFields: _*)
 
-    df.join(propagateBroadcastHint(otherPlan, renamedOther), on: Column, joinType)
+    val otherToJoin = if (broadcastOther) broadcast(renamedOther) else renamedOther
+
+    df.join(otherToJoin, on: Column, joinType)
   }
 
   /**
@@ -324,9 +326,9 @@ class SmvDFHelper(df: DataFrame) {
       keys: Seq[String],
       joinType: String,
       postfix: String = null,
-      dropRightKey: Boolean = true
+      dropRightKey: Boolean = true,
+      broadcastOther: Boolean = false
   ): DataFrame = {
-    import df.sqlContext.implicits._
 
     keys.foreach { k =>
       Seq(df, otherPlan) foreach { plan =>
@@ -342,12 +344,14 @@ class SmvDFHelper(df: DataFrame) {
     val joinedKeys    = keys zip rightKeys
     val renamedFields = joinedKeys.map { case (l, r) => (l -> r) }
     val renamedOther  = otherPlan.smvRenameField(renamedFields: _*)
+    import df.sqlContext.implicits._
     val joinOpt       = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
 
-    val dfJoined = df.joinUniqFieldNames(propagateBroadcastHint(otherPlan, renamedOther),
+    val dfJoined = df.joinUniqFieldNames(renamedOther,
                                          joinOpt,
                                          joinType,
-                                         postfix)
+                                         postfix,
+                                         broadcastOther)
     val dfCoalescedKeys = joinType match {
       case SmvJoinType.Outer | SmvJoinType.RightOuter =>
         // for each key used in the outer-join, coalesce key value from left to right
@@ -819,7 +823,7 @@ class SmvDFHelper(df: DataFrame) {
     val w       = Window.orderBy(orders: _*)
     val rankcol = mkUniq(df.columns, "rank")
     val rownum  = mkUniq(df.columns, "rownum")
-    val r1      = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    val r1      = df.smvSelectPlus(rank() over w as rankcol, row_number() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 
@@ -867,7 +871,7 @@ class SmvDFHelper(df: DataFrame) {
     val skewDf2     = df2.where(df2(key).isin(skewVals: _*))
     val balancedDf2 = df2.where(!df2(key).isin(skewVals: _*))
 
-    val skewRes     = skewDf1.smvJoinByKey(broadcast(skewDf2), Seq(key), joinType)
+    val skewRes     = skewDf1.smvJoinByKey(skewDf2, Seq(key), joinType, broadcastOther = true)
     val balancedRes = balancedDf1.smvJoinByKey(balancedDf2, Seq(key), joinType)
 
     balancedRes.smvUnion(skewRes)
@@ -1047,7 +1051,7 @@ class SmvDFHelper(df: DataFrame) {
   private[smv] def smvPipeCount(counter: Accumulator[Long]): DataFrame = {
     counter.setValue(0l)
     val dummyFunc = udf({ () =>
-      counter += 1l
+      counter add 1l
       true
     })
 

@@ -75,9 +75,8 @@ case class DQMRule(
   val name = if (ruleName == null) rule.toString else ruleName
 
   private[smv] def createCheckCol(dqmState: DQMState): (Column, Column, Column) = {
-    val refCols = rule.toExpr.references.toSeq.map { r =>
-      r.name
-    }
+    val refCols = rule.toExpr.references.baseSet.toSeq.map { _.a.name }
+    
     val catCols = refCols
       .flatMap { r =>
         Seq(lit(s"$r="), new Column(r), lit(","))

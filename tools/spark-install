@@ -14,8 +14,8 @@ spark_version=$(cat "$smv_tools"/../.spark_version)
 remote_tarball="https://archive.apache.org/dist/spark/spark-${spark_version}/spark-${spark_version}-bin-hadoop2.6.tgz"
 echo $remote_tarball
 local_tarball=$(basename $remote_tarball)
-echo "[INFO] Downloading $local_tarball."
-curl -L --progress-bar --fail "$remote_tarball" > "$local_tarball"
+echo "[INFO] Downloading $remote_tarball to $local_tarball."
+curl -OL --progress-bar --fail "$remote_tarball" > "$local_tarball"
 
 tar -zxf "$local_tarball"
 rm -rf "$local_tarball"

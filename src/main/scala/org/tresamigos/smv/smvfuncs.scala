@@ -15,7 +15,7 @@ object smvfuncs {
   /**
    * smvFirst: by default return null if the first record is null
    *
-   * Since Spark "first" will return the first non-null value, we have to create
+   * Since Spark 1.5 "first" will return the first non-null value, we have to create
    * our version smvFirst which to retune the real first value, even if it's null.
    * The alternative form will try to return the first non-null value
    *

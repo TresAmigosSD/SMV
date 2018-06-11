@@ -33,7 +33,11 @@ class SmvChunkTest extends SmvTestUtil {
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq("[a]", "[ab]", "[c]", "[cd]"))
 
     val res2 = df.orderBy('k.asc, 'v.asc).chunkByPlus('k)(runCatFunc)
-    assertSrddSchemaEqual(res2, "k:String; v: String; vcat:String")
+    // As of Spark 2, merging StructTypes (which occurs inside chunkByPlus) marks
+    // fields present in only one of the StructTypes with metadata {"_OPTIONAL_": true}.
+    // See https://github.com/apache/spark/commit/4637fc08a3733ec313218fb7e4d05064d9a6262d
+    assertSrddSchemaEqual(res2,
+      """k: String; v: String; vcat: String""")
     assertUnorderedSeqEqual(res2.collect.map(_.toString),
                             Seq("[k1,a,a]", "[k1,b,ab]", "[k2,c,c]", "[k2,d,cd]"))
   }

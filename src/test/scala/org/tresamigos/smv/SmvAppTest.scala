@@ -111,8 +111,9 @@ package org.tresamigos.smv {
   class SmvAppModuleResolutionTest extends SparkTestUtil {
     val stageNames = Seq("org.tresamigos.smv.test1", "org.tresamigos.smv.test2")
     def config(modname: String): Unit =
-      SmvApp.init(Array("--smv-props", s"""smv.stages=${stageNames
-        .mkString(":")}""", "-m", modname), Option(sc), Option(sqlContext))
+      SmvApp.init(
+        Array("--smv-props", s"""smv.stages=${stageNames.mkString(":")}""", "-m", modname),
+        Option(sc), Option(sqlContext))
 
     test("should report non-existing modules") {
       val modname = "tooth-fary"
@@ -161,8 +162,7 @@ package org.tresamigos.smv {
 
       object testApp
           extends SmvApp(Seq("--purge-old-output", "--history-dir", testcaseTempDir, "--output-dir", testcaseTempDir),
-                         Option(sc),
-                         Option(sqlContext)) {
+                         Option(sc), Option(sqlContext)) {
         override lazy val allDataSets = Seq(m)
       }
       SmvApp.app = testApp

@@ -257,7 +257,7 @@ class JoinHelperTest extends SmvTestUtil {
   }
 }
 
-class smvUionTest extends SmvTestUtil {
+class smvUnionTest extends SmvTestUtil {
   test("test smvUion") {
     val df  = dfFrom("a:Integer; b:Double; c:String", """1,2.0,hello;
          2,3.0,hello2""")
@@ -372,7 +372,7 @@ class smvPipeCount extends SmvTestUtil {
   test("Test smvPipeCount") {
     val ssc     = sqlContext; import ssc.implicits._
     val a       = dfFrom("key:String", "a;b;c;d;e;f;g;h;i;j;k")
-    val counter = sc.accumulator(0l)
+    val counter = sc.accumulator(0L)
 
     val n1 = a.smvPipeCount(counter).count
     val n2 = counter.value

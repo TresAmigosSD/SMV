@@ -67,8 +67,8 @@ class SmvBaseTest(unittest.TestCase):
         from smv import SmvApp
         cls = self.__class__
         if not hasattr(cls, 'smvApp'):
+            cls.sparkSession = TestConfig.sparkSession()
             cls.sparkContext = TestConfig.sparkContext()
-            cls.sqlContext = TestConfig.sqlContext()
             cls.sparkContext.setLogLevel("ERROR")
 
             import random;
