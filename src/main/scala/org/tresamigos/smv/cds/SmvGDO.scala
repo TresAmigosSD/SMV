@@ -172,20 +172,6 @@ private[smv] class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends Sm
   }
 }
 
-/* For dedupByKeyWithOrder method */
-private[smv] class DedupWithOrderGDO(orders: Seq[Expression]) extends SmvGDO {
-  override val inGroupKeys                           = Nil
-  override def createOutSchema(inSchema: StructType) = inSchema
-
-  override def createInGroupMapping(inSchema: StructType) = {
-    val rowOrdering = SmvGDO.orderColsToOrdering(inSchema, orders);
-
-    { it: Iterable[InternalRow] =>
-      List(it.toSeq.min(rowOrdering))
-    }
-  }
-}
-
 /* For smvFillNullWithPrevValue method */
 private[smv] class FillNullWithPrev(orders: Seq[Expression], values: Seq[String]) extends SmvGDO {
   override val inGroupKeys                           = Nil
