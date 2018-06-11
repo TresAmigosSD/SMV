@@ -26,7 +26,6 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.Partitioner
 import org.apache.spark.annotation.Experimental
 
-import cds.SmvGDO
 import edd.Edd
 import org.apache.spark.sql.types.{StringType, DoubleType}
 
@@ -53,67 +52,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
   // convenience method to get a prototype WindowSpec object
   @inline private def winspec: WindowSpec = Window.partitionBy(keys.head, keys.tail: _*)
-
-  /**
-   * smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData
-   *
-   * Example:
-   * {{{
-   * val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
-   * val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
-   * }}}
-   **/
-  @Experimental
-  def smvMapGroup(gdo: SmvGDO, needConvert: Boolean = true): SmvGroupedData = {
-    val schema   = df.schema
-    val ordinals = schema.getIndices(keys: _*)
-    val rowToKeys: Row => Seq[Any] = { row =>
-      ordinals.map { i =>
-        row(i)
-      }
-    }
-
-    val outSchema      = gdo.createOutSchema(schema)
-    val inGroupMapping = gdo.createInGroupMapping(schema)
-    val rdd = df.rdd
-      .groupBy(rowToKeys)
-      .flatMapValues(rowsInGroup => {
-        val inRow =
-          if (needConvert) convertToCatalyst(rowsInGroup, schema)
-          else
-            rowsInGroup.map { r =>
-              InternalRow(r.toSeq: _*)
-            }
-
-        // convert Iterable[Row] to Iterable[InternalRow] first
-        // so we can apply the function inGroupMapping
-        val res = inGroupMapping(inRow)
-        // now we have to convert an RDD[InternalRow] back to RDD[Row]
-        if (needConvert)
-          convertToScala(res, outSchema)
-        else
-          res.map { r =>
-            Row(r.toSeq(outSchema): _*)
-          }
-      })
-      .values
-
-    /* since df.rdd method called ScalaReflection.convertToScala at the end on each row, here
-       after process, we need to convert them all back by calling convertToCatalyst. One key difference
-       between the Scala and Catalyst representation is the DateType, which is Scala RDD, it is a
-       java.sql.Date, and in Catalyst RDD, it is an Int. Please note, since df.rdd always convert Catalyst RDD
-       to Scala RDD, user should have no chance work on Catalyst RDD outside of DF.
-     */
-
-    // TODO remove conversion to catalyst type after all else compiles
-    // val converted = rdd.map{row =>
-    //   Row(row.toSeq.zip(outSchema.fields).
-    //     map { case (elem, field) =>
-    //       ScalaReflection.convertToCatalyst(elem, field.dataType)
-    //     }: _*)}
-    val newdf = df.sqlContext.createDataFrame(rdd, gdo.createOutSchema(schema))
-    SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
-  }
 
   /**
    * smvPivot on SmvGroupedData is similar to smvPivot on DF with the keys being provided in the `smvGroupBy` method instead of to the method directly.
@@ -903,10 +841,12 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   def smvFillNullWithPrevValue(orders: Column*)(values: String*): DataFrame = {
-    val gdo = new cds.FillNullWithPrev(orders.map { o =>
-      o.toExpr
-    }.toList, values)
-    smvMapGroup(gdo).toDF
+    // Window.currentRow and Window.unboundedPreceding were introduce after Spark 2.1
+    // To make the code work under Spark 2.0, still use 0, and Long.MinValue
+    val w = winspec.orderBy(orders: _*).rowsBetween(Long.MinValue, 0)
+    values.foldLeft(df) {
+      (_df, c) => _df.withColumn(c, last(c, ignoreNulls = true).over(w))
+    }
   }
 
   private[smv] def smvRePartition(partitioner: Partitioner): SmvGroupedData = {

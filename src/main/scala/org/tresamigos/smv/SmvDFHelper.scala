@@ -22,7 +22,6 @@ import org.apache.spark.sql.types.{StructType, StringType, StructField, LongType
 import org.apache.spark.sql.catalyst.expressions.{NamedExpression, GenericRow}
 import org.apache.spark.annotation.Experimental
 import org.apache.spark.util.LongAccumulator
-import cds.{SmvChunkUDF, SmvChunkUDFGDO}
 import edd.{Edd, Hist}
 import smvfuncs._
 
@@ -928,43 +927,6 @@ class SmvDFHelper(df: DataFrame) {
     SmvGroupedData(df, cols)
   }
 
-  /**
-   * Apply user defined `chunk` mapping on data grouped by a set of keys
-   *
-   * {{{
-   * val addFirst = (l: List[Seq[Any]]) => {
-   *   val firstv = l.head.head
-   *   l.map{r => r :+ firstv}
-   * }
-   * val addFirstFunc = SmvChunkUDF(
-   *      Seq('time, 'call_length),
-   *      SmvSchema.fromString("time: TimeStamp; call_length: Double; first_call_time: TimeStamp").toStructType,
-   *      addFirst)
-   * df.chunkBy('account, 'cycleId)(addFirstFunc)
-   * }}}
-   *
-   * TODO: Current version will not keep teh key columns. It's SmvChunkUDF's responsibility to
-   * make sure key column is carried. This behavior should be changed to automatically
-   * carry keys, as chanegs made on Spark's groupBy.agg
-   **/
-  @deprecated("will rename and refine interface", "1.5")
-  def chunkBy(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
-    val kStr = keys.map { _.name }
-    df.smvGroupBy(kStr(0), kStr.tail: _*)
-      .smvMapGroup(new SmvChunkUDFGDO(chunkUDF, false), false)
-      .toDF
-  }
-
-  /**
-   * Same as `chunkBy`, but add the new columns to existing columns
-   **/
-  @deprecated("will rename and refine interface", "1.5")
-  def chunkByPlus(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
-    val kStr = keys.map { _.name }
-    df.smvGroupBy(kStr(0), kStr.tail: _*)
-      .smvMapGroup(new SmvChunkUDFGDO(chunkUDF, true), false)
-      .toDF
-  }
 
   /**
    * For a set of DFs, which share the same key column, check the overlap across them.
