@@ -10,12 +10,33 @@ class SmvDriver(object):
         call `run`.
     """
     def create_smv_app(self, smv_args, driver_args):
+        """Override this to define how this driver's SmvApp is created                
+
+            Default is just SmvApp.createInstance(smv_args). Note that it's important to use `createInstance` to ensure that
+            the singleton app is set. 
+            
+            SmvDriver will parse the full CLI args to distinguish the SMV args from from the args to your driver.
+            
+            Args:
+                smv_args (list(str)): CLI args for SMV - should be passed to `SmvApp`)
+                driver_args (list(str)): CLI args for the driver
+        """
         return SmvApp.createInstance(smv_args)
 
     def main(self, app, driver_args):
+        """Override this to define the driver logic 
+
+            Default is to just call `run` onthe `SmvApp`. 
+
+            Args:
+                app (SmvApp): app which was constructed
+                driver_args (list(str)): CLI args for the driver
+        """
         app.run()
 
     def run(self):
+        """Run the driver
+        """
         args = sys.argv[1:]
 
         try:
