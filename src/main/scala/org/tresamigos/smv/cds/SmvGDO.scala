@@ -74,61 +74,6 @@ object SmvGDO {
 }
 
 
-/**
- * User defined "chuck" mapping function
- * see the `chunkBy` and `chunkByPlus` method of [[org.tresamigos.smv.SmvDFHelper]] for details
- **/
-case class SmvChunkUDF(
-    para: Seq[Symbol],
-    outSchema: StructType,
-    eval: List[Seq[Any]] => List[Seq[Any]]
-)
-
-/* Add back chunkByPlus for project migration */
-@deprecated("will remove after 1.3", "1.3")
-private[smv] class SmvChunkUDFGDO(cudf: SmvChunkUDF, isPlus: Boolean) extends SmvGDO {
-  override val inGroupKeys = Nil
-
-  override def createOutSchema(inSchema: StructType) = {
-    if (isPlus)
-      inSchema.mergeSchema(cudf.outSchema)
-    else
-      cudf.outSchema
-  }
-
-  override def createInGroupMapping(inSchema: StructType) = {
-    val ordinals = inSchema.getIndices(cudf.para.map { s =>
-      s.name
-    }: _*)
-
-    { it: Iterable[InternalRow] =>
-      val inGroup = it.toList
-      val input = inGroup.map { r =>
-        ordinals collect r.toSeq(inSchema)
-      }
-      val output = cudf.eval(input)
-      if (isPlus) {
-        inGroup.zip(output).map {
-          case (orig, added) =>
-            InternalRow.fromSeq(orig.toSeq(inSchema) ++ added)
-        }
-      } else {
-        output.map(InternalRow.fromSeq)
-      }
-/* For dedupByKeyWithOrder method */
-private[smv] class DedupWithOrderGDO(orders: Seq[Expression]) extends SmvGDO {
-  override val inGroupKeys                           = Nil
-  override def createOutSchema(inSchema: StructType) = inSchema
-
-  override def createInGroupMapping(inSchema: StructType) = {
-    val rowOrdering = SmvGDO.orderColsToOrdering(inSchema, orders);
-
-    { it: Iterable[InternalRow] =>
-      List(it.toSeq.min(rowOrdering))
-    }
-  }
-}
-
 /* For smvFillNullWithPrevValue method */
 private[smv] class FillNullWithPrev(orders: Seq[Expression], values: Seq[String]) extends SmvGDO {
   override val inGroupKeys                           = Nil
