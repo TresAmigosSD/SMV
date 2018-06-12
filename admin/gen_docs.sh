@@ -34,7 +34,7 @@ function define_vars()
   export PYTHONPATH="$PKG_DIR:$PYTHONPATH"
   # Need pyspark and py4j the sys.path so they can be imported by sphinx
   export PYTHONPATH="$SPARK_HOME/python/:$PYTHONPATH"
-  export PYTHONPATH="$SPARK_HOME/python/lib/py4j-0.8.2.1-src.zip:$PYTHONPATH"
+  export PYTHONPATH="$(ls -1 $SPARK_HOME/python/lib/py4j-*-src.zip):$PYTHONPATH"
 }
 
 function  build_pydocs()
