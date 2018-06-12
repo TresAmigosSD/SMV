@@ -298,29 +298,27 @@ class SmvGroupedData(object):
 
     def smvWithTimePanel(self, time_col, start, end):
         """Adding a specified time panel period to the DF
+
             Args:
                 time_col (str): the column name in the data as the event timestamp
-                start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel
-                package for details
+                start (panel.PartialTime): could be Day, Month, Week, Quarter, refer
+                    the panel package for details
                 end (panel.PartialTime): should be the same time type as the "start"
-                addMissingTimeWithNull (boolean): Default True. when some PartialTime is missing whether to
-                fill null records
-
-            Example:
-
-            >>> df.smvGroupBy("K").smvWithTimePanel("TS", Week(2012, 1, 1), Week(2012, 12, 31))
+                addMissingTimeWithNull (boolean): Default True. when some PartialTime
+                    is missing whether to fill null records
 
             Returns:
                 (DataFrame): a result data frame with keys, and a column with name `smvTime`, and
                     other input columns. Refer the panel package for the potential forms of
                     different PartialTimes.
 
-                    Since `TimePanel` defines a period of time, if for some group in the data
-                    there are missing Months (or Quarters), when addMissingTimeWithNull is true,
-                    this function will add records with non-null keys and
-                    all possible `smvTime` columns with all other columns null-valued.
+            Note:
+                Since `TimePanel` defines a period of time, if for some group in the data
+                there are missing Months (or Quarters), when addMissingTimeWithNull is true,
+                this function will add records with non-null keys and
+                all possible `smvTime` columns with all other columns null-valued.
 
-            Example with on data:
+            Example:
 
                 Given DataFrame df as
 
@@ -337,7 +335,7 @@ class SmvGroupedData(object):
                 after applying
 
                 >>> import smv.panel as P
-                >>> df.smvGroupBy("k").smvWithTimePanel("TS", Month(2014,1), Month(2014, 3))
+                >>> df.smvGroupBy("k").smvWithTimePanel("TS", P.Month(2014,1), P.Month(2014, 3))
 
                 the result is
 
