@@ -115,12 +115,14 @@ class SmvInputBase(SmvDataSet, ABC):
 
 class SmvInputFromFile(SmvInputBase):
     """Base class for any input based on files on HDFS or local
+
         Concrete class need to provide:
-            - path (str): path relative to smv.inputDir, or
-                - fullPath (str): file full path with protocol
-                - fullSchemaPath (str): schema file's full path, or
-            - schema (StructType): schema object
-            - readAsDF (DataFrame): file reading method
+
+            * path (str): path relative to smv.inputDir, or
+            * fullPath (str): file full path with protocol
+            * fullSchemaPath (str): schema file's full path, or
+            * schema (StructType): schema object
+
     """
     def path(self):
         """Relative path to smv.dataDir config parameter"""
@@ -166,10 +168,11 @@ class SmvInputFromFile(SmvInputBase):
 class SmvXmlFile(SmvInputFromFile):
     """Input from file in XML format
         Concrete class need to provide:
-            - rowTag (str): XML tag for identifying a row
-            - path (str): File path relative to smv.InputDir. Or
-              - fullPath (str): file full path with protocol
-              - fullSchemaPath (str): full path of the schema JSON file or None (infer schema)
+
+            * rowTag (str): XML tag for identifying a row
+            * path (str): File path relative to smv.InputDir. Or
+            * fullPath (str): file full path with protocol
+            * fullSchemaPath (str): full path of the schema JSON file or None (infer schema)
     """
 
     @abc.abstractmethod

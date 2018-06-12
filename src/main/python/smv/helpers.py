@@ -301,10 +301,10 @@ class SmvGroupedData(object):
             Args:
                 time_col (str): the column name in the data as the event timestamp
                 start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel
-                    package for details
+                package for details
                 end (panel.PartialTime): should be the same time type as the "start"
                 addMissingTimeWithNull (boolean): Default True. when some PartialTime is missing whether to
-                    fill null records
+                fill null records
 
             Example:
 
@@ -345,17 +345,18 @@ class SmvGroupedData(object):
                 | K | TS         | V    | smvTime |
                 +===+============+======+=========+
                 | 1 | 2014-01-01 | 1.2  | M201401 |
-                +---+------------+------+---------|
+                +---+------------+------+---------+
                 | 1 | 2014-03-01 | 4.5  | M201403 |
-                +---+------------+------+---------|
+                +---+------------+------+---------+
                 | 1 | 2014-03-25 | 10.3 | M201403 |
-                +---+------------+------+---------|
+                +---+------------+------+---------+
                 | 1 | None       | None | M201401 |
-                +---+------------+------+---------|
+                +---+------------+------+---------+
                 | 1 | None       | None | M201402 |
-                +---+------------+------+---------|
+                +---+------------+------+---------+
                 | 1 | None       | None | M201403 |
-                +---+------------+------+---------|
+                +---+------------+------+---------+
+
         """
         return DataFrame(self.sgd.smvWithTimePanel(time_col, start, end), self.df.sql_ctx)
 
