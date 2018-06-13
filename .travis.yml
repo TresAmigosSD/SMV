@@ -6,6 +6,7 @@ install:
   - export PATH="$PATH:$(pwd)/spark/bin"
   - pyenv install 2.7.10
   - pyenv install 3.5.2
+  - pyenv install 3.6.5
   - pyenv local 3.5.2 2.7.10
   - pip install tox
 script:
