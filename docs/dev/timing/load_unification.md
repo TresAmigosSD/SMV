@@ -1,6 +1,6 @@
 # Benchmarking the unified loading scheme
 
-To benchmark module loading after the unification, the component tasks of `SmvApp.modulesToRun` were timed for the scenario that the user invokes `smv-pyrun --run-app` on an application of 1000 modules with a linear dependency. The tasks taking the most time were in turn decomposed for further timing. `modulesToRun` was decomposed as follows:
+To benchmark module loading after the unification, the component tasks of `SmvApp.modulesToRun` were timed for the scenario that the user invokes `smv-run --run-app` on an application of 1000 modules with a linear dependency. The tasks taking the most time were in turn decomposed for further timing. `modulesToRun` was decomposed as follows:
 
 ```
 modulesToRun

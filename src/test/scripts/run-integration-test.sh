@@ -49,7 +49,7 @@ echo "--------- BUILD INTEGRATION APP -------------"
 sbt clean assembly
 
 echo "--------- RUN INTEGRATION APP -------------"
-../../../tools/smv-pyrun \
+../../../tools/smv-run \
     --smv-props \
     smv.inputDir="file://$(pwd)/data/input" \
     smv.outputDir="file://$(pwd)/data/output" --run-app \
@@ -103,10 +103,10 @@ function verify_hash_changed() {
 
 echo "--------- RUN HASH TEST MODULE -------------"
 clear_data_dir
-../../../tools/smv-pyrun -m $HASH_TEST_MOD
+../../../tools/smv-run -m $HASH_TEST_MOD
 
 echo "--------- RERUN UNCHANGED TEST MODULE -------------"
-../../../tools/smv-pyrun -m $HASH_TEST_MOD
+../../../tools/smv-run -m $HASH_TEST_MOD
 
 echo "--------- VERIFY HASH UNCHANGED -------------"
 verify_hash_unchanged
@@ -117,7 +117,7 @@ HASH_TEST_MOD_FILE="src/main/python/$(sed -e "s/\./\//g" <<< "$HASH_TEST_PKG").p
 sed -i"" -e "s/table1/table2/" $HASH_TEST_MOD_FILE
 
 echo "--------- RUN CHANGED MODULE -------------"
-../../../tools/smv-pyrun -m hashtest.modules.M
+../../../tools/smv-run -m hashtest.modules.M
 
 echo "--------- VERIFY HASH CHANGED -------------"
 verify_hash_changed 1
@@ -126,7 +126,7 @@ echo "--------- TOUCH INPUT CSV -------------"
 touch data/input/hashtest/table.csv
 
 echo "--------- RUN MODULE WITH UPDATED CSV -------------"
-../../../tools/smv-pyrun -m hashtest.modules.M
+../../../tools/smv-run -m hashtest.modules.M
 
 echo "--------- VERIFY HASH CHANGED -------------"
 verify_hash_changed 2
@@ -135,7 +135,7 @@ echo "--------- CHANGE INPUT SCHEMA -------------"
 sed -i"" -e "s/String/Integer/" data/input/hashtest/table.schema
 
 echo "--------- RUN MODULE WITH UPDATED SCHEMA -------------"
-../../../tools/smv-pyrun -m hashtest.modules.M
+../../../tools/smv-run -m hashtest.modules.M
 
 echo "--------- VERIFY HASH CHANGED -------------"
 verify_hash_changed 3
@@ -156,7 +156,7 @@ echo "--------- GENERATE ENTERPRISE APP -------------"
 (
 cd $E_APP_NAME
 echo "--------- RUN ENTERPRISE APP -------------"
-../../../tools/smv-pyrun --run-app
+../../../tools/smv-run --run-app
 )
 
 echo "--------- GENERATE SIMPLE APP -------------"
@@ -165,7 +165,7 @@ echo "--------- GENERATE SIMPLE APP -------------"
 (
 cd $S_APP_NAME
 echo "--------- RUN SIMPLE APP -------------"
-../../../tools/smv-pyrun --run-app
+../../../tools/smv-run --run-app
 )
 
 echo "--------- TEST COMPLETE -------------"

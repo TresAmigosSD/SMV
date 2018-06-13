@@ -24,5 +24,5 @@ Data can be read over JDBC using `SmvJdbcTable`. Read more [here](smv_input.md#j
 
 When running an application, you may publish data over a JDBC connection using the `--publish-jdbc` option. Make sure that the application is properly configured when you do this. For example
 ```shell
-$ smv-pyrun --run-app --publish-jdbc --smv-props smv.jdbc.url="my-url" -- --jars "my-jdbc-driver.jar"
+$ smv-run --run-app --publish-jdbc --smv-props smv.jdbc.url="my-url" -- --jars "my-jdbc-driver.jar"
 ```
