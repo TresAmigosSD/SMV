@@ -183,6 +183,7 @@ class SmvDataSet(ABC):
         """Hash computed based on the source code of the dataset's class
         """
         cls = self.__class__
+        # get hash of module's source code text
         try:
             src = inspect.getsource(cls)
             src_no_comm = _stripComments(src)
@@ -201,9 +202,8 @@ class SmvDataSet(ABC):
                 self.urn() + " defined in shell can't be persisted"
             )
 
-        res += self.config_hash()
 
-        # include sourceCodeHash of parent classes
+        # incorporate source code hash of module's parent classes
         for m in inspect.getmro(cls):
             try:
                 # TODO: it probably shouldn't matter if the upstream class is an SmvDataSet - it could be a mixin
@@ -213,6 +213,13 @@ class SmvDataSet(ABC):
             except: 
                 pass
 
+        # NOTE: Until SmvRunConfig (now deprecated) is removed entirely, we consider 2 source code hashes, 
+        # config_hash and _smvGetRunConfigHash. The former is influenced by KVs for all keys listed in requiresConfig
+        # while latter is influenced by KVs for all keys listed in smv.config.keys.
+        # TODO: Is the config really a component of the "source code"? This method is called `sourceCodeHash`, after all.
+
+        # incorporate hash of KVs for config keys listed in requiresConfig
+        res += self.config_hash()
 
         # if module inherits from SmvRunConfig, then add hash of all config values to module hash
         try:

@@ -21,8 +21,12 @@ import traceback
 from smv.smvapp import SmvApp
 
 class SmvRunConfig(object):
-    """Mix-in class to SmvModules that enable the module to access user run
-       configuration parameters at run time.
+    """DEPRECATED
+
+        Run config accessor methods have been absorbed by SmvDataSet, so `SmvRunConfig` is maintained
+        to support existing projects. `SmvRunConfig's` influence on the dataset hash is preserved so that
+        modules do not have to transition overnight to using `SmvDataSet.requiresConfig` in order for the
+        config to influence the dataset hash.
     """
 
     def _smvGetRunConfigHash(self):
