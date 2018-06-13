@@ -28,6 +28,23 @@ class SmvRunConfig(object):
         modules do not have to transition overnight to using `SmvDataSet.requiresConfig` in order for the
         config to influence the dataset hash.
     """
+    
+    def smvGetRunConfig(self, key):
+        """return the current user run configuration value for the given key."""
+        return self.smvApp.getConf(key)
+    
+    def smvGetRunConfigAsInt(self, key):
+        runConfig = self.smvGetRunConfig(key);
+        if runConfig is None:
+            return None
+        return int(runConfig)
+
+    def smvGetRunConfigAsBool(self, key):
+        runConfig = self.smvGetRunConfig(key);
+        if runConfig is None:
+            return None
+        sval = runConfig.strip().lower()
+        return (sval == "1" or sval == "true")
 
     def _smvGetRunConfigHash(self):
         """return the app level hash of the all the current user config values"""
