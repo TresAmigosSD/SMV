@@ -28,7 +28,7 @@ class SmvRunConfig(object):
         modules do not have to transition overnight to using `SmvDataSet.requiresConfig` in order for the
         config to influence the dataset hash.
     """
-    
+
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
         return self.smvApp.getConf(key)
@@ -48,4 +48,6 @@ class SmvRunConfig(object):
 
     def _smvGetRunConfigHash(self):
         """return the app level hash of the all the current user config values"""
-        return SmvApp.getInstance().j_smvPyClient.getRunConfigHash()
+        app = SmvApp.getInstance()
+        app.warn("SmvRunConfig is deprecated. Accessors like smvGetRunConfig are now available directly on SmvDataSet.")
+        return app.j_smvPyClient.getRunConfigHash()
