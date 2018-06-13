@@ -21,7 +21,8 @@ libraryDependencies ++= Seq(
   "org.joda"                     % "joda-convert"       % "1.7",
   "joda-time"                    % "joda-time"          % "2.7",
   "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.2",
-  "com.github.mdr"               %% "ascii-graphs"      % "0.0.6"
+  "com.github.mdr"               %% "ascii-graphs"      % "0.0.6",
+  "com.databricks"               %% "spark-xml"         % "0.4.1"
 )
 
 parallelExecution in Test := false

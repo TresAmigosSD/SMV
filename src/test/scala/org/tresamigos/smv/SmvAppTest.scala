@@ -57,6 +57,9 @@ package org.tresamigos.smv {
 
       app.runModule(C.urn, runConfig = Map("sample" -> "3pct"))
       assert(app.smvConfig.getRunConfig("sample") === "3pct")
+
+      // test to make sure undefined runConfig returns null not an exception
+      assert(app.smvConfig.getRunConfig("sampleTwo") === null)
     }
 
     test("Test normal dependency execution") {
@@ -187,7 +190,7 @@ package org.tresamigos.smv.fixture.smvapptest {
   import org.tresamigos.smv._, dqm._
 
   class TestFile(override val path: String) extends SmvFile {
-    override def readFromFile(parserLogger: ParserLogger) = null
+    override def readFromSrc(parserLogger: ParserLogger) = null
     override def doRun(dsDqm: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = null
     override val userSchema = None
   }

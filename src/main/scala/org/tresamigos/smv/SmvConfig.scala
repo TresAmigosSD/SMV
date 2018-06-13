@@ -204,11 +204,12 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private def homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
   private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
-    "smv.appName"     -> "Smv Application",
-    "smv.appId"       -> java.util.UUID.randomUUID.toString,
-    "smv.stages"      -> "",
-    "smv.config.keys" -> "",
-    "smv.class_dir"   -> "./target/classes"
+    "smv.appName"         -> "Smv Application",
+    "smv.appId"           -> java.util.UUID.randomUUID.toString,
+    "smv.stages"          -> "",
+    "smv.config.keys"     -> "",
+    "smv.class_dir"       -> "./target/classes",
+    "smv.user_libraries"  -> ""
   )
 
   // ---------- Dynamic Run Config Parameters key/values ----------
@@ -235,6 +236,9 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   // --- stage names are a dynamic prop
   private[smv] def stageNames = { splitProp("smv.stages").toSeq }
+
+  // --- user libraries are dynamic as well
+  private[smv] def userLibs = { splitProp("smv.user_libraries").toSeq }
 
   val classDir = mergedProps("smv.class_dir")
 
@@ -271,8 +275,13 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
   // ---------- User Run Config Parameters key/values ----------
-  /** Get user run config parameter as a string. */
-  def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, mergedProps("smv.config." + key).trim)
+  def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, getRunConfigFromConf(key))
+
+  def getRunConfigFromConf(key: String): String  = {
+    val runConfig = mergedProps.getOrElse("smv.config." + key, null);
+    if (runConfig == null) return null
+    return runConfig.trim
+  }
 
   /** Get all run config keys. */
   def getRunConfigKeys(): Seq[String] = splitProp("smv.config.keys") ++ dynamicRunConfig.keySet

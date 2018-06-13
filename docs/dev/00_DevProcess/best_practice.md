@@ -37,6 +37,24 @@ We use `scalafmt` for scala code formatting.  Once PR #668 (https://github.com/T
 #### Python
 We should follow PEP8 for python styling (See https://www.python.org/dev/peps/pep-0008/).  One exception is use of CamelCase for function names to match the function names on the Scala side.
 
+When using Atom as editor, please install `linter-flake8` package. It will automatically
+install dependencies. Also it need you to install flake8 on Python, so need to do
+`pip install flake8` in terminal.
+
+### Abstract decorators
+Python's `abc` package provides both `abstractmethod` and `abstractproperty` decorators.
+When we define user-interface abstract classes (`SmvDataSet`), we should always use
+`abstractmethod` to decorate mandatory interface methods.
+
+For example:
+```python
+class SmvCsvFile(...):
+  @abstractmethod
+  def path(self):
+    pass
+```
+
+
 ## Testing
 TBD
 ### Scala Unit Test

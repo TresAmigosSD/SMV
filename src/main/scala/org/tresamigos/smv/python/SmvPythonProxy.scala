@@ -23,6 +23,7 @@ import java.util.ArrayList
 import org.apache.spark.sql.{Column, DataFrame, SQLContext}
 import org.apache.spark.sql.types.DataType
 import matcher._
+import org.tresamigos.smv.dqm.ParserLogger
 
 // Serialize scala map to json w/o reinventing any wheels
 import org.json4s.jackson.Serialization
@@ -260,6 +261,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def outputDir: String = j_smvApp.smvConfig.outputDir
 
   def stages: Array[String] = j_smvApp.stages.toArray
+  
+  def userLibs: Array[String] = j_smvApp.userLibs.toArray
 
   def inferDS(name: String): SmvDataSet =
     j_smvApp.dsm.inferDS(name).head
@@ -367,6 +370,27 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def javaMapToImmutableMap(javaMap: java.util.Map[String, String]): Map[String, String] =
     if (javaMap == null) Map.empty else mapAsScalaMap(javaMap).toMap
+
+  def getSmvSchema() = SmvSchema
+
+  def readCsvFromFile(
+    fullPath: String,
+    schema: SmvSchema,
+    csvAttr: CsvAttributes,
+    parserLogger: ParserLogger
+  ) = {
+    // Python side always provide schema instead of schemaPath
+    val handler = new FileIOHandler(j_smvApp.sqlContext, fullPath, None, parserLogger)
+    handler.csvFileWithSchema(csvAttr, Some(schema))
+  }
+
+  /**
+   * Alias to ShellCmd openCsv function
+   */
+  def shellOpenCsv(path: String, validate: Boolean): DataFrame =
+    shell.openCsv(path, null, validate)
+
+  def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
 }
 
 /** Not a companion object because we need to access it from Python */

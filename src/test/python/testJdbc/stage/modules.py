@@ -16,3 +16,9 @@ from smv import SmvJdbcTable
 class MyJdbcTable(SmvJdbcTable):
     def tableName(self):
         return "MyJdbcTable"
+
+class MyJdbcWithQuery(SmvJdbcTable):
+    def tableQuery(self):
+        return "select K from MyJdbcTable"
+    def tableName(self):
+        return "MyJdbcTable"

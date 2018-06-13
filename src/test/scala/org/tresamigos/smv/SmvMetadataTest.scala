@@ -15,6 +15,10 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.col
+
+import org.tresamigos.smv.dqm.{DQMRule, SmvDQM}
+import org.tresamigos.smv.dqm.SmvDqmValidationError
 
 class SmvMetadataTest extends SmvTestUtil {
   override def appArgs = super.appArgs ++ Seq(
@@ -92,13 +96,17 @@ class SmvMetadataTest extends SmvTestUtil {
     // Validation should succeed because history is empty
     app.runModule(fails.urn)
     // Validation should fail because metadata doesn't match
-    val dqmError = intercept[SmvDqmValidationError] {
+    val dqmError = intercept[SmvMetadataValidationError] {
       app.runModule(fails.urn, true)
     }
 
     val expectedPattern = fails.validationFailureMessage.r
 
     assert(expectedPattern.findAllIn(dqmError.getMessage).hasNext)
+  }
+
+  test("Metadata should be calculated based on output *with* DQM rules applied") {
+    app.runModule(modules1.MetadataPlusDQM.urn)
   }
 }
 
@@ -157,6 +165,24 @@ package modules1 {
     def validationFailureMessage = "TIMESTAMPS DON'T MATCH"
     override def metadataHistorySize() =
       1
+  }
+
+  object MetadataPlusDQM extends SmvModule("") {
+    def requiresDS =
+      Seq.empty
+    def run(i: runParams) =
+      app.createDF("a:Integer","-1;-2;0;1;2")
+    override def dqm() =
+      SmvDQM().add(DQMRule(col("a") > 0))
+    override def metadata(df: DataFrame) =
+      SmvMetadata.fromJson(s"""{"count": ${df.count()}}""")
+    override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
+      val count: Long = current.builder.build.getLong("count")
+      if (count == 2)
+        None
+      else
+        Some(s"There should only be 2 records, but there were ${count}!")
+    }
   }
 
   object X extends SmvModule("") {

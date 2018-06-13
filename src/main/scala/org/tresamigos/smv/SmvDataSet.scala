@@ -230,12 +230,6 @@ abstract class SmvDataSet extends FilenamePart {
     userDQM
 
   /**
-   * DQM inlcuding user policies, type specific policies, and metadata policy
-   */
-  private[smv] def completeDQM =
-    dqmWithTypeSpecificPolicy(dqm()).add(new DQMMetadataPolicy(this))
-
-  /**
    * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly. The cache is
    * external to SmvDataSet so that it we will not recalculate the DF even after
@@ -498,6 +492,7 @@ abstract class SmvDataSet extends FilenamePart {
     }
     resMetadata.addFQN(fqn)
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
+    resMetadata.addApplicationContext(app)
     dfOpt foreach {resMetadata.addSchemaMetadata}
     timestamp foreach {resMetadata.addTimestamp}
     validResOpt foreach {resMetadata.addDqmValidationResult}
@@ -551,19 +546,21 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def computeDataFrame(genEdd: Boolean,
                                     collector: SmvRunInfoCollector,
                                     quickRun: Boolean): DataFrame = {
-    val dqmValidator  = new DQMValidator(completeDQM, isPersistValidateResult)
+    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm), isPersistValidateResult)
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
-      // Populate user metadata cache to isolate time spent on DQM from time spent on metadata
-      getOrCreateUserMetadata(df)
       val (validationResult, validationDuration) =
         doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction, moduleValidPath())}
       dqmTimeElapsed = Some(validationDuration)
 
       val metadata = getOrCreateMetadata(Some(df), Some(validationResult))
-      // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
+      // Metadata is complete at time of validation, including user metadata and validation result
+      val validationRes: Option[String] = validateMetadata(metadata, metadataHistory.historyList)
+      validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
+      
+
       deleteOutputs(metadataOutputFiles)
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
@@ -775,7 +772,7 @@ class SmvJdbcTable(override val tableName: String)
  * Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
  * common part to the new ABC: SmvDSWithParser
  */
-trait SmvDSWithParser extends SmvDataSet {
+private[smv] abstract class SmvDSWithParser extends SmvInputDataSet {
   val forceParserCheck   = true
   val failAtParsingError = true
 
@@ -788,10 +785,22 @@ trait SmvDSWithParser extends SmvDataSet {
     else if (forceParserCheck) baseDqm.addAction()
     else baseDqm
   }
+
+  /**
+   * Read contents from file, dir or data string (without running the `run` method) as a DataFrame.
+   */
+  private[smv] def readFromSrc(parserLogger: ParserLogger): DataFrame
+
+  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
+    val parserValidator =
+      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
+    val df      = readFromSrc(parserValidator)
+    run(df)
+  }
 }
 
 
-abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
+abstract class SmvFile extends SmvDSWithParser {
   val path: String
   val schemaPath: String     = null
   override def description() = s"Input file: @${path}"
@@ -842,18 +851,6 @@ abstract class SmvFile extends SmvInputDataSet with SmvDSWithParser {
       case None => SmvSchema.fromFile(app.sc, finalSchemaPath)
     }
 
-  /**
-   * Read contents from file (without running the `run` method) as a DataFrame.
-   */
-  private[smv] def readFromFile(parserLogger: ParserLogger): DataFrame
-
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val parserValidator =
-      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
-    val df      = readFromFile(parserValidator)
-    run(df)
-  }
-
   /* For SmvFile, the datasetHash should be based on
    *  - raw class code crc
    *  - input csv file path
@@ -879,7 +876,7 @@ abstract class SmvSingleFile extends SmvFile {
    * Given a FileIOHandler, return the DataFrame that results from reading the file
    */
   private[smv] def readSingleFile(handler: FileIOHandler): DataFrame
-  private[smv] override def readFromFile(parserValidator: ParserLogger): DataFrame = {
+  private[smv] override def readFromSrc(parserValidator: ParserLogger): DataFrame = {
     val handler = getHandler(fullPath, parserValidator)
     readSingleFile(handler)
   }
@@ -955,7 +952,7 @@ class SmvMultiCsvFiles(
     else Option(findFullPath(schemaPath))
   }
 
-  private[smv] override def readFromFile(parserValidator: ParserLogger): DataFrame = {
+  private[smv] override def readFromSrc(parserValidator: ParserLogger): DataFrame = {
     val filesInDir = SmvHDFS.dirList(fullPath)
       .filterNot(_.startsWith(".")) // ignore all hidden files in the data dir
       .map { n =>
@@ -1154,7 +1151,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
                    quickRun: Boolean = false): DataFrame = {
     // forceRun argument is ignored (SmvModuleLink is rerun anyway)
     if (isFollowLink) {
-      smvModule.readPublishedData().getOrElse(smvModule.rdd(collector=collector))
+      smvModule.readPublishedData().getOrElse(smvModule.rdd(collector=collector, quickRun=quickRun))
     } else {
       smvModule
         .readPublishedData()
@@ -1269,8 +1266,7 @@ class SmvCsvStringData(
     schemaStr: String,
     data: String,
     override val isPersistValidateResult: Boolean = false
-) extends SmvInputDataSet
-    with SmvDSWithParser {
+) extends SmvDSWithParser {
 
   override def description() = s"Dummy module to create DF from strings"
 
@@ -1280,15 +1276,8 @@ class SmvCsvStringData(
     (crc.getValue).toInt
   }
 
-  override def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val schema    = SmvSchema.fromString(schemaStr)
-    val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
-
-    val parserValidator =
-      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
-    val handler = new FileIOHandler(app.sqlContext, null, None, parserValidator)
-    handler.csvStringRDDToDF(app.sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
-  }
+  private[smv] def readFromSrc(parserValidator: ParserLogger): DataFrame =
+    app.createDFWithLogger(schemaStr, data, parserValidator)
 }
 
 object SmvCsvStringData {

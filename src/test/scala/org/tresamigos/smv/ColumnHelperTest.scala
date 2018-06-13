@@ -15,6 +15,7 @@
 package org.tresamigos.smv
 
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
 class ColumnHelperTest extends SmvTestUtil {
   test("test smvStrToTimestamp") {
@@ -24,6 +25,22 @@ class ColumnHelperTest extends SmvTestUtil {
     assertSrddDataEqual(res,
                         "2019-01-01 00:00:00.0;" +
                           "null")
+  }
+
+  test("test smvTimestampToStr") {
+    val ssc = sqlContext; import ssc.implicits._
+    val df  = dfFrom("ts:Timestamp[yyyyMMdd'T'HHmmssZ]; tz:String; v:String;",
+                      "20180428T025800+1000,UTC,a;" +
+                      "20180428T025800+1000,America/Los_Angeles,b;" +
+                      "20180428T025800+1000,-07:00,c;" +
+                      ",Australia/Sydney,d")
+    val res = df.select($"ts".smvTimestampToStr($"tz","yyyyMMdd'T'HHmmssZ"),
+                        $"ts".smvTimestampToStr("+1000","yyyy-MM-dd"))
+    assertSrddDataEqual(res,
+        "20180427T165800+0000,2018-04-28;" +
+        "20180427T095800-0700,2018-04-28;" +
+        "20180427T095800-0700,2018-04-28;" +
+        "null,null")
   }
 
   test("test smvYear, smvMonth, smvQuarter, smvDayOfMonth, smvDayOfWeek") {
@@ -83,7 +100,7 @@ class ColumnHelperTest extends SmvTestUtil {
     val res4 = df.select($"t".smvPlusYears(2))
     val res5 = df.select($"t".smvPlusYears(4))
 
-    assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res1,
                         "1976-01-21 00:00:00.0;" +
                           "2012-02-19 00:00:00.0")
@@ -111,7 +128,7 @@ class ColumnHelperTest extends SmvTestUtil {
     val res4 = df.select($"t".smvPlusYears(2))
     val res5 = df.select($"t".smvPlusYears(4))
 
-    assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res1, "SmvPlusDays(t, -10): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res1,
                         "1976-01-21 00:00:00.0;" +
                           "2012-02-19 00:00:00.0")
@@ -137,25 +154,25 @@ class ColumnHelperTest extends SmvTestUtil {
     val res3 = df.select(col("t").smvPlusMonths(col("toadd")))
     val res4 = df.select(col("t").smvPlusYears(col("toadd")))
 
-    assertSrddSchemaEqual(res1, "SmvPlusDays(t, toadd): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res1, "SmvPlusDays(t, toadd): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res1,
                         """1976-02-10 00:00:00.0;
                            2012-04-01 00:00:00.0;
                            null"""
                        )
-    assertSrddSchemaEqual(res2, "SmvPlusWeeks(t, toadd): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res2, "SmvPlusWeeks(t, toadd): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res2,
                         """1976-04-10 00:00:00.0;
                            2012-10-10 00:00:00.0;
                            null"""
                        )
-    assertSrddSchemaEqual(res3, "SmvPlusMonths(t, toadd): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res3, "SmvPlusMonths(t, toadd): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res3,
                         """1976-11-30 00:00:00.0;
                            2014-10-29 00:00:00.0;
                            null"""
                        )
-    assertSrddSchemaEqual(res4, "SmvPlusYears(t, toadd): Timestamp[yyyy-MM-dd hh:mm:ss.S]")
+    assertSrddSchemaEqual(res4, "SmvPlusYears(t, toadd): Timestamp[yyyy-MM-dd HH:mm:ss.S]")
     assertSrddDataEqual(res4,
                         """1986-01-31 00:00:00.0;
                            2044-02-29 00:00:00.0;
@@ -279,6 +296,30 @@ class ColumnHelperTest extends SmvTestUtil {
                         """quarter,172,2013-Q1,2013-01-01 00:00:00.0;
 month,551,2015-12,2015-12-01 00:00:00.0;
 day,16405,2014-12-01,2014-12-01 00:00:00.0""")
+  }
+
+  test("test smvArrayFlatten helper") {
+    val df = dfFrom("a:String;b:String", "1,2;,2;,;3,4")
+    val df1 = df.select(array(
+      array(col("a"), col("b")),
+      array(col("b"), col("a")),
+      lit(null)
+    ).as("aa"))
+
+    import org.tresamigos.smv.smvfuncs._
+    val res = df1.select(col("aa").smvArrayFlatten(StringType).as("f"))
+      .select(smvArrayCat("|", col("f")).as("f"))
+
+    val res2 = df1.select(col("aa").smvArrayFlatten(StringType.json).as("f"))
+      .select(smvArrayCat("|", col("f")).as("f"))
+
+    val exp = """1|2|2|1;
+                |2|2|;
+                |||;
+                3|4|4|3"""
+
+    assertSrddDataEqual(res, exp)
+    assertSrddDataEqual(res2, exp)
   }
 }
 

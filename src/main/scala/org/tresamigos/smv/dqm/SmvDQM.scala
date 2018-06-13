@@ -183,8 +183,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
 
   private def terminateAtError(result: DqmValidationResult) = {
     if (!result.passed) {
-      val r = result.toJSON()
-      throw new SmvDqmValidationError(r)
+      throw new SmvDqmValidationError(result)
     }
   }
 
@@ -220,16 +219,19 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
    * @param path the path where the validation result should be persisted
    */
   def runValidation(df: DataFrame, forceAction: Boolean, path: String = ""): DqmValidationResult = {
+    // If necessary, force action of dataframe with DQM tasks attached in order to trigger the accumulators
+    // that count task failures
     if (forceAction)
       doForceAction(df)
 
     val res = applyPolicies(df)
 
+    // print report to console if any policies were failed
     if(!res.isEmpty)
       toConsole(res)
 
-    // persist if result is not empty or forced an action
-    if (persistable && allPolicies.length > 0)
+    // persist if result is persistable
+    if (persistable)
       persist(res, path)
 
     res
@@ -288,3 +290,6 @@ private[smv] object DqmValidationResult {
     read[DqmValidationResult](jsonStr)(DefaultFormats, ManifestFactory.classType(klass))
   }
 }
+
+class SmvDqmValidationError(dqmValidationResult: DqmValidationResult, cause: Throwable = null)
+  extends SmvRuntimeException(dqmValidationResult.toJSON(), cause)

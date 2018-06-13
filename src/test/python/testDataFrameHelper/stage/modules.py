@@ -23,7 +23,7 @@ class D1(SmvCsvStringData):
 
 class T(SmvCsvFile):
     @classmethod
-    def path(cls):
+    def fullPath(cls):
         return "./target/python-test-export-csv.csv"
     def csvAttr(self):
-        return self.defaultCsvWithHeader()
+        return self.smvApp.defaultCsvWithHeader()
