@@ -13,17 +13,18 @@ smv.config.filetype=csv
 ```
 
 ## 2. Modules
-Modules that need to access a configuration parameter must inherit from the mix-in class `SmvRunConfig`.  The `SmvRunConfig` class will provide the `smvGetRunConfig` method to access the user runtime config by key.  Additional helper methods are provided by `SmvRunConfig` to retrieved "typed" values (e.g. `smvGetRunConfigAsBool` and `smvGetRunConfigAsInt`)
+Modules that need access to config values can access them via the `smvGetRunConfig` method. If the value is expected to be `bool` or `int`, the string value can be coerced with `smvGetRunConfigAsBool` or `smvGetRunConfigAsInt` respectively. 
 
 ```python
 class MyModule(SmvModule, SmvRunConfig):
-  def run():
-    if self.smvGetRunConfig("sample") == "1pct":
-      df = df.sample(0.01)
-    return df
+  def run(self, i):
+    ...
+    if self.smvGetRunConfig("sample"):
+      res = res.sample(0.01)
+    return res
 ```
 
-The module hash value of modules that inherit from `SmvRunConfig` will be affected by the current config values.  The hash will utilize **ALL** the config values even ones that are not used by the current module.
+The module hash value of modules that inherit from `SmvRunConfig` will be affected by **ALL** config values - even ones that are not used by the current module.
 
 ## 3. Running
 The user can change the current value of any config parameter on a per run basis.  This can be done in one of two ways:

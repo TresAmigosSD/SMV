@@ -25,17 +25,6 @@ class SmvRunConfig(object):
        configuration parameters at run time.
     """
 
-    def smvGetRunConfig(self, key):
-        """return the current user run configuration value for the given key."""
-        return SmvApp.getInstance().j_smvPyClient.getRunConfig(key)
-
-    def smvGetRunConfigAsInt(self, key):
-        return int(self.smvGetRunConfig(key))
-
-    def smvGetRunConfigAsBool(self, key):
-        sval = self.smvGetRunConfig(key).strip().lower()
-        return (sval == "1" or sval == "true")
-
     def _smvGetRunConfigHash(self):
         """return the app level hash of the all the current user config values"""
         return SmvApp.getInstance().j_smvPyClient.getRunConfigHash()

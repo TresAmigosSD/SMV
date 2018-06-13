@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import sys
+import os
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
@@ -31,17 +32,21 @@ class ModuleHashTest(SmvBaseTest):
         return cls.resourceTestDir() + "/after"
 
     class Resource(object):
-        def __init__(self, smvApp, path, fqn):
+        def __init__(self, smvApp, target_path, fqn):
+            self.smvApp = smvApp
             self.dsr = DataSetRepo(smvApp)
-            self.path = path
+            self.orig_path = os.getcwd()
+            self.target_path = target_path
             self.fqn = fqn
 
         def __enter__(self):
-            sys.path.insert(1,self.path)
+            self.smvApp.setAppDir(self.target_path)
+            sys.path.insert(1, self.target_path)
             return self.dsr.loadDataSet(self.fqn)
 
         def __exit__(self, type, value, traceback):
-            sys.path.remove(self.path)
+            self.smvApp.setAppDir(self.orig_path)
+            sys.path.remove(self.target_path)
 
     def compare_resource_hash(self, fqn, assertion):
         with self.Resource(self.smvApp,self.before_dir(),fqn) as ds:
@@ -83,3 +88,11 @@ class ModuleHashTest(SmvBaseTest):
     def test_change_csv_file_run_method_should_change_hash(self):
         """updating run method of SmvCsvFile will change hash"""
         self.assert_hash_should_change("stage.modules.CsvFileWithRun")
+
+    def test_change_relevant_conf_value_should_change_hash(self):
+        """updating config value used by an SmvDataSet should change its hash"""
+        self.assert_hash_should_change("stage.modules.UsesConfigValue")
+
+    def test_change_irrelevant_conf_value_shouldnt_change_hash(self):
+        """updating config value not used by an SmvDataSet shouldn't change its hash"""
+        self.assert_hash_should_not_change("stage.modules.DoesntConfigValue")

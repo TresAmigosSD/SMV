@@ -100,12 +100,36 @@ class SmvDataSet(ABC):
     def __init__(self, smvApp):
         self.smvApp = smvApp
 
+    def smvGetRunConfig(self, key):
+        """return the current user run configuration value for the given key."""
+        return self.smvApp.getConf(key)
+
+    def smvGetRunConfigAsInt(self, key):
+        return int(self.smvGetRunConfig(key))
+
+    def smvGetRunConfigAsBool(self, key):
+        sval = self.smvGetRunConfig(key).strip().lower()
+        return (sval == "1" or sval == "true")
+
+    def config_hash(self):
+        """Integer value representing the SMV config's contribution to the dataset hash
+
+            Only the keys declared in requiresConfig will be considered.
+        """
+        kvs = [(k, self.smvGetRunConfig(k)) for k in self.requiresConfig()]
+        # the config_hash should change IFF the config changes
+        # sort keys to ensure config hash is independent from key order
+        sorted_kvs = sorted(kvs)
+        # we need a unique string representation of sorted_kvs to hash
+        # repr should change iff sorted_kvs changes
+        kv_str = repr(sorted_kvs)
+        return _smvhash(kv_str)
+
     def description(self):
         return self.__doc__
 
     getDescription = create_py4j_interface_method("getDescription", "description")
 
-    # this doesn't need stack trace protection
     @abc.abstractmethod
     def requiresDS(self):
         """User-specified list of dependencies
@@ -115,8 +139,15 @@ class SmvDataSet(ABC):
             Returns:
                 (list(SmvDataSet)): a list of dependencies
         """
+        pass
 
-    # this doesn't need stacktrace protection
+    def requiresConfig(self):
+        """User-specified list of config keys this module depends on
+
+            The given keys and their values will influence the dataset hash
+        """
+        return []
+
     def dqm(self):
         """DQM policy
 
@@ -175,19 +206,26 @@ class SmvDataSet(ABC):
             message = "{0}({1!r})".format(type(err).__name__, err.args)
             raise Exception(message + "\n" + "SmvDataSet " + self.urn() +" defined in shell can't be persisted")
 
+        res += self.config_hash()
+
         # include sourceCodeHash of parent classes
         for m in inspect.getmro(cls):
             try:
+                # TODO: it probably shouldn't matter if the upstream class is an SmvDataSet - it could be a mixin
+                # whose behavior matters but which doesn't inherit from SmvDataSet
                 if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
                     res += m(self.smvApp).sourceCodeHash()
-            except: pass
+            except: 
+                pass
 
         # if module inherits from SmvRunConfig, then add hash of all config values to module hash
-        if hasattr(self, "_smvGetRunConfigHash"):
+        try:
             res += self._smvGetRunConfigHash()
+        except: 
+            pass
 
         # if module has high order historical validation rules, add their hash to sum.
-        # they key() of a validator should change if it's parameters change.
+        # they key() of a validator should change if its parameters change.
         if hasattr(cls, "_smvHistoricalValidatorsList"):
             keys_hash = [_smvhash(v._key()) for v in cls._smvHistoricalValidatorsList]
             res += sum(keys_hash)
