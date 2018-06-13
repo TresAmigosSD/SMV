@@ -3,7 +3,7 @@ Full details on how to build/run/use this application can be found in the [Getti
 
 # Run App in batch
 ```shell
-$ smv-pyrun --run-app
+$ smv-run --run-app
 ```
 
 # Run App in Spark Shell

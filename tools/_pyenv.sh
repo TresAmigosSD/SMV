@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Set up common python environment used by smv-pyrun, smv-pytest scripts
+# Set up common python environment used by smv-run, smv-pytest scripts
 #
 
 # Another way to add smv.py is through the --py-files option passed to
