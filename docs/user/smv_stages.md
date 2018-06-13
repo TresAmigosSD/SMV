@@ -69,7 +69,7 @@ To avoid having to "re-run" `rawAccounts` continuously, the user may choose to "
 **1. Publish ETL stage**
 
 ```shell
-$ smv-run --publish V1 -s etl
+$ smv-pyrun --publish V1 -s etl
 ```
 
 **2. Pin `model` stage to use published ETL output**
@@ -135,10 +135,10 @@ class EmploymentByStateCategory(smv.SmvModule, smv.SmvOutput):
 
 In order to build the module structure, Python requires an `__init__.py` file inside each Python module subdirectory.  The file can remain empty.
 
-We can now run the `EmploymentByStateCategory` module by providing the module FQN to the `smv-run` command:
+We can now run the `EmploymentByStateCategory` module by providing the module FQN to the `smv-pyrun` command:
 
 ```bash
-$ smv-run -m modeling.category.EmploymentByStateCategory
+$ smv-pyrun -m modeling.category.EmploymentByStateCategory
 ```
 or by making the module extend `SmvOutput` and running the entire stage ("-s modeling").
 See [Smv Modules](smv_module.md) for details.

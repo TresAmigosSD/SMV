@@ -39,7 +39,7 @@ $ smv-init -s MyApp
 Run the entire application with
 
 ```shell
-$ smv-run --run-app
+$ smv-pyrun --run-app
 ```
 
 This command must be run from the root of the project.
@@ -92,7 +92,7 @@ The `run` method of a module defines the operations needed to get the output bas
 Now remove the old output and run the module again with
 
 ```shell
-smv-run --purge-old-output --run-app
+smv-pyrun --purge-old-output --run-app
 ```
 (make sure you run this from the from the root of the project)
 
@@ -129,7 +129,7 @@ class EmploymentByState(SmvModule, SmvOutput):
 
 Then use
 ```bash
-$ smv-run --publish-hive -m stage1.employment.EmploymentByState
+$ smv-pyrun --publish-hive -m stage1.employment.EmploymentByState
 ```
 
 ## smv-pyshell

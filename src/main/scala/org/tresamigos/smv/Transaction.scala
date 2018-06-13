@@ -58,7 +58,7 @@ class TX(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig) {
 
   /**
    * Infer which SmvDataSet corresponds to a partial name. Used e.g. to identify
-   * modules specified via smv-run -m.
+   * modules specified via smv-pyrun -m.
    */
   def inferDS(partialNames: String*): Seq[SmvDataSet] =
     load( inferUrn(partialNames: _*): _*)

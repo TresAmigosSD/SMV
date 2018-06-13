@@ -51,13 +51,13 @@ Users can specify `--no-profile` to stop the update of the profile files.
 ## Verify SMV installation
 To verify that SMV was installed correctly, run the following command:
 ```shell
-$ type smv-run
+$ type smv-pyrun
 ```
-The above should point to the `smv-run` script in the SMV tools directory.  If it can not find `smv-run` ensure that the profile rc file was sourced by either logging out / logging in or sourcing the appropriate profile file.
+The above should point to the `smv-pyrun` script in the SMV tools directory.  If it can not find `smv-pyrun` ensure that the profile rc file was sourced by either logging out / logging in or sourcing the appropriate profile file.
 
 # Python packages
 SMV depends on some third party python packages (e.g. jupyter, graphviz, etc).  To install these packages, use pip as follows:
 ```
-$ dirname $(dirname $(type -p smv-run))  # this will show the SMV home directory.
+$ dirname $(dirname $(type -p smv-pyrun))  # this will show the SMV home directory.
 $ pip install -r _SMV_HOME_/docker/smv/requirements.txt
 ```

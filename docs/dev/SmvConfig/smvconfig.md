@@ -32,7 +32,7 @@ The module hash value of modules that inherit from `SmvRunConfig` will be affect
 ## 3. Running
 The user should be able to easily change the current value of any config parameter on a per run basis.  This can be done in one of two ways:
 * modify the `conf/smv-user-conf.props` or `~/.smv/smv-user-conf.props`.
-* provide one or more `--run-conf`/`-rc` command line flag to change the value.  For example: `$ smv-run --run-conf key1=false --run-app`
+* provide one or more `--run-conf`/`-rc` command line flag to change the value.  For example: `$ smv-pyrun --run-conf key1=false --run-app`
 
 # Code changes
 * Create `SmvRunConfig` python class with a `getConfig` method.

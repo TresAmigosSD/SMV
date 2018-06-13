@@ -54,7 +54,7 @@ class SmvOutput(object):
 
         SmvOutputs are distinct from other SmvDataSets in that
             * SmvModuleLinks can *only* link to SmvOutputs
-            * The -s and --run-app options of smv-run only run SmvOutputs and their dependencies.
+            * The -s and --run-app options of smv-pyrun only run SmvOutputs and their dependencies.
     """
     IsSmvOutput = True
 

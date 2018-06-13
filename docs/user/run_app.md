@@ -1,11 +1,11 @@
 # Running SMV Application
 
 While an SMV application can be built and run using the standard "spark-submit" command,
-a convenient script `smv-run` is provided to make it easier to make running an application. No build is necessary if project is purely in Python.
+a convenient script `smv-pyrun` is provided to make it easier to make running an application. No build is necessary if project is purely in Python.
 
 ### Synopsis
 ```shell
-$ smv-run [smv-options] [what-to-run] -- [standard spark-submit-options]
+$ smv-pyrun [smv-options] [what-to-run] -- [standard spark-submit-options]
 ```
 
 **Note:**  The above command should be run from the project top level directory.
@@ -242,36 +242,36 @@ The above would ensure that SMV users the spark 2.2 version on the system.
 ### Examples
 Run modules `M1` and `M2` and all its dependencies.  Note the use of the module FQN.
 ```shell
-$ smv-run -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
+$ smv-pyrun -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
 ```
 
 Run modules `M1` and `M2` and all its dependencies. Publish to the Hive tables as specified
 by the `tableName` method of `M1` and `M2`.
 ```shell
-$ smv-run --publish-hive -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
+$ smv-pyrun --publish-hive -m com.mycom.myproj.stage1.M1 com.mycom.myproj.stage1.M2
 ```
 
 Run all modules in application and generate edd report for all modules that needed to run (including dependencies)
 ```shell
-$ smv-run --edd --run-app
+$ smv-pyrun --edd --run-app
 ```
 
 Generate a dependency graph for all modules that needed to run.
 ```shell
-$ smv-run -g --run-app
+$ smv-pyrun -g --run-app
 ```
 
 Clean up the output directory
 ```shell
-$ smv-run --purge-old-output
+$ smv-pyrun --purge-old-output
 ```
 
 Publish the output modules in stage "s1" as version "xyz".  The modules will be output to `/tmp/publish/xyz` dir.
 ```shell
-$ smv-run --publish xyz --publish-dir /tmp/publish -s s1
+$ smv-pyrun --publish xyz --publish-dir /tmp/publish -s s1
 ```
 
 Provide spark specific arguments
 ```shell
-$ smv-run -m com.mycom.myproj.stage1.M1 -- --executor-memory=2G --driver-memory=1G --master yarn-client
+$ smv-pyrun -m com.mycom.myproj.stage1.M1 -- --executor-memory=2G --driver-memory=1G --master yarn-client
 ```

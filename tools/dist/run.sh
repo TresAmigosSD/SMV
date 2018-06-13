@@ -17,7 +17,7 @@ fi
 
 LOGFILE="$(date '+esbrit_run_log.%Y%m%d%H%M%S')"
 
-smv-run --data-dir "${DATA_DIR}" --publish-hive --run-app \
+smv-pyrun --data-dir "${DATA_DIR}" --publish-hive --run-app \
   -- \
   --master yarn-client \
   --executor-memory ${EXECUTOR_MEMORY} \

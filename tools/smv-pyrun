@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+#
+# Run one or more SMV modules / stages / app.
+# USAGE: smv-pyrun [-h] smv_app_args -- spark_args
+#
+# user can specify optional spark args (such as --master, --executor-memory, etc)
+
+echo "---------------------------------------------------------------------------"
+echo "WARN: smv-pyrun is deprecated.  Please use smv-run in the same way instead."
+echo "---------------------------------------------------------------------------"
+set -e
+SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
+source $SMV_TOOLS/_env.sh
+source $SMV_TOOLS/_pyenv.sh
+
+if [ "$1" = "-h" ]; then
+  show_run_usage_message `basename $0`
+  exit 0
+fi
+
+echo "START RUN =============================="
+date
+
+run_pyspark_with ${SMV_TOOLS}/../src/main/python/scripts/runapp.py
+
+date
