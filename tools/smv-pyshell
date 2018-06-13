@@ -1,30 +1,9 @@
-#!/usr/bin/env bash
+#! /usr/bin/env bash
 
 set -e
 
-SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
-source $SMV_TOOLS/_env.sh
-source $SMV_TOOLS/_pyenv.sh
+echo "========================================"
+echo "WARNING: smv-pyshell is deprecated. Please use smv-shell instead!"
+echo "========================================"
 
-export SPARK_PRINT_LAUNCH_COMMAND=1
-
-# Set PYTHONSTARTUP to load the init script
-# Since pyspark does not take app parameters, we have to pass SMV_ARGS to the
-# startup script. A little hackish before we figure out better ways.
-export SMV_ALL_ARGS="${SMV_ARGS[@]}"
-sed -e "s|_SMV_ALL_ARGS_|${SMV_ALL_ARGS}|" $SMV_TOOLS/conf/smv_pyshell_init.py.template > smv_pyshell_init.py
-
-OLD_PYTHONSTARTUP=$PYTHONSTARTUP
-export PYTHONSTARTUP="smv_pyshell_init.py"
-
-
-# PySpark pre-2.0.0 has a bug (see
-# https://issues.apache.org/jira/browse/SPARK-5185) that does not add
-# the jar file to the driver's classpath, so we need to add the jars
-# to the --driver-class-path command-line option
-"${SMV_PYSPARK_FULLPATH}"  "${SPARK_ARGS[@]}" --jars "$APP_JAR,$EXTRA_JARS" --driver-class-path "${APP_JAR}"
-
-# Reset PYTHONSTARTUP
-export PYTHONSTARTUP=$OLD_PYTHONSTARTUP
-
-rm -f smv_pyshell_init.py
+smv-shell "$@"
