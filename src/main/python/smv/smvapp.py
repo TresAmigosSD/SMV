@@ -177,6 +177,9 @@ class SmvApp(object):
     def config(self):
         return self.j_smvApp.smvConfig()
 
+    def getConf(self, key):
+        return self.j_smvPyClient.getRunConfig(key)
+
     def setAppDir(self, appDir):
         """ SMV's equivalent of 'cd' for app dirs. """
         self.removeDefaultDirs()

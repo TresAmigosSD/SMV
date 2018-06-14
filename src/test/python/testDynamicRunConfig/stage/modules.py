@@ -16,5 +16,6 @@ from smv import SmvApp, SmvModule, SmvRunConfig
 class A(SmvModule, SmvRunConfig):
     def isEphemeral(self): return True
     def requiresDS(self): return []
+    def requiresConfig(self): return ["src"]
     def run(self, i):
         return self.smvApp.createDF("src:String", self.smvGetRunConfig("src"))

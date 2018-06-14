@@ -83,12 +83,42 @@ class SmvDataSet(ABC):
     def __init__(self, smvApp):
         self.smvApp = smvApp
 
+    def smvGetRunConfig(self, key):
+        """return the current user run configuration value for the given key."""
+        return self.smvApp.getConf(key)
+    
+    def smvGetRunConfigAsInt(self, key):
+        runConfig = self.smvGetRunConfig(key);
+        if runConfig is None:
+            return None
+        return int(runConfig)
+
+    def smvGetRunConfigAsBool(self, key):
+        runConfig = self.smvGetRunConfig(key);
+        if runConfig is None:
+            return None
+        sval = runConfig.strip().lower()
+        return (sval == "1" or sval == "true")
+
+    def config_hash(self):
+        """Integer value representing the SMV config's contribution to the dataset hash
+
+            Only the keys declared in requiresConfig will be considered.
+        """
+        kvs = [(k, self.smvGetRunConfig(k)) for k in self.requiresConfig()]
+        # the config_hash should change IFF the config changes
+        # sort keys to ensure config hash is independent from key order
+        sorted_kvs = sorted(kvs)
+        # we need a unique string representation of sorted_kvs to hash
+        # repr should change iff sorted_kvs changes
+        kv_str = repr(sorted_kvs)
+        return _smvhash(kv_str)
+
     def description(self):
         return self.__doc__
 
     getDescription = create_py4j_interface_method("getDescription", "description")
 
-    # this doesn't need stack trace protection
     @abc.abstractmethod
     def requiresDS(self):
         """User-specified list of dependencies
@@ -98,8 +128,15 @@ class SmvDataSet(ABC):
             Returns:
                 (list(SmvDataSet)): a list of dependencies
         """
+        pass
 
-    # this doesn't need stacktrace protection
+    def requiresConfig(self):
+        """User-specified list of config keys this module depends on
+
+            The given keys and their values will influence the dataset hash
+        """
+        return []
+
     def dqm(self):
         """DQM policy
 
@@ -146,6 +183,7 @@ class SmvDataSet(ABC):
         """Hash computed based on the source code of the dataset's class
         """
         cls = self.__class__
+        # get hash of module's source code text
         try:
             src = inspect.getsource(cls)
             src_no_comm = _stripComments(src)
@@ -164,19 +202,33 @@ class SmvDataSet(ABC):
                 self.urn() + " defined in shell can't be persisted"
             )
 
-        # include sourceCodeHash of parent classes
+
+        # incorporate source code hash of module's parent classes
         for m in inspect.getmro(cls):
             try:
+                # TODO: it probably shouldn't matter if the upstream class is an SmvDataSet - it could be a mixin
+                # whose behavior matters but which doesn't inherit from SmvDataSet
                 if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
                     res += m(self.smvApp).sourceCodeHash()
-            except: pass  # noqa: E701
+            except: 
+                pass
+
+        # NOTE: Until SmvRunConfig (now deprecated) is removed entirely, we consider 2 source code hashes, 
+        # config_hash and _smvGetRunConfigHash. The former is influenced by KVs for all keys listed in requiresConfig
+        # while latter is influenced by KVs for all keys listed in smv.config.keys.
+        # TODO: Is the config really a component of the "source code"? This method is called `sourceCodeHash`, after all.
+
+        # incorporate hash of KVs for config keys listed in requiresConfig
+        res += self.config_hash()
 
         # if module inherits from SmvRunConfig, then add hash of all config values to module hash
-        if hasattr(self, "_smvGetRunConfigHash"):
+        try:
             res += self._smvGetRunConfigHash()
+        except: 
+            pass
 
         # if module has high order historical validation rules, add their hash to sum.
-        # they key() of a validator should change if it's parameters change.
+        # they key() of a validator should change if its parameters change.
         if hasattr(cls, "_smvHistoricalValidatorsList"):
             keys_hash = [_smvhash(v._key()) for v in cls._smvHistoricalValidatorsList]
             res += sum(keys_hash)
