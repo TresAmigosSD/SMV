@@ -9,7 +9,7 @@ if [ -z "$target_dir" ]; then
 fi
 
 smv_tools="$(cd "`dirname "$0"`"; pwd)"
-spark_version=$(cat "$smv_tools"/../.spark_version)
+spark_version=2.3.0
 
 remote_tarball="http://www-us.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz"
 local_tarball=$(basename $remote_tarball)
