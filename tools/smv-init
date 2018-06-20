@@ -11,7 +11,7 @@ OVERRIDE=0
 DO_GIT_INIT=0
 
 
-while [[ $# -gt 1 ]]
+while [[ $# -gt 2 ]]
 do
 FLAG=$1
 
@@ -36,8 +36,12 @@ FLAG=$1
         PROJ_TYPE="test"
         shift
         ;;
-    -b|-big)
-        PROJ_TYPE="big"
+    -bc|-bigChain)
+        PROJ_TYPE="bigChain"
+        shift
+        ;;
+    -bt|-bigTree)
+        PROJ_TYPE="bigTree"
         shift
         ;;
     -d|--dataDir)
@@ -66,7 +70,7 @@ done
 TEMPLATE_DIR="$ALL_TEMPLATES_DIR/$PROJ_TYPE"
 TEMPLATE_DATA_DIR="$ALL_TEMPLATES_DIR/data"
 
-if [ $# -ne 1 ]; then
+if [ $# -ne 2 ]; then
     echo "ERROR: Invalid number of arguments"
     echo "USAGE: $0 [-q][-o] [-s|-e|-t|-b] [-dd] [-n]  project_path"
     echo "project types:"
@@ -89,6 +93,7 @@ PROJ_DIR="$1"
 PROJ_SRC_DIR="${PROJ_DIR}/src/main/python"
 PROJ_CLASS=""
 PROJ_DATA_DIR=${PROJ_DATA_DIR:="${PROJ_DIR}/data"} # default data dir is /data in project dir
+PROJ_SIZE="$2"
 
 function extract_group_artifact_ids()
 {
@@ -149,7 +154,7 @@ function substitute_tokens()
         PROJ_CLASS="integration.test"
         extract_group_artifact_ids
     fi
-    
+
     echo "-- substituting tokens with project info"
 
     local files="$(cd $PROJ_DIR; find . -type f)"
@@ -202,8 +207,12 @@ function copy_data_files() {
 }
 
 function augment_module_count() {
-    if [ "$PROJ_TYPE" = "big" ] ; then
-        $TEMPLATE_DIR/dupMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ 1000
+    if [ "$PROJ_TYPE" = "bigChain" ] ; then
+        $TEMPLATE_DIR/dupMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ $PROJ_SIZE
+        rm $PROJ_DIR/src/main/python/stage1/employment.py
+    fi
+    if [ "$PROJ_TYPE" = "bigTree" ] ; then
+        $TEMPLATE_DIR/dupMod2.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ $PROJ_SIZE
         rm $PROJ_DIR/src/main/python/stage1/employment.py
     fi
 }
