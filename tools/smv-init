@@ -72,13 +72,15 @@ TEMPLATE_DATA_DIR="$ALL_TEMPLATES_DIR/data"
 
 if [ $# -ne 2 ]; then
     echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q][-o] [-s|-e|-t|-b] [-dd] [-n]  project_path"
+    echo "USAGE: $0 [-q][-o] [-s|-e|-t|-b|-bc|-bt] [-dd] [-n]  project_path"
     echo "project types:"
     echo "  -s: simple (default)"
     echo "  -e: enterprise"
     echo "  -t: test (for developers only)"
     echo "  -b: blank/empty project"
-    echo "  -d: data directory"
+    echo "  -bc: big chain project"
+    echo "  -bt: big tree project"
+    echo "  -dd: data directory"
     echo "  -n: project name"
     echo "  -g: initializes git repo in project directory"
     echo
