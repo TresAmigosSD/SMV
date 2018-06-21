@@ -8,17 +8,17 @@ SMV_HOME="$(cd "`dirname "$0"`/.."; pwd)"
 
 DEFAULT_SPARK_VERSION=2.3.1
 
-function error() {
-  echo "ERROR: $1"
+function   error() {
+  echo "ERROR: ${1}"
   exit 1
 }
 
 function info() {
-  echo "INFO: $1"
+  echo "INFO: ${1}"
 }
 
 function usage() {
-  echo "USAGE: $USAGE"
+  echo "Usage: ${USAGE}"
 }
 
 function process_args() {
@@ -52,12 +52,13 @@ function find_spark() {
 }
 
 function install_spark() {
-  local local_tarball=$(basename "$REMOTE_TARBALL")
+  local target_parent=$(dirname $TARGET_DIR)
+  local local_tarball="$(basename "$REMOTE_TARBALL")"
   local unpacked_dir="${local_tarball%.tgz}"
   curl -OL --progress-bar --fail "$REMOTE_TARBALL" > "$local_tarball"
-  tar -zxf "$local_tarball"
+  tar zxvf "${local_tarball}"
   rm -rf "$local_tarball"
-  mv "$unpacked_dir" "$target_dir"
+  mv "${unpacked_dir}" "${TARGET_DIR}"
 }
  
 process_args "$@"
