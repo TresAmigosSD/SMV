@@ -1,24 +1,68 @@
 #!/bin/bash
 set -e
 
-target_dir="$1"
+PROG_NAME=$(basename "$0")
+USAGE="${PROG_NAME} [--spark-version version] target_dir"
 
-if [ -z "$target_dir" ]; then
-  echo "No target directory specified."
+SMV_HOME="$(cd "`dirname "$0"`/.."; pwd)"
+
+DEFAULT_SPARK_VERSION=2.3.1
+
+function error() {
+  echo "ERROR: $1"
   exit 1
-fi
+}
 
-smv_tools="$(cd "`dirname "$0"`"; pwd)"
-spark_version=2.3.0
+function info() {
+  echo "INFO: $1"
+}
 
-remote_tarball="http://www-us.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz"
-local_tarball=$(basename $remote_tarball)
-echo "[INFO] Downloading $remote_tarball to $local_tarball."
-curl -OL --progress-bar --fail "$remote_tarball" > "$local_tarball"
+function usage() {
+  echo "USAGE: $USAGE"
+}
 
-tar -zxf "$local_tarball"
-rm -rf "$local_tarball"
-spark_dir="${local_tarball%.tgz}"
-mv "$spark_dir" "$target_dir"
+function process_args() {
+  if [ "$1" = "--spark-version" ]; then
+    shift
+    SPARK_VERSION=$1
+    shift
+  else
+    SPARK_VERSION=$DEFAULT_SPARK_VERSION
+  fi
 
-echo "[INFO] Spark installed succesfully!"
+  if [ -z "$1" ]; then
+    usage
+    error "No target directory specified."
+  else
+    TARGET_DIR="$1"
+  fi
+
+  info "Installing Spark $SPARK_VERSION to $TARGET_DIR"
+}
+
+function find_spark() {
+  local spark_entries=$(grep $SPARK_VERSION $SMV_HOME/.supported_spark)
+  if [ -z "$spark_entries" ]; then
+    error "No entry for Spark $SPARK_VERSION found in $SMV_HOME/.supported_spark"
+  else
+    REMOTE_TARBALL="$(cut -c7- <<< "$spark_entries")"
+  fi
+
+  info "Downloading $REMOTE_TARBALL"
+}
+
+function install_spark() {
+  local local_tarball=$(basename "$REMOTE_TARBALL")
+  local unpacked_dir="${local_tarball%.tgz}"
+  curl -OL --progress-bar --fail "$REMOTE_TARBALL" > "$local_tarball"
+  tar -zxf "$local_tarball"
+  rm -rf "$local_tarball"
+  mv "$unpacked_dir" "$target_dir"
+}
+ 
+process_args "$@"
+find_spark
+install_spark
+
+
+info "Spark $SPARK_VERSION installed succesfully!"
