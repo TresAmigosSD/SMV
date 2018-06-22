@@ -1,4 +1,5 @@
 #!/bin/bash
+# This file is to create a chain project
 TEMPLATE=$1
 DEST=$2
 NUM_MODS=$3

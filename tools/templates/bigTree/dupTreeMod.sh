@@ -1,4 +1,5 @@
 #!/bin/bash
+# This file is to create a balanced binary tree project
 TEMPLATE=$1
 DEST=$2
 NUM_MODS=$3
