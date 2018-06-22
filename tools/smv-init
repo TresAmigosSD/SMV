@@ -11,7 +11,7 @@ OVERRIDE=0
 DO_GIT_INIT=0
 
 
-while [[ $# -gt 2 ]]
+while [[ $# -gt 1 ]]
 do
 FLAG=$1
 
@@ -54,6 +54,11 @@ FLAG=$1
         shift
         shift
         ;;
+    -mn|--moduleNumber)
+        PROJ_SIZE="$2"
+        shift
+        shift
+        ;;
     -o)
     OVERRIDE=1
         shift
@@ -70,7 +75,7 @@ done
 TEMPLATE_DIR="$ALL_TEMPLATES_DIR/$PROJ_TYPE"
 TEMPLATE_DATA_DIR="$ALL_TEMPLATES_DIR/data"
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 1 ]; then
     echo "ERROR: Invalid number of arguments"
     echo "USAGE: $0 [-q][-o] [-s|-e|-t|-b|-bc|-bt] [-dd] [-n]  project_path"
     echo "project types:"
@@ -95,7 +100,6 @@ PROJ_DIR="$1"
 PROJ_SRC_DIR="${PROJ_DIR}/src/main/python"
 PROJ_CLASS=""
 PROJ_DATA_DIR=${PROJ_DATA_DIR:="${PROJ_DIR}/data"} # default data dir is /data in project dir
-PROJ_SIZE="$2"
 
 function extract_group_artifact_ids()
 {
@@ -209,12 +213,16 @@ function copy_data_files() {
 }
 
 function augment_module_count() {
+    MODULE_NUMBER=10
+    if [ $PROJ_SIZE ]; then
+        MODULE_NUMBER=$PROJ_SIZE
+    fi
     if [ "$PROJ_TYPE" = "bigChain" ] ; then
-        $TEMPLATE_DIR/dupMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ $PROJ_SIZE
+        $TEMPLATE_DIR/dupChainMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ $MODULE_NUMBER
         rm $PROJ_DIR/src/main/python/stage1/employment.py
     fi
     if [ "$PROJ_TYPE" = "bigTree" ] ; then
-        $TEMPLATE_DIR/dupMod2.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ $PROJ_SIZE
+        $TEMPLATE_DIR/dupTreeMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ $MODULE_NUMBER
         rm $PROJ_DIR/src/main/python/stage1/employment.py
     fi
 }
