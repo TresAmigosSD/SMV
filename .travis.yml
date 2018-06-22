@@ -1,11 +1,15 @@
 sudo: required
 dist: trusty
 language: python
-install:
-  - pyenv install 2.7.10
-  - pyenv install 3.5.2
-  - pyenv install 3.6.5
-  - pip install tox
-  - make install-basic
-script:
-  - make test-quick
+jobs:
+  include:
+    - name: thorough
+      if: type = cron
+      stage: test
+      install: pip install tox
+      script: make test-thorough
+    - name: quick
+      if: type != cron
+      stage: test
+      install: pip install -r docker/smv/requirements.txt
+      script: make test-quick 
