@@ -4,12 +4,14 @@ language: python
 jobs:
   include:
     - name: thorough
-      if: type = cron
+      # run thorough tests for daily cron test
+      # also allow thorough tests to be forced through the Travis UI
+      if: type = cron or env(TEST_TYPE) = thorough
       stage: test
       install: pip install tox
       script: make test-thorough
     - name: quick
-      if: type != cron
+      if: type != cron and env(TEST_TYPE) != thorough
       stage: test
       install: pip install -r docker/smv/requirements.txt
       script: make test-quick 
