@@ -26,6 +26,24 @@ test7 \
 
 HASH_TEST_MOD="integration.test.hashtest.modules.M"
 
+function parse_args() {
+  local _spark_home
+
+  if [ "${1}" == "--spark-home" ]; then
+    shift
+    _spark_home="${1}"
+    shift
+  else
+    local spark_submit="$(type -p spark-submit)"
+    local spark_bin="$(dirname "$spark_submit")" 
+    _spark_home="$(cd "$spark_bin"; pwd)"
+  fi
+
+  SPARK_HOME=$(cd "$_spark_home"; pwd)
+
+  echo "Using Spark installation at $SPARK_HOME"
+}
+
 function verify_test_context() {
   if [ ! -d "src/test/scripts" ]; then
     echo "Must run this script from top level SMV directory"
@@ -35,7 +53,7 @@ function verify_test_context() {
   SMV_HOME="$(pwd)"
   SMV_TOOLS="${SMV_HOME}/tools"
   SMV_INIT="${SMV_TOOLS}/smv-init"
-  SMV_RUN="${SMV_TOOLS}/smv-pyrun"
+  SMV_RUN="${SMV_TOOLS}/smv-pyrun --spark-home ${SPARK_HOME}"
 }
 
 function enter_clean_test_dir() {
@@ -184,6 +202,7 @@ function test_simple_app() {
 
 echo "--------- INTEGRATION TEST BEGIN -------------"
 
+parse_args $@
 verify_test_context
 enter_clean_test_dir
 generate_integration_app

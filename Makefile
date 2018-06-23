@@ -43,7 +43,7 @@ test-python: install-basic
 	tools/smv-pytest --spark-home $(DEFAULT_SPARK_HOME)
 
 test-integration: install-basic publish-scala
-	bash src/test/scripts/run-integration-test.sh
+	bash src/test/scripts/run-integration-test.sh --spark-home $(DEFAULT_SPARK_HOME)
 
 
 test-thorough: install-full $(TEST_SPARK_RULES)
@@ -51,7 +51,8 @@ test-thorough: install-full $(TEST_SPARK_RULES)
 TEST_SPARK_RULES = $(addprefix test-spark-, $(SPARK_VERSIONS))
 
 $(TEST_SPARK_RULES) : test-spark-% : install-spark-% assemble-scala publish-scala
-	tox -- tools/smv-pytest --spark-home $(SPARKS_DIR)$* && bash src/test/scripts/run-integration-test.sh
+	tox -- tools/smv-pytest --spark-home $(SPARKS_DIR)$* && \
+		   bash src/test/scripts/run-integration-test.sh --spark-home $(SPARKS_DIR)$*
 
 
 
