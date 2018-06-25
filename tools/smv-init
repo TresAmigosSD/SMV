@@ -36,11 +36,11 @@ FLAG=$1
         PROJ_TYPE="test"
         shift
         ;;
-    -bc|-bigChain)
+    --bc|--bigChain)
         PROJ_TYPE="bigChain"
         shift
         ;;
-    -bt|-bigTree)
+    --bt|--bigTree)
         PROJ_TYPE="bigTree"
         shift
         ;;
@@ -54,7 +54,7 @@ FLAG=$1
         shift
         shift
         ;;
-    -mn|--moduleNumber)
+    --mn|--moduleNumber)
         PROJ_SIZE="$2"
         shift
         shift
@@ -77,17 +77,17 @@ TEMPLATE_DATA_DIR="$ALL_TEMPLATES_DIR/data"
 
 if [ $# -ne 1 ]; then
     echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q][-o] [-s|-e|-t|-b|-bc|-bt] [-d] [-n] [-mn] project_path"
+    echo "USAGE: $0 [-q][-o] [-s|-e|-t|-b|--bc|--bt] [-d] [-n] [--mn] project_path"
     echo "project types:"
     echo "  -s: simple (default)"
     echo "  -e: enterprise"
     echo "  -t: test (for developers only)"
     echo "  -b: blank/empty project"
-    echo "  -bc: big chain project"
-    echo "  -bt: big tree project"
+    echo "  --bc: big chain project"
+    echo "  --bt: big tree project"
     echo "  -d: data directory"
     echo "  -n: project name"
-    echo "  -mn: module number"
+    echo "  --mn: module number"
     echo "  -g: initializes git repo in project directory"
     echo
     echo "example:"
