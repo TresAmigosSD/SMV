@@ -1,8 +1,6 @@
 import smv
 import pyspark.sql.functions as F
 
-__all__ = ['EmploymentByState']
-
 from _PKG_NAME_ import _DEP_NAME_
 
 class _MOD_NAME_(smv.SmvModule, smv.SmvOutput):
