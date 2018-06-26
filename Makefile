@@ -55,7 +55,7 @@ TEST_SPARK_RULES = $(addprefix test-spark-, $(SPARK_VERSIONS))
 test-thorough: install-full test-scala $(TEST_SPARK_RULES)
 
 $(TEST_SPARK_RULES) : test-spark-% : install-spark-% assemble-scala publish-scala
-	tox -- tools/smv-pytest --spark-home $(SPARKS_DIR)$* && \
+	tox -- bash tools/smv-pytest --spark-home $(SPARKS_DIR)$* && \
 		   bash src/test/scripts/run-integration-test.sh --spark-home $(SPARKS_DIR)$*
 
 
