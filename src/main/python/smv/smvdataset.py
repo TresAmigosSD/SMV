@@ -48,6 +48,14 @@ def _stripComments(code):
     code = str(code)
     return re.sub(r'(?m)^ *(#.*\n?|[ \t]*\n)', '', code)
 
+def _sourceHash(module):
+    src = inspect.getsource(module)
+    src_no_comm = _stripComments(src)
+    # DO NOT use the compiled byte code for the hash computation as
+    # it doesn't change when constant values are changed.  For example,
+    # "a = 5" and "a = 6" compile to same byte code.
+    # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
+    return _smvhash(src_no_comm)
 
 class SmvOutput(object):
     """Mixin which marks an SmvModule as one of the output of its stage
@@ -136,6 +144,24 @@ class SmvDataSet(ABC):
             The given keys and their values will influence the dataset hash
         """
         return []
+    
+    def requiresLib(self):
+        """User-specified list of 'library' dependencies. These are code, other than
+            the DataSet's run method that impact its output or behaviour.
+
+            Override this method to assist in re-running this module based on changes
+            in other python objects (functions, classes, packages).
+
+            Limitations: For python modules and packages, the 'requiresLib()' method is
+            limited to registering changes on the main file of the package (for module
+            'foo', that's 'foo.py', for package 'bar', that's 'bar/__init__.py'). This
+            means that if a module or package imports other modules, the imported
+            module's changes will not impact DataSet hashes.
+
+            Returns:
+                (list(module)): a list of library dependencies
+        """
+        return []
 
     def dqm(self):
         """DQM policy
@@ -185,13 +211,7 @@ class SmvDataSet(ABC):
         cls = self.__class__
         # get hash of module's source code text
         try:
-            src = inspect.getsource(cls)
-            src_no_comm = _stripComments(src)
-            # DO NOT use the compiled byte code for the hash computation as
-            # it doesn't change when constant values are changed.  For example,
-            # "a = 5" and "a = 6" compile to same byte code.
-            # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
-            res = _smvhash(src_no_comm)
+            res = _sourceHash(cls)
         except Exception as err:  # `inspect` will raise error for classes defined in the REPL
             # Instead of handle the case that module defined in REPL, just raise Exception here
             # res = _smvhash(_disassemble(cls))
@@ -220,6 +240,11 @@ class SmvDataSet(ABC):
 
         # incorporate hash of KVs for config keys listed in requiresConfig
         res += self.config_hash()
+
+        # iterate through libs/modules that this DataSet depends on and use their source towards hash as well
+        for lib in self.requiresLib():
+            lib_src_hash = _sourceHash(lib)
+            res += lib_src_hash
 
         # if module inherits from SmvRunConfig, then add hash of all config values to module hash
         try:
