@@ -36,8 +36,12 @@ FLAG=$1
         PROJ_TYPE="test"
         shift
         ;;
-    -b|-big)
-        PROJ_TYPE="big"
+    --bc|--bigChain)
+        PROJ_TYPE="bigChain"
+        shift
+        ;;
+    --bt|--bigTree)
+        PROJ_TYPE="bigTree"
         shift
         ;;
     -d|--dataDir)
@@ -47,6 +51,11 @@ FLAG=$1
         ;;
     -n|--name)
         PROJ_NAME="$2"
+        shift
+        shift
+        ;;
+    --mn|--moduleNumber)
+        PROJ_SIZE="$2"
         shift
         shift
         ;;
@@ -68,14 +77,17 @@ TEMPLATE_DATA_DIR="$ALL_TEMPLATES_DIR/data"
 
 if [ $# -ne 1 ]; then
     echo "ERROR: Invalid number of arguments"
-    echo "USAGE: $0 [-q][-o] [-s|-e|-t|-b] [-dd] [-n]  project_path"
+    echo "USAGE: $0 [-q][-o] [-s|-e|-t|-b|--bc|--bt] [-d] [-n] [--mn] project_path"
     echo "project types:"
     echo "  -s: simple (default)"
     echo "  -e: enterprise"
     echo "  -t: test (for developers only)"
     echo "  -b: blank/empty project"
+    echo "  --bc: big chain project"
+    echo "  --bt: big tree project"
     echo "  -d: data directory"
     echo "  -n: project name"
+    echo "  --mn: module number"
     echo "  -g: initializes git repo in project directory"
     echo
     echo "example:"
@@ -149,7 +161,7 @@ function substitute_tokens()
         PROJ_CLASS="integration.test"
         extract_group_artifact_ids
     fi
-    
+
     echo "-- substituting tokens with project info"
 
     local files="$(cd $PROJ_DIR; find . -type f)"
@@ -202,8 +214,16 @@ function copy_data_files() {
 }
 
 function augment_module_count() {
-    if [ "$PROJ_TYPE" = "big" ] ; then
-        $TEMPLATE_DIR/dupMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ 1000
+    MODULE_NUMBER=10
+    if [ $PROJ_SIZE ]; then
+        MODULE_NUMBER=$PROJ_SIZE
+    fi
+    if [ "$PROJ_TYPE" = "bigChain" ] ; then
+        $TEMPLATE_DIR/dupChainMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ $MODULE_NUMBER
+        rm $PROJ_DIR/src/main/python/stage1/employment.py
+    fi
+    if [ "$PROJ_TYPE" = "bigTree" ] ; then
+        $TEMPLATE_DIR/dupTreeMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ $MODULE_NUMBER
         rm $PROJ_DIR/src/main/python/stage1/employment.py
     fi
 }
