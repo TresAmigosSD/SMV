@@ -6,6 +6,9 @@ DEFAULT_SPARK = $(shell tail -1 admin/.spark_to_test)
 SPARK_HOMES = $(addprefix $(SPARKS_DIR), $(SPARK_VERSIONS))
 DEFAULT_SPARK_HOME = $(addprefix $(SPARKS_DIR), "$(DEFAULT_SPARK)")
 
+DEFAULT_TOX_ENV = py35
+
+
 install : install-basic
 
 install-basic : install-spark-default assemble-scala
@@ -40,10 +43,10 @@ test-scala:
 	sbt test
 
 test-python: install-basic
-	tools/smv-pytest --spark-home $(DEFAULT_SPARK_HOME)
+	tox -e $(DEFAULT_TOX_ENV) -- bash tools/smv-pytest --spark-home $(DEFAULT_SPARK_HOME)
 
 test-integration: install-basic publish-scala
-	bash src/test/scripts/run-integration-test.sh --spark-home $(DEFAULT_SPARK_HOME)
+	tox -e $(DEFAULT_TOX_ENV) -- bash src/test/scripts/run-integration-test.sh --spark-home $(DEFAULT_SPARK_HOME)
 
 
 
