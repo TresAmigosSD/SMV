@@ -1,13 +1,13 @@
 SPARKS_DIR = .sparks
 
 SPARK_VERSIONS = $(shell cat admin/.spark_to_test)
-DEFAULT_SPARK = $(shell tail -1 admin/.spark_to_test)
+DEFAULT_SPARK = $(shell tail -1 <<< $(SPARK_VERSIONS))
 
 SPARK_HOMES = $(addprefix $(SPARKS_DIR)/, $(SPARK_VERSIONS))
-DEFAULT_SPARK_HOME = $(addprefix $(SPARKS_DIR)/, "$(DEFAULT_SPARK)")
+DEFAULT_SPARK_HOME = $(grep $(DEFAULT_SPARK) <<< $(SPARK_HOMES))
 
 PYTHON_VERSIONS = $(shell cat admin/.python_to_test)
-DEFAULT_PYTHON_VERSION = $(shell tail -1 admin/.python_to_test)
+DEFAULT_PYTHON_VERSION = $(shell tail -1 <<< $(PYTHON_VERSIONS))
 
 
 install : install-basic
