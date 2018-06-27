@@ -1,11 +1,11 @@
 sudo: required
 dist: trusty
 language: python
+python: 3.6.5
 install: 
   - pip install tox
-  - pyenv install 3.6.5
-  - pyenv install 3.5.3
   - pyenv install 2.7.10
+  - pyenv install 3.5.3
 jobs:
   include:
     - name: thorough
