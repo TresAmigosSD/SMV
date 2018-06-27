@@ -24,7 +24,7 @@ To verify your environment is set up properly, run
 make test-thorough
 ```
 
-This will run all of SMV's core tests with latest supported Python and Spark version.
+This will install all required versions of Spark, assemble the fat jar, and run all of SMV's tests. The first time you invoke it may take you in the are of 45 minutes. Subsequent invocations should take in the area of 5 minutes.
 
 ## Testing
 
