@@ -2,31 +2,9 @@
 
 Most users _will not_ need to compile anything to run an SMV application - for pure Python projects, the user can just run their application against a prebuilt binary. For those who do need to build SMV themselves, this document will review the use of [SBT](http://www.scala-sbt.org/download.html) for building SMV. SBT is the preferred tool for building SMV.
 
-## Tasks
-
 ### Build the SMV fat JAR
 ```
 $ sbt assembly
-```
-
-### Run Scala unit tests
-```
-$ sbt test
-```
-
-### Run Python unit tests
-```
-$ sbt pytest
-```
-
-### Run Integration tests
-```
-$ sbt itest
-```
-
-### Run all of the above tests
-```
-$ sbt alltest
 ```
 
 ## Memory options
