@@ -48,7 +48,7 @@ test-quick: test-scala test-python test-integration
 test-scala:
 	sbt test
 
-test-python: basic-install
+test-python: install-basic
 	tox -e $(DEFAULT_PYTHON_VERSION) -- bash tools/smv-pytest --spark-home $(DEFAULT_SPARK_HOME)
 
 test-integration: install-basic publish-scala
