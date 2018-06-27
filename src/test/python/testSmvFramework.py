@@ -77,15 +77,19 @@ class SmvFrameworkTest(SmvBaseTest):
 
     def test_SmvDQM(self):
         fqn = "stage.modules.D3"
-        try:
+
+        msg = """{"passed":false,"dqmStateSnapshot":{"totalRecords":3,"parseError":{"total":0,"firstN":[]},"fixCounts":{"a_lt_1_fix":1},"ruleErrors":{"b_lt_03":{"total":1,"firstN":["org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5"]}}},"errorMessages":[{"FailTotalRuleCountPolicy(2)":"true"},{"FailTotalFixCountPolicy(1)":"false"},{"FailParserCountPolicy(1)":"true"}],"checkLog":["Rule: b_lt_03, total count: 1","org.tresamigos.smv.dqm.DQMRuleError: b_lt_03 @FIELDS: b=0.5","Fix: a_lt_1_fix, total count: 1"]}"""
+
+        with self.assertRaises(SmvDqmValidationError) as cm:
             df = self.df(fqn)
             df.smvDumpDF()
-        except SmvDqmValidationError as e:
-            self.assertEqual(e.dqmValidationResult["passed"], False)
-            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["totalRecords"], 3)
-            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["parseError"]["total"],0)
-            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["fixCounts"]["a_lt_1_fix"],1)
-            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["ruleErrors"]["b_lt_03"]["total"],1)
+        
+        e = cm.exception
+        self.assertEqual(e.dqmValidationResult["passed"], False)
+        self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["totalRecords"], 3)
+        self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["parseError"]["total"],0)
+        self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["fixCounts"]["a_lt_1_fix"],1)
+        self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["ruleErrors"]["b_lt_03"]["total"],1)
 
     def test_SmvSqlModule(self):
         fqn = "stage.modules.SqlMod"
@@ -130,15 +134,18 @@ class SmvRunConfigTest1(SmvBaseTest):
         expect = self.createDF("a: String;b: Integer",
             """test1_s1,1;
                 test2_not_i2,4;
-                test3_b,5""")
+                test3_b,5;
+                test4_undefined_c,7;
+                test5_undefined_one,9;
+                test6_undefined_bool,11""")
         self.should_be_same(expect, df)
 
 class SmvRunConfigTest2(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s2', 'smv.config.i=2', 'smv.config.b=false', 'smv.stages=stage',
-                '-m', "None"]
+        return ['--smv-props', 'smv.config.s=s2', 'smv.config.i=2', 'smv.config.b=false', 'smv.config.c=c',
+                'smv.config.one=1', 'smv.config.bool=True', 'smv.stages=stage', '-m', "None"]
 
     def test_SmvCsvStringData_with_SmvRunConfig(self):
         fqn = "stage.modules.D4"
@@ -146,7 +153,10 @@ class SmvRunConfigTest2(SmvBaseTest):
         expect = self.createDF("a:String;b:Integer",
             """test1_not_s1,2;
                 test2_i2,3;
-                test3_not_b,6""")
+                test3_not_b,6;
+                test4_defined_c,8;
+                test5_defined_one,10;
+                test6_defined_bool,12""")
         self.should_be_same(expect, df)
 
 class SmvNameErrorPropagationTest(SmvBaseTest):
@@ -186,14 +196,8 @@ class SmvMetadataTest(SmvBaseTest):
 
     def test_metadata_validation_failure_causes_error(self):
         fqn = "metadata_stage.modules.ModWithFailingValidation"
-        try:
+        with self.assertRaisesRegexp(Py4JJavaError, "SmvMetadataValidationError"):
             self.df(fqn)
-        except SmvDqmValidationError as e:
-            self.assertEqual(e.dqmValidationResult["passed"], False)
-            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["totalRecords"], 2)
-            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["parseError"]["total"],0)
-            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["ruleErrors"],{})
-            self.assertEqual(e.dqmValidationResult["errorMessages"][0][fqn + " metadata validation"],"false")
 
     def test_invalid_metadata_rejected_gracefully(self):
         fqn = "metadata_stage.modules.ModWithInvalidMetadata"

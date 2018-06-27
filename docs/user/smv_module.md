@@ -98,7 +98,7 @@ The set of `SmvOutput` output modules in a stage define the data *interface/api*
 
 In addition to the above, the ability to mark certain modules as output has the following benefits:
 
-* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-pyrun`). Depending on the options specified, they can then be published to CSV or to Hive.
+* Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-run`). Depending on the options specified, they can then be published to CSV or to Hive.
 * A future option might be added to allow for listing of "dead" modules.  That is, any module in a stage that does not contribute to any output module either directly or indirectly.
 * We may add a future option to `SmvApp` that allows the user to display a "catalog" of output modules and their description.
 

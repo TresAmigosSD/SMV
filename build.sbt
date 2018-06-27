@@ -33,12 +33,6 @@ publishArtifact in Test := true
 
 testOptions in Test += Tests.Argument("-oF")
 
-// Tests must be forked in order to export env vars
-fork in Test := true
-// SMV_HOME would normally be set by _env.sh when starting SMV, so for testing we
-// explicitly set it to the current directory.
-envVars in Test := Map("SMV_HOME" -> ".")
-
 mainClass in assembly := Some("org.tresamigos.smv.SmvApp")
 
 assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)

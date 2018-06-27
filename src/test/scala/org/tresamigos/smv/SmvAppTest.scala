@@ -57,6 +57,9 @@ package org.tresamigos.smv {
 
       app.runModule(C.urn, runConfig = Map("sample" -> "3pct"))
       assert(app.smvConfig.getRunConfig("sample") === "3pct")
+
+      // test to make sure undefined runConfig returns null not an exception
+      assert(app.smvConfig.getRunConfig("sampleTwo") === null)
     }
 
     test("Test normal dependency execution") {

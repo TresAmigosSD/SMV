@@ -33,9 +33,7 @@ package org.tresamigos.smv {
         DqmStateSnapshot(2, ErrorReport(0,Seq.empty),Map.empty,
           Map("a_le_0" -> ErrorReport(1,
             Seq("org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @FIELDS: a=1")))),
-        Seq(
-          ("org.tresamigos.smv.runmoduletest.Mod1 metadata validation", "true")
-        ),
+        Seq(),
         Seq(
           "Rule: a_le_0, total count: 1",
           "org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @FIELDS: a=1"
@@ -44,8 +42,7 @@ package org.tresamigos.smv {
       assert(collector.getDqmValidationResult(Mod2.fqn) === DqmValidationResult(true,
         DqmStateSnapshot(2,ErrorReport(0,List()),Map("a_lt_1_fix" -> 1),Map()),
         Seq(
-          ("a_lt_1_fix", "true"),
-          ("org.tresamigos.smv.runmoduletest.Mod2 metadata validation", "true")
+          ("a_lt_1_fix", "true")
         ),
         Seq(
           "Fix: a_lt_1_fix, total count: 1"
@@ -53,9 +50,7 @@ package org.tresamigos.smv {
 
       assert(collector.getDqmValidationResult(Mod3.fqn) === DqmValidationResult(true,
         DqmStateSnapshot(2,ErrorReport(0,List()),Map(),Map()),
-        Seq(
-          ("org.tresamigos.smv.runmoduletest.Mod3 metadata validation", "true")
-        ),
+        Seq(),
         Seq.empty))
     }
   }

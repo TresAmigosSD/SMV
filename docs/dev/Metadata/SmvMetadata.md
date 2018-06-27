@@ -20,3 +20,7 @@ We will create new SMV properties to configure what metadata to save. All metada
 # Retrieving metadata
 
 `SmvDataSet` will provide a method `getMetadata` to get the `SmvMetadata` for an object (or perhaps just the Json string). If the metadata has already been persisted, we will essentially just read back the file. However, we will in some circumstances want metadata for modules which have not been run since they were last changed and thus do not have persisted metadata. In this case, we will construct the metadata that can be determined for a module without running it (FQN, inputs, possibly schema, etc.) and return that.
+
+# Validation
+
+Users may validate metadata by overriding `validateMetadata`. Returning `None` will indicate success, while returning a string will indicate failure - the string should be a message describing a failure. Metadata validation directly follows DQM validation. 

@@ -230,12 +230,6 @@ abstract class SmvDataSet extends FilenamePart {
     userDQM
 
   /**
-   * DQM inlcuding user policies, type specific policies, and metadata policy
-   */
-  private[smv] def completeDQM =
-    dqmWithTypeSpecificPolicy(dqm()).add(new DQMMetadataPolicy(this))
-
-  /**
    * returns the DataFrame from this dataset (file/module).
    * The value is cached so this function can be called repeatedly. The cache is
    * external to SmvDataSet so that it we will not recalculate the DF even after
@@ -380,7 +374,6 @@ abstract class SmvDataSet extends FilenamePart {
 
     val counter = app.sparkSession.sparkContext.longAccumulator
     val before  = DateTime.now()
-    println(s"${fmt.print(before)} PERSISTING: ${path}")
 
     val df      = dataframe.smvPipeCount(counter)
     val handler = new FileIOHandler(app.sparkSession, path)
@@ -503,6 +496,7 @@ abstract class SmvDataSet extends FilenamePart {
     }
     resMetadata.addFQN(fqn)
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
+    resMetadata.addApplicationContext(app)
     dfOpt foreach {resMetadata.addSchemaMetadata}
     timestamp foreach {resMetadata.addTimestamp}
     validResOpt foreach {resMetadata.addDqmValidationResult}
@@ -556,19 +550,21 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def computeDataFrame(genEdd: Boolean,
                                     collector: SmvRunInfoCollector,
                                     quickRun: Boolean): DataFrame = {
-    val dqmValidator  = new DQMValidator(completeDQM, isPersistValidateResult)
+    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm), isPersistValidateResult)
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
-      // Populate user metadata cache to isolate time spent on DQM from time spent on metadata
-      getOrCreateUserMetadata(df)
       val (validationResult, validationDuration) =
         doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction, moduleValidPath())}
       dqmTimeElapsed = Some(validationDuration)
 
       val metadata = getOrCreateMetadata(Some(df), Some(validationResult))
-      // must read metadata from file (if it exists) before deleting outputs
       val metadataHistory = getMetadataHistory
+      // Metadata is complete at time of validation, including user metadata and validation result
+      val validationRes: Option[String] = validateMetadata(metadata, metadataHistory.historyList)
+      validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
+      
+
       deleteOutputs(metadataOutputFiles)
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)

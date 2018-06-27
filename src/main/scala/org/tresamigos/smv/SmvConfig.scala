@@ -29,8 +29,8 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
   val DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
   val DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
 
-  banner("""Usage: smv-pyrun -m ModuleToRun
-           |Usage: smv-pyrun --run-app
+  banner("""Usage: smv-run -m ModuleToRun
+           |Usage: smv-run --run-app
            |""".stripMargin)
   footer("\nFor additional usage information, please refer to the user guide and API docs at: \nhttp://tresamigossd.github.io/SMV")
 
@@ -280,8 +280,13 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
   // ---------- User Run Config Parameters key/values ----------
-  /** Get user run config parameter as a string. */
-  def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, mergedProps("smv.config." + key).trim)
+  def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, getRunConfigFromConf(key))
+
+  def getRunConfigFromConf(key: String): String  = {
+    val runConfig = mergedProps.getOrElse("smv.config." + key, null);
+    if (runConfig == null) return null
+    return runConfig.trim
+  }
 
   /** Get all run config keys. */
   def getRunConfigKeys(): Seq[String] = splitProp("smv.config.keys") ++ dynamicRunConfig.keySet

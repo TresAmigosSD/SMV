@@ -19,15 +19,15 @@ function split_smv_spark_args()
         if [ "$1" == "--" ]; then
             shift
             break
+        fi 
+        
+        if [ "$1" == "--script" ]; then 
+          SMV_USER_SCRIPT="$2"
         fi
 
         if [ "$1" == "--spark-home" ]; then
           shift
           SPARK_HOME_OPT="$1"
-          shift
-        elif [ "$1" == "--script" ]; then
-          shift
-          SMV_USER_SCRIPT="$1"
           shift
         else
           SMV_ARGS=("${SMV_ARGS[@]}" "$1")

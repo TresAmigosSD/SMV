@@ -53,7 +53,7 @@ function verify_test_context() {
   SMV_HOME="$(pwd)"
   SMV_TOOLS="${SMV_HOME}/tools"
   SMV_INIT="${SMV_TOOLS}/smv-init"
-  SMV_RUN="${SMV_TOOLS}/smv-pyrun --spark-home ${SPARK_HOME}"
+  SMV_RUN="${SMV_TOOLS}/smv-run --spark-home ${SPARK_HOME}"
 }
 
 function enter_clean_test_dir() {
@@ -99,6 +99,7 @@ function test_integration_app() {
   run_integration_app
   validate_integration_app_output
   validate_hash_test_module_cache_invalidation
+  test_custom_driver
 }
 
 function run_integration_app() {
@@ -111,6 +112,17 @@ function run_integration_app() {
       smv.inputDir="file://$(pwd)/data/input" \
       smv.outputDir="file://$(pwd)/data/output" --run-app \
       -- --master 'local[*]'
+}
+
+function test_custom_driver() {
+  echo "--------- RUN APPLICATION WITH CUSTOM DRIVER -------------"
+  rm -rf data/output/*
+  ${SMV_RUN} --smv-props smv.config.keys=custom_key --smv-props smv.config.custom_key=custom_value \
+    --script src/main/runners/custom_driver.py arg1 arg2 arg3
+  if [ $(count_output) == 0 ]; then
+    echo "Driver script wasn't exectuted!"
+    exit 1
+  fi
 }
 
 function validate_integration_app_output() {
@@ -179,7 +191,6 @@ function validate_hash_test_module_cache_invalidation() {
 
   echo "--------- RUN MODULE WITH UPDATED SCHEMA -------------"
   ${SMV_RUN} -m hashtest.modules.M
-
   echo "--------- VERIFY HASH CHANGED -------------"
   verify_hash_changed 3
 }
@@ -211,3 +222,4 @@ test_enterprise_app
 test_simple_app
 
 echo "--------- INTEGRATION TEST COMPLETE -------------"
+

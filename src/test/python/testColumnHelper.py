@@ -68,7 +68,7 @@ class ColumnHelperTest(SmvBaseTest):
         r4 = df.select(col("t").smvPlusYears(2).alias("ts"))
         r5 = df.select(col("t").smvPlusYears(4).alias("ts"))
 
-        s = "ts: Timestamp[yyyy-MM-dd hh:mm:ss.S]"
+        s = "ts: Timestamp[yyyy-MM-dd HH:mm:ss.S]"
         e1 = self.createDF(
             s,
             "1976-01-21 00:00:00.0;" +
@@ -104,7 +104,7 @@ class ColumnHelperTest(SmvBaseTest):
         r3 = df.select(col("t").smvPlusMonths(col("toadd")).alias('ts'))
         r4 = df.select(col("t").smvPlusYears(col("toadd")).alias('ts'))
 
-        s = "ts: Timestamp[yyyy-MM-dd hh:mm:ss.S]"
+        s = "ts: Timestamp[yyyy-MM-dd HH:mm:ss.S]"
         e1 = self.createDF(
             s,
             """1976-02-10 00:00:00.0;
@@ -157,7 +157,7 @@ class ColumnHelperTest(SmvBaseTest):
             df.smvTime.smvTimeToTimestamp()
         )
 
-        e = self.createDF("smvTime: String;type: String;index: Integer;label: String;timestamp: Timestamp[yyyy-MM-dd hh:mm:ss.S]",
+        e = self.createDF("smvTime: String;type: String;index: Integer;label: String;timestamp: Timestamp[yyyy-MM-dd HH:mm:ss.S]",
                         """D20120302,day,15401,2012-03-02,2012-03-02 00:00:00.0;
                             Q201203,quarter,170,2012-Q3,2012-07-01 00:00:00.0;
                             M201203,month,506,2012-03,2012-03-01 00:00:00.0;
@@ -187,11 +187,14 @@ class ColumnHelperTest(SmvBaseTest):
 
     def test_smvTimestampToStr(self):
         df = self.createDF("ts:Timestamp[yyyyMMdd'T'HHmmssZ];tz:String", "20180428T025800+1000,+0000;,America/Los_Angeles;20180428T025800+1000,Australia/Sydney")
-        r1 = df.select(col("ts").smvTimestampToStr("+10:00","yyyyMMdd:HHmmssz").alias("localDT"))
-        r2 = df.select(col("ts").smvTimestampToStr(col("tz"),"yyyy-MM-dd HH:mm:ssz").alias("localDT2"))
+        # Use `Z`(RFC 822 time zone) in the SimpleDateFormat because it has only a single valid way to represent a given offset.
+        # Avoid to use `z`(General Time Zone) because it may have different result in different platforms(e.g. UTC and +00:00).
+        # Details in https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
+        r1 = df.select(col("ts").smvTimestampToStr("+10:00","yyyyMMdd:HHmmssZ").alias("localDT"))
+        r2 = df.select(col("ts").smvTimestampToStr(col("tz"),"yyyy-MM-dd HH:mm:ssZ").alias("localDT2"))
 
-        e1 = self.createDF("localDT: String", "20180428:025800+10:00;;20180428:025800+10:00")
-        e2 = self.createDF("localDT2: String", "2018-04-27 16:58:00+00:00;;2018-04-28 02:58:00+10:00")
+        e1 = self.createDF("localDT: String", "20180428:025800+1000;;20180428:025800+1000")
+        e2 = self.createDF("localDT2: String", "2018-04-27 16:58:00+0000;;2018-04-28 02:58:00+1000")
 
         self.should_be_same(e1, r1)
         self.should_be_same(e2, r2)

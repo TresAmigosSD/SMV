@@ -18,6 +18,10 @@ import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 
 class DQMTest extends SmvTestUtil {
+  override def appArgs = super.appArgs ++ Seq(
+    "--smv-props", "smv.stages=org.tresamigos.smv.stage1"
+  )
+
   test("test DQMState functions") {
     val state = new DQMState(sc, Seq("rule1", "rule2"), Seq("fix1"))
 
@@ -218,5 +222,21 @@ class DQMTest extends SmvTestUtil {
     intercept[SmvDqmValidationError] {
       file.rdd(collector=new SmvRunInfoCollector)
     }
+  }
+  
+  test("DQM failures only counted once") {
+    // Will fail with an error if the DQMRule is double-counted
+    app.runModuleByName("stage1.ModWithDQMAndMetadata")
+  }
+}
+
+package stage1 {
+  object ModWithDQMAndMetadata extends SmvModule("A module with metadata") {
+    def requiresDS = Seq()
+    def run(i: RunParams) = app.createDF(
+      """a:String;b:String""", """"a","b";,"d""""
+    )
+    override def metadata(df: DataFrame) = SmvMetadata.fromJson(f"""{"count": ${df.count}}""")
+    override def dqm = SmvDQM().add(DQMRule(col("a").isNotNull, "a_not_null", FailCount(2)))
   }
 }

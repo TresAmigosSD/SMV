@@ -73,3 +73,19 @@ class CsvFileWithRun(SmvCsvFile):
 
 class Child(Parent):
     pass
+
+class UsesConfigValue(SmvModule):
+    def requiresDS(self):
+        return[]
+    def run(self, i):
+        pass
+    def requiresConfig(self):
+        return ["keyChanges"]
+
+class DoesntConfigValue(SmvModule):
+    def requiresDS(self):
+        return []
+    def run(self, i):
+        pass
+    def requiresConfig(self):
+        return ["keyDoesntChange"]
