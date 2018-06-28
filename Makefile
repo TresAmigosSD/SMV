@@ -9,17 +9,19 @@ DEFAULT_SPARK_HOME = $(addprefix $(SPARKS_DIR)/, "$(DEFAULT_SPARK)")
 PYTHON_VERSIONS = $(shell cat admin/.python_to_test)
 DEFAULT_PYTHON_VERSION = $(shell tail -1 admin/.python_to_test)
 
+clean:
+	sbt clean
 
-install : install-basic
+install: install-basic
 
-install-basic : install-spark-default assemble-scala
+install-basic: install-spark-default assemble-fat-jar
 
-install-full : install-spark-all assemble-scala
+install-full: install-spark-all assemble-fat-jar
 
-assemble-scala:
+assemble-fat-jar:
 	sbt assembly
 
-publish-scala: assemble-scala
+publish-scala: assemble-fat-jar
 	sbt publish-local
 
 
@@ -60,7 +62,7 @@ test-integration: install-basic publish-scala
 # TODO: is it really necessary to test every spark version with every python version
 TEST_SPARK_RULES = $(addprefix test-spark-, $(SPARK_VERSIONS))
 
-$(TEST_SPARK_RULES) : test-spark-% : install-spark-% assemble-scala publish-scala
+$(TEST_SPARK_RULES) : test-spark-% : install-spark-% assemble-fat-jar publish-scala
 	# e.g. tox -e py26 -e py35 -- bash ...
 	tox $(addprefix "-e ", $(PYTHON_VERSIONS)) -- \
 		bash tools/smv-pytest --spark-home $(SPARKS_DIR)/$*
