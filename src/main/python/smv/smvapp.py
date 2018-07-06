@@ -206,7 +206,7 @@ class SmvApp(object):
     def stages(self):
         """Stages is a function as they can be set dynamically on an SmvApp instance"""
         return self.j_smvPyClient.stages()
-    
+
     def userLibs(self):
         """Return dynamically set smv.user_libraries from conf"""
         return self.j_smvPyClient.userLibs()
@@ -222,6 +222,18 @@ class SmvApp(object):
         csvAttributes --- Scala CsvAttributes instance (optional)
         """
         return self._jvm.SmvPythonHelper.discoverSchemaAsSmvSchema(path, n, csvAttributes)
+
+    def getSchemaByDataFileAsSmvSchema(self, data_file_name):
+        """Get the schema of a data file from its path and returns a Scala SmvSchema instance.
+        If no corresponding schema file, then returns None.
+        """
+        smv_schema_obj = self.j_smvPyClient.getSmvSchema()
+        data_file_path = os.path.join(self.inputDir(), data_file_name)
+        schema_file_path = smv_schema_obj.dataPathToSchemaPath(data_file_path)
+        try:
+            return smv_schema_obj.fromFile(self.j_smvApp.sc(), schema_file_path)
+        except:
+            return None
 
     def inputDir(self):
         return self.config().inputDir()
