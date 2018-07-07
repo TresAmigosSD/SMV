@@ -2,7 +2,14 @@ FROM openjdk:8-jdk
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG SBT_VERSION=0.13.15
-ENV PATH=$PATH:/usr/lib/SMV/tools:/usr/lib/spark/bin:/usr/lib/sbt/bin
+ARG PYTHON_VERSION=2.7.13
+
+ENV TEMPLATE_DIR=/home/template
+
+# create the projects directory and create a flag (.docker) to indicate project is inside docker image.
+RUN mkdir /projects &&\
+    touch /projects/.docker &&\
+    mkdir ${TEMPLATE_DIR}
 
 RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/source.list &&\
     apt-key adv --keyserver hkp://pgp.mit.edu --recv-key 381BA480 &&\
@@ -14,12 +21,8 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/
     apt-get install -y rsync &&\
     apt-get install -y git &&\
     apt-get install -y bc &&\
-    apt-get install -y python "python-dev" "python-pip" &&\
-    apt-get install -y graphviz
-
-# create the projects directory and create a flag (.docker) to indicate project is inside docker image.
-RUN mkdir /projects &&\
-    touch /projects/.docker
+    apt-get install -y graphviz &&\
+    apt-get install -y libssl-dev
 
 # install sbt.  The real sbt will be downloaded the first time sbt is run.
 # Note: do not run "sbt exit" here to prime the download as we want to wait until user mounts /projects/.ivy2
@@ -36,14 +39,17 @@ RUN cd /projects &&\
     mv SMV_* /usr/lib/SMV &&\
     mv spark-* /usr/lib/spark
 
-# installs python packages.
-RUN pip install --upgrade pip
-RUN pip install -r /usr/lib/SMV/docker/smv/requirements.txt
+# Debian repositories don't have all of the supported versions of Python, so it will be easiest to
+# use pyenv to manage installation
+RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash && \
+    /root/.pyenv/bin/pyenv install ${PYTHON_VERSION} &&\
+    /root/.pyenv/bin/pyenv global ${PYTHON_VERSION} &&\
+    /root/.pyenv/versions/${PYTHON_VERSION}/bin/pip install --upgrade pip && \
+    /root/.pyenv/versions/${PYTHON_VERSION}/bin/pip install -r /usr/lib/SMV/docker/smv/requirements.txt && \
+    cp -r /root/.pyenv ${TEMPLATE_DIR}/.pyenv
 
 # cleanup python dev tools and apt caches.
-RUN apt-get remove --purge -y python-dev &&\
-    apt-get remove --purge -y python-pip &&\
-    apt-get clean &&\
+RUN apt-get clean &&\
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY ./kernel.json /usr/local/share/jupyter/kernels/smv-pyshell/kernel.json
@@ -51,7 +57,6 @@ COPY ./hive-site.xml /usr/lib/spark/conf/hive-site.xml
 COPY ./entrypoint.sh /usr/bin/entrypoint.sh
 
 # copy files into template directory.  They will be copied to smv home later in entrypoint.sh
-ENV TEMPLATE_DIR=/home/template
 COPY ./bashrc ./jupyter_notebook_config.py ${TEMPLATE_DIR}/
 
 # Must use bracket syntax (["command"]) so that user can supply params (additional commands to execute)
