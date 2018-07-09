@@ -1,0 +1,248 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.panel &#8212; Spark Modularized View 2r0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 2r0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.panel</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;SMV PartialTime and TimePanel Framework</span>
+
+<span class="sd">This module defines the most used PartialTime including `Day`, `Month`, `Week`, `Quarter`, and the TimePanel</span>
+
+<span class="sd">PartialTime is the base class of</span>
+<span class="sd">    * Day</span>
+<span class="sd">    * Month</span>
+<span class="sd">    * Week</span>
+<span class="sd">    * Quarter</span>
+
+<span class="sd">PartialTime has the following methods</span>
+<span class="sd">    * smvTime(): returns (str), will be the value of the `smvTime` column if added to a DF</span>
+<span class="sd">    * timeIndex(): returns (int), an integer incremental by one as the PartialTime increase</span>
+<span class="sd">        by one unit</span>
+<span class="sd">    * timeLabel(): returns (str), a human readable string</span>
+<span class="sd">    * timeType(): returns (str), the type of the PartialTime</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">smv.smvapp</span> <span class="k">import</span> <span class="n">SmvApp</span>
+
+<div class="viewcode-block" id="Quarter"><a class="viewcode-back" href="../../smv.html#smv.panel.Quarter">[docs]</a><span class="k">def</span> <span class="nf">Quarter</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">quarter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Define an smv.panel.Quarter</span>
+
+<span class="sd">        Quarter extends smv.panel.PartialTime base class</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            year (int)</span>
+<span class="sd">            quarter (int):</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">            &gt;&gt;&gt; q = Quarter(2012, 1)</span>
+<span class="sd">            &gt;&gt;&gt; q.smvTime()</span>
+<span class="sd">            u&#39;Q201201&#39;</span>
+<span class="sd">            &gt;&gt;&gt; q.timeIndex()</span>
+<span class="sd">            168</span>
+<span class="sd">            &gt;&gt;&gt; q.timeLabel()</span>
+<span class="sd">            u&#39;2012-Q1&#39;</span>
+<span class="sd">            &gt;&gt;&gt; q.timeType()</span>
+<span class="sd">            u&#39;quarter&#39;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (java object smv.panel.Quarter)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">Quarter</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">quarter</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Month"><a class="viewcode-back" href="../../smv.html#smv.panel.Month">[docs]</a><span class="k">def</span> <span class="nf">Month</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Define an smv.panel.Month</span>
+
+<span class="sd">        Month extends smv.panel.PartialTime base class</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            year (int):</span>
+<span class="sd">            month (int):</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">            &gt;&gt;&gt; m = Month(2012, 5)</span>
+<span class="sd">            &gt;&gt;&gt; m.smvTime()</span>
+<span class="sd">            u&#39;M201205&#39;</span>
+<span class="sd">            &gt;&gt;&gt; m.timeIndex()</span>
+<span class="sd">            508</span>
+<span class="sd">            &gt;&gt;&gt; m.timeLabel()</span>
+<span class="sd">            u&#39;2012-05&#39;</span>
+<span class="sd">            &gt;&gt;&gt; m.timeType()</span>
+<span class="sd">            u&#39;month&#39;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (java object smv.panel.Month)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">Month</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Day"><a class="viewcode-back" href="../../smv.html#smv.panel.Day">[docs]</a><span class="k">def</span> <span class="nf">Day</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Define an smv.panel.Day</span>
+
+<span class="sd">        Day extends smv.panel.PartialTime base class</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            year (int):</span>
+<span class="sd">            month (int):</span>
+<span class="sd">            day (int):</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">            &gt;&gt;&gt; d = Day(2012, 5, 31)</span>
+<span class="sd">            &gt;&gt;&gt; d.smvTime()</span>
+<span class="sd">            u&#39;D20120531&#39;</span>
+<span class="sd">            &gt;&gt;&gt; d.timeIndex()</span>
+<span class="sd">            15491</span>
+<span class="sd">            &gt;&gt;&gt; d.timeLabel()</span>
+<span class="sd">            u&#39;2012-05-31&#39;</span>
+<span class="sd">            &gt;&gt;&gt; d.timeType()</span>
+<span class="sd">            u&#39;day&#39;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (java object smv.panel.Day)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">Day</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Week"><a class="viewcode-back" href="../../smv.html#smv.panel.Week">[docs]</a><span class="k">def</span> <span class="nf">Week</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">start_on</span> <span class="o">=</span> <span class="s2">&quot;Monday&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Define an smv.panel.Week</span>
+
+<span class="sd">        Week extends smv.panel.PartialTime base class</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            year (int):</span>
+<span class="sd">            month (int):</span>
+<span class="sd">            day (int):</span>
+<span class="sd">            start_on (str): Week starts on, valid values: Monday, Tuesday, Wednesday,</span>
+<span class="sd">                Thursday, Friday, Saturday, Sunday. Default value is Monday</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; w = Week(2012, 3, 4)</span>
+<span class="sd">            &gt;&gt;&gt; w.smvTime()</span>
+<span class="sd">            u&#39;W20120227&#39;</span>
+<span class="sd">            &gt;&gt;&gt; w.timeIndex()</span>
+<span class="sd">            2200</span>
+<span class="sd">            &gt;&gt;&gt; w.timeLabel()</span>
+<span class="sd">            u&#39;Week of 2012-02-27&#39;</span>
+<span class="sd">            &gt;&gt;&gt; w.timeType()</span>
+<span class="sd">            u&#39;week&#39;</span>
+
+<span class="sd">            &gt;&gt;&gt; w = Week(2012, 3, 4, &quot;Sunday&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; w.timeType()</span>
+<span class="sd">            u&#39;week_start_on_Sunday&#39;</span>
+<span class="sd">            &gt;&gt;&gt; w.smvTime()</span>
+<span class="sd">            u&#39;W(7)20120304&#39;</span>
+<span class="sd">            &gt;&gt;&gt; w.timeIndex()</span>
+<span class="sd">            2201</span>
+<span class="sd">            &gt;&gt;&gt; w.timeLabel()</span>
+<span class="sd">            u&#39;Week of 2012-03-04&#39;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (java object smv.panel.Week)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">Week</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">start_on</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TimePanel"><a class="viewcode-back" href="../../smv.html#smv.panel.TimePanel">[docs]</a><span class="k">def</span> <span class="nf">TimePanel</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Define an smv.panel.TimePanel</span>
+
+<span class="sd">         TimePanel is a consecutive range of PartialTimes</span>
+<span class="sd">         It has a &quot;start&quot; PartialTime and &quot;end&quot; PartialTime, both are inclusive.</span>
+<span class="sd">         &quot;start&quot; and &quot;end&quot; have to have the same timeType</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            start (java object smv.PartialTime): Quarter, Month, Day etc.</span>
+<span class="sd">            end (java object smv.PartialTime): Quarter, Month, Day etc.</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">            &gt;&gt;&gt; tp = TimePanel(Day(2012, 1, 1), Day(2013, 12, 31))</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (java object smv.panel.TimePanel)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">TimePanel</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 2r0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+    </div>
+  </body>
+</html>
