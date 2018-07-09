@@ -2,7 +2,7 @@ name := "smv"
 
 organization := "org.tresamigos"
 
-version := "2.3-SNAPSHOT"
+version := "2-SNAPSHOT"
 
 scalaVersion := "2.11.8"
 
