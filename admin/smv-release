@@ -96,14 +96,13 @@ function get_prev_smv_version()
 {
   PREV_SMV_VERSION=$(cat "${SMV_DIR}/.smv_version")
   info "previous SMV version: $PREV_SMV_VERSION"
-  validate_version "$PREV_SMV_VERSION"
 }
 
 # make sure version is of the format a.b.c.d where a,b,c,d are all numbers.
 function validate_version()
 {
   local ver="$1"
-  local res=$(echo "$ver" | sed -E -e 's/^([0-9]+\.){3}[0-9]+$//')
+  local res=$(echo "$ver" | sed -E -e 's/^[0-9](\.[0-9]){0,2}r[0-9]+$//')
   if [ -n "$res" ]; then
     echo "ERROR: invalid version format: $ver"
     usage 1
@@ -119,32 +118,32 @@ function build_local_docker_image()
   docker build -t local_docker_build . >> ${LOGFILE} 2>&1 || error "local docker build failed"
 }
 
-function run_sbt_in_docker()
+function run_make_in_docker()
 {
   local target="$1"
-  info "Running sbt ${target}"
+  info "Running make ${target}"
+
+  local sbtops="-ivy /projects/.ivy2"
+  local docker_cmd="cd $DOCKER_SMV_DIR; SBT_OPTS='${sbtopts}' make ${target}"
 
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
   docker run --rm -it -v ${PROJ_DIR}:/projects local_docker_build \
-    -u $(id -u) sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 $target" \
-    >> ${LOGFILE} 2>&1 || error "SMV sbt $target failed"
+    sh -c "${docker_cmd}" >> ${LOGFILE} 2>&1 || error "SMV sbt $target failed"
 }
 
 function build_smv()
 {
   info "Building SMV"
-  run_sbt_in_docker clean
-  run_sbt_in_docker assembly
+
+  run_make_in_docker clean
+  run_make_in_docker assemble-fat-jar
 }
 
 function test_smv()
 {
   info "Testing SMV"
-
-  # need to decompose the "alltest" target as the memory leak causes docker build to fail.
-  run_sbt_in_docker test
-  run_sbt_in_docker pytest
-  run_sbt_in_docker itest
+  # Should really run the thorough tests
+  run_make_in_docker test
 }
 
 # find the gnu tar on this system.
