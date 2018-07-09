@@ -93,8 +93,10 @@ if ! shopt -oq posix; then
   fi
 fi
 
+export PYENV_ROOT=/.pyenv
+
 # add smv and spark to path
-PATH=/usr/lib/SMV/tools:/usr/lib/spark/bin:/usr/lib/sbt/bin:/home/smv/.pyenv/bin:$PATH
+PATH=/usr/lib/SMV/tools:/usr/lib/spark/bin:/usr/lib/sbt/bin:${PYENV_ROOT}/bin:${PATH}
 
 # activate pyenv 
 eval "$(pyenv init -)"

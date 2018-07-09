@@ -4,6 +4,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG SBT_VERSION=0.13.15
 ARG PYTHON_VERSION=2.7.13
 
+ENV PYENV_ROOT=/.pyenv
 ENV TEMPLATE_DIR=/home/template
 
 # create the projects directory and create a flag (.docker) to indicate project is inside docker image.
@@ -42,11 +43,10 @@ RUN cd /projects &&\
 # Debian repositories don't have all of the supported versions of Python, so it will be easiest to
 # use pyenv to manage installation
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash && \
-    /root/.pyenv/bin/pyenv install ${PYTHON_VERSION} &&\
-    /root/.pyenv/bin/pyenv global ${PYTHON_VERSION} &&\
-    /root/.pyenv/versions/${PYTHON_VERSION}/bin/pip install --upgrade pip && \
-    /root/.pyenv/versions/${PYTHON_VERSION}/bin/pip install -r /usr/lib/SMV/docker/smv/requirements.txt && \
-    cp -r /root/.pyenv ${TEMPLATE_DIR}/.pyenv
+    ${PYENV_ROOT}/bin/pyenv install ${PYTHON_VERSION} &&\
+    ${PYENV_ROOT}/bin/pyenv global ${PYTHON_VERSION} &&\
+    ${PYENV_ROOT}/versions/${PYTHON_VERSION}/bin/pip install --upgrade pip && \
+    ${PYENV_ROOT}/versions/${PYTHON_VERSION}/bin/pip install -r /usr/lib/SMV/docker/smv/requirements.txt
 
 # cleanup python dev tools and apt caches.
 RUN apt-get clean &&\
