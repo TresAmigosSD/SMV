@@ -19,6 +19,7 @@ import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.DataFrame
+import org.apache.hadoop.mapred.InvalidInputException
 
 import java.sql.Date
 import java.text.{DateFormat, SimpleDateFormat}
@@ -540,9 +541,15 @@ object SmvSchema {
   /**
    * read a schema file as an RDD of schema entries.  One entry per line.
    * Each entry format is "name : type"
+   *
+   * returns null if the corresponding schema file does not exist.
    */
   def fromFile(sc: SparkContext, path: String) = {
-    schemaFromEntryStrings(sc.textFile(path).collect)
+    try {
+      schemaFromEntryStrings(sc.textFile(path).collect)
+    } catch {
+      case _: InvalidInputException => null
+    }
   }
 
   def fromDataFrame(df: DataFrame, strNullValue: String = "") = {
