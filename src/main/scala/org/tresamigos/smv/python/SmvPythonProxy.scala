@@ -20,6 +20,7 @@ import py4j.GatewayServer
 import scala.collection.JavaConversions._
 import java.util.ArrayList
 
+import org.apache.hadoop.mapred.InvalidInputException
 import org.apache.spark.sql.{Column, DataFrame, SQLContext}
 import org.apache.spark.sql.types.DataType
 import matcher._
@@ -261,7 +262,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def outputDir: String = j_smvApp.smvConfig.outputDir
 
   def stages: Array[String] = j_smvApp.stages.toArray
-  
+
   def userLibs: Array[String] = j_smvApp.userLibs.toArray
 
   def inferDS(name: String): SmvDataSet =
@@ -382,6 +383,23 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     // Python side always provide schema instead of schemaPath
     val handler = new FileIOHandler(j_smvApp.sqlContext, fullPath, None, parserLogger)
     handler.csvFileWithSchema(csvAttr, Some(schema))
+  }
+
+  /**
+   * Map the data file path to schema file path,
+   * and then try to read the schema from schema file.
+   * 
+   * Return the schema as a SmvSchema instance.
+   * If the schema file does not exist, return null.
+   */
+  def readSchemaFromDataPathAsSmvSchema(dataFilePath: String) = {
+    val schemaFilePath = SmvSchema.dataPathToSchemaPath(dataFilePath)
+
+    try {
+      SmvSchema.fromFile(j_smvApp.sc, schemaFilePath)
+    } catch {
+      case _: InvalidInputException => null
+    }
   }
 
   /**
