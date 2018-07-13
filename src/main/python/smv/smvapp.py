@@ -225,6 +225,7 @@ class SmvApp(object):
 
     def getSchemaByDataFileAsSmvSchema(self, data_file_name):
         """Get the schema of a data file from its path and returns a Scala SmvSchema instance.
+           The result will be None if the corresponding schema file does not exist or is invalid.
         """
         data_file_path = os.path.join(self.inputDir(), data_file_name)
         return self.j_smvPyClient.readSchemaFromDataPathAsSmvSchema(data_file_path)
