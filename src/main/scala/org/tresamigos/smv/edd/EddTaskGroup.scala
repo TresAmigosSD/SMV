@@ -197,6 +197,8 @@ private[smv] class EddHistogram(
         else edd.StringByKeyHistogram(s)
       case _: NumericType => edd.BinNumericHistogram(s, histCol.binSize)
       case BooleanType    => edd.BooleanHistogram(s)
+      case DateType       => edd.DateHistogram(s)
+      case TimestampType  => edd.TimeHistogram(s)
       case t              => throw new SmvUnsupportedType(s"data type: ${t} is not supported")
     }
   }
