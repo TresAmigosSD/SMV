@@ -203,27 +203,15 @@ private[smv] case class BooleanHistogram(col: Column) extends EddHistTask {
   override val statOp   = histBoolean(col)
 }
 
-private[smv] case class DateHistogram(col: Column) extends EddHistTask {
-  override val taskName = "dat"
-  override val taskDesc = "Date"
-  override val statOp   = histStr(col.cast("string"))
-}
-
-private[smv] case class TimeHistogram(col: Column) extends EddHistTask {
-  override val taskName = "tim"
-  override val taskDesc = "Timestamp"
-  override val statOp   = histStr(col.cast("string"))
-}
-
 private[smv] case class StringByKeyHistogram(col: Column) extends EddHistTask {
   override val taskName = "key"
   override val taskDesc = "String sort by Key"
-  override val statOp   = histStr(col)
+  override val statOp   = histStr(col.cast("string"))
 }
 
 private[smv] case class StringByFreqHistogram(col: Column) extends EddHistTask {
   override val taskName   = "frq"
   override val taskDesc   = "String sorted by Frequency"
   override def sortByFreq = true
-  override val statOp     = histStr(col)
+  override val statOp     = histStr(col.cast("string"))
 }

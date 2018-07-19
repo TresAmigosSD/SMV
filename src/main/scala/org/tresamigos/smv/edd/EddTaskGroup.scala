@@ -192,13 +192,11 @@ private[smv] class EddHistogram(
   private def createHist(histCol: edd.Hist) = {
     val s = df(histCol.colName)
     df.schema(histCol.colName).dataType match {
-      case StringType =>
+      case StringType | DateType | TimestampType =>
         if (histCol.sortByFreq) edd.StringByFreqHistogram(s)
         else edd.StringByKeyHistogram(s)
       case _: NumericType => edd.BinNumericHistogram(s, histCol.binSize)
       case BooleanType    => edd.BooleanHistogram(s)
-      case DateType       => edd.DateHistogram(s)
-      case TimestampType  => edd.TimeHistogram(s)
       case t              => throw new SmvUnsupportedType(s"data type: ${t} is not supported")
     }
   }
