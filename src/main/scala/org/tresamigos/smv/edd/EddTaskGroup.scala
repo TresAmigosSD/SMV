@@ -195,7 +195,10 @@ private[smv] class EddHistogram(
       case StringType =>
         if (histCol.sortByFreq) edd.StringByFreqHistogram(s)
         else edd.StringByKeyHistogram(s)
-      case _: NumericType => edd.BinNumericHistogram(s, histCol.binSize)
+      case _: NumericType => 
+        if (histCol.binSize > 0.0) edd.BinNumericHistogram(s, histCol.binSize)
+        else if (histCol.sortByFreq) edd.NumericByFreqHistogram(s)
+        else edd.NumericByKeyHistogram(s)
       case BooleanType    => edd.BooleanHistogram(s)
       case t              => throw new SmvUnsupportedType(s"data type: ${t} is not supported")
     }
