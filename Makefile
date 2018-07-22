@@ -9,7 +9,10 @@ DEFAULT_SPARK_HOME = $(addprefix $(SPARKS_DIR)/, "$(DEFAULT_SPARK)")
 PYTHON_VERSIONS = $(shell cat admin/.python_to_test)
 DEFAULT_PYTHON_VERSION = $(shell tail -1 admin/.python_to_test)
 
+SMV_VERSION = v$(shell cat .smv_version)
+
 clean:
+	rm -f $(BUNDLE_NAME)
 	sbt clean
 
 install: install-basic
@@ -23,6 +26,39 @@ assemble-fat-jar:
 
 publish-scala: assemble-fat-jar
 	sbt publish-local
+
+
+BUNDLE_NAME = smv_$(SMV_VERSION).tgz
+BUNDLE_PATH = docker/smv/$(BUNDLE_NAME)
+BUNDLE_EXCLUDE = venv metastore_db .tox .ivy2 $(SPARKS_DIR) .git admin $(BUNDLE_NAME)
+
+bundle:
+	# cleanup some unneeded binary files.
+	rm -rf project/target project/project
+	rm -rf target/resolution-cache target/streams
+	# use the `find ... -exec` variant instead of xargs
+	# because we don't want `rm` to execute if `find` returns nothing
+	find target -name *with-dependencies.jar -prune -o -type f -exec rm -f \{\} +
+	find src -name '*.pyc' -exec rm -f \{\} +
+	find src -name '__pycache__' -exec rm -rf \{\} +
+	tar zcvf $(BUNDLE_PATH) $(addprefix --exclude=, $(BUNDLE_EXCLUDE)) .
+
+
+DOCKER_BASE_NAME = local-smv-base-$(SMV_VERSION)
+DOCKER_SMV_NAME = local-smv-$(SMV_VERSION)
+
+docker_base: 
+	docker build -t $(DOCKER_BASE_NAME) docker/base
+
+docker_bundle: docker_base
+	docker run -v $(shell pwd):/SMV $(DOCKER_BASE_NAME) bash -c "cd /SMV; SBT_OPTS='-Dsbt.ivy.home=/SMV/.ivy2' make bundle"
+
+docker_smv: docker_base docker_bundle
+	docker build --build-arg SMV_BUNDLE=$(BUNDLE_NAME) --build-arg SMV_BASE_IMAGE=$(DOCKER_BASE_NAME) \
+		-t $(DOCKER_SMV_NAME) docker/smv
+
+docker: docker_smv
+
 
 
 # install-spark x.y.z
