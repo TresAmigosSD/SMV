@@ -10,8 +10,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import udl as lib
+import same as unchanged
 from smv import SmvApp, SmvModule, SmvHiveTable, SmvCsvFile
+
+def sameFunc():
+    """a function which is the same in before/after"""
+    return "I'm the same!"
+
+def differentFunc():
+    """a function that has different source in before/after"""
+    return "I'm in before!"
 
 class ChangeCode(SmvModule):
     def requiresDS(self):
@@ -42,6 +51,43 @@ class Upstream(SmvModule):
         return []
     def run(self,i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,45")
+
+class DifferentLibrary(SmvModule):
+    def requiresDS(self):
+        return []
+    def requiresLib(self):
+        return [lib]
+    def run(self, i):
+        number = lib.getNumber()
+        return self.smvApp.createDF("k:String;v:Integer", "a,1;b,2;c:3").limit(number)
+
+
+class SameLibrary(SmvModule):
+    def requiresDS(self):
+        return []
+    def requiresLib(self):
+        return [unchanged]
+    def run(self, i):
+        df = self.smvApp.createDF("k:String;v:Integer", "a,1;b,2;c:3")
+        return df.withColumn('new', unchanged.UnchangedFunction())
+
+class SameFunc(SmvModule):
+    def requiresDS(self):
+        return []
+    def requiresLib(self):
+        return [sameFunc]
+    def run(self, i):
+        df = self.smvApp.createDF("k:String;v:Integer", "a,1;b,2;c:3")
+        return df.withColumn('new', sameFunc())
+
+class DifferentFunc(SmvModule):
+    def requiresDS(self):
+        return []
+    def requiresLib(self):
+        return [differentFunc]
+    def run(self, i):
+        df = self.smvApp.createDF("k:String;v:Integer", "a,1;b,2;c:3")
+        return df.withColumn('new', differentFunc())
 
 class Downstream(SmvModule):
     def requiresDS(self):

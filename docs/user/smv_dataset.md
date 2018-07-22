@@ -20,15 +20,55 @@ directly, instead, they will use all the detailed types of `SmvDataSet`.
 
 In this document we will cover the following basic `SmvDataSet`s,
 
- | Scala | Python
---- | --- | ---
-**Input** | `SmvCsvFile` | `SmvCsvFile`
-          | `SmvMultiCsvFiles` | `SmvMultiCsvFiles`
-          | `SmvCsvStringData` | `SmvCsvStringData`
-          | `SmvHiveTable` | `SmvHiveTable`
-**Intermediate** | `SmvModule` | `SmvModule`
-**Output** (mix in) | `SmvOutput` | `SmvOutput`
+|                     | Scala              | Python             |
+|---------------------|--------------------|--------------------|
+| **Input**           | `SmvCsvFile`       | `SmvCsvFile`       |
+|                     | `SmvMultiCsvFiles` | `SmvMultiCsvFiles` |
+|                     | `SmvCsvStringData` | `SmvCsvStringData` |
+|                     | `SmvHiveTable`     | `SmvHiveTable`     |
+| **Intermediate**    | `SmvModule`        | `SmvModule`        |
+| **Output (mix in)** | `SmvOutput`        | `SmvOutput`        |
+|                     |                    |                    |
 
+### External Code Dependency (python only)
+
+Any of the classes listed above can implement a `requiresLib()` function to define code that isn't SMV DataSets (like an external or user-defined library) that should be considered like it is part of the source of the DataSet itself.
+
+This means cached data will be invalidated if the external code is changed, etc.
+
+> **Limitations:** For python modules and packages, the `requiresLib()` method is limited to registering changes on the main file of the package (for module `foo`, that's `foo.py`, for package `bar`, that's `bar/__init__.py`). This means that if a module or package imports other modules, the imported module's changes will not impact DataSet hashes.
+
+There are two steps to setting this up for your project:
+
+1. Add the `smv.user_libraries` prop to your [app configuration](./app_config.md).
+
+2. Import the library in all files that depend on it (like `import udl as lib`) and then in the class defs of DataSets that depend on it, implement the `requiresLib()` method and make it return an array of the libraries that that DataSet depends on (for the first example, `requiresLib()` would return `[lib]`).
+
+**Python**
+
+```py
+# in smv-app-conf.props:
+smv.stages = stage
+smv.user_libraries = lib, pandas
+
+# in src/main/python/stage/someFile.py:
+import some_library as lib
+import pandas
+
+class MyModule(smv.SmvModule):
+    """mod description"""
+    # define dependency on other SmvDataset(s)
+    def requiresDS(self):
+        return [Mod1, Mod2]
+
+    # define dependency on arbitary external code
+    # ie: libraries defined in your project or from pip
+    def requiresLib(self):
+        return [lib, pandas]
+
+    def run(self, i):
+        ...
+```
 
 ## Input SmvDataSet
 
