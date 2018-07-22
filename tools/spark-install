@@ -2,7 +2,7 @@
 set -e
 
 PROG_NAME=$(basename "$0")
-USAGE="${PROG_NAME} [--spark-version version] target_dir"
+USAGE="${PROG_NAME} [--spark-version version] [--target-dir target_dir]"
 
 SMV_HOME="$(cd "`dirname "$0"`/.."; pwd)"
 
@@ -22,20 +22,17 @@ function usage() {
 }
 
 function process_args() {
-  if [ "$1" = "--spark-version" ]; then
-    shift
-    SPARK_VERSION=$1
-    shift
-  else
-    SPARK_VERSION=$DEFAULT_SPARK_VERSION
-  fi
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --spark-version) shift; SPARK_VERSION="${1}"; shift;;
+      --target-dir) shift; TARGET_DIR="${1}"; shift;;
+    esac
+  done
 
-  if [ -z "$1" ]; then
-    usage
-    error "No target directory specified."
-  else
-    TARGET_DIR="$1"
-  fi
+  SPARK_VERSION=${SPARK_VERSION:="${DEFAULT_SPARK_VERSION}"}
+
+  DEFAULT_TARGET_DIR="$(pwd)/smv_${SPARK_VERSION}"
+  TARGET_DIR=${TARGET_DIR:="${DEFAULT_TARGET_DIR}"}
 
   info "Installing Spark $SPARK_VERSION to $TARGET_DIR"
 }

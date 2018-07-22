@@ -34,7 +34,7 @@ $(INSTALL_SPARK_RULES) : install-spark-% : $(SPARKS_DIR)/%
 # .sparks/x.y.z
 $(SPARK_HOMES) : $(SPARKS_DIR)/% :
 	mkdir -p .sparks
-	bash tools/spark-install --spark-version $* $(SPARKS_DIR)/$*
+	bash tools/spark-install --spark-version $* --target-dir $(SPARKS_DIR)/$* 
 
 install-spark-default: install-spark-$(DEFAULT_SPARK)
 
