@@ -192,7 +192,7 @@ private[smv] class EddHistogram(
   private def createHist(histCol: edd.Hist) = {
     val s = df(histCol.colName)
     df.schema(histCol.colName).dataType match {
-      case StringType =>
+      case StringType | DateType | TimestampType =>
         if (histCol.sortByFreq) edd.StringByFreqHistogram(s)
         else edd.StringByKeyHistogram(s)
       case _: NumericType => edd.BinNumericHistogram(s, histCol.binSize)
