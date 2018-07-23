@@ -13,12 +13,9 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/
     apt-key adv --keyserver hkp://pgp.mit.edu --recv-key 381BA480 &&\
     apt-get update &&\
     apt-get install -y r-base &&\
-    apt-get install -y unzip &&\
     apt-get install -y sudo &&\
     apt-get install -y vim &&\
-    apt-get install -y rsync &&\
     apt-get install -y git &&\
-    apt-get install -y bc &&\
     apt-get install -y graphviz &&\
     apt-get install -y libssl-dev
 
