@@ -31,7 +31,7 @@ function process_args() {
 
   SPARK_VERSION=${SPARK_VERSION:="${DEFAULT_SPARK_VERSION}"}
 
-  DEFAULT_TARGET_DIR="$(pwd)/smv_${SPARK_VERSION}"
+  DEFAULT_TARGET_DIR="$(pwd)/spark-${SPARK_VERSION}"
   TARGET_DIR=${TARGET_DIR:="${DEFAULT_TARGET_DIR}"}
 
   info "Installing Spark $SPARK_VERSION to $TARGET_DIR"
