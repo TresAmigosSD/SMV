@@ -221,7 +221,7 @@ function create_tar()
 {
   info "create tar image"
 
-  run_make_in_docker bundle
+  make docker_bundle
 }
 
 # This only creates the release and does NOT attach the zip asset to it.
