@@ -95,7 +95,7 @@ download_smv() {
 
 # Download prebuilt spark version with hive support.
 download_spark() {
-  "${install_dir}/${SMV_DIR}/tools/spark-install"
+  "${SMV_DIR}/tools/spark-install"
 }
 
 jre_installtion_validation() {
