@@ -1,0 +1,1280 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>SmvExtModuleLink - org.tresamigos.smv.SmvExtModuleLink</title>
+          <meta name="description" content="SmvExtModuleLink - org.tresamigos.smv.SmvExtModuleLink" />
+          <meta name="keywords" content="SmvExtModuleLink org.tresamigos.smv.SmvExtModuleLink" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../index.html';
+            var hash = 'org.tresamigos.smv.SmvExtModuleLink';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="type">
+      <div id="definition">
+        <img alt="Class" src="../../../lib/class_big.png" />
+        <p id="owner"><a href="../../package.html" class="extype" name="org">org</a>.<a href="../package.html" class="extype" name="org.tresamigos">tresamigos</a>.<a href="package.html" class="extype" name="org.tresamigos.smv">smv</a></p>
+        <h1>SmvExtModuleLink</h1><h3><span class="morelinks"><div>Related Doc:
+            <a href="package.html" class="extype" name="org.tresamigos.smv">package smv</a>
+          </div></span></h3><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <span class="name">SmvExtModuleLink</span><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Declarative class for links to datasets defined in another language. Resolves
+to a link to an SmvExtModulePython.
+</p></div><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.Product">Product</span>, <span class="extype" name="scala.Equals">Equals</span>, <a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a>, <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a>, <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>, <a href="FilenamePart.html" class="extype" name="org.tresamigos.smv.FilenamePart">FilenamePart</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol>
+                
+                <li class="alpha in"><span>Alphabetic</span></li>
+                <li class="inherit out"><span>By Inheritance</span></li>
+              </ol>
+            </div>
+        <div id="ancestors">
+                <span class="filtertype">Inherited<br />
+                </span>
+                <ol id="linearization">
+                  <li class="in" name="org.tresamigos.smv.SmvExtModuleLink"><span>SmvExtModuleLink</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.Product"><span>Product</span></li><li class="in" name="scala.Equals"><span>Equals</span></li><li class="in" name="org.tresamigos.smv.SmvModuleLink"><span>SmvModuleLink</span></li><li class="in" name="org.tresamigos.smv.SmvModule"><span>SmvModule</span></li><li class="in" name="org.tresamigos.smv.SmvDataSet"><span>SmvDataSet</span></li><li class="in" name="org.tresamigos.smv.FilenamePart"><span>FilenamePart</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                </ol>
+              </div><div id="ancestors">
+            <span class="filtertype"></span>
+            <ol>
+              <li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show All</span></li>
+            </ol>
+          </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        <div id="constructors" class="members">
+              <h3>Instance Constructors</h3>
+              <ol><li name="org.tresamigos.smv.SmvExtModuleLink#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(modFqn:String):org.tresamigos.smv.SmvExtModuleLink"></a>
+      <a id="&lt;init&gt;:SmvExtModuleLink"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">SmvExtModuleLink</span><span class="params">(<span name="modFqn">modFqn: <span class="extype" name="scala.Predef.String">String</span></span>)</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@&lt;init&gt;(modFqn:String):org.tresamigos.smv.SmvExtModuleLink" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="org.tresamigos.smv.SmvModule.runParams" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="runParams=org.tresamigos.smv.RunParams"></a>
+      <a id="runParams:runParams"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">runParams</span><span class="result"> = <a href="RunParams.html" class="extype" name="org.tresamigos.smv.RunParams">RunParams</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@runParams=org.tresamigos.smv.RunParams" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a></dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="scala.AnyRef#!=" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!=(x$1:Any):Boolean"></a>
+      <a id="!=(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@!=(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef###" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="##():Int"></a>
+      <a id="##():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@##():Int" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#==" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="==(x$1:Any):Boolean"></a>
+      <a id="==(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@==(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#allDeps" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="allDeps:Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="allDeps:Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">allDeps</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@allDeps:Seq[org.tresamigos.smv.SmvDataSet]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">All dependencies with the dependency hierarchy flattened</p><div class="fullcomment"><div class="comment cmt"><p>All dependencies with the dependency hierarchy flattened</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#ancestors" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ancestors:Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="ancestors:Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ancestors</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@ancestors:Seq[org.tresamigos.smv.SmvDataSet]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#app" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="app:org.tresamigos.smv.SmvApp"></a>
+      <a id="app:SmvApp"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">app</span><span class="result">: <a href="SmvApp.html" class="extype" name="org.tresamigos.smv.SmvApp">SmvApp</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@app:org.tresamigos.smv.SmvApp" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asInstanceOf[T0]:T0"></a>
+      <a id="asInstanceOf[T0]:T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Any.asInstanceOf.T0">T0</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@asInstanceOf[T0]:T0" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="clone():Object"></a>
+      <a id="clone():AnyRef"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@clone():Object" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#computeDataFrame" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="computeDataFrame(genEdd:Boolean,collector:org.tresamigos.smv.SmvRunInfoCollector,quickRun:Boolean):Nothing"></a>
+      <a id="computeDataFrame(Boolean,SmvRunInfoCollector,Boolean):Nothing"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">computeDataFrame</span><span class="params">(<span name="genEdd">genEdd: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="collector">collector: <a href="SmvRunInfoCollector.html" class="extype" name="org.tresamigos.smv.SmvRunInfoCollector">SmvRunInfoCollector</a></span>, <span name="quickRun">quickRun: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Nothing">Nothing</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@computeDataFrame(genEdd:Boolean,collector:org.tresamigos.smv.SmvRunInfoCollector,quickRun:Boolean):Nothing" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">SmvModuleLinks should not cache or validate their data</p><div class="fullcomment"><div class="comment cmt"><p>SmvModuleLinks should not cache or validate their data</p></div><dl class="paramcmts block"><dt class="param">genEdd</dt><dd class="cmt"><p>if true, compute and persist EDD to file</p></dd><dt class="param">collector</dt><dd class="cmt"><p>recepticle for info about running the module</p></dd><dt class="param">quickRun</dt><dd class="cmt"><p>skip computing metadata+validation and persisting output</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#datasetHash" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="datasetHash():Int"></a>
+      <a id="datasetHash():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">datasetHash</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@datasetHash():Int" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Hash computed from the dataset, could be overridden to include things other than CRC</p><div class="fullcomment"><div class="comment cmt"><p>Hash computed from the dataset, could be overridden to include things other than CRC</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModule#description" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="description:String"></a>
+      <a id="description:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">description</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@description:String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#doAction" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="doAction[T](desc:String)(action:=&gt;T):(T,Double)"></a>
+      <a id="doAction[T](String)(⇒T):(T,Double)"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">doAction</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="desc">desc: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span name="action">action: ⇒ <span class="extype" name="org.tresamigos.smv.SmvDataSet.doAction.T">T</span></span>)</span><span class="result">: (<span class="extype" name="org.tresamigos.smv.SmvDataSet.doAction.T">T</span>, <span class="extype" name="scala.Double">Double</span>)</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@doAction[T](desc:String)(action:=&gt;T):(T,Double)" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Perform an action and log the amount of time it took
+</p><div class="fullcomment"><div class="comment cmt"><p>Perform an action and log the amount of time it took
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#dqm" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="dqm():org.tresamigos.smv.dqm.SmvDQM"></a>
+      <a id="dqm():SmvDQM"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">dqm</span><span class="params">()</span><span class="result">: <a href="dqm/SmvDQM.html" class="extype" name="org.tresamigos.smv.dqm.SmvDQM">SmvDQM</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@dqm():org.tresamigos.smv.dqm.SmvDQM" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Define the DQM rules, fixes and policies to be applied to this <code>DataSet</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Define the DQM rules, fixes and policies to be applied to this <code>DataSet</code>.
+See <a href="dqm/package.html" class="extype" name="org.tresamigos.smv.dqm">org.tresamigos.smv.dqm</a>, <a href="dqm/DQMRule.html" class="extype" name="org.tresamigos.smv.dqm.DQMRule">org.tresamigos.smv.dqm.DQMRule</a>, and <a href="dqm/DQMFix.html" class="extype" name="org.tresamigos.smv.dqm.DQMFix">org.tresamigos.smv.dqm.DQMFix</a>
+for details on creating rules and fixes.</p><p>Concrete modules and files should override this method to define rules/fixes to apply.
+The default is to provide an empty set of DQM rules/fixes.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#dsType" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="dsType():String"></a>
+      <a id="dsType():String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">dsType</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@dsType():String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">DataSet type: could be 4 values, Input, Link, Module, Output</p><div class="fullcomment"><div class="comment cmt"><p>DataSet type: could be 4 values, Input, Link, Module, Output</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="eq(x$1:AnyRef):Boolean"></a>
+      <a id="eq(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@eq(x$1:AnyRef):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#exportToHive" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="exportToHive(collector:org.tresamigos.smv.SmvRunInfoCollector):(Unit,Double)"></a>
+      <a id="exportToHive(SmvRunInfoCollector):(Unit,Double)"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">exportToHive</span><span class="params">(<span name="collector">collector: <a href="SmvRunInfoCollector.html" class="extype" name="org.tresamigos.smv.SmvRunInfoCollector">SmvRunInfoCollector</a></span>)</span><span class="result">: (<span class="extype" name="scala.Unit">Unit</span>, <span class="extype" name="scala.Double">Double</span>)</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@exportToHive(collector:org.tresamigos.smv.SmvRunInfoCollector):(Unit,Double)" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Exports a dataframe to a hive table.</p><div class="fullcomment"><div class="comment cmt"><p>Exports a dataframe to a hive table.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <a id="finalize():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@finalize():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#fnpart" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="fnpart:String"></a>
+      <a id="fnpart:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">fnpart</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@fnpart:String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Names the persisted file for the result of this SmvDataSet</p><div class="fullcomment"><div class="comment cmt"><p>Names the persisted file for the result of this SmvDataSet</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a> → <a href="FilenamePart.html" class="extype" name="org.tresamigos.smv.FilenamePart">FilenamePart</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#fqn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="fqn:Nothing"></a>
+      <a id="fqn:Nothing"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">fqn</span><span class="result">: <span class="extype" name="scala.Nothing">Nothing</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@fqn:Nothing" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">The FQN of an SmvDataSet is its classname for Scala implementations.</p><div class="fullcomment"><div class="comment cmt"><p>The FQN of an SmvDataSet is its classname for Scala implementations.</p><p>Scala proxies for implementations in other languages must
+override this to name the proxied FQN.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#getAncillary" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getAncillary[T&lt;:org.tresamigos.smv.SmvAncillary](anc:T):T"></a>
+      <a id="getAncillary[T&lt;:SmvAncillary](T):T"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getAncillary</span><span class="tparams">[<span name="T">T &lt;: <a href="SmvAncillary.html" class="extype" name="org.tresamigos.smv.SmvAncillary">SmvAncillary</a></span>]</span><span class="params">(<span name="anc">anc: <span class="extype" name="org.tresamigos.smv.SmvDataSet.getAncillary.T">T</span></span>)</span><span class="result">: <span class="extype" name="org.tresamigos.smv.SmvDataSet.getAncillary.T">T</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@getAncillary[T&lt;:org.tresamigos.smv.SmvAncillary](anc:T):T" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">TODO: remove this method as checkDependency replaced this function</p><div class="fullcomment"><div class="comment cmt"><p>TODO: remove this method as checkDependency replaced this function</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="scala.AnyRef#getClass" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getClass():Class[_]"></a>
+      <a id="getClass():Class[_]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@getClass():Class[_]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#getOrCreateUserMetadata" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getOrCreateUserMetadata(df:org.apache.spark.sql.DataFrame):org.tresamigos.smv.SmvMetadata"></a>
+      <a id="getOrCreateUserMetadata(DataFrame):SmvMetadata"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getOrCreateUserMetadata</span><span class="params">(<span name="df">df: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>)</span><span class="result">: <a href="SmvMetadata.html" class="extype" name="org.tresamigos.smv.SmvMetadata">SmvMetadata</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@getOrCreateUserMetadata(df:org.apache.spark.sql.DataFrame):org.tresamigos.smv.SmvMetadata" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Cache the user metadata result (call to <code>metadata(df)</code>) so that multiple calls
+to this <code>getOrCreateMetadata</code> method will only do a single evaluation of the user
+defined metadata method which could be quite expensive.</p><div class="fullcomment"><div class="comment cmt"><p>Cache the user metadata result (call to <code>metadata(df)</code>) so that multiple calls
+to this <code>getOrCreateMetadata</code> method will only do a single evaluation of the user
+defined metadata method which could be quite expensive.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#instanceValHash" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="instanceValHash():Int"></a>
+      <a id="instanceValHash():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">instanceValHash</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@instanceValHash():Int" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">If the depended smvModule has a published version, SmvModuleLink's datasetHash
+depends on the version string and the target's FQN (even with versioned data
+the hash should change if the target changes).</p><div class="fullcomment"><div class="comment cmt"><p>If the depended smvModule has a published version, SmvModuleLink's datasetHash
+depends on the version string and the target's FQN (even with versioned data
+the hash should change if the target changes). Otherwise, depends on the
+smvModule's hashOfHash
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#isEphemeral" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isEphemeral:Boolean"></a>
+      <a id="isEphemeral:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isEphemeral</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@isEphemeral:Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.</p><div class="fullcomment"><div class="comment cmt"><p>flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
+This is quite handy for &quot;filter&quot; or &quot;map&quot; type modules so that we don't force an extra I/O step when it
+is not needed.  By default all modules are persisted unless the flag is overriden to true.
+Note: the module will still be persisted if it was specifically selected to run by the user.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@isInstanceOf[T0]:Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#isObjectInShell" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isObjectInShell:Boolean"></a>
+      <a id="isObjectInShell:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isObjectInShell</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@isObjectInShell:Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Objects defined in Spark Shell has class name start with $ *</p><div class="fullcomment"><div class="comment cmt"><p>Objects defined in Spark Shell has class name start with $ *</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#lockfilePath" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="lockfilePath(prefix:String):String"></a>
+      <a id="lockfilePath(String):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">lockfilePath</span><span class="params">(<span name="prefix">prefix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;&quot;</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@lockfilePath(prefix:String):String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#lockfileStatus" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="lockfileStatus:Option[org.apache.hadoop.fs.FileStatus]"></a>
+      <a id="lockfileStatus:Option[FileStatus]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">lockfileStatus</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.hadoop.fs.FileStatus">FileStatus</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@lockfileStatus:Option[org.apache.hadoop.fs.FileStatus]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Returns the file status for the lockfile if found</p><div class="fullcomment"><div class="comment cmt"><p>Returns the file status for the lockfile if found</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#metadata" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="metadata(df:org.apache.spark.sql.DataFrame):org.tresamigos.smv.SmvMetadata"></a>
+      <a id="metadata(DataFrame):SmvMetadata"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">metadata</span><span class="params">(<span name="df">df: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>)</span><span class="result">: <a href="SmvMetadata.html" class="extype" name="org.tresamigos.smv.SmvMetadata">SmvMetadata</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@metadata(df:org.apache.spark.sql.DataFrame):org.tresamigos.smv.SmvMetadata" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Can be overridden to supply custom metadata
+TODO: make SmvMetadata more user friendly or find alternative format for user metadata
+</p><div class="fullcomment"><div class="comment cmt"><p>Can be overridden to supply custom metadata
+TODO: make SmvMetadata more user friendly or find alternative format for user metadata
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvExtModuleLink#modFqn" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="modFqn:String"></a>
+      <a id="modFqn:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">modFqn</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@modFqn:String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="org.tresamigos.smv.SmvModuleLink#moduleCsvPath" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="moduleCsvPath(prefix:String):String"></a>
+      <a id="moduleCsvPath(String):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">moduleCsvPath</span><span class="params">(<span name="prefix">prefix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;&quot;</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@moduleCsvPath(prefix:String):String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Returns the path for the module's csv output</p><div class="fullcomment"><div class="comment cmt"><p>Returns the path for the module's csv output</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ne(x$1:AnyRef):Boolean"></a>
+      <a id="ne(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@ne(x$1:AnyRef):Boolean" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notify" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notify():Unit"></a>
+      <a id="notify():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@notify():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notifyAll" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notifyAll():Unit"></a>
+      <a id="notifyAll():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@notifyAll():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#outputModule" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="outputModule:org.tresamigos.smv.SmvOutput"></a>
+      <a id="outputModule:SmvOutput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">outputModule</span><span class="result">: <a href="SmvOutput.html" class="extype" name="org.tresamigos.smv.SmvOutput">SmvOutput</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@outputModule:org.tresamigos.smv.SmvOutput" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#persist" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="persist(dataframe:org.apache.spark.sql.DataFrame,prefix:String):Unit"></a>
+      <a id="persist(DataFrame,String):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">persist</span><span class="params">(<span name="dataframe">dataframe: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>, <span name="prefix">prefix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;&quot;</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@persist(dataframe:org.apache.spark.sql.DataFrame,prefix:String):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#publishHiveSql" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="publishHiveSql:Option[String]"></a>
+      <a id="publishHiveSql:Option[String]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">publishHiveSql</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@publishHiveSql:Option[String]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">An optional sql query to run to publish the results of this module when the
+--publish-hive command line is used.</p><div class="fullcomment"><div class="comment cmt"><p>An optional sql query to run to publish the results of this module when the
+--publish-hive command line is used.  The DataFrame result of running this
+module will be available to the query as the &quot;dftable&quot; table.  For example:
+   return &quot;insert overwrite table mytable select * from dftable&quot;
+If this method is not specified, the default is to just create the table
+specified by tableName() with the results of the module.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#rdd" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="rdd(forceRun:Boolean,genEdd:Boolean,collector:org.tresamigos.smv.SmvRunInfoCollector,quickRun:Boolean):org.apache.spark.sql.DataFrame"></a>
+      <a id="rdd(Boolean,Boolean,SmvRunInfoCollector,Boolean):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">rdd</span><span class="params">(<span name="forceRun">forceRun: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>, <span name="genEdd">genEdd: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>, <span name="collector">collector: <a href="SmvRunInfoCollector.html" class="extype" name="org.tresamigos.smv.SmvRunInfoCollector">SmvRunInfoCollector</a></span>, <span name="quickRun">quickRun: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@rdd(forceRun:Boolean,genEdd:Boolean,collector:org.tresamigos.smv.SmvRunInfoCollector,quickRun:Boolean):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">&quot;Running&quot; a link requires that we read the published output from the upstream <code>DataSet</code>.</p><div class="fullcomment"><div class="comment cmt"><p>&quot;Running&quot; a link requires that we read the published output from the upstream <code>DataSet</code>.
+When publish version is specified, it will try to read from the published dir. Otherwise
+it will either &quot;follow-the-link&quot;, which means resolve the modules the linked DS depends on
+and run the DS, or &quot;not-follow-the-link&quot;, which will try to read from the persisted data dir
+and fail if not found.</p></div><dl class="paramcmts block"><dt class="param">forceRun</dt><dd class="cmt"><p>skip the module cache and for the module to run</p></dd><dt class="param">genEdd</dt><dd class="cmt"><p>if true, compute and persist EDD to file</p></dd><dt class="param">collector</dt><dd class="cmt"><p>recepticle for info about running the module</p></dd><dt class="param">quickRun</dt><dd class="cmt"><p>skip computing metadata+validation and persisting output</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#readFile" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="readFile(path:String,attr:org.tresamigos.smv.CsvAttributes):org.apache.spark.sql.DataFrame"></a>
+      <a id="readFile(String,CsvAttributes):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">readFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="attr">attr: <a href="CsvAttributes.html" class="extype" name="org.tresamigos.smv.CsvAttributes">CsvAttributes</a> = <span class="symbol"><span class="name"><a href="CsvAttributes$.html">CsvAttributes.defaultCsv</a></span></span></span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@readFile(path:String,attr:org.tresamigos.smv.CsvAttributes):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Read a dataframe from a persisted file path, that is usually an
+input data set or the output of an upstream SmvModule.</p><div class="fullcomment"><div class="comment cmt"><p>Read a dataframe from a persisted file path, that is usually an
+input data set or the output of an upstream SmvModule.</p><p>The default format is headerless CSV with '&quot;' as the quote
+character
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#requiresAnc" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="requiresAnc():Seq[org.tresamigos.smv.SmvAncillary]"></a>
+      <a id="requiresAnc():Seq[SmvAncillary]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">requiresAnc</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvAncillary.html" class="extype" name="org.tresamigos.smv.SmvAncillary">SmvAncillary</a>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@requiresAnc():Seq[org.tresamigos.smv.SmvAncillary]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#requiresDS" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="requiresDS():Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="requiresDS():Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">requiresDS</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.collection.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@requiresDS():Seq[org.tresamigos.smv.SmvDataSet]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">override the module run/requiresDS methods to be a no-op as it will never be called (we overwrite doRun as well.)
+</p><div class="fullcomment"><div class="comment cmt"><p>override the module run/requiresDS methods to be a no-op as it will never be called (we overwrite doRun as well.)
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#resolve" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="resolve(resolver:org.tresamigos.smv.DataSetResolver):org.tresamigos.smv.SmvDataSet"></a>
+      <a id="resolve(DataSetResolver):SmvDataSet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">resolve</span><span class="params">(<span name="resolver">resolver: <a href="DataSetResolver.html" class="extype" name="org.tresamigos.smv.DataSetResolver">DataSetResolver</a></span>)</span><span class="result">: <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@resolve(resolver:org.tresamigos.smv.DataSetResolver):org.tresamigos.smv.SmvDataSet" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Resolve the target SmvModule and wrap it in a new SmvModuleLink
+</p><div class="fullcomment"><div class="comment cmt"><p>Resolve the target SmvModule and wrap it in a new SmvModuleLink
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#resolvedRequiresDS" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="resolvedRequiresDS:Seq[org.tresamigos.smv.SmvDataSet]"></a>
+      <a id="resolvedRequiresDS:Seq[SmvDataSet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">var</span>
+      </span>
+      <span class="symbol">
+        <span class="name">resolvedRequiresDS</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@resolvedRequiresDS:Seq[org.tresamigos.smv.SmvDataSet]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">fixed list of SmvDataSet dependencies</p><div class="fullcomment"><div class="comment cmt"><p>fixed list of SmvDataSet dependencies</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#run" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="run(inputs:SmvModuleLink.this.runParams):Null"></a>
+      <a id="run(runParams):Null"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">run</span><span class="params">(<span name="inputs">inputs: <a href="#runParams=org.tresamigos.smv.RunParams" class="extmbr" name="org.tresamigos.smv.SmvExtModuleLink.runParams">runParams</a></span>)</span><span class="result">: <span class="extype" name="scala.Null">Null</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@run(inputs:SmvModuleLink.this.runParams):Null" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#runInfo" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="runInfo:org.tresamigos.smv.SmvRunInfo"></a>
+      <a id="runInfo:SmvRunInfo"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">runInfo</span><span class="result">: <a href="SmvRunInfo.html" class="extype" name="org.tresamigos.smv.SmvRunInfo">SmvRunInfo</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@runInfo:org.tresamigos.smv.SmvRunInfo" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Returns the run information from this dataset's last run.</p><div class="fullcomment"><div class="comment cmt"><p>Returns the run information from this dataset's last run.</p><p>If the dataset has never been run, returns an empty run info with
+null for its components.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#setTimestamp" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="setTimestamp(dt:org.joda.time.DateTime):Unit"></a>
+      <a id="setTimestamp(DateTime):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">setTimestamp</span><span class="params">(<span name="dt">dt: <span class="extype" name="org.joda.time.DateTime">DateTime</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@setTimestamp(dt:org.joda.time.DateTime):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModule#snapshot" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="snapshot(df:org.apache.spark.sql.DataFrame,prefix:String):org.apache.spark.sql.DataFrame"></a>
+      <a id="snapshot(DataFrame,String):DataFrame"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">snapshot</span><span class="params">(<span name="df">df: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>, <span name="prefix">prefix: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="../../apache/spark/sql/package.html#DataFrame=org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]" class="extmbr" name="org.apache.spark.sql.DataFrame">DataFrame</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@snapshot(df:org.apache.spark.sql.DataFrame,prefix:String):org.apache.spark.sql.DataFrame" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Create a snapshot in the current module at some result DataFrame.</p><div class="fullcomment"><div class="comment cmt"><p>Create a snapshot in the current module at some result DataFrame.
+This is useful for debugging a long SmvModule by creating snapshots along the way.</p><pre><span class="kw">object</span> MyMod <span class="kw">extends</span> SmvModule(<span class="lit">"..."</span>) {
+  <span class="kw">override</span> <span class="kw">def</span> requiresDS = <span class="std">Seq</span>(...)
+  <span class="kw">override</span> <span class="kw">def</span> run(...) = {
+     <span class="kw">val</span> s1 = ...
+     snapshot(s1, <span class="lit">"s1"</span>)
+     <span class="kw">val</span> s2 = f(s1)
+     snapshot(s2, <span class="lit">"s2"</span>)
+     ...
+  }</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#sourceCodeHash" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="sourceCodeHash():Int"></a>
+      <a id="sourceCodeHash():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">sourceCodeHash</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@sourceCodeHash():Int" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Hash computed based on the source code of the dataset's class *</p><div class="fullcomment"><div class="comment cmt"><p>Hash computed based on the source code of the dataset's class *</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
+      <a id="synchronized[T0](⇒T0):T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">synchronized</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="params">(<span name="arg0">arg0: ⇒ <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>)</span><span class="result">: <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@synchronized[T0](x$1:=&gt;T0):T0" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#tableName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="tableName:String"></a>
+      <a id="tableName:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tableName</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@tableName:String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">full name of hive output table if this module is published to hive.</p><div class="fullcomment"><div class="comment cmt"><p>full name of hive output table if this module is published to hive.</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toString():String"></a>
+      <a id="toString():String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@toString():String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a> → AnyRef → Any</dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvModuleLink#urn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="urn:org.tresamigos.smv.LinkURN"></a>
+      <a id="urn:LinkURN"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">urn</span><span class="result">: <a href="LinkURN.html" class="extype" name="org.tresamigos.smv.LinkURN">LinkURN</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@urn:org.tresamigos.smv.LinkURN" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a> → <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#validateMetadata" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="validateMetadata(metadata:org.tresamigos.smv.SmvMetadata,history:Seq[org.tresamigos.smv.SmvMetadata]):Option[String]"></a>
+      <a id="validateMetadata(SmvMetadata,Seq[SmvMetadata]):Option[String]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">validateMetadata</span><span class="params">(<span name="metadata">metadata: <a href="SmvMetadata.html" class="extype" name="org.tresamigos.smv.SmvMetadata">SmvMetadata</a></span>, <span name="history">history: <span class="extype" name="scala.Seq">Seq</span>[<a href="SmvMetadata.html" class="extype" name="org.tresamigos.smv.SmvMetadata">SmvMetadata</a>]</span>)</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@validateMetadata(metadata:org.tresamigos.smv.SmvMetadata,history:Seq[org.tresamigos.smv.SmvMetadata]):Option[String]" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Override to validate module results based on current and historic metadata.</p><div class="fullcomment"><div class="comment cmt"><p>Override to validate module results based on current and historic metadata.
+If Some, DQM will fail. Defaults to None.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#verHex" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="verHex:String"></a>
+      <a id="verHex:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">verHex</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@verHex:String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#version" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="version():Int"></a>
+      <a id="version():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">version</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@version():Int" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">user tagged code &quot;version&quot;.</p><div class="fullcomment"><div class="comment cmt"><p>user tagged code &quot;version&quot;.  Derived classes should update the value when code or data</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="org.tresamigos.smv.SmvDataSet#versionedFqn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="versionedFqn:String"></a>
+      <a id="versionedFqn:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">versionedFqn</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@versionedFqn:String" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <a id="wait():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@wait():Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long,x$2:Int):Unit"></a>
+      <a id="wait(Long,Int):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>, <span name="arg1">arg1: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@wait(x$1:Long,x$2:Int):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long):Unit"></a>
+      <a id="wait(Long):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#org.tresamigos.smv.SmvExtModuleLink@wait(x$1:Long):Unit" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="scala.Serializable">
+              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="java.io.Serializable">
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="scala.Product">
+              <h3>Inherited from <span class="extype" name="scala.Product">Product</span></h3>
+            </div><div class="parent" name="scala.Equals">
+              <h3>Inherited from <span class="extype" name="scala.Equals">Equals</span></h3>
+            </div><div class="parent" name="org.tresamigos.smv.SmvModuleLink">
+              <h3>Inherited from <a href="SmvModuleLink.html" class="extype" name="org.tresamigos.smv.SmvModuleLink">SmvModuleLink</a></h3>
+            </div><div class="parent" name="org.tresamigos.smv.SmvModule">
+              <h3>Inherited from <a href="SmvModule.html" class="extype" name="org.tresamigos.smv.SmvModule">SmvModule</a></h3>
+            </div><div class="parent" name="org.tresamigos.smv.SmvDataSet">
+              <h3>Inherited from <a href="SmvDataSet.html" class="extype" name="org.tresamigos.smv.SmvDataSet">SmvDataSet</a></h3>
+            </div><div class="parent" name="org.tresamigos.smv.FilenamePart">
+              <h3>Inherited from <a href="FilenamePart.html" class="extype" name="org.tresamigos.smv.FilenamePart">FilenamePart</a></h3>
+            </div><div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
