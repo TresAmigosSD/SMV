@@ -35,20 +35,12 @@ SMV installing requires either curl or wget to be available.  **Note:** The inst
 
 ## Install SMV using curl
 ```bash
-<<<<<<< HEAD
-$ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/v2.3.0.0/tools/smv-install | bash -s -- -spark
-=======
-$ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.5.2.20/tools/smv-install | bash -s -- -spark
->>>>>>> master
+$ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/v2r1/tools/smv-install | bash -s -- -spark
 ```
 
 ## Install SMV using wget
 ```bash
-<<<<<<< HEAD
-$ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v2.3.0.0/tools/smv-install | bash -s -- -spark
-=======
-$ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.5.2.20/tools/smv-install | bash -s -- -w -spark
->>>>>>> master
+$ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v2r1/tools/smv-install | bash -s -- -w -spark
 ```
 If curl/wget method doesn't work, we can use "sbt assembly" to build SMV by ourselves.
 
