@@ -7,3 +7,5 @@ target
 .sparks
 .tox
 venv
+docs/scala
+docs/python

@@ -1,20 +1,20 @@
 SHELL := /bin/bash
 
-SPARKS_DIR = $(shell pwd)/.sparks
+SPARKS_DIR := $(shell pwd)/.sparks
 
-SPARK_VERSIONS = $(shell cat admin/.spark_to_test)
-DEFAULT_SPARK = $(shell tail -1 admin/.spark_to_test)
+SPARK_VERSIONS := $(shell cat admin/.spark_to_test)
+DEFAULT_SPARK := $(shell tail -1 admin/.spark_to_test)
 
-SPARK_HOMES = $(addprefix $(SPARKS_DIR)/, $(SPARK_VERSIONS))
-DEFAULT_SPARK_HOME = $(addprefix $(SPARKS_DIR)/, $(DEFAULT_SPARK))
+SPARK_HOMES := $(addprefix $(SPARKS_DIR)/, $(SPARK_VERSIONS))
+DEFAULT_SPARK_HOME := $(addprefix $(SPARKS_DIR)/, $(DEFAULT_SPARK))
 
-PYTHON_VERSIONS = $(shell cat admin/.python_to_test)
-DEFAULT_PYTHON_PATCH = $(shell tail -1 admin/.python_to_test)
-DEFAULT_PYTHON_MAJOR = $(shell cut -c 1-3 <<< $(DEFAULT_PYTHON_PATCH))
+PYTHON_VERSIONS := $(shell cat admin/.python_to_test)
+DEFAULT_PYTHON_PATCH := $(shell tail -1 admin/.python_to_test)
+DEFAULT_PYTHON_MAJOR := $(shell cut -c 1-3 <<< $(DEFAULT_PYTHON_PATCH))
 
-SMV_VERSION = v$(shell cat .smv_version)
+SMV_VERSION := v$(shell cat .smv_version)
 
-SMV_ROOT = $(shell pwd)
+SMV_ROOT := $(shell pwd)
 
 clean:
 	rm -rf .tox
@@ -69,19 +69,31 @@ docker_smv: docker_base
 docker: docker_smv
 
 
-PYDOC_DEST = docs/python
-SMV_PY_DIR = $(shell pwd)/src/main/python
-SPARK_PY_DIR = $(DEFAULT_SPARK_HOME)/python
+DOC_DIR = docs
+
+PYDOC_DEST := $(DOC_DIR)/python
+SMV_PY_DIR := $(SMV_ROOT)/src/main/python
+SPARK_PY_DIR := $(DEFAULT_SPARK_HOME)/python
 PY4J_LIBS = $(shell find $(SPARK_PY_DIR)/lib -maxdepth 1 -mindepth 1 -name 'py4j*-src.zip' -print | tr -d '\r')
 
-py-docs: $(PYDOC_DEST)
+py-doc: $(PYDOC_DEST)
 
-$(PYDOC_DEST): install-spark-default 
-	SMV_VERSION=$(SMV_VERSION) \
+$(PYDOC_DEST): install-spark-default
+	env SMV_VERSION=$(SMV_VERSION) \
 		PYTHONPATH="$(SMV_PY_DIR):$(SPARK_PY_DIR):$(PY4J_LIBS)" \
 		sphinx-apidoc --full -o $(PYDOC_DEST) $(SMV_PY_DIR)/smv
 	cp admin/conf/sphinx-conf.py $(PYDOC_DEST)/conf.py
-	cd $(PYDOC_DEST) && make html
+	cd $(PYDOC_DEST)
+	cd $(PYDOC_DEST) && env SMV_VERSION=$(SMV_VERSION) \
+		PYTHONPATH="$(SMV_PY_DIR):$(SPARK_PY_DIR):$(PY4J_LIBS)" \
+		make html
+
+SCALADOC_DEST = $(DOC_DIR)/scala
+
+scala-doc:
+	mkdir -p $(SCALADOC_DEST)
+	sbt doc
+	cp -R target/scala-*/api/* $(SCALADOC_DEST)
 
 
 # install-spark x.y.z
