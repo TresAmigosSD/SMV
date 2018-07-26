@@ -393,6 +393,16 @@ b_1                          1   25.00%           4  100.00%
 -------------------------------------------------""")
   }
 
+  test("smvHist") {
+    val a   = dfFrom("id:Date; v:Integer", "2010-01-01,1;2010-01-02,1;2010-01-01,1;2010-01-01,2")
+    val res = a._smvFreqHist("id").createReport()
+    assert(res === """Histogram of id: String sorted by Frequency
+key                      count      Pct    cumCount   cumPct
+2010-01-01                   3   75.00%           3   75.00%
+2010-01-02                   1   25.00%           4  100.00%
+-------------------------------------------------""")
+  }
+
   test("smvFreqHist") {
     val a   = dfFrom("id:String; v:Integer", "a,1;b,1;a,1;a,2")
     val res = a._smvFreqHist("id").createReport()

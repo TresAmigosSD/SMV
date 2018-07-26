@@ -334,6 +334,15 @@ a                            1   50.00%           1   50.00%
 b                            1   50.00%           2  100.00%
 -------------------------------------------------""")
 
+    def test_smvHistDate(self):
+        df = self.createDF("k:Date;v:Integer", "2010-01-01,1;2010-01-02,2")
+        res = dfhelper(df)._smvHist("k")
+        self.assertEqual(res, """Histogram of k: String sort by Key
+key                      count      Pct    cumCount   cumPct
+2010-01-01                   1   50.00%           1   50.00%
+2010-01-02                   1   50.00%           2  100.00%
+-------------------------------------------------""")
+
     def test_smvConcatHist(self):
         df = self.createDF("k:String;v:String", "a,1;b,2")
         res = dfhelper(df)._smvConcatHist("k", "v")
@@ -351,6 +360,16 @@ b_2                          1   50.00%           2  100.00%
 key                      count      Pct    cumCount   cumPct
 a                            2   66.67%           2   66.67%
 b                            1   33.33%           3  100.00%
+-------------------------------------------------""")
+
+    def test_smvFreqHistDate(self):
+        import smv.helpers as smv
+        df = self.createDF("k:Date;v:String", "2010-01-01,1;2010-01-02,2;2010-01-02,3")
+        res = dfhelper(df)._smvFreqHist("k")
+        self.assertEqual(res, """Histogram of k: String sorted by Frequency
+key                      count      Pct    cumCount   cumPct
+2010-01-02                   2   66.67%           2   66.67%
+2010-01-01                   1   33.33%           3  100.00%
 -------------------------------------------------""")
 
     def test_smvCountHist(self):
