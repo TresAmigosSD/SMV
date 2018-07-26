@@ -277,28 +277,16 @@ function publish_smv_docker_image() {
 function gen_pydocs()
 {
   info "generating python docs"
-  local smv_py_dir="${DOCKER_SMV_DIR}/src/main/python"
-  local spark_py_dir="/usr/lib/spark/python"
   mkdir -p ${DOCS_DIR}/python
 
-  # py4j lib dir version changes with spark version.  Must extract version used in spark.
-  py4j_lib=$(docker run --rm -it ${BASE_DOCKER_IMAGE} \
-    sh -c "find ${spark_py_dir}/lib -maxdepth 1 -mindepth 1 -name 'py4j*-src.zip' -print" | tr -d '\r')
+  # TODO: base image's python should work "out of the box" - shouldn't need pyenv init
+  local pyenv_init='eval "$(pyenv init -)"'
 
   docker run --rm -it \
-    -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/python:/pydoc \
+    -v ${DOCS_DIR}/python:/usr/lib/SMV/docs/python \
     ${BASE_DOCKER_IMAGE} \
-    sh -c "
-      set -e;
-      eval \"\$(pyenv init -)\";
-      cd $DOCKER_SMV_DIR;
-      export PYTHONPATH=\"${smv_py_dir}:${spark_py_dir}:${py4j_lib}:\";
-      export SMV_VERSION=${SMV_VERSION};
-      sphinx-apidoc --full -o /pydoc ${smv_py_dir}/smv;
-      cd /pydoc;
-      cp ${DOCKER_SMV_DIR}/admin/conf/sphinx-conf.py /pydoc/conf.py;
-      make html" \
-    >> ${LOGFILE} 2>&1 || error "python doc generation failed"
+    bash -c "cd /usr/lib/SMV && eval ${pyenv_init} && make py-doc" \
+    ${LOGFILE} 2>&1 || error "python doc generation failed"
 }
 
 function gen_scaladocs()
@@ -307,12 +295,9 @@ function gen_scaladocs()
   mkdir -p ${DOCS_DIR}/scala
 
   docker run --rm -it \
-    -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/scala:/scaladoc \
+    -v ${DOCS_DIR}/scala:/usr/lib/SMV/docs/scala \
     ${BASE_DOCKER_IMAGE} \
-    sh -c "
-      cd $DOCKER_SMV_DIR;
-      sbt doc;
-      cp -R target/scala-*/api/* /scaladoc" \
+    bash -c "cd /usr/lib/SMV && make scala-doc" \
     >> ${LOGFILE} 2>&1 || error "scala doc generation failed"
 }
 
