@@ -2,7 +2,7 @@
 # Release the current version of SMV.  This will use the tresamigos:smv
 # docker container to maintain release consistency.
 
-set -e
+set -eu
 PROG_NAME=$(basename "$0")
 
 
@@ -72,6 +72,15 @@ function parse_args()
 
   GHPAGES_DIR="${HOME}/.smv/ghpages"
   SMV_REPO_URL="git@github.com:TresAmigosSD/SMV.git"
+
+
+
+  local version_tag="v${SMV_VERSION}"
+  BASE_DOCKER_IMAGE="local-smv-base-${version_tag}"
+  LOCAL_DOCKER_IMAGE="local-smv-${version_tag}"
+  SMV_DOCKER_REPO="tresamigos/smv"
+  OFFICIAL_DOCKER_IMG="${SMV_DOCKER_REPO}:${version_tag}"
+  LATEST_DOCKER_IMG="${SMV_DOCKER_REPO}:latest"
 }
 
 function clone_repo()
@@ -113,32 +122,22 @@ function create_base_docker_image()
 {
   info "building local docker image"
 
-  BASE_DOCKER_IMAGE=smv-base-${SMV_VERSION}
-
-  cd "${SMV_DIR}/docker/smv"
-  # build local docker image tag as `local_docker_build`
-  docker build -t ${BASE_DOCKER_IMAGE} . >> ${LOGFILE} 2>&1 || error "local docker build failed"
+  cd ${SMV_DIR}
+  # build local docker image 
+  make docker_base >> ${LOGFILE} 2>&1 || error "local docker build failed"
 }
 
 function run_make_in_docker()
 {
   local target="$1"
-  info "Running make ${target}"
-
-  local sbtops="-ivy /projects/.ivy2"
-  local docker_cmd="cd $DOCKER_SMV_DIR; SBT_OPTS='${sbtopts}' make ${target}"
+  info "Running make ${target} in ${BASE_DOCKER_IMAGE}"
+  
+  local pyenv_setup='eval "$(pyenv init -)"'
+  local docker_cmd="cd /usr/lib/SMV && ${pyenv_setup} && make ${target}"
 
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
-  docker run --rm -it -v ${PROJ_DIR}:/projects local_docker_build \
-    sh -c "${docker_cmd}" >> ${LOGFILE} 2>&1 || error "SMV make $target failed"
-}
-
-function build_smv()
-{
-  info "Building SMV"
-
-  run_make_in_docker clean
-  run_make_in_docker assemble-fat-jar
+  docker run --rm -it ${BASE_DOCKER_IMAGE} bash -c "${docker_cmd}" \
+     >> ${LOGFILE} 2>&1 || error "SMV make $target failed"
 }
 
 function test_smv()
@@ -146,26 +145,6 @@ function test_smv()
   info "Testing SMV"
   # Should really run the thorough tests
   run_make_in_docker test
-}
-
-# find the gnu tar on this system.
-function find_gnu_tar()
-{
-  info "find gnu tar"
-  local tars="gtar gnutar tar"
-  TAR=""
-  for t in $tars; do
-    if [ -n "$(type -p $t)" ]; then
-      TAR=$t
-      break
-    fi
-  done
-
-  # make sure it is gnu tar:
-  if [ $($TAR --version | head -1 | grep "GNU tar" | wc -l) -ne 1 ]; then
-    echo "ERROR: did not find a gnu tar.  Need gnu tar to build SMV release"
-    exit 1
-  fi
 }
 
 # find the release message in /releases dir.
@@ -204,7 +183,6 @@ function update_version()
 
   git commit -a -m "updated version to $SMV_VERSION" \
     >> ${LOGFILE} 2>&1 || error "git commit failed"
-  git push origin >> ${LOGFILE} 2>&1 || error "git push failed"
 }
 
 function tag_release()
@@ -217,11 +195,12 @@ function tag_release()
   git push origin $tag >> ${LOGFILE} 2>&1 || error "git tag push failed"
 }
 
-function create_tar()
+function retrieve_tar()
 {
-  info "create tar image"
+  info "retrieve release archive from ${BASE_DOCKER_IMAGE}"
 
-  make docker_bundle
+  cd ${SMV_DIR}
+  make release_bundle >> ${LOGFILE} || error "Unable to retrieve archive from ${BASE_DOCKER_IMAGE}"
 }
 
 # This only creates the release and does NOT attach the zip asset to it.
@@ -273,25 +252,25 @@ function attach_tar_to_github_release()
 
 function create_smv_docker_image()
 {
-  local tag=v"$SMV_VERSION"
+  info "building docker image"
 
-  cd "${SMV_DIR}/docker/smv"
+  cd ${SMV_DIR}
+  make docker
+}
 
+function publish_smv_docker_image() {
   info "logging in to docker hub"
   docker login -u ${DOCKERHUB_USER_NAME} -p ${DOCKERHUB_USER_PASSWORD}
 
-  info "building docker image"
-  docker build --build-arg SMV_BASE_IMAGE=${BASE_DOCKER_IMAGE} --build-arg SMV_BUNDLE=${TGZ_IMAGE} \
-    -t docker_build . >> ${LOGFILE} 2>&1 || error "docker build failed"
-
-  info "pushing new tagged docker image (${tag})"
-  docker tag docker_build tresamigos/smv:${tag} >> ${LOGFILE} 2>&1 || error "docker tag failed"
-  docker push tresamigos/smv:${tag} >> ${LOGFILE} 2>&1 || error "docker push failed"
+  info "pushing new tagged docker image (${OFFICIAL_DOCKER_IMG})"
+  docker tag ${LOCAL_DOCKER_IMAGE} ${OFFICIAL_DOCKER_IMG} >> ${LOGFILE} 2>&1 || error "docker tag failed"
+  docker push ${OFFICIAL_DOCKER_IMG} >> ${LOGFILE} 2>&1 || error "docker push failed"
 
   if [ ${IS_LATEST} -eq 1 ]; then
     info "pushing docker image as latest"
-    docker tag docker_build tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker tag failed"
-    docker push tresamigos/smv:latest >> ${LOGFILE} 2>&1 || error "docker push failed"
+
+    docker tag ${LOCAL_DOCKER_IMAGE} ${LATEST_DOCKER_IMG} >> ${LOGFILE} 2>&1 || error "docker tag failed"
+    docker push ${LATEST_DOCKER_IMG} >> ${LOGFILE} 2>&1 || error "docker push failed"
   fi
 }
 
@@ -303,15 +282,15 @@ function gen_pydocs()
   mkdir -p ${DOCS_DIR}/python
 
   # py4j lib dir version changes with spark version.  Must extract version used in spark.
-  py4j_lib=$(docker run --rm -it tresamigos/smv:v${PREV_SMV_VERSION} -u $(id -u) \
+  py4j_lib=$(docker run --rm -it ${BASE_DOCKER_IMAGE} \
     sh -c "find ${spark_py_dir}/lib -maxdepth 1 -mindepth 1 -name 'py4j*-src.zip' -print" | tr -d '\r')
 
   docker run --rm -it \
     -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/python:/pydoc \
-    tresamigos/smv:v${PREV_SMV_VERSION} \
-    -u $(id -u)\
+    ${BASE_DOCKER_IMAGE} \
     sh -c "
       set -e;
+      eval \"\$(pyenv init -)\";
       cd $DOCKER_SMV_DIR;
       export PYTHONPATH=\"${smv_py_dir}:${spark_py_dir}:${py4j_lib}:\";
       export SMV_VERSION=${SMV_VERSION};
@@ -329,8 +308,7 @@ function gen_scaladocs()
 
   docker run --rm -it \
     -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/scala:/scaladoc \
-    tresamigos/smv:v${PREV_SMV_VERSION} \
-    -u $(id -u)\
+    ${BASE_DOCKER_IMAGE} \
     sh -c "
       cd $DOCKER_SMV_DIR;
       sbt doc;
@@ -394,26 +372,32 @@ function push_ghpages_docs()
   git push >> ${LOGFILE} 2>&1 || error "pushing SMV ghpages"
 }
 
+function push_changes_on_branch() {
+  info "push source changes to github"
+
+  git push origin >> ${LOGFILE} 2>&1 || error "git push failed"
+}
+
 # ---- MAIN ----
 parse_args "$@"
 info "Start Release on: $(date)"
 clone_repo
 check_for_existing_tag
 get_prev_smv_version
-find_gnu_tar
+update_version
 find_release_msg_file
 create_base_docker_image
-build_smv
 test_smv
+retrieve_tar
+create_smv_docker_image
 gen_pydocs
 gen_scaladocs
-update_version
 tag_release
-create_tar
-create_smv_docker_image
 create_github_release
 attach_tar_to_github_release
+publish_smv_docker_image
 get_latest_ghpages
 update_ghpages_docs
 push_ghpages_docs
+push_changes_on_branch
 info "Finish Release on: $(date)"
