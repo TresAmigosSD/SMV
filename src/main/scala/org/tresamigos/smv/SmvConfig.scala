@@ -270,6 +270,11 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       case _ =>
         throw new SmvRuntimeException("JDBC url not specified in SMV config")
     }
+  
+  def jdbcDriver: String = mergedProps.get("smv.jdbc.driver") match {
+    case None => throw new SmvRuntimeException("JDBC driver is not specified in SMV config")
+    case Some(ret) => ret
+  }
 
   /** The FQN of configuration object for a particular run.  See github issue #319 */
   val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))

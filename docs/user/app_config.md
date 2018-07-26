@@ -173,9 +173,17 @@ Can be overridden using <code>--publish-dir</code> command line option</td>
 <tr>
 <td>smv.jdbc.url</td>
 <td>None</td>
-<td>Optional</td>
+<td>Required for use with JDBC, otherwise optional</td>
 <td>JDBC url to use for publishing and reading tables</td>
 </tr>
+
+<tr>
+<td>smv.jdbc.driver</td>
+<td>None</td>
+<td>Required for use with JDBC, otherwise optional</td>
+<td>JDBC driver to use for publishing and reading tables</td>
+</tr>
+
 </table>
 
 Please refer [Runtime User Configuration](run_config.md) for details and examples

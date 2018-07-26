@@ -60,7 +60,7 @@ class Employment(SmvModule, SmvRunConfig):
 
 In some situations, such as building subsets by filtering, different sets `DataFrame`s are genereated from the same input with almost the same _logic_.  Using a _configurable_ module enables code reuse while minizing boilerplate.
 
-In addition to input modules specified with the `requireDS()` method, a _configurable_ module depends on a specific configuration object, that must be a subclass of the `SmvRunConfig` trait, to produce its desired output.  Which configuration object to use is specified by the value of `smv.runConfObj`, either in the application's <a href="app_config.md">configuration</a> file, or on the command line with `--run-conf-obj <name>` option or with `--smv-props smv.runConfObj=<name>`.
+In addition to input modules specified with the `requiresDS()` method, a _configurable_ module depends on a specific configuration object, that must be a subclass of the `SmvRunConfig` trait, to produce its desired output.  Which configuration object to use is specified by the value of `smv.runConfObj`, either in the application's <a href="app_config.md">configuration</a> file, or on the command line with `--run-conf-obj <name>` option or with `--smv-props smv.runConfObj=<name>`.
 
 By default, the name of the configuration object is the fully qualified class name (FQN) of the implementing object.  However, one could override `runConfig` in trait `Using[T]` to change the way the configuration object is obtained.
 

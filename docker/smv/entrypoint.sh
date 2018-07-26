@@ -25,7 +25,7 @@ ln -s /projects/.ivy2 ${USER_HOME}/.ivy2
 cp ${TEMPLATE_DIR}/bashrc ${USER_HOME}/.bashrc
 mkdir -p ${USER_HOME}/.jupyter
 cp ${TEMPLATE_DIR}/jupyter_notebook_config.py ${USER_HOME}/.jupyter/jupyter_notebook_config.py
-chown -R ${USER_NAME}:${USER_NAME} ${USER_HOME}
+chown -R ${USER_NAME}:${USER_NAME} ${USER_HOME} /.pyenv
 
 # ensure /projects is also owned by SMV user if it was not mounted by user.
 if [ -f /projects/.docker ]; then

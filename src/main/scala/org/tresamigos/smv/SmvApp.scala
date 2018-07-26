@@ -21,8 +21,8 @@ import scala.collection.mutable
 import scala.io.Source
 import scala.util.{Try, Success, Failure}
 
-import org.apache.log4j.{LogManager}
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.log4j.LogManager
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.{SparkContext, SparkConf}
 import org.joda.time.DateTime
 
@@ -35,9 +35,7 @@ import org.tresamigos.smv.dqm.{ParserLogger, TerminateParserLogger}
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp(private val cmdLineArgs: Seq[String],
-             _sc: Option[SparkContext] = None,
-             _sql: Option[SQLContext] = None) {
+class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] = None) {
   val log         = LogManager.getLogger("smv")
   val smvConfig   = new SmvConfig(cmdLineArgs)
   val genEdd      = smvConfig.cmdLine.genEdd()
@@ -65,8 +63,14 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    * val allSerializables = SmvReflection.objectsInPackage[Serializable]("org.tresamigos.smv")
    * sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
    **/
-  val sc         = _sc.getOrElse(new SparkContext(sparkConf))
-  val sqlContext = _sql.getOrElse(new org.apache.spark.sql.hive.HiveContext(sc))
+  val sparkSession = _spark getOrElse (SparkSession
+    .builder()
+    .appName(smvConfig.appName)
+    .enableHiveSupport()
+    .getOrCreate())
+
+  val sc         = sparkSession.sparkContext
+  val sqlContext = sparkSession.sqlContext
 
   // dsm should be private but will be temporarily public to accomodate outside invocations
   val dsm = new DataSetMgr(smvConfig)
@@ -84,7 +88,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
   private[smv] def createDFWithLogger(schemaStr: String, data: String, parserLogger: ParserLogger) = {
     val schema    = SmvSchema.fromString(schemaStr)
     val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
-    val handler = new FileIOHandler(sqlContext, null, None, parserLogger)
+    val handler = new FileIOHandler(sparkSession, null, None, parserLogger)
     handler.csvStringRDDToDF(sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
   }
 
@@ -94,7 +98,7 @@ class SmvApp(private val cmdLineArgs: Seq[String],
    *
    * Passing null for data will create an empty dataframe with a specified schema.
    **/
-  def createDF(schemaStr: String, data: String = null) = 
+  def createDF(schemaStr: String, data: String = null) =
     createDFWithLogger(schemaStr, data, TerminateParserLogger)
 
   /**
@@ -530,20 +534,16 @@ class SmvApp(private val cmdLineArgs: Seq[String],
 object SmvApp {
   var app: SmvApp = _
 
-  def init(args: Array[String],
-           _sc: Option[SparkContext] = None,
-           _sql: Option[SQLContext] = None) = {
-    app = new SmvApp(args, _sc, _sql)
+  def init(args: Array[String], _spark: Option[SparkSession] = None) = {
+    app = new SmvApp(args, _spark)
     app
   }
 
   /**
    * Creates a new app instances from a sql context.  This is used by SparkR to create a new app.
    */
-  def newApp(sqlContext: SQLContext, appPath: String): SmvApp = {
-    SmvApp.init(Seq("-m", "None", "--smv-app-dir", appPath).toArray,
-                Option(sqlContext.sparkContext),
-                Option(sqlContext))
+  def newApp(sparkSession: SparkSession, appPath: String): SmvApp = {
+    SmvApp.init(Seq("-m", "None", "--smv-app-dir", appPath).toArray, Option(sparkSession))
     SmvApp.app
   }
 

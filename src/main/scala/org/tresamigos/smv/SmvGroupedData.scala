@@ -16,17 +16,16 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.contrib.smv.{convertToCatalyst, convertToScala}
 
-import org.apache.spark.sql.{Column, DataFrame, GroupedData, Row, ColumnName}
+import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.{Alias, AggregateExpression}
+import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.aggregate._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.Partitioner
 import org.apache.spark.annotation.Experimental
 
-import cds.SmvGDO
 import edd.Edd
 import org.apache.spark.sql.types.{StringType, DoubleType}
 
@@ -35,8 +34,8 @@ import org.apache.spark.sql.types.{StringType, DoubleType}
  */
 @Experimental
 private[smv] case class SmvGroupedData(df: DataFrame, keys: Seq[String]) {
-  def toDF: DataFrame            = df
-  def toGroupedData: GroupedData = df.groupBy(keys(0), keys.tail: _*)
+  def toDF: DataFrame                         = df
+  def toGroupedData: RelationalGroupedDataset = df.groupBy(keys(0), keys.tail: _*)
 }
 
 /**
@@ -53,67 +52,6 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
 
   // convenience method to get a prototype WindowSpec object
   @inline private def winspec: WindowSpec = Window.partitionBy(keys.head, keys.tail: _*)
-
-  /**
-   * smvMapGroup: apply SmvGDO (GroupedData Operator) to SmvGroupedData
-   *
-   * Example:
-   * {{{
-   * val res1 = df.smvGroupBy('k).smvMapGroup(gdo1).agg(sum('v) as 'sumv, sum('v2) as 'sumv2)
-   * val res2 = df.smvGroupBy('k).smvMapGroup(gdo2).toDF
-   * }}}
-   **/
-  @Experimental
-  def smvMapGroup(gdo: SmvGDO, needConvert: Boolean = true): SmvGroupedData = {
-    val schema   = df.schema
-    val ordinals = schema.getIndices(keys: _*)
-    val rowToKeys: Row => Seq[Any] = { row =>
-      ordinals.map { i =>
-        row(i)
-      }
-    }
-
-    val outSchema      = gdo.createOutSchema(schema)
-    val inGroupMapping = gdo.createInGroupMapping(schema)
-    val rdd = df.rdd
-      .groupBy(rowToKeys)
-      .flatMapValues(rowsInGroup => {
-        val inRow =
-          if (needConvert) convertToCatalyst(rowsInGroup, schema)
-          else
-            rowsInGroup.map { r =>
-              InternalRow(r.toSeq: _*)
-            }
-
-        // convert Iterable[Row] to Iterable[InternalRow] first
-        // so we can apply the function inGroupMapping
-        val res = inGroupMapping(inRow)
-        // now we have to convert an RDD[InternalRow] back to RDD[Row]
-        if (needConvert)
-          convertToScala(res, outSchema)
-        else
-          res.map { r =>
-            Row(r.toSeq(outSchema): _*)
-          }
-      })
-      .values
-
-    /* since df.rdd method called ScalaReflection.convertToScala at the end on each row, here
-       after process, we need to convert them all back by calling convertToCatalyst. One key difference
-       between the Scala and Catalyst representation is the DateType, which is Scala RDD, it is a
-       java.sql.Date, and in Catalyst RDD, it is an Int. Please note, since df.rdd always convert Catalyst RDD
-       to Scala RDD, user should have no chance work on Catalyst RDD outside of DF.
-     */
-
-    // TODO remove conversion to catalyst type after all else compiles
-    // val converted = rdd.map{row =>
-    //   Row(row.toSeq.zip(outSchema.fields).
-    //     map { case (elem, field) =>
-    //       ScalaReflection.convertToCatalyst(elem, field.dataType)
-    //     }: _*)}
-    val newdf = df.sqlContext.createDataFrame(rdd, gdo.createOutSchema(schema))
-    SmvGroupedData(newdf, keys ++ gdo.inGroupKeys)
-  }
 
   /**
    * smvPivot on SmvGroupedData is similar to smvPivot on DF with the keys being provided in the `smvGroupBy` method instead of to the method directly.
@@ -252,7 +190,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
           }: _*)
           .orderBy(orders: _*)
         val r1 =
-          df.select((keys ++ valueCols map (c => $"$c")) :+ (rowNumber() over w as pcol): _*)
+          df.select((keys ++ valueCols map (c => $"$c")) :+ (row_number() over w as pcol): _*)
         // in-group ranking starting value is 0
         val r2 = r1.selectWithReplace(r1(pcol) - 1 as pcol)
         (r2, Seq(Seq(pcol)))
@@ -274,7 +212,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   /**
    * Compute the percent rank of a sequence of columns within a group in a given DataFrame.
    *
-   * Used Spark's `percentRank` window function. The precent rank is defined as
+   * Used Spark's `percent_rank` window function. The precent rank is defined as
    * `R/(N-1)`, where `R` is the base 0 rank, and `N` is the population size. Under
    * this definition, min value (R=0) has percent rank `0.0`, and max value has percent
    * rank `1.0`.
@@ -300,22 +238,22 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val c_prmin = {c: String => mkUniq(cols, c + "_prmin")}
     val c_pctrnk = {c: String => mkUniq(cols, c + "_pctrnk")}
     if (ignoreNull) {
-      //Calculate raw percentRank for all cols, assign null for null values
+      //Calculate raw percent_rank for all cols, assign null for null values
       val rawdf = df.smvSelectPlus(valueCols.zip(windows).map{
         case (c, w) =>
-          when(col(c).isNull, lit(null).cast(DoubleType)).otherwise(percentRank().over(w)).alias(c_rawpr(c))
+          when(col(c).isNull, lit(null).cast(DoubleType)).otherwise(percent_rank().over(w)).alias(c_rawpr(c))
       }: _*)
 
-      //Since min ignore nulls, "*_prmin" here are the min of the non-null percentRanks
+      //Since min ignore nulls, "*_prmin" here are the min of the non-null percent_ranks
       val aggcols = valueCols.map{c => min(c_rawpr(c)).alias(c_prmin(c))}
       val rawmin = rawdf.smvGroupBy(keys.map{col(_)}: _*).agg(aggcols.head, aggcols.tail: _*)
 
-      //Rescale the non-null percentRanks
+      //Rescale the non-null percent_ranks
       rawdf.smvJoinByKey(rawmin, keys, "inner").smvSelectPlus(valueCols.map{
         c => ((col(c_rawpr(c)) - col(c_prmin(c)))/(lit(1.0) - col(c_prmin(c)))).alias(c_pctrnk(c))
       }: _*).smvSelectMinus(valueCols.map{c => Seq(c_rawpr(c), c_prmin(c))}.flatten.map{col(_)}: _*)
     } else {
-      df.smvSelectPlus(valueCols.zip(windows).map{case (c, w) => percentRank().over(w).alias(c_pctrnk(c))}: _*)
+      df.smvSelectPlus(valueCols.zip(windows).map{case (c, w) => percent_rank().over(w).alias(c_pctrnk(c))}: _*)
     }
   }
 
@@ -327,7 +265,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample
    * for details.
    *
-   * `smvQuantile` calculated from Spark's `percentRank`. The algorithm is equavalent to the
+   * `smvQuantile` calculated from Spark's `percent_rank`. The algorithm is equavalent to the
    * one labled as `R-7, Excel, SciPy-(1,1), Maple-6` in above wikipedia page. Please note it
    * is slight different from SAS's default algorithm (labled as SAS-5).
    *
@@ -557,7 +495,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val w       = winspec.orderBy(orders: _*)
     val rankcol = mkUniq(df.columns, "rank")
     val rownum  = mkUniq(df.columns, "rownum")
-    val r1      = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    val r1      = df.smvSelectPlus(rank() over w as rankcol, row_number() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 
@@ -596,12 +534,16 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     val isSimpleRunAgg = aggCols
       .map { a =>
         a.toExpr match {
-          case Alias(Average(_), _) => true
-          case Alias(Sum(_), _)     => true
-          case Alias(Count(_), _)   => true
-          case Alias(Min(_), _)     => true
-          case Alias(Max(_), _)     => true
-          case _                    => false
+          case Alias(Average(_), _)                                => true
+          case Alias(Sum(_), _)                                    => true
+          case Alias(Count(_), _)                                  => true
+          case Alias(Min(_), _)                                    => true
+          case Alias(Max(_), _)                                    => true
+          case Alias(AggregateExpression(Last(_, _), x, y, z), _)  => true
+          case Alias(AggregateExpression(First(_, _), x, y, z), _) => true
+          case Alias(AggregateExpression(Count(_), x, y, z), _)    => true
+          case _: UnresolvedAttribute                              => true
+          case _                                                   => false
         }
       }
       .reduce(_ && _)
@@ -791,7 +733,7 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
       .select(df.columns.map { s =>
         $"$s"
       }: _*)
-      .unionAll(df)
+      .union(df)
 
     if (doFiltering) {
       res.where($"$colName".isin(expected.toSeq.map { lit }: _*))
@@ -899,10 +841,12 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
    * }}}
    **/
   def smvFillNullWithPrevValue(orders: Column*)(values: String*): DataFrame = {
-    val gdo = new cds.FillNullWithPrev(orders.map { o =>
-      o.toExpr
-    }.toList, values)
-    smvMapGroup(gdo).toDF
+    // Window.currentRow and Window.unboundedPreceding were introduce after Spark 2.1
+    // To make the code work under Spark 2.0, still use 0, and Long.MinValue
+    val w = winspec.orderBy(orders: _*).rowsBetween(Long.MinValue, 0)
+    values.foldLeft(df) {
+      (_df, c) => _df.withColumn(c, last(c, ignoreNulls = true).over(w))
+    }
   }
 
   private[smv] def smvRePartition(partitioner: Partitioner): SmvGroupedData = {

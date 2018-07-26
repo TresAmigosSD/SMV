@@ -68,7 +68,7 @@ class RollupCubeOpTest extends SmvTestUtil {
          a2,b2,G,50""")
     import df.sqlContext.implicits._
 
-    val res = df.smvCube("f", "a", "b").agg(sum("d") as "sum_d").where($"f" !== "*")
+    val res = df.smvCube("f", "a", "b").agg(sum("d") as "sum_d").where($"f" =!= "*")
 
     assertSrddDataEqual(
       res,

@@ -83,7 +83,7 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
                    col("zip") === col("_zip"),
                    normlevenshtein(col("city"), col("_city")),
                    0.9f),
-        ExactLogic("Zip_Not_Match", col("zip") !== col("_zip"))
+        ExactLogic("Zip_Not_Match", col("zip") =!= col("_zip"))
       )
     ).doMatch(createDF1, createDF2, false)
 
@@ -112,7 +112,7 @@ class SmvEntityMatcherTest extends NameMatcherTestFixture {
                    $"zip" === $"_zip",
                    normlevenshtein($"city", $"_city"),
                    0.9f),
-        ExactLogic("Zip_Not_Match", $"zip" !== $"_zip")
+        ExactLogic("Zip_Not_Match", $"zip" =!= $"_zip")
       )
     ).doMatch(createDF1, createDF2, false)
 

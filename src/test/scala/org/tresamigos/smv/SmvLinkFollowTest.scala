@@ -46,15 +46,15 @@ package org.tresamigos.smv {
 
     /* Since DS will cache the resolved DF we need to use a separate Y for SmvLinkFollowWithVersionTest */
     test("Test SmvModuleLink datasetHash follow link version") {
-      val app1 = SmvApp.init(v1AppArgs.toArray, Option(sc), Option(sqlContext))
+      val app1 = SmvApp.init(v1AppArgs.toArray, Option(sparkSession))
       val res1 = app1.dsm.load(smvLinkTestPkg2.L2.urn).head.instanceValHash()
-      val app2 = SmvApp.init(v2AppArgs.toArray, Option(sc), Option(sqlContext))
+      val app2 = SmvApp.init(v2AppArgs.toArray, Option(sparkSession))
       val res2 = app2.dsm.load(smvLinkTestPkg2.L2.urn).head.instanceValHash()
       assert(res1 !== res2) // when version = v1
     }
 
     test("Test SmvModuleLink follow link with version config") {
-      val app = SmvApp.init(v1AppArgs.toArray, Option(sc), Option(sqlContext))
+      val app = SmvApp.init(v1AppArgs.toArray, Option(sparkSession))
       intercept[org.apache.hadoop.mapred.InvalidInputException] {
         val res = app.runModule(smvLinkTestPkg2.T2.urn)
       }

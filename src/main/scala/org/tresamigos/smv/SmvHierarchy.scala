@@ -70,7 +70,7 @@ case class SmvHierarchy(
           )
           .dedupByKey(hierCols.typeName, hierCols.valueName)
     }
-    .reduce(_.unionAll(_))
+    .reduce(_.union(_))
 
   //TODO: this and the following method access deeply to SmvHierarchyColumns, should extract the need
   // implement methods in SmvHierarchyColumns
@@ -413,7 +413,7 @@ class SmvHierarchies(
     }
 
     val right = prepared
-      .where(prepared(colNames.typeName) !== lowestLevel)
+      .where(prepared(colNames.typeName) =!= lowestLevel)
       .select(
         (keyCols ++ varCols.map { s =>
           prepared(s) as (parentPrefix + s)
@@ -514,7 +514,7 @@ class SmvHierarchies(
       .map { hier =>
         rollupHier(dfWithHier.smvWithKeys(additionalKeys: _*), hier, conf)(aggregations)
       }
-      .reduce(_ unionAll _)
+      .reduce(_ union _)
 
     dfWithHier.unpersist
 

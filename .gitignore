@@ -1,7 +1,7 @@
 data/out
 target
 .idea
-smv.iml
+*.iml
 /bin/
 /.settings/
 /.classpath
@@ -28,3 +28,5 @@ Pipfile.lock
 .vscode/
 .sync-config.cson
 *.pyc
+
+.sparks

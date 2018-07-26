@@ -257,7 +257,7 @@ class JoinHelperTest extends SmvTestUtil {
   }
 }
 
-class smvUionTest extends SmvTestUtil {
+class smvUnionTest extends SmvTestUtil {
   test("test smvUion") {
     val df  = dfFrom("a:Integer; b:Double; c:String", """1,2.0,hello;
          2,3.0,hello2""")
@@ -350,7 +350,7 @@ class smvHashSampleTest extends SmvTestUtil {
   test("test smvHashSample") {
     val ssc = sqlContext; import ssc.implicits._
     val a   = dfFrom("key:String", "a;b;c;d;e;f;g;h;i;j;k")
-    val res = a.unionAll(a).smvHashSample($"key", 0.3)
+    val res = a.union(a).smvHashSample($"key", 0.3)
     assertUnorderedSeqEqual(res.collect.map(_.toString),
                             Seq("[a]", "[g]", "[i]", "[a]", "[g]", "[i]"))
   }
@@ -372,7 +372,7 @@ class smvPipeCount extends SmvTestUtil {
   test("Test smvPipeCount") {
     val ssc     = sqlContext; import ssc.implicits._
     val a       = dfFrom("key:String", "a;b;c;d;e;f;g;h;i;j;k")
-    val counter = sc.accumulator(0l)
+    val counter = sc.longAccumulator
 
     val n1 = a.smvPipeCount(counter).count
     val n2 = counter.value
@@ -390,6 +390,16 @@ key                      count      Pct    cumCount   cumPct
 a_1                          2   50.00%           2   50.00%
 a_2                          1   25.00%           3   75.00%
 b_1                          1   25.00%           4  100.00%
+-------------------------------------------------""")
+  }
+
+  test("smvHist") {
+    val a   = dfFrom("id:Date; v:Integer", "2010-01-01,1;2010-01-02,1;2010-01-01,1;2010-01-01,2")
+    val res = a._smvFreqHist("id").createReport()
+    assert(res === """Histogram of id: String sorted by Frequency
+key                      count      Pct    cumCount   cumPct
+2010-01-01                   3   75.00%           3   75.00%
+2010-01-02                   1   25.00%           4  100.00%
 -------------------------------------------------""")
   }
 

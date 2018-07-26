@@ -24,14 +24,14 @@ package org.tresamigos.smv
 
 import scala.reflect.ClassTag
 
-import org.apache.spark.{Logging, Partition, TaskContext}
+import org.apache.spark.{Partition, TaskContext}
 import org.apache.spark.rdd.RDD
 
 /**
  * Extra functions available on RDDs for providing the RDD analogs of Scala drop,
  * dropRight and dropWhile, which return an RDD as a result
  */
-private[smv] class DropRDDFunctions[T: ClassTag](self: RDD[T]) extends Logging with Serializable {
+private[smv] class DropRDDFunctions[T: ClassTag](self: RDD[T]) extends Serializable {
 
   /**
    * Return a new RDD formed by dropping the first (n) elements of the input RDD

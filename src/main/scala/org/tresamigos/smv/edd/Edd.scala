@@ -109,6 +109,7 @@ case class EddResultFunctions(eddRes: DataFrame) {
           r(0).asInstanceOf[String]
         }
         .toSeq
+        .sorted
 
       //TODO: implement indentation
       keys

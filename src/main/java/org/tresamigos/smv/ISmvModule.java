@@ -16,7 +16,8 @@ package org.tresamigos.smv;
 
 import java.util.List;
 import java.util.Map;
-import org.apache.spark.sql.DataFrame;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.tresamigos.smv.dqm.SmvDQM;
 import org.tresamigos.smv.dqm.DQMValidator;
 
@@ -68,7 +69,7 @@ public interface ISmvModule {
 	 * Try to run the module by its fully-qualified name and return its
 	 * result in a DataFrame.
 	 */
-	IPythonResponsePy4J<DataFrame> getDoRun(DQMValidator validator,  Map<String, DataFrame> known);
+	IPythonResponsePy4J<Dataset<Row>> getDoRun(DQMValidator validator,  Map<String, Dataset<Row>> known);
 
 	/**
 	 * Hash computed based on the source code of the dataset's class
@@ -84,7 +85,7 @@ public interface ISmvModule {
 	/**
 	 * User metadata serialized as JSON
 	 */
-	IPythonResponsePy4J<String> getMetadataJson(DataFrame df);
+	IPythonResponsePy4J<String> getMetadataJson(Dataset<Row> df);
 
 	/**
 	 * Validate metadata given serialized as json

@@ -41,7 +41,7 @@ EMP                  Null Count             0
 EMP                  Average                2170425.7884615385
 EMP                  Standard Deviation     2330941.3442028034
 EMP                  Min                    202724.0
-EMP                  Max                    1.2319102E7
+EMP                  Max                    1.2.3.0.0E7
 ```
 
 Boolean type column

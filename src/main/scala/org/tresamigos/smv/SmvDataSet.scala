@@ -194,7 +194,7 @@ abstract class SmvDataSet extends FilenamePart {
     val dataframe = rdd(collector=collector)
 
     // register the dataframe as a temp table.  Will be overwritten on next register.
-    dataframe.registerTempTable("dftable")
+    dataframe.createOrReplaceTempView("dftable")
 
     // if user provided a publish hive sql command, run it instead of default
     // table creation from data frame result.
@@ -342,7 +342,7 @@ abstract class SmvDataSet extends FilenamePart {
    */
   def readFile(path: String,
                attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
-    new FileIOHandler(app.sqlContext, path).csvFileWithSchema(attr)
+    new FileIOHandler(app.sparkSession, path).csvFileWithSchema(attr)
 
   /**
    * Perform an action and log the amount of time it took
@@ -370,9 +370,13 @@ abstract class SmvDataSet extends FilenamePart {
   def persist(dataframe: DataFrame,
               prefix: String = ""): Unit = {
     val path = moduleCsvPath(prefix)
-    val counter = app.sqlContext.sparkContext.accumulator(0l)
+    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
+
+    val counter = app.sparkSession.sparkContext.longAccumulator
+    val before  = DateTime.now()
+
     val df      = dataframe.smvPipeCount(counter)
-    val handler = new FileIOHandler(app.sqlContext, path)
+    val handler = new FileIOHandler(app.sparkSession, path)
 
     val (_, elapsed) =
       doAction("PERSIST OUTPUT"){handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")}
@@ -403,7 +407,7 @@ abstract class SmvDataSet extends FilenamePart {
 
   /** Has the result of this data set been persisted? */
   private[smv] def isPersisted: Boolean =
-    Try(new FileIOHandler(app.sqlContext, moduleCsvPath()).readSchema()).isSuccess
+    Try(new FileIOHandler(app.sparkSession, moduleCsvPath()).readSchema()).isSuccess
 
   /**
    * #560
@@ -646,7 +650,7 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def publish(collector: SmvRunInfoCollector) = {
     val df      = rdd(collector=collector)
     val version = app.smvConfig.cmdLine.publish()
-    val handler = new FileIOHandler(app.sqlContext, publishCsvPath(version))
+    val handler = new FileIOHandler(app.sparkSession, publishCsvPath(version))
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
@@ -668,6 +672,7 @@ abstract class SmvDataSet extends FilenamePart {
   private[smv] def publishThroughJDBC(collector: SmvRunInfoCollector) = {
     val df = rdd(collector=collector)
     val connectionProperties = new java.util.Properties()
+    connectionProperties.put("driver", app.smvConfig.jdbcDriver)
     val url = app.smvConfig.jdbcUrl
     df.write.mode(SaveMode.Append).jdbc(url, tableName, connectionProperties)
   }
@@ -682,7 +687,7 @@ abstract class SmvDataSet extends FilenamePart {
    */
   private[smv] def readPublishedData(version: Option[String] = stageVersion): Option[DataFrame] = {
     version.map { v =>
-      val handler = new FileIOHandler(app.sqlContext, publishCsvPath(v))
+      val handler = new FileIOHandler(app.sparkSession, publishCsvPath(v))
       handler.csvFileWithSchema(null)
     }
   }
@@ -720,7 +725,7 @@ class SmvHiveTable(override val tableName: String, val userQuery: String = null)
   }
 
   override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val df = app.sqlContext.sql(query)
+    val df = app.sparkSession.sql(query)
     run(df)
   }
 }
@@ -813,7 +818,7 @@ abstract class SmvFile extends SmvDSWithParser {
   }
 
   private[smv] def getHandler(csvPath: String, parserValidator: ParserLogger) =
-    new FileIOHandler(app.sqlContext, csvPath, fullSchemaPath, parserValidator)
+    new FileIOHandler(app.sparkSession, csvPath, fullSchemaPath, parserValidator)
 
   /* Historically we specify path in SmvFile respect to dataDir
    * instead of inputDir. However by convention we always put data
@@ -967,7 +972,7 @@ class SmvMultiCsvFiles(
         val handler =   getHandler(filePath, parserValidator)
         handler.csvFileWithSchema(csvAttributes, Some(schema))
       }
-      .reduce(_ unionAll _)
+      .reduce(_ union _)
 
     df
   }

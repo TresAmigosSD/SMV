@@ -18,7 +18,8 @@ import org.apache.spark.annotation.Experimental
 import org.apache.spark.sql.{Row, Column}
 import org.apache.spark.sql.contrib.smv.extractExpr
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.catalyst.expressions.{Alias, Expression, ScalaUDF, NamedExpression}
+import org.apache.spark.sql.catalyst.expressions.{Alias, Expression, NamedExpression}
+import org.apache.spark.sql.catalyst.util.usePrettyExpression
 import org.apache.spark.sql.types._
 
 import java.util.Calendar
@@ -59,7 +60,7 @@ class ColumnHelper(column: Column) {
    */
   def getName = expr match {
     case e: NamedExpression => e.name
-    case e: Expression      => e.prettyString
+    case e: Expression      => usePrettyExpression(expr).toString
   }
 
   /**
@@ -77,7 +78,7 @@ class ColumnHelper(column: Column) {
     val f = (s: String) =>
       if (s == null) null
       else new Timestamp(fmtObj.parse(s).getTime())
-    new Column(Alias(ScalaUDF(f, TimestampType, Seq(expr)), name)())
+    udf(f, TimestampType).apply(column).as(name)
   }
 
   /**
@@ -341,7 +342,7 @@ class ColumnHelper(column: Column) {
           math.floor(v / 1000000) * 1000000
     }
 
-    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)())
+    udf(f, DoubleType).apply(column).as(name)
   }
 
   /**
@@ -364,7 +365,7 @@ class ColumnHelper(column: Column) {
         else min + math.floor((v - min) / delta) * delta
     }
 
-    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)())
+    udf(f, DoubleType).apply(column).as(name)
   }
 
   /**
@@ -381,7 +382,7 @@ class ColumnHelper(column: Column) {
     val f = (v: Any) =>
       if (v == null) null
       else math.floor(v.asInstanceOf[Double] / bin) * bin
-    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)())
+    udf(f, DoubleType).apply(column).as(name)
   }
 
   /**
@@ -392,7 +393,7 @@ class ColumnHelper(column: Column) {
     val f = (s: String) =>
       if (s == null) null
       else MetaphoneAlgorithm.compute(s.replaceAll("""[^a-zA-Z]""", "")).getOrElse(null)
-    new Column(Alias(ScalaUDF(f, StringType, Seq(expr)), name)())
+    udf(f, StringType).apply(column).as(name)
   }
 
   /**
@@ -619,7 +620,7 @@ class ColumnHelper(column: Column) {
             .asInstanceOf[Double]) / 2.0;
         }
     }
-    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)())
+    udf(f, DoubleType).apply(column).alias(name)
   }
 
   /**
@@ -658,7 +659,7 @@ class ColumnHelper(column: Column) {
         }
     }
 
-    new Column(Alias(ScalaUDF(f, DoubleType, Seq(expr)), name)())
+    udf(f, DoubleType).apply(column).alias(name)
   }
 
   /**
@@ -746,7 +747,7 @@ class ColumnHelper(column: Column) {
       }
       case _ => None
     }}
-    new Column(Alias(ScalaUDF(f, ArrayType(elemType, true), Seq(expr)), name)())
+    udf(f, ArrayType(elemType, true)).apply(column).alias(name)
   }
 
   /**

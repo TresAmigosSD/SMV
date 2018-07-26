@@ -1,24 +1,66 @@
 #!/bin/bash
 set -e
 
-target_dir="$1"
+PROG_NAME=$(basename "$0")
+USAGE="${PROG_NAME} [--spark-version version] [--target-dir target_dir]"
 
-if [ -z "$target_dir" ]; then
-  echo "No target directory specified."
+SMV_HOME="$(cd "`dirname "$0"`/.."; pwd)"
+
+DEFAULT_SPARK_VERSION=2.3.1
+
+function   error() {
+  echo "ERROR: ${1}"
   exit 1
-fi
+}
 
-smv_tools="$(cd "`dirname "$0"`"; pwd)"
-spark_version=$(cat "$smv_tools"/../.spark_version)
+function info() {
+  echo "INFO: ${1}"
+}
 
-remote_tarball="https://github.com/TresAmigosSD/spark/releases/download/${spark_version}_hd/spark-${spark_version}-bin-2.7.2.tgz"
-local_tarball=$(basename $remote_tarball)
-echo "[INFO] Downloading $local_tarball."
-curl -L --progress-bar --fail "$remote_tarball" > "$local_tarball"
+function usage() {
+  echo "Usage: ${USAGE}"
+}
 
-tar -zxf "$local_tarball"
-rm -rf "$local_tarball"
-spark_dir="${local_tarball%.tgz}"
-mv "$spark_dir" "$target_dir"
+function process_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --spark-version) shift; SPARK_VERSION="${1}"; shift;;
+      --target-dir) shift; TARGET_DIR="${1}"; shift;;
+    esac
+  done
 
-echo "[INFO] Spark installed succesfully!"
+  SPARK_VERSION=${SPARK_VERSION:="${DEFAULT_SPARK_VERSION}"}
+
+  DEFAULT_TARGET_DIR="$(pwd)/spark-${SPARK_VERSION}"
+  TARGET_DIR=${TARGET_DIR:="${DEFAULT_TARGET_DIR}"}
+
+  info "Installing Spark $SPARK_VERSION to $TARGET_DIR"
+}
+
+function find_spark() {
+  local spark_entries=$(grep $SPARK_VERSION $SMV_HOME/.supported_spark)
+  if [ -z "$spark_entries" ]; then
+    error "No entry for Spark $SPARK_VERSION found in $SMV_HOME/.supported_spark"
+  else
+    REMOTE_TARBALL="$(cut -c7- <<< "$spark_entries")"
+  fi
+
+  info "Downloading $REMOTE_TARBALL"
+}
+
+function install_spark() {
+  local target_parent=$(dirname $TARGET_DIR)
+  local local_tarball="$(basename "$REMOTE_TARBALL")"
+  local unpacked_dir="${local_tarball%.tgz}"
+  curl -OL --progress-bar --fail "$REMOTE_TARBALL" > "$local_tarball"
+  tar zxvf "${local_tarball}"
+  rm -rf "$local_tarball"
+  mv "${unpacked_dir}" "${TARGET_DIR}"
+}
+ 
+process_args "$@"
+find_spark
+install_spark
+
+
+info "Spark $SPARK_VERSION installed succesfully!"

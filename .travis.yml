@@ -1,15 +1,22 @@
 sudo: required
 dist: trusty
 language: python
-install:
-  - tools/spark-install ./spark
-  - export PATH="$PATH:$(pwd)/spark/bin"
-  - pyenv install 2.7.10
-  - pyenv install 3.5.2
-  - pyenv local 3.5.2 2.7.10
+python: 3.6.5
+install: 
   - pip install tox
-script:
-  - sbt ++2.10.4 assembly
-  - sbt ++2.10.4 publish-local
-  - sbt ++2.10.4 test
-  - tox
+  - pyenv install --skip-existing 2.7.13
+  - pyenv install --skip-existing 3.5.3
+  - pyenv install --skip-existing 3.6.5
+  - pyenv global 3.6.5 3.5.3 2.7.13
+jobs:
+  include:
+    - name: thorough
+      # run thorough tests for daily cron test
+      # also allow thorough tests to be forced through the Travis UI
+      if: type = cron or env(TEST_TYPE) = thorough
+      stage: test
+      script: make test-thorough
+    - name: quick
+      if: type != cron and env(TEST_TYPE) != thorough
+      stage: test
+      script: make test-quick 

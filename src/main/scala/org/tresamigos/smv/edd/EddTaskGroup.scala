@@ -67,7 +67,7 @@ private[smv] abstract class EddTaskGroup {
       else
         df.agg(aggNews.head, aggNews.tail: _*)
           .coalesce(1)
-          .join(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
+          .crossJoin(df.agg(aggOlds.head, aggOlds.tail: _*).coalesce(1))
     } else {
       // on row per group
       val dfGd = df
@@ -192,7 +192,7 @@ private[smv] class EddHistogram(
   private def createHist(histCol: edd.Hist) = {
     val s = df(histCol.colName)
     df.schema(histCol.colName).dataType match {
-      case StringType =>
+      case StringType | DateType | TimestampType =>
         if (histCol.sortByFreq) edd.StringByFreqHistogram(s)
         else edd.StringByKeyHistogram(s)
       case _: NumericType => 

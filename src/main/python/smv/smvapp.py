@@ -23,7 +23,7 @@ import json
 
 from py4j.java_gateway import java_import, JavaObject
 from pyspark import SparkContext
-from pyspark.sql import HiveContext, DataFrame
+from pyspark.sql import SparkSession, DataFrame
 
 
 from smv.datasetrepo import DataSetRepoFactory
@@ -62,10 +62,10 @@ class SmvApp(object):
             return cls._instance
 
     @classmethod
-    def createInstance(cls, arglist, _sc = None, _sqlContext = None):
+    def createInstance(cls, arglist, _sparkSession = None):
         """Create singleton instance. Also returns the instance.
         """
-        cls._instance = cls(arglist, _sc, _sqlContext)
+        cls._instance = cls(arglist, _sparkSession)
         return cls._instance
 
     @classmethod
@@ -74,14 +74,18 @@ class SmvApp(object):
         """
         cls._instance = app
 
-    def __init__(self, arglist, _sc = None, _sqlContext = None):
-        sc = SparkContext() if _sc is None else _sc
-        sqlContext = HiveContext(sc) if _sqlContext is None else _sqlContext
+    def __init__(self, arglist, _sparkSession = None):
+        self.sparkSession = SparkSession.builder.\
+                    enableHiveSupport().\
+                    getOrCreate() if _sparkSession is None else _sparkSession
 
+        #self.prepend_source("src/main/python")
+
+        sc = self.sparkSession.sparkContext
         sc.setLogLevel("ERROR")
 
-        self.sqlContext = sqlContext
         self.sc = sc
+        self.sqlContext = self.sparkSession._wrapped
         self._jvm = sc._jvm
 
         from py4j.java_gateway import java_import
@@ -120,16 +124,14 @@ class SmvApp(object):
         if (not check_socket(cbs_port)):
             raise SmvRuntimeError("Start Python callback server failed. Port {0}-{1} are all in use".format(cbs_port - check_counter, cbs_port))
 
-        # this was a workaround for py4j 0.8.2.1, shipped with spark
-        # 1.5.x, to prevent the callback server from hanging the
-        # python, and hence the java, process
-        from pyspark.streaming.context import _daemonize_callback_server
-        _daemonize_callback_server()
-
         if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
-            print("SMV starting Py4j callback server on port {0}".format(cbs_port))
-            gw._shutdown_callback_server() # in case another has already started
-            gw._start_callback_server(cbs_port)
+            print("Starting Py4j callback server on port {0}".format(cbs_port))
+            gw.callback_server_parameters.eager_load = True
+            gw.callback_server_parameters.daemonize = True
+            gw.callback_server_parameters.daemonize_connections = True
+            gw.callback_server_parameters.port = cbs_port
+            gw.start_callback_server(gw.callback_server_parameters)
+            gw._callback_server.port = cbs_port
             gw._python_proxy_port = gw._callback_server.port
             # get the GatewayServer object in JVM by ID
             jgws = JavaObject("GATEWAY_SERVER", gw._gateway_client)
@@ -252,7 +254,7 @@ class SmvApp(object):
         '''
         # convert python arglist to java String array
         java_args =  smv_copy_array(self.sc, *arglist)
-        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sqlContext._ssql_ctx)
+        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sparkSession._jsparkSession)
 
     def get_graph_json(self):
         """Generate a json string representing the dependency graph.

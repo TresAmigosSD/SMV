@@ -18,16 +18,15 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, Column}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.contrib.smv.{hasBroadcastHint, propagateBroadcastHint}
 import org.apache.spark.sql.types.{StructType, StringType, StructField, LongType}
 import org.apache.spark.sql.catalyst.expressions.{NamedExpression, GenericRow}
 import org.apache.spark.annotation.Experimental
-import org.apache.spark.Accumulator
-import cds.{SmvChunkUDF, SmvChunkUDFGDO}
+import org.apache.spark.util.LongAccumulator
 import edd.{Edd, Hist}
 import smvfuncs._
 
 class SmvDFHelper(df: DataFrame) {
+  import df.sparkSession.implicits._
 
   /**
    * persist the `DataFrame` as a CSV file (along with a schema file).
@@ -43,7 +42,7 @@ class SmvDFHelper(df: DataFrame) {
                           ca: CsvAttributes = CsvAttributes.defaultCsv,
                           schemaWithMeta: SmvSchema = null,
                           strNullValue: String = "") {
-    val handler = new FileIOHandler(df.sqlContext, dataPath)
+    val handler = new FileIOHandler(df.sparkSession, dataPath)
     handler.saveAsCsvWithSchema(df, schemaWithMeta, ca, strNullValue)
   }
 
@@ -284,7 +283,8 @@ class SmvDFHelper(df: DataFrame) {
       otherPlan: DataFrame,
       on: Column,
       joinType: String = "inner",
-      postfix: String = null
+      postfix: String = null,
+      broadcastOther: Boolean = false
   ): DataFrame = {
     val namesLower = df.columns.map { c =>
       c.toLowerCase
@@ -297,7 +297,9 @@ class SmvDFHelper(df: DataFrame) {
 
     val renamedOther = otherPlan.smvRenameField(renamedFields: _*)
 
-    df.join(propagateBroadcastHint(otherPlan, renamedOther), on: Column, joinType)
+    val otherToJoin = if (broadcastOther) broadcast(renamedOther) else renamedOther
+
+    df.join(otherToJoin, on: Column, joinType)
   }
 
   /**
@@ -324,7 +326,8 @@ class SmvDFHelper(df: DataFrame) {
       keys: Seq[String],
       joinType: String,
       postfix: String = null,
-      dropRightKey: Boolean = true
+      dropRightKey: Boolean = true,
+      broadcastOther: Boolean = false
   ): DataFrame = {
     import df.sqlContext.implicits._
 
@@ -344,10 +347,11 @@ class SmvDFHelper(df: DataFrame) {
     val renamedOther  = otherPlan.smvRenameField(renamedFields: _*)
     val joinOpt       = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
 
-    val dfJoined = df.joinUniqFieldNames(propagateBroadcastHint(otherPlan, renamedOther),
+    val dfJoined = df.joinUniqFieldNames(renamedOther,
                                          joinOpt,
                                          joinType,
-                                         postfix)
+                                         postfix,
+                                         broadcastOther)
     val dfCoalescedKeys = joinType match {
       case SmvJoinType.Outer | SmvJoinType.RightOuter =>
         // for each key used in the outer-join, coalesce key value from left to right
@@ -500,10 +504,13 @@ class SmvDFHelper(df: DataFrame) {
 
   /** Same as `dedupByKeyWithOrder(Column*)(Column*)` but use `String` as key **/
   def dedupByKeyWithOrder(k1: String, krest: String*)(orderCol: Column*): DataFrame = {
-    val gdo = new cds.DedupWithOrderGDO(orderCol.map { o =>
-      o.toExpr
-    }.toList)
-    df.smvGroupBy(k1, krest: _*).smvMapGroup(gdo).toDF
+    val w = Window.partitionBy(k1, krest: _*).orderBy(orderCol: _*)
+    // Due to a spark bug: https://issues.apache.org/jira/browse/SPARK-16418
+    // We can't filter on window function directly. Creating a temp var
+    val tmpCol = mkUniq(df.columns, "_dedupByKeyWithOrder_rank", ignoreCase = true, "_")
+    df.withColumn(tmpCol, row_number().over(w))
+      .where(col(tmpCol) === 1)
+      .drop(tmpCol)
   }
 
   /**
@@ -559,7 +566,7 @@ class SmvDFHelper(df: DataFrame) {
     }
     val diffColumns = overlapLeftStruct diff overlapRightStruct
     if (diffColumns.isEmpty) {
-      leftFull.unionAll(rightFull.select(leftFull.columns.head, leftFull.columns.tail: _*))
+      leftFull.union(rightFull.select(leftFull.columns.head, leftFull.columns.tail: _*))
     } else {
       val diffNames = diffColumns
         .map { col =>
@@ -819,7 +826,7 @@ class SmvDFHelper(df: DataFrame) {
     val w       = Window.orderBy(orders: _*)
     val rankcol = mkUniq(df.columns, "rank")
     val rownum  = mkUniq(df.columns, "rownum")
-    val r1      = df.smvSelectPlus(rank() over w as rankcol, rowNumber() over w as rownum)
+    val r1      = df.smvSelectPlus(rank() over w as rankcol, row_number() over w as rownum)
     r1.where(r1(rankcol) <= maxElems && r1(rownum) <= maxElems).smvSelectMinus(rankcol, rownum)
   }
 
@@ -867,7 +874,7 @@ class SmvDFHelper(df: DataFrame) {
     val skewDf2     = df2.where(df2(key).isin(skewVals: _*))
     val balancedDf2 = df2.where(!df2(key).isin(skewVals: _*))
 
-    val skewRes     = skewDf1.smvJoinByKey(broadcast(skewDf2), Seq(key), joinType)
+    val skewRes     = skewDf1.smvJoinByKey(skewDf2, Seq(key), joinType, broadcastOther = true)
     val balancedRes = balancedDf1.smvJoinByKey(balancedDf2, Seq(key), joinType)
 
     balancedRes.smvUnion(skewRes)
@@ -920,43 +927,6 @@ class SmvDFHelper(df: DataFrame) {
     SmvGroupedData(df, cols)
   }
 
-  /**
-   * Apply user defined `chunk` mapping on data grouped by a set of keys
-   *
-   * {{{
-   * val addFirst = (l: List[Seq[Any]]) => {
-   *   val firstv = l.head.head
-   *   l.map{r => r :+ firstv}
-   * }
-   * val addFirstFunc = SmvChunkUDF(
-   *      Seq('time, 'call_length),
-   *      SmvSchema.fromString("time: TimeStamp; call_length: Double; first_call_time: TimeStamp").toStructType,
-   *      addFirst)
-   * df.chunkBy('account, 'cycleId)(addFirstFunc)
-   * }}}
-   *
-   * TODO: Current version will not keep teh key columns. It's SmvChunkUDF's responsibility to
-   * make sure key column is carried. This behavior should be changed to automatically
-   * carry keys, as chanegs made on Spark's groupBy.agg
-   **/
-  @deprecated("will rename and refine interface", "1.5")
-  def chunkBy(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
-    val kStr = keys.map { _.name }
-    df.smvGroupBy(kStr(0), kStr.tail: _*)
-      .smvMapGroup(new SmvChunkUDFGDO(chunkUDF, false), false)
-      .toDF
-  }
-
-  /**
-   * Same as `chunkBy`, but add the new columns to existing columns
-   **/
-  @deprecated("will rename and refine interface", "1.5")
-  def chunkByPlus(keys: Symbol*)(chunkUDF: SmvChunkUDF) = {
-    val kStr = keys.map { _.name }
-    df.smvGroupBy(kStr(0), kStr.tail: _*)
-      .smvMapGroup(new SmvChunkUDFGDO(chunkUDF, true), false)
-      .toDF
-  }
 
   /**
    * For a set of DFs, which share the same key column, check the overlap across them.
@@ -1044,10 +1014,10 @@ class SmvDFHelper(df: DataFrame) {
    * '''Warning''': Since using accumulator in process can't guarantee results when error recovery occcurs,
    * we will only use this method to report processed records when persisting SmvModule and potentially other SMV functions.
    */
-  private[smv] def smvPipeCount(counter: Accumulator[Long]): DataFrame = {
-    counter.setValue(0l)
+  private[smv] def smvPipeCount(counter: LongAccumulator): DataFrame = {
+    counter.reset()
     val dummyFunc = udf({ () =>
-      counter += 1l
+      counter add 1l
       true
     })
 
@@ -1287,9 +1257,9 @@ class SmvDFHelper(df: DataFrame) {
     val headerRdd = df.sqlContext.sparkContext.makeRDD(Seq(headerStr))
 
     val bodyRdd = if (n == null) {
-      df.map(schema.rowToCsvString(_, ca))
+      df.map(schema.rowToCsvString(_, ca)).rdd
     } else {
-      df.limit(n).map(schema.rowToCsvString(_, ca))
+      df.limit(n).map(schema.rowToCsvString(_, ca)).rdd
     }
 
     SmvReportIO.saveLocalReportFromRdd(headerRdd ++ bodyRdd, path)

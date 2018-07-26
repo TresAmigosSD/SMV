@@ -76,7 +76,7 @@ org.tresamigos.smv.smvAppTestPkg3:
       assertTextContains(graphString, expectPart)
     }
 
-    test("Test createDSAsciiGraph") {
+    ignore("Test createDSAsciiGraph") {
       val graphString = new graph.SmvGraphUtil(app).createDSAsciiGraph()
       //println(graphString)
       assertStrIgnoreSpace(
@@ -102,7 +102,7 @@ org.tresamigos.smv.smvAppTestPkg3:
       )
     }
 
-    test("Test createStageAsciiGraph") {
+    ignore("Test createStageAsciiGraph") {
       val graphString = new graph.SmvGraphUtil(app).createStageAsciiGraph()
       assertStrIgnoreSpace(
         graphString,

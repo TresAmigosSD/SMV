@@ -81,13 +81,18 @@ function find_file_in_dir()
 # find latest fat jar in target directory.
 function find_fat_jar()
 {
-  SMV_FAT_JAR="${SMV_TOOLS}/../target/scala-2.10"
+  # SMV_TOOLS should have been set by caller.
+  if [ -z "$SMV_TOOLS" ]; then
+    echo "ERROR: SMV_TOOLS not set by calling script!"
+    exit 1
+  fi
+  SMV_FAT_JAR="${SMV_TOOLS}/../target/scala-2.11"
 
   # try sbt-build location first if not found try mvn-build location next.
   # then repeat from the parent directory, because the shell is
   # sometimes run from a notebook subdirectory of a data project
-  # Fall back to SMV fat jar for python only projects.
-  dirs=("target/scala-2.10" "target" "../target/scala-2.10" "../target" "$SMV_FAT_JAR")
+
+  dirs=("target/scala-2.11" "target" "../target/scala-2.11" "../target" "$SMV_FAT_JAR")
   find_file_in_dir "*jar-with-dependencies.jar" "${dirs[@]}"
   echo APP_JAR = $APP_JAR
 
@@ -137,31 +142,18 @@ function sanitize_version () {
   echo $(sed -E 's/([0-9])[_+a-zA-Z][^.]*/\1/g' <<< "$1")
 }
 
-# Compares the two versions (required, found) after sanitizing using
-# the function above. Versions are dot-separated text. The major and
-# minor parts must match exactly with required, and the patch part in
-# the found version must be no less than required.
-#
-# echoes 0 if the found version meets the criteria
-#        1 otherwise
-function accept_version () {
-  local sane=$(sanitize_version $2)
-  local IFS=.
-  local required=($1) found=($sane)
-  if [[ ${required[0]} == ${found[0]} ]] && [[ ${required[1]} == ${found[1]} ]]; then
-    echo 0
-  else
-    echo 1
-  fi
+function installed_spark_major_version() {
+  local installed_version=$(${SMV_SPARK_SUBMIT_FULLPATH} --version 2>&1 | \
+    grep -v "Spark Command" | grep version | head -1 | sed -e 's/.*version //')
+  local sanitized_version=$(sanitize_version $installed_version)
+  echo ${sanitized_version:0:1}
 }
 
 function verify_spark_version() {
-  local installed_version=$(${SMV_SPARK_SUBMIT_FULLPATH} --version 2>&1 | \
-    grep -v "Spark Command" | grep version | head -1 | sed -e 's/.*version //')
-  local required_version=$(cat "$SMV_TOOLS/../.spark_version")
-  local vercmp=$(accept_version "$required_version" "$installed_version")
-  if [[ $vercmp != "0" ]]; then
-    echo "Spark $installed_version detected. Please install Spark $required_version."
+  local installed_major_version=$(installed_spark_major_version)
+  local required_major_version=2
+  if [[ $installed_major_version != $required_major_version ]]; then
+    echo "Spark $installed_major_version detected. Please install Spark $required_major_version."
     exit 1
   fi
 }

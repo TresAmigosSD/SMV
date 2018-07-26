@@ -176,35 +176,6 @@ private[smv] object stddev extends UserDefinedAggregateFunction {
   }
 }
 
-private[smv] case class SmvFirst(child: Expression)
-    extends UnaryExpression
-    with AggregateExpression1 {
-  def this() = this(null)
-
-  override def nullable: Boolean  = true
-  override def dataType: DataType = child.dataType
-  override def toString: String   = s"SmvFirst($child)"
-  override def newInstance(): SmvFirstFunction =
-    new SmvFirstFunction(child, this)
-}
-
-private[smv] case class SmvFirstFunction(expr: Expression, base: AggregateExpression1)
-    extends AggregateFunction1 {
-  def this() = this(null, null)
-
-  var calculated  = false
-  var result: Any = null
-
-  override def update(input: InternalRow): Unit = {
-    if (!calculated) {
-      result = expr.eval(input)
-      calculated = true
-    }
-  }
-
-  override def eval(input: InternalRow): Any = result
-}
-
 /**
  * Performs a linear bin based histogram. This UDF takes the following parameters:
  * the value to bin, the min value, the max value and the number of bins

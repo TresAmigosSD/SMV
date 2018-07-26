@@ -14,28 +14,25 @@
 
 package org.tresamigos.smv
 
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.GenericRow
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
-
-import dqm.{ParserLogger, TerminateParserLogger}
+import org.tresamigos.smv.dqm._
 
 /**
  * A class to convert Csv strings to DF
  **/
 private[smv] class FileIOHandler(
-    sqlContext: SQLContext,
+    sparkSession: SparkSession,
     dataPath: String,
     schemaPath: Option[String] = None,
     parserValidator: ParserLogger = TerminateParserLogger
 ) {
+  import sparkSession.implicits._
 
   private def fullSchemaPath = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
 
-  def readSchema(): SmvSchema = SmvSchema.fromFile(sqlContext.sparkContext, fullSchemaPath)
+  def readSchema(): SmvSchema = SmvSchema.fromFile(sparkSession.sparkContext, fullSchemaPath)
 
   /**
    * Create a DataFrame from the given data/schema path and CSV attributes.
@@ -47,7 +44,7 @@ private[smv] class FileIOHandler(
       csvAttributes: CsvAttributes,
       schemaOpt: Option[SmvSchema] = None
   ): DataFrame = {
-    val sc     = sqlContext.sparkContext
+    val sc     = sparkSession.sparkContext
     val schema = schemaOpt.getOrElse { readSchema() }
 
     val ca = if (csvAttributes == null) schema.extractCsvAttributes() else csvAttributes
@@ -59,7 +56,7 @@ private[smv] class FileIOHandler(
   }
 
   private[smv] def frlFileWithSchema(schemaOpt: Option[SmvSchema] = None): DataFrame = {
-    val sc     = sqlContext.sparkContext
+    val sc     = sparkSession.sparkContext
     val slices = SmvSchema.slicesFromFile(sc, fullSchemaPath)
     val schema = schemaOpt.getOrElse { readSchema() }
 
@@ -94,7 +91,7 @@ private[smv] class FileIOHandler(
         }
         .collect { case Some(l) => l }
     }
-    sqlContext.createDataFrame(rowRdd, schema.toStructType)
+    sparkSession.createDataFrame(rowRdd, schema.toStructType)
   }
 
   private[smv] def csvStringRDDToDF(
@@ -145,7 +142,7 @@ private[smv] class FileIOHandler(
       fieldNames.map(_.trim).map(fn => qc + fn + qc).mkString(csvAttributes.delimiter.toString)
 
     val csvHeaderRDD = df.sqlContext.sparkContext.parallelize(Array(headerStr), 1)
-    val csvBodyRDD   = df.map(schema.rowToCsvString(_, csvAttributes))
+    val csvBodyRDD   = df.map(schema.rowToCsvString(_, csvAttributes)).rdd
 
     //As far as I know the union maintain the order. So the header will end up being the
     //first line in the saved file.

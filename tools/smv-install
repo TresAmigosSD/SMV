@@ -32,22 +32,22 @@ function parse_args()
   done
 
   # SMV version is updated automatically by smv-release
-  SMV_VERSION="1.5.2.20"
+  SMV_VERSION="2r1"
 
   SMV_DIR="SMV_${SMV_VERSION}"
-  SPARK_DIR="spark-1.5.2-bin-2.7.2"
   SMV_PROFILE_FILENAME="smv-profile.sh"
   SMV_PROFILE="${HOME}/.smv/${SMV_PROFILE_FILENAME}"
 
   validate_version
 }
 
-# make sure version of the format a.b.c.d where a,b,c,d are all numbers.
+# make sure version is of the format a.b.c.d where a,b,c,d are all numbers.
 function validate_version()
 {
-  local res=$(echo "$SMV_VERSION" | sed -E -e 's/^([0-9]+\.){3}[0-9]+$//')
+  local ver="$1"
+  local res=$(echo "$ver" | sed -E -e 's/^[0-9](\.[0-9]){0,2}r[0-9]+$//')
   if [ -n "$res" ]; then
-    echo "ERROR: invalid version format"
+    echo "ERROR: invalid version format: $ver"
     usage 1
   fi
 }
@@ -95,7 +95,7 @@ download_smv() {
 
 # Download prebuilt spark version with hive support.
 download_spark() {
-  install_app "https://github.com/TresAmigosSD/spark/releases/download/1.5.2_hd/${SPARK_DIR}.tgz"
+  "${SMV_DIR}/tools/spark-install"
 }
 
 jre_installtion_validation() {

@@ -11,6 +11,7 @@ Reading or writing over a JDBC connection requires
 ### JDBC driver
 
 You will need make the correct JDBC driver available in the classpath. JDBC drivers are specific to the type of database you want to connect to. Once you have identified the correct driver, you can include it in the class path with the Spark `--jars` option.
+The driver needs to be specified with the SMV property `smv.jdbc.driver`
 
 ### JDBC url
 
@@ -24,5 +25,5 @@ Data can be read over JDBC using `SmvJdbcTable`. Read more [here](smv_input.md#j
 
 When running an application, you may publish data over a JDBC connection using the `--publish-jdbc` option. Make sure that the application is properly configured when you do this. For example
 ```shell
-$ smv-run --run-app --publish-jdbc --smv-props smv.jdbc.url="my-url" -- --jars "my-jdbc-driver.jar"
+$ smv-pyrun --run-app --publish-jdbc --smv-props smv.jdbc.url="my-url" smv.jdbc.driver="my.jdbc.driver.classname" -- --jars "my-jdbc-driver.jar"
 ```
