@@ -1,12 +1,12 @@
 SHELL := /bin/bash
 
-SPARKS_DIR = .sparks
+SPARKS_DIR = $(shell pwd)/.sparks
 
 SPARK_VERSIONS = $(shell cat admin/.spark_to_test)
 DEFAULT_SPARK = $(shell tail -1 admin/.spark_to_test)
 
 SPARK_HOMES = $(addprefix $(SPARKS_DIR)/, $(SPARK_VERSIONS))
-DEFAULT_SPARK_HOME = $(addprefix $(SPARKS_DIR)/, "$(DEFAULT_SPARK)")
+DEFAULT_SPARK_HOME = $(addprefix $(SPARKS_DIR)/, $(DEFAULT_SPARK))
 
 PYTHON_VERSIONS = $(shell cat admin/.python_to_test)
 DEFAULT_PYTHON_PATCH = $(shell tail -1 admin/.python_to_test)
@@ -67,6 +67,21 @@ docker_smv: docker_base
 	docker build --build-arg PYTHON_VERSION=$(DEFAULT_PYTHON_PATCH) -t $(DOCKER_SMV_NAME) --target smv -f $(DOCKERFILE) .
 
 docker: docker_smv
+
+
+PYDOC_DEST = docs/python
+SMV_PY_DIR = $(shell pwd)/src/main/python
+SPARK_PY_DIR = $(DEFAULT_SPARK_HOME)/python
+PY4J_LIBS = $(shell find $(SPARK_PY_DIR)/lib -maxdepth 1 -mindepth 1 -name 'py4j*-src.zip' -print | tr -d '\r')
+
+py-docs: $(PYDOC_DEST)
+
+$(PYDOC_DEST): install-spark-default 
+	SMV_VERSION=$(SMV_VERSION) \
+		PYTHONPATH="$(SMV_PY_DIR):$(SPARK_PY_DIR):$(PY4J_LIBS)" \
+		sphinx-apidoc --full -o $(PYDOC_DEST) $(SMV_PY_DIR)/smv
+	cp admin/conf/sphinx-conf.py $(PYDOC_DEST)/conf.py
+	cd $(PYDOC_DEST) && make html
 
 
 # install-spark x.y.z
