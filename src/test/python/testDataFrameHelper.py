@@ -334,6 +334,15 @@ a                            1   50.00%           1   50.00%
 b                            1   50.00%           2  100.00%
 -------------------------------------------------""")
 
+    def test_smvHistInt(self):
+        df = self.createDF("k:String;v:Integer", "a,1;b,2")
+        res = dfhelper(df)._smvHist("v")
+        self.assertEqual(res, """Histogram of v: Numeric sort by Key
+key                      count      Pct    cumCount   cumPct
+1.0                          1   50.00%           1   50.00%
+2.0                          1   50.00%           2  100.00%
+-------------------------------------------------""")
+
     def test_smvHistDate(self):
         df = self.createDF("k:Date;v:Integer", "2010-01-01,1;2010-01-02,2")
         res = dfhelper(df)._smvHist("k")

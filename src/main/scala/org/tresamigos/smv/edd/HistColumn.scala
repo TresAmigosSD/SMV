@@ -20,10 +20,10 @@ private[smv] abstract class HistColumn
  * Define histogram parameters for specified the column
  *
  * @param colName column name as a String
- * @param binSize bin size for numeric column, default 100.0
+ * @param binSize bin size for numeric column, if <=0.0, output all values. default 0.0
  * @param sortByFreq histogram result sort be frequency or not, default false (sort by key)
  **/
-case class Hist(colName: String, binSize: Double = 100.0, sortByFreq: Boolean = false)
+case class Hist(colName: String, binSize: Double = 0.0, sortByFreq: Boolean = false)
     extends HistColumn
 
 /**
