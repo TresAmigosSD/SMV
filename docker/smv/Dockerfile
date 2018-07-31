@@ -1,63 +1,96 @@
-FROM openjdk:8-jdk
+#############################################################################################################
+# SMV Dockerfile
+#
+# Usage: build the SMV docker image with `make docker` - the rest of this is for the release process
+#
+# SMV utilizes a multistage Docker build to integrate the process of building and testing new release
+# artifacts with the process of building new Docker images. Stage 1 is exclusively for generating the release
+# artifact. It installs dev dependencies, compiles SMV, and runs the local_bundle target from the Makefile.
+# The second stage installs only the production dependencies and then copies and unpacks the release artifact
+# from the first stage. This approach typically reduces image size, although at this time SMV's production  
+# dependencies so closely match its dev dependencies that there may not be much of a delta. The first stage
+# is also used as the canonical build environment for the release - the release copies the artifact out of
+# the image and publishes that to Github. 
+#############################################################################################################
+
+#############################################################################################################
+# 1. SMV builder image
+#############################################################################################################
+FROM openjdk:8-jdk as smv-build
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG SBT_VERSION=0.13.15
+ENV PYENV_ROOT=/.pyenv
+ENV SMV_HOME=/usr/lib/SMV
+ENV SBT_HOME=/usr/lib/sbt
+ENV PATH=${SBT_HOME}/bin:${PYENV_ROOT}/bin:${PATH}
+RUN apt-get -y update
+
+RUN wget https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz
+RUN tar -xzvf sbt-$SBT_VERSION.tgz
+RUN mv sbt /usr/lib/sbt
+RUN rm sbt-$SBT_VERSION.tgz
+
+RUN apt-get -y install make gcc libssl-dev zlib1g-dev
+
+COPY . ${SMV_HOME}
+WORKDIR ${SMV_HOME}
+
+RUN cd ${SMV_HOME} && ls && make clean 
+RUN cd ${SMV_HOME} && make assemble-fat-jar 
+RUN cd ${SMV_HOME} && make local_bundle
+
 ARG PYTHON_VERSION=2.7.13
+# Debian repositories don't have all of the supported versions of Python, so it will be easiest to
+# use pyenv to manage installation
+RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+RUN ${PYENV_ROOT}/bin/pyenv install ${PYTHON_VERSION}
+RUN ${PYENV_ROOT}/bin/pyenv global ${PYTHON_VERSION} 
+RUN ${PYENV_ROOT}/versions/${PYTHON_VERSION}/bin/pip install --upgrade pip
+RUN ${PYENV_ROOT}/versions/${PYTHON_VERSION}/bin/pip install -r ${SMV_HOME}/docker/smv/requirements.txt
+
+#############################################################################################################
+# 2. SMV publishable image
+#############################################################################################################
+FROM openjdk:8-jdk as smv
+
+ENV TEMPLATE_DIR=/home/template
+
+# TODO: does the docker image really need git or r-base any more?
+RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/source.list &&\
+    apt-key adv --keyserver hkp://pgp.mit.edu --recv-key 381BA480 &&\
+    apt-get update &&\
+    apt-get install -y r-base &&\ 
+    apt-get install -y sudo &&\
+    apt-get install -y vim &&\
+    apt-get install -y git &&\
+    apt-get install -y graphviz
 
 ENV PYENV_ROOT=/.pyenv
-ENV TEMPLATE_DIR=/home/template
+ENV SMV_HOME=/usr/lib/SMV
+ENV SPARK_HOME=/usr/lib/spark
+ENV PATH=${SPARK_HOME}/bin:${SMV_HOME}/tools:${PYENV_ROOT}/bin/:${PATH}
 
 # create the projects directory and create a flag (.docker) to indicate project is inside docker image.
 RUN mkdir /projects &&\
     touch /projects/.docker &&\
     mkdir ${TEMPLATE_DIR}
 
-RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/source.list &&\
-    apt-key adv --keyserver hkp://pgp.mit.edu --recv-key 381BA480 &&\
-    apt-get update &&\
-    apt-get install -y r-base &&\
-    apt-get install -y unzip &&\
-    apt-get install -y sudo &&\
-    apt-get install -y vim &&\
-    apt-get install -y rsync &&\
-    apt-get install -y git &&\
-    apt-get install -y bc &&\
-    apt-get install -y graphviz &&\
-    apt-get install -y libssl-dev
-
-# install sbt.  The real sbt will be downloaded the first time sbt is run.
-# Note: do not run "sbt exit" here to prime the download as we want to wait until user mounts /projects/.ivy2
-RUN cd /projects &&\
-    wget https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz &&\
-    tar -xzvf sbt-$SBT_VERSION.tgz &&\
-    mv sbt /usr/lib/sbt &&\
-    rm sbt-$SBT_VERSION.tgz
-
-# install smv and spark and move them into /usr/lib dir.
-RUN cd /projects &&\
-    wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/2/tools/smv-install | bash -s -- -spark &&\
-    mkdir -p /usr/lib &&\
-    mv SMV_* /usr/lib/SMV &&\
-    mv spark-* /usr/lib/spark
-
-# Debian repositories don't have all of the supported versions of Python, so it will be easiest to
-# use pyenv to manage installation
-RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash && \
-    ${PYENV_ROOT}/bin/pyenv install ${PYTHON_VERSION} &&\
-    ${PYENV_ROOT}/bin/pyenv global ${PYTHON_VERSION} &&\
-    ${PYENV_ROOT}/versions/${PYTHON_VERSION}/bin/pip install --upgrade pip && \
-    ${PYENV_ROOT}/versions/${PYTHON_VERSION}/bin/pip install -r /usr/lib/SMV/docker/smv/requirements.txt
-
-# cleanup python dev tools and apt caches.
-RUN apt-get clean &&\
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-COPY ./kernel.json /usr/local/share/jupyter/kernels/smv-pyshell/kernel.json
-COPY ./hive-site.xml /usr/lib/spark/conf/hive-site.xml
-COPY ./entrypoint.sh /usr/bin/entrypoint.sh
-
-# copy files into template directory.  They will be copied to smv home later in entrypoint.sh
-COPY ./bashrc ./jupyter_notebook_config.py ${TEMPLATE_DIR}/
+# Copy the pyenv installation from the first stage. This is an optimization so we don't install Python twice.
+# we can get away with this because we don't currently differentiate between dev and prod requirements.
+COPY --from=smv-build ${PYENV_ROOT} ${PYENV_ROOT}
+# Copy the SMV release artifact from the first stage and unpack it. Since the same artifact is also copied
+# out and published as the official release, we are guaranteed that the published image matches the published
+# This works around the chicken/egg issues encountered with the old approach of downloading a version of 
+# artifact. `smv-install` from Github raw content to install (probably) the most recent release.
+COPY --from=smv-build /usr/lib/SMV/smv_*.tgz .
+RUN tar xzvf smv_*.tgz && rm -rf smv_*.tgz && mv ./SMV ${SMV_HOME} &&\
+    ${SMV_HOME}/tools/spark-install --target-dir ${SPARK_HOME} &&\
+    mkdir -p /usr/local/share/jupyter/kernels/smv-pyshell/ &&\
+    cp ${SMV_HOME}/docker/smv/kernel.json /usr/local/share/jupyter/kernels/smv-pyshell/kernel.json &&\
+    cp ${SMV_HOME}/docker/smv/hive-site.xml /usr/lib/spark/conf/hive-site.xml &&\
+    cp ${SMV_HOME}/docker/smv/entrypoint.sh /usr/bin/entrypoint.sh &&\
+    cp ${SMV_HOME}/docker/smv/bashrc /usr/lib/SMV/docker/smv/jupyter_notebook_config.py ${TEMPLATE_DIR}/
 
 # Must use bracket syntax (["command"]) so that user can supply params (additional commands to execute)
 ENTRYPOINT ["entrypoint.sh"]

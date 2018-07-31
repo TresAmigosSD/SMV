@@ -1,0 +1,11 @@
+docker/smv/Dockerfile
+.dockerignore
+.git
+admin/smv-release
+smv*.tgz
+target
+.sparks
+.tox
+venv
+docs/scala
+docs/python
