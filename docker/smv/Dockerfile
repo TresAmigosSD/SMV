@@ -1,5 +1,20 @@
 #############################################################################################################
-# SMV builder
+# SMV Dockerfile
+#
+# Usage: build the SMV docker image with `make docker` - the rest of this is for the release process
+#
+# SMV utilizes a multistage Docker build to integrate the process of building and testing new release
+# artifacts with the process of building new Docker images. Stage 1 is exclusively for generating the release
+# artifact. It installs dev dependencies, compiles SMV, and runs the local_bundle target from the Makefile.
+# The second stage installs only the production dependencies and then copies and unpacks the release artifact
+# from the first stage. This approach typically reduces image size, although at this time SMV's production  
+# dependencies so closely match its dev dependencies that there may not be much of a delta. The first stage
+# is also used as the canonical build environment for the release - the release copies the artifact out of
+# the image and publishes that to Github. 
+#############################################################################################################
+
+#############################################################################################################
+# 1. SMV builder image
 #############################################################################################################
 FROM openjdk:8-jdk as smv-build
 
@@ -35,7 +50,7 @@ RUN ${PYENV_ROOT}/versions/${PYTHON_VERSION}/bin/pip install --upgrade pip
 RUN ${PYENV_ROOT}/versions/${PYTHON_VERSION}/bin/pip install -r ${SMV_HOME}/docker/smv/requirements.txt
 
 #############################################################################################################
-# SMV publishable
+# 2. SMV publishable image
 #############################################################################################################
 FROM openjdk:8-jdk as smv
 
@@ -61,7 +76,13 @@ RUN mkdir /projects &&\
     touch /projects/.docker &&\
     mkdir ${TEMPLATE_DIR}
 
+# Copy the pyenv installation from the first stage. This is an optimization so we don't install Python twice.
+# we can get away with this because we don't currently differentiate between dev and prod requirements.
 COPY --from=smv-build ${PYENV_ROOT} ${PYENV_ROOT}
+# Copy the SMV release artifact from the first stage and unpack it. Since the same artifact is also copied
+# out and published as the official release, we are guaranteed that the published image matches the published
+# This works around the chicken/egg issues encountered with the old approach of downloading a version of 
+# artifact. `smv-install` from Github raw content to install (probably) the most recent release.
 COPY --from=smv-build /usr/lib/SMV/smv_*.tgz .
 RUN tar xzvf smv_*.tgz && rm -rf smv_*.tgz && mv ./SMV ${SMV_HOME} &&\
     ${SMV_HOME}/tools/spark-install --target-dir ${SPARK_HOME} &&\
