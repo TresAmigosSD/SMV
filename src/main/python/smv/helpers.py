@@ -21,6 +21,7 @@ from pyspark import SparkContext
 from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col, lit
+import pyspark.sql.functions as F
 from pyspark.sql.types import DataType
 
 from smv.utils import smv_copy_array
@@ -1317,6 +1318,15 @@ class DataFrameHelper(object):
 
         """
         self._println(self._smvDiscoverPK(n))
+
+    def smvDupeCheck(self, keys, n=10000):
+        """
+        """
+        dfTopN = self.df.limit(n).cache()
+        return dfTopN.groupBy(*keys)\
+            .agg(F.count(F.lit(1)).alias('_N'))\
+            .where(F.col('_N')>1)\
+            .join(dfTopN, keys).orderBy(*keys)
 
     def smvDumpDF(self):
         """Dump the schema and data of given df to screen for debugging purposes
