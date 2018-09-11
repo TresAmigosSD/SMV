@@ -38,6 +38,8 @@ function parse_args()
   SMV_PROFILE_FILENAME="smv-profile.sh"
   SMV_PROFILE="${HOME}/.smv/${SMV_PROFILE_FILENAME}"
 
+  SPARK_DIR="Spark"
+
   validate_version
 }
 
@@ -95,7 +97,7 @@ download_smv() {
 
 # Download prebuilt spark version with hive support.
 download_spark() {
-  "${SMV_DIR}/tools/spark-install"
+  "${SMV_DIR}/tools/spark-install --target-dir ${SPARK_DIR}" 
 }
 
 jre_installtion_validation() {
