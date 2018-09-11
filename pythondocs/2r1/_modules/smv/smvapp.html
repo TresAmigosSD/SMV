@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>smv.smvapp &#8212; Spark Modularized View 2r0 documentation</title>
+    <title>smv.smvapp &#8212; Spark Modularized View 2r1 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 2r0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 2r1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -246,7 +246,7 @@
 <div class="viewcode-block" id="SmvApp.stages"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.stages">[docs]</a>    <span class="k">def</span> <span class="nf">stages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Stages is a function as they can be set dynamically on an SmvApp instance&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">stages</span><span class="p">()</span></div>
-    
+
 <div class="viewcode-block" id="SmvApp.userLibs"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.userLibs">[docs]</a>    <span class="k">def</span> <span class="nf">userLibs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return dynamically set smv.user_libraries from conf&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">userLibs</span><span class="p">()</span></div>
@@ -262,6 +262,13 @@
 <span class="sd">        csvAttributes --- Scala CsvAttributes instance (optional)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span><span class="o">.</span><span class="n">discoverSchemaAsSmvSchema</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">csvAttributes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.getSchemaByDataFileAsSmvSchema"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getSchemaByDataFileAsSmvSchema">[docs]</a>    <span class="k">def</span> <span class="nf">getSchemaByDataFileAsSmvSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_file_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the schema of a data file from its path and returns a Scala SmvSchema instance.</span>
+<span class="sd">           The result will be None if the corresponding schema file does not exist or is invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputDir</span><span class="p">(),</span> <span class="n">data_file_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">readSchemaFromDataPathAsSmvSchema</span><span class="p">(</span><span class="n">data_file_path</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SmvApp.inputDir"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.inputDir">[docs]</a>    <span class="k">def</span> <span class="nf">inputDir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">()</span><span class="o">.</span><span class="n">inputDir</span><span class="p">()</span></div>
@@ -546,7 +553,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 2r0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 2r1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

@@ -167,7 +167,7 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a href="Hist.html"><span class="name">Hist</span></a><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="binSize">binSize: <span class="extype" name="scala.Double">Double</span> = <span class="symbol">100.0</span></span>, <span name="sortByFreq">sortByFreq: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.edd.HistColumn">HistColumn</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="Hist.html"><span class="name">Hist</span></a><span class="params">(<span name="colName">colName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="binSize">binSize: <span class="extype" name="scala.Double">Double</span> = <span class="symbol">0.0</span></span>, <span name="sortByFreq">sortByFreq: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>)</span><span class="result"> extends <span class="extype" name="org.tresamigos.smv.edd.HistColumn">HistColumn</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4><span class="permalink">
       <a href="../../../../index.html#org.tresamigos.smv.edd.package@HistextendsHistColumnwithProductwithSerializable" title="Permalink" target="_top">
@@ -176,7 +176,7 @@ scala&gt; <span class="kw">val</span> eddResult: DataFrame = df.summary()</pre><
     </span>
       <p class="shortcomment cmt">Define histogram parameters for specified the column
 </p><div class="fullcomment"><div class="comment cmt"><p>Define histogram parameters for specified the column
-</p></div><dl class="paramcmts block"><dt class="param">colName</dt><dd class="cmt"><p>column name as a String</p></dd><dt class="param">binSize</dt><dd class="cmt"><p>bin size for numeric column, default 100.0</p></dd><dt class="param">sortByFreq</dt><dd class="cmt"><p>histogram result sort be frequency or not, default false (sort by key)</p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">colName</dt><dd class="cmt"><p>column name as a String</p></dd><dt class="param">binSize</dt><dd class="cmt"><p>bin size for numeric column, if &lt;=0.0, output all values. default 0.0</p></dd><dt class="param">sortByFreq</dt><dd class="cmt"><p>histogram result sort be frequency or not, default false (sort by key)</p></dd></dl></div>
     </li></ol>
             </div>
 
