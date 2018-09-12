@@ -642,9 +642,6 @@ class DataFrameHelper(object):
 
         return DataFrame(jdf, self._sql_ctx)
 
-    # FIXME py4j method resolution with null argument can fail, so we
-    # temporarily remove the trailing parameters till we can find a
-    # workaround
     def smvJoinByKey(self, other, keys, joinType, isNullSafe=False):
         """joins two DataFrames on a key
 
