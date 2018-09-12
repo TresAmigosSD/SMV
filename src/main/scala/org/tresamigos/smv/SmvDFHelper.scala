@@ -321,7 +321,16 @@ class SmvDFHelper(df: DataFrame) {
    * `postfix` parameter is specified, otherwise df2 version with be postfixed with
    * the specified `postfix`.
    */
+
   def smvJoinByKey(
+      otherPlan: DataFrame,
+      keys: Seq[String],
+      joinType: String
+  ): DataFrame = {
+    df.joinByKey(otherPlan, keys, joinType)
+  }
+
+  private[smv] def joinByKey(
       otherPlan: DataFrame,
       keys: Seq[String],
       joinType: String,
@@ -874,8 +883,8 @@ class SmvDFHelper(df: DataFrame) {
     val skewDf2     = df2.where(df2(key).isin(skewVals: _*))
     val balancedDf2 = df2.where(!df2(key).isin(skewVals: _*))
 
-    val skewRes     = skewDf1.smvJoinByKey(skewDf2, Seq(key), joinType, broadcastOther = true)
-    val balancedRes = balancedDf1.smvJoinByKey(balancedDf2, Seq(key), joinType)
+    val skewRes     = skewDf1.joinByKey(skewDf2, Seq(key), joinType, broadcastOther = true)
+    val balancedRes = balancedDf1.joinByKey(balancedDf2, Seq(key), joinType)
 
     balancedRes.smvUnion(skewRes)
   }

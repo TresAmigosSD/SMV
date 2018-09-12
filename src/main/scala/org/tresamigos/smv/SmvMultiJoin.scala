@@ -48,7 +48,7 @@ class SmvMultiJoin(val dfChain: Seq[SmvJoinDF], val conf: SmvMultiJoinConf) {
   def doJoin(dropExtra: Boolean = false): DataFrame = {
     val res = dfChain.foldLeft(conf.leftDf) {
       case (acc: DataFrame, SmvJoinDF(df, postfix, jType)) =>
-        acc.smvJoinByKey(df, conf.keys, jType, postfix, false)
+        acc.joinByKey(df, conf.keys, jType, postfix, false)
     }
 
     val colsWithPostfix = dfChain
