@@ -20,7 +20,6 @@ import decorator
 from pyspark import SparkContext
 from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
-from pyspark.sql.functions import col, lit
 import pyspark.sql.functions as F
 from pyspark.sql.types import DataType
 
@@ -633,7 +632,7 @@ class DataFrameHelper(object):
                 (DataFrame): sampled DF
         """
         if is_string(key):
-            jkey = col(key)._jc
+            jkey = F.col(key)._jc
         elif isinstance(key, Column):
             jkey = key._jc
         else:
