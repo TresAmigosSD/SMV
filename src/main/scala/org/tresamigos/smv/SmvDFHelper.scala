@@ -325,10 +325,8 @@ class SmvDFHelper(df: DataFrame) {
       otherPlan: DataFrame,
       keys: Seq[String],
       joinType: String,
-      isNullSafe: Boolean = false
-  ): DataFrame = {
+      isNullSafe: Boolean = false): DataFrame = 
     df.joinByKey(otherPlan, keys, joinType, isNullSafe = isNullSafe)
-  }
 
   private[smv] def joinByKey(
       otherPlan: DataFrame,

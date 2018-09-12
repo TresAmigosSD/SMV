@@ -148,6 +148,27 @@ class DfHelperTest(SmvBaseTest):
         )
         self.should_be_same(expect, res)
 
+    def test_smvJoinByKey_nullSafe(self):
+        df1 = self.createDF(
+            "a:String; b:String; i:Integer",
+            """a,,1;
+            a,b,2;
+            ,,3"""
+        )
+        df2 = self.createDF(
+            "a:String; b:String; j:String",
+            """a,,x;
+            ,,y;
+            c,d,z"""
+        )
+        res = df1.smvJoinByKey(df2, ['a', 'b'], 'inner', isNullSafe=True)
+        expect = self.createDF(
+            "a: String;b: String;i: Integer;j: String",
+            """,,3,y;
+            a,,1,x"""
+        )
+        self.should_be_same(expect, res)
+
     def test_smvJoinMultipleByKey(self):
         df1 = self.createDF("a:Integer;b:String", """1,x1;2,y1;3,z1""")
         df2 = self.createDF("a:Integer;b:String", """1,x1;4,w2;""")
