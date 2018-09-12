@@ -1326,7 +1326,8 @@ class DataFrameHelper(object):
         return dfTopN.groupBy(*keys)\
             .agg(F.count(F.lit(1)).alias('_N'))\
             .where(F.col('_N')>1)\
-            .join(dfTopN, keys).orderBy(*keys)
+            .smvJoinByKey(dfTopN, keys, 'inner', True)\
+            .orderBy(*keys)
 
     def smvDumpDF(self):
         """Dump the schema and data of given df to screen for debugging purposes
