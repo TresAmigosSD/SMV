@@ -642,10 +642,7 @@ class DataFrameHelper(object):
 
         return DataFrame(jdf, self._sql_ctx)
 
-    # FIXME py4j method resolution with null argument can fail, so we
-    # temporarily remove the trailing parameters till we can find a
-    # workaround
-    def smvJoinByKey(self, other, keys, joinType):
+    def smvJoinByKey(self, other, keys, joinType, isNullSafe=False):
         """joins two DataFrames on a key
 
             The Spark `DataFrame` join operation does not handle duplicate key names.
@@ -660,14 +657,16 @@ class DataFrameHelper(object):
                 other (DataFrame): the DataFrame to join with
                 keys (list(string)): a list of column names on which to apply the join
                 joinType (string): choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
+                isNullSafe (boolean): if true matches null keys between left and right tables and keep in output. Default False. 
 
             Example:
                 >>> df1.smvJoinByKey(df2, ["k"], "inner")
+                >>> df_with_null_key.smvJoinByKey(df2, ["k"], "inner", True)
 
             Returns:
                 (DataFrame): result of the join operation
         """
-        jdf = self._jPythonHelper.smvJoinByKey(self._jdf, other._jdf, _to_seq(keys), joinType)
+        jdf = self._jPythonHelper.smvJoinByKey(self._jdf, other._jdf, _to_seq(keys), joinType, isNullSafe)
         return DataFrame(jdf, self._sql_ctx)
 
     def smvJoinMultipleByKey(self, keys, joinType = 'inner'):

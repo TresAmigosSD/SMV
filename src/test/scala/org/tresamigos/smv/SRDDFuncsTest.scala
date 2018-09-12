@@ -233,6 +233,15 @@ class JoinHelperTest extends SmvTestUtil {
     assertUnorderedSeqEqual(res.collect.map(_.toString), Seq("[a,1,f]", "[a,2,f]"))
   }
 
+  test("smvJoinByKey with null-safe") {
+    val df1 = app.createDF("a:String;y:String", "a,1;,2")
+    val df2 = app.createDF("a:String;x:String", "a,f;,g")
+
+    val res = df1.smvJoinByKey(df2, Seq("a"), SmvJoinType.Inner, isNullSafe = true)
+    assert(res.columns === Seq("a", "y", "x"))
+    assertUnorderedSeqEqual(res.collect.map(_.toString), Seq("[null,2,g]", "[a,1,f]"))
+  }
+
   test("joinMultipleByKey") {
     val df1 = dfFrom("a:Integer;b:String", """1,x1;2,y1;3,z1""")
     val df2 = dfFrom("a:Integer;b:String", """1,x1;4,w2;""")
