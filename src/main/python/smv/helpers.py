@@ -1332,11 +1332,15 @@ class DataFrameHelper(object):
                     where "_N" has the count of duplications of the key values of that record
         """
         dfTopN = self.df.limit(n).cache()
-        return dfTopN.groupBy(*keys)\
+
+        res = dfTopN.groupBy(*keys)\
             .agg(F.count(F.lit(1)).alias('_N'))\
             .where(F.col('_N') > 1)\
             .smvJoinByKey(dfTopN, keys, 'inner', True)\
             .orderBy(*keys)
+
+        dfTopN.unpersist()
+        return res
 
     def smvDumpDF(self):
         """Dump the schema and data of given df to screen for debugging purposes
