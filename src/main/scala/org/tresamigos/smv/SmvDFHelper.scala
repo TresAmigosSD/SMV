@@ -316,18 +316,18 @@ class SmvDFHelper(df: DataFrame) {
    * }}}
    * Note the use of the `SmvJoinType.Inner` const instead of the naked "inner" string.
    *
-   * If, in addition to the duplicate keys, both df1 and df2 have column with name "v",
-   * both will be kept in the result, but the df2 version will be prefix with "_" if no
-   * `postfix` parameter is specified, otherwise df2 version with be postfixed with
-   * the specified `postfix`.
+   * When either of the left or the right table has null keys, those records will not be in
+   * the output table. However sometimes user may expect null keys on the left join with 
+   * null key on the right. In that case, need to specify `isNullSafe = true`.
    */
 
   def smvJoinByKey(
       otherPlan: DataFrame,
       keys: Seq[String],
-      joinType: String
+      joinType: String,
+      isNullSafe: Boolean = false
   ): DataFrame = {
-    df.joinByKey(otherPlan, keys, joinType)
+    df.joinByKey(otherPlan, keys, joinType, isNullSafe = isNullSafe)
   }
 
   private[smv] def joinByKey(
@@ -336,7 +336,8 @@ class SmvDFHelper(df: DataFrame) {
       joinType: String,
       postfix: String = null,
       dropRightKey: Boolean = true,
-      broadcastOther: Boolean = false
+      broadcastOther: Boolean = false,
+      isNullSafe: Boolean = false
   ): DataFrame = {
     import df.sqlContext.implicits._
 
@@ -354,7 +355,9 @@ class SmvDFHelper(df: DataFrame) {
     val joinedKeys    = keys zip rightKeys
     val renamedFields = joinedKeys.map { case (l, r) => (l -> r) }
     val renamedOther  = otherPlan.smvRenameField(renamedFields: _*)
-    val joinOpt       = joinedKeys.map { case (l, r) => ($"$l" === $"$r") }.reduce(_ && _)
+    val joinOpt       = joinedKeys.map { case (l, r) => 
+      if(isNullSafe) ($"$l" <=> $"$r") else ($"$l" === $"$r")
+    }.reduce(_ && _)
 
     val dfJoined = df.joinUniqFieldNames(renamedOther,
                                          joinOpt,
