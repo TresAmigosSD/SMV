@@ -1,6 +1,16 @@
 # SMV File Handling
 
-SMV added support for handling Comma Separated Values (CSV) and Fixed Record Length (FRL) files with schemas.  Recent versions of Spark have added direct support for CSV files but they lack the support for external schema definitions.
+SMV support the following types of inputs:
+
+* Single Comma Separated Values (CSV) file on HDFS compatible storage
+* Multiple CSV files as a single input
+* XML file
+* Hive tables (as long as Spark can access the H-catalog)
+* JDBC tables (any DB which supports JDBC connector, many need to load specific JDBC jar for the given DB)
+
+## SMV CSV file handling
+
+SMV added support for handling Comma Separated Values (CSV) files with schemas. Recent versions of Spark have added direct support for CSV files but they lack the support for external schema definitions.
 
 For each CSV file, SMV require a Schema file to explicitly define the schema of it.
 A schema file should stored along with the data.
@@ -26,7 +36,7 @@ where the data is actually a directory.
 
 SMV also provides a tool to [discover schema](schema_discovery.md) from raw CSV file.
 
-## Basic Usage
+### Basic Usage
 The most common way to utilize SMV files is to define objects in the input package of a given stage.
 For example:
 
@@ -43,7 +53,8 @@ that the schema file is in the same place with postfix `schema`.
 The file path `accounts/acct_demo.csv` is relative to `smv.inputDir` in the configuration, please
 check [Application Configuration](app_config.md) for details.
 
-Given the above definition, any module in `stage1` will be able to add a dependency to `acct_demo` by using it in `requiresDS`:
+Given the above definition, any module will be able to add a dependency to `acct_demo` by using it in `requiresDS`:
+
 ```Python
 from stage1.inputdata import acct_demo
 
@@ -65,8 +76,17 @@ Note that there should be not trailing '/' at the end of the path ("accounts/acc
 By default use the CSV attributes defined in the schema file. If no CSV attributes in the schema file,
 use comma as the delimiter with header.
 
-## Advanced Usage
-The previous example used a simple definition of an `SmvFile`.  However, SMV files are proper `SmvDataSet` and can therefore implement their own transformations and provide DQM rules.
+### Advanced Usage
+The previous example used a simple definition of an `SmvCsvFile`.  However, there are cases the base use 
+may not satisfy users' need. The entire API of `SmvCsvFile` can be referred in the API doc. The following is a list of used cases `SmvCsvFile` can handle:
+
+* Data file and schema file are in differing folders
+* No schema file stored, need to specify schema in code
+* Data file is not under `smv.inputDir` configured folder
+* Data file has different CSV Attributes (header or not, different separation character or quotation character)
+* Defined small data in code
+* Data quality assurance and parsing error handling
+
 For example:
 
 ```Python
@@ -100,6 +120,7 @@ income: Decimal[10];
 ```
 
 ## CSV attributes
+The CSV attribute 
 The schema file can specify the CSV attributes (delimiter, quote char, and header).  All three attributes are optional and will default to (',', '"', true) respectively.
 <table>
 <tr>
