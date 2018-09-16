@@ -106,4 +106,9 @@ class SchemaDiscoveryTest extends SmvTestUtil {
       helper.discoverSchema(strRDD, 10, CsvAttributes.defaultCsvWithHeader)
     }
   }
+
+  test("Test getTypeFormat Timestamp discovery") {
+    val helper = new SchemaDiscoveryHelper(sqlContext)
+    assert(helper.getTypeFormat(null, "2018-01-01 10:22:14.0") === DateTypeFormat("yyyy-MM-dd"))
+  }
 }

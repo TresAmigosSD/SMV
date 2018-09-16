@@ -68,7 +68,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
    * accommodate all the possible values.
    * TODO: should consider using Decimal for large integer/float values (more than what can fit in long/double)
    */
-  private def getTypeFormat(curTypeFormat: TypeFormat, valueStr: String): TypeFormat = {
+  private[smv] def getTypeFormat(curTypeFormat: TypeFormat, valueStr: String): TypeFormat = {
     if (valueStr.isEmpty)
       return curTypeFormat
 
