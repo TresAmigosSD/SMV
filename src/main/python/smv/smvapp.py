@@ -117,7 +117,7 @@ class SmvApp(object):
 
         # check wither the port is in-use or not. Try 10 times, if all fail, error out
         check_counter = 0
-        while(not check_socket(cbs_port) and check_counter < 10):
+        while(not check_socket(cbs_port) and check_counter < int(self.maxCbsPortRetries())):
             cbs_port += 1
             check_counter += 1
 
@@ -175,6 +175,9 @@ class SmvApp(object):
 
     def appName(self):
         return self.j_smvApp.smvConfig().appName()
+
+    def maxCbsPortRetries(self):
+        return self.j_smvApp.smvConfig().maxCbsPortRetries()
 
     def config(self):
         return self.j_smvApp.smvConfig()
