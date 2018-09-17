@@ -119,7 +119,8 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       case DateTypeFormat("yyyyMMdd") if canConvertToDouble(valueStr)       => DoubleTypeFormat()
       case DateTypeFormat("yyyyMMdd")                                       => StringTypeFormat()
 
-      case DateTypeFormat(preFmt) => convertToSupportedDateTime(preFmt, valueStr)
+      case TimestampTypeFormat(preFmt) => convertToSupportedDateTime(TimestampTypeFormat(preFmt), valueStr)
+      case DateTypeFormat(preFmt) => convertToSupportedDateTime(DateTypeFormat(preFmt), valueStr)
 
       case StringTypeFormat(_, _) => curTypeFormat
 

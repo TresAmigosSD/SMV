@@ -74,8 +74,9 @@ private[smv] object StringConversion {
     }
   }
 
-  def convertToSupportedDateTime(preFmt:String, str: String): TypeFormat = {
-    val supportedFmt = Seq(
+  /** Apply logic to discover Date format from a String */
+  def convertToSupportedDateTime(preType: TypeFormat, str: String): TypeFormat = {
+    val supportedTime = Seq(
       "MM/dd/yyyy HH:mm:ss",
       "MM-dd-yyyy HH:mm:ss",
       "MMM/dd/yyyy HH:mm:ss",
@@ -83,6 +84,10 @@ private[smv] object StringConversion {
       "dd-MMM-yyyy HH:mm:ss",
       "ddMMMyyyy HH:mm:ss",
       "yyyy-MM-dd HH:mm:ss",
+      "yyyy-MM-dd HH:mm:ss.S"
+    )
+
+    val supportedDate = Seq(
       "MM/dd/yyyy",
       "MM-dd-yyyy",
       "MMM/dd/yyyy",
@@ -92,16 +97,22 @@ private[smv] object StringConversion {
       "yyyy-MM-dd"
     )
 
-    if (preFmt == null){
-      supportedFmt.find(fmt => 
+    if (preType == null){
+      val tmType = supportedTime.find(fmt => 
         canConvertToDate(str, fmt)
-      ).map(fmt => 
-        DateTypeFormat(fmt)
-      ).getOrElse(StringTypeFormat())
-    } else if (canConvertToDate(str, preFmt)) {
-      DateTypeFormat(preFmt)
+      ).map(fmt => TimestampTypeFormat(fmt))
+
+      val dtType = supportedDate.find(fmt =>
+        canConvertToDate(str, fmt)
+      ).map(fmt => DateTypeFormat(fmt))
+
+      tmType.orElse(dtType).getOrElse(StringTypeFormat())
     } else {
-      StringTypeFormat()
+      preType match {
+        case DateTypeFormat(preFmt) if canConvertToDate(str, preFmt) => preType
+        case TimestampTypeFormat(preFmt) if canConvertToDate(str, preFmt) => preType
+        case _ => StringTypeFormat()
+      }
     }
   }
 }
