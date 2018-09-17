@@ -111,15 +111,43 @@ class SchemaDiscoveryTest extends SmvTestUtil {
 
   test("Test basic getTypeFormat Timestamp discovery") {
     val helper = new SchemaDiscoveryHelper(sqlContext)
+    assert(helper.getTypeFormat(null, "12/06/2012 10:22:14.0") === TimestampTypeFormat("MM/dd/yyyy HH:mm:ss.S"))
+    assert(helper.getTypeFormat(null, "12/06/2012 10:22:14") === TimestampTypeFormat("MM/dd/yyyy HH:mm:ss"))
+    assert(helper.getTypeFormat(null, "12-06-2012 10:22:14.0") === TimestampTypeFormat("MM-dd-yyyy HH:mm:ss.S"))
+    assert(helper.getTypeFormat(null, "12-06-2012 10:22:14") === TimestampTypeFormat("MM-dd-yyyy HH:mm:ss"))
+    assert(helper.getTypeFormat(null, "May/01/1905 23:11:01.125") === TimestampTypeFormat("MMM/dd/yyyy HH:mm:ss.S"))
+    assert(helper.getTypeFormat(null, "May/01/1905 23:11:01") === TimestampTypeFormat("MMM/dd/yyyy HH:mm:ss"))
+    assert(helper.getTypeFormat(null, "May-01-1905 23:11:01.125") === TimestampTypeFormat("MMM-dd-yyyy HH:mm:ss.S"))
+    assert(helper.getTypeFormat(null, "May-01-1905 23:11:01") === TimestampTypeFormat("MMM-dd-yyyy HH:mm:ss"))
+    assert(helper.getTypeFormat(null, "01-May-1905 23:11:01.125") === TimestampTypeFormat("dd-MMM-yyyy HH:mm:ss.S"))
+    assert(helper.getTypeFormat(null, "01-May-1905 23:11:01") === TimestampTypeFormat("dd-MMM-yyyy HH:mm:ss"))
+    assert(helper.getTypeFormat(null, "01May1905 23:11:01.125") === TimestampTypeFormat("ddMMMyyyy HH:mm:ss.S"))
+    assert(helper.getTypeFormat(null, "01May1905 23:11:01") === TimestampTypeFormat("ddMMMyyyy HH:mm:ss"))
     assert(helper.getTypeFormat(null, "2018-01-01 10:22:14.0") === TimestampTypeFormat("yyyy-MM-dd HH:mm:ss.S"))
-    assert(helper.getTypeFormat(null, "2018-01-01") === DateTypeFormat("yyyy-MM-dd"))
-    assert(helper.getTypeFormat(null, "May/01/1905") === DateTypeFormat("MMM/dd/yyyy"))
+    assert(helper.getTypeFormat(null, "2018-01-01 10:22:14") === TimestampTypeFormat("yyyy-MM-dd HH:mm:ss"))
   }
 
-  test("Test ambiguous month-date ordering discovery") {
+  test("Test basic getTypeFormat Date discovery") {
+    val helper = new SchemaDiscoveryHelper(sqlContext)
+    assert(helper.getTypeFormat(null, "12/06/2012") === DateTypeFormat("MM/dd/yyyy"))
+    assert(helper.getTypeFormat(null, "12-06-2012") === DateTypeFormat("MM-dd-yyyy"))
+    assert(helper.getTypeFormat(null, "May/01/1905") === DateTypeFormat("MMM/dd/yyyy"))
+    assert(helper.getTypeFormat(null, "May-01-1905") === DateTypeFormat("MMM-dd-yyyy"))
+    assert(helper.getTypeFormat(null, "01-May-1905") === DateTypeFormat("dd-MMM-yyyy"))
+    assert(helper.getTypeFormat(null, "01May1905") === DateTypeFormat("ddMMMyyyy"))
+    assert(helper.getTypeFormat(null, "2018-01-01") === DateTypeFormat("yyyy-MM-dd"))
+  }
+
+  test("Test ambiguous month-date ordering discovery") { 
     val helper = new SchemaDiscoveryHelper(sqlContext)
     //When it is ambiguous between month and date, we only support month in front
     assert(helper.getTypeFormat(null, "05/01/1905") === DateTypeFormat("MM/dd/yyyy"))
     assert(helper.getTypeFormat(null, "15/01/1905") === StringTypeFormat())
+  }
+
+  test("Test Date format change between records") {
+    val helper = new SchemaDiscoveryHelper(sqlContext)
+    //When one record in one format and the second in a different format should default to StringType
+    assert(helper.getTypeFormat(DateTypeFormat("MM-dd-yyyy"), "Jan-01-2001") === StringTypeFormat())
   }
 }
