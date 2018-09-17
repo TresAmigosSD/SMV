@@ -74,19 +74,34 @@ private[smv] object StringConversion {
     }
   }
 
-  def convertToSupportedDateTime(str: String): TypeFormat = {
+  def convertToSupportedDateTime(preFmt:String, str: String): TypeFormat = {
     val supportedFmt = Seq(
-      "dd/MM/yyyy",
-      "dd-MM-yyyy",
+      "MM/dd/yyyy HH:mm:ss",
+      "MM-dd-yyyy HH:mm:ss",
+      "MMM/dd/yyyy HH:mm:ss",
+      "MMM-dd-yyyy HH:mm:ss",
+      "dd-MMM-yyyy HH:mm:ss",
+      "ddMMMyyyy HH:mm:ss",
+      "yyyy-MM-dd HH:mm:ss",
+      "MM/dd/yyyy",
+      "MM-dd-yyyy",
+      "MMM/dd/yyyy",
+      "MMM-dd-yyyy",
       "dd-MMM-yyyy",
       "ddMMMyyyy",
       "yyyy-MM-dd"
     )
 
-    supportedFmt.find(fmt => 
-      canConvertToDate(str, fmt)
-    ).map(fmt => 
-      DateTypeFormat(fmt)
-    ).getOrElse(StringTypeFormat())
+    if (preFmt == null){
+      supportedFmt.find(fmt => 
+        canConvertToDate(str, fmt)
+      ).map(fmt => 
+        DateTypeFormat(fmt)
+      ).getOrElse(StringTypeFormat())
+    } else if (canConvertToDate(str, preFmt)) {
+      DateTypeFormat(preFmt)
+    } else {
+      StringTypeFormat()
+    }
   }
 }

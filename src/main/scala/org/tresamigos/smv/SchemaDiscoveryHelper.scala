@@ -82,7 +82,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       case null if canConvertToFloat(valueStr)               => FloatTypeFormat()
       case null if canConvertToDouble(valueStr)              => DoubleTypeFormat()
       case null if canConvertToBoolean(valueStr)             => BooleanTypeFormat()
-      case null                                              => convertToSupportedDateTime(valueStr)
+      case null                                              => convertToSupportedDateTime(null, valueStr)
 
       // Handling Integer type and its possible promotions
       case IntegerTypeFormat(_) if canConvertToInt(valueStr)    => curTypeFormat
@@ -119,7 +119,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       case DateTypeFormat("yyyyMMdd") if canConvertToDouble(valueStr)       => DoubleTypeFormat()
       case DateTypeFormat("yyyyMMdd")                                       => StringTypeFormat()
 
-      case DateTypeFormat(_) => convertToSupportedDateTime(valueStr)
+      case DateTypeFormat(preFmt) => convertToSupportedDateTime(preFmt, valueStr)
 
       case StringTypeFormat(_, _) => curTypeFormat
 
