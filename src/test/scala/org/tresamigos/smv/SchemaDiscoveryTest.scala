@@ -22,7 +22,7 @@ class SchemaDiscoveryTest extends SmvTestUtil {
     val schema  = helper.discoverSchema(strRDD, 10, CsvAttributes.defaultCsvWithHeader)
     val entries = schema.entries
 
-    assert(entries.length === 8)
+    assert(entries.length === 9)
 
     assert(entries(0).field.name === "id")
     assert(entries(0).typeFormat.typeName === "Integer")
@@ -40,6 +40,8 @@ class SchemaDiscoveryTest extends SmvTestUtil {
     assert(entries(6).typeFormat.typeName === "Date")
     assert(entries(7).field.name === "last_active_date")
     assert(entries(7).typeFormat.typeName === "Date")
+    assert(entries(8).field.name === "last_active_time")
+    assert(entries(8).typeFormat.typeName === "Timestamp")
   }
 
   test("Test schema discovery no header") {
