@@ -109,8 +109,17 @@ class SchemaDiscoveryTest extends SmvTestUtil {
     }
   }
 
-  test("Test getTypeFormat Timestamp discovery") {
+  test("Test basic getTypeFormat Timestamp discovery") {
     val helper = new SchemaDiscoveryHelper(sqlContext)
-    assert(helper.getTypeFormat(null, "2018-01-01 10:22:14.0") === TimestampTypeFormat("yyyy-MM-dd HH:mm:ss"))
+    assert(helper.getTypeFormat(null, "2018-01-01 10:22:14.0") === TimestampTypeFormat("yyyy-MM-dd HH:mm:ss.S"))
+    assert(helper.getTypeFormat(null, "2018-01-01") === DateTypeFormat("yyyy-MM-dd"))
+    assert(helper.getTypeFormat(null, "May/01/1905") === DateTypeFormat("MMM/dd/yyyy"))
+  }
+
+  test("Test ambiguous month-date ordering discovery") {
+    val helper = new SchemaDiscoveryHelper(sqlContext)
+    //When it is ambiguous between month and date, we only support month in front
+    assert(helper.getTypeFormat(null, "05/01/1905") === DateTypeFormat("MM/dd/yyyy"))
+    assert(helper.getTypeFormat(null, "15/01/1905") === StringTypeFormat())
   }
 }
