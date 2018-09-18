@@ -19,7 +19,7 @@ import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.DataFrame
-
+ 
 import java.sql.Date
 import java.text.{DateFormat, SimpleDateFormat}
 
@@ -323,12 +323,12 @@ object SchemaEntry {
     SchemaEntry(structField, typeFmt)
   }
 
-  def apply(name: String, typeFmt: TypeFormat): SchemaEntry = {
-    val field = StructField(name, typeFmt.dataType, true)
+  def apply(name: String, typeFmt: TypeFormat, meta: Metadata = new MetadataBuilder().build): SchemaEntry = {
+    val field = StructField(name, typeFmt.dataType, true, meta)
     SchemaEntry(field, typeFmt)
   }
 
-  def apply(name: String, typeFmtStr: String, meta: String = null): SchemaEntry = {
+  def apply(name: String, typeFmtStr: String, meta: String): SchemaEntry = {
     val typeFmt  = TypeFormat(typeFmtStr)
     val metaData = if (meta == null) Metadata.empty else Metadata.fromJson(meta)
     val field    = StructField(name, typeFmt.dataType, true, metaData)

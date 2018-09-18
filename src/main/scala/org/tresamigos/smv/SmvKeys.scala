@@ -17,16 +17,21 @@ package org.tresamigos.smv
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.types.{Metadata, MetadataBuilder, StructField}
 
-private[smv] abstract class SmvKeys {
+private[smv] class SmvKeys {
   val SmvLabel = "smvLabel"
   val SmvDesc  = "smvDesc"
 
-  protected def getMetaDesc(m: Metadata): String = {
+  def getMetaDesc(m: Metadata): String = {
     if (m.contains(SmvDesc)) m.getString(SmvDesc) else ""
   }
 
-  protected def getMetaLabels(m: Metadata): Seq[String] = {
+  def getMetaLabels(m: Metadata): Seq[String] = {
     if (m.contains(SmvLabel)) m.getStringArray(SmvLabel).toSeq else Seq.empty
+  }
+
+  def createMetaWithDesc(desc: String): Metadata = {
+    val builder = new MetadataBuilder()
+    builder.putString(SmvDesc, desc).build
   }
 
   def addDescToMeta(m: Metadata, desc: String): Metadata = {
