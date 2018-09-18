@@ -109,6 +109,16 @@ class SchemaDiscoveryTest extends SmvTestUtil {
     }
   }
 
+  test("Test schema discovery with first record as desc") {
+    val strRDD  = sqlContext.sparkContext.textFile(testDataDir + "SchemaDiscoveryTest/test6.csv")
+    val helper  = new SchemaDiscoveryHelper(sqlContext)
+    val schema  = helper.discoverSchema(strRDD, 10, CsvAttributes.defaultCsvWithHeader)
+    val entries = schema.entries
+
+    assert(SmvKeys.getMetaDesc(schema.toStructType.apply("name").metadata) === "bob")
+    assert(SmvKeys.getMetaDesc(schema.toStructType.apply("age").metadata) === "66")
+  }
+
   test("Test basic getTypeFormat Timestamp discovery") {
     val helper = new SchemaDiscoveryHelper(sqlContext)
     assert(helper.getTypeFormat(null, "12/06/2012 10:22:14.0") === TimestampTypeFormat("MM/dd/yyyy HH:mm:ss.S"))

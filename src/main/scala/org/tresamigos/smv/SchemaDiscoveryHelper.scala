@@ -152,17 +152,18 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
     // An alternative is to use the mapPartitionWithIndex
     val rowsToParse = noHeadRDD.take(numLines)
 
-    val columnsWithIndex = columns.zipWithIndex
-
     var validCount = 0
+    //extract first valid value for each field to be used in the discovered schema as the columne description
+    var firstValidFields = Array.fill[String](columns.length)("")
     for (rowStr <- rowsToParse) {
       val rowValues = Try { parser.parseLine(rowStr) }.getOrElse(Array[String]())
-      if (rowValues.length == columnsWithIndex.length) {
+      if (rowValues.length == columns.length) {
         validCount += 1
         for (index <- 0 until columns.length) {
           val colVal = rowValues(index)
           if (colVal.nonEmpty) {
             typeFmts(index) = getTypeFormat(typeFmts(index), colVal)
+            if(firstValidFields(index).isEmpty) firstValidFields(index) = colVal 
           }
         }
       }
@@ -182,7 +183,9 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
     }
 
     val res =
-      new SmvSchema(columns.zip(typeFmts).map { case (n, t) => SchemaEntry(n, t) }, Map.empty)
+      new SmvSchema(columns.zip(typeFmts).zip(firstValidFields).map { 
+        case ((n, t), r) => SchemaEntry(n, t, SmvKeys.createMetaWithDesc(r))
+      }, Map.empty)
 
     res.addCsvAttributes(ca)
   }
