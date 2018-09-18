@@ -153,7 +153,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
     val rowsToParse = noHeadRDD.take(numLines)
 
     var validCount = 0
-    //abstract first valid record to be used in the discovered schema as the columne description
+    //extract first valid record to be used in the discovered schema as the columne description
     var firstValidRec = new Array[String](columns.length)
     for (rowStr <- rowsToParse) {
       val rowValues = Try { parser.parseLine(rowStr) }.getOrElse(Array[String]())

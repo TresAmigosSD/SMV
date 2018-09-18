@@ -57,12 +57,6 @@ private[smv] class SmvKeys {
   }
 }
 
-private[smv] class FieldMetaOps(f: StructField) extends SmvKeys {
-  def addDesc(desc: String) = {
-    new StructField(f.name, f.dataType, f.nullable, f.metadata)
-  }
-}
-
 private[smv] class SchemaMetaOps(df: DataFrame) extends SmvKeys {
 
   /**
