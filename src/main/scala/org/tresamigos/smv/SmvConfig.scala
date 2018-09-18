@@ -204,12 +204,13 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   private def homeConfProps = _loadProps(DEFAULT_SMV_HOME_CONF_FILE)
   private val cmdLineProps  = cmdLine.smvProps
   private val defaultProps = Map(
-    "smv.appName"         -> "Smv Application",
-    "smv.appId"           -> java.util.UUID.randomUUID.toString,
-    "smv.stages"          -> "",
-    "smv.config.keys"     -> "",
-    "smv.class_dir"       -> "./target/classes",
-    "smv.user_libraries"  -> ""
+    "smv.appName"            -> "Smv Application",
+    "smv.appId"              -> java.util.UUID.randomUUID.toString,
+    "smv.stages"             -> "",
+    "smv.config.keys"        -> "",
+    "smv.class_dir"          -> "./target/classes",
+    "smv.user_libraries"     -> "",
+    "smv.maxCbsPortRetries"  -> "10"
   )
 
   // ---------- Dynamic Run Config Parameters key/values ----------
@@ -231,8 +232,9 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   def quickRun = mergedProps.getOrElse("smv.quickRun", false)
 
   // --- App should access configs through vals below rather than from props maps
-  def appName    = mergedProps("smv.appName")
-  def appId      = mergedProps("smv.appId")
+  def appName           = mergedProps("smv.appName")
+  def appId             = mergedProps("smv.appId")
+  def maxCbsPortRetries = mergedProps("smv.maxCbsPortRetries")
 
   // --- stage names are a dynamic prop
   private[smv] def stageNames = { splitProp("smv.stages").toSeq }

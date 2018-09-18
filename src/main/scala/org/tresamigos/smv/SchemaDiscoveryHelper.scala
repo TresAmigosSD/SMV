@@ -68,7 +68,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
    * accommodate all the possible values.
    * TODO: should consider using Decimal for large integer/float values (more than what can fit in long/double)
    */
-  private def getTypeFormat(curTypeFormat: TypeFormat, valueStr: String): TypeFormat = {
+  private[smv] def getTypeFormat(curTypeFormat: TypeFormat, valueStr: String): TypeFormat = {
     if (valueStr.isEmpty)
       return curTypeFormat
 
@@ -82,12 +82,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       case null if canConvertToFloat(valueStr)               => FloatTypeFormat()
       case null if canConvertToDouble(valueStr)              => DoubleTypeFormat()
       case null if canConvertToBoolean(valueStr)             => BooleanTypeFormat()
-      case null if canConvertToDate(valueStr, "dd/MM/yyyy")  => DateTypeFormat("dd/MM/yyyy")
-      case null if canConvertToDate(valueStr, "dd-MM-yyyy")  => DateTypeFormat("dd-MM-yyyy")
-      case null if canConvertToDate(valueStr, "dd-MMM-yyyy") => DateTypeFormat("dd-MMM-yyyy")
-      case null if canConvertToDate(valueStr, "ddMMMyyyy")   => DateTypeFormat("ddMMMyyyy")
-      case null if canConvertToDate(valueStr, "yyyy-MM-dd")  => DateTypeFormat("yyyy-MM-dd")
-      case null                                              => StringTypeFormat()
+      case null                                              => convertToSupportedDateTime(null, valueStr)
 
       // Handling Integer type and its possible promotions
       case IntegerTypeFormat(_) if canConvertToInt(valueStr)    => curTypeFormat
@@ -124,24 +119,8 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
       case DateTypeFormat("yyyyMMdd") if canConvertToDouble(valueStr)       => DoubleTypeFormat()
       case DateTypeFormat("yyyyMMdd")                                       => StringTypeFormat()
 
-      case DateTypeFormat("dd/MM/yyyy") if canConvertToDate(valueStr, "dd/MM/yyyy") =>
-        curTypeFormat
-      case DateTypeFormat("dd/MM/yyyy") => StringTypeFormat()
-
-      case DateTypeFormat("dd-MM-yyyy") if canConvertToDate(valueStr, "dd-MM-yyyy") =>
-        curTypeFormat
-      case DateTypeFormat("dd-MM-yyyy") => StringTypeFormat()
-
-      case DateTypeFormat("dd-MMM-yyyy") if canConvertToDate(valueStr, "dd-MMM-yyyy") =>
-        curTypeFormat
-      case DateTypeFormat("dd-MMM-yyyy") => StringTypeFormat()
-
-      case DateTypeFormat("ddMMMyyyy") if canConvertToDate(valueStr, "ddMMMyyyy") => curTypeFormat
-      case DateTypeFormat("ddMMMyyyy")                                            => StringTypeFormat()
-
-      case DateTypeFormat("yyyy-MM-dd") if canConvertToDate(valueStr, "yyyy-MM-dd") =>
-        curTypeFormat
-      case DateTypeFormat("yyyy-MM-dd") => StringTypeFormat()
+      case TimestampTypeFormat(preFmt) => convertToSupportedDateTime(TimestampTypeFormat(preFmt), valueStr)
+      case DateTypeFormat(preFmt) => convertToSupportedDateTime(DateTypeFormat(preFmt), valueStr)
 
       case StringTypeFormat(_, _) => curTypeFormat
 

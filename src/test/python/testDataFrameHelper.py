@@ -113,6 +113,36 @@ class DfHelperTest(SmvBaseTest):
         )
         self.should_be_same(expect, r1)
 
+    def test_smvDupeCheck(self):
+        df = self.createDF(
+            "a:String;b:String;c:Integer", 
+            """a,b,1;
+            a,b,2;
+            a,c,3"""
+        )
+        r1 = df.smvDupeCheck(['a', 'b'])
+        expect = self.createDF(
+            "a: String;b: String;_N: Long;c: Integer",
+            """a,b,2,2;
+                a,b,2,1"""
+        )
+        self.should_be_same(expect, r1)
+
+    def test_smvDupeCheck_with_Null(self):
+        df = self.createDF(
+            "a:String;b:String;c:Integer", 
+            """a,,1;
+            a,,2;
+            a,c,3"""
+        )
+        r1 = df.smvDupeCheck(['a', 'b'])
+        expect = self.createDF(
+            "a: String;b: String;_N: Long;c: Integer",
+            """a,,2,2;
+                a,,2,1"""
+        )
+        self.should_be_same(expect, r1)
+
     def test_smvExpandStruct(self):
         schema = "id:String;a:Double;b:Double"
         df1 = self.createDF(schema, "a,1.0,10.0;a,2.0,20.0;b,3.0,30.0")
@@ -145,6 +175,27 @@ class DfHelperTest(SmvBaseTest):
         expect = self.createDF(
             "a:Integer;b:Double;c:String;_c:String",
             "1,2.0,hello,asdf;1,3.0,hello,asdf;2,10.0,hello2,asdfg;2,11.0,hello3,asdfg"
+        )
+        self.should_be_same(expect, res)
+
+    def test_smvJoinByKey_nullSafe(self):
+        df1 = self.createDF(
+            "a:String; b:String; i:Integer",
+            """a,,1;
+            a,b,2;
+            ,,3"""
+        )
+        df2 = self.createDF(
+            "a:String; b:String; j:String",
+            """a,,x;
+            ,,y;
+            c,d,z"""
+        )
+        res = df1.smvJoinByKey(df2, ['a', 'b'], 'inner', isNullSafe=True)
+        expect = self.createDF(
+            "a: String;b: String;i: Integer;j: String",
+            """,,3,y;
+            a,,1,x"""
         )
         self.should_be_same(expect, res)
 

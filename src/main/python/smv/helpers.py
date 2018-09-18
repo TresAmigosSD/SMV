@@ -20,7 +20,7 @@ import decorator
 from pyspark import SparkContext
 from pyspark.sql import DataFrame
 from pyspark.sql.column import Column
-from pyspark.sql.functions import col, lit
+import pyspark.sql.functions as F
 from pyspark.sql.types import DataType
 
 from smv.utils import smv_copy_array
@@ -632,7 +632,7 @@ class DataFrameHelper(object):
                 (DataFrame): sampled DF
         """
         if is_string(key):
-            jkey = col(key)._jc
+            jkey = F.col(key)._jc
         elif isinstance(key, Column):
             jkey = key._jc
         else:
@@ -642,10 +642,7 @@ class DataFrameHelper(object):
 
         return DataFrame(jdf, self._sql_ctx)
 
-    # FIXME py4j method resolution with null argument can fail, so we
-    # temporarily remove the trailing parameters till we can find a
-    # workaround
-    def smvJoinByKey(self, other, keys, joinType):
+    def smvJoinByKey(self, other, keys, joinType, isNullSafe=False):
         """joins two DataFrames on a key
 
             The Spark `DataFrame` join operation does not handle duplicate key names.
@@ -660,14 +657,16 @@ class DataFrameHelper(object):
                 other (DataFrame): the DataFrame to join with
                 keys (list(string)): a list of column names on which to apply the join
                 joinType (string): choose one of ['inner', 'outer', 'leftouter', 'rightouter', 'leftsemi']
+                isNullSafe (boolean): if true matches null keys between left and right tables and keep in output. Default False. 
 
             Example:
                 >>> df1.smvJoinByKey(df2, ["k"], "inner")
+                >>> df_with_null_key.smvJoinByKey(df2, ["k"], "inner", True)
 
             Returns:
                 (DataFrame): result of the join operation
         """
-        jdf = self._jPythonHelper.smvJoinByKey(self._jdf, other._jdf, _to_seq(keys), joinType)
+        jdf = self._jPythonHelper.smvJoinByKey(self._jdf, other._jdf, _to_seq(keys), joinType, isNullSafe)
         return DataFrame(jdf, self._sql_ctx)
 
     def smvJoinMultipleByKey(self, keys, joinType = 'inner'):
@@ -1318,6 +1317,30 @@ class DataFrameHelper(object):
 
         """
         self._println(self._smvDiscoverPK(n))
+
+    def smvDupeCheck(self, keys, n=10000):
+        """For a given list of potential keys, check for duplicated records with the number of duplications and all the columns.
+
+            Null values are allowed in the potential keys, so duplication on Null valued keys will also be reported.
+
+            Args:
+                keys (list(string)): the key column list which the duplicate check applied
+                n (integer): number of rows from input data for checking duplications, defaults to 10000
+
+            Returns:
+                (DataFrame): returns key columns + "_N" + the rest columns for the records with more key duplication records, 
+                    where "_N" has the count of duplications of the key values of that record
+        """
+        dfTopN = self.df.limit(n).cache()
+
+        res = dfTopN.groupBy(*keys)\
+            .agg(F.count(F.lit(1)).alias('_N'))\
+            .where(F.col('_N') > 1)\
+            .smvJoinByKey(dfTopN, keys, 'inner', True)\
+            .orderBy(*keys)
+
+        dfTopN.unpersist()
+        return res
 
     def smvDumpDF(self):
         """Dump the schema and data of given df to screen for debugging purposes

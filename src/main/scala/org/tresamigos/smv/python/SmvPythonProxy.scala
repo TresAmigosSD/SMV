@@ -47,16 +47,12 @@ object SmvPythonHelper {
     }: _*))
   }
 
-  /**
-   * FIXME py4j method resolution with null argument can fail, so we
-   * temporarily remove the trailing parameters till we can find a
-   * workaround
-   */
   def smvJoinByKey(df: DataFrame,
                    other: DataFrame,
                    keys: Seq[String],
-                   joinType: String): DataFrame =
-    df.smvJoinByKey(other, keys, joinType)
+                   joinType: String,
+                   isNullSafe: Boolean): DataFrame =
+    df.smvJoinByKey(other, keys, joinType, isNullSafe)
 
   def smvJoinMultipleByKey(df: DataFrame,
                            keys: Array[String],
