@@ -115,7 +115,7 @@ class SchemaDiscoveryTest extends SmvTestUtil {
     val schema  = helper.discoverSchema(strRDD, 10, CsvAttributes.defaultCsvWithHeader)
     val entries = schema.entries
 
-    assert(new SmvKeys().getMetaDesc(schema.toStructType.apply("name").metadata) === "bob")
+    assert(SmvKeys.getMetaDesc(schema.toStructType.apply("name").metadata) === "bob")
   }
 
   test("Test basic getTypeFormat Timestamp discovery") {

@@ -184,7 +184,7 @@ class SchemaDiscoveryHelper(sqlContext: SQLContext) {
 
     val res =
       new SmvSchema(columns.zip(typeFmts).zip(firstValidRec).map { 
-        case ((n, t), r) => SchemaEntry(n, t, new SmvKeys().createMetaWithDesc(r))
+        case ((n, t), r) => SchemaEntry(n, t, SmvKeys.createMetaWithDesc(r))
       }, Map.empty)
 
     res.addCsvAttributes(ca)
