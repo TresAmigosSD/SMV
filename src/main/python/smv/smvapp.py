@@ -115,7 +115,7 @@ class SmvApp(object):
         cbsp = self.j_smvPyClient.callbackServerPort()
         cbs_port = cbsp.get() if cbsp.isDefined() else gw._python_proxy_port
 
-        # check wither the port is in-use or not. Try 10 times, if all fail, error out
+        # check wither the port is in-use or not for several times - if all fail, error out
         check_counter = 0
         while(not check_socket(cbs_port) and check_counter < int(self.maxCbsPortRetries())):
             cbs_port += 1
