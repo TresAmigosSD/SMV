@@ -58,6 +58,9 @@ function parse_args()
     exit 1
   fi
 
+  # transform the version number to a regex-friendly format
+  SMV_VERSION_REG=${SMV_VERSION//./\\.}
+
   # version specific vars
   LOGFILE="${BUILD_DIR}/smv-release.log"
   rm -f "${LOGFILE}"
@@ -105,6 +108,9 @@ function get_prev_smv_version()
 {
   PREV_SMV_VERSION=$(cat "${SMV_DIR}/.smv_version")
   info "previous SMV version: $PREV_SMV_VERSION"
+
+  # transform the version number to a regex-friendly format
+  PREV_SMV_VERSION_REG=${PREV_SMV_VERSION//./\\.}
 }
 
 # make sure version is of the format a.b.c.d where a,b,c,d are all numbers.
@@ -167,16 +173,16 @@ function update_version()
 
   # update version in user docs.
   find docs/user -name '*.md' \
-    -exec perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" \{\} +
+    -exec perl -pi -e "s/${PREV_SMV_VERSION_REG}/${SMV_VERSION_REG}/g" \{\} +
 
   # update version in README file
-  perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" README.md
+  perl -pi -e "s/${PREV_SMV_VERSION_REG}/${SMV_VERSION_REG}/g" README.md
 
   # update version in Dockerfile
-  perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" docker/smv/Dockerfile
+  perl -pi -e "s/${PREV_SMV_VERSION_REG}/${SMV_VERSION_REG}/g" docker/smv/Dockerfile
 
   # update version in smv-install
-  perl -pi -e "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" tools/smv-install
+  perl -pi -e "s/${PREV_SMV_VERSION_REG}/${SMV_VERSION_REG}/g" tools/smv-install
 
   # add the smv version to the SMV directory.
   echo ${SMV_VERSION} > "${SMV_DIR}/.smv_version"
@@ -342,7 +348,7 @@ function update_ghpages_docs()
     info "WARNING!!!! need to update ghpages index.html manually"
   else
     info "updating version numbers in ghpages index.html"
-    sed -i'.bak' "s/${PREV_SMV_VERSION}/${SMV_VERSION}/g" index.html
+    sed -i'.bak' "s/${PREV_SMV_VERSION_REG}/${SMV_VERSION_REG}/g" index.html
     rm -f index.html.bak
   fi
 }
