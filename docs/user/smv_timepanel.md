@@ -52,7 +52,7 @@ Day(2012, 1, 2)
 Attributes:
 * `timeType` - "day"
 * `timeIndex` - 15341
-* `smvTime` - "D2.3.0.02"
+* `smvTime` - "D20120102"
 * `timeLabel` - "2012-01-02"
 
 ### Month
@@ -95,7 +95,7 @@ Week(2012, 1, 2)
 Attributes:
 * `timeType` - "week"
 * `timeIndex` - 2192
-* `smvTime` - "W2.3.0.02"
+* `smvTime` - "W20120102"
 * `timeLabel` - "Week of 2012-01-02"
 
 In the custom start of week case,
@@ -106,7 +106,7 @@ Week(2012, 1, 2, "Sunday")
 Attributes:
 * `timeType` - "week_start_on_Sunday"
 * `timeIndex` - 2192
-* `smvTime` - "W(7)2.3.0.01"
+* `smvTime` - "W(7)20120101"
 * `timeLabel` - "Week of 2012-01-01"
 
 
