@@ -122,7 +122,7 @@ class SmvApp(object):
             check_counter += 1
 
         if (not check_socket(cbs_port)):
-            raise SmvRuntimeError("Start Python callback server failed. Port {0}-{1} are all in use".format(cbs_port - check_counter, cbs_port))
+            raise SmvRuntimeError("Start Python callback server failed. Port {0}-{1} are all in use. Please consider increasing the maximum retries or overriding the default port.".format(cbs_port - check_counter, cbs_port))
 
         if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
             print("Starting Py4j callback server on port {0}".format(cbs_port))
