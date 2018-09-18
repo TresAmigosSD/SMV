@@ -123,6 +123,13 @@ Note that for sequence/list type parameters (e.g. smv.stages), a "," or ":" can 
 </tr>
 
 <tr>
+<td>smv.maxCbsPortRetries</td>
+<td>10</td>
+<td>Optional</td>
+<td>Maximum number of retries when binding to a Callback Server port before giving up. When a port is given a specific value (non 0), each subsequent retry will increment the port used in the previous attempt by 1 before retrying. This essentially allows it to try a range of ports from the start port specified to port + smv.maxCbsPortRetries.</td>
+</tr>
+
+<tr>
 <th colspan="4">Data Directories Parameters</th>
 </tr>
 

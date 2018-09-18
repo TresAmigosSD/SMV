@@ -115,14 +115,14 @@ class SmvApp(object):
         cbsp = self.j_smvPyClient.callbackServerPort()
         cbs_port = cbsp.get() if cbsp.isDefined() else gw._python_proxy_port
 
-        # check wither the port is in-use or not. Try 10 times, if all fail, error out
+        # check wither the port is in-use or not for several times - if all fail, error out
         check_counter = 0
-        while(not check_socket(cbs_port) and check_counter < 10):
+        while(not check_socket(cbs_port) and check_counter < int(self.maxCbsPortRetries())):
             cbs_port += 1
             check_counter += 1
 
         if (not check_socket(cbs_port)):
-            raise SmvRuntimeError("Start Python callback server failed. Port {0}-{1} are all in use".format(cbs_port - check_counter, cbs_port))
+            raise SmvRuntimeError("Start Python callback server failed. Port {0}-{1} are all in use. Please consider increasing the maximum retries or overriding the default port.".format(cbs_port - check_counter, cbs_port))
 
         if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
             print("Starting Py4j callback server on port {0}".format(cbs_port))
@@ -175,6 +175,9 @@ class SmvApp(object):
 
     def appName(self):
         return self.j_smvApp.smvConfig().appName()
+
+    def maxCbsPortRetries(self):
+        return self.j_smvApp.smvConfig().maxCbsPortRetries()
 
     def config(self):
         return self.j_smvApp.smvConfig()
