@@ -17,29 +17,48 @@ package org.tresamigos.smv
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.types.{Metadata, MetadataBuilder, StructField}
 
-trait SmvKeys {
+private[smv] abstract class SmvKeys {
   val SmvLabel = "smvLabel"
   val SmvDesc  = "smvDesc"
+
+  protected def getMetaDesc(m: Metadata): String = {
+    if (m.contains(SmvDesc)) m.getString(SmvDesc) else ""
+  }
+
+  protected def getMetaLabels(m: Metadata): Seq[String] = {
+    if (m.contains(SmvLabel)) m.getStringArray(SmvLabel).toSeq else Seq.empty
+  }
+
+  def addDescToMeta(m: Metadata, desc: String): Metadata = {
+    val builder = new MetadataBuilder().withMetadata(m)
+    builder.putString(SmvDesc, desc).build
+  }
+
+  def addLabelsToMeta(m: Metadata, labels: Seq[String]): Metadata = {
+    val builder = new MetadataBuilder().withMetadata(m)
+    // preserve the current meta data
+    builder.putStringArray(SmvLabel, (getMetaLabels(m) ++ labels).distinct.toArray).build
+  }
+
+  def removeLabelsFromMeta(m: Metadata, labels: Seq[String]): Metadata = {
+    val newLabels = if (labels.isEmpty) Seq.empty else (getMetaLabels(m) diff labels).distinct
+    val builder   = new MetadataBuilder().withMetadata(m)
+    builder.putStringArray(SmvLabel, newLabels.toArray).build
+  }
+
+  def removeDescFromMeta(m: Metadata): Metadata = {
+    val builder = new MetadataBuilder().withMetadata(m)
+    builder.putString(SmvDesc, "").build
+  }
 }
 
-private[smv] class ColumnMetaOps(col: Column) extends SmvKeys {
+private[smv] class FieldMetaOps(f: StructField) extends SmvKeys {
   def addDesc(desc: String) = {
-    val m = Metadata.fromJson(s"""{"${SmvDesc}": "${desc}"}""")
-    col.as(col.getName, m)
+    new StructField(f.name, f.dataType, f.nullable, f.metadata)
   }
 }
 
 private[smv] class SchemaMetaOps(df: DataFrame) extends SmvKeys {
-
-  private def fieldLabel(f: StructField) = {
-    val meta = f.metadata
-    if (meta.contains(SmvLabel)) meta.getStringArray(SmvLabel).toSeq else Seq.empty
-  }
-
-  private def fieldDesc(f: StructField) = {
-    val meta = f.metadata
-    if (meta.contains(SmvDesc)) meta.getString(SmvDesc) else ""
-  }
 
   /**
    * Adds labels to the specified columns.
@@ -60,10 +79,7 @@ private[smv] class SchemaMetaOps(df: DataFrame) extends SmvKeys {
 
       // if new label should be added to this column. Add to all columns, if colNames is empty
       if (allCol || colNames.contains(c)) {
-        // preserve the current meta data
-        val builder = new MetadataBuilder().withMetadata(f.metadata)
-        val meta =
-          builder.putStringArray(SmvLabel, (fieldLabel(f) ++ labels).distinct.toArray).build
+        val meta = addLabelsToMeta(f.metadata, labels)
         df(c).as(c, meta)
       } else df(f.name)
     }
@@ -78,8 +94,7 @@ private[smv] class SchemaMetaOps(df: DataFrame) extends SmvKeys {
     val columns = df.schema.fields map { f =>
       val c = f.name
       if (colMap.contains(c)) {
-        val builder = new MetadataBuilder().withMetadata(f.metadata)
-        val meta    = builder.putString(SmvDesc, colMap.getOrElse(c, "")).build
+        val meta = addDescToMeta(f.metadata, colMap.getOrElse(c, ""))
         df(c).as(c, meta)
       } else df(c)
     }
@@ -88,23 +103,20 @@ private[smv] class SchemaMetaOps(df: DataFrame) extends SmvKeys {
   }
 
   def getLabel(colName: String): Seq[String] = {
-    fieldLabel(df.schema.apply(colName))
+    getMetaLabels(df.schema.apply(colName).metadata)
   }
 
   def getDesc(colName: String): String = {
-    fieldDesc(df.schema.apply(colName))
+    getMetaDesc(df.schema.apply(colName).metadata)
   }
 
   def removeLabel(colNames: Seq[String], labels: Seq[String]): DataFrame = {
     val allCol    = colNames.isEmpty
-    val allLabels = labels.isEmpty
 
     val columns = df.schema.fields map { f =>
       val c = f.name
       if (allCol || colNames.contains(c)) {
-        val newLabels = if (allLabels) Seq.empty else (fieldLabel(f) diff labels).distinct
-        val builder   = new MetadataBuilder().withMetadata(f.metadata)
-        val meta      = builder.putStringArray(SmvLabel, newLabels.toArray).build
+        val meta = removeLabelsFromMeta(f.metadata, labels)
         df(c) as (c, meta)
       } else df(c)
     }
@@ -117,8 +129,7 @@ private[smv] class SchemaMetaOps(df: DataFrame) extends SmvKeys {
     val columns = df.schema.fields map { f =>
       val c = f.name
       if (allCol || colNames.contains(c)) {
-        val builder = new MetadataBuilder().withMetadata(f.metadata)
-        val meta    = builder.putString(SmvDesc, "").build
+        val meta    = removeDescFromMeta(f.metadata)
         df(c) as (c, meta)
       } else df(c)
     }
