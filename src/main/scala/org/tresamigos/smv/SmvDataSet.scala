@@ -936,49 +936,6 @@ object SmvFrlFile {
 }
 
 /**
- * Instead of a single input file, specify a data dir with files which has
- * the same schema and CsvAttributes.
- *
- * `SmvCsvFile` can also take dir as path parameter, but all files are considered
- * slices. In that case if none of them has headers, it's equivalent to `SmvMultiCsvFiles`.
- * However if every file has header, `SmvCsvFile` will not remove header correctly.
- **/
-class SmvMultiCsvFiles(
-    dir: String,
-    csvAttributes: CsvAttributes = null,
-    override val schemaPath: String = null,
-    override val userSchema: Option[String] = None
-) extends SmvFile {
-
-  override val path = dir
-
-  override def fullSchemaPath = {
-    if (schemaPath == null) Option(SmvSchema.dataPathToSchemaPath(fullPath))
-    else Option(findFullPath(schemaPath))
-  }
-
-  private[smv] override def readFromSrc(parserValidator: ParserLogger): DataFrame = {
-    val filesInDir = SmvHDFS.dirList(fullPath)
-      .filterNot(_.startsWith(".")) // ignore all hidden files in the data dir
-      .map { n =>
-        s"${fullPath}/${n}"
-      }
-
-    if (filesInDir.isEmpty)
-      throw new SmvRuntimeException(s"There are no data files in ${fullPath}")
-
-    val df = filesInDir
-      .map { filePath =>
-        val handler =   getHandler(filePath, parserValidator)
-        handler.csvFileWithSchema(csvAttributes, Some(schema))
-      }
-      .reduce(_ union _)
-
-    df
-  }
-}
-
-/**
  * Maps SmvDataSet to DataFrame by FQN. This is the type of the parameter expected
  * by SmvModule's run method.
  *
