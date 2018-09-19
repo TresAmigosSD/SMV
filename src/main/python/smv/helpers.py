@@ -26,6 +26,7 @@ from pyspark.sql.types import DataType
 from smv.utils import smv_copy_array
 from smv.error import SmvRuntimeError
 from smv.utils import is_string
+from smv.schema_meta_ops import SchemaMetaOps
 
 
 # common converters to pass to _to_seq and _to_list
@@ -564,6 +565,7 @@ class DataFrameHelper(object):
         self._jdf = df._jdf
         self._jPythonHelper = df._sc._jvm.SmvPythonHelper
         self._jDfHelper = df._sc._jvm.SmvDFHelper(df._jdf)
+        self._jSchemaMetaOps = SchemaMetaOps(df)
 
     def smvExpandStruct(self, *cols):
         """Expand structure type column to a group of columns
@@ -1101,9 +1103,9 @@ class DataFrameHelper(object):
                 (list(tuple)): a list of (colName, description) pairs for all columns
         """
         if (colName is not None):
-            return self._jDfHelper.smvGetDesc(colName)
+            return self._jSchemaMetaOps.getDesc(colName)
         else:
-            return [(c, self._jDfHelper.smvGetDesc(c)) for c in self.df.columns]
+            return [(c, self._jSchemaMetaOps.getDesc(c)) for c in self.df.columns]
 
     def smvRemoveDesc(self, *colNames):
         """Removes description for the given columns from the Dataframe
