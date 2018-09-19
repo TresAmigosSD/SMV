@@ -31,8 +31,8 @@ class DiscoverSchemaTest(SmvBaseTest):
         exp = ('@delimiter = ,\n'
                '@has-header = true\n'
                '@quote-char = "\n'
-               'a: Integer\n'
-               'b: String\n'
-               'c: String')
+               'a: Integer @metadata={"smvDesc":"1"}\n'
+               'b: String @metadata={"smvDesc":"2"}\n'
+               'c: String @metadata={"smvDesc":"a"}')
 
         self.assertEqual(res, exp)
