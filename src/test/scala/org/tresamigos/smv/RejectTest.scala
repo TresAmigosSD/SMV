@@ -18,9 +18,26 @@ import org.apache.spark.SparkException
 import dqm._
 
 class RejectTest extends SmvTestUtil {
+  val testSchema = """id: String;
+            val: double;
+            val2: timestamp[yyyyMMddHHmmss];
+            val3: String"""
+  val testData = """123,12.50  ,20130109130619,12102012;
+            123,  ,20130109130619,12102012;
+            123,12.50  ,20130109130619,12102012;
+            123,12.50  ,130109130619,12102012;
+            123,12.50  ,109130619,12102012;
+            123,12.50  ,201309130619,12102012;
+            123,12.50  ,20133109130619,12102012;
+            123,12.50  ,12102012;
+            123,001x  ,20130109130619,12102012;
+            231,67.21  ,20121009101621,02122011;
+            123,,20140817010156,22052014"""
+
   test("test csvFile loader rejection with NoOp") {
     object file
-        extends SmvCsvFile("./" + testDataDir + "RejectTest/test2", CsvAttributes.defaultCsv) {
+        extends SmvCsvStringData(testSchema, testData
+        ) {
       override val failAtParsingError = false
     }
     val df = file.rdd(collector=new SmvRunInfoCollector)
@@ -40,7 +57,10 @@ class RejectTest extends SmvTestUtil {
 
   test("test csvFile loader rejection with exception") {
     val e = intercept[SmvDqmValidationError] {
-      val df = open(testDataDir + "RejectTest/test2")
+      object file extends  SmvCsvStringData(
+        testSchema, testData
+      )
+      val df = file.rdd(collector=new SmvRunInfoCollector)
     }
     val m   = e.getMessage
     val res = DqmValidationResult.fromJson(m)
@@ -58,7 +78,7 @@ class RejectTest extends SmvTestUtil {
 
   test("test csvFile loader with FailParserCountPolicy") {
     object file
-        extends SmvCsvFile("./" + testDataDir + "RejectTest/test2", CsvAttributes.defaultCsv) {
+        extends SmvCsvStringData(testSchema, testData, true) {
       override val failAtParsingError = false
       override def dqm()              = SmvDQM().add(FailParserCountPolicy(10))
       // override fqn because object defined in anonymous function has spaghetti fqn
