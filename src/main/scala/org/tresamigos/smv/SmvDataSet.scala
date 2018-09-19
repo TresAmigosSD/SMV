@@ -874,7 +874,7 @@ abstract class SmvFile extends SmvDSWithParser {
 }
 
 /**
- * Represents a single raw input file with a given file path. E.g. SmvCsvFile or SmvFrlFile
+ * Represents a single raw input file with a given file path. E.g. SmvCsvFile
  */
 abstract class SmvSingleFile extends SmvFile {
   /**
@@ -911,27 +911,6 @@ object SmvCsvFile {
       userSchema: Option[String] = None
   ): SmvCsvFile = {
     new SmvCsvFile(path, csvAttributes, schemaPath, isFullPath, userSchema)
-  }
-}
-
-class SmvFrlFile(
-    override val path: String,
-    override val schemaPath: String = null,
-    override val isFullPath: Boolean = false,
-    override val userSchema: Option[String] = None
-) extends SmvSingleFile {
-  def readSingleFile(handler: FileIOHandler) =
-    handler.frlFileWithSchema(Some(schema))
-}
-
-object SmvFrlFile {
-  def apply(
-    path: String,
-    schemaPath: String = null,
-    isFullPath: Boolean = false,
-    userSchema: Option[String] = None
-  ): SmvFrlFile = {
-    new SmvFrlFile(path, schemaPath, isFullPath, userSchema)
   }
 }
 
