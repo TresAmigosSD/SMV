@@ -23,21 +23,6 @@ class CsvTest extends SmvTestUtil {
                           "5,3.0")
   }
 
-  ignore("Test run method in SmvFile") {
-    object TestFile
-        extends SmvCsvFile("./" + testDataDir + "CsvTest/test1",
-                           CsvAttributes.defaultCsvWithHeader) {
-      override def run(df: DataFrame) = {
-        import df.sqlContext.implicits._
-        df.smvSelectPlus(smvfuncs.smvStrCat($"name", $"id") as "name_id")
-      }
-    }
-    val df = TestFile.rdd(collector=new SmvRunInfoCollector)
-    assertSrddDataEqual(df,
-                        "Bob,1,Bob1;" +
-                          "Fred,2,Fred2")
-  }
-
   ignore("Test change csv attribute modifies hash") {
     val file1 =
       SmvCsvFile(
