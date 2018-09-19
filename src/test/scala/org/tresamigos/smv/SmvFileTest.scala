@@ -38,19 +38,4 @@ class SmvFileTest extends SmvTestUtil {
     object Link1 extends SmvModuleLink(File3)
   }
 
-  test("read dir using SmvMultiCsvFiles") {
-    resetTestcaseTempDir()
-
-    new File(testcaseTempDir, "input").mkdir()
-    new File(testcaseTempDir, "input/data1").mkdir()
-    createTempFile("input/data1/f1", "col1\na\n")
-    createTempFile("input/data1/f2", "col1\nb\n")
-
-    createTempFile("input/data1.schema", "col1:String\n")
-
-    object Data1 extends SmvMultiCsvFiles("data1")
-
-    val res = Data1.rdd(collector=new SmvRunInfoCollector)
-    assertSrddDataEqual(res, "a;b")
-  }
 }

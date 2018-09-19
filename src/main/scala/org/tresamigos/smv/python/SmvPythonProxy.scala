@@ -159,6 +159,9 @@ object SmvPythonHelper {
 
   def smvHashKey(prefix: String, cols: Array[Column]): Column =
     smvfuncs.smvHashKey(prefix, cols: _*)
+
+  def getTerminateParserLogger() = 
+    dqm.TerminateParserLogger
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
@@ -223,22 +226,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
 
   def publishVersion: Option[String] = config.cmdLine.publish.get
-
-  /** Create a SmvCsvFile for use in Python */
-  def smvCsvFile(moduleName: String,
-                 path: String,
-                 csvAttr: CsvAttributes,
-                 pForceParserCheck: Boolean,
-                 pFailAtParsingError: Boolean,
-                 pUserSchema: Option[String]): SmvCsvFile = {
-
-    new SmvCsvFile(path, csvAttr) {
-      override def fqn                = moduleName
-      override val forceParserCheck   = pForceParserCheck
-      override val failAtParsingError = pFailAtParsingError
-      override val userSchema         = pUserSchema
-    }
-  }
 
   def mergedPropsJSON: String = Serialization.write(j_smvApp.smvConfig.mergedProps)(org.json4s.DefaultFormats)
 
@@ -397,12 +384,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
       case _: InvalidInputException => null
     }
   }
-
-  /**
-   * Alias to ShellCmd openCsv function
-   */
-  def shellOpenCsv(path: String, validate: Boolean): DataFrame =
-    shell.openCsv(path, null, validate)
 
   def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
 }

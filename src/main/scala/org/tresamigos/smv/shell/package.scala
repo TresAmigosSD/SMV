@@ -105,20 +105,9 @@ package object shell {
   def now() = println(ShellCmd.now())
 
   /**
-   * Read in a Hive table as DF
-   **/
-  def openHive(tableName: String) = ShellCmd.openHive(tableName)
-
-  /**
    * Export dataset's running result to a Hive table
    **/
   def exportToHive(dsName: String) = ShellCmd.exportToHive(dsName)
-
-  /**
-   * Read in a Csv file as DF
-   **/
-  def openCsv(path: String, ca: CsvAttributes = null, validate: Boolean = false) =
-    ShellCmd.openCsv(path, ca, validate)
 
   /**
    * Resolve SmvDataSet

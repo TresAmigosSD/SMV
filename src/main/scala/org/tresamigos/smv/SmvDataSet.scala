@@ -711,32 +711,6 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
 }
 
 /**
- * SMV Dataset Wrapper around a hive table.
- */
-class SmvHiveTable(override val tableName: String, val userQuery: String = null)
-    extends SmvInputDataSet {
-  override def description() = s"Hive Table: @${tableName}"
-
-  val query = {
-    if (userQuery == null)
-      "select * from " + tableName
-    else
-      userQuery
-  }
-
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val df = app.sparkSession.sql(query)
-    run(df)
-  }
-}
-
-object SmvHiveTable {
-  def apply(tableName: String, userQuery: String = null): SmvHiveTable = {
-    new SmvHiveTable(tableName, userQuery)
-  }
-}
-
-/**
  * Wrapper for a database table accessed via JDBC
  */
 class SmvJdbcTable(override val tableName: String)
@@ -874,7 +848,7 @@ abstract class SmvFile extends SmvDSWithParser {
 }
 
 /**
- * Represents a single raw input file with a given file path. E.g. SmvCsvFile or SmvFrlFile
+ * Represents a single raw input file with a given file path. E.g. SmvCsvFile
  */
 abstract class SmvSingleFile extends SmvFile {
   /**
@@ -911,70 +885,6 @@ object SmvCsvFile {
       userSchema: Option[String] = None
   ): SmvCsvFile = {
     new SmvCsvFile(path, csvAttributes, schemaPath, isFullPath, userSchema)
-  }
-}
-
-class SmvFrlFile(
-    override val path: String,
-    override val schemaPath: String = null,
-    override val isFullPath: Boolean = false,
-    override val userSchema: Option[String] = None
-) extends SmvSingleFile {
-  def readSingleFile(handler: FileIOHandler) =
-    handler.frlFileWithSchema(Some(schema))
-}
-
-object SmvFrlFile {
-  def apply(
-    path: String,
-    schemaPath: String = null,
-    isFullPath: Boolean = false,
-    userSchema: Option[String] = None
-  ): SmvFrlFile = {
-    new SmvFrlFile(path, schemaPath, isFullPath, userSchema)
-  }
-}
-
-/**
- * Instead of a single input file, specify a data dir with files which has
- * the same schema and CsvAttributes.
- *
- * `SmvCsvFile` can also take dir as path parameter, but all files are considered
- * slices. In that case if none of them has headers, it's equivalent to `SmvMultiCsvFiles`.
- * However if every file has header, `SmvCsvFile` will not remove header correctly.
- **/
-class SmvMultiCsvFiles(
-    dir: String,
-    csvAttributes: CsvAttributes = null,
-    override val schemaPath: String = null,
-    override val userSchema: Option[String] = None
-) extends SmvFile {
-
-  override val path = dir
-
-  override def fullSchemaPath = {
-    if (schemaPath == null) Option(SmvSchema.dataPathToSchemaPath(fullPath))
-    else Option(findFullPath(schemaPath))
-  }
-
-  private[smv] override def readFromSrc(parserValidator: ParserLogger): DataFrame = {
-    val filesInDir = SmvHDFS.dirList(fullPath)
-      .filterNot(_.startsWith(".")) // ignore all hidden files in the data dir
-      .map { n =>
-        s"${fullPath}/${n}"
-      }
-
-    if (filesInDir.isEmpty)
-      throw new SmvRuntimeException(s"There are no data files in ${fullPath}")
-
-    val df = filesInDir
-      .map { filePath =>
-        val handler =   getHandler(filePath, parserValidator)
-        handler.csvFileWithSchema(csvAttributes, Some(schema))
-      }
-      .reduce(_ union _)
-
-    df
   }
 }
 

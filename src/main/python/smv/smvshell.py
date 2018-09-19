@@ -15,7 +15,7 @@
 from inspect import formatargspec, getargspec
 import sys
 
-from smv import SmvApp
+from smv import SmvApp, SmvHiveTable, SmvCsvFile, dqm
 from test_support.test_runner import SmvTestRunner
 from test_support.testconfig import TestConfig
 
@@ -87,7 +87,12 @@ def openHive(tableName):
         Returns:
             (DataFrame): The resulting DataFrame
     """
-    return DataFrame(_jvmShellCmd().openHive(tableName), SmvApp.getInstance().sqlContext)
+    app = SmvApp.getInstance()
+    class TmpHive(SmvHiveTable):
+        def tableName(self):
+            return tableName
+
+    return DataFrame(TmpHive(app).doRun(None, None), app.sqlContext)
 
 def openCsv(path, validate=False):
     """Read in a CSV file as a DataFrame
@@ -100,8 +105,13 @@ def openCsv(path, validate=False):
             (DataFrame): The resulting DataFrame
     """
     app = SmvApp.getInstance()
-    jdf = app.j_smvPyClient.shellOpenCsv(path, validate)
-    return DataFrame(jdf, SmvApp.getInstance().sqlContext)
+    class TmpCsv(SmvCsvFile):
+        def fullPath(self):
+            return path
+
+    # validator == None will use TerminateParserLogger, empty dqm means ignore errors
+    validator = None if validate else app._jvm.DQMValidator(dqm.SmvDQM(), False)
+    return DataFrame(TmpCsv(app).doRun(validator, None), app.sqlContext)
 
 def smvExportCsv(name, path):
     """Export the result of a module to a CSV file at a local path

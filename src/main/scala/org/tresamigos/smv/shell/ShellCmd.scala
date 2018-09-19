@@ -148,13 +148,6 @@ object ShellCmd {
   }
 
   /**
-   * Read in a Hive table as DF
-  **/
-  def openHive(tableName: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
-    new SmvHiveTable(tableName).rdd(collector=collector)
-  }
-
-  /**
    * Export dataset's running result to a Hive table
   **/
   def exportToHive(dsName: String,
@@ -162,9 +155,6 @@ object ShellCmd {
                    collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
     SmvApp.app.publishModuleToHiveByName(dsName, runConfig, collector)
   }
-
-  def openCsv(path: String, ca: CsvAttributes, validate: Boolean): DataFrame = 
-    SmvApp.app.openCsv(path, ca, validate)
 
   /**
    * Deprecated
