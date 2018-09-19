@@ -55,22 +55,6 @@ class CsvTest extends SmvTestUtil {
     assert(file2.instanceValHash == file3.instanceValHash)
   }
 
-  ignore("Test reading CSV file with user-defined schema") {
-    val file =
-      SmvCsvFile(
-        "./" + testDataDir + "CsvTest/test1",
-        CsvAttributes.defaultCsvWithHeader,
-        null,
-        false,
-        Some("eman:String;di:integer")
-      )
-
-    val res = file.rdd(collector=new SmvRunInfoCollector)
-
-    assertSrddDataEqual(res, "Bob,1;Fred,2")
-    assertSrddSchemaEqual(res, "eman:String;di:integer")
-  }
-
   test("Test reading CSV file with attributes in schema file.") {
     val df = open(testDataDir + "CsvTest/test2.csv", null)
 

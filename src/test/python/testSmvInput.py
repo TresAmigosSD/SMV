@@ -172,3 +172,14 @@ id:integer"""
         )
         self.should_be_same(res, expected)
             
+    def test_SmvCsvFile_with_userSchema(self):
+        fqn = "stage.modules.Csv2"
+        self._create_csv_file('csvtest/csv1.csv')
+        self._create_csv_schema('csvtest/csv1.schema')
+        res = self.df(fqn)
+        expected = self.createDF(
+            "eman:String;di:Integer",
+            """Bob,1;
+            Fred,2"""
+        )
+        self.should_be_same(res, expected)

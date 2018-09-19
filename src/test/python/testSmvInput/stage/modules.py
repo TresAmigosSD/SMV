@@ -53,3 +53,11 @@ class Csv1(SmvCsvFile):
         return df.withColumn("name_id",
             smvStrCat(F.col("name"), F.col("id"))
         )
+
+class Csv2(SmvCsvFile):
+    def path(self):
+        return "csvtest/csv1.csv"
+    def csvAttr(self):
+        return CsvAttributes(",", '"', True)
+    def userSchema(self):
+        return "eman:String;di:integer"
