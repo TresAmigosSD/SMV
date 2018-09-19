@@ -357,17 +357,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def getSmvSchema() = SmvSchema
 
-  def readCsvFromFile(
-    fullPath: String,
-    schema: SmvSchema,
-    csvAttr: CsvAttributes,
-    parserLogger: ParserLogger
-  ) = {
-    // Python side always provide schema instead of schemaPath
-    val handler = new FileIOHandler(j_smvApp.sparkSession, fullPath, None, parserLogger)
-    handler.csvFileWithSchema(csvAttr, Some(schema))
-  }
-
   /**
    * Map the data file path to schema file path,
    * and then try to read the schema from schema file.
