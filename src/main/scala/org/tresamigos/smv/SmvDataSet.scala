@@ -711,32 +711,6 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
 }
 
 /**
- * SMV Dataset Wrapper around a hive table.
- */
-class SmvHiveTable(override val tableName: String, val userQuery: String = null)
-    extends SmvInputDataSet {
-  override def description() = s"Hive Table: @${tableName}"
-
-  val query = {
-    if (userQuery == null)
-      "select * from " + tableName
-    else
-      userQuery
-  }
-
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val df = app.sparkSession.sql(query)
-    run(df)
-  }
-}
-
-object SmvHiveTable {
-  def apply(tableName: String, userQuery: String = null): SmvHiveTable = {
-    new SmvHiveTable(tableName, userQuery)
-  }
-}
-
-/**
  * Wrapper for a database table accessed via JDBC
  */
 class SmvJdbcTable(override val tableName: String)
