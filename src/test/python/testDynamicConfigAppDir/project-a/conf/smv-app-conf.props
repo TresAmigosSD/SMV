@@ -9,3 +9,6 @@ smv.appId = PROJECT_A
 
 # dummy user_libraries key
 smv.user_libraries = core
+
+# set maximum retries of Callback Server
+smv.maxCbsPortRetries = 20
