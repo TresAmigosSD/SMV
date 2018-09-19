@@ -118,6 +118,12 @@ class CsvFileWithRun(SmvCsvFile):
     def run(self, df):
         return df.select("bar")
 
+class CsvFileWithAttr(SmvCsvFile):
+    def path(self):
+        return "foo"
+    def userSchema(self):
+        return "@quote-char=';eman:String;di:integer"
+
 class Child(Parent):
     pass
 

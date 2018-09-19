@@ -103,6 +103,10 @@ class ModuleHashTest(SmvBaseTest):
         """updating run method of SmvCsvFile will change hash"""
         self.assert_hash_should_change("stage.modules.CsvFileWithRun")
 
+    def test_change_csv_file_attribute_shoule_change_hash(self):
+        """updating csv attribute through userSchema of SmvCsvFile will change hash"""
+        self.assert_hash_should_change("stage.modules.CsvFileWithAttr")
+
     def test_change_relevant_conf_value_should_change_hash(self):
         """updating config value used by an SmvDataSet should change its hash"""
         self.assert_hash_should_change("stage.modules.UsesConfigValue")

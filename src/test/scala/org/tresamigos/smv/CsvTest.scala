@@ -23,38 +23,6 @@ class CsvTest extends SmvTestUtil {
                           "5,3.0")
   }
 
-  ignore("Test change csv attribute modifies hash") {
-    val file1 =
-      SmvCsvFile(
-        "./" + testDataDir + "CsvTest/test1",
-        CsvAttributes.defaultCsvWithHeader,
-        null,
-        false,
-        Some("@quote-char=|;eman:String;di:integer")
-      )
-
-    val file2 =
-      SmvCsvFile(
-        "./" + testDataDir + "CsvTest/test1",
-        CsvAttributes.defaultCsvWithHeader,
-        null,
-        false,
-        Some("@quote-char=';eman:String;di:integer")
-      )
-
-    val file3 =
-      SmvCsvFile(
-        "./" + testDataDir + "CsvTest/test1",
-        CsvAttributes.defaultCsvWithHeader,
-        null,
-        false,
-        Some("@quote-char=';eman:String;di:integer")
-      )
-
-    assert(file1.instanceValHash != file2.instanceValHash)
-    assert(file2.instanceValHash == file3.instanceValHash)
-  }
-
   test("Test reading CSV file with attributes in schema file.") {
     val df = open(testDataDir + "CsvTest/test2.csv", null)
 
