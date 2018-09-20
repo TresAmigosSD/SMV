@@ -6,38 +6,6 @@ class SmvLabelTest extends SmvTestUtil {
     dfFrom("variables:String;decriptions:String",
            "id,This is an ID field;name,This is a name field;sex,This is a sex filed")
 
-  test(
-    "calling smvRemoveLabel with zero column arguments would remove the specified label from all columns") {
-    val label1 = fixture.smvLabel("name")("white", "blue", "red")
-    val label2 = label1.smvLabel("sex")("white", "blue")
-    val label3 = label2.smvLabel("id")("white")
-    val res    = label3.smvRemoveLabel()("white")
-    res.smvGetLabels("id") shouldBe 'Empty
-    res.smvGetLabels("name") shouldBe Seq("blue", "red")
-    res.smvGetLabels("sex") shouldBe Seq("blue")
-  }
-
-  test(
-    "calling smvRemoveLabel with zero label argument would remove all labels from the specified columns") {
-    val label1 = fixture.smvLabel("name")("white", "blue", "red")
-    val label2 = label1.smvLabel("sex")("white", "blue")
-    val label3 = label2.smvLabel("id")("white")
-    val res    = label3.smvRemoveLabel("name", "sex")()
-    res.smvGetLabels("id") shouldBe Seq("white")
-    res.smvGetLabels("name") shouldBe 'Empty
-    res.smvGetLabels("sex") shouldBe 'Empty
-  }
-
-  test("calling smvRemoveLabel with two empty parameter lists should clear all label meta data") {
-    val label1 = fixture.smvLabel("name")("white", "blue", "red")
-    val label2 = label1.smvLabel("sex")("white", "blue")
-    val label3 = label2.smvLabel("id")("white")
-    val res    = label3.smvRemoveLabel()()
-    res.smvGetLabels("id") shouldBe 'Empty
-    res.smvGetLabels("name") shouldBe 'Empty
-    res.smvGetLabels("sex") shouldBe 'Empty
-  }
-
   test("selecting labeled columns should return only columns that have all the specified labels") {
     val label1 = fixture.smvLabel("name", "sex")("white")
     val label2 = label1.smvLabel("name")("red")
