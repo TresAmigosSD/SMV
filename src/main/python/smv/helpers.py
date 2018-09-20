@@ -1178,29 +1178,44 @@ class DataFrameHelper(object):
             When colNames is empty, the set of labels will be removed from all columns of the df.
             When labels is empty, all labels will be removed from the given columns.
 
+            If neither columns nor labels are specified, i.e. both parameter lists are empty,
+            then all labels are removed from all columns in the data frame, essentially clearing
+            the label meta data.
+
             Args:
                 labels: (set(string)) a set of label strings to remove
                 colNames: (\*string) names of columns for which to remove labels
 
             Example:
                 >>> df.smvRemoveLabel(set(["tag_1"]), "col_a")
-                >>> df.smvRemoveLabel(set(["tag_1"]))
-                >>> df.smvRemoveLabel(set(), "col_a")
+                >>> df.smvRemoveLabel(set())
 
             Returns:
-                (DataFrame): the DataFrame with labels removed from the specified columns
+                (DataFrame): the DataFrame with specified labels removed from the specified columns
 
             or:
 
             Returns:
-                (DataFrame): the DataFrame with labels removed from all columns
-
-            or:
-
-            Returns:
-                (DataFrame): the DataFrame with all labels removed from the specified columns
+                (DataFrame): the DataFrame with all label meta data cleared
         """
         return self.SchemaMetaOps.removeLabel(labels, *colNames)
+
+    def smvWithLabel(self, labels = None):
+        """Returns all column names in the data frame that contain all the specified labels
+        
+            If the labels is an empty set, returns all unlabeled columns in the data frame.
+            Will throw if there are no columns that satisfy the condition.
+
+            Args:
+                labels: (set(string)) a set of label strings for the columns to match
+
+            Example:
+                >>> df.smvWithLabel(set(["tag_1", "tag_2"]))
+
+            Returns:
+                (list(string)): a list of column name strings that match the specified labels
+        """
+        return self.SchemaMetaOps.colsWithLabel(labels)
 
     #############################################
     # DfHelpers which print to STDOUT

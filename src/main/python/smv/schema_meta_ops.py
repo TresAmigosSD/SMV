@@ -30,6 +30,10 @@ class SchemaMetaOps(object):
         self.df = df
 
     def getMetaByName(self, colName):
+        """Returns the metadata of the first column that matches the column name
+
+            Will throw if there's no column that matches the specified name
+        """
         try:
             meta = next(col.metadata for col in self.df.schema.fields if col.name == colName)
         except:
@@ -94,3 +98,19 @@ class SchemaMetaOps(object):
                 col.metadata[smv_label] = set() if allLabel else getMetaLabels(col.metadata) - labels
 
         return self.df
+
+    def colsWithLabel(self, labels = None):
+        def match(meta):
+            return labels <= getMetaLabels(meta) if bool(labels) else not getMetaLabels(meta)
+
+        ret = [col.name for col in self.df.schema.fields if match(col.metadata)]
+
+        if not ret:
+            if bool(labels):
+                raise SmvRuntimeError("there are no columns labeled with {{{}}} in the data frame [{}]"\
+                    .format(", ".join(list(labels)), ", ".join(self.df.columns)))
+            else:
+                raise SmvRuntimeError("there are no unlabeled columns in the data frame [{}]"\
+                    .format(", ".join(self.df.columns)))
+
+        return ret
