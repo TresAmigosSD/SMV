@@ -6,42 +6,6 @@ class SmvLabelTest extends SmvTestUtil {
     dfFrom("variables:String;decriptions:String",
            "id,This is an ID field;name,This is a name field;sex,This is a sex filed")
 
-  // test("labeling a column should preserve previous meta data on the column") {
-  //   val df1     = fixture
-  //   val df2     = df1.smvSelectPlus(df1("id") + 1 as "id1").smvDesc("id1" -> "id plus 1")
-  //   val labeled = df2.smvLabel("id1")("purple")
-  //   labeled.smvGetDesc() shouldBe Seq("id" -> "", "name" -> "", "sex" -> "", "id1" -> "id plus 1")
-  // }
-
-  test("labeling a column twice should have the same effect as labeling once") {
-    val label1 = fixture.smvLabel("name")("white")
-    val label2 = fixture.smvLabel("name", "sex")("white")
-    label2.smvGetLabels("name") shouldBe Seq("white")
-    label2.smvGetLabels("sex") shouldBe Seq("white")
-  }
-
-  test("columns can have multiple labels") {
-    val label = fixture.smvLabel("name")("white", "blue")
-    label.smvGetLabels("name") shouldBe Seq("white", "blue")
-  }
-
-  test("removing labels should preserve other meta data") {
-    val df1    = fixture
-    val df2    = df1.smvSelectPlus(df1("id") + 1 as "id1").smvDesc("id1" -> "id plus 1")
-    val label1 = df2.smvLabel("id1")("white", "blue")
-    val label2 = label1.smvRemoveLabel("id1")("white", "blue")
-    label2.smvGetDesc() shouldBe Seq("id" -> "", "name" -> "", "sex" -> "", "id1" -> "id plus 1")
-  }
-
-  test("removing one label should preserve other labels") {
-    val label1 = fixture.smvLabel("name")("white", "blue", "red")
-    val label2 = label1.smvLabel("sex")("white", "blue")
-    val res    = label2.smvRemoveLabel("name", "sex")("blue", "red")
-    res.smvGetLabels("id") shouldBe 'Empty
-    res.smvGetLabels("sex") shouldBe Seq("white")
-    res.smvGetLabels("name") shouldBe Seq("white")
-  }
-
   test(
     "calling smvRemoveLabel with zero column arguments would remove the specified label from all columns") {
     val label1 = fixture.smvLabel("name")("white", "blue", "red")
