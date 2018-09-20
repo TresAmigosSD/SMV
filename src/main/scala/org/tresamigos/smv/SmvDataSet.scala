@@ -116,14 +116,6 @@ abstract class SmvDataSet {
       })
       .distinct
 
-  def requiresAnc(): Seq[SmvAncillary] = Seq.empty
-
-  /** TODO: remove this method as checkDependency replaced this function */
-  def getAncillary[T <: SmvAncillary](anc: T) = {
-    if (requiresAnc.contains(anc)) anc
-    else throw new SmvRuntimeException(s"SmvAncillary: ${anc} is not in requiresAnc")
-  }
-
   /** user tagged code "version".  Derived classes should update the value when code or data */
   def version(): Int = 0
 
