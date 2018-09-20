@@ -70,12 +70,12 @@ class SchemaMetaOps(object):
         
     def getLabel(self, colName):
         if colName is None:
-            return [(col.name, getMetaLabels(col.metadata)) for col in self.df.schema.fields]
-        return getMetaLabels(self.getMetaByName(colName))
+            return [(col.name, list(getMetaLabels(col.metadata))) for col in self.df.schema.fields]
+        return list(getMetaLabels(self.getMetaByName(colName)))
 
-    def addLabel(self, labels, *colNames):
+    def addLabel(self, labels, colNames = None):
         if not labels:
-            raise SmvRuntimeError("must provide a set of labels to add")
+            raise SmvRuntimeError("must provide a list of labels to add")
         
         addToAll = not bool(colNames)
         if not addToAll:
@@ -83,11 +83,11 @@ class SchemaMetaOps(object):
 
         for col in self.df.schema.fields:
             if addToAll or col.name in addSet:
-                col.metadata[smv_label] = getMetaLabels(col.metadata) | labels
+                col.metadata[smv_label] = getMetaLabels(col.metadata) | set(labels)
 
         return self.df
 
-    def removeLabel(self, labels, *colNames):
+    def removeLabel(self, labels, colNames = None):
         allLabel = not bool(labels)
         allCol = not bool(colNames)
         if not allCol:
@@ -95,22 +95,22 @@ class SchemaMetaOps(object):
 
         for col in self.df.schema.fields:
             if allCol or col.name in removeSet:
-                col.metadata[smv_label] = set() if allLabel else getMetaLabels(col.metadata) - labels
+                col.metadata[smv_label] = set() if allLabel else getMetaLabels(col.metadata) - set(labels)
 
         return self.df
 
     def colsWithLabel(self, labels = None):
         def match(meta):
-            return labels <= getMetaLabels(meta) if bool(labels) else not getMetaLabels(meta)
+            return set(labels) <= getMetaLabels(meta) if bool(labels) else not getMetaLabels(meta)
 
         ret = [col.name for col in self.df.schema.fields if match(col.metadata)]
 
         if not ret:
             if bool(labels):
-                raise SmvRuntimeError("there are no columns labeled with {{{}}} in the data frame [{}]"\
-                    .format(", ".join(list(labels)), ", ".join(self.df.columns)))
+                raise SmvRuntimeError("there are no columns labeled with {{{}}} in {}"\
+                    .format(", ".join(labels), self.df))
             else:
-                raise SmvRuntimeError("there are no unlabeled columns in the data frame [{}]"\
-                    .format(", ".join(self.df.columns)))
+                raise SmvRuntimeError("there are no unlabeled columns in {}"\
+                    .format(self.df))
 
         return ret
