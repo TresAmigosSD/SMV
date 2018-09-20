@@ -42,15 +42,7 @@ object ClassCRC {
   /** compute checksum for a SmvDataSet, including config object if any */
   def checksum(dataset: SmvDataSet, classLoader: ClassLoader): CRC32 = {
     val crc = checksum(dataset.getClass.getName, classLoader)
-
-    // #319: include configuration object in the hash calculation
-    if (dataset.isInstanceOf[Using[_]]) {
-      checksum(dataset.asInstanceOf[Using[SmvRunConfig]].runConfig.getClass.getName,
-               classLoader,
-               crc)
-    } else {
-      crc
-    }
+    crc
   }
 
   /**

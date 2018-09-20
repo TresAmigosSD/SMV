@@ -29,18 +29,13 @@ import edd._
 
 import org.joda.time._, format._
 
-/** A module's file name part is stackable, e.g. with Using[SmvRunConfig] */
-trait FilenamePart {
-  def fnpart: String
-}
-
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result DataFrame.
  */
-abstract class SmvDataSet extends FilenamePart {
+abstract class SmvDataSet {
 
   def app: SmvApp                                                = SmvApp.app
 
@@ -76,9 +71,6 @@ abstract class SmvDataSet extends FilenamePart {
   def fqn: String       = this.getClass().getName().filterNot(_ == '$')
   def urn: URN          = ModURN(fqn)
   override def toString = urn.toString
-
-  /** Names the persisted file for the result of this SmvDataSet */
-  override def fnpart = fqn
 
   def description(): String
 
@@ -1101,35 +1093,4 @@ object SmvCsvStringData {
  */
 trait SmvOutput { this: SmvDataSet =>
   override def dsType(): String = "Output"
-}
-
-/** Base marker trait for run configuration objects */
-trait SmvRunConfig
-
-/**
- * SmvDataSet that can be configured to return different DataFrames.
- */
-trait Using[+T <: SmvRunConfig] extends FilenamePart { self: SmvDataSet =>
-
-  lazy val confObjName = self.app.smvConfig.runConfObj
-
-  /** The actual run configuration object */
-  lazy val runConfig: T = {
-    require(
-      confObjName.isDefined,
-      s"Expected a run configuration object provided with ${SmvConfig.RunConfObjKey} but found none")
-
-    import scala.reflect.runtime.{universe => ru}
-    val mir = ru.runtimeMirror(getClass.getClassLoader)
-
-    val sym    = mir.staticModule(confObjName.get)
-    val module = mir.reflectModule(sym)
-    module.instance.asInstanceOf[T]
-  }
-
-  // Configurable SmvDataSet has the configuration object appended to its name
-  abstract override def fnpart = {
-    val confObjStr = confObjName.get
-    super.fnpart + '-' + confObjStr.substring(1 + confObjStr.lastIndexOf('.'))
-  }
 }
