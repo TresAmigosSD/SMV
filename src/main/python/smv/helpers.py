@@ -1143,7 +1143,7 @@ class DataFrameHelper(object):
         """
         return self.SchemaMetaOps.getLabel(colName)
 
-    def smvLabel(self, labels, colNames = None):
+    def smvLabel(self, colNames, labels):
         """Adds labels to the specified columns
 
             A column may have multiple labels. Adding the same label twice
@@ -1158,8 +1158,8 @@ class DataFrameHelper(object):
                 colNames: (list(string)) list of names of columns for which to add labels
 
             Example:
-                >>> df.smvLabel(["tag_1", "tag_2"], ["col_a", "col_b", "col_c"])
-                >>> df.smvLabel(["tag_1", "tag_2"])
+                >>> df.smvLabel(["col_a", "col_b", "col_c"], ["tag_1", "tag_2"])
+                >>> df.smvLabel([], ["tag_1", "tag_2"])
 
             Returns:
                 (DataFrame): the DataFrame with labels added to the specified columns
@@ -1169,9 +1169,9 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with labels added to all columns
         """
-        return self.SchemaMetaOps.addLabel(labels, colNames)
+        return self.SchemaMetaOps.addLabel(colNames, labels)
 
-    def smvRemoveLabel(self, labels = None, colNames = None):
+    def smvRemoveLabel(self, colNames = None, labels = None):
         """Removes labels from the specified columns
 
             For multiple colNames, the same set of labels will be removed from all of them.
@@ -1187,7 +1187,7 @@ class DataFrameHelper(object):
                 colNames: (list(string)) list of names of columns for which to remove labels
 
             Example:
-                >>> df.smvRemoveLabel(["tag_1"], ["col_a"])
+                >>> df.smvRemoveLabel(["col_a"], ["tag_1"])
                 >>> df.smvRemoveLabel()
 
             Returns:
@@ -1198,7 +1198,7 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with all label meta data cleared
         """
-        return self.SchemaMetaOps.removeLabel(labels, colNames)
+        return self.SchemaMetaOps.removeLabel(colNames, labels)
 
     def smvWithLabel(self, labels = None):
         """Returns all column names in the data frame that contain all the specified labels

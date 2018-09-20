@@ -73,7 +73,7 @@ class SchemaMetaOps(object):
             return [(col.name, list(getMetaLabels(col.metadata))) for col in self.df.schema.fields]
         return list(getMetaLabels(self.getMetaByName(colName)))
 
-    def addLabel(self, labels, colNames = None):
+    def addLabel(self, colNames, labels):
         if not labels:
             raise SmvRuntimeError("must provide a list of labels to add")
         
@@ -87,7 +87,7 @@ class SchemaMetaOps(object):
 
         return self.df
 
-    def removeLabel(self, labels = None, colNames = None):
+    def removeLabel(self, colNames = None, labels = None):
         allLabel = not bool(labels)
         allCol = not bool(colNames)
         if not allCol:

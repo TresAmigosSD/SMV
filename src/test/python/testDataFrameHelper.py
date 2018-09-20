@@ -370,19 +370,19 @@ class DfHelperTest(SmvBaseTest):
 
     def test_smvLabel(self):
         df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
-        res = df.smvLabel(["white"], ["name"])
+        res = df.smvLabel(["name"], ["white"])
         self.assertEqual(res.smvGetLabel("name"), ["white"])
         self.assertEqual(res.smvGetLabel("sex"), [])
 
     def test_smvLabel_not_alter_data(self):
         df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
-        df2 = df1.smvLabel(["white"], ["name"])
+        df2 = df1.smvLabel(["name"], ["white"])
         self.assertEqual(df1, df2)
 
     def test_smvLabel_preserve_metadata(self):
         df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
         df2 = df1.smvSelectPlus((col("id") + 1).alias("id1")).smvDesc(("id1", "id plus 1"))
-        res = df2.smvLabel(["purple"], ["id1"])
+        res = df2.smvLabel(["id1"], ["purple"])
         self.assertEqual(res.smvGetDesc(), [("id", ""), ("name", ""), ("sex", ""), ("id1", "id plus 1")])
 
 class ShellDfHelperTest(SmvBaseTest):
