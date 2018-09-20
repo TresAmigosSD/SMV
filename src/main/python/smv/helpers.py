@@ -1115,7 +1115,55 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with column descriptions removed
         """
-        return self.SchemaMetaOps.smvRemoveDesc(*colNames)
+        return self.SchemaMetaOps.removeDesc(*colNames)
+
+    def smvGetLabel(self, colName = None):
+        """Returns a list column label(s)
+
+            Args:
+                colName (string):  optional column name for which to get the label.
+
+            Example:
+                >>> df.smvGetLabel("col_a")
+                >>> df.smvGetLabel()
+
+            Returns:
+                (set(string)): a set of label strings of colName, if specified
+
+            or:
+
+            Returns:
+                (list(tuple)): a list of (colName, set(labels)) pairs for all columns
+        """
+        return self.SchemaMetaOps.getLabel(colName)
+
+    def smvLabel(self, labels, *colNames):
+        """Adds labels to the specified columns
+
+            A column may have multiple labels. Adding the same label twice
+            to a column has the same effect as adding that label once.
+
+            For multiple colNames, the same set of labels will be added to all of them.
+            When colNames is empty, the set of labels will be added to all columns of the df.
+            labels parameters must be non-empty.
+
+            Args:
+                labels: (set(string)) a set of label strings to add
+                colNames: (\*string) names of columns for which to add labels
+
+            Example:
+                >>> df.smvLabel(set(["tag_1", "tag_2"]), "col_a", "col_b", "col_c")
+                >>> df.smvLabel(set(["tag_1", "tag_2"]))
+
+            Returns:
+                (DataFrame): the DataFrame with labels added to the specified columns
+
+            or:
+
+            Returns:
+                (DataFrame): the DataFrame with labels added to all columns
+        """
+        return self.SchemaMetaOps.addLabel(labels, *colNames)
 
     #############################################
     # DfHelpers which print to STDOUT

@@ -22,24 +22,29 @@ smv_desc = "smvDesc"
 def getMetaDesc(m):
     return m.get(smv_desc, u'')
 
+def getMetaLabels(m):
+    return m.get(smv_label, set())
+
 class SchemaMetaOps(object):
     def __init__(self, df):
         self.df = df
 
+    def getMetaByName(self, colName):
+        try:
+            meta = next(col.metadata for col in self.df.schema.fields if col.name == colName)
+        except:
+            raise SmvRuntimeError("column name {} not found".format(colName))
+        return meta
+
     def getDesc(self, colName):
         if colName is None:
             return [(col.name, getMetaDesc(col.metadata)) for col in self.df.schema.fields]
-        try:
-            meta = (col.metadata for col in self.df.schema.fields if col.name == colName).next()
-        except:
-            raise SmvRuntimeError("column name {} not found".format(colName))
-
-        return getMetaDesc(meta)
+        return getMetaDesc(self.getMetaByName(colName))
 
     def addDesc(self, *colDescs):
-        if not colDescs: raise SmvRuntimeError("must provide (name, description) pair to add")
+        if not colDescs:
+            raise SmvRuntimeError("must provide (name, description) pair to add")
 
-        # convert list [(name, desc), ...] to a dictionary {name: desc, ...}
         addDict = dict(colDescs)
 
         for col in self.df.schema.fields:
@@ -48,15 +53,34 @@ class SchemaMetaOps(object):
 
         return self.df
 
-    def smvRemoveDesc(self, *colNames):
+    def removeDesc(self, *colNames):
         removeAll = not bool(colNames)
 
-        # convert list [name, ...] to a dictionary {name: True, ...}
-        if not removeAll: removeDict = {name: True for name in colNames}
+        if not removeAll:
+            removeSet = set(colNames)
 
         for col in self.df.schema.fields:
-            if removeAll or col.name in removeDict:
+            if removeAll or col.name in removeSet:
                 col.metadata.pop(smv_desc, None)
 
         return self.df
         
+    def getLabel(self, colName):
+        if colName is None:
+            return [(col.name, getMetaLabels(col.metadata)) for col in self.df.schema.fields]
+        return getMetaLabels(self.getMetaByName(colName))
+
+    def addLabel(self, labels, *colNames):
+        if not labels:
+            raise SmvRuntimeError("must provide a set of labels to add")
+        
+        addToAll = not bool(colNames)
+
+        if not addToAll:
+            addSet = set(colNames)
+
+        for col in self.df.schema.fields:
+            if addToAll or col.name in addSet:
+                col.metadata[smv_label] = getMetaLabels(col.metadata) | labels
+
+        return self.df
