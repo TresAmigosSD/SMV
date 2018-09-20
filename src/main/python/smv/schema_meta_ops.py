@@ -14,7 +14,7 @@
 
     Provides helper functions for SmvDesc and SmvLabel operations
 """
-from pyspark.sql import DataFrame
+from smv.error import SmvRuntimeError
 
 smv_label = "smvLabel"
 smv_desc = "smvDesc"
@@ -24,4 +24,17 @@ class SchemaMetaOps(object):
         self.df = df
 
     def getDesc(self, colName):
-        return [col.metadata.get(smv_desc) or u'' for col in self.df.schema.fields if col.name == colName][0]
+        try:
+            meta = (col.metadata for col in self.df.schema.fields if col.name == colName).next()
+        except:
+            raise SmvRuntimeError("column name {} not found".format(colName))
+
+        return meta.get(smv_desc, u'')
+
+    def addDesc(self, *colDescs):
+        if not colDescs: raise SmvRuntimeError("must provide description argument")
+        colDict = dict(colDescs)
+        for col in self.df.schema.fields:
+            if colDict.has_key(col.name):
+                col.metadata[smv_desc] = colDict[col.name]
+        return self.df
