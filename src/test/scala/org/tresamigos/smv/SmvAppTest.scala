@@ -85,21 +85,6 @@ package org.tresamigos.smv {
       }
     }
 
-    test("Test SmvFile crc") {
-      import org.tresamigos.smv.fixture.smvapptest._
-      createTempFile("F1.csv")
-      createTempFile("F1.schema", "foo:integer")
-      createTempFile("F2.csv")
-      createTempFile("F2.schema", "bar:string")
-
-      assert(f1.datasetHash() !== f2.datasetHash)
-
-      SmvHDFS.deleteFile("F1.schema")
-      createTempFile("F1.schema", "foo:string")
-
-      assert(f1.datasetHash() !== f3.datasetHash())
-    }
-
     test("SmvApp.createDF should be able to create an empty dataframe with schema") {
       val r1 = app.createDF("k:String")
       r1.count() shouldBe 0
@@ -188,16 +173,6 @@ package org.tresamigos.smv {
 
 package org.tresamigos.smv.fixture.smvapptest {
   import org.tresamigos.smv._, dqm._
-
-  class TestFile(override val path: String) extends SmvFile {
-    override def readFromSrc(parserLogger: ParserLogger) = null
-    override def doRun(dsDqm: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = null
-    override val userSchema = None
-  }
-
-  object f1 extends TestFile("F1.csv")
-  object f2 extends TestFile("F2.csv")
-  object f3 extends TestFile("F1.csv")
 
   object SmvTestFile extends SmvModule("") {
     override def requiresDS()      = Seq.empty
