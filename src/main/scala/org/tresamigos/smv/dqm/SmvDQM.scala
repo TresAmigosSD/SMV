@@ -247,7 +247,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
     val snapshot = dqmState.snapshot()
 
     val results = allPolicies.map { p =>
-      (p.name, p.policy(df, dqmState))
+      (p.name, p.policy(dqmState))
     }
 
     val passed = results.isEmpty || results.map { _._2 }.reduce(_ && _)

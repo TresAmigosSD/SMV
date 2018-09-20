@@ -209,7 +209,7 @@ class DQMTest extends SmvTestUtil {
   test("test user defined policy") {
     val ssc = sqlContext; import ssc.implicits._
     object file extends SmvCsvStringData("a:Integer;b:Double", "1,0.3;0,0.2;3,0.5") {
-      val policy: (DataFrame, DQMState) => Boolean = { (df, state) =>
+      val policy: (DQMState) => Boolean = { (state) =>
         state.getRuleCount("rule1") + state.getFixCount("fix2") == 3
       }
       override def dqm() =
