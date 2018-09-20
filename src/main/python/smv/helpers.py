@@ -1203,7 +1203,7 @@ class DataFrameHelper(object):
     def smvWithLabel(self, labels = None):
         """Returns all column names in the data frame that contain all the specified labels
         
-            If the labels is an empty set, returns all unlabeled columns in the data frame.
+            If the labels is empty, returns all unlabeled columns in the data frame.
             Will throw if there are no columns that satisfy the condition.
 
             Args:
@@ -1216,6 +1216,23 @@ class DataFrameHelper(object):
                 (list(string)): a list of column name strings that match the specified labels
         """
         return self.SchemaMetaOps.colsWithLabel(labels)
+
+    def selectByLabel(self, labels = None):
+        """Select columns whose metadata contains the specified labels
+
+            If the labels is empty, returns a DataFrame with all the unlabeled columns.
+            Will throw if there are no columns that satisfy the condition.
+
+            Args:
+                labels: (list(string)) a list of label strings for the columns to match
+
+            Example:
+                >>> df.selectByLabel(["tag_1"])
+
+            Returns:
+                (DataFrame): the DataFrame with the selected columns
+        """
+        return self.df.select(self.smvWithLabel(labels))
 
     #############################################
     # DfHelpers which print to STDOUT
