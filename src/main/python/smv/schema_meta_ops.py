@@ -43,7 +43,7 @@ class SchemaMetaOps(object):
         addDict = dict(colDescs)
 
         for col in self.df.schema.fields:
-            if addDict.has_key(col.name):
+            if col.name in addDict:
                 col.metadata[smv_desc] = addDict[col.name]
 
         return self.df
@@ -55,7 +55,7 @@ class SchemaMetaOps(object):
         if not removeAll: removeDict = {name: True for name in colNames}
 
         for col in self.df.schema.fields:
-            if removeAll or removeDict.has_key(col.name):
+            if removeAll or col.name in removeDict:
                 col.metadata.pop(smv_desc, None)
 
         return self.df
