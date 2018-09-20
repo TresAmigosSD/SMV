@@ -5,7 +5,4 @@ smv.appName = Example App
 smv.stages = integration.test.test2, \
              integration.test.test4, \
              integration.test.test4_1, \
-             integration.test.test5, \
-             integration.test.test8, \
-             integration.test.test8_1, \
              integration.test.hashtest
