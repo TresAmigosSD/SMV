@@ -565,7 +565,7 @@ class DataFrameHelper(object):
         self._jdf = df._jdf
         self._jPythonHelper = df._sc._jvm.SmvPythonHelper
         self._jDfHelper = df._sc._jvm.SmvDFHelper(df._jdf)
-        self._jSchemaMetaOps = SchemaMetaOps(df)
+        self.SchemaMetaOps = SchemaMetaOps(df)
 
     def smvExpandStruct(self, *cols):
         """Expand structure type column to a group of columns
@@ -1066,7 +1066,7 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with column descriptions added
         """
-        return self._jSchemaMetaOps.addDesc(*colDescs)
+        return self.SchemaMetaOps.addDesc(*colDescs)
 
     def smvDescFromDF(self, descDF):
         """Adds column descriptions
@@ -1101,7 +1101,7 @@ class DataFrameHelper(object):
             Returns:
                 (list(tuple)): a list of (colName, description) pairs for all columns
         """
-        return self._jSchemaMetaOps.getDesc(colName)
+        return self.SchemaMetaOps.getDesc(colName)
 
     def smvRemoveDesc(self, *colNames):
         """Removes description for the given columns from the Dataframe
@@ -1115,7 +1115,7 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with column descriptions removed
         """
-        return self._jSchemaMetaOps.smvRemoveDesc(*colNames)
+        return self.SchemaMetaOps.smvRemoveDesc(*colNames)
 
     #############################################
     # DfHelpers which print to STDOUT
