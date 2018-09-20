@@ -10,8 +10,6 @@ E_APP_NAME=EnterpriseApp
 
 # Test stages containing a dependency scenario with a Scala output module
 SCALA_MODULE_STAGES="\
-test1 \
-test3 \
 test5 \
 test8 \
 "
@@ -20,8 +18,6 @@ test8 \
 PYTHON_MODULE_STAGES="\
 test2 \
 test4 \
-test6 \
-test7 \
 "
 
 HASH_TEST_MOD="integration.test.hashtest.modules.M"
